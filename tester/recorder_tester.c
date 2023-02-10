@@ -18,11 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 #include <mediastreamer2/mediastream.h>
 #include <sys/stat.h>
-
 
 #ifdef _WIN32
 #	include <io.h>
@@ -59,7 +60,7 @@
 #endif /*!_WIN32*/
 
 
-static void record_file(const char *filename, bool_t supported_format, const char *audio_mime, const char *video_mime, LinphoneRecorderFileFormat format) {
+static void record_file(const char *filename, UNUSED(bool_t supported_format), UNUSED(const char *audio_mime), const char *video_mime, LinphoneRecorderFileFormat format) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_create("marie_rc");
 	LinphoneRecorder *recorder;
 	int res = 0;

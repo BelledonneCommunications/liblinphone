@@ -21,6 +21,8 @@
 #ifndef _L_ABSTRACT_CHAT_ROOM_H_
 #define _L_ABSTRACT_CHAT_ROOM_H_
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/enum-mask.h"
 
 #include "chat/chat-message/chat-message.h"
@@ -152,7 +154,7 @@ public:
 
 	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
 
-	virtual bool update(const ConferenceParamsInterface &newParameters) override { return false; };
+	virtual bool update(UNUSED(const ConferenceParamsInterface &newParameters)) override { return false; };
 
 	virtual bool canHandleParticipants () const = 0;
 	virtual std::shared_ptr<Conference> getConference () const = 0;

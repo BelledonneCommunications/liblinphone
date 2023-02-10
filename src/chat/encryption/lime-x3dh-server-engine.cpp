@@ -19,6 +19,8 @@
  */
 
 #include "bctoolbox/crypto.h"
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
@@ -53,7 +55,7 @@ LimeX3dhEncryptionServerEngine::~LimeX3dhEncryptionServerEngine () {
 
 ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessage (
 	const std::shared_ptr<ChatMessage> &message,
-	int &errorCode) {
+	UNUSED(int &errorCode)) {
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &toDeviceId = message->getToAddress().asString();

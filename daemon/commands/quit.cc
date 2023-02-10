@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "quit.h"
 
 using namespace std;
@@ -26,7 +28,7 @@ QuitCommand::QuitCommand() :
 		DaemonCommand("quit", "quit", "Quit the application.") {
 }
 
-void QuitCommand::exec(Daemon *app, const string& args) {
+void QuitCommand::exec(Daemon *app, UNUSED(const string& args)) {
 	app->quit();
 	app->sendResponse(Response());
 }

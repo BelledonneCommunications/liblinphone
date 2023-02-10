@@ -21,6 +21,8 @@
 #ifndef _L_CONFERENCE_LISTENER_H_
 #define _L_CONFERENCE_LISTENER_H_
 
+#include <bctoolbox/defs.h>
+
 #include <vector>
 
 #include "event-log/events.h"
@@ -33,12 +35,12 @@ class LINPHONE_PUBLIC ConferenceListener {
 public:
 	virtual ~ConferenceListener () = default;
 
-	virtual void onConferenceCreated (const ConferenceAddress &addr) {}
-	virtual void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) {}
-	virtual void onConferenceTerminated (const IdentityAddress &addr) {}
-	virtual void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) {}
+	virtual void onConferenceCreated (UNUSED(const ConferenceAddress &addr)) {}
+	virtual void onConferenceKeywordsChanged (UNUSED(const std::vector<std::string> &keywords)) {}
+	virtual void onConferenceTerminated (UNUSED(const IdentityAddress &addr)) {}
+	virtual void onSecurityEvent (UNUSED(const std::shared_ptr<ConferenceSecurityEvent> &event)) {}
 
-	virtual void onFirstNotifyReceived (const IdentityAddress &addr) {}
+	virtual void onFirstNotifyReceived (UNUSED(const IdentityAddress &addr)) {}
 	virtual void onParticipantsCleared () {}
 };
 

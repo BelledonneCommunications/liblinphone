@@ -20,6 +20,8 @@
 
 #include <iterator>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/algorithm.h"
 
 #include "address/identity-address.h"
@@ -110,6 +112,10 @@ IdentityAddress CorePrivate::getIdentityAddressWithGruu(const IdentityAddress &i
 
 // -----------------------------------------------------------------------------
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 //Base client group chat room creator
 shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const std::string &subject,
@@ -159,7 +165,14 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	return nullptr;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const string &subject,
 	const ConferenceId &conferenceId,
@@ -191,6 +204,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	return nullptr;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 //From deprecated public API
 shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string &subject, bool fallback, bool encrypted) {
@@ -549,6 +565,10 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 		const IdentityAddress &localAddress,
 		const IdentityAddress &participantAddress,
@@ -577,7 +597,14 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 #endif
 	return nullptr;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 shared_ptr<AbstractChatRoom> CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const {
 #ifdef HAVE_ADVANCED_IM
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
@@ -601,7 +628,14 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExumedChatRoomFromPreviousConferen
 #endif
 	return nullptr;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void CorePrivate::updateChatRoomConferenceId (const shared_ptr<AbstractChatRoom> &chatRoom, ConferenceId oldConferenceId) {
 #ifdef HAVE_ADVANCED_IM
 	const ConferenceId &newConferenceId = chatRoom->getConferenceId();
@@ -613,6 +647,9 @@ void CorePrivate::updateChatRoomConferenceId (const shared_ptr<AbstractChatRoom>
 	mainDb->updateChatRoomConferenceId(oldConferenceId, newConferenceId);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // -----------------------------------------------------------------------------
 
@@ -631,7 +668,7 @@ string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const Identit
 		return getConferenceFactoryUri(core, account);
 }
 
-string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const LinphoneAccount *account) {
+string Core::getConferenceFactoryUri(UNUSED(const shared_ptr<Core> &core), const LinphoneAccount *account) {
 	const LinphoneAccountParams *params = linphone_account_get_params(account);
 	if(params){
 		const char *uri = linphone_account_params_get_conference_factory_uri(params);

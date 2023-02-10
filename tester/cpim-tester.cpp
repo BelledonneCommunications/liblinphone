@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "address/address.h"
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/basic-chat-room.h"
@@ -246,8 +248,8 @@ static void build_message () {
 }
 
 static int fake_im_encryption_engine_process_incoming_message_cb (
-	LinphoneImEncryptionEngine *engine,
-	LinphoneChatRoom *room,
+	UNUSED(LinphoneImEncryptionEngine *engine),
+	UNUSED(LinphoneChatRoom *room),
 	LinphoneChatMessage *msg
 ) {
 	// Encryption is the first receiving step, so this message should be CPIM.
@@ -257,8 +259,8 @@ static int fake_im_encryption_engine_process_incoming_message_cb (
 }
 
 static int fake_im_encryption_engine_process_outgoing_message_cb (
-	LinphoneImEncryptionEngine *engine,
-	LinphoneChatRoom *room,
+	UNUSED(LinphoneImEncryptionEngine *engine),
+	UNUSED(LinphoneChatRoom *room),
 	LinphoneChatMessage *msg
 ) {
 	// Encryption is the last sending step, so this message should be CPIM.

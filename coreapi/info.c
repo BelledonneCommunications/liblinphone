@@ -34,6 +34,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
@@ -84,7 +86,7 @@ LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *orig)
 	return (LinphoneInfoMessage *)belle_sip_object_clone((const belle_sip_object_t *)orig);
 }
 
-LinphoneInfoMessage *linphone_core_create_info_message(LinphoneCore *lc){
+LinphoneInfoMessage *linphone_core_create_info_message(UNUSED(LinphoneCore *lc)){
 	return belle_sip_object_new(LinphoneInfoMessage);
 }
 

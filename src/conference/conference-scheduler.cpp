@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "conference-scheduler.h"
 #include "participant.h"
 #include "chat/chat-message/chat-message-p.h"
@@ -350,7 +352,7 @@ void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSessi
 	}
 }
 
-void ConferenceScheduler::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
+void ConferenceScheduler::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, UNUSED(const string &message)) {
 	switch(state) {
 		case CallSession::State::Error:
 			setState(State::Error);

@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/internal/c-tools.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/sal_stream_bundle.h"
@@ -29,7 +31,7 @@
 
 #include "utils/payload-type-handler.h"
 
-static PayloadType * opus_match(MSOfferAnswerContext *ctx, const bctbx_list_t *local_payloads, const PayloadType *refpt, const bctbx_list_t *remote_payloads, bool_t reading_response){
+static PayloadType * opus_match(UNUSED(MSOfferAnswerContext *ctx), const bctbx_list_t *local_payloads, const PayloadType *refpt, UNUSED(const bctbx_list_t *remote_payloads), UNUSED(bool_t reading_response)){
 	PayloadType *pt;
 	const bctbx_list_t *elem;
 	PayloadType *legacy_opus=NULL;
@@ -65,7 +67,7 @@ MSOfferAnswerProvider opus_offer_answer_provider={
 };
 
 /* the reason for this matcher is for some stupid uncompliant phone that offer G729a mime type !*/
-static PayloadType * g729A_match(MSOfferAnswerContext *ctx, const bctbx_list_t *local_payloads, const PayloadType *refpt, const bctbx_list_t *remote_payloads, bool_t reading_response){
+static PayloadType * g729A_match(UNUSED(MSOfferAnswerContext *ctx), const bctbx_list_t *local_payloads, const PayloadType *refpt, UNUSED(const bctbx_list_t *remotoe_payloads), UNUSED(bool_t reading_resonse)){
 	PayloadType *pt;
 	const bctbx_list_t *elem;
 	PayloadType *candidate=NULL;
@@ -90,7 +92,7 @@ MSOfferAnswerProvider g729a_offer_answer_provider={
 	g729a_offer_answer_create_context
 };
 
-static PayloadType * red_match(MSOfferAnswerContext *ctx, const bctbx_list_t *local_payloads, const PayloadType *refpt, const bctbx_list_t *remote_payloads, bool_t reading_response) {
+static PayloadType * red_match(UNUSED(MSOfferAnswerContext *ctx), const bctbx_list_t *local_payloads, UNUSED(const PayloadType *refpt), const bctbx_list_t *remote_payloads, UNUSED(bool_t reading_response)) {
 	const bctbx_list_t *elem_local, *elem_remote;
 	PayloadType *red = NULL;
 
@@ -146,7 +148,7 @@ bool OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l
 	return true;
 }
 
-PayloadType * OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads){
+PayloadType * OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, UNUSED(const std::list<OrtpPayloadType*> &remote_payloads)){
 	for (const auto & pt : local_payloads) {
 		
 		if ( pt->mime_type && refpt->mime_type 

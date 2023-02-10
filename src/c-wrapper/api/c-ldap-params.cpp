@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "ldap/ldap-params.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-ldap-params.h"
@@ -28,8 +30,7 @@
 
 using namespace LinphonePrivate;
 
-
-LinphoneLdapParams* linphone_ldap_params_new(LinphoneCore *lc) {
+LinphoneLdapParams* linphone_ldap_params_new(UNUSED(LinphoneCore * lc)) {
 	return LdapParams::createCObject();
 }
 

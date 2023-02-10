@@ -66,7 +66,7 @@ int SalRegisterOp::sendRegister (const string &proxy, const string &from, int ex
 	return sendRequestAndCreateRefresher(request, expires, registerRefresherListener);
 }
 
-void SalRegisterOp::registerRefresherListener (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry) {
+void SalRegisterOp::registerRefresherListener (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, UNUSED(int willRetry)) {
 	auto op = static_cast<SalRegisterOp *>(userCtx);
 	auto response = belle_sip_transaction_get_response(BELLE_SIP_TRANSACTION(belle_sip_refresher_get_transaction(refresher)));
 

@@ -22,6 +22,9 @@
 	#define _XOPEN_SOURCE 700 // To have definition of strptime, snprintf and getline
 #endif
 #include <time.h>
+
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -165,8 +168,7 @@ static time_t get_current_time(void) {
 	return mktime(lt);
 }
 
-static time_t check_file(LinphoneCoreManager* mgr)  {
-
+static time_t check_file(UNUSED(LinphoneCoreManager* mgr))  {
 	time_t cur_time = get_current_time();
 	char*    filepath = linphone_core_compress_log_collection();
 	time_t  log_time = -1;

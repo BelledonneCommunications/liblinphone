@@ -18,11 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "echo.h"
 
 using namespace std;
-
-
 
 void echoResultCbs(LinphoneCore *core, LinphoneEcCalibratorStatus status, int delay_ms){
 	Daemon *app = (Daemon*) linphone_core_get_user_data(core);
@@ -46,7 +46,7 @@ EchoCalibrationCommand::EchoCalibrationCommand() :
 						"Status: Ok"));
 }
 
-void EchoCalibrationCommand::exec(Daemon *app, const string& args) {
+void EchoCalibrationCommand::exec(Daemon *app, UNUSED(const string& args)) {
 	LinphoneCore *lc = app->getCore();
 	//LinphoneCoreCbs * cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	LinphoneCoreCbs *cbs=linphone_core_get_current_callbacks(lc);

@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "conference.h"
 #include "conference/participant-device.h"
 #include "conference/params/media-session-params-p.h"
@@ -81,7 +83,7 @@ void Conference::clearParticipants () {
 
 // -----------------------------------------------------------------------------
 
-bool Conference::addParticipant (std::shared_ptr<Call> call) {
+bool Conference::addParticipant (UNUSED(std::shared_ptr<Call> call)) {
 	lError() << "Conference class does not handle addParticipant() generically";
 	return false;
 }
@@ -219,13 +221,13 @@ const string &Conference::getUsername () const {
 	return mUsername;
 }
 
-void Conference::join (const IdentityAddress &participantAddress) {}
+void Conference::join (UNUSED(const IdentityAddress &participantAddress)) {}
 
 void Conference::join () {}
 
 void Conference::leave () {}
 
-void Conference::setLocalParticipantStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type) {}
+void Conference::setLocalParticipantStreamCapability(UNUSED(const LinphoneMediaDirection &direction), UNUSED(const LinphoneStreamType type)) {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
 	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams&>(newParameters);
@@ -256,7 +258,7 @@ bool Conference::removeParticipants (const list<shared_ptr<Participant>> &partic
 	return soFarSoGood;
 }
 
-void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
+void Conference::setParticipantAdminStatus (UNUSED(const shared_ptr<Participant> &participant), UNUSED(bool isAdmin)) {
 	lError() << "Conference class does not handle setParticipantAdminStatus() generically";
 }
 

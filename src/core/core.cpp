@@ -30,6 +30,8 @@
 #include <iterator>
 
 #include "bctoolbox/utils.hh"
+#include <bctoolbox/defs.h>
+
 #include <mediastreamer2/mscommon.h>
 
 #ifdef HAVE_ADVANCED_IM
@@ -474,7 +476,7 @@ ToneManager & CorePrivate::getToneManager() {
 	return *toneManager.get();
 }
 
-int CorePrivate::ephemeralMessageTimerExpired (void *data, unsigned int revents) {
+int CorePrivate::ephemeralMessageTimerExpired (void *data, UNUSED(unsigned int revents)) {
 	CorePrivate *d = static_cast<CorePrivate *>(data);
 	d->stopEphemeralMessageTimer();
 

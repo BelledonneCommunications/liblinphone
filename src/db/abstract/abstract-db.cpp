@@ -58,6 +58,10 @@ void AbstractDbPrivate::safeInit () {
 
 AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 bool AbstractDb::connect (Backend backend, const string &nameParams) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
@@ -94,6 +98,9 @@ bool AbstractDb::connect (Backend backend, const string &nameParams) {
 	return false;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void AbstractDb::disconnect () {
 #ifdef HAVE_DB_STORAGE

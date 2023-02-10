@@ -20,6 +20,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 #include "linphone/logging.h"
 #include "logging-private.h"
@@ -186,7 +189,7 @@ LinphoneAddress * create_linphone_address_for_algo(const char * domain, const ch
 	return addr;
 }
 
-static void auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, const char *domain) {
+static void auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, UNUSED(const char *domain)) {
 	stats* counters;
 	ms_message("Auth info requested (deprecated callback) for user id [%s] at realm [%s]\n", username, realm);
 	counters = get_stats(lc);
@@ -617,7 +620,7 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 	}
 }
 
-static void conference_participant_device_state_changed(LinphoneConference *conference, const LinphoneParticipantDevice *device, const LinphoneParticipantDeviceState state) {
+static void conference_participant_device_state_changed(LinphoneConference *conference, UNUSED(const LinphoneParticipantDevice *device), const LinphoneParticipantDeviceState state) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	switch (state) {
@@ -657,45 +660,45 @@ static void conference_available_media_changed(LinphoneConference *conference) {
 	manager->stat.number_of_available_media_changed++;
 }
 
-static void conference_participant_device_media_capability_changed(LinphoneConference *conference, const LinphoneParticipantDevice *device) {
+static void conference_participant_device_media_capability_changed(LinphoneConference *conference, UNUSED(const LinphoneParticipantDevice *device)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_media_capability_changed++;
 }
 
-static void conference_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant) {
+static void conference_participant_admin_status_changed(LinphoneConference *conference, UNUSED(const LinphoneParticipant *participant)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_admin_statuses_changed++;
 }
 
-static void conference_subject_changed(LinphoneConference *conference, const char *subject) {
+static void conference_subject_changed(LinphoneConference *conference, UNUSED(const char *subject)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_subject_changed++;
 }
-static void conference_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant) {
+static void conference_participant_added(LinphoneConference *conference, UNUSED(const LinphoneParticipant *participant)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participants_added++;
 }
-static void conference_participant_removed(LinphoneConference *conference, const LinphoneParticipant *participant) {
+static void conference_participant_removed(LinphoneConference *conference, UNUSED(const LinphoneParticipant *participant)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participants_removed++;
 }
-static void conference_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+static void conference_participant_device_added(LinphoneConference *conference, UNUSED(const LinphoneParticipantDevice *participant_device)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_added++;
 }
-static void conference_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+static void conference_participant_device_removed(LinphoneConference *conference, UNUSED(const LinphoneParticipantDevice *participant_device)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_removed++;
 }
 
-void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneConferenceState state) {
+void core_conference_state_changed (UNUSED(LinphoneCore *core), LinphoneConference *conference, LinphoneConferenceState state) {
 	if (state == LinphoneConferenceStateInstantiated) {
 		LinphoneConferenceCbs * cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
 		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
@@ -951,7 +954,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 	}
 }
 
-static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, stats conf_initial_stats, bctbx_list_t *new_participants, stats* new_participant_initial_stats, bool_t * is_call_paused, bctbx_list_t *participants, stats* participant_initial_stats, int* initial_call_video_streams, LinphoneConference * conference) {
+static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, stats conf_initial_stats, bctbx_list_t *new_participants, stats* new_participant_initial_stats, bool_t * is_call_paused, bctbx_list_t *participants, stats* participant_initial_stats, LinphoneConference * conference) {
 
 	const int no_new_participants = (int)bctbx_list_size(new_participants);
 	int no_participants_without_event_log = 0;
@@ -1085,12 +1088,12 @@ void check_nb_streams(LinphoneCoreManager * m1, LinphoneCoreManager * m2, const 
 	LinphoneCall * m1_to_m2_call = linphone_core_get_call_by_remote_address2(m1->lc, m2->identity);
 	BC_ASSERT_PTR_NOT_NULL(m1_to_m2_call);
 	if (m1_to_m2_call) {
-		_linphone_call_check_nb_streams(m1_to_m2_call, nb_audio_streams, nb_video_streams, 0);
+		_linphone_call_check_nb_streams(m1_to_m2_call, nb_audio_streams, nb_video_streams, nb_text_streams);
 	}
 	LinphoneCall * m2_to_m1_call = linphone_core_get_call_by_remote_address2(m2->lc, m1->identity);
 	BC_ASSERT_PTR_NOT_NULL(m2_to_m1_call);
 	if (m2_to_m1_call) {
-		_linphone_call_check_nb_streams(m2_to_m1_call, nb_audio_streams, nb_video_streams, 0);
+		_linphone_call_check_nb_streams(m2_to_m1_call, nb_audio_streams, nb_video_streams, nb_text_streams);
 	}
 }
 
@@ -1370,17 +1373,14 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 
 	counter = 1;
 	stats* new_participants_initial_stats = NULL;
-	int* initial_call_video_streams = NULL;
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		// Allocate memory
 		new_participants_initial_stats = (stats*)realloc(new_participants_initial_stats, counter * sizeof(stats));
-		initial_call_video_streams = (int*)realloc(initial_call_video_streams, (counter+1) * sizeof(int));
 		// Append element
 		new_participants_initial_stats[counter - 1] = m->stat;
 		LinphoneCall * call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(call);
-		initial_call_video_streams[counter - 1] = call? _linphone_call_get_nb_video_steams(call) : 0;
 		// Increment counter
 		counter++;
 	}
@@ -1489,11 +1489,10 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + (int)bctbx_list_size(new_participants),50000));
 	}
 
-	check_participant_added_to_conference(lcs, conf_mgr, conf_initial_stats, new_participants, new_participants_initial_stats, call_paused, participants, participants_initial_stats, initial_call_video_streams, conference_used);
+	check_participant_added_to_conference(lcs, conf_mgr, conf_initial_stats, new_participants, new_participants_initial_stats, call_paused, participants, participants_initial_stats, conference_used);
 
 	ms_free(call_paused);
 	ms_free(participants_initial_stats);
-	ms_free(initial_call_video_streams);
 	ms_free(new_participants_initial_stats);
 	bctbx_list_free(participants);
 
@@ -1834,7 +1833,7 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 
 }
 
-static void finish_terminate_remote_conference(bctbx_list_t *lcs, stats* lcm_stats, bool_t* call_is_in_conference, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * focus_mgr, unsigned int no_participants, bool_t core_held_conference, LinphoneAddress * conf_addr) {
+static void finish_terminate_remote_conference(bctbx_list_t *lcs, stats* lcm_stats, bool_t* call_is_in_conference, UNUSED(LinphoneCoreManager * conf_mgr), LinphoneCoreManager * focus_mgr, unsigned int no_participants, bool_t core_held_conference, LinphoneAddress * conf_addr) {
 	finish_terminate_local_conference(lcs, lcm_stats, call_is_in_conference, focus_mgr, no_participants+1, core_held_conference, conf_addr);
 }
 
@@ -2025,7 +2024,7 @@ LinphoneStatus terminate_conference(bctbx_list_t *participants, LinphoneCoreMana
 	return 0;
 }
 
-static void call_created(LinphoneCore *lc, LinphoneCall *call){
+static void call_created(LinphoneCore *lc, UNUSED(LinphoneCall *call)){
 	stats* counters = get_stats(lc);
 	counters->number_of_LinphoneCallCreated++;
 }
@@ -2038,7 +2037,7 @@ static void call_created(LinphoneCore *lc, LinphoneCall *call){
 #else
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+void linphone_core_manager_init2(LinphoneCoreManager *mgr, UNUSED(const char* rc_file), const char* phone_alias) {
 	mgr->number_of_bcunit_error_at_creation =  bc_get_number_of_failures();
 	mgr->cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_registration_state_changed(mgr->cbs, registration_state_changed);
@@ -2567,7 +2566,7 @@ void compare_files(const char *path1, const char *path2) {
 	if (buf2) ms_free(buf2);
 }
 
-void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message){
+void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, UNUSED(const char *message)){
 	stats* counters;
 	ms_message("New registration state %s for user id [%s] at proxy [%s]\n"
 		   ,linphone_registration_state_to_string(cstate)
@@ -2585,7 +2584,7 @@ void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *c
 	}
 }
 
-void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg){
+void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *msg)){
 	stats* counters = get_stats(lc);
 
 	if (linphone_call_is_op_configured(call)) {
@@ -2630,14 +2629,14 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 	}
 }
 
-void messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages) {
+void messages_received(LinphoneCore *lc, UNUSED(LinphoneChatRoom *room), const bctbx_list_t *messages) {
 	stats* counters;
 	counters = get_stats(lc);
 	int count = (int)bctbx_list_size(messages);
 	counters->number_of_LinphoneAggregatedMessagesReceived += count;
 }
 
-void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* msg) {
+void message_received(LinphoneCore *lc, UNUSED(LinphoneChatRoom *room), LinphoneChatMessage* msg) {
 	char* from=linphone_address_as_string(linphone_chat_message_get_from_address(msg));
 	stats* counters;
 	const char *text=linphone_chat_message_get_text(msg);
@@ -2795,7 +2794,7 @@ void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
 	}
 }
 
-void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence) {
+void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, UNUSED(LinphoneFriend *lf), const char *uri_or_tel, UNUSED(const LinphonePresenceModel *presence)) {
 	stats *counters = get_stats(lc);
 	ms_message("Presence notification for URI or phone number [%s]", uri_or_tel);
 	counters->number_of_NotifyPresenceReceivedForUriOrTel++;
@@ -2884,7 +2883,7 @@ void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered,
 	}
 }
 
-void info_message_received(LinphoneCore *lc, LinphoneCall* call, const LinphoneInfoMessage *msg){
+void info_message_received(LinphoneCore *lc, UNUSED(LinphoneCall* call), const LinphoneInfoMessage *msg){
 	stats* counters = get_stats(lc);
 
 	if (counters->last_received_info_message) {
@@ -2965,7 +2964,7 @@ void linphone_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneCo
 	linphone_event_set_user_data(lev, (void*)linphone_content_copy(content));
 }
 
-void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
+void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, UNUSED(const char *eventname), const LinphoneContent *content){
 	LinphoneCoreManager *mgr;
 	const char * ua = linphone_event_get_custom_header(lev, "User-Agent");
 	if (!BC_ASSERT_PTR_NOT_NULL(content)) return;
@@ -2977,7 +2976,7 @@ void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *
 	mgr->stat.number_of_NotifyReceived++;
 }
 
-void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
+void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, UNUSED(const char *eventname), UNUSED(const LinphoneContent *content)) {
 	LinphoneCoreManager *mgr = get_manager(lc);
 	if (!mgr->decline_subscribe)
 		linphone_event_accept_subscription(lev);
@@ -3028,7 +3027,7 @@ void linphone_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call) {
 	linphone_call_confirm_go_clear(call);
 }
 
-void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
+void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, UNUSED(const char *authentication_token)) {
 	LinphoneCallLog *calllog = linphone_call_get_call_log(call);
 	char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
 	char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
@@ -3046,7 +3045,7 @@ void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool
 		counters->number_of_LinphoneCallEncryptedOff++;
 }
 
-void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf) {
+void dtmf_received(LinphoneCore *lc, UNUSED(LinphoneCall *call), int dtmf) {
 	stats* counters = get_stats(lc);
 	char** dst = &counters->dtmf_list_received;
 	*dst = *dst ? ms_strcat_printf(*dst, "%c", dtmf) : ms_strdup_printf("%c", dtmf);
@@ -3190,12 +3189,12 @@ bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr,
 	return messages;
 }
 
-void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, UNUSED(LinphoneChatRoom *room), UNUSED(LinphoneChatMessage *msg)) {
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneMessageSent++;
 }
 
-void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info) {
+void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, UNUSED(const char* userId), UNUSED(const char *info)) {
 	stats *counters = get_stats(lc);
 	if (status == TRUE) {
 		counters->number_of_X3dhUserCreationSuccess++;
@@ -3366,7 +3365,7 @@ void file_transfer_received(LinphoneChatMessage *msg, LinphoneContent* content, 
 
 }
 
-void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, UNUSED(const char *message)) {
 	stats *counters = get_stats(lc);
 	switch (gstate) {
 		case LinphoneGlobalOn:
@@ -3400,7 +3399,7 @@ void last_call_ended(LinphoneCore *lc) {
 	counters->number_of_LinphoneCoreLastCallEnded++;
 }
 
-void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device) {
+void audio_device_changed(LinphoneCore *lc, UNUSED(LinphoneAudioDevice *device)) {
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneCoreAudioDeviceChanged++;
 }
@@ -3803,7 +3802,7 @@ void end_call(LinphoneCoreManager *m1, LinphoneCoreManager *m2){
 	BC_ASSERT_TRUE(wait_for(m1->lc,m2->lc,&m2->stat.number_of_LinphoneCallReleased,previous_count_2+1));
 }
 
-static void linphone_conference_server_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
+static void linphone_conference_server_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *msg)) {
 	LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(lc);
 	LinphoneConferenceServer *conf_srv = (LinphoneConferenceServer *)linphone_core_cbs_get_user_data(cbs);
 	LinphoneConference *conference = linphone_core_get_conference(lc);
@@ -3866,7 +3865,7 @@ static void linphone_conference_server_registration_state_changed(
 	LinphoneCore *core,
 	LinphoneProxyConfig *cfg,
 	LinphoneRegistrationState cstate,
-	const char *message
+	UNUSED(const char *message)
 ) {
 	LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(core);
 	LinphoneConferenceServer *m = (LinphoneConferenceServer *)linphone_core_cbs_get_user_data(cbs);
@@ -3875,12 +3874,12 @@ static void linphone_conference_server_registration_state_changed(
 	}
 }
 
-static void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
+static void linphone_subscribe_received_internal(LinphoneCore *lc, UNUSED(LinphoneEvent *lev), UNUSED(const char *eventname), UNUSED(const LinphoneContent *content)) {
 	int *subscription_received = (int*)(((LinphoneCoreManager *)linphone_core_get_user_data(lc))->user_info);
 	*subscription_received += 1;
 }
 
-static void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
+static void linphone_notify_received_internal(LinphoneCore *lc, UNUSED(LinphoneEvent *lev), UNUSED(const char *eventname), UNUSED(const LinphoneContent *content)){
 	LinphoneCoreManager *mgr = get_manager(lc);
 	mgr->stat.number_of_NotifyReceived++;
 }
@@ -4045,21 +4044,21 @@ size_t liblinphone_tester_load_text_file_in_buffer(const char *filePath, char **
 static const int flowControlIntervalMs = 5000;
 static const int flowControlThresholdMs = 40;
 
-static int dummy_set_sample_rate(MSFilter *obj, void *data) {
+static int dummy_set_sample_rate(UNUSED(MSFilter *obj), UNUSED(void *data)) {
 	return 0;
 }
 
-static int dummy_get_sample_rate(MSFilter *obj, void *data) {
+static int dummy_get_sample_rate(UNUSED(MSFilter *obj), void *data) {
 	int *n = (int*)data;
 	*n = 44100;
 	return 0;
 }
 
-static int dummy_set_nchannels(MSFilter *obj, void *data) {
+static int dummy_set_nchannels(UNUSED(MSFilter *obj), UNUSED(void *data)) {
 	return 0;
 }
 
-static int dummy_get_nchannels(MSFilter *obj, void *data) {
+static int dummy_get_nchannels(UNUSED(MSFilter *obj), void *data) {
 	int *n = (int*)data;
 	*n = 1;
 	return 0;

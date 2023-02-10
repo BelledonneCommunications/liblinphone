@@ -18,11 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 
-
 #ifdef VCARD_ENABLED
-
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -233,14 +233,14 @@ typedef struct _LinphoneFriendListStats {
 	int removed_list_count;
 } LinphoneFriendListStats;
 
-static void friend_list_created_cb(LinphoneCore *lc, LinphoneFriendList *list) {
+static void friend_list_created_cb(UNUSED(LinphoneCore *lc), LinphoneFriendList *list) {
 	LinphoneFriendListStats *stats = (LinphoneFriendListStats *)linphone_friend_list_get_user_data(list);
 	if (stats) {
 		stats->new_list_count++;
 	}
 }
 
-static void friend_list_removed_cb(LinphoneCore *lc, LinphoneFriendList *list) {
+static void friend_list_removed_cb(UNUSED(LinphoneCore *lc), LinphoneFriendList *list) {
 	LinphoneFriendListStats *stats = (LinphoneFriendListStats *)linphone_friend_list_get_user_data(list);
 	if (stats) {
 		stats->removed_list_count++;
@@ -522,7 +522,7 @@ typedef struct _LinphoneCardDAVStats {
 	int updated_contact_count;
 } LinphoneCardDAVStats;
 
-static void carddav_sync_done(LinphoneCardDavContext *c, bool_t success, const char *message) {
+static void carddav_sync_done(LinphoneCardDavContext *c, bool_t success, UNUSED(const char *message)) {
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)linphone_carddav_get_user_data(c);
 	BC_ASSERT_TRUE(success);
 	stats->sync_done_count++;
@@ -695,12 +695,12 @@ static void carddav_sync_4(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-static void carddav_contact_created(LinphoneFriendList *list, LinphoneFriend *lf) {
+static void carddav_contact_created(LinphoneFriendList *list, UNUSED(LinphoneFriend *lf)) {
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)linphone_friend_list_cbs_get_user_data(linphone_friend_list_get_callbacks(list));
 	stats->new_contact_count++;
 }
 
-static void carddav_contact_deleted(LinphoneFriendList *list, LinphoneFriend *lf) {
+static void carddav_contact_deleted(LinphoneFriendList *list, UNUSED(LinphoneFriend *lf)) {
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)linphone_friend_list_cbs_get_user_data(linphone_friend_list_get_callbacks(list));
 	stats->removed_contact_count++;
 }

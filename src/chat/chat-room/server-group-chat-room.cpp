@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+#include <bctoolbox/defs.h>
+
 #include "address/address.h"
 #include "address/identity-address.h"
 #include "c-wrapper/c-wrapper.h"
@@ -1138,7 +1140,7 @@ void ServerGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shar
 	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
 }
 
-void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
+void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) {
 	L_Q();
 	q->deleteFromDb();
 }
@@ -1217,7 +1219,7 @@ bool ServerGroupChatRoomPrivate::dispatchMessagesAfterFullState(const shared_ptr
 }
 
 
-void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, const string &message) {
+void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, UNUSED(const string &message)) {
 	L_Q();
 	auto device = q->findCachedParticipantDevice(session);
 	if (!device) {
@@ -1309,7 +1311,7 @@ void ServerGroupChatRoomPrivate::moveDeviceToPresent(const std::shared_ptr<Parti
 	}
 }
 
-void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers){
+void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSession> &session, UNUSED(LinphoneHeaders *headers)){
 	if (!dispatchMessagesAfterFullState(session)){
 		moveDeviceToPresent(session);
 	}
@@ -1450,9 +1452,9 @@ shared_ptr<ParticipantDevice> ServerGroupChatRoom::findCachedParticipantDevice (
 	return nullptr;
 }
 
-void ServerGroupChatRoom::allowCpim (bool value) {}
+void ServerGroupChatRoom::allowCpim (UNUSED(bool value)) {}
 
-void ServerGroupChatRoom::allowMultipart (bool value) {}
+void ServerGroupChatRoom::allowMultipart (UNUSED(bool value)) {}
 
 
 bool ServerGroupChatRoom::canHandleCpim () const {

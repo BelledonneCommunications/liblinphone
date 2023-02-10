@@ -559,6 +559,10 @@ void * ParticipantDevice::createWindowId() const {
 	return windowId;
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void ParticipantDevice::setWindowId(void * newWindowId) const {
 #ifdef VIDEO_ENABLED
 	mWindowId = newWindowId;
@@ -571,6 +575,9 @@ void ParticipantDevice::setWindowId(void * newWindowId) const {
 	}
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void * ParticipantDevice::getWindowId() const {
 	return mWindowId;
@@ -646,6 +653,4 @@ LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb ParticipantDeviceCbs::ge
 void ParticipantDeviceCbs::setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
 	mStreamAvailabilityChangedCb = cb;
 }
-
-
 LINPHONE_END_NAMESPACE

@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "sal/message-op.h"
 
 using namespace std;
@@ -32,7 +34,7 @@ void SalMessageOp::processError () {
 	mState = State::Terminated;
 }
 
-void SalMessageOp::processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event) {
+void SalMessageOp::processIoErrorCb (void *userCtx, UNUSED(const belle_sip_io_error_event_t *event)) {
 	auto op = static_cast<SalMessageOp *>(userCtx);
 	sal_error_info_set(&op->mErrorInfo, SalReasonIOError, "SIP", 503, "IO Error", nullptr);
 	op->processError();
@@ -53,7 +55,7 @@ void SalMessageOp::processResponseEventCb (void *userCtx, const belle_sip_respon
 	op->mRoot->mCallbacks.message_delivery_update(op, status);
 }
 
-void SalMessageOp::processTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event) {
+void SalMessageOp::processTimeoutCb (void *userCtx, UNUSED(const belle_sip_timeout_event_t *event)) {
 	auto op = static_cast<SalMessageOp *>(userCtx);
 	sal_error_info_set(&op->mErrorInfo, SalReasonRequestTimeout, "SIP", 408, "Request timeout", nullptr);
 	op->processError();

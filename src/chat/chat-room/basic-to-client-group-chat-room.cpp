@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "basic-to-client-group-chat-room.h"
 #include "proxy-chat-room-p.h"
 #include "client-group-chat-room-p.h"
@@ -46,11 +48,11 @@ public:
 		q->getCore()->getPrivate()->insertChatRoom(chatRoom);
 	}
 
-	void onChatRoomInsertInDatabaseRequested (const shared_ptr<AbstractChatRoom> &chatRoom) override {
+	void onChatRoomInsertInDatabaseRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
 		// Do not insert the client group chat room in database, the migration will do it
 	}
 
-	void onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) override {
+	void onChatRoomDeleteRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
 		L_Q();
 		q->getCore()->deleteChatRoom(q->getSharedFromThis());
 		q->setState(ConferenceInterface::State::Deleted);

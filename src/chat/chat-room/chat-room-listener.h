@@ -21,6 +21,8 @@
 #ifndef _L_CHAT_ROOM_LISTENER_H_
 #define _L_CHAT_ROOM_LISTENER_H_
 
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-room/abstract-chat-room.h"
 
 // =============================================================================
@@ -31,9 +33,9 @@ class ChatRoomListener {
 public:
 	virtual ~ChatRoomListener () = default;
 
-	virtual void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) {}
-	virtual void onChatRoomInsertInDatabaseRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) {}
-	virtual void onChatRoomDeleteRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) {}
+	virtual void onChatRoomInsertRequested (UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
+	virtual void onChatRoomInsertInDatabaseRequested (UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
+	virtual void onChatRoomDeleteRequested (UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
 };
 
 LINPHONE_END_NAMESPACE

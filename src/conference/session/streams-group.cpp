@@ -229,7 +229,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	mCurrentSessionState = targetState;
 }
 
-void StreamsGroup::sessionConfirmed(const OfferAnswerContext &params){
+void StreamsGroup::sessionConfirmed(UNUSED(const OfferAnswerContext &params)){
 	for (auto &stream  : mStreams){
 		if (!stream) continue;
 		mCurrentOfferAnswerState.scopeStreamToIndex(stream->getIndex());

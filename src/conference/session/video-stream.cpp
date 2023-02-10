@@ -101,7 +101,7 @@ void MS2VideoStream::sVideoStreamEventCb (void *userData, const MSFilter *f, con
 	zis->videoStreamEventCb(f, eventId, args);
 }
 
-void MS2VideoStream::videoStreamEventCb (const MSFilter *f, const unsigned int eventId, const void *args) {
+void MS2VideoStream::videoStreamEventCb (UNUSED(const MSFilter *f), const unsigned int eventId, const void *args) {
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
 	switch (eventId) {
@@ -615,7 +615,7 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev){
 	}
 }
 
-void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
+void MS2VideoStream::zrtpStarted(UNUSED(Stream *mainZrtpStream)){
 	if (getState() == Running){
 		lInfo() << "Trying to start ZRTP encryption on video stream";
 		startZrtp();
@@ -798,7 +798,7 @@ void MS2VideoControl::requestNotifyNextVideoFrameDecoded () {
 		ms_filter_call_method_noarg(vs->ms.decoder, MS_VIDEO_DECODER_RESET_FIRST_IMAGE_NOTIFICATION);
 }
 
-void MS2VideoControl::sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+void MS2VideoControl::sSnapshotTakenCb(void *userdata, MSFilter *, unsigned int id, void *arg) {
 	MS2VideoControl *d = (MS2VideoControl *)userdata;
 	if (id == MS_JPEG_WRITER_SNAPSHOT_TAKEN) {
 		MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);

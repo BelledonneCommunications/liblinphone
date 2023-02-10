@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/utils.h"
 
 #include "basic-chat-room-p.h"
@@ -104,32 +106,32 @@ const ConferenceAddress &BasicChatRoom::getConferenceAddress () const {
 }
 
 bool BasicChatRoom::addParticipant (
-	std::shared_ptr<Call> call
+	UNUSED(std::shared_ptr<Call> call)
 ) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
 bool BasicChatRoom::addParticipant (
-	const IdentityAddress &participantAddress
+	UNUSED(const IdentityAddress &participantAddress)
 ) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
 bool BasicChatRoom::addParticipants (
-	const list<IdentityAddress> &addresses
+	UNUSED(const list<IdentityAddress> &addresses)
 ) {
 	lError() << "addParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::removeParticipant (const shared_ptr<Participant> &) {
+bool BasicChatRoom::removeParticipant (UNUSED(const shared_ptr<Participant> &participantAddress)) {
 	lError() << "removeParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::removeParticipants (const list<shared_ptr<Participant>> &) {
+bool BasicChatRoom::removeParticipants (UNUSED(const list<shared_ptr<Participant>> &participantAddress)) {
 	lError() << "removeParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
@@ -182,7 +184,7 @@ void BasicChatRoom::join () {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 
-void BasicChatRoom::join (const IdentityAddress &participantAddress) {
+void BasicChatRoom::join (UNUSED(const IdentityAddress &participantAddress)) {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 

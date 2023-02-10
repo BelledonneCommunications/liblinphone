@@ -19,6 +19,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/lpconfig.h"
 #include "linphone/wrapper_utils.h"
 #include "mediastreamer2/mediastream.h"
@@ -87,7 +89,7 @@ void linphone_core_update_allocated_audio_bandwidth(LinphoneCore *lc){
 	}
 }
 
-bool_t linphone_core_is_payload_type_usable_for_bandwidth(const LinphoneCore *lc, const PayloadType *pt, int bandwidth_limit){
+bool_t linphone_core_is_payload_type_usable_for_bandwidth(UNUSED(const LinphoneCore *lc), const PayloadType *pt, int bandwidth_limit){
 	double codec_band;
 	const int video_enablement_limit = 99;
 	bool_t ret=FALSE;
@@ -769,7 +771,7 @@ static MSZrtpKeyAgreement Linphone_to_MS2_ZrtpKeyAgreement(LinphoneZrtpKeyAgreem
 }
 
 
-bctbx_list_t *linphone_core_get_zrtp_available_key_agreement_list(LinphoneCore *lc) {
+bctbx_list_t *linphone_core_get_zrtp_available_key_agreement_list(UNUSED(LinphoneCore *lc)) {
 	MSZrtpKeyAgreement algos[256];
 	uint8_t nb_algos = ms_zrtp_available_key_agreement(algos);
 	return	MS2_to_Linphone_ZrtpKeyAgreement_array(algos, nb_algos);

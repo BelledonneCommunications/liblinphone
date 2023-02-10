@@ -17,18 +17,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <bctoolbox/defs.h>
+
 #include "linphone/lpconfig.h"
 #include "private.h"
 #include "xml2lpc.h"
 
 #define XML2LPC_CALLBACK_BUFFER_SIZE 1024
 
-static void belle_request_process_io_error(void *ctx, const belle_sip_io_error_event_t *event) {
+static void belle_request_process_io_error(void *ctx, UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneCore *lc = (LinphoneCore *)ctx;
 	linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http io error");
 }
 
-static void belle_request_process_timeout(void *ctx, const belle_sip_timeout_event_t *event) {
+static void belle_request_process_timeout(void *ctx, UNUSED(const belle_sip_timeout_event_t *event)) {
 	LinphoneCore *lc = (LinphoneCore *)ctx;
 	linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http timeout");
 }

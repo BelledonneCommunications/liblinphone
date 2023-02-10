@@ -298,11 +298,11 @@ const ConferenceAddress &ProxyChatRoom::getConferenceAddress () const {
 
 // -----------------------------------------------------------------------------
 
-void ProxyChatRoom::allowCpim (bool value) {
+void ProxyChatRoom::allowCpim (bool) {
 
 }
 
-void ProxyChatRoom::allowMultipart (bool value) {
+void ProxyChatRoom::allowMultipart (bool) {
 
 }
 

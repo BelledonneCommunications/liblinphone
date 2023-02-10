@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "logger/logger.h"
 #include "platform-helpers.h"
 
@@ -96,13 +98,13 @@ void *GenericPlatformHelpers::getPathContext () {
 	return nullptr;
 }
 
-void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
+void GenericPlatformHelpers::setVideoPreviewWindow (UNUSED(void *windowId)) {}
 
-void GenericPlatformHelpers::setVideoWindow (void *windowId) {}
+void GenericPlatformHelpers::setVideoWindow (UNUSED(void *widowId)) {}
 
-void GenericPlatformHelpers::setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) {}
+void GenericPlatformHelpers::setParticipantDeviceVideoWindow(UNUSED(const LinphoneParticipantDevice *participantDevice), UNUSED(void* windowId)) {}
 
-void GenericPlatformHelpers::resizeVideoPreview (int width, int height) {}
+void GenericPlatformHelpers::resizeVideoPreview (UNUSED(int width), UNUSED(int height)) {}
 
 bool GenericPlatformHelpers::isNetworkReachable () {
 	return mNetworkReachable;
@@ -114,11 +116,11 @@ bool GenericPlatformHelpers::isActiveNetworkWifiOnlyCompliant () const {
 	return false;
 }
 
-void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
+void GenericPlatformHelpers::onWifiOnlyEnabled (UNUSED(bool enabled)) {}
 
 void GenericPlatformHelpers::setDnsServers () {}
 
-void GenericPlatformHelpers::setHttpProxy (const string &host, int port) {}
+void GenericPlatformHelpers::setHttpProxy (UNUSED(const string &host), UNUSED(int port)) {}
 
 PlatformHelpers::NetworkType GenericPlatformHelpers::getNetworkType()const{
 	return NetworkType::Unknown;
@@ -195,7 +197,7 @@ bool GenericPlatformHelpers::checkIpAddressChanged(){
 	return ipChanged;
 }
 
-int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
+int GenericPlatformHelpers::monitorTimerExpired (void *data, UNUSED(unsigned int revents)) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
 	LinphoneCore *core = helper->getCore()->getCCore();
 	

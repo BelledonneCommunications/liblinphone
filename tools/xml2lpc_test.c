@@ -19,9 +19,12 @@
  */
 
 #include <stdio.h>
+
+#include "bctoolbox/defs.h"
+
 #include "xml2lpc.h"
 
-void cb_function(void *ctx, xml2lpc_log_level level, const char *msg, va_list list) {
+void cb_function(UNUSED(void *ctx), xml2lpc_log_level level, const char *msg, va_list list) {
 	const char *header = "";
 	switch(level) {
 		case XML2LPC_DEBUG:
@@ -42,7 +45,7 @@ void cb_function(void *ctx, xml2lpc_log_level level, const char *msg, va_list li
 	fprintf(stdout, "\n");
 }
 
-void show_usage(int argc, char *argv[]) {
+void show_usage(UNUSED(int argc), char *argv[]) {
 	fprintf(stderr, "usage %s convert <xml_file> <lpc_file>\n"
 			"      %s validate <xml_file> <xsd_file>\n",
 			argv[0], argv[0]);

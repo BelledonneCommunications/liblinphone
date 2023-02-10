@@ -22,11 +22,12 @@
 #include <libxml/tree.h>
 #include <libxml/xmlwriter.h>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-auth-info.h"
-
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -184,7 +185,7 @@ static bool_t linphone_xml_rpc_request_aborted(LinphoneXmlRpcRequest *req){
 	return session->released;
 }
 
-static void process_io_error_from_post_xml_rpc_request(void *data, const belle_sip_io_error_event_t *event) {
+static void process_io_error_from_post_xml_rpc_request(void *data, UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneXmlRpcRequest *request = (LinphoneXmlRpcRequest *)data;
 	ms_error("I/O Error during XML-RPC request sending");
 	if (!linphone_xml_rpc_request_aborted(request)){
@@ -467,7 +468,7 @@ const char * linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcReque
 	return request->raw_response;
 }
 
-const bctbx_map_t* linphone_xml_rpc_request_get_string_struct_response(const LinphoneXmlRpcRequest *request) {
+const bctbx_map_t* linphone_xml_rpc_request_get_string_struct_response(UNUSED(const LinphoneXmlRpcRequest *request)) {
 	return NULL;
 	//return request->response.data.m;
 }

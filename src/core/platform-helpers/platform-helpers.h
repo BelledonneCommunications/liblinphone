@@ -24,6 +24,8 @@
 #include <string>
 #include <sstream>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/general.h"
 #include "core/core-accessor.h"
 #include "core/core.h"
@@ -166,17 +168,17 @@ public:
 	void startAudioForEchoTestOrCalibration () override;
 	void stopAudioForEchoTestOrCalibration () override;
 	
-	void start (std::shared_ptr<LinphonePrivate::Core> core) override {};
+	void start (UNUSED(std::shared_ptr<LinphonePrivate::Core> core)) override {};
 	void stop (void) override {};
 
-	void didRegisterForRemotePush(void *token) override {};
-	void didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) override {};
-	void enableAutoIterate (bool autoIterateEnabled) override {};
+	void didRegisterForRemotePush(UNUSED(void *token)) override {};
+	void didRegisterForRemotePushWithStringifiedToken(UNUSED(const char *tokenStr)) override {};
+	void enableAutoIterate (UNUSED(bool autoIterateEnabled)) override {};
 
 	void onRecordingStarted () const override {};
 	void onRecordingPaused () const override {};
 	void stopRinging () const override {};
-	void setDeviceRotation (int orientation) const override {};
+	void setDeviceRotation (UNUSED(int orientation)) const override {};
 
 protected:
 	bool checkIpAddressChanged();

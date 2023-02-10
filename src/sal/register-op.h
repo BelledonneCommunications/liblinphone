@@ -21,6 +21,8 @@
 #ifndef _L_SAL_REGISTER_OP_H_
 #define _L_SAL_REGISTER_OP_H_
 
+#include <bctoolbox/defs.h>
+
 #include "sal/op.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -35,7 +37,7 @@ public:
 	}
 	int unregister() { return refreshRegister(0); }
 
-	void authenticate (const SalAuthInfo *info) override {
+	void authenticate (UNUSED(const SalAuthInfo *info)) override {
 		mRoot->removePendingAuth(this);
 		refreshRegister(-1);
 	}

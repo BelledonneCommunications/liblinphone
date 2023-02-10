@@ -653,7 +653,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 	}
 
 	/* Get ICE candidate attributes if any */
-	sdpParseMediaIceParameters(actualCfg, media_desc);
+	sdpParseMediaIceParameters(media_desc);
 
 	bool has_avpf_attributes = sdpParseRtcpFbParameters(actualCfg, media_desc);
 
@@ -1161,8 +1161,8 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-pwd",L_STRING_TO_C(ice_pwd)));
 			if (!ice_ufrag.empty())
 				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-ufrag",L_STRING_TO_C(ice_ufrag)));
-			addIceCandidatesToSdp(actualCfg, media_desc);
-			addIceRemoteCandidatesToSdp(actualCfg, media_desc);
+			addIceCandidatesToSdp(media_desc);
+			addIceRemoteCandidatesToSdp(media_desc);
 		}
 	}
 
@@ -1385,7 +1385,7 @@ void SalStreamDescription::sdpParseMediaCryptoParameters(SalStreamConfiguration 
 	ms_message("Found: %0zu valid crypto lines", cfg.crypto.size());
 }
 
-void SalStreamDescription::sdpParseMediaIceParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc) {
+void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_description_t *media_desc) {
 	belle_sip_list_t *attribute_it;
 	belle_sdp_attribute_t *attribute;
 	const char *att_name;
@@ -1577,7 +1577,7 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 	}
 }
 
-void SalStreamDescription::addIceCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const {
+void SalStreamDescription::addIceCandidatesToSdp(belle_sdp_media_description_t *md) const {
 	for (const auto & candidate : ice_candidates) {
 		if ((candidate.addr.empty()) || (candidate.port == 0)) break;
 		std::string iceCandidateValue = candidate.foundation + " " + std::to_string(candidate.componentID) + " UDP " + std::to_string(candidate.priority) + " " + candidate.addr.c_str() + " " + std::to_string(candidate.port) + " typ " + candidate.type;
@@ -1596,7 +1596,7 @@ void SalStreamDescription::addIceCandidatesToSdp(const SalStreamConfiguration & 
 	}
 }
 
-void SalStreamDescription::addIceRemoteCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const {
+void SalStreamDescription::addIceRemoteCandidatesToSdp(belle_sdp_media_description_t *md) const {
 	std::string iceRemoteCandidateValue;
 
 	for (size_t i = 0; i < ice_remote_candidates.size(); i++) {

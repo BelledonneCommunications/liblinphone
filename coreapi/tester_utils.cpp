@@ -287,6 +287,10 @@ bool_t linphone_call_check_rtp_sessions(LinphoneCall *call) {
 	return false;
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, MediaStreamDir dir, const char  *label) {
 #ifdef VIDEO_ENABLED
 	auto lambda = [] (Stream *s, MediaStreamDir dir, const string &label, MSMireControl cl) {
@@ -306,4 +310,7 @@ bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, M
 #endif
 	return false;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
 
 #include "TunnelManager.hh"
 
@@ -123,7 +124,8 @@ static void sCloseRtpTransport(RtpTransport *t){
 	manager->closeRtpTransport(t, recvSocket);
 	ms_free(ds);
 }
-void TunnelManager::closeRtpTransport(RtpTransport *t, TunnelSocket *s){
+
+void TunnelManager::closeRtpTransport(UNUSED(RtpTransport *t), TunnelSocket *s){
 	mTunnelClient->closeSocket(s);
 }
 
@@ -196,7 +198,7 @@ void TunnelManager::setKey(bctbx_signing_key_t *key) {
 	mKey = key;
 }
 
-int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, const bctbx_list_t *names) {
+int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, UNUSED(const bctbx_list_t *names)) {
 	TunnelManager *zis = static_cast<TunnelManager*>(data);
 	int error;
 
@@ -352,7 +354,7 @@ bool TunnelManager::isConnected() const {
 	return mState == On;
 }
 
-int TunnelManager::customSendto(struct _RtpTransport *t, mblk_t *msg , int flags, const struct sockaddr *to, socklen_t tolen){
+int TunnelManager::customSendto(struct _RtpTransport *t, mblk_t *msg, UNUSED(int flags), const struct sockaddr *to, socklen_t tolen){
 	int size;
 	DualSocket *ds = (DualSocket *)t->data;
 	msgpullup(msg, (size_t)-1);
@@ -361,7 +363,7 @@ int TunnelManager::customSendto(struct _RtpTransport *t, mblk_t *msg , int flags
 	return size;
 }
 
-int TunnelManager::customRecvfrom(struct _RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen){
+int TunnelManager::customRecvfrom(struct _RtpTransport *t, mblk_t *msg, UNUSED(int flags), struct sockaddr *from, socklen_t *fromlen){
 	DualSocket *ds = (DualSocket *)t->data;
 	memset(&msg->recv_addr,0,sizeof(msg->recv_addr));
 	long err=ds->recvSocket->recvfrom(msg->b_wptr, (size_t)(dblk_lim(msg->b_datap) - dblk_base(msg->b_datap)), from, *fromlen);
@@ -541,7 +543,7 @@ void TunnelManager::tunnelCallback(bool connected, void *user_pointer){
 	zis->postEvent(ev);
 }
 
-void TunnelManager::tunnelCallback2(TunnelDirection direction, bool connected, void *user_pointer){
+void TunnelManager::tunnelCallback2(UNUSED(TunnelDirection direction), bool connected, void *user_pointer){
 	TunnelManager *zis = static_cast<TunnelManager*>(user_pointer);
 	Event ev;
 
@@ -638,7 +640,8 @@ void TunnelManager::networkReachableCb(LinphoneCore *lc, bool_t reachable) {
 		tunnel->stopClient();
 	}
 }
-void TunnelManager::globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+
+void TunnelManager::globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, UNUSED(const char *message)) {
 	if (gstate == LinphoneGlobalOff) {
 		ms_message("Core [%p] is Off, unlinking TunnelManager to core",lc);
 		//calling same core as for object destruction

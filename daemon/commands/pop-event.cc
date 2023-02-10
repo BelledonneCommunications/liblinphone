@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "pop-event.h"
 
 using namespace std;
@@ -28,6 +30,6 @@ PopEventCommand::PopEventCommand() :
 						"Status: Ok\n\n"
 						"Size: 0"));
 }
-void PopEventCommand::exec(Daemon *app, const string& args) {
+void PopEventCommand::exec(Daemon *app, UNUSED(const string& args)) {
 	app->pullEvent();
 }

@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -47,7 +49,7 @@ RemoteConference::RemoteConference (
 	this->confParams->enableLocalParticipant(false);
 
 	// FIXME: Not very nice to have an empty deleter
-	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
+	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](UNUSED(ConferenceListenerInterface *p)){}));
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 #endif
@@ -83,23 +85,23 @@ void RemoteConference::onConferenceTerminated (const IdentityAddress &) {
 
 void RemoteConference::onFirstNotifyReceived (const IdentityAddress &) {}
 
-void RemoteConference::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
+void RemoteConference::onParticipantAdded (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
-void RemoteConference::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
+void RemoteConference::onParticipantRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
-void RemoteConference::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
+void RemoteConference::onParticipantSetAdmin (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
-void RemoteConference::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &) {}
+void RemoteConference::onSubjectChanged (UNUSED(const std::shared_ptr<ConferenceSubjectEvent> &event)) {}
 
-void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, const std::shared_ptr<ParticipantDevice> &) {}
+void RemoteConference::onParticipantDeviceAdded (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
 
-void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, const std::shared_ptr<ParticipantDevice> &) {}
+void RemoteConference::onParticipantDeviceRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
 
-void RemoteConference::onEphemeralModeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {}
+void RemoteConference::onEphemeralModeChanged (UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
 
-void RemoteConference::onEphemeralMessageEnabled (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {}
+void RemoteConference::onEphemeralMessageEnabled (UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
 
-void RemoteConference::onEphemeralLifetimeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {}
+void RemoteConference::onEphemeralLifetimeChanged (UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
 
 void RemoteConference::onFullStateReceived() {
 	time_t creationTime = time(nullptr);

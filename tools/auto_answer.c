@@ -18,25 +18,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <signal.h>
+
+#include <bctoolbox/defs.h>
 
 #include "linphone/core.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <signal.h>
 
 static bool_t running=TRUE;
 static bool_t print_stats=FALSE;
 static bool_t dump_stats=FALSE;
 
-static void stop(int signum){
+static void stop(UNUSED(int signum)){
 	running=FALSE;
 }
 #ifndef _WIN32
-static void stats(int signum){
+static void stats(UNUSED(int signum)){
 	print_stats=TRUE;
 }
-static void dump_call_logs(int signum){
+static void dump_call_logs(UNUSED(int signum)){
 	dump_stats=TRUE;
 }
 
@@ -44,7 +46,7 @@ static void dump_call_logs(int signum){
 /*
  * Call state notification callback
  */
-static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg){
+static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *msg)){
 	LinphoneCallParams * call_params;
 	switch(cstate){
 		case LinphoneCallIncomingReceived:

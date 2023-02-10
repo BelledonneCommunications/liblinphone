@@ -21,9 +21,12 @@
 #ifndef streams_h
 #define streams_h
 
+#include <iostream>
 #include <vector>
 #include <memory>
 #include <map>
+
+#include <bctoolbox/defs.h>
 
 #include "port-config.h"
 #include "call-session.h"
@@ -169,7 +172,7 @@ protected:
 	/**
 	 * Notifies that zrtp primary stream is now secured.
 	 */
-	virtual void zrtpStarted(Stream *mainZrtpStream){};
+	virtual void zrtpStarted(UNUSED(Stream *mainZrtpStream)){};
 	const std::string & getPublicIp() const;
 	PortConfig mPortConfig;
 	LinphoneStreamInternalStats mInternalStats;

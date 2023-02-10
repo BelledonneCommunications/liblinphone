@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/api/c-factory.h"
 #include "factory/factory.h"
 #include "c-wrapper/c-wrapper.h"
@@ -486,7 +488,7 @@ LinphoneDigestAuthenticationPolicy *linphone_factory_create_digest_authenticatio
 	return Factory::toCpp(factory)->createDigestAuthenticationPolicy();
 }
 
-LinphoneConferenceInfo *linphone_factory_create_conference_info(LinphoneFactory *factory) {
+LinphoneConferenceInfo *linphone_factory_create_conference_info(UNUSED(LinphoneFactory * f)) {
 	return linphone_conference_info_new();
 }
 
@@ -499,7 +501,7 @@ LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs
 	return Factory::toCpp(factory)->createConferenceSchedulerCbs();
 }
 
-bool_t linphone_factory_is_qrcode_available(LinphoneFactory *factory){
+bool_t linphone_factory_is_qrcode_available(UNUSED(LinphoneFactory * f)){
 #ifdef QRCODE_ENABLED
 	return TRUE;
 #else
@@ -515,10 +517,10 @@ int linphone_factory_write_qrcode_file(LinphoneFactory *factory, const char *fil
 	return Factory::toCpp(factory)->writeQRCodeFile(code ? code : "", file_path ? file_path : "", width > 0 ? width : 100 , height > 0 ? height : 0, margin);
 }
 
-LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label) {
+LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(UNUSED(const LinphoneFactory * f), const char *phone_number, const char *label) {
 	return linphone_friend_phone_number_new(phone_number, label);
 }
 
-LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(LinphoneFactory *factory) {
+LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(UNUSED(LinphoneFactory * f)) {
 	return linphone_video_source_descriptor_new();
 }

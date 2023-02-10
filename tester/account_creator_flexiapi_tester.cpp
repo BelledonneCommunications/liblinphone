@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "linphone/FlexiAPIClient.hh"
 
 #include "liblinphone_tester.h"
@@ -67,7 +69,7 @@ static void account_delete_on_api(LinphoneCore *core, string username, string pa
 	linphone_auth_info_unref(authInfo);
 }
 
-static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
+static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, UNUSED(const char*resp)) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
 
 	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(

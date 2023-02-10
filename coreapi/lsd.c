@@ -23,8 +23,8 @@
  simultaneous sound access.
 */
 
-#include "linphone/core_utils.h"
-#include "private.h"
+#include <bctoolbox/defs.h>
+
 #include "mediastreamer2/msticker.h"
 #include "mediastreamer2/mssndcard.h"
 #include "mediastreamer2/msaudiomixer.h"
@@ -32,6 +32,8 @@
 #include "mediastreamer2/msfileplayer.h"
 #include "mediastreamer2/msitc.h"
 
+#include "linphone/core_utils.h"
+#include "private.h"
 
 static struct _MSSndCard *linphone_sound_daemon_get_proxy_card(LinphoneSoundDaemon *obj);
 
@@ -101,7 +103,7 @@ LsdPlayer *linphone_sound_daemon_get_player(LinphoneSoundDaemon *obj){
 	return NULL;
 }
 
-void linphone_sound_daemon_release_player(LinphoneSoundDaemon *obj, LsdPlayer * player){
+void linphone_sound_daemon_release_player(UNUSED(LinphoneSoundDaemon *obj), LsdPlayer * player){
 	int state;
 	ms_filter_call_method(player->player,MS_PLAYER_GET_STATE,&state);
 	if (state!=MSPlayerClosed){
@@ -160,7 +162,7 @@ void *lsd_player_get_user_pointer(const LsdPlayer *p){
 	return p->user_data;
 }
 
-static void lsd_player_on_eop(void * userdata, MSFilter *f, unsigned int id, void *arg){
+static void lsd_player_on_eop(void * userdata, UNUSED(MSFilter *f), UNUSED(unsigned int id), UNUSED(void *arg)){
 	LsdPlayer *p=(LsdPlayer *)userdata;
 	if (p->eop_cb!=NULL)
 		p->eop_cb(p);

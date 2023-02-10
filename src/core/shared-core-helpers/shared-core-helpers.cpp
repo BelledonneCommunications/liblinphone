@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 // #include "logger/logger.h"
 #include "shared-core-helpers.h"
 
@@ -45,11 +47,11 @@ bool GenericSharedCoreHelpers::canCoreStart() {
 
 void GenericSharedCoreHelpers::registerSharedCoreMsgCallback() {}
 
-std::shared_ptr<PushNotificationMessage> GenericSharedCoreHelpers::getPushNotificationMessage(const string &callId) {
+std::shared_ptr<PushNotificationMessage> GenericSharedCoreHelpers::getPushNotificationMessage(UNUSED(const string &callId)) {
 	return nullptr;
 }
 
-std::shared_ptr<ChatRoom> GenericSharedCoreHelpers::getPushNotificationChatRoom(const string &chatRoomAddr) {
+std::shared_ptr<ChatRoom> GenericSharedCoreHelpers::getPushNotificationChatRoom(UNUSED(const string &chatRoomAddr)) {
 	return nullptr;
 }
 
@@ -67,7 +69,7 @@ void *GenericSharedCoreHelpers::getPathContext() {
     return NULL;
 }
 
-void GenericSharedCoreHelpers::setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) {}
+void GenericSharedCoreHelpers::setChatRoomInvite(UNUSED(std::shared_ptr<ChatRoom> cr)) {}
 
 SharedCoreState GenericSharedCoreHelpers::getSharedCoreState() {
 	return SharedCoreState::noCoreStarted;

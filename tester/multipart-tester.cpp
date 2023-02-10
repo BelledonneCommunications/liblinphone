@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "address/address.h"
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/basic-chat-room.h"
@@ -134,7 +136,7 @@ static void check_contents(const bctbx_list_t *contents, bool first_file_transfe
 	}
 }
 
-static void chat_message_multipart_modifier_base(bool first_file_transfer, bool second_file_transfer, bool third_content, bool use_cpim) {
+static void chat_message_multipart_modifier_base(bool first_file_transfer, bool second_file_transfer, bool third_content, UNUSED(bool cpim)) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 

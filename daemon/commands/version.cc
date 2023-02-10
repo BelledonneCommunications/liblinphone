@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "version.h"
 
 using namespace std;
@@ -27,7 +29,7 @@ public:
 	VersionResponse(LinphoneCore *core);
 };
 
-VersionResponse::VersionResponse(LinphoneCore *core) : Response() {
+VersionResponse::VersionResponse(UNUSED(LinphoneCore * core)) : Response() {
 	ostringstream ost;
 	ost << "Version: " << linphone_core_get_version();
 	setBody(ost.str());
@@ -40,6 +42,6 @@ VersionCommand::VersionCommand() :
 						"Version: 3.5.99.0_6c2f4b9312fd4717b2f8ae0a7d7c97b752768c7c"));
 }
 
-void VersionCommand::exec(Daemon *app, const string& args) {
+void VersionCommand::exec(Daemon *app, UNUSED(const string& argc)) {
 	app->sendResponse(VersionResponse(app->getCore()));
 }

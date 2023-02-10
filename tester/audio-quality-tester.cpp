@@ -18,6 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <vector>
+#include <map>
+
+#include <bctoolbox/defs.h>
+
 #include "address/address.h"
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/basic-chat-room.h"
@@ -31,9 +36,6 @@
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
-
-#include <vector>
-#include <map>
 // =============================================================================
 
 using namespace std;
@@ -64,7 +66,7 @@ public:
 };
 
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
-static void completion_cb(void *user_data, int percentage){
+static void completion_cb(UNUSED(void *user_data), int percentage){
 	fprintf(stdout,"%i %% completed\r",percentage);
 	fflush(stdout);
 }
@@ -156,10 +158,15 @@ static void audio_mono_call_opus(void){
 	audio_call_stereo_call("opus", 48000, 150, FALSE);
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 // Opus issue : Results can contain random silences on FEC. Their number depend on the gain (a very low gain leads to get a silence on all FEC)
 // This cannot be solved by the similarity alone because of the randomness behaviour.
 // This test is about having a better result with high fec on 2 tries from a first one with the worst fec (not 0)
-static void audio_call_loss_resilience(const char *codec_name, int clock_rate, int bitrate_override, int jitterBufferMs, bool_t stereo, std::pair<double,double> threshold ) {
+static void audio_call_loss_resilience(const char *codec_name, int clock_rate, int bitrate_override, int jitterBufferMs, bool_t stereo, std::pair<double,double> threshold) {
+	((void)(threshold));
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	LinphoneCoreManager *marie = nullptr, *pauline = nullptr;
 	char *recordPath = nullptr;
@@ -275,6 +282,9 @@ end:
 	BC_PASS("audio_call_loss_resilience disabled on this platform");
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static void audio_call_loss_resilience_opus(){
 	audio_call_loss_resilience("opus", 48000, 120, 1000, TRUE, std::pair<double,double>(0.7,1.0));

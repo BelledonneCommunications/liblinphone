@@ -21,6 +21,8 @@
 #ifndef _L_ENCRYPTION_ENGINE_H_
 #define _L_ENCRYPTION_ENGINE_H_
 
+#include <bctoolbox/defs.h>
+
 #include <memory>
 
 #include "chat/chat-room/client-group-chat-room.h"
@@ -53,92 +55,92 @@ public:
 	virtual ~EncryptionEngine () = default;
 
 	virtual ChatMessageModifier::Result processOutgoingMessage (
-		const std::shared_ptr<ChatMessage> &message,
-		int &errorCode
+		UNUSED(const std::shared_ptr<ChatMessage> &message),
+		UNUSED(int &errorCode)
 	) { return ChatMessageModifier::Result::Skipped; }
 
 	virtual ChatMessageModifier::Result processIncomingMessage (
-		const std::shared_ptr<ChatMessage> &message,
-		int &errorCode
+		UNUSED(const std::shared_ptr<ChatMessage> &message),
+		UNUSED(int &errorCode)
 	) { return ChatMessageModifier::Result::Skipped; }
 
 	virtual bool isEncryptionEnabledForFileTransfer (
-		const std::shared_ptr<AbstractChatRoom> &ChatRoom
+		UNUSED(const std::shared_ptr<AbstractChatRoom> &ChatRoom)
 	) { return false; }
 
 	virtual void generateFileTransferKey (
-		const std::shared_ptr<AbstractChatRoom> &ChatRoom,
-		const std::shared_ptr<ChatMessage> &message,
-		FileTransferContent *fileTransferContent
+		UNUSED(const std::shared_ptr<AbstractChatRoom> &ChatRoom),
+		UNUSED(const std::shared_ptr<ChatMessage> &message),
+		UNUSED(FileTransferContent *fileTransferContent)
 	) {}
 
 	virtual int downloadingFile (
-		const std::shared_ptr<ChatMessage> &message,
-		size_t offset,
-		const uint8_t *buffer,
-		size_t size,
-		uint8_t *decryptedBuffer,
-		FileTransferContent *fileTransferContent
+		UNUSED(const std::shared_ptr<ChatMessage> &message),
+		UNUSED(size_t offset),
+		UNUSED(const uint8_t *buffer),
+		UNUSED(size_t size),
+		UNUSED(uint8_t *decryptedBuffer),
+		UNUSED(FileTransferContent *fileTransferContent)
 	) { return 0; }
 
 	virtual int uploadingFile (
-		const std::shared_ptr<ChatMessage> &message,
-		size_t offset,
-		const uint8_t *buffer,
-		size_t *size,
-		uint8_t *encryptedBuffer,
-		FileTransferContent *fileTransferContent
+		UNUSED(const std::shared_ptr<ChatMessage> &message),
+		UNUSED(size_t offset),
+		UNUSED(const uint8_t *buffer),
+		UNUSED(size_t *size),
+		UNUSED(uint8_t *encryptedBuffer),
+		UNUSED(FileTransferContent *fileTransferContent)
 	) { return 0; }
 
 	virtual int cancelFileTransfer (
-		FileTransferContent *fileTransferContent
+		UNUSED(FileTransferContent *fileTransferContent)
 	) { return 0; }
 
 	virtual void mutualAuthentication (
-		MSZrtpContext *zrtpContext,
-		const std::shared_ptr<SalMediaDescription> & localMediaDescription,
-		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
-		LinphoneCallDir direction
+		UNUSED(MSZrtpContext *zrtpContext),
+		UNUSED(const std::shared_ptr<SalMediaDescription> & localMediaDescription),
+		UNUSED(const std::shared_ptr<SalMediaDescription> & remoteMediaDescription),
+		UNUSED(LinphoneCallDir direction)
 	) {}
 
 	virtual void authenticationVerified (
-		MSZrtpContext *zrtpContext,
-		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
-		const char *peerDeviceId
+		UNUSED(MSZrtpContext *zrtpContext),
+		UNUSED(const std::shared_ptr<SalMediaDescription> & remoteMediaDescription),
+		UNUSED(const char *peerDeviceId)
 	) {}
 
 	virtual void authenticationRejected (
-		const char *peerDeviceId
+		UNUSED(const char *peerDeviceId)
 	) {}
 
 	virtual void addSecurityEventInChatrooms (
-		const IdentityAddress &peerDeviceAddr,
-		ConferenceSecurityEvent::SecurityEventType securityEventType
+		UNUSED(const IdentityAddress &peerDeviceAddr),
+		UNUSED(ConferenceSecurityEvent::SecurityEventType securityEventType)
 	) {}
 
 	virtual std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded (
-		const IdentityAddress &newDeviceAddr,
-		std::shared_ptr<Participant> participant,
-		const std::shared_ptr<AbstractChatRoom> &chatRoom,
-		ChatRoom::SecurityLevel currentSecurityLevel
+		UNUSED(const IdentityAddress &newDeviceAddr),
+		UNUSED(std::shared_ptr<Participant> participant),
+		UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom),
+		UNUSED(ChatRoom::SecurityLevel currentSecurityLevel)
 	) { return nullptr; }
 
 	virtual void cleanDb () {}
 	virtual void update () {}
 	virtual EngineType getEngineType () { return EngineType::Undefined; }
-	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::ClearText; }
-	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::list<std::string> &deviceIds) const { return AbstractChatRoom::SecurityLevel::ClearText; }
+	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (UNUSED(const std::string &deviceId)) const { return AbstractChatRoom::SecurityLevel::ClearText; }
+	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (UNUSED(const std::list<std::string> &deviceIds)) const { return AbstractChatRoom::SecurityLevel::ClearText; }
 	virtual std::list<EncryptionParameter> getEncryptionParameters () { return std::list<EncryptionParameter>(); }
 
-	virtual void staleSession (const std::string localDeviceId, const std::string peerDeviceId) {};
+	virtual void staleSession (UNUSED(const std::string localDeviceId), UNUSED(const std::string peerDeviceId)) {};
 
 	virtual void setTestForceDecryptionFailureFlag(
-			bool flag
+		UNUSED(bool flag)
 	) {}
 
 	virtual void onServerUrlChanged(
-		const std::shared_ptr<Account> & account,
-		const std::string& limeServerUrl
+		UNUSED(const std::shared_ptr<Account> & account),
+		UNUSED(const std::string& limeServerUrl)
 	) {}
 
 protected:

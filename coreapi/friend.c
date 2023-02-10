@@ -34,6 +34,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
@@ -1026,7 +1028,7 @@ void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *lf) {
 	}
 }
 
-void linphone_core_remove_friend(LinphoneCore *lc, LinphoneFriend *lf) {
+void linphone_core_remove_friend(UNUSED(LinphoneCore *lc), LinphoneFriend *lf) {
 	if (lf && lf->friend_list) {
 		if (linphone_friend_list_remove_friend(lf->friend_list, lf) == LinphoneFriendListNonExistentFriend) {
 			ms_error("linphone_core_remove_friend(): friend [%p] is not part of core's list.", lf);
@@ -1536,7 +1538,7 @@ void linphone_core_friends_storage_close(LinphoneCore *lc) {
  * | 3  | uri
  * | 4  | revision
  */
-static int create_friend_list(void *data, int argc, char **argv, char **colName) {
+static int create_friend_list(void *data, UNUSED(int argc), char **argv, UNUSED(char **colName)) {
 	bctbx_list_t **list = (bctbx_list_t **)data;
 	unsigned int storage_id = (unsigned int)atoi(argv[0]);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(NULL);
@@ -1572,7 +1574,7 @@ static int create_friend_list(void *data, int argc, char **argv, char **colName)
  * | 8  | vCard URL
  * | 9  | presence_received
  */
-static int create_friend(void *data, int argc, char **argv, char **colName) {
+static int create_friend(void *data, UNUSED(int argc), char **argv, UNUSED(char **colName)) {
 	LinphoneVcardContext *context = (LinphoneVcardContext *)data;
 	bctbx_list_t **list = (bctbx_list_t **)linphone_vcard_context_get_user_data(context);
 	LinphoneFriend *lf = NULL;

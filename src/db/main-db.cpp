@@ -18,12 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+
 #if (__GNUC__ == 9 && __GNUC_MINOR__ >= 1)
-	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
 #include <ctime>
+
+#include <bctoolbox/defs.h>
 
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/static-string.h"
@@ -1146,7 +1152,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
-	EventLog::Type type,
+	UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 	long long eventId = getConferenceEventIdFromRow(row);
@@ -1242,7 +1248,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 	const ConferenceId &conferenceId,
-	EventLog::Type type,
+	UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 	return make_shared<ConferenceSecurityEvent>(
@@ -1268,7 +1274,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralMessageEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceAvailableMediaEvent (
 	const ConferenceId &conferenceId,
-	EventLog::Type type,
+	UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 
@@ -1288,7 +1294,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceAvailableMediaEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
 	const ConferenceId &conferenceId,
-	EventLog::Type type,
+	UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
@@ -5241,5 +5247,9 @@ bool MainDb::import (Backend, const string &parameters) {
 	return false;
 #endif
 }
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 LINPHONE_END_NAMESPACE

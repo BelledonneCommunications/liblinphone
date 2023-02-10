@@ -243,6 +243,10 @@ bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc) {
 
 // =============================================================================
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	if (!lc) return;
 
@@ -253,6 +257,9 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 
 	lc->call_logs = bctbx_list_prepend(lc->call_logs, linphone_call_log_ref(log));
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	if (!lc) return NULL;
@@ -297,6 +304,10 @@ void linphone_core_delete_call_history(LinphoneCore *lc) {
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	if (!lc) return;
 
@@ -312,6 +323,9 @@ void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 		lc->call_logs = NULL;
 	}
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 int linphone_core_get_call_history_size(LinphoneCore *lc) {
 	if (!lc) return 0;

@@ -1191,7 +1191,7 @@ void Account::onAudioVideoConferenceFactoryAddressChanged (const LinphoneAddress
 	}
 }
 
-void Account::onNatPolicyChanged (LinphoneNatPolicy *policy) {
+void Account::onNatPolicyChanged (UNUSED(LinphoneNatPolicy *policy)) {
 }
 
 LinphoneProxyConfig *Account::getConfig () const {
@@ -1214,6 +1214,10 @@ void AccountCbs::setRegistrationStateChanged(LinphoneAccountCbsRegistrationState
 	mRegistrationStateChangedCb = cb;
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void Account::onLimeServerUrlChanged (const std::string& limeServerUrl) {
 #ifdef HAVE_LIME_X3DH
 	if (!limeServerUrl.empty()) {
@@ -1255,5 +1259,8 @@ void Account::onLimeServerUrlChanged (const std::string& limeServerUrl) {
 	lWarning() << "Lime X3DH support is not available";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 LINPHONE_END_NAMESPACE

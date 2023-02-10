@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include <bctoolbox/defs.h>
+
 // TODO: Remove me later.
 #include "linphone/chat.h"
 
@@ -55,7 +57,7 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 	mutable bctbx_list_t *composingAddresses;
 )
 
-static void _linphone_chat_room_constructor (LinphoneChatRoom *cr) {}
+static void _linphone_chat_room_constructor (UNUSED(LinphoneChatRoom *cr)) {}
 
 static void _linphone_chat_room_destructor (LinphoneChatRoom *cr) {
 	if (cr->composingAddresses)
@@ -159,8 +161,8 @@ LinphoneChatMessage *linphone_chat_room_create_message_2 (
 	const char *external_body_url,
 	LinphoneChatMessageState state,
 	time_t time,
-	bool_t is_read,
-	bool_t is_incoming
+	UNUSED(bool_t is_read),
+	UNUSED(bool_t is_incoming)
 ) {
 	LinphoneChatMessage *msg = linphone_chat_room_create_message(cr, message);
 
@@ -199,16 +201,16 @@ LinphoneChatMessage *linphone_chat_room_create_voice_recording_message (Linphone
 	return chat_message;
 }
 
-void linphone_chat_room_send_chat_message_2 (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
+void linphone_chat_room_send_chat_message_2 (UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
 	linphone_chat_message_ref(msg);
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
 }
 
-void linphone_chat_room_send_chat_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
+void linphone_chat_room_send_chat_message (UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
 }
 
-void linphone_chat_room_receive_chat_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
+void linphone_chat_room_receive_chat_message (UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
 	L_GET_PRIVATE_FROM_C_OBJECT(msg)->receive();
 }
 
@@ -462,6 +464,10 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses (LinphoneChatRoom
 	return cr->composingAddresses;
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const LinphoneAddress *confAddr) {
 #ifdef HAVE_ADVANCED_IM
 	char *addrStr = confAddr ? linphone_address_as_string(confAddr) : nullptr;
@@ -476,7 +482,14 @@ void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const Linp
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *deviceIdentities) {
 #ifdef HAVE_ADVANCED_IM
 	char *addrStr = linphone_address_as_string(partAddr);
@@ -489,7 +502,14 @@ void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const Lin
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *cr, const LinphoneAddress *participant_device){
 #ifdef HAVE_ADVANCED_IM
 	char *addrStr = linphone_address_as_string(participant_device);
@@ -501,6 +521,9 @@ void linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom 
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // =============================================================================
 // Callbacks
@@ -709,6 +732,10 @@ void linphone_chat_room_set_user_data (LinphoneChatRoom *cr, void *ud) {
 // Constructor and destructor functions.
 // =============================================================================
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, LinphonePrivate::SalCallOp *op) {
 #ifdef HAVE_ADVANCED_IM
 	LinphoneChatRoom *cr = L_INIT(ChatRoom);
@@ -724,6 +751,9 @@ LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, Linp
 	return NULL;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // Convert chat room enum to conference state enum
 LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneChatRoomState state) {

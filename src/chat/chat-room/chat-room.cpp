@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/utils.h"
 #include "linphone/utils/algorithm.h"
 
@@ -512,7 +514,7 @@ bool ChatRoomPrivate::isSubscriptionUnderWay() const {
 	return false;
 }
 
-void ChatRoomPrivate::addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {
+void ChatRoomPrivate::addPendingMessage(UNUSED(const std::shared_ptr<ChatMessage> &chatMessage)) {
 	lInfo() << __func__ << ": not implemented";
 }
 
@@ -799,7 +801,7 @@ const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 	return d->params;
 }
 
-void ChatRoom::enableEphemeral (bool ephem, bool updateDb) {
+void ChatRoom::enableEphemeral (UNUSED(bool ephem), UNUSED(bool updateDb)) {
 	lDebug() << "Ephemeral message is only supported in conference based chat room!";
 }
 
@@ -807,7 +809,7 @@ bool ChatRoom::ephemeralEnabled() const {
 	return false;
 }
 
-void ChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
+void ChatRoom::setEphemeralLifetime (UNUSED(long lifetime), UNUSED(bool updateDb)) {
 	lError() << "Ephemeral message is only supported in conference based chat room!";
 }
 
@@ -815,7 +817,7 @@ long ChatRoom::getEphemeralLifetime () const {
 	return 0;
 }
 
-void ChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) {
+void ChatRoom::setEphemeralMode(UNUSED(AbstractChatRoom::EphemeralMode mode), UNUSED(bool updateDb)) {
 	lError() << "Ephemeral message is only supported in conference based chat room!";
 }
 

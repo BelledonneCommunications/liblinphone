@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "private.h"
-
+#include <bctoolbox/defs.h>
 #include "bctoolbox/charconv.h"
+
 #include "sqlite3_bctbx_vfs.h"
 #include <sqlite3.h>
 
@@ -28,6 +28,7 @@
 #include <errno.h>
 #endif /*_WIN32_WCE*/
 
+#include "private.h"
 
 /**
  * Closes the file whose file descriptor is stored in the file handle p.
@@ -166,7 +167,7 @@ implementation. Some of them are just stubs, some do a very limited job. */
  * @param  p 	sqlite3_file file handle pointer.
  * @return		value 4096.
  */
-static int sqlite3bctbx_DeviceCharacteristics(sqlite3_file *p){
+static int sqlite3bctbx_DeviceCharacteristics(UNUSED(sqlite3_file *p)){
 	int rc = 0x00001000;
 	return rc;
 }
@@ -178,7 +179,7 @@ static int sqlite3bctbx_DeviceCharacteristics(sqlite3_file *p){
  * @param  pArg unused
  * @return      SQLITE_OK on success, SALITE_NOTFOUND otherwise.
  */
-static int sqlite3bctbx_FileControl(sqlite3_file *p, int op, void *pArg){
+static int sqlite3bctbx_FileControl(UNUSED(sqlite3_file *p), UNUSED(int op), UNUSED(void *pArg)){
 #ifdef SQLITE_FCNTL_MMAP_SIZE
 	if (op == SQLITE_FCNTL_MMAP_SIZE) return SQLITE_OK;
 #endif
@@ -193,7 +194,7 @@ static int sqlite3bctbx_FileControl(sqlite3_file *p, int op, void *pArg){
  * @param  pResOut set to 0 since there is no lock mechanism.
  * @return         SQLITE_OK
  */
-static int sqlite3bctbx_nolockCheckReservedLock(sqlite3_file *pUnused, int *pResOut){
+static int sqlite3bctbx_nolockCheckReservedLock(UNUSED(sqlite3_file *pUnused), int *pResOut){
 	*pResOut = 0;
 	return SQLITE_OK;
 }
@@ -205,7 +206,7 @@ static int sqlite3bctbx_nolockCheckReservedLock(sqlite3_file *pUnused, int *pRes
  * @param  unused  unused
  * @return         SQLITE_OK
  */
-static int sqlite3bctbx_nolockLock(sqlite3_file *pUnused, int unused){
+static int sqlite3bctbx_nolockLock(UNUSED(sqlite3_file *pUnused), UNUSED(int unused)){
 	return SQLITE_OK;
 }
 
@@ -216,7 +217,7 @@ static int sqlite3bctbx_nolockLock(sqlite3_file *pUnused, int unused){
  * @param  unused  unused
  * @return         SQLITE_OK
  */
-static int sqlite3bctbx_nolockUnlock(sqlite3_file *pUnused, int unused){
+static int sqlite3bctbx_nolockUnlock(UNUSED(sqlite3_file *pUnused), UNUSED(int unused)){
 	return SQLITE_OK;
 }
 
@@ -228,7 +229,7 @@ static int sqlite3bctbx_nolockUnlock(sqlite3_file *pUnused, int unused){
  * @param  flags unused
  * @return       SQLITE_OK on success, SLITE_IOERR_FSYNC if an error occurred.
  */
-static int sqlite3bctbx_Sync(sqlite3_file *p, int flags){
+static int sqlite3bctbx_Sync(sqlite3_file *p, UNUSED(int flags)){
 	sqlite3_bctbx_file_t *pFile = (sqlite3_bctbx_file_t*)p;
 	int ret = bctbx_file_sync(pFile->pbctbx_file);
 	return (ret==BCTBX_VFS_OK ? SQLITE_OK : SQLITE_IOERR_FSYNC);
@@ -249,7 +250,7 @@ static int sqlite3bctbx_Sync(sqlite3_file *p, int flags){
  * @param  pOutFlags flags used by SQLite
  * @return           SQLITE_CANTOPEN on error, SQLITE_OK on success.
  */
-static  int sqlite3bctbx_Open(sqlite3_vfs *pVfs, const char *fName, sqlite3_file *p, int flags, int *pOutFlags ){
+static  int sqlite3bctbx_Open(UNUSED(sqlite3_vfs *pVfs), const char *fName, sqlite3_file *p, int flags, int *pOutFlags ){
 	static const sqlite3_io_methods sqlite3_bctbx_io = {
 		1,										/* iVersion         Structure version number */
 		sqlite3bctbx_Close,                 	/* xClose */

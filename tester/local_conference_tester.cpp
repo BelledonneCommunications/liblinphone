@@ -18,6 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <map>
+
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 #include "linphone/api/c-types.h"
 #include "linphone/api/c-chat-room.h"
@@ -27,7 +31,6 @@
 #include "linphone/wrapper_utils.h"
 #include "liblinphone_tester.h"
 #include "bctoolbox/crypto.h"
-#include <map>
 #include "address/identity-address.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
@@ -689,8 +692,8 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 static void group_chat_room_server_admin_managed_messages_base (bool_t encrypted) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
-		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1807,7 +1810,7 @@ static void group_chat_room_with_client_restart (void) {
 	}
 }
 
-static void chat_room_participant_added_sip_error (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+static void chat_room_participant_added_sip_error (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
 	if (bctbx_list_size(linphone_chat_room_get_participants(cr)) == 2) {
 		LinphoneCoreManager *initiator = (LinphoneCoreManager*)linphone_chat_room_get_user_data(cr);
 		ms_message("Turning off network for core %s", linphone_core_get_identity(initiator->lc));
@@ -3615,7 +3618,7 @@ static void conference_scheduler_state_changed(LinphoneConferenceScheduler *sche
 	}
 }
 
-static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, const bctbx_list_t *failed_addresses) {
+static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, UNUSED(const bctbx_list_t *failed_addresses)) {
 	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 }

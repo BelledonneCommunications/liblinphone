@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "streams.h"
 #include "mixers.h"
 
@@ -83,7 +85,7 @@ void MS2AudioMixer::connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool 
 	ms_audio_conference_mute_member(mConference, endpoint, muted);
 }
 
-void MS2AudioMixer::disconnectEndpoint(Stream *as, MSAudioEndpoint *endpoint){
+void MS2AudioMixer::disconnectEndpoint(UNUSED(Stream *as), MSAudioEndpoint *endpoint){
 	ms_audio_endpoint_set_user_data(endpoint, nullptr);
 	ms_audio_conference_remove_member(mConference, endpoint);
 }
@@ -167,7 +169,7 @@ bool MS2AudioMixer::micEnabled()const{
 	return mLocalMicEnabled;
 }
 
-void MS2AudioMixer::enableSpeaker(bool value){
+void MS2AudioMixer::enableSpeaker(UNUSED(bool value)){
 }
 
 bool MS2AudioMixer::speakerEnabled()const{
@@ -226,20 +228,20 @@ float MS2AudioMixer::getMicGain(){
 	return 0.0;
 }
 
-void MS2AudioMixer::setMicGain(float value){
+void MS2AudioMixer::setMicGain(UNUSED(float value)){
 }
 
 float MS2AudioMixer::getSpeakerGain(){
 	return 0.0;
 }
 
-void MS2AudioMixer::setSpeakerGain(float value){
+void MS2AudioMixer::setSpeakerGain(UNUSED(float value)){
 }
 
-void MS2AudioMixer::sendDtmf(int dtmf){
+void MS2AudioMixer::sendDtmf(UNUSED(int dtmf)){
 }
 
-void MS2AudioMixer::enableEchoCancellation(bool value){
+void MS2AudioMixer::enableEchoCancellation(UNUSED(bool value)){
 }
 
 bool MS2AudioMixer::echoCancellationEnabled()const{

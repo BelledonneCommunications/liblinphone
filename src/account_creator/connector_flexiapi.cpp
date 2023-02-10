@@ -26,6 +26,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
 
+#include <bctoolbox/defs.h>
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
 
@@ -381,7 +382,7 @@ linphone_account_creator_link_phone_number_with_account_flexiapi(LinphoneAccount
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPhoneChangeRequest(creator->phone_number)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusRequestOk; })
+		->then([](UNUSED(FlexiAPIClient::Response response)) { return LinphoneAccountCreatorStatusRequestOk; })
 		->error([creator](FlexiAPIClient::Response response) {
 			if (response.code == 404) {
 				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
@@ -418,7 +419,7 @@ linphone_account_creator_activate_phone_number_link_flexiapi(LinphoneAccountCrea
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPhoneChange(creator->activation_code)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusRequestOk; })
+		->then([](UNUSED(FlexiAPIClient::Response response)) { return LinphoneAccountCreatorStatusRequestOk; })
 		->error([creator](FlexiAPIClient::Response response) {
 			if (response.code == 404) {
 				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusAccountNotExist,
@@ -455,7 +456,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_fle
 	flexiAPIClient
 		->accountActivatePhone(string(creator->username).append("@").append(_get_domain(creator)),
 							   creator->activation_code)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusAccountActivated; })
+		->then([](UNUSED(FlexiAPIClient::Response response)) { return LinphoneAccountCreatorStatusAccountActivated; })
 		->error([creator](FlexiAPIClient::Response response) {
 			if (response.code == 404) {
 				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
@@ -494,7 +495,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_flexiapi(L
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPasswordChange(creator->algorithm, creator->password, new_pwd)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusRequestOk; })
+		->then([](UNUSED(FlexiAPIClient::Response response)) { return LinphoneAccountCreatorStatusRequestOk; })
 		->error([creator](FlexiAPIClient::Response response) {
 			if (response.code == 404) {
 				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusAccountNotExist,

@@ -41,6 +41,8 @@
 #include <poll.h>
 #endif
 
+#include <bctoolbox/defs.h>
+
 #include "daemon.h"
 #include "commands/adaptive-jitter-compensation.h"
 #include "commands/jitterbuffer.h"
@@ -218,7 +220,7 @@ AudioStreamStatsEvent::AudioStreamStatsEvent(Daemon* daemon, AudioStream* stream
 	setBody(ostr.str());
 }
 
-CallPlayingStatsEvent::CallPlayingStatsEvent(Daemon* daemon, int id) : Event("call-playing-complete"){
+CallPlayingStatsEvent::CallPlayingStatsEvent(UNUSED(Daemon* daemon), int id) : Event("call-playing-complete"){
 	ostringstream ostr;
 
 	ostr << "Id: " << id << "\n";
@@ -542,7 +544,7 @@ bool Daemon::pullEvent() {
 	return status;
 }
 
-void Daemon::callStateChanged(LinphoneCall *call, LinphoneCallState state, const char *msg) {
+void Daemon::callStateChanged(LinphoneCall *call, LinphoneCallState state, UNUSED(const char * msg)) {
 	queueEvent(new CallEvent(this, call, state));
 
 	if (state == LinphoneCallIncomingReceived && mAutoAnswer){
@@ -550,7 +552,7 @@ void Daemon::callStateChanged(LinphoneCall *call, LinphoneCallState state, const
 	}
 }
 
-void Daemon::messageReceived(LinphoneChatRoom *cr, LinphoneChatMessage *msg){
+void Daemon::messageReceived(UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg){
 	queueEvent(new IncomingMessageEvent(msg));
 }
 
@@ -935,7 +937,7 @@ Daemon::~Daemon() {
 
 static Daemon *the_app = NULL;
 
-static void sighandler(int signum){
+static void sighandler(UNUSED(int signum)){
 	if (the_app){
 		the_app->quit();
 		the_app = NULL;

@@ -19,6 +19,8 @@
  */
 
 #include "bctoolbox/crypto.h"
+#include <bctoolbox/defs.h>
+
 #include "account/account.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
@@ -53,7 +55,7 @@ struct X3dhServerPostContext {
 	) : responseProcess(response), username{username}, core{core} {};
 };
 
-void LimeManager::processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept {
+void LimeManager::processIoError (void *data, UNUSED(const belle_sip_io_error_event_t *event)) noexcept {
 	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
 	try  {
 		(userData->responseProcess)(0, vector<uint8_t>{});
@@ -509,8 +511,8 @@ bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer (const shared_
 #define FILE_TRANSFER_KEY_SIZE 32
 
 void LimeX3dhEncryptionEngine::generateFileTransferKey (
-	const shared_ptr<AbstractChatRoom> &chatRoom,
-	const shared_ptr<ChatMessage> &message,
+	UNUSED(const shared_ptr<AbstractChatRoom> &chatRoom),
+	UNUSED(const shared_ptr<ChatMessage> &message),
 	FileTransferContent *fileTransferContent
 ) {
 	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
@@ -521,8 +523,8 @@ void LimeX3dhEncryptionEngine::generateFileTransferKey (
 }
 
 int LimeX3dhEncryptionEngine::downloadingFile (
-	const shared_ptr<ChatMessage> &message,
-	size_t offset,
+	UNUSED(const shared_ptr<ChatMessage> &message),
+	UNUSED(size_t offset),
 	const uint8_t *buffer,
 	size_t size,
 	uint8_t *decrypted_buffer,
@@ -567,7 +569,7 @@ int LimeX3dhEncryptionEngine::downloadingFile (
 }
 
 int LimeX3dhEncryptionEngine::uploadingFile (
-	const shared_ptr<ChatMessage> &message,
+	UNUSED(const shared_ptr<ChatMessage> &message),
 	size_t offset,
 	const uint8_t *buffer,
 	size_t *size,
@@ -921,7 +923,7 @@ void LimeX3dhEncryptionEngine::staleSession (const std::string localDeviceId, co
 }
 
 lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback (string operation) {
-	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
+	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, UNUSED(string anythingToSay)) {
 		if (returnCode == lime::CallbackReturn::success) {
 			lInfo() << "[LIME] operation successful: " << operation;
 		} else {
@@ -944,12 +946,12 @@ lime::limeCallback LimeX3dhEncryptionEngine::setLimeUserCreationCallback (Linpho
 	return callback;
 }
 
-void LimeX3dhEncryptionEngine::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {}
+void LimeX3dhEncryptionEngine::onNetworkReachable (UNUSED(bool sipNetworkReachable), UNUSED(bool mediaNetworkReachable)) {}
 
 void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	LinphoneProxyConfig *cfg,
 	LinphoneRegistrationState state,
-	const string &message
+	UNUSED(const string &message)
 ) {
 	if (state != LinphoneRegistrationState::LinphoneRegistrationOk)
 		return;

@@ -26,6 +26,10 @@
 #include <exception>
 
 /* */
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void lime_delete_DRSessions(const char *limedb) {
 #ifdef HAVE_SOCI
 	try {
@@ -37,5 +41,6 @@ void lime_delete_DRSessions(const char *limedb) {
 	}
 #endif
 }
-
-
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER

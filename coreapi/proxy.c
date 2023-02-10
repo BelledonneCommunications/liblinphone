@@ -940,7 +940,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 	return cfg;
 }
 
-SipSetup *linphone_proxy_config_get_sip_setup(LinphoneProxyConfig *cfg){
+SipSetup *linphone_proxy_config_get_sip_setup(UNUSED(LinphoneProxyConfig *cfg)){
 	return NULL;
 } // TODO: remove this
 
@@ -952,11 +952,11 @@ void linphone_account_update(LinphoneAccount *account){
 	Account::toCpp(account)->update();
 }
 
-void linphone_proxy_config_set_sip_setup(LinphoneProxyConfig *cfg, const char *type){
+void linphone_proxy_config_set_sip_setup(UNUSED(LinphoneProxyConfig *cfg), UNUSED(const char *type)){
 
 } // TODO: remove this
 
-SipSetupContext *linphone_proxy_config_get_sip_setup_context(LinphoneProxyConfig *cfg){
+SipSetupContext *linphone_proxy_config_get_sip_setup_context(UNUSED(LinphoneProxyConfig *cfg)){
 	return NULL;
 } // TODO: remove this
 

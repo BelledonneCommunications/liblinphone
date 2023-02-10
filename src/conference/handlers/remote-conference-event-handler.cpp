@@ -20,6 +20,8 @@
 
 #include <sstream>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
 
@@ -734,7 +736,7 @@ void RemoteConferenceEventHandler::unsubscribePrivate () {
 	}
 }
 
-void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable) {
 		subscribe();
 	} else {
@@ -742,7 +744,7 @@ void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable,
 	}
 }
 
-void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
+void RemoteConferenceEventHandler::onRegistrationStateChanged (UNUSED(LinphoneProxyConfig *cfg), LinphoneRegistrationState state, UNUSED(const std::string &message)) {
 	if (state == LinphoneRegistrationOk)
 		subscribe();
 }

@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/notification-message-p.h"
 
 // =============================================================================
@@ -41,7 +43,7 @@ NotificationMessage::NotificationMessage (NotificationMessagePrivate &p) : ChatM
 	d->contentEncoding = "deflate";
 }
 
-void NotificationMessage::setToBeStored (bool value) {
+void NotificationMessage::setToBeStored (UNUSED(bool value)) {
 }
 
 LINPHONE_END_NAMESPACE

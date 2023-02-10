@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
 
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
@@ -189,12 +190,12 @@ int groupchat_benchmark_tester_set_log_file(const char *filename) {
 	return 0;
 }
 
-int silent_arg_func(const char *arg) {
+int silent_arg_func(UNUSED(const char *arg)) {
 	linphone_core_set_log_level(ORTP_FATAL);
 	return 0;
 }
 
-int verbose_arg_func(const char *arg) {
+int verbose_arg_func(UNUSED(const char *arg)) {
 	linphone_core_set_log_level(ORTP_MESSAGE);
 	return 0;
 }
@@ -343,7 +344,7 @@ int create_chat_room(bctbx_list_t* coresList, LinphoneCoreManager *mgr, const ch
 }
 
 //Wait for chatrooms instances to be created for all proxy configs identities
-int wait_chat_room_creation(bctbx_list_t *coresList, LinphoneCoreManager *mgr, const char *subject) {
+int wait_chat_room_creation(bctbx_list_t *coresList, LinphoneCoreManager *mgr) {
 	int ret = 0;
 	stats initialStats = mgr->stat;
 
@@ -379,7 +380,7 @@ int get_or_create_chat_rooms(LinphoneCoreManager *mgr, bctbx_list_t *coresList, 
 			}
 			ret &= create_chat_room(coresList, mgr, subject, participantsAddressesForThisRoom);
 		} else {
-			ret &= wait_chat_room_creation(coresList, mgr, subject);
+			ret &= wait_chat_room_creation(coresList, mgr);
 		}
 		bctbx_free(subject);
 	}

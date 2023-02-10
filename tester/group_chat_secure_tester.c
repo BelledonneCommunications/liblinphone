@@ -18,13 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#include <bctoolbox/defs.h>
+#include "bctoolbox/crypto.h"
 
 #include "linphone/core.h"
 #include "tester_utils.h"
 #include "linphone/wrapper_utils.h"
 #include "liblinphone_tester.h"
-#include "bctoolbox/crypto.h"
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
@@ -3937,7 +3937,7 @@ static void group_chat_lime_x3dh_update_keys(void) {
 	group_chat_lime_x3dh_update_keys_curve(448);
 }
 
-static void chat_room_message_participant_state_changed(LinphoneChatRoom *cr, LinphoneChatMessage *msg, const LinphoneParticipantImdnState *state) {
+static void chat_room_message_participant_state_changed(LinphoneChatRoom *cr, UNUSED(LinphoneChatMessage *msg), UNUSED(const LinphoneParticipantImdnState *state)) {
 	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_current_callbacks(cr);
 	LinphoneCoreManager *chloe = (LinphoneCoreManager *)linphone_chat_room_cbs_get_user_data(cbs);
 	chloe->stat.number_of_participant_state_changed += 1;

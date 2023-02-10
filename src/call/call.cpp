@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/c-wrapper.h"
 #include "call.h"
 #include "chat/chat-room/abstract-chat-room-p.h"
@@ -32,8 +34,6 @@
 #include "sal/sal_media_description.h"
 
 #include "conference_private.h"
-
-#include <bctoolbox/defs.h>
 
 // =============================================================================
 
@@ -310,23 +310,23 @@ void Call::cleanupSessionAndUnrefCObjectCall() {
 
 // -----------------------------------------------------------------------------
 
-void Call::onAckBeingSent (const shared_ptr<CallSession> &session, LinphoneHeaders *headers) {
+void Call::onAckBeingSent (UNUSED(const shared_ptr<CallSession> & session), LinphoneHeaders *headers) {
 	linphone_call_notify_ack_processing(this->toC(), headers, false);
 }
 
-void Call::onAckReceived (const shared_ptr<CallSession> &session, LinphoneHeaders *headers) {
+void Call::onAckReceived (UNUSED(const shared_ptr<CallSession> & session), LinphoneHeaders *headers) {
 	linphone_call_notify_ack_processing(this->toC(), headers, true);
 }
 
-void Call::onBackgroundTaskToBeStarted (const shared_ptr<CallSession> &session) {
+void Call::onBackgroundTaskToBeStarted (UNUSED(const shared_ptr<CallSession> & session)) {
 	mBgTask.start(getCore(),30);
 }
 
-void Call::onBackgroundTaskToBeStopped (const shared_ptr<CallSession> &session) {
+void Call::onBackgroundTaskToBeStopped (UNUSED(const shared_ptr<CallSession> & session)) {
 	mBgTask.stop();
 }
 
-void Call::onCallSessionAccepting (const std::shared_ptr<CallSession> &session) {
+void Call::onCallSessionAccepting (UNUSED(const shared_ptr<CallSession> & session)) {
 	accept();
 }
 
@@ -345,11 +345,11 @@ void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, Lin
 	cleanupSessionAndUnrefCObjectCall();
 }
 
-void Call::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
+void Call::onCallSessionSetReleased (UNUSED(const shared_ptr<CallSession> & session)) {
 	cleanupSessionAndUnrefCObjectCall();
 }
 
-void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
+void Call::onCallSessionSetTerminated (UNUSED(const shared_ptr<CallSession> & session)) {
 	LinphoneCore *core = getCore()->getCCore();
 	
 	if (getSharedFromThis() == getCore()->getCurrentCall()) {
@@ -371,11 +371,11 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 	}
 }
 
-void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
+void Call::onCallSessionStartReferred (UNUSED(const shared_ptr<CallSession> & session)) {
 	startReferredCall(nullptr);
 }
 
-void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
+void Call::reenterLocalConference(UNUSED(const shared_ptr<CallSession> &session)) {
 	if (getConference()) {
 		auto conference = MediaConference::Conference::toCpp(getConference());
 		if (conference->getState() == ConferenceInterface::State::Created) {
@@ -569,11 +569,11 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	}
 }
 
-void Call::onCallSessionTransferStateChanged (const shared_ptr<CallSession> &session, CallSession::State state) {
+void Call::onCallSessionTransferStateChanged (UNUSED(const shared_ptr<CallSession> &session), CallSession::State state) {
 	linphone_call_notify_transfer_state_changed(this->toC(), static_cast<LinphoneCallState>(state));
 }
 
-void Call::onCheckForAcceptation (const shared_ptr<CallSession> &session) {
+void Call::onCheckForAcceptation (UNUSED(const shared_ptr<CallSession> &session)) {
 	// If the core is a conference server, there is no need to ensure that media resources are not shared
 	if(!linphone_core_conference_server_enabled(getCore()->getCCore()) && (linphone_core_get_media_resource_mode(getCore()->getCCore()) != LinphoneSharedMediaResources)) {
 		list<shared_ptr<Call>> calls = getCore()->getCalls();
@@ -597,22 +597,22 @@ void Call::onCheckForAcceptation (const shared_ptr<CallSession> &session) {
 	}
 }
 
-void Call::onDtmfReceived (const shared_ptr<CallSession> &session, char dtmf) {
+void Call::onDtmfReceived (UNUSED(const shared_ptr<CallSession> &session), char dtmf) {
 	linphone_call_notify_dtmf_received(this->toC(), dtmf);
 }
 
-void Call::onIncomingCallSessionNotified (const shared_ptr<CallSession> &session) {
+void Call::onIncomingCallSessionNotified (UNUSED(const shared_ptr<CallSession> &session)) {
 	/* The call is acceptable so we can now add it to our list */
 	getCore()->getPrivate()->addCall(getSharedFromThis());
 }
 
-void Call::onIncomingCallSessionStarted (const shared_ptr<CallSession> &session) {
+void Call::onIncomingCallSessionStarted (UNUSED(const shared_ptr<CallSession> &session)) {
 	if (linphone_core_get_calls_nb(getCore()->getCCore()) == 1 && !isInConference()) {
 		L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(getSharedFromThis());
 	}
 }
 
-void Call::onIncomingCallSessionTimeoutCheck (const shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) {
+void Call::onIncomingCallSessionTimeoutCheck (UNUSED(const shared_ptr<CallSession> &session), int elapsed, bool oneSecondElapsed) {
 	if (oneSecondElapsed)
 		lInfo() << "Incoming call ringing for " << elapsed << " seconds";
 	if (elapsed > getCore()->getCCore()->sip_conf.inc_timeout) {
@@ -623,7 +623,7 @@ void Call::onIncomingCallSessionTimeoutCheck (const shared_ptr<CallSession> &ses
 	}
 }
 
-void Call::onPushCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &session, int elapsed) {
+void Call::onPushCallSessionTimeoutCheck (UNUSED(const std::shared_ptr<CallSession> &session), int elapsed) {
 	if (elapsed > getCore()->getCCore()->sip_conf.push_incoming_call_timeout) {
 		lInfo() << "Push incoming call timeout (" << getCore()->getCCore()->sip_conf.push_incoming_call_timeout << ")";
 		auto config = linphone_core_get_config(getCore()->getCCore());
@@ -633,15 +633,15 @@ void Call::onPushCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &se
 	}
 }
 
-void Call::onInfoReceived (const shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) {
+void Call::onInfoReceived (UNUSED(const shared_ptr<CallSession> &session), const LinphoneInfoMessage *im) {
 	linphone_call_notify_info_message_received(this->toC(), im);
 }
 
-void Call::onLossOfMediaDetected (const shared_ptr<CallSession> &session) {
+void Call::onLossOfMediaDetected (UNUSED(const shared_ptr<CallSession> &session)) {
 	terminateBecauseOfLostMedia();
 }
 
-void Call::onEncryptionChanged (const shared_ptr<CallSession> &session, bool activated, const string &authToken) {
+void Call::onEncryptionChanged (UNUSED(const shared_ptr<CallSession> &session), bool activated, const string &authToken) {
 	linphone_call_notify_encryption_changed(this->toC(), activated, authToken.empty() ? nullptr : authToken.c_str());
 }
 
@@ -649,32 +649,32 @@ void Call::onGoClearAckSent() {
 	linphone_call_notify_goclear_ack_sent(this->toC());
 }
 
-void Call::onCallSessionStateChangedForReporting (const shared_ptr<CallSession> &session) {
+void Call::onCallSessionStateChangedForReporting (UNUSED(const shared_ptr<CallSession> &session)) {
 	linphone_reporting_call_state_updated(this->toC());
 }
 
-void Call::onRtcpUpdateForReporting (const shared_ptr<CallSession> &session, SalStreamType type) {
+void Call::onRtcpUpdateForReporting (UNUSED(const shared_ptr<CallSession> &session), SalStreamType type) {
 	linphone_reporting_on_rtcp_update(this->toC(), type);
 }
 
-void Call::onStatsUpdated (const shared_ptr<CallSession> &session, const LinphoneCallStats *stats) {
+void Call::onStatsUpdated (UNUSED(const shared_ptr<CallSession> &session), const LinphoneCallStats *stats) {
 	linphone_call_notify_stats_updated(this->toC(), stats);
 }
 
-void Call::onUpdateMediaInfoForReporting (const shared_ptr<CallSession> &session, int statsType) {
+void Call::onUpdateMediaInfoForReporting (UNUSED(const shared_ptr<CallSession> &session), int statsType) {
 	linphone_reporting_update_media_info(this->toC(), statsType);
 }
 
 
-void Call::onResetCurrentSession (const shared_ptr<CallSession> &session) {
+void Call::onResetCurrentSession (UNUSED(const shared_ptr<CallSession> &session)) {
 	getCore()->getPrivate()->setCurrentCall(nullptr);
 }
 
-void Call::onSetCurrentSession (const shared_ptr<CallSession> &session) {
+void Call::onSetCurrentSession (UNUSED(const shared_ptr<CallSession> &session)) {
 	getCore()->getPrivate()->setCurrentCall(getSharedFromThis());
 }
 
-void Call::onFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
+void Call::onFirstVideoFrameDecoded (UNUSED(const shared_ptr<CallSession> &session)) {
 	if (mNextVideoFrameDecoded._func) {
 		mNextVideoFrameDecoded._func(this->toC(), mNextVideoFrameDecoded._user_data);
 		mNextVideoFrameDecoded._func = nullptr;
@@ -683,7 +683,7 @@ void Call::onFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
 	linphone_call_notify_next_video_frame_decoded(this->toC());
 }
 
-void Call::onResetFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
+void Call::onResetFirstVideoFrameDecoded (UNUSED(const shared_ptr<CallSession> &session)) {
 	/*we are called here by the MediaSession when the stream start to know whether there is the deprecated nextVideoFrameDecoded callback set,
 	 * so that we can request the notification of the next frame decoded.*/
 #ifdef VIDEO_ENABLED
@@ -696,11 +696,11 @@ void Call::requestNotifyNextVideoFrameDecoded(){
 	static_pointer_cast<MediaSession>(getActiveSession())->requestNotifyNextVideoFrameDecoded();
 }
 
-void Call::onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) {
+void Call::onCameraNotWorking (UNUSED(const std::shared_ptr<CallSession> &session), const char *camera_name) {
 	linphone_call_notify_camera_not_working(this->toC(), camera_name);
 }
 
-bool Call::areSoundResourcesAvailable (const shared_ptr<CallSession> &session) {
+bool Call::areSoundResourcesAvailable (UNUSED(const shared_ptr<CallSession> &session)) {
 	LinphoneCore *lc = getCore()->getCCore();
 	shared_ptr<Call> currentCall = getCore()->getCurrentCall();
 	// If core is in a conference, then check if the call is in the same conference
@@ -709,15 +709,15 @@ bool Call::areSoundResourcesAvailable (const shared_ptr<CallSession> &session) {
 	return soundResourcesFree;
 }
 
-bool Call::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
+bool Call::isPlayingRingbackTone (UNUSED(const shared_ptr<CallSession> &session)) {
 	return mPlayingRingbackTone;
 }
 
-LinphoneConference * Call::getCallSessionConference (const shared_ptr<CallSession> &session) const {
+LinphoneConference * Call::getCallSessionConference (UNUSED(const shared_ptr<CallSession> &session)) const {
 	return getConference();
 }
 
-void Call::onRealTimeTextCharacterReceived (const shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {
+void Call::onRealTimeTextCharacterReceived (UNUSED(const shared_ptr<CallSession> &session), RealtimeTextReceivedCharacter *data) {
 	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
 	if (chatRoom) {
 		chatRoom->getPrivate()->realtimeTextReceived(data->character, getSharedFromThis());
@@ -726,19 +726,19 @@ void Call::onRealTimeTextCharacterReceived (const shared_ptr<CallSession> &sessi
 	}
 }
 
-void Call::onTmmbrReceived (const shared_ptr<CallSession> &session, int streamIndex, int tmmbr) {
+void Call::onTmmbrReceived (UNUSED(const shared_ptr<CallSession> &session), int streamIndex, int tmmbr) {
 	linphone_call_notify_tmmbr_received(this->toC(), streamIndex, tmmbr);
 }
 
-void Call::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *file_path) {
+void Call::onSnapshotTaken(UNUSED(const shared_ptr<CallSession> &session), const char *file_path) {
 	linphone_call_notify_snapshot_taken(this->toC(), file_path);
 }
 
-void Call::onStartRingtone(const shared_ptr<CallSession> &session){
+void Call::onStartRingtone(UNUSED(const shared_ptr<CallSession> &session)){
 	//Already handled by tone manager.
 }
 
-void Call::onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording) {
+void Call::onRemoteRecording(UNUSED(const std::shared_ptr<CallSession> &session), bool recording) {
 	linphone_call_notify_remote_recording(this->toC(), recording);
 }
 
@@ -816,7 +816,7 @@ void Call::configure (
 	const Address &to,
 	LinphoneProxyConfig *cfg,
 	SalCallOp *op,
-	const MediaSessionParams *msp
+	UNUSED(const MediaSessionParams *msp)
 ) {
 	mParticipant->configure(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
 	mParticipant->getSession()->configure(direction, cfg, op, from, to);

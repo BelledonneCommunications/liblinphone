@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "adaptive-jitter-compensation.h"
 
 using namespace std;
@@ -58,7 +60,7 @@ AdaptiveBufferCompensationResponse::AdaptiveBufferCompensationResponse(LinphoneC
 	setBody(ost.str());
 }
 
-void AdaptiveBufferCompensationResponse::outputAdaptiveBufferCompensation(LinphoneCore *core, ostringstream &ost, const string& header, bool_t value) {
+void AdaptiveBufferCompensationResponse::outputAdaptiveBufferCompensation(UNUSED(LinphoneCore *core), ostringstream &ost, const string& header, bool_t value) {
 	ost << header << ": ";
 	if (value) {
 		ost << "enabled\n";

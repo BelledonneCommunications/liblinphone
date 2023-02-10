@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "private.h"
 
 #include "ice-service.h"
@@ -767,7 +769,7 @@ void IceService::finishPrepare(){
 	gatheringFinished();
 }
 
-void IceService::render(const OfferAnswerContext & ctx, CallSession::State targetState){
+void IceService::render(const OfferAnswerContext & ctx, UNUSED(CallSession::State state)){
 	if (!mIceSession) return;
 	
 	updateFromRemoteMediaDescription(ctx.localMediaDescription, ctx.remoteMediaDescription, !ctx.localIsOfferer);
@@ -782,7 +784,7 @@ void IceService::render(const OfferAnswerContext & ctx, CallSession::State targe
 
 }
 
-void IceService::sessionConfirmed(const OfferAnswerContext &ctx){
+void IceService::sessionConfirmed(UNUSED(const OfferAnswerContext &ctx)){
 }
 
 void IceService::stop(){

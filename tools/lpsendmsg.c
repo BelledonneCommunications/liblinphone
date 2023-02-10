@@ -19,16 +19,19 @@
  */
 
 
-#include "linphone/core.h"
+#include <bctoolbox/defs.h>
+
+#include <signal.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <signal.h>
+#include "linphone/core.h"
 
 static bool_t running = TRUE;
 static const char *passwd = NULL;
 
-static void stop(int signum){
+static void stop(UNUSED(int signum)){
 	running=FALSE;
 }
 
@@ -44,7 +47,7 @@ static void helper(const char *progname) {
 	exit(0);
 }
 
-static void on_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state){
+static void on_msg_state_changed(UNUSED(LinphoneChatMessage *msg), LinphoneChatMessageState state){
 	switch(state){
 		case LinphoneChatMessageStateInProgress:
 			printf("Sending message...\n");
@@ -67,7 +70,7 @@ static void on_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageSt
 	}
 }
 
-static void auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, const char *domain){
+static void auth_info_requested(UNUSED(LinphoneCore *lc), UNUSED(const char *realm), UNUSED(const char *username), UNUSED(const char *domain)){
 	running = FALSE;
 	if (passwd){
 		fprintf(stderr, "Server rejected the supplied username or password\n");

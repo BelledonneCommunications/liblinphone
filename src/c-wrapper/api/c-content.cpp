@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/api/c-content.h"
 #include "linphone/wrapper_utils.h"
 
@@ -513,7 +515,7 @@ LinphoneContent *linphone_content_copy (const LinphoneContent *ref) {
 	return reinterpret_cast<LinphoneContent *>(belle_sip_object_clone(BELLE_SIP_OBJECT(ref)));
 }
 
-LinphoneContent *linphone_core_create_content (LinphoneCore *lc) {
+LinphoneContent *linphone_core_create_content (UNUSED(LinphoneCore *lc)) {
 	return linphone_content_new();
 }
 

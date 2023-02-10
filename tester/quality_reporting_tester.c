@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -26,7 +28,7 @@
 /* Avoid crash if x is NULL on libc versions <4.5.26 */
 #define __strstr(x, y) ((x==NULL)?NULL:strstr(x,y))
 
-static void on_report_send_mandatory (const LinphoneCall *call, SalStreamType stream_type, const LinphoneContent *content) {
+static void on_report_send_mandatory (UNUSED(const LinphoneCall *call), UNUSED(SalStreamType stream_type), const LinphoneContent *content) {
 	const char *body = linphone_content_get_utf8_text(content);
 	char *remote_metrics_start = __strstr(body, "RemoteMetrics:");
 	BC_ASSERT_TRUE((__strstr(body, "VQIntervalReport\r\n") == body)
@@ -212,7 +214,7 @@ static void quality_reporting_not_sent_if_low_bandwidth (void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void on_report_send_remove_fields (const LinphoneCall *call, SalStreamType stream_type, const LinphoneContent *content) {
+static void on_report_send_remove_fields (UNUSED(const LinphoneCall *call), UNUSED(SalStreamType stream_type), const LinphoneContent *content) {
 	char *body = bctbx_strdup(linphone_content_get_utf8_text(content));
 	/* Corrupt start of the report */
 	const char *corrupted_str = "corrupted report is corrupted";

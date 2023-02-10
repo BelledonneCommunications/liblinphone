@@ -21,13 +21,15 @@
 #ifndef _L_DB_TRANSACTION_H_
 #define _L_DB_TRANSACTION_H_
 
+#include <bctoolbox/defs.h>
+
 #include "db/main-db-p.h"
 #include "logger/logger.h"
 
 // =============================================================================
 
 #define L_DB_TRANSACTION_C(CONTEXT) \
-	LinphonePrivate::DbTransactionInfo().set(__func__, CONTEXT) * [&](SmartTransaction &tr)
+	LinphonePrivate::DbTransactionInfo().set(__func__, CONTEXT) * [&](UNUSED(SmartTransaction &tr))
 
 #define L_DB_TRANSACTION L_DB_TRANSACTION_C(this)
 

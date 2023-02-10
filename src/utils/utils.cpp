@@ -346,6 +346,10 @@ std::string Utils::getSipFragAddress(const Content & content) {
 	return tmpIdentityAddress.asString();
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 std::string Utils::getResourceLists (const std::list<IdentityAddress> &addresses) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
@@ -365,9 +369,16 @@ std::string Utils::getResourceLists (const std::list<IdentityAddress> &addresses
 	return "";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // -----------------------------------------------------------------------------
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 std::list<IdentityAddress> Utils::parseResourceLists (const Content &content) {
 #ifdef HAVE_ADVANCED_IM
 	if ((content.getContentType() == ContentType::ResourceLists)
@@ -395,6 +406,9 @@ std::list<IdentityAddress> Utils::parseResourceLists (const Content &content) {
 	return std::list<IdentityAddress>();
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op, bool remote) {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();

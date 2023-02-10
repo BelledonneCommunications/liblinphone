@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "background-task.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "logger/logger.h"
@@ -36,7 +38,7 @@ void BackgroundTask::sHandleTimeout (void *context) {
 	static_cast<BackgroundTask *>(context)->handleTimeout();
 }
 
-int BackgroundTask::sHandleSalTimeout (void *data, unsigned int events) {
+int BackgroundTask::sHandleSalTimeout (void *data, UNUSED(unsigned int events)) {
 	static_cast<BackgroundTask *>(data)->handleSalTimeout();
 	return BELLE_SIP_STOP;
 }

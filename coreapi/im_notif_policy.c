@@ -84,6 +84,10 @@ static void load_im_notif_policy_from_config(LinphoneImNotifPolicy *policy) {
 #endif
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 static void save_im_notif_policy_to_config(LinphoneImNotifPolicy *policy) {
 #ifdef HAVE_ADVANCED_IM
 	bctbx_list_t *values = NULL;
@@ -119,6 +123,9 @@ static void save_im_notif_policy_to_config(LinphoneImNotifPolicy *policy) {
 	if (values != NULL) bctbx_list_free(values);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 LinphoneImNotifPolicy * linphone_im_notif_policy_ref(LinphoneImNotifPolicy *policy) {
 	belle_sip_object_ref(policy);
@@ -148,6 +155,10 @@ void linphone_im_notif_policy_clear(LinphoneImNotifPolicy *policy) {
 	save_im_notif_policy_to_config(policy);
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_im_notif_policy_enable_all(LinphoneImNotifPolicy *policy) {
 #ifdef HAVE_ADVANCED_IM
 	policy->send_is_composing = TRUE;
@@ -161,6 +172,9 @@ void linphone_im_notif_policy_enable_all(LinphoneImNotifPolicy *policy) {
 	ms_warning("Cannot enable im policy because ENABLE_ADVANCED_IM is OFF");
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 bool_t linphone_im_notif_policy_get_send_is_composing(const LinphoneImNotifPolicy *policy) {
 	return policy->send_is_composing;

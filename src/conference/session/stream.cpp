@@ -73,7 +73,7 @@ MediaSessionPrivate &Stream::getMediaSessionPrivate()const{
 	return *getMediaSession().getPrivate();
 }
 
-void Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
+void Stream::fillLocalMediaDescription(UNUSED(OfferAnswerContext &ctx)){
 }
 
 bool Stream::prepare(){
@@ -85,14 +85,14 @@ void Stream::finishPrepare(){
 	mState = Stopped;
 }
 
-void Stream::tryEarlyMediaForking(const OfferAnswerContext &ctx){
+void Stream::tryEarlyMediaForking(UNUSED(const OfferAnswerContext &ctx)){
 }
 
-void Stream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
+void Stream::render(UNUSED(const OfferAnswerContext &ctx), UNUSED(CallSession::State state)){
 	mState = Running;
 }
 
-void Stream::sessionConfirmed(const OfferAnswerContext &ctx){
+void Stream::sessionConfirmed(UNUSED(const OfferAnswerContext &ctx)){
 }
 
 void Stream::stop(){
@@ -100,7 +100,7 @@ void Stream::stop(){
 	mInternalStats.number_of_stops++;
 }
 
-void Stream::setIceCheckList(IceCheckList *cl){
+void Stream::setIceCheckList(UNUSED(IceCheckList *cl)){
 }
 
 void Stream::iceStateChanged(){

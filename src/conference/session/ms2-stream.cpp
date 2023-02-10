@@ -553,7 +553,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
  * Handle some basic session changes.
  * Return true everything was handled, false otherwise, in which case the caller will have to restart the stream.
  */
-bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
+bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, UNUSED(CallSession::State targetState)){
 	const auto & stream = params.getResultStreamDescription();
 	
 	initRtpBundle(params);

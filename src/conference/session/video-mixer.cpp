@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "streams.h"
 #include "mixers.h"
 
@@ -49,7 +51,7 @@ void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool 
 	}
 }
 
-void MS2VideoMixer::disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint){
+void MS2VideoMixer::disconnectEndpoint(UNUSED(Stream *vs), MSVideoEndpoint *endpoint){
 	ms_video_endpoint_set_user_data(endpoint, nullptr);
 	// Try to remove endpoint from both MSConference
 	ms_video_conference_remove_member(mConferenceMix, endpoint);
@@ -232,7 +234,7 @@ MSWebCam *MS2VideoMixer::getVideoDevice()const{
 	return mCore.getCCore()->video_conf.device;
 }
 
-void MS2VideoMixer::onSnapshotTaken(const std::string &filepath){
+void MS2VideoMixer::onSnapshotTaken(UNUSED(const std::string &filepath)){
 	// TODO
 }
 

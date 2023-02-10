@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "sal/event-op.h"
 #include "c-wrapper/internal/c-tools.h"
 
@@ -404,7 +406,7 @@ void SalPublishOp::fillCallbacks () {
 	mCallbacks = &opPublishCallbacks;
 }
 
-void SalPublishOp::publishRefresherListenerCb (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry) {
+void SalPublishOp::publishRefresherListenerCb (UNUSED(belle_sip_refresher_t *refresher), void *userCtx, unsigned int statusCode, const char *reasonPhrase, UNUSED(int willRetry)) {
 	auto op = static_cast<SalPublishOp *>(userCtx);
 	auto lastTransaction = belle_sip_refresher_get_transaction(op->mRefresher);
 	auto response = belle_sip_transaction_get_response(BELLE_SIP_TRANSACTION(lastTransaction));

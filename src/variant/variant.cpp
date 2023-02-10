@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "linphone/utils/utils.h"
 
 #include "variant.h"
@@ -223,7 +225,7 @@ void Variant::clear () {
 	d->setType(Invalid);
 }
 
-void Variant::swap (const Variant &other) {
+void Variant::swap (UNUSED(const Variant &other)) {
 	// TODO.
 }
 

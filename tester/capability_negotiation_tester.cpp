@@ -21,6 +21,8 @@
 #include <string>
 #include <algorithm>
 
+#include "bctoolbox/defs.h"
+
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/core.h"
@@ -168,8 +170,8 @@ LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(const ch
 		}
 	}
 
-#ifdef VIDEO_ENABLED
 	if (enable_video) {
+#ifdef VIDEO_ENABLED
 		// important: VP8 has really poor performances with the mire camera, at least
 		// on iOS - so when ever h264 is available, let's use it instead
 		if (linphone_core_get_payload_type(mgr->lc,"h264", -1, -1)!=NULL) {
@@ -187,8 +189,8 @@ LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(const ch
 
 		linphone_core_enable_video_capture(mgr->lc, TRUE);
 		linphone_core_enable_video_display(mgr->lc, TRUE);
-	}
 #endif // VIDEO_ENABLED
+	}
 
 	if (enable_ice){
 		enable_stun_in_core(mgr, TRUE, enable_ice);
@@ -1149,7 +1151,7 @@ static void call_with_tcap_line_merge_base(const bool_t caller_tcap_merge, const
 	bctbx_list_free(caller_cfg_enc);
 	linphone_call_params_set_media_encryption (caller_params, LinphoneMediaEncryptionSRTP);
 	linphone_call_params_enable_mandatory_media_encryption(caller_params,0);
-	linphone_call_params_enable_tcap_line_merging(caller_params, TRUE);
+	linphone_call_params_enable_tcap_line_merging(caller_params, caller_tcap_merge);
 
 	// Callee call params:
 	// - RFC5939 is supported
@@ -1167,7 +1169,7 @@ static void call_with_tcap_line_merge_base(const bool_t caller_tcap_merge, const
 	bctbx_list_free(callee_cfg_enc);
 	linphone_call_params_set_media_encryption (callee_params, LinphoneMediaEncryptionNone);
 	linphone_call_params_enable_mandatory_media_encryption(callee_params,0);
-	linphone_call_params_enable_tcap_line_merging(callee_params, TRUE);
+	linphone_call_params_enable_tcap_line_merging(callee_params, callee_tcap_merge);
 
 	const LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionDTLS;
 	encrypted_call_with_params_base(caller, callee, expectedEncryption, caller_params, callee_params, TRUE);
@@ -2778,7 +2780,7 @@ void call_with_optional_encryption_on_both_sides_base(const LinphoneMediaEncrypt
 	call_with_encryption_test_base(marie_enc_params, TRUE, FALSE, pauline_enc_params, TRUE, FALSE, enable_video);
 }
 
-void call_with_toggling_encryption_base(const LinphoneMediaEncryption encryption) {
+void call_with_toggling_encryption_base(UNUSED(const LinphoneMediaEncryption encryption)) {
 #if 0
 	std::list<LinphoneMediaEncryption> enc_list {encryption};
 

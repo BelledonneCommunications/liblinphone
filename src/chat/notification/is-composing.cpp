@@ -20,6 +20,8 @@
 
 #include <utility>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/utils.h"
 
 #include "chat/chat-room/chat-room-p.h"
@@ -56,6 +58,10 @@ IsComposing::~IsComposing () {
 
 // -----------------------------------------------------------------------------
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 string IsComposing::createXml (bool isComposing) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::IsComposing::IsComposing node(isComposing ? "active" : "idle");
@@ -72,7 +78,14 @@ string IsComposing::createXml (bool isComposing) {
 	return "";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void IsComposing::parse (const Address &remoteAddr, const string &text) {
 #ifdef HAVE_ADVANCED_IM
 	istringstream data(text);
@@ -94,6 +107,9 @@ void IsComposing::parse (const Address &remoteAddr, const string &text) {
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void IsComposing::startIdleTimer () {
 	unsigned int duration = getIdleTimerDuration();
@@ -212,17 +228,17 @@ unordered_map<string, belle_sip_source_t *>::iterator IsComposing::stopRemoteRef
 	return remoteRefreshTimers.erase(it);
 }
 
-int IsComposing::idleTimerExpired (void *data, unsigned int revents) {
+int IsComposing::idleTimerExpired (void *data, UNUSED(unsigned int revents)) {
 	IsComposing *d = static_cast<IsComposing *>(data);
 	return d->idleTimerExpired();
 }
 
-int IsComposing::refreshTimerExpired (void *data, unsigned int revents) {
+int IsComposing::refreshTimerExpired (void *data, UNUSED(unsigned int revents)) {
 	IsComposing *d = static_cast<IsComposing *>(data);
 	return d->refreshTimerExpired();
 }
 
-int IsComposing::remoteRefreshTimerExpired (void *data, unsigned int revents) {
+int IsComposing::remoteRefreshTimerExpired (void *data, UNUSED(unsigned int revents)) {
 	IsRemoteComposingData *d = static_cast<IsRemoteComposingData *>(data);
 	int result = d->isComposingHandler->remoteRefreshTimerExpired(d->uri);
 	return result;

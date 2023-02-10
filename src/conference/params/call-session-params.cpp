@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/c-wrapper.h"
 #include "call-session-params-p.h"
 #include "call-session-params.h"
@@ -201,7 +203,7 @@ CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other)
 
 // -----------------------------------------------------------------------------
 
-void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
+void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, UNUSED(LinphoneCallDir dir)) {
 	L_D();
 	const auto & cCore = core->getCCore();
 	d->inConference = false;

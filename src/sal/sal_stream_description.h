@@ -230,8 +230,11 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void setCrypto(const size_t & idx, const SalSrtpCryptoAlgo & newCrypto);
 		void setSupportedEncryptions(const std::list<LinphoneMediaEncryption> & encryptionList);
 
-		void addIceRemoteCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const;
-		void addIceCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const;
+		// ICE
+		void sdpParseMediaIceParameters(const belle_sdp_media_description_t *media_desc);
+		void addIceRemoteCandidatesToSdp(belle_sdp_media_description_t *md) const;
+		void addIceCandidatesToSdp(belle_sdp_media_description_t *md) const;
+
 		void addRtcpFbAttributesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const;
 		bool isRtcpFbTrrIntTheSameForAllPayloads(const SalStreamConfiguration & cfg, uint16_t *trr_int) const;
 		void addMidAttributesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const;
@@ -239,7 +242,6 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool sdpParseRtcpFbParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc);
 		void sdpParsePayloadTypes(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc) const;
 		void sdpParseMediaCryptoParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc) const;
-		void sdpParseMediaIceParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc);
 
 		int globalEqual(const SalStreamDescription & other) const;
 		int compareConfigurations(const SalStreamDescription & other, const SalStreamDescription::cfg_map::key_type & thisKey, const SalStreamDescription::cfg_map::key_type & otherKey) const;

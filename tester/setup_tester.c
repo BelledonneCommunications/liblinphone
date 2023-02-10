@@ -18,6 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <bctoolbox/defs.h>
 
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
@@ -27,9 +31,6 @@
 #include "linphone/friend.h"
 #include "linphone/api/c-magic-search.h"
 #include "tester_utils.h"
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifdef __APPLE__
 #include "TargetConditionals.h"
@@ -78,7 +79,7 @@ static void _create_call_log(LinphoneCore *lc, LinphoneAddress *addrFrom, Linpho
 	);
 }
 
-static LinphoneLdap * _create_default_ldap_server(LinphoneCoreManager * manager, const char * password, const char* bind_dn){
+static LinphoneLdap * _create_default_ldap_server(LinphoneCoreManager * manager, UNUSED(const char * password), const char* bind_dn){
 	LinphoneLdap * ldap = NULL;
 	if(linphone_core_ldap_available(manager->lc)){
 // 1) Create LDAP params and set values
@@ -2279,7 +2280,7 @@ void _onMagicSearchResultsReceived(LinphoneMagicSearch* magic_search) {
 	stats * stat = (stats*)linphone_magic_search_cbs_get_user_data(linphone_magic_search_get_current_callbacks(magic_search));
 	++stat->number_of_LinphoneMagicSearchResultReceived;
 }
-void _onMagicSearchLdapHaveMoreResults(LinphoneMagicSearch* magic_search, LinphoneLdap* ldap) {
+void _onMagicSearchLdapHaveMoreResults(LinphoneMagicSearch* magic_search, UNUSED(LinphoneLdap* ldap)) {
 	stats * stat = (stats*)linphone_magic_search_cbs_get_user_data(linphone_magic_search_get_current_callbacks(magic_search));
 	++stat->number_of_LinphoneMagicSearchLdapHaveMoreResults;
 }

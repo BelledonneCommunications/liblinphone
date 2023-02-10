@@ -20,6 +20,8 @@
 
 #include <ctype.h>
 
+#include <bctoolbox/defs.h>
+
 #include "account/account.h"
 #include "account/account-params.h"
 #include "c-wrapper/c-wrapper.h"
@@ -175,7 +177,7 @@ void _linphone_account_notify_registration_state_changed(LinphoneAccount *accoun
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, Account::toCpp(account), linphone_account_cbs_get_registration_state_changed, state, message);
 }
 
-bool_t linphone_account_is_phone_number(LinphoneAccount *account, const char *username) {
+bool_t linphone_account_is_phone_number(UNUSED(LinphoneAccount *account), const char *username) {
 	if (!username) return FALSE;
 
 	const char *p;

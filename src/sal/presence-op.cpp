@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/presence-op.h"
 
@@ -45,7 +47,7 @@ void SalPresenceOp::presenceProcessIoErrorCb (void *userCtx, const belle_sip_io_
 	}
 }
 
-void SalPresenceOp::presenceRefresherListenerCb (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry) {
+void SalPresenceOp::presenceRefresherListenerCb (UNUSED(belle_sip_refresher_t *refresher), void *userCtx, unsigned int statusCode, UNUSED(const char *reasonPhrase), UNUSED(int willRetry)) {
 	auto op = static_cast<SalPresenceOp *>(userCtx);
 	if (statusCode >= 300) {
 		lInfo() << "The SUBSCRIBE dialog no longer works, let's start a new one";
@@ -134,7 +136,7 @@ void SalPresenceOp::presenceProcessTimeoutCb (void *userCtx, const belle_sip_tim
 	}
 }
 
-void SalPresenceOp::presenceProcessTransactionTerminatedCb (void *userCtx, const belle_sip_transaction_terminated_event_t *event) {
+void SalPresenceOp::presenceProcessTransactionTerminatedCb (UNUSED(void *userCtx), UNUSED(const belle_sip_transaction_terminated_event_t *event)) {
 	lInfo() << "SalPresenceOp::presenceProcessTransactionTerminatedCb not implemented yet";
 }
 
@@ -295,7 +297,7 @@ void SalPresenceOp::presenceProcessRequestEventCb (void *userCtx, const belle_si
 	}
 }
 
-void SalPresenceOp::presenceProcessDialogTerminatedCb (void *userCtx, const belle_sip_dialog_terminated_event_t *event) {
+void SalPresenceOp::presenceProcessDialogTerminatedCb (void *userCtx, UNUSED(const belle_sip_dialog_terminated_event_t *event)) {
 	auto op = static_cast<SalPresenceOp *>(userCtx);
 	if (!op->mDialog || !belle_sip_dialog_is_server(op->mDialog))
 		return; // Client dialog is managed by refresher

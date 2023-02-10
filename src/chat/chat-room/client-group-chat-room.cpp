@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/utils.h"
 
 #include "address/address.h"
@@ -259,7 +261,7 @@ void ClientGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<Call
 void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 	const shared_ptr<CallSession> &session,
 	CallSession::State newState,
-	const string &message
+	UNUSED(const string &message)
 ) {
 	L_Q();
 
@@ -388,7 +390,7 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	L_D();
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler = std::make_shared<RemoteConferenceEventHandler>(getConference().get(), this);
-	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
+	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](UNUSED(ConferenceListenerInterface *p)){}));
 
 	getConference()->setSubject(subject);
 	for (const auto &addr : Utils::parseResourceLists(content))
@@ -446,7 +448,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	}
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler = std::make_shared<RemoteConferenceEventHandler>(getConference().get(), this);
-	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
+	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](UNUSED(ConferenceListenerInterface *p)){}));
 	const ConferenceAddress &peerAddress = conferenceId.getPeerAddress();
 	static_pointer_cast<RemoteConference>(getConference())->focus = Participant::create(getConference().get(),peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(peerAddress);
@@ -516,11 +518,11 @@ shared_ptr<Core> ClientGroupChatRoom::getCore () const {
 	return ChatRoom::getCore();
 }
 
-void ClientGroupChatRoom::allowCpim (bool value) {
+void ClientGroupChatRoom::allowCpim (UNUSED(bool value)) {
 
 }
 
-void ClientGroupChatRoom::allowMultipart (bool value) {
+void ClientGroupChatRoom::allowMultipart (UNUSED(bool value)) {
 
 }
 
@@ -994,7 +996,7 @@ void ClientGroupChatRoom::onConferenceKeywordsChanged (const vector<string> &key
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
 }
 
-void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
+void ClientGroupChatRoom::onConferenceTerminated (UNUSED(const IdentityAddress &addr)) {
 	L_D();
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler->unsubscribe();
@@ -1021,7 +1023,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	}
 }
 
-void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
+void ClientGroupChatRoom::onFirstNotifyReceived (UNUSED(const IdentityAddress &addr)) {
 	L_D();
 
 	if (getState() != ConferenceInterface::State::Created) {
@@ -1068,7 +1070,7 @@ void ClientGroupChatRoom::onFullStateReceived () {
 	d->pendingCreationMessages.clear();
 }
 
-void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
 	L_D();
 
 	if (event->getFullState())
@@ -1080,7 +1082,7 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 	_linphone_chat_room_notify_participant_added(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event,  UNUSED(const std::shared_ptr<Participant> &participant)) {
 	L_D();
 
 	d->addEvent(event);
@@ -1089,7 +1091,7 @@ void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParti
 	_linphone_chat_room_notify_participant_removed(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event,  UNUSED(const std::shared_ptr<Participant> &participant)) {
 	L_D();
 
 	if (event->getFullState())
@@ -1113,7 +1115,7 @@ void ClientGroupChatRoom::onParticipantDeviceStateChanged (const std::shared_ptr
 	_linphone_chat_room_notify_participant_device_state_changed(cr, L_GET_C_BACK_PTR(event), (LinphoneParticipantDeviceState)device->getState());
 }
 
-void ClientGroupChatRoom::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void ClientGroupChatRoom::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 	L_D();
 
 	if (event->getFullState())
@@ -1190,7 +1192,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	_linphone_chat_room_notify_participant_device_added(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 	L_D();
 
 	d->addEvent(event);

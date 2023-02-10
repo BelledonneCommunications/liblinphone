@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 // TODO: Remove me later.
 #include "private.h"
 
@@ -37,7 +39,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 ChatMessageModifier::Result MultipartChatMessageModifier::encode (
 	const shared_ptr<ChatMessage> &message,
-	int &errorCode
+	UNUSED(int &errorCode)
 ) {
 	if (message->getContents().size() <= 1)
 		return ChatMessageModifier::Result::Skipped;
@@ -48,7 +50,7 @@ ChatMessageModifier::Result MultipartChatMessageModifier::encode (
 	return ChatMessageModifier::Result::Done;
 }
 
-ChatMessageModifier::Result MultipartChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, int &errorCode) {
+ChatMessageModifier::Result MultipartChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, UNUSED(int &errorCode)) {
 	if (message->getInternalContent().getContentType().isMultipart()) {
 		for (Content &c : ContentManager::multipartToContentList(message->getInternalContent())) {
 			Content *content;

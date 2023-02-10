@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/internal/c-tools.h"
 #include "audio-stream-start.h"
 #include "private.h"
@@ -31,7 +33,7 @@ AudioStreamStartCommand::AudioStreamStartCommand() :
 						"Id: 1"));
 }
 
-static PayloadType *getPayloadType(LinphoneCore *lc, const MSList *codecs, int number){
+static PayloadType *getPayloadType(UNUSED(LinphoneCore *lc), const MSList *codecs, int number){
 	const MSList *elem;
 	for (elem = codecs; elem != NULL; elem = elem->next) {
 		PayloadType *pt = (PayloadType*)elem->data;

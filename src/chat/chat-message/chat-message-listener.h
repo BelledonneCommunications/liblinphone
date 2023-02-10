@@ -21,6 +21,8 @@
 #ifndef _L_CHAT_MESSAGE_LISTENER_H_
 #define _L_CHAT_MESSAGE_LISTENER_H_
 
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/chat-message.h"
 
 // =============================================================================
@@ -31,7 +33,7 @@ class LINPHONE_PUBLIC ChatMessageListener {
 public:
 	virtual ~ChatMessageListener () = default;
 
-	virtual void onChatMessageStateChanged (const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) {}
+	virtual void onChatMessageStateChanged (UNUSED(const std::shared_ptr<ChatMessage> &message), UNUSED(ChatMessage::State state)) {}
 };
 
 LINPHONE_END_NAMESPACE

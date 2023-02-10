@@ -35,7 +35,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupToBasicChatRoomPrivate : public ProxyChatRoomPrivate {
 public:
-	void onChatRoomInsertRequested (const shared_ptr<AbstractChatRoom> &chatRoom) override {
+	void onChatRoomInsertRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
 		L_Q();
 		// Insert the proxy chat room instead of the real one
 		q->getCore()->getPrivate()->insertChatRoom(q->getSharedFromThis());
@@ -48,7 +48,7 @@ public:
 		q->getCore()->getPrivate()->insertChatRoomWithDb(q->getSharedFromThis(), notifyId);
 	}
 
-	void onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) override {
+	void onChatRoomDeleteRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
 		L_Q();
 		// Keep a ref, otherwise the object might be destroyed before we can set the Deleted state
 		shared_ptr<AbstractChatRoom> ref = q->getSharedFromThis();

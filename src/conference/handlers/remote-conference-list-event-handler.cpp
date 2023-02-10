@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 #include "linphone/event.h"
 #include "linphone/proxy_config.h"
@@ -355,7 +357,7 @@ map<string, IdentityAddress> RemoteConferenceListEventHandler::parseRlmi (const 
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceListEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+void RemoteConferenceListEventHandler::onNetworkReachable (bool sipNetworkReachable, UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable) {
 		subscribe();
 	} else {
@@ -363,7 +365,7 @@ void RemoteConferenceListEventHandler::onNetworkReachable (bool sipNetworkReacha
 	}
 }
 
-void RemoteConferenceListEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
+void RemoteConferenceListEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, UNUSED(const std::string &message)) {
 	if (state == LinphoneRegistrationOk )
 		subscribe(cfg->account);
 	else if(state == LinphoneRegistrationCleared){// On cleared, restart subscription if the cleared proxy config is the current subscription

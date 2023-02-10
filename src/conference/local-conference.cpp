@@ -43,6 +43,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LocalConference::LocalConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
@@ -61,6 +65,9 @@ LocalConference::LocalConference (
 	addListener(eventHandler);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 LocalConference::~LocalConference () {
 #ifdef HAVE_ADVANCED_IM

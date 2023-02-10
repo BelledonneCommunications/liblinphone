@@ -21,6 +21,8 @@
 #ifndef _L_NOTIFICATION_MESSAGE_P_H_
 #define _L_NOTIFICATION_MESSAGE_P_H_
 
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-message/notification-message.h"
 
@@ -36,12 +38,12 @@ protected:
 	NotificationMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir)
 		: ChatMessagePrivate(cr, dir) {}
 
-	void setState (ChatMessage::State newState) override {};
+	void setState (UNUSED(ChatMessage::State state)) override {};
 
 private:
-	void setDisplayNotificationRequired (bool value) override {}
-	void setNegativeDeliveryNotificationRequired (bool value) override {}
-	void setPositiveDeliveryNotificationRequired (bool value) override {}
+	void setDisplayNotificationRequired (UNUSED(bool value)) override {}
+	void setNegativeDeliveryNotificationRequired (UNUSED(bool value)) override {}
+	void setPositiveDeliveryNotificationRequired (UNUSED(bool value)) override {}
 
 	L_DECLARE_PUBLIC(NotificationMessage);
 };

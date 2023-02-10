@@ -21,6 +21,8 @@
 #ifndef _L_CORE_LISTENER_H_
 #define _L_CORE_LISTENER_H_
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/types.h"
 
 #include "linphone/utils/general.h"
@@ -33,10 +35,10 @@ class LINPHONE_PUBLIC CoreListener {
 public:
 	virtual ~CoreListener () = default;
 
-	virtual void onGlobalStateChanged (LinphoneGlobalState state) {}
-	virtual void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {}
-	virtual void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {}
-	virtual void onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) {}
+	virtual void onGlobalStateChanged (UNUSED(LinphoneGlobalState state)) {}
+	virtual void onNetworkReachable (UNUSED(bool sipNetworkReachable), UNUSED(bool mediaNetworkReachable)) {}
+	virtual void onRegistrationStateChanged (UNUSED(LinphoneProxyConfig *cfg), UNUSED(LinphoneRegistrationState state), UNUSED(const std::string &message)) {}
+	virtual void onCallStateChanged (UNUSED(LinphoneCall *call), UNUSED(LinphoneCallState state), UNUSED(const std::string &message)) {}
 	virtual void onEnteringBackground () {}
 	virtual void onEnteringForeground () {}
 };

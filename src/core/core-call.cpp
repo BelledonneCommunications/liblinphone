@@ -146,6 +146,10 @@ int CorePrivate::removeCall (const shared_ptr<Call> &call) {
 	return 0;
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void CorePrivate::setVideoWindowId (bool preview, void *id) {
 #ifdef VIDEO_ENABLED
 	L_Q();
@@ -173,6 +177,9 @@ void CorePrivate::setVideoWindowId (bool preview, void *id) {
 	}
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 /*
  * setCurrentCall() is the good place to notify the soundcard about its planned usage.
@@ -322,6 +329,10 @@ LinphoneStatus Core::terminateAllCalls () {
 
 // =============================================================================
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void Core::reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallLog> &callLog, std::shared_ptr<ConferenceInfo> confInfo) {
 	// TODO: This is a workaround that has to be removed ASAP
 #ifdef HAVE_DB_STORAGE
@@ -409,6 +420,9 @@ void Core::reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallL
 
 	linphone_core_notify_call_log_updated(getCCore(), callLog->toC());
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void Core::reportEarlyCallFailed (LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const std::string callId) {
 	auto callLog = CallLog::create(getSharedFromThis(), dir, from, to);

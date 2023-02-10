@@ -20,6 +20,8 @@
 
 #include <ctime>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/api/c-content.h"
 #include "linphone/utils/utils.h"
 
@@ -1158,11 +1160,11 @@ void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<Confer
 	}
 }
 
-void LocalConferenceEventHandler::onParticipantDeviceIsSpeakingChanged (const std::shared_ptr<ParticipantDevice> &device, bool isSpeaking) {
+void LocalConferenceEventHandler::onParticipantDeviceIsSpeakingChanged (const std::shared_ptr<ParticipantDevice> &, UNUSED(bool isSpeaking)) {
 	
 }
 
-void LocalConferenceEventHandler::onParticipantDeviceIsMuted (const std::shared_ptr<ParticipantDevice> &device, bool isMuted) {
+void LocalConferenceEventHandler::onParticipantDeviceIsMuted (const std::shared_ptr<ParticipantDevice> &, UNUSED(bool isMuted)) {
 	
 }
 
@@ -1243,7 +1245,7 @@ void LocalConferenceEventHandler::onParticipantDeviceStateChanged (const std::sh
 	}
 }
 
-void LocalConferenceEventHandler::onParticipantDeviceMediaCapabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void LocalConferenceEventHandler::onParticipantDeviceMediaCapabilityChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		auto participant = device->getParticipant();
@@ -1271,11 +1273,11 @@ void LocalConferenceEventHandler::onEphemeralLifetimeChanged (const std::shared_
 	}
 }
 
-void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+void LocalConferenceEventHandler::onStateChanged (UNUSED(LinphonePrivate::ConferenceInterface::State state)) {
 }
 
-void LocalConferenceEventHandler::onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {
-	
+void LocalConferenceEventHandler::onActiveSpeakerParticipantDevice(UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
+
 }
 
 shared_ptr<Participant> LocalConferenceEventHandler::getConferenceParticipant (const Address & address) const {

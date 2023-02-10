@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "linphone/core.h"
 #include "linphone/core_utils.h"
 #if _MSC_VER
@@ -25,7 +27,7 @@
 #endif
 static int done = 0;
 
-static void calibration_finished(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay, void *data) {
+static void calibration_finished(UNUSED(LinphoneCore *lc), LinphoneEcCalibratorStatus status, int delay, UNUSED(void *data)) {
 	ms_message("echo calibration finished %s.", status == LinphoneEcCalibratorDone ? "successfully" : "with faillure");
 	if (status == LinphoneEcCalibratorDone)
 		ms_message("Measured delay is %i", delay);

@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/algorithm.h"
 
 #include "chat/chat-message/imdn-message-p.h"
@@ -135,7 +137,7 @@ void Imdn::onLinphoneCoreStop() {
 	sentImdnMessages.clear();
 }
 
-void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message){
+void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, UNUSED(const std::string &message)){
 	if (state == LinphoneRegistrationOk && cfg == getRelatedProxyConfig()){
 		// When we are registered to the proxy, then send pending notification if any.
 		sentImdnMessages.clear();
@@ -143,7 +145,7 @@ void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistra
 	}
 }
 
-void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+void Imdn::onNetworkReachable (bool sipNetworkReachable, UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable && getRelatedProxyConfig() == nullptr) {
 		// When the SIP network gets up and this chatroom isn't related to any proxy configuration, retry notification
 		sentImdnMessages.clear();
@@ -155,6 +157,10 @@ void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReacha
 
 // -----------------------------------------------------------------------------
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType, LinphoneReason reason) {
 #ifdef HAVE_ADVANCED_IM
 	char *datetime = linphone_timestamp_to_rfc3339_string(timestamp);
@@ -196,7 +202,14 @@ string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType,
 	return "";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 #ifdef HAVE_ADVANCED_IM
 	shared_ptr<AbstractChatRoom> cr = chatMessage->getChatRoom();
@@ -283,7 +296,14 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 #ifdef HAVE_ADVANCED_IM
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
@@ -313,10 +333,13 @@ bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 	return false;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // -----------------------------------------------------------------------------
 
-int Imdn::timerExpired (void *data, unsigned int revents) {
+int Imdn::timerExpired (void *data, UNUSED(unsigned int revents)) {
 	Imdn *d = static_cast<Imdn *>(data);
 	d->stopTimer();
 	d->send();

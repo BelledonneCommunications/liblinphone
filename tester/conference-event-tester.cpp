@@ -21,6 +21,8 @@
 #include <map>
 #include <string>
 
+#include "bctoolbox/defs.h"
+
 #include "c-wrapper/c-wrapper.h"
 
 #include "address/identity-address.h"
@@ -781,7 +783,7 @@ ConferenceEventTester::~ConferenceEventTester () {
 	delete handler;
 }
 
-void ConferenceEventTester::onConferenceCreated (const ConferenceAddress &addr) {}
+void ConferenceEventTester::onConferenceCreated (UNUSED(const ConferenceAddress &address)) {}
 
 void ConferenceEventTester::onConferenceKeywordsChanged (const vector<string> &keywords) {
 	for (const auto &k : keywords) {
@@ -790,23 +792,23 @@ void ConferenceEventTester::onConferenceKeywordsChanged (const vector<string> &k
 	}
 }
 
-void ConferenceEventTester::onConferenceTerminated (const IdentityAddress &addr) {}
+void ConferenceEventTester::onConferenceTerminated (UNUSED(const IdentityAddress &addr)) {}
 
-void ConferenceEventTester::onFirstNotifyReceived (const IdentityAddress &addr) {}
+void ConferenceEventTester::onFirstNotifyReceived (UNUSED(const IdentityAddress &addr)) {}
 
-void ConferenceEventTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ConferenceEventTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	participants.insert({ addr.asString(), false });
 	participantDevices.insert({ addr.asString(), 0 });
 }
 
-void ConferenceEventTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ConferenceEventTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	participants.erase(addr.asString());
 	participantDevices.erase(addr.asString());
 }
 
-void ConferenceEventTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ConferenceEventTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participants.find(addr.asString());
 	if (it != participants.end())
@@ -817,7 +819,7 @@ void ConferenceEventTester::onSubjectChanged(const shared_ptr<ConferenceSubjectE
 	confSubject = event->getSubject();
 }
 
-void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end())
@@ -825,7 +827,7 @@ void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<Conferenc
 
 }
 
-void ConferenceEventTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void ConferenceEventTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end() && it->second > 0)
@@ -889,21 +891,21 @@ public:
 	unsigned int lastNotify = 1;
 };
 
-void ConferenceListenerInterfaceTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ConferenceListenerInterfaceTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	participants.insert({ addr.asString(), false });
 	participantDevices.insert({ addr.asString(), 0 });
 	lastNotify++;
 }
 
-void ConferenceListenerInterfaceTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ConferenceListenerInterfaceTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	participants.erase(addr.asString());
 	participantDevices.erase(addr.asString());
 	lastNotify++;
 }
 
-void ConferenceListenerInterfaceTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+void ConferenceListenerInterfaceTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participants.find(addr.asString());
 	if (it != participants.end())
@@ -916,7 +918,7 @@ void ConferenceListenerInterfaceTester::onSubjectChanged(const shared_ptr<Confer
 	lastNotify++;
 }
 
-void ConferenceListenerInterfaceTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void ConferenceListenerInterfaceTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end())
@@ -925,7 +927,7 @@ void ConferenceListenerInterfaceTester::onParticipantDeviceAdded (const shared_p
 
 }
 
-void ConferenceListenerInterfaceTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void ConferenceListenerInterfaceTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end() && it->second > 0)

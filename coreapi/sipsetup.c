@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -45,7 +47,7 @@ void sip_setup_register_all(MSFactory *factory){
 	}
 }
 
-const bctbx_list_t * linphone_core_get_sip_setups(LinphoneCore *lc){
+const bctbx_list_t * linphone_core_get_sip_setups(UNUSED(LinphoneCore *lc)){
 	return registered_sip_setups;
 }
 

@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include <bctoolbox/crypto.h>
 
 #include "linphone/api/c-content.h"
@@ -989,12 +991,12 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 			}
 		};
 
-		belle_request_listener.process_io_error = [](void *ctx, const belle_sip_io_error_event_t *event) {
+		belle_request_listener.process_io_error = [](void *ctx, UNUSED(const belle_sip_io_error_event_t *event)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
 			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, NULL)
 		};
 
-		belle_request_listener.process_timeout = [](void *ctx, const belle_sip_timeout_event_t *event) {
+		belle_request_listener.process_timeout = [](void *ctx, UNUSED(const belle_sip_timeout_event_t *event)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
 			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, NULL)
 		};
@@ -1330,7 +1332,7 @@ void linphone_friend_list_notify_presence(LinphoneFriendList *list, LinphonePres
 	}
 }
 
-void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, LinphoneEvent *lev,
+void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, UNUSED(LinphoneEvent *lev),
 												   const LinphoneContent *body) {
 	if (!linphone_content_is_multipart(body))
 		return;

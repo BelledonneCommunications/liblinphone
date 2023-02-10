@@ -242,7 +242,7 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 	}
 }
 
-void CallSessionPrivate::onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) {
+void CallSessionPrivate::onCallStateChanged (UNUSED(LinphoneCall *call), UNUSED(LinphoneCallState state), UNUSED(const std::string &message)) {
 	this->executePendingActions();
 }
 
@@ -711,7 +711,7 @@ void CallSessionPrivate::acceptOrTerminateReplacedSessionInIncomingNotification 
 	}
 }
 
-LinphoneStatus CallSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
+LinphoneStatus CallSessionPrivate::acceptUpdate (UNUSED(const CallSessionParams *csp), CallSession::State nextState, const string &stateInfo) {
 	return startAcceptUpdate(nextState, stateInfo);
 }
 
@@ -980,14 +980,14 @@ void CallSessionPrivate::setContactOp () {
 
 // -----------------------------------------------------------------------------
 
-void CallSessionPrivate::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+void CallSessionPrivate::onNetworkReachable (bool sipNetworkReachable, UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable)
 		repairIfBroken();
 	else
 		setBroken();
 }
 
-void CallSessionPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const std::string &message) {
+void CallSessionPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, UNUSED(const std::string &message)) {
 	//might be better to add callbacks on Account, but due to the lake of internal listener, it is dangerous to expose internal listeners to public object.
 	if (cfg == destProxy && cstate == LinphoneRegistrationOk)
 		repairIfBroken();
@@ -1394,7 +1394,7 @@ bool CallSession::hasTransferPending () {
 
 void CallSession::initiateIncoming () {}
 
-bool CallSession::initiateOutgoing (const string &subject, const Content *content) {
+bool CallSession::initiateOutgoing (UNUSED(const string &subject), UNUSED(const Content *content)) {
 	L_D();
 	bool defer = false;
 	d->setState(CallSession::State::OutgoingInit, "Starting outgoing call");

@@ -18,6 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -44,7 +49,6 @@ LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new (con
 #endif
 }
 
-
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
 	belle_sip_object_ref(deviceIdentity);
@@ -53,20 +57,16 @@ LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (Lin
 	return NULL;
 #endif
 }
-
 void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
 	belle_sip_object_unref(deviceIdentity);
 #endif
 }
-
-
 void linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *deviceIdentity, const char *descriptor){
 #ifdef HAVE_ADVANCED_IM
 	ParticipantDeviceIdentity::toCpp(deviceIdentity)->setCapabilityDescriptor(L_C_TO_STRING(descriptor));
 #endif
 }
-
 const char* linphone_participant_device_identity_get_capability_descriptor(const LinphoneParticipantDeviceIdentity *deviceIdentity){
 #ifdef HAVE_ADVANCED_IM
 	return ParticipantDeviceIdentity::toCpp(deviceIdentity)->getCapabilityDescriptor().c_str();
@@ -80,4 +80,6 @@ const LinphoneAddress* linphone_participant_device_identity_get_address(const Li
 #endif
 	return NULL;
 }
-
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER

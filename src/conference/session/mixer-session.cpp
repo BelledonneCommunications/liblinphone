@@ -48,12 +48,19 @@ void MixerSession::unjoinStreamsGroup(StreamsGroup &sg){
 	sg.unjoinMixerSession();
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void MixerSession::setFocus(StreamsGroup *sg){
 #ifdef VIDEO_ENABLED
 	MS2VideoMixer *mixer = dynamic_cast<MS2VideoMixer*>(mMixers[SalVideo].get());
 	if (mixer) mixer->setFocus(sg);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 StreamMixer *MixerSession::getMixerByType(SalStreamType type){
 	try {
