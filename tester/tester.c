@@ -3236,6 +3236,18 @@ void notify_presence_received(LinphoneCore *lc, LinphoneFriend *lf) {
 		ms_error("Unexpected basic status [%i]",
 		         linphone_presence_model_get_basic_status(counters->last_received_presence));
 	}
+
+	LinphoneConsolidatedPresence consolidated_presence = linphone_friend_get_consolidated_presence(lf);
+	if (consolidated_presence == LinphoneConsolidatedPresenceOnline) {
+		counters->number_of_LinphoneConsolidatedPresenceOnline++;
+	} else if (consolidated_presence == LinphoneConsolidatedPresenceBusy) {
+		counters->number_of_LinphoneConsolidatedPresenceBusy++;
+	} else if (consolidated_presence == LinphoneConsolidatedPresenceDoNotDisturb) {
+		counters->number_of_LinphoneConsolidatedPresenceDoNotDisturb++;
+	} else if (consolidated_presence == LinphoneConsolidatedPresenceOffline) {
+		counters->number_of_LinphoneConsolidatedPresenceOffline++;
+	}
+
 	if (counters->last_received_presence &&
 	    linphone_presence_model_get_nb_activities(counters->last_received_presence) > 0) {
 		for (i = 0; counters->last_received_presence &&

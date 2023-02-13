@@ -351,6 +351,11 @@ typedef struct _stats {
 	int number_of_LinphonePresenceBasicStatusOpen;
 	int number_of_LinphonePresenceBasicStatusClosed;
 
+	int number_of_LinphoneConsolidatedPresenceOnline;
+	int number_of_LinphoneConsolidatedPresenceBusy;
+	int number_of_LinphoneConsolidatedPresenceDoNotDisturb;
+	int number_of_LinphoneConsolidatedPresenceOffline;
+
 	int number_of_inforeceived;
 	LinphoneInfoMessage *last_received_info_message;
 

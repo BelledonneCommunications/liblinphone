@@ -77,8 +77,8 @@ static bool_t subscribe_to_callee_presence(LinphoneCoreManager *caller_mgr, Linp
 
 	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_NotifyFriendPresenceReceived,
 	                initial_caller.number_of_NotifyFriendPresenceReceived + 1, int, "%d");
-	linphone_friend_unref(friend);
 
+	linphone_friend_unref(friend);
 	ms_free(identity);
 	return result;
 }
@@ -315,6 +315,49 @@ static void presence_information(void) {
 	BC_ASSERT_GREATER((unsigned)presence_timestamp, (unsigned)current_timestamp, unsigned, "%u");
 	linphone_presence_model_unref(presence);
 
+	/* Consolidated presence */
+	LinphoneFriend *marie_friend =
+	    linphone_core_create_friend_with_address(pauline->lc, linphone_core_get_identity(marie->lc));
+	linphone_friend_edit(marie_friend);
+	linphone_friend_enable_subscribes(marie_friend, TRUE);
+	linphone_friend_done(marie_friend);
+	linphone_core_add_friend(pauline->lc, marie_friend);
+	BC_ASSERT_PTR_NOT_NULL(marie_friend);
+
+	LinphoneFriend *pauline_friend = linphone_core_find_friend(marie->lc, pauline->identity);
+	BC_ASSERT_PTR_NOT_NULL(pauline_friend);
+	if (!marie_friend || !pauline_friend) goto end;
+
+	reset_counters(&marie->stat);
+	reset_counters(&pauline->stat);
+
+	linphone_core_set_consolidated_presence(pauline->lc, LinphoneConsolidatedPresenceBusy);
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConsolidatedPresenceBusy, 1);
+	BC_ASSERT_TRUE(linphone_core_get_consolidated_presence(pauline->lc) == LinphoneConsolidatedPresenceBusy);
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(pauline_friend), LinphoneConsolidatedPresenceBusy, int,
+	                "%d");
+
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceDoNotDisturb);
+	wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceDoNotDisturb, 1);
+	BC_ASSERT_TRUE(linphone_core_get_consolidated_presence(marie->lc) == LinphoneConsolidatedPresenceDoNotDisturb);
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(marie_friend), LinphoneConsolidatedPresenceDoNotDisturb,
+	                int, "%d");
+
+	linphone_core_set_consolidated_presence(pauline->lc, LinphoneConsolidatedPresenceOnline);
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConsolidatedPresenceOnline, 1);
+	BC_ASSERT_TRUE(linphone_core_get_consolidated_presence(pauline->lc) == LinphoneConsolidatedPresenceOnline);
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(pauline_friend), LinphoneConsolidatedPresenceOnline, int,
+	                "%d");
+
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOffline);
+	wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceOffline, 1);
+	BC_ASSERT_TRUE(linphone_core_get_consolidated_presence(marie->lc) == LinphoneConsolidatedPresenceOffline);
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(marie_friend), LinphoneConsolidatedPresenceOffline, int,
+	                "%d");
+
+	linphone_friend_unref(marie_friend);
+
+end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }

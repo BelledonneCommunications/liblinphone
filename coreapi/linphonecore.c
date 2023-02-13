@@ -5477,7 +5477,10 @@ void linphone_core_set_consolidated_presence(LinphoneCore *lc, LinphoneConsolida
 			break;
 	}
 
-	if (activity != NULL) linphone_presence_model_add_activity(model, activity);
+	if (activity != NULL) {
+		linphone_presence_model_add_activity(model, activity);
+		linphone_presence_activity_unref(activity);
+	}
 	linphone_core_set_presence_model(lc, model);
 	linphone_presence_model_unref(model);
 
