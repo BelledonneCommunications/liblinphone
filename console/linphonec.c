@@ -962,7 +962,7 @@ static void lpc_apply_video_params(void){
  *
  */
 static int
-linphonec_idle_call ()
+linphonec_idle_call (void)
 {
 	LinphoneCore *opm=linphonec;
 
@@ -1271,7 +1271,7 @@ linphonec_parse_cmdline(int argc, char **argv)
  *	-1 on error
  */
 static int
-handle_configfile_migration()
+handle_configfile_migration(void)
 {
 #if !defined(_WIN32_WCE)
 	char *old_cfg_gui;
