@@ -137,6 +137,9 @@ private:
 template <typename _T>
 class ListHolder {
 public:
+	ListHolder() = default;
+	ListHolder(const ListHolder<_T>& other) : mList(other.mList), mCList(nullptr){
+	}
 	// The STL list is a public member, directly accessible.
 	std::list <std::shared_ptr<_T>> mList;
 	// Return a C list from the STL list.
@@ -155,6 +158,7 @@ public:
 private:
 	mutable bctbx_list_t *mCList = nullptr;
 };
+
 
 /*
  * Template class for classes that hold callbacks (such as LinphoneCallCbs, LinphoneAccountCbs etc.

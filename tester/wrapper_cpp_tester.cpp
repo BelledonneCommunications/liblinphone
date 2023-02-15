@@ -46,6 +46,14 @@ static void create_chat_room(){
 	participants.push_back(linphone::Object::cPtrToSharedPtr<linphone::Address>(pauline->identity));
 	params->setBackend(linphone::ChatRoomBackend::Basic);
 
+	/* check a few accessors */
+	auto defaultAccount = core->getDefaultAccount();
+	BC_ASSERT_PTR_NOT_NULL(defaultAccount);
+	auto contactAddress = defaultAccount->getContactAddress();
+	BC_ASSERT_PTR_NOT_NULL(contactAddress);
+	auto newAddress = contactAddress->clone();
+	BC_ASSERT_PTR_NOT_NULL(newAddress);
+
 // Creation, store the result inside a variable to test variable scope.
 	auto chatRoom = core->createChatRoom(params, localAddress, participants);
 	

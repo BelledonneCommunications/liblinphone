@@ -7653,13 +7653,8 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	linphone_core_zrtp_cache_close(lc);
 	ms_bandwidth_controller_destroy(lc->bw_controller);
 	lc->bw_controller = NULL;
-<<<<<<< HEAD
-	if (lc->callsCache) { // Ensure to remove cache before destroying factory
-		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
-=======
 	if (lc->callsCache) {// Ensure to remove cache before destroying factory
 		bctbx_list_free(lc->callsCache);
->>>>>>> 04174eac6 (Fix memory leaks.)
 		lc->callsCache = NULL;
 	}
 

@@ -169,14 +169,14 @@ LINPHONE_PUBLIC LinphoneCore* linphone_account_get_core(LinphoneAccount *account
  * @param account The #LinphoneAccount object. @notnil
  * @return The #LinphoneErrorInfo explaining why registration failed for this account. @notnil
 **/
-LINPHONE_PUBLIC LinphoneErrorInfo* linphone_account_get_error_info(LinphoneAccount *account);
+LINPHONE_PUBLIC const LinphoneErrorInfo* linphone_account_get_error_info(LinphoneAccount *account);
 
 /**
  * Return the contact address of the account.
  * @param account The #LinphoneAccount object. @notnil
- * @return a #LinphoneAddress correspong to the contact address of the account. @maybenil @tobefreed
+ * @return a #LinphoneAddress correspong to the contact address of the account. @maybenil
 **/
-LINPHONE_PUBLIC LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account);
+LINPHONE_PUBLIC const LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account);
 
 
 /**

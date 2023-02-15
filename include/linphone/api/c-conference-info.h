@@ -75,9 +75,9 @@ LINPHONE_PUBLIC void linphone_conference_info_set_organizer(LinphoneConferenceIn
 /**
  * Retrieve the list of participants.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
- * @return The list of participants. \bctbx_list{LinphoneAddress} @maybenil @tobefreed
+ * @return The list of participants. \bctbx_list{LinphoneAddress} @maybenil
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info);
 
 /**
  * Set the list of participants.

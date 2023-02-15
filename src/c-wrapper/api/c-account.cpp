@@ -103,11 +103,11 @@ LinphoneCore* linphone_account_get_core(LinphoneAccount *account) {
 	return Account::toCpp(account)->getCore();
 }
 
-LinphoneErrorInfo* linphone_account_get_error_info(LinphoneAccount *account) {
+const LinphoneErrorInfo* linphone_account_get_error_info(LinphoneAccount *account) {
 	return Account::toCpp(account)->getErrorInfo();
 }
 
-LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account) {
+const LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account) {
 	return Account::toCpp(account)->getContactAddress();
 }
 
