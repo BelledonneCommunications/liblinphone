@@ -359,7 +359,7 @@ public class CoreManager {
         stopTimerToResetAutoIterateSchedule();
 
         mCore = null; // To allow the garbage colletor to free the Core
-        sInstance = null;
+        // sInstance = null; Instance will be released in destroy() method, called when C Core finishes to shutdown
     }
 
     public void startAutoIterate() {
