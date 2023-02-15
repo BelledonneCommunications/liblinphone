@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #ifndef _L_CONFERENCE_LISTENER_H_
 #define _L_CONFERENCE_LISTENER_H_
 
+#include <bctoolbox/defs.h>
+
 #include <vector>
 
 #include "event-log/events.h"
@@ -31,15 +33,21 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ConferenceListener {
 public:
-	virtual ~ConferenceListener () = default;
+	virtual ~ConferenceListener() = default;
 
-	virtual void onConferenceCreated (const ConferenceAddress &addr) {}
-	virtual void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) {}
-	virtual void onConferenceTerminated (const IdentityAddress &addr) {}
-	virtual void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) {}
+	virtual void onConferenceCreated(BCTBX_UNUSED(const ConferenceAddress &addr)) {
+	}
+	virtual void onConferenceKeywordsChanged(BCTBX_UNUSED(const std::vector<std::string> &keywords)) {
+	}
+	virtual void onConferenceTerminated(BCTBX_UNUSED(const IdentityAddress &addr)) {
+	}
+	virtual void onSecurityEvent(BCTBX_UNUSED(const std::shared_ptr<ConferenceSecurityEvent> &event)) {
+	}
 
-	virtual void onFirstNotifyReceived (const IdentityAddress &addr) {}
-	virtual void onParticipantsCleared () {}
+	virtual void onFirstNotifyReceived(BCTBX_UNUSED(const IdentityAddress &addr)) {
+	}
+	virtual void onParticipantsCleared() {
+	}
 };
 
 LINPHONE_END_NAMESPACE

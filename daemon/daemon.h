@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,17 +21,17 @@
 #ifndef DAEMON_H_
 #define DAEMON_H_
 
+#include <bctoolbox/list.h>
 #include <linphone/core.h>
 #include <linphone/core_utils.h>
 #include <mediastreamer2/mediastream.h>
 #include <mediastreamer2/mscommon.h>
-#include <bctoolbox/list.h>
 
-#include <string>
 #include <list>
-#include <queue>
 #include <map>
+#include <queue>
 #include <sstream>
+#include <string>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -54,19 +54,20 @@
 #endif
 #endif
 
-
 class Daemon;
 
 class DaemonCommandExample {
 public:
-	DaemonCommandExample(const std::string& command, const std::string& output);
-	~DaemonCommandExample() {}
+	DaemonCommandExample(const std::string &command, const std::string &output);
+	~DaemonCommandExample() {
+	}
 	const std::string &getCommand() const {
 		return mCommand;
 	}
 	const std::string &getOutput() const {
 		return mOutput;
 	}
+
 private:
 	const std::string mCommand;
 	const std::string mOutput;
@@ -75,8 +76,8 @@ private:
 class DaemonCommand {
 public:
 	virtual ~DaemonCommand() = default;
-	virtual void exec(Daemon *app, const std::string& args)=0;
-	bool matches(const std::string& name) const;
+	virtual void exec(Daemon *app, const std::string &args) = 0;
+	bool matches(const std::string &name) const;
 	const std::string getHelp() const;
 	const std::string &getProto() const {
 		return mProto;
@@ -87,10 +88,10 @@ public:
 	const std::vector<std::unique_ptr<const DaemonCommandExample>> &getExamples() const {
 		return mExamples;
 	}
-	void addExample(std::unique_ptr<const DaemonCommandExample>&& example);
+	void addExample(std::unique_ptr<const DaemonCommandExample> &&example);
 
 protected:
-	DaemonCommand(const std::string& name, const std::string& proto, const std::string& description);
+	DaemonCommand(const std::string &name, const std::string &proto, const std::string &description);
 
 	const std::string mName;
 	const std::string mProto;
@@ -101,17 +102,13 @@ protected:
 /*Base class for all kind of responses to commands*/
 class Response {
 public:
-	enum Status {
-		Ok = 0, Error = 1
-	};
+	enum Status { Ok = 0, Error = 1 };
 	virtual ~Response() {
 	}
-	Response() :
-			mStatus(Ok) {
+	Response() : mStatus(Ok) {
 	}
-	Response(const std::string& msg, Status status = Error):
-		mStatus(status) {
-		if( status == Ok) {
+	Response(const std::string &msg, Status status = Error) : mStatus(status) {
+		if (status == Ok) {
 			mBody = msg;
 		} else {
 			mReason = msg;
@@ -121,10 +118,10 @@ public:
 	void setStatus(Status st) {
 		mStatus = st;
 	}
-	void setReason(const std::string& reason) {
+	void setReason(const std::string &reason) {
 		mReason = reason;
 	}
-	void setBody(const std::string& body) {
+	void setBody(const std::string &body) {
 		mBody = body;
 	}
 	const std::string &getBody() const {
@@ -142,23 +139,26 @@ public:
 		}
 		return buf.str();
 	}
+
 private:
 	Status mStatus;
 	std::string mReason;
 	std::string mBody;
 };
 
-/*Base class for all kind of event poping out of the linphonecore. They are posted to the Daemon's event queue with queueEvent().*/
-class Event{
+/*Base class for all kind of event poping out of the linphonecore. They are posted to the Daemon's event queue with
+ * queueEvent().*/
+class Event {
 public:
-	Event(const std::string &eventType, const std::string &body="") : mEventType(eventType), mBody(body){}
-	const std::string &getBody()const{
+	Event(const std::string &eventType, const std::string &body = "") : mEventType(eventType), mBody(body) {
+	}
+	const std::string &getBody() const {
 		return mBody;
 	}
-	void setBody(const std::string &body){
+	void setBody(const std::string &body) {
 		mBody = body;
 	}
-	virtual ~Event(){
+	virtual ~Event() {
 	}
 	virtual std::string toBuf() const {
 		std::ostringstream buf;
@@ -169,6 +169,7 @@ public:
 		}
 		return buf.str();
 	}
+
 protected:
 	const std::string mEventType;
 	std::string mBody;
@@ -179,45 +180,51 @@ public:
 	CallEvent(Daemon *daemon, LinphoneCall *call, LinphoneCallState state);
 };
 
-class CallStatsEvent: public Event {
+class CallStatsEvent : public Event {
 public:
 	CallStatsEvent(Daemon *daemon, LinphoneCall *call, const LinphoneCallStats *stats);
 };
 
-class CallPlayingStatsEvent: public Event {
+class CallPlayingStatsEvent : public Event {
 public:
 	CallPlayingStatsEvent(Daemon *daemon, int id);
 };
 
-
-class DtmfEvent: public Event {
+class DtmfEvent : public Event {
 public:
 	DtmfEvent(Daemon *daemon, LinphoneCall *call, int dtmf);
 };
 
-
-class AudioStreamStatsEvent: public Event {
+class AudioStreamStatsEvent : public Event {
 public:
-	AudioStreamStatsEvent(Daemon *daemon, AudioStream *stream,
-		const LinphoneCallStats *stats);
+	AudioStreamStatsEvent(Daemon *daemon, AudioStream *stream, const LinphoneCallStats *stats);
 };
 
-class PayloadTypeResponse: public Response {
+class PayloadTypeResponse : public Response {
 public:
-	PayloadTypeResponse(LinphoneCore *core, const PayloadType *payloadType, int index = -1, const std::string &prefix = std::string(), bool enabled_status = true);
+	PayloadTypeResponse(LinphoneCore *core,
+	                    const PayloadType *payloadType,
+	                    int index = -1,
+	                    const std::string &prefix = std::string(),
+	                    bool enabled_status = true);
 };
 
 class PayloadTypeParser {
 public:
 	PayloadTypeParser(LinphoneCore *core, const std::string &mime_type, bool accept_all = false);
-	inline bool all() { return mAll; }
-	inline bool successful() { return mSuccesful; }
-	inline PayloadType * getPayloadType()const{
+	inline bool all() {
+		return mAll;
+	}
+	inline bool successful() {
+		return mSuccesful;
+	}
+	inline PayloadType *getPayloadType() const {
 		return mPayloadType;
 	}
-	inline int getPosition()const{
+	inline int getPosition() const {
 		return mPosition;
 	}
+
 private:
 	bool mAll;
 	bool mSuccesful;
@@ -241,9 +248,15 @@ struct AudioStreamAndOther {
 
 class Daemon {
 	friend class DaemonCommand;
+
 public:
 	typedef Response::Status Status;
-	Daemon(const char *config_path, const char *factory_config_path, const char *log_file, const char *pipe_path, bool display_video, bool capture_video);
+	Daemon(const char *config_path,
+	       const char *factory_config_path,
+	       const char *log_file,
+	       const char *pipe_path,
+	       bool display_video,
+	       bool capture_video);
 	~Daemon();
 	int run();
 	void quit();
@@ -251,7 +264,7 @@ public:
 	void queueEvent(Event *resp);
 	LinphoneCore *getCore();
 	LinphoneSoundDaemon *getLSD();
-	const std::list<DaemonCommand*> &getCommandList() const;
+	const std::list<DaemonCommand *> &getCommandList() const;
 	LinphoneCall *findCall(int id);
 	LinphoneProxyConfig *findProxy(int id);
 	LinphoneAuthInfo *findAuthInfo(int id);
@@ -261,8 +274,12 @@ public:
 	bool pullEvent();
 	int updateCallId(LinphoneCall *call);
 	int updateProxyId(LinphoneProxyConfig *proxy);
-	inline int maxProxyId() { return mProxyIds; }
-	inline int maxAuthInfoId()  { return (int)bctbx_list_size(linphone_core_get_auth_info_list(mLc)); }
+	inline int maxProxyId() {
+		return mProxyIds;
+	}
+	inline int maxAuthInfoId() {
+		return (int)bctbx_list_size(linphone_core_get_auth_info_list(mLc));
+	}
 	int updateAudioStreamId(AudioStream *audio_stream);
 	void dumpCommandsHelp();
 	void dumpCommandsHelpHtml();
@@ -270,11 +287,15 @@ public:
 	void enableLSD(bool enabled);
 	void enableAutoAnswer(bool enabled);
 	void callPlayingComplete(int id);
-	void setAutoVideo( bool enabled ){ mAutoVideo = enabled; }
-	inline bool autoVideo(){ return mAutoVideo; }
+	void setAutoVideo(bool enabled) {
+		mAutoVideo = enabled;
+	}
+	inline bool autoVideo() {
+		return mAutoVideo;
+	}
 
 private:
-	static void* iterateThread(void *arg);
+	static void *iterateThread(void *arg);
 	static void callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *msg);
 	static void callStatsUpdated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
 	static void dtmfReceived(LinphoneCore *lc, LinphoneCall *call, int dtmf);
@@ -285,7 +306,7 @@ private:
 	void messageReceived(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 
 	void execCommand(const std::string &command);
-	std::string readLine(const std::string&, bool*);
+	std::string readLine(const std::string &, bool *);
 	std::string readPipe();
 	void iterate();
 	void iterateStreamStats();
@@ -295,8 +316,8 @@ private:
 	void uninitCommands();
 	LinphoneCore *mLc;
 	LinphoneSoundDaemon *mLSD;
-	std::list<DaemonCommand*> mCommands;
-	std::queue<Event*> mEventQueue;
+	std::list<DaemonCommand *> mCommands;
+	std::queue<Event *> mEventQueue;
 	ortp_pipe_t mServerFd;
 	ortp_pipe_t mChildFd;
 	std::string mHistfile;
@@ -310,7 +331,7 @@ private:
 	int mAudioStreamIds;
 	ms_thread_t mThread;
 	ms_mutex_t mMutex;
-	std::map<int, AudioStreamAndOther*> mAudioStreams;
+	std::map<int, AudioStreamAndOther *> mAudioStreams;
 };
 
-#endif //DAEMON_H_
+#endif // DAEMON_H_

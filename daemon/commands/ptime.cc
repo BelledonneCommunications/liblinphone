@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,11 +24,7 @@ using namespace std;
 
 class PtimeResponse : public Response {
 public:
-	enum Direction {
-		Upload = 0,
-		Download = 1,
-		BothDirections = 2
-	};
+	enum Direction { Upload = 0, Download = 1, BothDirections = 2 };
 	PtimeResponse(LinphoneCore *core, Direction dir);
 };
 
@@ -49,24 +45,23 @@ PtimeResponse::PtimeResponse(LinphoneCore *core, Direction dir) : Response() {
 	setBody(ost.str());
 }
 
-PtimeCommand::PtimeCommand() :
-		DaemonCommand("ptime", "ptime [up|down] [<ms>]", "Set the upload or download ptime if ms is defined, otherwise return the current value of the ptime.") {
-	addExample(make_unique<DaemonCommandExample>("ptime up 20",
-						"Status: Ok\n\n"
-						"Upload: 20"));
-	addExample(make_unique<DaemonCommandExample>("ptime down 30",
-						"Status: Ok\n\n"
-						"Download: 30"));
-	addExample(make_unique<DaemonCommandExample>("ptime up",
-						"Status: Ok\n\n"
-						"Upload: 20"));
-	addExample(make_unique<DaemonCommandExample>("ptime",
-						"Status: Ok\n\n"
-						"Upload: 20\n"
-						"Download: 30"));
+PtimeCommand::PtimeCommand()
+    : DaemonCommand(
+          "ptime",
+          "ptime [up|down] [<ms>]",
+          "Set the upload or download ptime if ms is defined, otherwise return the current value of the ptime.") {
+	addExample(make_unique<DaemonCommandExample>("ptime up 20", "Status: Ok\n\n"
+	                                                            "Upload: 20"));
+	addExample(make_unique<DaemonCommandExample>("ptime down 30", "Status: Ok\n\n"
+	                                                              "Download: 30"));
+	addExample(make_unique<DaemonCommandExample>("ptime up", "Status: Ok\n\n"
+	                                                         "Upload: 20"));
+	addExample(make_unique<DaemonCommandExample>("ptime", "Status: Ok\n\n"
+	                                                      "Upload: 20\n"
+	                                                      "Download: 30"));
 }
 
-void PtimeCommand::exec(Daemon *app, const string& args) {
+void PtimeCommand::exec(Daemon *app, const string &args) {
 	string direction;
 	int ms;
 	istringstream ist(args);

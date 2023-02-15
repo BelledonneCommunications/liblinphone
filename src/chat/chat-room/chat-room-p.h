@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,74 +38,80 @@ class IsComposingMessage;
 
 class ChatRoomPrivate : public AbstractChatRoomPrivate, public IsComposingListener {
 public:
-	ChatRoomPrivate (AbstractChatRoom::CapabilitiesMask value) { capabilities = value; }
+	ChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) {
+		capabilities = value;
+	}
 	virtual ~ChatRoomPrivate() = default;
 
-	inline void setProxyChatRoom (AbstractChatRoom *value) { proxyChatRoom = value; }
+	inline void setProxyChatRoom(AbstractChatRoom *value) {
+		proxyChatRoom = value;
+	}
 
-	inline void setCreationTime (time_t creationTime) override {
+	inline void setCreationTime(time_t creationTime) override {
 		this->creationTime = creationTime;
 	}
 
-	inline void setLastUpdateTime (time_t lastUpdateTime) override {
+	inline void setLastUpdateTime(time_t lastUpdateTime) override {
 		this->lastUpdateTime = lastUpdateTime;
 	}
 
-	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
-	void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) override;
-	void sendIsComposingNotification ();
+	void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void onChatMessageSent(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void sendIsComposingNotification();
 
-	void addEvent (const std::shared_ptr<EventLog> &eventLog) override;
+	void addEvent(const std::shared_ptr<EventLog> &eventLog) override;
 
-	void addTransientEvent (const std::shared_ptr<EventLog> &eventLog) override;
-	void removeTransientEvent (const std::shared_ptr<EventLog> &eventLog) override;
+	void addTransientEvent(const std::shared_ptr<EventLog> &eventLog) override;
+	void removeTransientEvent(const std::shared_ptr<EventLog> &eventLog) override;
 
-	void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
-	void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
-	std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages () override;
+	void addTransientChatMessage(const std::shared_ptr<ChatMessage> &message) override;
+	void removeTransientChatMessage(const std::shared_ptr<ChatMessage> &message) override;
+	std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages() override;
 
-	void setIsEmpty (const bool empty) override;
+	void setIsEmpty(const bool empty) override;
 
 	virtual bool isSubscriptionUnderWay() const override;
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
-	std::shared_ptr<ChatMessage> createChatMessage (ChatMessage::Direction direction);
-	std::shared_ptr<ImdnMessage> createImdnMessage (
-		const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
-		const std::list<std::shared_ptr<ChatMessage>> &displayedMessages
-	);
-	std::shared_ptr<ImdnMessage> createImdnMessage (const std::list<Imdn::MessageReason> &nonDeliveredMessages);
-	std::shared_ptr<ImdnMessage> createImdnMessage (const std::shared_ptr<ImdnMessage> &message);
-	std::shared_ptr<IsComposingMessage> createIsComposingMessage ();
-	std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::string &messageId) const;
-	std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::list<std::string> &messageIds) const;
+	std::shared_ptr<ChatMessage> createChatMessage(ChatMessage::Direction direction);
+	std::shared_ptr<ImdnMessage> createImdnMessage(const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
+	                                               const std::list<std::shared_ptr<ChatMessage>> &displayedMessages);
+	std::shared_ptr<ImdnMessage> createImdnMessage(const std::list<Imdn::MessageReason> &nonDeliveredMessages);
+	std::shared_ptr<ImdnMessage> createImdnMessage(const std::shared_ptr<ImdnMessage> &message);
+	std::shared_ptr<IsComposingMessage> createIsComposingMessage();
+	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const std::string &messageId) const;
+	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const std::list<std::string> &messageIds) const;
 
-	void sendDeliveryErrorNotification (const std::shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason);
-	void sendDeliveryNotification (const std::shared_ptr<ChatMessage> &chatMessage);
-	void sendDeliveryNotifications (const std::shared_ptr<ChatMessage> &chatMessage) override;
-	void sendDisplayNotification (const std::shared_ptr<ChatMessage> &chatMessage);
+	void sendDeliveryErrorNotification(const std::shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason);
+	void sendDeliveryNotification(const std::shared_ptr<ChatMessage> &chatMessage);
+	void sendDeliveryNotifications(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void sendDisplayNotification(const std::shared_ptr<ChatMessage> &chatMessage);
 
-	void notifyAggregatedChatMessages () override;
+	void notifyAggregatedChatMessages() override;
 	void notifyMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage);
-	void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
-	void notifyIsComposingReceived (const Address &remoteAddress, bool isComposing);
-	void notifyStateChanged ();
-	void notifyUndecryptableChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void notifyChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void notifyIsComposingReceived(const Address &remoteAddress, bool isComposing);
+	void notifyStateChanged();
+	void notifyUndecryptableChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
-	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
-	void onChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
-	void onImdnReceived (const std::shared_ptr<ChatMessage> &chatMessage);
-	void onIsComposingReceived (const Address &remoteAddress, const std::string &text);
-	void onIsComposingRefreshNeeded () override;
-	void onIsComposingStateChanged (bool isComposing) override;
-	void onIsRemoteComposingStateChanged (const Address &remoteAddress, bool isComposing) override;
+	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) override;
+	void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void onImdnReceived(const std::shared_ptr<ChatMessage> &chatMessage);
+	void onIsComposingReceived(const Address &remoteAddress, const std::string &text);
+	void onIsComposingRefreshNeeded() override;
+	void onIsComposingStateChanged(bool isComposing) override;
+	void onIsRemoteComposingStateChanged(const Address &remoteAddress, bool isComposing) override;
 
-	void realtimeTextReceived (uint32_t character, const std::shared_ptr<Call> &call) override;
-	void setCallId (const std::string &value) override { callId = value; };
+	void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) override;
+	void setCallId(const std::string &value) override {
+		callId = value;
+	};
 
-	Imdn *getImdnHandler () const { return imdnHandler.get(); }
+	Imdn *getImdnHandler() const {
+		return imdnHandler.get();
+	}
 
-	LinphoneChatRoom *getCChatRoom () const;
+	LinphoneChatRoom *getCChatRoom() const;
 
 	std::list<IdentityAddress> remoteIsComposing;
 	std::list<std::shared_ptr<EventLog>> transientEvents;
@@ -120,7 +126,6 @@ protected:
 	std::shared_ptr<ChatMessage> getMessageFromSal(SalOp *op, const SalMessage *message);
 
 private:
-
 	time_t creationTime = std::time(nullptr);
 	time_t lastUpdateTime = std::time(nullptr);
 
@@ -129,7 +134,7 @@ private:
 
 	bool isComposing = false;
 	bool isEmpty = true;
-	
+
 	std::string callId;
 	size_t readCharacterIndex = 0;
 	std::vector<uint32_t> receivedRttCharacters;

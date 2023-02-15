@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,19 +31,15 @@ class ClientGroupToBasicChatRoomPrivate;
 
 class LINPHONE_PUBLIC ClientGroupToBasicChatRoom : public ProxyChatRoom {
 public:
-	ClientGroupToBasicChatRoom (const std::shared_ptr<ChatRoom> &chatRoom);
+	ClientGroupToBasicChatRoom(const std::shared_ptr<ChatRoom> &chatRoom);
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
-	bool addParticipant (
-		const IdentityAddress &participantAddress
-	) override;
+	bool addParticipant(const IdentityAddress &participantAddress) override;
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipants;
-	bool addParticipants (
-		const std::list<IdentityAddress> &addresses
-	) override;
+	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
 
 private:
 	L_DECLARE_PRIVATE(ClientGroupToBasicChatRoom);

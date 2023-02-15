@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,28 +33,28 @@ LINPHONE_BEGIN_NAMESPACE
 
 class FriendPhoneNumber : public bellesip::HybridObject<LinphoneFriendPhoneNumber, FriendPhoneNumber> {
 public:
-    FriendPhoneNumber (const std::string &phoneNumber, const std::string label);
-    FriendPhoneNumber (const std::string &phoneNumber);
+	FriendPhoneNumber(const std::string &phoneNumber, const std::string label);
+	FriendPhoneNumber(const std::string &phoneNumber);
 #ifdef VCARD_ENABLED
-    FriendPhoneNumber (const std::shared_ptr<belcard::BelCardPhoneNumber>& belcardPhoneNumber);
+	FriendPhoneNumber(const std::shared_ptr<belcard::BelCardPhoneNumber> &belcardPhoneNumber);
 #endif
-    FriendPhoneNumber (const FriendPhoneNumber &other);
-	~FriendPhoneNumber ();
+	FriendPhoneNumber(const FriendPhoneNumber &other);
+	~FriendPhoneNumber();
 
-	FriendPhoneNumber* clone () const override;
+	FriendPhoneNumber *clone() const override;
 #ifdef VCARD_ENABLED
-    std::shared_ptr<belcard::BelCardPhoneNumber> toBelcardPhoneNumber() const;
+	std::shared_ptr<belcard::BelCardPhoneNumber> toBelcardPhoneNumber() const;
 #endif
 
-    void setPhoneNumber(const std::string& phoneNumber);
-    const std::string& getPhoneNumber() const;
+	void setPhoneNumber(const std::string &phoneNumber);
+	const std::string &getPhoneNumber() const;
 
-    void setLabel(const std::string& label);
-    const std::string& getLabel() const;
+	void setLabel(const std::string &label);
+	const std::string &getLabel() const;
 
 private:
 	std::string mPhoneNumber;
-    std::string mLabel;
+	std::string mLabel;
 };
 
 LINPHONE_END_NAMESPACE

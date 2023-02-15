@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,8 +25,8 @@
 
 #include <ortp/port.h>
 
-#include "core/core.h"
 #include "core/core-accessor.h"
+#include "core/core.h"
 
 #include "linphone/utils/general.h"
 
@@ -43,26 +43,27 @@ class StunClient : public CoreAccessor {
 	};
 
 public:
-	StunClient (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
+	StunClient(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
+	}
 
-	int run (int audioPort, int videoPort, int textPort);
-	void updateMediaDescription (std::shared_ptr<SalMediaDescription> & md) const;
+	int run(int audioPort, int videoPort, int textPort);
+	void updateMediaDescription(std::shared_ptr<SalMediaDescription> &md) const;
 
-	const Candidate &getAudioCandidate () const {
+	const Candidate &getAudioCandidate() const {
 		return audioCandidate;
 	}
 
-	const Candidate &getVideoCandidate () const {
+	const Candidate &getVideoCandidate() const {
 		return videoCandidate;
 	}
 
-	const Candidate &getTextCandidate () const {
+	const Candidate &getTextCandidate() const {
 		return textCandidate;
 	}
 
-	ortp_socket_t createStunSocket (int localPort);
-	int recvStunResponse (ortp_socket_t sock, Candidate &candidate, int &id);
-	int sendStunRequest (ortp_socket_t sock, const struct sockaddr *server, socklen_t addrlen, int id, bool changeAddr);
+	ortp_socket_t createStunSocket(int localPort);
+	int recvStunResponse(ortp_socket_t sock, Candidate &candidate, int &id);
+	int sendStunRequest(ortp_socket_t sock, const struct sockaddr *server, socklen_t addrlen, int id, bool changeAddr);
 
 private:
 	Candidate audioCandidate;

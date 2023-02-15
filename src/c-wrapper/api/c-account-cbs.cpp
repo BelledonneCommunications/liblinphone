@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,34 +26,33 @@ using namespace LinphonePrivate;
 
 // =============================================================================
 
-LinphoneAccountCbs * linphone_account_cbs_new (void) {
+LinphoneAccountCbs *linphone_account_cbs_new(void) {
 	return AccountCbs::createCObject();
 }
 
-LinphoneAccountCbs * linphone_account_cbs_ref (LinphoneAccountCbs *cbs) {
+LinphoneAccountCbs *linphone_account_cbs_ref(LinphoneAccountCbs *cbs) {
 	AccountCbs::toCpp(cbs)->ref();
 	return cbs;
 }
 
-void linphone_account_cbs_unref (LinphoneAccountCbs *cbs) {
+void linphone_account_cbs_unref(LinphoneAccountCbs *cbs) {
 	AccountCbs::toCpp(cbs)->unref();
 }
 
-void* linphone_account_cbs_get_user_data (const LinphoneAccountCbs *cbs) {
+void *linphone_account_cbs_get_user_data(const LinphoneAccountCbs *cbs) {
 	return AccountCbs::toCpp(cbs)->getUserData();
 }
 
-void linphone_account_cbs_set_user_data (LinphoneAccountCbs *cbs, void *ud) {
+void linphone_account_cbs_set_user_data(LinphoneAccountCbs *cbs, void *ud) {
 	AccountCbs::toCpp(cbs)->setUserData(ud);
 }
 
-LinphoneAccountCbsRegistrationStateChangedCb linphone_account_cbs_get_registration_state_changed (
-	const LinphoneAccountCbs *cbs) {
+LinphoneAccountCbsRegistrationStateChangedCb
+linphone_account_cbs_get_registration_state_changed(const LinphoneAccountCbs *cbs) {
 	return AccountCbs::toCpp(cbs)->getRegistrationStateChanged();
 }
 
-void linphone_account_cbs_set_registration_state_changed (
-	LinphoneAccountCbs *cbs,
-	LinphoneAccountCbsRegistrationStateChangedCb cb) {
+void linphone_account_cbs_set_registration_state_changed(LinphoneAccountCbs *cbs,
+                                                         LinphoneAccountCbsRegistrationStateChangedCb cb) {
 	AccountCbs::toCpp(cbs)->setRegistrationStateChanged(cb);
 }

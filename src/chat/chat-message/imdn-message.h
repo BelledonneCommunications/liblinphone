@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,19 +37,19 @@ public:
 
 	L_OVERRIDE_SHARED_FROM_THIS(ImdnMessage);
 
-	virtual ~ImdnMessage () = default;
+	virtual ~ImdnMessage() = default;
 
 private:
 	struct Context {
-		Context (
-			const std::shared_ptr<AbstractChatRoom> &chatRoom,
-			const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
-			const std::list<std::shared_ptr<ChatMessage>> &displayedMessages
-		) : chatRoom(chatRoom), deliveredMessages(deliveredMessages), displayedMessages(displayedMessages) {}
-		Context (
-			const std::shared_ptr<AbstractChatRoom> &chatRoom,
-			const std::list<Imdn::MessageReason> &nonDeliveredMessages
-		) : chatRoom(chatRoom), nonDeliveredMessages(nonDeliveredMessages) {}
+		Context(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+		        const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
+		        const std::list<std::shared_ptr<ChatMessage>> &displayedMessages)
+		    : chatRoom(chatRoom), deliveredMessages(deliveredMessages), displayedMessages(displayedMessages) {
+		}
+		Context(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+		        const std::list<Imdn::MessageReason> &nonDeliveredMessages)
+		    : chatRoom(chatRoom), nonDeliveredMessages(nonDeliveredMessages) {
+		}
 
 		std::shared_ptr<AbstractChatRoom> chatRoom;
 		std::list<std::shared_ptr<ChatMessage>> deliveredMessages;
@@ -57,17 +57,13 @@ private:
 		std::list<Imdn::MessageReason> nonDeliveredMessages;
 	};
 
-	ImdnMessage (
-		const std::shared_ptr<AbstractChatRoom> &chatRoom,
-		const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
-		const std::list<std::shared_ptr<ChatMessage>> &displayedMessages
-	);
-	ImdnMessage (
-		const std::shared_ptr<AbstractChatRoom> &chatRoom,
-		const std::list<Imdn::MessageReason> &nonDeliveredMessages
-	);
-	ImdnMessage (const std::shared_ptr<ImdnMessage> &message);
-	ImdnMessage (const Context &context);
+	ImdnMessage(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	            const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
+	            const std::list<std::shared_ptr<ChatMessage>> &displayedMessages);
+	ImdnMessage(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	            const std::list<Imdn::MessageReason> &nonDeliveredMessages);
+	ImdnMessage(const std::shared_ptr<ImdnMessage> &message);
+	ImdnMessage(const Context &context);
 
 	L_DECLARE_PRIVATE(ImdnMessage);
 	L_DISABLE_COPY(ImdnMessage);

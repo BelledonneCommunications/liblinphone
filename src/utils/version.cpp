@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,73 +20,75 @@
 
 #include "linphone/utils/utils.h"
 
-#include <vector>
-#include <regex>
 #include <cstring>
+#include <regex>
+#include <vector>
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace Utils{
+namespace Utils {
 
-	constexpr const char *SEMVER = "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$";
+constexpr const char *SEMVER =
+    "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|"
+    "\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$";
 
-	Version::Version(int major, int minor) : mMajor(major), mMinor(minor){
-	}
-
-	Version::Version(int major, int minor, int patch) : mMajor(major), mMinor(minor), mPatch(patch){
-	}
-
-	Version::Version(const std::string &version){
-		const static std::regex semver{SEMVER};
-		std::smatch matches;
-
-		if (std::regex_search(version, matches, semver)) {
-			auto size = matches.size();
-			if (size > 3) {
-				mMajor = atoi(matches[1].str().c_str());
-				mMinor = atoi(matches[2].str().c_str());
-				mPatch = atoi(matches[3].str().c_str());
-			}
-			if (size > 4) {
-				mPreRelease = matches[4].str();
-			}
-			if (size > 5) {
-				mBuildMetaData = matches[5].str();
-			}
-		} else {
-			bctbx_debug("Version [%s] doesn't matches semantic versioning regex", version.c_str());
-			const char *ptr = version.c_str();
-			const char *next;
-			
-			next = strchr(ptr, '.');
-			mMajor = atoi(ptr);
-			ptr = next + 1;
-			next = strchr(ptr, '.');
-			mMinor = atoi(ptr);
-			if (next != NULL) {
-				ptr = next + 1;
-				mPatch = atoi(ptr);
-			}
-		}
-	}
-
-	int Version::compare(const Version &other)const{
-		int tmp = mMajor - other.mMajor;
-		if (tmp == 0) tmp = mMinor - other.mMinor;
-		if (tmp == 0) tmp = mPatch - other.mPatch;
-		
-		// To ensure 1.0.0 > 1.0.0-beta for example
-		if (tmp == 0 && mPreRelease.empty() && !other.mPreRelease.empty()) tmp = 1; 
-		if (tmp == 0 && !mPreRelease.empty() && other.mPreRelease.empty()) tmp = -1;
-
-		if (tmp == 0) tmp = mPreRelease.compare(other.mPreRelease);
-		if (tmp == 0) tmp = mBuildMetaData.compare(other.mBuildMetaData);
-		return tmp;
-	}
-
+Version::Version(int major, int minor) : mMajor(major), mMinor(minor) {
 }
 
-std::ostream &operator<<(std::ostream & ostr, const Utils::Version &version){
+Version::Version(int major, int minor, int patch) : mMajor(major), mMinor(minor), mPatch(patch) {
+}
+
+Version::Version(const std::string &version) {
+	const static std::regex semver{SEMVER};
+	std::smatch matches;
+
+	if (std::regex_search(version, matches, semver)) {
+		auto size = matches.size();
+		if (size > 3) {
+			mMajor = atoi(matches[1].str().c_str());
+			mMinor = atoi(matches[2].str().c_str());
+			mPatch = atoi(matches[3].str().c_str());
+		}
+		if (size > 4) {
+			mPreRelease = matches[4].str();
+		}
+		if (size > 5) {
+			mBuildMetaData = matches[5].str();
+		}
+	} else {
+		bctbx_debug("Version [%s] doesn't matches semantic versioning regex", version.c_str());
+		const char *ptr = version.c_str();
+		const char *next;
+
+		next = strchr(ptr, '.');
+		mMajor = atoi(ptr);
+		ptr = next + 1;
+		next = strchr(ptr, '.');
+		mMinor = atoi(ptr);
+		if (next != NULL) {
+			ptr = next + 1;
+			mPatch = atoi(ptr);
+		}
+	}
+}
+
+int Version::compare(const Version &other) const {
+	int tmp = mMajor - other.mMajor;
+	if (tmp == 0) tmp = mMinor - other.mMinor;
+	if (tmp == 0) tmp = mPatch - other.mPatch;
+
+	// To ensure 1.0.0 > 1.0.0-beta for example
+	if (tmp == 0 && mPreRelease.empty() && !other.mPreRelease.empty()) tmp = 1;
+	if (tmp == 0 && !mPreRelease.empty() && other.mPreRelease.empty()) tmp = -1;
+
+	if (tmp == 0) tmp = mPreRelease.compare(other.mPreRelease);
+	if (tmp == 0) tmp = mBuildMetaData.compare(other.mBuildMetaData);
+	return tmp;
+}
+
+} // namespace Utils
+
+std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version) {
 	ostr << version.getMajor() << "." << version.getMinor();
 	if (version.getPatch() != 0) ostr << "." << version.getPatch();
 	if (!version.getPreRelease().empty()) ostr << "-" << version.getPreRelease();
@@ -95,4 +97,3 @@ std::ostream &operator<<(std::ostream & ostr, const Utils::Version &version){
 }
 
 LINPHONE_END_NAMESPACE
-

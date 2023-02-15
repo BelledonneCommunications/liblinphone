@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <bctoolbox/defs.h>
 
 #ifdef __APPLE__
 #include "TargetConditionals.h"
@@ -66,11 +67,11 @@ public:
 	string getWifiSSID() override;
 	void setWifiSSID(const string &ssid) override;
 
-	void setVideoPreviewWindow (void *windowId) override {}
+	void setVideoPreviewWindow (BCTBX_UNUSED(void *windowId)) override {}
 	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
-	void setVideoWindow (void *windowId) override {}
-	void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) override {};
-	void resizeVideoPreview (int width, int height) override {}
+	void setVideoWindow (BCTBX_UNUSED(void *windowId)) override {}
+	void setParticipantDeviceVideoWindow(BCTBX_UNUSED(const LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void* windowId)) override {};
+	void resizeVideoPreview (BCTBX_UNUSED(int width), BCTBX_UNUSED(int height)) override {}
 
 	void onWifiOnlyEnabled (bool enabled) override;
 	bool isActiveNetworkWifiOnlyCompliant () const override;
@@ -124,7 +125,7 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 // =============================================================================
 
 
-IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : MacPlatformHelpers(core) {
+IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, BCTBX_UNUSED(void *systemContext)) : MacPlatformHelpers(core) {
 	mUseAppDelgate = core->getCCore()->is_main_core;
 	if (mUseAppDelgate) {
 		mAppDelegate = [[IosAppDelegate alloc] initWithCore:core];
@@ -189,7 +190,7 @@ void IosPlatformHelpers::stopRinging () const {
 	
 }
 
-void IosPlatformHelpers::setDeviceRotation (int orientation) const {
+void IosPlatformHelpers::setDeviceRotation (BCTBX_UNUSED(int orientation)) const {
 
 }
 
@@ -360,7 +361,7 @@ void IosPlatformHelpers::stopNetworkMonitoring(void) {
 }
 
 //This callback keeps tracks of wifi SSID changes
-static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+static void sNetworkChangeCallback(BCTBX_UNUSED(CFNotificationCenterRef center), void *observer, BCTBX_UNUSED(CFStringRef name), BCTBX_UNUSED(const void *object), BCTBX_UNUSED(CFDictionaryRef userInfo)) {
 	if (!observer) {
 		return;
 	}

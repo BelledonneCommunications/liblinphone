@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,13 +39,11 @@ static void flexiapiPing() {
 	int code = 0;
 	int fetched = 0;
 
-	flexiAPIClient
-		->ping()
-		->then([&resolvedContent, &code, &fetched](FlexiAPIClient::Response response) {
-			resolvedContent = response.body;
-			code = response.code;
-			fetched = 1;
-		});
+	flexiAPIClient->ping()->then([&resolvedContent, &code, &fetched](FlexiAPIClient::Response response) {
+		resolvedContent = response.body;
+		code = response.code;
+		fetched = 1;
+	});
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 
@@ -65,12 +63,10 @@ static void flexiapiAccounts() {
 	string resolvedDomain;
 
 	// Unauthenticated
-	flexiAPIClient
-		->me()
-		->then([&code, &fetched](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-		});
+	flexiAPIClient->me()->then([&code, &fetched](FlexiAPIClient::Response response) {
+		code = response.code;
+		fetched = 1;
+	});
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 
@@ -82,13 +78,11 @@ static void flexiapiAccounts() {
 	fetched = 0;
 
 	// Authenticated
-	flexiAPIClient
-		->me()
-		->then([&code, &fetched, &resolvedDomain](FlexiAPIClient::Response response) {
-			code = response.code;
-			resolvedDomain = response.json()["domain"].asString();
-			fetched = 1;
-		});
+	flexiAPIClient->me()->then([&code, &fetched, &resolvedDomain](FlexiAPIClient::Response response) {
+		code = response.code;
+		resolvedDomain = response.json()["domain"].asString();
+		fetched = 1;
+	});
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -96,7 +90,7 @@ static void flexiapiAccounts() {
 
 	linphone_core_manager_destroy(marie);
 }
-#if 0 //echoue en permanence sur master du 1/10/2021
+#if 0 // echoue en permanence sur master du 1/10/2021
 static void flexiapiChangeEmail() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 
@@ -137,13 +131,12 @@ static void flexiapiCreateAccount() {
 	bool activated = true;
 
 	// Create the account
-	flexiAPIClient
-		->adminAccountCreate(username, "test", "MD5", activated)
-		->then([&code, &fetched, &id](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-			id = response.json()["id"].asInt();
-		});
+	flexiAPIClient->adminAccountCreate(username, "test", "MD5", activated)
+	    ->then([&code, &fetched, &id](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+		    id = response.json()["id"].asInt();
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -154,14 +147,13 @@ static void flexiapiCreateAccount() {
 	bool resolvedActivated;
 
 	// Request it
-	flexiAPIClient
-		->adminAccount(id)
-		->then([&code, &fetched, &resolvedUsername, &resolvedActivated](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-			resolvedUsername = response.json()["username"].asString();
-			resolvedActivated = response.json()["activated"].asBool();
-		});
+	flexiAPIClient->adminAccount(id)->then(
+	    [&code, &fetched, &resolvedUsername, &resolvedActivated](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+		    resolvedUsername = response.json()["username"].asString();
+		    resolvedActivated = response.json()["activated"].asBool();
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -172,12 +164,10 @@ static void flexiapiCreateAccount() {
 	fetched = 0;
 
 	// Destroy it
-	flexiAPIClient
-		->adminAccountDelete(id)
-		->then([&code, &fetched](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-		});
+	flexiAPIClient->adminAccountDelete(id)->then([&code, &fetched](FlexiAPIClient::Response response) {
+		code = response.code;
+		fetched = 1;
+	});
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -190,14 +180,11 @@ static void flexiapiChangePassword() {
 
 	// Resolve the password
 	LinphoneAddress *identityAddress = linphone_address_new(linphone_core_get_identity(pauline->lc));
-	LinphoneAuthInfo *authInfo = (LinphoneAuthInfo*)linphone_core_find_auth_info(
-		pauline->lc,
-		linphone_address_get_domain(identityAddress),
-		linphone_address_get_username(identityAddress),
-		NULL
-	);
+	LinphoneAuthInfo *authInfo =
+	    (LinphoneAuthInfo *)linphone_core_find_auth_info(pauline->lc, linphone_address_get_domain(identityAddress),
+	                                                     linphone_address_get_username(identityAddress), NULL);
 
-	const char* password = linphone_auth_info_get_password(authInfo);
+	const char *password = linphone_auth_info_get_password(authInfo);
 	BC_ASSERT_PTR_NOT_NULL(password);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(pauline->lc);
@@ -206,12 +193,11 @@ static void flexiapiChangePassword() {
 	int fetched = 0;
 	string resolvedDomain;
 
-	flexiAPIClient
-		->accountPasswordChange("MD5", "new_password", password)
-		->then([&code, &fetched](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-		});
+	flexiAPIClient->accountPasswordChange("MD5", "new_password", password)
+	    ->then([&code, &fetched](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+	    });
 
 	wait_for_until(pauline->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -220,17 +206,18 @@ static void flexiapiChangePassword() {
 	linphone_core_manager_destroy(pauline);
 }
 
-test_t flexiapiclient_tests[] = {
-	TEST_NO_TAG("Ping", flexiapiPing),
-	TEST_NO_TAG("Create Account", flexiapiCreateAccount),
-	TEST_NO_TAG("Accounts", flexiapiAccounts),
-#if 0 //echoue en permanence sur master du 1/10/2021
+test_t flexiapiclient_tests[] = {TEST_NO_TAG("Ping", flexiapiPing),
+                                 TEST_NO_TAG("Create Account", flexiapiCreateAccount),
+                                 TEST_NO_TAG("Accounts", flexiapiAccounts),
+#if 0 // echoue en permanence sur master du 1/10/2021
 	TEST_NO_TAG("Change Email", flexiapiChangeEmail),
 #endif
-	TEST_NO_TAG("Change Password", flexiapiChangePassword)
-};
+                                 TEST_NO_TAG("Change Password", flexiapiChangePassword)};
 
-test_suite_t flexiapiclient_suite = {
-	"FlexiAPI Client", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(flexiapiclient_tests) / sizeof(flexiapiclient_tests[0]), flexiapiclient_tests
-};
+test_suite_t flexiapiclient_suite = {"FlexiAPI Client",
+                                     NULL,
+                                     NULL,
+                                     liblinphone_tester_before_each,
+                                     liblinphone_tester_after_each,
+                                     sizeof(flexiapiclient_tests) / sizeof(flexiapiclient_tests[0]),
+                                     flexiapiclient_tests};

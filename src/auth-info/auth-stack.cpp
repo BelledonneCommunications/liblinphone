@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+
+#include <bctoolbox/defs.h>
+
 #include "auth-stack.h"
 
 #include "account/account.h"
@@ -25,54 +29,52 @@
 
 #include "private_functions.h"
 
-#include <algorithm>
-
-using namespace::std;
+using namespace ::std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-AuthStack::AuthStack(CorePrivate & core) : mCore(core){
+AuthStack::AuthStack(CorePrivate &core) : mCore(core) {
 }
 
-AuthStack::~AuthStack(){
-	if (mTimer){
+AuthStack::~AuthStack() {
+	if (mTimer) {
 		mCore.getSal()->cancelTimer(mTimer);
 		belle_sip_object_unref(mTimer);
 		mTimer = nullptr;
 	}
 }
 
-void AuthStack::pushAuthRequested(const std::shared_ptr<AuthInfo> &ai){
+void AuthStack::pushAuthRequested(const std::shared_ptr<AuthInfo> &ai) {
 	if (mAuthBeingRequested || !ai) return;
 	lInfo() << "AuthRequested pushed";
-	auto authIndex = std::find_if(mAuthQueue.begin(), mAuthQueue.end(), [&ai](std::shared_ptr<AuthInfo> auth){return ai->isEqualButAlgorithms(&(*auth));});
-	if(authIndex == mAuthQueue.end())
-		mAuthQueue.push_back(ai);
-	else// Get the ai algorithm and add it to the list of the Authinfo that match identities
+	auto authIndex = std::find_if(mAuthQueue.begin(), mAuthQueue.end(),
+	                              [&ai](std::shared_ptr<AuthInfo> auth) { return ai->isEqualButAlgorithms(&(*auth)); });
+	if (authIndex == mAuthQueue.end()) mAuthQueue.push_back(ai);
+	else // Get the ai algorithm and add it to the list of the Authinfo that match identities
 		(*authIndex)->addAvailableAlgorithm(ai->getAlgorithm());
-	if (!mTimer){
+	if (!mTimer) {
 		mTimer = mCore.getSal()->createTimer(&onTimeout, this, 0, "authentication requests");
 	}
 }
 
-void AuthStack::authFound(const std::shared_ptr<AuthInfo> &ai){
+void AuthStack::authFound(const std::shared_ptr<AuthInfo> &ai) {
 	lInfo() << "AuthStack::authFound() for " << ai->toString();
 	mAuthFound.push_back(ai);
-	if (!mTimer){
+	if (!mTimer) {
 		mTimer = mCore.getSal()->createTimer(&onTimeout, this, 0, "authentication requests");
 	}
 }
 
-void AuthStack::notifyAuthFailures(){
+void AuthStack::notifyAuthFailures() {
 	auto pendingAuths = mCore.getSal()->getPendingAuths();
 	for (const auto &op : pendingAuths) {
 		const bctbx_list_t *elem;
 		/*proxy case*/
 		for (elem = linphone_core_get_account_list(mCore.getCCore()); elem != NULL; elem = elem->next) {
-			LinphoneAccount *acc = (LinphoneAccount*)elem->data;
+			LinphoneAccount *acc = (LinphoneAccount *)elem->data;
 			if (acc == op->getUserPointer()) {
-				const SalErrorInfo *ei=op->getErrorInfo();
-				const char *details=ei->full_string;
+				const SalErrorInfo *ei = op->getErrorInfo();
+				const char *details = ei->full_string;
 				Account::toCpp(acc)->setState(LinphoneRegistrationFailed, details);
 				break;
 			}
@@ -80,11 +82,10 @@ void AuthStack::notifyAuthFailures(){
 	}
 }
 
-bool AuthStack::wasFound(const std::shared_ptr<AuthInfo>& authInfo){
-	for (auto &ai : mAuthFound){
-		if (authInfo->getRealm() == ai->getRealm() &&
-			authInfo->getUsername() == ai->getUsername() &&
-			authInfo->getDomain() == ai->getDomain()){
+bool AuthStack::wasFound(const std::shared_ptr<AuthInfo> &authInfo) {
+	for (auto &ai : mAuthFound) {
+		if (authInfo->getRealm() == ai->getRealm() && authInfo->getUsername() == ai->getUsername() &&
+		    authInfo->getDomain() == ai->getDomain()) {
 			lInfo() << "Authentication request not needed.";
 			return true;
 		}
@@ -92,24 +93,25 @@ bool AuthStack::wasFound(const std::shared_ptr<AuthInfo>& authInfo){
 	return false;
 }
 
-void AuthStack::processAuthRequested(){
-	/* The auth_info_requested() callback may cause the application to directly call linphone_core_add_auth_info(), which
-	 * will re-invoke the auth_requsted callback of the SAL, which may call authFound() here.
-	 * The mAuthBeingRequested flag is to inhinit this behavior.
+void AuthStack::processAuthRequested() {
+	/* The auth_info_requested() callback may cause the application to directly call linphone_core_add_auth_info(),
+	 * which will re-invoke the auth_requsted callback of the SAL, which may call authFound() here. The
+	 * mAuthBeingRequested flag is to inhinit this behavior.
 	 */
 	mAuthBeingRequested = true;
-	
-	for(const auto &authInfo : mAuthQueue){
-		if (!wasFound(authInfo)){
+
+	for (const auto &authInfo : mAuthQueue) {
+		if (!wasFound(authInfo)) {
 			linphone_core_notify_authentication_requested(mCore.getCCore(), authInfo->toC(), LinphoneAuthHttpDigest);
 			// Deprecated callback:
-			linphone_core_notify_auth_info_requested(mCore.getCCore(), authInfo->getRealm().c_str(), authInfo->getUsername().c_str(), authInfo->getDomain().c_str());
+			linphone_core_notify_auth_info_requested(mCore.getCCore(), authInfo->getRealm().c_str(),
+			                                         authInfo->getUsername().c_str(), authInfo->getDomain().c_str());
 		}
 	}
 	notifyAuthFailures();
 	mAuthQueue.clear();
 	mAuthFound.clear();
-	if (mTimer){
+	if (mTimer) {
 		mCore.getSal()->cancelTimer(mTimer);
 		belle_sip_object_unref(mTimer);
 		mTimer = nullptr;
@@ -117,11 +119,10 @@ void AuthStack::processAuthRequested(){
 	mAuthBeingRequested = false;
 }
 
-int AuthStack::onTimeout(void *data, unsigned int events){
-	AuthStack *zis = static_cast<AuthStack*>(data);
+int AuthStack::onTimeout(void *data, BCTBX_UNUSED(unsigned int events)) {
+	AuthStack *zis = static_cast<AuthStack *>(data);
 	zis->processAuthRequested();
 	return BELLE_SIP_STOP;
 }
-
 
 LINPHONE_END_NAMESPACE

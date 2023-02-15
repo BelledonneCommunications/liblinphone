@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,15 +29,29 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LegacyEncryptionEngine : public EncryptionEngine {
 public:
-	LegacyEncryptionEngine (const std::shared_ptr<Core> &core);
+	LegacyEncryptionEngine(const std::shared_ptr<Core> &core);
 
-	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	bool isEncryptionEnabledForFileTransfer (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
-	void generateFileTransferKey (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message, FileTransferContent *fileTransferContent) override;
-	int downloadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer, FileTransferContent *fileTransferContent) override;
-	int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer, FileTransferContent *fileTransferContent) override;
-	int cancelFileTransfer (FileTransferContent *fileTransferContent) override;
+	ChatMessageModifier::Result processIncomingMessage(const std::shared_ptr<ChatMessage> &message,
+	                                                   int &errorCode) override;
+	ChatMessageModifier::Result processOutgoingMessage(const std::shared_ptr<ChatMessage> &message,
+	                                                   int &errorCode) override;
+	bool isEncryptionEnabledForFileTransfer(const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
+	void generateFileTransferKey(const std::shared_ptr<AbstractChatRoom> &ChatRoom,
+	                             const std::shared_ptr<ChatMessage> &message,
+	                             FileTransferContent *fileTransferContent) override;
+	int downloadingFile(const std::shared_ptr<ChatMessage> &message,
+	                    size_t offset,
+	                    const uint8_t *buffer,
+	                    size_t size,
+	                    uint8_t *decrypted_buffer,
+	                    FileTransferContent *fileTransferContent) override;
+	int uploadingFile(const std::shared_ptr<ChatMessage> &message,
+	                  size_t offset,
+	                  const uint8_t *buffer,
+	                  size_t *size,
+	                  uint8_t *encrypted_buffer,
+	                  FileTransferContent *fileTransferContent) override;
+	int cancelFileTransfer(FileTransferContent *fileTransferContent) override;
 };
 
 LINPHONE_END_NAMESPACE

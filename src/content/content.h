@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -40,67 +40,68 @@ class Header;
 
 class LINPHONE_PUBLIC Content : public ClonableObject, public AppDataContainer {
 public:
-	Content ();
-	Content (const Content &other);
-	Content (Content &&other);
-	~Content ();
+	Content();
+	Content(const Content &other);
+	Content(Content &&other);
+	~Content();
 
-	Content* clone () const override {
+	Content *clone() const override {
 		return new Content(*this);
 	}
 
-	Content &operator= (const Content &other);
-	Content &operator= (Content &&other);
+	Content &operator=(const Content &other);
+	Content &operator=(Content &&other);
 
-	bool operator== (const Content &other) const;
+	bool operator==(const Content &other) const;
 
 	void copy(const Content &other);
-	
-	/* This accessor returns a modifiable ContentType, which is useful to add parameters to an already constructed Content */
+
+	/* This accessor returns a modifiable ContentType, which is useful to add parameters to an already constructed
+	 * Content */
 	ContentType &getContentType();
-	const ContentType &getContentType () const;
-	void setContentType (const ContentType &contentType);
+	const ContentType &getContentType() const;
+	void setContentType(const ContentType &contentType);
 
-	const ContentDisposition &getContentDisposition () const;
-	void setContentDisposition (const ContentDisposition &contentDisposition);
+	const ContentDisposition &getContentDisposition() const;
+	void setContentDisposition(const ContentDisposition &contentDisposition);
 
-	const std::string &getContentEncoding () const;
-	void setContentEncoding (const std::string &contentEncoding);
+	const std::string &getContentEncoding() const;
+	void setContentEncoding(const std::string &contentEncoding);
 
-	const std::vector<char> &getBody () const;
-	std::string getBodyAsString () const;
-	std::string getBodyAsUtf8String () const;
+	const std::vector<char> &getBody() const;
+	std::string getBodyAsString() const;
+	std::string getBodyAsUtf8String() const;
 
-	void setBody (const std::vector<char> &body);
-	void setBody (std::vector<char> &&body);
-	void setBodyFromLocale (const std::string &body);
-	void setBody (const void *buffer, size_t size);
-	void setBodyFromUtf8 (const std::string &body);
+	void setBody(const std::vector<char> &body);
+	void setBody(std::vector<char> &&body);
+	void setBodyFromLocale(const std::string &body);
+	void setBody(const void *buffer, size_t size);
+	void setBodyFromUtf8(const std::string &body);
 
-	size_t getSize () const;
+	size_t getSize() const;
 
-	bool isValid () const;
-	bool isMultipart () const;
-	bool isEmpty () const;
+	bool isValid() const;
+	bool isMultipart() const;
+	bool isEmpty() const;
 
-	virtual bool isFile () const;
-	virtual bool isFileTransfer () const;
+	virtual bool isFile() const;
+	virtual bool isFileTransfer() const;
 
-	const std::list<Header> &getHeaders () const;
-	const Header &getHeader (const std::string &headerName) const;
-	void addHeader (const std::string &headerName, const std::string &headerValue);
-	void addHeader (const Header &header);
-	void removeHeader (const std::string &headerName);
-	std::list<Header>::const_iterator findHeader (const std::string &headerName) const;
+	const std::list<Header> &getHeaders() const;
+	const Header &getHeader(const std::string &headerName) const;
+	void addHeader(const std::string &headerName, const std::string &headerValue);
+	void addHeader(const Header &header);
+	void removeHeader(const std::string &headerName);
+	std::list<Header>::const_iterator findHeader(const std::string &headerName) const;
 
 	void setUserData(const Variant &userData);
 	Variant getUserData() const;
 
 protected:
-	explicit Content (ContentPrivate &p);
+	explicit Content(ContentPrivate &p);
 
-	bool isFileEncrypted (const std::string& filePath) const;
-	const std::string exportPlainFileFromEncryptedFile (const std::string& filePath) const;
+	bool isFileEncrypted(const std::string &filePath) const;
+	const std::string exportPlainFileFromEncryptedFile(const std::string &filePath) const;
 
 private:
 	L_DECLARE_PRIVATE(Content);

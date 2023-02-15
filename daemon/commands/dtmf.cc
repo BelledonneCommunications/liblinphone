@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,17 +22,15 @@
 
 using namespace std;
 
-DtmfCommand::DtmfCommand() :
-		DaemonCommand("dtmf", "dtmf <digit>", "Generate a DTMF (one of 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, *, #).") {
-	addExample(make_unique<DaemonCommandExample>("dtmf 4",
-						"Status: Ok"));
-	addExample(make_unique<DaemonCommandExample>("dtmf B",
-						"Status: Ok"));
-	addExample(make_unique<DaemonCommandExample>("dtmf #",
-						"Status: Ok"));
+DtmfCommand::DtmfCommand()
+    : DaemonCommand(
+          "dtmf", "dtmf <digit>", "Generate a DTMF (one of 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, *, #).") {
+	addExample(make_unique<DaemonCommandExample>("dtmf 4", "Status: Ok"));
+	addExample(make_unique<DaemonCommandExample>("dtmf B", "Status: Ok"));
+	addExample(make_unique<DaemonCommandExample>("dtmf #", "Status: Ok"));
 }
 
-void DtmfCommand::exec(Daemon *app, const string& args) {
+void DtmfCommand::exec(Daemon *app, const string &args) {
 	string digit_str;
 	char digit;
 	istringstream ist(args);
@@ -43,7 +41,8 @@ void DtmfCommand::exec(Daemon *app, const string& args) {
 	}
 
 	digit = digit_str.at(0);
-	if (isdigit(digit) || (digit == 'A') || (digit == 'B') || (digit == 'C') || (digit == 'D') || (digit == '*') || (digit == '#')) {
+	if (isdigit(digit) || (digit == 'A') || (digit == 'B') || (digit == 'C') || (digit == 'D') || (digit == '*') ||
+	    (digit == '#')) {
 		LinphoneCall *call = linphone_core_get_current_call(app->getCore());
 		linphone_core_play_dtmf(app->getCore(), digit, 200);
 		if (call != NULL) {

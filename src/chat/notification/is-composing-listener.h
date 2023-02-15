@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,9 +33,9 @@ class IsComposingListener {
 public:
 	virtual ~IsComposingListener() = default;
 
-	virtual void onIsComposingStateChanged (bool isComposing) = 0;
-	virtual void onIsRemoteComposingStateChanged (const Address &remoteAddr, bool isComposing) = 0;
-	virtual void onIsComposingRefreshNeeded () = 0;
+	virtual void onIsComposingStateChanged(bool isComposing) = 0;
+	virtual void onIsRemoteComposingStateChanged(const Address &remoteAddr, bool isComposing) = 0;
+	virtual void onIsComposingRefreshNeeded() = 0;
 };
 
 LINPHONE_END_NAMESPACE

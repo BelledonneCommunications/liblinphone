@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,14 +34,12 @@ public:
 
 	L_OVERRIDE_SHARED_FROM_THIS(IsComposingMessage);
 
-	virtual ~IsComposingMessage () = default;
+	virtual ~IsComposingMessage() = default;
 
 private:
-	IsComposingMessage (
-		const std::shared_ptr<AbstractChatRoom> &chatRoom,
-		IsComposing &isComposingHandler,
-		bool isComposing
-	);
+	IsComposingMessage(const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	                   IsComposing &isComposingHandler,
+	                   bool isComposing);
 
 	L_DECLARE_PRIVATE(NotificationMessage);
 	L_DISABLE_COPY(IsComposingMessage);

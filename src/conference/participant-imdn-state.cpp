@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,16 +26,18 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-ParticipantImdnState::ParticipantImdnState (const shared_ptr<Participant> &participant, ChatMessage::State state, time_t stateChangeTime)
-	: ClonableObject(*new ParticipantImdnStatePrivate)
-{
+ParticipantImdnState::ParticipantImdnState(const shared_ptr<Participant> &participant,
+                                           ChatMessage::State state,
+                                           time_t stateChangeTime)
+    : ClonableObject(*new ParticipantImdnStatePrivate) {
 	L_D();
 	d->participant = participant;
 	d->state = state;
 	d->stateChangeTime = stateChangeTime;
 }
 
-ParticipantImdnState::ParticipantImdnState(const ParticipantImdnState &other) : ClonableObject(*new ParticipantImdnStatePrivate) {
+ParticipantImdnState::ParticipantImdnState(const ParticipantImdnState &other)
+    : ClonableObject(*new ParticipantImdnStatePrivate) {
 	L_D();
 	d->participant = other.getParticipant();
 	d->state = other.getState();
@@ -44,17 +46,17 @@ ParticipantImdnState::ParticipantImdnState(const ParticipantImdnState &other) : 
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<Participant> ParticipantImdnState::getParticipant () const {
+shared_ptr<Participant> ParticipantImdnState::getParticipant() const {
 	L_D();
 	return d->participant;
 }
 
-ChatMessage::State ParticipantImdnState::getState () const {
+ChatMessage::State ParticipantImdnState::getState() const {
 	L_D();
 	return d->state;
 }
 
-time_t ParticipantImdnState::getStateChangeTime () const {
+time_t ParticipantImdnState::getStateChangeTime() const {
 	L_D();
 	return d->stateChangeTime;
 }

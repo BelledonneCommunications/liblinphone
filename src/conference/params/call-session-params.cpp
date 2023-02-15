@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,13 +18,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/c-wrapper.h"
 #include "call-session-params-p.h"
 #include "call-session-params.h"
 #include "core/core-p.h"
 
-#include "linphone/proxy_config.h"
 #include "linphone/core.h"
+#include "linphone/proxy_config.h"
 
 using namespace std;
 
@@ -32,7 +34,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
+void CallSessionParamsPrivate::clone(const CallSessionParamsPrivate *src) {
 	sessionName = src->sessionName;
 	privacy = src->privacy;
 	inConference = src->inConference;
@@ -51,13 +53,13 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	endTime = src->endTime;
 	conferenceVideoLayout = src->conferenceVideoLayout;
 	description = src->description;
-	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
+	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more
+	 * efficient. */
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);
 		customHeaders = nullptr;
 	}
-	if (src->customHeaders)
-		customHeaders = sal_custom_header_clone(src->customHeaders);
+	if (src->customHeaders) customHeaders = sal_custom_header_clone(src->customHeaders);
 	customContactParameters = src->customContactParameters;
 	referer = src->referer;
 	customContents = src->customContents;
@@ -85,31 +87,31 @@ void CallSessionParamsPrivate::setDescription(std::string desc) {
 	description = desc;
 }
 
-const std::string & CallSessionParamsPrivate::getDescription() const {
+const std::string &CallSessionParamsPrivate::getDescription() const {
 	return description;
 }
 
-bool CallSessionParamsPrivate::isConferenceCreation () const {
+bool CallSessionParamsPrivate::isConferenceCreation() const {
 	return conferenceCreation;
 }
 
-void CallSessionParamsPrivate::setConferenceCreation (const bool enable) {
+void CallSessionParamsPrivate::setConferenceCreation(const bool enable) {
 	conferenceCreation = enable;
 }
 
-bool CallSessionParamsPrivate::capabilityNegotiationReInviteEnabled () const {
+bool CallSessionParamsPrivate::capabilityNegotiationReInviteEnabled() const {
 	return capabilityNegotiationReInvite;
 }
 
-void CallSessionParamsPrivate::enableCapabilityNegotiationReInvite (const bool enable) {
+void CallSessionParamsPrivate::enableCapabilityNegotiationReInvite(const bool enable) {
 	capabilityNegotiationReInvite = enable;
 }
 
-bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
+bool CallSessionParamsPrivate::capabilityNegotiationEnabled() const {
 	return capabilityNegotiation;
 }
 
-void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
+void CallSessionParamsPrivate::enableCapabilityNegotiation(const bool enable) {
 	capabilityNegotiation = enable;
 }
 
@@ -121,7 +123,7 @@ bool CallSessionParamsPrivate::cfgLinesMerged() const {
 	return false;
 }
 
-void CallSessionParamsPrivate::enableCfgLinesMerging (const bool enable) {
+void CallSessionParamsPrivate::enableCfgLinesMerging(const bool enable) {
 	mergeCfgLines = enable;
 }
 
@@ -133,7 +135,7 @@ bool CallSessionParamsPrivate::tcapLinesMerged() const {
 	return false;
 }
 
-void CallSessionParamsPrivate::enableTcapLineMerging (const bool enable) {
+void CallSessionParamsPrivate::enableTcapLineMerging(const bool enable) {
 	mergeTcapLines = enable;
 }
 
@@ -150,8 +152,8 @@ const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedE
 	}
 
 	std::list<LinphoneMediaEncryption> encEnumList;
-	bctbx_list_t * encList = linphone_core_get_supported_media_encryptions_at_compile_time();
-	for(bctbx_list_t * enc = encList;enc!=NULL;enc=enc->next){
+	bctbx_list_t *encList = linphone_core_get_supported_media_encryptions_at_compile_time();
+	for (bctbx_list_t *enc = encList; enc != NULL; enc = enc->next) {
 		const auto encEnum = static_cast<LinphoneMediaEncryption>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(enc)));
 		// Do not add ZRTP if it is not supported by core even though the core was compile with it on
 		if ((encEnum != LinphoneMediaEncryptionZRTP) || ((encEnum == LinphoneMediaEncryptionZRTP) && !disallowZrtp)) {
@@ -166,57 +168,53 @@ const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedE
 	return encEnumList;
 }
 
-void CallSessionParamsPrivate::setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions) {
+void CallSessionParamsPrivate::setSupportedEncryptions(const std::list<LinphoneMediaEncryption> encryptions) {
 	supportedEncryptions = encryptions;
 }
 
-
-SalCustomHeader * CallSessionParamsPrivate::getCustomHeaders () const {
+SalCustomHeader *CallSessionParamsPrivate::getCustomHeaders() const {
 	return customHeaders;
 }
 
-void CallSessionParamsPrivate::setCustomHeaders (const SalCustomHeader *ch) {
+void CallSessionParamsPrivate::setCustomHeaders(const SalCustomHeader *ch) {
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);
 		customHeaders = nullptr;
 	}
-	if (ch)
-		customHeaders = sal_custom_header_clone(ch);
+	if (ch) customHeaders = sal_custom_header_clone(ch);
 }
 
 // =============================================================================
 
-CallSessionParams::CallSessionParams () : ClonableObject(*new CallSessionParamsPrivate) {}
+CallSessionParams::CallSessionParams() : ClonableObject(*new CallSessionParamsPrivate) {
+}
 
-CallSessionParams::CallSessionParams (CallSessionParamsPrivate &p) : ClonableObject(p) {
+CallSessionParams::CallSessionParams(CallSessionParamsPrivate &p) : ClonableObject(p) {
 	L_D();
 	d->account = p.account;
 }
 
-CallSessionParams::CallSessionParams (const CallSessionParams &other)
-	: ClonableObject(*new CallSessionParamsPrivate) {
+CallSessionParams::CallSessionParams(const CallSessionParams &other) : ClonableObject(*new CallSessionParamsPrivate) {
 	L_D();
 	d->clone(other.getPrivate());
 }
 
-CallSessionParams::~CallSessionParams () {
+CallSessionParams::~CallSessionParams() {
 	L_D();
-	if (d->customHeaders)
-		sal_custom_header_free(d->customHeaders);
+	if (d->customHeaders) sal_custom_header_free(d->customHeaders);
 }
 
-CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other) {
+CallSessionParams &CallSessionParams::operator=(const CallSessionParams &other) {
 	L_D();
-	if (this != &other)
-		d->clone(other.getPrivate());
+	if (this != &other) d->clone(other.getPrivate());
 	return *this;
 }
 
 // -----------------------------------------------------------------------------
 
-void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
+void CallSessionParams::initDefault(const std::shared_ptr<Core> &core, BCTBX_UNUSED(LinphoneCallDir dir)) {
 	L_D();
-	const auto & cCore = core->getCCore();
+	const auto &cCore = core->getCCore();
 	d->inConference = false;
 	d->capabilityNegotiation = !!linphone_core_capability_negociation_enabled(cCore);
 	d->capabilityNegotiationReInvite = !!linphone_core_capability_negotiation_reinvite_enabled(cCore);
@@ -236,82 +234,80 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 
 // -----------------------------------------------------------------------------
 
-const string& CallSessionParams::getSessionName () const {
+const string &CallSessionParams::getSessionName() const {
 	L_D();
 	return d->sessionName;
 }
 
-void CallSessionParams::setSessionName (const string &sessionName) {
+void CallSessionParams::setSessionName(const string &sessionName) {
 	L_D();
 	d->sessionName = sessionName;
 }
 
 // -----------------------------------------------------------------------------
 
-LinphonePrivacyMask CallSessionParams::getPrivacy () const {
+LinphonePrivacyMask CallSessionParams::getPrivacy() const {
 	L_D();
 	return d->privacy;
 }
 
-void CallSessionParams::setPrivacy (LinphonePrivacyMask privacy) {
+void CallSessionParams::setPrivacy(LinphonePrivacyMask privacy) {
 	L_D();
 	d->privacy = privacy;
 }
 
 // -----------------------------------------------------------------------------
 
-void CallSessionParams::addCustomHeader (const string &headerName, const string &headerValue) {
+void CallSessionParams::addCustomHeader(const string &headerName, const string &headerValue) {
 	L_D();
 	d->customHeaders = sal_custom_header_append(d->customHeaders, headerName.c_str(), headerValue.c_str());
 }
 
-void CallSessionParams::removeCustomHeader (const string &headerName) {
+void CallSessionParams::removeCustomHeader(const string &headerName) {
 	L_D();
 	d->customHeaders = sal_custom_header_remove(d->customHeaders, headerName.c_str());
 }
 
-void CallSessionParams::clearCustomHeaders () {
+void CallSessionParams::clearCustomHeaders() {
 	L_D();
 	d->setCustomHeaders(nullptr);
 }
 
-const char * CallSessionParams::getCustomHeader (const string &headerName) const {
+const char *CallSessionParams::getCustomHeader(const string &headerName) const {
 	L_D();
 	return sal_custom_header_find(d->customHeaders, headerName.c_str());
 }
 
 // -----------------------------------------------------------------------------
 
-void CallSessionParams::addCustomContactParameter (const std::string &paramName, const std::string &paramValue) {
+void CallSessionParams::addCustomContactParameter(const std::string &paramName, const std::string &paramValue) {
 	L_D();
 	auto it = d->customContactParameters.find(paramName);
-	if (it != d->customContactParameters.end())
-		d->customContactParameters.erase(it);
+	if (it != d->customContactParameters.end()) d->customContactParameters.erase(it);
 	pair<string, string> param(paramName, paramValue);
 	d->customContactParameters.insert(param);
 }
 
-void CallSessionParams::clearCustomContactParameters () {
+void CallSessionParams::clearCustomContactParameters() {
 	L_D();
 	d->customContactParameters.clear();
 }
 
-std::string CallSessionParams::getCustomContactParameter (const std::string &paramName) const {
+std::string CallSessionParams::getCustomContactParameter(const std::string &paramName) const {
 	L_D();
 	auto it = d->customContactParameters.find(paramName);
-	if (it == d->customContactParameters.end())
-		return "";
+	if (it == d->customContactParameters.end()) return "";
 	return it->second;
 }
 
 // -----------------------------------------------------------------------------
 
-void CallSessionParams::addCustomContent(const Content& content) {
+void CallSessionParams::addCustomContent(const Content &content) {
 	L_D();
 	d->customContents.push_back(move(content));
 }
 
-const list<Content>& CallSessionParams::getCustomContents() const {
+const list<Content> &CallSessionParams::getCustomContents() const {
 	L_D();
 	return d->customContents;
 }
@@ -323,17 +319,17 @@ void CallSessionParams::setFromHeader(const std::string &fromValue) {
 	d->from = fromValue;
 }
 
-const char* CallSessionParams::getFromHeader() const {
+const char *CallSessionParams::getFromHeader() const {
 	L_D();
-	return (d->from.empty()?NULL:d->from.c_str()); // C style API, return NULL when the string is empty
+	return (d->from.empty() ? NULL : d->from.c_str()); // C style API, return NULL when the string is empty
 }
 // -----------------------------------------------------------------------------
-void CallSessionParams::setSrtpSuites (const std::list<LinphoneSrtpSuite> &srtpSuites) {
+void CallSessionParams::setSrtpSuites(const std::list<LinphoneSrtpSuite> &srtpSuites) {
 	L_D();
 	d->srtpSuites = srtpSuites;
 }
 
-const std::list<LinphoneSrtpSuite>& CallSessionParams::getSrtpSuites () const {
+const std::list<LinphoneSrtpSuite> &CallSessionParams::getSrtpSuites() const {
 	L_D();
 	return d->srtpSuites;
 }
@@ -353,7 +349,7 @@ void CallSessionParams::setConferenceVideoLayout(const ConferenceLayout l) {
 	d->conferenceVideoLayout = l;
 }
 
-const ConferenceLayout & CallSessionParams::getConferenceVideoLayout() const {
+const ConferenceLayout &CallSessionParams::getConferenceVideoLayout() const {
 	L_D();
 	return d->conferenceVideoLayout;
 };

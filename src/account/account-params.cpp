@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,12 @@
  */
 
 #include "account-params.h"
-#include "push-notification/push-notification-config.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-address.h"
-#include "nat/nat-policy.h"
 #include "linphone/types.h"
+#include "nat/nat-policy.h"
 #include "private.h"
+#include "push-notification/push-notification-config.h"
 
 // =============================================================================
 
@@ -38,13 +38,17 @@ static string generate_account_id() {
 	return string("proxy_config_").append(id); // TODO: change to account
 }
 
-AccountParams::AccountParams (LinphoneCore *lc) {
+AccountParams::AccountParams(LinphoneCore *lc) {
 	mExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "reg_expires", 3600) : 3600;
 	mRegisterEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "reg_sendregister", 1) : 1;
-	mInternationalPrefix = lc ? linphone_config_get_default_string(lc->config,"proxy","dial_prefix", "") : "";
-	mUseInternationalPrefixForCallsAndChats = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "use_dial_prefix_for_calls_and_chats", true) : true;
-	mDialEscapePlusEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "dial_escape_plus", false) : false;
-	mPrivacy = lc ? (LinphonePrivacyMask) linphone_config_get_default_int(lc->config, "proxy", "privacy", LinphonePrivacyDefault) : (LinphonePrivacyMask) LinphonePrivacyDefault;
+	mInternationalPrefix = lc ? linphone_config_get_default_string(lc->config, "proxy", "dial_prefix", "") : "";
+	mUseInternationalPrefixForCallsAndChats =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "use_dial_prefix_for_calls_and_chats", true) : true;
+	mDialEscapePlusEnabled =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "dial_escape_plus", false) : false;
+	mPrivacy = lc ? (LinphonePrivacyMask)linphone_config_get_default_int(lc->config, "proxy", "privacy",
+	                                                                     LinphonePrivacyDefault)
+	              : (LinphonePrivacyMask)LinphonePrivacyDefault;
 	mIdentity = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_identity", "") : "";
 	mIdentityAddress = !mIdentity.empty() ? linphone_address_new(mIdentity.c_str()) : nullptr;
 	mProxy = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_proxy", "") : "";
@@ -53,14 +57,21 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	mRoutes = !route.empty() ? bctbx_list_append(mRoutes, linphone_address_new(route.c_str())) : nullptr;
 	mRoutesString = !route.empty() ? bctbx_list_append(mRoutesString, bctbx_strdup(route.c_str())) : nullptr;
 	mRealm = lc ? linphone_config_get_default_string(lc->config, "proxy", "realm", "") : "";
-	mQualityReportingEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_enabled", false) : false;
-	mQualityReportingCollector = lc ? linphone_config_get_default_string(lc->config, "proxy", "quality_reporting_collector", "") : "";
-	mQualityReportingInterval = lc ? linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_interval", 0) : 0;
+	mQualityReportingEnabled =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_enabled", false) : false;
+	mQualityReportingCollector =
+	    lc ? linphone_config_get_default_string(lc->config, "proxy", "quality_reporting_collector", "") : "";
+	mQualityReportingInterval =
+	    lc ? linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_interval", 0) : 0;
 	mContactParameters = lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_parameters", "") : "";
-	mContactUriParameters = lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_uri_parameters", "") : "";
-	mAllowCpimMessagesInBasicChatRooms = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "cpim_in_basic_chat_rooms_enabled", false) : false;
-	
-	mAvpfMode = lc ? static_cast<LinphoneAVPFMode>(linphone_config_get_default_int(lc->config, "proxy", "avpf", LinphoneAVPFDefault)) : LinphoneAVPFDefault;
+	mContactUriParameters =
+	    lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_uri_parameters", "") : "";
+	mAllowCpimMessagesInBasicChatRooms =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "cpim_in_basic_chat_rooms_enabled", false) : false;
+
+	mAvpfMode = lc ? static_cast<LinphoneAVPFMode>(
+	                     linphone_config_get_default_int(lc->config, "proxy", "avpf", LinphoneAVPFDefault))
+	               : LinphoneAVPFDefault;
 	mAvpfRrInterval = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
 	mPublishExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
 	mPublishEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "publish", false) : false;
@@ -70,8 +81,13 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 #if defined(__ANDROID__) || TARGET_OS_IPHONE
 	pushAllowedDefault = true;
 #endif
-	mPushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault) : pushAllowedDefault;
-	mRemotePushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed", remotePushAllowedDefault) : remotePushAllowedDefault;
+	mPushNotificationAllowed =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault)
+	       : pushAllowedDefault;
+	mRemotePushNotificationAllowed =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed",
+	                                           remotePushAllowedDefault)
+	       : remotePushAllowedDefault;
 	mRefKey = lc ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
 
 	/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
@@ -81,19 +97,22 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 
 	string natPolicyRef = lc ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
 	if (!natPolicyRef.empty()) {
-		NatPolicy * policy = nullptr;
-		if (linphone_config_has_section(lc->config, natPolicyRef.c_str())){
+		NatPolicy *policy = nullptr;
+		if (linphone_config_has_section(lc->config, natPolicyRef.c_str())) {
 			/* Odd method - to be deprecated, inconsistent */
-			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromSectionName, natPolicyRef);
-		}else{
+			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromSectionName,
+			                       natPolicyRef);
+		} else {
 			/* Usual method */
-			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromRefName, natPolicyRef);
+			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromRefName,
+			                       natPolicyRef);
 		}
-		if (policy){
+		if (policy) {
 			setNatPolicy(policy->toC());
 			policy->unref();
 		} else {
-			lError() << "Cannot create default nat policy with ref [" << natPolicyRef << "] for account [" << this << "]";
+			lError() << "Cannot create default nat policy with ref [" << natPolicyRef << "] for account [" << this
+			         << "]";
 		}
 	}
 	mDependsOn = lc ? linphone_config_get_default_string(lc->config, "proxy", "depends_on", "") : "";
@@ -103,10 +122,12 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	} else {
 		mIdKey = generate_account_id();
 	}
-	string conferenceFactoryUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "conference_factory_uri", "") : "";
+	string conferenceFactoryUri =
+	    lc ? linphone_config_get_default_string(lc->config, "proxy", "conference_factory_uri", "") : "";
 	setConferenceFactoryUri(conferenceFactoryUri);
 
-	string audioVideoConferenceFactoryUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "audio_video_conference_factory_uri", "") : "";
+	string audioVideoConferenceFactoryUri =
+	    lc ? linphone_config_get_default_string(lc->config, "proxy", "audio_video_conference_factory_uri", "") : "";
 	mAudioVideoConferenceFactoryAddress = nullptr;
 	if (!audioVideoConferenceFactoryUri.empty()) {
 		mAudioVideoConferenceFactoryAddress = linphone_address_new(audioVideoConferenceFactoryUri.c_str());
@@ -116,11 +137,15 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	} else {
 		mPushNotificationConfig = new PushNotificationConfig();
-		mPushNotificationConfig->readPushParamsFromString(string(lc ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
+		mPushNotificationConfig->readPushParamsFromString(
+		    string(lc ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
 	}
-	mRtpBundleEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle", linphone_core_rtp_bundle_enabled(lc)) : false;
-	mRtpBundleAssumption = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle_assumption", false) : false;
-	
+	mRtpBundleEnabled =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle", linphone_core_rtp_bundle_enabled(lc))
+	       : false;
+	mRtpBundleAssumption =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle_assumption", false) : false;
+
 	string customContact = lc ? linphone_config_get_default_string(lc->config, "proxy", "custom_contact", "") : "";
 	setCustomContact(customContact);
 
@@ -128,7 +153,7 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	setLimeServerUrl(limeServerUrl);
 }
 
-AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
+AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc) {
 	LpConfig *config = lc->config;
 
 	char key[50];
@@ -159,33 +184,43 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 
 	mRealm = linphone_config_get_string(config, key, "realm", mRealm.c_str());
 
-	mQualityReportingEnabled = !!linphone_config_get_int(config, key, "quality_reporting_enabled", mQualityReportingEnabled);
-	mQualityReportingCollector = linphone_config_get_string(config, key, "quality_reporting_collector", mQualityReportingCollector.c_str());
-	mQualityReportingInterval = linphone_config_get_int(config, key, "quality_reporting_interval", mQualityReportingInterval);
+	mQualityReportingEnabled =
+	    !!linphone_config_get_int(config, key, "quality_reporting_enabled", mQualityReportingEnabled);
+	mQualityReportingCollector =
+	    linphone_config_get_string(config, key, "quality_reporting_collector", mQualityReportingCollector.c_str());
+	mQualityReportingInterval =
+	    linphone_config_get_int(config, key, "quality_reporting_interval", mQualityReportingInterval);
 	mContactParameters = linphone_config_get_string(config, key, "contact_parameters", mContactParameters.c_str());
-	mContactUriParameters = linphone_config_get_string(config, key, "contact_uri_parameters", mContactUriParameters.c_str());
+	mContactUriParameters =
+	    linphone_config_get_string(config, key, "contact_uri_parameters", mContactUriParameters.c_str());
 	string pushParameters = linphone_config_get_string(config, key, "push_parameters", "");
-	
-	//mPushNotificationConfig can't be null because it is always created in AccountParams(lc) called previously
+
+	// mPushNotificationConfig can't be null because it is always created in AccountParams(lc) called previously
 	if (linphone_core_is_push_notification_enabled(lc) && !pushParameters.empty()) {
 		mPushNotificationConfig->readPushParamsFromString(pushParameters);
-	} else if (!mContactUriParameters.empty()){
+	} else if (!mContactUriParameters.empty()) {
 		mPushNotificationConfig->readPushParamsFromString(mContactUriParameters);
 	}
-	
+
 	mExpires = linphone_config_get_int(config, key, "reg_expires", mExpires);
 	mRegisterEnabled = !!linphone_config_get_int(config, key, "reg_sendregister", mRegisterEnabled);
 	mPublishEnabled = !!linphone_config_get_int(config, key, "publish", mPublishEnabled);
-	setPushNotificationAllowed(!!linphone_config_get_int(config, key, "push_notification_allowed", mPushNotificationAllowed));
-	setRemotePushNotificationAllowed(!!linphone_config_get_int(config, key, "remote_push_notification_allowed", mRemotePushNotificationAllowed));
-	mAvpfMode = static_cast<LinphoneAVPFMode>(linphone_config_get_int(config, key, "avpf", static_cast<int>(mAvpfMode)));
-	mAvpfRrInterval = (uint8_t) linphone_config_get_int(config, key, "avpf_rr_interval", (int) mAvpfRrInterval);
+	setPushNotificationAllowed(
+	    !!linphone_config_get_int(config, key, "push_notification_allowed", mPushNotificationAllowed));
+	setRemotePushNotificationAllowed(
+	    !!linphone_config_get_int(config, key, "remote_push_notification_allowed", mRemotePushNotificationAllowed));
+	mAvpfMode =
+	    static_cast<LinphoneAVPFMode>(linphone_config_get_int(config, key, "avpf", static_cast<int>(mAvpfMode)));
+	mAvpfRrInterval = (uint8_t)linphone_config_get_int(config, key, "avpf_rr_interval", (int)mAvpfRrInterval);
 	mDialEscapePlusEnabled = !!linphone_config_get_int(config, key, "dial_escape_plus", mDialEscapePlusEnabled);
 	mInternationalPrefix = linphone_config_get_string(config, key, "dial_prefix", mInternationalPrefix.c_str());
-	mUseInternationalPrefixForCallsAndChats = !!linphone_config_get_int(config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
-	mAllowCpimMessagesInBasicChatRooms = !!linphone_config_get_int(config, key, "cpim_in_basic_chat_rooms_enabled", mAllowCpimMessagesInBasicChatRooms);
+	mUseInternationalPrefixForCallsAndChats = !!linphone_config_get_int(
+	    config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
+	mAllowCpimMessagesInBasicChatRooms =
+	    !!linphone_config_get_int(config, key, "cpim_in_basic_chat_rooms_enabled", mAllowCpimMessagesInBasicChatRooms);
 
-	mPrivacy = static_cast<LinphonePrivacyMask>(linphone_config_get_int(config, key, "privacy", static_cast<int>(mPrivacy)));
+	mPrivacy =
+	    static_cast<LinphonePrivacyMask>(linphone_config_get_int(config, key, "privacy", static_cast<int>(mPrivacy)));
 
 	mRefKey = linphone_config_get_string(config, key, "refkey", mRefKey.c_str());
 	mIdKey = linphone_config_get_string(config, key, "idkey", mRefKey.c_str());
@@ -204,18 +239,19 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 		 * This is not consistent and error-prone.
 		 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
 		 */
-		if (linphone_config_has_section(config, nat_policy_ref)){
+		if (linphone_config_has_section(config, nat_policy_ref)) {
 			/* Odd method - to be deprecated, inconsistent */
 			mNatPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
 		} else {
 			/* Usual method */
 			mNatPolicy = linphone_core_create_nat_policy_from_ref(lc, nat_policy_ref);
 		}
-
 	}
 
-	mConferenceFactoryUri = linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
-	string audioVideoConferenceFactoryUri = linphone_config_get_string(config, key, "audio_video_conference_factory_uri", "");
+	mConferenceFactoryUri =
+	    linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
+	string audioVideoConferenceFactoryUri =
+	    linphone_config_get_string(config, key, "audio_video_conference_factory_uri", "");
 	mAudioVideoConferenceFactoryAddress = nullptr;
 	if (!audioVideoConferenceFactoryUri.empty()) {
 		mAudioVideoConferenceFactoryAddress = linphone_address_new(audioVideoConferenceFactoryUri.c_str());
@@ -227,10 +263,10 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 
 	mLimeServerUrl = linphone_config_get_string(config, key, "lime_server_url", mLimeServerUrl.c_str());
 
-	readCustomParamsFromConfigFile (config, key);
+	readCustomParamsFromConfigFile(config, key);
 }
 
-AccountParams::AccountParams (const AccountParams &other) : HybridObject(other), CustomParams(other) {
+AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), CustomParams(other) {
 	mExpires = other.mExpires;
 	mQualityReportingInterval = other.mQualityReportingInterval;
 	mPublishExpires = other.mPublishExpires;
@@ -257,7 +293,9 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other),
 	mDependsOn = other.mDependsOn;
 	mIdKey = other.mIdKey;
 	mConferenceFactoryUri = other.mConferenceFactoryUri;
-	mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress ? linphone_address_clone(other.mAudioVideoConferenceFactoryAddress) : nullptr;
+	mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress
+	                                          ? linphone_address_clone(other.mAudioVideoConferenceFactoryAddress)
+	                                          : nullptr;
 	mFileTransferServer = other.mFileTransferServer;
 	mIdentity = other.mIdentity;
 
@@ -272,7 +310,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other),
 	mAvpfMode = other.mAvpfMode;
 
 	setNatPolicy(other.mNatPolicy);
-	
+
 	mPushNotificationConfig = other.mPushNotificationConfig->clone();
 	mRtpBundleEnabled = other.mRtpBundleEnabled;
 	mRtpBundleAssumption = other.mRtpBundleAssumption;
@@ -280,58 +318,58 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other),
 	mLimeServerUrl = other.mLimeServerUrl;
 }
 
-AccountParams::~AccountParams () {
+AccountParams::~AccountParams() {
 	if (mIdentityAddress) linphone_address_unref(mIdentityAddress);
 	if (mProxyAddress) linphone_address_unref(mProxyAddress);
 	if (mRoutes) bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
-	if (mRoutesString)  bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
+	if (mRoutesString) bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
 	if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 	if (mAudioVideoConferenceFactoryAddress) linphone_address_unref(mAudioVideoConferenceFactoryAddress);
 	if (mCustomContact) linphone_address_unref(mCustomContact);
 }
 
-AccountParams* AccountParams::clone () const {
+AccountParams *AccountParams::clone() const {
 	return new AccountParams(*this);
 }
 
 // -----------------------------------------------------------------------------
 
-void AccountParams::setExpires (int expires) {
+void AccountParams::setExpires(int expires) {
 	if (expires < 0) expires = 600;
 	mExpires = expires;
 }
 
-void AccountParams::setQualityReportingInterval (int qualityReportingInterval) {
+void AccountParams::setQualityReportingInterval(int qualityReportingInterval) {
 	mQualityReportingInterval = qualityReportingInterval;
 }
 
-void AccountParams::setPublishExpires (int publishExpires) {
+void AccountParams::setPublishExpires(int publishExpires) {
 	mPublishExpires = publishExpires;
 }
 
-void AccountParams::setAvpfRrInterval (uint8_t avpfRrInterval) {
+void AccountParams::setAvpfRrInterval(uint8_t avpfRrInterval) {
 	if (avpfRrInterval > 5) avpfRrInterval = 5;
 	mAvpfRrInterval = avpfRrInterval;
 }
 
-void AccountParams::setRegisterEnabled (bool enable) {
+void AccountParams::setRegisterEnabled(bool enable) {
 	mRegisterEnabled = enable;
 }
 
-void AccountParams::setDialEscapePlusEnabled (bool enable) {
+void AccountParams::setDialEscapePlusEnabled(bool enable) {
 	mDialEscapePlusEnabled = enable;
 }
 
-void AccountParams::setQualityReportingEnabled (bool enable) {
+void AccountParams::setQualityReportingEnabled(bool enable) {
 	mQualityReportingEnabled = enable;
 }
 
-void AccountParams::setPublishEnabled (bool enable) {
+void AccountParams::setPublishEnabled(bool enable) {
 	mPublishEnabled = enable;
 }
 
-void AccountParams::setOutboundProxyEnabled (bool enable) {
+void AccountParams::setOutboundProxyEnabled(bool enable) {
 	// If enable we remove all routes to only have the server address as route
 	// If disable since we should only have the server address route, we can remove the list
 	if (mRoutes) {
@@ -349,50 +387,51 @@ void AccountParams::setOutboundProxyEnabled (bool enable) {
 			lError() << "Can't enable outbound proxy without having set the proxy address first!";
 			return;
 		}
-		
+
 		mRoutes = bctbx_list_append(mRoutes, linphone_address_clone(mProxyAddress));
 		mRoutesString = bctbx_list_append(mRoutesString, bctbx_strdup(mProxy.c_str()));
 	}
 }
 
-void AccountParams::setPushNotificationAllowed (bool allow) {
+void AccountParams::setPushNotificationAllowed(bool allow) {
 	mPushNotificationAllowed = allow;
 }
 
-void AccountParams::setRemotePushNotificationAllowed (bool allow) {
+void AccountParams::setRemotePushNotificationAllowed(bool allow) {
 	mRemotePushNotificationAllowed = allow;
 }
 
-void AccountParams::setUseInternationalPrefixForCallsAndChats (bool enable) {
+void AccountParams::setUseInternationalPrefixForCallsAndChats(bool enable) {
 	mUseInternationalPrefixForCallsAndChats = enable;
 }
 
-void AccountParams::setCpimMessagesAllowedInBasicChatRooms (bool allow) {
+void AccountParams::setCpimMessagesAllowedInBasicChatRooms(bool allow) {
 	mAllowCpimMessagesInBasicChatRooms = allow;
 }
 
-void AccountParams::setUserData (void *userData) {
+void AccountParams::setUserData(void *userData) {
 	mUserData = userData;
 }
 
-void AccountParams::setInternationalPrefix (const std::string &internationalPrefix) {
+void AccountParams::setInternationalPrefix(const std::string &internationalPrefix) {
 	mInternationalPrefix = internationalPrefix;
 }
 
-void AccountParams::setProxy (const std::string &proxy) {
+void AccountParams::setProxy(const std::string &proxy) {
 	mProxy = proxy;
 }
 
-void AccountParams::setRealm (const std::string &realm) {
+void AccountParams::setRealm(const std::string &realm) {
 	mRealm = realm;
 }
 
-void AccountParams::setQualityReportingCollector (const std::string &qualityReportingCollector) {
+void AccountParams::setQualityReportingCollector(const std::string &qualityReportingCollector) {
 	if (!qualityReportingCollector.empty()) {
 		LinphoneAddress *addr = linphone_address_new(qualityReportingCollector.c_str());
 
 		if (!addr) {
-			lError() << "Invalid SIP collector URI: " << qualityReportingCollector << ". Quality reporting will be DISABLED.";
+			lError() << "Invalid SIP collector URI: " << qualityReportingCollector
+			         << ". Quality reporting will be DISABLED.";
 		} else {
 			mQualityReportingCollector = qualityReportingCollector;
 		}
@@ -403,35 +442,35 @@ void AccountParams::setQualityReportingCollector (const std::string &qualityRepo
 	}
 }
 
-void AccountParams::setContactParameters (const std::string &contactParameters) {
+void AccountParams::setContactParameters(const std::string &contactParameters) {
 	mContactParameters = contactParameters;
 }
 
-void AccountParams::setContactUriParameters (const std::string &contactUriParameters) {
+void AccountParams::setContactUriParameters(const std::string &contactUriParameters) {
 	mContactUriParameters = contactUriParameters;
 }
 
-void AccountParams::setRefKey (const std::string &refKey) {
+void AccountParams::setRefKey(const std::string &refKey) {
 	mRefKey = refKey;
 }
 
-void AccountParams::setDependsOn (const std::string &dependsOn) {
+void AccountParams::setDependsOn(const std::string &dependsOn) {
 	mDependsOn = dependsOn;
 }
 
-void AccountParams::setIdKey (const std::string &idKey) {
+void AccountParams::setIdKey(const std::string &idKey) {
 	mIdKey = idKey;
 }
 
-void AccountParams::setConferenceFactoryUri (const std::string &conferenceFactoryUri) {
+void AccountParams::setConferenceFactoryUri(const std::string &conferenceFactoryUri) {
 	mConferenceFactoryUri = conferenceFactoryUri;
 }
 
-void AccountParams::setFileTranferServer (const std::string &fileTransferServer) {
+void AccountParams::setFileTranferServer(const std::string &fileTransferServer) {
 	mFileTransferServer = fileTransferServer;
 }
 
-LinphoneStatus AccountParams::setRoutes (const bctbx_list_t *routes) {
+LinphoneStatus AccountParams::setRoutes(const bctbx_list_t *routes) {
 	if (mRoutes != nullptr) {
 		bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
 		mRoutes = nullptr;
@@ -441,7 +480,7 @@ LinphoneStatus AccountParams::setRoutes (const bctbx_list_t *routes) {
 		mRoutesString = nullptr;
 	}
 
-	bctbx_list_t *iterator = (bctbx_list_t *) routes;
+	bctbx_list_t *iterator = (bctbx_list_t *)routes;
 	while (iterator != nullptr) {
 		LinphoneAddress *routeAddress = (LinphoneAddress *)bctbx_list_get_data(iterator);
 		if (routeAddress != nullptr) {
@@ -454,7 +493,7 @@ LinphoneStatus AccountParams::setRoutes (const bctbx_list_t *routes) {
 	return 0;
 }
 
-LinphoneStatus AccountParams::setRoutesFromStringList (const bctbx_list_t *routes) {
+LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes) {
 	if (mRoutes != nullptr) {
 		bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
 		mRoutes = nullptr;
@@ -464,7 +503,7 @@ LinphoneStatus AccountParams::setRoutesFromStringList (const bctbx_list_t *route
 		mRoutesString = nullptr;
 	}
 
-	bctbx_list_t *iterator = (bctbx_list_t *) routes;
+	bctbx_list_t *iterator = (bctbx_list_t *)routes;
 	while (iterator != nullptr) {
 		char *route = (char *)bctbx_list_get_data(iterator);
 		if (route != NULL && route[0] != '\0') {
@@ -490,13 +529,13 @@ LinphoneStatus AccountParams::setRoutesFromStringList (const bctbx_list_t *route
 	return 0;
 }
 
-void AccountParams::setPrivacy (LinphonePrivacyMask privacy) {
+void AccountParams::setPrivacy(LinphonePrivacyMask privacy) {
 	mPrivacy = privacy;
 }
 
-LinphoneStatus AccountParams::setIdentityAddress (const LinphoneAddress* identityAddress) {
+LinphoneStatus AccountParams::setIdentityAddress(const LinphoneAddress *identityAddress) {
 	if (!identityAddress || linphone_address_get_username(identityAddress) == nullptr) {
-		char* as_string = identityAddress ? linphone_address_as_string(identityAddress) : ms_strdup("NULL");
+		char *as_string = identityAddress ? linphone_address_as_string(identityAddress) : ms_strdup("NULL");
 		lWarning() << "Invalid sip identity: " << as_string;
 		ms_free(as_string);
 		return -1;
@@ -514,11 +553,11 @@ LinphoneStatus AccountParams::setIdentityAddress (const LinphoneAddress* identit
 	return 0;
 }
 
-void AccountParams::setAvpfMode (LinphoneAVPFMode avpfMode) {
+void AccountParams::setAvpfMode(LinphoneAVPFMode avpfMode) {
 	mAvpfMode = avpfMode;
 }
 
-void AccountParams::setNatPolicy (LinphoneNatPolicy *natPolicy) {
+void AccountParams::setNatPolicy(LinphoneNatPolicy *natPolicy) {
 	if (natPolicy != nullptr) {
 		linphone_nat_policy_ref(natPolicy); /* Prevent object destruction if the same policy is used */
 	}
@@ -526,14 +565,14 @@ void AccountParams::setNatPolicy (LinphoneNatPolicy *natPolicy) {
 	mNatPolicy = natPolicy;
 }
 
-void AccountParams::setPushNotificationConfig (PushNotificationConfig *pushNotificationConfig) {
+void AccountParams::setPushNotificationConfig(PushNotificationConfig *pushNotificationConfig) {
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
-	
+
 	mPushNotificationConfig = pushNotificationConfig;
 	mPushNotificationConfig->ref();
 }
 
-void AccountParams::setAudioVideoConferenceFactoryAddress (const LinphoneAddress *audioVideoConferenceFactoryAddress) {
+void AccountParams::setAudioVideoConferenceFactoryAddress(const LinphoneAddress *audioVideoConferenceFactoryAddress) {
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
 		linphone_address_unref(mAudioVideoConferenceFactoryAddress);
 		mAudioVideoConferenceFactoryAddress = nullptr;
@@ -543,22 +582,22 @@ void AccountParams::setAudioVideoConferenceFactoryAddress (const LinphoneAddress
 	}
 }
 
-void AccountParams::enableRtpBundle(bool value){
+void AccountParams::enableRtpBundle(bool value) {
 	mRtpBundleEnabled = value;
 }
 
-void AccountParams::enableRtpBundleAssumption(bool value){
+void AccountParams::enableRtpBundleAssumption(bool value) {
 	mRtpBundleAssumption = value;
 }
 
-void AccountParams::setCustomContact(const LinphoneAddress *contact){
+void AccountParams::setCustomContact(const LinphoneAddress *contact) {
 	if (mCustomContact) linphone_address_unref(mCustomContact);
 	mCustomContact = contact ? linphone_address_clone(contact) : nullptr;
 }
 
-void AccountParams::setCustomContact(const string &contact){
+void AccountParams::setCustomContact(const string &contact) {
 	LinphoneAddress *address = !contact.empty() ? linphone_address_new(contact.c_str()) : nullptr;
-	if (address == nullptr && !contact.empty()){
+	if (address == nullptr && !contact.empty()) {
 		lError() << "AccountParams: invalid custom contact '" << contact << "'";
 	}
 	if (mCustomContact) linphone_address_unref(mCustomContact);
@@ -567,57 +606,57 @@ void AccountParams::setCustomContact(const string &contact){
 
 // -----------------------------------------------------------------------------
 
-int AccountParams::getExpires () const {
+int AccountParams::getExpires() const {
 	return mExpires;
 }
 
-int AccountParams::getQualityReportingInterval () const {
+int AccountParams::getQualityReportingInterval() const {
 	return mQualityReportingInterval;
 }
 
-int AccountParams::getPublishExpires () const {
+int AccountParams::getPublishExpires() const {
 	/*default value is same as register*/
 	return mPublishExpires < 0 ? mExpires : mPublishExpires;
 }
 
-uint8_t AccountParams::getAvpfRrInterval () const {
+uint8_t AccountParams::getAvpfRrInterval() const {
 	return mAvpfRrInterval;
 }
 
-bool AccountParams::getRegisterEnabled () const {
+bool AccountParams::getRegisterEnabled() const {
 	return mRegisterEnabled;
 }
 
-bool AccountParams::getDialEscapePlusEnabled () const {
+bool AccountParams::getDialEscapePlusEnabled() const {
 	return mDialEscapePlusEnabled;
 }
 
-bool AccountParams::getQualityReportingEnabled () const {
+bool AccountParams::getQualityReportingEnabled() const {
 	return mQualityReportingEnabled;
 }
 
-bool AccountParams::getPublishEnabled () const {
+bool AccountParams::getPublishEnabled() const {
 	return mPublishEnabled;
 }
 
-bool AccountParams::getOutboundProxyEnabled () const {
+bool AccountParams::getOutboundProxyEnabled() const {
 	LinphoneAddress *address = mRoutes != nullptr ? (LinphoneAddress *)bctbx_list_get_data(mRoutes) : nullptr;
 	return address != nullptr && mProxyAddress != nullptr && linphone_address_weak_equal(mProxyAddress, address);
 }
 
-bool AccountParams::getPushNotificationAllowed () const {
+bool AccountParams::getPushNotificationAllowed() const {
 	return mPushNotificationAllowed;
 }
 
-bool AccountParams::getRemotePushNotificationAllowed () const {
+bool AccountParams::getRemotePushNotificationAllowed() const {
 	return mRemotePushNotificationAllowed;
 }
 
-bool AccountParams::getUseInternationalPrefixForCallsAndChats () const {
+bool AccountParams::getUseInternationalPrefixForCallsAndChats() const {
 	return mUseInternationalPrefixForCallsAndChats;
 }
 
-bool AccountParams::isPushNotificationAvailable () const {
+bool AccountParams::isPushNotificationAvailable() const {
 	string prid = mPushNotificationConfig->getPrid();
 	string param = mPushNotificationConfig->getParam();
 	string basicToken = mPushNotificationConfig->getVoipToken();
@@ -626,112 +665,112 @@ bool AccountParams::isPushNotificationAvailable () const {
 	// Accounts can support multiple types of push. Push notification is ready when all supported push's tokens to set
 
 	bool paramAvailable = !param.empty() || !bundle.empty();
-	bool pridAvailable = !prid.empty() || !((mPushNotificationAllowed && basicToken.empty()) || (mRemotePushNotificationAllowed && remoteToken.empty()));
+	bool pridAvailable = !prid.empty() || !((mPushNotificationAllowed && basicToken.empty()) ||
+	                                        (mRemotePushNotificationAllowed && remoteToken.empty()));
 	return paramAvailable && pridAvailable;
-
 }
 
-bool AccountParams::isCpimMessagesAllowedInBasicChatRooms () const {
+bool AccountParams::isCpimMessagesAllowedInBasicChatRooms() const {
 	return mAllowCpimMessagesInBasicChatRooms;
 }
 
-void* AccountParams::getUserData () const {
+void *AccountParams::getUserData() const {
 	return mUserData;
 }
 
-const std::string& AccountParams::getInternationalPrefix () const {
+const std::string &AccountParams::getInternationalPrefix() const {
 	return mInternationalPrefix;
 }
 
-const char* AccountParams::getDomain () const {
+const char *AccountParams::getDomain() const {
 	return mIdentityAddress ? linphone_address_get_domain(mIdentityAddress) : nullptr;
 }
 
-const std::string& AccountParams::getProxy () const {
+const std::string &AccountParams::getProxy() const {
 	return mProxy;
 }
 
-const std::string& AccountParams::getRealm () const {
+const std::string &AccountParams::getRealm() const {
 	return mRealm;
 }
 
-const std::string& AccountParams::getQualityReportingCollector () const {
+const std::string &AccountParams::getQualityReportingCollector() const {
 	return mQualityReportingCollector;
 }
 
-const std::string& AccountParams::getContactParameters () const {
+const std::string &AccountParams::getContactParameters() const {
 	return mContactParameters;
 }
 
-const std::string& AccountParams::getContactUriParameters () const {
+const std::string &AccountParams::getContactUriParameters() const {
 	return mContactUriParameters;
 }
 
-const std::string& AccountParams::getRefKey () const {
+const std::string &AccountParams::getRefKey() const {
 	return mRefKey;
 }
 
-const std::string& AccountParams::getDependsOn () const {
+const std::string &AccountParams::getDependsOn() const {
 	return mDependsOn;
 }
 
-const std::string& AccountParams::getIdKey () const {
+const std::string &AccountParams::getIdKey() const {
 	return mIdKey;
 }
 
-const std::string& AccountParams::getConferenceFactoryUri () const {
+const std::string &AccountParams::getConferenceFactoryUri() const {
 	return mConferenceFactoryUri;
 }
 
-const std::string& AccountParams::getFileTransferServer () const {
+const std::string &AccountParams::getFileTransferServer() const {
 	return mFileTransferServer;
 }
 
-const std::string& AccountParams::getIdentity () const {
+const std::string &AccountParams::getIdentity() const {
 	return mIdentity;
 }
 
-const bctbx_list_t* AccountParams::getRoutes () const {
+const bctbx_list_t *AccountParams::getRoutes() const {
 	return mRoutes;
 }
 
-const bctbx_list_t* AccountParams::getRoutesString () const {
+const bctbx_list_t *AccountParams::getRoutesString() const {
 	return mRoutesString;
 }
 
-LinphonePrivacyMask AccountParams::getPrivacy () const {
+LinphonePrivacyMask AccountParams::getPrivacy() const {
 	return mPrivacy;
 }
 
-LinphoneAddress* AccountParams::getIdentityAddress () const {
+LinphoneAddress *AccountParams::getIdentityAddress() const {
 	return mIdentityAddress;
 }
 
-LinphoneAVPFMode AccountParams::getAvpfMode () const {
+LinphoneAVPFMode AccountParams::getAvpfMode() const {
 	return mAvpfMode;
 }
 
-LinphoneNatPolicy* AccountParams::getNatPolicy () const {
+LinphoneNatPolicy *AccountParams::getNatPolicy() const {
 	return mNatPolicy;
 }
 
-PushNotificationConfig* AccountParams::getPushNotificationConfig () const {
+PushNotificationConfig *AccountParams::getPushNotificationConfig() const {
 	return mPushNotificationConfig;
 }
 
-const LinphoneAddress* AccountParams::getAudioVideoConferenceFactoryAddress () const {
+const LinphoneAddress *AccountParams::getAudioVideoConferenceFactoryAddress() const {
 	return mAudioVideoConferenceFactoryAddress;
 }
 
-bool AccountParams::rtpBundleEnabled() const{
+bool AccountParams::rtpBundleEnabled() const {
 	return mRtpBundleEnabled;
 }
 
-bool AccountParams::rtpBundleAssumptionEnabled()const{
+bool AccountParams::rtpBundleAssumptionEnabled() const {
 	return mRtpBundleAssumption;
 }
 
-const LinphoneAddress *AccountParams::getCustomContact()const{
+const LinphoneAddress *AccountParams::getCustomContact() const {
 	return mCustomContact;
 }
 
@@ -739,13 +778,13 @@ void AccountParams::setLimeServerUrl(const std::string &url) {
 	mLimeServerUrl = url;
 }
 
-const std::string& AccountParams::getLimeServerUrl() const {
+const std::string &AccountParams::getLimeServerUrl() const {
 	return mLimeServerUrl;
 }
 
 // -----------------------------------------------------------------------------
 
-LinphoneStatus AccountParams::setServerAddress (const LinphoneAddress *serverAddr) {
+LinphoneStatus AccountParams::setServerAddress(const LinphoneAddress *serverAddr) {
 	bool outboundProxyEnabled = getOutboundProxyEnabled();
 
 	if (mProxyAddress) linphone_address_unref(mProxyAddress);
@@ -763,11 +802,11 @@ LinphoneStatus AccountParams::setServerAddress (const LinphoneAddress *serverAdd
 	return 0;
 }
 
-const LinphoneAddress *AccountParams::getServerAddress () const {
+const LinphoneAddress *AccountParams::getServerAddress() const {
 	return mProxyAddress;
 }
 
-LinphoneStatus AccountParams::setServerAddressAsString (const std::string &serverAddr) {
+LinphoneStatus AccountParams::setServerAddressAsString(const std::string &serverAddr) {
 	LinphoneAddress *addr = nullptr;
 
 	if (!serverAddr.empty()) {
@@ -803,11 +842,11 @@ LinphoneStatus AccountParams::setServerAddressAsString (const std::string &serve
 	return 0;
 }
 
-const std::string& AccountParams::getServerAddressAsString () const {
+const std::string &AccountParams::getServerAddressAsString() const {
 	return mProxy;
 }
 
-void AccountParams::setTransport (LinphoneTransportType transport) {
+void AccountParams::setTransport(LinphoneTransportType transport) {
 	linphone_address_set_transport(mProxyAddress, transport);
 
 	char *tmpProxy = linphone_address_as_string(mProxyAddress);
@@ -819,38 +858,38 @@ void AccountParams::setTransport (LinphoneTransportType transport) {
 	}
 }
 
-LinphoneTransportType AccountParams::getTransport () const {
+LinphoneTransportType AccountParams::getTransport() const {
 	return linphone_address_get_transport(mProxyAddress);
 }
 
-void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
+void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	char key[50];
 
 	sprintf(key, "proxy_%i", index);
 	linphone_config_clean_section(config, key);
 
-	if (!mProxy.empty()){
+	if (!mProxy.empty()) {
 		linphone_config_set_string(config, key, "reg_proxy", mProxy.c_str());
 	}
 	if (mRoutesString != NULL) {
 		linphone_config_set_string_list(config, key, "reg_route", mRoutesString);
 	}
-	if (!mIdentity.empty()){
+	if (!mIdentity.empty()) {
 		linphone_config_set_string(config, key, "reg_identity", mIdentity.c_str());
 	}
-	if (!mRealm.empty()){
+	if (!mRealm.empty()) {
 		linphone_config_set_string(config, key, "realm", mRealm.c_str());
 	}
-	if (!mContactParameters.empty()){
+	if (!mContactParameters.empty()) {
 		linphone_config_set_string(config, key, "contact_parameters", mContactParameters.c_str());
 	}
-	if (!mContactUriParameters.empty()){
+	if (!mContactUriParameters.empty()) {
 		linphone_config_set_string(config, key, "contact_uri_parameters", mContactUriParameters.c_str());
 	}
-	if (!mQualityReportingCollector.empty()){
+	if (!mQualityReportingCollector.empty()) {
 		linphone_config_set_string(config, key, "quality_reporting_collector", mQualityReportingCollector.c_str());
 	}
-	
+
 	string pushParams;
 	if (mPushNotificationAllowed || mRemotePushNotificationAllowed) {
 		pushParams = mPushNotificationConfig->asString(mRemotePushNotificationAllowed);
@@ -864,8 +903,9 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "avpf", mAvpfMode);
 	linphone_config_set_int(config, key, "avpf_rr_interval", mAvpfRrInterval);
 	linphone_config_set_int(config, key, "dial_escape_plus", (int)mDialEscapePlusEnabled);
-	linphone_config_set_string(config,key,"dial_prefix", mInternationalPrefix.c_str());
-	linphone_config_set_int(config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
+	linphone_config_set_string(config, key, "dial_prefix", mInternationalPrefix.c_str());
+	linphone_config_set_int(config, key, "use_dial_prefix_for_calls_and_chats",
+	                        mUseInternationalPrefixForCallsAndChats);
 	linphone_config_set_int(config, key, "privacy", (int)mPrivacy);
 	linphone_config_set_int(config, key, "push_notification_allowed", (int)mPushNotificationAllowed);
 	linphone_config_set_int(config, key, "remote_push_notification_allowed", (int)mRemotePushNotificationAllowed);
@@ -883,14 +923,14 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
 
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
-		char * factory_address = linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress);
+		char *factory_address = linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress);
 		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", factory_address);
 		ms_free(factory_address);
 	}
 	linphone_config_set_int(config, key, "rtp_bundle", mRtpBundleEnabled);
 	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleAssumption);
 
-	writeCustomParamsToConfigFile (config, key);
+	writeCustomParamsToConfigFile(config, key);
 
 	linphone_config_set_string(config, key, "lime_server_url", mLimeServerUrl.c_str());
 }

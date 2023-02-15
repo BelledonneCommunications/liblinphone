@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -41,22 +41,22 @@ public:
 		Image = LinphoneVideoSourceImage
 	};
 
-	VideoSourceDescriptor () = default;
-	VideoSourceDescriptor (const VideoSourceDescriptor &other);
-	virtual ~VideoSourceDescriptor () = default;
+	VideoSourceDescriptor() = default;
+	VideoSourceDescriptor(const VideoSourceDescriptor &other);
+	virtual ~VideoSourceDescriptor() = default;
 
-	VideoSourceDescriptor* clone () const override;
+	VideoSourceDescriptor *clone() const override;
 
-	VideoSourceDescriptor::Type getType () const;
+	VideoSourceDescriptor::Type getType() const;
 
-	std::shared_ptr<Call> getCall () const;
-	void setCall (std::shared_ptr<Call> call);
+	std::shared_ptr<Call> getCall() const;
+	void setCall(std::shared_ptr<Call> call);
 
-	const std::string &getCameraId () const;
-	void setCameraId (std::string cameraId);
+	const std::string &getCameraId() const;
+	void setCameraId(std::string cameraId);
 
-	const std::string &getImage () const;
-	void setImage (std::string imagePath);
+	const std::string &getImage() const;
+	void setImage(std::string imagePath);
 
 private:
 	VideoSourceDescriptor::Type mType = VideoSourceDescriptor::Type::Unknown;

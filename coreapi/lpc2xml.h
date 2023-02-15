@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,18 +35,18 @@ typedef enum _lpc2xml_log_level {
 	LPC2XML_ERROR = 3
 } lpc2xml_log_level;
 
-typedef void(*lpc2xml_function)(void *ctx, lpc2xml_log_level level, const char *fmt, va_list list);
+typedef void (*lpc2xml_function)(void *ctx, lpc2xml_log_level level, const char *fmt, va_list list);
 
-LINPHONE_PUBLIC lpc2xml_context* lpc2xml_context_new(lpc2xml_function cbf, void *ctx);
-LINPHONE_PUBLIC void lpc2xml_context_destroy(lpc2xml_context*);
+LINPHONE_PUBLIC lpc2xml_context *lpc2xml_context_new(lpc2xml_function cbf, void *ctx);
+LINPHONE_PUBLIC void lpc2xml_context_destroy(lpc2xml_context *);
 
-LINPHONE_PUBLIC int lpc2xml_set_lpc(lpc2xml_context* context, const LpConfig *lpc);
+LINPHONE_PUBLIC int lpc2xml_set_lpc(lpc2xml_context *context, const LpConfig *lpc);
 
-LINPHONE_PUBLIC int lpc2xml_convert_file(lpc2xml_context* context, const char *filename);
-LINPHONE_PUBLIC int lpc2xml_convert_fd(lpc2xml_context* context, int fd);
-LINPHONE_PUBLIC int lpc2xml_convert_string(lpc2xml_context* context, char **content);
+LINPHONE_PUBLIC int lpc2xml_convert_file(lpc2xml_context *context, const char *filename);
+LINPHONE_PUBLIC int lpc2xml_convert_fd(lpc2xml_context *context, int fd);
+LINPHONE_PUBLIC int lpc2xml_convert_string(lpc2xml_context *context, char **content);
 #ifdef __cplusplus
 }
 #endif
 
-#endif //LPC2XML_H_
+#endif // LPC2XML_H_

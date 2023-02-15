@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "conference-chat-message-event.h"
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/chat-room.h"
-#include "conference-chat-message-event.h"
 #include "conference-event-p.h"
 
 // =============================================================================
@@ -29,7 +29,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-static inline ConferenceId getSafeConferenceId (const shared_ptr<const AbstractChatRoom> chatRoom) {
+static inline ConferenceId getSafeConferenceId(const shared_ptr<const AbstractChatRoom> chatRoom) {
 	return chatRoom ? chatRoom->getConferenceId() : ConferenceId();
 }
 
@@ -42,21 +42,17 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ConferenceChatMessageEvent::ConferenceChatMessageEvent (
-	time_t creationTime,
-	const shared_ptr<ChatMessage> &chatMessage
-) : ConferenceEvent(
-	*new ConferenceChatMessageEventPrivate,
-	EventLog::Type::ConferenceChatMessage,
-	creationTime,
-	getSafeConferenceId(chatMessage->getChatRoom())
-) {
+ConferenceChatMessageEvent::ConferenceChatMessageEvent(time_t creationTime, const shared_ptr<ChatMessage> &chatMessage)
+    : ConferenceEvent(*new ConferenceChatMessageEventPrivate,
+                      EventLog::Type::ConferenceChatMessage,
+                      creationTime,
+                      getSafeConferenceId(chatMessage->getChatRoom())) {
 	L_D();
 	L_ASSERT(chatMessage);
 	d->chatMessage = chatMessage;
 }
 
-shared_ptr<ChatMessage> ConferenceChatMessageEvent::getChatMessage () const {
+shared_ptr<ChatMessage> ConferenceChatMessageEvent::getChatMessage() const {
 	L_D();
 	return d->chatMessage;
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,14 +23,14 @@
 #import "linphone/factory.h"
 #import "linphone/types.h"
 
-#import "linphone/core.h"
 #import "linphone/call.h"
+#import "linphone/core.h"
+#import "linphone/core_utils.h"
 #import "linphone/tunnel.h"
 #import "linphone/wrapper_utils.h"
-#import "linphone/core_utils.h"
 
-#import "belle-sip/object.h"
 #import "bctoolbox/list.h"
+#import "belle-sip/object.h"
 #import "mediastreamer2/msfactory.h"
 
 #endif /* include_h */

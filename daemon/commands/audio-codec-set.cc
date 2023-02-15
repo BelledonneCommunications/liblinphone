@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,54 +23,54 @@
 #include "private.h"
 
 /*hack, until this function comes to linphonecore*/
-#define _payload_type_get_number(pt)	((long)(pt)->user_data)
-#define _payload_type_set_number(pt,n)	(pt)->user_data=(void*)(long)(n)
+#define _payload_type_get_number(pt) ((long)(pt)->user_data)
+#define _payload_type_set_number(pt, n) (pt)->user_data = (void *)(long)(n)
 
 using namespace std;
 
-AudioCodecSetCommand::AudioCodecSetCommand() :
-		DaemonCommand("audio-codec-set", "audio-codec-set <payload_type_number>|<mime_type> <property> <value>",
-				"Set a property (number, clock_rate, recv_fmtp, send_fmtp, bitrate (in kbps/s)) of a codec. Numbering of payload type is automatically performed at startup, any change will be lost after restart.\n"
-				"<mime_type> is of the form mime/rate/channels, eg. speex/16000/1") {
-	addExample(make_unique<DaemonCommandExample>("audio-codec-set 9 number 18",
-						"Status: Ok\n\n"
-						"Index: 10\n"
-						"Payload-type-number: 18\n"
-						"Clock-rate: 8000\n"
-						"Bitrate: 64000\n"
-						"Mime: G722\n"
-						"Channels: 1\n"
-						"Recv-fmtp: \n"
-						"Send-fmtp: \n"
-						"Enabled: false"));
-	addExample(make_unique<DaemonCommandExample>("audio-codec-set G722/8000/1 number 9",
-						"Status: Ok\n\n"
-						"Index: 10\n"
-						"Payload-type-number: 9\n"
-						"Clock-rate: 8000\n"
-						"Bitrate: 64000\n"
-						"Mime: G722\n"
-						"Channels: 1\n"
-						"Recv-fmtp: \n"
-						"Send-fmtp: \n"
-						"Enabled: false"));
-	addExample(make_unique<DaemonCommandExample>("audio-codec-set 9 clock_rate 16000",
-						"Status: Ok\n\n"
-						"Index: 10\n"
-						"Payload-type-number: 9\n"
-						"Clock-rate: 16000\n"
-						"Bitrate: 64000\n"
-						"Mime: G722\n"
-						"Channels: 1\n"
-						"Recv-fmtp: \n"
-						"Send-fmtp: \n"
-						"Enabled: false"));
+AudioCodecSetCommand::AudioCodecSetCommand()
+    : DaemonCommand(
+          "audio-codec-set",
+          "audio-codec-set <payload_type_number>|<mime_type> <property> <value>",
+          "Set a property (number, clock_rate, recv_fmtp, send_fmtp, bitrate (in kbps/s)) of a codec. Numbering of "
+          "payload type is automatically performed at startup, any change will be lost after restart.\n"
+          "<mime_type> is of the form mime/rate/channels, eg. speex/16000/1") {
+	addExample(make_unique<DaemonCommandExample>("audio-codec-set 9 number 18", "Status: Ok\n\n"
+	                                                                            "Index: 10\n"
+	                                                                            "Payload-type-number: 18\n"
+	                                                                            "Clock-rate: 8000\n"
+	                                                                            "Bitrate: 64000\n"
+	                                                                            "Mime: G722\n"
+	                                                                            "Channels: 1\n"
+	                                                                            "Recv-fmtp: \n"
+	                                                                            "Send-fmtp: \n"
+	                                                                            "Enabled: false"));
+	addExample(make_unique<DaemonCommandExample>("audio-codec-set G722/8000/1 number 9", "Status: Ok\n\n"
+	                                                                                     "Index: 10\n"
+	                                                                                     "Payload-type-number: 9\n"
+	                                                                                     "Clock-rate: 8000\n"
+	                                                                                     "Bitrate: 64000\n"
+	                                                                                     "Mime: G722\n"
+	                                                                                     "Channels: 1\n"
+	                                                                                     "Recv-fmtp: \n"
+	                                                                                     "Send-fmtp: \n"
+	                                                                                     "Enabled: false"));
+	addExample(make_unique<DaemonCommandExample>("audio-codec-set 9 clock_rate 16000", "Status: Ok\n\n"
+	                                                                                   "Index: 10\n"
+	                                                                                   "Payload-type-number: 9\n"
+	                                                                                   "Clock-rate: 16000\n"
+	                                                                                   "Bitrate: 64000\n"
+	                                                                                   "Mime: G722\n"
+	                                                                                   "Channels: 1\n"
+	                                                                                   "Recv-fmtp: \n"
+	                                                                                   "Send-fmtp: \n"
+	                                                                                   "Enabled: false"));
 }
 
-static PayloadType *findPayload(LinphoneCore *lc, int payload_type, int *index){
-	if (index) *index=0;
+static PayloadType *findPayload(LinphoneCore *lc, int payload_type, int *index) {
+	if (index) *index = 0;
 	for (const bctbx_list_t *node = linphone_core_get_audio_codecs(lc); node != NULL; node = bctbx_list_next(node)) {
-		PayloadType *payload = reinterpret_cast<PayloadType*>(node->data);
+		PayloadType *payload = reinterpret_cast<PayloadType *>(node->data);
 		if (index) (*index)++;
 		if (payload_type == payload_type_get_number(payload)) {
 			return payload;
@@ -79,7 +79,7 @@ static PayloadType *findPayload(LinphoneCore *lc, int payload_type, int *index){
 	return NULL;
 }
 
-void AudioCodecSetCommand::exec(Daemon *app, const string& args) {
+void AudioCodecSetCommand::exec(Daemon *app, const string &args) {
 	istringstream ist(args);
 
 	if (ist.peek() == EOF) {
@@ -104,7 +104,7 @@ void AudioCodecSetCommand::exec(Daemon *app, const string& args) {
 	ist >> value;
 	if (value.length() > 255) value.resize(255);
 
-	PayloadType *payload=parser.getPayloadType();
+	PayloadType *payload = parser.getPayloadType();
 	if (payload) {
 		bool handled = false;
 		if (param.compare("clock_rate") == 0) {
@@ -120,10 +120,10 @@ void AudioCodecSetCommand::exec(Daemon *app, const string& args) {
 			handled = true;
 		} else if (param.compare("number") == 0) {
 			if (value.length() > 0) {
-				int idx=atoi(value.c_str());
-				PayloadType *conflict=NULL;
-				if (idx!=-1){
-					conflict=findPayload(app->getCore(), atoi(value.c_str()), NULL);
+				int idx = atoi(value.c_str());
+				PayloadType *conflict = NULL;
+				if (idx != -1) {
+					conflict = findPayload(app->getCore(), atoi(value.c_str()), NULL);
 				}
 				if (conflict) {
 					app->sendResponse(Response("New payload type number is already used.", Response::Error));
@@ -135,7 +135,7 @@ void AudioCodecSetCommand::exec(Daemon *app, const string& args) {
 			}
 		} else if (param.compare("bitrate") == 0) {
 			linphone_core_set_payload_type_bitrate(app->getCore(), payload, atoi(value.c_str()));
-			handled=true;
+			handled = true;
 		}
 		if (handled) {
 			app->sendResponse(PayloadTypeResponse(app->getCore(), payload, parser.getPosition()));

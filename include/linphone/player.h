@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,15 +21,12 @@
 #ifndef LINPHONE_PLAYER_H_
 #define LINPHONE_PLAYER_H_
 
-
 #include "linphone/types.h"
 #include "mediastreamer2/msinterfaces.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @addtogroup call_control
@@ -40,27 +37,27 @@ extern "C" {
  * Acquire a reference to the player.
  * @param player #LinphonePlayer object. @notnil
  * @return The same #LinphonePlayer object. @notnil
-**/
-LINPHONE_PUBLIC LinphonePlayer * linphone_player_ref(LinphonePlayer *player);
+ **/
+LINPHONE_PUBLIC LinphonePlayer *linphone_player_ref(LinphonePlayer *player);
 
 /**
  * Release reference to the player.
  * @param player #LinphonePlayer object. @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_player_unref(LinphonePlayer *player);
 
 /**
  * Retrieve the user pointer associated with the player.
  * @param player #LinphonePlayer object. @notnil
  * @return The user pointer associated with the player. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void *linphone_player_get_user_data(const LinphonePlayer *player);
 
 /**
  * Assign a user pointer to the player.
  * @param player #LinphonePlayer object. @notnil
  * @param user_data The user pointer to associate with the player. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_player_set_user_data(LinphonePlayer *player, void *user_data);
 
 /**
@@ -195,7 +192,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_player_get_core(const LinphonePlayer *pla
  * @param cbs #LinphonePlayerCbs object. @notnil
  * @return The same #LinphonePlayerCbs object. @notnil
  */
-LINPHONE_PUBLIC LinphonePlayerCbs * linphone_player_cbs_ref(LinphonePlayerCbs *cbs);
+LINPHONE_PUBLIC LinphonePlayerCbs *linphone_player_cbs_ref(LinphonePlayerCbs *cbs);
 
 /**
  * Release reference to the #LinphonePlayerCbs object.
@@ -242,12 +239,11 @@ LINPHONE_PUBLIC void linphone_player_cbs_set_eof_reached(LinphonePlayerCbs *cbs,
  * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead @notnil
  * @donotwrap
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphonePlayerCbs * linphone_player_get_callbacks(const LinphonePlayer *player);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphonePlayerCbs *linphone_player_get_callbacks(const LinphonePlayer *player);
 
 /**
  * @}
-**/
-
+ **/
 
 #ifdef __cplusplus
 }

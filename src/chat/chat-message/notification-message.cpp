@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/notification-message-p.h"
 
 // =============================================================================
@@ -28,11 +30,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-NotificationMessage::NotificationMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction) :
-	NotificationMessage(*new NotificationMessagePrivate(chatRoom, direction)) {
+NotificationMessage::NotificationMessage(const shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction)
+    : NotificationMessage(*new NotificationMessagePrivate(chatRoom, direction)) {
 }
 
-NotificationMessage::NotificationMessage (NotificationMessagePrivate &p) : ChatMessage(p) {
+NotificationMessage::NotificationMessage(NotificationMessagePrivate &p) : ChatMessage(p) {
 	L_D();
 	d->displayNotificationRequired = false;
 	d->negativeDeliveryNotificationRequired = false;
@@ -41,7 +43,7 @@ NotificationMessage::NotificationMessage (NotificationMessagePrivate &p) : ChatM
 	d->contentEncoding = "deflate";
 }
 
-void NotificationMessage::setToBeStored (bool value) {
+void NotificationMessage::setToBeStored(BCTBX_UNUSED(bool value)) {
 }
 
 LINPHONE_END_NAMESPACE

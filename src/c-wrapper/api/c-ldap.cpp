@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,11 +20,11 @@
 
 #include <ctype.h>
 
-#include "ldap/ldap.h"
-#include "ldap/ldap-params.h"
 #include "c-wrapper/c-wrapper.h"
-#include "linphone/api/c-ldap.h"
+#include "ldap/ldap-params.h"
+#include "ldap/ldap.h"
 #include "linphone/api/c-ldap-params.h"
+#include "linphone/api/c-ldap.h"
 #include "linphone/wrapper_utils.h"
 #include "utils/enum.h"
 
@@ -32,15 +32,15 @@
 
 using namespace LinphonePrivate;
 
-LinphoneLdap* linphone_ldap_new(LinphoneCore *core) {
+LinphoneLdap *linphone_ldap_new(LinphoneCore *core) {
 	return Ldap::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core));
 }
 
-LinphoneLdap* linphone_ldap_new_with_params(LinphoneCore *core, LinphoneLdapParams *params) {
+LinphoneLdap *linphone_ldap_new_with_params(LinphoneCore *core, LinphoneLdapParams *params) {
 	return Ldap::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core), LdapParams::toCpp(params)->getSharedFromThis());
 }
 
-LinphoneLdap* linphone_ldap_ref(LinphoneLdap *ldap) {
+LinphoneLdap *linphone_ldap_ref(LinphoneLdap *ldap) {
 	Ldap::toCpp(ldap)->ref();
 	return ldap;
 }
@@ -49,23 +49,22 @@ void linphone_ldap_unref(LinphoneLdap *ldap) {
 	Ldap::toCpp(ldap)->unref();
 }
 
-void linphone_ldap_set_params(LinphoneLdap *ldap, LinphoneLdapParams* params) {
+void linphone_ldap_set_params(LinphoneLdap *ldap, LinphoneLdapParams *params) {
 	Ldap::toCpp(ldap)->setLdapParams(LdapParams::toCpp(params)->getSharedFromThis());
 }
 
-const LinphoneLdapParams* linphone_ldap_get_params(LinphoneLdap *ldap) {
+const LinphoneLdapParams *linphone_ldap_get_params(LinphoneLdap *ldap) {
 	return Ldap::toCpp(ldap)->getLdapParams()->toC();
 }
 
-
-LinphoneCore* linphone_ldap_get_core(LinphoneLdap *ldap) {
+LinphoneCore *linphone_ldap_get_core(LinphoneLdap *ldap) {
 	return Ldap::toCpp(ldap)->getCore()->getCCore();
 }
 
-void linphone_ldap_set_index(LinphoneLdap *ldap, int index){
+void linphone_ldap_set_index(LinphoneLdap *ldap, int index) {
 	return Ldap::toCpp(ldap)->setIndex(index);
 }
 
-int linphone_ldap_get_index(const LinphoneLdap *ldap){
+int linphone_ldap_get_index(const LinphoneLdap *ldap) {
 	return Ldap::toCpp(ldap)->getIndex();
 }

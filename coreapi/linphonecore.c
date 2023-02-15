@@ -20,6 +20,8 @@
 
 #include <sstream>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/api/c-content.h"
 #include "linphone/api/c-recorder-params.h"
 #include "linphone/api/c-recorder.h"
@@ -957,7 +959,7 @@ static void clean_log_collection_upload_context(LinphoneCore *lc) {
 	}
 }
 
-static void process_io_error_upload_log_collection(void *data, const belle_sip_io_error_event_t *event) {
+static void process_io_error_upload_log_collection(void *data, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneCore *core = (LinphoneCore *)data;
 	ms_error("I/O Error during log collection upload to %s", linphone_core_get_log_collection_upload_server_url(core));
 	linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered,
@@ -965,7 +967,7 @@ static void process_io_error_upload_log_collection(void *data, const belle_sip_i
 	clean_log_collection_upload_context(core);
 }
 
-static void process_auth_requested_upload_log_collection(void *data, belle_sip_auth_event_t *event) {
+static void process_auth_requested_upload_log_collection(void *data, BCTBX_UNUSED(belle_sip_auth_event_t *event)) {
 	LinphoneCore *core = (LinphoneCore *)data;
 	ms_error("Error during log collection upload: auth requested to connect %s",
 	         linphone_core_get_log_collection_upload_server_url(core));
@@ -983,8 +985,8 @@ static void process_auth_requested_upload_log_collection(void *data, belle_sip_a
  * @param[in] buffer The ouput buffer where to copy the data to be uploaded
  * @param[in,out] size The size in byte of the data requested, as output it will contain the effective copied size
  */
-static int log_collection_upload_on_send_body(belle_sip_user_body_handler_t *bh,
-                                              belle_sip_message_t *msg,
+static int log_collection_upload_on_send_body(BCTBX_UNUSED(belle_sip_user_body_handler_t *bh),
+                                              BCTBX_UNUSED(belle_sip_message_t *msg),
                                               void *data,
                                               size_t offset,
                                               uint8_t *buffer,
@@ -1029,8 +1031,11 @@ static int log_collection_upload_on_send_body(belle_sip_user_body_handler_t *bh,
  * Callback called during upload of a log collection to server.
  * It is just forwarding the call and some parameters to the vtable defined callback.
  */
-static void log_collection_upload_on_progress(
-    belle_sip_body_handler_t *bh, belle_sip_message_t *msg, void *data, size_t offset, size_t total) {
+static void log_collection_upload_on_progress(BCTBX_UNUSED(belle_sip_body_handler_t *bh),
+                                              BCTBX_UNUSED(belle_sip_message_t *msg),
+                                              void *data,
+                                              size_t offset,
+                                              size_t total) {
 	LinphoneCore *core = (LinphoneCore *)data;
 	linphone_core_notify_log_collection_upload_progress_indication(core, offset, total);
 }
@@ -2212,6 +2217,10 @@ static void build_video_devices_table(LinphoneCore *lc) {
 	lc->video_conf.cams = devices;
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 static void video_config_read(LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
 	int automatic_video = 1;
@@ -2248,6 +2257,9 @@ static void video_config_read(LinphoneCore *lc) {
 	    !!linphone_config_get_int(lc->config, "video", "retransmission_on_nack_enabled", 0);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static void read_friends_from_rc(LinphoneCore *lc) {
 	LinphoneFriend *lf = NULL;
@@ -2720,6 +2732,10 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 static void
 _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *body) {
 #ifdef HAVE_ADVANCED_IM
@@ -2749,16 +2765,23 @@ _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *le
 	ms_warning("Advanced IM such as group chat is disabled!");
 #endif // HAVE_ADVANCED_IM
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static void linphone_core_internal_subscribe_received(LinphoneCore *lc,
                                                       LinphoneEvent *lev,
-                                                      const char *subscribe_event,
+                                                      BCTBX_UNUSED(const char *subscribe_event),
                                                       const LinphoneContent *body) {
 	if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
 		_linphone_core_conference_subscribe_received(lc, lev, body);
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 static void _linphone_core_conference_subscription_state_changed(LinphoneCore *lc,
                                                                  LinphoneEvent *lev,
                                                                  LinphoneSubscriptionState state) {
@@ -2791,6 +2814,9 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
 	ms_warning("Advanced IM such as group chat is disabled!");
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static void linphone_core_internal_subscription_state_changed(LinphoneCore *lc,
                                                               LinphoneEvent *lev,
@@ -3016,7 +3042,7 @@ static void linphone_core_init(LinphoneCore *lc,
                                LinphoneCoreCbs *cbs,
                                LpConfig *config,
                                void *userdata,
-                               void *system_context,
+                               BCTBX_UNUSED(void *system_context),
                                bool_t automatically_start) {
 	LinphoneFactory *lfactory = linphone_factory_get();
 	LinphoneCoreCbs *internal_cbs = _linphone_core_cbs_new();
@@ -3069,6 +3095,9 @@ static void linphone_core_init(LinphoneCore *lc,
 	    !!linphone_config_get_int(lc->config, "misc", "vibrate_on_incoming_call", vibration_incoming_call_default);
 
 	lc->push_config = linphone_push_notification_config_new();
+
+	linphone_core_enable_empty_chatrooms_deletion(
+	    lc, linphone_config_get_bool(lc->config, "misc", "empty_chat_room_deletion", TRUE));
 
 #ifdef __ANDROID__
 	if (system_context) {
@@ -3542,7 +3571,7 @@ void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val) {
 }
 
 // Deprecated
-bool_t linphone_core_lime_available(const LinphoneCore *lc) {
+bool_t linphone_core_lime_available(BCTBX_UNUSED(const LinphoneCore *lc)) {
 	return lime_is_available();
 }
 
@@ -4410,7 +4439,8 @@ const char *linphone_core_get_route(LinphoneCore *lc) {
 	return route;
 }
 
-LinphoneCall *linphone_core_start_refered_call(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
+LinphoneCall *
+linphone_core_start_refered_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	shared_ptr<LinphonePrivate::Call> referredCall =
 	    Call::toCpp(call)->startReferredCall(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 	return referredCall->toC();
@@ -4939,7 +4969,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 	return call;
 }
 
-LinphoneStatus linphone_core_transfer_call(LinphoneCore *lc, LinphoneCall *call, const char *url) {
+LinphoneStatus linphone_core_transfer_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const char *url) {
 	if (call == NULL) {
 		ms_warning("No established call to refer.");
 		return -1;
@@ -4947,7 +4977,8 @@ LinphoneStatus linphone_core_transfer_call(LinphoneCore *lc, LinphoneCall *call,
 	return linphone_call_transfer(call, url);
 }
 
-LinphoneStatus linphone_core_transfer_call_to_another(LinphoneCore *lc, LinphoneCall *call, LinphoneCall *dest) {
+LinphoneStatus
+linphone_core_transfer_call_to_another(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCall *dest) {
 	return linphone_call_transfer_to_another(call, dest);
 }
 
@@ -4962,25 +4993,27 @@ bool_t linphone_core_is_incoming_invite_pending(LinphoneCore *lc) {
 	return FALSE;
 }
 
-LinphoneStatus
-linphone_core_accept_early_media_with_params(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
+LinphoneStatus linphone_core_accept_early_media_with_params(BCTBX_UNUSED(LinphoneCore *lc),
+                                                            LinphoneCall *call,
+                                                            const LinphoneCallParams *params) {
 	return linphone_call_accept_early_media_with_params(call, params);
 }
 
-LinphoneStatus linphone_core_accept_early_media(LinphoneCore *lc, LinphoneCall *call) {
+LinphoneStatus linphone_core_accept_early_media(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_accept_early_media(call);
 }
 
-LinphoneStatus linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
+LinphoneStatus
+linphone_core_update_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	return linphone_call_update(call, params);
 }
 
-LinphoneStatus linphone_core_defer_call_update(LinphoneCore *lc, LinphoneCall *call) {
+LinphoneStatus linphone_core_defer_call_update(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_defer_update(call);
 }
 
 LinphoneStatus
-linphone_core_accept_call_update(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
+linphone_core_accept_call_update(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	return linphone_call_accept_update(call, params);
 }
 
@@ -5013,7 +5046,8 @@ linphone_core_accept_call_with_params(LinphoneCore *lc, LinphoneCall *call, cons
 	return _linphone_core_accept_call_with_params(lc, call, params);
 }
 
-LinphoneStatus linphone_core_redirect_call(LinphoneCore *lc, LinphoneCall *call, const char *redirect_uri) {
+LinphoneStatus
+linphone_core_redirect_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const char *redirect_uri) {
 	return linphone_call_redirect(call, redirect_uri);
 }
 
@@ -5032,7 +5066,7 @@ LinphoneStatus linphone_core_terminate_all_calls(LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->terminateAllCalls();
 }
 
-LinphoneStatus linphone_core_decline_call(LinphoneCore *lc, LinphoneCall *call, LinphoneReason reason) {
+LinphoneStatus linphone_core_decline_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneReason reason) {
 	return linphone_call_decline(call, reason);
 }
 
@@ -5059,7 +5093,7 @@ LinphoneCall *linphone_core_get_current_call(const LinphoneCore *lc) {
 	return call ? call->toC() : NULL;
 }
 
-LinphoneStatus linphone_core_pause_call(LinphoneCore *lc, LinphoneCall *call) {
+LinphoneStatus linphone_core_pause_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_pause(call);
 }
 
@@ -5103,7 +5137,7 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc) {
 	return err;
 }
 
-LinphoneStatus linphone_core_resume_call(LinphoneCore *lc, LinphoneCall *call) {
+LinphoneStatus linphone_core_resume_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_resume(call);
 }
 
@@ -5893,7 +5927,8 @@ void linphone_core_set_ssl_config(LinphoneCore *lc, void *ssl_config) {
 	}
 }
 
-static void notify_end_of_ringtone(LinphoneRingtonePlayer *rp, void *user_data, int status) {
+static void
+notify_end_of_ringtone(BCTBX_UNUSED(LinphoneRingtonePlayer *rp), void *user_data, BCTBX_UNUSED(int status)) {
 	LinphoneCore *lc = (LinphoneCore *)user_data;
 	lc->preview_finished = 1;
 }
@@ -6020,11 +6055,11 @@ bool_t linphone_core_upnp_available() {
 	return FALSE;
 }
 
-LinphoneUpnpState linphone_core_get_upnp_state(const LinphoneCore *lc) {
+LinphoneUpnpState linphone_core_get_upnp_state(BCTBX_UNUSED(const LinphoneCore *lc)) {
 	return LinphoneUpnpStateNotAvailable;
 }
 
-const char *linphone_core_get_upnp_external_ipaddress(const LinphoneCore *lc) {
+const char *linphone_core_get_upnp_external_ipaddress(BCTBX_UNUSED(const LinphoneCore *lc)) {
 	return NULL;
 }
 
@@ -6154,7 +6189,7 @@ void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *pat
 	}
 }
 
-const char *linphone_core_get_call_logs_database_path(LinphoneCore *lc) {
+const char *linphone_core_get_call_logs_database_path(BCTBX_UNUSED(LinphoneCore *lc)) {
 	lError() << "Do not use `linphone_core_get_call_logs_database_path`. Not necessary.";
 	return "";
 }
@@ -6253,6 +6288,10 @@ void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
  * Video related functions                                                  *
  ******************************************************************************/
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height) {
 	bool_t auto_camera_preview_resize =
 	    !!linphone_config_get_int(lc->config, "video", "auto_resize_preview_to_keep_ratio", 0);
@@ -6262,9 +6301,13 @@ void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height)
 	getPlatformHelpers(lc)->resizeVideoPreview(width, height);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 #ifdef VIDEO_ENABLED
-static void video_stream_callback(void *userdata, const MSFilter *f, const unsigned int id, const void *arg) {
+static void
+video_stream_callback(void *userdata, BCTBX_UNUSED(const MSFilter *f), const unsigned int id, const void *arg) {
 	switch (id) {
 		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
 			LinphoneCore *lc = (LinphoneCore *)userdata;
@@ -6275,8 +6318,7 @@ static void video_stream_callback(void *userdata, const MSFilter *f, const unsig
 		}
 	}
 }
-
-static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+static void video_filter_callback(void *userdata, BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
 	switch (id) {
 		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
 			LinphoneCore *lc = (LinphoneCore *)userdata;
@@ -6327,6 +6369,10 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 	return -1;
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 static void toggle_video_preview(LinphoneCore *lc, bool_t val) {
 #ifdef VIDEO_ENABLED
 	if (val) {
@@ -6376,6 +6422,9 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val) {
 	}
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static void relaunch_video_preview(LinphoneCore *lc) {
 	if (lc->previewstream) {
@@ -6385,7 +6434,7 @@ static void relaunch_video_preview(LinphoneCore *lc) {
 	 * This code will need to be revisited when linphone_core_iterate() will no longer be required*/
 }
 
-bool_t linphone_core_video_supported(LinphoneCore *lc) {
+bool_t linphone_core_video_supported(BCTBX_UNUSED(LinphoneCore *lc)) {
 #ifdef VIDEO_ENABLED
 	return TRUE;
 #else
@@ -6560,6 +6609,10 @@ void linphone_core_set_qrcode_decode_rect(LinphoneCore *lc, const int x, const i
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_enable_self_view(LinphoneCore *lc, bool_t val) {
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
@@ -6576,6 +6629,9 @@ void linphone_core_enable_self_view(LinphoneCore *lc, bool_t val) {
 	}
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 bool_t linphone_core_self_view_enabled(const LinphoneCore *lc) {
 	return lc->video_conf.selfview;
@@ -6628,6 +6684,10 @@ static VideoStream *get_active_video_stream(LinphoneCore *lc) {
 }
 #endif
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LinphoneStatus linphone_core_set_static_picture(LinphoneCore *lc, const char *path) {
 #ifdef VIDEO_ENABLED
 	VideoStream *vs = get_active_video_stream(lc);
@@ -6647,8 +6707,15 @@ LinphoneStatus linphone_core_set_static_picture(LinphoneCore *lc, const char *pa
 #endif
 	return 0;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-const char *linphone_core_get_static_picture(LinphoneCore *lc) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+const char *linphone_core_get_static_picture(BCTBX_UNUSED(LinphoneCore *lc)) {
 	const char *path = NULL;
 #ifdef VIDEO_ENABLED
 	path = ms_static_image_get_default_image();
@@ -6657,7 +6724,14 @@ const char *linphone_core_get_static_picture(LinphoneCore *lc) {
 #endif
 	return path;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LinphoneStatus linphone_core_set_static_picture_fps(LinphoneCore *lc, float fps) {
 #ifdef VIDEO_ENABLED
 	VideoStream *vs = NULL;
@@ -6677,7 +6751,14 @@ LinphoneStatus linphone_core_set_static_picture_fps(LinphoneCore *lc, float fps)
 #endif
 	return 0;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 float linphone_core_get_static_picture_fps(LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
 	VideoStream *vs = NULL;
@@ -6699,7 +6780,14 @@ float linphone_core_get_static_picture_fps(LinphoneCore *lc) {
 #endif
 	return 0;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void *linphone_core_create_native_video_window_id(const LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
@@ -6710,6 +6798,9 @@ void *linphone_core_create_native_video_window_id(const LinphoneCore *lc) {
 #endif
 	return 0;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void *linphone_core_get_native_video_window_id(const LinphoneCore *lc) {
 	if (lc->video_window_id) {
@@ -6717,8 +6808,8 @@ void *linphone_core_get_native_video_window_id(const LinphoneCore *lc) {
 		return lc->video_window_id;
 	} else {
 #ifdef VIDEO_ENABLED
-		/*case where it was not set but we want to get the one automatically created by mediastreamer2 (desktop versions
-		 * only)*/
+		/*case where it was not set but we want to get the one automatically created by mediastreamer2 (desktop
+		 * versions only)*/
 		LinphoneCall *call = linphone_core_get_current_call(lc);
 
 		if (call) {
@@ -6743,6 +6834,10 @@ void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 #endif
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
@@ -6757,6 +6852,9 @@ void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
 #endif
 	return 0;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void *linphone_core_get_native_preview_window_id(LinphoneCore *lc) {
 	if (lc->preview_window_id) {
@@ -6790,6 +6888,10 @@ void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 #endif
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 #ifdef __ANDROID__
 	getPlatformHelpers(lc)->setVideoPreviewWindow(id);
@@ -6797,7 +6899,14 @@ void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 	_linphone_core_set_native_preview_window_id(lc, id);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_show_video(LinphoneCore *lc, bool_t show) {
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
@@ -6808,6 +6917,9 @@ void linphone_core_show_video(LinphoneCore *lc, bool_t show) {
 	}
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void linphone_core_use_preview_window(LinphoneCore *lc, bool_t yesno) {
 	lc->use_preview_window = yesno;
@@ -6844,6 +6956,10 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 	if (lc->platform_helper) getPlatformHelpers(lc)->setDeviceRotation(rotation);
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 int linphone_core_get_camera_sensor_rotation(LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
@@ -6854,6 +6970,9 @@ int linphone_core_get_camera_sensor_rotation(LinphoneCore *lc) {
 #endif
 	return -1;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static MSVideoSizeDef supported_resolutions[] = {
 #if !defined(__ANDROID__) && !TARGET_OS_IPHONE
@@ -6883,7 +7002,7 @@ static MSVideoSizeDef supported_resolutions[] = {
     {{MS_VIDEO_SIZE_QCIF_W, MS_VIDEO_SIZE_QCIF_H}, "qcif"},
     {{0, 0}, NULL}};
 
-const MSVideoSizeDef *linphone_core_get_supported_video_sizes(LinphoneCore *lc) {
+const MSVideoSizeDef *linphone_core_get_supported_video_sizes(BCTBX_UNUSED(LinphoneCore *lc)) {
 	return supported_resolutions;
 }
 
@@ -6983,233 +7102,6 @@ MSVideoSize linphone_core_get_preview_video_size(const LinphoneCore *lc) {
 	vsize.width = (int)linphone_video_definition_get_width(lc->video_conf.preview_vdef);
 	vsize.height = (int)linphone_video_definition_get_height(lc->video_conf.preview_vdef);
 	return vsize;
-}
-
-MSVideoSize linphone_core_get_current_preview_video_size(const LinphoneCore *lc) {
-	MSVideoSize ret = {0};
-#ifndef VIDEO_ENABLED
-	ms_error("linphone_core_get_current_preview_video_size() fail. Support for video is disabled");
-#else
-	if (lc->previewstream) {
-		ret = video_preview_get_current_size(lc->previewstream);
-	}
-#endif
-	return ret;
-}
-
-LinphoneVideoDefinition *linphone_core_get_current_preview_video_definition(const LinphoneCore *lc) {
-#ifdef VIDEO_ENABLED
-	MSVideoSize vsize = {0};
-	if (lc->previewstream) {
-		vsize = video_preview_get_current_size(lc->previewstream);
-	}
-	return linphone_factory_find_supported_video_definition(linphone_factory_get(), (unsigned int)vsize.width,
-	                                                        (unsigned int)vsize.height);
-#else
-	ms_error("Video support is disabled");
-	return NULL;
-#endif
-}
-
-void linphone_core_set_preview_video_size_by_name(LinphoneCore *lc, const char *name) {
-	MSVideoSize vsize = video_size_get_by_name(name);
-	linphone_core_set_preview_video_size(lc, vsize);
-}
-
-void linphone_core_set_preview_video_definition_by_name(LinphoneCore *lc, const char *name) {
-	LinphoneVideoDefinition *vdef =
-	    linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), name);
-	if (vdef == NULL) {
-		ms_error("Video definition '%s' is not supported", name);
-	} else {
-		linphone_core_set_preview_video_definition(lc, vdef);
-	}
-}
-
-void linphone_core_set_preferred_video_size_by_name(LinphoneCore *lc, const char *name) {
-	MSVideoSize vsize = video_size_get_by_name(name);
-	MSVideoSize default_vsize = {MS_VIDEO_SIZE_CIF_W, MS_VIDEO_SIZE_CIF_H};
-	if (vsize.width != 0) linphone_core_set_preferred_video_size(lc, vsize);
-	else linphone_core_set_preferred_video_size(lc, default_vsize);
-}
-
-void linphone_core_set_preferred_video_definition_by_name(LinphoneCore *lc, const char *name) {
-	LinphoneVideoDefinition *vdef =
-	    linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), name);
-	if (vdef == NULL) {
-		ms_error("Video definition '%s' is not supported", name);
-	} else {
-		linphone_core_set_preferred_video_definition(lc, vdef);
-	}
-}
-
-const LinphoneVideoDefinition *linphone_core_get_preferred_video_definition(const LinphoneCore *lc) {
-	return lc->video_conf.vdef;
-}
-
-MSVideoSize linphone_core_get_preferred_video_size(const LinphoneCore *lc) {
-	MSVideoSize vsize = {0};
-	vsize.width = (int)linphone_video_definition_get_width(lc->video_conf.vdef);
-	vsize.height = (int)linphone_video_definition_get_height(lc->video_conf.vdef);
-	return vsize;
-}
-
-char *linphone_core_get_preferred_video_size_name(const LinphoneCore *lc) {
-	return ms_strdup(linphone_video_definition_get_name(lc->video_conf.vdef));
-}
-
-void linphone_core_set_preferred_framerate(LinphoneCore *lc, float fps) {
-	lc->video_conf.fps = fps;
-	if (linphone_core_ready(lc)) linphone_config_set_float(lc->config, "video", "framerate", fps);
-}
-
-float linphone_core_get_preferred_framerate(LinphoneCore *lc) {
-	return lc->video_conf.fps;
-}
-
-void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
-#ifdef VIDEO_ENABLED
-
-	LinphoneCall *call = linphone_core_get_current_call(lc);
-	VideoStream *stream = call
-	                          ? reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo))
-	                          : lc->previewstream;
-
-	if (stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
-		ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
-	}
-
-#endif
-}
-
-void linphone_core_set_keep_stream_direction_for_rejected_stream(LinphoneCore *lc, bool_t yesno) {
-	lc->keep_stream_direction_for_rejected_stream = yesno;
-}
-
-bool_t linphone_core_get_keep_stream_direction_for_rejected_stream(LinphoneCore *lc) {
-	return lc->keep_stream_direction_for_rejected_stream;
-}
-
-void linphone_core_set_use_files(LinphoneCore *lc, bool_t yesno) {
-	lc->use_files = yesno;
-	if (yesno) {
-		if (lc->sound_conf.ring_sndcard) {
-			ms_snd_card_unref(lc->sound_conf.ring_sndcard);
-			lc->sound_conf.ring_sndcard = NULL;
-		}
-		if (lc->sound_conf.play_sndcard) {
-			ms_snd_card_unref(lc->sound_conf.play_sndcard);
-			lc->sound_conf.play_sndcard = NULL;
-		}
-		if (lc->sound_conf.capt_sndcard) {
-			ms_snd_card_unref(lc->sound_conf.capt_sndcard);
-			lc->sound_conf.capt_sndcard = NULL;
-		}
-		if (lc->sound_conf.media_sndcard) {
-			ms_snd_card_unref(lc->sound_conf.media_sndcard);
-			lc->sound_conf.media_sndcard = NULL;
-		}
-	} else {
-		linphone_core_set_default_sound_devices(lc);
-	}
-}
-
-bool_t linphone_core_get_use_files(LinphoneCore *lc) {
-	return lc->use_files;
-}
-
-const char *linphone_core_get_play_file(const LinphoneCore *lc) {
-	return lc->play_file;
-}
-
-void linphone_core_set_play_file(LinphoneCore *lc, const char *file) {
-	LinphoneCall *call = linphone_core_get_current_call(lc);
-	if (lc->play_file != NULL) {
-		ms_free(lc->play_file);
-		lc->play_file = NULL;
-	}
-	if (file != NULL) {
-		lc->play_file = ms_strdup(file);
-		if (call) {
-			AudioStream *astream =
-			    reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-			if (astream && astream->ms.state == MSStreamStarted) audio_stream_play(astream, file);
-		}
-	}
-}
-
-const char *linphone_core_get_record_file(const LinphoneCore *lc) {
-	return lc->rec_file;
-}
-
-void linphone_core_set_record_file(LinphoneCore *lc, const char *file) {
-	LinphoneCall *call = linphone_core_get_current_call(lc);
-	if (lc->rec_file != NULL) {
-		ms_free(lc->rec_file);
-		lc->rec_file = NULL;
-	}
-	if (file != NULL) {
-		lc->rec_file = ms_strdup(file);
-		if (call) {
-			AudioStream *astream =
-			    reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-			if (astream) audio_stream_record(astream, file);
-		}
-	}
-}
-
-void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playDtmf(dtmf, duration_ms);
-}
-
-LinphoneStatus linphone_core_play_local(LinphoneCore *lc, const char *audiofile) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playLocal(audiofile);
-}
-
-void linphone_core_stop_dtmf(LinphoneCore *lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().stopDtmf();
-}
-
-void *linphone_core_get_user_data(const LinphoneCore *lc) {
-	return lc->data;
-}
-
-void linphone_core_set_user_data(LinphoneCore *lc, void *userdata) {
-	lc->data = userdata;
-}
-
-int linphone_core_get_mtu(const LinphoneCore *lc) {
-	return lc->net_conf.mtu;
-}
-
-void linphone_core_set_mtu(LinphoneCore *lc, int mtu) {
-	lc->net_conf.mtu = mtu;
-	if (mtu > 0) {
-		if (mtu < 500) {
-			ms_error("MTU too small !");
-			mtu = 500;
-		}
-		ms_factory_set_mtu(lc->factory, mtu);
-		ms_message("MTU is supposed to be %i, rtp payload max size will be %i", mtu,
-		           ms_factory_get_payload_max_size(lc->factory));
-	} else ms_factory_set_mtu(lc->factory, 0); // use mediastreamer2 default value
-}
-
-void linphone_core_set_rtp_transport_factories(LinphoneCore *lc, LinphoneRtpTransportFactories *factories) {
-	lc->rtptf = factories;
-}
-
-int linphone_core_get_current_call_stats(LinphoneCore *lc, rtp_stats_t *local, rtp_stats_t *remote) {
-	LinphoneCall *call = linphone_core_get_current_call(lc);
-	if (call) {
-		AudioStream *astream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-		if (astream) {
-			memset(remote, 0, sizeof(*remote));
-			audio_stream_get_local_rtp_stats(astream, local);
-			return 0;
-		}
-	}
-	return -1;
 }
 
 void net_config_uninit(LinphoneCore *lc) {
@@ -7430,6 +7322,254 @@ static void video_config_uninit(LinphoneCore *lc) {
 	lc->video_conf = {0};
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+MSVideoSize linphone_core_get_current_preview_video_size(const LinphoneCore *lc) {
+	MSVideoSize ret = {0};
+#ifndef VIDEO_ENABLED
+	ms_error("linphone_core_get_current_preview_video_size() fail. Support for video is disabled");
+#else
+	if (lc->previewstream) {
+		ret = video_preview_get_current_size(lc->previewstream);
+	}
+#endif
+	return ret;
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+LinphoneVideoDefinition *linphone_core_get_current_preview_video_definition(const LinphoneCore *lc) {
+#ifdef VIDEO_ENABLED
+	MSVideoSize vsize = {0};
+	if (lc->previewstream) {
+		vsize = video_preview_get_current_size(lc->previewstream);
+	}
+	return linphone_factory_find_supported_video_definition(linphone_factory_get(), (unsigned int)vsize.width,
+	                                                        (unsigned int)vsize.height);
+#else
+	ms_error("Video support is disabled");
+	return NULL;
+#endif
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
+
+void linphone_core_set_preview_video_size_by_name(LinphoneCore *lc, const char *name) {
+	MSVideoSize vsize = video_size_get_by_name(name);
+	linphone_core_set_preview_video_size(lc, vsize);
+}
+
+void linphone_core_set_preview_video_definition_by_name(LinphoneCore *lc, const char *name) {
+	LinphoneVideoDefinition *vdef =
+	    linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), name);
+	if (vdef == NULL) {
+		ms_error("Video definition '%s' is not supported", name);
+	} else {
+		linphone_core_set_preview_video_definition(lc, vdef);
+	}
+}
+
+void linphone_core_set_preferred_video_size_by_name(LinphoneCore *lc, const char *name) {
+	MSVideoSize vsize = video_size_get_by_name(name);
+	MSVideoSize default_vsize = {MS_VIDEO_SIZE_CIF_W, MS_VIDEO_SIZE_CIF_H};
+	if (vsize.width != 0) linphone_core_set_preferred_video_size(lc, vsize);
+	else linphone_core_set_preferred_video_size(lc, default_vsize);
+}
+
+void linphone_core_set_preferred_video_definition_by_name(LinphoneCore *lc, const char *name) {
+	LinphoneVideoDefinition *vdef =
+	    linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), name);
+	if (vdef == NULL) {
+		ms_error("Video definition '%s' is not supported", name);
+	} else {
+		linphone_core_set_preferred_video_definition(lc, vdef);
+	}
+}
+
+const LinphoneVideoDefinition *linphone_core_get_preferred_video_definition(const LinphoneCore *lc) {
+	return lc->video_conf.vdef;
+}
+
+MSVideoSize linphone_core_get_preferred_video_size(const LinphoneCore *lc) {
+	MSVideoSize vsize = {0};
+	vsize.width = (int)linphone_video_definition_get_width(lc->video_conf.vdef);
+	vsize.height = (int)linphone_video_definition_get_height(lc->video_conf.vdef);
+	return vsize;
+}
+
+char *linphone_core_get_preferred_video_size_name(const LinphoneCore *lc) {
+	return ms_strdup(linphone_video_definition_get_name(lc->video_conf.vdef));
+}
+
+void linphone_core_set_preferred_framerate(LinphoneCore *lc, float fps) {
+	lc->video_conf.fps = fps;
+	if (linphone_core_ready(lc)) linphone_config_set_float(lc->config, "video", "framerate", fps);
+}
+
+float linphone_core_get_preferred_framerate(LinphoneCore *lc) {
+	return lc->video_conf.fps;
+}
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
+#ifdef VIDEO_ENABLED
+
+	LinphoneCall *call = linphone_core_get_current_call(lc);
+	VideoStream *stream = call
+	                          ? reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo))
+	                          : lc->previewstream;
+
+	if (stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
+		ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
+	}
+
+#endif
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#endif // _MSC_VER
+
+void linphone_core_set_keep_stream_direction_for_rejected_stream(LinphoneCore *lc, bool_t yesno) {
+	lc->keep_stream_direction_for_rejected_stream = yesno;
+}
+
+bool_t linphone_core_get_keep_stream_direction_for_rejected_stream(LinphoneCore *lc) {
+	return lc->keep_stream_direction_for_rejected_stream;
+}
+
+void linphone_core_set_use_files(LinphoneCore *lc, bool_t yesno) {
+	lc->use_files = yesno;
+	if (yesno) {
+		if (lc->sound_conf.ring_sndcard) {
+			ms_snd_card_unref(lc->sound_conf.ring_sndcard);
+			lc->sound_conf.ring_sndcard = NULL;
+		}
+		if (lc->sound_conf.play_sndcard) {
+			ms_snd_card_unref(lc->sound_conf.play_sndcard);
+			lc->sound_conf.play_sndcard = NULL;
+		}
+		if (lc->sound_conf.capt_sndcard) {
+			ms_snd_card_unref(lc->sound_conf.capt_sndcard);
+			lc->sound_conf.capt_sndcard = NULL;
+		}
+		if (lc->sound_conf.media_sndcard) {
+			ms_snd_card_unref(lc->sound_conf.media_sndcard);
+			lc->sound_conf.media_sndcard = NULL;
+		}
+	} else {
+		linphone_core_set_default_sound_devices(lc);
+	}
+}
+
+bool_t linphone_core_get_use_files(LinphoneCore *lc) {
+	return lc->use_files;
+}
+
+const char *linphone_core_get_play_file(const LinphoneCore *lc) {
+	return lc->play_file;
+}
+
+void linphone_core_set_play_file(LinphoneCore *lc, const char *file) {
+	LinphoneCall *call = linphone_core_get_current_call(lc);
+	if (lc->play_file != NULL) {
+		ms_free(lc->play_file);
+		lc->play_file = NULL;
+	}
+	if (file != NULL) {
+		lc->play_file = ms_strdup(file);
+		if (call) {
+			AudioStream *astream =
+			    reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
+			if (astream && astream->ms.state == MSStreamStarted) audio_stream_play(astream, file);
+		}
+	}
+}
+
+const char *linphone_core_get_record_file(const LinphoneCore *lc) {
+	return lc->rec_file;
+}
+
+void linphone_core_set_record_file(LinphoneCore *lc, const char *file) {
+	LinphoneCall *call = linphone_core_get_current_call(lc);
+	if (lc->rec_file != NULL) {
+		ms_free(lc->rec_file);
+		lc->rec_file = NULL;
+	}
+	if (file != NULL) {
+		lc->rec_file = ms_strdup(file);
+		if (call) {
+			AudioStream *astream =
+			    reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
+			if (astream) audio_stream_record(astream, file);
+		}
+	}
+}
+
+void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms) {
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playDtmf(dtmf, duration_ms);
+}
+
+LinphoneStatus linphone_core_play_local(LinphoneCore *lc, const char *audiofile) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playLocal(audiofile);
+}
+
+void linphone_core_stop_dtmf(LinphoneCore *lc) {
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().stopDtmf();
+}
+
+void *linphone_core_get_user_data(const LinphoneCore *lc) {
+	return lc->data;
+}
+
+void linphone_core_set_user_data(LinphoneCore *lc, void *userdata) {
+	lc->data = userdata;
+}
+
+int linphone_core_get_mtu(const LinphoneCore *lc) {
+	return lc->net_conf.mtu;
+}
+
+void linphone_core_set_mtu(LinphoneCore *lc, int mtu) {
+	lc->net_conf.mtu = mtu;
+	if (mtu > 0) {
+		if (mtu < 500) {
+			ms_error("MTU too small !");
+			mtu = 500;
+		}
+		ms_factory_set_mtu(lc->factory, mtu);
+		ms_message("MTU is supposed to be %i, rtp payload max size will be %i", mtu,
+		           ms_factory_get_payload_max_size(lc->factory));
+	} else ms_factory_set_mtu(lc->factory, 0); // use mediastreamer2 default value
+}
+
+void linphone_core_set_rtp_transport_factories(LinphoneCore *lc, LinphoneRtpTransportFactories *factories) {
+	lc->rtptf = factories;
+}
+
+int linphone_core_get_current_call_stats(LinphoneCore *lc, rtp_stats_t *local, rtp_stats_t *remote) {
+	LinphoneCall *call = linphone_core_get_current_call(lc);
+	if (call) {
+		AudioStream *astream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
+		if (astream) {
+			memset(remote, 0, sizeof(*remote));
+			audio_stream_get_local_rtp_stats(astream, local);
+			return 0;
+		}
+	}
+	return -1;
+}
+
 void _linphone_core_codec_config_write(LinphoneCore *lc) {
 	if (linphone_core_ready(lc)) {
 		::PayloadType *pt;
@@ -7516,15 +7656,15 @@ LpConfig *linphone_core_get_config(const LinphoneCore *lc) {
 	return lc->config;
 }
 
-LpConfig *linphone_core_create_lp_config(LinphoneCore *lc, const char *filename) {
+LpConfig *linphone_core_create_lp_config(BCTBX_UNUSED(LinphoneCore *lc), const char *filename) {
 	return linphone_config_new(filename);
 }
 
-LinphoneConfig *linphone_core_create_config(LinphoneCore *lc, const char *filename) {
+LinphoneConfig *linphone_core_create_config(BCTBX_UNUSED(LinphoneCore *lc), const char *filename) {
 	return linphone_config_new(filename);
 }
 
-LinphoneAddress *linphone_core_create_address(LinphoneCore *lc, const char *address) {
+LinphoneAddress *linphone_core_create_address(BCTBX_UNUSED(LinphoneCore *lc), const char *address) {
 	return linphone_address_new(address);
 }
 
@@ -7653,7 +7793,7 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	linphone_core_zrtp_cache_close(lc);
 	ms_bandwidth_controller_destroy(lc->bw_controller);
 	lc->bw_controller = NULL;
-	if (lc->callsCache) {// Ensure to remove cache before destroying factory
+	if (lc->callsCache) { // Ensure to remove cache before destroying factory
 		bctbx_list_free(lc->callsCache);
 		lc->callsCache = NULL;
 	}
@@ -7864,11 +8004,11 @@ void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachab
 	notify_network_reachable_change(lc);
 }
 
-bool_t linphone_core_is_network_reachable(LinphoneCore *lc) {
+bool_t linphone_core_is_network_reachable(BCTBX_UNUSED(LinphoneCore *lc)) {
 	return lc->sip_network_state.global_state;
 }
 
-ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc) {
+ortp_socket_t linphone_core_get_sip_socket(BCTBX_UNUSED(LinphoneCore *lc)) {
 	ms_warning("linphone_core_get_sip_socket is deprecated");
 	return -1;
 }
@@ -8557,8 +8697,8 @@ void linphone_core_set_chat_database_path(LinphoneCore *lc, const char *path) {
 			mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->loadChatRooms();
 		} else {
-			ms_warning(
-			    "linphone_core_set_chat_database_path() needs to be called once linphone_core_start() has been called");
+			ms_warning("linphone_core_set_chat_database_path() needs to be called once linphone_core_start() has "
+			           "been called");
 		}
 	}
 }
@@ -8880,7 +9020,7 @@ LinphoneRingtonePlayer *linphone_core_get_ringtoneplayer(LinphoneCore *lc) {
 	return lc->ringtoneplayer;
 }
 
-static int _linphone_core_delayed_conference_destruction_cb(void *user_data, unsigned int event) {
+static int _linphone_core_delayed_conference_destruction_cb(void *user_data, BCTBX_UNUSED(unsigned int event)) {
 	LinphoneConference *conf = (LinphoneConference *)user_data;
 	linphone_conference_unref(conf);
 	return 0;
@@ -8897,7 +9037,8 @@ _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConfer
 }
 
 /*This function sets the "unique" conference object for the LinphoneCore - which is necessary as long as
- * liblinphone is used in a client app. When liblinphone will be used in a server app, this shall not be done anymore.*/
+ * liblinphone is used in a client app. When liblinphone will be used in a server app, this shall not be done
+ * anymore.*/
 static void linphone_core_set_conference(LinphoneCore *lc, LinphoneConference *conf) {
 	lc->conf_ctx = linphone_conference_ref(conf);
 }
@@ -9305,14 +9446,18 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 	                                  "AES_256_CM_HMAC_SHA1_32, AEAD_AES_128_GCM, AEAD_AES_256_GCM");
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	auto confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(uri)));
 
 	if (confInfo != nullptr) {
-		// Clone the conference information so that the application can freely change it without modifying the object
-		// stored in the cached of the DB
+		// Clone the conference information so that the application can freely change it without modifying the
+		// object stored in the cached of the DB
 		return linphone_conference_info_clone(confInfo->toC());
 	}
 
@@ -9321,7 +9466,14 @@ LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(Linph
 	return NULL;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t t) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
@@ -9337,6 +9489,9 @@ static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t 
 	return NULL;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core) {
 	return get_conference_information_list(core, -1);
@@ -9357,7 +9512,7 @@ void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneCon
 #endif
 }
 
-bool_t linphone_core_ldap_available(LinphoneCore *core) {
+bool_t linphone_core_ldap_available(BCTBX_UNUSED(LinphoneCore *core)) {
 #ifdef LDAP_ENABLED
 	return TRUE;
 #else
@@ -9375,4 +9530,13 @@ LinphoneStatus linphone_core_config_sync(LinphoneCore *core) {
 	}
 #endif
 	return linphone_config_sync(core->config);
+}
+
+bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(core)->emptyChatroomsDeletionEnabled();
+}
+
+void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable) {
+	linphone_config_set_bool(core->config, "misc", "empty_chat_room_deletion", enable);
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->enableEmptyChatroomsDeletion(enable);
 }

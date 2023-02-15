@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/factory.h"
 #include "linphone/video_definition.h"
+#include "linphone/factory.h"
 
 #include "c-wrapper/c-wrapper.h"
 
@@ -30,27 +30,27 @@ static void linphone_video_definition_destroy(LinphoneVideoDefinition *vdef) {
 	if (vdef->name) bctbx_free(vdef->name);
 }
 
-static void _linphone_video_definition_clone(LinphoneVideoDefinition *obj, const LinphoneVideoDefinition *orig){
+static void _linphone_video_definition_clone(LinphoneVideoDefinition *obj, const LinphoneVideoDefinition *orig) {
 	obj->name = bctbx_strdup(orig->name);
 	obj->width = orig->width;
 	obj->height = orig->height;
 }
 
-belle_sip_error_code _linphone_video_definition_marshal(const LinphoneVideoDefinition* obj, char* buff, size_t buff_size, size_t *offset){
-	return belle_sip_snprintf(buff,buff_size,offset,"%s",obj->name);
+belle_sip_error_code
+_linphone_video_definition_marshal(const LinphoneVideoDefinition *obj, char *buff, size_t buff_size, size_t *offset) {
+	return belle_sip_snprintf(buff, buff_size, offset, "%s", obj->name);
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneVideoDefinition);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneVideoDefinition, belle_sip_object_t,
-	(belle_sip_object_destroy_t)linphone_video_definition_destroy,
-	(belle_sip_object_clone_t)_linphone_video_definition_clone, // clone
-	(belle_sip_object_marshal_t)_linphone_video_definition_marshal, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneVideoDefinition,
+                           belle_sip_object_t,
+                           (belle_sip_object_destroy_t)linphone_video_definition_destroy,
+                           (belle_sip_object_clone_t)_linphone_video_definition_clone,     // clone
+                           (belle_sip_object_marshal_t)_linphone_video_definition_marshal, // marshal
+                           FALSE);
 
-
-LinphoneVideoDefinition * linphone_video_definition_new(unsigned int width, unsigned int height, const char *name) {
+LinphoneVideoDefinition *linphone_video_definition_new(unsigned int width, unsigned int height, const char *name) {
 	LinphoneVideoDefinition *vdef = belle_sip_object_new(LinphoneVideoDefinition);
 	vdef->width = width;
 	vdef->height = height;
@@ -62,7 +62,7 @@ LinphoneVideoDefinition * linphone_video_definition_new(unsigned int width, unsi
 	return vdef;
 }
 
-LinphoneVideoDefinition * linphone_video_definition_ref(LinphoneVideoDefinition *vdef) {
+LinphoneVideoDefinition *linphone_video_definition_ref(LinphoneVideoDefinition *vdef) {
 	belle_sip_object_ref(vdef);
 	return vdef;
 }
@@ -79,8 +79,8 @@ void linphone_video_definition_set_user_data(LinphoneVideoDefinition *vdef, void
 	vdef->user_data = ud;
 }
 
-LinphoneVideoDefinition * linphone_video_definition_clone(const LinphoneVideoDefinition *vdef) {
-	return (LinphoneVideoDefinition*)belle_sip_object_clone((belle_sip_object_t*)vdef);
+LinphoneVideoDefinition *linphone_video_definition_clone(const LinphoneVideoDefinition *vdef) {
+	return (LinphoneVideoDefinition *)belle_sip_object_clone((belle_sip_object_t *)vdef);
 }
 
 unsigned int linphone_video_definition_get_width(const LinphoneVideoDefinition *vdef) {
@@ -104,7 +104,7 @@ void linphone_video_definition_set_definition(LinphoneVideoDefinition *vdef, uns
 	vdef->height = height;
 }
 
-const char * linphone_video_definition_get_name(const LinphoneVideoDefinition *vdef) {
+const char *linphone_video_definition_get_name(const LinphoneVideoDefinition *vdef) {
 	return vdef->name;
 }
 
@@ -114,12 +114,12 @@ void linphone_video_definition_set_name(LinphoneVideoDefinition *vdef, const cha
 }
 
 bool_t linphone_video_definition_equals(const LinphoneVideoDefinition *vdef1, const LinphoneVideoDefinition *vdef2) {
-	return ((vdef1 != NULL && vdef2 != NULL)
-		&& (((vdef1->width == vdef2->width) && (vdef1->height == vdef2->height))
-		|| ((vdef1->width == vdef2->height) && (vdef1->height == vdef2->width))));
+	return ((vdef1 != NULL && vdef2 != NULL) && (((vdef1->width == vdef2->width) && (vdef1->height == vdef2->height)) ||
+	                                             ((vdef1->width == vdef2->height) && (vdef1->height == vdef2->width))));
 }
 
-bool_t linphone_video_definition_strict_equals(const LinphoneVideoDefinition *vdef1, const LinphoneVideoDefinition *vdef2) {
+bool_t linphone_video_definition_strict_equals(const LinphoneVideoDefinition *vdef1,
+                                               const LinphoneVideoDefinition *vdef2) {
 	return (vdef1->width == vdef2->width) && (vdef1->height == vdef2->height);
 }
 

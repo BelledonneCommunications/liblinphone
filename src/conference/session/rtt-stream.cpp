@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,14 +19,14 @@
  */
 #include "bctoolbox/defs.h"
 
-#include "ms2-streams.h"
-#include "media-session.h"
-#include "media-session-p.h"
-#include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "conference/participant.h"
 #include "conference/params/media-session-params-p.h"
+#include "conference/participant.h"
+#include "core/core.h"
+#include "media-session-p.h"
+#include "media-session.h"
+#include "ms2-streams.h"
 
 #include "linphone/core.h"
 
@@ -38,111 +38,110 @@ LINPHONE_BEGIN_NAMESPACE
  * MS2RTTStream implementation.
  */
 
-MS2RTTStream::MS2RTTStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
+MS2RTTStream::MS2RTTStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params) {
 	string bindIp = getBindIp();
-	mStream = text_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	mStream = text_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort,
+	                           mPortConfig.rtcpPort);
 	initializeSessions(&mStream->ms);
 }
 
-void MS2RTTStream::configure(const OfferAnswerContext &params) {
-
+void MS2RTTStream::configure(BCTBX_UNUSED(const OfferAnswerContext &params)) {
 }
 
-void MS2RTTStream::realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg) {
+void MS2RTTStream::realTimeTextCharacterReceived(BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-	
+
 	if (id == MS_RTT_4103_RECEIVED_CHAR) {
 		RealtimeTextReceivedCharacter *data = static_cast<RealtimeTextReceivedCharacter *>(arg);
-		if (listener)
-			listener->onRealTimeTextCharacterReceived(getMediaSession().getSharedFromThis(), data);
+		if (listener) listener->onRealTimeTextCharacterReceived(getMediaSession().getSharedFromThis(), data);
 	}
 }
 
-void MS2RTTStream::sRealTimeTextCharacterReceived (void *userData, MSFilter *f, unsigned int id, void *arg) {
+void MS2RTTStream::sRealTimeTextCharacterReceived(void *userData, MSFilter *f, unsigned int id, void *arg) {
 	MS2RTTStream *zis = static_cast<MS2RTTStream *>(userData);
 	zis->realTimeTextCharacterReceived(f, id, arg);
 }
 
-bool MS2RTTStream::prepare(){
+bool MS2RTTStream::prepare() {
 	MS2Stream::prepare();
-	if (isTransportOwner()){
+	if (isTransportOwner()) {
 		text_stream_prepare_text(mStream);
 	}
 	return false;
 }
 
-void MS2RTTStream::finishPrepare(){
+void MS2RTTStream::finishPrepare() {
 	MS2Stream::finishPrepare();
 	text_stream_unprepare_text(mStream);
 }
 
-void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State targetState){
-	const auto & tstream = params.getResultStreamDescription();
+void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State targetState) {
+	const auto &tstream = params.getResultStreamDescription();
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
-	
+
 	if (basicChangesHandled) {
 		if (getState() == Running) MS2Stream::render(params, targetState);
 		return;
 	}
-	
+
 	MS2Stream::render(params, targetState);
 	RtpAddressInfo dest;
 	getRtpDestination(params, &dest);
 	int usedPt = -1;
-	RtpProfile * textProfile = makeProfile(params.resultMediaDescription, tstream, &usedPt);
-	if (usedPt == -1){
+	RtpProfile *textProfile = makeProfile(params.resultMediaDescription, tstream, &usedPt);
+	if (usedPt == -1) {
 		lError() << "No payload type was accepted for text stream.";
 		stop();
 		return;
 	}
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(rtp_profile_get_payload(textProfile, usedPt));
+	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(
+	    rtp_profile_get_payload(textProfile, usedPt));
 	getMediaSessionPrivate().getCurrentParams()->enableRealtimeText(true);
-	
+
 	unsigned int interval = getMediaSessionPrivate().getParams()->realtimeTextKeepaliveInterval();
 	getMediaSessionPrivate().getCurrentParams()->setRealtimeTextKeepaliveInterval(interval);
-	
-	text_stream_start(mStream, textProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt);
+
+	text_stream_start(mStream, textProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
+	                  usedPt);
 	ms_filter_add_notify_callback(mStream->rttsink, sRealTimeTextCharacterReceived, this, false);
 	ms_filter_call_method(mStream->rttsource, MS_RTT_4103_SOURCE_SET_KEEP_ALIVE_INTERVAL, &interval);
 	mInternalStats.number_of_starts++;
 }
 
-void MS2RTTStream::stop(){
+void MS2RTTStream::stop() {
 	MS2Stream::stop();
 	text_stream_stop(mStream);
-	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
-	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
+	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later
+	 * use, keeping the sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = text_stream_new_with_sessions(getCCore()->factory, &mSessions);
 }
 
-void MS2RTTStream::finish(){
-	if (mStream){
+void MS2RTTStream::finish() {
+	if (mStream) {
 		text_stream_stop(mStream);
 		mStream = nullptr;
 	}
 }
 
-MS2RTTStream::~MS2RTTStream(){
+MS2RTTStream::~MS2RTTStream() {
 	finish();
 }
 
-MediaStream *MS2RTTStream::getMediaStream()const{
+MediaStream *MS2RTTStream::getMediaStream() const {
 	return &mStream->ms;
 }
 
-void MS2RTTStream::handleEvent(const OrtpEvent *ev){
+void MS2RTTStream::handleEvent(BCTBX_UNUSED(const OrtpEvent *ev)) {
 }
 
 void MS2RTTStream::initZrtp() {
-
 }
 
-std::string MS2RTTStream::getLabel()const {
+std::string MS2RTTStream::getLabel() const {
 	return std::string();
 }
 
 void MS2RTTStream::startZrtp() {
-
 }
 
 LINPHONE_END_NAMESPACE

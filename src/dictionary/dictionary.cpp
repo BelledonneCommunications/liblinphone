@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,41 +28,41 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-Dictionary* Dictionary::clone() const {
-    Dictionary *dict = new Dictionary();
-    return dict;
+Dictionary *Dictionary::clone() const {
+	Dictionary *dict = new Dictionary();
+	return dict;
 }
 
-float Dictionary::getFloat (const string &name) const {
-    return PropertyContainer::getProperty(name).getValue<float>();
+float Dictionary::getFloat(const string &name) const {
+	return PropertyContainer::getProperty(name).getValue<float>();
 }
 
-void Dictionary::setProperty (const string &name, const float value) {
-    PropertyContainer::setProperty(name, Variant(value));
+void Dictionary::setProperty(const string &name, const float value) {
+	PropertyContainer::setProperty(name, Variant(value));
 }
 
-const string &Dictionary::getString (const string &name) const {
-    return PropertyContainer::getProperty(name).getValue<string>();
+const string &Dictionary::getString(const string &name) const {
+	return PropertyContainer::getProperty(name).getValue<string>();
 }
 
-void Dictionary::setProperty (const string &name, const string &value) {
-    PropertyContainer::setProperty(name, Variant(value));
+void Dictionary::setProperty(const string &name, const string &value) {
+	PropertyContainer::setProperty(name, Variant(value));
 }
 
-int Dictionary::getInt (const string &name) const {
-    return PropertyContainer::getProperty(name).getValue<int>();
+int Dictionary::getInt(const string &name) const {
+	return PropertyContainer::getProperty(name).getValue<int>();
 }
 
-void Dictionary::setProperty (const string &name, const int value) {
-    PropertyContainer::setProperty(name, Variant(value));
+void Dictionary::setProperty(const string &name, const int value) {
+	PropertyContainer::setProperty(name, Variant(value));
 }
 
-long long Dictionary::getLongLong (const string &name) const {
-    return PropertyContainer::getProperty(name).getValue<long long>();
+long long Dictionary::getLongLong(const string &name) const {
+	return PropertyContainer::getProperty(name).getValue<long long>();
 }
 
-void Dictionary::setProperty (const string &name, const long long value) {
-    PropertyContainer::setProperty(name, Variant(value));
+void Dictionary::setProperty(const string &name, const long long value) {
+	PropertyContainer::setProperty(name, Variant(value));
 }
 
 LINPHONE_END_NAMESPACE

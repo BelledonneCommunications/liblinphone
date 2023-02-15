@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ using namespace std;
 using namespace LinphonePrivate;
 using namespace LinphonePrivate::Utils;
 
-static void split () {
+static void split() {
 	string emptyString;
 	vector<string> result = bctoolbox::Utils::split(emptyString, ",");
 	BC_ASSERT_EQUAL((int)result.size(), 1, int, "%d");
@@ -58,7 +58,7 @@ static void split () {
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), contentDisposition.c_str());
 }
 
-static void trim () {
+static void trim() {
 	string emptyString;
 	string result = Utils::trim(emptyString);
 	BC_ASSERT_STRING_EQUAL(result.c_str(), "");
@@ -76,7 +76,7 @@ static void trim () {
 	BC_ASSERT_STRING_EQUAL(result.c_str(), "hello world!");
 }
 
-static void version_comparisons(void){
+static void version_comparisons(void) {
 	BC_ASSERT_TRUE(Version(1, 0) == Version(1, 0));
 	BC_ASSERT_TRUE(Version(2, 0) > Version(1, 0));
 	BC_ASSERT_TRUE(Version(1, 1) > Version(1, 0));
@@ -92,26 +92,26 @@ static void version_comparisons(void){
 	BC_ASSERT_TRUE(Version("1.0.0") < Version("1.0.1-pre.1"));
 }
 
-static void parse_capabilities(void){
+static void parse_capabilities(void) {
 	auto caps = Utils::parseCapabilityDescriptor("groupchat,lime,ephemeral");
 	BC_ASSERT_TRUE(caps.find("groupchat") != caps.end());
 	BC_ASSERT_TRUE(caps.find("lime") != caps.end());
 	BC_ASSERT_TRUE(caps.find("ephemeral") != caps.end());
-	
+
 	caps = Utils::parseCapabilityDescriptor("groupchat/1.3,lime/1.1,ephemeral");
 	BC_ASSERT_TRUE(caps["lime"] == Version(1, 1));
 	BC_ASSERT_TRUE(caps["groupchat"] == Version(1, 3));
 	BC_ASSERT_TRUE(caps["ephemeral"] == Version(1, 0));
 }
 
-test_t utils_tests[] = {
-	TEST_NO_TAG("split", split),
-	TEST_NO_TAG("trim", trim),
-	TEST_NO_TAG("Version comparisons", version_comparisons),
-	TEST_NO_TAG("Parse capabilities", parse_capabilities)
-};
+test_t utils_tests[] = {TEST_NO_TAG("split", split), TEST_NO_TAG("trim", trim),
+                        TEST_NO_TAG("Version comparisons", version_comparisons),
+                        TEST_NO_TAG("Parse capabilities", parse_capabilities)};
 
-test_suite_t utils_test_suite = {
-	"Utils", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(utils_tests) / sizeof(utils_tests[0]), utils_tests
-};
+test_suite_t utils_test_suite = {"Utils",
+                                 NULL,
+                                 NULL,
+                                 liblinphone_tester_before_each,
+                                 liblinphone_tester_after_each,
+                                 sizeof(utils_tests) / sizeof(utils_tests[0]),
+                                 utils_tests};

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
 typedef struct _xml2lpc_context xml2lpc_context;
 
 typedef enum _xml2lpc_log_level {
@@ -36,18 +36,18 @@ typedef enum _xml2lpc_log_level {
 	XML2LPC_ERROR
 } xml2lpc_log_level;
 
-typedef void(*xml2lpc_function)(void *ctx, xml2lpc_log_level level, const char *fmt, va_list list);
+typedef void (*xml2lpc_function)(void *ctx, xml2lpc_log_level level, const char *fmt, va_list list);
 
-LINPHONE_PUBLIC xml2lpc_context* xml2lpc_context_new(xml2lpc_function cbf, void *ctx);
-LINPHONE_PUBLIC void xml2lpc_context_destroy(xml2lpc_context*);
+LINPHONE_PUBLIC xml2lpc_context *xml2lpc_context_new(xml2lpc_function cbf, void *ctx);
+LINPHONE_PUBLIC void xml2lpc_context_destroy(xml2lpc_context *);
 
-LINPHONE_PUBLIC int xml2lpc_set_xml_file(xml2lpc_context* context, const char *filename);
-LINPHONE_PUBLIC int xml2lpc_set_xml_fd(xml2lpc_context* context, int fd);
-LINPHONE_PUBLIC int xml2lpc_set_xml_string(xml2lpc_context* context, const char *content);
+LINPHONE_PUBLIC int xml2lpc_set_xml_file(xml2lpc_context *context, const char *filename);
+LINPHONE_PUBLIC int xml2lpc_set_xml_fd(xml2lpc_context *context, int fd);
+LINPHONE_PUBLIC int xml2lpc_set_xml_string(xml2lpc_context *context, const char *content);
 
-LINPHONE_PUBLIC int xml2lpc_set_xsd_file(xml2lpc_context* context, const char *filename);
-LINPHONE_PUBLIC int xml2lpc_set_xsd_fd(xml2lpc_context* context, int fd);
-LINPHONE_PUBLIC int xml2lpc_set_xsd_string(xml2lpc_context* context, const char *content);
+LINPHONE_PUBLIC int xml2lpc_set_xsd_file(xml2lpc_context *context, const char *filename);
+LINPHONE_PUBLIC int xml2lpc_set_xsd_fd(xml2lpc_context *context, int fd);
+LINPHONE_PUBLIC int xml2lpc_set_xsd_string(xml2lpc_context *context, const char *content);
 
 LINPHONE_PUBLIC int xml2lpc_validate(xml2lpc_context *context);
 LINPHONE_PUBLIC int xml2lpc_convert(xml2lpc_context *context, LpConfig *lpc);
@@ -56,4 +56,4 @@ LINPHONE_PUBLIC int xml2lpc_convert(xml2lpc_context *context, LpConfig *lpc);
 }
 #endif
 
-#endif //XML2LPC_H_
+#endif // XML2LPC_H_

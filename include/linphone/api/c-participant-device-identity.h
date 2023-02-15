@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 // =============================================================================
 
 #ifdef __cplusplus
-	extern "C" {
+extern "C" {
 #endif // ifdef __cplusplus
 
 /**
@@ -40,21 +40,22 @@
  * @param name the name of the participant device @maybenil
  * @return a new #LinphoneParticipantDeviceIdentity @maybenil
  **/
-LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new (const LinphoneAddress *address, const char *name);
+LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *
+linphone_participant_device_identity_new(const LinphoneAddress *address, const char *name);
 
 /**
  * Increment reference count of #LinphoneParticipantDeviceIdentity object.
  * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
  * @return the same #LinphoneParticipantDeviceIdentity object @notnil
  **/
-LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *device_identity);
+LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *
+linphone_participant_device_identity_ref(LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * Decrement reference count of #LinphoneParticipantDeviceIdentity object. When dropped to zero, memory is freed.
  * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
  **/
-LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *device_identity);
-
+LINPHONE_PUBLIC void linphone_participant_device_identity_unref(LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * Set the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
@@ -62,7 +63,9 @@ LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphonePartici
  * @param capability_descriptor the capability descriptor string.
  *
  **/
-LINPHONE_PUBLIC void linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *device_identity, const char *capability_descriptor);
+LINPHONE_PUBLIC void
+linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *device_identity,
+                                                               const char *capability_descriptor);
 
 /**
  * Get the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
@@ -70,21 +73,23 @@ LINPHONE_PUBLIC void linphone_participant_device_identity_set_capability_descrip
  * @return the capability descriptor string.
  *
  **/
-LINPHONE_PUBLIC const char* linphone_participant_device_identity_get_capability_descriptor(const LinphoneParticipantDeviceIdentity *device_identity);
+LINPHONE_PUBLIC const char *linphone_participant_device_identity_get_capability_descriptor(
+    const LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * Get the address of the participant device.
  * @param device_identity the #LinphoneParticipantDeviceIdentity @notnil
  * @return the address. @notnil
  */
-LINPHONE_PUBLIC const LinphoneAddress* linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *deviceIdentity);
+LINPHONE_PUBLIC const LinphoneAddress *
+linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *deviceIdentity);
 
 /**
  * @}
  */
 
 #ifdef __cplusplus
-	}
+}
 #endif // ifdef __cplusplus
 
 #endif // ifndef _L_C_PARTICIPANT_DEVICE_IDENTiTY_H_

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,20 +19,20 @@
  */
 
 #include "belle-sip/utils.h"
+#include "linphone/api/c-address.h"
 #include "linphone/enums/chat-room-enums.h"
 #include "linphone/utils/utils.h"
-#include "linphone/api/c-address.h"
 
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-room/abstract-chat-room.h"
-#include "conference/participant.h"
+#include "conference/local-conference.h"
 #include "conference/participant-device.h"
-#include "content/content.h"
+#include "conference/participant.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
+#include "content/content.h"
 #include "core/core.h"
-#include "conference/local-conference.h"
 #include "local-conference-event-handler.h"
 #include "local-conference-list-event-handler.h"
 #include "logger/logger.h"
@@ -50,23 +50,22 @@ class LocalConference;
 
 LINPHONE_BEGIN_NAMESPACE
 
+// -----------------------------------------------------------------------------
+
+LocalConferenceListEventHandler::LocalConferenceListEventHandler(const std::shared_ptr<Core> &core)
+    : CoreAccessor(core) {
+}
 
 // -----------------------------------------------------------------------------
 
-LocalConferenceListEventHandler::LocalConferenceListEventHandler (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
-
-// -----------------------------------------------------------------------------
-
-void LocalConferenceListEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
+void LocalConferenceListEventHandler::notifyResponseCb(const LinphoneEvent *ev) {
 	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
-	LocalConferenceListEventHandler *listHandler = static_cast<LocalConferenceListEventHandler *>(
-		linphone_event_cbs_get_user_data(cbs)
-	);
+	LocalConferenceListEventHandler *listHandler =
+	    static_cast<LocalConferenceListEventHandler *>(linphone_event_cbs_get_user_data(cbs));
 	linphone_event_cbs_set_user_data(cbs, nullptr);
 	linphone_event_cbs_set_notify_response(cbs, nullptr);
 
-	if (linphone_event_get_reason(ev) != LinphoneReasonNone)
-		return;
+	if (linphone_event_get_reason(ev) != LinphoneReasonNone) return;
 
 	for (const auto &p : listHandler->handlers) {
 		linphone_event_cbs_set_user_data(cbs, p.second);
@@ -78,7 +77,7 @@ void LocalConferenceListEventHandler::notifyResponseCb (const LinphoneEvent *ev)
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, const LinphoneContent *body) {
+void LocalConferenceListEventHandler::subscribeReceived(LinphoneEvent *lev, const LinphoneContent *body) {
 	LinphoneSubscriptionState subscriptionState = linphone_event_get_subscription_state(lev);
 
 	const string &xmlBody = string(linphone_content_get_utf8_text(body));
@@ -89,7 +88,8 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 
 	linphone_event_accept_subscription(lev);
 
-	if (subscriptionState != LinphoneSubscriptionIncomingReceived && subscriptionState != LinphoneSubscriptionTerminated)
+	if (subscriptionState != LinphoneSubscriptionIncomingReceived &&
+	    subscriptionState != LinphoneSubscriptionTerminated)
 		return;
 
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
@@ -111,10 +111,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 	istringstream data(xmlBody);
 	unique_ptr<Xsd::ResourceLists::ResourceLists> rl;
 	try {
-		rl = Xsd::ResourceLists::parseResourceLists(
-			data,
-			Xsd::XmlSchema::Flags::dont_validate
-		);
+		rl = Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate);
 	} catch (const exception &) {
 		lError() << "Error while parsing subscribe body for conferences asked by: " << participantAddr;
 		return;
@@ -127,10 +124,10 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 			addr.removeUriParam("Last-Notify");
 			ConferenceId conferenceId(addr, addr);
 			LocalConferenceEventHandler *handler = findHandler(conferenceId);
-			if (!handler)
-				continue;
+			if (!handler) continue;
 
-			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(lev))->findChatRoom(conferenceId);
+			shared_ptr<AbstractChatRoom> chatRoom =
+			    L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(lev))->findChatRoom(conferenceId);
 			if (!chatRoom) {
 				lError() << "Received subscribe for unknown chat room: " << conferenceId;
 				continue;
@@ -138,21 +135,25 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 
 			shared_ptr<Participant> participant = chatRoom->findParticipant(participantAddr);
 			if (!participant) {
-				lError() << "Received subscribe for unknown participant: " << participantAddr <<  " for chat room: " << conferenceId;
+				lError() << "Received subscribe for unknown participant: " << participantAddr
+				         << " for chat room: " << conferenceId;
 				continue;
 			}
 			shared_ptr<ParticipantDevice> device = participant->findDevice(deviceAddr);
-			if (!device || (device->getState() != ParticipantDevice::State::Present && device->getState() != ParticipantDevice::State::Joining)) {
-				lError() << "Received subscribe for unknown device: " << deviceAddr << " for participant: "
-					<< participantAddr <<  " for chat room: " << conferenceId;
+			if (!device || (device->getState() != ParticipantDevice::State::Present &&
+			                device->getState() != ParticipantDevice::State::Joining)) {
+				lError() << "Received subscribe for unknown device: " << deviceAddr
+				         << " for participant: " << participantAddr << " for chat room: " << conferenceId;
 				continue;
 			}
-			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? lev : nullptr);
+			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? lev
+			                                                                                                : nullptr);
 
-			int notifyId = (notifyIdStr.empty() || device->getState() == ParticipantDevice::State::Joining) ? 0 : Utils::stoi(notifyIdStr);
+			int notifyId = (notifyIdStr.empty() || device->getState() == ParticipantDevice::State::Joining)
+			                   ? 0
+			                   : Utils::stoi(notifyIdStr);
 			Content content = handler->getNotifyForId(notifyId, device->getConferenceSubscribeEvent());
-			if (content.isEmpty())
-				continue;
+			if (content.isEmpty()) continue;
 
 			noContent = false;
 			char token[17];
@@ -171,8 +172,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 		}
 	}
 
-	if (noContent)
-		return;
+	if (noContent) return;
 
 	Xsd::Rlmi::List rlmiList("", 0, TRUE);
 	rlmiList.setResource(resources);
@@ -202,39 +202,39 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceListEventHandler::addHandler (LocalConferenceEventHandler *handler) {
+void LocalConferenceListEventHandler::addHandler(LocalConferenceEventHandler *handler) {
 	if (!handler) {
 		lError() << "Trying to insert null handler in the local conference handler list";
 		return;
 	}
 
-	if(findHandler(handler->conf->getConferenceId())) {
-		lError() << "Trying to insert an already present handler in the local conference handler list: " << handler->conf->getConferenceId();
+	if (findHandler(handler->conf->getConferenceId())) {
+		lError() << "Trying to insert an already present handler in the local conference handler list: "
+		         << handler->conf->getConferenceId();
 		return;
 	}
 
 	handlers[handler->conf->getConferenceId()] = handler;
 }
 
-void LocalConferenceListEventHandler::removeHandler (LocalConferenceEventHandler *handler) {
-	if (handler){
+void LocalConferenceListEventHandler::removeHandler(LocalConferenceEventHandler *handler) {
+	if (handler) {
 		auto it = handlers.find(handler->conf->getConferenceId());
-		if (it != handlers.end()){
+		if (it != handlers.end()) {
 			handlers.erase(it);
 			lInfo() << "Handler removed.";
-		}else{
+		} else {
 			lError() << "Handler not found in LocalConferenceListEventHandler.";
 		}
-	}else{
+	} else {
 		lError() << "Handler is null !";
 	}
 }
 
-LocalConferenceEventHandler *LocalConferenceListEventHandler::findHandler (const ConferenceId &conferenceId) const {
+LocalConferenceEventHandler *LocalConferenceListEventHandler::findHandler(const ConferenceId &conferenceId) const {
 	auto it = handlers.find(conferenceId);
 	if (it != handlers.end()) return (*it).second;
 	return nullptr;
 }
-
 
 LINPHONE_END_NAMESPACE

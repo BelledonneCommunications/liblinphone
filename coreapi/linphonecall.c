@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,9 +25,8 @@
 
 #include "private.h"
 
-
-const char *linphone_call_state_to_string(LinphoneCallState cs){
-	switch (cs){
+const char *linphone_call_state_to_string(LinphoneCallState cs) {
+	switch (cs) {
 		case LinphoneCallIdle:
 			return "LinphoneCallIdle";
 		case LinphoneCallIncomingReceived:
@@ -80,21 +79,29 @@ const char *linphone_call_state_to_string(LinphoneCallState cs){
  * @ingroup call_control
  * @return string value of LinphonePrivacy enum
  **/
-const char* linphone_privacy_to_string(LinphonePrivacy privacy) {
-	switch(privacy) {
-	case LinphonePrivacyDefault: return "LinphonePrivacyDefault";
-	case LinphonePrivacyUser: return "LinphonePrivacyUser";
-	case LinphonePrivacyHeader: return "LinphonePrivacyHeader";
-	case LinphonePrivacySession: return "LinphonePrivacySession";
-	case LinphonePrivacyId: return "LinphonePrivacyId";
-	case LinphonePrivacyNone: return "LinphonePrivacyNone";
-	case LinphonePrivacyCritical: return "LinphonePrivacyCritical";
-	default: return "Unknown privacy mode";
+const char *linphone_privacy_to_string(LinphonePrivacy privacy) {
+	switch (privacy) {
+		case LinphonePrivacyDefault:
+			return "LinphonePrivacyDefault";
+		case LinphonePrivacyUser:
+			return "LinphonePrivacyUser";
+		case LinphonePrivacyHeader:
+			return "LinphonePrivacyHeader";
+		case LinphonePrivacySession:
+			return "LinphonePrivacySession";
+		case LinphonePrivacyId:
+			return "LinphonePrivacyId";
+		case LinphonePrivacyNone:
+			return "LinphonePrivacyNone";
+		case LinphonePrivacyCritical:
+			return "LinphonePrivacyCritical";
+		default:
+			return "Unknown privacy mode";
 	}
 }
 
-void set_playback_gain_db(AudioStream *st, float gain){
-	if (st->volrecv){
-		ms_filter_call_method(st->volrecv,MS_VOLUME_SET_DB_GAIN,&gain);
-	}else ms_warning("Could not apply playback gain: gain control wasn't activated.");
+void set_playback_gain_db(AudioStream *st, float gain) {
+	if (st->volrecv) {
+		ms_filter_call_method(st->volrecv, MS_VOLUME_SET_DB_GAIN, &gain);
+	} else ms_warning("Could not apply playback gain: gain control wasn't activated.");
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,25 +22,21 @@
 
 using namespace std;
 
-CallMuteCommand::CallMuteCommand() :
-	DaemonCommand("call-mute", "call-mute 0|1", "Mute/unmute the microphone (1 to mute, 0 to unmute). No argument means MUTE.")
-{
-	addExample(make_unique<DaemonCommandExample>("call-mute 1",
-										"Status: Ok\n\n"
-										"Microphone Muted"));
-	addExample(make_unique<DaemonCommandExample>("call-mute",
-										"Status: Ok\n\n"
-										"Microphone Muted"));
-	addExample(make_unique<DaemonCommandExample>("call-mute 0",
-										"Status: Ok\n\n"
-										"Microphone Unmuted"));
-	addExample(make_unique<DaemonCommandExample>("call-mute 1",
-										"Status: Error\n\n"
-										"Reason: No call in progress. Can't mute."));
+CallMuteCommand::CallMuteCommand()
+    : DaemonCommand("call-mute",
+                    "call-mute 0|1",
+                    "Mute/unmute the microphone (1 to mute, 0 to unmute). No argument means MUTE.") {
+	addExample(make_unique<DaemonCommandExample>("call-mute 1", "Status: Ok\n\n"
+	                                                            "Microphone Muted"));
+	addExample(make_unique<DaemonCommandExample>("call-mute", "Status: Ok\n\n"
+	                                                          "Microphone Muted"));
+	addExample(make_unique<DaemonCommandExample>("call-mute 0", "Status: Ok\n\n"
+	                                                            "Microphone Unmuted"));
+	addExample(make_unique<DaemonCommandExample>("call-mute 1", "Status: Error\n\n"
+	                                                            "Reason: No call in progress. Can't mute."));
 }
 
-void CallMuteCommand::exec(Daemon* app, const string& args)
-{
+void CallMuteCommand::exec(Daemon *app, const string &args) {
 	LinphoneCore *lc = app->getCore();
 	int muted;
 	LinphoneCall *call = linphone_core_get_current_call(lc);

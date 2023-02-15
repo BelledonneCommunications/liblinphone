@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,22 +20,22 @@
 
 #include "linphone/api/c-participant.h"
 
-#include "call/call.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
-#include "conference/participant.h"
+#include "call/call.h"
 #include "conference/participant-device.h"
+#include "conference/participant.h"
 
 // =============================================================================
 
 using namespace std;
 
-LinphoneParticipant *linphone_participant_ref (LinphoneParticipant *participant) {
+LinphoneParticipant *linphone_participant_ref(LinphoneParticipant *participant) {
 	belle_sip_object_ref(participant);
 	return participant;
 }
 
-void linphone_participant_unref (LinphoneParticipant *participant) {
+void linphone_participant_unref(LinphoneParticipant *participant) {
 	belle_sip_object_unref(participant);
 }
 
@@ -47,47 +47,53 @@ void linphone_participant_set_user_data(LinphoneParticipant *participant, void *
 	LinphonePrivate::Participant::toCpp(participant)->setUserData(ud);
 }
 
-const LinphoneAddress *linphone_participant_get_address (const LinphoneParticipant *participant) {
-	const LinphonePrivate::Address & addr = LinphonePrivate::Participant::toCpp(participant)->getAddress().asAddress();
+const LinphoneAddress *linphone_participant_get_address(const LinphoneParticipant *participant) {
+	const LinphonePrivate::Address &addr = LinphonePrivate::Participant::toCpp(participant)->getAddress().asAddress();
 	return L_GET_C_BACK_PTR(&addr);
 }
 
-bool_t linphone_participant_is_admin (const LinphoneParticipant *participant) {
+bool_t linphone_participant_is_admin(const LinphoneParticipant *participant) {
 	return LinphonePrivate::Participant::toCpp(participant)->isAdmin();
 }
 
-bool_t linphone_participant_is_focus (const LinphoneParticipant *participant) {
+bool_t linphone_participant_is_focus(const LinphoneParticipant *participant) {
 	return LinphonePrivate::Participant::toCpp(participant)->isFocus();
 }
 
-LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const LinphoneParticipant *participant) {
+LinphoneChatRoomSecurityLevel linphone_participant_get_security_level(const LinphoneParticipant *participant) {
 	return (LinphoneChatRoomSecurityLevel)LinphonePrivate::Participant::toCpp(participant)->getSecurityLevel();
 }
 
-bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant) {
-	return LinphonePrivate::ParticipantDevice::getCListFromCppList(LinphonePrivate::Participant::toCpp(participant)->getDevices());
+bctbx_list_t *linphone_participant_get_devices(const LinphoneParticipant *participant) {
+	return LinphonePrivate::ParticipantDevice::getCListFromCppList(
+	    LinphonePrivate::Participant::toCpp(participant)->getDevices());
 }
 
-LinphoneParticipantDevice *linphone_participant_find_device_2 (const LinphoneParticipant *participant, const LinphoneCall *call) {
-	std::shared_ptr<LinphonePrivate::ParticipantDevice> device = LinphonePrivate::Participant::toCpp(participant)->findDevice(LinphonePrivate::Call::toCpp(call)->getActiveSession());
+LinphoneParticipantDevice *linphone_participant_find_device_2(const LinphoneParticipant *participant,
+                                                              const LinphoneCall *call) {
+	std::shared_ptr<LinphonePrivate::ParticipantDevice> device =
+	    LinphonePrivate::Participant::toCpp(participant)
+	        ->findDevice(LinphonePrivate::Call::toCpp(call)->getActiveSession());
 	if (device) {
 		return device->toC();
 	}
 	return NULL;
 }
 
-LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address) {
+LinphoneParticipantDevice *linphone_participant_find_device(const LinphoneParticipant *participant,
+                                                            const LinphoneAddress *address) {
 	char *addrStr = linphone_address_as_string(address);
 	LinphonePrivate::Address deviceAddress(addrStr);
 	bctbx_free(addrStr);
-	std::shared_ptr<LinphonePrivate::ParticipantDevice> device = LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress);
+	std::shared_ptr<LinphonePrivate::ParticipantDevice> device =
+	    LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress);
 	if (device) {
 		return device->toC();
 	}
 	return NULL;
 }
 
-time_t linphone_participant_get_creation_time (const LinphoneParticipant *participant) {
+time_t linphone_participant_get_creation_time(const LinphoneParticipant *participant) {
 	return LinphonePrivate::Participant::toCpp(participant)->getCreationTime();
 }
 

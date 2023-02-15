@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-list<Content> ContentManager::multipartToContentList (const Content &content) {
+list<Content> ContentManager::multipartToContentList(const Content &content) {
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
 	SalBodyHandler *sbh = sal_body_handler_from_content(cContent);
 
@@ -55,11 +55,10 @@ list<Content> ContentManager::multipartToContentList (const Content &content) {
 	return contents;
 }
 
-
-Content ContentManager::contentListToMultipart (const list<Content *> &contents, const string &boundary, bool encrypted) {
-	belle_sip_multipart_body_handler_t *mpbh = belle_sip_multipart_body_handler_new(
-		nullptr, nullptr, nullptr, boundary.empty() ? nullptr : boundary.c_str()
-	);
+Content
+ContentManager::contentListToMultipart(const list<Content *> &contents, const string &boundary, bool encrypted) {
+	belle_sip_multipart_body_handler_t *mpbh =
+	    belle_sip_multipart_body_handler_new(nullptr, nullptr, nullptr, boundary.empty() ? nullptr : boundary.c_str());
 	mpbh = (belle_sip_multipart_body_handler_t *)belle_sip_object_ref(mpbh);
 
 	for (Content *content : contents) {
@@ -70,7 +69,8 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 
 	SalBodyHandler *sbh = (SalBodyHandler *)mpbh;
 	sal_body_handler_set_type(sbh, ContentType::Multipart.getType().c_str());
-	sal_body_handler_set_subtype(sbh, encrypted ? ContentType::Encrypted.getSubType().c_str() : ContentType::Multipart.getSubType().c_str());
+	sal_body_handler_set_subtype(sbh, encrypted ? ContentType::Encrypted.getSubType().c_str()
+	                                            : ContentType::Multipart.getSubType().c_str());
 	sal_body_handler_set_content_type_parameter(sbh, "boundary", belle_sip_multipart_body_handler_get_boundary(mpbh));
 
 	LinphoneContent *cContent = linphone_content_from_sal_body_handler(sbh);
@@ -81,11 +81,11 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 	return content;
 }
 
-Content ContentManager::contentListToMultipart (const std::list<Content *> &contents, bool encrypted){
+Content ContentManager::contentListToMultipart(const std::list<Content *> &contents, bool encrypted) {
 	return contentListToMultipart(contents, "", encrypted);
 }
 
-Content ContentManager::contentListToMultipart (const std::list<Content *> &contents){
+Content ContentManager::contentListToMultipart(const std::list<Content *> &contents) {
 	return contentListToMultipart(contents, "", false);
 }
 

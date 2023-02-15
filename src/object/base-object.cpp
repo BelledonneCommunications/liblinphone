@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "base-object-p.h"
 #include "base-object.h"
+#include "base-object-p.h"
 #include "c-wrapper/internal/c-tools.h"
 
 // =============================================================================
@@ -28,11 +28,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 L_OBJECT_IMPL(BaseObject);
 
-BaseObject::BaseObject (BaseObjectPrivate &p) : mPrivate(&p) {
+BaseObject::BaseObject(BaseObjectPrivate &p) : mPrivate(&p) {
 	mPrivate->mPublic = this;
 }
 
-BaseObject::~BaseObject () {
+BaseObject::~BaseObject() {
 	Wrapper::handleObjectDestruction(this);
 	delete mPrivate;
 }

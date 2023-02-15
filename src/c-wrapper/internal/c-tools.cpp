@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
  */
 
 #ifdef DEBUG
-	#include <typeinfo>
+#include <typeinfo>
 #endif
 
 #include "c-tools.h"
@@ -31,13 +31,13 @@
 LINPHONE_BEGIN_NAMESPACE
 
 #ifdef DEBUG
-	void Wrapper::setName (belle_sip_object_t *cObject, const BaseObject *cppObject) {
-		belle_sip_object_set_name(cObject, typeid(*cppObject).name());
-	}
+void Wrapper::setName(belle_sip_object_t *cObject, const BaseObject *cppObject) {
+	belle_sip_object_set_name(cObject, typeid(*cppObject).name());
+}
 
-	void Wrapper::setName (belle_sip_object_t *cObject, const ClonableObject *cppObject) {
-		belle_sip_object_set_name(cObject, typeid(*cppObject).name());
-	}
+void Wrapper::setName(belle_sip_object_t *cObject, const ClonableObject *cppObject) {
+	belle_sip_object_set_name(cObject, typeid(*cppObject).name());
+}
 #endif
 
 LINPHONE_END_NAMESPACE

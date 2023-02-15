@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,10 +24,10 @@
 #include "object/clonable-object.h"
 #include "utils/general-internal.h"
 
-#include "linphone/types.h"
-#include "content/content.h"
-#include "conference/conference-enums.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "conference/conference-enums.h"
+#include "content/content.h"
+#include "linphone/types.h"
 #include "sal/sal.h"
 
 // =============================================================================
@@ -49,48 +49,48 @@ class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
 	friend class SalMediaDescriptionParams;
 
 public:
-	CallSessionParams ();
-	CallSessionParams (const CallSessionParams &other);
-	virtual ~CallSessionParams ();
+	CallSessionParams();
+	CallSessionParams(const CallSessionParams &other);
+	virtual ~CallSessionParams();
 
-	CallSessionParams* clone () const override {
+	CallSessionParams *clone() const override {
 		return new CallSessionParams(*this);
 	}
 
-	CallSessionParams &operator= (const CallSessionParams &other);
+	CallSessionParams &operator=(const CallSessionParams &other);
 
-	virtual void initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir);
+	virtual void initDefault(const std::shared_ptr<Core> &core, LinphoneCallDir dir);
 
-	const std::string& getSessionName () const;
-	void setSessionName (const std::string &sessionName);
+	const std::string &getSessionName() const;
+	void setSessionName(const std::string &sessionName);
 
-	LinphonePrivacyMask getPrivacy () const;
-	void setPrivacy (LinphonePrivacyMask privacy);
+	LinphonePrivacyMask getPrivacy() const;
+	void setPrivacy(LinphonePrivacyMask privacy);
 
-	void addCustomHeader (const std::string &headerName, const std::string &headerValue);
-	void removeCustomHeader (const std::string &headerName);
-	void clearCustomHeaders ();
-	const char * getCustomHeader (const std::string &headerName) const;
-	void setFromHeader (const std::string &fromValue);
-	const char * getFromHeader () const;
-	void setSrtpSuites (const std::list<LinphoneSrtpSuite> &srtpSuites);
-	const std::list<LinphoneSrtpSuite>& getSrtpSuites () const;
+	void addCustomHeader(const std::string &headerName, const std::string &headerValue);
+	void removeCustomHeader(const std::string &headerName);
+	void clearCustomHeaders();
+	const char *getCustomHeader(const std::string &headerName) const;
+	void setFromHeader(const std::string &fromValue);
+	const char *getFromHeader() const;
+	void setSrtpSuites(const std::list<LinphoneSrtpSuite> &srtpSuites);
+	const std::list<LinphoneSrtpSuite> &getSrtpSuites() const;
 
-	void addCustomContactParameter (const std::string &paramName, const std::string &paramValue = "");
-	void clearCustomContactParameters ();
-	std::string getCustomContactParameter (const std::string &paramName) const;
+	void addCustomContactParameter(const std::string &paramName, const std::string &paramValue = "");
+	void clearCustomContactParameters();
+	std::string getCustomContactParameter(const std::string &paramName) const;
 
-	void addCustomContent (const Content& content);
-	const std::list<Content>& getCustomContents () const;
+	void addCustomContent(const Content &content);
+	const std::list<Content> &getCustomContents() const;
 
 	std::shared_ptr<Account> getAccount() const;
 	void setAccount(std::shared_ptr<Account> account);
 
 	void setConferenceVideoLayout(const ConferenceLayout l);
-	const ConferenceLayout & getConferenceVideoLayout() const;
+	const ConferenceLayout &getConferenceVideoLayout() const;
 
 protected:
-	explicit CallSessionParams (CallSessionParamsPrivate &p);
+	explicit CallSessionParams(CallSessionParamsPrivate &p);
 
 private:
 	L_DECLARE_PRIVATE(CallSessionParams);

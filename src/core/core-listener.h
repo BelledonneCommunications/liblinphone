@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #ifndef _L_CORE_LISTENER_H_
 #define _L_CORE_LISTENER_H_
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/types.h"
 
 #include "linphone/utils/general.h"
@@ -31,14 +33,24 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC CoreListener {
 public:
-	virtual ~CoreListener () = default;
+	virtual ~CoreListener() = default;
 
-	virtual void onGlobalStateChanged (LinphoneGlobalState state) {}
-	virtual void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {}
-	virtual void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {}
-	virtual void onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) {}
-	virtual void onEnteringBackground () {}
-	virtual void onEnteringForeground () {}
+	virtual void onGlobalStateChanged(BCTBX_UNUSED(LinphoneGlobalState state)) {
+	}
+	virtual void onNetworkReachable(BCTBX_UNUSED(bool sipNetworkReachable), BCTBX_UNUSED(bool mediaNetworkReachable)) {
+	}
+	virtual void onRegistrationStateChanged(BCTBX_UNUSED(LinphoneProxyConfig *cfg),
+	                                        BCTBX_UNUSED(LinphoneRegistrationState state),
+	                                        BCTBX_UNUSED(const std::string &message)) {
+	}
+	virtual void onCallStateChanged(BCTBX_UNUSED(LinphoneCall *call),
+	                                BCTBX_UNUSED(LinphoneCallState state),
+	                                BCTBX_UNUSED(const std::string &message)) {
+	}
+	virtual void onEnteringBackground() {
+	}
+	virtual void onEnteringForeground() {
+	}
 };
 
 LINPHONE_END_NAMESPACE

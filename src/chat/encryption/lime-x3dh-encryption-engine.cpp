@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,75 +18,76 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "lime-x3dh-encryption-engine.h"
 #include "bctoolbox/crypto.h"
+#include <bctoolbox/defs.h>
+
 #include "account/account.h"
+#include "bctoolbox/exception.hh"
+#include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
+#include "conference/participant-device.h"
+#include "conference/participant.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
-#include "conference/participant.h"
-#include "conference/participant-device.h"
 #include "core/core.h"
-#include "factory/factory.h"
-#include "c-wrapper/c-wrapper.h"
 #include "event-log/conference/conference-security-event.h"
-#include "lime-x3dh-encryption-engine.h"
+#include "factory/factory.h"
 #include "private.h"
-#include "bctoolbox/exception.hh"
 #include "sqlite3_bctbx_vfs.h"
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-
 struct X3dhServerPostContext {
 	const lime::limeX3DHServerResponseProcess responseProcess;
 	const string username;
 	shared_ptr<Core> core;
-	X3dhServerPostContext (
-		const lime::limeX3DHServerResponseProcess &response,
-		const string &username,
-		shared_ptr<Core> core
-	) : responseProcess(response), username{username}, core{core} {};
+	X3dhServerPostContext(const lime::limeX3DHServerResponseProcess &response,
+	                      const string &username,
+	                      shared_ptr<Core> core)
+	    : responseProcess(response), username{username}, core{core} {};
 };
 
-void LimeManager::processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept {
+void LimeManager::processIoError(void *data, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) noexcept {
 	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
-	try  {
+	try {
 		(userData->responseProcess)(0, vector<uint8_t>{});
 	} catch (const exception &e) {
-		lError() << "Processing IoError on lime server request triggered an exception: "<<e.what();
+		lError() << "Processing IoError on lime server request triggered an exception: " << e.what();
 	}
-	delete(userData);
+	delete (userData);
 }
 
-void LimeManager::processResponse (void *data, const belle_http_response_event_t *event) noexcept {
+void LimeManager::processResponse(void *data, const belle_http_response_event_t *event) noexcept {
 	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
 
-	if (event->response){
-		auto code=belle_http_response_get_status_code(event->response);
+	if (event->response) {
+		auto code = belle_http_response_get_status_code(event->response);
 		belle_sip_message_t *message = BELLE_SIP_MESSAGE(event->response);
 		auto body = reinterpret_cast<const uint8_t *>(belle_sip_message_get_body(message));
 		auto bodySize = belle_sip_message_get_body_size(message);
-		try  { // the response processing might generate an exception, make sure it will not flow up to belle-sip otherwise it will cause an abort
-			(userData->responseProcess)(code, vector<uint8_t>{body, body+bodySize});
+		try { // the response processing might generate an exception, make sure it will not flow up to belle-sip
+			  // otherwise it will cause an abort
+			(userData->responseProcess)(code, vector<uint8_t>{body, body + bodySize});
 		} catch (const exception &e) {
-			lError() << "Processing lime server response triggered an exception: "<<e.what();
+			lError() << "Processing lime server response triggered an exception: " << e.what();
 		}
 	} else {
-		try  {
+		try {
 			(userData->responseProcess)(0, vector<uint8_t>{});
 		} catch (const exception &e) {
-			lError() << "Processing empty response event on lime server request triggered an exception: "<<e.what();
+			lError() << "Processing empty response event on lime server request triggered an exception: " << e.what();
 		}
 	}
-	delete(userData);
+	delete (userData);
 }
 
-void LimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept {
+void LimeManager::processAuthRequested(void *data, belle_sip_auth_event_t *event) noexcept {
 	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
 	shared_ptr<Core> core = userData->core;
 
@@ -94,49 +95,53 @@ void LimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *even
 	auto address = IdentityAddress(userData->username);
 
 	/* Notes: when registering on the Lime server, the user is already registered on the flexisip server
-	 * the requested auth info shall thus be present in linphone core (except if registering methods are differents on flexisip and lime server - very unlikely)
-	 * This request will thus not use the auth requested callback to get the information
+	 * the requested auth info shall thus be present in linphone core (except if registering methods are differents on
+	 * flexisip and lime server - very unlikely) This request will thus not use the auth requested callback to get the
+	 * information
 	 * - Stored auth information in linphone core are indexed by username/domain */
-	linphone_core_fill_belle_sip_auth_event(core->getCCore(), event, address.getUsername().data(), address.getDomain().data());
+	linphone_core_fill_belle_sip_auth_event(core->getCCore(), event, address.getUsername().data(),
+	                                        address.getDomain().data());
 }
 
-LimeManager::LimeManager (
-	const string &dbAccess,
-	belle_http_provider_t *prov,
-	shared_ptr<Core> core
-) : lime::LimeManager(dbAccess, [prov, core](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
-	belle_http_request_listener_callbacks_t cbs= {};
-	belle_http_request_listener_t *l;
-	belle_generic_uri_t *uri;
-	belle_http_request_t *req;
-	belle_sip_memory_body_handler_t *bh;
+LimeManager::LimeManager(const string &dbAccess, belle_http_provider_t *prov, shared_ptr<Core> core)
+    : lime::LimeManager(
+          dbAccess,
+          [prov, core](const string &url,
+                       const string &from,
+                       const vector<uint8_t> &message,
+                       const lime::limeX3DHServerResponseProcess &responseProcess) {
+	          belle_http_request_listener_callbacks_t cbs = {};
+	          belle_http_request_listener_t *l;
+	          belle_generic_uri_t *uri;
+	          belle_http_request_t *req;
+	          belle_sip_memory_body_handler_t *bh;
 
-	stringstream userAgent;
-	userAgent << "Linphone/" << linphone_core_get_version() << " (Lime)" << " Belle-sip/" << belle_sip_version_to_string();
+	          stringstream userAgent;
+	          userAgent << "Linphone/" << linphone_core_get_version() << " (Lime)"
+	                    << " Belle-sip/" << belle_sip_version_to_string();
 
-	bh = belle_sip_memory_body_handler_new_copy_from_buffer(message.data(), message.size(), NULL, NULL);
-	uri=belle_generic_uri_parse(url.data());
-	req=belle_http_request_create("POST", uri,
-			belle_http_header_create("User-Agent", userAgent.str().c_str()),
-			belle_http_header_create("Content-type", "x3dh/octet-stream"),
-			belle_http_header_create("From", from.data()),
-			NULL);
+	          bh = belle_sip_memory_body_handler_new_copy_from_buffer(message.data(), message.size(), NULL, NULL);
+	          uri = belle_generic_uri_parse(url.data());
+	          req = belle_http_request_create("POST", uri,
+	                                          belle_http_header_create("User-Agent", userAgent.str().c_str()),
+	                                          belle_http_header_create("Content-type", "x3dh/octet-stream"),
+	                                          belle_http_header_create("From", from.data()), NULL);
 
-	belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req),BELLE_SIP_BODY_HANDLER(bh));
-	cbs.process_response = processResponse;
-	cbs.process_io_error = processIoError;
-	cbs.process_auth_requested = processAuthRequested;
-	X3dhServerPostContext *userData = new X3dhServerPostContext(responseProcess, from, core);
-	l=belle_http_request_listener_create_from_callbacks(&cbs, userData);
-	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "http_request_listener", l, belle_sip_object_unref);
-	belle_http_provider_send_request(prov,req,l);
-}) {}
+	          belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req), BELLE_SIP_BODY_HANDLER(bh));
+	          cbs.process_response = processResponse;
+	          cbs.process_io_error = processIoError;
+	          cbs.process_auth_requested = processAuthRequested;
+	          X3dhServerPostContext *userData = new X3dhServerPostContext(responseProcess, from, core);
+	          l = belle_http_request_listener_create_from_callbacks(&cbs, userData);
+	          belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "http_request_listener", l, belle_sip_object_unref);
+	          belle_http_provider_send_request(prov, req, l);
+          }) {
+}
 
-LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
-	const std::string &dbAccess,
-	belle_http_provider_t *prov,
-	const shared_ptr<Core> core
-) : EncryptionEngine(core) {
+LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
+                                                   belle_http_provider_t *prov,
+                                                   const shared_ptr<Core> core)
+    : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
 	auto cCore = core->getCCore();
 	// get the curve to use in the config file, default is c25519
@@ -146,31 +151,33 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	} else {
 		curve = lime::CurveId::c25519;
 	}
-	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine " << this << " - default server is [" << core->getX3dhServerUrl() << "] and curve " << curveConfig;
+	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine " << this << " - default server is ["
+	        << core->getX3dhServerUrl() << "] and curve " << curveConfig;
 	_dbAccess = dbAccess;
-	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
+	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(
+	    BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccessWithParam, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
 }
 
-LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine () {
-	lInfo()<<"[LIME] destroy LimeX3dhEncryption engine "<<this;
+LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine() {
+	lInfo() << "[LIME] destroy LimeX3dhEncryption engine " << this;
 }
 
-lime::CurveId LimeX3dhEncryptionEngine::getCurveId () const {
+lime::CurveId LimeX3dhEncryptionEngine::getCurveId() const {
 	return curve;
 }
 
-ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(const shared_ptr<ChatMessage> &message,
+                                                                             int &errorCode) {
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
-	shared_ptr<ChatMessageModifier::Result> result =  make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
+	shared_ptr<ChatMessageModifier::Result> result =
+	    make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
-	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
+	shared_ptr<const string> recipientUserId =
+	    make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
 	// Check if chatroom is encrypted or not
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
@@ -179,9 +186,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 		lInfo() << "[LIME] this chatroom is not encrypted, no need to encrypt outgoing message";
 		return ChatMessageModifier::Result::Skipped;
 	}
-	
+
 	// Reject message in unsafe chatroom if not allowed
-	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
+	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime",
+	                            "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
 			lWarning() << "Sending encrypted message in an unsafe chatroom";
 			errorCode = 488; // Not Acceptable
@@ -191,7 +199,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 	// Add participants to the recipient list
 	bool tooManyDevices = FALSE;
-	int maxNbDevicePerParticipant = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "max_nb_device_per_participant", INT_MAX);
+	int maxNbDevicePerParticipant = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()),
+	                                                        "lime", "max_nb_device_per_participant", INT_MAX);
 	auto recipients = make_shared<vector<lime::RecipientData>>();
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
 	for (const shared_ptr<Participant> &participant : participants) {
@@ -235,7 +244,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 		for (const auto &event : eventList) {
 			if (event->getType() == ConferenceEvent::Type::ConferenceSecurityEvent) {
 				auto securityEvent = static_pointer_cast<ConferenceSecurityEvent>(event);
-				if (securityEvent->getSecurityEventType() == ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded) {
+				if (securityEvent->getSecurityEventType() ==
+				    ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded) {
 					recentSecurityAlert = true;
 				}
 			}
@@ -243,8 +253,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 		// If there is no recent security alert send a new one
 		if (!recentSecurityAlert) {
-			ConferenceSecurityEvent::SecurityEventType securityEventType = ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded;
-			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityEventType);
+			ConferenceSecurityEvent::SecurityEventType securityEventType =
+			    ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded;
+			shared_ptr<ConferenceSecurityEvent> securityEvent =
+			    make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityEventType);
 			confListener->onSecurityEvent(securityEvent);
 		}
 		errorCode = 488; // Not Acceptable
@@ -252,97 +264,103 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	}
 
 	const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();
-	shared_ptr<const vector<uint8_t>> plainMessage = make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
+	shared_ptr<const vector<uint8_t>> plainMessage =
+	    make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
-		errorCode = 0; //no need to specify error code because not used later
-		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result] (lime::CallbackReturn returnCode, string errorMessage) {
-			if (returnCode == lime::CallbackReturn::success) {
+		errorCode = 0; // no need to specify error code because not used later
+		limeManager->encrypt(
+		    localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage,
+		    [localDeviceId, recipients, cipherMessage, message, result](lime::CallbackReturn returnCode,
+		                                                                string errorMessage) {
+			    if (returnCode == lime::CallbackReturn::success) {
 
-				// Ignore devices which do not have keys on the X3DH server
-				// The message will still be sent to them but they will not be able to decrypt it
-				vector<lime::RecipientData> filteredRecipients;
-				filteredRecipients.reserve(recipients->size());
-				for (const lime::RecipientData &recipient : *recipients) {
-					if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
-						filteredRecipients.push_back(recipient);
-					}else{
-						lError() << "[LIME] No cipher key generated for " << recipient.deviceId;
-					}
-				}
+				    // Ignore devices which do not have keys on the X3DH server
+				    // The message will still be sent to them but they will not be able to decrypt it
+				    vector<lime::RecipientData> filteredRecipients;
+				    filteredRecipients.reserve(recipients->size());
+				    for (const lime::RecipientData &recipient : *recipients) {
+					    if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
+						    filteredRecipients.push_back(recipient);
+					    } else {
+						    lError() << "[LIME] No cipher key generated for " << recipient.deviceId;
+					    }
+				    }
 
-				list<Content *> contents;
+				    list<Content *> contents;
 
-				// ---------------------------------------------- CPIM
+				    // ---------------------------------------------- CPIM
 
-				// Replaces SIPFRAG since version 4.4.0
-				CpimChatMessageModifier ccmm;
-				Content *cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
-				contents.push_back(move(cpimContent));
+				    // Replaces SIPFRAG since version 4.4.0
+				    CpimChatMessageModifier ccmm;
+				    Content *cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
+				    contents.push_back(move(cpimContent));
 
-				// ---------------------------------------------- SIPFRAG
+				    // ---------------------------------------------- SIPFRAG
 
-				// For backward compatibility only since 4.4.0
-				Content *sipfrag = new Content();
-				sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
-				sipfrag->setContentType(ContentType::SipFrag);
-				contents.push_back(move(sipfrag));
+				    // For backward compatibility only since 4.4.0
+				    Content *sipfrag = new Content();
+				    sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
+				    sipfrag->setContentType(ContentType::SipFrag);
+				    contents.push_back(move(sipfrag));
 
-				// ---------------------------------------------- HEADERS
+				    // ---------------------------------------------- HEADERS
 
-				for (const lime::RecipientData &recipient : filteredRecipients) {
-					string cipherHeaderB64 = encodeBase64(recipient.DRmessage);
-					Content *cipherHeader = new Content();
-					cipherHeader->setBodyFromLocale(cipherHeaderB64);
-					cipherHeader->setContentType(ContentType::LimeKey);
-					cipherHeader->addHeader("Content-Id", recipient.deviceId);
-					Header contentDescription("Content-Description", "Cipher key");
-					cipherHeader->addHeader(contentDescription);
-					contents.push_back(move(cipherHeader));
-				}
+				    for (const lime::RecipientData &recipient : filteredRecipients) {
+					    string cipherHeaderB64 = encodeBase64(recipient.DRmessage);
+					    Content *cipherHeader = new Content();
+					    cipherHeader->setBodyFromLocale(cipherHeaderB64);
+					    cipherHeader->setContentType(ContentType::LimeKey);
+					    cipherHeader->addHeader("Content-Id", recipient.deviceId);
+					    Header contentDescription("Content-Description", "Cipher key");
+					    cipherHeader->addHeader(contentDescription);
+					    contents.push_back(move(cipherHeader));
+				    }
 
-				// ---------------------------------------------- MESSAGE
+				    // ---------------------------------------------- MESSAGE
 
-				const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
-				string cipherMessageB64 = encodeBase64(*binaryCipherMessage);
-				Content *cipherMessage = new Content();
-				cipherMessage->setBodyFromLocale(cipherMessageB64);
-				cipherMessage->setContentType(ContentType::OctetStream);
-				cipherMessage->addHeader("Content-Description", "Encrypted message");
-				contents.push_back(move(cipherMessage));
+				    const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
+				    string cipherMessageB64 = encodeBase64(*binaryCipherMessage);
+				    Content *cipherMessage = new Content();
+				    cipherMessage->setBodyFromLocale(cipherMessageB64);
+				    cipherMessage->setContentType(ContentType::OctetStream);
+				    cipherMessage->addHeader("Content-Description", "Encrypted message");
+				    contents.push_back(move(cipherMessage));
 
-				Content finalContent = ContentManager::contentListToMultipart(contents, true);
+				    Content finalContent = ContentManager::contentListToMultipart(contents, true);
 
-				/* Septembre 2022 note:
-				 * Because of a scandalous ancient bug in belle-sip, we are forced to set
-				 * the boundary as the last parameter of the content-type header.
-				 * After this is fixed, only the line that adds the protocol parameter is necessary.
-				 */
-				ContentType &contentType = finalContent.getContentType();
-				string boundary = contentType.getParameter("boundary").getValue();
-				contentType.removeParameter("boundary");
-				contentType.addParameter("protocol", "\"application/lime\"");
-				contentType.addParameter("boundary", boundary);
-				
-				if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(), "deflate")) {
-					finalContent.setContentEncoding("deflate");
-				}
+				    /* Septembre 2022 note:
+				     * Because of a scandalous ancient bug in belle-sip, we are forced to set
+				     * the boundary as the last parameter of the content-type header.
+				     * After this is fixed, only the line that adds the protocol parameter is necessary.
+				     */
+				    ContentType &contentType = finalContent.getContentType();
+				    string boundary = contentType.getParameter("boundary").getValue();
+				    contentType.removeParameter("boundary");
+				    contentType.addParameter("protocol", "\"application/lime\"");
+				    contentType.addParameter("boundary", boundary);
 
-				message->setInternalContent(finalContent);
-				message->getPrivate()->send();
-				*result = ChatMessageModifier::Result::Done;
+				    if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(),
+				                                                 "deflate")) {
+					    finalContent.setContentEncoding("deflate");
+				    }
 
-				// TODO can be improved
-				for (const auto &content : contents) {
-					delete content;
-				}
-			} else {
-				lError() << "[LIME] operation failed: " << errorMessage;
-				message->getPrivate()->setState(ChatMessage::State::NotDelivered);
-				*result = ChatMessageModifier::Result::Error;
-			}
-		}, lime::EncryptionPolicy::cipherMessage);
+				    message->setInternalContent(finalContent);
+				    message->getPrivate()->send();
+				    *result = ChatMessageModifier::Result::Done;
+
+				    // TODO can be improved
+				    for (const auto &content : contents) {
+					    delete content;
+				    }
+			    } else {
+				    lError() << "[LIME] operation failed: " << errorMessage;
+				    message->getPrivate()->setState(ChatMessage::State::NotDelivered);
+				    *result = ChatMessageModifier::Result::Error;
+			    }
+		    },
+		    lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while encrypting message";
 		*result = ChatMessageModifier::Result::Error;
@@ -350,10 +368,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	return *result;
 }
 
-ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(const shared_ptr<ChatMessage> &message,
+                                                                             int &errorCode) {
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
@@ -367,10 +383,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	}
 
 	const Content *internalContent;
-	if (!message->getInternalContent().isEmpty())
-		internalContent = &(message->getInternalContent());
-	else
-		internalContent = message->getContents().front();
+	if (!message->getInternalContent().isEmpty()) internalContent = &(message->getInternalContent());
+	else internalContent = message->getContents().front();
 
 	// Check if the message is encrypted and unwrap the multipart
 	if (!isMessageEncrypted(internalContent)) {
@@ -388,8 +402,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	string senderDeviceId;
 	bool cpimFound = false;
 	for (const auto &content : contentList) { // 4.4.x new behavior
-		if (content.getContentType() != ContentType::Cpim)
-			continue;
+		if (content.getContentType() != ContentType::Cpim) continue;
 
 		CpimChatMessageModifier ccmm;
 		senderDeviceId = ccmm.parseMinimalCpimContentInLimeMessage(message, content);
@@ -404,22 +417,23 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 
 	if (!cpimFound) { // Legacy behavior (< 4.4.x)
 		for (const auto &content : contentList) {
-			if (content.getContentType() != ContentType::SipFrag)
-				continue;
+			if (content.getContentType() != ContentType::SipFrag) continue;
 			senderDeviceId = Utils::getSipFragAddress(content);
 		}
 	}
 
 	// Early discard of malformed incoming message: we must have a sender Id to decrypt the message
 	if (senderDeviceId.empty()) {
-			lWarning() << "[LIME] discard malformed incoming message ["<< message <<"] for ["<<localDeviceId<<"]: no sender Device Id found ";
-			errorCode = 488; // Not Acceptable
-			return ChatMessageModifier::Result::Done;
+		lWarning() << "[LIME] discard malformed incoming message [" << message << "] for [" << localDeviceId
+		           << "]: no sender Device Id found ";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Done;
 	}
 
 	// Discard incoming messages from unsafe peer devices
 	lime::PeerDeviceStatus peerDeviceStatus = limeManager->get_peerDeviceStatus(senderDeviceId);
-	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
+	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime",
+	                            "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
 			lWarning() << "[LIME] discard incoming message from unsafe sender device " << senderDeviceId;
 			errorCode = 488; // Not Acceptable
@@ -431,8 +445,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 
 	string cipherHeader;
 	for (const auto &content : contentList) {
-		if (content.getContentType() != ContentType::LimeKey)
-			continue;
+		if (content.getContentType() != ContentType::LimeKey) continue;
 
 		Header headerDeviceId = content.getHeader("Content-Id");
 		if (headerDeviceId.getValueWithParams() == localDeviceId) {
@@ -448,7 +461,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 			cipherMessage = content.getBodyAsUtf8String();
 		}
 	}
-	
+
 	if (forceFailure) {
 		lError() << "No key found (on purpose for tests) for [" << localDeviceId << "] for message [" << message << "]";
 		errorCode = 488; // Not Acceptable
@@ -460,13 +473,14 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Done;
 	}
-	
+
 	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
 	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
 	vector<uint8_t> plainMessage{};
 
 	try {
-		 peerDeviceStatus = limeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
+		peerDeviceStatus = limeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader,
+		                                        decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while decrypting message";
 		peerDeviceStatus = lime::PeerDeviceStatus::fail;
@@ -493,7 +507,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	return ChatMessageModifier::Result::Done;
 }
 
-void LimeX3dhEncryptionEngine::update () {
+void LimeX3dhEncryptionEngine::update() {
 	lime::limeCallback callback = setLimeCallback("Keys update");
 
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCore()->getCCore());
@@ -501,122 +515,108 @@ void LimeX3dhEncryptionEngine::update () {
 	linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 }
 
-bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
+bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	return (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted);
 }
 
 #define FILE_TRANSFER_AUTH_TAG_SIZE 16
 #define FILE_TRANSFER_KEY_SIZE 32
 
-void LimeX3dhEncryptionEngine::generateFileTransferKey (
-	const shared_ptr<AbstractChatRoom> &chatRoom,
-	const shared_ptr<ChatMessage> &message,
-	FileTransferContent *fileTransferContent
-) {
-	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
-	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
+void LimeX3dhEncryptionEngine::generateFileTransferKey(BCTBX_UNUSED(const shared_ptr<AbstractChatRoom> &chatRoom),
+                                                       BCTBX_UNUSED(const shared_ptr<ChatMessage> &message),
+                                                       FileTransferContent *fileTransferContent) {
+	char keyBuffer[FILE_TRANSFER_KEY_SIZE]; // temporary storage of generated key: 192 bits of key + 64 bits of initial
+	                                        // vector
+	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key
+	// field of the msg
 	sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
 	fileTransferContent->setFileKey(keyBuffer, FILE_TRANSFER_KEY_SIZE);
 	bctbx_clean(keyBuffer, FILE_TRANSFER_KEY_SIZE);
 }
 
-int LimeX3dhEncryptionEngine::downloadingFile (
-	const shared_ptr<ChatMessage> &message,
-	size_t offset,
-	const uint8_t *buffer,
-	size_t size,
-	uint8_t *decrypted_buffer,
-	FileTransferContent *fileTransferContent
-) {
-	if (fileTransferContent == nullptr) 
-		return -1;
+int LimeX3dhEncryptionEngine::downloadingFile(BCTBX_UNUSED(const shared_ptr<ChatMessage> &message),
+                                              BCTBX_UNUSED(size_t offset),
+                                              const uint8_t *buffer,
+                                              size_t size,
+                                              uint8_t *decrypted_buffer,
+                                              FileTransferContent *fileTransferContent) {
+	if (fileTransferContent == nullptr) return -1;
 
 	Content *content = static_cast<Content *>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
-	if (!fileKey)
-		return -1;
+	if (!fileKey) return -1;
 
 	if (!buffer) {
 		// get the authentication tag
 		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of decryption
-		int ret = bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, FILE_TRANSFER_AUTH_TAG_SIZE, authTag, NULL);
-		if (ret<0) return ret;
+		int ret = bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL,
+		                                    FILE_TRANSFER_AUTH_TAG_SIZE, authTag, NULL);
+		if (ret < 0) return ret;
 		// compare auth tag if we have one
 		const size_t fileAuthTagSize = fileTransferContent->getFileAuthTagSize();
 		if (fileAuthTagSize == FILE_TRANSFER_AUTH_TAG_SIZE) {
 			const char *fileAuthTag = fileTransferContent->getFileAuthTag().data();
 			if (memcmp(authTag, fileAuthTag, FILE_TRANSFER_AUTH_TAG_SIZE) != 0) {
-				lError()<<"download encrypted file : authentication failure";
+				lError() << "download encrypted file : authentication failure";
 				return ERROR_FILE_TRANFER_AUTHENTICATION_FAILED;
 			} else {
 				return ret;
 			}
 		} else {
-			lWarning()<<"download encrypted file : no authentication Tag";
+			lWarning() << "download encrypted file : no authentication Tag";
 			return 0;
 		}
 	}
 
-	return bctbx_aes_gcm_decryptFile(
-		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
-		(unsigned char *)fileKey,
-		size,
-		(char *)decrypted_buffer,
-		(char *)buffer
-	);
+	return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
+	                                 (unsigned char *)fileKey, size, (char *)decrypted_buffer, (char *)buffer);
 }
 
-int LimeX3dhEncryptionEngine::uploadingFile (
-	const shared_ptr<ChatMessage> &message,
-	size_t offset,
-	const uint8_t *buffer,
-	size_t *size,
-	uint8_t *encrypted_buffer,
-	FileTransferContent *fileTransferContent
-) {
-	if (fileTransferContent == nullptr) 
-		return -1;
+int LimeX3dhEncryptionEngine::uploadingFile(BCTBX_UNUSED(const shared_ptr<ChatMessage> &message),
+                                            size_t offset,
+                                            const uint8_t *buffer,
+                                            size_t *size,
+                                            uint8_t *encrypted_buffer,
+                                            FileTransferContent *fileTransferContent) {
+	if (fileTransferContent == nullptr) return -1;
 
 	Content *content = static_cast<Content *>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
-	if (!fileKey)
-		return -1;
+	if (!fileKey) return -1;
 
 	/* This is the final call, get an auth tag and insert it in the fileTransferContent*/
 	if (!buffer || *size == 0) {
-		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of encryption, size is fixed at 16 bytes
-		int ret = bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, FILE_TRANSFER_AUTH_TAG_SIZE, NULL, authTag);
+		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of encryption,
+		                                           // size is fixed at 16 bytes
+		int ret = bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL,
+		                                    FILE_TRANSFER_AUTH_TAG_SIZE, NULL, authTag);
 		fileTransferContent->setFileAuthTag(authTag, 16);
 		return ret;
 	}
 
 	size_t file_size = fileTransferContent->getFileSize();
 	if (file_size == 0) {
-		lWarning() << "File size has not been set, encryption will fail if not done in one step (if file is larger than 16K)";
+		lWarning()
+		    << "File size has not been set, encryption will fail if not done in one step (if file is larger than 16K)";
 	} else if (offset + *size < file_size) {
 		*size -= (*size % 16);
 	}
 
-	return bctbx_aes_gcm_encryptFile(
-		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
-		(unsigned char *)fileKey,
-		*size,
-		(char *)buffer,
-		(char *)encrypted_buffer
-	);
+	return bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
+	                                 (unsigned char *)fileKey, *size, (char *)buffer, (char *)encrypted_buffer);
 
 	return 0;
 }
 
-int LimeX3dhEncryptionEngine::cancelFileTransfer (
-	FileTransferContent *fileTransferContent
-	) {
+int LimeX3dhEncryptionEngine::cancelFileTransfer(FileTransferContent *fileTransferContent) {
 	Content *content = static_cast<Content *>(fileTransferContent);
-	// calling decrypt with no data and no buffer to write the tag will simply release the encryption context and delete it
-	return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+	// calling decrypt with no data and no buffer to write the tag will simply release the encryption context and delete
+	// it
+	return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0,
+	                                 NULL, NULL);
 }
 
-EncryptionEngine::EngineType LimeX3dhEncryptionEngine::getEngineType () {
+EncryptionEngine::EngineType LimeX3dhEncryptionEngine::getEngineType() {
 	return engineType;
 }
 
@@ -634,16 +634,16 @@ AbstractChatRoom::SecurityLevel limeStatus2ChatRoomSecLevel(const lime::PeerDevi
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
 }
-}
+} // namespace
 
-AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const string &deviceId) const {
+AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel(const string &deviceId) const {
 	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
 }
-AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const std::list<string> &deviceId) const {
+AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel(const std::list<string> &deviceId) const {
 	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
 }
 
-list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
+list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters() {
 	// Get proxy config
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(getCore()->getCCore());
 	if (!proxy) {
@@ -654,7 +654,8 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 	// Get local device Id from local contact address
 	const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
 	if (!contactAddress) {
-		lWarning() << "[LIME] No contactAddress available, unable to setup identity key for ZRTP auxiliary shared secret";
+		lWarning()
+		    << "[LIME] No contactAddress available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 	char *identity = linphone_address_as_string(contactAddress);
@@ -676,7 +677,7 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 	}
 
 	// Encode to base64 and append to the parameter list
-	list<pair<string,string>> paramList;
+	list<pair<string, string>> paramList;
 	string IkB64 = encodeBase64(Ik);
 	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
 	// Switch here to lime-Ik to start publishing lime-Ik instead of Ik
@@ -684,21 +685,21 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 	return paramList;
 }
 
-void LimeX3dhEncryptionEngine::mutualAuthentication (
-	MSZrtpContext *zrtpContext,
-	const std::shared_ptr<SalMediaDescription> & localMediaDescription,
-	const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
-	LinphoneCallDir direction
-) {
+void LimeX3dhEncryptionEngine::mutualAuthentication(MSZrtpContext *zrtpContext,
+                                                    const std::shared_ptr<SalMediaDescription> &localMediaDescription,
+                                                    const std::shared_ptr<SalMediaDescription> &remoteMediaDescription,
+                                                    LinphoneCallDir direction) {
 	// Check we have remote and local media description (remote could be null when a call without SDP is received)
-	if ( !localMediaDescription || !remoteMediaDescription) {
-		lInfo() << "[LIME] Missing media description to get identity keys for mutual authentication, do not set auxiliary secret from identity keys";
+	if (!localMediaDescription || !remoteMediaDescription) {
+		lInfo() << "[LIME] Missing media description to get identity keys for mutual authentication, do not set "
+		           "auxiliary secret from identity keys";
 		return;
 	}
 
 	// Get local and remote identity keys from sdp attributes
 	std::string LocalIkB64;
-	const char *charLocalLimeIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "lime-Ik");
+	const char *charLocalLimeIk =
+	    sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "lime-Ik");
 	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
 	if (!charLocalLimeIk) {
 		const char *charLocalIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "Ik");
@@ -710,7 +711,8 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 	}
 
 	std::string RemoteIkB64;
-	const char *charRemoteLimeIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
+	const char *charRemoteLimeIk =
+	    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
 	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
 	if (!charRemoteLimeIk) {
 		const char *charRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
@@ -722,8 +724,9 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 	}
 
 	// This sdp might be from a non lime aware device
-	if (LocalIkB64.size()==0 || RemoteIkB64.size()==0) {
-		lInfo() << "[LIME] Missing identity keys for mutual authentication, do not set auxiliary secret from identity keys";
+	if (LocalIkB64.size() == 0 || RemoteIkB64.size() == 0) {
+		lInfo()
+		    << "[LIME] Missing identity keys for mutual authentication, do not set auxiliary secret from identity keys";
 		return;
 	}
 
@@ -754,18 +757,18 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 	const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
 	lInfo() << "[LIME] Setting ZRTP auxiliary shared secret after identity key concatenation";
 	int retval = ms_zrtp_setAuxiliarySharedSecret(zrtpContext, auxSharedSecret, auxSharedSecretLength);
-	if (retval != 0) //not an error as most of the time reason is already set (I.E re-invite case)
+	if (retval != 0) // not an error as most of the time reason is already set (I.E re-invite case)
 		lWarning() << "[LIME] ZRTP auxiliary shared secret cannot be set 0x" << hex << retval;
 }
 
-void LimeX3dhEncryptionEngine::authenticationVerified (
-	MSZrtpContext *zrtpContext,
-	const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
-	const char *peerDeviceId
-) {
+void LimeX3dhEncryptionEngine::authenticationVerified(
+    MSZrtpContext *zrtpContext,
+    const std::shared_ptr<SalMediaDescription> &remoteMediaDescription,
+    const char *peerDeviceId) {
 	// Get peer's Ik
 	string remoteIkB64;
-	const char *sdpRemoteLimeIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
+	const char *sdpRemoteLimeIk =
+	    sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
 	if (sdpRemoteLimeIk) {
 		remoteIkB64 = sdpRemoteLimeIk;
 	} else { /* legacy: check deprecated Ik attribute */
@@ -792,16 +795,21 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 			lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(peerDeviceId);
 			switch (status) {
 				case lime::PeerDeviceStatus::unsafe:
-					lWarning() << "[LIME] peer device " << peerDeviceId << " is unsafe and its identity key has changed";
+					lWarning() << "[LIME] peer device " << peerDeviceId
+					           << " is unsafe and its identity key has changed";
 					break;
 				case lime::PeerDeviceStatus::untrusted:
-					lWarning() << "[LIME] peer device " << peerDeviceId << " is untrusted and its identity key has changed";
+					lWarning() << "[LIME] peer device " << peerDeviceId
+					           << " is untrusted and its identity key has changed";
 					// TODO specific alert to warn the user that previous messages are compromised
-					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged);
+					addSecurityEventInChatrooms(
+					    peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged);
 					break;
 				case lime::PeerDeviceStatus::trusted:
-					lError() << "[LIME] peer device " << peerDeviceId << " is already trusted but its identity key has changed";
-					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged);
+					lError() << "[LIME] peer device " << peerDeviceId
+					         << " is already trusted but its identity key has changed";
+					addSecurityEventInChatrooms(
+					    peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged);
 					break;
 				case lime::PeerDeviceStatus::unknown:
 				case lime::PeerDeviceStatus::fail:
@@ -811,14 +819,13 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 			// Delete current peer device data and replace it with the new Ik and a trusted status
 			limeManager->delete_peerDevice(peerDeviceId);
 			limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, lime::PeerDeviceStatus::trusted);
-		}
-		catch (const exception &e) {
+		} catch (const exception &e) {
 			lError() << "[LIME] exception" << e.what();
 			return;
 		}
 	}
 	// SAS is verified but the auxiliary secret mismatches
-	else /*BZRTP_AUXSECRET_MISMATCH*/{
+	else /*BZRTP_AUXSECRET_MISMATCH*/ {
 		lError() << "[LIME] SAS is verified but the auxiliary secret mismatches, removing trust";
 		ms_zrtp_sas_reset_verified(zrtpContext);
 		limeManager->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
@@ -826,20 +833,21 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 	}
 }
 
-void LimeX3dhEncryptionEngine::authenticationRejected (
-	const char *peerDeviceId
-) {
+void LimeX3dhEncryptionEngine::authenticationRejected(const char *peerDeviceId) {
 	// Get peer's Ik
 	// Warn the user that rejecting the SAS reveals a man-in-the-middle
 	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
 
 	if (limeManager->get_peerDeviceStatus(peerDeviceId) == lime::PeerDeviceStatus::trusted) {
-		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded);
+		addSecurityEventInChatrooms(peerDeviceAddr,
+		                            ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded);
 	}
 
 	// Set peer device to untrusted or unsafe depending on configuration
 	LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
-	lime::PeerDeviceStatus statusIfSASrefused = linphone_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 0) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
+	lime::PeerDeviceStatus statusIfSASrefused = linphone_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 0)
+	                                                ? lime::PeerDeviceStatus::unsafe
+	                                                : lime::PeerDeviceStatus::untrusted;
 	if (statusIfSASrefused == lime::PeerDeviceStatus::unsafe) {
 		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 	}
@@ -847,33 +855,28 @@ void LimeX3dhEncryptionEngine::authenticationRejected (
 	limeManager->set_peerDeviceStatus(peerDeviceId, statusIfSASrefused);
 }
 
-void LimeX3dhEncryptionEngine::addSecurityEventInChatrooms (
-	const IdentityAddress &peerDeviceAddr,
-	ConferenceSecurityEvent::SecurityEventType securityEventType
-) {
+void LimeX3dhEncryptionEngine::addSecurityEventInChatrooms(
+    const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) {
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = getCore()->getChatRooms();
 	for (const auto &chatRoom : chatRooms) {
-		if (chatRoom->findParticipant(peerDeviceAddr) && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) ) {
+		if (chatRoom->findParticipant(peerDeviceAddr) &&
+		    (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
 			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(
-				time(nullptr),
-				chatRoom->getConferenceId(),
-				securityEventType,
-				peerDeviceAddr
-			);
+			    time(nullptr), chatRoom->getConferenceId(), securityEventType, peerDeviceAddr);
 			shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 			confListener->onSecurityEvent(securityEvent);
 		}
 	}
 }
 
-shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
-	const IdentityAddress &newDeviceAddr,
-	shared_ptr<Participant> participant,
-	const shared_ptr<AbstractChatRoom> &chatRoom,
-	ChatRoom::SecurityLevel currentSecurityLevel
-) {
+shared_ptr<ConferenceSecurityEvent>
+LimeX3dhEncryptionEngine::onDeviceAdded(const IdentityAddress &newDeviceAddr,
+                                        shared_ptr<Participant> participant,
+                                        const shared_ptr<AbstractChatRoom> &chatRoom,
+                                        ChatRoom::SecurityLevel currentSecurityLevel) {
 	lime::PeerDeviceStatus newDeviceStatus = limeManager->get_peerDeviceStatus(newDeviceAddr.asString());
-	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", INT_MAX);
+	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())),
+	                                                         "lime", "max_nb_device_per_participant", INT_MAX);
 	int nbDevice = int(participant->getDevices().size());
 	shared_ptr<ConferenceSecurityEvent> securityEvent = nullptr;
 
@@ -881,47 +884,43 @@ shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
 	if (nbDevice > maxNbDevicesPerParticipant) {
 		lWarning() << "[LIME] maximum number of devices exceeded for " << participant->getAddress();
 		securityEvent = make_shared<ConferenceSecurityEvent>(
-			time(nullptr),
-			chatRoom->getConferenceId(),
-			ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded,
-			newDeviceAddr
-		);
+		    time(nullptr), chatRoom->getConferenceId(),
+		    ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded, newDeviceAddr);
 		limeManager->set_peerDeviceStatus(newDeviceAddr.asString(), lime::PeerDeviceStatus::unsafe);
 	}
 
 	// Otherwise if the chatroom security level was degraded a corresponding security event is created
 	else {
-		if ((currentSecurityLevel == ChatRoom::SecurityLevel::Safe) && (newDeviceStatus != lime::PeerDeviceStatus::trusted)) {
+		if ((currentSecurityLevel == ChatRoom::SecurityLevel::Safe) &&
+		    (newDeviceStatus != lime::PeerDeviceStatus::trusted)) {
 			lInfo() << "[LIME] chat room security level degraded by " << newDeviceAddr.asString();
 			securityEvent = make_shared<ConferenceSecurityEvent>(
-				time(nullptr),
-				chatRoom->getConferenceId(),
-				ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded,
-				newDeviceAddr
-			);
+			    time(nullptr), chatRoom->getConferenceId(),
+			    ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded, newDeviceAddr);
 		}
 	}
 	return securityEvent;
 }
 
-void LimeX3dhEncryptionEngine::cleanDb () {
+void LimeX3dhEncryptionEngine::cleanDb() {
 	remove(_dbAccess.c_str());
 }
 
-std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager () {
+std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager() {
 	return limeManager;
 }
 
-void LimeX3dhEncryptionEngine::staleSession (const std::string localDeviceId, const std::string peerDeviceId) {
+void LimeX3dhEncryptionEngine::staleSession(const std::string localDeviceId, const std::string peerDeviceId) {
 	try {
 		limeManager->stale_sessions(localDeviceId, peerDeviceId);
 	} catch (const BctbxException &e) {
-		lError() << "[LIME] fail to stale session between local ["<<localDeviceId<<"] and "<<" remote ["<<peerDeviceId<<"]. lime says: "<<e.what();
+		lError() << "[LIME] fail to stale session between local [" << localDeviceId << "] and "
+		         << " remote [" << peerDeviceId << "]. lime says: " << e.what();
 	}
 }
 
-lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback (string operation) {
-	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
+lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback(string operation) {
+	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, BCTBX_UNUSED(string anythingToSay)) {
 		if (returnCode == lime::CallbackReturn::success) {
 			lInfo() << "[LIME] operation successful: " << operation;
 		} else {
@@ -931,28 +930,29 @@ lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback (string operation) 
 	return callback;
 }
 
-lime::limeCallback LimeX3dhEncryptionEngine::setLimeUserCreationCallback (LinphoneCore * lc, const std::string localDeviceId) {
+lime::limeCallback LimeX3dhEncryptionEngine::setLimeUserCreationCallback(LinphoneCore *lc,
+                                                                         const std::string localDeviceId) {
 	lime::limeCallback callback([lc, localDeviceId](lime::CallbackReturn returnCode, string info) {
-		if (returnCode==lime::CallbackReturn::success) {
-			lInfo() << "[LIME] user "<< localDeviceId <<" creation successful";
+		if (returnCode == lime::CallbackReturn::success) {
+			lInfo() << "[LIME] user " << localDeviceId << " creation successful";
 		} else {
-			lWarning() << "[LIME] user "<< localDeviceId <<" creation failed with error [" << info << "]";
+			lWarning() << "[LIME] user " << localDeviceId << " creation failed with error [" << info << "]";
 		}
-		linphone_core_notify_imee_user_registration(lc, returnCode==lime::CallbackReturn::success, localDeviceId.data(), info.data());
+		linphone_core_notify_imee_user_registration(lc, returnCode == lime::CallbackReturn::success,
+		                                            localDeviceId.data(), info.data());
 	});
 
 	return callback;
 }
 
-void LimeX3dhEncryptionEngine::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {}
+void LimeX3dhEncryptionEngine::onNetworkReachable(BCTBX_UNUSED(bool sipNetworkReachable),
+                                                  BCTBX_UNUSED(bool mediaNetworkReachable)) {
+}
 
-void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
-	LinphoneProxyConfig *cfg,
-	LinphoneRegistrationState state,
-	const string &message
-) {
-	if (state != LinphoneRegistrationState::LinphoneRegistrationOk)
-		return;
+void LimeX3dhEncryptionEngine::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
+                                                          LinphoneRegistrationState state,
+                                                          BCTBX_UNUSED(const string &message)) {
+	if (state != LinphoneRegistrationState::LinphoneRegistrationOk) return;
 
 	auto account = Account::toCpp(cfg->account);
 	auto accountParams = account->getAccountParams();
@@ -960,7 +960,9 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	string accountLimeServerUrl = accountParams->getLimeServerUrl();
 	if (accountLimeServerUrl.empty()) {
 		accountLimeServerUrl = getCore()->getX3dhServerUrl();
-		lWarning() << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL [" << accountLimeServerUrl << "]";
+		lWarning()
+		    << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL ["
+		    << accountLimeServerUrl << "]";
 	}
 	if (accountLimeServerUrl.empty()) {
 		lWarning() << "[LIME] Server URL unavailable for encryption engine: can't create user";
@@ -970,14 +972,14 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
 	IdentityAddress identityAddress = IdentityAddress(contactAddress);
 	string localDeviceId = identityAddress.asString();
-	if (contactAddress)
-		ms_free(contactAddress);
+	if (contactAddress) ms_free(contactAddress);
 
 	LinphoneCore *lc = linphone_proxy_config_get_core(cfg);
 	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
 	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
-	lInfo() << "[LIME] Trying to create lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl << "]";
+	lInfo() << "[LIME] Trying to create lime user for device " << localDeviceId << " with server URL ["
+	        << accountLimeServerUrl << "]";
 
 	try {
 		if (!limeManager->is_user(localDeviceId)) {
@@ -988,7 +990,8 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		} else {
 			limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
 			// update keys if necessary
-			int limeUpdateThreshold = linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
+			int limeUpdateThreshold =
+			    linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
 			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
 				update();
 				lastLimeUpdate = ms_time(NULL);
@@ -996,21 +999,21 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		}
 		linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
-		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
+		lError() << "[LIME] user for id [" << localDeviceId << "] cannot be created" << e.what();
 	}
 }
 
-void LimeX3dhEncryptionEngine::onServerUrlChanged (
-	const std::shared_ptr<Account> & account,
-	const std::string& limeServerUrl
-) {
+void LimeX3dhEncryptionEngine::onServerUrlChanged(const std::shared_ptr<Account> &account,
+                                                  const std::string &limeServerUrl) {
 
 	auto accountParams = account->getAccountParams();
 	// The LIME server URL set in the account parameters is preferred to that set in the core parameters
 	string accountLimeServerUrl = limeServerUrl;
 	if (accountLimeServerUrl.empty()) {
 		accountLimeServerUrl = getCore()->getX3dhServerUrl();
-		lWarning() << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL [" << accountLimeServerUrl << "]";
+		lWarning()
+		    << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL ["
+		    << accountLimeServerUrl << "]";
 	}
 
 	// Can take into account LIME server changed when the contact address is not known
@@ -1021,14 +1024,14 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged (
 	char *contactAddressStr = linphone_address_as_string_uri_only(contactAddress);
 	IdentityAddress identityAddress = IdentityAddress(contactAddressStr);
 	string localDeviceId = identityAddress.asString();
-	if (contactAddressStr)
-		ms_free(contactAddressStr);
+	if (contactAddressStr) ms_free(contactAddressStr);
 
 	LinphoneCore *lc = account->getCore();
 	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
 	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
-	lInfo() << "[LIME] Trying to update lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl << "]";
+	lInfo() << "[LIME] Trying to update lime user for device " << localDeviceId << " with server URL ["
+	        << accountLimeServerUrl << "]";
 
 	try {
 		if (!accountLimeServerUrl.empty()) {
@@ -1046,7 +1049,8 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged (
 			} else {
 				limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
 				// update keys if necessary
-				int limeUpdateThreshold = linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
+				int limeUpdateThreshold =
+				    linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
 				if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
 					update();
 					lastLimeUpdate = ms_time(NULL);
@@ -1055,15 +1059,12 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged (
 		}
 		linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
-		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
+		lError() << "[LIME] user for id [" << localDeviceId << "] cannot be created" << e.what();
 	}
-
 }
-
 
 void LimeX3dhEncryptionEngine::setTestForceDecryptionFailureFlag(bool flag) {
 	forceFailure = flag;
 }
-
 
 LINPHONE_END_NAMESPACE

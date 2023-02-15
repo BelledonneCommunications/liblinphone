@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,42 +18,42 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "lime-x3dh-server-engine.h"
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/exception.hh"
+#include "c-wrapper/c-wrapper.h"
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
+#include "conference/participant-device.h"
+#include "conference/participant.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
-#include "conference/participant.h"
-#include "conference/participant-device.h"
 #include "core/core.h"
 #include "factory/factory.h"
-#include "c-wrapper/c-wrapper.h"
-#include "lime-x3dh-server-engine.h"
 #include "private.h"
-#include "bctoolbox/exception.hh"
-
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-
 // -----------------------------------------------  LimeX3dhEncryptionServerEngine
 
-LimeX3dhEncryptionServerEngine::LimeX3dhEncryptionServerEngine (const shared_ptr<Core> core) : EncryptionEngine(core) {
+LimeX3dhEncryptionServerEngine::LimeX3dhEncryptionServerEngine(const shared_ptr<Core> core) : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dhServer;
-	lInfo() << "[LIME][server] instanciate a LimeX3dhEncryptionServer engine "<<this;
+	lInfo() << "[LIME][server] instanciate a LimeX3dhEncryptionServer engine " << this;
 }
 
-LimeX3dhEncryptionServerEngine::~LimeX3dhEncryptionServerEngine () {
-	lInfo()<<"[LIME][server] destroy LimeX3dhEncryptionServer engine "<<this;
+LimeX3dhEncryptionServerEngine::~LimeX3dhEncryptionServerEngine() {
+	lInfo() << "[LIME][server] destroy LimeX3dhEncryptionServer engine " << this;
 }
 
-ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessage (
-	const std::shared_ptr<ChatMessage> &message,
-	int &errorCode) {
+ChatMessageModifier::Result
+LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<ChatMessage> &message,
+                                                       BCTBX_UNUSED(int &errorCode)) {
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &toDeviceId = message->getToAddress().asString();
@@ -67,10 +67,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessa
 		return ChatMessageModifier::Result::Skipped;
 	}
 
-	if (!message->getInternalContent().isEmpty())
-		internalContent = &(message->getInternalContent());
-	else
-		internalContent = message->getContents().front();
+	if (!message->getInternalContent().isEmpty()) internalContent = &(message->getInternalContent());
+	else internalContent = message->getContents().front();
 
 	// Check if the message is encrypted
 	if (!isMessageEncrypted(internalContent)) {
@@ -94,8 +92,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessa
 		return ChatMessageModifier::Result::Error;
 	}
 
-	/* FIXME: to preserve backward compatibility with liblinphone <= 5.1, we must keep using an fixed multipart boundary.
-	 * Remove this awful stuff after March 2023. */
+	/* FIXME: to preserve backward compatibility with liblinphone <= 5.1, we must keep using an fixed multipart
+	 * boundary. Remove this awful stuff after March 2023. */
 	const char *harcodedBoundary = "---------------------------14737809831466499882746641449";
 	Content finalContent = ContentManager::contentListToMultipart(contents, harcodedBoundary, true);
 	/* Set the original ContentType, but we need to set the new boundary parameter for the new forged multipart. */
@@ -107,24 +105,24 @@ ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessa
 	return ChatMessageModifier::Result::Done;
 }
 
-EncryptionEngine::EngineType LimeX3dhEncryptionServerEngine::getEngineType () {
+EncryptionEngine::EngineType LimeX3dhEncryptionServerEngine::getEngineType() {
 	return engineType;
 }
 
 bool LimeX3dhUtils::isMessageEncrypted(const Content *internalContent) {
-	const ContentType & incomingContentType = internalContent->getContentType();
+	const ContentType &incomingContentType = internalContent->getContentType();
 	ContentType expectedContentType = ContentType::Encrypted;
-	
-	if (incomingContentType == expectedContentType){
+
+	if (incomingContentType == expectedContentType) {
 		string protocol = incomingContentType.getParameter("protocol").getValue();
-		if (protocol == "\"application/lime\""){
+		if (protocol == "\"application/lime\"") {
 			return true;
-		}else if (protocol.empty()){
+		} else if (protocol.empty()) {
 			lWarning() << "Accepting possible legacy lime message.";
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,24 +28,23 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-ConferenceEvent::ConferenceEvent (Type type, time_t creationTime, const ConferenceId &conferenceId) :
-	EventLog(*new ConferenceEventPrivate, type, creationTime) {
+ConferenceEvent::ConferenceEvent(Type type, time_t creationTime, const ConferenceId &conferenceId)
+    : EventLog(*new ConferenceEventPrivate, type, creationTime) {
 	L_D();
 	L_ASSERT(type == Type::ConferenceCreated || type == Type::ConferenceTerminated);
 	d->conferenceId = conferenceId;
 }
 
-ConferenceEvent::ConferenceEvent (
-	ConferenceEventPrivate &p,
-	Type type,
-	time_t creationTime,
-	const ConferenceId &conferenceId
-) : EventLog(p, type, creationTime) {
+ConferenceEvent::ConferenceEvent(ConferenceEventPrivate &p,
+                                 Type type,
+                                 time_t creationTime,
+                                 const ConferenceId &conferenceId)
+    : EventLog(p, type, creationTime) {
 	L_D();
 	d->conferenceId = conferenceId;
 }
 
-const ConferenceId &ConferenceEvent::getConferenceId () const {
+const ConferenceId &ConferenceEvent::getConferenceId() const {
 	L_D();
 	return d->conferenceId;
 }

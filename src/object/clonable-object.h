@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,14 +26,13 @@
 
 // =============================================================================
 
-#define L_USE_DEFAULT_CLONABLE_OBJECT_SHARED_IMPL(CLASS) \
-	CLASS::CLASS (const CLASS &other) : ClonableObject( \
-		const_cast<std::decay<decltype(*other.getPrivate())>::type &>(*other.getPrivate()) \
-	) {} \
-	CLASS &CLASS::operator= (const CLASS &other) { \
-		if (this != &other) \
-			setRef(*other.getPrivate()); \
-		return *this; \
+#define L_USE_DEFAULT_CLONABLE_OBJECT_SHARED_IMPL(CLASS)                                                               \
+	CLASS::CLASS(const CLASS &other)                                                                                   \
+	    : ClonableObject(const_cast<std::decay<decltype(*other.getPrivate())>::type &>(*other.getPrivate())) {         \
+	}                                                                                                                  \
+	CLASS &CLASS::operator=(const CLASS &other) {                                                                      \
+		if (this != &other) setRef(*other.getPrivate());                                                               \
+		return *this;                                                                                                  \
 	}
 
 LINPHONE_BEGIN_NAMESPACE
@@ -46,15 +45,15 @@ class LINPHONE_PUBLIC ClonableObject : public PropertyContainer {
 	L_OBJECT;
 
 public:
-	virtual ~ClonableObject ();
+	virtual ~ClonableObject();
 
-	virtual ClonableObject* clone () const = 0;
+	virtual ClonableObject *clone() const = 0;
 
 protected:
-	explicit ClonableObject (ClonableObjectPrivate &p);
+	explicit ClonableObject(ClonableObjectPrivate &p);
 
 	// Change the ClonableObjectPrivate. Unref previous.
-	void setRef (const ClonableObjectPrivate &p);
+	void setRef(const ClonableObjectPrivate &p);
 
 	ClonableObjectPrivate *mPrivate = nullptr;
 

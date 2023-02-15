@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -44,48 +44,47 @@ public:
 	string formalName;
 };
 
-Cpim::ContactHeader::ContactHeader () : Header(*new ContactHeaderPrivate) {}
+Cpim::ContactHeader::ContactHeader() : Header(*new ContactHeaderPrivate) {
+}
 
-Cpim::ContactHeader::ContactHeader (const string &uri, const string &formalName) : ContactHeader() {
+Cpim::ContactHeader::ContactHeader(const string &uri, const string &formalName) : ContactHeader() {
 	setUri(uri);
 	setFormalName(formalName);
 }
 
-string Cpim::ContactHeader::getUri () const {
+string Cpim::ContactHeader::getUri() const {
 	L_D();
 	return d->uri;
 }
 
-void Cpim::ContactHeader::setUri (const string &uri) {
+void Cpim::ContactHeader::setUri(const string &uri) {
 	L_D();
 	d->uri = uri;
 }
 
-string Cpim::ContactHeader::getFormalName () const {
+string Cpim::ContactHeader::getFormalName() const {
 	L_D();
 	return d->formalName;
 }
 
-void Cpim::ContactHeader::setFormalName (const string &formalName) {
+void Cpim::ContactHeader::setFormalName(const string &formalName) {
 	L_D();
 	if (!formalName.empty() && formalName.front() == '\"' && formalName.back() == '\"')
 		d->formalName = formalName.substr(1, formalName.size() - 2);
 	else if (!formalName.empty() && formalName.back() == ' ')
 		d->formalName = formalName.substr(0, formalName.size() - 1);
-	else
-		d->formalName = formalName;
+	else d->formalName = formalName;
 }
 
-string Cpim::ContactHeader::getValue () const {
+string Cpim::ContactHeader::getValue() const {
 	L_D();
 	string result;
-	if (!d->formalName.empty())
-		result += "\"" + d->formalName + "\"";
+	if (!d->formalName.empty()) result += "\"" + d->formalName + "\"";
 	result += "<" + d->uri + ">";
 	return result;
 }
 
-string Cpim::ContactHeader::asString () const {
+string Cpim::ContactHeader::asString() const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
@@ -98,17 +97,19 @@ public:
 	string signOffset;
 };
 
-Cpim::DateTimeHeader::DateTimeHeader () : Header(*new DateTimeHeaderPrivate) {}
+Cpim::DateTimeHeader::DateTimeHeader() : Header(*new DateTimeHeaderPrivate) {
+}
 
-Cpim::DateTimeHeader::DateTimeHeader (time_t time) : DateTimeHeader() {
+Cpim::DateTimeHeader::DateTimeHeader(time_t time) : DateTimeHeader() {
 	setTime(time);
 }
 
-Cpim::DateTimeHeader::DateTimeHeader (const tm &time, const tm &timeOffset, const string &signOffset) : DateTimeHeader() {
+Cpim::DateTimeHeader::DateTimeHeader(const tm &time, const tm &timeOffset, const string &signOffset)
+    : DateTimeHeader() {
 	setTime(time, timeOffset, signOffset);
 }
 
-time_t Cpim::DateTimeHeader::getTime () const {
+time_t Cpim::DateTimeHeader::getTime() const {
 	L_D();
 
 	tm result = d->dateTime;
@@ -123,8 +124,7 @@ time_t Cpim::DateTimeHeader::getTime () const {
 			result.tm_hour++;
 			result.tm_min -= 60;
 		}
-	}
-	else if (d->signOffset == "-") {
+	} else if (d->signOffset == "-") {
 		result.tm_hour -= d->dateTimeOffset.tm_hour;
 		result.tm_hour -= d->dateTimeOffset.tm_min;
 
@@ -137,7 +137,7 @@ time_t Cpim::DateTimeHeader::getTime () const {
 	return Utils::getTmAsTimeT(result);
 }
 
-void Cpim::DateTimeHeader::setTime (const time_t time) {
+void Cpim::DateTimeHeader::setTime(const time_t time) {
 	L_D();
 
 	d->signOffset = "Z";
@@ -145,7 +145,7 @@ void Cpim::DateTimeHeader::setTime (const time_t time) {
 	d->dateTime.tm_year += 1900;
 }
 
-void Cpim::DateTimeHeader::setTime (const tm &time, const tm &timeOffset, const string &signOffset) {
+void Cpim::DateTimeHeader::setTime(const tm &time, const tm &timeOffset, const string &signOffset) {
 	L_D();
 
 	d->dateTime = time;
@@ -153,40 +153,37 @@ void Cpim::DateTimeHeader::setTime (const tm &time, const tm &timeOffset, const 
 	d->signOffset = signOffset;
 }
 
-string Cpim::DateTimeHeader::getValue () const {
- 	L_D();
+string Cpim::DateTimeHeader::getValue() const {
+	L_D();
 
 	stringstream ss;
-	ss << setfill('0') << setw(4) << d->dateTime.tm_year << "-"
-		<< setfill('0') << setw(2) << d->dateTime.tm_mon + 1 << "-"
-		<< setfill('0') << setw(2) << d->dateTime.tm_mday << "T"
-		<< setfill('0') << setw(2) << d->dateTime.tm_hour << ":"
-		<< setfill('0') << setw(2) << d->dateTime.tm_min << ":"
-		<< setfill('0') << setw(2) << d->dateTime.tm_sec;
+	ss << setfill('0') << setw(4) << d->dateTime.tm_year << "-" << setfill('0') << setw(2) << d->dateTime.tm_mon + 1
+	   << "-" << setfill('0') << setw(2) << d->dateTime.tm_mday << "T" << setfill('0') << setw(2) << d->dateTime.tm_hour
+	   << ":" << setfill('0') << setw(2) << d->dateTime.tm_min << ":" << setfill('0') << setw(2) << d->dateTime.tm_sec;
 
 	ss << d->signOffset;
 	if (d->signOffset != "Z")
-		ss << setfill('0') << setw(2) << d->dateTimeOffset.tm_hour << ":"
-			<< setfill('0') << setw(2) << d->dateTimeOffset.tm_min;
+		ss << setfill('0') << setw(2) << d->dateTimeOffset.tm_hour << ":" << setfill('0') << setw(2)
+		   << d->dateTimeOffset.tm_min;
 
- 	return ss.str();
+	return ss.str();
 }
 
-string Cpim::DateTimeHeader::asString () const {
+string Cpim::DateTimeHeader::asString() const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
-struct tm Cpim::DateTimeHeader::getTimeStruct () const {
+struct tm Cpim::DateTimeHeader::getTimeStruct() const {
 	L_D();
 	return d->dateTime;
 }
 
-struct tm Cpim::DateTimeHeader::getTimeOffset () const {
+struct tm Cpim::DateTimeHeader::getTimeOffset() const {
 	L_D();
 	return d->dateTimeOffset;
 }
 
-string Cpim::DateTimeHeader::getSignOffset () const {
+string Cpim::DateTimeHeader::getSignOffset() const {
 	L_D();
 	return d->signOffset;
 }
@@ -199,44 +196,44 @@ public:
 	string prefixName;
 };
 
-Cpim::NsHeader::NsHeader () : Header(*new NsHeaderPrivate) {}
+Cpim::NsHeader::NsHeader() : Header(*new NsHeaderPrivate) {
+}
 
-Cpim::NsHeader::NsHeader (const string &uri, const string &prefixName) : NsHeader() {
+Cpim::NsHeader::NsHeader(const string &uri, const string &prefixName) : NsHeader() {
 	setUri(uri);
 	setPrefixName(prefixName);
 }
 
-string Cpim::NsHeader::getUri () const {
+string Cpim::NsHeader::getUri() const {
 	L_D();
 	return d->uri;
 }
 
-void Cpim::NsHeader::setUri (const string &uri) {
+void Cpim::NsHeader::setUri(const string &uri) {
 	L_D();
 	d->uri = uri;
 }
 
-string Cpim::NsHeader::getPrefixName () const {
+string Cpim::NsHeader::getPrefixName() const {
 	L_D();
 	return d->prefixName;
 }
 
-void Cpim::NsHeader::setPrefixName (const string &prefixName) {
+void Cpim::NsHeader::setPrefixName(const string &prefixName) {
 	L_D();
 	d->prefixName = prefixName;
 }
 
-string Cpim::NsHeader::getValue () const {
+string Cpim::NsHeader::getValue() const {
 	L_D();
 
 	string ns;
-	if (!d->prefixName.empty())
-		ns = d->prefixName + " ";
+	if (!d->prefixName.empty()) ns = d->prefixName + " ";
 
 	return ns + "<" + d->uri + ">";
 }
 
-string Cpim::NsHeader::asString () const {
+string Cpim::NsHeader::asString() const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
@@ -247,43 +244,43 @@ public:
 	list<string> headerNames;
 };
 
-Cpim::RequireHeader::RequireHeader () : Header(*new RequireHeaderPrivate) {}
+Cpim::RequireHeader::RequireHeader() : Header(*new RequireHeaderPrivate) {
+}
 
-Cpim::RequireHeader::RequireHeader (const string &headerNames) : RequireHeader() {
+Cpim::RequireHeader::RequireHeader(const string &headerNames) : RequireHeader() {
 	for (const string &header : bctoolbox::Utils::split(headerNames, ",")) {
 		addHeaderName(header);
 	}
 }
 
-Cpim::RequireHeader::RequireHeader (const list<string> &headerNames) : RequireHeader() {
+Cpim::RequireHeader::RequireHeader(const list<string> &headerNames) : RequireHeader() {
 	L_D();
 	d->headerNames = headerNames;
 }
 
-list<string> Cpim::RequireHeader::getHeaderNames () const {
+list<string> Cpim::RequireHeader::getHeaderNames() const {
 	L_D();
 	return d->headerNames;
 }
 
-void Cpim::RequireHeader::addHeaderName (const string &headerName) {
+void Cpim::RequireHeader::addHeaderName(const string &headerName) {
 	L_D();
 	d->headerNames.push_back(headerName);
 }
 
-string Cpim::RequireHeader::getValue () const {
+string Cpim::RequireHeader::getValue() const {
 	L_D();
 
 	string requires;
 	for (const string &header : d->headerNames) {
-		if (header != d->headerNames.front())
-			requires += ",";
+		if (header != d->headerNames.front()) requires += ",";
 		requires += header;
 	}
 
 	return requires;
 }
 
-string Cpim::RequireHeader::asString () const {
+string Cpim::RequireHeader::asString() const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
@@ -295,44 +292,44 @@ public:
 	string language;
 };
 
-Cpim::SubjectHeader::SubjectHeader () : Header(*new SubjectHeaderPrivate) {}
+Cpim::SubjectHeader::SubjectHeader() : Header(*new SubjectHeaderPrivate) {
+}
 
-Cpim::SubjectHeader::SubjectHeader (const string &subject, const string &language) : SubjectHeader() {
+Cpim::SubjectHeader::SubjectHeader(const string &subject, const string &language) : SubjectHeader() {
 	setSubject(subject);
 	setLanguage(language);
 }
 
-string Cpim::SubjectHeader::getSubject () const {
+string Cpim::SubjectHeader::getSubject() const {
 	L_D();
 	return d->subject;
 }
 
-void Cpim::SubjectHeader::setSubject (const string &subject) {
+void Cpim::SubjectHeader::setSubject(const string &subject) {
 	L_D();
 	d->subject = subject;
 }
 
-string Cpim::SubjectHeader::getLanguage () const {
+string Cpim::SubjectHeader::getLanguage() const {
 	L_D();
 	return d->language;
 }
 
-void Cpim::SubjectHeader::setLanguage (const string &language) {
+void Cpim::SubjectHeader::setLanguage(const string &language) {
 	L_D();
 	d->language = language;
 }
 
-string Cpim::SubjectHeader::getValue () const {
+string Cpim::SubjectHeader::getValue() const {
 	L_D();
 
 	string languageParam;
-	if (!d->language.empty())
-		languageParam = ";lang=" + d->language;
+	if (!d->language.empty()) languageParam = ";lang=" + d->language;
 
 	return languageParam + " " + d->subject;
 }
 
-string Cpim::SubjectHeader::asString () const {
+string Cpim::SubjectHeader::asString() const {
 	return getName() + ":" + getValue() + "\r\n";
 }
 

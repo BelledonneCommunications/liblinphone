@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,8 +22,8 @@
 #define LINPHONE_FACTORY_H
 
 #include "linphone/api/c-types.h"
-#include "linphone/types.h"
 #include "linphone/logging.h"
+#include "linphone/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +42,8 @@ LINPHONE_PUBLIC LinphoneFactory *linphone_factory_get(void);
 
 /**
  * Clean the factory. This function is generally useless as the factory is unique per process, however
- * calling this function at the end avoid getting reports from belle-sip leak detector about memory leaked in linphone_factory_get().
+ * calling this function at the end avoid getting reports from belle-sip leak detector about memory leaked in
+ * linphone_factory_get().
  */
 LINPHONE_PUBLIC void linphone_factory_clean(void);
 
@@ -53,11 +54,12 @@ LINPHONE_PUBLIC void linphone_factory_clean(void);
  * application.
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
- * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected
+ * languages.
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param config_path A path to a config file. If it does not exists it will be created. The config file is used to
- * store all settings, proxies... so that all these settings become persistent over the life of the #LinphoneCore object.
- * It is allowed to set a NULL config file. In that case #LinphoneCore will not store any settings. @maybenil
+ * store all settings, proxies... so that all these settings become persistent over the life of the #LinphoneCore
+ * object. It is allowed to set a NULL config file. In that case #LinphoneCore will not store any settings. @maybenil
  * @param factory_config_path A path to a read-only config file that can be used to store hard-coded preferences
  * such as proxy settings or internal preferences. The settings in this factory file always override the ones in the
  * normal config file. It is optional, use NULL if unneeded. @maybenil
@@ -66,12 +68,10 @@ LINPHONE_PUBLIC void linphone_factory_clean(void);
  * @return a #LinphoneCore object @notnil
  * @see linphone_core_new_with_config_3()
  */
-LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
-	const LinphoneFactory *factory,
-	const char *config_path,
-	const char *factory_config_path,
-	void *system_context
-);
+LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3(const LinphoneFactory *factory,
+                                                             const char *config_path,
+                                                             const char *factory_config_path,
+                                                             void *system_context);
 
 /**
  * Instantiate a shared #LinphoneCore object.
@@ -89,30 +89,30 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
  *
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
- * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected
+ * languages.
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param config_filename The name of the config file. If it does not exists it will be created.
  * Its path is computed using the app_group_id. The config file is used to
- * store all settings, proxies... so that all these settings become persistent over the life of the #LinphoneCore object.
- * It is allowed to set a NULL config file. In that case #LinphoneCore will not store any settings. @maybenil
+ * store all settings, proxies... so that all these settings become persistent over the life of the #LinphoneCore
+ * object. It is allowed to set a NULL config file. In that case #LinphoneCore will not store any settings. @maybenil
  * @param factory_config_path A path to a read-only config file that can be used to store hard-coded preferences
  * such as proxy settings or internal preferences. The settings in this factory file always override the ones in the
  * normal config file. It is optional, use NULL if unneeded. @maybenil
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
  * pass an android Context on android, pass NULL on other platforms. @maybenil
- * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions. @notnil
+ * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app
+ * extensions. @notnil
  * @param main_core Indicate if we want to create a "Main Core" or an "Executor Core".
  * @return a #LinphoneCore object @notnil
  * @see linphone_factory_create_shared_core_with_config()
  */
-LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
-	const LinphoneFactory *factory,
-	const char *config_filename,
-	const char *factory_config_path,
-	void *system_context,
-	const char *app_group_id,
-	bool_t main_core
-);
+LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core(const LinphoneFactory *factory,
+                                                                  const char *config_filename,
+                                                                  const char *factory_config_path,
+                                                                  void *system_context,
+                                                                  const char *app_group_id,
+                                                                  bool_t main_core);
 
 /**
  * Instantiate a #LinphoneCore object with a given LinphoneConfig.
@@ -121,7 +121,8 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
  * application.
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
- * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected
+ * languages.
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param config A #LinphoneConfig object holding the configuration for the #LinphoneCore to be instantiated. @notnil
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
@@ -129,11 +130,9 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
  * @return a #LinphoneCore object @notnil
  * @see linphone_factory_create_core_3()
  */
-LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
-	const LinphoneFactory *factory,
-	LinphoneConfig *config,
-	void *system_context
-);
+LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3(const LinphoneFactory *factory,
+                                                                         LinphoneConfig *config,
+                                                                         void *system_context);
 
 /**
  * Instantiate a shared #LinphoneCore object.
@@ -151,23 +150,23 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
  *
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
- * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected
+ * languages.
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param config A #LinphoneConfig object holding the configuration for the #LinphoneCore to be instantiated. @notnil
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
  * pass an android Context on android, pass NULL on other platforms. @maybenil
- * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions. @notnil
+ * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app
+ * extensions. @notnil
  * @param main_core Indicate if we want to create a "Main Core" or an "Executor Core".
  * @return a #LinphoneCore object @notnil
  * @see linphone_factory_create_shared_core()
  */
-LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config (
-	const LinphoneFactory *factory,
-	LinphoneConfig *config,
-	void *system_context,
-	const char *app_group_id,
-	bool_t main_core
-);
+LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config(const LinphoneFactory *factory,
+                                                                              LinphoneConfig *config,
+                                                                              void *system_context,
+                                                                              const char *app_group_id,
+                                                                              bool_t main_core);
 
 /**
  * Instanciate a #LinphoneCoreCbs object.
@@ -192,10 +191,7 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_factory_create_address(const LinphoneF
  * @return A new #LinphoneParticipantDeviceIdentity. @notnil
  */
 LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_identity(
-	const LinphoneFactory *factory,
-	const LinphoneAddress *address,
-	const char *name
-);
+    const LinphoneFactory *factory, const LinphoneAddress *address, const char *name);
 
 /**
  * Creates a #LinphoneAuthInfo object.
@@ -207,12 +203,20 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_factory_create_parti
  * @param userid The userid used for authenticating (use NULL if you don't know what it is) @maybenil
  * @param passwd The password in clear text @maybenil
  * @param ha1 The ha1-encrypted password if password is not given in clear text. @maybenil
- * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't use this parameter. @maybenil
- * @param domain The SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain. @maybenil
- * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed. The #LinphoneCore makes a copy of #LinphoneAuthInfo
- * passed through linphone_core_add_auth_info(). @notnil
+ * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't
+ * use this parameter. @maybenil
+ * @param domain The SIP domain for which this authentication information is valid, if it has to be restricted for a
+ * single SIP domain. @maybenil
+ * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed.
+ * The #LinphoneCore makes a copy of #LinphoneAuthInfo passed through linphone_core_add_auth_info(). @notnil
  */
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory,
+                                                                    const char *username,
+                                                                    const char *userid,
+                                                                    const char *passwd,
+                                                                    const char *ha1,
+                                                                    const char *realm,
+                                                                    const char *domain);
 
 /**
  * Creates a #LinphoneAuthInfo object.
@@ -224,55 +228,65 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info(const Linpho
  * @param userid The userid used for authenticating (use NULL if you don't know what it is) @maybenil
  * @param passwd The password in clear text @maybenil
  * @param ha1 The ha1-encrypted password if password is not given in clear text. @maybenil
- * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't use this parameter. @maybenil
- * @param domain The SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain. @maybenil
+ * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't
+ * use this parameter. @maybenil
+ * @param domain The SIP domain for which this authentication information is valid, if it has to be restricted for a
+ * single SIP domain. @maybenil
  * @param algorithm The algorithm for encrypting password. @maybenil
- * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed. The #LinphoneCore makes a copy of #LinphoneAuthInfo
- * passed through linphone_core_add_auth_info(). @notnil
+ * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed.
+ * The #LinphoneCore makes a copy of #LinphoneAuthInfo passed through linphone_core_add_auth_info(). @notnil
  */
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *factory,
+                                                                      const char *username,
+                                                                      const char *userid,
+                                                                      const char *passwd,
+                                                                      const char *ha1,
+                                                                      const char *realm,
+                                                                      const char *domain,
+                                                                      const char *algorithm);
 
 /**
  * Create a #LinphoneCallCbs object that holds callbacks for events happening on a call.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneCallCbs object @notnil
  */
-LINPHONE_PUBLIC LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneCallCbs *linphone_factory_create_call_cbs(const LinphoneFactory *factory);
 
 /**
  * Create a #LinphoneConferenceCbs object that holds callbacks for events happening on a conference.
  * @param[in] factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneConferenceCbs object @notnil
  */
-LINPHONE_PUBLIC LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneConferenceCbs *linphone_factory_create_conference_cbs(const LinphoneFactory *factory);
 
 /**
  * Create a #LinphoneParticipantDeviceCbs object that holds callbacks for events happening on a participant device.
  * @param[in] factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneParticipantDeviceCbs object @notnil
  */
-LINPHONE_PUBLIC LinphoneParticipantDeviceCbs * linphone_factory_create_participant_device_cbs(const LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbs *
+linphone_factory_create_participant_device_cbs(const LinphoneFactory *factory);
 
 /**
  * Create a LinphoneChatRoomCbs object that holds callbacks for events happening on a chat room.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneChatRoomCbs object @notnil
  */
-LINPHONE_PUBLIC LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneChatRoomCbs *linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory);
 
 /**
  * Create a LinphoneChatMessageCbs object that holds callbacks for events happening on a chat message.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneChatMessageCbs object @notnil
  */
-LINPHONE_PUBLIC LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory);
 
 /**
  * Create a LinphoneMagicSearchCbs object that holds callbacks for events happening on a chat message.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneMagicSearchCbs object @notnil
  */
-LINPHONE_PUBLIC LinphoneMagicSearchCbs * linphone_factory_create_magic_search_cbs(const LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneMagicSearchCbs *linphone_factory_create_magic_search_cbs(const LinphoneFactory *factory);
 
 /**
  * Create an empty #LinphoneVcard.
@@ -289,7 +303,8 @@ LINPHONE_PUBLIC LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *fa
  * @param height The height of the created video definition
  * @return A new #LinphoneVideoDefinition object @notnil
  */
-LINPHONE_PUBLIC LinphoneVideoDefinition * linphone_factory_create_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height);
+LINPHONE_PUBLIC LinphoneVideoDefinition *
+linphone_factory_create_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height);
 
 /**
  * Create a #LinphoneVideoDefinition from a given standard definition name
@@ -297,29 +312,31 @@ LINPHONE_PUBLIC LinphoneVideoDefinition * linphone_factory_create_video_definiti
  * @param name The standard definition name of the video definition to create @notnil
  * @return A new #LinphoneVideoDefinition object @notnil
  */
-LINPHONE_PUBLIC LinphoneVideoDefinition * linphone_factory_create_video_definition_from_name(const LinphoneFactory *factory, const char *name);
+LINPHONE_PUBLIC LinphoneVideoDefinition *
+linphone_factory_create_video_definition_from_name(const LinphoneFactory *factory, const char *name);
 
 /**
  * Get the list of standard video definitions supported by Linphone.
  * @param factory #LinphoneFactory singleton object @notnil
  * @return A list of video definitions. \bctbx_list{LinphoneVideoDefinition} @maybenil
  */
-LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory);
 
 /**
  * Get the recommended list of standard video definitions.
- * This list is suitable for a widest set of hardware for all video codec implementations, and thus excludes some very high definition formats that are unlikely to work unless specific hardware or codecs are used.
+ * This list is suitable for a widest set of hardware for all video codec implementations, and thus excludes some very
+ * high definition formats that are unlikely to work unless specific hardware or codecs are used.
  * @param factory #LinphoneFactory singleton object @notnil
  * @return A list of video definitions. \bctbx_list{LinphoneVideoDefinition} @maybenil
  */
-LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_recommended_video_definitions(const LinphoneFactory *factory);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_factory_get_recommended_video_definitions(const LinphoneFactory *factory);
 
 /**
  * Get the top directory where the resources are located.
  * @param factory #LinphoneFactory object @notnil
  * @return The path to the top directory where the resources are located @maybenil
  */
-LINPHONE_PUBLIC const char * linphone_factory_get_top_resources_dir(const LinphoneFactory *factory);
+LINPHONE_PUBLIC const char *linphone_factory_get_top_resources_dir(const LinphoneFactory *factory);
 
 /**
  * Set the top directory where the resources are located.
@@ -334,7 +351,7 @@ LINPHONE_PUBLIC void linphone_factory_set_top_resources_dir(LinphoneFactory *fac
  * @param factory #LinphoneFactory object @notnil
  * @return The path to the directory where the data resources are located @maybenil
  */
-LINPHONE_PUBLIC const char * linphone_factory_get_data_resources_dir(LinphoneFactory *factory);
+LINPHONE_PUBLIC const char *linphone_factory_get_data_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the data resources are located.
@@ -348,7 +365,7 @@ LINPHONE_PUBLIC void linphone_factory_set_data_resources_dir(LinphoneFactory *fa
  * @param factory #LinphoneFactory object @notnil
  * @return The path to the directory where the sound resources are located @maybenil
  */
-LINPHONE_PUBLIC const char * linphone_factory_get_sound_resources_dir(LinphoneFactory *factory);
+LINPHONE_PUBLIC const char *linphone_factory_get_sound_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the sound resources are located.
@@ -362,7 +379,7 @@ LINPHONE_PUBLIC void linphone_factory_set_sound_resources_dir(LinphoneFactory *f
  * @param factory #LinphoneFactory object @notnil
  * @return The path to the directory where the ring resources are located @maybenil
  */
-LINPHONE_PUBLIC const char * linphone_factory_get_ring_resources_dir(LinphoneFactory *factory);
+LINPHONE_PUBLIC const char *linphone_factory_get_ring_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the ring resources are located.
@@ -376,7 +393,7 @@ LINPHONE_PUBLIC void linphone_factory_set_ring_resources_dir(LinphoneFactory *fa
  * @param factory #LinphoneFactory object @notnil
  * @return The path to the directory where the image resources are located @maybenil
  */
-LINPHONE_PUBLIC const char * linphone_factory_get_image_resources_dir(LinphoneFactory *factory);
+LINPHONE_PUBLIC const char *linphone_factory_get_image_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the image resources are located.
@@ -388,9 +405,10 @@ LINPHONE_PUBLIC void linphone_factory_set_image_resources_dir(LinphoneFactory *f
 /**
  * Get the directory where the mediastreamer2 plugins are located.
  * @param factory #LinphoneFactory object @notnil
- * @return The path to the directory where the mediastreamer2 plugins are located, or NULL if it has not been set. @maybenil
+ * @return The path to the directory where the mediastreamer2 plugins are located, or NULL if it has not been set.
+ * @maybenil
  */
-LINPHONE_PUBLIC const char * linphone_factory_get_msplugins_dir(LinphoneFactory *factory);
+LINPHONE_PUBLIC const char *linphone_factory_get_msplugins_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the mediastreamer2 plugins are located.
@@ -402,10 +420,11 @@ LINPHONE_PUBLIC void linphone_factory_set_msplugins_dir(LinphoneFactory *factory
 /**
  * Get the config path
  * @param factory the #LinphoneFactory @notnil
- * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
+ *shared core. @maybenil
  * @return The config path @maybenil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context);
 
 /**
@@ -413,7 +432,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *fac
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if config dir has been set.
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_config_dir_set(const LinphoneFactory *factory);
 
 /**
@@ -427,10 +446,11 @@ LINPHONE_PUBLIC void linphone_factory_set_config_dir(LinphoneFactory *factory, c
 /**
  * Get the data path
  * @param factory the #LinphoneFactory @notnil
- * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
+ *shared core. @maybenil
  * @return The data path @maybenil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context);
 
 /**
@@ -438,7 +458,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *facto
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if data dir has been set.
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_data_dir_set(const LinphoneFactory *factory);
 
 /**
@@ -452,10 +472,11 @@ LINPHONE_PUBLIC void linphone_factory_set_data_dir(LinphoneFactory *factory, con
 /**
  * Get the download path
  * @param factory the #LinphoneFactory @notnil
- * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
+ *shared core. @maybenil
  * @return The download path @maybenil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
 
 /**
@@ -463,7 +484,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *f
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if download dir has been set.
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_download_dir_set(const LinphoneFactory *factory);
 
 /**
@@ -477,10 +498,11 @@ LINPHONE_PUBLIC void linphone_factory_set_download_dir(LinphoneFactory *factory,
 /**
  * Get the cache path
  * @param factory the #LinphoneFactory @notnil
- * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with
+ *shared core. @maybenil
  * @return The cache path @maybenil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_factory_get_cache_dir(LinphoneFactory *factory, void *context);
 
 /**
@@ -488,7 +510,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_cache_dir(LinphoneFactory *fact
  * @param factory the #LinphoneFactory @notnil
  * @return TRUE if cache dir has been set.
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_factory_is_cache_dir_set(const LinphoneFactory *factory);
 
 /**
@@ -504,7 +526,7 @@ LINPHONE_PUBLIC void linphone_factory_set_cache_dir(LinphoneFactory *factory, co
  * @param factory #LinphoneFactory object @notnil
  * @return a #LinphoneErrorInfo object. @notnil
  */
-LINPHONE_PUBLIC  LinphoneErrorInfo *linphone_factory_create_error_info(LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneErrorInfo *linphone_factory_create_error_info(LinphoneFactory *factory);
 
 /**
  * Creates an object LinphoneRange.
@@ -525,14 +547,15 @@ LINPHONE_PUBLIC LinphoneTransports *linphone_factory_create_transports(LinphoneF
  * @param factory #LinphoneFactory object @notnil
  * @return  #LinphoneVideoActivationPolicy object. @notnil
  */
-LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_factory_create_video_activation_policy(LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneVideoActivationPolicy *
+linphone_factory_create_video_activation_policy(LinphoneFactory *factory);
 
 /**
  * Returns a bctbx_list_t of all DialPlans
  * @param factory the #LinphoneFactory object @notnil
  * @return A list of #LinphoneDialPlan \bctbx_list{LinphoneDialPlan} @notnil
  */
-LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_dial_plans(const LinphoneFactory *factory);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_factory_get_dial_plans(const LinphoneFactory *factory);
 
 /**
  * Creates an object #LinphoneContent
@@ -547,7 +570,8 @@ LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_content(LinphoneFactory
  * @param file_path the path of the file @notnil
  * @return a #LinphoneContent which can be used as a file @notnil
  */
-LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_content_from_file(LinphoneFactory *factory, const char * file_path);
+LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_content_from_file(LinphoneFactory *factory,
+                                                                           const char *file_path);
 
 /**
  * Creates an object #LinphoneBuffer
@@ -563,7 +587,8 @@ LINPHONE_PUBLIC LinphoneBuffer *linphone_factory_create_buffer(LinphoneFactory *
  * @param size the size of the data
  * @return a #LinphoneBuffer @notnil
  */
-LINPHONE_PUBLIC LinphoneBuffer *linphone_factory_create_buffer_from_data(LinphoneFactory *factory, const uint8_t *data, size_t size);
+LINPHONE_PUBLIC LinphoneBuffer *
+linphone_factory_create_buffer_from_data(LinphoneFactory *factory, const uint8_t *data, size_t size);
 
 /**
  * Creates an object #LinphoneBuffer
@@ -588,7 +613,8 @@ LINPHONE_PUBLIC LinphoneConfig *linphone_factory_create_config(LinphoneFactory *
  * @param factory_path the path of the factory @maybenil
  * @return a #LinphoneConfig @notnil
  */
-LINPHONE_PUBLIC LinphoneConfig *linphone_factory_create_config_with_factory(LinphoneFactory *factory, const char *path, const char *factory_path);
+LINPHONE_PUBLIC LinphoneConfig *
+linphone_factory_create_config_with_factory(LinphoneFactory *factory, const char *path, const char *factory_path);
 
 /**
  * Creates an object #LinphoneConfig
@@ -602,14 +628,14 @@ LINPHONE_PUBLIC LinphoneConfig *linphone_factory_create_config_from_string(Linph
  * Gets the user data in the #LinphoneFactory object
  * @param factory the #LinphoneFactory @notnil
  * @return the user data. @maybenil
-*/
+ */
 LINPHONE_PUBLIC void *linphone_factory_get_user_data(const LinphoneFactory *factory);
 
 /**
  * Sets the user data in the #LinphoneFactory object
  * @param factory the #LinphoneFactory object @notnil
  * @param data the user data. @maybenil
-*/
+ */
 LINPHONE_PUBLIC void linphone_factory_set_user_data(LinphoneFactory *factory, void *data);
 
 /**
@@ -688,7 +714,8 @@ LINPHONE_PUBLIC LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_reques
  * @param chatroom_backend the #LinphoneChatRoomBackend
  * @return TRUE if the chatroom backend is available, FALSE otherwise
  */
-LINPHONE_PUBLIC bool_t linphone_factory_is_chatroom_backend_available(LinphoneFactory *factory, LinphoneChatRoomBackend chatroom_backend);
+LINPHONE_PUBLIC bool_t linphone_factory_is_chatroom_backend_available(LinphoneFactory *factory,
+                                                                      LinphoneChatRoomBackend chatroom_backend);
 
 /**
  * Indicates if the storage in database is available
@@ -717,14 +744,16 @@ LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_factory_create_conference_info(
  * @param content the Icalendar #LinphoneContent @notnil
  * @return a #LinphoneConferenceInfo created from an Icalendar #LinphoneContent @maybenil
  */
-LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content);
+LINPHONE_PUBLIC LinphoneConferenceInfo *
+linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content);
 
 /**
  * Creates an object #LinphoneConferenceSchedulerCbs
  * @param factory the #LinphoneFactory @notnil
  * @return a #LinphoneConferenceSchedulerCbs @notnil
  */
-LINPHONE_PUBLIC LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs(LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneConferenceSchedulerCbs *
+linphone_factory_create_conference_scheduler_cbs(LinphoneFactory *factory);
 
 /**
  * Indicates if the QRCode feature is available.
@@ -742,7 +771,8 @@ LINPHONE_PUBLIC bool_t linphone_factory_is_qrcode_available(LinphoneFactory *fac
  * @param margin The requested margin of the QRCode image.
  * @return a #LinphoneContent @maybenil
  */
-LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_qrcode(LinphoneFactory *factory, const char * code, unsigned int width, unsigned int height, unsigned int margin);
+LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_qrcode(
+    LinphoneFactory *factory, const char *code, unsigned int width, unsigned int height, unsigned int margin);
 
 /**
  * Creates a QRCode and write it into a JPEG file specified by file_path (only if build with JPEG).
@@ -754,14 +784,20 @@ LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_qrcode(LinphoneFactory 
  * @param margin The requested margin of the QRCode image.
  * @return 0 if successful, -2 if JPEG is not supported, -1 otherwise
  */
-LINPHONE_PUBLIC int linphone_factory_write_qrcode_file(LinphoneFactory *factory, const char *file_path, const char * code, unsigned int width, unsigned int height, unsigned int margin);
+LINPHONE_PUBLIC int linphone_factory_write_qrcode_file(LinphoneFactory *factory,
+                                                       const char *file_path,
+                                                       const char *code,
+                                                       unsigned int width,
+                                                       unsigned int height,
+                                                       unsigned int margin);
 
 /**
  * Creates an object #LinphoneVideoSourceDescriptor
  * @param factory the #LinphoneFactory @notnil
  * @return a #LinphoneVideoSourceDescriptor @notnil
  */
-LINPHONE_PUBLIC LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneVideoSourceDescriptor *
+linphone_factory_create_video_source_descriptor(LinphoneFactory *factory);
 
 /************ */
 /* DEPRECATED */
@@ -788,12 +824,10 @@ LINPHONE_PUBLIC LinphoneVideoSourceDescriptor *linphone_factory_create_video_sou
  * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
  * @donotwrap
  */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path
-);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(const LinphoneFactory *factory,
+                                                                               LinphoneCoreCbs *cbs,
+                                                                               const char *config_path,
+                                                                               const char *factory_config_path);
 
 /**
  * Instanciate a #LinphoneCore object.
@@ -813,19 +847,18 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(
  *        The settings in this factory file always override the one in the normal config file.
  *        It is OPTIONAL, use NULL if unneeded.
  * @param user_data an application pointer associated with the returned core.
- * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
+ * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass
+ *an android Context on android, pass NULL on other platforms.
  * @see linphone_core_new_with_config()
  * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
  * @donotwrap
  */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2 (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path,
-	void *user_data,
-	void *system_context
-);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2(const LinphoneFactory *factory,
+                                                                                 LinphoneCoreCbs *cbs,
+                                                                                 const char *config_path,
+                                                                                 const char *factory_config_path,
+                                                                                 void *user_data,
+                                                                                 void *system_context);
 
 /**
  * Instantiates a #LinphoneCore object with a given LpConfig.
@@ -841,11 +874,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2
  * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
  * @donotwrap
  */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	LinphoneConfig *config
-);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *
+linphone_factory_create_core_with_config(const LinphoneFactory *factory, LinphoneCoreCbs *cbs, LinphoneConfig *config);
 
 /**
  * Instantiates a #LinphoneCore object with a given LpConfig.
@@ -858,18 +888,18 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
  * with linphone_core_remove_cbs().
  * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
  * @param user_data an application pointer associated with the returned core.
- * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
+ * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass
+ * an android Context on android, pass NULL on other platforms.
  * @see linphone_core_new()
  * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
  * @donotwrap
  */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_2 (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	LinphoneConfig *config,
-	void *user_data,
-	void *system_context
-);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *
+linphone_factory_create_core_with_config_2(const LinphoneFactory *factory,
+                                           LinphoneCoreCbs *cbs,
+                                           LinphoneConfig *config,
+                                           void *user_data,
+                                           void *system_context);
 
 #define LINPHONE_VFS_ENCRYPTION_PLAIN 0xFFFF
 #define LINPHONE_VFS_ENCRYPTION_UNSET 0x0000
@@ -878,23 +908,27 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
 /**
  * Select encryption module and set secret material to encrypt the files
  * @param[in]	factory			the #LinphoneFactory @notnil
- * @param[in]	encryptionModule	One of the available encryption module for VFS, pick in the LINPHONE_VFS_ENCRYPTION_* list
- * 					if set to _UNSET, default bctoolbox VFS is switch to Standard one
- * @param[in]	secret			the secret material used to encrypt the files, can be NULL for the _PLAIN module @maybenil
+ * @param[in]	encryptionModule	One of the available encryption module for VFS, pick in the
+ * LINPHONE_VFS_ENCRYPTION_* list if set to _UNSET, default bctoolbox VFS is switch to Standard one
+ * @param[in]	secret			the secret material used to encrypt the files, can be NULL for the _PLAIN module
+ * @maybenil
  * @param[in]	secretSize		size of the secret
  */
-LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
-
+LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption(LinphoneFactory *factory,
+                                                         const uint16_t encryptionModule,
+                                                         const uint8_t *secret,
+                                                         const size_t secretSize);
 
 /**
  * Create a #LinphoneDigestAuthenticationPolicy object.
- * 
+ *
  * The #LinphoneDigestAuthenticationPolicy object which is used to configure a policy for digest authentication,
  * such as allowing MD5 or mode without qop=auth.
  * @param factory The #LinphoneFactory @notnil
  * @return a new #LinphoneDigestAuthenticationPolicy . @notnil
  */
-LINPHONE_PUBLIC LinphoneDigestAuthenticationPolicy *linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory);
+LINPHONE_PUBLIC LinphoneDigestAuthenticationPolicy *
+linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory);
 
 /**
  * Creates a new #LinphoneFriendPhoneNumber objects.
@@ -903,8 +937,9 @@ LINPHONE_PUBLIC LinphoneDigestAuthenticationPolicy *linphone_factory_create_dige
  * @param label the type of phone number, for example "home", "cell", etc. Use NULL or empty for no label. @maybenil
  * @return The newly created #LinphoneFriendPhoneNumber object. @notnil
  */
-LINPHONE_PUBLIC LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label);
-
+LINPHONE_PUBLIC LinphoneFriendPhoneNumber *linphone_factory_create_friend_phone_number(const LinphoneFactory *factory,
+                                                                                       const char *phone_number,
+                                                                                       const char *label);
 
 /**
  * @}
@@ -913,6 +948,5 @@ LINPHONE_PUBLIC LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif // LINPHONE_FACTORY_H

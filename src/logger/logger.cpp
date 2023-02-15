@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -42,21 +42,21 @@ public:
 
 // -----------------------------------------------------------------------------
 
-Logger::Logger (Level level) : BaseObject(*new LoggerPrivate) {
+Logger::Logger(Level level) : BaseObject(*new LoggerPrivate) {
 	L_D();
 	d->level = level;
 }
 
-Logger::~Logger () {
+Logger::~Logger() {
 	L_D();
 
 	const string str = d->os.str();
 
 	switch (d->level) {
 		case Debug:
-			#if DEBUG_LOGS
-				bctbx_debug("%s", str.c_str());
-			#endif // if DEBUG_LOGS
+#if DEBUG_LOGS
+			bctbx_debug("%s", str.c_str());
+#endif // if DEBUG_LOGS
 			break;
 		case Info:
 			bctbx_message("%s", str.c_str());
@@ -73,7 +73,7 @@ Logger::~Logger () {
 	}
 }
 
-ostringstream &Logger::getOutput () {
+ostringstream &Logger::getOutput() {
 	L_D();
 	return d->os;
 }
@@ -89,7 +89,7 @@ public:
 
 // -----------------------------------------------------------------------------
 
-DurationLogger::DurationLogger (const string &label, Logger::Level level) : BaseObject(*new DurationLoggerPrivate) {
+DurationLogger::DurationLogger(const string &label, Logger::Level level) : BaseObject(*new DurationLoggerPrivate) {
 	L_D();
 
 	d->logger.reset(new Logger(level));
@@ -99,7 +99,7 @@ DurationLogger::DurationLogger (const string &label, Logger::Level level) : Base
 	Logger(level).getOutput() << "Start measurement of [" + label + "].";
 }
 
-DurationLogger::~DurationLogger () {
+DurationLogger::~DurationLogger() {
 	L_D();
 
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -42,106 +42,109 @@ typedef enum _LinphoneAccountAddressComparisonResult {
 
 class AccountCbs;
 
-class Account : public bellesip::HybridObject<LinphoneAccount, Account> , public UserDataAccessor, public CallbacksHolder<AccountCbs>{
+class Account : public bellesip::HybridObject<LinphoneAccount, Account>,
+                public UserDataAccessor,
+                public CallbacksHolder<AccountCbs> {
 public:
-	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params);
-	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);
-	Account (const Account &other);
-	virtual ~Account ();
+	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params);
+	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);
+	Account(const Account &other);
+	virtual ~Account();
 
-	Account* clone () const override;
+	Account *clone() const override;
 
 	// Account params configuration
-	LinphoneStatus setAccountParams (std::shared_ptr<AccountParams> params);
-	std::shared_ptr<const AccountParams> getAccountParams () const;
+	LinphoneStatus setAccountParams(std::shared_ptr<AccountParams> params);
+	std::shared_ptr<const AccountParams> getAccountParams() const;
 
 	// Setters
-	void setAuthFailure (int authFailure);
-	void setRegisterChanged (bool registerChanged);
-	void setSendPublish (bool sendPublish);
-	void setNeedToRegister (bool needToRegister);
-	void setDeletionDate (time_t deletionDate);
-	void setSipEtag (const std::string& sipEtag);
-	void setCore (LinphoneCore *lc);
-	void setErrorInfo (LinphoneErrorInfo *errorInfo);
-	void setContactAddress (const LinphoneAddress *contact);
-	void setContactAddressWithoutParams (const LinphoneAddress *contact);
-	void setPendingContactAddress (LinphoneAddress *contact);
-	void setServiceRouteAddress (LinphoneAddress *serviceRoute);
-	void setState (LinphoneRegistrationState state, const std::string& message);
-	void setOp (SalRegisterOp *op);
-	void setCustomheader (const std::string& headerName, const std::string& headerValue);
-	void setPresencePublishEvent (LinphoneEvent *presencePublishEvent);
-	void setDependency (std::shared_ptr<Account> dependency);
+	void setAuthFailure(int authFailure);
+	void setRegisterChanged(bool registerChanged);
+	void setSendPublish(bool sendPublish);
+	void setNeedToRegister(bool needToRegister);
+	void setDeletionDate(time_t deletionDate);
+	void setSipEtag(const std::string &sipEtag);
+	void setCore(LinphoneCore *lc);
+	void setErrorInfo(LinphoneErrorInfo *errorInfo);
+	void setContactAddress(const LinphoneAddress *contact);
+	void setContactAddressWithoutParams(const LinphoneAddress *contact);
+	void setPendingContactAddress(LinphoneAddress *contact);
+	void setServiceRouteAddress(LinphoneAddress *serviceRoute);
+	void setState(LinphoneRegistrationState state, const std::string &message);
+	void setOp(SalRegisterOp *op);
+	void setCustomheader(const std::string &headerName, const std::string &headerValue);
+	void setPresencePublishEvent(LinphoneEvent *presencePublishEvent);
+	void setDependency(std::shared_ptr<Account> dependency);
 
 	// Getters
-	int getAuthFailure () const;
-	bool getRegisterChanged () const;
-	time_t getDeletionDate () const;
-	const std::string& getSipEtag () const;
-	LinphoneCore* getCore () const;
-	const LinphoneErrorInfo* getErrorInfo ();
-	const LinphoneAddress* getContactAddress () const;
-	const LinphoneAddress* getContactAddressWithoutParams () const;
-	const LinphoneAddress* getPendingContactAddress () const;
-	const LinphoneAddress* getServiceRouteAddress ();
-	LinphoneRegistrationState getState () const;
-	SalRegisterOp* getOp() const;
-	const char* getCustomHeader (const std::string& headerName) const;
-	LinphoneEvent* getPresencePublishEvent () const;
-	std::shared_ptr<Account> getDependency ();
+	int getAuthFailure() const;
+	bool getRegisterChanged() const;
+	time_t getDeletionDate() const;
+	const std::string &getSipEtag() const;
+	LinphoneCore *getCore() const;
+	const LinphoneErrorInfo *getErrorInfo();
+	const LinphoneAddress *getContactAddress() const;
+	const LinphoneAddress *getContactAddressWithoutParams() const;
+	const LinphoneAddress *getPendingContactAddress() const;
+	const LinphoneAddress *getServiceRouteAddress();
+	LinphoneRegistrationState getState() const;
+	SalRegisterOp *getOp() const;
+	const char *getCustomHeader(const std::string &headerName) const;
+	LinphoneEvent *getPresencePublishEvent() const;
+	std::shared_ptr<Account> getDependency();
 
 	// Other
-	bool check ();
-	bool isAvpfEnabled () const;
-	int getUnreadChatMessageCount () const;
-	int sendPublish (LinphonePresenceModel *presence);
-	void apply (LinphoneCore *lc);
-	void notifyPublishStateChanged (LinphonePublishState state);
-	void pauseRegister ();
-	void refreshRegister ();
-	void registerAccount ();
-	void releaseOps ();
-	void stopRefreshing ();
-	void unpublish ();
-	void unregister ();
-	void update ();
-	void addCustomParam(const std::string & key, const std::string & value);
-	const std::string & getCustomParam(const std::string & key) const;
-	void writeToConfigFile (int index);
-	const LinphoneAuthInfo* findAuthInfo () const;
-	LinphoneEvent *createPublish (const char *event, int expires);
-	LinphoneReason getError ();
-	LinphoneTransportType getTransport ();
+	bool check();
+	bool isAvpfEnabled() const;
+	int getUnreadChatMessageCount() const;
+	int sendPublish(LinphonePresenceModel *presence);
+	void apply(LinphoneCore *lc);
+	void notifyPublishStateChanged(LinphonePublishState state);
+	void pauseRegister();
+	void refreshRegister();
+	void registerAccount();
+	void releaseOps();
+	void stopRefreshing();
+	void unpublish();
+	void unregister();
+	void update();
+	void addCustomParam(const std::string &key, const std::string &value);
+	const std::string &getCustomParam(const std::string &key) const;
+	void writeToConfigFile(int index);
+	const LinphoneAuthInfo *findAuthInfo() const;
+	LinphoneEvent *createPublish(const char *event, int expires);
+	LinphoneReason getError();
+	LinphoneTransportType getTransport();
 
 	// Callbacks
-	
 
 	// Utils
-	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses (const LinphoneAddress *a, const LinphoneAddress *b);
+	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses(const LinphoneAddress *a,
+	                                                                       const LinphoneAddress *b);
 
 	// To be removed when not using proxy config anymore
-	LinphoneProxyConfig *getConfig () const;
-	void setConfig (LinphoneProxyConfig *config);
-	LinphoneAccountAddressComparisonResult isServerConfigChanged ();
+	LinphoneProxyConfig *getConfig() const;
+	void setConfig(LinphoneProxyConfig *config);
+	LinphoneAccountAddressComparisonResult isServerConfigChanged();
 
 private:
-	bool canRegister ();
+	bool canRegister();
 	bool computePublishParamsHash();
-	int done ();
-	void applyParamsChanges ();
-	void resolveDependencies ();
+	int done();
+	void applyParamsChanges();
+	void resolveDependencies();
 	void updateDependentAccount(LinphoneRegistrationState state, const std::string &message);
-	LinphoneAccountAddressComparisonResult isServerConfigChanged (std::shared_ptr<AccountParams> oldParams, std::shared_ptr<AccountParams> newParams);
-	LinphoneAddress *guessContactForRegister ();
+	LinphoneAccountAddressComparisonResult isServerConfigChanged(std::shared_ptr<AccountParams> oldParams,
+	                                                             std::shared_ptr<AccountParams> newParams);
+	LinphoneAddress *guessContactForRegister();
 
-	void onInternationalPrefixChanged ();
-	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
-	void onAudioVideoConferenceFactoryAddressChanged (const LinphoneAddress *audioVideoConferenceFactoryAddress);
-	void onNatPolicyChanged (LinphoneNatPolicy *policy);
-	void onLimeServerUrlChanged (const std::string& limeServerUrl);
+	void onInternationalPrefixChanged();
+	void onConferenceFactoryUriChanged(const std::string &conferenceFactoryUri);
+	void onAudioVideoConferenceFactoryAddressChanged(const LinphoneAddress *audioVideoConferenceFactoryAddress);
+	void onNatPolicyChanged(LinphoneNatPolicy *policy);
+	void onLimeServerUrlChanged(const std::string &limeServerUrl);
 	bool customContactChanged();
-	std::list<SalAddress*> getOtherContacts();
+	std::list<SalAddress *> getOtherContacts();
 
 	std::shared_ptr<AccountParams> mParams;
 
@@ -177,18 +180,18 @@ private:
 	std::shared_ptr<AccountParams> mOldParams;
 
 	// This is a back pointer intended to keep both LinphoneProxyConfig and Account
-	// api to be usable at the same time. This should be removed as soon as 
+	// api to be usable at the same time. This should be removed as soon as
 	// proxy configs can be replaced.
 	LinphoneProxyConfig *mConfig = nullptr;
 };
 
-
 class AccountCbs : public bellesip::HybridObject<LinphoneAccountCbs, AccountCbs>, public Callbacks {
-	public:
-		LinphoneAccountCbsRegistrationStateChangedCb getRegistrationStateChanged()const;
-		void setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb);
-	private:
-		LinphoneAccountCbsRegistrationStateChangedCb mRegistrationStateChangedCb = nullptr;
+public:
+	LinphoneAccountCbsRegistrationStateChangedCb getRegistrationStateChanged() const;
+	void setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb);
+
+private:
+	LinphoneAccountCbsRegistrationStateChangedCb mRegistrationStateChangedCb = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

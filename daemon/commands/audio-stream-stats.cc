@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,31 +22,29 @@
 
 using namespace std;
 
-AudioStreamStatsCommand::AudioStreamStatsCommand() :
-		DaemonCommand("audio-stream-stats", "audio-stream-stats <stream_id>", "Return stats of a given audio stream.") {
-	addExample(make_unique<DaemonCommandExample>("audio-stream-stats 1",
-						"Status: Ok\n\n"
-						"Audio-ICE state: Not activated\n"
-						"Audio-RoundTripDelay: 0.0859833\n"
-						"Audio-Jitter: 296\n"
-						"Audio-JitterBufferSizeMs: 47.7778\n"
-						"Audio-Received-InterarrivalJitter: 154\n"
-						"Audio-Received-FractionLost: 0\n"
-						"Audio-Sent-InterarrivalJitter: 296\n"
-						"Audio-Sent-FractionLost: 0\n"
-						"Audio-Payload-type-number: 111\n"
-						"Audio-Clock-rate: 16000\n"
-						"Audio-Bitrate: 44000\n"
-						"Audio-Mime: speex\n"
-						"Audio-Channels: 1\n"
-						"Audio-Recv-fmtp: vbr=on\n"
-						"Audio-Send-fmtp: vbr=on"));
-	addExample(make_unique<DaemonCommandExample>("audio-stream-stats 2",
-						"Status: Error\n"
-						"Reason: No audio stream with such id."));
+AudioStreamStatsCommand::AudioStreamStatsCommand()
+    : DaemonCommand("audio-stream-stats", "audio-stream-stats <stream_id>", "Return stats of a given audio stream.") {
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stats 1", "Status: Ok\n\n"
+	                                                                     "Audio-ICE state: Not activated\n"
+	                                                                     "Audio-RoundTripDelay: 0.0859833\n"
+	                                                                     "Audio-Jitter: 296\n"
+	                                                                     "Audio-JitterBufferSizeMs: 47.7778\n"
+	                                                                     "Audio-Received-InterarrivalJitter: 154\n"
+	                                                                     "Audio-Received-FractionLost: 0\n"
+	                                                                     "Audio-Sent-InterarrivalJitter: 296\n"
+	                                                                     "Audio-Sent-FractionLost: 0\n"
+	                                                                     "Audio-Payload-type-number: 111\n"
+	                                                                     "Audio-Clock-rate: 16000\n"
+	                                                                     "Audio-Bitrate: 44000\n"
+	                                                                     "Audio-Mime: speex\n"
+	                                                                     "Audio-Channels: 1\n"
+	                                                                     "Audio-Recv-fmtp: vbr=on\n"
+	                                                                     "Audio-Send-fmtp: vbr=on"));
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stats 2", "Status: Error\n"
+	                                                                     "Reason: No audio stream with such id."));
 }
 
-void AudioStreamStatsCommand::exec(Daemon *app, const string& args) {
+void AudioStreamStatsCommand::exec(Daemon *app, const string &args) {
 	int sid;
 	AudioStreamAndOther *stream = NULL;
 	istringstream ist(args);

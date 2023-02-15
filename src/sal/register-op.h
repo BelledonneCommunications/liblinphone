@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,28 +21,41 @@
 #ifndef _L_SAL_REGISTER_OP_H_
 #define _L_SAL_REGISTER_OP_H_
 
+#include <bctoolbox/defs.h>
+
 #include "sal/op.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class SalRegisterOp : public SalOp {
 public:
-	SalRegisterOp(Sal *sal) : SalOp(sal) { mType = Type::Register; }
+	SalRegisterOp(Sal *sal) : SalOp(sal) {
+		mType = Type::Register;
+	}
 
-	int sendRegister (const std::string &proxy, const std::string &from, int expires, const std::list<SalAddress *> &customContacts);
-	int refreshRegister (int expires) {
+	int sendRegister(const std::string &proxy,
+	                 const std::string &from,
+	                 int expires,
+	                 const std::list<SalAddress *> &customContacts);
+	int refreshRegister(int expires) {
 		return mRefresher ? belle_sip_refresher_refresh(mRefresher, expires) : -1;
 	}
-	int unregister() { return refreshRegister(0); }
+	int unregister() {
+		return refreshRegister(0);
+	}
 
-	void authenticate (const SalAuthInfo *info) override {
+	void authenticate(BCTBX_UNUSED(const SalAuthInfo *info)) override {
 		mRoot->removePendingAuth(this);
 		refreshRegister(-1);
 	}
 
 private:
-	void fillCallbacks () override {};
-	static void registerRefresherListener (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry);
+	void fillCallbacks() override{};
+	static void registerRefresherListener(belle_sip_refresher_t *refresher,
+	                                      void *userCtx,
+	                                      unsigned int statusCode,
+	                                      const char *reasonPhrase,
+	                                      int willRetry);
 };
 
 LINPHONE_END_NAMESPACE

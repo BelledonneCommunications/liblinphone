@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "participant-device.h"
 #include "chat/encryption/encryption-engine.h"
+#include "conference/params/media-session-params-p.h"
+#include "conference/params/media-session-params.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session.h"
-#include "conference/params/media-session-params.h"
-#include "conference/params/media-session-params-p.h"
-#include "participant-device.h"
-#include "participant.h"
 #include "core/core.h"
+#include "participant.h"
 #include "private_functions.h"
 
 #include "linphone/event.h"
@@ -40,14 +40,16 @@ class Core;
 
 // =============================================================================
 
-ParticipantDevice::ParticipantDevice () {
+ParticipantDevice::ParticipantDevice() {
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
 }
 
-ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name)
-	: mParticipant(participant), mGruu(participant->getAddress()), mName(name), mSession(session) {
+ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
+                                     const std::shared_ptr<LinphonePrivate::CallSession> &session,
+                                     const std::string &name)
+    : mParticipant(participant), mGruu(participant->getAddress()), mName(name), mSession(session) {
 	if (mSession && mSession->getRemoteContactAddress()) {
 		setAddress(*mSession->getRemoteContactAddress());
 	}
@@ -55,43 +57,44 @@ ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, 
 	updateStreamAvailabilities();
 }
 
-ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const std::string &name)
-	: mParticipant(participant), mGruu(gruu), mName(name) {
+ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
+                                     const IdentityAddress &gruu,
+                                     const std::string &name)
+    : mParticipant(participant), mGruu(gruu), mName(name) {
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
 }
 
-ParticipantDevice::~ParticipantDevice () {
-	if (mConferenceSubscribeEvent)
-		linphone_event_unref(mConferenceSubscribeEvent);
+ParticipantDevice::~ParticipantDevice() {
+	if (mConferenceSubscribeEvent) linphone_event_unref(mConferenceSubscribeEvent);
 }
 
-bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
+bool ParticipantDevice::operator==(const ParticipantDevice &device) const {
 	return (getAddress() == device.getAddress());
 }
 
-Conference* ParticipantDevice::getConference () const {
+Conference *ParticipantDevice::getConference() const {
 	return getParticipant() ? getParticipant()->getConference() : nullptr;
 }
 
-shared_ptr<Core> ParticipantDevice::getCore () const {
+shared_ptr<Core> ParticipantDevice::getCore() const {
 	return getParticipant() ? getParticipant()->getCore() : nullptr;
 }
 
-const IdentityAddress & ParticipantDevice::getAddress() const {
-	return  mGruu;
+const IdentityAddress &ParticipantDevice::getAddress() const {
+	return mGruu;
 }
 
-void ParticipantDevice::setAddress (const IdentityAddress & address) {
-	setAddress (address.asAddress());
+void ParticipantDevice::setAddress(const IdentityAddress &address) {
+	setAddress(address.asAddress());
 }
 
-void ParticipantDevice::setAddress (const Address & address) {
+void ParticipantDevice::setAddress(const Address &address) {
 	mGruu = address;
 	if (address.hasParam("+org.linphone.specs")) {
 		const auto &linphoneSpecs = address.getParamValue("+org.linphone.specs");
-		setCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size()-2));
+		setCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size() - 2));
 	}
 }
 
@@ -107,35 +110,34 @@ std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
 	return participant;
 }
 
-void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
+void ParticipantDevice::setConferenceSubscribeEvent(LinphoneEvent *ev) {
 	if (ev) linphone_event_ref(ev);
-	if (mConferenceSubscribeEvent){
+	if (mConferenceSubscribeEvent) {
 		linphone_event_unref(mConferenceSubscribeEvent);
 		mConferenceSubscribeEvent = nullptr;
 	}
 	mConferenceSubscribeEvent = ev;
 }
 
-AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
+AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel() const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
-	if (encryptionEngine)
-		return encryptionEngine->getSecurityLevel(getAddress().asString());
+	if (encryptionEngine) return encryptionEngine->getSecurityLevel(getAddress().asString());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }
 
-time_t ParticipantDevice::getTimeOfJoining () const {
+time_t ParticipantDevice::getTimeOfJoining() const {
 	return mTimeOfJoining;
 }
 
-time_t ParticipantDevice::getTimeOfDisconnection () const {
+time_t ParticipantDevice::getTimeOfDisconnection() const {
 	return mTimeOfDisconnection;
 }
 
 bool ParticipantDevice::isInConference() const {
-	const auto & conference = getConference();
+	const auto &conference = getConference();
 	if (conference) {
-		const auto & isMe = conference->isMe(getAddress());
+		const auto &isMe = conference->isMe(getAddress());
 		if (isMe) {
 			return conference->isIn();
 		} else {
@@ -145,7 +147,7 @@ bool ParticipantDevice::isInConference() const {
 	return false;
 }
 
-bool ParticipantDevice::setSsrc (const LinphoneStreamType type, uint32_t newSsrc) {
+bool ParticipantDevice::setSsrc(const LinphoneStreamType type, uint32_t newSsrc) {
 	bool changed = false;
 	const bool idxFound = (ssrc.find(type) != ssrc.cend());
 	if (!idxFound || (ssrc[type] != newSsrc)) {
@@ -157,7 +159,7 @@ bool ParticipantDevice::setSsrc (const LinphoneStreamType type, uint32_t newSsrc
 	switch (type) {
 		case LinphoneStreamTypeAudio:
 			if (conference) {
-				const auto & pendingParticipantsMutes = conference->getPendingParticipantsMutes();
+				const auto &pendingParticipantsMutes = conference->getPendingParticipantsMutes();
 				auto it = pendingParticipantsMutes.find(newSsrc);
 				if (it != pendingParticipantsMutes.end()) {
 					conference->notifyMutedDevice(it->first, it->second);
@@ -172,45 +174,47 @@ bool ParticipantDevice::setSsrc (const LinphoneStreamType type, uint32_t newSsrc
 
 	if (changed) {
 		if (conference) {
-			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " in conference " << conference->getConferenceAddress() << " to " << newSsrc;
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
+			        << getAddress() << " in conference " << conference->getConferenceAddress() << " to " << newSsrc;
 		} else {
-			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " to " << newSsrc;
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
+			        << getAddress() << " to " << newSsrc;
 		}
 	}
 
 	return changed;
 }
 
-uint32_t ParticipantDevice::getSsrc (const LinphoneStreamType type) const {
+uint32_t ParticipantDevice::getSsrc(const LinphoneStreamType type) const {
 	try {
 		return ssrc.at(type);
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		return 0;
 	}
 }
 
-void *ParticipantDevice::getUserData () const{
+void *ParticipantDevice::getUserData() const {
 	return mUserData;
 }
 
-void ParticipantDevice::setUserData (void *ud) {
+void ParticipantDevice::setUserData(void *ud) {
 	mUserData = ud;
 }
 
-const std::string &ParticipantDevice::getCallId () {
+const std::string &ParticipantDevice::getCallId() {
 	if (mCallId.empty() && mSession) {
-		const auto & log = mSession->getLog();
+		const auto &log = mSession->getLog();
 		mCallId = log->getCallId();
 	}
 
 	return mCallId;
 }
 
-void ParticipantDevice::setCallId (const std::string &callId) {
+void ParticipantDevice::setCallId(const std::string &callId) {
 	mCallId = callId;
 }
 
-const std::string &ParticipantDevice::getFromTag () {
+const std::string &ParticipantDevice::getFromTag() {
 	if (mFromTag.empty() && mSession) {
 		mFromTag = mSession->getFromTag();
 	}
@@ -218,11 +222,11 @@ const std::string &ParticipantDevice::getFromTag () {
 	return mFromTag;
 }
 
-void ParticipantDevice::setFromTag (const std::string &tag) {
+void ParticipantDevice::setFromTag(const std::string &tag) {
 	mFromTag = tag;
 }
 
-const std::string &ParticipantDevice::getToTag () {
+const std::string &ParticipantDevice::getToTag() {
 	if (mToTag.empty() && mSession) {
 		mToTag = mSession->getToTag();
 	}
@@ -230,11 +234,11 @@ const std::string &ParticipantDevice::getToTag () {
 	return mToTag;
 }
 
-void ParticipantDevice::setToTag (const std::string &tag) {
+void ParticipantDevice::setToTag(const std::string &tag) {
 	mToTag = tag;
 }
 
-bool ParticipantDevice::isLeavingState(const ParticipantDevice::State & state) {
+bool ParticipantDevice::isLeavingState(const ParticipantDevice::State &state) {
 	switch (state) {
 		case ParticipantDevice::State::ScheduledForJoining:
 		case ParticipantDevice::State::Joining:
@@ -251,7 +255,7 @@ bool ParticipantDevice::isLeavingState(const ParticipantDevice::State & state) {
 	return false;
 }
 
-void ParticipantDevice::setState (State newState, bool notify) {
+void ParticipantDevice::setState(State newState, bool notify) {
 	if (mState != newState) {
 		const auto currentStateLeavingState = ParticipantDevice::isLeavingState(mState);
 		const auto newStateLeavingState = ParticipantDevice::isLeavingState(newState);
@@ -264,14 +268,15 @@ void ParticipantDevice::setState (State newState, bool notify) {
 		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
-		const auto & conference = getConference();
+		const auto &conference = getConference();
 		if (conference && sendNotify) {
-			conference->notifyParticipantDeviceStateChanged (ms_time(nullptr), false, getParticipant(), getSharedFromThis());
+			conference->notifyParticipantDeviceStateChanged(ms_time(nullptr), false, getParticipant(),
+			                                                getSharedFromThis());
 		}
 	}
 }
 
-ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
+ostream &operator<<(ostream &stream, ParticipantDevice::State state) {
 	switch (state) {
 		case ParticipantDevice::State::ScheduledForJoining:
 			return stream << "ScheduledForJoining";
@@ -295,23 +300,23 @@ ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 	return stream;
 }
 
-void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities){
+void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities) {
 	mCapabilityDescriptor = capabilities;
 }
 
-void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
+void ParticipantDevice::setSession(std::shared_ptr<CallSession> session) {
 	mSession = session;
 }
 
 LinphoneMediaDirection ParticipantDevice::getStreamCapability(const LinphoneStreamType type) const {
 	try {
 		return mediaCapabilities.at(type);
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		return LinphoneMediaDirectionInactive;
 	}
 }
 
-bool ParticipantDevice::setStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type) {
+bool ParticipantDevice::setStreamCapability(const LinphoneMediaDirection &direction, const LinphoneStreamType type) {
 	const bool idxFound = (mediaCapabilities.find(type) != mediaCapabilities.cend());
 	if (!idxFound || (mediaCapabilities[type] != direction)) {
 		mediaCapabilities[type] = direction;
@@ -322,16 +327,13 @@ bool ParticipantDevice::setStreamCapability(const LinphoneMediaDirection & direc
 }
 
 LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const LinphoneStreamType type) const {
-	const auto & state = mSession->getState();
-	const auto & sessionNotEstablished =
-		(state == CallSession::State::Idle) ||
-		(state == CallSession::State::IncomingReceived) ||
-		(state == CallSession::State::OutgoingProgress) ||
-		(state == CallSession::State::OutgoingRinging) ||
-		(state == CallSession::State::OutgoingEarlyMedia) ||
-		(state == CallSession::State::PushIncomingReceived);
+	const auto &state = mSession->getState();
+	const auto &sessionNotEstablished =
+	    (state == CallSession::State::Idle) || (state == CallSession::State::IncomingReceived) ||
+	    (state == CallSession::State::OutgoingProgress) || (state == CallSession::State::OutgoingRinging) ||
+	    (state == CallSession::State::OutgoingEarlyMedia) || (state == CallSession::State::PushIncomingReceived);
 
-	const MediaSessionParams* participantParams = nullptr;
+	const MediaSessionParams *participantParams = nullptr;
 	if (mSession) {
 		if (sessionNotEstablished) {
 			if (mSession->getPrivate()->isInConference()) {
@@ -363,7 +365,8 @@ LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const Li
 		}
 	}
 
-	// Current params stores the negotiated media direction from the local standpoint, hence it must be flipped if it is unidirectional
+	// Current params stores the negotiated media direction from the local standpoint, hence it must be flipped if it is
+	// unidirectional
 	if (dir == LinphoneMediaDirectionSendOnly) {
 		dir = LinphoneMediaDirectionRecvOnly;
 	} else if (dir == LinphoneMediaDirectionRecvOnly) {
@@ -376,7 +379,7 @@ LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const Li
 bool ParticipantDevice::getStreamAvailability(const LinphoneStreamType type) const {
 	try {
 		return streamAvailabilities.at(type);
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		return false;
 	}
 }
@@ -391,7 +394,9 @@ bool ParticipantDevice::setStreamAvailability(const bool available, const Linpho
 	return false;
 }
 
-LinphoneMediaDirection ParticipantDevice::computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const {
+LinphoneMediaDirection ParticipantDevice::computeDeviceMediaDirection(const bool conferenceEnable,
+                                                                      const bool callEnable,
+                                                                      const LinphoneMediaDirection dir) const {
 	if (conferenceEnable && callEnable) {
 		return dir;
 	}
@@ -401,14 +406,14 @@ LinphoneMediaDirection ParticipantDevice::computeDeviceMediaDirection(const bool
 
 bool ParticipantDevice::updateMediaCapabilities() {
 	bool mediaCapabilityChanged = false;
-	const auto & conference = getConference();
+	const auto &conference = getConference();
 
 	if (conference) {
-		const auto & isMe = conference->isMe(getAddress());
-		const auto & conferenceParams = conference->getCurrentParams();
-		const auto & conferenceAudioEnabled = conferenceParams.audioEnabled();
-		const auto & conferenceVideoEnabled = conferenceParams.videoEnabled();
-		const auto & conferenceTextEnabled = conferenceParams.chatEnabled();
+		const auto &isMe = conference->isMe(getAddress());
+		const auto &conferenceParams = conference->getCurrentParams();
+		const auto &conferenceAudioEnabled = conferenceParams.audioEnabled();
+		const auto &conferenceVideoEnabled = conferenceParams.videoEnabled();
+		const auto &conferenceTextEnabled = conferenceParams.chatEnabled();
 		auto audioEnabled = false;
 		auto videoEnabled = false;
 		auto textEnabled = false;
@@ -419,7 +424,7 @@ bool ParticipantDevice::updateMediaCapabilities() {
 			audioEnabled = true;
 			videoEnabled = linphone_core_video_enabled(getCore()->getCCore());
 			textEnabled = true;
-			const auto & cCore = getCore()->getCCore();
+			const auto &cCore = getCore()->getCCore();
 			audioDir = LinphoneMediaDirectionSendRecv;
 
 			const auto captureEnabled = linphone_core_video_capture_enabled(cCore);
@@ -436,10 +441,14 @@ bool ParticipantDevice::updateMediaCapabilities() {
 
 			textDir = LinphoneMediaDirectionSendRecv;
 		} else if (mSession) {
-			// A conference server is a passive element, therefore it may happen that the negotiated capabilities are different than those the client requested.
-			// For example if the video will be inactive if all clients are RecvOnly and their layout is Grid but as soon as one toggles the video direction to SendRecv, then everybody should be able to get stream in
+			// A conference server is a passive element, therefore it may happen that the negotiated capabilities are
+			// different than those the client requested. For example if the video will be inactive if all clients are
+			// RecvOnly and their layout is Grid but as soon as one toggles the video direction to SendRecv, then
+			// everybody should be able to get stream in
 			auto mMediaSession = static_pointer_cast<MediaSession>(mSession);
-			const MediaSessionParams* participantParams = (mSession->getPrivate()->isInConference()) ? mMediaSession->getRemoteParams() : mMediaSession->getMediaParams();
+			const MediaSessionParams *participantParams = (mSession->getPrivate()->isInConference())
+			                                                  ? mMediaSession->getRemoteParams()
+			                                                  : mMediaSession->getMediaParams();
 			if (participantParams) {
 				audioEnabled = participantParams->audioEnabled();
 				videoEnabled = participantParams->videoEnabled();
@@ -457,9 +466,12 @@ bool ParticipantDevice::updateMediaCapabilities() {
 				mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeVideo, videoSsrc);
 			}
 		}
-		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir), LinphoneStreamTypeAudio);
-		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceVideoEnabled, videoEnabled, videoDir), LinphoneStreamTypeVideo);
-		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceTextEnabled, textEnabled, textDir), LinphoneStreamTypeText);
+		mediaCapabilityChanged |= setStreamCapability(
+		    computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir), LinphoneStreamTypeAudio);
+		mediaCapabilityChanged |= setStreamCapability(
+		    computeDeviceMediaDirection(conferenceVideoEnabled, videoEnabled, videoDir), LinphoneStreamTypeVideo);
+		mediaCapabilityChanged |= setStreamCapability(
+		    computeDeviceMediaDirection(conferenceTextEnabled, textEnabled, textDir), LinphoneStreamTypeText);
 	} else {
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
@@ -471,48 +483,78 @@ bool ParticipantDevice::updateMediaCapabilities() {
 	return mediaCapabilityChanged;
 }
 
-bool ParticipantDevice::computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const {
-	const auto & resultDir = computeDeviceMediaDirection(conferenceEnable, callEnable, dir);
+bool ParticipantDevice::computeStreamAvailable(const bool conferenceEnable,
+                                               const bool callEnable,
+                                               const LinphoneMediaDirection dir) const {
+	const auto &resultDir = computeDeviceMediaDirection(conferenceEnable, callEnable, dir);
 	return ((resultDir == LinphoneMediaDirectionSendOnly) || (resultDir == LinphoneMediaDirectionSendRecv));
 }
 
 bool ParticipantDevice::updateStreamAvailabilities() {
-	const auto & conference = getConference();
+	const auto &conference = getConference();
 	auto streamAvailabilityChanged = false;
 
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
 	if (conference) {
-		const auto & conferenceParams = conference->getCurrentParams();
-		const auto & conferenceAudioEnabled = conferenceParams.audioEnabled();
-		const auto & conferenceVideoEnabled = conferenceParams.videoEnabled();
-		const auto & conferenceTextEnabled = conferenceParams.chatEnabled();
+		const auto &conferenceParams = conference->getCurrentParams();
+		const auto &conferenceAudioEnabled = conferenceParams.audioEnabled();
+		const auto &conferenceVideoEnabled = conferenceParams.videoEnabled();
+		const auto &conferenceTextEnabled = conferenceParams.chatEnabled();
 		if (session) {
 			if (session->getPrivate()->isInConference() && conferenceParams.localParticipantEnabled()) {
 				if (conference->isMe(getAddress())) {
-					streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, conferenceAudioEnabled, getStreamCapability(LinphoneStreamTypeAudio)), LinphoneStreamTypeAudio);
-					streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, conferenceVideoEnabled, getStreamCapability(LinphoneStreamTypeVideo)), LinphoneStreamTypeVideo);
-					streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, conferenceTextEnabled, getStreamCapability(LinphoneStreamTypeText)), LinphoneStreamTypeText);
-				} else  {
+					streamAvailabilityChanged |=
+					    setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, conferenceAudioEnabled,
+					                                                 getStreamCapability(LinphoneStreamTypeAudio)),
+					                          LinphoneStreamTypeAudio);
+					streamAvailabilityChanged |=
+					    setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, conferenceVideoEnabled,
+					                                                 getStreamCapability(LinphoneStreamTypeVideo)),
+					                          LinphoneStreamTypeVideo);
+					streamAvailabilityChanged |=
+					    setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, conferenceTextEnabled,
+					                                                 getStreamCapability(LinphoneStreamTypeText)),
+					                          LinphoneStreamTypeText);
+				} else {
 					std::shared_ptr<ParticipantDevice> meDev = nullptr;
 					if (conferenceParams.getAccount()) {
-						char * devAddrStr = linphone_account_get_contact_address(conferenceParams.getAccount()) ? linphone_address_as_string(linphone_account_get_contact_address(conferenceParams.getAccount())) : nullptr;
+						char *devAddrStr = linphone_account_get_contact_address(conferenceParams.getAccount())
+						                       ? linphone_address_as_string(linphone_account_get_contact_address(
+						                             conferenceParams.getAccount()))
+						                       : nullptr;
 						if (devAddrStr) {
 							Address devAddr(devAddrStr);
 							ms_free(devAddrStr);
 							meDev = conference->getMe()->findDevice(devAddr);
 						}
 					}
-					auto audioEnabled = (meDev) ? meDev->getStreamAvailability(LinphoneStreamTypeAudio) : conferenceAudioEnabled;
-					auto videoEnabled = (meDev) ? meDev->getStreamAvailability(LinphoneStreamTypeVideo) : conferenceVideoEnabled;
-					auto textEnabled = (meDev) ? meDev->getStreamAvailability(LinphoneStreamTypeText) : conferenceTextEnabled;
-					streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, audioEnabled, getStreamCapability(LinphoneStreamTypeAudio)), LinphoneStreamTypeAudio);
-					streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, videoEnabled, getStreamCapability(LinphoneStreamTypeVideo)), LinphoneStreamTypeVideo);
-					streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, textEnabled, getStreamCapability(LinphoneStreamTypeText)), LinphoneStreamTypeText);
+					auto audioEnabled =
+					    (meDev) ? meDev->getStreamAvailability(LinphoneStreamTypeAudio) : conferenceAudioEnabled;
+					auto videoEnabled =
+					    (meDev) ? meDev->getStreamAvailability(LinphoneStreamTypeVideo) : conferenceVideoEnabled;
+					auto textEnabled =
+					    (meDev) ? meDev->getStreamAvailability(LinphoneStreamTypeText) : conferenceTextEnabled;
+					streamAvailabilityChanged |=
+					    setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, audioEnabled,
+					                                                 getStreamCapability(LinphoneStreamTypeAudio)),
+					                          LinphoneStreamTypeAudio);
+					streamAvailabilityChanged |=
+					    setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, videoEnabled,
+					                                                 getStreamCapability(LinphoneStreamTypeVideo)),
+					                          LinphoneStreamTypeVideo);
+					streamAvailabilityChanged |=
+					    setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, textEnabled,
+					                                                 getStreamCapability(LinphoneStreamTypeText)),
+					                          LinphoneStreamTypeText);
 				}
-			} else  {
-				// A conference server is a passive element, therefore it may happen that the negotiated capabilities are different than those the client requested.
-				// For example if the video will be inactive if all clients are RecvOnly and their layout is Grid but as soon as one toggles the video direction to SendRecv, then everybody should be able to get stream in
-				const MediaSessionParams* params = (session->getPrivate()->isInConference()) ? static_pointer_cast<MediaSession>(session)->getRemoteParams() : static_pointer_cast<MediaSession>(session)->getMediaParams();
+			} else {
+				// A conference server is a passive element, therefore it may happen that the negotiated capabilities
+				// are different than those the client requested. For example if the video will be inactive if all
+				// clients are RecvOnly and their layout is Grid but as soon as one toggles the video direction to
+				// SendRecv, then everybody should be able to get stream in
+				const MediaSessionParams *params = (session->getPrivate()->isInConference())
+				                                       ? static_pointer_cast<MediaSession>(session)->getRemoteParams()
+				                                       : static_pointer_cast<MediaSession>(session)->getMediaParams();
 
 				auto audioEnabled = false;
 				auto videoEnabled = false;
@@ -523,14 +565,32 @@ bool ParticipantDevice::updateStreamAvailabilities() {
 					textEnabled = params->realtimeTextEnabled();
 				}
 
-				streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, audioEnabled, getStreamCapability(LinphoneStreamTypeAudio)), LinphoneStreamTypeAudio);
-				streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, videoEnabled, getStreamCapability(LinphoneStreamTypeVideo)), LinphoneStreamTypeVideo);
-				streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, textEnabled, getStreamCapability(LinphoneStreamTypeText)), LinphoneStreamTypeText);
+				streamAvailabilityChanged |=
+				    setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, audioEnabled,
+				                                                 getStreamCapability(LinphoneStreamTypeAudio)),
+				                          LinphoneStreamTypeAudio);
+				streamAvailabilityChanged |=
+				    setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, videoEnabled,
+				                                                 getStreamCapability(LinphoneStreamTypeVideo)),
+				                          LinphoneStreamTypeVideo);
+				streamAvailabilityChanged |=
+				    setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, textEnabled,
+				                                                 getStreamCapability(LinphoneStreamTypeText)),
+				                          LinphoneStreamTypeText);
 			}
 		} else if (conference->isMe(getAddress()) && conferenceParams.localParticipantEnabled()) {
-				streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, conferenceAudioEnabled, getStreamCapability(LinphoneStreamTypeAudio)), LinphoneStreamTypeAudio);
-				streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, conferenceVideoEnabled, getStreamCapability(LinphoneStreamTypeVideo)), LinphoneStreamTypeVideo);
-				streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, conferenceTextEnabled, getStreamCapability(LinphoneStreamTypeText)), LinphoneStreamTypeText);
+			streamAvailabilityChanged |=
+			    setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, conferenceAudioEnabled,
+			                                                 getStreamCapability(LinphoneStreamTypeAudio)),
+			                          LinphoneStreamTypeAudio);
+			streamAvailabilityChanged |=
+			    setStreamAvailability(computeStreamAvailable(conferenceVideoEnabled, conferenceVideoEnabled,
+			                                                 getStreamCapability(LinphoneStreamTypeVideo)),
+			                          LinphoneStreamTypeVideo);
+			streamAvailabilityChanged |=
+			    setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, conferenceTextEnabled,
+			                                                 getStreamCapability(LinphoneStreamTypeText)),
+			                          LinphoneStreamTypeText);
 		}
 	}
 
@@ -545,34 +605,45 @@ void ParticipantDevice::enableAdminModeSupport(bool support) {
 	mSupportAdminMode = support;
 }
 
-void * ParticipantDevice::createWindowId() const {
-	void * windowId = nullptr;
+void *ParticipantDevice::createWindowId() const {
+	void *windowId = nullptr;
 #ifdef VIDEO_ENABLED
-	const auto & conference = getConference();
+	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
 	if (!mLabel.empty() && session) {
 		windowId = static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(mLabel);
 	} else {
-		lError() << "Unable to create a window ID for device " << getAddress() << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual " << session << ")";
+		lError() << "Unable to create a window ID for device " << getAddress()
+		         << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel)
+		         << ") or no session is linked to this device (actual " << session << ")";
 	}
 #endif
 	return windowId;
 }
 
-void ParticipantDevice::setWindowId(void * newWindowId) const {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void ParticipantDevice::setWindowId(void *newWindowId) const {
 #ifdef VIDEO_ENABLED
 	mWindowId = newWindowId;
-	const auto & conference = getConference();
+	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
 	if (!mLabel.empty() && session) {
 		static_pointer_cast<MediaSession>(session)->setNativeVideoWindowId(mWindowId, mLabel);
 	} else {
-		lError() << "Unable to set window ID for device " << getAddress() << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual " << session << ")";
+		lError() << "Unable to set window ID for device " << getAddress() << " because either label is empty (actual "
+		         << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual "
+		         << session << ")";
 	}
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-void * ParticipantDevice::getWindowId() const {
+void *ParticipantDevice::getWindowId() const {
 	return mWindowId;
 }
 
@@ -594,7 +665,7 @@ bool ParticipantDevice::getIsMuted() const {
 
 void ParticipantDevice::setDisconnectionData(bool initiated, int code, LinphoneReason reason) {
 	mTimeOfDisconnection = ms_time(NULL);
-	if(reason == LinphoneReasonNone) {
+	if (reason == LinphoneReasonNone) {
 		mDisconnectionMethod = initiated ? DisconnectionMethod::Booted : DisconnectionMethod::Departed;
 		mDisconnectionReason = std::string();
 	} else {
@@ -603,35 +674,36 @@ void ParticipantDevice::setDisconnectionData(bool initiated, int code, LinphoneR
 		} else {
 			mDisconnectionMethod = DisconnectionMethod::Failed;
 		}
-		mDisconnectionReason = std::string("Reason: SIP;cause=") + std::to_string(code) + ";text=" + std::string(linphone_reason_to_string(reason));
+		mDisconnectionReason = std::string("Reason: SIP;cause=") + std::to_string(code) +
+		                       ";text=" + std::string(linphone_reason_to_string(reason));
 	}
 }
 
-LinphoneParticipantDeviceCbsIsSpeakingChangedCb ParticipantDeviceCbs::getIsSpeakingChanged()const{
+LinphoneParticipantDeviceCbsIsSpeakingChangedCb ParticipantDeviceCbs::getIsSpeakingChanged() const {
 	return mIsSpeakingChangedCb;
 }
 
-void ParticipantDeviceCbs::setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb){
+void ParticipantDeviceCbs::setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb) {
 	mIsSpeakingChangedCb = cb;
 }
 
-LinphoneParticipantDeviceCbsIsMutedCb ParticipantDeviceCbs::getIsMuted()const{
+LinphoneParticipantDeviceCbsIsMutedCb ParticipantDeviceCbs::getIsMuted() const {
 	return mIsMutedCb;
 }
 
-void ParticipantDeviceCbs::setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb){
+void ParticipantDeviceCbs::setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb) {
 	mIsMutedCb = cb;
 }
 
-LinphoneParticipantDeviceCbsStateChangedCb ParticipantDeviceCbs::getStateChanged()const {
+LinphoneParticipantDeviceCbsStateChangedCb ParticipantDeviceCbs::getStateChanged() const {
 	return mStateChangedCb;
 }
 
-void ParticipantDeviceCbs::setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb){
+void ParticipantDeviceCbs::setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb) {
 	mStateChangedCb = cb;
 }
 
-LinphoneParticipantDeviceCbsStreamCapabilityChangedCb ParticipantDeviceCbs::getStreamCapabilityChanged()const {
+LinphoneParticipantDeviceCbsStreamCapabilityChangedCb ParticipantDeviceCbs::getStreamCapabilityChanged() const {
 	return mStreamCapabilityChangedCb;
 }
 
@@ -639,13 +711,11 @@ void ParticipantDeviceCbs::setStreamCapabilityChanged(LinphoneParticipantDeviceC
 	mStreamCapabilityChangedCb = cb;
 }
 
-LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb ParticipantDeviceCbs::getStreamAvailabilityChanged()const {
+LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb ParticipantDeviceCbs::getStreamAvailabilityChanged() const {
 	return mStreamAvailabilityChangedCb;
 }
 
 void ParticipantDeviceCbs::setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
 	mStreamAvailabilityChangedCb = cb;
 }
-
-
 LINPHONE_END_NAMESPACE

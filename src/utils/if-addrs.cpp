@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,119 +18,125 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-tools.h"
 #include "private.h"
 #include "tester_utils.h"
-#include "c-wrapper/internal/c-tools.h"
 
 #ifdef HAVE_GETIFADDRS
-#include <sys/types.h>
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <sys/types.h>
 #endif
 #if defined(_WIN32) || defined(_WIN32_WCE)
-#include <winsock2.h>
-#include <iptypes.h>
 #include <iphlpapi.h>
+#include <iptypes.h>
+#include <winsock2.h>
 #endif
 
 #include "if-addrs.h"
 
-#include <set>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_GETIFADDRS
-list<string> IfAddrs::fetchWithGetIfAddrs(){
+list<string> IfAddrs::fetchWithGetIfAddrs() {
 	list<string> ret;
 	struct ifaddrs *ifap = nullptr;
 	set<string> ipv6Interfaces;
-	
+
 	lInfo() << "Fetching current local IP addresses using getifaddrs().";
-	
-	if (getifaddrs(&ifap) == 0){
+
+	if (getifaddrs(&ifap) == 0) {
 		struct ifaddrs *ifaddr;
-		for (ifaddr = ifap; ifaddr != nullptr; ifaddr = ifaddr->ifa_next){
+		for (ifaddr = ifap; ifaddr != nullptr; ifaddr = ifaddr->ifa_next) {
 			if (ifaddr->ifa_flags & IFF_LOOPBACK) continue;
-			if (ifaddr->ifa_flags & IFF_UP){
+			if (ifaddr->ifa_flags & IFF_UP) {
 				struct sockaddr *saddr = ifaddr->ifa_addr;
-				char addr[INET6_ADDRSTRLEN] = { 0 };
-				if (!saddr){
+				char addr[INET6_ADDRSTRLEN] = {0};
+				if (!saddr) {
 					lError() << "NULL sockaddr returned by getifaddrs().";
 					continue;
 				}
-				switch (saddr->sa_family){
+				switch (saddr->sa_family) {
 					case AF_INET:
-						if (inet_ntop(AF_INET, &((struct sockaddr_in*)saddr)->sin_addr, addr, sizeof(addr)) != nullptr){
+						if (inet_ntop(AF_INET, &((struct sockaddr_in *)saddr)->sin_addr, addr, sizeof(addr)) !=
+						    nullptr) {
 							ret.push_back(addr);
-						}else{
+						} else {
 							lError() << "inet_ntop() failed with AF_INET: " << strerror(errno);
 						}
-					break;
+						break;
 					case AF_INET6:
-						if (IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6*)saddr)->sin6_addr)){
+						if (IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)saddr)->sin6_addr)) {
 							// Skip link local addresses for now, they are painful to manage with ICE.
 							continue;
 						}
-						if (inet_ntop(AF_INET6, &((struct sockaddr_in6*)saddr)->sin6_addr, addr, sizeof(addr)) != nullptr){
+						if (inet_ntop(AF_INET6, &((struct sockaddr_in6 *)saddr)->sin6_addr, addr, sizeof(addr)) !=
+						    nullptr) {
 							/* Limit to one ipv6 address per interface, to filter out temporaries.
 							 * I would have prefer to find a way with getifaddrs() to know
-							 * whether an ipv6 address is a temporary or not, but unfortunately this doesn't seem possible.
+							 * whether an ipv6 address is a temporary or not, but unfortunately this doesn't seem
+							 * possible.
 							 */
-							if (ipv6Interfaces.find(ifaddr->ifa_name) == ipv6Interfaces.end()){
+							if (ipv6Interfaces.find(ifaddr->ifa_name) == ipv6Interfaces.end()) {
 								ret.push_back(addr);
 								ipv6Interfaces.insert(ifaddr->ifa_name);
 							}
-						}else{
+						} else {
 							lError() << "inet_ntop() failed with AF_INET6: " << strerror(errno);
 						}
-					break;
+						break;
 					default:
 						// ignored.
-					break;
+						break;
 				}
 			}
 		}
 		freeifaddrs(ifap);
-	}else{
+	} else {
 		lError() << "getifaddrs(): " << strerror(errno);
 	}
 	return ret;
 }
 #else
 #if defined(_WIN32) || defined(_WIN32_WCE)
-class AddressData{
+class AddressData {
 public:
-	AddressData(){}
-	AddressData(const std::string& addr, const bool& isIpv6=false, const bool& isRandom=false, const ULONG& preferredLifetime=0) 
-		: mAddress(addr), mIsIpv6(isIpv6), mIsRandom(isRandom), mPreferredLifetime(preferredLifetime)
-	{}
-	AddressData(const AddressData& data)
-		: mAddress(data.mAddress), mIsIpv6(data.mIsIpv6), mIsRandom(data.mIsRandom), mPreferredLifetime(data.mPreferredLifetime)
-	{}
+	AddressData() {
+	}
+	AddressData(const std::string &addr,
+	            const bool &isIpv6 = false,
+	            const bool &isRandom = false,
+	            const ULONG &preferredLifetime = 0)
+	    : mAddress(addr), mIsIpv6(isIpv6), mIsRandom(isRandom), mPreferredLifetime(preferredLifetime) {
+	}
+	AddressData(const AddressData &data)
+	    : mAddress(data.mAddress), mIsIpv6(data.mIsIpv6), mIsRandom(data.mIsRandom),
+	      mPreferredLifetime(data.mPreferredLifetime) {
+	}
 	std::string mAddress;
 	bool mIsIpv6 = false;
 	bool mIsRandom = false;
 	ULONG mPreferredLifetime = 0;
 
-	static std::list<std::string> toStringList(const std::list<AddressData>& addresses){
+	static std::list<std::string> toStringList(const std::list<AddressData> &addresses) {
 		std::list<std::string> addressesStr;
-		for(auto itAddr = addresses.begin() ; itAddr != addresses.end() ; ++itAddr) {
-			if( !itAddr->mIsIpv6)
-				addressesStr.push_back(itAddr->mAddress);
+		for (auto itAddr = addresses.begin(); itAddr != addresses.end(); ++itAddr) {
+			if (!itAddr->mIsIpv6) addressesStr.push_back(itAddr->mAddress);
 			else {
 				// Return only the first IPV6
-				if(!itAddr->mIsRandom){	// The first IPV6 is not a random : check if there is a second and pick it if exists : a temporary address have less time life
+				if (!itAddr->mIsRandom) { // The first IPV6 is not a random : check if there is a second and pick it if
+					                      // exists : a temporary address have less time life
 					auto nextIt = itAddr;
 					++nextIt;
-					if(nextIt != addresses.end())
-						addressesStr.push_back(nextIt->mAddress);
+					if (nextIt != addresses.end()) addressesStr.push_back(nextIt->mAddress);
 					else // there is no other addresses
 						addressesStr.push_back(itAddr->mAddress);
-				}else
-					addressesStr.push_back(itAddr->mAddress);
+				} else addressesStr.push_back(itAddr->mAddress);
 				return addressesStr;
 			}
 		}
@@ -138,36 +144,38 @@ public:
 	}
 };
 
-static void getAddress(IP_ADAPTER_UNICAST_ADDRESS * unicastAddress, std::list<AddressData> * pList){
-	SOCKET_ADDRESS * pAddr = &unicastAddress->Address;
+static void getAddress(IP_ADAPTER_UNICAST_ADDRESS *unicastAddress, std::list<AddressData> *pList) {
+	SOCKET_ADDRESS *pAddr = &unicastAddress->Address;
 	char szAddr[INET6_ADDRSTRLEN];
 	DWORD dwSize = INET6_ADDRSTRLEN;
 
 	if (pAddr->lpSockaddr->sa_family == AF_INET) {
 		dwSize = INET_ADDRSTRLEN;
 		memset(szAddr, 0, INET_ADDRSTRLEN);
-		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR){
+		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR) {
 			lInfo() << "ICE on fetchLocalAddresses cannot read IPV4 : " << WSAGetLastError();
 			return;
 		}
-		if (string(szAddr) != string("127.0.0.1")){
+		if (string(szAddr) != string("127.0.0.1")) {
 			pList->push_back(AddressData(szAddr));
 		}
-	}else if (pAddr->lpSockaddr->sa_family == AF_INET6 && !IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
-		&& !IN6_IS_ADDR_LOOPBACK(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
-		) {
+	} else if (pAddr->lpSockaddr->sa_family == AF_INET6 &&
+	           !IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr) &&
+	           !IN6_IS_ADDR_LOOPBACK(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)) {
 		memset(szAddr, 0, INET6_ADDRSTRLEN);
-		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR){
+		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR) {
 			lInfo() << "ICE on fetchLocalAddresses cannot read IPV6 : " << WSAGetLastError();
 			return;
 		}
-		pList->push_back(AddressData(szAddr, true, unicastAddress->SuffixOrigin == IpSuffixOriginRandom, unicastAddress->PreferredLifetime));
+		pList->push_back(AddressData(szAddr, true, unicastAddress->SuffixOrigin == IpSuffixOriginRandom,
+		                             unicastAddress->PreferredLifetime));
 	}
 }
 
 list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 	list<string> ret;
-	ULONG flags = GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_ANYCAST; // Remove anycast and multicast from the search
+	ULONG flags = GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_SKIP_MULTICAST |
+	              GAA_FLAG_SKIP_ANYCAST; // Remove anycast and multicast from the search
 	DWORD dwSize = 0;
 	DWORD dwRetVal = 0;
 	LPVOID lpMsgBuf = nullptr;
@@ -175,12 +183,13 @@ list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 	PIP_ADAPTER_ADDRESSES pAddresses = (IP_ADAPTER_ADDRESSES *)bctbx_malloc(outBufLen);
 	ULONG Iterations = 0;
 	PIP_ADAPTER_ADDRESSES pCurrAdapters = nullptr;
-	PIP_ADAPTER_UNICAST_ADDRESS pUnicast = nullptr; 
-	//PIP_ADAPTER_ANYCAST_ADDRESS pAnycast = nullptr;	// Commented just in case we need it
-	//PIP_ADAPTER_MULTICAST_ADDRESS pMulticast = nullptr;
+	PIP_ADAPTER_UNICAST_ADDRESS pUnicast = nullptr;
+	// PIP_ADAPTER_ANYCAST_ADDRESS pAnycast = nullptr;	// Commented just in case we need it
+	// PIP_ADAPTER_MULTICAST_ADDRESS pMulticast = nullptr;
 
 	dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, nullptr, pAddresses, &outBufLen);
-	if(dwRetVal == ERROR_BUFFER_OVERFLOW){// There is not enough space in address buffer. We need to get bigger and the size is given by outBufLen
+	if (dwRetVal == ERROR_BUFFER_OVERFLOW) { // There is not enough space in address buffer. We need to get bigger and
+		                                     // the size is given by outBufLen
 		bctbx_free(pAddresses);
 		pAddresses = (IP_ADAPTER_ADDRESSES *)bctbx_malloc(outBufLen);
 		dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, nullptr, pAddresses, &outBufLen);
@@ -188,18 +197,16 @@ list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 	if (dwRetVal == NO_ERROR) {
 		pCurrAdapters = pAddresses;
 		while (pCurrAdapters) {
-			if( pCurrAdapters->OperStatus == IfOperStatusUp ) {
+			if (pCurrAdapters->OperStatus == IfOperStatusUp) {
 				std::list<AddressData> addresses;
-				for (pUnicast = pCurrAdapters->FirstUnicastAddress; pUnicast != nullptr; pUnicast = pUnicast->Next){
+				for (pUnicast = pCurrAdapters->FirstUnicastAddress; pUnicast != nullptr; pUnicast = pUnicast->Next) {
 					getAddress(pUnicast, &addresses);
 				}
-// Sort list : IPV4 first, then IPV6, Random, PreferredLifeTime
-				addresses.sort([](const AddressData& a, const AddressData& b) {
-					return !a.mIsIpv6 
-							|| ( b.mIsIpv6 && (
-								(a.mIsRandom && !b.mIsRandom)
-								|| ((a.mIsRandom || !a.mIsRandom && !b.mIsRandom) && (a.mPreferredLifetime > b.mPreferredLifetime))
-							));
+				// Sort list : IPV4 first, then IPV6, Random, PreferredLifeTime
+				addresses.sort([](const AddressData &a, const AddressData &b) {
+					return !a.mIsIpv6 || (b.mIsIpv6 && ((a.mIsRandom && !b.mIsRandom) ||
+					                                    ((a.mIsRandom || !a.mIsRandom && !b.mIsRandom) &&
+					                                     (a.mPreferredLifetime > b.mPreferredLifetime))));
 				});
 				ret.splice(ret.end(), AddressData::toStringList(addresses));
 			}
@@ -212,9 +219,9 @@ list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 #endif
 #endif
 
-list<string> IfAddrs::fetchLocalAddresses(){
+list<string> IfAddrs::fetchLocalAddresses() {
 	list<string> ret;
-	
+
 #ifdef HAVE_GETIFADDRS
 	ret = fetchWithGetIfAddrs();
 #else
@@ -233,18 +240,18 @@ list<string> IfAddrs::fetchLocalAddresses(){
 	 */
 	lInfo() << "Fetching local ip addresses using the connect() method.";
 	char localAddr[LINPHONE_IPADDR_SIZE];
-	
+
 	if (linphone_core_get_local_ip_for(AF_INET6, nullptr, localAddr) == 0) {
 		ret.remove(localAddr);
 		ret.push_front(localAddr);
-	}else{
+	} else {
 		lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv6";
 	}
-	
-	if (linphone_core_get_local_ip_for(AF_INET, nullptr, localAddr) == 0){
+
+	if (linphone_core_get_local_ip_for(AF_INET, nullptr, localAddr) == 0) {
 		ret.remove(localAddr);
 		ret.push_front(localAddr);
-	}else{
+	} else {
 		lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv4";
 	}
 
@@ -253,7 +260,6 @@ list<string> IfAddrs::fetchLocalAddresses(){
 
 LINPHONE_END_NAMESPACE
 
-bctbx_list_t *linphone_fetch_local_addresses(void){
+bctbx_list_t *linphone_fetch_local_addresses(void) {
 	return LinphonePrivate::Wrapper::getCListFromCppList(LinphonePrivate::IfAddrs::fetchLocalAddresses());
 }
-

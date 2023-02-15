@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,24 +20,23 @@
 
 #include <ctype.h>
 
-#include "call/audio-device/audio-device.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "call/audio-device/audio-device.h"
 #include "recorder/recorder-params.h"
-
 
 // =============================================================================
 
 using namespace LinphonePrivate;
 
-LinphoneRecorderParams* linphone_recorder_params_new() {
+LinphoneRecorderParams *linphone_recorder_params_new() {
 	return RecorderParams::createCObject(nullptr, "", nullptr, LinphoneRecorderFileFormatUnknown, "");
 }
 
-LinphoneRecorderParams* linphone_recorder_params_clone(const LinphoneRecorderParams *params) {
+LinphoneRecorderParams *linphone_recorder_params_clone(const LinphoneRecorderParams *params) {
 	return RecorderParams::toCpp(params)->clone()->toC();
 }
 
-LinphoneRecorderParams* linphone_recorder_params_ref(LinphoneRecorderParams *params) {
+LinphoneRecorderParams *linphone_recorder_params_ref(LinphoneRecorderParams *params) {
 	RecorderParams::toCpp(params)->ref();
 	return params;
 }
@@ -51,7 +50,8 @@ void linphone_recorder_params_set_audio_device(LinphoneRecorderParams *params, c
 }
 
 const LinphoneAudioDevice *linphone_recorder_params_get_audio_device(const LinphoneRecorderParams *params) {
-	return RecorderParams::toCpp(params)->getAudioDevice() ? RecorderParams::toCpp(params)->getAudioDevice()->toC() : nullptr;
+	return RecorderParams::toCpp(params)->getAudioDevice() ? RecorderParams::toCpp(params)->getAudioDevice()->toC()
+	                                                       : nullptr;
 }
 
 void linphone_recorder_params_set_webcam_name(LinphoneRecorderParams *params, const char *webcam_name) {

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
  */
 
 #include "local-audio-video-conference-event-handler.h"
-#include "logger/logger.h"
 #include "conference_private.h"
+#include "logger/logger.h"
 
 // TODO: remove me.
 #include "private.h"
@@ -33,15 +33,16 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-LocalAudioVideoConferenceEventHandler::LocalAudioVideoConferenceEventHandler (MediaConference::Conference *conference) : LocalConferenceEventHandler (dynamic_cast<Conference *>(conference)) {
+LocalAudioVideoConferenceEventHandler::LocalAudioVideoConferenceEventHandler(MediaConference::Conference *conference)
+    : LocalConferenceEventHandler(dynamic_cast<Conference *>(conference)) {
 }
 
 MediaConference::Conference *LocalAudioVideoConferenceEventHandler::getMediaConference() const {
 	return dynamic_cast<MediaConference::Conference *>(conf);
 }
 
-void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
-	switch(state) {
+void LocalAudioVideoConferenceEventHandler::onStateChanged(LinphonePrivate::ConferenceInterface::State state) {
+	switch (state) {
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::Created:
@@ -52,7 +53,8 @@ void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::Con
 			getMediaConference()->finalizeCreation();
 			break;
 		case ConferenceInterface::State::TerminationPending:
-			if (getMediaConference()->getParticipantCount() == 0) getMediaConference()->setState(ConferenceInterface::State::Terminated);
+			if (getMediaConference()->getParticipantCount() == 0)
+				getMediaConference()->setState(ConferenceInterface::State::Terminated);
 			break;
 		case ConferenceInterface::State::Terminated:
 			getMediaConference()->resetLastNotify();
@@ -60,7 +62,6 @@ void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::Con
 		case ConferenceInterface::State::Deleted:
 			break;
 	}
-
 }
 
 void LocalAudioVideoConferenceEventHandler::setConference(Conference *conference) {

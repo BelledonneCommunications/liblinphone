@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,79 +20,80 @@
 
 #ifdef VIDEO_ENABLED
 
-#include "linphone/core.h"
 #include "liblinphone_tester.h"
-#include "tester_utils.h"
+#include "linphone/core.h"
 #include "linphone/lpconfig.h"
+#include "tester_utils.h"
 #include <mediastreamer2/msqrcodereader.h>
 
 static void enable_disable_camera_after_camera_switches(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	const char *currentCamId = (char*)linphone_core_get_video_device(marie->lc);
-	const char **cameras=linphone_core_get_video_devices(marie->lc);
-	const char *newCamId=NULL;
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	const char *currentCamId = (char *)linphone_core_get_video_device(marie->lc);
+	const char **cameras = linphone_core_get_video_devices(marie->lc);
+	const char *newCamId = NULL;
 	int i;
 
-	video_call_base_2(marie,pauline,FALSE,LinphoneMediaEncryptionNone,TRUE,TRUE);
+	video_call_base_2(marie, pauline, FALSE, LinphoneMediaEncryptionNone, TRUE, TRUE);
 
-	for (i=0;cameras[i]!=NULL;++i){
-		if (strcmp(cameras[i],currentCamId)!=0){
-			newCamId=cameras[i];
+	for (i = 0; cameras[i] != NULL; ++i) {
+		if (strcmp(cameras[i], currentCamId) != 0) {
+			newCamId = cameras[i];
 			break;
 		}
 	}
 
-	if (newCamId){
+	if (newCamId) {
 		LinphoneCall *call = linphone_core_get_current_call(marie->lc);
 		ms_message("Switching from [%s] to [%s]", currentCamId, newCamId);
 		linphone_core_set_video_device(marie->lc, newCamId);
-		BC_ASSERT_STRING_EQUAL(newCamId,ms_web_cam_get_string_id(_linphone_call_get_video_device(call)));
-		linphone_call_enable_camera(call,FALSE);
+		BC_ASSERT_STRING_EQUAL(newCamId, ms_web_cam_get_string_id(_linphone_call_get_video_device(call)));
+		linphone_call_enable_camera(call, FALSE);
 		linphone_core_iterate(marie->lc);
-		linphone_call_enable_camera(call,TRUE);
-		BC_ASSERT_STRING_EQUAL(newCamId,ms_web_cam_get_string_id(_linphone_call_get_video_device(call)));
+		linphone_call_enable_camera(call, TRUE);
+		BC_ASSERT_STRING_EQUAL(newCamId, ms_web_cam_get_string_id(_linphone_call_get_video_device(call)));
 	}
 
 	linphone_core_terminate_all_calls(pauline->lc);
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void camera_switches_while_only_preview(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	const char *camId = "Mire: Mire (synthetic moving picture)";
 	float fps = 0.0f;
-	MSWebCam *cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(marie->lc)),camId );
+	MSWebCam *cam =
+	    ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(marie->lc)), camId);
 
 	if (cam == NULL) {
 		MSWebCamDesc *desc = ms_mire_webcam_desc_get();
 		if (desc) {
-			cam=ms_web_cam_new(desc);
+			cam = ms_web_cam_new(desc);
 			ms_web_cam_manager_add_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(marie->lc)), cam);
 		}
 	}
 	linphone_core_set_video_device(marie->lc, camId);
 	linphone_core_iterate(marie->lc);
 	linphone_core_enable_video_preview(marie->lc, TRUE);
-	linphone_core_iterate(marie->lc);   // Let time to the core to set new values
+	linphone_core_iterate(marie->lc); // Let time to the core to set new values
 	VideoStream *vs = (VideoStream *)linphone_core_get_preview_stream(marie->lc);
-	if(BC_ASSERT_PTR_NOT_NULL(vs) && BC_ASSERT_PTR_NOT_NULL(vs->source) ){
-	    ms_filter_call_method(vs->source, MS_FILTER_SET_FPS,(void *)&fps);	//Simulate camera deficiency
-	    BC_ASSERT_TRUE(vs->cam == cam);
-	    wait_for_until(marie->lc, NULL, NULL, 0, 6000);
-	    BC_ASSERT_TRUE(vs->cam != cam);
-        }
+	if (BC_ASSERT_PTR_NOT_NULL(vs) && BC_ASSERT_PTR_NOT_NULL(vs->source)) {
+		ms_filter_call_method(vs->source, MS_FILTER_SET_FPS, (void *)&fps); // Simulate camera deficiency
+		BC_ASSERT_TRUE(vs->cam == cam);
+		wait_for_until(marie->lc, NULL, NULL, 0, 6000);
+		BC_ASSERT_TRUE(vs->cam != cam);
+	}
 	linphone_core_manager_destroy(marie);
 }
 
 typedef struct struct_qrcode_callback_data {
 	int qrcode_found;
 	char *text;
-}qrcode_callback_data;
-
+} qrcode_callback_data;
 
 static void qrcode_found_cb(LinphoneCore *lc, const char *result) {
 	LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(lc);
@@ -109,28 +110,26 @@ typedef struct struct_image_rect {
 	int y;
 	int w;
 	int h;
-}image_rect;
+} image_rect;
 
-static void _decode_qrcode(const char* image_path, image_rect *rect, bool_t image_from_res) {
+static void _decode_qrcode(const char *image_path, image_rect *rect, bool_t image_from_res) {
 	qrcode_callback_data qrcode_data;
 	char *qrcode_image;
-	LinphoneCoreManager* lcm = NULL;
-	MSFactory* factory = NULL;
+	LinphoneCoreManager *lcm = NULL;
+	MSFactory *factory = NULL;
 	factory = ms_factory_new_with_voip();
 	if (!ms_factory_lookup_filter_by_name(factory, "MSQRCodeReader")) {
 		ms_error("QRCode support is not built-in");
 		goto end;
 	}
 
-	lcm =linphone_core_manager_create("empty_rc");
-	LinphoneCoreCbs* cbs = NULL;
+	lcm = linphone_core_manager_create("empty_rc");
+	LinphoneCoreCbs *cbs = NULL;
 	qrcode_data.qrcode_found = FALSE;
 	qrcode_data.text = NULL;
 	linphone_core_manager_start(lcm, FALSE);
-	if(image_from_res)
-		qrcode_image = bc_tester_res(image_path);
-	else
-		qrcode_image =  bctbx_strdup(image_path);
+	if (image_from_res) qrcode_image = bc_tester_res(image_path);
+	else qrcode_image = bctbx_strdup(image_path);
 
 	linphone_core_set_video_device(lcm->lc, liblinphone_tester_static_image_id);
 	linphone_core_set_static_picture(lcm->lc, qrcode_image);
@@ -175,42 +174,44 @@ static void decode_qrcode_from_zone(void) {
 }
 
 #if defined(QRCODE_ENABLED) && defined(JPEG_ENABLED)
-static void encode_qrcode(void){
+static void encode_qrcode(void) {
 	unsigned int w = 200;
 	unsigned int h = 150;
-	LinphoneFactory * factory = linphone_factory_get();
-	char * file_path = NULL;
-	
+	LinphoneFactory *factory = linphone_factory_get();
+	char *file_path = NULL;
+
 	file_path = bc_tester_file("video_tester_qrcode.jpg");
-	
-	int error = linphone_factory_write_qrcode_file(factory, file_path,"https://www.linphone.org/", w, h, 0);
-	
-	if( error != 0 ){
+
+	int error = linphone_factory_write_qrcode_file(factory, file_path, "https://www.linphone.org/", w, h, 0);
+
+	if (error != 0) {
 		BC_ASSERT_EQUAL(error, 0, int, "%i");
 		goto end;
 	}
-	
-// Decode the encoded qrcode from file
+
+	// Decode the encoded qrcode from file
 	_decode_qrcode(file_path, NULL, FALSE);
 end:
-	if(file_path) free(file_path);
+	if (file_path) free(file_path);
 }
 
 #endif
 
 test_t video_tests[] = {
-	TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
-	TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),
-	TEST_ONE_TAG("Decode QRCode from zone", decode_qrcode_from_zone, "QRCode"),
+    TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
+    TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),
+    TEST_ONE_TAG("Decode QRCode from zone", decode_qrcode_from_zone, "QRCode"),
 #if defined(QRCODE_ENABLED) && defined(JPEG_ENABLED)
-	TEST_ONE_TAG("Encode QRCode", encode_qrcode, "QRCode"),
+    TEST_ONE_TAG("Encode QRCode", encode_qrcode, "QRCode"),
 #endif
-	TEST_NO_TAG("Fallback camera while preview is only enabled", camera_switches_while_only_preview)
-};
+    TEST_NO_TAG("Fallback camera while preview is only enabled", camera_switches_while_only_preview)};
 
-test_suite_t video_test_suite = {
-	"Video", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(video_tests) / sizeof(video_tests[0]), video_tests
-};
+test_suite_t video_test_suite = {"Video",
+                                 NULL,
+                                 NULL,
+                                 liblinphone_tester_before_each,
+                                 liblinphone_tester_after_each,
+                                 sizeof(video_tests) / sizeof(video_tests[0]),
+                                 video_tests};
 
 #endif // ifdef VIDEO_ENABLED

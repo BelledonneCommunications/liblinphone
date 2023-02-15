@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,32 +36,33 @@ LINPHONE_BEGIN_NAMESPACE
 
 class IsComposing {
 public:
-	IsComposing (LinphoneCore *core, IsComposingListener *listener);
-	~IsComposing ();
+	IsComposing(LinphoneCore *core, IsComposingListener *listener);
+	~IsComposing();
 
-	std::string createXml (bool isComposing);
-	void parse (const Address &remoteAddr, const std::string &content);
-	void startIdleTimer ();
-	void startRefreshTimer ();
-	void stopIdleTimer ();
-	void stopRefreshTimer ();
-	void stopRemoteRefreshTimer (const std::string &uri);
-	void stopTimers ();
+	std::string createXml(bool isComposing);
+	void parse(const Address &remoteAddr, const std::string &content);
+	void startIdleTimer();
+	void startRefreshTimer();
+	void stopIdleTimer();
+	void stopRefreshTimer();
+	void stopRemoteRefreshTimer(const std::string &uri);
+	void stopTimers();
 
 private:
-	unsigned int getIdleTimerDuration ();
-	unsigned int getRefreshTimerDuration ();
-	unsigned int getRemoteRefreshTimerDuration ();
-	int idleTimerExpired ();
-	int refreshTimerExpired ();
-	int remoteRefreshTimerExpired (const std::string &uri);
-	void startRemoteRefreshTimer (const std::string &uri, unsigned long long refresh);
-	void stopAllRemoteRefreshTimers ();
-	std::unordered_map<std::string, belle_sip_source_t *>::iterator stopRemoteRefreshTimer (const std::unordered_map<std::string, belle_sip_source_t *>::const_iterator it);
+	unsigned int getIdleTimerDuration();
+	unsigned int getRefreshTimerDuration();
+	unsigned int getRemoteRefreshTimerDuration();
+	int idleTimerExpired();
+	int refreshTimerExpired();
+	int remoteRefreshTimerExpired(const std::string &uri);
+	void startRemoteRefreshTimer(const std::string &uri, unsigned long long refresh);
+	void stopAllRemoteRefreshTimers();
+	std::unordered_map<std::string, belle_sip_source_t *>::iterator
+	stopRemoteRefreshTimer(const std::unordered_map<std::string, belle_sip_source_t *>::const_iterator it);
 
-	static int idleTimerExpired (void *data, unsigned int revents);
-	static int refreshTimerExpired (void *data, unsigned int revents);
-	static int remoteRefreshTimerExpired (void *data, unsigned int revents);
+	static int idleTimerExpired(void *data, unsigned int revents);
+	static int refreshTimerExpired(void *data, unsigned int revents);
+	static int remoteRefreshTimerExpired(void *data, unsigned int revents);
 
 private:
 	static const int defaultIdleTimeout = 15;
@@ -70,7 +71,7 @@ private:
 
 	LinphoneCore *core = nullptr;
 	IsComposingListener *listener = nullptr;
-	std::unordered_map<std::string, belle_sip_source_t *>remoteRefreshTimers;
+	std::unordered_map<std::string, belle_sip_source_t *> remoteRefreshTimers;
 	belle_sip_source_t *idleTimer = nullptr;
 	belle_sip_source_t *refreshTimer = nullptr;
 };

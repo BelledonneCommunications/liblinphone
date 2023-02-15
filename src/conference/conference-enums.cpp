@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,16 +28,22 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e) {
-	switch(e) {
-		case ConferenceMediaCapabilities::Audio: lhs << "Audio"; break;
-		case ConferenceMediaCapabilities::Video: lhs << "Video"; break;
-		case ConferenceMediaCapabilities::Text: lhs << "Text"; break;
+std::ostream &operator<<(std::ostream &lhs, ConferenceMediaCapabilities e) {
+	switch (e) {
+		case ConferenceMediaCapabilities::Audio:
+			lhs << "Audio";
+			break;
+		case ConferenceMediaCapabilities::Video:
+			lhs << "Video";
+			break;
+		case ConferenceMediaCapabilities::Text:
+			lhs << "Text";
+			break;
 	}
 	return lhs;
 }
 
-std::ostream & operator << (std::ostream & str, ConferenceLayout layout){
+std::ostream &operator<<(std::ostream &str, ConferenceLayout layout) {
 	switch (layout) {
 		case ConferenceLayout::Grid:
 			str << "Grid";
@@ -49,7 +55,7 @@ std::ostream & operator << (std::ostream & str, ConferenceLayout layout){
 	return str;
 }
 
-std::string operator + (const std::string & str, ConferenceLayout layout){
+std::string operator+(const std::string &str, ConferenceLayout layout) {
 	std::string s(str);
 	switch (layout) {
 		case ConferenceLayout::Grid:

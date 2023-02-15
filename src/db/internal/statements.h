@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,28 +28,25 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Statements {
-	enum Select {
-		SelectSipAddressId,
-		SelectChatRoomId,
-		SelectChatRoomParticipantId,
-		SelectOneToOneChatRoomId,
-		SelectConferenceEvent,
-		SelectConferenceEvents,
-		SelectConferenceInfoId,
-		SelectConferenceInfoParticipantId,
-		SelectConferenceInfoOrganizerId,
-		SelectConferenceCall,
-		SelectCount
-	};
+enum Select {
+	SelectSipAddressId,
+	SelectChatRoomId,
+	SelectChatRoomParticipantId,
+	SelectOneToOneChatRoomId,
+	SelectConferenceEvent,
+	SelectConferenceEvents,
+	SelectConferenceInfoId,
+	SelectConferenceInfoParticipantId,
+	SelectConferenceInfoOrganizerId,
+	SelectConferenceCall,
+	SelectCount
+};
 
-	enum Insert {
-		InsertOneToOneChatRoom,
-		InsertCount
-	};
+enum Insert { InsertOneToOneChatRoom, InsertCount };
 
-	const char *get (Select selectStmt);
-	const char *get (Insert insertStmt, AbstractDb::Backend backend);
-}
+const char *get(Select selectStmt);
+const char *get(Insert insertStmt, AbstractDb::Backend backend);
+} // namespace Statements
 
 LINPHONE_END_NAMESPACE
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,11 +27,11 @@
 #include <mediastreamer2/mswebcam.h>
 
 #include "call/audio-device/audio-device.h"
+#include "content/file-content.h"
 #include "core/core-accessor.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
 #include "recorder-params.h"
-#include "content/file-content.h"
 
 // =============================================================================
 
@@ -39,31 +39,31 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Recorder : public bellesip::HybridObject<LinphoneRecorder, Recorder>, public CoreAccessor {
 public:
-	Recorder (std::shared_ptr<Core> core, std::shared_ptr<RecorderParams> params);
-	~Recorder ();
+	Recorder(std::shared_ptr<Core> core, std::shared_ptr<RecorderParams> params);
+	~Recorder();
 
-	Recorder* clone () const override;
+	Recorder *clone() const override;
 
-	LinphoneStatus open (const std::string &file);
-	void close ();
-	const std::string& getFile () const;
+	LinphoneStatus open(const std::string &file);
+	void close();
+	const std::string &getFile() const;
 
-	LinphoneStatus start ();
-	LinphoneStatus pause ();
+	LinphoneStatus start();
+	LinphoneStatus pause();
 
-	LinphoneRecorderState getState () const;
-	int getDuration () const;
+	LinphoneRecorderState getState() const;
+	int getDuration() const;
 	float getCaptureVolume() const;
-	FileContent* createContent () const;
+	FileContent *createContent() const;
 
-	void setParams (std::shared_ptr<RecorderParams> params);
+	void setParams(std::shared_ptr<RecorderParams> params);
 	std::shared_ptr<const RecorderParams> getParams() const;
 
-	void setUserData (void *userData);
-	void *getUserData () const;
+	void setUserData(void *userData);
+	void *getUserData() const;
 
 protected:
-	void init ();
+	void init();
 
 private:
 	MSMediaRecorder *mRecorder = nullptr;

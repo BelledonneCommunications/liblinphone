@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,13 +26,15 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-RecorderParams::RecorderParams (shared_ptr<const AudioDevice> device, const string &webcamName, void *windowId,
-				   LinphoneRecorderFileFormat format, const string &videoCodec)
-	: mAudioDevice(device), mWebcamName(webcamName), mWindowId(windowId), mFormat(format), mVideoCodec(videoCodec) {
-
+RecorderParams::RecorderParams(shared_ptr<const AudioDevice> device,
+                               const string &webcamName,
+                               void *windowId,
+                               LinphoneRecorderFileFormat format,
+                               const string &videoCodec)
+    : mAudioDevice(device), mWebcamName(webcamName), mWindowId(windowId), mFormat(format), mVideoCodec(videoCodec) {
 }
 
-RecorderParams::RecorderParams (const RecorderParams &other) : HybridObject(other) {
+RecorderParams::RecorderParams(const RecorderParams &other) : HybridObject(other) {
 	mAudioDevice = other.mAudioDevice;
 	mWebcamName = other.mWebcamName;
 	mVideoCodec = other.mVideoCodec;
@@ -40,47 +42,47 @@ RecorderParams::RecorderParams (const RecorderParams &other) : HybridObject(othe
 	mWindowId = other.mWindowId;
 }
 
-RecorderParams* RecorderParams::clone() const {
+RecorderParams *RecorderParams::clone() const {
 	return new RecorderParams(*this);
 }
 
-void RecorderParams::setAudioDevice (shared_ptr<const AudioDevice> audioDevice) {
+void RecorderParams::setAudioDevice(shared_ptr<const AudioDevice> audioDevice) {
 	mAudioDevice = audioDevice;
 }
 
-void RecorderParams::setWebcamName (const string &webcamName) {
+void RecorderParams::setWebcamName(const string &webcamName) {
 	mWebcamName = webcamName;
 }
 
-void RecorderParams::setVideoCodec (const string &videoCodec) {
+void RecorderParams::setVideoCodec(const string &videoCodec) {
 	mVideoCodec = videoCodec;
 }
 
-void RecorderParams::setFileFormat (LinphoneRecorderFileFormat format) {
+void RecorderParams::setFileFormat(LinphoneRecorderFileFormat format) {
 	mFormat = format;
 }
 
-void RecorderParams::setWindowId (void *windowId) {
+void RecorderParams::setWindowId(void *windowId) {
 	mWindowId = windowId;
 }
 
-shared_ptr<const AudioDevice> RecorderParams::getAudioDevice () const {
+shared_ptr<const AudioDevice> RecorderParams::getAudioDevice() const {
 	return mAudioDevice;
 }
 
-const string& RecorderParams::getWebcamName () const {
+const string &RecorderParams::getWebcamName() const {
 	return mWebcamName;
 }
 
-const string& RecorderParams::getVideoCodec () const {
+const string &RecorderParams::getVideoCodec() const {
 	return mVideoCodec;
 }
 
-LinphoneRecorderFileFormat RecorderParams::getFileFormat () const {
+LinphoneRecorderFileFormat RecorderParams::getFileFormat() const {
 	return mFormat;
 }
 
-void* RecorderParams::getWindowId () const {
+void *RecorderParams::getWindowId() const {
 	return mWindowId;
 }
 

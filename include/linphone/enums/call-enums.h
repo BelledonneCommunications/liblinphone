@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,29 +27,32 @@
  * The application is notified of a state change through the LinphoneCoreVTable::call_state_changed callback.
  * @ingroup call_control
  */
-typedef enum _LinphoneCallState{
-	LinphoneCallStateIdle = 0, /**< Initial state */
-	LinphoneCallStateIncomingReceived = 1, /**< Incoming call received */
+typedef enum _LinphoneCallState {
+	LinphoneCallStateIdle = 0,                 /**< Initial state */
+	LinphoneCallStateIncomingReceived = 1,     /**< Incoming call received */
 	LinphoneCallStatePushIncomingReceived = 2, /**< PushIncoming call received */
-	LinphoneCallStateOutgoingInit = 3, /**< Outgoing call initialized */
-	LinphoneCallStateOutgoingProgress = 4, /**< Outgoing call in progress */
-	LinphoneCallStateOutgoingRinging = 5, /**< Outgoing call ringing */
-	LinphoneCallStateOutgoingEarlyMedia = 6, /**< Outgoing call early media */
-	LinphoneCallStateConnected = 7, /**< Connected */
-	LinphoneCallStateStreamsRunning = 8, /**< Streams running */
-	LinphoneCallStatePausing = 9, /**< Pausing */
-	LinphoneCallStatePaused = 10, /**< Paused */
-	LinphoneCallStateResuming = 11, /**< Resuming */
-	LinphoneCallStateReferred = 12, /**< Referred */
-	LinphoneCallStateError = 13, /**< Error */
-	LinphoneCallStateEnd = 14, /**< Call end */
-	LinphoneCallStatePausedByRemote = 15, /**< Paused by remote */
-	LinphoneCallStateUpdatedByRemote = 16, /**< The call&apos;s parameters are updated for example when video is asked by remote */
+	LinphoneCallStateOutgoingInit = 3,         /**< Outgoing call initialized */
+	LinphoneCallStateOutgoingProgress = 4,     /**< Outgoing call in progress */
+	LinphoneCallStateOutgoingRinging = 5,      /**< Outgoing call ringing */
+	LinphoneCallStateOutgoingEarlyMedia = 6,   /**< Outgoing call early media */
+	LinphoneCallStateConnected = 7,            /**< Connected */
+	LinphoneCallStateStreamsRunning = 8,       /**< Streams running */
+	LinphoneCallStatePausing = 9,              /**< Pausing */
+	LinphoneCallStatePaused = 10,              /**< Paused */
+	LinphoneCallStateResuming = 11,            /**< Resuming */
+	LinphoneCallStateReferred = 12,            /**< Referred */
+	LinphoneCallStateError = 13,               /**< Error */
+	LinphoneCallStateEnd = 14,                 /**< Call end */
+	LinphoneCallStatePausedByRemote = 15,      /**< Paused by remote */
+	LinphoneCallStateUpdatedByRemote =
+	    16, /**< The call&apos;s parameters are updated for example when video is asked by remote */
 	LinphoneCallStateIncomingEarlyMedia = 17, /**< We are proposing early media to an incoming call */
-	LinphoneCallStateUpdating = 18, /**< We have initiated a call update */
-	LinphoneCallStateReleased = 19, /**< The call object is now released */
-	LinphoneCallStateEarlyUpdatedByRemote = 20, /**< The call is updated by remote while not yet answered (SIP UPDATE in early dialog received) */
-	LinphoneCallStateEarlyUpdating = 21, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
+	LinphoneCallStateUpdating = 18,           /**< We have initiated a call update */
+	LinphoneCallStateReleased = 19,           /**< The call object is now released */
+	LinphoneCallStateEarlyUpdatedByRemote =
+	    20, /**< The call is updated by remote while not yet answered (SIP UPDATE in early dialog received) */
+	LinphoneCallStateEarlyUpdating =
+	    21, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
 } LinphoneCallState;
 
 /**
@@ -57,18 +60,18 @@ typedef enum _LinphoneCallState{
  * @ingroup audio
  */
 typedef enum _LinphoneAudioDeviceType {
-	LinphoneAudioDeviceTypeUnknown = 0, /** Unknown */
-	LinphoneAudioDeviceTypeMicrophone = 1, /** Microphone */
-	LinphoneAudioDeviceTypeEarpiece = 2, /** Earpiece */
-	LinphoneAudioDeviceTypeSpeaker = 3, /** Speaker */
-	LinphoneAudioDeviceTypeBluetooth = 4, /** Bluetooth */
+	LinphoneAudioDeviceTypeUnknown = 0,       /** Unknown */
+	LinphoneAudioDeviceTypeMicrophone = 1,    /** Microphone */
+	LinphoneAudioDeviceTypeEarpiece = 2,      /** Earpiece */
+	LinphoneAudioDeviceTypeSpeaker = 3,       /** Speaker */
+	LinphoneAudioDeviceTypeBluetooth = 4,     /** Bluetooth */
 	LinphoneAudioDeviceTypeBluetoothA2DP = 5, /** Bluetooth A2DP */
-	LinphoneAudioDeviceTypeTelephony = 6, /** Telephony */
-	LinphoneAudioDeviceTypeAuxLine = 7, /** AuxLine */
-	LinphoneAudioDeviceTypeGenericUsb = 8, /** GenericUsb */
-	LinphoneAudioDeviceTypeHeadset = 9, /** Headset */
-	LinphoneAudioDeviceTypeHeadphones = 10, /** Headphones */
-	LinphoneAudioDeviceTypeHearingAid = 11, /** Hearing Aid */
+	LinphoneAudioDeviceTypeTelephony = 6,     /** Telephony */
+	LinphoneAudioDeviceTypeAuxLine = 7,       /** AuxLine */
+	LinphoneAudioDeviceTypeGenericUsb = 8,    /** GenericUsb */
+	LinphoneAudioDeviceTypeHeadset = 9,       /** Headset */
+	LinphoneAudioDeviceTypeHeadphones = 10,   /** Headphones */
+	LinphoneAudioDeviceTypeHearingAid = 11,   /** Hearing Aid */
 } LinphoneAudioDeviceType;
 
 /**
@@ -77,8 +80,8 @@ typedef enum _LinphoneAudioDeviceType {
  */
 typedef enum _LinphoneAudioDeviceCapabilities {
 	LinphoneAudioDeviceCapabilityRecord = 1 << 0, /** Can record audio */
-	LinphoneAudioDeviceCapabilityPlay = 1 << 1, /** Can play audio */
-	LinphoneAudioDeviceCapabilityAll = 3, /** Can play and record audio */
+	LinphoneAudioDeviceCapabilityPlay = 1 << 1,   /** Can play audio */
+	LinphoneAudioDeviceCapabilityAll = 3,         /** Can play and record audio */
 } LinphoneAudioDeviceCapabilities;
 
 // =============================================================================

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 
 #include "linphone/utils/utils.h"
 
-#include "sqlite3_bctbx_vfs.h"
 #include "db-session.h"
 #include "logger/logger.h"
+#include "sqlite3_bctbx_vfs.h"
 
 // =============================================================================
 
@@ -32,31 +32,30 @@ LINPHONE_BEGIN_NAMESPACE
 
 class DbSessionPrivate {
 public:
-	enum class Backend {
-		None,
-		Mysql,
-		Sqlite3
-	} backend = Backend::None;
+	enum class Backend { None, Mysql, Sqlite3 } backend = Backend::None;
 
 	std::unique_ptr<soci::session> backendSession;
 };
 
-DbSession::DbSession () : mPrivate(new DbSessionPrivate) {}
+DbSession::DbSession() : mPrivate(new DbSessionPrivate) {
+}
 
-DbSession::DbSession (const string &uri) : DbSession() {
+DbSession::DbSession(const string &uri) : DbSession() {
 	try {
 		L_D();
 		auto sqlitePos = uri.find("sqlite3://");
 		if (sqlitePos != std::string::npos) { // opening a sqlite3 db, force SOCI to use the bctbx_sqlite3_vfs
 			// uri might be just the filepath, add a db= in front of it in that case
 			std::string uriArgs{uri};
-			if ((uri.find("db=")==std::string::npos) && (uri.find("dbname=")==std::string::npos)) { // db name parameter can be db= or dbname=
+			if ((uri.find("db=") == std::string::npos) &&
+			    (uri.find("dbname=") == std::string::npos)) { // db name parameter can be db= or dbname=
 				// Add the db= prefix
-				if (uriArgs[sqlitePos+10] != '"') { // file path is not enclosed in quotes, do it too
-					uriArgs.insert(sqlitePos+10, "db=\""); // insert just after "sqlite3://" position +10
+				if (uriArgs[sqlitePos + 10] != '"') {        // file path is not enclosed in quotes, do it too
+					uriArgs.insert(sqlitePos + 10, "db=\""); // insert just after "sqlite3://" position +10
 					uriArgs.push_back('\"');
 				} else { // file path is already enclosed in quotes
-					uriArgs.insert(sqlitePos+10, "db="); // insert just after "sqlite3://" position +10, before the opening "
+					uriArgs.insert(sqlitePos + 10,
+					               "db="); // insert just after "sqlite3://" position +10, before the opening "
 				}
 			}
 			uriArgs.append(" vfs=").append(BCTBX_SQLITE3_VFS);
@@ -70,30 +69,30 @@ DbSession::DbSession (const string &uri) : DbSession() {
 	}
 }
 
-DbSession::DbSession (DbSession &&other) : mPrivate(other.mPrivate) {
+DbSession::DbSession(DbSession &&other) : mPrivate(other.mPrivate) {
 	other.mPrivate = nullptr;
 }
 
-DbSession::~DbSession () {
+DbSession::~DbSession() {
 	delete mPrivate;
 }
 
-DbSession &DbSession::operator= (DbSession &&other) {
+DbSession &DbSession::operator=(DbSession &&other) {
 	std::swap(mPrivate, other.mPrivate);
 	return *this;
 }
 
-DbSession::operator bool () const {
+DbSession::operator bool() const {
 	L_D();
 	return d->backend != DbSessionPrivate::Backend::None;
 }
 
-soci::session *DbSession::getBackendSession () const {
+soci::session *DbSession::getBackendSession() const {
 	L_D();
 	return d->backendSession.get();
 }
 
-string DbSession::primaryKeyStr (const string &type) const {
+string DbSession::primaryKeyStr(const string &type) const {
 	L_D();
 
 	switch (d->backend) {
@@ -111,7 +110,7 @@ string DbSession::primaryKeyStr (const string &type) const {
 	return "";
 }
 
-string DbSession::primaryKeyRefStr (const string &type) const {
+string DbSession::primaryKeyRefStr(const string &type) const {
 	L_D();
 
 	switch (d->backend) {
@@ -127,7 +126,7 @@ string DbSession::primaryKeyRefStr (const string &type) const {
 	return "";
 }
 
-string DbSession::varcharPrimaryKeyStr (int length) const {
+string DbSession::varcharPrimaryKeyStr(int length) const {
 	L_D();
 
 	switch (d->backend) {
@@ -143,7 +142,7 @@ string DbSession::varcharPrimaryKeyStr (int length) const {
 	return "";
 }
 
-string DbSession::currentTimestamp () const {
+string DbSession::currentTimestamp() const {
 	L_D();
 
 	switch (d->backend) {
@@ -155,12 +154,8 @@ string DbSession::currentTimestamp () const {
 			const tm &now = Utils::getTimeTAsTm(std::time(nullptr));
 
 			char buffer[128];
-			snprintf(
-				buffer,
-				sizeof buffer,
-				"'%d-%02d-%02d %02d:%02d:%02d'",
-				now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec
-			);
+			snprintf(buffer, sizeof buffer, "'%d-%02d-%02d %02d:%02d:%02d'", now.tm_year + 1900, now.tm_mon + 1,
+			         now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec);
 			return buffer;
 		}
 		case DbSessionPrivate::Backend::None:
@@ -171,7 +166,7 @@ string DbSession::currentTimestamp () const {
 	return "";
 }
 
-string DbSession::timestampType () const {
+string DbSession::timestampType() const {
 	L_D();
 
 	switch (d->backend) {
@@ -187,7 +182,7 @@ string DbSession::timestampType () const {
 	return "";
 }
 
-string DbSession::noLimitValue () const {
+string DbSession::noLimitValue() const {
 	L_D();
 
 	switch (d->backend) {
@@ -203,7 +198,7 @@ string DbSession::noLimitValue () const {
 	return "";
 }
 
-long long DbSession::getLastInsertId () const {
+long long DbSession::getLastInsertId() const {
 	long long id = 0;
 
 	L_D();
@@ -227,7 +222,7 @@ long long DbSession::getLastInsertId () const {
 	return id;
 }
 
-void DbSession::enableForeignKeys (bool status) {
+void DbSession::enableForeignKeys(bool status) {
 	L_D();
 
 	switch (d->backend) {
@@ -242,7 +237,7 @@ void DbSession::enableForeignKeys (bool status) {
 	}
 }
 
-bool DbSession::checkTableExists (const string &table) const {
+bool DbSession::checkTableExists(const string &table) const {
 	L_D();
 
 	soci::session *session = d->backendSession.get();
@@ -261,7 +256,7 @@ bool DbSession::checkTableExists (const string &table) const {
 	return false;
 }
 
-long long DbSession::resolveId (const soci::row &row, int col) const {
+long long DbSession::resolveId(const soci::row &row, int col) const {
 	L_D();
 
 	switch (d->backend) {
@@ -277,7 +272,7 @@ long long DbSession::resolveId (const soci::row &row, int col) const {
 	return 0;
 }
 
-unsigned int DbSession::getUnsignedInt (const soci::row &row, const std::size_t col, const unsigned int def) const {
+unsigned int DbSession::getUnsignedInt(const soci::row &row, const std::size_t col, const unsigned int def) const {
 	L_D();
 
 	switch (d->backend) {
@@ -293,7 +288,7 @@ unsigned int DbSession::getUnsignedInt (const soci::row &row, const std::size_t 
 	return 0;
 }
 
-time_t DbSession::getTime (const soci::row &row, int col) const {
+time_t DbSession::getTime(const soci::row &row, int col) const {
 	L_D();
 
 	tm t = row.get<tm>((size_t)col);

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,19 +22,19 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "core/core.h"
-#include "recorder/recorder.h"
 #include "recorder/recorder-params.h"
-
+#include "recorder/recorder.h"
 
 // =============================================================================
 
 using namespace LinphonePrivate;
 
-LinphoneRecorder* linphone_recorder_new(LinphoneCore *core, LinphoneRecorderParams *params) {
-	return Recorder::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core), RecorderParams::toCpp(params)->getSharedFromThis());
+LinphoneRecorder *linphone_recorder_new(LinphoneCore *core, LinphoneRecorderParams *params) {
+	return Recorder::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core),
+	                               RecorderParams::toCpp(params)->getSharedFromThis());
 }
 
-LinphoneRecorder* linphone_recorder_ref(LinphoneRecorder *recorder) {
+LinphoneRecorder *linphone_recorder_ref(LinphoneRecorder *recorder) {
 	Recorder::toCpp(recorder)->ref();
 	return recorder;
 }
@@ -51,7 +51,7 @@ void linphone_recorder_close(LinphoneRecorder *recorder) {
 	Recorder::toCpp(recorder)->close();
 }
 
-const char* linphone_recorder_get_file(const LinphoneRecorder *recorder) {
+const char *linphone_recorder_get_file(const LinphoneRecorder *recorder) {
 	return L_STRING_TO_C(Recorder::toCpp(recorder)->getFile());
 }
 

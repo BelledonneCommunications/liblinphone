@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,32 +22,26 @@
 
 using namespace std;
 
-AnswerCommand::AnswerCommand() :
-		DaemonCommand("answer", "answer <call_id>", "Answer an incoming call.") {
-	addExample(make_unique<DaemonCommandExample>("answer 3",
-						"Status: Error\n"
-						"Reason: No call with such id."));
-	addExample(make_unique<DaemonCommandExample>("answer 2",
-						"Status: Error\n"
-						"Reason: Can't accept this call."));
-	addExample(make_unique<DaemonCommandExample>("answer 1",
-						"Status: Ok"));
-	addExample(make_unique<DaemonCommandExample>("answer",
-						"Status: Ok"));
-	addExample(make_unique<DaemonCommandExample>("answer",
-						"Status: Error\n"
-						"Reason: No call to accept."));
+AnswerCommand::AnswerCommand() : DaemonCommand("answer", "answer <call_id>", "Answer an incoming call.") {
+	addExample(make_unique<DaemonCommandExample>("answer 3", "Status: Error\n"
+	                                                         "Reason: No call with such id."));
+	addExample(make_unique<DaemonCommandExample>("answer 2", "Status: Error\n"
+	                                                         "Reason: Can't accept this call."));
+	addExample(make_unique<DaemonCommandExample>("answer 1", "Status: Ok"));
+	addExample(make_unique<DaemonCommandExample>("answer", "Status: Ok"));
+	addExample(make_unique<DaemonCommandExample>("answer", "Status: Error\n"
+	                                                       "Reason: No call to accept."));
 }
 
-void AnswerCommand::exec(Daemon *app, const string& args) {
+void AnswerCommand::exec(Daemon *app, const string &args) {
 	LinphoneCore *lc = app->getCore();
 	int cid;
 	LinphoneCall *call;
 	istringstream ist(args);
 	ist >> cid;
 	if (ist.fail()) {
-		for (const MSList* elem = linphone_core_get_calls(lc); elem != NULL; elem = elem->next) {
-			call = (LinphoneCall*)elem->data;
+		for (const MSList *elem = linphone_core_get_calls(lc); elem != NULL; elem = elem->next) {
+			call = (LinphoneCall *)elem->data;
 			LinphoneCallState cstate = linphone_call_get_state(call);
 			if (cstate == LinphoneCallIncomingReceived || cstate == LinphoneCallIncomingEarlyMedia) {
 				if (linphone_call_accept(call) == 0) {

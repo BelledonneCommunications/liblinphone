@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,14 +20,14 @@
 
 #include <bctoolbox/crypto.h>
 
-#include <belcard/belcard_parser.hpp>
 #include <belcard/belcard.hpp>
+#include <belcard/belcard_parser.hpp>
 
-#include "linphone/factory.h"
-#include "linphone/wrapper_utils.h"
-#include "linphone/utils/utils.h"
-#include "linphone/api/c-friend-phone-number.h"
 #include "friend/friend_phone_number.h"
+#include "linphone/api/c-friend-phone-number.h"
+#include "linphone/factory.h"
+#include "linphone/utils/utils.h"
+#include "linphone/wrapper_utils.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-sal.h"
@@ -44,8 +44,8 @@ struct _LinphoneVcardContext {
 
 extern "C" {
 
-LinphoneVcardContext* linphone_vcard_context_new(void) {
-	LinphoneVcardContext* context = ms_new0(LinphoneVcardContext, 1);
+LinphoneVcardContext *linphone_vcard_context_new(void) {
+	LinphoneVcardContext *context = ms_new0(LinphoneVcardContext, 1);
 	new (&context->parser) shared_ptr<belcard::BelCardParser>(belcard::BelCardParser::getInstance());
 	context->user_data = NULL;
 	return context;
@@ -58,17 +58,15 @@ void linphone_vcard_context_destroy(LinphoneVcardContext *context) {
 	}
 }
 
-void* linphone_vcard_context_get_user_data(const LinphoneVcardContext *context) {
+void *linphone_vcard_context_get_user_data(const LinphoneVcardContext *context) {
 	return context ? context->user_data : NULL;
 }
-
 
 void linphone_vcard_context_set_user_data(LinphoneVcardContext *context, void *data) {
 	if (context) context->user_data = data;
 }
 
 } // extern "C"
-
 
 struct _LinphoneVcard {
 	belle_sip_object_t base;
@@ -90,15 +88,15 @@ static void _linphone_vcard_uninit(LinphoneVcard *vCard) {
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneVcard);
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneVcard);
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneVcard, belle_sip_object_t,
-	_linphone_vcard_uninit, // destroy
-	NULL, // clone
-	NULL, // Marshall
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneVcard,
+                           belle_sip_object_t,
+                           _linphone_vcard_uninit, // destroy
+                           NULL,                   // clone
+                           NULL,                   // Marshall
+                           FALSE);
 
-LinphoneVcard* _linphone_vcard_new(void) {
-	LinphoneVcard* vCard = belle_sip_object_new(LinphoneVcard);
+LinphoneVcard *_linphone_vcard_new(void) {
+	LinphoneVcard *vCard = belle_sip_object_new(LinphoneVcard);
 	new (&vCard->belCard) shared_ptr<belcard::BelCard>(belcard::BelCardGeneric::create<belcard::BelCard>());
 	return vCard;
 }
@@ -107,8 +105,8 @@ LinphoneVcard *linphone_vcard_new(void) {
 	return _linphone_vcard_new();
 }
 
-static LinphoneVcard* linphone_vcard_new_from_belcard(shared_ptr<belcard::BelCard> belcard) {
-	LinphoneVcard* vCard = belle_sip_object_new(LinphoneVcard);
+static LinphoneVcard *linphone_vcard_new_from_belcard(shared_ptr<belcard::BelCard> belcard) {
+	LinphoneVcard *vCard = belle_sip_object_new(LinphoneVcard);
 	new (&vCard->belCard) shared_ptr<belcard::BelCard>(belcard);
 	return vCard;
 }
@@ -128,7 +126,8 @@ void linphone_vcard_unref(LinphoneVcard *vCard) {
 LinphoneVcard *linphone_vcard_clone(const LinphoneVcard *vCard) {
 	LinphoneVcard *copy = belle_sip_object_new(LinphoneVcard);
 
-	new (&copy->belCard) shared_ptr<belcard::BelCard>(belcard::BelCardParser::getInstance()->parseOne(vCard->belCard->toFoldedString()));
+	new (&copy->belCard)
+	    shared_ptr<belcard::BelCard>(belcard::BelCardParser::getInstance()->parseOne(vCard->belCard->toFoldedString()));
 
 	if (vCard->url) copy->url = ms_strdup(vCard->url);
 	if (vCard->etag) copy->etag = ms_strdup(vCard->etag);
@@ -138,7 +137,7 @@ LinphoneVcard *linphone_vcard_clone(const LinphoneVcard *vCard) {
 	return copy;
 }
 
-bctbx_list_t* linphone_vcard_context_get_vcard_list_from_file(LinphoneVcardContext *context, const char *filename) {
+bctbx_list_t *linphone_vcard_context_get_vcard_list_from_file(LinphoneVcardContext *context, const char *filename) {
 	bctbx_list_t *result = NULL;
 	if (context && filename) {
 		if (!context->parser) {
@@ -153,7 +152,7 @@ bctbx_list_t* linphone_vcard_context_get_vcard_list_from_file(LinphoneVcardConte
 	return result;
 }
 
-bctbx_list_t* linphone_vcard_context_get_vcard_list_from_buffer(LinphoneVcardContext *context, const char *buffer) {
+bctbx_list_t *linphone_vcard_context_get_vcard_list_from_buffer(LinphoneVcardContext *context, const char *buffer) {
 	bctbx_list_t *result = NULL;
 	if (context && buffer) {
 		if (!context->parser) {
@@ -168,7 +167,7 @@ bctbx_list_t* linphone_vcard_context_get_vcard_list_from_buffer(LinphoneVcardCon
 	return result;
 }
 
-LinphoneVcard* linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext *context, const char *buffer) {
+LinphoneVcard *linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext *context, const char *buffer) {
 	LinphoneVcard *vCard = NULL;
 	if (context && buffer) {
 		if (!context->parser) {
@@ -184,7 +183,7 @@ LinphoneVcard* linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext
 	return vCard;
 }
 
-const char * linphone_vcard_as_vcard4_string(LinphoneVcard *vCard) {
+const char *linphone_vcard_as_vcard4_string(LinphoneVcard *vCard) {
 	if (!vCard) return NULL;
 
 	return vCard->belCard->toFoldedString().c_str();
@@ -206,7 +205,7 @@ void linphone_vcard_set_full_name(LinphoneVcard *vCard, const char *name) {
 	}
 }
 
-const char* linphone_vcard_get_full_name(const LinphoneVcard *vCard) {
+const char *linphone_vcard_get_full_name(const LinphoneVcard *vCard) {
 	if (!vCard) return NULL;
 
 	const char *result = vCard->belCard->getFullName() ? vCard->belCard->getFullName()->getValue().c_str() : NULL;
@@ -238,7 +237,7 @@ void linphone_vcard_set_family_name(LinphoneVcard *vCard, const char *name) {
 	}
 }
 
-const char* linphone_vcard_get_family_name(const LinphoneVcard *vCard) {
+const char *linphone_vcard_get_family_name(const LinphoneVcard *vCard) {
 	if (!vCard) return NULL;
 
 	const char *result = vCard->belCard->getName() ? vCard->belCard->getName()->getFamilyName().c_str() : NULL;
@@ -257,7 +256,7 @@ void linphone_vcard_set_given_name(LinphoneVcard *vCard, const char *name) {
 	}
 }
 
-const char* linphone_vcard_get_given_name(const LinphoneVcard *vCard) {
+const char *linphone_vcard_get_given_name(const LinphoneVcard *vCard) {
 	if (!vCard) return NULL;
 
 	const char *result = vCard->belCard->getName() ? vCard->belCard->getName()->getGivenName().c_str() : NULL;
@@ -301,14 +300,14 @@ void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, const char *sip_
 	}
 }
 
-const bctbx_list_t* linphone_vcard_get_sip_addresses(LinphoneVcard *vCard) {
+const bctbx_list_t *linphone_vcard_get_sip_addresses(LinphoneVcard *vCard) {
 	if (!vCard) return NULL;
 	if (!vCard->sip_addresses_cache) {
 		for (auto &impp : vCard->belCard->getImpp()) {
-			LinphoneAddress* addr = linphone_address_new(impp->getValue().c_str());
+			LinphoneAddress *addr = linphone_address_new(impp->getValue().c_str());
 			if (addr) {
 				auto displayName = vCard->belCard->getFullName();
-				if( linphone_address_get_display_name(addr) == NULL && displayName)
+				if (linphone_address_get_display_name(addr) == NULL && displayName)
 					linphone_address_set_display_name(addr, displayName->getValue().c_str());
 				vCard->sip_addresses_cache = bctbx_list_append(vCard->sip_addresses_cache, addr);
 			}
@@ -320,7 +319,8 @@ const bctbx_list_t* linphone_vcard_get_sip_addresses(LinphoneVcard *vCard) {
 void linphone_vcard_add_phone_number(LinphoneVcard *vCard, const char *phone) {
 	if (!vCard || !phone) return;
 
-	shared_ptr<belcard::BelCardPhoneNumber> phone_number = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+	shared_ptr<belcard::BelCardPhoneNumber> phone_number =
+	    belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
 	phone_number->setValue(phone);
 	if (!vCard->belCard->addPhoneNumber(phone_number)) {
 		ms_error("[vCard] Couldn't add TEL value [%s] to vCard [%p]", phone, vCard);
@@ -339,7 +339,7 @@ void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, const char *phone)
 	}
 }
 
-bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard) {
+bctbx_list_t *linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard) {
 	bctbx_list_t *result = NULL;
 	if (!vCard) return NULL;
 
@@ -350,17 +350,18 @@ bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard) {
 	return result;
 }
 
-
 void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard, LinphoneFriendPhoneNumber *phoneNumber) {
 	if (!vCard || !phoneNumber) return;
 
-	shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber = LinphonePrivate::FriendPhoneNumber::toCpp(phoneNumber)->toBelcardPhoneNumber();
+	shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber =
+	    LinphonePrivate::FriendPhoneNumber::toCpp(phoneNumber)->toBelcardPhoneNumber();
 	if (!vCard->belCard->addPhoneNumber(belcardPhoneNumber)) {
 		const char *phone = linphone_friend_phone_number_get_phone_number(phoneNumber);
 		const char *label = linphone_friend_phone_number_get_label(phoneNumber);
 		ms_error("[vCard] Couldn't add TEL value [%s] with label [%s] to vCard [%p]", phone, label, vCard);
 
-		shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumberWithoutLabel = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+		shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumberWithoutLabel =
+		    belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
 		belcardPhoneNumberWithoutLabel->setValue(phone);
 		if (!vCard->belCard->addPhoneNumber(belcardPhoneNumberWithoutLabel)) {
 			ms_error("[vCard] Couldn't add TEL value [%s] without label to vCard [%p] either!", phone, vCard);
@@ -383,7 +384,7 @@ void linphone_vcard_remove_phone_number_with_label(LinphoneVcard *vCard, const L
 	}
 }
 
-bctbx_list_t* linphone_vcard_get_phone_numbers_with_label(const LinphoneVcard *vCard) {
+bctbx_list_t *linphone_vcard_get_phone_numbers_with_label(const LinphoneVcard *vCard) {
 	bctbx_list_t *result = NULL;
 	if (!vCard) return NULL;
 
@@ -411,7 +412,7 @@ void linphone_vcard_set_organization(LinphoneVcard *vCard, const char *organizat
 	}
 }
 
-const char* linphone_vcard_get_organization(const LinphoneVcard *vCard) {
+const char *linphone_vcard_get_organization(const LinphoneVcard *vCard) {
 	if (vCard && vCard->belCard->getOrganizations().size() > 0) {
 		const shared_ptr<belcard::BelCardOrganization> org = vCard->belCard->getOrganizations().front();
 		return org->getValue().c_str();
@@ -484,14 +485,14 @@ void linphone_vcard_set_uid(LinphoneVcard *vCard, const char *uid) {
 	vCard->belCard->setUniqueId(uniqueId);
 }
 
-const char* linphone_vcard_get_uid(const LinphoneVcard *vCard) {
+const char *linphone_vcard_get_uid(const LinphoneVcard *vCard) {
 	if (vCard && vCard->belCard->getUniqueId()) {
 		return vCard->belCard->getUniqueId()->getValue().c_str();
 	}
 	return NULL;
 }
 
-void linphone_vcard_set_etag(LinphoneVcard *vCard, const char * etag) {
+void linphone_vcard_set_etag(LinphoneVcard *vCard, const char *etag) {
 	if (!vCard) {
 		return;
 	}
@@ -502,12 +503,12 @@ void linphone_vcard_set_etag(LinphoneVcard *vCard, const char * etag) {
 	vCard->etag = ms_strdup(etag);
 }
 
-const char* linphone_vcard_get_etag(const LinphoneVcard *vCard) {
+const char *linphone_vcard_get_etag(const LinphoneVcard *vCard) {
 	if (!vCard) return NULL;
 	return vCard->etag;
 }
 
-void linphone_vcard_set_url(LinphoneVcard *vCard, const char * url) {
+void linphone_vcard_set_url(LinphoneVcard *vCard, const char *url) {
 	if (!vCard) {
 		return;
 	}
@@ -518,7 +519,7 @@ void linphone_vcard_set_url(LinphoneVcard *vCard, const char * url) {
 	vCard->url = ms_strdup(url);
 }
 
-const char* linphone_vcard_get_url(const LinphoneVcard *vCard) {
+const char *linphone_vcard_get_url(const LinphoneVcard *vCard) {
 	if (!vCard) return NULL;
 	return vCard->url;
 }
@@ -542,11 +543,12 @@ bool_t linphone_core_vcard_supported(void) {
 }
 
 void linphone_vcard_clean_cache(LinphoneVcard *vCard) {
-	if (vCard->sip_addresses_cache) bctbx_list_free_with_data(vCard->sip_addresses_cache, (void (*)(void*))linphone_address_unref);
+	if (vCard->sip_addresses_cache)
+		bctbx_list_free_with_data(vCard->sip_addresses_cache, (void (*)(void *))linphone_address_unref);
 	vCard->sip_addresses_cache = NULL;
 }
 
-bctbx_list_t* linphone_vcard_get_extended_properties_values_by_name(const LinphoneVcard *vCard, const char *name) {
+bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(const LinphoneVcard *vCard, const char *name) {
 	bctbx_list_t *result = NULL;
 
 	for (auto &property : vCard->belCard->getExtendedProperties()) {

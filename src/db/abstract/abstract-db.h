@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,12 +32,9 @@ class AbstractDbPrivate;
 
 class LINPHONE_INTERNAL_PUBLIC AbstractDb : public Object {
 public:
-	enum Backend {
-		Mysql,
-		Sqlite3
-	};
+	enum Backend { Mysql, Sqlite3 };
 
-	virtual ~AbstractDb () = default;
+	virtual ~AbstractDb() = default;
 
 	/*
 	 * Connect to the database, using specified backend.
@@ -45,29 +42,31 @@ public:
 	 * - a file path if sqlite3 backend is used. If the path contains spaces, it must be enclosed within quotes.
 	 * - a database name if using mysql.
 	 * Then optional parameters can be added, in the form "param-name=param-value", separated with spaces.
-	 * The meaning of these optional parameters is implementation dependant, refer to SOCI documentation for more details.
+	 * The meaning of these optional parameters is implementation dependant, refer to SOCI documentation for more
+	 * details.
 	 */
-	bool connect (Backend backend, const std::string &nameParams);
-	void disconnect ();
+	bool connect(Backend backend, const std::string &nameParams);
+	void disconnect();
 
-	bool forceReconnect ();
+	bool forceReconnect();
 
-	Backend getBackend () const;
+	Backend getBackend() const;
 
-	virtual bool import (Backend backend, const std::string &parameters);
+	virtual bool import(Backend backend, const std::string &parameters);
 
 	bool isInitialized() const;
-protected:
-	explicit AbstractDb (AbstractDbPrivate &p);
 
-	virtual void init ();
+protected:
+	explicit AbstractDb(AbstractDbPrivate &p);
+
+	virtual void init();
 
 private:
 	L_DECLARE_PRIVATE(AbstractDb);
 	L_DISABLE_COPY(AbstractDb);
 };
 
-std::ostream& operator<<(std::ostream& os, AbstractDb::Backend b);
+std::ostream &operator<<(std::ostream &os, AbstractDb::Backend b);
 
 LINPHONE_END_NAMESPACE
 

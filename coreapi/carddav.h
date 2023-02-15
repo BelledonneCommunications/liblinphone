@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ extern "C" {
  * @addtogroup carddav_vcard
  * @{
  */
-	
+
 typedef struct _LinphoneCardDavContext LinphoneCardDavContext;
 
 typedef enum _LinphoneCardDavQueryType {
@@ -48,22 +48,24 @@ typedef struct _LinphoneCardDavResponse LinphoneCardDavResponse;
 
 /**
  * Callback used to notify a new contact has been created on the CardDAV server
-**/
+ **/
 typedef void (*LinphoneCardDavContactCreatedCb)(LinphoneCardDavContext *cdc, LinphoneFriend *lf);
 
 /**
  * Callback used to notify a contact has been updated on the CardDAV server
-**/
-typedef void (*LinphoneCardDavContactUpdatedCb)(LinphoneCardDavContext *cdc, LinphoneFriend *new_friend, LinphoneFriend *old_friend);
+ **/
+typedef void (*LinphoneCardDavContactUpdatedCb)(LinphoneCardDavContext *cdc,
+                                                LinphoneFriend *new_friend,
+                                                LinphoneFriend *old_friend);
 
 /**
  * Callback used to notify a contact has been removed on the CardDAV server
-**/
+ **/
 typedef void (*LinphoneCardDavContactRemovedCb)(LinphoneCardDavContext *cdc, LinphoneFriend *lf);
 
 /**
  * Callback used to notify a contact has been removed on the CardDAV server
-**/
+ **/
 typedef void (*LinphoneCardDavSynchronizationDoneCb)(LinphoneCardDavContext *cdc, bool_t success, const char *message);
 
 /**
@@ -71,7 +73,7 @@ typedef void (*LinphoneCardDavSynchronizationDoneCb)(LinphoneCardDavContext *cdc
  * @param lfl LinphoneFriendList object
  * @return LinphoneCardDavContext object if vCard support is enabled and server URL is available, NULL otherwise
  */
-LINPHONE_PUBLIC LinphoneCardDavContext* linphone_carddav_context_new(LinphoneFriendList *lfl);
+LINPHONE_PUBLIC LinphoneCardDavContext *linphone_carddav_context_new(LinphoneFriendList *lfl);
 
 /**
  * Deletes a LinphoneCardDavContext object
@@ -91,7 +93,7 @@ LINPHONE_PUBLIC void linphone_carddav_set_user_data(LinphoneCardDavContext *cdc,
  * @param cdc LinphoneCardDavContext object
  * @return The user data pointer if set, NULL otherwise
  */
-LINPHONE_PUBLIC void* linphone_carddav_get_user_data(LinphoneCardDavContext *cdc);
+LINPHONE_PUBLIC void *linphone_carddav_get_user_data(LinphoneCardDavContext *cdc);
 
 /**
  * Starts a synchronization with the remote server to update local friends with server changes
@@ -107,7 +109,7 @@ LINPHONE_PUBLIC void linphone_carddav_synchronize(LinphoneCardDavContext *cdc);
 LINPHONE_PUBLIC void linphone_carddav_put_vcard(LinphoneCardDavContext *cdc, LinphoneFriend *lf);
 
 /**
- * Deletes a LinphoneFriend on the CardDAV server 
+ * Deletes a LinphoneFriend on the CardDAV server
  * @param cdc LinphoneCardDavContext object
  * @param lf a LinphoneFriend object to delete on the server
  */
@@ -118,28 +120,32 @@ LINPHONE_PUBLIC void linphone_carddav_delete_vcard(LinphoneCardDavContext *cdc, 
  * @param cdc LinphoneCardDavContext object
  * @param cb The synchronization done callback to be used.
  */
-LINPHONE_PUBLIC void linphone_carddav_set_synchronization_done_callback(LinphoneCardDavContext *cdc, LinphoneCardDavSynchronizationDoneCb cb);
+LINPHONE_PUBLIC void linphone_carddav_set_synchronization_done_callback(LinphoneCardDavContext *cdc,
+                                                                        LinphoneCardDavSynchronizationDoneCb cb);
 
 /**
  * Set the new contact callback.
  * @param cdc LinphoneCardDavContext object
  * @param cb The new contact callback to be used.
  */
-LINPHONE_PUBLIC void linphone_carddav_set_new_contact_callback(LinphoneCardDavContext *cdc, LinphoneCardDavContactCreatedCb cb);
+LINPHONE_PUBLIC void linphone_carddav_set_new_contact_callback(LinphoneCardDavContext *cdc,
+                                                               LinphoneCardDavContactCreatedCb cb);
 
 /**
  * Set the updated contact callback.
  * @param cdc LinphoneCardDavContext object
  * @param cb The updated contact callback to be used.
  */
-LINPHONE_PUBLIC void linphone_carddav_set_updated_contact_callback(LinphoneCardDavContext *cdc, LinphoneCardDavContactUpdatedCb cb);
+LINPHONE_PUBLIC void linphone_carddav_set_updated_contact_callback(LinphoneCardDavContext *cdc,
+                                                                   LinphoneCardDavContactUpdatedCb cb);
 
 /**
  * Set the removed contact callback.
  * @param cdc LinphoneCardDavContext object
  * @param cb The removed contact callback to be used.
  */
-LINPHONE_PUBLIC void linphone_carddav_set_removed_contact_callback(LinphoneCardDavContext *cdc, LinphoneCardDavContactRemovedCb cb);
+LINPHONE_PUBLIC void linphone_carddav_set_removed_contact_callback(LinphoneCardDavContext *cdc,
+                                                                   LinphoneCardDavContactRemovedCb cb);
 
 /**
  * Retrieves the current cTag value for the remote server

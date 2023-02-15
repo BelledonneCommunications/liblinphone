@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/api/c-factory.h"
-#include "factory/factory.h"
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/c-wrapper.h"
+#include "factory/factory.h"
+#include "linphone/api/c-factory.h"
 
 using namespace LinphonePrivate;
 
@@ -28,111 +30,75 @@ LinphoneFactory *linphone_factory_get(void) {
 	return Factory::get().get()->toC();
 }
 
-void linphone_factory_clean(void){
+void linphone_factory_clean(void) {
 	Factory::clean();
 }
 
-LinphoneCore *linphone_factory_create_core (
-		const LinphoneFactory *factory,
-		LinphoneCoreCbs *cbs,
-		const char *config_path,
-		const char *factory_config_path
-		) {
-	
+LinphoneCore *linphone_factory_create_core(const LinphoneFactory *factory,
+                                           LinphoneCoreCbs *cbs,
+                                           const char *config_path,
+                                           const char *factory_config_path) {
+
+	return Factory::toCpp(factory)->createCore(cbs, config_path ? config_path : "",
+	                                           factory_config_path ? factory_config_path : "");
+}
+
+LinphoneCore *linphone_factory_create_core_2(const LinphoneFactory *factory,
+                                             LinphoneCoreCbs *cbs,
+                                             const char *config_path,
+                                             const char *factory_config_path,
+                                             void *user_data,
+                                             void *system_context) {
 	return Factory::toCpp(factory)->createCore(
-				cbs,
-				config_path ? config_path : "",
-				factory_config_path ? factory_config_path : ""
-  );
-	
+	    cbs, config_path ? config_path : "", factory_config_path ? factory_config_path : "", user_data, system_context);
 }
 
-LinphoneCore *linphone_factory_create_core_2 (
-		const LinphoneFactory *factory,
-		LinphoneCoreCbs *cbs,
-		const char *config_path,
-		const char *factory_config_path,
-		void *user_data,
-		void *system_context
-		) {
-	return Factory::toCpp(factory)->createCore(
-				cbs,
-				config_path ? config_path : "",
-				factory_config_path ? factory_config_path : "",
-				user_data,
-				system_context
-				);
-	
+LinphoneCore *linphone_factory_create_core_3(const LinphoneFactory *factory,
+                                             const char *config_path,
+                                             const char *factory_config_path,
+                                             void *system_context) {
+	return Factory::toCpp(factory)->createCore(config_path ? config_path : "",
+	                                           factory_config_path ? factory_config_path : "", system_context);
 }
 
-LinphoneCore *linphone_factory_create_core_3 (
-		const LinphoneFactory *factory,
-		const char *config_path,
-		const char *factory_config_path,
-		void *system_context
-		) {
-	return Factory::toCpp(factory)->createCore(
-				config_path ? config_path : "",
-				factory_config_path ? factory_config_path : "",
-				system_context
-				);
-	
+LinphoneCore *linphone_factory_create_shared_core(const LinphoneFactory *factory,
+                                                  const char *config_filename,
+                                                  const char *factory_config_path,
+                                                  void *system_context,
+                                                  const char *app_group_id,
+                                                  bool_t main_core) {
+
+	return Factory::toCpp(factory)->createSharedCore(config_filename ? config_filename : "",
+	                                                 factory_config_path ? factory_config_path : "", system_context,
+	                                                 app_group_id ? app_group_id : "", main_core);
 }
 
-LinphoneCore *linphone_factory_create_shared_core (
-		const LinphoneFactory *factory,
-		const char *config_filename,
-		const char *factory_config_path,
-		void *system_context,
-		const char *app_group_id,
-		bool_t main_core
-		) {
-	
-	return Factory::toCpp(factory)->createSharedCore(
-				config_filename ? config_filename : "",
-				factory_config_path ? factory_config_path : "",
-				system_context,
-				app_group_id ? app_group_id : "",
-				main_core
-				);
-	
-}
-
-LinphoneCore *linphone_factory_create_core_with_config (
-		const LinphoneFactory *factory,
-		LinphoneCoreCbs *cbs,
-		LinphoneConfig *config
-		) {
+LinphoneCore *
+linphone_factory_create_core_with_config(const LinphoneFactory *factory, LinphoneCoreCbs *cbs, LinphoneConfig *config) {
 	return Factory::toCpp(factory)->createCoreWithConfig(cbs, config);
 }
 
-LinphoneCore *linphone_factory_create_core_with_config_2 (
-		const LinphoneFactory *factory,
-		LinphoneCoreCbs *cbs,
-		LinphoneConfig *config,
-		void *user_data,
-		void *system_context
-		) {
+LinphoneCore *linphone_factory_create_core_with_config_2(const LinphoneFactory *factory,
+                                                         LinphoneCoreCbs *cbs,
+                                                         LinphoneConfig *config,
+                                                         void *user_data,
+                                                         void *system_context) {
 	return Factory::toCpp(factory)->createCoreWithConfig(cbs, config, user_data, system_context);
 }
 
-LinphoneCore *linphone_factory_create_core_with_config_3 (
-		const LinphoneFactory *factory,
-		LinphoneConfig *config,
-		void *system_context
-		) {
+LinphoneCore *linphone_factory_create_core_with_config_3(const LinphoneFactory *factory,
+                                                         LinphoneConfig *config,
+                                                         void *system_context) {
 	return Factory::toCpp(factory)->createCoreWithConfig(config, system_context);
 }
 
-LinphoneCore *linphone_factory_create_shared_core_with_config (
-		const LinphoneFactory *factory,
-		LinphoneConfig *config,
-		void *system_context,
-		const char *app_group_id,
-		bool_t main_core
-		) {
-	return Factory::toCpp(factory)->createSharedCoreWithConfig(config, system_context, app_group_id ? app_group_id : "", main_core);
-	
+LinphoneCore *linphone_factory_create_shared_core_with_config(const LinphoneFactory *factory,
+                                                              LinphoneConfig *config,
+                                                              void *system_context,
+                                                              const char *app_group_id,
+                                                              bool_t main_core) {
+	return Factory::toCpp(factory)->createSharedCoreWithConfig(config, system_context, app_group_id ? app_group_id : "",
+	                                                           main_core);
 }
 
 LinphoneCoreCbs *linphone_factory_create_core_cbs(const LinphoneFactory *factory) {
@@ -143,65 +109,61 @@ LinphoneAddress *linphone_factory_create_address(const LinphoneFactory *factory,
 	return Factory::toCpp(factory)->createAddress(addr ? addr : "");
 }
 
-LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_identity(
-		const LinphoneFactory *factory,
-		const LinphoneAddress *address,
-		const char *name
-		) {
-	return Factory::toCpp(factory)->createParticipantDeviceIdentity(
-				address,
-				name ? name : "");
+LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_identity(const LinphoneFactory *factory,
+                                                                                       const LinphoneAddress *address,
+                                                                                       const char *name) {
+	return Factory::toCpp(factory)->createParticipantDeviceIdentity(address, name ? name : "");
 }
 
-LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) {
-	return Factory::toCpp(factory)->createAuthInfo(
-				username ? username : "",
-				userid ? userid : "",
-				passwd ? passwd : "",
-				ha1 ? ha1 : "",
-				realm ? realm : "",
-				domain ? domain : ""
-  );
+LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory,
+                                                    const char *username,
+                                                    const char *userid,
+                                                    const char *passwd,
+                                                    const char *ha1,
+                                                    const char *realm,
+                                                    const char *domain) {
+	return Factory::toCpp(factory)->createAuthInfo(username ? username : "", userid ? userid : "", passwd ? passwd : "",
+	                                               ha1 ? ha1 : "", realm ? realm : "", domain ? domain : "");
 }
 
-LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm) {
-	return Factory::toCpp(factory)->createAuthInfo(
-				username ? username : "",
-				userid ? userid : "",
-				passwd ? passwd : "",
-				ha1 ? ha1 : "",
-				realm ? realm : "",
-				domain ? domain : "",
-				algorithm ? algorithm : ""
-  );
-	
+LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *factory,
+                                                      const char *username,
+                                                      const char *userid,
+                                                      const char *passwd,
+                                                      const char *ha1,
+                                                      const char *realm,
+                                                      const char *domain,
+                                                      const char *algorithm) {
+	return Factory::toCpp(factory)->createAuthInfo(username ? username : "", userid ? userid : "", passwd ? passwd : "",
+	                                               ha1 ? ha1 : "", realm ? realm : "", domain ? domain : "",
+	                                               algorithm ? algorithm : "");
 }
 
-LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factory) {
+LinphoneCallCbs *linphone_factory_create_call_cbs(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createCallCbs();
 }
 
-LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory) {
+LinphoneConferenceCbs *linphone_factory_create_conference_cbs(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createConferenceCbs();
 }
 
-LinphoneParticipantDeviceCbs * linphone_factory_create_participant_device_cbs(const LinphoneFactory *factory) {
+LinphoneParticipantDeviceCbs *linphone_factory_create_participant_device_cbs(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createParticipantDeviceCbs();
 }
 
-LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {
+LinphoneChatRoomCbs *linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createChatRoomCbs();
 }
 
-LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory) {
+LinphoneChatMessageCbs *linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createChatMessageCbs();
 }
 
-LinphoneMagicSearchCbs * linphone_factory_create_magic_search_cbs(const LinphoneFactory *factory) {
+LinphoneMagicSearchCbs *linphone_factory_create_magic_search_cbs(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createMagicSearchCbs();
 }
 
-LinphoneDictionary * linphone_factory_create_dictionary(LinphoneFactory *factory) {
+LinphoneDictionary *linphone_factory_create_dictionary(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createDictionary();
 }
 
@@ -209,152 +171,132 @@ LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createVcard();
 }
 
-LinphoneVideoDefinition * linphone_factory_create_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height) {
+LinphoneVideoDefinition *
+linphone_factory_create_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height) {
 	return Factory::toCpp(factory)->createVideoDefinition(width, height);
-	
 }
 
-LinphoneVideoDefinition * linphone_factory_create_video_definition_from_name(const LinphoneFactory *factory, const char *name) {
-	return Factory::toCpp(factory)->createVideoDefinitionFromName(
-				name ? name : ""
-  );
+LinphoneVideoDefinition *linphone_factory_create_video_definition_from_name(const LinphoneFactory *factory,
+                                                                            const char *name) {
+	return Factory::toCpp(factory)->createVideoDefinitionFromName(name ? name : "");
 }
 
-const bctbx_list_t * linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory) {
+const bctbx_list_t *linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->getSupportedVideoDefinitions();
 }
 
-const bctbx_list_t * linphone_factory_get_recommended_video_definitions(const LinphoneFactory *factory) {
+const bctbx_list_t *linphone_factory_get_recommended_video_definitions(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->getRecommendedVideoDefinitions();
 }
 
-LinphoneVideoDefinition * linphone_factory_find_supported_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height) {
+LinphoneVideoDefinition *linphone_factory_find_supported_video_definition(const LinphoneFactory *factory,
+                                                                          unsigned int width,
+                                                                          unsigned int height) {
 	return Factory::toCpp(factory)->findSupportedVideoDefinition(width, height);
 }
 
-LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_name(const LinphoneFactory *factory, const char *name) {
-	return Factory::toCpp(factory)->findSupportedVideoDefinitionByName(
-				name ? name : ""
-  );
+LinphoneVideoDefinition *linphone_factory_find_supported_video_definition_by_name(const LinphoneFactory *factory,
+                                                                                  const char *name) {
+	return Factory::toCpp(factory)->findSupportedVideoDefinitionByName(name ? name : "");
 }
 
-const char * linphone_factory_get_top_resources_dir(const LinphoneFactory *factory) {
+const char *linphone_factory_get_top_resources_dir(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->getTopResourcesDir().c_str();
 }
 
 void linphone_factory_set_top_resources_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setTopResourcesDir(
-				path ? path : ""
-  );
+	Factory::toCpp(factory)->setTopResourcesDir(path ? path : "");
 }
 
-const char * linphone_factory_get_data_resources_dir(LinphoneFactory *factory) {
+const char *linphone_factory_get_data_resources_dir(LinphoneFactory *factory) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getDataResourcesDir());
 }
 
 void linphone_factory_set_data_resources_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setDataResourcesDir(
-				path ? path : ""
-  );
+	Factory::toCpp(factory)->setDataResourcesDir(path ? path : "");
 }
 
-const char * linphone_factory_get_sound_resources_dir(LinphoneFactory *factory) {
+const char *linphone_factory_get_sound_resources_dir(LinphoneFactory *factory) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getSoundResourcesDir());
 }
 
 void linphone_factory_set_sound_resources_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setSoundResourcesDir(
-				path ? path : ""
-  );
-	
+	Factory::toCpp(factory)->setSoundResourcesDir(path ? path : "");
 }
 
-const char * linphone_factory_get_ring_resources_dir(LinphoneFactory *factory) {
+const char *linphone_factory_get_ring_resources_dir(LinphoneFactory *factory) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getRingResourcesDir());
 }
 
 void linphone_factory_set_ring_resources_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setRingResourcesDir(
-				path ? path : ""
-  );
-	
+	Factory::toCpp(factory)->setRingResourcesDir(path ? path : "");
 }
 
-const char * linphone_factory_get_image_resources_dir(LinphoneFactory *factory) {
+const char *linphone_factory_get_image_resources_dir(LinphoneFactory *factory) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getImageResourcesDir());
 }
 
 void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setImageResourcesDir(
-				path ? path : ""
-    );
+	Factory::toCpp(factory)->setImageResourcesDir(path ? path : "");
 }
 
-const char * linphone_factory_get_msplugins_dir(LinphoneFactory *factory) {
+const char *linphone_factory_get_msplugins_dir(LinphoneFactory *factory) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getMspluginsDir());
 }
 
 void linphone_factory_set_msplugins_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setMspluginsDir(
-				path ? path : ""
-  );
+	Factory::toCpp(factory)->setMspluginsDir(path ? path : "");
 }
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getConfigDir(context));
 }
 
-bool_t linphone_factory_is_config_dir_set(const LinphoneFactory *factory){
+bool_t linphone_factory_is_config_dir_set(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->isConfigDirSet();
 }
 
 void linphone_factory_set_config_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setConfigDir(
-				path ? path : ""
-  );
+	Factory::toCpp(factory)->setConfigDir(path ? path : "");
 }
 
 const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getDataDir(context));
 }
 
-bool_t linphone_factory_is_data_dir_set(const LinphoneFactory *factory){
+bool_t linphone_factory_is_data_dir_set(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->isDataDirSet();
 }
 
 void linphone_factory_set_data_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setDataDir(
-				path ? path : ""
-  );
+	Factory::toCpp(factory)->setDataDir(path ? path : "");
 }
 
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getDownloadDir(context));
 }
 
-bool_t linphone_factory_is_download_dir_set(const LinphoneFactory *factory){
+bool_t linphone_factory_is_download_dir_set(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->isDownloadDirSet();
 }
 
 void linphone_factory_set_download_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setDownloadDir(
-				path ? path : "");
+	Factory::toCpp(factory)->setDownloadDir(path ? path : "");
 }
 
 const char *linphone_factory_get_cache_dir(LinphoneFactory *factory, void *context) {
 	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getCacheDir(context));
 }
 
-bool_t linphone_factory_is_cache_dir_set(const LinphoneFactory *factory){
+bool_t linphone_factory_is_cache_dir_set(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->isCacheDirSet();
 }
 
 void linphone_factory_set_cache_dir(LinphoneFactory *factory, const char *path) {
-	Factory::toCpp(factory)->setCacheDir(
-				path ? path : "");
+	Factory::toCpp(factory)->setCacheDir(path ? path : "");
 }
 
-LinphoneErrorInfo *linphone_factory_create_error_info(LinphoneFactory *factory){
+LinphoneErrorInfo *linphone_factory_create_error_info(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createErrorInfo();
 }
 
@@ -374,7 +316,7 @@ LinphoneContent *linphone_factory_create_content(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createContent();
 }
 
-LinphoneContent *linphone_factory_create_content_from_file(LinphoneFactory *factory, const char * file_path) {
+LinphoneContent *linphone_factory_create_content_from_file(LinphoneFactory *factory, const char *file_path) {
 	return Factory::toCpp(factory)->createContentFromFile(file_path);
 }
 
@@ -384,35 +326,26 @@ LinphoneBuffer *linphone_factory_create_buffer(LinphoneFactory *factory) {
 
 LinphoneBuffer *linphone_factory_create_buffer_from_data(LinphoneFactory *factory, const uint8_t *data, size_t size) {
 	return Factory::toCpp(factory)->createBufferFromData(data, size);
-	
 }
 
 LinphoneBuffer *linphone_factory_create_buffer_from_string(LinphoneFactory *factory, const char *data) {
-	return Factory::toCpp(factory)->createBufferFromString(
-				data ? data : ""
-  );
+	return Factory::toCpp(factory)->createBufferFromString(data ? data : "");
 }
 
 LinphoneConfig *linphone_factory_create_config(LinphoneFactory *factory, const char *path) {
-	return Factory::toCpp(factory)->createConfig(
-				path ? path : ""
-  );
+	return Factory::toCpp(factory)->createConfig(path ? path : "");
 }
 
-LinphoneConfig *linphone_factory_create_config_with_factory(LinphoneFactory *factory, const char *path, const char *factory_path) {
-	return Factory::toCpp(factory)->createConfigWithFactory(
-				path ? path : "",
-				factory_path ? factory_path : ""
-  );
+LinphoneConfig *
+linphone_factory_create_config_with_factory(LinphoneFactory *factory, const char *path, const char *factory_path) {
+	return Factory::toCpp(factory)->createConfigWithFactory(path ? path : "", factory_path ? factory_path : "");
 }
 
 LinphoneConfig *linphone_factory_create_config_from_string(LinphoneFactory *factory, const char *data) {
-	return Factory::toCpp(factory)->createConfigFromString(
-				data ? data : ""
-  );
+	return Factory::toCpp(factory)->createConfigFromString(data ? data : "");
 }
 
-const bctbx_list_t * linphone_factory_get_dial_plans(const LinphoneFactory *factory) {
+const bctbx_list_t *linphone_factory_get_dial_plans(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->getDialPlans();
 }
 
@@ -425,9 +358,7 @@ void linphone_factory_set_user_data(LinphoneFactory *factory, void *data) {
 }
 
 void linphone_factory_set_log_collection_path(LinphoneFactory *factory, const char *path) {
-	return Factory::toCpp(factory)->setLogCollectionPath(
-				path ? path : ""
-  );
+	return Factory::toCpp(factory)->setLogCollectionPath(path ? path : "");
 }
 
 void linphone_factory_enable_log_collection(LinphoneFactory *factory, LinphoneLogCollectionState state) {
@@ -438,7 +369,7 @@ LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *fac
 	return Factory::toCpp(factory)->createTunnelConfig();
 }
 
-LinphoneAccountCbs * linphone_factory_create_account_cbs(LinphoneFactory *factory) {
+LinphoneAccountCbs *linphone_factory_create_account_cbs(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createAccountCbs();
 }
 
@@ -466,7 +397,8 @@ LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_request_cbs(LinphoneFa
 	return Factory::toCpp(factory)->createXmlRpcRequestCbs();
 }
 
-bool_t linphone_factory_is_chatroom_backend_available(LinphoneFactory *factory, LinphoneChatRoomBackend chatroom_backend) {
+bool_t linphone_factory_is_chatroom_backend_available(LinphoneFactory *factory,
+                                                      LinphoneChatRoomBackend chatroom_backend) {
 	return Factory::toCpp(factory)->isChatroomBackendAvailable(chatroom_backend);
 }
 
@@ -478,24 +410,26 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->isImdnAvailable();
 }
 
-void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
-	return Factory::toCpp(factory)->setVfsEncryption(
-				encryptionModule,
-				secret,
-				secretSize
-				);
+void linphone_factory_set_vfs_encryption(LinphoneFactory *factory,
+                                         const uint16_t encryptionModule,
+                                         const uint8_t *secret,
+                                         const size_t secretSize) {
+	return Factory::toCpp(factory)->setVfsEncryption(encryptionModule, secret, secretSize);
 }
 
-LinphoneDigestAuthenticationPolicy *linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory){
+LinphoneDigestAuthenticationPolicy *
+linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createDigestAuthenticationPolicy();
 }
 
-LinphoneConferenceInfo *linphone_factory_create_conference_info(LinphoneFactory *factory) {
+LinphoneConferenceInfo *linphone_factory_create_conference_info(BCTBX_UNUSED(LinphoneFactory *f)) {
 	return linphone_conference_info_new();
 }
 
-LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content) {
-	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo = Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
+LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory,
+                                                                                       LinphoneContent *content) {
+	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo =
+	    Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
 	return conferenceInfo ? linphone_conference_info_ref(conferenceInfo->toC()) : nullptr;
 }
 
@@ -503,7 +437,7 @@ LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs
 	return Factory::toCpp(factory)->createConferenceSchedulerCbs();
 }
 
-bool_t linphone_factory_is_qrcode_available(LinphoneFactory *factory){
+bool_t linphone_factory_is_qrcode_available(BCTBX_UNUSED(LinphoneFactory *f)) {
 #ifdef QRCODE_ENABLED
 	return TRUE;
 #else
@@ -511,18 +445,28 @@ bool_t linphone_factory_is_qrcode_available(LinphoneFactory *factory){
 #endif
 }
 
-LinphoneContent *linphone_factory_create_qrcode(LinphoneFactory *factory, const char* code, unsigned int width, unsigned int height, unsigned int margin){
-	return Factory::toCpp(factory)->createQRCode(code ? code : "", width > 0 ? width : 100 , height > 0 ? height : 0, margin);
+LinphoneContent *linphone_factory_create_qrcode(
+    LinphoneFactory *factory, const char *code, unsigned int width, unsigned int height, unsigned int margin) {
+	return Factory::toCpp(factory)->createQRCode(code ? code : "", width > 0 ? width : 100, height > 0 ? height : 0,
+	                                             margin);
 }
 
-int linphone_factory_write_qrcode_file(LinphoneFactory *factory, const char *file_path, const char * code, unsigned int width, unsigned int height, unsigned int margin){
-	return Factory::toCpp(factory)->writeQRCodeFile(code ? code : "", file_path ? file_path : "", width > 0 ? width : 100 , height > 0 ? height : 0, margin);
+int linphone_factory_write_qrcode_file(LinphoneFactory *factory,
+                                       const char *file_path,
+                                       const char *code,
+                                       unsigned int width,
+                                       unsigned int height,
+                                       unsigned int margin) {
+	return Factory::toCpp(factory)->writeQRCodeFile(code ? code : "", file_path ? file_path : "",
+	                                                width > 0 ? width : 100, height > 0 ? height : 0, margin);
 }
 
-LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label) {
+LinphoneFriendPhoneNumber *linphone_factory_create_friend_phone_number(BCTBX_UNUSED(const LinphoneFactory *f),
+                                                                       const char *phone_number,
+                                                                       const char *label) {
 	return linphone_friend_phone_number_new(phone_number, label);
 }
 
-LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(LinphoneFactory *factory) {
+LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(BCTBX_UNUSED(LinphoneFactory *f)) {
 	return linphone_video_source_descriptor_new();
 }

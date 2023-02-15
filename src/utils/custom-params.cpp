@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
  */
 
 #include "custom-params.h"
-#include "logger/logger.h"
 #include "linphone/utils/utils.h"
+#include "logger/logger.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -35,42 +35,42 @@ CustomParams::CustomParams(const CustomParams &other) {
 }
 
 CustomParams::~CustomParams() {
-
 }
 
-void CustomParams::addCustomParam(const std::string & key, const std::string & value) {
+void CustomParams::addCustomParam(const std::string &key, const std::string &value) {
 	params[key] = value;
 }
 
-const std::string & CustomParams::getCustomParam(const std::string & key) const {
+const std::string &CustomParams::getCustomParam(const std::string &key) const {
 	try {
 		return params.at(key);
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		lDebug() << "Unable to find parameter with key " << key;
 		return Utils::getEmptyConstRefObject<std::string>();
 	}
 }
 
-void CustomParams::writeCustomParamsToConfigFile (LinphoneConfig *config, std::string configKey) const {
-	for (const auto & p : params) {
-		const auto & key = p.first;
-		const auto & value = p.second;
+void CustomParams::writeCustomParamsToConfigFile(LinphoneConfig *config, std::string configKey) const {
+	for (const auto &p : params) {
+		const auto &key = p.first;
+		const auto &value = p.second;
 		const auto paramsName(std::string(paramPrefix) + key);
 		linphone_config_set_string(config, configKey.c_str(), paramsName.c_str(), value.c_str());
 	}
 }
 
-void CustomParams::readCustomParamsFromConfigFile (LinphoneConfig *config, const char * key) {
-	bctbx_list_t * param_names = linphone_config_get_keys_names_list(config, key);
-	for(auto param_name_it = param_names; param_name_it != NULL ; param_name_it = param_name_it->next) {
-		const char * param_name = (const char *)param_name_it->data;
+void CustomParams::readCustomParamsFromConfigFile(LinphoneConfig *config, const char *key) {
+	bctbx_list_t *param_names = linphone_config_get_keys_names_list(config, key);
+	for (auto param_name_it = param_names; param_name_it != NULL; param_name_it = param_name_it->next) {
+		const char *param_name = (const char *)param_name_it->data;
 		// If it is a custom parameter
-		if (param_name && strstr(param_name,paramPrefix.c_str())) {
-			const std::string value(linphone_config_get_string(config, key, param_name,""));
+		if (param_name && strstr(param_name, paramPrefix.c_str())) {
+			const std::string value(linphone_config_get_string(config, key, param_name, ""));
 			std::string param(param_name);
 			const auto start_param_name = param.find(paramPrefix);
 			const auto prunedKey = param.substr(start_param_name + paramPrefix.size());
-			lInfo() << "Adding custom parameter " << prunedKey << " with value " << value << " from config section " << std::string(key);
+			lInfo() << "Adding custom parameter " << prunedKey << " with value " << value << " from config section "
+			        << std::string(key);
 			addCustomParam(prunedKey, value);
 		}
 	}

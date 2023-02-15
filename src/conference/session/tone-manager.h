@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,9 +22,9 @@
 
 #include "conference/session/call-session.h"
 #include "core/core-accessor.h"
-#include "private.h"
-#include "mediastreamer2/dtmfgen.h"
 #include "core/core.h"
+#include "mediastreamer2/dtmfgen.h"
+#include "private.h"
 #include "tester_utils.h"
 #include <map>
 
@@ -35,12 +35,12 @@ LINPHONE_BEGIN_NAMESPACE
  * of calls.
  */
 class ToneManager {
-    public:
+public:
 	ToneManager(Core &core);
 	ToneManager(const ToneManager &other) = delete;
 	~ToneManager();
 
-	/* 
+	/*
 	 * The CallSession's state change notification are sufficient to trigger rings and tones.
 	 * The ToneManager also needs to be informed about a transition to a future state, that's why
 	 * there are to entry points:
@@ -50,24 +50,22 @@ class ToneManager {
 	 */
 	void prepareForNextState(const std::shared_ptr<CallSession> &session, CallSession::State nextState);
 	void notifyState(const std::shared_ptr<CallSession> &session, CallSession::State nextState);
-	
-	
+
 	/* Below are a few accessors required by other parts of liblinphone.*/
 	void playDtmf(char dtmf, int duration);
 	void stopDtmf();
 	LinphoneStatus playLocal(const char *audiofile);
 	void startDtmfStream();
 	void stopDtmfStream();
-	
+
 	/* Used to temporarily override the audio output device. */
 	void setOutputDevice(const std::shared_ptr<CallSession> &session, const std::shared_ptr<AudioDevice> &audioDevice);
 	std::shared_ptr<AudioDevice> getOutputDevice(const std::shared_ptr<CallSession> &session) const;
-	
 	/* Request the tone manager to immediately abandon any sound card usage. All running rings or tones are dropped. */
 	void freeAudioResources();
 
 	// tester
-	const LinphoneCoreToneManagerStats *getStats()const;
+	const LinphoneCoreToneManagerStats *getStats() const;
 	void resetStats();
 
 	// Tone configuration.
@@ -75,20 +73,17 @@ class ToneManager {
 	LinphoneToneDescription *getToneFromId(LinphoneToneID id);
 	void setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
 
-    private:
-        using AudioResourceType = enum {
-            ToneGenerator = 0,
-            LocalPlayer = 1
-        };
-	
-        LinphoneCoreToneManagerStats mStats;
-	
+private:
+	using AudioResourceType = enum { ToneGenerator = 0, LocalPlayer = 1 };
+
+	LinphoneCoreToneManagerStats mStats;
+
 	void notifyIncomingCall(const std::shared_ptr<CallSession> &session);
 	void notifyOutgoingCallRinging(const std::shared_ptr<CallSession> &session);
 	void notifyToneIndication(LinphoneReason reason);
 	void destroyRingStream();
 
-        // start
+	// start
 	void startRingbackTone();
 	void startRingtone();
 	void startErrorTone(LinphoneReason reason);
@@ -101,24 +96,24 @@ class ToneManager {
 
 	void scheduleRingStreamDestruction();
 	void updateRingingSessions(const std::shared_ptr<CallSession> &callSession, CallSession::State state);
-	
-	Core & getCore()const{
+
+	Core &getCore() const {
 		return mCore;
 	}
 
 	// sound
 	MSFilter *getAudioResource(AudioResourceType rtype, MSSndCard *card, bool create);
 	LinphoneStatus playFile(const char *audiofile);
-	void playTone(const MSDtmfGenCustomTone & tone);
+	void playTone(const MSDtmfGenCustomTone &tone);
 	MSDtmfGenCustomTone generateToneFromId(LinphoneToneID toneId);
 	void cleanPauseTone();
-	bool inCallOrConference()const;
+	bool inCallOrConference() const;
 	bool shouldPlayWaitingTone(const std::shared_ptr<CallSession> &session);
 	std::shared_ptr<CallSession> lookupRingingSession() const;
-	Core & mCore;
+	Core &mCore;
 	RingStream *mRingStream = nullptr;
 	std::shared_ptr<CallSession> mSessionRinging;
-	std::function< void() > mSessionRingingStopFunction;
+	std::function<void()> mSessionRingingStopFunction;
 	std::shared_ptr<CallSession> mSessionRingingBack;
 	std::shared_ptr<CallSession> mSessionPaused;
 	belle_sip_source_t *mRingStreamTimer = nullptr;

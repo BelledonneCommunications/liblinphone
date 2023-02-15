@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,20 +29,19 @@
 // =============================================================================
 
 // Must be used in Object or ObjectPrivate.
-#define L_SYNC() \
-	static_assert( \
-		!std::is_base_of<Object, decltype(this)>::value && !std::is_base_of<ObjectPrivate, decltype(this)>::value, \
-		"Unable to lock. Instance is not an Object or ObjectPrivate." \
-	); \
+#define L_SYNC()                                                                                                       \
+	static_assert(!std::is_base_of<Object, decltype(this)>::value &&                                                   \
+	                  !std::is_base_of<ObjectPrivate, decltype(this)>::value,                                          \
+	              "Unable to lock. Instance is not an Object or ObjectPrivate.");                                      \
 	const std::lock_guard<Object::Lock> synchronized(const_cast<Object::Lock &>(getLock()));
 
 LINPHONE_BEGIN_NAMESPACE
 
 #ifdef _WIN32
-	// TODO: Avoid this error. Maybe with a custom enabled_shared_from_this.
-	// Disable C4251 triggered by std::enabled_shared_from_this.
-	#pragma warning(push)
-	#pragma warning(disable: 4251)
+// TODO: Avoid this error. Maybe with a custom enabled_shared_from_this.
+// Disable C4251 triggered by std::enabled_shared_from_this.
+#pragma warning(push)
+#pragma warning(disable : 4251)
 #endif // ifdef _WIN32
 
 /*
@@ -50,20 +49,19 @@ LINPHONE_BEGIN_NAMESPACE
  * Supports properties and shared from this.
  * Must be built with ObjectFactory.
  */
-class LINPHONE_PUBLIC Object :
-	public std::enable_shared_from_this<Object>,
-	public BaseObject,
-	public PropertyContainer {
+class LINPHONE_PUBLIC Object : public std::enable_shared_from_this<Object>,
+                               public BaseObject,
+                               public PropertyContainer {
 public:
 	typedef std::recursive_mutex Lock;
 
-	std::shared_ptr<Object> getSharedFromThis ();
-	std::shared_ptr<const Object> getSharedFromThis () const;
+	std::shared_ptr<Object> getSharedFromThis();
+	std::shared_ptr<const Object> getSharedFromThis() const;
 
 protected:
-	explicit Object (ObjectPrivate &p);
+	explicit Object(ObjectPrivate &p);
 
-	const Lock &getLock () const;
+	const Lock &getLock() const;
 
 private:
 	L_DECLARE_PRIVATE(Object);
@@ -71,7 +69,7 @@ private:
 };
 
 #ifdef _WIN32
-	#pragma warning(pop)
+#pragma warning(pop)
 #endif // ifdef _WIN32
 
 LINPHONE_END_NAMESPACE

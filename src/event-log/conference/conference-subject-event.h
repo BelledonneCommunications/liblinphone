@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #ifndef _L_CONFERENCE_SUBJECT_EVENT_H_
 #define _L_CONFERENCE_SUBJECT_EVENT_H_
 
+#include <string>
+
 #include "conference-notified-event.h"
 
 // =============================================================================
@@ -31,14 +33,11 @@ class ConferenceSubjectEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceSubjectEvent : public ConferenceNotifiedEvent {
 	friend class Conference;
-public:
-	ConferenceSubjectEvent (
-		time_t creationTime,
-		const ConferenceId &conferenceId,
-		const std::string &subject
-	);
 
-	const std::string &getSubject () const;
+public:
+	ConferenceSubjectEvent(time_t creationTime, const ConferenceId &conferenceId, const std::string &subject);
+
+	const std::string &getSubject() const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceSubjectEvent);

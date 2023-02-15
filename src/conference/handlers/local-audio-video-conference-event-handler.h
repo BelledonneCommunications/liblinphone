@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,30 +27,31 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
+namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
+	                        // src/conference/*
 
 class Conference;
 
 }
 
 class LINPHONE_PUBLIC LocalAudioVideoConferenceEventHandler : public LocalConferenceEventHandler {
-friend class LocalConferenceListEventHandler;
+	friend class LocalConferenceListEventHandler;
 #ifdef LINPHONE_TESTER
 	friend class Tester;
 #endif
 public:
-	LocalAudioVideoConferenceEventHandler (MediaConference::Conference *conference);
+	LocalAudioVideoConferenceEventHandler(MediaConference::Conference *conference);
 
 	/*
 	 * This fonction is called each time the conference transitions to a new state
 	 * @param[in] state new state of the conference
 	 */
-	void onStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
-	void setConference (Conference *conference);
+	void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+	void setConference(Conference *conference);
 
 	MediaConference::Conference *getMediaConference() const;
-private:
 
+private:
 	L_DISABLE_COPY(LocalAudioVideoConferenceEventHandler);
 };
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "background-task.h"
 #include "c-wrapper/internal/c-sal.h"
-#include "logger/logger.h"
 #include "core/core-p.h"
+#include "logger/logger.h"
 
 // TODO: Remove me
 #include "private.h" // To get access to the Sal
@@ -32,21 +34,21 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-void BackgroundTask::sHandleTimeout (void *context) {
+void BackgroundTask::sHandleTimeout(void *context) {
 	static_cast<BackgroundTask *>(context)->handleTimeout();
 }
 
-int BackgroundTask::sHandleSalTimeout (void *data, unsigned int events) {
+int BackgroundTask::sHandleSalTimeout(void *data, BCTBX_UNUSED(unsigned int events)) {
 	static_cast<BackgroundTask *>(data)->handleSalTimeout();
 	return BELLE_SIP_STOP;
 }
 
-void BackgroundTask::handleSalTimeout () {
+void BackgroundTask::handleSalTimeout() {
 	lWarning() << "Background task [" << mId << "] with name: [" << mName << "] is now expiring";
 	stop();
 }
 
-void BackgroundTask::start (const shared_ptr<Core> &core, int maxDurationSeconds) {
+void BackgroundTask::start(const shared_ptr<Core> &core, int maxDurationSeconds) {
 	if (mName.empty()) {
 		lError() << "No name was set on background task";
 		return;
@@ -54,21 +56,20 @@ void BackgroundTask::start (const shared_ptr<Core> &core, int maxDurationSeconds
 
 	unsigned long newId = sal_begin_background_task(mName.c_str(), sHandleTimeout, this);
 	stop();
-	if (newId == 0)
-		return;
+	if (newId == 0) return;
 
-	lInfo() << "Starting background task [" << newId << "] with name: [" << mName
-		<< "] and expiration of [" << maxDurationSeconds << "]";
+	lInfo() << "Starting background task [" << newId << "] with name: [" << mName << "] and expiration of ["
+	        << maxDurationSeconds << "]";
 	mId = newId;
 	if (maxDurationSeconds > 0) {
 		mSal = core->getCCore()->sal;
-		mTimeout = core->getCCore()->sal->createTimer(sHandleSalTimeout, this, (unsigned int)maxDurationSeconds * 1000, mName.c_str());
+		mTimeout = core->getCCore()->sal->createTimer(sHandleSalTimeout, this, (unsigned int)maxDurationSeconds * 1000,
+		                                              mName.c_str());
 	}
 }
 
-void BackgroundTask::stop () {
-	if (mId == 0)
-		return;
+void BackgroundTask::stop() {
+	if (mId == 0) return;
 
 	lInfo() << "Ending background task [" << mId << "] with name: [" << mName << "]";
 	sal_end_background_task(mId);
@@ -87,13 +88,16 @@ void BackgroundTask::stop () {
 	mId = 0;
 }
 
-void BackgroundTask::handleTimeout () {
+void BackgroundTask::handleTimeout() {
 	lWarning() << "Background task [" << mId << "] with name: [" << mName
-		<< "] is expiring from OS before completion...";
+	           << "] is expiring from OS before completion...";
 	stop();
 }
 
-void ExtraBackgroundTask::start (const shared_ptr<Core> &core, const std::function<void ()> &extraFunc, const std::function<void ()> &extraSalFunc, int maxDurationSeconds) {
+void ExtraBackgroundTask::start(const shared_ptr<Core> &core,
+                                const std::function<void()> &extraFunc,
+                                const std::function<void()> &extraSalFunc,
+                                int maxDurationSeconds) {
 	sExtraFunc = extraFunc;
 	sExtraSalFunc = extraSalFunc;
 	BackgroundTask::start(core, maxDurationSeconds);

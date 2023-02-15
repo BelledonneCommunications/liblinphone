@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,21 +21,18 @@
 #ifndef LINPHONE_MISC_H_
 #define LINPHONE_MISC_H_
 
-
 #include "linphone/types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 /**
- * Lowest volume measurement that can be returned by linphone_call_get_play_volume() or linphone_call_get_record_volume(), corresponding to pure silence.
+ * Lowest volume measurement that can be returned by linphone_call_get_play_volume() or
+ *linphone_call_get_record_volume(), corresponding to pure silence.
  * @ingroup call_misc
-**/
+ **/
 #define LINPHONE_VOLUME_DB_LOWEST (-120) /* WARNING: keep this in sync with mediastreamer2/msvolume.h */
-
 
 /**
  * Disable a sip transport
@@ -54,9 +51,8 @@ extern "C" {
  * Don't create any server socket for this transport, ie don't bind on any port.
  * Use with #LinphoneSipTransports
  * @ingroup initializing
-**/
+ **/
 #define LC_SIP_TRANSPORT_DONTBIND (-2)
-
 
 /**
  * Function returning a human readable value for LinphoneStreamType.
@@ -79,7 +75,7 @@ LINPHONE_PUBLIC const char *linphone_registration_state_to_string(LinphoneRegist
  * @param media_encryption the #LinphoneMediaEncryption to convert
  * @return a string representation of the #LinphoneMediaEncryption @notnil
  * @ingroup media_parameters
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_media_encryption_to_string(LinphoneMediaEncryption media_encryption);
 
 /**
@@ -87,7 +83,7 @@ LINPHONE_PUBLIC const char *linphone_media_encryption_to_string(LinphoneMediaEnc
  * @param media_direction the #LinphoneMediaDirection to convert
  * @return a string representation of the #LinphoneMediaDirection @notnil
  * @ingroup media_parameters
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_media_direction_to_string(LinphoneMediaDirection media_direction);
 
 /**
@@ -95,10 +91,10 @@ LINPHONE_PUBLIC const char *linphone_media_direction_to_string(LinphoneMediaDire
  * @param a string representation of the #LinphoneMediaEncryption to convert @notnil
  * @return integer value of the media_encryption in enum #LinphoneMediaEncryption or -1 if it is not found
  * @ingroup media_parameters
-**/
-LINPHONE_PUBLIC int linphone_media_encryption_from_string(const char * value);
+ **/
+LINPHONE_PUBLIC int linphone_media_encryption_from_string(const char *value);
 
-LINPHONE_PUBLIC const char* linphone_privacy_to_string(LinphonePrivacy privacy);
+LINPHONE_PUBLIC const char *linphone_privacy_to_string(LinphonePrivacy privacy);
 
 LINPHONE_PUBLIC const char *linphone_subscription_state_to_string(LinphoneSubscriptionState state);
 
@@ -108,7 +104,8 @@ LINPHONE_PUBLIC const char *linphone_ice_state_to_string(LinphoneIceState state)
 
 LINPHONE_PUBLIC const char *linphone_global_state_to_string(LinphoneGlobalState gs);
 
-LINPHONE_PUBLIC const char *linphone_core_log_collection_upload_state_to_string(const LinphoneCoreLogCollectionUploadState lcus);
+LINPHONE_PUBLIC const char *
+linphone_core_log_collection_upload_state_to_string(const LinphoneCoreLogCollectionUploadState lcus);
 
 LINPHONE_PUBLIC const char *linphone_call_state_to_string(LinphoneCallState cs);
 
@@ -117,7 +114,7 @@ LINPHONE_PUBLIC const char *linphone_call_state_to_string(LinphoneCallState cs);
  * @param state #LinphoneConfiguringState the value for which we want a string representation
  * @return a string representation of the #LinphoneConfiguringState @notnil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_configuring_state_to_string(LinphoneConfiguringState state);
 
 /**
@@ -125,14 +122,14 @@ LINPHONE_PUBLIC const char *linphone_configuring_state_to_string(LinphoneConfigu
  * @param state #LinphoneChatMessageState the value for which we want a string representation
  * @return a string representation of the #LinphoneChatMessageState @notnil
  */
-LINPHONE_PUBLIC	const char* linphone_chat_message_state_to_string(const LinphoneChatMessageState state);
+LINPHONE_PUBLIC const char *linphone_chat_message_state_to_string(const LinphoneChatMessageState state);
 
 /**
  * Converts a #LinphoneReason enum to a string.
  * @param error A #LinphoneReason
  * @return The string representation of the specified #LinphoneReason @notnil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_reason_to_string(LinphoneReason error);
 
 /**
@@ -167,23 +164,23 @@ LINPHONE_PUBLIC bool_t linphone_recorder_matroska_supported(void);
  * @param transport a #LinphoneTransportType to convert to string
  * @return the string representation of the #LinphoneTransportType @notnil
  * @ingroup misc
-**/
-LINPHONE_PUBLIC const char* linphone_transport_to_string(LinphoneTransportType transport);
+ **/
+LINPHONE_PUBLIC const char *linphone_transport_to_string(LinphoneTransportType transport);
 
 /**
  * Converts a lowercase string to a #LinphoneTransportType enum.
  * @ingroup misc
  * @param transport the transport to parse. @notnil
  * @return #LinphoneTransportType matching input, or #LinphoneTransportUdp if nothing is found
-**/
-LINPHONE_PUBLIC LinphoneTransportType linphone_transport_parse(const char* transport);
+ **/
+LINPHONE_PUBLIC LinphoneTransportType linphone_transport_parse(const char *transport);
 
 /**
-* Check whether an error code is in Retry-After field.
-* @param error An error code
-* @return TRUE if it is in Retry-After field
-* @ingroup misc
-**/
+ * Check whether an error code is in Retry-After field.
+ * @param error An error code
+ * @return TRUE if it is in Retry-After field
+ * @ingroup misc
+ **/
 LINPHONE_PUBLIC bool_t linphone_error_code_is_retry_after(int error);
 
 /**
@@ -191,7 +188,7 @@ LINPHONE_PUBLIC bool_t linphone_error_code_is_retry_after(int error);
  * @param error An error code
  * @return The #LinphoneReason corresponding to the specified error code
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC LinphoneReason linphone_error_code_to_reason(int error);
 
 /**
@@ -207,14 +204,14 @@ LINPHONE_PUBLIC int linphone_reason_to_error_code(LinphoneReason reason);
  * @param range #LinphoneRange object @notnil
  * @return the same #LinphoneRange object @notnil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC LinphoneRange *linphone_range_ref(LinphoneRange *range);
 
 /**
  * Decrement refcount and possibly free the object.
  * @param range #LinphoneRange object @notnil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC void linphone_range_unref(LinphoneRange *range);
 
 /**
@@ -222,7 +219,7 @@ LINPHONE_PUBLIC void linphone_range_unref(LinphoneRange *range);
  * @param range the #LinphoneRange @notnil
  * @return the user data. @maybenil
  * @ingroup misc
-*/
+ */
 LINPHONE_PUBLIC void *linphone_range_get_user_data(const LinphoneRange *range);
 
 /**
@@ -230,7 +227,7 @@ LINPHONE_PUBLIC void *linphone_range_get_user_data(const LinphoneRange *range);
  * @param range the #LinphoneRange object @notnil
  * @param user_data the user data @maybenil
  * @ingroup misc
-*/
+ */
 LINPHONE_PUBLIC void linphone_range_set_user_data(LinphoneRange *range, void *user_data);
 
 /**
@@ -272,11 +269,11 @@ LINPHONE_PUBLIC void linphone_range_set_max(LinphoneRange *range, int max);
 /**
  * Return humain readable presence status
  * @param status
- * @deprecated 03/02/2017 Use #LinphonePresenceModel, #LinphonePresenceActivity and linphone_presence_activity_to_string() instead.
+ * @deprecated 03/02/2017 Use #LinphonePresenceModel, #LinphonePresenceActivity and
+ * linphone_presence_activity_to_string() instead.
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_online_status_to_string(LinphoneOnlineStatus status);
-
 
 #ifdef __cplusplus
 }

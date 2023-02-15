@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,54 +21,70 @@
 #ifndef _L_SAL_EVENT_OP_H_
 #define _L_SAL_EVENT_OP_H_
 
+#include <bctoolbox/defs.h>
+
 #include "sal/op.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC SalEventOp : public SalOp {
 public:
-	SalEventOp (Sal *sal) : SalOp(sal) {}
+	SalEventOp(Sal *sal) : SalOp(sal) {
+	}
 };
 
-class LINPHONE_PUBLIC SalSubscribeOp: public SalEventOp {
+class LINPHONE_PUBLIC SalSubscribeOp : public SalEventOp {
 public:
-	SalSubscribeOp (Sal *sal);
+	SalSubscribeOp(Sal *sal);
 
-	int subscribe (const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
-	int unsubscribe () { return SalOp::unsubscribe(); }
-	int accept ();
-	int decline (SalReason reason);
-	int notifyPendingState ();
-	int notify (const SalBodyHandler *bodyHandler);
-	int closeNotify ();
+	int subscribe(const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
+	int unsubscribe() {
+		return SalOp::unsubscribe();
+	}
+	int accept();
+	int decline(SalReason reason);
+	int notifyPendingState();
+	int notify(const SalBodyHandler *bodyHandler);
+	int closeNotify();
 
 private:
-	void fillCallbacks () override;
-	void handleNotify (belle_sip_request_t *request, const char *eventName, SalBodyHandler *bodyHandler);
-	void handleSubscribeResponse (unsigned int statusCode, const char *reasonPhrase, int willRetry);
+	void fillCallbacks() override;
+	void handleNotify(belle_sip_request_t *request, const char *eventName, SalBodyHandler *bodyHandler);
+	void handleSubscribeResponse(unsigned int statusCode, const char *reasonPhrase, int willRetry);
 
-	static void subscribeProcessIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
-	static void subscribeResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
-	static void subscribeProcessTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event);
-	static void subscribeProcessTransactionTerminatedCb (void *userCtx, const belle_sip_transaction_terminated_event_t *event) {}
-	static void subscribeProcessRequestEventCb (void *userCtx, const belle_sip_request_event_t *event);
-	static void subscribeProcessDialogTerminatedCb (void *userCtx, const belle_sip_dialog_terminated_event_t *event);
-	static void releaseCb (SalOp *op);
-	static void subscribeRefresherListenerCb (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry);
+	static void subscribeProcessIoErrorCb(void *userCtx, const belle_sip_io_error_event_t *event);
+	static void subscribeResponseEventCb(void *userCtx, const belle_sip_response_event_t *event);
+	static void subscribeProcessTimeoutCb(void *userCtx, const belle_sip_timeout_event_t *event);
+	static void
+	subscribeProcessTransactionTerminatedCb(BCTBX_UNUSED(void *userCtx),
+	                                        BCTBX_UNUSED(const belle_sip_transaction_terminated_event_t *event)) {
+	}
+	static void subscribeProcessRequestEventCb(void *userCtx, const belle_sip_request_event_t *event);
+	static void subscribeProcessDialogTerminatedCb(void *userCtx, const belle_sip_dialog_terminated_event_t *event);
+	static void releaseCb(SalOp *op);
+	static void subscribeRefresherListenerCb(belle_sip_refresher_t *refresher,
+	                                         void *userCtx,
+	                                         unsigned int statusCode,
+	                                         const char *reasonPhrase,
+	                                         int willRetry);
 };
 
 class SalPublishOp : public SalEventOp {
 public:
-	SalPublishOp (Sal *sal);
+	SalPublishOp(Sal *sal);
 
-	int publish (const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
-	int unpublish ();
+	int publish(const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
+	int unpublish();
 
 private:
-	void fillCallbacks () override;
+	void fillCallbacks() override;
 
-	static void publishResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
-	static void publishRefresherListenerCb (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry);
+	static void publishResponseEventCb(void *userCtx, const belle_sip_response_event_t *event);
+	static void publishRefresherListenerCb(belle_sip_refresher_t *refresher,
+	                                       void *userCtx,
+	                                       unsigned int statusCode,
+	                                       const char *reasonPhrase,
+	                                       int willRetry);
 };
 
 LINPHONE_END_NAMESPACE

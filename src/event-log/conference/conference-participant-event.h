@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,23 +37,19 @@ class LINPHONE_PUBLIC ConferenceParticipantEvent : public ConferenceNotifiedEven
 	friend class Conference;
 
 public:
-	ConferenceParticipantEvent (
-		Type type,
-		time_t creationTime,
-		const ConferenceId &conferenceId,
-		const IdentityAddress &participantAddress
-	);
+	ConferenceParticipantEvent(Type type,
+	                           time_t creationTime,
+	                           const ConferenceId &conferenceId,
+	                           const IdentityAddress &participantAddress);
 
-	const IdentityAddress &getParticipantAddress () const;
+	const IdentityAddress &getParticipantAddress() const;
 
 protected:
-	ConferenceParticipantEvent (
-		ConferenceParticipantEventPrivate &p,
-		Type type,
-		time_t creationTime,
-		const ConferenceId &conferenceId,
-		const IdentityAddress &participantAddress
-	);
+	ConferenceParticipantEvent(ConferenceParticipantEventPrivate &p,
+	                           Type type,
+	                           time_t creationTime,
+	                           const ConferenceId &conferenceId,
+	                           const IdentityAddress &participantAddress);
 
 private:
 	L_DECLARE_PRIVATE(ConferenceParticipantEvent);

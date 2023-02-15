@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,19 +18,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "core/platform-helpers/platform-helpers.h"
 #include "paths.h"
+#include "core/platform-helpers/platform-helpers.h"
 
 #ifdef __APPLE__
-	#include "paths-apple.h"
+#include "paths-apple.h"
 #elif defined(__ANDROID__)
-	#include "paths-android.h"
+#include "paths-android.h"
 #elif defined(_WIN32)
-	#include "paths-windows.h"
+#include "paths-windows.h"
 #elif defined(__linux__)
-	#include "paths-linux.h"
+#include "paths-linux.h"
 #else
-	#error "Unsupported system."
+#error "Unsupported system."
 #endif // ifdef __APPLE__
 
 // =============================================================================
@@ -39,7 +39,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-string Paths::getPath (Paths::Type type, void *context) {
+string Paths::getPath(Paths::Type type, void *context) {
 	switch (type) {
 		case Data:
 			return SysPaths::getDataPath(context);

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,22 +39,20 @@ CNResponse::CNResponse(LinphoneCore *core) : Response() {
 	setBody(ost.str());
 }
 
-
-CNCommand::CNCommand() :
-		DaemonCommand("cn", "cn [enable|disable]",
-				"Enable or disable generic comfort noice (CN payload type) with the 'enable' and 'disable' parameters, return the status of the use of comfort noise without parameter.") {
-	addExample(make_unique<DaemonCommandExample>("cn enable",
-						"Status: Ok\n\n"
-						"State: enabled"));
-	addExample(make_unique<DaemonCommandExample>("cn disable",
-						"Status: Ok\n\n"
-						"State: disabled"));
-	addExample(make_unique<DaemonCommandExample>("cn",
-						"Status: Ok\n\n"
-						"State: disabled"));
+CNCommand::CNCommand()
+    : DaemonCommand("cn",
+                    "cn [enable|disable]",
+                    "Enable or disable generic comfort noice (CN payload type) with the 'enable' and 'disable' "
+                    "parameters, return the status of the use of comfort noise without parameter.") {
+	addExample(make_unique<DaemonCommandExample>("cn enable", "Status: Ok\n\n"
+	                                                          "State: enabled"));
+	addExample(make_unique<DaemonCommandExample>("cn disable", "Status: Ok\n\n"
+	                                                           "State: disabled"));
+	addExample(make_unique<DaemonCommandExample>("cn", "Status: Ok\n\n"
+	                                                   "State: disabled"));
 }
 
-void CNCommand::exec(Daemon *app, const string& args) {
+void CNCommand::exec(Daemon *app, const string &args) {
 	string status;
 	istringstream ist(args);
 	ist >> status;

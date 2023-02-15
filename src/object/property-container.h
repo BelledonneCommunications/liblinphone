@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,21 +31,21 @@ class PropertyContainerPrivate;
 
 class LINPHONE_PUBLIC PropertyContainer {
 public:
-	PropertyContainer ();
-	PropertyContainer (const PropertyContainer &other);
-	virtual ~PropertyContainer ();
+	PropertyContainer();
+	PropertyContainer(const PropertyContainer &other);
+	virtual ~PropertyContainer();
 
-	PropertyContainer &operator= (const PropertyContainer &other);
+	PropertyContainer &operator=(const PropertyContainer &other);
 
-	const Variant &getProperty (const std::string &name) const;
-	void setProperty (const std::string &name, const Variant &value);
-	void setProperty (const std::string &name, Variant &&value);
+	const Variant &getProperty(const std::string &name) const;
+	void setProperty(const std::string &name, const Variant &value);
+	void setProperty(const std::string &name, Variant &&value);
 
-	int remove (const std::string &name) const;
+	int remove(const std::string &name) const;
 
-	void clear ();
+	void clear();
 
-	bool hasKey (const std::string &name) const;
+	bool hasKey(const std::string &name) const;
 
 private:
 	PropertyContainerPrivate *mPrivate;

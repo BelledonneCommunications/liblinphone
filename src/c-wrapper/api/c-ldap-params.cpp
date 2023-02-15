@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ldap/ldap-params.h"
+#include <bctoolbox/defs.h>
+
 #include "c-wrapper/internal/c-tools.h"
+#include "ldap/ldap-params.h"
 #include "linphone/api/c-ldap-params.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
@@ -28,16 +30,15 @@
 
 using namespace LinphonePrivate;
 
-
-LinphoneLdapParams* linphone_ldap_params_new(LinphoneCore *lc) {
+LinphoneLdapParams *linphone_ldap_params_new(BCTBX_UNUSED(LinphoneCore *lc)) {
 	return LdapParams::createCObject();
 }
 
-LinphoneLdapParams* linphone_ldap_params_clone(const LinphoneLdapParams *params) {
+LinphoneLdapParams *linphone_ldap_params_clone(const LinphoneLdapParams *params) {
 	return LdapParams::toCpp(params)->clone()->toC();
 }
 
-LinphoneLdapParams* linphone_ldap_params_ref(LinphoneLdapParams *params) {
+LinphoneLdapParams *linphone_ldap_params_ref(LinphoneLdapParams *params) {
 	LdapParams::toCpp(params)->ref();
 	return params;
 }
@@ -52,7 +53,7 @@ void linphone_ldap_params_set_custom_value(LinphoneLdapParams *params, const cha
 	LdapParams::toCpp(params)->setCustomValue(L_C_TO_STRING(key), L_C_TO_STRING(value));
 }
 
-const char * linphone_ldap_params_get_custom_value(const LinphoneLdapParams *params, const char *key) {
+const char *linphone_ldap_params_get_custom_value(const LinphoneLdapParams *params, const char *key) {
 	return L_STRING_TO_C(LdapParams::toCpp(params)->getCustomValue(L_C_TO_STRING(key)));
 }
 
@@ -62,7 +63,7 @@ void linphone_ldap_params_set_server(LinphoneLdapParams *params, const char *ser
 	LdapParams::toCpp(params)->setServer(L_C_TO_STRING(server));
 }
 
-const char * linphone_ldap_params_get_server(const LinphoneLdapParams *params) {
+const char *linphone_ldap_params_get_server(const LinphoneLdapParams *params) {
 	return LdapParams::toCpp(params)->getServer().c_str();
 }
 
@@ -91,8 +92,8 @@ void linphone_ldap_params_set_timeout(LinphoneLdapParams *params, int timeout) {
 	LdapParams::toCpp(params)->setTimeout(timeout);
 }
 
-int  linphone_ldap_params_get_timeout(const LinphoneLdapParams *params) {
-		return LdapParams::toCpp(params)->getTimeout();
+int linphone_ldap_params_get_timeout(const LinphoneLdapParams *params) {
+	return LdapParams::toCpp(params)->getTimeout();
 }
 /*************************************************************************************/
 
@@ -120,8 +121,8 @@ void linphone_ldap_params_set_delay(LinphoneLdapParams *params, int delay) {
 	LdapParams::toCpp(params)->setDelay(delay);
 }
 
-int  linphone_ldap_params_get_delay(const LinphoneLdapParams *params) {
-		return LdapParams::toCpp(params)->getDelay();
+int linphone_ldap_params_get_delay(const LinphoneLdapParams *params) {
+	return LdapParams::toCpp(params)->getDelay();
 }
 
 /*************************************************************************************/
@@ -135,7 +136,7 @@ LinphoneLdapAuthMethod linphone_ldap_params_get_auth_method(const LinphoneLdapPa
 }
 /*************************************************************************************/
 
-void linphone_ldap_params_set_password(LinphoneLdapParams *params, const char * password) {
+void linphone_ldap_params_set_password(LinphoneLdapParams *params, const char *password) {
 	LdapParams::toCpp(params)->setPassword(L_C_TO_STRING(password));
 }
 
@@ -158,7 +159,7 @@ void linphone_ldap_params_set_name_attribute(LinphoneLdapParams *params, const c
 	LdapParams::toCpp(params)->setNameAttribute(L_C_TO_STRING(name_attribute));
 }
 
-const char*linphone_ldap_params_get_name_attribute(const LinphoneLdapParams *params) {
+const char *linphone_ldap_params_get_name_attribute(const LinphoneLdapParams *params) {
 	return L_STRING_TO_C(LdapParams::toCpp(params)->getNameAttribute());
 }
 
@@ -181,7 +182,6 @@ void linphone_ldap_params_set_sip_domain(LinphoneLdapParams *params, const char 
 const char *linphone_ldap_params_get_sip_domain(const LinphoneLdapParams *params) {
 	return L_STRING_TO_C(LdapParams::toCpp(params)->getSipDomain());
 }
-
 
 /*************************************************************************************/
 
@@ -225,11 +225,13 @@ LinphoneLdapDebugLevel linphone_ldap_params_get_debug_level(const LinphoneLdapPa
 
 /*************************************************************************************/
 
-void linphone_ldap_params_set_server_certificates_verification_mode(LinphoneLdapParams *params, LinphoneLdapCertVerificationMode verify_server_certificates) {
+void linphone_ldap_params_set_server_certificates_verification_mode(
+    LinphoneLdapParams *params, LinphoneLdapCertVerificationMode verify_server_certificates) {
 	LdapParams::toCpp(params)->setServerCertificatesVerificationMode(verify_server_certificates);
 }
 
-LinphoneLdapCertVerificationMode linphone_ldap_params_get_server_certificates_verification_mode(const LinphoneLdapParams *params) {
+LinphoneLdapCertVerificationMode
+linphone_ldap_params_get_server_certificates_verification_mode(const LinphoneLdapParams *params) {
 	return LdapParams::toCpp(params)->getServerCertificatesVerificationMode();
 }
 

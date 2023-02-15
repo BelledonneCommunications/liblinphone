@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,183 +30,186 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-#define MAKE_CONTACT_HEADER(CLASS_PREFIX, NAME) \
-	class LINPHONE_PUBLIC CLASS_PREFIX ## Header : public ContactHeader { \
-	public: \
-		CLASS_PREFIX ## Header () = default; \
-		CLASS_PREFIX ## Header (const std::string &uri, const std::string &formalName = "") : ContactHeader (uri, formalName) {} \
-		inline std::string getName () const override { \
-			return NAME; \
-		} \
-	private: \
-		L_DISABLE_COPY(CLASS_PREFIX ## Header); \
+#define MAKE_CONTACT_HEADER(CLASS_PREFIX, NAME)                                                                        \
+	class LINPHONE_PUBLIC CLASS_PREFIX##Header : public ContactHeader {                                                \
+	public:                                                                                                            \
+		CLASS_PREFIX##Header() = default;                                                                              \
+		CLASS_PREFIX##Header(const std::string &uri, const std::string &formalName = "")                               \
+		    : ContactHeader(uri, formalName) {                                                                         \
+		}                                                                                                              \
+		inline std::string getName() const override {                                                                  \
+			return NAME;                                                                                               \
+		}                                                                                                              \
+                                                                                                                       \
+	private:                                                                                                           \
+		L_DISABLE_COPY(CLASS_PREFIX##Header);                                                                          \
 	};
 
 namespace Cpim {
-	class DateTimeHeaderNode;
+class DateTimeHeaderNode;
 
-	// -------------------------------------------------------------------------
-	// Specific Contact headers declaration.
-	// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// Specific Contact headers declaration.
+// -------------------------------------------------------------------------
 
-	class ContactHeaderPrivate;
+class ContactHeaderPrivate;
 
-	class LINPHONE_PUBLIC ContactHeader : public Header {
-	public:
-		ContactHeader ();
+class LINPHONE_PUBLIC ContactHeader : public Header {
+public:
+	ContactHeader();
 
-		ContactHeader (const std::string &uri, const std::string &formalName = "");
+	ContactHeader(const std::string &uri, const std::string &formalName = "");
 
-		std::string getUri () const;
-		void setUri (const std::string &uri);
+	std::string getUri() const;
+	void setUri(const std::string &uri);
 
-		std::string getFormalName () const;
-		void setFormalName (const std::string &formalName);
+	std::string getFormalName() const;
+	void setFormalName(const std::string &formalName);
 
-		std::string getValue () const override;
+	std::string getValue() const override;
 
-		std::string asString () const override;
+	std::string asString() const override;
 
-	private:
-		L_DECLARE_PRIVATE(ContactHeader);
-		L_DISABLE_COPY(ContactHeader);
-	};
+private:
+	L_DECLARE_PRIVATE(ContactHeader);
+	L_DISABLE_COPY(ContactHeader);
+};
 
-	// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
-	MAKE_CONTACT_HEADER(From, "From");
-	MAKE_CONTACT_HEADER(To, "To");
-	MAKE_CONTACT_HEADER(Cc, "cc");
+MAKE_CONTACT_HEADER(From, "From");
+MAKE_CONTACT_HEADER(To, "To");
+MAKE_CONTACT_HEADER(Cc, "cc");
 
-	// -------------------------------------------------------------------------
-	// Specific DateTime declaration.
-	// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// Specific DateTime declaration.
+// -------------------------------------------------------------------------
 
-	class DateTimeHeaderPrivate;
+class DateTimeHeaderPrivate;
 
-	class LINPHONE_PUBLIC DateTimeHeader : public Header {
-		friend class DateTimeHeaderNode;
+class LINPHONE_PUBLIC DateTimeHeader : public Header {
+	friend class DateTimeHeaderNode;
 
-	public:
-		DateTimeHeader ();
+public:
+	DateTimeHeader();
 
-		DateTimeHeader (time_t time);
+	DateTimeHeader(time_t time);
 
-		DateTimeHeader (const tm &time, const tm &timeOffset, const std::string &signOffset);
+	DateTimeHeader(const tm &time, const tm &timeOffset, const std::string &signOffset);
 
-		inline std::string getName () const override {
-			return "DateTime";
-		}
+	inline std::string getName() const override {
+		return "DateTime";
+	}
 
-		time_t getTime () const;
-		void setTime (const time_t time);
+	time_t getTime() const;
+	void setTime(const time_t time);
 
-		void setTime  (const tm &time, const tm &timeOffset, const std::string &signOffset);
+	void setTime(const tm &time, const tm &timeOffset, const std::string &signOffset);
 
-		std::string getValue () const override;
+	std::string getValue() const override;
 
-		std::string asString () const override;
+	std::string asString() const override;
 
-	private:
-		tm getTimeStruct () const;
-		tm getTimeOffset () const;
-		std::string getSignOffset () const;
+private:
+	tm getTimeStruct() const;
+	tm getTimeOffset() const;
+	std::string getSignOffset() const;
 
-		L_DECLARE_PRIVATE(DateTimeHeader);
-		L_DISABLE_COPY(DateTimeHeader);
-	};
+	L_DECLARE_PRIVATE(DateTimeHeader);
+	L_DISABLE_COPY(DateTimeHeader);
+};
 
-	// -------------------------------------------------------------------------
-	// Specific Ns declaration.
-	// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// Specific Ns declaration.
+// -------------------------------------------------------------------------
 
-	class NsHeaderPrivate;
+class NsHeaderPrivate;
 
-	class LINPHONE_PUBLIC NsHeader : public Header {
-	public:
-		NsHeader ();
+class LINPHONE_PUBLIC NsHeader : public Header {
+public:
+	NsHeader();
 
-		NsHeader (const std::string &uri, const std::string &prefixName = "");
+	NsHeader(const std::string &uri, const std::string &prefixName = "");
 
-		inline std::string getName () const override {
-			return "NS";
-		}
+	inline std::string getName() const override {
+		return "NS";
+	}
 
-		std::string getPrefixName () const;
-		void setPrefixName (const std::string &prefixName);
+	std::string getPrefixName() const;
+	void setPrefixName(const std::string &prefixName);
 
-		std::string getUri () const;
-		void setUri (const std::string &uri);
+	std::string getUri() const;
+	void setUri(const std::string &uri);
 
-		std::string getValue () const override;
+	std::string getValue() const override;
 
-		std::string asString () const override;
+	std::string asString() const override;
 
-	private:
-		L_DECLARE_PRIVATE(NsHeader);
-		L_DISABLE_COPY(NsHeader);
-	};
+private:
+	L_DECLARE_PRIVATE(NsHeader);
+	L_DISABLE_COPY(NsHeader);
+};
 
-	// -------------------------------------------------------------------------
-	// Specific Require declaration.
-	// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// Specific Require declaration.
+// -------------------------------------------------------------------------
 
-	class RequireHeaderPrivate;
+class RequireHeaderPrivate;
 
-	class LINPHONE_PUBLIC RequireHeader : public Header {
-	public:
-		RequireHeader ();
+class LINPHONE_PUBLIC RequireHeader : public Header {
+public:
+	RequireHeader();
 
-		RequireHeader (const std::string &headerNames);
-		RequireHeader (const std::list<std::string> &headerNames);
+	RequireHeader(const std::string &headerNames);
+	RequireHeader(const std::list<std::string> &headerNames);
 
-		inline std::string getName () const override {
-			return "Require";
-		}
+	inline std::string getName() const override {
+		return "Require";
+	}
 
-		std::list<std::string> getHeaderNames () const;
-		void addHeaderName (const std::string &headerName);
+	std::list<std::string> getHeaderNames() const;
+	void addHeaderName(const std::string &headerName);
 
-		std::string getValue () const override;
+	std::string getValue() const override;
 
-		std::string asString () const override;
+	std::string asString() const override;
 
-	private:
-		L_DECLARE_PRIVATE(RequireHeader);
-		L_DISABLE_COPY(RequireHeader);
-	};
+private:
+	L_DECLARE_PRIVATE(RequireHeader);
+	L_DISABLE_COPY(RequireHeader);
+};
 
-	// -------------------------------------------------------------------------
-	// Specific Subject declaration.
-	// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// Specific Subject declaration.
+// -------------------------------------------------------------------------
 
-	class SubjectHeaderPrivate;
+class SubjectHeaderPrivate;
 
-	class LINPHONE_PUBLIC SubjectHeader : public Header {
-	public:
-		SubjectHeader ();
+class LINPHONE_PUBLIC SubjectHeader : public Header {
+public:
+	SubjectHeader();
 
-		SubjectHeader (const std::string &subject, const std::string &language = "");
+	SubjectHeader(const std::string &subject, const std::string &language = "");
 
-		inline std::string getName () const override {
-			return "Subject";
-		}
+	inline std::string getName() const override {
+		return "Subject";
+	}
 
-		std::string getSubject () const;
-		void setSubject (const std::string &subject);
+	std::string getSubject() const;
+	void setSubject(const std::string &subject);
 
-		std::string getLanguage () const;
-		void setLanguage (const std::string &language);
+	std::string getLanguage() const;
+	void setLanguage(const std::string &language);
 
-		std::string getValue () const override;
+	std::string getValue() const override;
 
-		std::string asString () const override;
+	std::string asString() const override;
 
-	private:
-		L_DECLARE_PRIVATE(SubjectHeader);
-		L_DISABLE_COPY(SubjectHeader);
-	};
-}
+private:
+	L_DECLARE_PRIVATE(SubjectHeader);
+	L_DISABLE_COPY(SubjectHeader);
+};
+} // namespace Cpim
 
 #undef MAKE_CONTACT_HEADER
 

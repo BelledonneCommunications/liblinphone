@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,56 +35,50 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneMagicSearchCbs);
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneMagicSearchCbs);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneMagicSearchCbs, belle_sip_object_t,
-	NULL, // destroy
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneMagicSearchCbs,
+                           belle_sip_object_t,
+                           NULL, // destroy
+                           NULL, // clone
+                           NULL, // marshal
+                           FALSE);
 
 // =============================================================================
 
-LinphoneMagicSearchCbs * linphone_magic_search_cbs_new (void) {
+LinphoneMagicSearchCbs *linphone_magic_search_cbs_new(void) {
 	return belle_sip_object_new(LinphoneMagicSearchCbs);
 }
 
-LinphoneMagicSearchCbs * linphone_magic_search_cbs_ref (LinphoneMagicSearchCbs *cbs) {
+LinphoneMagicSearchCbs *linphone_magic_search_cbs_ref(LinphoneMagicSearchCbs *cbs) {
 	belle_sip_object_ref(cbs);
 	return cbs;
 }
 
-void linphone_magic_search_cbs_unref (LinphoneMagicSearchCbs *cbs) {
+void linphone_magic_search_cbs_unref(LinphoneMagicSearchCbs *cbs) {
 	belle_sip_object_unref(cbs);
 }
 
-void * linphone_magic_search_cbs_get_user_data (const LinphoneMagicSearchCbs *cbs) {
+void *linphone_magic_search_cbs_get_user_data(const LinphoneMagicSearchCbs *cbs) {
 	return cbs->userData;
 }
 
-void linphone_magic_search_cbs_set_user_data (LinphoneMagicSearchCbs *cbs, void *ud) {
+void linphone_magic_search_cbs_set_user_data(LinphoneMagicSearchCbs *cbs, void *ud) {
 	cbs->userData = ud;
 }
 
-LinphoneMagicSearchCbsSearchResultsReceivedCb linphone_magic_search_cbs_get_search_results_received(
-	const LinphoneMagicSearchCbs *cbs
-) {
+LinphoneMagicSearchCbsSearchResultsReceivedCb
+linphone_magic_search_cbs_get_search_results_received(const LinphoneMagicSearchCbs *cbs) {
 	return cbs->search_results_received;
 }
-void linphone_magic_search_cbs_set_search_results_received (
-	LinphoneMagicSearchCbs *cbs,
-	LinphoneMagicSearchCbsSearchResultsReceivedCb cb
-) {
+void linphone_magic_search_cbs_set_search_results_received(LinphoneMagicSearchCbs *cbs,
+                                                           LinphoneMagicSearchCbsSearchResultsReceivedCb cb) {
 	cbs->search_results_received = cb;
 }
 
-LinphoneMagicSearchCbsLdapHaveMoreResultsCb linphone_magic_search_cbs_get_ldap_have_more_results(
-	const LinphoneMagicSearchCbs *cbs
-) {
+LinphoneMagicSearchCbsLdapHaveMoreResultsCb
+linphone_magic_search_cbs_get_ldap_have_more_results(const LinphoneMagicSearchCbs *cbs) {
 	return cbs->ldap_have_more_results;
 }
-void linphone_magic_search_cbs_set_ldap_have_more_results (
-	LinphoneMagicSearchCbs *cbs,
-	LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb
-) {
+void linphone_magic_search_cbs_set_ldap_have_more_results(LinphoneMagicSearchCbs *cbs,
+                                                          LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb) {
 	cbs->ldap_have_more_results = cb;
 }

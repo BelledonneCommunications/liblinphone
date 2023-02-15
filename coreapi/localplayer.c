@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,21 +31,24 @@ static int _local_player_get_duration(LinphonePlayer *obj);
 static int _local_player_get_current_position(LinphonePlayer *obj);
 static void _local_player_close(LinphonePlayer *obj);
 static void _local_player_destroy(LinphonePlayer *obj);
-static void * _local_player_create_window_id(LinphonePlayer *obj);
-static void _local_player_set_window_id(LinphonePlayer *obj, void* window_id);
+static void *_local_player_create_window_id(LinphonePlayer *obj);
+static void _local_player_set_window_id(LinphonePlayer *obj, void *window_id);
 static bool_t _local_player_is_video_available(LinphonePlayer *obj);
 static void _local_player_set_volume_gain(LinphonePlayer *obj, float gain);
 static float _local_player_get_volume_gain(const LinphonePlayer *obj);
 static void _local_player_eof_callback(void *user_data);
 
-LinphonePlayer *linphone_core_create_local_player(LinphoneCore *lc, const char *sound_card_name, const char *video_display_name, void *window_id) {
+LinphonePlayer *linphone_core_create_local_player(LinphoneCore *lc,
+                                                  const char *sound_card_name,
+                                                  const char *video_display_name,
+                                                  void *window_id) {
 	LinphonePlayer *obj = linphone_player_new(lc);
 	MSSndCard *snd_card;
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(lc->factory);
 
 	if (sound_card_name == NULL) sound_card_name = linphone_core_get_media_device(lc);
 	snd_card = ms_snd_card_manager_get_card(snd_card_manager, sound_card_name);
-	if (snd_card == NULL){
+	if (snd_card == NULL) {
 		ms_error("linphone_core_create_local_player(): no sound card.");
 		return NULL;
 	}
@@ -111,11 +114,11 @@ static void _local_player_close(LinphonePlayer *obj) {
 	ms_media_player_close((MSMediaPlayer *)obj->impl);
 }
 
-static void * _local_player_create_window_id(LinphonePlayer *obj) {
+static void *_local_player_create_window_id(LinphonePlayer *obj) {
 	return ms_media_player_create_window_id((MSMediaPlayer *)obj->impl);
 }
 
-static void _local_player_set_window_id(LinphonePlayer *obj, void* window_id) {
+static void _local_player_set_window_id(LinphonePlayer *obj, void *window_id) {
 	ms_media_player_set_window_id((MSMediaPlayer *)obj->impl, window_id);
 }
 
@@ -131,10 +134,9 @@ static float _local_player_get_volume_gain(const LinphonePlayer *player) {
 	return ms_media_player_get_volume_gain((const MSMediaPlayer *)player->impl);
 }
 
-
 static void _local_player_eof_callback(void *user_data) {
 	LinphonePlayer *obj = (LinphonePlayer *)user_data;
-	
+
 	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(obj);
 	LinphonePlayerCbsEofReachedCb cb = linphone_player_cbs_get_eof_reached(cbs);
 	if (cb) cb(obj);
@@ -142,8 +144,9 @@ static void _local_player_eof_callback(void *user_data) {
 	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_player_get_callbacks_list(obj));
 	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {
 		linphone_player_set_current_callbacks(obj, reinterpret_cast<LinphonePlayerCbs *>(bctbx_list_get_data(it)));
-		LinphonePlayerCbsEofReachedCb cb = linphone_player_cbs_get_eof_reached(linphone_player_get_current_callbacks(obj));
-		if (cb)	cb(obj);
+		LinphonePlayerCbsEofReachedCb cb =
+		    linphone_player_cbs_get_eof_reached(linphone_player_get_current_callbacks(obj));
+		if (cb) cb(obj);
 	}
 	linphone_player_set_current_callbacks(obj, NULL);
 	bctbx_list_free(callbacksCopy);

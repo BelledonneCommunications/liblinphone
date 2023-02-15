@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,100 +33,101 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Ics {
-	class LINPHONE_PUBLIC Event {
-		friend class Icalendar;
-	public:
-		using attendee_params_t = std::map<std::string, std::string>;
-		using attendee_list_t = std::map<std::string, attendee_params_t>;
-		using organizer_t = std::pair<std::string, attendee_params_t>;
+class LINPHONE_PUBLIC Event {
+	friend class Icalendar;
 
-		Event () = default;
-		~Event () = default;
+public:
+	using attendee_params_t = std::map<std::string, std::string>;
+	using attendee_list_t = std::map<std::string, attendee_params_t>;
+	using organizer_t = std::pair<std::string, attendee_params_t>;
 
-		const organizer_t &getOrganizer () const;
-		const std::string &getOrganizerAddress () const;
-		void setOrganizer (const std::string &organizer);
-		void setOrganizer (const std::string &organizer, const attendee_params_t & params);
+	Event() = default;
+	~Event() = default;
 
-		const attendee_list_t &getAttendees () const;
-		void addAttendee (const std::string &attendee);
-		void addAttendee (const std::string &attendee, const attendee_params_t & params);
+	const organizer_t &getOrganizer() const;
+	const std::string &getOrganizerAddress() const;
+	void setOrganizer(const std::string &organizer);
+	void setOrganizer(const std::string &organizer, const attendee_params_t &params);
 
-		tm getDateTimeStart () const;
-		void setDateTimeStart (tm dateTimeStart);
+	const attendee_list_t &getAttendees() const;
+	void addAttendee(const std::string &attendee);
+	void addAttendee(const std::string &attendee, const attendee_params_t &params);
 
-		tm getDuration () const;
-		void setDuration (tm duration);
+	tm getDateTimeStart() const;
+	void setDateTimeStart(tm dateTimeStart);
 
-		unsigned int getSequence () const;
-		void setSequence (unsigned int duration);
+	tm getDuration() const;
+	void setDuration(tm duration);
 
-		const std::string &getUid () const;
-		const std::string getUtf8Uid () const;
-		void setUtf8Uid (const std::string &uid);
-		void setUid (const std::string &uid);
+	unsigned int getSequence() const;
+	void setSequence(unsigned int duration);
 
-		const std::string &getSummary () const;
-		const std::string getUtf8Summary () const;
-		void setUtf8Summary (const std::string &summary);
-		void setSummary (const std::string &summary);
+	const std::string &getUid() const;
+	const std::string getUtf8Uid() const;
+	void setUtf8Uid(const std::string &uid);
+	void setUid(const std::string &uid);
 
-		const std::string &getDescription () const;
-		const std::string getUtf8Description () const;
-		void setUtf8Description (const std::string &description);
-		void setDescription (const std::string &description);
+	const std::string &getSummary() const;
+	const std::string getUtf8Summary() const;
+	void setUtf8Summary(const std::string &summary);
+	void setSummary(const std::string &summary);
 
-		const std::string &getXConfUri () const;
-		void setXConfUri (const std::string &xConfUri);
+	const std::string &getDescription() const;
+	const std::string getUtf8Description() const;
+	void setUtf8Description(const std::string &description);
+	void setDescription(const std::string &description);
 
-		std::string asString () const;
+	const std::string &getXConfUri() const;
+	void setXConfUri(const std::string &xConfUri);
 
-	private:
-		organizer_t mOrganizer;
-		attendee_list_t mAttendees;
-		tm mDateTimeStart;
-		tm mDuration;
-		unsigned int mSequence = 0;
-		std::string mSummary;
-		std::string mDescription;
-		std::string mXConfUri;
-		mutable std::string mUid;
+	std::string asString() const;
 
-		time_t mCreationTime = (time_t) -1; // Used by tester
+private:
+	organizer_t mOrganizer;
+	attendee_list_t mAttendees;
+	tm mDateTimeStart;
+	tm mDuration;
+	unsigned int mSequence = 0;
+	std::string mSummary;
+	std::string mDescription;
+	std::string mXConfUri;
+	mutable std::string mUid;
+
+	time_t mCreationTime = (time_t)-1; // Used by tester
+};
+
+class LINPHONE_PUBLIC Icalendar {
+public:
+	enum class Method {
+		Request = 0,
+		Cancel = 1,
 	};
 
-	class LINPHONE_PUBLIC Icalendar {
-	public:
+	Icalendar() = default;
+	~Icalendar() = default;
 
-		enum class Method {
-			Request = 0,
-			Cancel = 1,
-		};
+	const Method &getMethod() const;
+	void setMethod(const std::string &method);
+	void setMethod(const Method &method);
 
-		Icalendar () = default;
-		~Icalendar () = default;
+	void addEvent(std::shared_ptr<Event> event);
 
-		const Method &getMethod () const;
-		void setMethod (const std::string &method);
-		void setMethod (const Method &method);
+	std::string asString() const;
 
-		void addEvent (std::shared_ptr<Event> event);
+	std::shared_ptr<ConferenceInfo> toConferenceInfo() const;
 
-		std::string asString () const;
+	static std::shared_ptr<const Icalendar> createFromString(const std::string &str);
 
-		std::shared_ptr<ConferenceInfo> toConferenceInfo () const;
+	// Used by the tester
+	void setCreationTime(time_t time);
 
-		static std::shared_ptr<const Icalendar> createFromString (const std::string &str);
+private:
+	Method mMethod = Method::Request;
+	std::list<std::shared_ptr<Event>> mEvents;
+};
+} // namespace Ics
 
-		// Used by the tester
-		void setCreationTime(time_t time);
-	private:
-		Method mMethod = Method::Request;
-		std::list<std::shared_ptr<Event>> mEvents;
-	};
-}
-
-std::ostream &operator<< (std::ostream &stream, Ics::Icalendar::Method method);
+std::ostream &operator<<(std::ostream &stream, Ics::Icalendar::Method method);
 
 LINPHONE_END_NAMESPACE
 

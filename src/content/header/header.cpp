@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@
 
 #include <sstream>
 
-#include "linphone/utils/utils.h"
 #include "linphone/utils/algorithm.h"
+#include "linphone/utils/utils.h"
 
 #include "header-p.h"
 #include "header-param.h"
@@ -34,11 +34,13 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-Header::Header(HeaderPrivate &p) : ClonableObject(p) {}
+Header::Header(HeaderPrivate &p) : ClonableObject(p) {
+}
 
-Header::Header() : ClonableObject(*new HeaderPrivate) {}
+Header::Header() : ClonableObject(*new HeaderPrivate) {
+}
 
-Header::Header (const string &name, const string &value) : ClonableObject(*new HeaderPrivate) {
+Header::Header(const string &name, const string &value) : ClonableObject(*new HeaderPrivate) {
 	setName(name);
 
 	size_t posParam = value.find(";");
@@ -64,13 +66,14 @@ Header::Header (const string &name, const string &value) : ClonableObject(*new H
 	setValue(parsedValue);
 }
 
-Header::Header (const string &name, const string &value, const list<HeaderParam> &params) : Header(name, value) {
+Header::Header(const string &name, const string &value, const list<HeaderParam> &params) : Header(name, value) {
 	addParameters(params);
 }
 
-Header::Header (const Header &other) : Header(other.getName(), other.getValue(), other.getParameters()) {}
+Header::Header(const Header &other) : Header(other.getName(), other.getValue(), other.getParameters()) {
+}
 
-Header &Header::operator= (const Header &other) {
+Header &Header::operator=(const Header &other) {
 	if (this != &other) {
 		setName(other.getName());
 		setValue(other.getValue());
@@ -81,36 +84,35 @@ Header &Header::operator= (const Header &other) {
 	return *this;
 }
 
-bool Header::operator== (const Header &other) const {
-	return getName() == other.getName() &&
-		getValue() == other.getValue();
+bool Header::operator==(const Header &other) const {
+	return getName() == other.getName() && getValue() == other.getValue();
 }
 
-bool Header::operator!= (const Header &other) const {
+bool Header::operator!=(const Header &other) const {
 	return !(*this == other);
 }
 
-void Header::setName (const string &name) {
+void Header::setName(const string &name) {
 	L_D();
 	d->name = name;
 }
 
-const string& Header::getName () const {
+const string &Header::getName() const {
 	L_D();
 	return d->name;
 }
 
-void Header::setValue (const string &value) {
+void Header::setValue(const string &value) {
 	L_D();
 	d->value = value;
 }
 
-const string& Header::getValue () const {
+const string &Header::getValue() const {
 	L_D();
 	return d->value;
 }
 
-std::string Header::getValueWithParams () const {
+std::string Header::getValueWithParams() const {
 	stringstream returnValue;
 	returnValue << getValue();
 	for (const auto &param : getParameters())
@@ -119,64 +121,59 @@ std::string Header::getValueWithParams () const {
 	return returnValue.str();
 }
 
-void Header::cleanParameters () {
+void Header::cleanParameters() {
 	L_D();
 	d->parameters.clear();
 }
 
-const list<HeaderParam> &Header::getParameters () const {
+const list<HeaderParam> &Header::getParameters() const {
 	L_D();
 	return d->parameters;
 }
 
-void Header::addParameter (const string &paramName, const string &paramValue) {
+void Header::addParameter(const string &paramName, const string &paramValue) {
 	addParameter(HeaderParam(paramName, paramValue));
 }
 
-void Header::addParameter (const HeaderParam &param) {
+void Header::addParameter(const HeaderParam &param) {
 	L_D();
 	removeParameter(param);
 	d->parameters.push_back(param);
 }
 
 void Header::addParameters(const list<HeaderParam> &params) {
-	for (auto it = std::begin(params); it!=std::end(params); ++it) {
+	for (auto it = std::begin(params); it != std::end(params); ++it) {
 		HeaderParam param = *it;
 		addParameter(param.getName(), param.getValue());
 	}
 }
 
-void Header::removeParameter (const string &paramName) {
+void Header::removeParameter(const string &paramName) {
 	L_D();
 	auto it = findParameter(paramName);
-	if (it != d->parameters.cend())
-		d->parameters.remove(*it);
+	if (it != d->parameters.cend()) d->parameters.remove(*it);
 }
 
-void Header::removeParameter (const HeaderParam &param) {
+void Header::removeParameter(const HeaderParam &param) {
 	removeParameter(param.getName());
 }
 
-list<HeaderParam>::const_iterator Header::findParameter (const string &paramName) const {
+list<HeaderParam>::const_iterator Header::findParameter(const string &paramName) const {
 	L_D();
-	return findIf(d->parameters, [&paramName](const HeaderParam &param) {
-		return param.getName() == paramName;
-	});
+	return findIf(d->parameters, [&paramName](const HeaderParam &param) { return param.getName() == paramName; });
 }
 
-const HeaderParam &Header::getParameter (const string &paramName) const {
+const HeaderParam &Header::getParameter(const string &paramName) const {
 	L_D();
 	list<HeaderParam>::const_iterator it = findParameter(paramName);
-	if (it != d->parameters.cend())
-		return *it;
+	if (it != d->parameters.cend()) return *it;
 
 	return Utils::getEmptyConstRefObject<HeaderParam>();
 }
 
-string Header::asString () const {
+string Header::asString() const {
 	stringstream asString;
-	if (!getName().empty())
-		asString << getName() << ":";
+	if (!getName().empty()) asString << getName() << ":";
 
 	asString << getValue();
 	for (const auto &param : getParameters())
@@ -185,7 +182,7 @@ string Header::asString () const {
 	return asString.str();
 }
 
-ostream &operator<< (ostream &os, const Header& header) {
+ostream &operator<<(ostream &os, const Header &header) {
 	os << header.asString();
 	return os;
 }

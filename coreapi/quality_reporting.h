@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,25 +21,24 @@
 #ifndef quality_reporting_h
 #define quality_reporting_h
 
-#include "linphone/core.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "linphone/core.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
-
 
 /**
  * Linphone quality report sub object storing address related information.
  */
 typedef struct reporting_addr {
-	char * id;
-	char * ip;
+	char *id;
+	char *ip;
 	int port;
 	uint32_t ssrc;
 
-	char * group;
-	char * mac; // optional
+	char *group;
+	char *mac; // optional
 } reporting_addr_t;
 
 /**
@@ -56,10 +55,10 @@ typedef struct reporting_content_metrics {
 	// session description - optional
 	struct {
 		int payload_type;
-		char * payload_desc;
+		char *payload_desc;
 		int sample_rate;
 		int frame_duration;
-		char * fmtp;
+		char *fmtp;
 		int packet_loss_concealment;
 	} session_description;
 
@@ -99,14 +98,15 @@ typedef struct reporting_content_metrics {
 	} quality_estimates;
 
 	// custom extension
-	char * user_agent;
+	char *user_agent;
 
 	// for internal processing
-	uint8_t rtcp_xr_count; // number of RTCP XR packets received since last report, used to compute average of instantaneous parameters as stated in the RFC 6035 (4.5)
-	uint8_t rtcp_sr_count; // number of RTCP SR packets received since last report, used to compute RTT average values in case RTCP XR voip metrics is not enabled
+	uint8_t rtcp_xr_count; // number of RTCP XR packets received since last report, used to compute average of
+	                       // instantaneous parameters as stated in the RFC 6035 (4.5)
+	uint8_t rtcp_sr_count; // number of RTCP SR packets received since last report, used to compute RTT average values
+	                       // in case RTCP XR voip metrics is not enabled
 
 } reporting_content_metrics_t;
-
 
 /**
  * Linphone quality report main object created by function linphone_reporting_new().
@@ -114,8 +114,8 @@ typedef struct reporting_content_metrics {
  */
 typedef struct reporting_session_report {
 	struct {
-		char * call_id;
-		char * orig_id;
+		char *call_id;
+		char *orig_id;
 		reporting_addr_t local_addr;
 		reporting_addr_t remote_addr;
 	} info;
@@ -123,18 +123,18 @@ typedef struct reporting_session_report {
 	reporting_content_metrics_t local_metrics;
 	reporting_content_metrics_t remote_metrics; // optional
 
-	char * dialog_id; // optional
+	char *dialog_id; // optional
 
 	// Quality of Service analyzer - custom extension
 	/* This should allow us to analysis bad network conditions and quality adaptation
 	on server side*/
 	struct {
-		char * name; /*type of the QoS analyzer used*/
-		char* timestamp; /*time of each decision in seconds*/
-		char* input_leg; /*input parameters' name*/
-		char* input; /*set of inputs for each semicolon separated decision*/
-		char* output_leg; /*output parameters' name*/
-		char* output; /*set of outputs for each semicolon separated decision*/
+		char *name;       /*type of the QoS analyzer used*/
+		char *timestamp;  /*time of each decision in seconds*/
+		char *input_leg;  /*input parameters' name*/
+		char *input;      /*set of inputs for each semicolon separated decision*/
+		char *output_leg; /*output parameters' name*/
+		char *output;     /*set of outputs for each semicolon separated decision*/
 	} qos_analyzer;
 
 	// for internal processing
@@ -142,20 +142,20 @@ typedef struct reporting_session_report {
 	LinphoneCall *call;
 } reporting_session_report_t;
 
+typedef void (*LinphoneQualityReportingReportSendCb)(const LinphoneCall *call,
+                                                     SalStreamType stream_type,
+                                                     const LinphoneContent *content);
 
-typedef void (*LinphoneQualityReportingReportSendCb)(const LinphoneCall *call, SalStreamType stream_type, const LinphoneContent *content);
-
-struct _LinphoneQualityReporting{
-	reporting_session_report_t * reports[3]; /**Store information on audio and video media streams (RFC 6035) */
+struct _LinphoneQualityReporting {
+	reporting_session_report_t *reports[3]; /**Store information on audio and video media streams (RFC 6035) */
 	LinphoneQualityReportingReportSendCb on_report_sent;
 	bool_t was_video_running; /*Keep video state since last check in order to detect its (de)activation*/
 };
 
 typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
 
-
-reporting_session_report_t * linphone_reporting_new(void);
-void linphone_reporting_destroy(reporting_session_report_t * report);
+reporting_session_report_t *linphone_reporting_new(void);
+void linphone_reporting_destroy(reporting_session_report_t *report);
 
 /**
  * Fill media information about a given call. This function must be called before
@@ -164,7 +164,7 @@ void linphone_reporting_destroy(reporting_session_report_t * report);
  * @param stats_type the media type (LINPHONE_CALL_STATS_AUDIO or LINPHONE_CALL_STATS_VIDEO)
  *
  */
-void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type);
+void linphone_reporting_update_media_info(LinphoneCall *call, int stats_type);
 
 /**
  * Fill IP information about a given call. This function must be called each
@@ -174,7 +174,7 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type);
  * @param call #LinphoneCall object to consider
  *
  */
-void linphone_reporting_update_ip(LinphoneCall * call);
+void linphone_reporting_update_ip(LinphoneCall *call);
 
 /**
  * Publish a session report. This function should be called when session terminates,
@@ -184,7 +184,7 @@ void linphone_reporting_update_ip(LinphoneCall * call);
  *
  * @return error code. 0 for success, positive value otherwise.
  */
-int linphone_reporting_publish_session_report(LinphoneCall* call, bool_t call_term);
+int linphone_reporting_publish_session_report(LinphoneCall *call, bool_t call_term);
 
 /**
  * Publish an interval report. This function should be used for periodic interval
@@ -192,7 +192,7 @@ int linphone_reporting_publish_session_report(LinphoneCall* call, bool_t call_te
  * @return error code. 0 for success, positive value otherwise.
  *
  */
-int linphone_reporting_publish_interval_report(LinphoneCall* call);
+int linphone_reporting_publish_interval_report(LinphoneCall *call);
 
 /**
  * Update publish reports with newly sent/received RTCP-XR packets (if available).

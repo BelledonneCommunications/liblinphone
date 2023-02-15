@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #ifndef _L_CHAT_MESSAGE_LISTENER_H_
 #define _L_CHAT_MESSAGE_LISTENER_H_
 
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/chat-message.h"
 
 // =============================================================================
@@ -29,9 +31,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ChatMessageListener {
 public:
-	virtual ~ChatMessageListener () = default;
+	virtual ~ChatMessageListener() = default;
 
-	virtual void onChatMessageStateChanged (const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) {}
+	virtual void onChatMessageStateChanged(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message),
+	                                       BCTBX_UNUSED(ChatMessage::State state)) {
+	}
 };
 
 LINPHONE_END_NAMESPACE

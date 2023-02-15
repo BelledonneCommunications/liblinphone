@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,37 +31,66 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LINPHONE_PUBLIC LocalConference :
-	public Conference {
+class LINPHONE_PUBLIC LocalConference : public Conference {
 	friend class ServerGroupChatRoomPrivate;
 	friend class ServerGroupChatRoom;
-public:
-	LocalConference (	const std::shared_ptr<Core> &core
-					 , const IdentityAddress &myAddress
-					 , CallSessionListener *listener
-					 , const std::shared_ptr<ConferenceParams> params
-					 , ConferenceListener * confListener = nullptr);
-	virtual ~LocalConference ();
 
-	void subscribeReceived (LinphoneEvent *event);
+public:
+	LocalConference(const std::shared_ptr<Core> &core,
+	                const IdentityAddress &myAddress,
+	                CallSessionListener *listener,
+	                const std::shared_ptr<ConferenceParams> params,
+	                ConferenceListener *confListener = nullptr);
+	virtual ~LocalConference();
+
+	void subscribeReceived(LinphoneEvent *event);
 
 	virtual bool isIn() const override;
 
-	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
-	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
-	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) override;
-	virtual std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) override;
-	virtual std::shared_ptr<ConferenceEphemeralMessageEvent> notifyEphemeralModeChanged (time_t creationTime,  const bool isFullState, const EventLog::Type type) override;
-	virtual std::shared_ptr<ConferenceEphemeralMessageEvent> notifyEphemeralMessageEnabled (time_t creationTime, const bool isFullState, const bool enable) override;
-	virtual std::shared_ptr<ConferenceEphemeralMessageEvent> notifyEphemeralLifetimeChanged (time_t creationTime, const bool isFullState, const long lifetime) override;
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceStateChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded(
+	    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant) override;
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved(
+	    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant) override;
+	virtual std::shared_ptr<ConferenceParticipantEvent>
+	notifyParticipantSetAdmin(time_t creationTime,
+	                          const bool isFullState,
+	                          const std::shared_ptr<Participant> &participant,
+	                          bool isAdmin) override;
+	virtual std::shared_ptr<ConferenceSubjectEvent>
+	notifySubjectChanged(time_t creationTime, const bool isFullState, const std::string subject) override;
+	virtual std::shared_ptr<ConferenceEphemeralMessageEvent>
+	notifyEphemeralModeChanged(time_t creationTime, const bool isFullState, const EventLog::Type type) override;
+	virtual std::shared_ptr<ConferenceEphemeralMessageEvent>
+	notifyEphemeralMessageEnabled(time_t creationTime, const bool isFullState, const bool enable) override;
+	virtual std::shared_ptr<ConferenceEphemeralMessageEvent>
+	notifyEphemeralLifetimeChanged(time_t creationTime, const bool isFullState, const long lifetime) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
+	notifyParticipantDeviceAdded(time_t creationTime,
+	                             const bool isFullState,
+	                             const std::shared_ptr<Participant> &participant,
+	                             const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
+	notifyParticipantDeviceRemoved(time_t creationTime,
+	                               const bool isFullState,
+	                               const std::shared_ptr<Participant> &participant,
+	                               const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
+	notifyParticipantDeviceStateChanged(time_t creationTime,
+	                                    const bool isFullState,
+	                                    const std::shared_ptr<Participant> &participant,
+	                                    const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
-	virtual std::shared_ptr<ConferenceAvailableMediaEvent> notifyAvailableMediaChanged (time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) override;
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceAvailableMediaEvent>
+	notifyAvailableMediaChanged(time_t creationTime,
+	                            const bool isFullState,
+	                            const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
+	notifyParticipantDeviceMediaCapabilityChanged(time_t creationTime,
+	                                              const bool isFullState,
+	                                              const std::shared_ptr<Participant> &participant,
+	                                              const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
-	virtual void notifyFullState () override;
+	virtual void notifyFullState() override;
 	virtual std::shared_ptr<Call> getCall() const override;
 
 protected:
@@ -70,9 +99,7 @@ protected:
 #endif
 
 private:
-
 	L_DISABLE_COPY(LocalConference);
-
 };
 
 LINPHONE_END_NAMESPACE

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,29 +28,27 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Private {
-	// See: http://en.cppreference.com/w/cpp/types/void_t
-	template<typename... T> struct MakeVoid {
-		typedef void type;
-	};
-	template<typename... T>
-	using void_t = typename MakeVoid<T...>::type;
-
-	template<typename T, typename U = void>
-	struct IsMapContainerImpl : std::false_type {};
-
-	template<typename T>
-	struct IsMapContainerImpl<
-		T,
-		void_t<
-			typename T::key_type,
-			typename T::mapped_type,
-			decltype(std::declval<T&>()[std::declval<const typename T::key_type&>()])
-		>
-	> : std::true_type {};
+// See: http://en.cppreference.com/w/cpp/types/void_t
+template <typename... T>
+struct MakeVoid {
+	typedef void type;
 };
+template <typename... T>
+using void_t = typename MakeVoid<T...>::type;
+
+template <typename T, typename U = void>
+struct IsMapContainerImpl : std::false_type {};
+
+template <typename T>
+struct IsMapContainerImpl<T,
+                          void_t<typename T::key_type,
+                                 typename T::mapped_type,
+                                 decltype(std::declval<T &>()[std::declval<const typename T::key_type &>()])>>
+    : std::true_type {};
+}; // namespace Private
 
 // Check if a type is a std container like map, unordered_map...
-template<typename T>
+template <typename T>
 struct IsMapContainer : Private::IsMapContainerImpl<T>::type {};
 
 LINPHONE_END_NAMESPACE

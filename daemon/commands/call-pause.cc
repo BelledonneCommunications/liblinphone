@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,26 +22,19 @@
 
 using namespace std;
 
-CallPauseCommand::CallPauseCommand() :
-	DaemonCommand("call-pause",
-				  "call-pause [<call_id>]",
-				  "Pause a call (pause current if no id is specified).")
-{
-	addExample(make_unique<DaemonCommandExample>("call-pause 1",
-										"Status: Ok\n\n"
-										"Call was paused"));
+CallPauseCommand::CallPauseCommand()
+    : DaemonCommand("call-pause", "call-pause [<call_id>]", "Pause a call (pause current if no id is specified).") {
+	addExample(make_unique<DaemonCommandExample>("call-pause 1", "Status: Ok\n\n"
+	                                                             "Call was paused"));
 
-	addExample(make_unique<DaemonCommandExample>("call-pause 2",
-										"Status: Error\n"
-										"Reason: No call with such id."));
+	addExample(make_unique<DaemonCommandExample>("call-pause 2", "Status: Error\n"
+	                                                             "Reason: No call with such id."));
 
-	addExample(make_unique<DaemonCommandExample>("call-pause",
-										"Status: Error\n"
-										"Reason: No current call available."));
+	addExample(make_unique<DaemonCommandExample>("call-pause", "Status: Error\n"
+	                                                           "Reason: No current call available."));
 }
 
-void CallPauseCommand::exec(Daemon* app, const string& args)
-{
+void CallPauseCommand::exec(Daemon *app, const string &args) {
 	LinphoneCore *lc = app->getCore();
 	int cid;
 	LinphoneCall *call = NULL;

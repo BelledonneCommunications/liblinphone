@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 // =============================================================================
 
 #ifdef __cplusplus
-	extern "C" {
+extern "C" {
 #endif // ifdef __cplusplus
 
 /**
@@ -38,56 +38,59 @@
 /**
  * Create a new account callbacks object.
  * @return The #LinphoneAccountCbs object. @notnil
-**/
-LinphoneAccountCbs *linphone_account_cbs_new (void);
+ **/
+LinphoneAccountCbs *linphone_account_cbs_new(void);
 
 /**
  * Acquire a reference to the account callbacks object.
  * @param cbs The #LinphoneAccountCbs object. @notnil
  * @return The same account callbacks object. @notnil
-**/
-LINPHONE_PUBLIC LinphoneAccountCbs * linphone_account_cbs_ref (LinphoneAccountCbs *cbs);
+ **/
+LINPHONE_PUBLIC LinphoneAccountCbs *linphone_account_cbs_ref(LinphoneAccountCbs *cbs);
 
 /**
  * Release reference to the account callbacks object.
  * @param cbs The #LinphoneAccountCbs object. @notnil
-**/
-LINPHONE_PUBLIC void linphone_account_cbs_unref (LinphoneAccountCbs *cbs);
+ **/
+LINPHONE_PUBLIC void linphone_account_cbs_unref(LinphoneAccountCbs *cbs);
 
 /**
  * Retrieve the user pointer associated with the account callbacks object.
  * @param cbs The #LinphoneAccountCbs object. @notnil
  * @return The user pointer associated with the account callbacks object. @maybenil
-**/
-LINPHONE_PUBLIC void * linphone_account_cbs_get_user_data (const LinphoneAccountCbs *cbs);
+ **/
+LINPHONE_PUBLIC void *linphone_account_cbs_get_user_data(const LinphoneAccountCbs *cbs);
 
 /**
  * Assign a user pointer to the account callbacks object.
  * @param cbs The #LinphoneAccountCbs object. @notnil
  * @param user_data The user pointer to associate with the account callbacks object. @maybenil
-**/
-LINPHONE_PUBLIC void linphone_account_cbs_set_user_data (LinphoneAccountCbs *cbs, void *user_data);
+ **/
+LINPHONE_PUBLIC void linphone_account_cbs_set_user_data(LinphoneAccountCbs *cbs, void *user_data);
 
 /**
  * Get the registration state changed callback.
  * @param cbs #LinphoneAccountCbs object. @notnil
  * @return The current registration state changed callback.
  */
-LINPHONE_PUBLIC LinphoneAccountCbsRegistrationStateChangedCb linphone_account_cbs_get_registration_state_changed (const LinphoneAccountCbs *cbs);
+LINPHONE_PUBLIC LinphoneAccountCbsRegistrationStateChangedCb
+linphone_account_cbs_get_registration_state_changed(const LinphoneAccountCbs *cbs);
 
 /**
  * Set the registration state changed callback.
  * @param cbs #LinphoneAccountCbs object. @notnil
  * @param cb The registration state changed callback to be used.
  */
-LINPHONE_PUBLIC void linphone_account_cbs_set_registration_state_changed (LinphoneAccountCbs *cbs, LinphoneAccountCbsRegistrationStateChangedCb cb);
+LINPHONE_PUBLIC void
+linphone_account_cbs_set_registration_state_changed(LinphoneAccountCbs *cbs,
+                                                    LinphoneAccountCbsRegistrationStateChangedCb cb);
 
 /**
  * @}
  */
 
 #ifdef __cplusplus
-	}
+}
 #endif // ifdef __cplusplus
 
 #endif // ifndef _L_C_ACCOUNT_CBS_H_

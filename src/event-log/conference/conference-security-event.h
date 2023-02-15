@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,15 +30,15 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class IdentityAddress;
 class ConferenceSecurityEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceSecurityEvent : public ConferenceEvent {
 
 public:
+	/*TODO rename it "Type" as the name is already clear enough with namespaces*/
 
-/*TODO rename it "Type" as the name is already clear enough with namespaces*/
-
-	enum class SecurityEventType{
+	enum class SecurityEventType {
 		None = LinphoneSecurityEventTypeNone,
 		SecurityLevelDowngraded = LinphoneSecurityEventTypeSecurityLevelDowngraded,
 		ParticipantMaxDeviceCountExceeded = LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded,
@@ -46,32 +46,29 @@ public:
 		ManInTheMiddleDetected = LinphoneSecurityEventTypeManInTheMiddleDetected
 	};
 
-	//casting to int to get rid of the enum compare warning.
-	//Here we are comparing two enums serving the same purpose
-	static_assert((int)ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected == (int)LinphoneSecurityEventTypeManInTheMiddleDetected, "LinphoneSecurityEventType and ConferenceSecurityEvent::SecurityEventType are not synchronized, fix this !");
+	// casting to int to get rid of the enum compare warning.
+	// Here we are comparing two enums serving the same purpose
+	static_assert(
+	    (int)ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected ==
+	        (int)LinphoneSecurityEventTypeManInTheMiddleDetected,
+	    "LinphoneSecurityEventType and ConferenceSecurityEvent::SecurityEventType are not synchronized, fix this !");
 
-	ConferenceSecurityEvent (
-		time_t creationTime,
-		const ConferenceId &conferenceId,
-		SecurityEventType securityEventType,
-		const IdentityAddress &faultyDevice
-	);
+	ConferenceSecurityEvent(time_t creationTime,
+	                        const ConferenceId &conferenceId,
+	                        SecurityEventType securityEventType,
+	                        const IdentityAddress &faultyDevice);
 
-	ConferenceSecurityEvent (
-		time_t creationTime,
-		const ConferenceId &conferenceId,
-		SecurityEventType securityEventType
-	);
+	ConferenceSecurityEvent(time_t creationTime, const ConferenceId &conferenceId, SecurityEventType securityEventType);
 
-	SecurityEventType getSecurityEventType () const;
-	const IdentityAddress &getFaultyDeviceAddress () const;
+	SecurityEventType getSecurityEventType() const;
+	const IdentityAddress &getFaultyDeviceAddress() const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceSecurityEvent);
 	L_DISABLE_COPY(ConferenceSecurityEvent);
 };
 
-std::ostream& operator<<(std::ostream& lhs, ConferenceSecurityEvent::SecurityEventType e);
+std::ostream &operator<<(std::ostream &lhs, ConferenceSecurityEvent::SecurityEventType e);
 
 LINPHONE_END_NAMESPACE
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #ifndef _L_CONTENT_TYPE_H_
 #define _L_CONTENT_TYPE_H_
 
-#include "object/clonable-object.h"
 #include "header/header.h"
+#include "object/clonable-object.h"
 
 // =============================================================================
 
@@ -33,41 +33,41 @@ class HeaderParam;
 
 class LINPHONE_PUBLIC ContentType : public Header {
 public:
-	explicit ContentType (const std::string &contentType = "");
-	ContentType (const std::string &type, const std::string &subType);
-	ContentType (const std::string &type, const std::string &subType, const HeaderParam &parameter);
-	ContentType (const std::string &type, const std::string &subType, const std::list<HeaderParam> &parameters);
-	ContentType (const ContentType &other);
+	explicit ContentType(const std::string &contentType = "");
+	ContentType(const std::string &type, const std::string &subType);
+	ContentType(const std::string &type, const std::string &subType, const HeaderParam &parameter);
+	ContentType(const std::string &type, const std::string &subType, const std::list<HeaderParam> &parameters);
+	ContentType(const ContentType &other);
 
-	ContentType &operator= (const ContentType &other);
+	ContentType &operator=(const ContentType &other);
 
-	bool strongEqual (const ContentType &other) const;
+	bool strongEqual(const ContentType &other) const;
 	/*does not check parameters*/
-	bool operator== (const ContentType &other) const;
+	bool operator==(const ContentType &other) const;
 	/*does not check parameters*/
-	bool operator!= (const ContentType &other) const;
+	bool operator!=(const ContentType &other) const;
 
 	// Delete these operators to prevent putting complicated content-type strings
 	// in the code. Instead define static const ContentType objects below.
-	bool operator== (const std::string &other) const = delete;
-	bool operator!= (const std::string &other) const = delete;
+	bool operator==(const std::string &other) const = delete;
+	bool operator!=(const std::string &other) const = delete;
 
-	bool isEmpty () const;
-	bool isValid () const;
-	bool isFile () const;
+	bool isEmpty() const;
+	bool isValid() const;
+	bool isFile() const;
 
-	const std::string &getType () const;
-	bool setType (const std::string &type);
+	const std::string &getType() const;
+	bool setType(const std::string &type);
 
-	const std::string &getSubType () const;
-	bool setSubType (const std::string &subType);
+	const std::string &getSubType() const;
+	bool setSubType(const std::string &subType);
 
 	bool isMultipart() const;
 
-	static bool isFile (const ContentType &contentType);
+	static bool isFile(const ContentType &contentType);
 	std::string getMediaType() const;
 
-	LINPHONE_PUBLIC friend std::ostream &operator<< (std::ostream &os, const ContentType &header);
+	LINPHONE_PUBLIC friend std::ostream &operator<<(std::ostream &os, const ContentType &header);
 
 	static const ContentType ConferenceInfo;
 	static const ContentType Cpim;

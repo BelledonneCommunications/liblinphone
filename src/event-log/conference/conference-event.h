@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,12 +32,12 @@ class ConferenceId;
 
 class LINPHONE_PUBLIC ConferenceEvent : public EventLog {
 public:
-	ConferenceEvent (Type type, time_t creationTime, const ConferenceId &conferenceId);
+	ConferenceEvent(Type type, time_t creationTime, const ConferenceId &conferenceId);
 
-	const ConferenceId &getConferenceId () const;
+	const ConferenceId &getConferenceId() const;
 
 protected:
-	ConferenceEvent (ConferenceEventPrivate &p, Type type, time_t creationTime, const ConferenceId &conferenceId);
+	ConferenceEvent(ConferenceEventPrivate &p, Type type, time_t creationTime, const ConferenceId &conferenceId);
 
 private:
 	L_DECLARE_PRIVATE(ConferenceEvent);

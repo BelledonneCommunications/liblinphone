@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,15 +30,16 @@ LINPHONE_BEGIN_NAMESPACE
 
 class RemoteConferenceEventHandler;
 
-class LINPHONE_PUBLIC RemoteConference :
-	public Conference,
-	public ConferenceListenerInterface {
+class LINPHONE_PUBLIC RemoteConference : public Conference, public ConferenceListenerInterface {
 	friend class ClientGroupChatRoomPrivate;
 	friend class ClientGroupChatRoom;
 
 public:
-	RemoteConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
-	virtual ~RemoteConference ();
+	RemoteConference(const std::shared_ptr<Core> &core,
+	                 const IdentityAddress &myAddress,
+	                 CallSessionListener *listener,
+	                 const std::shared_ptr<ConferenceParams> params);
+	virtual ~RemoteConference();
 
 	virtual bool isIn() const override;
 
@@ -49,20 +50,25 @@ protected:
 #endif // HAVE_ADVANCED_IM
 
 	/* ConferenceListener */
-	void onConferenceCreated (const ConferenceAddress &addr) override;
-	void onConferenceTerminated (const IdentityAddress &addr) override;
-	void onFirstNotifyReceived (const IdentityAddress &addr) override;
-	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
-	void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
-	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
-	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
-	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
-	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
-	void onFullStateReceived () override;
+	void onConferenceCreated(const ConferenceAddress &addr) override;
+	void onConferenceTerminated(const IdentityAddress &addr) override;
+	void onFirstNotifyReceived(const IdentityAddress &addr) override;
+	void onParticipantAdded(const std::shared_ptr<ConferenceParticipantEvent> &event,
+	                        const std::shared_ptr<Participant> &participant) override;
+	void onParticipantRemoved(const std::shared_ptr<ConferenceParticipantEvent> &event,
+	                          const std::shared_ptr<Participant> &participant) override;
+	void onParticipantSetAdmin(const std::shared_ptr<ConferenceParticipantEvent> &event,
+	                           const std::shared_ptr<Participant> &participant) override;
+	void onSubjectChanged(const std::shared_ptr<ConferenceSubjectEvent> &event) override;
+	void onParticipantDeviceAdded(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+	                              const std::shared_ptr<ParticipantDevice> &device) override;
+	void onParticipantDeviceRemoved(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+	                                const std::shared_ptr<ParticipantDevice> &device) override;
+	void onFullStateReceived() override;
 
-	void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
-	void onEphemeralMessageEnabled (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
-	void onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralModeChanged(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralMessageEnabled(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralLifetimeChanged(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 	virtual std::shared_ptr<Call> getCall() const override;
 
 private:

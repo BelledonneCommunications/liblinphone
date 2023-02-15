@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,26 +22,28 @@
 
 using namespace std;
 
-HelpCommand::HelpCommand() :
-		DaemonCommand("help", "help [<command>]", "Show <command> help notice, if command is unspecified or inexistent show all commands.") {
+HelpCommand::HelpCommand()
+    : DaemonCommand("help",
+                    "help [<command>]",
+                    "Show <command> help notice, if command is unspecified or inexistent show all commands.") {
 }
 
-void HelpCommand::exec(Daemon *app, const string& args) {
+void HelpCommand::exec(Daemon *app, const string &args) {
 	ostringstream ost;
-	list<DaemonCommand*>::const_iterator it;
-	const list<DaemonCommand*> &l = app->getCommandList();
+	list<DaemonCommand *>::const_iterator it;
+	const list<DaemonCommand *> &l = app->getCommandList();
 	bool found = false;
-	if (!args.empty()){
+	if (!args.empty()) {
 		for (it = l.begin(); it != l.end(); ++it) {
-			if ((*it)->matches(args)){
+			if ((*it)->matches(args)) {
 				ost << (*it)->getHelp();
 				found = true;
 				break;
 			}
 		}
 	}
-	
-	if (!found){
+
+	if (!found) {
 		for (it = l.begin(); it != l.end(); ++it) {
 			ost << (*it)->getProto() << endl;
 		}

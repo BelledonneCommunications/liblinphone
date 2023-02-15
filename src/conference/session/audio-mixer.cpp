@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "streams.h"
+#include <bctoolbox/defs.h>
+
 #include "mixers.h"
+#include "streams.h"
 
 #include "linphone/core.h"
 #include "private.h"
@@ -28,7 +30,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session){
+MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session) {
 	MSAudioConferenceParams ms_conf_params;
 	ms_conf_params.samplerate = linphone_config_get_int(mSession.getCCore()->config, "sound", "conference_rate", 16000);
 	ms_conf_params.active_talker_callback = &MS2AudioMixer::sOnActiveTalkerChanged;
@@ -36,54 +38,56 @@ MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session){
 	mConference = ms_audio_conference_new(&ms_conf_params, mSession.getCCore()->factory);
 }
 
-MS2AudioMixer::~MS2AudioMixer(){
-	if (mTimer){
+MS2AudioMixer::~MS2AudioMixer() {
+	if (mTimer) {
 		mSession.getCore().destroyTimer(mTimer);
 	}
 	if (mRecordEndpoint) {
 		stopRecording();
 	}
-	if (mLocalEndpoint){
+	if (mLocalEndpoint) {
 		removeLocalParticipant();
 	}
 	ms_audio_conference_destroy(mConference);
 }
 
-void MS2AudioMixer::addListener(AudioMixerListener *listener){
-	if (mTimer == nullptr){
+void MS2AudioMixer::addListener(AudioMixerListener *listener) {
+	if (mTimer == nullptr) {
 		// Start the monitoring of the active talker since somebody wants this information.
-		mTimer = mSession.getCore().createTimer([this]() -> bool{
-				ms_audio_conference_process_events(mConference);
-				return true;
-			}, 50, "AudioConference events timer");
+		mTimer = mSession.getCore().createTimer(
+		    [this]() -> bool {
+			    ms_audio_conference_process_events(mConference);
+			    return true;
+		    },
+		    50, "AudioConference events timer");
 	}
 	mListeners.push_back(listener);
 }
 
-void MS2AudioMixer::removeListener(AudioMixerListener *listener){
+void MS2AudioMixer::removeListener(AudioMixerListener *listener) {
 	mListeners.remove(listener);
 }
 
-void MS2AudioMixer::sOnActiveTalkerChanged(MSAudioConference *audioconf, MSAudioEndpoint *ep){
+void MS2AudioMixer::sOnActiveTalkerChanged(MSAudioConference *audioconf, MSAudioEndpoint *ep) {
 	const MSAudioConferenceParams *params = ms_audio_conference_get_params(audioconf);
-	MS2AudioMixer *zis = static_cast<MS2AudioMixer*>(params->user_data);
+	MS2AudioMixer *zis = static_cast<MS2AudioMixer *>(params->user_data);
 	zis->onActiveTalkerChanged(ep);
 }
 
-void MS2AudioMixer::onActiveTalkerChanged(MSAudioEndpoint *ep){
-	StreamsGroup *sg = (StreamsGroup*)ms_audio_endpoint_get_user_data(ep);
-	for (auto & l : mListeners){
+void MS2AudioMixer::onActiveTalkerChanged(MSAudioEndpoint *ep) {
+	StreamsGroup *sg = (StreamsGroup *)ms_audio_endpoint_get_user_data(ep);
+	for (auto &l : mListeners) {
 		l->onActiveTalkerChanged(sg);
 	}
 }
 
-void MS2AudioMixer::connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool muted){
+void MS2AudioMixer::connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool muted) {
 	ms_audio_endpoint_set_user_data(endpoint, &as->getGroup());
 	ms_audio_conference_add_member(mConference, endpoint);
 	ms_audio_conference_mute_member(mConference, endpoint, muted);
 }
 
-void MS2AudioMixer::disconnectEndpoint(Stream *as, MSAudioEndpoint *endpoint){
+void MS2AudioMixer::disconnectEndpoint(BCTBX_UNUSED(Stream *as), MSAudioEndpoint *endpoint) {
 	ms_audio_endpoint_set_user_data(endpoint, nullptr);
 	ms_audio_conference_remove_member(mConference, endpoint);
 }
@@ -96,33 +100,20 @@ RtpProfile *MS2AudioMixer::sMakeDummyProfile(int samplerate) {
 	return prof;
 }
 
-void MS2AudioMixer::addLocalParticipant(){
+void MS2AudioMixer::addLocalParticipant() {
 	LinphoneCore *core = getSession().getCCore();
 	AudioStream *st = audio_stream_new(core->factory, 65000, 65001, FALSE);
-	MSSndCard *playcard = core->sound_conf.lsd_card
-		? core->sound_conf.lsd_card
-		: core->sound_conf.play_sndcard;
+	MSSndCard *playcard = core->sound_conf.lsd_card ? core->sound_conf.lsd_card : core->sound_conf.play_sndcard;
 	MSSndCard *captcard = core->sound_conf.capt_sndcard;
-	
+
 	// If playfile are supplied don't use soundcards
 	if (core->use_files) {
 		captcard = playcard = nullptr;
 	}
 	const MSAudioConferenceParams *params = ms_audio_conference_get_params(mConference);
 	mLocalDummyProfile = sMakeDummyProfile(params->samplerate);
-	audio_stream_start_full(st, mLocalDummyProfile,
-				"127.0.0.1",
-				65000,
-				"127.0.0.1",
-				65001,
-				0,
-				40,
-				nullptr,
-				nullptr,
-				playcard,
-				captcard,
-				linphone_core_echo_cancellation_enabled(core)
-				);
+	audio_stream_start_full(st, mLocalDummyProfile, "127.0.0.1", 65000, "127.0.0.1", 65001, 0, 40, nullptr, nullptr,
+	                        playcard, captcard, linphone_core_echo_cancellation_enabled(core));
 	MS2AudioStream::postConfigureAudioStream(st, core, FALSE);
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_audio_endpoint_get_from_stream(st, FALSE);
@@ -131,7 +122,7 @@ void MS2AudioMixer::addLocalParticipant(){
 	enableMic(mLocalMicEnabled);
 }
 
-void MS2AudioMixer::removeLocalParticipant(){
+void MS2AudioMixer::removeLocalParticipant() {
 	if (mLocalEndpoint) {
 		ms_audio_conference_remove_member(mConference, mLocalEndpoint);
 		ms_audio_endpoint_release_from_stream(mLocalEndpoint);
@@ -143,39 +134,40 @@ void MS2AudioMixer::removeLocalParticipant(){
 	}
 }
 
-void MS2AudioMixer::enableLocalParticipant(bool value){
+void MS2AudioMixer::enableLocalParticipant(bool value) {
 	/* Create a dummy audiostream in order to extract the local part of it */
 	/* network address and ports have no meaning and are not used here. */
-	if (value && !mLocalParticipantStream){
+	if (value && !mLocalParticipantStream) {
 		addLocalParticipant();
-	}else if (!value && mLocalParticipantStream){
+	} else if (!value && mLocalParticipantStream) {
 		removeLocalParticipant();
 	}
 }
 
-void MS2AudioMixer::setRecordPath(const std::string &path){
+void MS2AudioMixer::setRecordPath(const std::string &path) {
 	mRecordPath = path;
 }
 
-void MS2AudioMixer::enableMic(bool value){
+void MS2AudioMixer::enableMic(bool value) {
 	mLocalMicEnabled = value;
 	if (mLocalEndpoint)
-		ms_audio_conference_mute_member(mConference, mLocalEndpoint, !(value && linphone_core_mic_enabled(mSession.getCore().getCCore())));
+		ms_audio_conference_mute_member(mConference, mLocalEndpoint,
+		                                !(value && linphone_core_mic_enabled(mSession.getCore().getCCore())));
 }
 
-bool MS2AudioMixer::micEnabled()const{
+bool MS2AudioMixer::micEnabled() const {
 	return mLocalMicEnabled;
 }
 
-void MS2AudioMixer::enableSpeaker(bool value){
+void MS2AudioMixer::enableSpeaker(BCTBX_UNUSED(bool value)) {
 }
 
-bool MS2AudioMixer::speakerEnabled()const{
+bool MS2AudioMixer::speakerEnabled() const {
 	return false;
 }
 
-bool MS2AudioMixer::startRecording(){
-	if (mRecordPath.empty()){
+bool MS2AudioMixer::startRecording() {
+	if (mRecordPath.empty()) {
 		lError() << "MS2AudioMixer:startRecording(): no path set.";
 		return false;
 	}
@@ -186,10 +178,10 @@ bool MS2AudioMixer::startRecording(){
 	return ms_audio_recorder_endpoint_start(mRecordEndpoint) != -1;
 }
 
-void MS2AudioMixer::stopRecording(){
+void MS2AudioMixer::stopRecording() {
 	if (!mRecordEndpoint) {
 		lWarning() << "MS2AudioMixer::stopRecording(): no record currently active";
-		return ;
+		return;
 	}
 	ms_audio_recorder_endpoint_stop(mRecordEndpoint);
 	ms_audio_conference_remove_member(mConference, mRecordEndpoint);
@@ -197,11 +189,11 @@ void MS2AudioMixer::stopRecording(){
 	mRecordEndpoint = nullptr;
 }
 
-bool MS2AudioMixer::isRecording(){
-	return mRecordEndpoint != nullptr; 
+bool MS2AudioMixer::isRecording() {
+	return mRecordEndpoint != nullptr;
 }
 
-float MS2AudioMixer::getPlayVolume(){
+float MS2AudioMixer::getPlayVolume() {
 	AudioStream *st = mLocalParticipantStream;
 	if (st && st->volrecv) {
 		float vol = 0;
@@ -209,10 +201,9 @@ float MS2AudioMixer::getPlayVolume(){
 		return vol;
 	}
 	return LINPHONE_VOLUME_DB_LOWEST;
-	
 }
 
-float MS2AudioMixer::getRecordVolume(){
+float MS2AudioMixer::getRecordVolume() {
 	AudioStream *st = mLocalParticipantStream;
 	if (st && st->volsend && mLocalMicEnabled) {
 		float vol = 0;
@@ -222,31 +213,31 @@ float MS2AudioMixer::getRecordVolume(){
 	return LINPHONE_VOLUME_DB_LOWEST;
 }
 
-float MS2AudioMixer::getMicGain(){
+float MS2AudioMixer::getMicGain() {
 	return 0.0;
 }
 
-void MS2AudioMixer::setMicGain(float value){
+void MS2AudioMixer::setMicGain(BCTBX_UNUSED(float value)) {
 }
 
-float MS2AudioMixer::getSpeakerGain(){
+float MS2AudioMixer::getSpeakerGain() {
 	return 0.0;
 }
 
-void MS2AudioMixer::setSpeakerGain(float value){
+void MS2AudioMixer::setSpeakerGain(BCTBX_UNUSED(float value)) {
 }
 
-bool MS2AudioMixer::supportsTelephoneEvents(){
+bool MS2AudioMixer::supportsTelephoneEvents() {
 	return false;
 }
 
-void MS2AudioMixer::sendDtmf(int dtmf){
+void MS2AudioMixer::sendDtmf(BCTBX_UNUSED(int dtmf)) {
 }
 
-void MS2AudioMixer::enableEchoCancellation(bool value){
+void MS2AudioMixer::enableEchoCancellation(BCTBX_UNUSED(bool value)) {
 }
 
-bool MS2AudioMixer::echoCancellationEnabled()const{
+bool MS2AudioMixer::echoCancellationEnabled() const {
 	return linphone_core_echo_cancellation_enabled(getSession().getCCore());
 }
 
@@ -278,11 +269,11 @@ std::shared_ptr<AudioDevice> MS2AudioMixer::getOutputDevice() const {
 	return nullptr;
 }
 
-AudioStream * MS2AudioMixer::getAudioStream(){
+AudioStream *MS2AudioMixer::getAudioStream() {
 	return mLocalParticipantStream;
 }
 
-MSAudioConference * MS2AudioMixer::getAudioConference(){
+MSAudioConference *MS2AudioMixer::getAudioConference() {
 	return mConference;
 }
 

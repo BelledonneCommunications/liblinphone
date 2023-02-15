@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,48 +36,48 @@ extern "C" {
  * Acquire a reference to the call log.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The same #LinphoneCallLog object @notnil
-**/
-LINPHONE_PUBLIC LinphoneCallLog * linphone_call_log_ref(LinphoneCallLog *call_log);
+ **/
+LINPHONE_PUBLIC LinphoneCallLog *linphone_call_log_ref(LinphoneCallLog *call_log);
 
 /**
  * Release a reference to the call log.
  * @param call_log #LinphoneCallLog object @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_log_unref(LinphoneCallLog *call_log);
 
 /**
  * Get the call ID used by the call.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The call ID used by the call as a string. @maybenil
-**/
-LINPHONE_PUBLIC const char * linphone_call_log_get_call_id(const LinphoneCallLog *call_log);
+ **/
+LINPHONE_PUBLIC const char *linphone_call_log_get_call_id(const LinphoneCallLog *call_log);
 
 /**
  * Get the direction of the call.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The #LinphoneCallDir of the call.
-**/
+ **/
 LINPHONE_PUBLIC LinphoneCallDir linphone_call_log_get_dir(const LinphoneCallLog *call_log);
 
 /**
  * Get the duration of the call since connected.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The duration of the call in seconds.
-**/
+ **/
 LINPHONE_PUBLIC int linphone_call_log_get_duration(const LinphoneCallLog *call_log);
 
 /**
  * Get the origin address (ie from) of the call.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The origin #LinphoneAddress (ie from) of the call. @notnil
-**/
-LINPHONE_PUBLIC const LinphoneAddress * linphone_call_log_get_from_address(const LinphoneCallLog *call_log);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_log_get_from_address(const LinphoneCallLog *call_log);
 
 /**
  * Get the overall quality indication of the call.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The overall quality indication of the call.
-**/
+ **/
 LINPHONE_PUBLIC float linphone_call_log_get_quality(const LinphoneCallLog *call_log);
 
 /**
@@ -87,9 +87,10 @@ LINPHONE_PUBLIC float linphone_call_log_get_quality(const LinphoneCallLog *call_
  * It is stored in the config file, thus can survive to process exits/restarts.
  *
  * @param call_log #LinphoneCallLog object @notnil
- * @return The reference key string that has been associated to the call log, or NULL if none has been associated. @maybenil
-**/
-LINPHONE_PUBLIC const char * linphone_call_log_get_ref_key(const LinphoneCallLog *call_log);
+ * @return The reference key string that has been associated to the call log, or NULL if none has been associated.
+ *@maybenil
+ **/
+LINPHONE_PUBLIC const char *linphone_call_log_get_ref_key(const LinphoneCallLog *call_log);
 
 /**
  * Get the local address (that is from or to depending on call direction)
@@ -102,38 +103,39 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_log_get_local_address(const
  * Get the remote address (that is from or to depending on call direction).
  * @param call_log #LinphoneCallLog object @notnil
  * @return The remote #LinphoneAddress of the call. @notnil
-**/
-LINPHONE_PUBLIC const LinphoneAddress * linphone_call_log_get_remote_address(const LinphoneCallLog *call_log);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_log_get_remote_address(const LinphoneCallLog *call_log);
 
 /**
  * Set the remote address (that is 'from' or 'to' depending on call direction).
  * It allows to fill more information that the SDK doesn't have.
- * A use case can be to fill the display name (coming from an external address book) into a call log on incoming call. When the call end, the database will take account of the new information and can be used later
+ * A use case can be to fill the display name (coming from an external address book) into a call log on incoming call.
+ *When the call end, the database will take account of the new information and can be used later
  * @param call_log #LinphoneCallLog object @notnil
  * @param address #LinphoneAddress object @notnil
-**/
-LINPHONE_PUBLIC void linphone_call_log_set_remote_address(LinphoneCallLog *call_log, LinphoneAddress * address);
+ **/
+LINPHONE_PUBLIC void linphone_call_log_set_remote_address(LinphoneCallLog *call_log, LinphoneAddress *address);
 
 /**
  * Get the start date of the call.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The date of the beginning of the call.
-**/
+ **/
 LINPHONE_PUBLIC time_t linphone_call_log_get_start_date(const LinphoneCallLog *call_log);
 
 /**
  * Get the status of the call.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The #LinphoneCallStatus of the call.
-**/
+ **/
 LINPHONE_PUBLIC LinphoneCallStatus linphone_call_log_get_status(const LinphoneCallLog *call_log);
 
 /**
  * Get the destination address (ie to) of the call.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The destination #LinphoneAddress (ie to) of the call. @notnil
-**/
-LINPHONE_PUBLIC const LinphoneAddress * linphone_call_log_get_to_address(const LinphoneCallLog *call_log);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_log_get_to_address(const LinphoneCallLog *call_log);
 
 /**
  * Associate a persistent reference key to the call log.
@@ -143,14 +145,14 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_call_log_get_to_address(const L
  *
  * @param call_log #LinphoneCallLog object @notnil
  * @param refkey The reference key string to associate to the call log. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_log_set_ref_key(LinphoneCallLog *call_log, const char *refkey);
 
 /**
  * Tell whether video was enabled at the end of the call or not.
  * @param call_log #LinphoneCallLog object @notnil
  * @return A boolean value telling whether video was enabled at the end of the call.
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_call_log_video_enabled(const LinphoneCallLog *call_log);
 
 /**
@@ -158,8 +160,8 @@ LINPHONE_PUBLIC bool_t linphone_call_log_video_enabled(const LinphoneCallLog *ca
  * @note: the returned string must be freed by the application (use ms_free()).
  * @param call_log #LinphoneCallLog object @notnil
  * @return A human readable string describing the call. @notnil @tobefreed
-**/
-LINPHONE_PUBLIC char * linphone_call_log_to_str(const LinphoneCallLog *call_log);
+ **/
+LINPHONE_PUBLIC char *linphone_call_log_to_str(const LinphoneCallLog *call_log);
 
 /**
  * Tells whether that call was part of a conference
@@ -172,28 +174,28 @@ LINPHONE_PUBLIC bool_t linphone_call_log_was_conference(LinphoneCallLog *call_lo
  * When the call was failed, return an object describing the failure.
  * @param call_log #LinphoneCallLog object @notnil
  * @return #LinphoneErrorInfo about the error encountered by the call associated with this call log or NULL. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_call_log_get_error_info(const LinphoneCallLog *call_log);
 
 /**
  * Get the user data associated with the call log.
  * @param call_log #LinphoneCallLog object @notnil
  * @return The user data associated with the call log. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void *linphone_call_log_get_user_data(const LinphoneCallLog *call_log);
 
 /**
  * Assign a user data to the call log.
  * @param call_log #LinphoneCallLog object @notnil
  * @param user_data The user data to associate with the call log. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_log_set_user_data(LinphoneCallLog *call_log, void *user_data);
 
 /**
  * Retrieves the conference info associated to this call log in DB.
  * @param call_log #LinphoneCallLog object. @notnil
  * @return The #LinphoneConferenceInfo associated. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_call_log_get_conference_info(LinphoneCallLog *call_log);
 
 /**
@@ -209,9 +211,17 @@ LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_call_log_get_conference_info(Li
  * @param video_enabled whether video was enabled or not for this call
  * @param quality call quality
  * @return a #LinphoneCallLog object @notnil
-**/
-LINPHONE_PUBLIC LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *core, LinphoneAddress *from, LinphoneAddress *to, LinphoneCallDir dir, 
-		int duration, time_t start_time, time_t connected_time, LinphoneCallStatus status, bool_t video_enabled, float quality);
+ **/
+LINPHONE_PUBLIC LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *core,
+                                                               LinphoneAddress *from,
+                                                               LinphoneAddress *to,
+                                                               LinphoneCallDir dir,
+                                                               int duration,
+                                                               time_t start_time,
+                                                               time_t connected_time,
+                                                               LinphoneCallStatus status,
+                                                               bool_t video_enabled,
+                                                               float quality);
 
 /**
  * @}

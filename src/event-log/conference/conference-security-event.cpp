@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference-event-p.h"
 #include "conference-security-event.h"
+#include "conference-event-p.h"
 
 // =============================================================================
 
@@ -37,58 +37,51 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ConferenceSecurityEvent::ConferenceSecurityEvent (
-	time_t creationTime,
-	const ConferenceId &conferenceId,
-	SecurityEventType securityEventType,
-	const IdentityAddress &faultyDevice
-) : ConferenceEvent(
-	*new ConferenceSecurityEventPrivate,
-	Type::ConferenceSecurityEvent,
-	creationTime,
-	conferenceId
-) {
+ConferenceSecurityEvent::ConferenceSecurityEvent(time_t creationTime,
+                                                 const ConferenceId &conferenceId,
+                                                 SecurityEventType securityEventType,
+                                                 const IdentityAddress &faultyDevice)
+    : ConferenceEvent(*new ConferenceSecurityEventPrivate, Type::ConferenceSecurityEvent, creationTime, conferenceId) {
 	L_D();
 	d->securityEventType = securityEventType;
 	d->faultyDevice = faultyDevice;
 }
 
-ConferenceSecurityEvent::ConferenceSecurityEvent (
-	time_t creationTime,
-	const ConferenceId &conferenceId,
-	SecurityEventType securityEventType
-) : ConferenceEvent(
-	*new ConferenceSecurityEventPrivate,
-	Type::ConferenceSecurityEvent,
-	creationTime,
-	conferenceId
-) {
+ConferenceSecurityEvent::ConferenceSecurityEvent(time_t creationTime,
+                                                 const ConferenceId &conferenceId,
+                                                 SecurityEventType securityEventType)
+    : ConferenceEvent(*new ConferenceSecurityEventPrivate, Type::ConferenceSecurityEvent, creationTime, conferenceId) {
 	L_D();
 	d->securityEventType = securityEventType;
 }
 
-ConferenceSecurityEvent::SecurityEventType ConferenceSecurityEvent::getSecurityEventType () const {
+ConferenceSecurityEvent::SecurityEventType ConferenceSecurityEvent::getSecurityEventType() const {
 	L_D();
 	return d->securityEventType;
 }
 
-const IdentityAddress &ConferenceSecurityEvent::getFaultyDeviceAddress () const {
+const IdentityAddress &ConferenceSecurityEvent::getFaultyDeviceAddress() const {
 	L_D();
 	return d->faultyDevice;
 }
 
-std::ostream& operator<<(std::ostream& lhs, ConferenceSecurityEvent::SecurityEventType e) {
-	switch(e) {
+std::ostream &operator<<(std::ostream &lhs, ConferenceSecurityEvent::SecurityEventType e) {
+	switch (e) {
 		case ConferenceSecurityEvent::SecurityEventType::None:
-			lhs << "None"; break;
+			lhs << "None";
+			break;
 		case ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded:
-			lhs << "SecurityLevelDowngraded"; break;
+			lhs << "SecurityLevelDowngraded";
+			break;
 		case ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded:
-			lhs << "ParticipantMaxDeviceCountExceeded"; break;
+			lhs << "ParticipantMaxDeviceCountExceeded";
+			break;
 		case ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged:
-			lhs << "EncryptionIdentityKeyChanged"; break;
+			lhs << "EncryptionIdentityKeyChanged";
+			break;
 		case ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected:
-			lhs << "ManInTheMiddleDetected"; break;
+			lhs << "ManInTheMiddleDetected";
+			break;
 	}
 	return lhs;
 }

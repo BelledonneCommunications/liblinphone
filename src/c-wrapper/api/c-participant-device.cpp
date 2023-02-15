@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,12 +30,12 @@
 using namespace std;
 using namespace LinphonePrivate;
 
-LinphoneParticipantDevice *linphone_participant_device_ref (LinphoneParticipantDevice *participant_device) {
+LinphoneParticipantDevice *linphone_participant_device_ref(LinphoneParticipantDevice *participant_device) {
 	belle_sip_object_ref(participant_device);
 	return participant_device;
 }
 
-void linphone_participant_device_unref (LinphoneParticipantDevice *participant_device) {
+void linphone_participant_device_unref(LinphoneParticipantDevice *participant_device) {
 	belle_sip_object_unref(participant_device);
 }
 
@@ -48,44 +48,49 @@ void linphone_participant_device_set_user_data(LinphoneParticipantDevice *partic
 }
 
 const LinphoneAddress *linphone_participant_device_get_address(const LinphoneParticipantDevice *participant_device) {
-	const LinphonePrivate::Address & addr = ParticipantDevice::toCpp(participant_device)->getAddress().asAddress();
+	const LinphonePrivate::Address &addr = ParticipantDevice::toCpp(participant_device)->getAddress().asAddress();
 	return L_GET_C_BACK_PTR(&addr);
 }
 
-void linphone_participant_device_set_state (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceState state) {
+void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,
+                                           LinphoneParticipantDeviceState state) {
 	ParticipantDevice::toCpp(participant_device)->setState(static_cast<ParticipantDevice::State>(state));
 }
 
-
-LinphoneParticipantDeviceState linphone_participant_device_get_state (const LinphoneParticipantDevice *participant_device) {
+LinphoneParticipantDeviceState
+linphone_participant_device_get_state(const LinphoneParticipantDevice *participant_device) {
 	return (LinphoneParticipantDeviceState)(ParticipantDevice::toCpp(participant_device)->getState());
 }
 
-LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
+LinphoneChatRoomSecurityLevel
+linphone_participant_device_get_security_level(const LinphoneParticipantDevice *participant_device) {
 	return (LinphoneChatRoomSecurityLevel)(ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
 }
 
-const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device) {
+const char *linphone_participant_device_get_name(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getName().c_str();
 }
 
-bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device) {
+bool_t linphone_participant_device_is_in_conference(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->isInConference();
 }
 
-LinphoneParticipantDeviceJoiningMethod linphone_participant_device_get_joining_method (const LinphoneParticipantDevice *participant_device) {
+LinphoneParticipantDeviceJoiningMethod
+linphone_participant_device_get_joining_method(const LinphoneParticipantDevice *participant_device) {
 	return (LinphoneParticipantDeviceJoiningMethod)ParticipantDevice::toCpp(participant_device)->getJoiningMethod();
 }
 
-LinphoneParticipantDeviceDisconnectionMethod linphone_participant_device_get_disconnection_method (const LinphoneParticipantDevice *participant_device) {
-	return (LinphoneParticipantDeviceDisconnectionMethod)ParticipantDevice::toCpp(participant_device)->getDisconnectionMethod();
+LinphoneParticipantDeviceDisconnectionMethod
+linphone_participant_device_get_disconnection_method(const LinphoneParticipantDevice *participant_device) {
+	return (LinphoneParticipantDeviceDisconnectionMethod)ParticipantDevice::toCpp(participant_device)
+	    ->getDisconnectionMethod();
 }
 
-const char * linphone_participant_device_get_disconnection_reason (const LinphoneParticipantDevice *participant_device) {
+const char *linphone_participant_device_get_disconnection_reason(const LinphoneParticipantDevice *participant_device) {
 	return L_STRING_TO_C(ParticipantDevice::toCpp(participant_device)->getDisconnectionReason());
 }
 
-time_t linphone_participant_device_get_time_of_joining (const LinphoneParticipantDevice *participant_device) {
+time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
 }
 
@@ -93,57 +98,72 @@ time_t linphone_participant_device_get_time_of_disconnection(const LinphoneParti
 	return ParticipantDevice::toCpp(participant_device)->getTimeOfDisconnection();
 }
 
-LinphoneMediaDirection linphone_participant_device_get_stream_capability (const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type) {
+LinphoneMediaDirection
+linphone_participant_device_get_stream_capability(const LinphoneParticipantDevice *participant_device,
+                                                  const LinphoneStreamType stream_type) {
 	return ParticipantDevice::toCpp(participant_device)->getStreamCapability(stream_type);
 }
 
-bool_t linphone_participant_device_get_stream_availability (const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type) {
+bool_t linphone_participant_device_get_stream_availability(const LinphoneParticipantDevice *participant_device,
+                                                           const LinphoneStreamType stream_type) {
 	return ParticipantDevice::toCpp(participant_device)->getStreamAvailability(stream_type);
 }
 
-uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type) {
+uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device,
+                                              const LinphoneStreamType stream_type) {
 	return ParticipantDevice::toCpp(participant_device)->getSsrc(stream_type);
 }
 
-bool_t linphone_participant_device_get_is_speaking (const LinphoneParticipantDevice *participant_device) {
+bool_t linphone_participant_device_get_is_speaking(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getIsSpeaking();
 }
 
-bool_t linphone_participant_device_get_is_muted (const LinphoneParticipantDevice *participant_device) {
+bool_t linphone_participant_device_get_is_muted(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getIsMuted();
 }
 
-void linphone_participant_device_add_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+void linphone_participant_device_add_callbacks(LinphoneParticipantDevice *participant_device,
+                                               LinphoneParticipantDeviceCbs *cbs) {
 	ParticipantDevice::toCpp(participant_device)->addCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
 }
 
-void linphone_participant_device_remove_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
-	ParticipantDevice::toCpp(participant_device)->removeCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
+void linphone_participant_device_remove_callbacks(LinphoneParticipantDevice *participant_device,
+                                                  LinphoneParticipantDeviceCbs *cbs) {
+	ParticipantDevice::toCpp(participant_device)
+	    ->removeCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
 }
 
-LinphoneParticipantDeviceCbs *linphone_participant_device_get_current_callbacks (const LinphoneParticipantDevice *participant_device) {
+LinphoneParticipantDeviceCbs *
+linphone_participant_device_get_current_callbacks(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getCurrentCallbacks()->toC();
 }
 
-void linphone_participant_device_set_current_callbacks(LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
-	ParticipantDevice::toCpp(participant_device)->setCurrentCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
+void linphone_participant_device_set_current_callbacks(LinphoneParticipantDevice *participant_device,
+                                                       LinphoneParticipantDeviceCbs *cbs) {
+	ParticipantDevice::toCpp(participant_device)
+	    ->setCurrentCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
 }
 
-const bctbx_list_t *linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device) {
+const bctbx_list_t *
+linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getCCallbacksList();
 }
 
-void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking) {
+void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device,
+                                                             bool_t is_speaking) {
 	ParticipantDevice::toCpp(participant_device)->setIsSpeaking(is_speaking);
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_speaking_changed, is_speaking);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device),
+	                                  linphone_participant_device_cbs_get_is_speaking_changed, is_speaking);
 }
 
 void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *participant_device, bool_t is_muted) {
 	ParticipantDevice::toCpp(participant_device)->setIsMuted(is_muted);
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_muted, is_muted);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device),
+	                                  linphone_participant_device_cbs_get_is_muted, is_muted);
 }
 
-void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device, void* window_id){
+void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device,
+                                                            void *window_id) {
 #ifdef __ANDROID__
 	shared_ptr<LinphonePrivate::Core> core = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCore();
 	if (core) {
@@ -155,22 +175,32 @@ void linphone_participant_device_set_native_video_window_id(const LinphonePartic
 #endif
 }
 
-void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device){
+void *linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
 }
 
-void * linphone_participant_device_create_native_video_window_id(const LinphoneParticipantDevice *participant_device){
+void *linphone_participant_device_create_native_video_window_id(const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->createWindowId();
 }
 
-void _linphone_participant_device_notify_state_changed(LinphoneParticipantDevice *participant_device, const LinphoneParticipantDeviceState state) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_state_changed, state);
+void _linphone_participant_device_notify_state_changed(LinphoneParticipantDevice *participant_device,
+                                                       const LinphoneParticipantDeviceState state) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device),
+	                                  linphone_participant_device_cbs_get_state_changed, state);
 }
 
-void _linphone_participant_device_notify_stream_capability_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction, const LinphoneStreamType stream_type) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_stream_capability_changed, direction, stream_type);
+void _linphone_participant_device_notify_stream_capability_changed(LinphoneParticipantDevice *participant_device,
+                                                                   LinphoneMediaDirection direction,
+                                                                   const LinphoneStreamType stream_type) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device),
+	                                  linphone_participant_device_cbs_get_stream_capability_changed, direction,
+	                                  stream_type);
 }
 
-void _linphone_participant_device_notify_stream_availability_changed(LinphoneParticipantDevice *participant_device, bool_t available, const LinphoneStreamType stream_type) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_stream_availability_changed, available, stream_type);
+void _linphone_participant_device_notify_stream_availability_changed(LinphoneParticipantDevice *participant_device,
+                                                                     bool_t available,
+                                                                     const LinphoneStreamType stream_type) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device),
+	                                  linphone_participant_device_cbs_get_stream_availability_changed, available,
+	                                  stream_type);
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,13 +30,16 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ImdnMessagePrivate : public NotificationMessagePrivate {
 public:
-	const ImdnMessage::Context &getContext () { return context; }
+	const ImdnMessage::Context &getContext() {
+		return context;
+	}
 
 private:
-	ImdnMessagePrivate (const ImdnMessage::Context &context)
-		: NotificationMessagePrivate(context.chatRoom, ChatMessage::Direction::Outgoing), context(context) {}
+	ImdnMessagePrivate(const ImdnMessage::Context &context)
+	    : NotificationMessagePrivate(context.chatRoom, ChatMessage::Direction::Outgoing), context(context) {
+	}
 
-	void setState (ChatMessage::State newState) override;
+	void setState(ChatMessage::State newState) override;
 
 	ImdnMessage::Context context;
 

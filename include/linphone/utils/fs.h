@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,9 +30,9 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Fs {
-	// Copy one file to other destination. Return true on success.
-	LINPHONE_PUBLIC bool copy (const std::string &srcPath, const std::string &destPath);
-}
+// Copy one file to other destination. Return true on success.
+LINPHONE_PUBLIC bool copy(const std::string &srcPath, const std::string &destPath);
+} // namespace Fs
 
 LINPHONE_END_NAMESPACE
 

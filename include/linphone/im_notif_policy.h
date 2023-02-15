@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,14 +21,11 @@
 #ifndef LINPHONE_IM_NOTIF_POLICY_H_
 #define LINPHONE_IM_NOTIF_POLICY_H_
 
-
 #include "linphone/types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @addtogroup chatroom
@@ -39,27 +36,27 @@ extern "C" {
  * Acquire a reference to the #LinphoneImNotifPolicy object.
  * @param policy #LinphoneImNotifPolicy object. @notnil
  * @return The same #LinphoneImNotifPolicy object. @notnil
-**/
-LINPHONE_PUBLIC LinphoneImNotifPolicy * linphone_im_notif_policy_ref(LinphoneImNotifPolicy *policy);
+ **/
+LINPHONE_PUBLIC LinphoneImNotifPolicy *linphone_im_notif_policy_ref(LinphoneImNotifPolicy *policy);
 
 /**
  * Release reference to the #LinphoneImNotifPolicy object.
  * @param policy #LinphoneImNotifPolicy object. @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_im_notif_policy_unref(LinphoneImNotifPolicy *policy);
 
 /**
  * Retrieve the user pointer associated with the #LinphoneImNotifPolicy object.
  * @param policy #LinphoneImNotifPolicy object. @notnil
  * @return The user pointer associated with the #LinphoneImNotifPolicy object. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void *linphone_im_notif_policy_get_user_data(const LinphoneImNotifPolicy *policy);
 
 /**
  * Assign a user pointer to the #LinphoneImNotifPolicy object.
  * @param policy #LinphoneImNotifPolicy object. @notnil
  * @param user_data The user pointer to associate with the #LinphoneImNotifPolicy object. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_im_notif_policy_set_user_data(LinphoneImNotifPolicy *policy, void *user_data);
 
 /**
@@ -161,7 +158,6 @@ LINPHONE_PUBLIC void linphone_im_notif_policy_set_recv_imdn_displayed(LinphoneIm
 /**
  * @}
  */
-
 
 #ifdef __cplusplus
 }

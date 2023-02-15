@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,9 +26,9 @@
 #ifndef _WRAPPER_UTILS_H
 #define _WRAPPER_UTILS_H
 
-#include <bctoolbox/list.h>
 #include "linphone/defs.h"
 #include "linphone/types.h"
+#include <bctoolbox/list.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,7 +93,8 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_get_callbacks_list(const
  * @return The attached listeners. \bctbx_list{LinphoneParticipantDeviceCbs}
  * @donotwrap
  */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device);
+LINPHONE_PUBLIC const bctbx_list_t *
+linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Sets the current LinphoneParticipantDeviceCbs.
@@ -101,7 +102,8 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_participant_device_get_callbacks_li
  * @param cbs The #LinphoneParticipantDeviceCbs object. @maybenil
  * @donotwrap
  */
-LINPHONE_PUBLIC void linphone_participant_device_set_current_callbacks(LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs);
+LINPHONE_PUBLIC void linphone_participant_device_set_current_callbacks(LinphoneParticipantDevice *participant_device,
+                                                                       LinphoneParticipantDeviceCbs *cbs);
 
 /**
  * Sets the current LinphoneChatRoomCbs.
@@ -125,7 +127,8 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_callbacks_list(con
  * @param cbs LinphoneChatMessageCbs object
  * @donotwrap
  */
-LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *message, LinphoneChatMessageCbs *cbs);
+LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *message,
+                                                                 LinphoneChatMessageCbs *cbs);
 
 /**
  * @brief Gets the list of listener in the account.
@@ -133,7 +136,8 @@ LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMes
  * @return The list of #LinphoneConferenceSchedulerCbs. @maybenil
  * @donotwrap
  */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_scheduler_get_callbacks_list(const LinphoneConferenceScheduler *conference_scheduler);
+LINPHONE_PUBLIC const bctbx_list_t *
+linphone_conference_scheduler_get_callbacks_list(const LinphoneConferenceScheduler *conference_scheduler);
 
 /**
  * Sets the current LinphoneConferenceSchedulerCbs.
@@ -141,7 +145,9 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_scheduler_get_callbacks_
  * @param cbs The #LinphoneConferenceSchedulerCbs object. @maybenil
  * @donotwrap
  */
-LINPHONE_PUBLIC void linphone_conference_scheduler_set_current_callbacks(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceSchedulerCbs *cbs);
+LINPHONE_PUBLIC void
+linphone_conference_scheduler_set_current_callbacks(LinphoneConferenceScheduler *conference_scheduler,
+                                                    LinphoneConferenceSchedulerCbs *cbs);
 
 /**
  * Accessor for the shared_ptr&lt;BelCard&gt; stored by a #LinphoneVcard
@@ -178,24 +184,25 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_magic_search_get_callbacks_list(con
 /**
  * Send a message to peer member of this chat room.
  *
- * The state of the sending message will be notified via the callbacks defined in the #LinphoneChatMessageCbs object that can be obtained
- * by calling linphone_chat_message_get_callbacks().
+ * The state of the sending message will be notified via the callbacks defined in the #LinphoneChatMessageCbs object
+ * that can be obtained by calling linphone_chat_message_get_callbacks().
  * @note Unlike linphone_chat_room_send_chat_message(), that function only takes a reference on the #LinphoneChatMessage
- * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
- * that function.
+ * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after
+ * calling that function.
  *
  * @param chat_room A chat room. @notnil
  * @param message The message to send. @notnil
  * @deprecated 08/07/2020 Use linphone_chat_message_send() instead.
  * @donotwrap It doesn't says what the doc says it does
  */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *chat_room,
+                                                                                LinphoneChatMessage *message);
 
 /**
  * Resend a chat message if it is in the 'not delivered' state for whatever reason.
  * @note Unlike linphone_chat_message_resend(), that function only takes a reference on the #LinphoneChatMessage
- * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
- * that function.
+ * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after
+ * calling that function.
  *
  * @param message #LinphoneChatMessage object @notnil
  * @deprecated 08/07/2020 Use linphone_chat_message_send instead.

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,33 +30,32 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-template<typename Key, typename Value>
+template <typename Key, typename Value>
 class LruCache {
 public:
-	LruCache (int capacity = DefaultCapacity) : mCapacity(capacity) {
-		if (capacity < MinCapacity)
-			capacity = MinCapacity;
+	LruCache(int capacity = DefaultCapacity) : mCapacity(capacity) {
+		if (capacity < MinCapacity) capacity = MinCapacity;
 	}
 
-	int getCapacity () const {
+	int getCapacity() const {
 		return mCapacity;
 	}
 
-	int getSize () const {
+	int getSize() const {
 		return int(mKeyToPair.size());
 	}
 
-	Value *operator[] (const Key &key) {
+	Value *operator[](const Key &key) {
 		auto it = mKeyToPair.find(key);
 		return it == mKeyToPair.end() ? nullptr : &it->second.second;
 	}
 
-	const Value *operator[] (const Key &key) const {
+	const Value *operator[](const Key &key) const {
 		auto it = mKeyToPair.find(key);
 		return it == mKeyToPair.cend() ? nullptr : &it->second.second;
 	}
 
-	void insert (const Key &key, const Value &value) {
+	void insert(const Key &key, const Value &value) {
 		auto it = mKeyToPair.find(key);
 		if (it != mKeyToPair.end()) {
 			mKeys.erase(it->second.first);
@@ -68,10 +67,10 @@ public:
 		}
 
 		mKeys.push_front(key);
-		mKeyToPair.insert({ key, { mKeys.begin(), value } });
+		mKeyToPair.insert({key, {mKeys.begin(), value}});
 	}
 
-	void insert (const Key &key, Value &&value) {
+	void insert(const Key &key, Value &&value) {
 		auto it = mKeyToPair.find(key);
 		if (it != mKeyToPair.end()) {
 			mKeys.erase(it->second.first);
@@ -83,10 +82,10 @@ public:
 		}
 
 		mKeys.push_front(key);
-		mKeyToPair.insert({ key, std::make_pair(mKeys.begin(), std::move(value)) });
+		mKeyToPair.insert({key, std::make_pair(mKeys.begin(), std::move(value))});
 	}
 
-	void clear () {
+	void clear() {
 		mKeyToPair.clear();
 		mKeys.clear();
 	}

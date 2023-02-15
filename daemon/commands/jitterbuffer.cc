@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,41 +23,39 @@
 
 #include <mediastreamer2/msrtp.h>
 #include <private.h>
-using namespace::std;
+using namespace ::std;
 
-
-class JitterBufferResponse : public Response{
+class JitterBufferResponse : public Response {
 public:
-	JitterBufferResponse(LinphoneCore *lc,bool audio, bool video){
+	JitterBufferResponse(LinphoneCore *lc, bool audio, bool video) {
 		ostringstream ostr;
-		if (audio)
-			ostr<<"audio-jitter-buffer-size: "<<linphone_core_get_audio_jittcomp(lc)<<endl;
-		if (video)
-			ostr<<"video-jitter-buffer-size: "<<linphone_core_get_video_jittcomp(lc)<<endl;
+		if (audio) ostr << "audio-jitter-buffer-size: " << linphone_core_get_audio_jittcomp(lc) << endl;
+		if (video) ostr << "video-jitter-buffer-size: " << linphone_core_get_video_jittcomp(lc) << endl;
 		setBody(ostr.str());
 	}
 };
 
-JitterBufferCommand::JitterBufferCommand() : DaemonCommand("jitter-buffer",
-	"jitter-buffer [audio|video] [size <milliseconds>]",
-	"Control jitter buffer parameters.\n"
-	"jitter-buffer [audio|video] size <milliseconds>: sets the nominal jitter buffer size in milliseconds. Has no effect in a running call.\n"
-	"jitter-buffer [audio|video]: gets the nominal jitter buffer size."
-	){
-	addExample(make_unique<DaemonCommandExample>("jitter-buffer","Status: Ok\n\n"
-				"audio-jitter-buffer-size: 60\nvideo-jitter-buffer-size: 60\n"));
-	addExample(make_unique<DaemonCommandExample>("jitter-buffer audio","Status: Ok\n\n"
-				"audio-jitter-buffer-size: 60\n"));
-	addExample(make_unique<DaemonCommandExample>("jitter-buffer audio size 80","Status: Ok\n\n"
-				"audio-jitter-buffer-size: 80\n"));
+JitterBufferCommand::JitterBufferCommand()
+    : DaemonCommand("jitter-buffer",
+                    "jitter-buffer [audio|video] [size <milliseconds>]",
+                    "Control jitter buffer parameters.\n"
+                    "jitter-buffer [audio|video] size <milliseconds>: sets the nominal jitter buffer size in "
+                    "milliseconds. Has no effect in a running call.\n"
+                    "jitter-buffer [audio|video]: gets the nominal jitter buffer size.") {
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer",
+	                                             "Status: Ok\n\n"
+	                                             "audio-jitter-buffer-size: 60\nvideo-jitter-buffer-size: 60\n"));
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer audio", "Status: Ok\n\n"
+	                                                                    "audio-jitter-buffer-size: 60\n"));
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer audio size 80", "Status: Ok\n\n"
+	                                                                            "audio-jitter-buffer-size: 80\n"));
 }
 
-
-void JitterBufferCommand::exec(Daemon *app, const string& args) {
+void JitterBufferCommand::exec(Daemon *app, const string &args) {
 	istringstream istr(args);
 	string arg1;
 	istr >> arg1;
-	if (istr.fail()){
+	if (istr.fail()) {
 		app->sendResponse(JitterBufferResponse(app->getCore(), true, true));
 		return;
 	}
@@ -78,26 +76,21 @@ void JitterBufferCommand::exec(Daemon *app, const string& args) {
 			app->sendResponse(Response("Bad command argument."));
 			return;
 		}
-		if (arg1 == "audio")
-			linphone_core_set_audio_jittcomp(app->getCore(), arg3);
-		else if (arg1=="video")
-			linphone_core_set_video_jittcomp(app->getCore(), arg3);
+		if (arg1 == "audio") linphone_core_set_audio_jittcomp(app->getCore(), arg3);
+		else if (arg1 == "video") linphone_core_set_video_jittcomp(app->getCore(), arg3);
 	}
 	app->sendResponse(JitterBufferResponse(app->getCore(), arg1 == "audio", arg1 == "video"));
 }
 
-JitterBufferResetCommand::JitterBufferResetCommand() : DaemonCommand("jitter-buffer-reset",
-	"jitter-buffer-reset call|stream <id> [audio|video]" ,
-	"Reset the RTP jitter buffer for a given call or stream id and stream type."
-	){
-	addExample(make_unique<DaemonCommandExample>("jitter-buffer-reset call 3 audio",
-		"Status: Ok\n"));
-	addExample(make_unique<DaemonCommandExample>("jitter-buffer-reset stream 12",
-		"Status: Ok\n"));
+JitterBufferResetCommand::JitterBufferResetCommand()
+    : DaemonCommand("jitter-buffer-reset",
+                    "jitter-buffer-reset call|stream <id> [audio|video]",
+                    "Reset the RTP jitter buffer for a given call or stream id and stream type.") {
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer-reset call 3 audio", "Status: Ok\n"));
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer-reset stream 12", "Status: Ok\n"));
 }
 
-
-void JitterBufferResetCommand::exec(Daemon *app, const string& args) {
+void JitterBufferResetCommand::exec(Daemon *app, const string &args) {
 	istringstream istr(args);
 	string arg1;
 	istr >> arg1;
@@ -125,10 +118,12 @@ void JitterBufferResetCommand::exec(Daemon *app, const string& args) {
 		}
 		istr >> streamtype;
 		if (streamtype == "video") {
-			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
+			VideoStream *vstream =
+			    reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
 			rtprecv = vstream ? vstream->ms.rtprecv : NULL;
 		} else {
-			AudioStream *astream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
+			AudioStream *astream =
+			    reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
 			rtprecv = astream ? astream->ms.rtprecv : NULL;
 		}
 	} else {
@@ -146,5 +141,3 @@ void JitterBufferResetCommand::exec(Daemon *app, const string& args) {
 	ms_filter_call_method_noarg(rtprecv, MS_RTP_RECV_RESET_JITTER_BUFFER);
 	app->sendResponse(Response());
 }
-
-

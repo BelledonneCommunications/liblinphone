@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,26 +28,26 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Cpim {
-	class HeaderPrivate;
+class HeaderPrivate;
 
-	class LINPHONE_PUBLIC Header : public Object {
-	public:
-		virtual ~Header () = default;
+class LINPHONE_PUBLIC Header : public Object {
+public:
+	virtual ~Header() = default;
 
-		virtual std::string getName () const = 0;
+	virtual std::string getName() const = 0;
 
-		virtual std::string getValue () const = 0;
+	virtual std::string getValue() const = 0;
 
-		virtual std::string asString () const = 0;
+	virtual std::string asString() const = 0;
 
-	protected:
-		explicit Header (HeaderPrivate &p);
+protected:
+	explicit Header(HeaderPrivate &p);
 
-	private:
-		L_DECLARE_PRIVATE(Header);
-		L_DISABLE_COPY(Header);
-	};
-}
+private:
+	L_DECLARE_PRIVATE(Header);
+	L_DISABLE_COPY(Header);
+};
+} // namespace Cpim
 
 LINPHONE_END_NAMESPACE
 

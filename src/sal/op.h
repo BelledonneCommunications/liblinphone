@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #ifndef _L_SAL_OP_H_
 #define _L_SAL_OP_H_
 
+#include <bctoolbox/defs.h>
 #include <bctoolbox/list.h>
 #include <bctoolbox/ownership.hh>
 #include <bctoolbox/port.h>
@@ -42,130 +43,196 @@ class SalMessageOpInterface;
 
 class LINPHONE_PUBLIC SalOp {
 public:
-	enum class Dir {
-		Incoming = 0,
-		Outgoing = 1
-	};
+	enum class Dir { Incoming = 0, Outgoing = 1 };
 
-	SalOp (Sal *sal);
-	virtual ~SalOp ();
+	SalOp(Sal *sal);
+	virtual ~SalOp();
 
-	SalOp *ref ();
-	void *unref ();
+	SalOp *ref();
+	void *unref();
 
-	Sal *getSal () const { return mRoot; }
+	Sal *getSal() const {
+		return mRoot;
+	}
 
-	void setUserPointer (void *value) { mUserPointer = value; }
-	void *getUserPointer () const { return mUserPointer; }
+	void setUserPointer(void *value) {
+		mUserPointer = value;
+	}
+	void *getUserPointer() const {
+		return mUserPointer;
+	}
 
-	void setSubject (const std::string &value) { mSubject = value; }
-	const std::string &getSubject () const { return mSubject; }
+	void setSubject(const std::string &value) {
+		mSubject = value;
+	}
+	const std::string &getSubject() const {
+		return mSubject;
+	}
 
-	const Dir &getDir () const { return mDir; }
+	const Dir &getDir() const {
+		return mDir;
+	}
 
-	void setFrom (const std::string &value);
-	void setFromAddress (const SalAddress *value);
-	const std::string &getFrom () const { return mFrom; }
-	const SalAddress *getFromAddress () const { return mFromAddress; }
+	void setFrom(const std::string &value);
+	void setFromAddress(const SalAddress *value);
+	const std::string &getFrom() const {
+		return mFrom;
+	}
+	const SalAddress *getFromAddress() const {
+		return mFromAddress;
+	}
 
-	void setTo (const std::string &value);
-	void setToAddress (const SalAddress *value);
-	const std::string &getTo () const { return mTo; }
-	const SalAddress *getToAddress () const { return mToAddress; }
+	void setTo(const std::string &value);
+	void setToAddress(const SalAddress *value);
+	const std::string &getTo() const {
+		return mTo;
+	}
+	const SalAddress *getToAddress() const {
+		return mToAddress;
+	}
 
 	BorrowedMut<SalAddress> getRequestAddress() {
 		return mRequestAddress.borrow();
 	}
 
-	void setContactAddress (const SalAddress* value);
+	void setContactAddress(const SalAddress *value);
 	/* The contact address returned here is be pub-gruu provided by the proxy during REGISTER transaction, if "gruu"
 	 is supported by client and server, otherwise the low-level transport address.*/
-	const SalAddress *getContactAddress() const { return mContactAddress; }
+	const SalAddress *getContactAddress() const {
+		return mContactAddress;
+	}
 
-	void setRoute (const std::string &value);
-	void setRouteAddress (const SalAddress *value);
-	const std::list<SalAddress *> &getRouteAddresses () const { return mRouteAddresses; }
-	void addRouteAddress (const SalAddress *address);
+	void setRoute(const std::string &value);
+	void setRouteAddress(const SalAddress *value);
+	const std::list<SalAddress *> &getRouteAddresses() const {
+		return mRouteAddresses;
+	}
+	void addRouteAddress(const SalAddress *address);
 
-	void setDiversionAddress (const SalAddress *value);
-	const SalAddress *getDiversionAddress () const { return mDiversionAddress; }
+	void setDiversionAddress(const SalAddress *value);
+	const SalAddress *getDiversionAddress() const {
+		return mDiversionAddress;
+	}
 
-	void setServiceRoute (const SalAddress *value);
-	const SalAddress *getServiceRoute () const { return mServiceRoute; }
+	void setServiceRoute(const SalAddress *value);
+	const SalAddress *getServiceRoute() const {
+		return mServiceRoute;
+	}
 
-	void setManualRefresherMode (bool value) { mManualRefresher = value; }
+	void setManualRefresherMode(bool value) {
+		mManualRefresher = value;
+	}
 
-	void setEntityTag (const std::string &value) { mEntityTag = value; }
-	const std::string &getEntityTag() const { return mEntityTag; }
+	void setEntityTag(const std::string &value) {
+		mEntityTag = value;
+	}
+	const std::string &getEntityTag() const {
+		return mEntityTag;
+	}
 
-	void setEvent (const std::string &eventName);
+	void setEvent(const std::string &eventName);
 
-	void setPrivacy (SalPrivacyMask value) { mPrivacy = value; }
-	SalPrivacyMask getPrivacy() const { return mPrivacy; }
+	void setPrivacy(SalPrivacyMask value) {
+		mPrivacy = value;
+	}
+	SalPrivacyMask getPrivacy() const {
+		return mPrivacy;
+	}
 
-	void setRealm (const std::string &value) { mRealm = value; }
+	void setRealm(const std::string &value) {
+		mRealm = value;
+	}
 
-	void setSentCustomHeaders (SalCustomHeader *ch);
+	void setSentCustomHeaders(SalCustomHeader *ch);
 
-	void enableCnxIpTo0000IfSendOnly (bool value) { mCnxIpTo0000IfSendOnlyEnabled = value; }
-	bool cnxIpTo0000IfSendOnlyEnabled () const { return mCnxIpTo0000IfSendOnlyEnabled; }
+	void enableCnxIpTo0000IfSendOnly(bool value) {
+		mCnxIpTo0000IfSendOnlyEnabled = value;
+	}
+	bool cnxIpTo0000IfSendOnlyEnabled() const {
+		return mCnxIpTo0000IfSendOnlyEnabled;
+	}
 
-	const std::string &getProxy () const { return mRoute; }
-	const std::string &getNetworkOrigin () const { return mOrigin; }
-	const std::string &getCallId () const { return  mCallId; }
-	std::string getDialogId () const;
-	int getAddressFamily () const;
-	void setRecvCustomHeaders (SalCustomHeader *ch);
-	const SalCustomHeader *getRecvCustomHeaders () const { return mRecvCustomHeaders; }
+	const std::string &getProxy() const {
+		return mRoute;
+	}
+	const std::string &getNetworkOrigin() const {
+		return mOrigin;
+	}
+	const std::string &getCallId() const {
+		return mCallId;
+	}
+	std::string getDialogId() const;
+	int getAddressFamily() const;
+	void setRecvCustomHeaders(SalCustomHeader *ch);
+	const SalCustomHeader *getRecvCustomHeaders() const {
+		return mRecvCustomHeaders;
+	}
 	// overrideRemoteContact: Used by testers. Do not use in production code
-	void overrideRemoteContact (const std::string &value);
-	const std::string &getRemoteContact () const { return mRemoteContact; }
-	const SalAddress *getRemoteContactAddress () const { return mRemoteContactAddress; }
-	const std::string &getRemoteUserAgent () const { return mRemoteUserAgent; }
+	void overrideRemoteContact(const std::string &value);
+	const std::string &getRemoteContact() const {
+		return mRemoteContact;
+	}
+	const SalAddress *getRemoteContactAddress() const {
+		return mRemoteContactAddress;
+	}
+	const std::string &getRemoteUserAgent() const {
+		return mRemoteUserAgent;
+	}
 
-	const char *getPublicAddress (int *port) {
+	const char *getPublicAddress(int *port) {
 		return mRefresher ? belle_sip_refresher_get_public_address(mRefresher, port) : nullptr;
 	}
-	const char *getLocalAddress (int *port) {
+	const char *getLocalAddress(int *port) {
 		return mRefresher ? belle_sip_refresher_get_local_address(mRefresher, port) : nullptr;
 	}
 
-	const SalErrorInfo *getErrorInfo () const { return &mErrorInfo; }
-	const SalErrorInfo *getReasonErrorInfo () const { return &mReasonErrorInfo; }
+	const SalErrorInfo *getErrorInfo() const {
+		return &mErrorInfo;
+	}
+	const SalErrorInfo *getReasonErrorInfo() const {
+		return &mReasonErrorInfo;
+	}
 
-	bool isForkedOf (const SalOp *op) const {
+	bool isForkedOf(const SalOp *op) const {
 		return !mCallId.empty() && !op->mCallId.empty() && (mCallId == op->mCallId);
 	}
-	bool isIdle () const;
+	bool isIdle() const;
 
-	void stopRefreshing () {
-		if (mRefresher)
-			belle_sip_refresher_stop(mRefresher);
+	void stopRefreshing() {
+		if (mRefresher) belle_sip_refresher_stop(mRefresher);
 	}
-	int refresh ();
-	bool hasDialog() const{ return mDialog != nullptr; };
+	int refresh();
+	bool hasDialog() const {
+		return mDialog != nullptr;
+	};
 	void killDialog();
 	// Returns the remote CSeq, only in case the op has a dialog.
 	unsigned int getRemoteCSeq();
-	//Release means let the op finish its life but we don't want to use it anymore, and don't want to be called in callbacks for this op
-	void release ();
+	// Release means let the op finish its life but we don't want to use it anymore, and don't want to be called in
+	// callbacks for this op
+	void release();
 
-	virtual void authenticate (const SalAuthInfo *info) {
-        processAuthentication(); }
-	void cancelAuthentication () { lFatal() << "SalOp::cancelAuthentication not implemented yet"; }
-	SalAuthInfo *getAuthRequested () { return mAuthInfo; }
+	virtual void authenticate(BCTBX_UNUSED(const SalAuthInfo *info)) {
+		processAuthentication();
+	}
+	void cancelAuthentication() {
+		lFatal() << "SalOp::cancelAuthentication not implemented yet";
+	}
+	SalAuthInfo *getAuthRequested() {
+		return mAuthInfo;
+	}
 
-	int ping (const std::string &from, const std::string &to);
-	int sendInfo (const SalBodyHandler *bodyHandler);
+	int ping(const std::string &from, const std::string &to);
+	int sendInfo(const SalBodyHandler *bodyHandler);
 
-	int replyMessage (SalReason reason);
-	/* Set a function to be called whenever an operation encouters a "491 request pending" response. 
+	int replyMessage(SalReason reason);
+	/* Set a function to be called whenever an operation encouters a "491 request pending" response.
 	 * The function shall retry the operation, based on the new context. */
-	void setRetryFunction(const std::function<void ()> & retryFunc);
+	void setRetryFunction(const std::function<void()> &retryFunc);
 	bool hasRetryFunction() const;
 	void resetRetryFunction();
 
-	int processRedirect ();
+	int processRedirect();
 
 protected:
 	enum class State {
@@ -175,7 +242,7 @@ protected:
 		Terminated = 3
 	};
 
-	static std::string toString (const State value);
+	static std::string toString(const State value);
 
 	enum class Type {
 		Unknown = 0,
@@ -188,68 +255,70 @@ protected:
 		Refer = 7 // For out of dialog refer only
 	};
 
-	static const size_t SIP_MESSAGE_BODY_LIMIT = 16*1024; // 16kB
+	static const size_t SIP_MESSAGE_BODY_LIMIT = 16 * 1024; // 16kB
 
-	static std::string toString (const Type type);
+	static std::string toString(const Type type);
 
-	using ReleaseCb = void (*) (SalOp *op);
+	using ReleaseCb = void (*)(SalOp *op);
 
-	virtual void fillCallbacks () {}
-	void releaseImpl ();
-	void processAuthentication ();
+	virtual void fillCallbacks() {
+	}
+	void releaseImpl();
+	void processAuthentication();
 
-	belle_sip_request_t *buildRequest (const std::string &method);
-	int sendRequest (belle_sip_request_t *request);
-	int sendRequestWithContact (belle_sip_request_t *request, bool addContact);
-	int sendRequestWithExpires (belle_sip_request_t *request, int expires);
-	void resendRequest (belle_sip_request_t *request);
-	int sendRequestAndCreateRefresher (belle_sip_request_t *request, int expires, belle_sip_refresher_listener_t listener);
+	belle_sip_request_t *buildRequest(const std::string &method);
+	int sendRequest(belle_sip_request_t *request);
+	int sendRequestWithContact(belle_sip_request_t *request, bool addContact);
+	int sendRequestWithExpires(belle_sip_request_t *request, int expires);
+	void resendRequest(belle_sip_request_t *request);
+	int
+	sendRequestAndCreateRefresher(belle_sip_request_t *request, int expires, belle_sip_refresher_listener_t listener);
 
-	void setReasonErrorInfo (belle_sip_message_t *message);
-	void setErrorInfoFromResponse (belle_sip_response_t *response);
+	void setReasonErrorInfo(belle_sip_message_t *message);
+	void setErrorInfoFromResponse(belle_sip_response_t *response);
 	void resetErrorInfo();
 
-	void setReferredBy (belle_sip_header_referred_by_t *referredByHeader);
-	void setReplaces (belle_sip_header_replaces_t *replacesHeader);
+	void setReferredBy(belle_sip_header_referred_by_t *referredByHeader);
+	void setReplaces(belle_sip_header_replaces_t *replacesHeader);
 
-	void setRemoteContact (const std::string &value);
-	void setNetworkOrigin (const std::string &value);
-	void setNetworkOriginAddress (SalAddress *value);
-	void setPrivacyFromMessage (belle_sip_message_t *message);
-	void setRemoteUserAgent (belle_sip_message_t *message);
+	void setRemoteContact(const std::string &value);
+	void setNetworkOrigin(const std::string &value);
+	void setNetworkOriginAddress(SalAddress *value);
+	void setPrivacyFromMessage(belle_sip_message_t *message);
+	void setRemoteUserAgent(belle_sip_message_t *message);
 	void setRequestAddress(BorrowedMut<SalAddress> value);
 
-	belle_sip_response_t *createResponseFromRequest (belle_sip_request_t *request, int code) {
+	belle_sip_response_t *createResponseFromRequest(belle_sip_request_t *request, int code) {
 		return mRoot->createResponseFromRequest(request, code);
 	}
 	belle_sip_header_contact_t *createContact(bool forceSipInstance = false);
 
-	void setOrUpdateDialog (belle_sip_dialog_t *dialog);
-	belle_sip_dialog_t *linkOpWithDialog (belle_sip_dialog_t *dialog);
-	void unlinkOpFromDialog (belle_sip_dialog_t *dialog);
+	void setOrUpdateDialog(belle_sip_dialog_t *dialog);
+	belle_sip_dialog_t *linkOpWithDialog(belle_sip_dialog_t *dialog);
+	void unlinkOpFromDialog(belle_sip_dialog_t *dialog);
 
-	SalBodyHandler *getBodyHandler (belle_sip_message_t *message);
+	SalBodyHandler *getBodyHandler(belle_sip_message_t *message);
 
-	void assignRecvHeaders (belle_sip_message_t *message);
+	void assignRecvHeaders(belle_sip_message_t *message);
 
-	bool isSecure () const;
-	void addHeaders (belle_sip_header_t *h, belle_sip_message_t *message);
-	void addCustomHeaders (belle_sip_message_t *message);
-	int unsubscribe ();
+	bool isSecure() const;
+	void addHeaders(belle_sip_header_t *h, belle_sip_message_t *message);
+	void addCustomHeaders(belle_sip_message_t *message);
+	int unsubscribe();
 
-	void processIncomingMessage (const belle_sip_request_event_t *event);
-	void addMessageAccept (belle_sip_message_t *message);
-	
+	void processIncomingMessage(const belle_sip_request_event_t *event);
+	void addMessageAccept(belle_sip_message_t *message);
+
 	/* Handling of 491 Request pending. */
 	bool runRetryFunc();
 	bool handleRetry();
 
 	static int setCustomBody(belle_sip_message_t *msg, const Content &body);
 
-	static bool isExternalBody (belle_sip_header_content_type_t* contentType);
+	static bool isExternalBody(belle_sip_header_content_type_t *contentType);
 
-	static void assignAddress (SalAddress **address, const std::string &value);
-	static void addInitialRouteSet (belle_sip_request_t *request, const std::list<SalAddress *> &routeAddresses);
+	static void assignAddress(SalAddress **address, const std::string &value);
+	static void addInitialRouteSet(belle_sip_request_t *request, const std::list<SalAddress *> &routeAddresses);
 
 	// SalOpBase
 	Sal *mRoot = nullptr;
@@ -258,7 +327,7 @@ protected:
 	SalAddress *mContactAddress = nullptr;
 	std::string mSubject;
 	std::string mFrom;
-	SalAddress* mFromAddress = nullptr;
+	SalAddress *mFromAddress = nullptr;
 	std::string mTo;
 	SalAddress *mToAddress = nullptr;
 	Owned<SalAddress> mRequestAddress = nullptr;

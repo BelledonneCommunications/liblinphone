@@ -8364,6 +8364,21 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_zrtp_key_agreement_list(Linphone
  */
 LINPHONE_PUBLIC void linphone_core_set_zrtp_key_agreement_suites(LinphoneCore *lc, bctbx_list_t *key_agreements);
 
+/**
+ * Enable the deletion of empty chatrooms (i.e. chatrooms with no participants)
+ * @param core A #LinphoneCore object @notnil
+ * @param enable A boolean value telling whether to enable or disable the deletion of chat rooms with no participants in
+ * it
+ */
+LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable);
+
+/**
+ * Tells whether empty chat rooms are deleted or not.
+ * @param core A #LinphoneCore object @notnil
+ * @return A boolean value telling whether the deletion of empty chatrooms is enabled or not
+ */
+LINPHONE_PUBLIC bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core);
+
 #ifdef __cplusplus
 }
 #endif

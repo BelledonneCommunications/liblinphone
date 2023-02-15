@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,20 +24,33 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-PushNotificationMessage::PushNotificationMessage(const std::string &callId, bool isText,
-												 const std::string &textContent, const std::string &subject,
-												 const std::string &fromAddr, const std::string &localAddr,
-												 const std::string &peerAddr, bool isIcalendar,
-												 bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation) {
-	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr,
-								  peerAddr, isIcalendar, isConferenceInvitationNew, isConferenceInvitationUpdate, isConferenceInvitationCancellation);
+PushNotificationMessage::PushNotificationMessage(const std::string &callId,
+                                                 bool isText,
+                                                 const std::string &textContent,
+                                                 const std::string &subject,
+                                                 const std::string &fromAddr,
+                                                 const std::string &localAddr,
+                                                 const std::string &peerAddr,
+                                                 bool isIcalendar,
+                                                 bool isConferenceInvitationNew,
+                                                 bool isConferenceInvitationUpdate,
+                                                 bool isConferenceInvitationCancellation) {
+	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr, peerAddr, isIcalendar,
+	                              isConferenceInvitationNew, isConferenceInvitationUpdate,
+	                              isConferenceInvitationCancellation);
 }
 
-void PushNotificationMessage::init(const std::string &callId, bool isText,
-								   const std::string &textContent, const std::string &subject,
-								   const std::string &fromAddr, const std::string &localAddr,
-								   const std::string &peerAddr, bool isIcalendar,
-								   bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation) {
+void PushNotificationMessage::init(const std::string &callId,
+                                   bool isText,
+                                   const std::string &textContent,
+                                   const std::string &subject,
+                                   const std::string &fromAddr,
+                                   const std::string &localAddr,
+                                   const std::string &peerAddr,
+                                   bool isIcalendar,
+                                   bool isConferenceInvitationNew,
+                                   bool isConferenceInvitationUpdate,
+                                   bool isConferenceInvitationCancellation) {
 	mCallId = callId;
 	mIsText = isText;
 	mTextContent = textContent;

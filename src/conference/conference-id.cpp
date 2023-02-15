@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,49 +26,45 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ConferenceId::ConferenceId () {}
+ConferenceId::ConferenceId() {
+}
 
-ConferenceId::ConferenceId (
-	const ConferenceAddress &peerAddress,
-	const ConferenceAddress &localAddress
-) {
+ConferenceId::ConferenceId(const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress) {
 	this->peerAddress = peerAddress;
 	this->localAddress = localAddress;
 }
 
-ConferenceId::ConferenceId (const ConferenceId &other) :
-	peerAddress(other.peerAddress),
-	localAddress(other.localAddress)
-{ }
+ConferenceId::ConferenceId(const ConferenceId &other)
+    : peerAddress(other.peerAddress), localAddress(other.localAddress) {
+}
 
-ConferenceId &ConferenceId::operator= (const ConferenceId &other) {
+ConferenceId &ConferenceId::operator=(const ConferenceId &other) {
 	this->peerAddress = other.peerAddress;
 	this->localAddress = other.localAddress;
 	return *this;
 }
 
-bool ConferenceId::operator== (const ConferenceId &other) const {
+bool ConferenceId::operator==(const ConferenceId &other) const {
 	return peerAddress == other.peerAddress && localAddress == other.localAddress;
 }
 
-bool ConferenceId::operator!= (const ConferenceId &other) const {
+bool ConferenceId::operator!=(const ConferenceId &other) const {
 	return !(*this == other);
 }
 
-bool ConferenceId::operator< (const ConferenceId &other) const {
-	return peerAddress < other.peerAddress
-		|| (peerAddress == other.peerAddress && localAddress < other.localAddress);
+bool ConferenceId::operator<(const ConferenceId &other) const {
+	return peerAddress < other.peerAddress || (peerAddress == other.peerAddress && localAddress < other.localAddress);
 }
 
-const ConferenceAddress &ConferenceId::getPeerAddress () const {
+const ConferenceAddress &ConferenceId::getPeerAddress() const {
 	return peerAddress;
 }
 
-const ConferenceAddress &ConferenceId::getLocalAddress () const {
+const ConferenceAddress &ConferenceId::getLocalAddress() const {
 	return localAddress;
 }
 
-bool ConferenceId::isValid () const {
+bool ConferenceId::isValid() const {
 	return peerAddress.isValid() && localAddress.isValid();
 }
 

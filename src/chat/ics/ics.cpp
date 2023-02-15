@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,147 +32,149 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-const Ics::Event::organizer_t &Ics::Event::getOrganizer () const {
+const Ics::Event::organizer_t &Ics::Event::getOrganizer() const {
 	return mOrganizer;
 }
 
-const std::string &Ics::Event::getOrganizerAddress () const {
+const std::string &Ics::Event::getOrganizerAddress() const {
 	return getOrganizer().first;
 }
 
-void Ics::Event::setOrganizer (const std::string &organizer) {
+void Ics::Event::setOrganizer(const std::string &organizer) {
 	Ics::Event::attendee_params_t params;
 	setOrganizer(organizer, params);
 }
 
-void Ics::Event::setOrganizer (const std::string &organizer, const attendee_params_t & params) {
+void Ics::Event::setOrganizer(const std::string &organizer, const attendee_params_t &params) {
 	mOrganizer = std::make_pair(organizer, params);
 }
 
-const Ics::Event::attendee_list_t &Ics::Event::getAttendees () const {
+const Ics::Event::attendee_list_t &Ics::Event::getAttendees() const {
 	return mAttendees;
 }
 
-void Ics::Event::addAttendee (const std::string &attendee) {
+void Ics::Event::addAttendee(const std::string &attendee) {
 	Ics::Event::attendee_params_t params;
 	addAttendee(attendee, params);
 }
 
-void Ics::Event::addAttendee (const std::string &attendee, const attendee_params_t & params) {
+void Ics::Event::addAttendee(const std::string &attendee, const attendee_params_t &params) {
 	mAttendees.insert(std::make_pair(attendee, params));
 }
 
-tm Ics::Event::getDateTimeStart () const {
+tm Ics::Event::getDateTimeStart() const {
 	return mDateTimeStart;
 }
 
-void Ics::Event::setDateTimeStart (tm dateTimeStart) {
+void Ics::Event::setDateTimeStart(tm dateTimeStart) {
 	mDateTimeStart = dateTimeStart;
 }
 
-tm Ics::Event::getDuration () const {
+tm Ics::Event::getDuration() const {
 	return mDuration;
 }
 
-void Ics::Event::setDuration (tm duration) {
+void Ics::Event::setDuration(tm duration) {
 	mDuration = duration;
 }
 
-const std::string Ics::Event::getUtf8Summary () const {
+const std::string Ics::Event::getUtf8Summary() const {
 	return Utils::localeToUtf8(mSummary);
 }
 
-
-const std::string &Ics::Event::getSummary () const {
+const std::string &Ics::Event::getSummary() const {
 	return mSummary;
 }
 
-void Ics::Event::setUtf8Summary (const std::string &summary) {
+void Ics::Event::setUtf8Summary(const std::string &summary) {
 	mSummary = Utils::trim(Utils::utf8ToLocale(summary));
 }
 
-void Ics::Event::setSummary (const std::string &summary) {
+void Ics::Event::setSummary(const std::string &summary) {
 	mSummary = Utils::trim(summary);
 }
 
-unsigned int Ics::Event::getSequence () const {
+unsigned int Ics::Event::getSequence() const {
 	return mSequence;
 }
 
-void Ics::Event::setSequence (unsigned int sequence) {
+void Ics::Event::setSequence(unsigned int sequence) {
 	mSequence = sequence;
 }
 
-const std::string Ics::Event::getUtf8Uid () const {
+const std::string Ics::Event::getUtf8Uid() const {
 	return Utils::localeToUtf8(mUid);
 }
 
-const std::string &Ics::Event::getUid () const {
+const std::string &Ics::Event::getUid() const {
 	return mUid;
 }
 
-void Ics::Event::setUtf8Uid (const std::string &uid) {
+void Ics::Event::setUtf8Uid(const std::string &uid) {
 	mUid = Utils::trim(Utils::utf8ToLocale(uid));
 }
 
-void Ics::Event::setUid (const std::string &uid) {
+void Ics::Event::setUid(const std::string &uid) {
 	mUid = Utils::trim(uid);
 }
 
-const std::string Ics::Event::getUtf8Description () const {
+const std::string Ics::Event::getUtf8Description() const {
 	return Utils::localeToUtf8(mDescription);
 }
 
-const std::string &Ics::Event::getDescription () const {
+const std::string &Ics::Event::getDescription() const {
 	return mDescription;
 }
 
-void Ics::Event::setUtf8Description (const std::string &description) {
+void Ics::Event::setUtf8Description(const std::string &description) {
 	mDescription = Utils::trim(Utils::utf8ToLocale(description));
 }
 
-void Ics::Event::setDescription (const std::string &description) {
+void Ics::Event::setDescription(const std::string &description) {
 	mDescription = Utils::trim(description);
 }
 
-const std::string &Ics::Event::getXConfUri () const {
+const std::string &Ics::Event::getXConfUri() const {
 	return mXConfUri;
 }
 
-void Ics::Event::setXConfUri (const std::string &xConfUri) {
+void Ics::Event::setXConfUri(const std::string &xConfUri) {
 	mXConfUri = xConfUri;
 }
 
-static std::string escape (std::string str) {
+static std::string escape(std::string str) {
 	ostringstream output;
 
-	std::for_each(str.cbegin(), str.cend(), [&output] (char c) {
-		switch(c) {
-			case '\\': output << "\\\\"; break;
-			case '\n': output << "\\n"; break;
-			case ';': output << "\\;"; break;
-			case ',': output << "\\,"; break;
-			default: output << c;
+	std::for_each(str.cbegin(), str.cend(), [&output](char c) {
+		switch (c) {
+			case '\\':
+				output << "\\\\";
+				break;
+			case '\n':
+				output << "\\n";
+				break;
+			case ';':
+				output << "\\;";
+				break;
+			case ',':
+				output << "\\,";
+				break;
+			default:
+				output << c;
 		}
 	});
 
 	return output.str();
 }
 
-std::string Ics::Event::asString () const {
+std::string Ics::Event::asString() const {
 	ostringstream output;
 
 	output << "BEGIN:VEVENT\r\n";
 
-	output << setfill('0') << "DTSTART:"
-		<< setw(4) << (mDateTimeStart.tm_year + 1900)
-		<< setw(2) << (mDateTimeStart.tm_mon + 1)
-		<< setw(2) << mDateTimeStart.tm_mday
-		<< "T"
-		<< setw(2) << mDateTimeStart.tm_hour
-		<< setw(2) << mDateTimeStart.tm_min
-		<< setw(2) << mDateTimeStart.tm_sec
-		<< "Z\r\n";
+	output << setfill('0') << "DTSTART:" << setw(4) << (mDateTimeStart.tm_year + 1900) << setw(2)
+	       << (mDateTimeStart.tm_mon + 1) << setw(2) << mDateTimeStart.tm_mday << "T" << setw(2)
+	       << mDateTimeStart.tm_hour << setw(2) << mDateTimeStart.tm_min << setw(2) << mDateTimeStart.tm_sec << "Z\r\n";
 
 	if (mDuration.tm_hour > 0 || mDuration.tm_min > 0 || mDuration.tm_sec > 0) {
 		output << "DURATION:PT";
@@ -182,10 +184,10 @@ std::string Ics::Event::asString () const {
 		output << "\r\n";
 	}
 
-	const auto & organizerAddress = getOrganizerAddress();
+	const auto &organizerAddress = getOrganizerAddress();
 	if (!organizerAddress.empty()) {
 		output << "ORGANIZER";
-		const auto & params = mOrganizer.second;
+		const auto &params = mOrganizer.second;
 		for (const auto &param : params) {
 			output << ";" << param.first << "=" << param.second;
 		}
@@ -195,11 +197,11 @@ std::string Ics::Event::asString () const {
 	if (!mAttendees.empty()) {
 		for (const auto &attendee : mAttendees) {
 			output << "ATTENDEE";
-			const auto & params = attendee.second;
+			const auto &params = attendee.second;
 			for (const auto &param : params) {
 				output << ";" << param.first << "=" << param.second;
 			}
-			const auto & address = attendee.first;
+			const auto &address = attendee.first;
 			output << ":" << address;
 			output << "\r\n";
 		}
@@ -210,31 +212,19 @@ std::string Ics::Event::asString () const {
 	if (mSequence != 0) output << "SEQUENCE:" << mSequence << "\r\n";
 
 	// An EVENT needs two mandatory attributes DTSTAMP AND UID
-	time_t usedTime = mCreationTime != (time_t) -1 ? mCreationTime : ms_time(NULL);
+	time_t usedTime = mCreationTime != (time_t)-1 ? mCreationTime : ms_time(NULL);
 	tm stamp = Utils::getTimeTAsTm(usedTime);
-	output << setfill('0') << "DTSTAMP:"
-		<< setw(4) << (stamp.tm_year + 1900)
-		<< setw(2) << (stamp.tm_mon + 1)
-		<< setw(2) << stamp.tm_mday
-		<< "T"
-		<< setw(2) << stamp.tm_hour
-		<< setw(2) << stamp.tm_min
-		<< setw(2) << stamp.tm_sec
-		<< "Z\r\n";
+	output << setfill('0') << "DTSTAMP:" << setw(4) << (stamp.tm_year + 1900) << setw(2) << (stamp.tm_mon + 1)
+	       << setw(2) << stamp.tm_mday << "T" << setw(2) << stamp.tm_hour << setw(2) << stamp.tm_min << setw(2)
+	       << stamp.tm_sec << "Z\r\n";
 
 	// For UID RFC recommends to use a DATE-TIME [some unique value] @ domain
 	output << setfill('0') << "UID:";
 
 	if (mUid.empty()) {
 		ostringstream uid;
-		uid << setw(4) << (stamp.tm_year + 1900)
-			<< (stamp.tm_mon + 1)
-			<< stamp.tm_mday
-			<< "T"
-			<< stamp.tm_hour
-			<< stamp.tm_min
-			<< stamp.tm_sec
-			<< "Z";
+		uid << setw(4) << (stamp.tm_year + 1900) << (stamp.tm_mon + 1) << stamp.tm_mday << "T" << stamp.tm_hour
+		    << stamp.tm_min << stamp.tm_sec << "Z";
 
 		size_t p;
 		if (!organizerAddress.empty() && (p = organizerAddress.find("@")) != string::npos) {
@@ -252,11 +242,11 @@ std::string Ics::Event::asString () const {
 	return output.str();
 }
 
-const Ics::Icalendar::Method &Ics::Icalendar::getMethod () const {
+const Ics::Icalendar::Method &Ics::Icalendar::getMethod() const {
 	return mMethod;
 }
 
-void Ics::Icalendar::setMethod (const std::string &method) {
+void Ics::Icalendar::setMethod(const std::string &method) {
 	if (method.compare("REQUEST") == 0) {
 		setMethod(Ics::Icalendar::Method::Request);
 	} else if (method.compare("CANCEL") == 0) {
@@ -266,15 +256,15 @@ void Ics::Icalendar::setMethod (const std::string &method) {
 	}
 }
 
-void Ics::Icalendar::setMethod (const Ics::Icalendar::Method &method) {
+void Ics::Icalendar::setMethod(const Ics::Icalendar::Method &method) {
 	mMethod = method;
 }
 
-void Ics::Icalendar::addEvent (shared_ptr<Event> event) {
+void Ics::Icalendar::addEvent(shared_ptr<Event> event) {
 	mEvents.push_back(event);
 }
 
-std::string Ics::Icalendar::asString () const {
+std::string Ics::Icalendar::asString() const {
 	ostringstream output;
 
 	output << "BEGIN:VCALENDAR\r\n";
@@ -291,20 +281,21 @@ std::string Ics::Icalendar::asString () const {
 	return bctoolbox::Utils::fold(output.str());
 }
 
-std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
+std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 	if (mEvents.empty()) return nullptr;
 
 	auto confInfo = ConferenceInfo::create();
 	const auto &event = mEvents.front(); // It should always be one event
 
 	if (!event->getOrganizerAddress().empty()) {
-		const auto & org = event->getOrganizer();
-		const auto & orgAddress = IdentityAddress(org.first);
-		const auto & orgParams = org.second;
+		const auto &org = event->getOrganizer();
+		const auto &orgAddress = IdentityAddress(org.first);
+		const auto &orgParams = org.second;
 		if (orgAddress.isValid()) {
 			confInfo->setOrganizer(orgAddress, orgParams);
 		} else {
-			lWarning() << "Could not parse organizer's address:" << event->getOrganizerAddress() << " because it is not a valid address";
+			lWarning() << "Could not parse organizer's address:" << event->getOrganizerAddress()
+			           << " because it is not a valid address";
 		}
 	}
 
@@ -312,7 +303,7 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 		auto address = attendee.first;
 		auto params = attendee.second;
 		if (!address.empty()) {
-			const auto & addr = IdentityAddress(address);
+			const auto &addr = IdentityAddress(address);
 			if (addr.isValid()) {
 				confInfo->addParticipant(addr, params);
 			} else {
@@ -325,7 +316,7 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	confInfo->setDescription(event->getDescription());
 
 	tm dur = event->getDuration();
-	int duration = dur.tm_hour*60 + dur.tm_min + dur.tm_sec/60;
+	int duration = dur.tm_hour * 60 + dur.tm_min + dur.tm_sec / 60;
 	if (duration >= 0) {
 		confInfo->setDuration(static_cast<unsigned int>(duration));
 	}
@@ -335,14 +326,15 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 		if (uri.isValid()) {
 			confInfo->setUri(uri);
 		} else {
-			lWarning() << "Could not parse conference's uri address:" << event->getXConfUri() << " because it is not a valid address";
+			lWarning() << "Could not parse conference's uri address:" << event->getXConfUri()
+			           << " because it is not a valid address";
 		}
 	}
 
 	tm start = event->getDateTimeStart();
 	confInfo->setDateTime(Utils::getTmAsTimeT(start));
 
-	if (event->mCreationTime != (time_t) -1) {
+	if (event->mCreationTime != (time_t)-1) {
 		confInfo->setCreationTime(event->mCreationTime);
 	}
 
@@ -362,7 +354,7 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	return confInfo;
 }
 
-shared_ptr<const Ics::Icalendar> Ics::Icalendar::createFromString (const string &str) {
+shared_ptr<const Ics::Icalendar> Ics::Icalendar::createFromString(const string &str) {
 	return Ics::Parser::getInstance()->parseIcs(bctoolbox::Utils::unfold(str));
 }
 
@@ -372,7 +364,7 @@ void Ics::Icalendar::setCreationTime(time_t time) {
 	}
 }
 
-ostream &operator<< (ostream &stream, Ics::Icalendar::Method method) {
+ostream &operator<<(ostream &stream, Ics::Icalendar::Method method) {
 	switch (method) {
 		case Ics::Icalendar::Method::Request:
 			return stream << "REQUEST";

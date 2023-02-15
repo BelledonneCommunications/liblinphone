@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ class LINPHONE_PUBLIC EventLog : public BaseObject {
 	friend class MainDbPrivate;
 
 public:
-	enum class Type{
+	enum class Type {
 		None = LinphoneEventLogTypeNone,
 		ConferenceCreated = LinphoneEventLogTypeConferenceCreated,
 		ConferenceTerminated = LinphoneEventLogTypeConferenceTerminated,
@@ -53,8 +53,10 @@ public:
 		ConferenceParticipantUnsetAdmin = LinphoneEventLogTypeConferenceParticipantUnsetAdmin,
 		ConferenceParticipantDeviceAdded = LinphoneEventLogTypeConferenceParticipantDeviceAdded,
 		ConferenceParticipantDeviceRemoved = LinphoneEventLogTypeConferenceParticipantDeviceRemoved,
-		ConferenceParticipantDeviceMediaCapabilityChanged = LinphoneEventLogTypeConferenceParticipantDeviceMediaCapabilityChanged,
-		ConferenceParticipantDeviceMediaAvailabilityChanged = LinphoneEventLogTypeConferenceParticipantDeviceMediaAvailabilityChanged,
+		ConferenceParticipantDeviceMediaCapabilityChanged =
+		    LinphoneEventLogTypeConferenceParticipantDeviceMediaCapabilityChanged,
+		ConferenceParticipantDeviceMediaAvailabilityChanged =
+		    LinphoneEventLogTypeConferenceParticipantDeviceMediaAvailabilityChanged,
 		ConferenceParticipantDeviceStatusChanged = LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged,
 		ConferenceSubjectChanged = LinphoneEventLogTypeConferenceSubjectChanged,
 		ConferenceAvailableMediaChanged = LinphoneEventLogTypeConferenceAvailableMediaChanged,
@@ -63,30 +65,33 @@ public:
 		ConferenceEphemeralMessageEnabled = LinphoneEventLogTypeConferenceEphemeralMessageEnabled,
 		ConferenceEphemeralMessageDisabled = LinphoneEventLogTypeConferenceEphemeralMessageDisabled,
 		ConferenceEphemeralMessageManagedByAdmin = LinphoneEventLogTypeConferenceEphemeralMessageManagedByAdmin,
-		ConferenceEphemeralMessageManagedByParticipants = LinphoneEventLogTypeConferenceEphemeralMessageManagedByParticipants,
+		ConferenceEphemeralMessageManagedByParticipants =
+		    LinphoneEventLogTypeConferenceEphemeralMessageManagedByParticipants,
 	};
 
-	//casting to int to get rid of the enum compare warning.
-	//Here we are comparing two enums serving the same purpose
-	static_assert((int)EventLog::Type::ConferenceEphemeralMessageDisabled == (int)LinphoneEventLogTypeConferenceEphemeralMessageDisabled, "LinphoneEventLogType and EventLog::Type are not synchronized, fix this !");
+	// casting to int to get rid of the enum compare warning.
+	// Here we are comparing two enums serving the same purpose
+	static_assert((int)EventLog::Type::ConferenceEphemeralMessageDisabled ==
+	                  (int)LinphoneEventLogTypeConferenceEphemeralMessageDisabled,
+	              "LinphoneEventLogType and EventLog::Type are not synchronized, fix this !");
 
-	EventLog ();
-	virtual ~EventLog ();
+	EventLog();
+	virtual ~EventLog();
 
-	Type getType () const;
-	time_t getCreationTime () const;
+	Type getType() const;
+	time_t getCreationTime() const;
 
-	static void deleteFromDatabase (const std::shared_ptr<const EventLog> &eventLog);
+	static void deleteFromDatabase(const std::shared_ptr<const EventLog> &eventLog);
 
 protected:
-	EventLog (EventLogPrivate &p, Type type, time_t creationTime);
+	EventLog(EventLogPrivate &p, Type type, time_t creationTime);
 
 private:
 	L_DECLARE_PRIVATE(EventLog);
 	L_DISABLE_COPY(EventLog);
 };
 
-std::ostream& operator<<(std::ostream& lhs, EventLog::Type e);
+std::ostream &operator<<(std::ostream &lhs, EventLog::Type e);
 
 LINPHONE_END_NAMESPACE
 

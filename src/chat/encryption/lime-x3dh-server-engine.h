@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,29 +21,25 @@
 #ifndef _L_LIME_X3DH_SERVER_ENGINE_H_
 #define _L_LIME_X3DH_SERVER_ENGINE_H_
 
-
 #include "core/core-listener.h"
 #include "encryption-engine.h"
-
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LimeX3dhUtils{
+class LimeX3dhUtils {
 public:
 	static bool isMessageEncrypted(const Content *internalContent);
 };
 
-class LimeX3dhEncryptionServerEngine: public EncryptionEngine, public CoreListener, private LimeX3dhUtils {
+class LimeX3dhEncryptionServerEngine : public EncryptionEngine, public CoreListener, private LimeX3dhUtils {
 public:
-	LimeX3dhEncryptionServerEngine (const std::shared_ptr<Core> core);
-	~LimeX3dhEncryptionServerEngine ();
-	ChatMessageModifier::Result processOutgoingMessage (
-		const std::shared_ptr<ChatMessage> &message,
-		int &errorCode
-	) override;
-	EncryptionEngine::EngineType getEngineType () override;
+	LimeX3dhEncryptionServerEngine(const std::shared_ptr<Core> core);
+	~LimeX3dhEncryptionServerEngine();
+	ChatMessageModifier::Result processOutgoingMessage(const std::shared_ptr<ChatMessage> &message,
+	                                                   int &errorCode) override;
+	EncryptionEngine::EngineType getEngineType() override;
 };
 
 LINPHONE_END_NAMESPACE

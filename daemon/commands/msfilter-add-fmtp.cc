@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,19 +24,19 @@
 
 using namespace std;
 
-MSFilterAddFmtpCommand::MSFilterAddFmtpCommand() :
-	DaemonCommand("msfilter-add-fmtp", "msfilter-add-fmtp call|stream <id> <fmtp>", "Add fmtp to the encoder of a call or a stream") {
-	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp call 1 vbr=on",
-						"Status: Ok"));
-	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp call 2 vbr=on",
-						"Status: Error\n"
-						"Reason: No Call with such id."));
+MSFilterAddFmtpCommand::MSFilterAddFmtpCommand()
+    : DaemonCommand("msfilter-add-fmtp",
+                    "msfilter-add-fmtp call|stream <id> <fmtp>",
+                    "Add fmtp to the encoder of a call or a stream") {
+	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp call 1 vbr=on", "Status: Ok"));
+	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp call 2 vbr=on", "Status: Error\n"
+	                                                                                "Reason: No Call with such id."));
 	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp stream 7 vbr=on",
-						"Status: Error\n"
-						"Reason: No Audio Stream with such id."));
+	                                             "Status: Error\n"
+	                                             "Reason: No Audio Stream with such id."));
 }
 
-void MSFilterAddFmtpCommand::exec(Daemon *app, const string& args) {
+void MSFilterAddFmtpCommand::exec(Daemon *app, const string &args) {
 	string type;
 	int id;
 	string fmtp;

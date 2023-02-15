@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,31 +18,38 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
-#include "linphone/core.h"
-#include "tester_utils.h"
-#include "linphone/wrapper_utils.h"
-#include "liblinphone_tester.h"
 #include "bctoolbox/crypto.h"
+#include "liblinphone_tester.h"
+#include "linphone/core.h"
+#include "linphone/wrapper_utils.h"
+#include "tester_utils.h"
 #include <array>
 
 // enum the different methods for the client to retrieve the certificate
 enum class certProvider {
-	config_sip = 0, /**< in the sip section (client_cert_chain and client_cert_key) of the config file */
-	config_auth_info_buffer = 1, /**< in a dedicated auth_info section of the configuration file, set cert and key in a buffer -> they won't be written in the core config file */
-	config_auth_info_path = 2, /**< in a dedicated auth_info section of the configuration file, set path to cert and key -> these will be written in the core config file */
-	callback = 3 /**< using a callback adding auth_info into the core :
-		   NOT IMPLEMENTED, Client certificate for lime user identification shall already be accessible to the core as
-		  user register to the flexisip server before. THIS IS NOT DONE THIS WAY IN THIS TEST SUITE : user register on
-		  flexisip user http digest and tls cert on lime server for test purpose, it is very unlikely to proceed this way*/
+	config_sip = 0,              /**< in the sip section (client_cert_chain and client_cert_key) of the config file */
+	config_auth_info_buffer = 1, /**< in a dedicated auth_info section of the configuration file, set cert and key in a
+	                                buffer -> they won't be written in the core config file */
+	config_auth_info_path = 2, /**< in a dedicated auth_info section of the configuration file, set path to cert and key
+	                              -> these will be written in the core config file */
+	callback =
+	    3 /**< using a callback adding auth_info into the core :
+	NOT IMPLEMENTED, Client certificate for lime user identification shall already be accessible to the core as
+   user register to the flexisip server before. THIS IS NOT DONE THIS WAY IN THIS TEST SUITE : user register on
+   flexisip user http digest and tls cert on lime server for test purpose, it is very unlikely to proceed this way*/
 };
 
 // Helper to loop on all certificate providing methods availables
-static std::array<certProvider, 3> availCertProv{{certProvider::config_sip, certProvider::config_auth_info_buffer, certProvider::config_auth_info_path}};
+static std::array<certProvider, 3> availCertProv{
+    {certProvider::config_sip, certProvider::config_auth_info_buffer, certProvider::config_auth_info_path}};
 
 // This function will add proxy and auth info to the core config. The proxy is set as the default one
-static void add_user_to_core_config(LinphoneCore *lc, const char *identity, const char *username, const char *realm, const char * server, const char *password) {
+static void add_user_to_core_config(LinphoneCore *lc,
+                                    const char *identity,
+                                    const char *username,
+                                    const char *realm,
+                                    const char *server,
+                                    const char *password) {
 	// Use the user user_1
 	LinphoneProxyConfig *cfg;
 	cfg = linphone_core_create_proxy_config(lc);
@@ -51,7 +58,7 @@ static void add_user_to_core_config(LinphoneCore *lc, const char *identity, cons
 	linphone_proxy_config_set_realm(cfg, realm);
 	linphone_proxy_config_enable_register(cfg, TRUE);
 
-	LinphoneAddress *addr=linphone_address_new(identity);
+	LinphoneAddress *addr = linphone_address_new(identity);
 	linphone_proxy_config_set_identity_address(cfg, addr);
 	if (addr) linphone_address_unref(addr);
 
@@ -59,13 +66,18 @@ static void add_user_to_core_config(LinphoneCore *lc, const char *identity, cons
 	linphone_proxy_config_unref(cfg); // linphone_core_add_proxy_config set a ref on it
 	linphone_core_set_default_proxy_config(lc, cfg);
 	// set its credential
-	LinphoneAuthInfo* auth_info = linphone_auth_info_new(username, username, password, NULL, realm, realm);
+	LinphoneAuthInfo *auth_info = linphone_auth_info_new(username, username, password, NULL, realm, realm);
 	linphone_core_add_auth_info(lc, auth_info);
 	linphone_auth_info_unref(auth_info);
 }
 
 // Add tls information for given user into the linphone core
-static void add_tls_client_certificate(LinphoneCore *lc, const std::string &username, const std::string &realm, const std::string &cert, const std::string &key, const certProvider method ) {
+static void add_tls_client_certificate(LinphoneCore *lc,
+                                       const std::string &username,
+                                       const std::string &realm,
+                                       const std::string &cert,
+                                       const std::string &key,
+                                       const certProvider method) {
 	// set a TLS client certificate
 	switch (method) {
 		// when using config_sip, no user name is set, we can set only one certificate anyway...
@@ -81,56 +93,54 @@ static void add_tls_client_certificate(LinphoneCore *lc, const std::string &user
 				bc_free(key_path);
 			}
 			break;
-		case certProvider::config_auth_info_path:
-			{
-				// We shall already have an auth info for this username/realm, add the tls cert in it
-				LinphoneAuthInfo* auth_info = linphone_auth_info_clone(linphone_core_find_auth_info(lc, realm.data(), username.data(), realm.data()));
-				// otherwise create it
-				if (auth_info == NULL) {
-					auth_info = linphone_auth_info_new(username.data(), NULL, NULL, NULL, realm.data(), realm.data());
-				}
-				if (!cert.empty()) {
-					char *cert_path = bc_tester_res(cert.data());
-					linphone_auth_info_set_tls_cert_path(auth_info, cert_path);
-					bc_free(cert_path);
-				}
-				if (!key.empty()) {
-					char *key_path = bc_tester_res(key.data());
-					linphone_auth_info_set_tls_key_path(auth_info, key_path);
-					bc_free(key_path);
-				}
-				linphone_core_add_auth_info(lc, auth_info);
-				linphone_auth_info_unref(auth_info);
+		case certProvider::config_auth_info_path: {
+			// We shall already have an auth info for this username/realm, add the tls cert in it
+			LinphoneAuthInfo *auth_info =
+			    linphone_auth_info_clone(linphone_core_find_auth_info(lc, realm.data(), username.data(), realm.data()));
+			// otherwise create it
+			if (auth_info == NULL) {
+				auth_info = linphone_auth_info_new(username.data(), NULL, NULL, NULL, realm.data(), realm.data());
 			}
-			break;
-		case certProvider::config_auth_info_buffer:
-			{
-				// We shall already have an auth info for this username/realm, add the tls cert in it
-				LinphoneAuthInfo* auth_info = linphone_auth_info_clone(linphone_core_find_auth_info(lc, realm.data(), username.data(), realm.data()));
-				// otherwise create it
-				if (auth_info == NULL) {
-					auth_info = linphone_auth_info_new(username.data(), NULL, NULL, NULL, realm.data(), realm.data());
-				}
-				if (!cert.empty()) {
-					char *cert_path = bc_tester_res(cert.data());
-					char *cert_buffer = NULL;
-					liblinphone_tester_load_text_file_in_buffer(cert_path, &cert_buffer);
-					linphone_auth_info_set_tls_cert(auth_info, cert_buffer);
-					bc_free(cert_path);
-					bctbx_free(cert_buffer);
-				}
-				if (!key.empty()) {
-					char *key_path = bc_tester_res(key.data());
-					char *key_buffer = NULL;
-					liblinphone_tester_load_text_file_in_buffer(key_path, &key_buffer);
-					linphone_auth_info_set_tls_key(auth_info, key_buffer);
-					bc_free(key_path);
-					bctbx_free(key_buffer);
-				}
-				linphone_core_add_auth_info(lc, auth_info);
-				linphone_auth_info_unref(auth_info);
+			if (!cert.empty()) {
+				char *cert_path = bc_tester_res(cert.data());
+				linphone_auth_info_set_tls_cert_path(auth_info, cert_path);
+				bc_free(cert_path);
 			}
-			break;
+			if (!key.empty()) {
+				char *key_path = bc_tester_res(key.data());
+				linphone_auth_info_set_tls_key_path(auth_info, key_path);
+				bc_free(key_path);
+			}
+			linphone_core_add_auth_info(lc, auth_info);
+			linphone_auth_info_unref(auth_info);
+		} break;
+		case certProvider::config_auth_info_buffer: {
+			// We shall already have an auth info for this username/realm, add the tls cert in it
+			LinphoneAuthInfo *auth_info =
+			    linphone_auth_info_clone(linphone_core_find_auth_info(lc, realm.data(), username.data(), realm.data()));
+			// otherwise create it
+			if (auth_info == NULL) {
+				auth_info = linphone_auth_info_new(username.data(), NULL, NULL, NULL, realm.data(), realm.data());
+			}
+			if (!cert.empty()) {
+				char *cert_path = bc_tester_res(cert.data());
+				char *cert_buffer = NULL;
+				liblinphone_tester_load_text_file_in_buffer(cert_path, &cert_buffer);
+				linphone_auth_info_set_tls_cert(auth_info, cert_buffer);
+				bc_free(cert_path);
+				bctbx_free(cert_buffer);
+			}
+			if (!key.empty()) {
+				char *key_path = bc_tester_res(key.data());
+				char *key_buffer = NULL;
+				liblinphone_tester_load_text_file_in_buffer(key_path, &key_buffer);
+				linphone_auth_info_set_tls_key(auth_info, key_buffer);
+				bc_free(key_path);
+				bctbx_free(key_buffer);
+			}
+			linphone_core_add_auth_info(lc, auth_info);
+			linphone_auth_info_unref(auth_info);
+		} break;
 		case certProvider::callback:
 			break;
 	}
@@ -138,10 +148,15 @@ static void add_tls_client_certificate(LinphoneCore *lc, const std::string &user
 
 static void TLS_mandatory_two_users_curve(const int curveId) {
 	LinphoneCoreManager *lcm = linphone_core_manager_create(NULL);
-	add_user_to_core_config(lcm->lc, "sip:user_1@sip.example.org", "user_1", "sip.example.org", "sip:sip.example.org; transport=tls", "secret");
-	add_user_to_core_config(lcm->lc, "sip:user_2@sip.example.org", "user_2", "sip.example.org", "sip:sip.example.org; transport=tls", "secret");
-	add_tls_client_certificate(lcm->lc, "user_1", "sip.example.org", "certificates/client/user1_multiple_aliases_cert.pem", "certificates/client/user1_multiple_aliases_key.pem", certProvider::config_auth_info_path);
-	add_tls_client_certificate(lcm->lc, "user_2", "sip.example.org", "certificates/client/user2_cert.pem", "certificates/client/user2_key.pem", certProvider::config_auth_info_buffer);
+	add_user_to_core_config(lcm->lc, "sip:user_1@sip.example.org", "user_1", "sip.example.org",
+	                        "sip:sip.example.org; transport=tls", "secret");
+	add_user_to_core_config(lcm->lc, "sip:user_2@sip.example.org", "user_2", "sip.example.org",
+	                        "sip:sip.example.org; transport=tls", "secret");
+	add_tls_client_certificate(
+	    lcm->lc, "user_1", "sip.example.org", "certificates/client/user1_multiple_aliases_cert.pem",
+	    "certificates/client/user1_multiple_aliases_key.pem", certProvider::config_auth_info_path);
+	add_tls_client_certificate(lcm->lc, "user_2", "sip.example.org", "certificates/client/user2_cert.pem",
+	                           "certificates/client/user2_key.pem", certProvider::config_auth_info_buffer);
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, lcm);
 	set_lime_server_and_curve_list_tls(curveId, coresManagerList, TRUE, TRUE);
@@ -150,7 +165,8 @@ static void TLS_mandatory_two_users_curve(const int curveId) {
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 2));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+2, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationSuccess,
+	                             initialMarieStats.number_of_X3dhUserCreationSuccess + 2, x3dhServer_creationTimeout));
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -168,15 +184,20 @@ constexpr bool tls_optional = false;
 constexpr bool expect_success = true;
 constexpr bool expect_failure = false;
 
-
-
-static void create_user_sip_client_cert_chain(const int curveId, const bool use_tls, const certProvider method, const std::string &cert, const std::string &key, const bool expected_outcome, const std::string &username="user_1") {
+static void create_user_sip_client_cert_chain(const int curveId,
+                                              const bool use_tls,
+                                              const certProvider method,
+                                              const std::string &cert,
+                                              const std::string &key,
+                                              const bool expected_outcome,
+                                              const std::string &username = "user_1") {
 	LinphoneCoreManager *lcm = linphone_core_manager_create(NULL);
 	const std::string realm{"sip.example.org"};
 	const std::string identity = std::string("sip:").append(username).append("@").append(realm);
 
 	// add user
-	add_user_to_core_config(lcm->lc, identity.data(), username.data(), realm.data(), "sip:sip.example.org; transport=tls", "secret");
+	add_user_to_core_config(lcm->lc, identity.data(), username.data(), realm.data(),
+	                        "sip:sip.example.org; transport=tls", "secret");
 
 	// add client certificate
 	add_tls_client_certificate(lcm->lc, username, realm, cert, key, method);
@@ -192,9 +213,13 @@ static void create_user_sip_client_cert_chain(const int curveId, const bool use_
 
 	// Wait for lime user to be created on X3DH server
 	if (expected_outcome == expect_success) {
-		BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationSuccess,
+		                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1,
+		                             x3dhServer_creationTimeout));
 	} else {
-		BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationFailure, initialMarieStats.number_of_X3dhUserCreationFailure+1, x3dhServer_creationTimeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationFailure,
+		                             initialMarieStats.number_of_X3dhUserCreationFailure + 1,
+		                             x3dhServer_creationTimeout));
 	}
 
 	bctbx_list_free(coresList);
@@ -207,7 +232,7 @@ static void create_user_sip_client_cert_chain(const int curveId, const bool use_
  */
 static void identity_in_altName_one_DNS_entry(void) {
 	const std::string cert_path{"certificates/client/user1_cert.pem"};
-	const std::string key_path {"certificates/client/user1_key.pem"};
+	const std::string key_path{"certificates/client/user1_key.pem"};
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_success);
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_success);
@@ -219,20 +244,21 @@ static void identity_in_altName_one_DNS_entry(void) {
  */
 static void identity_in_subject_CN(void) {
 	const std::string cert_path{"certificates/client/user2_CN_cert.pem"};
-	const std::string key_path {"certificates/client/user2_CN_key.pem"};
+	const std::string key_path{"certificates/client/user2_CN_key.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_success, "user_2");
+		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_success,
+		                                  "user_2");
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_success, "user_2");
 	}
 }
 
-
 /**
- * Create a user, successfully identify with the correct certificate holding the sip:uri in altName:DNS1 (4 DNS entry in the altName)
+ * Create a user, successfully identify with the correct certificate holding the sip:uri in altName:DNS1 (4 DNS entry in
+ * the altName)
  */
 static void identity_in_altName_multiple_DNS_entry(void) {
 	const std::string cert_path{"certificates/client/user1_multiple_aliases_cert.pem"};
-	const std::string key_path {"certificates/client/user1_multiple_aliases_key.pem"};
+	const std::string key_path{"certificates/client/user1_multiple_aliases_key.pem"};
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_success);
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_success);
@@ -244,9 +270,10 @@ static void identity_in_altName_multiple_DNS_entry(void) {
  */
 static void revoked_certificate(void) {
 	const std::string cert_path{"certificates/client/user2_revoked_cert.pem"};
-	const std::string key_path {"certificates/client/user2_revoked_key.pem"};
+	const std::string key_path{"certificates/client/user2_revoked_key.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_failure, "user_2");
+		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_failure,
+		                                  "user_2");
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_failure, "user_2");
 	}
 }
@@ -257,7 +284,7 @@ static void revoked_certificate(void) {
  */
 static void TLS_mandatory_CN_UserId_mismatch(void) {
 	const std::string cert_path{"certificates/client/cert2.pem"};
-	const std::string key_path {"certificates/client/key2.pem"};
+	const std::string key_path{"certificates/client/key2.pem"};
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_failure);
 		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_failure);
@@ -270,7 +297,7 @@ static void TLS_mandatory_CN_UserId_mismatch(void) {
  */
 static void TLS_optional_CN_UserId_mismatch(void) {
 	const std::string cert_path{"certificates/client/cert2.pem"};
-	const std::string key_path {"certificates/client/key2.pem"};
+	const std::string key_path{"certificates/client/key2.pem"};
 	for (const auto &certProv : availCertProv) {
 		create_user_sip_client_cert_chain(25519, tls_optional, certProv, cert_path, key_path, expect_failure);
 		create_user_sip_client_cert_chain(448, tls_optional, certProv, cert_path, key_path, expect_failure);
@@ -297,11 +324,11 @@ static void TLS_mandatory_No_certificate(void) {
 	create_user_sip_client_cert_chain(448, tls_mandatory, certProvider::config_sip, empty, empty, expect_failure);
 }
 
-static void local_set_lime_server_and_curve(LinphoneCoreManager * manager, const char * curve, const char * server) {
-	linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve",curve);
+static void local_set_lime_server_and_curve(LinphoneCoreManager *manager, const char *curve, const char *server) {
+	linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", curve);
 	LinphoneAccount *account = linphone_core_get_default_account(manager->lc);
-	const LinphoneAccountParams* account_params = linphone_account_get_params(account);
-	LinphoneAccountParams* new_account_params = linphone_account_params_clone(account_params);
+	const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+	LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
 	linphone_account_params_set_lime_server_url(new_account_params, server);
 	linphone_account_set_params(account, new_account_params);
 	linphone_account_params_unref(new_account_params);
@@ -313,7 +340,8 @@ static void local_set_lime_server_and_curve(LinphoneCoreManager * manager, const
 static void Digest_Auth_multidomains_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *libtester = linphone_core_manager_create(NULL);
-	add_user_to_core_config(libtester->lc, "sip:liblinphone_tester@auth1.example.org", "liblinphone_tester", "auth1.example.org", "sip:auth1.example.org; transport=tls", "secret");
+	add_user_to_core_config(libtester->lc, "sip:liblinphone_tester@auth1.example.org", "liblinphone_tester",
+	                        "auth1.example.org", "sip:auth1.example.org; transport=tls", "secret");
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, libtester);
@@ -333,8 +361,11 @@ static void Digest_Auth_multidomains_curve(const int curveId) {
 	start_core_for_conference(coresManagerList);
 
 	// Wait for lime users to be created on X3DH server
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &libtester->stat.number_of_X3dhUserCreationSuccess, initialLibtesterStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess,
+	                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &libtester->stat.number_of_X3dhUserCreationSuccess,
+	                             initialLibtesterStats.number_of_X3dhUserCreationSuccess + 1,
+	                             x3dhServer_creationTimeout));
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -353,9 +384,9 @@ static void Digest_Auth_multiservers_curve(const int curveId) {
 	coresManagerList = bctbx_list_append(coresManagerList, manager);
 
 	if (curveId == 448) {
-		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
+		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c448");
 	} else {
-		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
+		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c25519");
 	}
 
 	LinphoneAccount *marie_account = linphone_core_get_account_by_idkey(manager->lc, "eric");
@@ -383,15 +414,16 @@ static void Digest_Auth_multiservers_curve(const int curveId) {
 		linphone_account_set_params(pauline_account, params);
 		linphone_account_params_unref(params);
 	}
-	
+
 	stats initialStats = manager->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 
 	// Wait for lime users to be created on X3DH server, but only for Marie & Pauline
-	BC_ASSERT_FALSE(wait_for_list(coresList, &manager->stat.number_of_X3dhUserCreationSuccess, initialStats.number_of_X3dhUserCreationSuccess+3, x3dhServer_creationTimeout));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &manager->stat.number_of_X3dhUserCreationSuccess,
+	                              initialStats.number_of_X3dhUserCreationSuccess + 3, x3dhServer_creationTimeout));
 	BC_ASSERT_EQUAL(manager->stat.number_of_X3dhUserCreationSuccess, 2, int, "%d");
-	
+
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(manager);
@@ -402,15 +434,15 @@ static void Digest_Auth_multiservers(void) {
 	Digest_Auth_multiservers_curve(448);
 }
 
-const char * wrong_lime_server = "https://lime.wildcard8.linphone.org:8443/lime-server-%s/lime-server.php";
+const char *wrong_lime_server = "https://lime.wildcard8.linphone.org:8443/lime-server-%s/lime-server.php";
 
 static void invalid_lime_server_in_account_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 
-	const char * curve = (curveId == 448) ? "c448" : "c25519";
-	linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve",curve);
+	const char *curve = (curveId == 448) ? "c448" : "c25519";
+	linphone_config_set_string(linphone_core_get_config(marie->lc), "lime", "curve", curve);
 
 	char lime_server_url[80];
 	sprintf(lime_server_url, wrong_lime_server, curve);
@@ -423,16 +455,18 @@ static void invalid_lime_server_in_account_curve(const int curveId) {
 		linphone_account_set_params(marie_account, params);
 		linphone_account_params_unref(params);
 	}
-	
+
 	stats initialStats = marie->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 
 	// Wait for lime users to be created on X3DH server, but only for Marie & Pauline
-	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationFailure, initialStats.number_of_X3dhUserCreationFailure+1, x3dhServer_creationTimeout));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess,
+	                              initialStats.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationFailure,
+	                             initialStats.number_of_X3dhUserCreationFailure + 1, x3dhServer_creationTimeout));
 	BC_ASSERT_EQUAL(marie->stat.number_of_X3dhUserCreationFailure, 1, int, "%d");
-	
+
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
@@ -443,28 +477,26 @@ static void invalid_lime_server_in_account(void) {
 	invalid_lime_server_in_account_curve(448);
 }
 
-
-
 test_t lime_server_auth_tests[] = {
-	TEST_ONE_TAG("Invalid LIME server in account parameters", invalid_lime_server_in_account, "LimeX3DH"),
-	TEST_ONE_TAG("sip:uri in altname DNS", identity_in_altName_one_DNS_entry, "LimeX3DH"),
-	TEST_ONE_TAG("sip:uri in subject CN", identity_in_subject_CN, "LimeX3DH"),
-	TEST_ONE_TAG("sip:uri in altname DNS with multiple entries", identity_in_altName_multiple_DNS_entry, "LimeX3DH"),
-	TEST_ONE_TAG("Try to use a revoked certificate", revoked_certificate, "LimeX3DH"),
-	TEST_ONE_TAG("TLS optional server log using digest auth", TLS_optional_No_certificate, "LimeX3DH"),
-	TEST_ONE_TAG("TLS mandatory, no certificate", TLS_mandatory_No_certificate, "LimeX3DH"),
-	TEST_ONE_TAG("CN and From mismatch on TLS mandatory server", TLS_mandatory_CN_UserId_mismatch, "LimeX3DH"),
-	TEST_ONE_TAG("CN and From mismatch on TLS optional server", TLS_optional_CN_UserId_mismatch, "LimeX3DH"),
-	TEST_ONE_TAG("Connect two users with client certificate to TLS mandatory server", TLS_mandatory_two_users, "LimeX3DH"),
-	TEST_ONE_TAG("Digest Auth - multiple domains", Digest_Auth_multidomains, "LimeX3DH"),
-	TEST_ONE_TAG("Digest Auth - multiple servers", Digest_Auth_multiservers, "LimeX3DH"),
+    TEST_ONE_TAG("Invalid LIME server in account parameters", invalid_lime_server_in_account, "LimeX3DH"),
+    TEST_ONE_TAG("sip:uri in altname DNS", identity_in_altName_one_DNS_entry, "LimeX3DH"),
+    TEST_ONE_TAG("sip:uri in subject CN", identity_in_subject_CN, "LimeX3DH"),
+    TEST_ONE_TAG("sip:uri in altname DNS with multiple entries", identity_in_altName_multiple_DNS_entry, "LimeX3DH"),
+    TEST_ONE_TAG("Try to use a revoked certificate", revoked_certificate, "LimeX3DH"),
+    TEST_ONE_TAG("TLS optional server log using digest auth", TLS_optional_No_certificate, "LimeX3DH"),
+    TEST_ONE_TAG("TLS mandatory, no certificate", TLS_mandatory_No_certificate, "LimeX3DH"),
+    TEST_ONE_TAG("CN and From mismatch on TLS mandatory server", TLS_mandatory_CN_UserId_mismatch, "LimeX3DH"),
+    TEST_ONE_TAG("CN and From mismatch on TLS optional server", TLS_optional_CN_UserId_mismatch, "LimeX3DH"),
+    TEST_ONE_TAG(
+        "Connect two users with client certificate to TLS mandatory server", TLS_mandatory_two_users, "LimeX3DH"),
+    TEST_ONE_TAG("Digest Auth - multiple domains", Digest_Auth_multidomains, "LimeX3DH"),
+    TEST_ONE_TAG("Digest Auth - multiple servers", Digest_Auth_multiservers, "LimeX3DH"),
 };
 
-test_suite_t lime_server_auth_test_suite = {
-	"Lime server user authentication",
-	NULL,
-	NULL,
-	liblinphone_tester_before_each,
-	liblinphone_tester_after_each,
-	sizeof(lime_server_auth_tests) / sizeof(lime_server_auth_tests[0]), lime_server_auth_tests
-};
+test_suite_t lime_server_auth_test_suite = {"Lime server user authentication",
+                                            NULL,
+                                            NULL,
+                                            liblinphone_tester_before_each,
+                                            liblinphone_tester_after_each,
+                                            sizeof(lime_server_auth_tests) / sizeof(lime_server_auth_tests[0]),
+                                            lime_server_auth_tests};

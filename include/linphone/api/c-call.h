@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 // =============================================================================
 
 #ifdef __cplusplus
-	extern "C" {
+extern "C" {
 #endif // ifdef __cplusplus
 
 /**
@@ -44,63 +44,63 @@
  * it must call linphone_call_unref().
  * @param call The #LinphoneCall object. @notnil
  * @return The same #LinphoneCall object. @notnil
-**/
-LINPHONE_PUBLIC LinphoneCall *linphone_call_ref (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneCall *linphone_call_ref(LinphoneCall *call);
 
 /**
  * Release reference to the call.
  * @param call The #LinphoneCall object. @notnil
-**/
-LINPHONE_PUBLIC void linphone_call_unref (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC void linphone_call_unref(LinphoneCall *call);
 
 /**
  * Retrieve the user pointer associated with the call.
  * @param call The #LinphoneCall object. @notnil
  * @return The user pointer associated with the call. @maybenil
-**/
-LINPHONE_PUBLIC void *linphone_call_get_user_data (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC void *linphone_call_get_user_data(const LinphoneCall *call);
 
 /**
  * Assign a user pointer to the call.
  * @param call The #LinphoneCall object. @notnil
  * @param user_data The user pointer to associate with the call. @maybenil
-**/
-LINPHONE_PUBLIC void linphone_call_set_user_data (LinphoneCall *call, void *user_data);
+ **/
+LINPHONE_PUBLIC void linphone_call_set_user_data(LinphoneCall *call, void *user_data);
 
 /**
  * Get the core that has created the specified call.
  * @param call #LinphoneCall object. @notnil
  * @return The #LinphoneCore object that has created the specified call. @notnil
  */
-LINPHONE_PUBLIC LinphoneCore * linphone_call_get_core (const LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneCore *linphone_call_get_core(const LinphoneCall *call);
 
 /**
  * Retrieves the call's current state.
  * @param call #LinphoneCall object. @notnil
  * @return the current #LinphoneCallState of this call.
-**/
-LINPHONE_PUBLIC LinphoneCallState linphone_call_get_state (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneCallState linphone_call_get_state(const LinphoneCall *call);
 
 /**
  * Tell whether a call has been asked to autoanswer
  * @param call #LinphoneCall object. @notnil
  * @return A boolean value telling whether the call has been asked to autoanswer
-**/
-LINPHONE_PUBLIC bool_t linphone_call_asked_to_autoanswer (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_asked_to_autoanswer(LinphoneCall *call);
 
 /**
  * Returns the remote address associated to this call
  * @param call #LinphoneCall object. @notnil
  * @return The #LinphoneAddress of the remote end of the call. @notnil
-**/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_remote_address (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_remote_address(const LinphoneCall *call);
 
 /**
  * Returns the to address with its headers associated to this call
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneAddress matching the TO of the call. @notnil
-**/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_to_address (const LinphoneCall * call);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_to_address(const LinphoneCall *call);
 
 /**
  * The address to which the call has been sent, taken directly from the SIP URI of the INVITE.
@@ -108,8 +108,8 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_to_address (const Linph
  * You should probably use getToAddress() instead, unless you know what you're doing.
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneAddress matching the URI of the INVITE request. @notnil
-**/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_request_address (const LinphoneCall * call);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_request_address(const LinphoneCall *call);
 
 /**
  * Returns the value of the header name
@@ -117,36 +117,36 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_request_address (const 
  * @param header_name the name of the header to check. @notnil
  * @return the value of the header if exists. @maybenil
  * @deprecated 27/10/2020. Use linphone_call_params_get_custom_header() on linphone_call_get_remote_params() instead.
-**/
-LINPHONE_PUBLIC const char *linphone_call_get_to_header (const LinphoneCall *call, const char *header_name);
+ **/
+LINPHONE_PUBLIC const char *linphone_call_get_to_header(const LinphoneCall *call, const char *header_name);
 
 /**
  * Returns the diversion address associated to this call
  * @param call #LinphoneCall object. @notnil
  * @return the diversion address as #LinphoneAddress or NULL. @maybenil
-**/
-LINPHONE_PUBLIC const LinphoneAddress * linphone_call_get_diversion_address (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_diversion_address(const LinphoneCall *call);
 
 /**
  * Returns direction of the call (incoming or outgoing).
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneCallDir
-**/
-LINPHONE_PUBLIC LinphoneCallDir linphone_call_get_dir (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneCallDir linphone_call_get_dir(const LinphoneCall *call);
 
 /**
  * Gets the call log associated to this call.
  * @param call #LinphoneCall object. @notnil
  * @return The #LinphoneCallLog associated with the specified #LinphoneCall. @notnil
-**/
-LINPHONE_PUBLIC LinphoneCallLog *linphone_call_get_call_log (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneCallLog *linphone_call_get_call_log(const LinphoneCall *call);
 
 /**
  * Gets the refer-to uri (if the call was transfered).
  * @param call #LinphoneCall object. @notnil
  * @return The refer-to uri of the call (if it was transfered). @maybenil
-**/
-LINPHONE_PUBLIC const char *linphone_call_get_refer_to (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const char *linphone_call_get_refer_to(const LinphoneCall *call);
 
 /**
  * Returns if this calls has received a transfer that has not been
@@ -157,23 +157,25 @@ LINPHONE_PUBLIC const char *linphone_call_get_refer_to (const LinphoneCall *call
  * transfer immediately occurs.
  * @param call #LinphoneCall object. @notnil
  * @return TRUE if transfer is pending, FALSE otherwise.
-**/
-LINPHONE_PUBLIC bool_t linphone_call_has_transfer_pending (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_has_transfer_pending(const LinphoneCall *call);
 
 /**
  * Gets the transferer if this call was started automatically as a result of an incoming transfer request.
  * The call in which the transfer request was received is returned in this case.
  * @param call #LinphoneCall object. @notnil
- * @return The transferer #LinphoneCall if the specified call was started automatically as a result of an incoming transfer request, NULL otherwise. @maybenil
-**/
-LINPHONE_PUBLIC LinphoneCall *linphone_call_get_transferer_call (const LinphoneCall *call);
+ * @return The transferer #LinphoneCall if the specified call was started automatically as a result of an incoming
+ *transfer request, NULL otherwise. @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneCall *linphone_call_get_transferer_call(const LinphoneCall *call);
 
 /**
- * When this call has received a transfer request, returns the new call that was automatically created as a result of the transfer.
+ * When this call has received a transfer request, returns the new call that was automatically created as a result of
+ *the transfer.
  * @param call #LinphoneCall object. @notnil
  * @return the transfer #LinphoneCall created. @maybenil
-**/
-LINPHONE_PUBLIC LinphoneCall *linphone_call_get_transfer_target_call (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneCall *linphone_call_get_transfer_target_call(const LinphoneCall *call);
 
 /**
  * Returns the call object this call is replacing, if any.
@@ -182,100 +184,102 @@ LINPHONE_PUBLIC LinphoneCall *linphone_call_get_transfer_target_call (const Linp
  * This function allows the application to know whether a new incoming call is a one that replaces another one.
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneCall object this call is replacing or NULL. @maybenil
-**/
-LINPHONE_PUBLIC LinphoneCall *linphone_call_get_replaced_call (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneCall *linphone_call_get_replaced_call(LinphoneCall *call);
 
 /**
  * Returns call's duration in seconds.
  * @param call #LinphoneCall object. @notnil
  * @return the call's duration in seconds.
-**/
-LINPHONE_PUBLIC int linphone_call_get_duration (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC int linphone_call_get_duration(const LinphoneCall *call);
 
 /**
  * Returns current parameters associated to the call.
  * @param call #LinphoneCall object. @notnil
  * @return the current #LinphoneCallParams of this call. @notnil
-**/
-LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_current_params (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_current_params(const LinphoneCall *call);
 
 /**
  * Returns call parameters proposed by remote.
  *
  * This is useful when receiving an incoming call, to know whether the remote party
  * supports video, encryption or whatever.
- * 
+ *
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneCallParams suggested by the remote or NULL. @maybenil
-**/
-LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_remote_params (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_remote_params(const LinphoneCall *call);
 
 /**
  * Indicate whether camera input should be sent to remote end.
  * @param call #LinphoneCall object. @notnil
  * @param enabled wether or not to send local video stream.
-**/
-LINPHONE_PUBLIC void linphone_call_enable_camera (LinphoneCall *call, bool_t enabled);
+ **/
+LINPHONE_PUBLIC void linphone_call_enable_camera(LinphoneCall *call, bool_t enabled);
 
 /**
  * Returns if camera pictures are allowed to be sent to the remote party.
  * @param call #LinphoneCall object. @notnil
  * @return TRUE if local video stream is being sent, FALSE otherwise.
-**/
-LINPHONE_PUBLIC bool_t linphone_call_camera_enabled (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_camera_enabled(const LinphoneCall *call);
 
 /**
  * Take a photo of currently received video and write it into a jpeg file.
- * Note that the snapshot is asynchronous, an application shall not assume that the file is created when the function returns.
+ * Note that the snapshot is asynchronous, an application shall not assume that the file is created when the function
+ *returns.
  * @param call #LinphoneCall object. @notnil
  * @param file_path a path where to write the jpeg content. @notnil
  * @return 0 if successfull, -1 otherwise (typically if jpeg format is not supported).
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_take_video_snapshot (LinphoneCall *call, const char *file_path);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_take_video_snapshot(LinphoneCall *call, const char *file_path);
 
 /**
  * Take a photo of currently captured video and write it into a jpeg file.
- * Note that the snapshot is asynchronous, an application shall not assume that the file is created when the function returns.
+ * Note that the snapshot is asynchronous, an application shall not assume that the file is created when the function
+ *returns.
  * @param call #LinphoneCall object. @notnil
  * @param file_path a path where to write the jpeg content. @notnil
  * @return 0 if successfull, -1 otherwise (typically if jpeg format is not supported).
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_take_preview_snapshot (LinphoneCall *call, const char *file_path);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_take_preview_snapshot(LinphoneCall *call, const char *file_path);
 
 /**
  * Returns the reason for a call termination (either error or normal termination)
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneReason of the call termination.
-**/
-LINPHONE_PUBLIC LinphoneReason linphone_call_get_reason (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneReason linphone_call_get_reason(const LinphoneCall *call);
 
 /**
  * Returns full details about call errors or termination reasons.
  * @param call #LinphoneCall object. @notnil on which we want the information error
  * @return #LinphoneErrorInfo object holding the reason error. @notnil
  */
-LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_call_get_error_info (const LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_call_get_error_info(const LinphoneCall *call);
 
 /**
  * Returns the far end's user agent description string, if available.
  * @param call #LinphoneCall object. @notnil
  * @return the remote user agent or NULL. @maybenil
-**/
-LINPHONE_PUBLIC const char *linphone_call_get_remote_user_agent (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const char *linphone_call_get_remote_user_agent(LinphoneCall *call);
 
 /**
  * Returns the far end's sip contact as a string, if available.
  * @param call #LinphoneCall object. @notnil
  * @return the remote contact or NULL. @maybenil
-**/
-LINPHONE_PUBLIC const char *linphone_call_get_remote_contact (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const char *linphone_call_get_remote_contact(LinphoneCall *call);
 
 /**
  * Returns the ZRTP authentication token to verify.
  * @param call The #LinphoneCall object @notnil
  * @return the authentication token to verify or NULL if ZRTP isn't enabled. @maybenil
-**/
-LINPHONE_PUBLIC const char *linphone_call_get_authentication_token (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC const char *linphone_call_get_authentication_token(LinphoneCall *call);
 
 /**
  * Returns whether ZRTP authentication token is verified.
@@ -283,27 +287,29 @@ LINPHONE_PUBLIC const char *linphone_call_get_authentication_token (LinphoneCall
  * Once done, the application must inform of the results with linphone_call_set_authentication_token_verified().
  * @param call The #LinphoneCall object @notnil
  * @return TRUE if authentication token is verifed, false otherwise.
-**/
-LINPHONE_PUBLIC bool_t linphone_call_get_authentication_token_verified (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_get_authentication_token_verified(const LinphoneCall *call);
 
 /**
  * Set the result of ZRTP short code verification by user.
- * If remote party also does the same, it will update the ZRTP cache so that user's verification will not be required for the two users.
+ * If remote party also does the same, it will update the ZRTP cache so that user's verification will not be required
+ *for the two users.
  * @param call The #LinphoneCall object @notnil
  * @param verified whether the ZRTP SAS is verified.
-**/
-LINPHONE_PUBLIC void linphone_call_set_authentication_token_verified (LinphoneCall *call, bool_t verified);
+ **/
+LINPHONE_PUBLIC void linphone_call_set_authentication_token_verified(LinphoneCall *call, bool_t verified);
 
 /**
  * Request remote side to send us a Video Fast Update.
  * @param call #LinphoneCall object. @notnil
-**/
-LINPHONE_PUBLIC void linphone_call_send_vfu_request (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC void linphone_call_send_vfu_request(LinphoneCall *call);
 
 /**
- * Request the callback passed to linphone_call_cbs_set_next_video_frame_decoded() to be called the next time the video decoder properly decodes a video frame.
+ * Request the callback passed to linphone_call_cbs_set_next_video_frame_decoded() to be called the next time the video
+ *decoder properly decodes a video frame.
  * @param call the #LinphoneCall @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_request_notify_next_video_frame_decoded(LinphoneCall *call);
 
 /**
@@ -311,18 +317,20 @@ LINPHONE_PUBLIC void linphone_call_request_notify_next_video_frame_decoded(Linph
  * @see linphone_core_transfer_call() , linphone_core_transfer_call_to_another()
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneCallState.
-**/
-LINPHONE_PUBLIC LinphoneCallState linphone_call_get_transfer_state (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneCallState linphone_call_get_transfer_state(LinphoneCall *call);
 
 /**
  * Perform a zoom of the video displayed during a call.
  * The zoom ensures that all the screen is fullfilled with the video.
  * @param call The #LinphoneCall object @notnil
  * @param zoom_factor a floating point number describing the zoom factor. A value 1.0 corresponds to no zoom applied.
- * @param cx a floating point number pointing the horizontal center of the zoom to be applied. This value should be between 0.0 and 1.0.
- * @param cy a floating point number pointing the vertical center of the zoom to be applied. This value should be between 0.0 and 1.0.
-**/
-LINPHONE_PUBLIC void linphone_call_zoom (LinphoneCall *call, float zoom_factor, float cx, float cy);
+ * @param cx a floating point number pointing the horizontal center of the zoom to be applied. This value should be
+ *between 0.0 and 1.0.
+ * @param cy a floating point number pointing the vertical center of the zoom to be applied. This value should be
+ *between 0.0 and 1.0.
+ **/
+LINPHONE_PUBLIC void linphone_call_zoom(LinphoneCall *call, float zoom_factor, float cx, float cy);
 
 /**
  * Send the specified dtmf.
@@ -331,8 +339,8 @@ LINPHONE_PUBLIC void linphone_call_zoom (LinphoneCall *call, float zoom_factor, 
  * @param call The #LinphoneCall object @notnil
  * @param dtmf The dtmf name specified as a char, such as '0', '#' etc...
  * @return 0 if successful, -1 on error.
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmf (LinphoneCall *call, char dtmf);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmf(LinphoneCall *call, char dtmf);
 
 /**
  * Send a list of dtmf.
@@ -342,8 +350,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmf (LinphoneCall *call, char
  * @param call The #LinphoneCall object @notnil
  * @param dtmfs A dtmf sequence such as '123#123123' @notnil
  * @return -2 if there is already a DTMF sequence, -1 if call is not ready, 0 otherwise.
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmfs (LinphoneCall *call, const char *dtmfs);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmfs(LinphoneCall *call, const char *dtmfs);
 
 /**
  * Stop current DTMF sequence sending.
@@ -352,43 +360,43 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmfs (LinphoneCall *call, con
  * depending on when this function call is delayed from #linphone_call_send_dtmfs(). This
  * function will be automatically called if call state change to anything but LinphoneCallStreamsRunning.
  * @param call The #LinphoneCall object @notnil
-**/
-LINPHONE_PUBLIC void linphone_call_cancel_dtmfs (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC void linphone_call_cancel_dtmfs(LinphoneCall *call);
 
 /**
  * Return the associated conference object
  * @param call The #LinphoneCall object @notnil
  * @return A pointer on #LinphoneConference or NULL if the call is not part of any conference. @maybenil
  */
-LINPHONE_PUBLIC LinphoneConference *linphone_call_get_conference (const LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneConference *linphone_call_get_conference(const LinphoneCall *call);
 
 /**
  * Returns the number of stream for the given call.
  * @param call The #LinphoneCall object @notnil
  * @return the amount of streams for this call.
-**/
-LINPHONE_PUBLIC int linphone_call_get_stream_count (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC int linphone_call_get_stream_count(const LinphoneCall *call);
 
 /**
  * @brief Returns the type of stream for the given stream index.
  * @return the type (MSAudio, MSVideo, MSText) of the stream of given index.
  * @donotwrap
-**/
-LINPHONE_PUBLIC MSFormatType linphone_call_get_stream_type (const LinphoneCall *call, int stream_index);
+ **/
+LINPHONE_PUBLIC MSFormatType linphone_call_get_stream_type(const LinphoneCall *call, int stream_index);
 
 /**
  * @brief Returns the meta rtp transport for the given stream index.
  * @return a pointer to the meta rtp transport if it exists, NULL otherwise.
  * @donotwrap
-**/
-LINPHONE_PUBLIC RtpTransport *linphone_call_get_meta_rtp_transport (const LinphoneCall *call, int stream_index);
+ **/
+LINPHONE_PUBLIC RtpTransport *linphone_call_get_meta_rtp_transport(const LinphoneCall *call, int stream_index);
 
 /**
  * @brief Returns the meta rtcp transport for the given stream index.
  * @return a pointer to the meta rtcp transport if it exists, NULL otherwise.
  * @donotwrap
-**/
-LINPHONE_PUBLIC RtpTransport *linphone_call_get_meta_rtcp_transport (const LinphoneCall *call, int stream_index);
+ **/
+LINPHONE_PUBLIC RtpTransport *linphone_call_get_meta_rtcp_transport(const LinphoneCall *call, int stream_index);
 
 /**
  * Pauses the call. If a music file has been setup using linphone_core_set_play_file(),
@@ -397,8 +405,8 @@ LINPHONE_PUBLIC RtpTransport *linphone_call_get_meta_rtcp_transport (const Linph
  * @param call #LinphoneCall object. @notnil
  * @return 0 on success, -1 on failure
  * @see linphone_call_resume()
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_pause (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_pause(LinphoneCall *call);
 
 /**
  * Resumes a call.
@@ -406,22 +414,23 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_pause (LinphoneCall *call);
  * @param call #LinphoneCall object. @notnil
  * @return 0 on success, -1 on failure
  * @see linphone_call_pause()
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_resume (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_resume(LinphoneCall *call);
 
 /**
  * Terminates a call.
  * @param call #LinphoneCall object. @notnil
  * @return 0 on success, -1 on failure
-**/LINPHONE_PUBLIC LinphoneStatus linphone_call_terminate (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_terminate(LinphoneCall *call);
 
 /**
  * Terminates a call.
  * @param call The #LinphoneCall object @notnil
  * @param ei #LinphoneErrorInfo @maybenil
  * @return 0 on success, -1 on failure
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_terminate_with_error_info (LinphoneCall *call, const LinphoneErrorInfo *ei);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_terminate_with_error_info(LinphoneCall *call, const LinphoneErrorInfo *ei);
 
 /**
  * Redirect the specified call to the given redirect Address.
@@ -429,15 +438,15 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_terminate_with_error_info (Linphone
  * @param redirect_address The #LinphoneAddress to redirect the call to @notnil
  * @return 0 if successful, -1 on error.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect_to (LinphoneCall *call, const LinphoneAddress *redirect_address);
+LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect_to(LinphoneCall *call, const LinphoneAddress *redirect_address);
 
 /**
  * Decline a pending incoming call, with a reason.
  * @param call A #LinphoneCall object that must be in the IncomingReceived state @notnil
  * @param reason The reason for rejecting the call: #LinphoneReasonDeclined or #LinphoneReasonBusy
  * @return 0 on success, -1 on failure
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_decline (LinphoneCall *call, LinphoneReason reason);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_decline(LinphoneCall *call, LinphoneReason reason);
 
 /**
  * Decline a pending incoming call, with a #LinphoneErrorInfo object.
@@ -445,7 +454,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_decline (LinphoneCall *call, Linpho
  * @param ei #LinphoneErrorInfo containing more information on the call rejection. @maybenil
  * @return 0 on success, -1 on failure
  */
-LINPHONE_PUBLIC int linphone_call_decline_with_error_info (LinphoneCall *call, const LinphoneErrorInfo *ei);
+LINPHONE_PUBLIC int linphone_call_decline_with_error_info(LinphoneCall *call, const LinphoneErrorInfo *ei);
 
 /**
  * Accept an incoming call.
@@ -456,8 +465,8 @@ LINPHONE_PUBLIC int linphone_call_decline_with_error_info (LinphoneCall *call, c
  * The application can later accept the call using this method.
  * @param call The #LinphoneCall object @notnil
  * @return 0 on success, -1 on failure
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_accept (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_accept(LinphoneCall *call);
 
 /**
  * Accept an incoming call, with parameters.
@@ -467,10 +476,11 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept (LinphoneCall *call);
  * a #LinphoneCallIncoming event with the associated #LinphoneCall object.
  * The application can later accept the call using this method.
  * @param call A #LinphoneCall object @notnil
- * @param params The specific parameters for this call, for example whether video is accepted or not. Use NULL to use default parameters. @maybenil
+ * @param params The specific parameters for this call, for example whether video is accepted or not. Use NULL to use
+ *default parameters. @maybenil
  * @return 0 on success, -1 on failure
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_with_params (LinphoneCall *call, const LinphoneCallParams *params);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_with_params(LinphoneCall *call, const LinphoneCallParams *params);
 
 /**
  * Accept an early media session for an incoming call.
@@ -478,102 +488,110 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_with_params (LinphoneCall *c
  * @param call A #LinphoneCall object @notnil
  * @return 0 if successful, -1 otherwise
  * @see linphone_call_accept_early_media_with_params()
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media (LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media(LinphoneCall *call);
 
 /**
  * When receiving an incoming, accept to start a media session as early-media.
- * This means the call is not accepted but audio & video streams can be established if the remote party supports early media.
- * However, unlike after call acceptance, mic and camera input are not sent during early-media, though received audio & video are played normally.
- * The call can then later be fully accepted using linphone_call_accept() or linphone_call_accept_with_params().
+ * This means the call is not accepted but audio & video streams can be established if the remote party supports early
+ *media. However, unlike after call acceptance, mic and camera input are not sent during early-media, though received
+ *audio & video are played normally. The call can then later be fully accepted using linphone_call_accept() or
+ *linphone_call_accept_with_params().
  * @param call A #LinphoneCall object @notnil
  * @param params The call parameters to use (can be NULL). @maybenil
  * @return 0 if successful, -1 otherwise
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media_with_params (LinphoneCall *call, const LinphoneCallParams *params);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media_with_params(LinphoneCall *call,
+                                                                            const LinphoneCallParams *params);
 
 /**
  * Updates a running call according to supplied call parameters or parameters changed in the LinphoneCore.
  *  It triggers a SIP reINVITE in order to perform a new offer/answer of media capabilities.
- * Changing the size of the transmitted video after calling #linphone_core_set_preferred_video_size() can be used by passing NULL as params argument.
- * In case no changes are requested through the #LinphoneCallParams argument, then this argument can be omitted and set to NULL.
- * WARNING: Updating a call in the #LinphoneCallPaused state will still result in a paused call even if the media directions set in the
- * params are sendrecv. To resume a paused call, you need to call linphone_call_resume().
+ * Changing the size of the transmitted video after calling #linphone_core_set_preferred_video_size() can be used by
+ *passing NULL as params argument. In case no changes are requested through the #LinphoneCallParams argument, then this
+ *argument can be omitted and set to NULL. WARNING: Updating a call in the #LinphoneCallPaused state will still result
+ *in a paused call even if the media directions set in the params are sendrecv. To resume a paused call, you need to
+ *call linphone_call_resume().
  *
  * @param call A #LinphoneCall object @notnil
  * @param params The new call parameters to use (may be NULL). @maybenil
  * @return 0 if successful, -1 otherwise.
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_update (LinphoneCall *call, const LinphoneCallParams *params);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_update(LinphoneCall *call, const LinphoneCallParams *params);
 
 /**
- * When receiving a #LinphoneCallUpdatedByRemote state notification, prevent #LinphoneCore from performing an automatic answer.
+ * When receiving a #LinphoneCallUpdatedByRemote state notification, prevent #LinphoneCore from performing an automatic
+ *answer.
  *
  * When receiving a #LinphoneCallUpdatedByRemote state notification (ie an incoming reINVITE), the default behaviour of
- * #LinphoneCore is defined by the "defer_update_default" option of the "sip" section of the config. If this option is 0 (the default)
- * then the #LinphoneCore automatically answers the reINIVTE with call parameters unchanged.
- * However when for example when the remote party updated the call to propose a video stream, it can be useful
- * to prompt the user before answering. This can be achieved by calling linphone_core_defer_call_update() during
- * the call state notification, to deactivate the automatic answer that would just confirm the audio but reject the video.
- * Then, when the user responds to dialog prompt, it becomes possible to call linphone_call_accept_update() to answer
- * the reINVITE, with eventually video enabled in the #LinphoneCallParams argument.
+ * #LinphoneCore is defined by the "defer_update_default" option of the "sip" section of the config. If this option is 0
+ *(the default) then the #LinphoneCore automatically answers the reINIVTE with call parameters unchanged. However when
+ *for example when the remote party updated the call to propose a video stream, it can be useful to prompt the user
+ *before answering. This can be achieved by calling linphone_core_defer_call_update() during the call state
+ *notification, to deactivate the automatic answer that would just confirm the audio but reject the video. Then, when
+ *the user responds to dialog prompt, it becomes possible to call linphone_call_accept_update() to answer the reINVITE,
+ *with eventually video enabled in the #LinphoneCallParams argument.
  *
- * The #LinphoneCallUpdatedByRemote notification can also arrive when receiving an INVITE without SDP. In such case, an unchanged offer is made
- * in the 200Ok, and when the ACK containing the SDP answer is received, #LinphoneCallUpdatedByRemote is triggered to notify the application of possible
- * changes in the media session. However in such case defering the update has no meaning since we just generating an offer.
+ * The #LinphoneCallUpdatedByRemote notification can also arrive when receiving an INVITE without SDP. In such case, an
+ *unchanged offer is made in the 200Ok, and when the ACK containing the SDP answer is received,
+ *#LinphoneCallUpdatedByRemote is triggered to notify the application of possible changes in the media session. However
+ *in such case defering the update has no meaning since we just generating an offer.
  *
  * @param call A #LinphoneCall object @notnil
- * @return 0 if successful, -1 if the linphone_call_defer_update() was done outside a valid #LinphoneCallUpdatedByRemote notification
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_defer_update (LinphoneCall *call);
+ * @return 0 if successful, -1 if the linphone_call_defer_update() was done outside a valid #LinphoneCallUpdatedByRemote
+ *notification
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_defer_update(LinphoneCall *call);
 
 /**
  * Accept call modifications initiated by other end.
  *
  * This call may be performed in response to a #LinphoneCallUpdatedByRemote state notification.
  * When such notification arrives, the application can decide to call linphone_call_defer_update() so that it can
- * have the time to prompt the user. linphone_call_get_remote_params() can be used to get information about the call parameters
- * requested by the other party, such as whether a video stream is requested.
+ * have the time to prompt the user. linphone_call_get_remote_params() can be used to get information about the call
+ *parameters requested by the other party, such as whether a video stream is requested.
  *
  * When the user accepts or refuse the change, linphone_call_accept_update() can be done to answer to the other party.
- * If params is NULL, then the same call parameters established before the update request will continue to be used (no change).
- * If params is not NULL, then the update will be accepted according to the parameters passed.
- * Typical example is when a user accepts to start video, then params should indicate that video stream should be used
- * (see linphone_call_params_enable_video()).
+ * If params is NULL, then the same call parameters established before the update request will continue to be used (no
+ *change). If params is not NULL, then the update will be accepted according to the parameters passed. Typical example
+ *is when a user accepts to start video, then params should indicate that video stream should be used (see
+ *linphone_call_params_enable_video()).
  * @param call A #LinphoneCall object @notnil
  * @param params A #LinphoneCallParams object describing the call parameters to accept. @maybenil
- * @return 0 if successful, -1 otherwise (actually when this function call is performed outside ot #LinphoneCallUpdatedByRemote state)
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_update (LinphoneCall *call, const LinphoneCallParams *params);
+ * @return 0 if successful, -1 otherwise (actually when this function call is performed outside ot
+ *#LinphoneCallUpdatedByRemote state)
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_update(LinphoneCall *call, const LinphoneCallParams *params);
 
 /**
  * Performs a simple call transfer to the specified destination.
  * The remote endpoint is expected to issue a new call to the specified destination.
  * The current call remains active and thus can be later paused or terminated.
  * It is possible to follow the progress of the transfer provided that transferee sends notification about it.
- * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party.
- * The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
+ * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the
+ *new call at the other party. The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress,
+ *#LinphoneCallOutgoingRinging and #LinphoneCallConnected.
  * @param call The call to be transfered @notnil
  * @param refer_to The #LinphoneAddress the call is to be refered to. @notnil
  * @return 0 on success, -1 on failure
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to (LinphoneCall *call, const LinphoneAddress *refer_to);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, const LinphoneAddress *refer_to);
 
 /**
  * Transfers a call to destination of another running call. This is used for "attended transfer" scenarios.
  * The transfered call is supposed to be in paused state, so that it is able to accept the transfer immediately.
  * The destination call is a call previously established to introduce the transfered person.
  * This method will send a transfer request to the transfered person. The phone of the transfered is then
- * expected to automatically call to the destination of the transfer. The receiver of the transfer will then automatically
- * close the call with us (the 'dest' call).
- * It is possible to follow the progress of the transfer provided that transferee sends notification about it.
- * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party.
- * The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
+ * expected to automatically call to the destination of the transfer. The receiver of the transfer will then
+ *automatically close the call with us (the 'dest' call). It is possible to follow the progress of the transfer provided
+ *that transferee sends notification about it. In this case, the transfer_state_changed callback of the
+ *#LinphoneCoreVTable is invoked to notify of the state of the new call at the other party. The notified states are
+ *#LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
  * @param call A running call you want to transfer @notnil
  * @param dest A running call whose remote person will receive the transfer @notnil
  * @return 0 on success, -1 on failure
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to_another (LinphoneCall *call, LinphoneCall *dest);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to_another(LinphoneCall *call, LinphoneCall *dest);
 
 /**
  * @}
@@ -588,50 +606,50 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to_another (LinphoneCall *
  * Get the native window handle of the video window, casted as an unsigned long.
  * @param call the #LinphoneCall object @notnil
  * @return the native video window id (type may vary depending on platform). @maybenil
-**/
-LINPHONE_PUBLIC void * linphone_call_get_native_video_window_id(const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC void *linphone_call_get_native_video_window_id(const LinphoneCall *call);
 
 /**
  * Create a native video window id where the video is to be displayed.
  * @param call the #LinphoneCall object @notnil
  * @return the native video window id (type may vary depending on platform). @maybenil
-**/
-LINPHONE_PUBLIC void * linphone_call_create_native_video_window_id(const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC void *linphone_call_create_native_video_window_id(const LinphoneCall *call);
 
 /**
  * Set the native video window id where the video is to be displayed.
  * For MacOS, Linux, Windows: if not set or 0 a window will be automatically created, unless the special id -1 is given.
  * @param call the #LinphoneCall object @notnil
  * @param window_id the native video window id. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_set_native_video_window_id(LinphoneCall *call, void *window_id);
 
 /**
  * Enables or disable echo cancellation for this call
  * @param call the #LinphoneCall object @notnil
  * @param enable wether to enable echo cancellation or not.
-**/
-LINPHONE_PUBLIC void linphone_call_enable_echo_cancellation(LinphoneCall *call, bool_t enable) ;
+ **/
+LINPHONE_PUBLIC void linphone_call_enable_echo_cancellation(LinphoneCall *call, bool_t enable);
 
 /**
  * Returns if echo cancellation is enabled.
  * @param call the #LinphoneCall object @notnil
  * @return TRUE if echo cancellation is enabled, FALSE otherwise.
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_call_echo_cancellation_enabled(const LinphoneCall *call);
 
 /**
  * Enables or disable echo limiter for this call.
  * @param call the #LinphoneCall object @notnil
  * @param enable wether to enable echo limiter or not.
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_enable_echo_limiter(LinphoneCall *call, bool_t enable);
 
 /**
  * Returns if echo limiter is enabled.
  * @param call the #LinphoneCall object @notnil
  * @return TRUE if echo limiter is enabled, FALSE otherwise.
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_call_echo_limiter_enabled(const LinphoneCall *call);
 
 /**
@@ -647,9 +665,10 @@ LINPHONE_PUBLIC bool_t linphone_call_echo_limiter_enabled(const LinphoneCall *ca
  * Create a new chat room for real time messaging from a call if not already existing, else return existing one.
  * No reference is given to the caller: the chat room will be deleted when the call is ended.
  * @param call #LinphoneCall object @notnil
- * @return #LinphoneChatRoom where real time messaging can take place or NULL if chat room couldn't be created. @maybenil
+ * @return #LinphoneChatRoom where real time messaging can take place or NULL if chat room couldn't be created.
+ * @maybenil
  */
-LINPHONE_PUBLIC LinphoneChatRoom * linphone_call_get_chat_room(LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_call_get_chat_room(LinphoneCall *call);
 
 /**
  * Get the mesured playback volume level (received from remote) in dbm0.
@@ -706,14 +725,14 @@ LINPHONE_PUBLIC void linphone_call_set_microphone_volume_gain(LinphoneCall *call
  * @param call The #LinphoneCall object. @notnil
  * @return The speaker muted state.
  **/
-LINPHONE_PUBLIC bool_t linphone_call_get_speaker_muted (const LinphoneCall *call);
+LINPHONE_PUBLIC bool_t linphone_call_get_speaker_muted(const LinphoneCall *call);
 
 /**
  * Set speaker muted state.
  * @param call The #LinphoneCall object. @notnil
  * @param muted The speaker muted state.
  **/
-LINPHONE_PUBLIC void linphone_call_set_speaker_muted (LinphoneCall *call, bool_t muted);
+LINPHONE_PUBLIC void linphone_call_set_speaker_muted(LinphoneCall *call, bool_t muted);
 
 /**
  * Get microphone muted state.
@@ -722,7 +741,7 @@ LINPHONE_PUBLIC void linphone_call_set_speaker_muted (LinphoneCall *call, bool_t
  * @param call The #LinphoneCall object. @notnil
  * @return The microphone muted state.
  **/
-LINPHONE_PUBLIC bool_t linphone_call_get_microphone_muted (const LinphoneCall *call);
+LINPHONE_PUBLIC bool_t linphone_call_get_microphone_muted(const LinphoneCall *call);
 
 /**
  * Set microphone muted state.
@@ -731,7 +750,7 @@ LINPHONE_PUBLIC bool_t linphone_call_get_microphone_muted (const LinphoneCall *c
  * @param call The #LinphoneCall object. @notnil
  * @param muted The microphone muted state.
  **/
-LINPHONE_PUBLIC void linphone_call_set_microphone_muted (LinphoneCall *call, bool_t muted);
+LINPHONE_PUBLIC void linphone_call_set_microphone_muted(LinphoneCall *call, bool_t muted);
 
 /**
  * Obtain real-time quality rating of the call
@@ -750,7 +769,7 @@ LINPHONE_PUBLIC void linphone_call_set_microphone_muted (LinphoneCall *call, boo
  * @param call The #LinphoneCall object. @notnil
  * @return The function returns -1 if no quality measurement is available, for example if no
  * active audio stream exist. Otherwise it returns the quality rating.
-**/
+ **/
 LINPHONE_PUBLIC float linphone_call_get_current_quality(const LinphoneCall *call);
 
 /**
@@ -759,7 +778,7 @@ LINPHONE_PUBLIC float linphone_call_get_current_quality(const LinphoneCall *call
  * See linphone_call_get_current_quality() for more details about quality measurement.
  * @param call The #LinphoneCall object. @notnil
  * @return the call average quality since tbe beginning of the call.
-**/
+ **/
 LINPHONE_PUBLIC float linphone_call_get_average_quality(const LinphoneCall *call);
 
 /**
@@ -767,13 +786,13 @@ LINPHONE_PUBLIC float linphone_call_get_average_quality(const LinphoneCall *call
  * Video record is only available if this function is called in state StreamRunning.
  * The output file where audio is recorded must be previously specified with linphone_call_params_set_record_file().
  * @param call The #LinphoneCall object. @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_start_recording(LinphoneCall *call);
 
 /**
  * Stops call recording.
  * @param call The #LinphoneCall object. @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_stop_recording(LinphoneCall *call);
 
 /**
@@ -781,17 +800,17 @@ LINPHONE_PUBLIC void linphone_call_stop_recording(LinphoneCall *call);
  * @param call #LinphoneCall object. @notnil
  * @return A #LinphonePlayer object @notnil
  */
-LINPHONE_PUBLIC LinphonePlayer * linphone_call_get_player(LinphoneCall *call);
+LINPHONE_PUBLIC LinphonePlayer *linphone_call_get_player(LinphoneCall *call);
 
 /**
  * Indicates whether an operation is in progress at the media side.
- * It can be a bad idea to initiate signaling operations (adding video, pausing the call, removing video, changing video parameters) while
- * the media is busy in establishing the connection (typically ICE connectivity checks). It can result in failures generating loss of time
- * in future operations in the call.
- * Applications are invited to check this function after each call state change to decide whether certain operations are permitted or not.
+ * It can be a bad idea to initiate signaling operations (adding video, pausing the call, removing video, changing video
+ *parameters) while the media is busy in establishing the connection (typically ICE connectivity checks). It can result
+ *in failures generating loss of time in future operations in the call. Applications are invited to check this function
+ *after each call state change to decide whether certain operations are permitted or not.
  * @param call the #LinphoneCall @notnil
  * @return TRUE if media is busy in establishing the connection, FALSE otherwise.
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_call_media_in_progress(const LinphoneCall *call);
 
 /**
@@ -804,7 +823,7 @@ LINPHONE_PUBLIC void linphone_call_ogl_render(const LinphoneCall *call);
  * Sends an info message through an established call
  * @param call the #LinphoneCall @notnil
  * @param info the #LinphoneInfoMessage to send @notnil
-**/
+ **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_send_info_message(LinphoneCall *call, const LinphoneInfoMessage *info);
 
 /**
@@ -812,35 +831,36 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_send_info_message(LinphoneCall *cal
  * @param call the #LinphoneCall @notnil
  * @param type the #LinphoneStreamType
  * @return a #LinphoneCallStats object for the given stream or NULL if stream isn't available. @maybenil @tobefreed
-**/
+ **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_stats(LinphoneCall *call, LinphoneStreamType type);
 
 /**
  * Returns a copy of the call statistics for the audio stream.
  * @param call the #LinphoneCall @notnil
  * @return a #LinphoneCallStats object for the audio stream or NULL if it isn't available. @maybenil @tobefreed
-**/
+ **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_audio_stats(LinphoneCall *call);
 
 /**
  * Returns a copy of the call statistics for the video stream.
  * @param call the #LinphoneCall @notnil
  * @return a #LinphoneCallStats object for the video stream or NULL if it isn't available. @maybenil @tobefreed
-**/
+ **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_video_stats(LinphoneCall *call);
 
 /**
  * Returns a copy of the call statistics for the text stream.
  * @param call the #LinphoneCall @notnil
  * @return a #LinphoneCallStats object for the text stream or NULL if it isn't available. @maybenil @tobefreed
-**/
+ **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_text_stats(LinphoneCall *call);
 
 /**
- * Add a listener in order to be notified of #LinphoneCall events. Once an event is received, registred #LinphoneCallCbs are
- * invoked sequencially.
+ * Add a listener in order to be notified of #LinphoneCall events. Once an event is received, registred #LinphoneCallCbs
+ * are invoked sequencially.
  * @param call #LinphoneCall object. @notnil to monitor.
- * @param cbs A #LinphoneCallCbs object holding the callbacks you need. A reference is taken by the #LinphoneCall until you invoke linphone_call_remove_callbacks(). @notnil
+ * @param cbs A #LinphoneCallCbs object holding the callbacks you need. A reference is taken by the #LinphoneCall until
+ * you invoke linphone_call_remove_callbacks(). @notnil
  */
 LINPHONE_PUBLIC void linphone_call_add_callbacks(LinphoneCall *call, LinphoneCallCbs *cbs);
 
@@ -853,7 +873,8 @@ LINPHONE_PUBLIC void linphone_call_remove_callbacks(LinphoneCall *call, Linphone
 
 /**
  * Gets the current LinphoneCallCbs.
- * This is meant only to be called from a callback to be able to get the user_data associated with the #LinphoneCallCbs that is calling the callback.
+ * This is meant only to be called from a callback to be able to get the user_data associated with the #LinphoneCallCbs
+ * that is calling the callback.
  * @param call #LinphoneCall object. @notnil
  * @return The #LinphoneCallCbs that has called the last callback @maybenil
  */
@@ -861,21 +882,23 @@ LINPHONE_PUBLIC LinphoneCallCbs *linphone_call_get_current_callbacks(const Linph
 
 /**
  * Set call parameters - advanced and not recommended feature - use with caution.
- * Local call parameters applicable to an outgoing or incoming shall usually be passed to linphone_core_invite_address_with_params() or
- * linphone_call_accept_with_params().
- * However, in some cases it might be desirable from a software design standpoint to modify local parameters outside of the application layer, typically
- * in the purpose of implementing a custom logic including special headers in INVITE or 200Ok requests, driven by a call_state_changed listener method.
- * This function accepts to assign a new #LinphoneCallParams only in #LinphoneCallOutgoingInit and #LinphoneCallIncomingReceived states.
- * 
+ * Local call parameters applicable to an outgoing or incoming shall usually be passed to
+ *linphone_core_invite_address_with_params() or linphone_call_accept_with_params(). However, in some cases it might be
+ *desirable from a software design standpoint to modify local parameters outside of the application layer, typically in
+ *the purpose of implementing a custom logic including special headers in INVITE or 200Ok requests, driven by a
+ *call_state_changed listener method. This function accepts to assign a new #LinphoneCallParams only in
+ *#LinphoneCallOutgoingInit and #LinphoneCallIncomingReceived states.
+ *
  * @param call the #LinphoneCall object @notnil
  * @param params the #LinphoneCallParams object @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_call_set_params(LinphoneCall *call, const LinphoneCallParams *params);
 
 /**
  * Returns local parameters associated with the call.
- * This is typically the parameters passed at call initiation to linphone_core_invite_address_with_params() or linphone_call_accept_with_params(), or some default
- * parameters if no #LinphoneCallParams was explicitely passed during call initiation.
+ * This is typically the parameters passed at call initiation to linphone_core_invite_address_with_params() or
+ *linphone_call_accept_with_params(), or some default parameters if no #LinphoneCallParams was explicitely passed during
+ *call initiation.
  * @param call the #LinphoneCall object @notnil
  * @return the call's local parameters. @notnil
  **/
@@ -898,22 +921,25 @@ LINPHONE_PUBLIC void linphone_call_set_output_audio_device(LinphoneCall *call, L
 /**
  * Gets the current input device for this call.
  * @param call The #LinphoneCall @notnil
- * @return the #LinphoneAudioDevice used by this call as input or NULL if there is currently no soundcard configured (depending on the state of the call) @maybenil
+ * @return the #LinphoneAudioDevice used by this call as input or NULL if there is currently no soundcard configured
+ * (depending on the state of the call) @maybenil
  */
-LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_input_audio_device(const LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneAudioDevice *linphone_call_get_input_audio_device(const LinphoneCall *call);
 
 /**
  * Gets the current output device for this call.
  * @param call The #LinphoneCall @notnil
- * @return the #LinphoneAudioDevice used by this call as output or NULL if there is currently no soundcard configured (depending on the state of the call) @maybenil
+ * @return the #LinphoneAudioDevice used by this call as output or NULL if there is currently no soundcard configured
+ * (depending on the state of the call) @maybenil
  */
-LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneAudioDevice *linphone_call_get_output_audio_device(const LinphoneCall *call);
 
 /**
  * Starts the process of replying 180 Ringing.
  *
  * This function is used in conjonction with linphone_core_enable_auto_send_ringing().
- * If the automatic sending of the 180 Ringing is disabled, this function needs to be called manually before the call timeouts.
+ * If the automatic sending of the 180 Ringing is disabled, this function needs to be called manually before the call
+ * timeouts.
  *
  * @param call The #LinphoneCall @notnil
  */
@@ -924,7 +950,8 @@ LINPHONE_PUBLIC void linphone_call_notify_ringing(LinphoneCall *call);
  * @param call The #LinphoneCall @notnil
  * @param descriptor The #LinphoneVideoSourceDescriptor describing the video source to set @maybenil
  */
-LINPHONE_PUBLIC void linphone_call_set_video_source(LinphoneCall *call, const LinphoneVideoSourceDescriptor *descriptor);
+LINPHONE_PUBLIC void linphone_call_set_video_source(LinphoneCall *call,
+                                                    const LinphoneVideoSourceDescriptor *descriptor);
 
 /**
  * Gets the video source of a call.
@@ -951,21 +978,22 @@ LINPHONE_PUBLIC void linphone_call_confirm_go_clear(const LinphoneCall *call);
  * @return 0 if successful, -1 on error.
  * @deprecated 27/10/2020. Use linphone_call_redirect_to() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect (LinphoneCall *call, const char *redirect_uri);
+LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect(LinphoneCall *call, const char *redirect_uri);
 
 /**
  * Performs a simple call transfer to the specified destination.
  * The remote endpoint is expected to issue a new call to the specified destination.
  * The current call remains active and thus can be later paused or terminated.
  * It is possible to follow the progress of the transfer provided that transferee sends notification about it.
- * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party.
- * The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
+ * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the
+ *new call at the other party. The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress,
+ *#LinphoneCallOutgoingRinging and #LinphoneCallConnected.
  * @param call The call to be transfered @notnil
  * @param refer_to The destination the call is to be refered to. @notnil
  * @return 0 on success, -1 on failure
  * @deprecated 27/10/2020. Use linphone_call_transfer_to() instead.
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer (LinphoneCall *call, const char *refer_to);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer(LinphoneCall *call, const char *refer_to);
 
 /**
  * Returns the remote address associated to this call as a string.
@@ -973,26 +1001,31 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer (LinphoneCall *call, const
  * @param call #LinphoneCall object. @notnil
  * @return the remote address as a string. @maybenil @tobefreed
  * @deprecated 06/07/2020 use linphone_call_get_remote_address() instead.
-**/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_call_get_remote_address_as_string (const LinphoneCall *call);
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_call_get_remote_address_as_string(const LinphoneCall *call);
 
 /**
  * @deprecated 23/05/2018
  * @donotwrap
-**/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_set_next_video_frame_decoded_callback (LinphoneCall *call, LinphoneCallCbFunc cb, void *user_data);
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void
+linphone_call_set_next_video_frame_decoded_callback(LinphoneCall *call, LinphoneCallCbFunc cb, void *user_data);
 
 /**
  * Perform a zoom of the video displayed during a call.
  * @param call The #LinphoneCall object @notnil
  * @param zoom_factor a floating point number describing the zoom factor. A value 1.0 corresponds to no zoom applied.
- * @param cx a floating point number pointing the horizontal center of the zoom to be applied. This value should be between 0.0 and 1.0.
- * @param cy a floating point number pointing the vertical center of the zoom to be applied. This value should be between 0.0 and 1.0.
+ * @param cx a floating point number pointing the horizontal center of the zoom to be applied. This value should be
+ *between 0.0 and 1.0.
+ * @param cy a floating point number pointing the vertical center of the zoom to be applied. This value should be
+ *between 0.0 and 1.0.
  * @deprecated 16/10/2017 use linphone_call_zoom instead
  * @donotwrap
- * cx and cy are updated in return in case their coordinates were too excentrated for the requested zoom factor. The zoom ensures that all the screen is fullfilled with the video.
-**/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_zoom_video (LinphoneCall *call, float zoom_factor, float *cx, float *cy);
+ * cx and cy are updated in return in case their coordinates were too excentrated for the requested zoom factor. The
+ *zoom ensures that all the screen is fullfilled with the video.
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void
+linphone_call_zoom_video(LinphoneCall *call, float zoom_factor, float *cx, float *cy);
 
 /**
  * Return TRUE if this call is currently part of a conference
@@ -1001,14 +1034,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_zoom_video (LinphoneCall 
  * @deprecated 21/09/2017 Use linphone_call_get_conference() instead.
  * @donotwrap
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_call_is_in_conference (const LinphoneCall *call);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_call_is_in_conference(const LinphoneCall *call);
 
 /**
  * Returns whether or not the call is currently being recorded
  * @param call #LinphoneCall for which we can to know the recording state @notnil
  * @return TRUE if recording is in progress, FALSE otherwise
  * @deprecated 15/09/2021 Use linphone_call_params_is_recording() instead.
-**/
+ **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_call_is_recording(LinphoneCall *call);
 
 /**
@@ -1016,7 +1049,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_call_is_recording(LinphoneCa
  */
 
 #ifdef __cplusplus
-	}
+}
 #endif // ifdef __cplusplus
 
 #endif // ifndef _L_C_CALL_H_

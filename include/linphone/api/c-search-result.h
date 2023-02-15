@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -50,21 +50,21 @@ LINPHONE_PUBLIC void linphone_search_result_unref(LinphoneSearchResult *search_r
  * @param search_result the #LinphoneSearchResult object @notnil
  * @return The associated #LinphoneFriend or NULL. @maybenil
  **/
-LINPHONE_PUBLIC const LinphoneFriend* linphone_search_result_get_friend(const LinphoneSearchResult *search_result);
+LINPHONE_PUBLIC const LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *search_result);
 
 /**
  * Gets the address of the search result if any.
  * @param search_result the #LinphoneSearchResult object @notnil
  * @return The associed #LinphoneAddress or NULL. @maybenil
  **/
-LINPHONE_PUBLIC const LinphoneAddress* linphone_search_result_get_address(const LinphoneSearchResult *search_result);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_search_result_get_address(const LinphoneSearchResult *search_result);
 
 /**
  * Gets the phone number of the search result if any.
  * @param search_result the #LinphoneSearchResult object @notnil
  * @return The associed phone number or NULL. @maybenil
  **/
-LINPHONE_PUBLIC const char* linphone_search_result_get_phone_number(const LinphoneSearchResult *search_result);
+LINPHONE_PUBLIC const char *linphone_search_result_get_phone_number(const LinphoneSearchResult *search_result);
 
 /**
  * Returns the capabilities mask of the search result.
@@ -79,7 +79,8 @@ LINPHONE_PUBLIC int linphone_search_result_get_capabilities(const LinphoneSearch
  * @param capability the #LinphoneFriendCapability to check
  * @return TRUE if it has the capability, FALSE otherwise.
  **/
-LINPHONE_PUBLIC bool_t linphone_search_result_has_capability(const LinphoneSearchResult *search_result, const LinphoneFriendCapability capability);
+LINPHONE_PUBLIC bool_t linphone_search_result_has_capability(const LinphoneSearchResult *search_result,
+                                                             const LinphoneFriendCapability capability);
 
 /**
  * Gets the weight of the search result.

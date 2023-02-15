@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,33 +36,33 @@ class SalOp;
 
 class AbstractChatRoomPrivate : public ObjectPrivate, public ChatRoomListener, public CallSessionListener {
 public:
-	virtual void setCreationTime (time_t creationTime) = 0;
-	virtual void setLastUpdateTime (time_t lastUpdateTime) = 0;
+	virtual void setCreationTime(time_t creationTime) = 0;
+	virtual void setLastUpdateTime(time_t lastUpdateTime) = 0;
 
-	virtual void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
-	virtual void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void onChatMessageSent(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 
-	virtual void addEvent (const std::shared_ptr<EventLog> &eventLog) = 0;
+	virtual void addEvent(const std::shared_ptr<EventLog> &eventLog) = 0;
 
-	virtual void addTransientEvent (const std::shared_ptr<EventLog> &eventLog) = 0;
-	virtual void removeTransientEvent (const std::shared_ptr<EventLog> &eventLog) = 0;
+	virtual void addTransientEvent(const std::shared_ptr<EventLog> &eventLog) = 0;
+	virtual void removeTransientEvent(const std::shared_ptr<EventLog> &eventLog) = 0;
 
-	virtual void sendDeliveryNotifications (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void sendDeliveryNotifications(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 
-	virtual void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
-	virtual void notifyUndecryptableChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void notifyChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void notifyUndecryptableChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 
-	virtual LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) = 0;
-	virtual void onChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) = 0;
+	virtual void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 
-	virtual void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) = 0;
-	virtual void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) = 0;
-	virtual std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages () = 0;
+	virtual void addTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;
+	virtual void removeTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;
+	virtual std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages() = 0;
 
-	virtual void setIsEmpty (const bool empty) = 0;
+	virtual void setIsEmpty(const bool empty) = 0;
 
-	virtual void realtimeTextReceived (uint32_t character, const std::shared_ptr<Call> &call) = 0;
-	virtual void setCallId (const std::string &value) = 0;
+	virtual void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) = 0;
+	virtual void setCallId(const std::string &value) = 0;
 
 	virtual void notifyAggregatedChatMessages() = 0;
 

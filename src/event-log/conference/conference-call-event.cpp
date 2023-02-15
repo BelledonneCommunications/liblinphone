@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,21 +37,25 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ConferenceCallEvent::ConferenceCallEvent (Type type, time_t creationTime, const shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo) :
-	EventLog(*new ConferenceCallEventPrivate, type, creationTime) {
+ConferenceCallEvent::ConferenceCallEvent(Type type,
+                                         time_t creationTime,
+                                         const shared_ptr<CallLog> &callLog,
+                                         const std::shared_ptr<ConferenceInfo> &conferenceInfo)
+    : EventLog(*new ConferenceCallEventPrivate, type, creationTime) {
 	L_D();
 	L_ASSERT(callLog);
-	L_ASSERT(type == Type::ConferenceCallStarted || type == Type::ConferenceCallConnected || type == Type::ConferenceCallEnded);
+	L_ASSERT(type == Type::ConferenceCallStarted || type == Type::ConferenceCallConnected ||
+	         type == Type::ConferenceCallEnded);
 	d->callLog = callLog;
 	d->conferenceInfo = conferenceInfo;
 }
 
-shared_ptr<CallLog> ConferenceCallEvent::getCallLog () const {
+shared_ptr<CallLog> ConferenceCallEvent::getCallLog() const {
 	L_D();
 	return d->callLog;
 }
 
-std::shared_ptr<ConferenceInfo> ConferenceCallEvent::getConferenceInfo () const {
+std::shared_ptr<ConferenceInfo> ConferenceCallEvent::getConferenceInfo() const {
 	L_D();
 	return d->conferenceInfo;
 }

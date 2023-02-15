@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -71,22 +71,20 @@
 #include "core/platform-helpers/platform-helpers.h"
 #endif
 
-#include "linphone/sipsetup.h"
-#include "quality_reporting.h"
-#include "linphone/ringtoneplayer.h"
-#include "vcard_private.h"
 #include "carddav.h"
 #include "linphone/player.h"
+#include "linphone/ringtoneplayer.h"
+#include "linphone/sipsetup.h"
+#include "quality_reporting.h"
 #include "tester_utils.h"
+#include "vcard_private.h"
 
-#include "bctoolbox/port.h"
 #include "bctoolbox/map.h"
+#include "bctoolbox/port.h"
 #include "bctoolbox/vfs.h"
 #include "belle-sip/belle-sip.h" /*we need this include for all http operations*/
 
-
 #include <ctype.h>
-
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -94,7 +92,6 @@
 #include "mediastreamer2/ice.h"
 #include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/msconference.h"
-
 
 #ifndef LIBLINPHONE_VERSION
 #define LIBLINPHONE_VERSION LINPHONE_VERSION
@@ -108,10 +105,10 @@
 #if defined(__MINGW32__) || !defined(WINAPI_FAMILY_PARTITION) || !defined(WINAPI_PARTITION_DESKTOP)
 #define LINPHONE_WINDOWS_DESKTOP 1
 #elif defined(WINAPI_FAMILY_PARTITION)
-//See bctoolbox/include/port.h for WINAPI_PARTITION checker
+// See bctoolbox/include/port.h for WINAPI_PARTITION checker
 #if defined(WINAPI_PARTITION_DESKTOP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 #define LINPHONE_WINDOWS_DESKTOP 1
-#elif defined (WINAPI_PARTITION_PC_APP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP)
+#elif defined(WINAPI_PARTITION_PC_APP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP)
 #define LINPHONE_WINDOWS_DESKTOP 1
 #define LINPHONE_WINDOWS_UNIVERSAL 1
 #define LINPHONE_WINDOWS_UWP 1
@@ -132,31 +129,45 @@
 #include <sqlite3.h>
 #endif
 
-#include "private_structs.h"
-#include "private_functions.h"
 #include "core_private.h"
+#include "private_functions.h"
+#include "private_structs.h"
 
-
-#define STRING_RESET(field)	if (field) bctbx_free(field); (field) = NULL
-#define STRING_SET(field, value)	do{ if (field){bctbx_free(field);field=NULL;}; field=bctbx_strdup(value); }while(0)
-#define STRING_TRANSFER(field, newvalue)	do{ if (field){bctbx_free(field);field=NULL;}; field=newvalue; }while(0)
+#define STRING_RESET(field)                                                                                            \
+	if (field) bctbx_free(field);                                                                                      \
+	(field) = NULL
+#define STRING_SET(field, value)                                                                                       \
+	do {                                                                                                               \
+		if (field) {                                                                                                   \
+			bctbx_free(field);                                                                                         \
+			field = NULL;                                                                                              \
+		};                                                                                                             \
+		field = bctbx_strdup(value);                                                                                   \
+	} while (0)
+#define STRING_TRANSFER(field, newvalue)                                                                               \
+	do {                                                                                                               \
+		if (field) {                                                                                                   \
+			bctbx_free(field);                                                                                         \
+			field = NULL;                                                                                              \
+		};                                                                                                             \
+		field = newvalue;                                                                                              \
+	} while (0)
 #define STRING_IS_NULL(field) (field == NULL || !strcmp(field, ""))
 
 #ifdef __cplusplus
-#define getPlatformHelpers(lc) static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper)
+#define getPlatformHelpers(lc) static_cast<LinphonePrivate::PlatformHelpers *>(lc->platform_helper)
 #endif
 
-
-#define HOLD_OFF	(0)
-#define HOLD_ON		(1)
+#define HOLD_OFF (0)
+#define HOLD_ON (1)
 
 #ifndef NB_MAX_CALLS
-#define NB_MAX_CALLS	(10)
+#define NB_MAX_CALLS (10)
 #endif
 
 #define LINPHONE_MAX_CALL_HISTORY_UNLIMITED (-1)
 #ifndef LINPHONE_MAX_CALL_HISTORY_SIZE
-	#define LINPHONE_MAX_CALL_HISTORY_SIZE LINPHONE_MAX_CALL_HISTORY_UNLIMITED
+#define LINPHONE_MAX_CALL_HISTORY_SIZE LINPHONE_MAX_CALL_HISTORY_UNLIMITED
 #endif
 
 #endif /* _PRIVATE_H */

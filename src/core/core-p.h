@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,15 +25,15 @@
 
 #include "linphone/utils/utils.h"
 
+#include "auth-info/auth-stack.h"
+#include "call/audio-device/audio-device.h"
 #include "chat/chat-room/abstract-chat-room.h"
+#include "conference/session/tone-manager.h"
 #include "core.h"
 #include "db/main-db.h"
 #include "object/object-p.h"
 #include "sal/call-op.h"
-#include "auth-info/auth-stack.h"
-#include "conference/session/tone-manager.h"
 #include "utils/background-task.h"
-#include "call/audio-device/audio-device.h"
 
 // =============================================================================
 
@@ -48,136 +48,145 @@ class CorePrivate : public ObjectPrivate {
 public:
 	class DatabaseConnectionFailure : public std::runtime_error {
 	public:
-		DatabaseConnectionFailure(const char *what) : std::runtime_error(what) {}
-		DatabaseConnectionFailure(const std::string &what) : std::runtime_error(what) {}
+		DatabaseConnectionFailure(const char *what) : std::runtime_error(what) {
+		}
+		DatabaseConnectionFailure(const std::string &what) : std::runtime_error(what) {
+		}
 	};
 	CorePrivate();
-	void init ();
-	void registerListener (CoreListener *listener);
-	void unregisterListener (CoreListener *listener);
-	void uninit ();
-	void shutdown ();
-	bool isShutdownDone ();
-	void disconnectMainDb ();
+	void init();
+	void registerListener(CoreListener *listener);
+	void unregisterListener(CoreListener *listener);
+	void uninit();
+	void shutdown();
+	bool isShutdownDone();
+	void disconnectMainDb();
 
-	void notifyGlobalStateChanged (LinphoneGlobalState state);
-	void notifyNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable);
-	void notifyCallStateChanged (LinphoneCall *cfg, LinphoneCallState state, const std::string &message);
-	void notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message);
-	void notifyEnteringBackground ();
-	void notifyEnteringForeground ();
+	void notifyGlobalStateChanged(LinphoneGlobalState state);
+	void notifyNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable);
+	void notifyCallStateChanged(LinphoneCall *cfg, LinphoneCallState state, const std::string &message);
+	void notifyRegistrationStateChanged(LinphoneProxyConfig *cfg,
+	                                    LinphoneRegistrationState state,
+	                                    const std::string &message);
+	void notifyEnteringBackground();
+	void notifyEnteringForeground();
 
-	void enableFriendListsSubscription (bool enable);
+	void enableFriendListsSubscription(bool enable);
 
-	int addCall (const std::shared_ptr<Call> &call);
-	bool canWeAddCall () const;
-	bool hasCalls () const { return !calls.empty(); }
-	bool inviteReplacesABrokenCall (SalCallOp *op);
-	bool isAlreadyInCallWithAddress (const Address &addr) const;
-	void iterateCalls (time_t currentRealTime, bool oneSecondElapsed) const;
-	void notifySoundcardUsage (bool used);
-	int removeCall (const std::shared_ptr<Call> &call);
-	void setCurrentCall (const std::shared_ptr<Call> &call);
-	void setVideoWindowId (bool preview, void *id);
+	int addCall(const std::shared_ptr<Call> &call);
+	bool canWeAddCall() const;
+	bool hasCalls() const {
+		return !calls.empty();
+	}
+	bool inviteReplacesABrokenCall(SalCallOp *op);
+	bool isAlreadyInCallWithAddress(const Address &addr) const;
+	void iterateCalls(time_t currentRealTime, bool oneSecondElapsed) const;
+	void notifySoundcardUsage(bool used);
+	int removeCall(const std::shared_ptr<Call> &call);
+	void setCurrentCall(const std::shared_ptr<Call> &call);
+	void setVideoWindowId(bool preview, void *id);
 
 	bool setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
 	bool setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
 
-	void loadChatRooms ();
-	void handleEphemeralMessages (time_t currentTime);
-	void initEphemeralMessages ();
-	void updateEphemeralMessages (const std::shared_ptr<ChatMessage> &message);
-	void sendDeliveryNotifications ();
-	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
-	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
-	std::shared_ptr<AbstractChatRoom> createBasicChatRoom (const ConferenceId &conferenceId, AbstractChatRoom::CapabilitiesMask capabilities, const std::shared_ptr<ChatRoomParams> &params);
+	void loadChatRooms();
+	void handleEphemeralMessages(time_t currentTime);
+	void initEphemeralMessages();
+	void updateEphemeralMessages(const std::shared_ptr<ChatMessage> &message);
+	void sendDeliveryNotifications();
+	void insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom);
+	void insertChatRoomWithDb(const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
+	std::shared_ptr<AbstractChatRoom> createBasicChatRoom(const ConferenceId &conferenceId,
+	                                                      AbstractChatRoom::CapabilitiesMask capabilities,
+	                                                      const std::shared_ptr<ChatRoomParams> &params);
 
-	ToneManager & getToneManager();
-	
+	ToneManager &getToneManager();
+
 	void reloadLdapList();
 
-	//Base
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (
-		const std::string &subject,
-		const IdentityAddress &conferenceFactoryUri,
-		const ConferenceId &conferenceId,
-		const Content &content,
-		AbstractChatRoom::CapabilitiesMask capabilities,
-		const std::shared_ptr<ChatRoomParams> &params,
-		bool fallback
-	);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
-									 const ConferenceId &conferenceId,
-									 const Content &content,
-									 bool encrypted,
-									 AbstractChatRoom::EphemeralMode ephemerableMode,
-									 long ephemeralLifeTime);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
+	// Base
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
+	                                                            const IdentityAddress &conferenceFactoryUri,
+	                                                            const ConferenceId &conferenceId,
+	                                                            const Content &content,
+	                                                            AbstractChatRoom::CapabilitiesMask capabilities,
+	                                                            const std::shared_ptr<ChatRoomParams> &params,
+	                                                            bool fallback);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
+	                                                            const ConferenceId &conferenceId,
+	                                                            const Content &content,
+	                                                            bool encrypted,
+	                                                            AbstractChatRoom::EphemeralMode ephemerableMode,
+	                                                            long ephemeralLifeTime);
+	std::shared_ptr<AbstractChatRoom>
+	createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
 
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-							 const IdentityAddress &localAddr,
-							 const std::string &subject,
-							 const std::list<IdentityAddress> &participants);
+	                                                 const IdentityAddress &localAddr,
+	                                                 const std::string &subject,
+	                                                 const std::list<IdentityAddress> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-							 const IdentityAddress &localAddr,
-							 const std::list<IdentityAddress> &participants);
+	                                                 const IdentityAddress &localAddr,
+	                                                 const std::list<IdentityAddress> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-							 const std::string &subject,
-							 const std::list<IdentityAddress> &participants);
+	                                                 const std::string &subject,
+	                                                 const std::list<IdentityAddress> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
-							 const std::list<IdentityAddress> &participants);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const IdentityAddress &participant);
+	                                                 const std::list<IdentityAddress> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+	                                                 const IdentityAddress &localAddr,
+	                                                 const IdentityAddress &participant);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant);
 
-
 	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-							const IdentityAddress &localAddr,
-							const IdentityAddress &remoteAddr,
-							const std::list<IdentityAddress> &participants) const;
+	                                                 const IdentityAddress &localAddr,
+	                                                 const IdentityAddress &remoteAddr,
+	                                                 const std::list<IdentityAddress> &participants) const;
 
 	IdentityAddress getDefaultLocalAddress(const IdentityAddress *peerAddress, bool withGruu) const;
 	IdentityAddress getIdentityAddressWithGruu(const IdentityAddress &identityAddress) const;
-	
-	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 
-	void updateChatRoomConferenceId (const std::shared_ptr<AbstractChatRoom> &chatRoom, ConferenceId newConferenceId);
-	std::shared_ptr<AbstractChatRoom> findExhumableOneToOneChatRoom (
-		const IdentityAddress &localAddress,
-		const IdentityAddress &participantAddress,
-		bool encrypted) const;
+	void replaceChatRoom(const std::shared_ptr<AbstractChatRoom> &replacedChatRoom,
+	                     const std::shared_ptr<AbstractChatRoom> &newChatRoom);
+
+	void updateChatRoomConferenceId(const std::shared_ptr<AbstractChatRoom> &chatRoom, ConferenceId newConferenceId);
+	std::shared_ptr<AbstractChatRoom> findExhumableOneToOneChatRoom(const IdentityAddress &localAddress,
+	                                                                const IdentityAddress &participantAddress,
+	                                                                bool encrypted) const;
 	std::shared_ptr<AbstractChatRoom> findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const;
-	
-	void stopChatMessagesAggregationTimer ();
+
+	void stopChatMessagesAggregationTimer();
 
 	// Cancel task scheduled on the main loop
-	void doLater(const std::function<void ()> &something);
+	void doLater(const std::function<void()> &something);
 	belle_sip_main_loop_t *getMainLoop();
-	bool basicToFlexisipChatroomMigrationEnabled()const;
+	bool basicToFlexisipChatroomMigrationEnabled() const;
 	std::unique_ptr<MainDb> mainDb;
 #ifdef HAVE_ADVANCED_IM
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
 	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;
 #endif
-	AuthStack &getAuthStack(){
+	AuthStack &getAuthStack() {
 		return authStack;
 	}
-	Sal * getSal();
+	Sal *getSal();
 	LinphoneCore *getCCore() const;
 
-	void startEphemeralMessageTimer (time_t expireTime);
-	void stopEphemeralMessageTimer ();
+	void startEphemeralMessageTimer(time_t expireTime);
+	void stopEphemeralMessageTimer();
 
-	void computeAudioDevicesList ();
-	
+	void computeAudioDevicesList();
+
 	/* called by linphone_core_set_video_device() to update the video device in the running call or conference.*/
 	void updateVideoDevice();
-	
+
 	static const Utils::Version conferenceProtocolVersion;
 	static const Utils::Version groupChatProtocolVersion;
 	static const Utils::Version ephemeralProtocolVersion;
+
 private:
 	bool isInBackground = false;
-	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
+	static int ephemeralMessageTimerExpired(void *data, unsigned int revents);
 
 	std::list<CoreListener *> listeners;
 
@@ -201,17 +210,17 @@ private:
 	belle_sip_source_t *ephemeralTimer = nullptr;
 
 	belle_sip_source_t *chatMessagesAggregationTimer = nullptr;
-	BackgroundTask chatMessagesAggregationBackgroundTask { "Chat messages aggregation" };
+	BackgroundTask chatMessagesAggregationBackgroundTask{"Chat messages aggregation"};
 
-	BackgroundTask pushReceivedBackgroundTask {"Push received background task"};
+	BackgroundTask pushReceivedBackgroundTask{"Push received background task"};
 	std::string lastPushReceivedCallId = "";
 
 	std::list<std::shared_ptr<AudioDevice>> audioDevices;
 	bool stopAsyncEndEnabled = false;
-	ExtraBackgroundTask bgTask {"Stop core async end"};
-	
-	std::list<std::shared_ptr<Ldap>> mLdapServers;	// Persistent list of LDAP servers
-	
+	ExtraBackgroundTask bgTask{"Stop core async end"};
+
+	std::list<std::shared_ptr<Ldap>> mLdapServers; // Persistent list of LDAP servers
+
 	L_DECLARE_PUBLIC(Core);
 };
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,12 +22,13 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
-#include "linphone/FlexiAPIClient.hh"
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
+#include "linphone/FlexiAPIClient.hh"
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
+#include <bctoolbox/defs.h>
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -42,10 +43,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_create_account_flexiapi(Li
 	if (!identity || ((!creator->username && !creator->phone_number) || (!creator->password && !creator->ha1))) {
 		if (creator->cbs->create_account_response_cb != NULL) {
 			creator->cbs->create_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-													 "Missing required parameters");
+			                                         "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		if (identity) ms_free(identity);
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
@@ -54,32 +55,32 @@ LinphoneAccountCreatorStatus linphone_account_creator_create_account_flexiapi(Li
 
 	if (creator->phone_number) {
 		flexiAPIClient
-			->accountCreate("", string(creator->password), "", "", string(creator->email), string(creator->phone_number))
-			->then([creator](FlexiAPIClient::Response response) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
-												response.body.c_str());
-				return LinphoneAccountCreatorStatusAccountCreated;
-			})
-			->error([creator](FlexiAPIClient::Response response) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountNotCreated,
-												response.body.c_str())
+		    ->accountCreate("", string(creator->password), "", "", string(creator->email),
+		                    string(creator->phone_number))
+		    ->then([creator](FlexiAPIClient::Response response) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
+			                                    response.body.c_str());
+			    return LinphoneAccountCreatorStatusAccountCreated;
+		    })
+		    ->error([creator](FlexiAPIClient::Response response) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountNotCreated,
+			                                    response.body.c_str())
 
-				return LinphoneAccountCreatorStatusRequestFailed;
-			});
+			    return LinphoneAccountCreatorStatusRequestFailed;
+		    });
 	} else {
-		flexiAPIClient
-			->accountCreate(string(creator->username), string(creator->password), string(creator->email))
-			->then([creator](FlexiAPIClient::Response response) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
-												response.body.c_str());
-				return LinphoneAccountCreatorStatusAccountCreated;
-			})
-			->error([creator](FlexiAPIClient::Response response) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountNotCreated,
-												response.body.c_str())
+		flexiAPIClient->accountCreate(string(creator->username), string(creator->password), string(creator->email))
+		    ->then([creator](FlexiAPIClient::Response response) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
+			                                    response.body.c_str());
+			    return LinphoneAccountCreatorStatusAccountCreated;
+		    })
+		    ->error([creator](FlexiAPIClient::Response response) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountNotCreated,
+			                                    response.body.c_str())
 
-				return LinphoneAccountCreatorStatusRequestFailed;
-			});
+			    return LinphoneAccountCreatorStatusRequestFailed;
+		    });
 	}
 
 	ms_free(identity);
@@ -93,32 +94,32 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_phone_number_used_flexi
 	if (!creator->phone_number) {
 		if (creator->cbs->is_alias_used_response_cb != NULL) {
 			creator->cbs->is_alias_used_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-													"Missing required parameters");
+			                                        "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_alias_used, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountInfoByPhone(string(creator->phone_number))
-		->then([creator](FlexiAPIClient::Response response) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_alias_used, creator, LinphoneAccountCreatorStatusAliasExist,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusAliasExist;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAliasNotExist,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_alias_used, creator, LinphoneAccountCreatorStatusAliasExist,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusAliasExist;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAliasNotExist,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -130,22 +131,22 @@ LinphoneAccountCreatorStatus linphone_account_creator_recover_phone_account_flex
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountRecoverByPhone(creator->phone_number)
-		->then([creator](FlexiAPIClient::Response response) {
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, LinphoneAccountCreatorStatusRequestOk,
-										response.body.c_str());
-		return LinphoneAccountCreatorStatusRequestOk;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-		if (response.code == 404) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
-											response.body.c_str())
-		} else {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-											response.body.c_str())
-		}
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, LinphoneAccountCreatorStatusRequestOk,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusRequestOk;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-		return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -157,10 +158,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_fle
 	if ((!creator->username && !creator->phone_number) || !creator->activation_code) {
 		if (creator->cbs->login_linphone_account_response_cb != NULL) {
 			creator->cbs->login_linphone_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-															 "Missing required parameters");
+			                                                 "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -169,24 +170,24 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_fle
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient
-		->accountRecoverUsingRecoverKey(string(creator->username).append("@").append(_get_domain(creator)),
-										string(creator->activation_code))
-		->then([creator](FlexiAPIClient::Response response) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator, LinphoneAccountCreatorStatusRequestOk,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusRequestOk;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator,
-												LinphoneAccountCreatorStatusAccountNotExist, response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator,
-												LinphoneAccountCreatorStatusUnexpectedError, response.body.c_str())
-			}
+	    ->accountRecoverUsingRecoverKey(string(creator->username).append("@").append(_get_domain(creator)),
+	                                    string(creator->activation_code))
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator, LinphoneAccountCreatorStatusRequestOk,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusRequestOk;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator,
+			                                    LinphoneAccountCreatorStatusAccountNotExist, response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator,
+			                                    LinphoneAccountCreatorStatusUnexpectedError, response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -195,10 +196,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_flexiapi(
 	if (!creator->username && !creator->phone_number) {
 		if (creator->cbs->is_account_exist_response_cb != NULL) {
 			creator->cbs->is_account_exist_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-													   "Missing required parameters");
+			                                           "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -207,25 +208,25 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_flexiapi(
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountInfo(string(creator->username).append("@").append(creator->domain))
-		->then([creator](FlexiAPIClient::Response response) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusAccountExist,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusRequestOk;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusAccountExist,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusRequestOk;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -234,10 +235,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_flexiapi(Li
 	if ((!creator->username && !creator->phone_number) || !creator->password || !creator->proxy_cfg) {
 		if (creator->cbs->delete_account_response_cb != NULL) {
 			creator->cbs->delete_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-													 "Missing required parameters");
+			                                         "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -246,25 +247,25 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_flexiapi(Li
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountDelete()
-		->then([creator](FlexiAPIClient::Response response) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusRequestOk,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusRequestOk;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusRequestOk,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusRequestOk;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -273,10 +274,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_fle
 	if (!creator->activation_code || !creator->username) {
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-														   "Missing required parameters");
+			                                               "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -285,36 +286,36 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_fle
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient
-		->accountActivateEmail(string(creator->username).append("@").append(_get_domain(creator)),
-							   creator->activation_code)
-		->then([creator](FlexiAPIClient::Response response) {
-			if (creator->cbs->activate_account_response_cb != NULL) {
-				creator->cbs->activate_account_response_cb(creator, LinphoneAccountCreatorStatusRequestFailed,
-														   response.body.c_str());
-			}
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusAccountActivated;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (creator->cbs->activate_account_response_cb != NULL) {
-				creator->cbs->activate_account_response_cb(creator, LinphoneAccountCreatorStatusRequestFailed,
-														   response.body.c_str());
-			}
+	    ->accountActivateEmail(string(creator->username).append("@").append(_get_domain(creator)),
+	                           creator->activation_code)
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    if (creator->cbs->activate_account_response_cb != NULL) {
+			    creator->cbs->activate_account_response_cb(creator, LinphoneAccountCreatorStatusRequestFailed,
+			                                               response.body.c_str());
+		    }
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusAccountActivated;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (creator->cbs->activate_account_response_cb != NULL) {
+			    creator->cbs->activate_account_response_cb(creator, LinphoneAccountCreatorStatusRequestFailed,
+			                                               response.body.c_str());
+		    }
 
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -324,41 +325,41 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_flexi
 	if (!identity) {
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-														   "Missing required parameters");
+			                                               "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_activated, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountInfo(string(creator->username).append("@").append(_get_domain(creator)))
-		->then([creator](FlexiAPIClient::Response response) {
-			if (response.json()["activated"].asBool()) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
-												response.body.c_str());
-				return LinphoneAccountCreatorStatusAccountActivated;
-			}
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    if (response.json()["activated"].asBool()) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
+			                                    response.body.c_str());
+			    return LinphoneAccountCreatorStatusAccountActivated;
+		    }
 
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotActivated,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusAccountNotActivated;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotActivated,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusAccountNotActivated;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	ms_free(identity);
 	return LinphoneAccountCreatorStatusRequestOk;
@@ -369,10 +370,10 @@ linphone_account_creator_link_phone_number_with_account_flexiapi(LinphoneAccount
 	if (!creator->phone_number || !creator->username) {
 		if (creator->cbs->link_account_response_cb != NULL) {
 			creator->cbs->link_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-												   "Missing required parameters");
+			                                       "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -381,21 +382,21 @@ linphone_account_creator_link_phone_number_with_account_flexiapi(LinphoneAccount
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPhoneChangeRequest(creator->phone_number)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusRequestOk; })
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->then([](BCTBX_UNUSED(FlexiAPIClient::Response response)) { return LinphoneAccountCreatorStatusRequestOk; })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestFailed;
 }
@@ -403,13 +404,13 @@ linphone_account_creator_link_phone_number_with_account_flexiapi(LinphoneAccount
 LinphoneAccountCreatorStatus
 linphone_account_creator_activate_phone_number_link_flexiapi(LinphoneAccountCreator *creator) {
 	if (!creator->phone_number || !creator->username || !creator->activation_code ||
-		(!creator->password && !creator->ha1) || !_get_domain(creator)) {
+	    (!creator->password && !creator->ha1) || !_get_domain(creator)) {
 		if (creator->cbs->activate_alias_response_cb != NULL) {
 			creator->cbs->activate_alias_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-													 "Missing required parameters");
+			                                         "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -418,21 +419,21 @@ linphone_account_creator_activate_phone_number_link_flexiapi(LinphoneAccountCrea
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPhoneChange(creator->activation_code)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusRequestOk; })
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->then([](BCTBX_UNUSED(FlexiAPIClient::Response response)) { return LinphoneAccountCreatorStatusRequestOk; })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestFailed;
 }
@@ -441,10 +442,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_fle
 	if (!creator->phone_number || !creator->activation_code) {
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-														   "Missing required parameters");
+			                                               "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -453,23 +454,25 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_fle
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient
-		->accountActivatePhone(string(creator->username).append("@").append(_get_domain(creator)),
-							   creator->activation_code)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusAccountActivated; })
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->accountActivatePhone(string(creator->username).append("@").append(_get_domain(creator)),
+	                           creator->activation_code)
+	    ->then([](BCTBX_UNUSED(FlexiAPIClient::Response response)) {
+		    return LinphoneAccountCreatorStatusAccountActivated;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestFailed;
 }
@@ -478,13 +481,13 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_flexiapi(L
 	char *identity = _get_identity(creator);
 	const char *new_pwd = (const char *)linphone_account_creator_get_user_data(creator);
 	if (!identity || ((!creator->username && !creator->phone_number) || !_get_domain(creator) ||
-					  (!creator->password && !creator->ha1) || !new_pwd)) {
+	                  (!creator->password && !creator->ha1) || !new_pwd)) {
 		if (creator->cbs->update_account_response_cb != NULL) {
 			creator->cbs->update_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-													 "Missing required parameters");
+			                                         "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 	bctbx_free(identity);
@@ -494,21 +497,21 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_flexiapi(L
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPasswordChange(creator->algorithm, creator->password, new_pwd)
-		->then([](FlexiAPIClient::Response response) { return LinphoneAccountCreatorStatusRequestOk; })
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->then([](BCTBX_UNUSED(FlexiAPIClient::Response response)) { return LinphoneAccountCreatorStatusRequestOk; })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -517,10 +520,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_flexiapi
 	if (!creator->username || !_get_domain(creator)) {
 		if (creator->cbs->is_account_linked_response_cb != NULL) {
 			creator->cbs->is_account_linked_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
-														"Missing required parameters");
+			                                            "Missing required parameters");
 		}
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, LinphoneAccountCreatorStatusMissingArguments,
-										"Missing required parameters")
+		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -529,27 +532,27 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_flexiapi
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->me()
-		->then([](FlexiAPIClient::Response response) {
-			if (!response.json()["phone"].empty()) {
-				return LinphoneAccountCreatorStatusAccountLinked;
-			}
+	    ->then([](FlexiAPIClient::Response response) {
+		    if (!response.json()["phone"].empty()) {
+			    return LinphoneAccountCreatorStatusAccountLinked;
+		    }
 
-			return LinphoneAccountCreatorStatusAccountNotLinked;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 404) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, LinphoneAccountCreatorStatusAccountNotExist,
-												response.body.c_str())
-			} else if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator,
-												LinphoneAccountCreatorStatusMissingArguments, response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+		    return LinphoneAccountCreatorStatusAccountNotLinked;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 404) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, LinphoneAccountCreatorStatusAccountNotExist,
+			                                    response.body.c_str())
+		    } else if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator,
+			                                    LinphoneAccountCreatorStatusMissingArguments, response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -560,22 +563,22 @@ LinphoneAccountCreatorStatus linphone_account_creator_send_token_flexiapi(Linpho
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->sendAccountCreationTokenByPush(creator->pn_provider, creator->pn_param, creator->pn_prid)
-		->then([creator](FlexiAPIClient::Response response) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusRequestOk,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusRequestOk;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusRequestOk,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusRequestOk;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -587,24 +590,24 @@ linphone_account_creator_create_account_with_token_flexiapi(LinphoneAccountCreat
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient
-		->accountCreateWithAccountCreationToken(creator->username, creator->domain, creator->password,
-												creator->algorithm, creator->token)
-		->then([creator](FlexiAPIClient::Response response) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusRequestOk,
-											response.body.c_str());
-			return LinphoneAccountCreatorStatusRequestOk;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+	    ->accountCreateWithAccountCreationToken(creator->username, creator->domain, creator->password,
+	                                            creator->algorithm, creator->token)
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusRequestOk,
+		                                    response.body.c_str());
+		    return LinphoneAccountCreatorStatusRequestOk;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -620,24 +623,24 @@ LinphoneAccountCreatorStatus linphone_account_creator_admin_create_account_flexi
 	string phone = (creator->phone_number) ? creator->phone_number : "";
 
 	flexiAPIClient->useTestAdminAccount(true)
-		->adminAccountCreate(creator->username, creator->password, "MD5", creator->domain, true, creator->email, phone)
-		->then([creator](FlexiAPIClient::Response response) {
-			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
-											response.body.c_str());
+	    ->adminAccountCreate(creator->username, creator->password, "MD5", creator->domain, true, creator->email, phone)
+	    ->then([creator](FlexiAPIClient::Response response) {
+		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
+		                                    response.body.c_str());
 
-			return LinphoneAccountCreatorStatusRequestOk;
-		})
-		->error([creator](FlexiAPIClient::Response response) {
-			if (response.code == 422) {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
-												response.body.c_str())
-			} else {
-				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
-												response.body.c_str())
-			}
+		    return LinphoneAccountCreatorStatusRequestOk;
+	    })
+	    ->error([creator](FlexiAPIClient::Response response) {
+		    if (response.code == 422) {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+			                                    response.body.c_str())
+		    } else {
+			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+			                                    response.body.c_str())
+		    }
 
-			return LinphoneAccountCreatorStatusRequestFailed;
-		});
+		    return LinphoneAccountCreatorStatusRequestFailed;
+	    });
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }

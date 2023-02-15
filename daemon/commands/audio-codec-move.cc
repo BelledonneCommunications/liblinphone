@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,35 +22,34 @@
 
 using namespace std;
 
-AudioCodecMoveCommand::AudioCodecMoveCommand() :
-		DaemonCommand("audio-codec-move", "audio-codec-move <payload_type_number>|<mime_type> <index>",
-				"Move a codec to the specified index.\n"
-				"<mime_type> is of the form mime/rate/channels, eg. speex/16000/1") {
-	addExample(make_unique<DaemonCommandExample>("audio-codec-move 9 1",
-						"Status: Ok\n\n"
-						"Index: 1\n"
-						"Payload-type-number: 9\n"
-						"Clock-rate: 8000\n"
-						"Bitrate: 64000\n"
-						"Mime: G722\n"
-						"Channels: 1\n"
-						"Recv-fmtp: \n"
-						"Send-fmtp: \n"
-						"Enabled: false"));
-	addExample(make_unique<DaemonCommandExample>("audio-codec-move G722/8000/1 9",
-						"Status: Ok\n\n"
-						"Index: 9\n"
-						"Payload-type-number: 9\n"
-						"Clock-rate: 8000\n"
-						"Bitrate: 64000\n"
-						"Mime: G722\n"
-						"Channels: 1\n"
-						"Recv-fmtp: \n"
-						"Send-fmtp: \n"
-						"Enabled: false"));
+AudioCodecMoveCommand::AudioCodecMoveCommand()
+    : DaemonCommand("audio-codec-move",
+                    "audio-codec-move <payload_type_number>|<mime_type> <index>",
+                    "Move a codec to the specified index.\n"
+                    "<mime_type> is of the form mime/rate/channels, eg. speex/16000/1") {
+	addExample(make_unique<DaemonCommandExample>("audio-codec-move 9 1", "Status: Ok\n\n"
+	                                                                     "Index: 1\n"
+	                                                                     "Payload-type-number: 9\n"
+	                                                                     "Clock-rate: 8000\n"
+	                                                                     "Bitrate: 64000\n"
+	                                                                     "Mime: G722\n"
+	                                                                     "Channels: 1\n"
+	                                                                     "Recv-fmtp: \n"
+	                                                                     "Send-fmtp: \n"
+	                                                                     "Enabled: false"));
+	addExample(make_unique<DaemonCommandExample>("audio-codec-move G722/8000/1 9", "Status: Ok\n\n"
+	                                                                               "Index: 9\n"
+	                                                                               "Payload-type-number: 9\n"
+	                                                                               "Clock-rate: 8000\n"
+	                                                                               "Bitrate: 64000\n"
+	                                                                               "Mime: G722\n"
+	                                                                               "Channels: 1\n"
+	                                                                               "Recv-fmtp: \n"
+	                                                                               "Send-fmtp: \n"
+	                                                                               "Enabled: false"));
 }
 
-void AudioCodecMoveCommand::exec(Daemon *app, const string& args) {
+void AudioCodecMoveCommand::exec(Daemon *app, const string &args) {
 	istringstream ist(args);
 
 	if (ist.peek() == EOF) {
@@ -71,12 +70,12 @@ void AudioCodecMoveCommand::exec(Daemon *app, const string& args) {
 	}
 	PayloadType *selected_payload = NULL;
 	selected_payload = parser.getPayloadType();
-	
+
 	if (selected_payload == NULL) {
 		app->sendResponse(Response("Audio codec not found.", Response::Error));
 		return;
 	}
-	
+
 	int index;
 	ist >> index;
 	if (ist.fail() || (index < 0)) {
@@ -86,8 +85,9 @@ void AudioCodecMoveCommand::exec(Daemon *app, const string& args) {
 
 	int i = 0;
 	bctbx_list_t *mslist = NULL;
-	for (const bctbx_list_t *node = linphone_core_get_audio_codecs(app->getCore()); node != NULL; node = bctbx_list_next(node)) {
-		PayloadType *payload = reinterpret_cast<PayloadType*>(node->data);
+	for (const bctbx_list_t *node = linphone_core_get_audio_codecs(app->getCore()); node != NULL;
+	     node = bctbx_list_next(node)) {
+		PayloadType *payload = reinterpret_cast<PayloadType *>(node->data);
 		if (i == index) {
 			mslist = bctbx_list_append(mslist, selected_payload);
 			++i;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,72 +19,71 @@
  */
 
 #include "linphone/api/c-dictionary.h"
-#include "dictionary/dictionary.h"
 #include "c-wrapper/c-wrapper.h"
+#include "dictionary/dictionary.h"
 
 using namespace LinphonePrivate;
 
-
-LinphoneDictionary * linphone_dictionary_clone(const LinphoneDictionary* src){
-    if(src){
-        LinphoneDictionary *dict = Dictionary::toCpp(src)->clone()->toC();
-        return dict;
-    }
-    return NULL;
+LinphoneDictionary *linphone_dictionary_clone(const LinphoneDictionary *src) {
+	if (src) {
+		LinphoneDictionary *dict = Dictionary::toCpp(src)->clone()->toC();
+		return dict;
+	}
+	return NULL;
 }
 
-LinphoneDictionary * linphone_dictionary_ref(LinphoneDictionary* dict){
-    Dictionary::toCpp(dict)->ref();
-    return dict;  
+LinphoneDictionary *linphone_dictionary_ref(LinphoneDictionary *dict) {
+	Dictionary::toCpp(dict)->ref();
+	return dict;
 }
 
-void linphone_dictionary_unref(LinphoneDictionary* dict){
-    Dictionary::toCpp(dict)->unref();
+void linphone_dictionary_unref(LinphoneDictionary *dict) {
+	Dictionary::toCpp(dict)->unref();
 }
 
-void linphone_dictionary_set_float(LinphoneDictionary* dict, const char* key, float value){
-    Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
+void linphone_dictionary_set_float(LinphoneDictionary *dict, const char *key, float value) {
+	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
 }
 
-float linphone_dictionary_get_float(LinphoneDictionary* dict, const char* key){
-    return Dictionary::toCpp(dict)->getFloat(L_C_TO_STRING(key));
+float linphone_dictionary_get_float(LinphoneDictionary *dict, const char *key) {
+	return Dictionary::toCpp(dict)->getFloat(L_C_TO_STRING(key));
 }
 
-void linphone_dictionary_set_int(LinphoneDictionary* dict, const char* key, int value){
-    Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
+void linphone_dictionary_set_int(LinphoneDictionary *dict, const char *key, int value) {
+	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
 }
 
-int linphone_dictionary_get_int(LinphoneDictionary* dict, const char* key){
-    return Dictionary::toCpp(dict)->getInt(L_C_TO_STRING(key));
+int linphone_dictionary_get_int(LinphoneDictionary *dict, const char *key) {
+	return Dictionary::toCpp(dict)->getInt(L_C_TO_STRING(key));
 }
 
-void linphone_dictionary_set_string(LinphoneDictionary* dict, const char* key, const char*value){
-    Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
+void linphone_dictionary_set_string(LinphoneDictionary *dict, const char *key, const char *value) {
+	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
 }
 
-const char* linphone_dictionary_get_string(LinphoneDictionary* dict, const char* key){
-    return Dictionary::toCpp(dict)->getString(L_C_TO_STRING(key)).c_str();
+const char *linphone_dictionary_get_string(LinphoneDictionary *dict, const char *key) {
+	return Dictionary::toCpp(dict)->getString(L_C_TO_STRING(key)).c_str();
 }
 
-void linphone_dictionary_set_int64(LinphoneDictionary* dict, const char* key, int64_t value){
-    Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), static_cast<long long>(value));
+void linphone_dictionary_set_int64(LinphoneDictionary *dict, const char *key, int64_t value) {
+	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), static_cast<long long>(value));
 }
 
-int64_t linphone_dictionary_get_int64(LinphoneDictionary* dict, const char* key){
-    return Dictionary::toCpp(dict)->getLongLong(L_C_TO_STRING(key));
+int64_t linphone_dictionary_get_int64(LinphoneDictionary *dict, const char *key) {
+	return Dictionary::toCpp(dict)->getLongLong(L_C_TO_STRING(key));
 }
 
-LinphoneStatus linphone_dictionary_remove(LinphoneDictionary* dict, const char* key){
-    return Dictionary::toCpp(dict)->remove(L_C_TO_STRING(key));
+LinphoneStatus linphone_dictionary_remove(LinphoneDictionary *dict, const char *key) {
+	return Dictionary::toCpp(dict)->remove(L_C_TO_STRING(key));
 }
 
-void linphone_dictionary_clear(LinphoneDictionary* dict){
-    Dictionary::toCpp(dict)->clear();
+void linphone_dictionary_clear(LinphoneDictionary *dict) {
+	Dictionary::toCpp(dict)->clear();
 }
 
-LinphoneStatus linphone_dictionary_has_key(const LinphoneDictionary* dict, const char* key){
-    if (Dictionary::toCpp(dict)->hasKey(L_C_TO_STRING(key))) {
-        return 1;
-    }
-    return 0;
+LinphoneStatus linphone_dictionary_has_key(const LinphoneDictionary *dict, const char *key) {
+	if (Dictionary::toCpp(dict)->hasKey(L_C_TO_STRING(key))) {
+		return 1;
+	}
+	return 0;
 }

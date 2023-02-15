@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,15 +18,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "quit.h"
 
 using namespace std;
 
-QuitCommand::QuitCommand() :
-		DaemonCommand("quit", "quit", "Quit the application.") {
+QuitCommand::QuitCommand() : DaemonCommand("quit", "quit", "Quit the application.") {
 }
 
-void QuitCommand::exec(Daemon *app, const string& args) {
+void QuitCommand::exec(Daemon *app, BCTBX_UNUSED(const string &args)) {
 	app->quit();
 	app->sendResponse(Response());
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,11 +19,11 @@
  */
 
 #ifdef __APPLE__
-	#include <TargetConditionals.h>
+#include <TargetConditionals.h>
 #endif // ifdef __APPLE__
 
 #if (__APPLE__ || defined(__ANDROID__))
-	#include <sqlite3.h>
+#include <sqlite3.h>
 #endif // if (__APPLE__ || defined(__ANDROID__))
 
 #include "abstract-db-p.h"
@@ -36,17 +36,17 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 #if (__APPLE__ || defined(__ANDROID__))
-	// Force static sqlite3 linking for IOS and Android.
-	extern "C" void register_factory_sqlite3();
+// Force static sqlite3 linking for IOS and Android.
+extern "C" void register_factory_sqlite3();
 
 #ifdef HAVE_DB_STORAGE
-	static void sqlite3Log (void *, int iErrCode, const char *zMsg) {
-		lInfo() << "[sqlite3][" << iErrCode << "]" << zMsg;
-	}
+static void sqlite3Log(void *, int iErrCode, const char *zMsg) {
+	lInfo() << "[sqlite3][" << iErrCode << "]" << zMsg;
+}
 #endif
 #endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
 
-void AbstractDbPrivate::safeInit () {
+void AbstractDbPrivate::safeInit() {
 #ifdef HAVE_DB_STORAGE
 	L_Q();
 	dbSession.enableForeignKeys(false);
@@ -56,27 +56,30 @@ void AbstractDbPrivate::safeInit () {
 #endif
 }
 
-AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
+AbstractDb::AbstractDb(AbstractDbPrivate &p) : Object(p) {
+}
 
-bool AbstractDb::connect (Backend backend, const string &nameParams) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+bool AbstractDb::connect(Backend backend, const string &nameParams) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
-	#if (__APPLE__ || defined(__ANDROID__))
-		if (backend == Sqlite3) {
-			static bool registered = false;
-			if (!registered) {
-				registered = true;
-				register_factory_sqlite3();
-				sqlite3_config(SQLITE_CONFIG_LOG, sqlite3Log, nullptr);
-			}
+#if (__APPLE__ || defined(__ANDROID__))
+	if (backend == Sqlite3) {
+		static bool registered = false;
+		if (!registered) {
+			registered = true;
+			register_factory_sqlite3();
+			sqlite3_config(SQLITE_CONFIG_LOG, sqlite3Log, nullptr);
 		}
-	#endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
+	}
+#endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
 
 	d->backend = backend;
-	d->dbSession = DbSession(
-		(backend == Mysql ? "mysql://" : "sqlite3://") + nameParams
-	);
+	d->dbSession = DbSession((backend == Mysql ? "mysql://" : "sqlite3://") + nameParams);
 
 	if (d->dbSession) {
 		try {
@@ -94,15 +97,18 @@ bool AbstractDb::connect (Backend backend, const string &nameParams) {
 	return false;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-void AbstractDb::disconnect () {
+void AbstractDb::disconnect() {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	d->dbSession = DbSession();
 #endif
 }
 
-bool AbstractDb::forceReconnect () {
+bool AbstractDb::forceReconnect() {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	if (!d->dbSession) {
@@ -122,8 +128,7 @@ bool AbstractDb::forceReconnect () {
 				lInfo() << "Database reconnection successful!";
 				return true;
 			} catch (const soci::soci_error &e) {
-				if (e.get_error_category() != soci::soci_error::connection_error)
-				throw e;
+				if (e.get_error_category() != soci::soci_error::connection_error) throw e;
 			}
 		}
 	} catch (const exception &e) {
@@ -136,34 +141,34 @@ bool AbstractDb::forceReconnect () {
 	return false;
 }
 
-AbstractDb::Backend AbstractDb::getBackend () const {
+AbstractDb::Backend AbstractDb::getBackend() const {
 	L_D();
 	return d->backend;
 }
 
-bool AbstractDb::import (Backend, const string &) {
+bool AbstractDb::import(Backend, const string &) {
 	return false;
 }
 
 // -----------------------------------------------------------------------------
 
-void AbstractDb::init () {
+void AbstractDb::init() {
 	// Nothing.
 }
 
-bool AbstractDb::isInitialized() const{
+bool AbstractDb::isInitialized() const {
 	L_D();
 	return d->initialized;
 }
 
-std::ostream& operator<<(std::ostream& os, AbstractDb::Backend b){
-	switch(b){
+std::ostream &operator<<(std::ostream &os, AbstractDb::Backend b) {
+	switch (b) {
 		case AbstractDb::Mysql:
-			os<<"Mysql";
-		break;
+			os << "Mysql";
+			break;
 		case AbstractDb::Sqlite3:
-			os<<"Sqlite3";
-		break;
+			os << "Sqlite3";
+			break;
 	}
 	return os;
 }

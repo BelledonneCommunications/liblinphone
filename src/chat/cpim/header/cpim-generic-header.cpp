@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,68 +37,66 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Cpim::GenericHeaderPrivate : public HeaderPrivate {
 public:
-	GenericHeaderPrivate () : parameters(make_shared<list<pair<string, string>>>()) {}
+	GenericHeaderPrivate() : parameters(make_shared<list<pair<string, string>>>()) {
+	}
 
 	string name;
 	string value;
 	shared_ptr<list<pair<string, string>>> parameters;
 };
 
-Cpim::GenericHeader::GenericHeader () : Header(*new GenericHeaderPrivate) {}
+Cpim::GenericHeader::GenericHeader() : Header(*new GenericHeaderPrivate) {
+}
 
-Cpim::GenericHeader::GenericHeader (string name, string value, string parameters) : GenericHeader() {
+Cpim::GenericHeader::GenericHeader(string name, string value, string parameters) : GenericHeader() {
 	setName(name);
 	setValue(value);
 
 	for (const auto &parameter : bctoolbox::Utils::split(parameters, ';')) {
 		size_t equalIndex = parameter.find('=');
-		if (equalIndex != string::npos)
-			addParameter(parameter.substr(0, equalIndex), parameter.substr(equalIndex + 1));
+		if (equalIndex != string::npos) addParameter(parameter.substr(0, equalIndex), parameter.substr(equalIndex + 1));
 	}
 }
 
-string Cpim::GenericHeader::getName () const {
+string Cpim::GenericHeader::getName() const {
 	L_D();
 	return d->name;
 }
 
-void Cpim::GenericHeader::setName (const string &name) {
+void Cpim::GenericHeader::setName(const string &name) {
 	L_D();
 
-	static const set<string> reserved = {
-		"From", "To", "cc", "DateTime", "Subject", "NS", "Require"
-	};
+	static const set<string> reserved = {"From", "To", "cc", "DateTime", "Subject", "NS", "Require"};
 
-	if (reserved.find(name) == reserved.end())
-		d->name = name;
+	if (reserved.find(name) == reserved.end()) d->name = name;
 }
 
-string Cpim::GenericHeader::getValue () const {
+string Cpim::GenericHeader::getValue() const {
 	L_D();
 	return d->value;
 }
 
-void Cpim::GenericHeader::setValue (const string &value) {
+void Cpim::GenericHeader::setValue(const string &value) {
 	L_D();
 	d->value = value;
 }
 
-Cpim::GenericHeader::ParameterList Cpim::GenericHeader::getParameters () const {
+Cpim::GenericHeader::ParameterList Cpim::GenericHeader::getParameters() const {
 	L_D();
 	return d->parameters;
 }
 
-void Cpim::GenericHeader::addParameter (const string &key, const string &value) {
+void Cpim::GenericHeader::addParameter(const string &key, const string &value) {
 	L_D();
 	d->parameters->push_back(make_pair(key, value));
 }
 
-void Cpim::GenericHeader::removeParameter (const string &key, const string &value) {
+void Cpim::GenericHeader::removeParameter(const string &key, const string &value) {
 	L_D();
 	d->parameters->remove(make_pair(key, value));
 }
 
-string Cpim::GenericHeader::asString () const {
+string Cpim::GenericHeader::asString() const {
 	L_D();
 
 	string parameters;

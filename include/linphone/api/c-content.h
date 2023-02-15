@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 // =============================================================================
 
 #ifdef __cplusplus
-	extern "C" {
+extern "C" {
 #endif // ifdef __cplusplus
 
 /**
@@ -38,56 +38,56 @@
  * Acquire a reference to the content.
  * @param content #LinphoneContent object. @notnil
  * @return The same #LinphoneContent object. @notnil
-**/
-LINPHONE_PUBLIC LinphoneContent *linphone_content_ref (LinphoneContent *content);
+ **/
+LINPHONE_PUBLIC LinphoneContent *linphone_content_ref(LinphoneContent *content);
 
 /**
  * Release reference to the content.
  * @param content #LinphoneContent object. @notnil
-**/
-LINPHONE_PUBLIC void linphone_content_unref (LinphoneContent *content);
+ **/
+LINPHONE_PUBLIC void linphone_content_unref(LinphoneContent *content);
 
 /**
  * Retrieve the user pointer associated with the content.
  * @param content #LinphoneContent object. @notnil
  * @return The user pointer associated with the content. @maybenil
-**/
-LINPHONE_PUBLIC void *linphone_content_get_user_data (const LinphoneContent *content);
+ **/
+LINPHONE_PUBLIC void *linphone_content_get_user_data(const LinphoneContent *content);
 
 /**
  * Assign a user pointer to the content.
  * @param content #LinphoneContent object. @notnil
  * @param user_data The user pointer to associate with the content. @maybenil
-**/
-LINPHONE_PUBLIC void linphone_content_set_user_data (LinphoneContent *content, void *user_data);
+ **/
+LINPHONE_PUBLIC void linphone_content_set_user_data(LinphoneContent *content, void *user_data);
 
 /**
  * Get the mime type of the content data.
  * @param content #LinphoneContent object. @notnil
  * @return The mime type of the content data, for example "application". @notnil
  */
-LINPHONE_PUBLIC const char *linphone_content_get_type (const LinphoneContent *content);
+LINPHONE_PUBLIC const char *linphone_content_get_type(const LinphoneContent *content);
 
 /**
  * Set the mime type of the content data.
  * @param content #LinphoneContent object. @notnil
  * @param type The mime type of the content data, for example "application". @notnil
  */
-LINPHONE_PUBLIC void linphone_content_set_type (LinphoneContent *content, const char *type);
+LINPHONE_PUBLIC void linphone_content_set_type(LinphoneContent *content, const char *type);
 
 /**
  * Get the mime subtype of the content data.
  * @param content #LinphoneContent object. @notnil
  * @return The mime subtype of the content data, for example "html". @notnil
  */
-LINPHONE_PUBLIC const char *linphone_content_get_subtype (const LinphoneContent *content);
+LINPHONE_PUBLIC const char *linphone_content_get_subtype(const LinphoneContent *content);
 
 /**
  * Set the mime subtype of the content data.
  * @param content #LinphoneContent object. @notnil
  * @param subtype The mime subtype of the content data, for example "html". @notnil
  */
-LINPHONE_PUBLIC void linphone_content_set_subtype (LinphoneContent *content, const char *subtype);
+LINPHONE_PUBLIC void linphone_content_set_subtype(LinphoneContent *content, const char *subtype);
 
 /**
  * Adds a parameter to the ContentType header.
@@ -95,18 +95,15 @@ LINPHONE_PUBLIC void linphone_content_set_subtype (LinphoneContent *content, con
  * @param name the name of the parameter to add. @notnil
  * @param value the value of the parameter to add. @maybenil
  */
-LINPHONE_PUBLIC void linphone_content_add_content_type_parameter (
-	LinphoneContent *content,
-	const char *name,
-	const char *value
-);
+LINPHONE_PUBLIC void
+linphone_content_add_content_type_parameter(LinphoneContent *content, const char *name, const char *value);
 
 /**
  * Get the content data buffer, usually a string.
  * @param content #LinphoneContent object. @notnil
  * @return The content data buffer. @notnil
  */
-LINPHONE_PUBLIC const uint8_t *linphone_content_get_buffer (const LinphoneContent *content);
+LINPHONE_PUBLIC const uint8_t *linphone_content_get_buffer(const LinphoneContent *content);
 
 /**
  * Set the content data buffer, usually a string.
@@ -114,7 +111,7 @@ LINPHONE_PUBLIC const uint8_t *linphone_content_get_buffer (const LinphoneConten
  * @param buffer The content data buffer. @notnil
  * @param size The size of the content data buffer.
  */
-LINPHONE_PUBLIC void linphone_content_set_buffer (LinphoneContent *content, const uint8_t *buffer, size_t size);
+LINPHONE_PUBLIC void linphone_content_set_buffer(LinphoneContent *content, const uint8_t *buffer, size_t size);
 
 /**
  * Get the string content data buffer. Introduced in 01/07/2020
@@ -128,14 +125,14 @@ LINPHONE_PUBLIC const char *linphone_content_get_utf8_text(const LinphoneContent
  * @param content #LinphoneContent object. @notnil
  * @param buffer The string content data buffer in UTF8. @maybenil
  */
-LINPHONE_PUBLIC void linphone_content_set_utf8_text (LinphoneContent *content, const char *buffer);
+LINPHONE_PUBLIC void linphone_content_set_utf8_text(LinphoneContent *content, const char *buffer);
 
 /**
  * Get the content data buffer size, excluding null character despite null character is always set for convenience.
  * @param content #LinphoneContent object. @notnil
  * @return The content data buffer size.
  */
-LINPHONE_PUBLIC size_t linphone_content_get_size (const LinphoneContent *content);
+LINPHONE_PUBLIC size_t linphone_content_get_size(const LinphoneContent *content);
 
 /**
  * Get the file size if content is either a FileContent or a FileTransferContent.
@@ -149,14 +146,14 @@ LINPHONE_PUBLIC size_t linphone_content_get_file_size(const LinphoneContent *con
  * @param content #LinphoneContent object @notnil
  * @param size The content data buffer size.
  */
-LINPHONE_PUBLIC void linphone_content_set_size (LinphoneContent *content, size_t size);
+LINPHONE_PUBLIC void linphone_content_set_size(LinphoneContent *content, size_t size);
 
 /**
  * Get the encoding of the data buffer, for example "gzip".
  * @param content #LinphoneContent object. @notnil
  * @return The encoding of the data buffer. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_content_get_encoding (const LinphoneContent *content);
+LINPHONE_PUBLIC const char *linphone_content_get_encoding(const LinphoneContent *content);
 
 /**
  * Set the encoding of the data buffer, for example "gzip".
@@ -180,32 +177,34 @@ LINPHONE_PUBLIC const char *linphone_content_get_disposition(const LinphoneConte
 LINPHONE_PUBLIC void linphone_content_set_disposition(LinphoneContent *content, const char *disposition);
 
 /**
- * Get the name associated with a RCS file transfer message. It is used to store the original filename of the file to be downloaded from server.
+ * Get the name associated with a RCS file transfer message. It is used to store the original filename of the file to be
+ * downloaded from server.
  * @param content #LinphoneContent object. @notnil
  * @return The name of the content. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_content_get_name (const LinphoneContent *content);
+LINPHONE_PUBLIC const char *linphone_content_get_name(const LinphoneContent *content);
 
 /**
- * Set the name associated with a RCS file transfer message. It is used to store the original filename of the file to be downloaded from server.
+ * Set the name associated with a RCS file transfer message. It is used to store the original filename of the file to be
+ * downloaded from server.
  * @param content #LinphoneContent object. @notnil
  * @param name The name of the content. @maybenil
  */
-LINPHONE_PUBLIC void linphone_content_set_name (LinphoneContent *content, const char *name);
+LINPHONE_PUBLIC void linphone_content_set_name(LinphoneContent *content, const char *name);
 
 /**
  * Tell whether a content is a multipart content.
  * @param content #LinphoneContent object. @notnil
  * @return A boolean value telling whether the content is multipart or not.
  */
-LINPHONE_PUBLIC bool_t linphone_content_is_multipart (const LinphoneContent *content);
+LINPHONE_PUBLIC bool_t linphone_content_is_multipart(const LinphoneContent *content);
 
 /**
  * Get all the parts from a multipart content.
  * @param content #LinphoneContent object. @notnil
  * @return A \bctbx_list{LinphoneContent} object holding the part if found, NULL otherwise. @tobefreed @maybenil
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_content_get_parts (const LinphoneContent *content);
+LINPHONE_PUBLIC bctbx_list_t *linphone_content_get_parts(const LinphoneContent *content);
 
 /**
  * Get a part from a multipart content according to its index.
@@ -213,7 +212,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_content_get_parts (const LinphoneContent 
  * @param index The index of the part to get.
  * @return A #LinphoneContent object holding the part if found, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphoneContent *linphone_content_get_part (const LinphoneContent *content, int index);
+LINPHONE_PUBLIC LinphoneContent *linphone_content_get_part(const LinphoneContent *content, int index);
 
 /**
  * Find a part from a multipart content looking for a part header with a specified value.
@@ -222,11 +221,8 @@ LINPHONE_PUBLIC LinphoneContent *linphone_content_get_part (const LinphoneConten
  * @param header_value The value of the header to look for. @notnil
  * @return A #LinphoneContent object object the part if found, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphoneContent *linphone_content_find_part_by_header (
-	const LinphoneContent *content,
-	const char *header_name,
-	const char *header_value
-);
+LINPHONE_PUBLIC LinphoneContent *
+linphone_content_find_part_by_header(const LinphoneContent *content, const char *header_name, const char *header_value);
 
 /**
  * Get a custom header value of a content.
@@ -234,7 +230,7 @@ LINPHONE_PUBLIC LinphoneContent *linphone_content_find_part_by_header (
  * @param header_name The name of the header to get the value from. @notnil
  * @return The value of the header if found, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_content_get_custom_header (const LinphoneContent *content, const char *header_name);
+LINPHONE_PUBLIC const char *linphone_content_get_custom_header(const LinphoneContent *content, const char *header_name);
 
 /**
  * Adds a custom header in a content.
@@ -242,8 +238,8 @@ LINPHONE_PUBLIC const char *linphone_content_get_custom_header (const LinphoneCo
  * @param header_name The name of the header to add. @notnil
  * @param header_value The value of the header to add. @notnil
  */
-LINPHONE_PUBLIC void linphone_content_add_custom_header(LinphoneContent *content, const char *header_name,
-														const char *header_value);
+LINPHONE_PUBLIC void
+linphone_content_add_custom_header(LinphoneContent *content, const char *header_name, const char *header_value);
 
 /**
  * Get the key associated with a RCS file transfer message if encrypted
@@ -257,7 +253,7 @@ LINPHONE_PUBLIC const char *linphone_content_get_key(const LinphoneContent *cont
  * @param content #LinphoneContent object. @notnil
  * @return The key size in bytes
  */
-LINPHONE_PUBLIC size_t linphone_content_get_key_size (const LinphoneContent *content);
+LINPHONE_PUBLIC size_t linphone_content_get_key_size(const LinphoneContent *content);
 
 /**
  * Set the key associated with a RCS file transfer message if encrypted
@@ -265,14 +261,14 @@ LINPHONE_PUBLIC size_t linphone_content_get_key_size (const LinphoneContent *con
  * @param key The key to be used to encrypt/decrypt file associated to this content. @notnil
  * @param key_length The lengh of the key.
  */
-LINPHONE_PUBLIC void linphone_content_set_key (LinphoneContent *content, const char *key, const size_t key_length);
+LINPHONE_PUBLIC void linphone_content_set_key(LinphoneContent *content, const char *key, const size_t key_length);
 
 /**
  * Get the file transfer filepath set for this content (replace linphone_chat_message_get_file_transfer_filepath).
  * @param content #LinphoneContent object. @notnil
  * @return The file path set for this content if it has been set, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_content_get_file_path (const LinphoneContent *content);
+LINPHONE_PUBLIC const char *linphone_content_get_file_path(const LinphoneContent *content);
 
 /**
  * Generates a temporary plain copy of the file and returns its paths
@@ -281,14 +277,14 @@ LINPHONE_PUBLIC const char *linphone_content_get_file_path (const LinphoneConten
  * @param[in] content #LinphoneContent object.
  * @return The file path set for this content if it has been set, NULL otherwise. @tobefreed
  */
-LINPHONE_PUBLIC char *linphone_content_export_plain_file (const LinphoneContent *content);
+LINPHONE_PUBLIC char *linphone_content_export_plain_file(const LinphoneContent *content);
 
 /**
  * Set the file transfer filepath for this content (replace linphone_chat_message_set_file_transfer_filepath).
  * @param content #LinphoneContent object. @notnil
  * @param file_path the file transfer filepath. @maybenil
  */
-LINPHONE_PUBLIC void linphone_content_set_file_path (LinphoneContent *content, const char *file_path);
+LINPHONE_PUBLIC void linphone_content_set_file_path(LinphoneContent *content, const char *file_path);
 
 /**
  * Gets the file duration in seconds, if information is available.
@@ -302,35 +298,35 @@ LINPHONE_PUBLIC int linphone_content_get_file_duration(LinphoneContent *content)
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content contains plain text, FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_content_is_text (const LinphoneContent *content);
+LINPHONE_PUBLIC bool_t linphone_content_is_text(const LinphoneContent *content);
 
 /**
  * Tells whether or not this content contains a voice recording by checking it's content type.
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content type is 'audio/wav;voice-recording=yes', FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_content_is_voice_recording (const LinphoneContent *content);
+LINPHONE_PUBLIC bool_t linphone_content_is_voice_recording(const LinphoneContent *content);
 
 /**
  * Tells whether or not this content contains an icalendar by checking it's content type.
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content type is 'text/calendar;conference-event=yes', FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_content_is_icalendar (const LinphoneContent *content);
+LINPHONE_PUBLIC bool_t linphone_content_is_icalendar(const LinphoneContent *content);
 
 /**
  * Tells whether or not this content contains a file.
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content contains a file, FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_content_is_file (const LinphoneContent *content);
+LINPHONE_PUBLIC bool_t linphone_content_is_file(const LinphoneContent *content);
 
 /**
  * Tells whether or not this content is a file transfer.
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content is a file transfer, FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_content_is_file_transfer (const LinphoneContent *content);
+LINPHONE_PUBLIC bool_t linphone_content_is_file_transfer(const LinphoneContent *content);
 
 /**
  * Tells whether or not this content contains an encrypted file
@@ -348,7 +344,7 @@ LINPHONE_PUBLIC bool_t linphone_content_is_file_encrypted(const LinphoneContent 
  * @return The string content data buffer. @notnil
  * @deprecated 2020-07-01. Use linphone_content_get_utf8_text() instead.
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_content_get_string_buffer (const LinphoneContent *content);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_content_get_string_buffer(const LinphoneContent *content);
 
 /**
  * Set the string content data buffer.
@@ -356,7 +352,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_content_get_string_buff
  * @param buffer The string content data buffer in UTF8. @notnil
  * @deprecated 2020-07-01. Use linphone_content_set_utf8_text() instead.
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_content_set_string_buffer (LinphoneContent *content, const char *buffer);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_content_set_string_buffer(LinphoneContent *content,
+                                                                            const char *buffer);
 
 /**
  * Generates a temporary plain copy of the file and returns its paths
@@ -365,14 +362,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_content_set_string_buffer (Lin
  * @return The file path set for this content if it has been set, NULL otherwise. @tobefreed
  * @deprecated 2022-01-07. Use linphone_content_export_plain_file() instead.
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_content_get_plain_file_path (const LinphoneContent *content);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_content_get_plain_file_path(const LinphoneContent *content);
 
 /**
  * @}
  */
 
 #ifdef __cplusplus
-	}
+}
 #endif // ifdef __cplusplus
 
 #endif // ifndef _L_C_CONTENT_H_

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,6 @@ extern "C" {
  * @{
  */
 
-
 /**
  * Create a new #LinphoneLdap.
  *
@@ -41,7 +40,7 @@ extern "C" {
  * @param lc The #LinphoneCore object. @maybenil
  * @return The newly created #LinphoneLdap object. @notnil @tobefreed
  */
-LINPHONE_PUBLIC LinphoneLdap* linphone_ldap_new(LinphoneCore *lc);
+LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_new(LinphoneCore *lc);
 
 /**
  * Create a new #LinphoneLdap, associate it with the #LinphoneLdapParams and store it into the configuration file.
@@ -50,14 +49,14 @@ LINPHONE_PUBLIC LinphoneLdap* linphone_ldap_new(LinphoneCore *lc);
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The newly created #LinphoneLdap object. @notnil @tobefreed
  */
-LINPHONE_PUBLIC LinphoneLdap* linphone_ldap_new_with_params(LinphoneCore *lc, LinphoneLdapParams *params);
+LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_new_with_params(LinphoneCore *lc, LinphoneLdapParams *params);
 
 /**
  * Take a reference on a #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @return the same #LinphoneLdap object. @notnil
  */
-LINPHONE_PUBLIC LinphoneLdap* linphone_ldap_ref(LinphoneLdap *ldap);
+LINPHONE_PUBLIC LinphoneLdap *linphone_ldap_ref(LinphoneLdap *ldap);
 
 /**
  * Release a #LinphoneLdap.
@@ -71,39 +70,37 @@ LINPHONE_PUBLIC void linphone_ldap_unref(LinphoneLdap *ldap);
  * @param ldap The #LinphoneLdap object. @notnil
  * @param params The #LinphoneLdapParams object. @notnil
  */
-LINPHONE_PUBLIC void linphone_ldap_set_params(LinphoneLdap *ldap, LinphoneLdapParams* params);
+LINPHONE_PUBLIC void linphone_ldap_set_params(LinphoneLdap *ldap, LinphoneLdapParams *params);
 
 /**
  * Get the #LinphoneLdapParams as read-only object.
- * To make changes, clone the returned object using linphone_ldap_params_clone() method, 
+ * To make changes, clone the returned object using linphone_ldap_params_clone() method,
  * make your changes on it and apply them using with linphone_ldap_set_params().
  * @param ldap The #LinphoneLdap object. @notnil
  * @return The #LinphoneLdapParams attached to this ldap. @notnil
  */
-LINPHONE_PUBLIC const LinphoneLdapParams* linphone_ldap_get_params(LinphoneLdap *ldap);
-
+LINPHONE_PUBLIC const LinphoneLdapParams *linphone_ldap_get_params(LinphoneLdap *ldap);
 
 /**
  * Get the #LinphoneCore object to which is associated the #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @return The #LinphoneCore object to which is associated the #LinphoneLdap. @notnil
-**/
-LINPHONE_PUBLIC LinphoneCore* linphone_ldap_get_core(LinphoneLdap *ldap);
+ **/
+LINPHONE_PUBLIC LinphoneCore *linphone_ldap_get_core(LinphoneLdap *ldap);
 
 /**
  * Set the index associated to the #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @param The index of the Ldap. Can be -1 : it will be determined on save.
-**/
+ **/
 LINPHONE_PUBLIC void linphone_ldap_set_index(LinphoneLdap *ldap, int index);
 
 /**
  * Get the index of the #LinphoneLdap.
  * @param ldap The #LinphoneLdap object. @notnil
  * @return The index of the Ldap
-**/
+ **/
 LINPHONE_PUBLIC int linphone_ldap_get_index(const LinphoneLdap *ldap);
-
 
 /**
  * @}

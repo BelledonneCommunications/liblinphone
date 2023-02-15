@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,17 +21,17 @@
 #ifndef LINPHONE_LDAP_CONTACT_SEARCH_H_
 #define LINPHONE_LDAP_CONTACT_SEARCH_H_
 
+#include "../search/search-result.h"
+#include "belle-sip/object++.hh"
+#include "core/core-accessor.h"
+#include "core/core.h"
+#include "linphone/contactprovider.h"
 #include "linphone/core.h"
 #include "linphone/types.h"
-#include "linphone/contactprovider.h"
-#include "belle-sip/object++.hh"
-#include "core/core.h"
-#include "core/core-accessor.h"
-#include "../search/search-result.h"
-#include <map>
-#include <vector>
-#include <string>
 #include <list>
+#include <map>
+#include <string>
+#include <vector>
 
 #include <ldap.h>
 
@@ -41,25 +41,25 @@ class LdapContactProvider;
 
 class LINPHONE_PUBLIC LdapContactSearch {
 public:
-	LdapContactSearch(const int& msgId);
-	LdapContactSearch(LdapContactProvider * parent, std::string predicate, ContactSearchCallback cb, void* cbData);
+	LdapContactSearch(const int &msgId);
+	LdapContactSearch(LdapContactProvider *parent, std::string predicate, ContactSearchCallback cb, void *cbData);
 	virtual ~LdapContactSearch();
-	
+
 	void callCallback();
-	
-	static int entryCompareWeak(const void*a, const void* b);
-	
+
+	static int entryCompareWeak(const void *a, const void *b);
+
 	int mMsgId;
 	std::string mFilter;
-	bool_t  complete;
+	bool_t complete;
 	bool_t mHaveMoreResults = FALSE;
 	std::list<std::shared_ptr<SearchResult>> mFoundEntries;
 	unsigned int mFoundCount;
-	
+
 private:
 	std::string mPredicate;
 	ContactSearchCallback mCb;
-	void* mCbData;
+	void *mCbData;
 };
 
 LINPHONE_END_NAMESPACE

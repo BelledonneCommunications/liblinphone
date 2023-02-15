@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,8 +25,8 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "core/core-p.h"
-#include "linphone/utils/utils.h"
 #include "linphone/types.h"
+#include "linphone/utils/utils.h"
 #include "private.h"
 
 // =============================================================================
@@ -35,7 +35,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-CallLog::CallLog (shared_ptr<Core> core, LinphoneCallDir direction, LinphoneAddress *from, LinphoneAddress *to) : CoreAccessor(core) {
+CallLog::CallLog(shared_ptr<Core> core, LinphoneCallDir direction, LinphoneAddress *from, LinphoneAddress *to)
+    : CoreAccessor(core) {
 	mDirection = direction;
 	mFrom = from;
 	mTo = to;
@@ -48,126 +49,129 @@ CallLog::CallLog (shared_ptr<Core> core, LinphoneCallDir direction, LinphoneAddr
 	mReporting.reports[LINPHONE_CALL_STATS_TEXT] = linphone_reporting_new();
 }
 
-CallLog::~CallLog () {
+CallLog::~CallLog() {
 	if (mFrom != nullptr) linphone_address_unref(mFrom);
 	if (mTo != nullptr) linphone_address_unref(mTo);
-	if (mReporting.reports[LINPHONE_CALL_STATS_AUDIO] != nullptr) linphone_reporting_destroy(mReporting.reports[LINPHONE_CALL_STATS_AUDIO]);
-	if (mReporting.reports[LINPHONE_CALL_STATS_VIDEO] != nullptr) linphone_reporting_destroy(mReporting.reports[LINPHONE_CALL_STATS_VIDEO]);
-	if (mReporting.reports[LINPHONE_CALL_STATS_TEXT] != nullptr) linphone_reporting_destroy(mReporting.reports[LINPHONE_CALL_STATS_TEXT]);
+	if (mReporting.reports[LINPHONE_CALL_STATS_AUDIO] != nullptr)
+		linphone_reporting_destroy(mReporting.reports[LINPHONE_CALL_STATS_AUDIO]);
+	if (mReporting.reports[LINPHONE_CALL_STATS_VIDEO] != nullptr)
+		linphone_reporting_destroy(mReporting.reports[LINPHONE_CALL_STATS_VIDEO]);
+	if (mReporting.reports[LINPHONE_CALL_STATS_TEXT] != nullptr)
+		linphone_reporting_destroy(mReporting.reports[LINPHONE_CALL_STATS_TEXT]);
 	if (mErrorInfo != nullptr) linphone_error_info_unref(mErrorInfo);
 }
 
 // =============================================================================
 
-LinphoneCallDir CallLog::getDirection () const {
+LinphoneCallDir CallLog::getDirection() const {
 	return mDirection;
 }
 
-void CallLog::setDirection (LinphoneCallDir direction) {
+void CallLog::setDirection(LinphoneCallDir direction) {
 	mDirection = direction;
 }
 
-int CallLog::getDuration () const {
+int CallLog::getDuration() const {
 	return mDuration;
 }
 
-void CallLog::setDuration (int duration) {
+void CallLog::setDuration(int duration) {
 	mDuration = duration;
 }
 
-float CallLog::getQuality () const {
+float CallLog::getQuality() const {
 	return mQuality;
 }
 
-void CallLog::setQuality (float quality) {
+void CallLog::setQuality(float quality) {
 	mQuality = quality;
 }
 
-const LinphoneAddress *CallLog::getFromAddress () const {
+const LinphoneAddress *CallLog::getFromAddress() const {
 	return mFrom;
 }
 
-void CallLog::setFromAddress (LinphoneAddress *address) {
+void CallLog::setFromAddress(LinphoneAddress *address) {
 	if (mFrom) linphone_address_unref(mFrom);
 	mFrom = address;
 }
 
-const LinphoneAddress *CallLog::getToAddress () const {
+const LinphoneAddress *CallLog::getToAddress() const {
 	return mTo;
 }
 
-void CallLog::setToAddress (LinphoneAddress *address) {
+void CallLog::setToAddress(LinphoneAddress *address) {
 	if (mTo) linphone_address_unref(mTo);
 	mTo = address;
 }
 
-const string &CallLog::getCallId () const {
+const string &CallLog::getCallId() const {
 	return mCallId;
 }
 
-void CallLog::setCallId (const string &callId) {
+void CallLog::setCallId(const string &callId) {
 	mCallId = callId;
 }
 
-const string &CallLog::getRefKey () const {
+const string &CallLog::getRefKey() const {
 	return mRefKey;
 }
 
-void CallLog::setRefKey (const string &refKey) {
+void CallLog::setRefKey(const string &refKey) {
 	mRefKey = refKey;
 }
 
-time_t CallLog::getStartTime () const {
+time_t CallLog::getStartTime() const {
 	return mStartTime;
 }
 
-void CallLog::setStartTime (time_t startTime) {
+void CallLog::setStartTime(time_t startTime) {
 	mStartTime = startTime;
 	mStartDate = Utils::getTimeAsString("%c", mStartTime);
 }
 
-time_t CallLog::getConnectedTime () const {
+time_t CallLog::getConnectedTime() const {
 	return mConnectedTime;
 }
 
-void CallLog::setConnectedTime (time_t connectedTime) {
+void CallLog::setConnectedTime(time_t connectedTime) {
 	mConnectedTime = connectedTime;
 }
 
-LinphoneCallStatus CallLog::getStatus () const {
+LinphoneCallStatus CallLog::getStatus() const {
 	return mStatus;
 }
 
-void CallLog::setStatus (LinphoneCallStatus status) {
+void CallLog::setStatus(LinphoneCallStatus status) {
 	mStatus = status;
 }
 
-bool CallLog::isVideoEnabled () const {
+bool CallLog::isVideoEnabled() const {
 	return mVideoEnabled;
 }
 
-void CallLog::setVideoEnabled (bool enabled) {
+void CallLog::setVideoEnabled(bool enabled) {
 	mVideoEnabled = enabled;
 }
 
-bool CallLog::wasConference () {
+bool CallLog::wasConference() {
 	return getConferenceInfo() != nullptr;
 }
 
-const LinphoneErrorInfo *CallLog::getErrorInfo () const {
+const LinphoneErrorInfo *CallLog::getErrorInfo() const {
 	return mErrorInfo;
 }
 
-void CallLog::setErrorInfo (LinphoneErrorInfo *errorInfo) {
+void CallLog::setErrorInfo(LinphoneErrorInfo *errorInfo) {
 	if (mErrorInfo) linphone_error_info_unref(mErrorInfo);
 	mErrorInfo = errorInfo;
 }
 
-const LinphoneAddress *CallLog::getRemoteAddress () const {
+const LinphoneAddress *CallLog::getRemoteAddress() const {
 	return (mDirection == LinphoneCallIncoming) ? mFrom : mTo;
 }
 
-void CallLog::setRemoteAddress (const LinphoneAddress *remoteAddress) {
+void CallLog::setRemoteAddress(const LinphoneAddress *remoteAddress) {
 	if (mDirection == LinphoneCallIncoming) {
 		if (mFrom) linphone_address_unref(mFrom);
 		mFrom = linphone_address_clone(remoteAddress);
@@ -177,37 +181,37 @@ void CallLog::setRemoteAddress (const LinphoneAddress *remoteAddress) {
 	}
 }
 
-void *CallLog::getUserData () const {
+void *CallLog::getUserData() const {
 	return mUserData;
 }
 
-void CallLog::setUserData (void* userData) {
+void CallLog::setUserData(void *userData) {
 	mUserData = userData;
 }
 
-const LinphoneAddress *CallLog::getLocalAddress () const {
+const LinphoneAddress *CallLog::getLocalAddress() const {
 	return (mDirection == LinphoneCallIncoming) ? mTo : mFrom;
 }
 
-const std::string &CallLog::getStartTimeString () const {
+const std::string &CallLog::getStartTimeString() const {
 	return mStartDate;
 }
 
-LinphoneQualityReporting *CallLog::getQualityReporting () {
+LinphoneQualityReporting *CallLog::getQualityReporting() {
 	return &mReporting;
 }
 
-void CallLog::setConferenceInfoId (long long conferenceInfoId) {
+void CallLog::setConferenceInfoId(long long conferenceInfoId) {
 	mConferenceInfoId = conferenceInfoId;
 }
 
 // =============================================================================
 
-void CallLog::setConferenceInfo (std::shared_ptr<ConferenceInfo> conferenceInfo) {
+void CallLog::setConferenceInfo(std::shared_ptr<ConferenceInfo> conferenceInfo) {
 	mConferenceInfo = conferenceInfo;
 }
 
-std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo () {
+std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo() {
 	if (mConferenceInfo != nullptr) return mConferenceInfo;
 
 	if (mConferenceInfoId != -1) {
@@ -222,7 +226,8 @@ std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo () {
 string CallLog::toString() const {
 	ostringstream os;
 
-	os << (mDirection == LinphoneCallIncoming ? "Incoming call" : "Outgoing call") << " with call-id: " << mCallId << " at " << mStartDate << "\n";
+	os << (mDirection == LinphoneCallIncoming ? "Incoming call" : "Outgoing call") << " with call-id: " << mCallId
+	   << " at " << mStartDate << "\n";
 
 	char *from = linphone_address_as_string(mFrom);
 	char *to = linphone_address_as_string(mTo);
@@ -233,7 +238,7 @@ string CallLog::toString() const {
 	bctbx_free(to);
 
 	string status;
-	switch(mStatus) {
+	switch (mStatus) {
 		case LinphoneCallAborted:
 			status = "aborted";
 			break;
@@ -253,7 +258,7 @@ string CallLog::toString() const {
 			status = "unknown";
 	}
 
-	os << "Status: " << status << "\nDuration: " << (mDuration/60) << " mn " << (mDuration%60) << " sec\n";
+	os << "Status: " << status << "\nDuration: " << (mDuration / 60) << " mn " << (mDuration % 60) << " sec\n";
 
 	return os.str();
 }

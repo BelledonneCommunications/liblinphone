@@ -23,6 +23,9 @@
 
 #include "bctoolbox/defs.h"
 #include "liblinphone_tester.h"
+
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "mediastreamer2/msutils.h"
@@ -178,8 +181,10 @@ void liblinphone_tester_check_rtcp_2(LinphoneCoreManager *caller, LinphoneCoreMa
 
 static const char *info_content = "<somexml>blabla</somexml>";
 
-static void
-call_check_log_duration_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
+static void call_check_log_duration_cb(BCTBX_UNUSED(LinphoneCore *lc),
+                                       LinphoneCall *call,
+                                       LinphoneCallState cstate,
+                                       BCTBX_UNUSED(const char *message)) {
 	if (cstate == LinphoneCallStateEnd || cstate == LinphoneCallStateReleased) {
 		LinphoneCallLog *call_log = linphone_call_get_call_log(call);
 		BC_ASSERT_PTR_NOT_NULL(call_log);
@@ -1534,6 +1539,10 @@ void disable_all_audio_codecs_except_one(LinphoneCore *lc, const char *mime, int
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void disable_all_video_codecs_except_one(LinphoneCore *lc, const char *mime) {
 #ifdef VIDEO_ENABLED
 	const bctbx_list_t *codecs = linphone_core_get_video_codecs(lc);
@@ -1549,6 +1558,9 @@ void disable_all_video_codecs_except_one(LinphoneCore *lc, const char *mime) {
 	}
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static void call_with_dns_time_out(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
@@ -2244,7 +2256,7 @@ static void on_ack_processing(LinphoneCall *call, LinphoneHeaders *ack, bool_t i
 	}
 }
 
-static void call_created(LinphoneCore *lc, LinphoneCall *call) {
+static void call_created(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	LinphoneCallCbs *cbs = linphone_factory_create_call_cbs(linphone_factory_get());
 	linphone_call_cbs_set_ack_processing(cbs, on_ack_processing);
 	linphone_call_add_callbacks(call, cbs);
@@ -2448,7 +2460,7 @@ static void call_with_custom_reserved_headers(void) {
 static void call_with_custom_sdp_attributes_cb(LinphoneCore *lc,
                                                LinphoneCall *call,
                                                LinphoneCallState cstate,
-                                               const char *message) {
+                                               BCTBX_UNUSED(const char *message)) {
 	if (cstate == LinphoneCallUpdatedByRemote) {
 		LinphoneCallParams *params;
 		const LinphoneCallParams *remote_params = linphone_call_get_remote_params(call);
@@ -2522,19 +2534,17 @@ static void call_with_custom_sdp_attributes(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void
-call_with_custom_header_or_sdp_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
-
+static void call_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *lc),
+                                              LinphoneCall *call,
+                                              LinphoneCallState cstate,
+                                              BCTBX_UNUSED(const char *message)) {
 	const char *value;
 	if (cstate == LinphoneCallOutgoingInit) {
 		LinphoneCallParams *params = linphone_call_params_copy(linphone_call_get_params(call));
 		linphone_call_params_add_custom_sdp_attribute(params, "working", "maybe");
 		linphone_call_set_params(call, params);
 		linphone_call_params_unref(params);
-
-	}
-
-	else if (cstate == LinphoneCallIncomingReceived) {
+	} else if (cstate == LinphoneCallIncomingReceived) {
 		const LinphoneCallParams *tparams = linphone_call_get_remote_params(call);
 		LinphoneCallParams *params = linphone_call_params_copy(tparams);
 		// Check received params
@@ -2644,10 +2654,10 @@ static void call_caller_with_custom_header_or_sdp_attributes(void) {
 	linphone_core_manager_destroy(caller_mgr);
 }
 
-static void call_callee_with_custom_header_or_sdp_cb(LinphoneCore *lc,
+static void call_callee_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *lc),
                                                      LinphoneCall *call,
                                                      LinphoneCallState cstate,
-                                                     const char *message) {
+                                                     BCTBX_UNUSED(const char *message)) {
 
 	const char *value;
 	if (cstate == LinphoneCallOutgoingInit) {
@@ -2655,10 +2665,7 @@ static void call_callee_with_custom_header_or_sdp_cb(LinphoneCore *lc,
 		linphone_call_params_add_custom_sdp_attribute(params, "working", "maybe");
 		linphone_call_set_params(call, params);
 		linphone_call_params_unref(params);
-
-	}
-
-	else if (cstate == LinphoneCallIncomingReceived) {
+	} else if (cstate == LinphoneCallIncomingReceived) {
 		const LinphoneCallParams *tparams = linphone_call_get_remote_params(call);
 		LinphoneCallParams *params = linphone_call_params_copy(tparams);
 		value = linphone_call_params_get_custom_sdp_attribute(params, "working");
@@ -3844,8 +3851,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode,
 			}
 		}
 
-#ifdef VIDEO_ENABLED
 		if (enable_video) {
+#ifdef VIDEO_ENABLED
 			if (linphone_core_video_supported(marie->lc)) {
 				BC_ASSERT_TRUE(request_video(pauline, marie, TRUE));
 				if (policy == LinphonePolicyUseIce) {
@@ -3858,8 +3865,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode,
 			} else {
 				ms_warning("not tested because video not available");
 			}
-		}
 #endif
+		}
 		end_call(marie, pauline);
 	} else {
 		ms_warning("not tested because %s not available", linphone_media_encryption_to_string(mode));
@@ -4487,6 +4494,10 @@ static void call_rejected_without_403_because_wrong_credentials_no_auth_req_cb(v
 	call_rejected_because_wrong_credentials_with_params("tester-no-403", FALSE);
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void check_media_direction(LinphoneCoreManager *mgr,
                            LinphoneCall *call,
                            bctbx_list_t *lcs,
@@ -4564,11 +4575,14 @@ void check_media_direction(LinphoneCoreManager *mgr,
 		linphone_call_unref(call);
 	}
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-static void call_state_changed_callback_to_start_record(LinphoneCore *lc,
+static void call_state_changed_callback_to_start_record(BCTBX_UNUSED(LinphoneCore *lc),
                                                         LinphoneCall *call,
                                                         LinphoneCallState state,
-                                                        const char *message) {
+                                                        BCTBX_UNUSED(const char *message)) {
 	if (state == /*LinphoneCallStreamsRunning*/ LinphoneCallConnected) {
 		ms_message("call_recording(): start early recording into %s",
 		           linphone_call_params_get_record_file(linphone_call_get_params(call)));
@@ -4576,6 +4590,10 @@ static void call_state_changed_callback_to_start_record(LinphoneCore *lc,
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec) {
 	LinphoneCoreManager *marie = NULL;
 	LinphoneCoreManager *pauline = NULL;
@@ -4656,6 +4674,9 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 static void audio_call_recording_test(void) {
 	record_call("recording", FALSE, NULL);
@@ -5097,7 +5118,10 @@ static void call_with_generic_cn(void) {
 	bc_free(recorded_file);
 }
 
-static void call_state_changed_2(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
+static void call_state_changed_2(LinphoneCore *lc,
+                                 BCTBX_UNUSED(LinphoneCall *call),
+                                 LinphoneCallState cstate,
+                                 BCTBX_UNUSED(const char *msg)) {
 	LinphoneSipTransports sip_tr;
 	if (cstate == LinphoneCallReleased) {
 		/*to make sure transport is changed*/
@@ -5109,7 +5133,10 @@ static void call_state_changed_2(LinphoneCore *lc, LinphoneCall *call, LinphoneC
 	}
 }
 
-static void call_state_changed_3(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
+static void call_state_changed_3(BCTBX_UNUSED(LinphoneCore *lc),
+                                 LinphoneCall *call,
+                                 LinphoneCallState cstate,
+                                 BCTBX_UNUSED(const char *msg)) {
 	/*just to check multi listener in such situation*/
 	LinphoneCallLog *clog = linphone_call_get_call_log(call);
 	char *to = linphone_address_as_string(linphone_call_log_get_to_address(clog));
@@ -5537,13 +5564,16 @@ static void rtptm_on_schedule(RtpTransportModifier *rtptm) {
 
 // This callback is called when the transport modifier is being destroyed
 // It is a good place to free the resources allocated for the transport modifier
-static void rtptm_destroy(RtpTransportModifier *rtptm) {
+static void rtptm_destroy(BCTBX_UNUSED(RtpTransportModifier *rtptm)) {
 	// Do nothing, we'll free it later because we need to access the RtpTransportModifierData structure after the call
 	// is ended
 }
 
 // This is the callback called when the state of the call change
-static void call_state_changed_4(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
+static void call_state_changed_4(BCTBX_UNUSED(LinphoneCore *lc),
+                                 LinphoneCall *call,
+                                 LinphoneCallState cstate,
+                                 BCTBX_UNUSED(const char *msg)) {
 	int i = 0;
 
 	// To add a custom RTP transport modifier, we have to do it before the call is running, but after the RTP session is
@@ -6166,7 +6196,10 @@ static void v6_call_over_nat_64(void) {
 	} else ms_warning("Test skipped, no ipv6 nat64 available");
 }
 
-static void my_call_state_changed_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *text) {
+static void my_call_state_changed_cb(LinphoneCore *lc,
+                                     BCTBX_UNUSED(LinphoneCall *call),
+                                     LinphoneCallState state,
+                                     BCTBX_UNUSED(const char *text)) {
 	if (state == LinphoneCallError) {
 		linphone_core_set_network_reachable(lc, FALSE);
 	}
@@ -6633,8 +6666,10 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void
-call_state_changed_accept_early_media(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
+static void call_state_changed_accept_early_media(BCTBX_UNUSED(LinphoneCore *lc),
+                                                  LinphoneCall *call,
+                                                  LinphoneCallState cstate,
+                                                  BCTBX_UNUSED(const char *msg)) {
 	if (cstate == LinphoneCallIncomingReceived) {
 		/* send a 183 to initiate the early media */
 		linphone_call_accept_early_media(call);

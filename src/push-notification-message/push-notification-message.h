@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,17 +26,32 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotificationMessage, PushNotificationMessage> {
-  public:
-	PushNotificationMessage(const std::string &callId, bool isText,
-							const std::string &textContent, const std::string &subject, const std::string &fromAddr,
-							const std::string &localAddr, const std::string &peerAddr, bool isIcalendar,
-							bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation);
+class PushNotificationMessage
+    : public bellesip::HybridObject<LinphonePushNotificationMessage, PushNotificationMessage> {
+public:
+	PushNotificationMessage(const std::string &callId,
+	                        bool isText,
+	                        const std::string &textContent,
+	                        const std::string &subject,
+	                        const std::string &fromAddr,
+	                        const std::string &localAddr,
+	                        const std::string &peerAddr,
+	                        bool isIcalendar,
+	                        bool isConferenceInvitationNew,
+	                        bool isConferenceInvitationUpdate,
+	                        bool isConferenceInvitationCancellation);
 
-	void init(const std::string &callId, bool isText, const std::string &textContent,
-			  const std::string &subject, const std::string &fromAddr, const std::string &localAddr,
-			  const std::string &peerAddr, bool isIcalendar,
-			  bool isConferenceInvitationNew,	bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation);
+	void init(const std::string &callId,
+	          bool isText,
+	          const std::string &textContent,
+	          const std::string &subject,
+	          const std::string &fromAddr,
+	          const std::string &localAddr,
+	          const std::string &peerAddr,
+	          bool isIcalendar,
+	          bool isConferenceInvitationNew,
+	          bool isConferenceInvitationUpdate,
+	          bool isConferenceInvitationCancellation);
 
 	const std::string &getCallId() const;
 	bool isText() const;
@@ -52,7 +67,7 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 
 	std::string toString() const override;
 
-  private:
+private:
 	std::string mCallId;
 	bool mIsText;
 	std::string mTextContent;

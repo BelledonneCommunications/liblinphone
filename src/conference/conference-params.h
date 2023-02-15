@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,112 +23,172 @@
 
 #include <string>
 
+#include "address/address.h"
 #include "conference/conference-interface.h"
 #include "core/core.h"
 #include "linphone/core.h"
-#include "address/address.h"
 
 #include "belle-sip/object++.hh"
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
+namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
+	                        // src/conference/*
 class Conference;
 class LocalConference;
 class RemoteConference;
-}
+} // namespace MediaConference
 
-class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>, public ConferenceParamsInterface {
+class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>,
+                                         public ConferenceParamsInterface {
 	friend class MediaConference::Conference;
 	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
-	public:
 
-		ConferenceParams(const ConferenceParams& params);
-		ConferenceParams(const LinphoneCore *core = NULL);
+public:
+	ConferenceParams(const ConferenceParams &params);
+	ConferenceParams(const LinphoneCore *core = NULL);
 
-		ConferenceParams *clone()const override{
-			return new ConferenceParams(*this);
-		}
+	ConferenceParams *clone() const override {
+		return new ConferenceParams(*this);
+	}
 
-		virtual void setConferenceFactoryAddress(const Address &address)override {
-			m_useDefaultFactoryAddress = false;
-			m_factoryAddress = address;// Setting with Address("") means that we want a local conference
-		};
-		
-		const Address& getConferenceFactoryAddress() const {
-			return m_factoryAddress;
-		};
+	virtual void setConferenceFactoryAddress(const Address &address) override {
+		m_useDefaultFactoryAddress = false;
+		m_factoryAddress = address; // Setting with Address("") means that we want a local conference
+	};
 
-		void setStatic(bool enable) {m_static = enable;}
-		bool isStatic() const {return m_static;}
+	const Address &getConferenceFactoryAddress() const {
+		return m_factoryAddress;
+	};
 
-		virtual void enableVideo(bool enable) override {m_enableVideo = enable;}
-		bool videoEnabled() const {return m_enableVideo;}
+	void setStatic(bool enable) {
+		m_static = enable;
+	}
+	bool isStatic() const {
+		return m_static;
+	}
 
-		virtual void  enableAudio(bool enable) override {m_enableAudio = enable;};
-		bool audioEnabled() const {return m_enableAudio;}
+	virtual void enableVideo(bool enable) override {
+		m_enableVideo = enable;
+	}
+	bool videoEnabled() const {
+		return m_enableVideo;
+	}
 
-		virtual void  enableChat(bool enable) override {m_enableChat = enable;};
-		bool chatEnabled() const {return m_enableChat;}
+	virtual void enableAudio(bool enable) override {
+		m_enableAudio = enable;
+	};
+	bool audioEnabled() const {
+		return m_enableAudio;
+	}
 
-		void enableLocalParticipant (bool enable) { m_localParticipantEnabled = enable; }
-		bool localParticipantEnabled() const { return m_localParticipantEnabled; }
+	virtual void enableChat(bool enable) override {
+		m_enableChat = enable;
+	};
+	bool chatEnabled() const {
+		return m_enableChat;
+	}
 
-		void enableOneParticipantConference (bool enable) { m_allowOneParticipantConference = enable; }
-		bool oneParticipantConferenceEnabled() const { return m_allowOneParticipantConference; }
+	void enableLocalParticipant(bool enable) {
+		m_localParticipantEnabled = enable;
+	}
+	bool localParticipantEnabled() const {
+		return m_localParticipantEnabled;
+	}
 
-		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
-		const ConferenceAddress & getConferenceAddress() const { return m_conferenceAddress; };
+	void enableOneParticipantConference(bool enable) {
+		m_allowOneParticipantConference = enable;
+	}
+	bool oneParticipantConferenceEnabled() const {
+		return m_allowOneParticipantConference;
+	}
 
-		void setUtf8Description (const std::string &description);
-		void setDescription (const std::string &description) { m_description = description; };
-		const std::string &getDescription() const { return m_description; };
-		const std::string getUtf8Description() const;
+	virtual void setConferenceAddress(const ConferenceAddress conferenceAddress) override {
+		m_conferenceAddress = conferenceAddress;
+	};
+	const ConferenceAddress &getConferenceAddress() const {
+		return m_conferenceAddress;
+	};
 
-		virtual void setUtf8Subject (const std::string &subject) override;
-		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
-		const std::string getUtf8Subject() const;
-		const std::string &getSubject() const { return m_subject; };
+	void setUtf8Description(const std::string &description);
+	void setDescription(const std::string &description) {
+		m_description = description;
+	};
+	const std::string &getDescription() const {
+		return m_description;
+	};
+	const std::string getUtf8Description() const;
 
-		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
-		const IdentityAddress &getMe() const { return m_me; };
+	virtual void setUtf8Subject(const std::string &subject) override;
+	virtual void setSubject(const std::string &subject) override {
+		m_subject = subject;
+	};
+	const std::string getUtf8Subject() const;
+	const std::string &getSubject() const {
+		return m_subject;
+	};
 
-		void setAccount(LinphoneAccount * a);
-		LinphoneAccount * getAccount() const { return m_account; };
+	virtual void setMe(const IdentityAddress &participantAddress) override {
+		m_me = participantAddress;
+	};
+	const IdentityAddress &getMe() const {
+		return m_me;
+	};
 
-		virtual void setStartTime (const time_t &start) override { m_startTime = start; };
-		const time_t &getStartTime() const { return m_startTime; };
+	void setAccount(LinphoneAccount *a);
+	LinphoneAccount *getAccount() const {
+		return m_account;
+	};
 
-		virtual void setEndTime (const time_t &end) override { m_endTime = end; };
-		const time_t &getEndTime() const { return m_endTime; };
+	virtual void setStartTime(const time_t &start) override {
+		m_startTime = start;
+	};
+	const time_t &getStartTime() const {
+		return m_startTime;
+	};
 
-		virtual void setParticipantListType (const ParticipantListType &type) override { m_participantListType = type; };
-		const ParticipantListType &getParticipantListType() const { return m_participantListType; };
+	virtual void setEndTime(const time_t &end) override {
+		m_endTime = end;
+	};
+	const time_t &getEndTime() const {
+		return m_endTime;
+	};
 
-		virtual void setJoiningMode (const JoiningMode &mode) override { m_joinMode = mode; };
-		const JoiningMode &getJoiningMode() const { return m_joinMode; };
+	virtual void setParticipantListType(const ParticipantListType &type) override {
+		m_participantListType = type;
+	};
+	const ParticipantListType &getParticipantListType() const {
+		return m_participantListType;
+	};
 
-	private:
-		void updateFromAccount(LinphoneAccount * account);// Update Me and default factory from account.
-	
-		bool m_enableVideo = false;
-		bool m_enableAudio = false;
-		bool m_enableChat = false;
-		bool m_localParticipantEnabled = true;
-		bool m_allowOneParticipantConference = false;
-		ParticipantListType m_participantListType = ParticipantListType::Open;
-		JoiningMode m_joinMode = JoiningMode::DialIn;
-		ConferenceAddress m_conferenceAddress = ConferenceAddress();
-		Address m_factoryAddress = Address();
-		bool m_useDefaultFactoryAddress = true;
-		std::string m_subject = "";
-		std::string m_description = "";
-		IdentityAddress m_me = IdentityAddress();
-		time_t m_startTime = (time_t)-1;
-		time_t m_endTime = (time_t)-1;
-		LinphoneAccount * m_account = nullptr;
-		bool m_static = false;
+	virtual void setJoiningMode(const JoiningMode &mode) override {
+		m_joinMode = mode;
+	};
+	const JoiningMode &getJoiningMode() const {
+		return m_joinMode;
+	};
+
+private:
+	void updateFromAccount(LinphoneAccount *account); // Update Me and default factory from account.
+
+	bool m_enableVideo = false;
+	bool m_enableAudio = false;
+	bool m_enableChat = false;
+	bool m_localParticipantEnabled = true;
+	bool m_allowOneParticipantConference = false;
+	ParticipantListType m_participantListType = ParticipantListType::Open;
+	JoiningMode m_joinMode = JoiningMode::DialIn;
+	ConferenceAddress m_conferenceAddress = ConferenceAddress();
+	Address m_factoryAddress = Address();
+	bool m_useDefaultFactoryAddress = true;
+	std::string m_subject = "";
+	std::string m_description = "";
+	IdentityAddress m_me = IdentityAddress();
+	time_t m_startTime = (time_t)-1;
+	time_t m_endTime = (time_t)-1;
+	LinphoneAccount *m_account = nullptr;
+	bool m_static = false;
 };
 
 LINPHONE_END_NAMESPACE

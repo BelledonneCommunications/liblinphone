@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #define _L_BASIC_CHAT_ROOM_H_
 
 #include "chat/chat-room/chat-room.h"
+#include "conference/conference-id.h"
 
 // =============================================================================
 
@@ -34,54 +35,59 @@ class LINPHONE_PUBLIC BasicChatRoom : public ChatRoom {
 	friend class CorePrivate;
 
 public:
-	void allowCpim (bool value) override;
-	void allowMultipart (bool value) override;
-	bool canHandleCpim () const override;
-	bool canHandleMultipart () const override;
+	void allowCpim(bool value) override;
+	void allowMultipart(bool value) override;
+	bool canHandleCpim() const override;
+	bool canHandleMultipart() const override;
 
-	CapabilitiesMask getCapabilities () const override;
-	bool hasBeenLeft () const override;
-	bool isReadOnly () const override;
+	CapabilitiesMask getCapabilities() const override;
+	bool hasBeenLeft() const override;
+	bool isReadOnly() const override;
 
-	const ConferenceAddress &getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress() const override;
 
-	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
+	bool removeParticipants(const std::list<std::shared_ptr<Participant>> &participants) override;
 
-	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
+	std::shared_ptr<Participant> findParticipant(const IdentityAddress &addr) const override;
 
-	std::shared_ptr<Participant> getMe () const override;
-	int getParticipantCount () const override;
-	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
-	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
+	std::shared_ptr<Participant> getMe() const override;
+	int getParticipantCount() const override;
+	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
+	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices() const override;
 
-	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
+	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	const std::string & getSubject () const override;
-	void setSubject (const std::string &subject) override;
+	const std::string &getSubject() const override;
+	void setSubject(const std::string &subject) override;
 
 	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::join;
-	void join () override;
-	void leave () override;
+	void join() override;
+	void leave() override;
 
-	const ConferenceId &getConferenceId () const override;
+	const ConferenceId &getConferenceId() const override;
 
-	bool addParticipant (const IdentityAddress &participantAddress) override;
-	bool addParticipant (std::shared_ptr<Call> call) override;
-	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
-	void join (const IdentityAddress &participantAddress) override;
+	bool addParticipant(const IdentityAddress &participantAddress) override;
+	bool addParticipant(std::shared_ptr<Call> call) override;
+	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
+	void join(const IdentityAddress &participantAddress) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 
-	State getState () const override;
-	void setState (ConferenceInterface::State newState) override;
+	State getState() const override;
+	void setState(ConferenceInterface::State newState) override;
 
 protected:
-	explicit BasicChatRoom (BasicChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
+	explicit BasicChatRoom(BasicChatRoomPrivate &p,
+	                       const std::shared_ptr<Core> &core,
+	                       const ConferenceId &conferenceId,
+	                       const std::shared_ptr<ChatRoomParams> &params);
 
 private:
-	BasicChatRoom (const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
+	BasicChatRoom(const std::shared_ptr<Core> &core,
+	              const ConferenceId &conferenceId,
+	              const std::shared_ptr<ChatRoomParams> &params);
 
 	ConferenceId conferenceId;
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,15 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#include "core/core.h"
 #include "mixers.h"
 #include "streams.h"
-#include "core/core.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-
-MixerSession::MixerSession(Core &core) : mCore(core){
+MixerSession::MixerSession(Core &core) : mCore(core) {
 	auto audioMixer = new MS2AudioMixer(*this);
 	audioMixer->addListener(this);
 	mMixers[SalAudio].reset(audioMixer);
@@ -35,57 +33,64 @@ MixerSession::MixerSession(Core &core) : mCore(core){
 #endif
 }
 
-MixerSession::~MixerSession(){
+MixerSession::~MixerSession() {
 }
 
-void MixerSession::joinStreamsGroup(StreamsGroup &sg){
+void MixerSession::joinStreamsGroup(StreamsGroup &sg) {
 	lInfo() << sg << " is joining " << *this;
 	sg.joinMixerSession(this);
 }
 
-void MixerSession::unjoinStreamsGroup(StreamsGroup &sg){
+void MixerSession::unjoinStreamsGroup(StreamsGroup &sg) {
 	lInfo() << sg << " is unjoining " << *this;
 	sg.unjoinMixerSession();
 }
 
-void MixerSession::setFocus(StreamsGroup *sg){
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void MixerSession::setFocus(StreamsGroup *sg) {
 #ifdef VIDEO_ENABLED
-	MS2VideoMixer *mixer = dynamic_cast<MS2VideoMixer*>(mMixers[SalVideo].get());
+	MS2VideoMixer *mixer = dynamic_cast<MS2VideoMixer *>(mMixers[SalVideo].get());
 	if (mixer) mixer->setFocus(sg);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-StreamMixer *MixerSession::getMixerByType(SalStreamType type){
+StreamMixer *MixerSession::getMixerByType(SalStreamType type) {
 	try {
-		auto & mixer = mMixers.at(type);
+		auto &mixer = mMixers.at(type);
 		if (mixer) {
 			return mixer.get();
 		}
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		// Ignore
 	}
 	return nullptr;
 }
 
-Core & MixerSession::getCore() const{
+Core &MixerSession::getCore() const {
 	return mCore;
 }
 
-LinphoneCore *MixerSession::getCCore()const{
+LinphoneCore *MixerSession::getCCore() const {
 	return mCore.getCCore();
 }
 
-void MixerSession::enableLocalParticipant(bool enabled){
-	for( const auto & p : mMixers){
+void MixerSession::enableLocalParticipant(bool enabled) {
+	for (const auto &p : mMixers) {
 		p.second->enableLocalParticipant(enabled);
 	}
 }
 
-void MixerSession::onActiveTalkerChanged(StreamsGroup *sg){
+void MixerSession::onActiveTalkerChanged(StreamsGroup *sg) {
 	setFocus(sg);
 }
 
-StreamMixer::StreamMixer(MixerSession & session) : mSession(session){
+StreamMixer::StreamMixer(MixerSession &session) : mSession(session) {
 }
 
 LINPHONE_END_NAMESPACE

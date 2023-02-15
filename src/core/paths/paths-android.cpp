@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 
 #include <jni.h>
 
+#include "c-wrapper/c-wrapper.h"
 #include "logger/logger.h"
 #include "paths-android.h"
-#include "c-wrapper/c-wrapper.h"
 
 // =============================================================================
 
@@ -30,23 +30,22 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-static jmethodID getStaticMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature) {
+static jmethodID getStaticMethodId(JNIEnv *env, jclass klass, const char *method, const char *signature) {
 	jmethodID id = env->GetStaticMethodID(klass, method, signature);
-	if (id == 0)
-		lFatal() << "Could not find static java method: `" << method << ", " << signature << "`.";
+	if (id == 0) lFatal() << "Could not find static java method: `" << method << ", " << signature << "`.";
 	return id;
 }
 
-static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
+static const char *GetStringUTFChars(JNIEnv *env, jstring string) {
 	const char *cstring = string ? env->GetStringUTFChars(string, nullptr) : nullptr;
 	return cstring;
 }
 
-static void ReleaseStringUTFChars (JNIEnv *env, jstring string, const char *cstring) {
+static void ReleaseStringUTFChars(JNIEnv *env, jstring string, const char *cstring) {
 	if (string) env->ReleaseStringUTFChars(string, cstring);
 }
 
-static string getPath (void *context, const char *jMethodName) {
+static string getPath(void *context, const char *jMethodName) {
 	if (!context) {
 		lError() << "context is null.";
 		return "";
@@ -56,8 +55,7 @@ static string getPath (void *context, const char *jMethodName) {
 	jobject jContext = (jobject)context;
 
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
-	if (!klass)
-		lFatal() << "Could not find java AndroidPlatformHelper class.";
+	if (!klass) lFatal() << "Could not find java AndroidPlatformHelper class.";
 
 	jmethodID jMethodId = getStaticMethodId(env, klass, jMethodName, "(Landroid/content/Context;)Ljava/lang/String;");
 	jstring jPath = (jstring)env->CallStaticObjectMethod(klass, jMethodId, jContext);
@@ -68,15 +66,15 @@ static string getPath (void *context, const char *jMethodName) {
 	return path;
 }
 
-string SysPaths::getDataPath (void *context) {
+string SysPaths::getDataPath(void *context) {
 	return getPath(context, "getDataPath");
 }
 
-string SysPaths::getConfigPath (void *context) {
+string SysPaths::getConfigPath(void *context) {
 	return getPath(context, "getConfigPath");
 }
 
-string SysPaths::getDownloadPath (void *context) {
+string SysPaths::getDownloadPath(void *context) {
 	return getPath(context, "getDownloadPath");
 }
 

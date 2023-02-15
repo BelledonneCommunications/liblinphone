@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference-notified-event-p.h"
 #include "conference-ephemeral-message-event.h"
+#include "conference-notified-event-p.h"
 
 // =============================================================================
 
@@ -36,29 +36,20 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ConferenceEphemeralMessageEvent::ConferenceEphemeralMessageEvent (
-Type type,
-time_t creationTime,
-const ConferenceId &conferenceId,
-long ephemeralLifetime
-) : ConferenceNotifiedEvent(
-	*new ConferenceEphemeralMessageEventPrivate,
-	type,
-	creationTime,
-	conferenceId
-) {
+ConferenceEphemeralMessageEvent::ConferenceEphemeralMessageEvent(Type type,
+                                                                 time_t creationTime,
+                                                                 const ConferenceId &conferenceId,
+                                                                 long ephemeralLifetime)
+    : ConferenceNotifiedEvent(*new ConferenceEphemeralMessageEventPrivate, type, creationTime, conferenceId) {
 	L_D();
-	L_ASSERT(
-			 type == Type::ConferenceEphemeralMessageLifetimeChanged ||
-			 type == Type::ConferenceEphemeralMessageManagedByAdmin ||
-			 type == Type::ConferenceEphemeralMessageManagedByParticipants ||
-			 type == Type::ConferenceEphemeralMessageEnabled ||
-			 type == Type::ConferenceEphemeralMessageDisabled
-			 );
+	L_ASSERT(type == Type::ConferenceEphemeralMessageLifetimeChanged ||
+	         type == Type::ConferenceEphemeralMessageManagedByAdmin ||
+	         type == Type::ConferenceEphemeralMessageManagedByParticipants ||
+	         type == Type::ConferenceEphemeralMessageEnabled || type == Type::ConferenceEphemeralMessageDisabled);
 	d->ephemeralLifetime = ephemeralLifetime;
 }
 
-long ConferenceEphemeralMessageEvent::getEphemeralMessageLifetime () const {
+long ConferenceEphemeralMessageEvent::getEphemeralMessageLifetime() const {
 	L_D();
 	return d->ephemeralLifetime;
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -60,21 +60,18 @@ const ContentType ContentType::Icalendar("text/calendar;conference-event=yes");
 
 // -----------------------------------------------------------------------------
 
-ContentType::ContentType (const string &contentType) : Header(*new ContentTypePrivate) {
+ContentType::ContentType(const string &contentType) : Header(*new ContentTypePrivate) {
 	L_D();
 
 	setName("Content-Type");
 	size_t pos = contentType.find('/');
 	size_t posParam = contentType.find(";");
 	size_t end = contentType.length();
-	if (pos == string::npos)
-		return;
+	if (pos == string::npos) return;
 
 	if (setType(Utils::trim(contentType.substr(0, pos)))) {
-		if (posParam != string::npos)
-			end = posParam;
-		if (!setSubType(Utils::trim(contentType.substr(pos + 1, end - (pos + 1)))))
-			d->type.clear();
+		if (posParam != string::npos) end = posParam;
+		if (!setSubType(Utils::trim(contentType.substr(pos + 1, end - (pos + 1))))) d->type.clear();
 	}
 
 	if (posParam != string::npos) {
@@ -93,43 +90,36 @@ ContentType::ContentType (const string &contentType) : Header(*new ContentTypePr
 	}
 }
 
-ContentType::ContentType (const string &type, const string &subType) : Header(*new ContentTypePrivate) {
+ContentType::ContentType(const string &type, const string &subType) : Header(*new ContentTypePrivate) {
 	L_D();
 
 	setName("Content-Type");
-	if (setType(type) && !setSubType(subType))
-		d->type.clear();
+	if (setType(type) && !setSubType(subType)) d->type.clear();
 }
 
-ContentType::ContentType (
-	const string &type,
-	const string &subType,
-	const HeaderParam &parameter
-) : Header(*new ContentTypePrivate) {
+ContentType::ContentType(const string &type, const string &subType, const HeaderParam &parameter)
+    : Header(*new ContentTypePrivate) {
 	L_D();
 
 	setName("Content-Type");
-	if (setType(type) && !setSubType(subType))
-		d->type.clear();
+	if (setType(type) && !setSubType(subType)) d->type.clear();
 	addParameter(parameter);
 }
 
-ContentType::ContentType (
-	const string &type,
-	const string &subType,
-	const std::list<HeaderParam> &parameters
-) : Header(*new ContentTypePrivate) {
+ContentType::ContentType(const string &type, const string &subType, const std::list<HeaderParam> &parameters)
+    : Header(*new ContentTypePrivate) {
 	L_D();
 
 	setName("Content-Type");
-	if (setType(type) && !setSubType(subType))
-		d->type.clear();
+	if (setType(type) && !setSubType(subType)) d->type.clear();
 	addParameters(parameters);
 }
 
-ContentType::ContentType (const ContentType &other) : ContentType(other.getType(), other.getSubType(), other.getParameters()) {}
+ContentType::ContentType(const ContentType &other)
+    : ContentType(other.getType(), other.getSubType(), other.getParameters()) {
+}
 
-ContentType &ContentType::operator= (const ContentType &other) {
+ContentType &ContentType::operator=(const ContentType &other) {
 	if (this != &other) {
 		setName("Content-Type");
 		setType(other.getType());
@@ -141,35 +131,31 @@ ContentType &ContentType::operator= (const ContentType &other) {
 	return *this;
 }
 
-bool ContentType::operator== (const ContentType &other) const {
+bool ContentType::operator==(const ContentType &other) const {
 	return (getType() == other.getType()) && (getSubType() == other.getSubType());
 }
 
 bool ContentType::strongEqual(const ContentType &other) const {
-	if ( *this != other)
-		return false;
-	if (getParameters().size() != other.getParameters().size())
-		return false;
+	if (*this != other) return false;
+	if (getParameters().size() != other.getParameters().size()) return false;
 	for (const auto &param : getParameters()) {
 		auto it = other.findParameter(param.getName());
-		if (it == other.getParameters().cend())
-			return false;
-		if (it->getValue() != param.getValue())
-			return false;
+		if (it == other.getParameters().cend()) return false;
+		if (it->getValue() != param.getValue()) return false;
 	}
 	return true;
 }
 
-bool ContentType::operator!= (const ContentType &other) const {
+bool ContentType::operator!=(const ContentType &other) const {
 	return !(*this == other);
 }
 
-const string &ContentType::getType () const {
+const string &ContentType::getType() const {
 	L_D();
 	return d->type;
 }
 
-bool ContentType::setType (const string &type) {
+bool ContentType::setType(const string &type) {
 	L_D();
 	if (type.find('/') == string::npos) {
 		d->type = Utils::stringToLower(type);
@@ -179,12 +165,12 @@ bool ContentType::setType (const string &type) {
 	return false;
 }
 
-const string &ContentType::getSubType () const {
+const string &ContentType::getSubType() const {
 	L_D();
 	return d->subType;
 }
 
-bool ContentType::setSubType (const string &subType) {
+bool ContentType::setSubType(const string &subType) {
 	L_D();
 	if (subType.find('/') == string::npos) {
 		d->subType = Utils::stringToLower(subType);
@@ -194,12 +180,12 @@ bool ContentType::setSubType (const string &subType) {
 	return false;
 }
 
-bool ContentType::isEmpty () const {
+bool ContentType::isEmpty() const {
 	L_D();
 	return d->type.empty() && d->subType.empty();
 }
 
-bool ContentType::isValid () const {
+bool ContentType::isValid() const {
 	L_D();
 	return !d->type.empty() && !d->subType.empty();
 }
@@ -208,26 +194,19 @@ bool ContentType::isMultipart() const {
 	return getType() == "multipart";
 }
 
-bool ContentType::isFile () const {
+bool ContentType::isFile() const {
 	// TODO Remove when not needed anymore in step 2.1 of maindb
 	return isFile(*this);
 }
 
-bool ContentType::isFile (const ContentType &contentType) {
+bool ContentType::isFile(const ContentType &contentType) {
 	// TODO Remove when not needed anymore in step 2.1 of maindb
-	return contentType != FileTransfer &&
-		contentType != PlainText &&
-		contentType != ExternalBody &&
-		contentType != Imdn &&
-		contentType != ImIsComposing &&
-		contentType != ResourceLists &&
-		contentType != Rlmi &&
-		contentType != Sdp &&
-		contentType != Cpim &&
-		contentType != ConferenceInfo;
+	return contentType != FileTransfer && contentType != PlainText && contentType != ExternalBody &&
+	       contentType != Imdn && contentType != ImIsComposing && contentType != ResourceLists && contentType != Rlmi &&
+	       contentType != Sdp && contentType != Cpim && contentType != ConferenceInfo;
 }
 
-string ContentType::getMediaType () const {
+string ContentType::getMediaType() const {
 	stringstream asString;
 	asString << getValue();
 	for (const auto &param : getParameters())
@@ -236,7 +215,7 @@ string ContentType::getMediaType () const {
 	return asString.str();
 }
 
-ostream &operator<< (ostream &os, const ContentType& contentType) {
+ostream &operator<<(ostream &os, const ContentType &contentType) {
 	os << contentType.getMediaType();
 	return os;
 }

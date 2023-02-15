@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,18 +34,21 @@ using namespace LinphonePrivate;
 
 class TestObjectPrivate : public ClonableObjectPrivate {
 public:
-	TestObjectPrivate () = default;
+	TestObjectPrivate() = default;
 
-	TestObjectPrivate (const TestObjectPrivate &) : TestObjectPrivate() {}
+	TestObjectPrivate(const TestObjectPrivate &) : TestObjectPrivate() {
+	}
 };
 
 class TestObject : public ClonableObject {
 public:
-	TestObject () : ClonableObject(*new TestObjectPrivate) {}
+	TestObject() : ClonableObject(*new TestObjectPrivate) {
+	}
 
-	TestObject (const TestObject &src) : ClonableObject(*new TestObjectPrivate(*src.getPrivate())) {}
+	TestObject(const TestObject &src) : ClonableObject(*new TestObjectPrivate(*src.getPrivate())) {
+	}
 
-	TestObject* clone () const override {
+	TestObject *clone() const override {
 		return new TestObject(*this);
 	}
 
@@ -55,7 +58,7 @@ private:
 
 // -----------------------------------------------------------------------------
 
-static void check_clonable_object_creation () {
+static void check_clonable_object_creation() {
 	TestObject *object = new TestObject();
 	TestObject *object2 = new TestObject(*object);
 
@@ -63,11 +66,12 @@ static void check_clonable_object_creation () {
 	delete object2;
 }
 
-test_t clonable_object_tests[] = {
-	TEST_NO_TAG("Check clonable object creation", check_clonable_object_creation)
-};
+test_t clonable_object_tests[] = {TEST_NO_TAG("Check clonable object creation", check_clonable_object_creation)};
 
-test_suite_t clonable_object_test_suite = {
-	"ClonableObject", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(clonable_object_tests) / sizeof(clonable_object_tests[0]), clonable_object_tests
-};
+test_suite_t clonable_object_test_suite = {"ClonableObject",
+                                           NULL,
+                                           NULL,
+                                           liblinphone_tester_before_each,
+                                           liblinphone_tester_after_each,
+                                           sizeof(clonable_object_tests) / sizeof(clonable_object_tests[0]),
+                                           clonable_object_tests};

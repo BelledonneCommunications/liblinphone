@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,27 +31,23 @@ class ChatMessage;
 
 class ChatMessageModifier {
 public:
-	enum class Result {
-		Skipped = -1,
-		Done = 0,
-		Suspended = 1,
-		Error = 2
-	};
+	enum class Result { Skipped = -1, Done = 0, Suspended = 1, Error = 2 };
 
-	virtual ~ChatMessageModifier () = default;
+	virtual ~ChatMessageModifier() = default;
 
 	/**
 	 * This method will be called when the message is about to be sent.
 	 * It should check first if the internalContent is filled.
 	 * If so, it should apply it's changes to it, otherwise it should use the contentsList.
 	 */
-	virtual Result encode (const std::shared_ptr<ChatMessage> &message, int &errorCode) = 0;
+	virtual Result encode(const std::shared_ptr<ChatMessage> &message, int &errorCode) = 0;
 
 	/**
 	 * This method will be called when the message is about to be received.
-	 * It should apply it's changes to the internal content, the last modifier will take care of filling the contentsList.
+	 * It should apply it's changes to the internal content, the last modifier will take care of filling the
+	 * contentsList.
 	 */
-	virtual Result decode (const std::shared_ptr<ChatMessage> &message, int &errorCode) = 0;
+	virtual Result decode(const std::shared_ptr<ChatMessage> &message, int &errorCode) = 0;
 };
 
 LINPHONE_END_NAMESPACE

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,11 +19,14 @@
  */
 
 #include <stdio.h>
+
+#include "bctoolbox/defs.h"
+
 #include "lpc2xml.h"
 
-void cb_function(void *ctx, lpc2xml_log_level level, const char *msg, va_list list) {
+void cb_function(BCTBX_UNUSED(void *ctx), lpc2xml_log_level level, const char *msg, va_list list) {
 	const char *header = "";
-	switch(level) {
+	switch (level) {
 		case LPC2XML_DEBUG:
 			header = "DEBUG";
 			break;
@@ -42,20 +45,20 @@ void cb_function(void *ctx, lpc2xml_log_level level, const char *msg, va_list li
 	fprintf(stdout, "\n");
 }
 
-void show_usage(int argc, char *argv[]) {
+void show_usage(BCTBX_UNUSED(int argc), char *argv[]) {
 	fprintf(stderr, "usage:\n%s convert <lpc_file> <xml_file>\n%s dump <lpc_file>\n", argv[0], argv[0]);
 }
 
 int main(int argc, char *argv[]) {
 	lpc2xml_context *ctx;
 	LpConfig *lpc;
-	if(argc > 4 || argc < 3) {
+	if (argc > 4 || argc < 3) {
 		show_usage(argc, argv);
 		return -1;
 	}
 
 	lpc = linphone_config_new(argv[2]);
-	if(strcmp("convert", argv[1]) == 0 && argc == 4) {
+	if (strcmp("convert", argv[1]) == 0 && argc == 4) {
 		ctx = lpc2xml_context_new(cb_function, NULL);
 		lpc2xml_set_lpc(ctx, lpc);
 		lpc2xml_convert_file(ctx, argv[3]);
@@ -69,4 +72,3 @@ int main(int argc, char *argv[]) {
 	linphone_config_destroy(lpc);
 	return 0;
 }
-

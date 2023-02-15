@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,17 +26,35 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-std::ostream& operator<<(std::ostream& lhs, ConferenceInterface::State e) {
-	switch(e) {
-		case ConferenceInterface::State::None: lhs << "None"; break;
-		case ConferenceInterface::State::Instantiated: lhs << "Instantiated"; break;
-		case ConferenceInterface::State::CreationPending: lhs << "CreationPending"; break;
-		case ConferenceInterface::State::Created: lhs << "Created"; break;
-		case ConferenceInterface::State::CreationFailed: lhs << "CreationFailed"; break;
-		case ConferenceInterface::State::TerminationPending: lhs << "TerminationPending"; break;
-		case ConferenceInterface::State::Terminated: lhs << "Terminated"; break;
-		case ConferenceInterface::State::TerminationFailed: lhs << "TerminationFailed"; break;
-		case ConferenceInterface::State::Deleted: lhs << "Deleted"; break;
+std::ostream &operator<<(std::ostream &lhs, ConferenceInterface::State e) {
+	switch (e) {
+		case ConferenceInterface::State::None:
+			lhs << "None";
+			break;
+		case ConferenceInterface::State::Instantiated:
+			lhs << "Instantiated";
+			break;
+		case ConferenceInterface::State::CreationPending:
+			lhs << "CreationPending";
+			break;
+		case ConferenceInterface::State::Created:
+			lhs << "Created";
+			break;
+		case ConferenceInterface::State::CreationFailed:
+			lhs << "CreationFailed";
+			break;
+		case ConferenceInterface::State::TerminationPending:
+			lhs << "TerminationPending";
+			break;
+		case ConferenceInterface::State::Terminated:
+			lhs << "Terminated";
+			break;
+		case ConferenceInterface::State::TerminationFailed:
+			lhs << "TerminationFailed";
+			break;
+		case ConferenceInterface::State::Deleted:
+			lhs << "Deleted";
+			break;
 	}
 	return lhs;
 }

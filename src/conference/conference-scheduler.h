@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,15 +22,15 @@
 #define _L_CONFERENCE_SCHEDULER_H_
 
 #include "c-wrapper/c-wrapper.h"
-#include <conference/session/call-session-listener.h>
-#include <conference/conference-info.h>
 #include "core/core-accessor.h"
-#include <chat/chat-message/chat-message-listener.h>
-#include <chat/chat-room/chat-room-params.h>
-#include <conference/session/call-session.h>
-#include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
+#include <belle-sip/object++.hh>
+#include <chat/chat-message/chat-message-listener.h>
+#include <chat/chat-room/chat-room-params.h>
+#include <conference/conference-info.h>
+#include <conference/session/call-session-listener.h>
+#include <conference/session/call-session.h>
 
 // =============================================================================
 
@@ -38,15 +38,14 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceSchedulerCbs;
 
-class LINPHONE_PUBLIC ConferenceScheduler : public bellesip::HybridObject<LinphoneConferenceScheduler, ConferenceScheduler>, 
-	public CoreAccessor, 
-	public UserDataAccessor, 
-	public CallbacksHolder<ConferenceSchedulerCbs>,
-	public CallSessionListener,
-	public ChatMessageListener
-{
+class LINPHONE_PUBLIC ConferenceScheduler
+    : public bellesip::HybridObject<LinphoneConferenceScheduler, ConferenceScheduler>,
+      public CoreAccessor,
+      public UserDataAccessor,
+      public CallbacksHolder<ConferenceSchedulerCbs>,
+      public CallSessionListener,
+      public ChatMessageListener {
 public:
-
 	enum class State {
 		Idle = LinphoneConferenceSchedulerStateIdle,
 		Error = LinphoneConferenceSchedulerStateError,
@@ -55,33 +54,38 @@ public:
 		Updating = LinphoneConferenceSchedulerStateUpdating
 	};
 
-	ConferenceScheduler (const std::shared_ptr<Core> &core);
-	virtual ~ConferenceScheduler ();
+	ConferenceScheduler(const std::shared_ptr<Core> &core);
+	virtual ~ConferenceScheduler();
 
-	void onCallSessionSetTerminated (const std::shared_ptr<CallSession> &session) override;
-	void onCallSessionStateChanged (const std::shared_ptr<CallSession> &session, CallSession::State state, const std::string &message) override;
-	void onChatMessageStateChanged (const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) override;
+	void onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
+	                               CallSession::State state,
+	                               const std::string &message) override;
+	void onChatMessageStateChanged(const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) override;
 
-	State getState () const;
+	State getState() const;
 
-	const std::shared_ptr<ConferenceInfo> getInfo () const;
-	void cancelConference (const std::shared_ptr<ConferenceInfo> & info);
-	void setInfo(const std::shared_ptr<ConferenceInfo> & info);
+	const std::shared_ptr<ConferenceInfo> getInfo() const;
+	void cancelConference(const std::shared_ptr<ConferenceInfo> &info);
+	void setInfo(const std::shared_ptr<ConferenceInfo> &info);
 
-	void setConferenceAddress(const ConferenceAddress& conferenceAddress);
+	void setConferenceAddress(const ConferenceAddress &conferenceAddress);
 
-	void sendInvitations (std::shared_ptr<ChatRoomParams> chatRoomParams);
+	void sendInvitations(std::shared_ptr<ChatRoomParams> chatRoomParams);
 
-	const std::shared_ptr<Account> & getAccount() const;
+	const std::shared_ptr<Account> &getAccount() const;
 	void setAccount(std::shared_ptr<Account> account);
 
 private:
-	void setState (State newState);
-	std::string stateToString (State state);
+	void setState(State newState);
+	std::string stateToString(State state);
 
-	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom, const IdentityAddress participant, bool cancel);
-	void fillCancelList(const ConferenceInfo::participant_list_t &oldList, const ConferenceInfo::participant_list_t &newList);
-	
+	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom,
+	                                                         const IdentityAddress participant,
+	                                                         bool cancel);
+	void fillCancelList(const ConferenceInfo::participant_list_t &oldList,
+	                    const ConferenceInfo::participant_list_t &newList);
+
 	ConferenceScheduler::State mState;
 	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
 	std::shared_ptr<CallSession> mSession = nullptr;
@@ -93,19 +97,20 @@ private:
 	std::list<Address> mInvitationsInError;
 };
 
-class ConferenceSchedulerCbs : public bellesip::HybridObject<LinphoneConferenceSchedulerCbs, ConferenceSchedulerCbs>, public Callbacks {
+class ConferenceSchedulerCbs : public bellesip::HybridObject<LinphoneConferenceSchedulerCbs, ConferenceSchedulerCbs>,
+                               public Callbacks {
 public:
-	LinphoneConferenceSchedulerCbsStateChangedCb getStateChanged () const;
-	void setStateChanged (LinphoneConferenceSchedulerCbsStateChangedCb cb);
-	LinphoneConferenceSchedulerCbsInvitationsSentCb getInvitationsSent () const;
-	void setInvitationsSent (LinphoneConferenceSchedulerCbsInvitationsSentCb cb);
+	LinphoneConferenceSchedulerCbsStateChangedCb getStateChanged() const;
+	void setStateChanged(LinphoneConferenceSchedulerCbsStateChangedCb cb);
+	LinphoneConferenceSchedulerCbsInvitationsSentCb getInvitationsSent() const;
+	void setInvitationsSent(LinphoneConferenceSchedulerCbsInvitationsSentCb cb);
 
 private:
 	LinphoneConferenceSchedulerCbsStateChangedCb mStateChangedCb = nullptr;
 	LinphoneConferenceSchedulerCbsInvitationsSentCb mInvitationsSent = nullptr;
 };
 
-std::ostream& operator<<(std::ostream& lhs, ConferenceScheduler::State s);
+std::ostream &operator<<(std::ostream &lhs, ConferenceScheduler::State s);
 
 LINPHONE_END_NAMESPACE
 

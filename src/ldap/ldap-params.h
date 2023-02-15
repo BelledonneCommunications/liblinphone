@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,9 @@
 #ifndef _L_LDAP_PARAMS_H_
 #define _L_LDAP_PARAMS_H_
 
-#include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
+#include <belle-sip/object++.hh>
 
 #include <map>
 #include <string>
@@ -36,48 +36,48 @@ class LdapParams : public bellesip::HybridObject<LinphoneLdapParams, LdapParams>
 	friend class Ldap;
 
 public:
-	LdapParams ();
-	LdapParams (LinphoneConfig *lConfig, const std::string& sectionKey);
-	LdapParams (const LdapParams &other);
-	~LdapParams ();
+	LdapParams();
+	LdapParams(LinphoneConfig *lConfig, const std::string &sectionKey);
+	LdapParams(const LdapParams &other);
+	~LdapParams();
 
-	LdapParams* clone () const override;
+	LdapParams *clone() const override;
 
 	// Setters
-	void setCustomValue(const std::string& key, const std::string& value);
-	void setServer(const std::string& server);
-	void setBindDn(const std::string& bindDn);
-	void setBaseObject(const std::string& baseObject);
-	void setTimeout(const int& timeout);
-	void setMaxResults(const int& maxResults);
-	void setMinChars(const int& minChars);
-	void setDelay(const int& ms);
-	void setPassword(const std::string& password);
-	void setFilter(const std::string& filter);
-	void setNameAttribute(const std::string& nameAttribute);
-	void setSipAttribute(const std::string& sipAttribute);
-	void setSipDomain(const std::string& sipDomain);
+	void setCustomValue(const std::string &key, const std::string &value);
+	void setServer(const std::string &server);
+	void setBindDn(const std::string &bindDn);
+	void setBaseObject(const std::string &baseObject);
+	void setTimeout(const int &timeout);
+	void setMaxResults(const int &maxResults);
+	void setMinChars(const int &minChars);
+	void setDelay(const int &ms);
+	void setPassword(const std::string &password);
+	void setFilter(const std::string &filter);
+	void setNameAttribute(const std::string &nameAttribute);
+	void setSipAttribute(const std::string &sipAttribute);
+	void setSipDomain(const std::string &sipDomain);
 	void setEnabled(const bool enable);
 	void enableSal(const bool enable);
 	void enableTls(const bool enable);
 	void setDebugLevel(LinphoneLdapDebugLevel level);
 	void setAuthMethod(LinphoneLdapAuthMethod authMethod);
 	void setServerCertificatesVerificationMode(LinphoneLdapCertVerificationMode mode);
-	
+
 	// Getters
-	const std::string& getCustomValue(const std::string& key) const;
-	const std::string& getServer() const;
-	const std::string& getBindDn() const;
-	const std::string& getBaseObject() const;
+	const std::string &getCustomValue(const std::string &key) const;
+	const std::string &getServer() const;
+	const std::string &getBindDn() const;
+	const std::string &getBaseObject() const;
 	int getTimeout() const;
 	int getMaxResults() const;
 	int getMinChars() const;
 	int getDelay() const;
-	const std::string& getPassword() const;
-	const std::string& getFilter() const;
-	const std::string& getNameAttribute() const;
-	const std::string& getSipAttribute() const;
-	const std::string& getSipDomain() const;
+	const std::string &getPassword() const;
+	const std::string &getFilter() const;
+	const std::string &getNameAttribute() const;
+	const std::string &getSipAttribute() const;
+	const std::string &getSipDomain() const;
 	bool getEnabled() const;
 	bool salEnabled() const;
 	bool tlsEnabled() const;
@@ -85,18 +85,19 @@ public:
 	LinphoneLdapAuthMethod getAuthMethod() const;
 	LinphoneLdapCertVerificationMode getServerCertificatesVerificationMode() const;
 
-	const std::map<std::string,std::string>& getConfig() const;
-	
+	const std::map<std::string, std::string> &getConfig() const;
+
 	// Others
 	int check() const;
 	int checkServer() const;
 	int checkBaseObject() const;
 
-	void writeToConfigFile (LinphoneConfig *config, const std::string& sectionKey);
+	void writeToConfigFile(LinphoneConfig *config, const std::string &sectionKey);
 
 private:
-	std::map<std::string,std::string>  mConfig;
-	std::string mDummyTxt;	// For passing persistent data to wrapper (getCustomValue() can return "" without being in config)
+	std::map<std::string, std::string> mConfig;
+	std::string
+	    mDummyTxt; // For passing persistent data to wrapper (getCustomValue() can return "" without being in config)
 };
 
 LINPHONE_END_NAMESPACE

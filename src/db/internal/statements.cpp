@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,56 +25,59 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Statements {
-	using Backend = AbstractDb::Backend;
+using Backend = AbstractDb::Backend;
 
-	struct Statement {
-		template<size_t N>
-		constexpr Statement (Backend _backend, const char (&_sql)[N]) : backend(_backend), sql(_sql) {}
+struct Statement {
+	template <size_t N>
+	constexpr Statement(Backend _backend, const char (&_sql)[N]) : backend(_backend), sql(_sql) {
+	}
 
-		Backend backend;
-		const char *sql;
-	};
+	Backend backend;
+	const char *sql;
+};
 
-	struct AbstractStatement {
-	public:
-		template<size_t N>
-		constexpr AbstractStatement (const char (&_sql)[N]) : mSql{ _sql, nullptr } {}
+struct AbstractStatement {
+public:
+	template <size_t N>
+	constexpr AbstractStatement(const char (&_sql)[N]) : mSql{_sql, nullptr} {
+	}
 
-		// TODO: Improve, check backends.
-		constexpr AbstractStatement (const Statement &a, const Statement &b) : mSql{ a.sql, b.sql } {}
+	// TODO: Improve, check backends.
+	constexpr AbstractStatement(const Statement &a, const Statement &b) : mSql{a.sql, b.sql} {
+	}
 
-		const char *get (Backend backend) const {
-			return backend == Backend::Mysql && mSql[1] ? mSql[1] : mSql[0];
-		}
+	const char *get(Backend backend) const {
+		return backend == Backend::Mysql && mSql[1] ? mSql[1] : mSql[0];
+	}
 
-	private:
-		const char *mSql[2];
-	};
+private:
+	const char *mSql[2];
+};
 
-	// ---------------------------------------------------------------------------
-	// Select statements.
-	// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Select statements.
+// ---------------------------------------------------------------------------
 
-	constexpr const char *select[SelectCount] = {
-		/* SelectSipAddressId */ R"(
+constexpr const char *select[SelectCount] = {
+    /* SelectSipAddressId */ R"(
 			SELECT id
 			FROM sip_address
 			WHERE value = :1
 		)",
 
-		/* SelectChatRoomId */ R"(
+    /* SelectChatRoomId */ R"(
 			SELECT id
 			FROM chat_room
 			WHERE peer_sip_address_id = :1 AND local_sip_address_id = :2
 		)",
 
-		/* SelectChatRoomParticipantId */ R"(
+    /* SelectChatRoomParticipantId */ R"(
 			SELECT id
 			FROM chat_room_participant
 			WHERE chat_room_id = :1 AND participant_sip_address_id = :2
 		)",
 
-		/* SelectOneToOneChatRoomId */ R"(
+    /* SelectOneToOneChatRoomId */ R"(
 			SELECT chat_room_id
 			FROM one_to_one_chat_room
 			LEFT JOIN chat_room ON chat_room.id = chat_room_id
@@ -87,7 +90,7 @@ namespace Statements {
 			AND (capabilities & :3) = :4
 		)",
 
-		/* SelectConferenceEvent */ R"(
+    /* SelectConferenceEvent */ R"(
 			SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, conference_event_view.subject, delivery_notification_required, display_notification_required, peer_sip_address.value, local_sip_address.value, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, reply_message_id, reply_sender_address.value
 			FROM conference_event_view
 			JOIN chat_room ON chat_room.id = chat_room_id
@@ -101,7 +104,7 @@ namespace Statements {
 			WHERE conference_event_view.id = :1
 		)",
 
-		/* SelectConferenceEvents */ R"(
+    /* SelectConferenceEvents */ R"(
 			SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, reply_message_id, reply_sender_address.value
 			FROM conference_event_view
 			LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id
@@ -112,54 +115,52 @@ namespace Statements {
 			WHERE chat_room_id = :1
 		)",
 
-		/* SelectConferenceInfoId */ R"(
+    /* SelectConferenceInfoId */ R"(
 			SELECT id
 			FROM conference_info
 			WHERE uri_sip_address_id = :1
 		)",
 
-		/* SelectConferenceInfoParticipantId */ R"(
+    /* SelectConferenceInfoParticipantId */ R"(
 			SELECT id
 			FROM conference_info_participant
 			WHERE conference_info_id = :1 AND participant_sip_address_id = :2
 		)",
 
-		/* SelectConferenceInfoOrganizerId */ R"(
+    /* SelectConferenceInfoOrganizerId */ R"(
 			SELECT id
 			FROM conference_info_organizer
 			WHERE conference_info_id = :1
 		)",
 
-		/* SelectConferenceCall */ R"(
+    /* SelectConferenceCall */ R"(
 			SELECT id
 			FROM conference_call
 			WHERE call_id = :1
-		)"
-	};
+		)"};
 
-	// ---------------------------------------------------------------------------
-	// Insert statements.
-	// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Insert statements.
+// ---------------------------------------------------------------------------
 
-	constexpr AbstractStatement insert[InsertCount] = {
-		/* InsertOneToOneChatRoom */ R"(
+constexpr AbstractStatement insert[InsertCount] = {
+    /* InsertOneToOneChatRoom */ R"(
 			INSERT INTO one_to_one_chat_room (
 				chat_room_id, participant_a_sip_address_id, participant_b_sip_address_id
 			) VALUES (:1, :2, :3)
-		)"
-	};
+		)"};
 
-	// ---------------------------------------------------------------------------
-	// Getters.
-	// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Getters.
+// ---------------------------------------------------------------------------
 
-	const char *get (Select selectStmt) {
-		return selectStmt >= Select::SelectCount ? nullptr : select[selectStmt];
-	}
-
-	const char *get (Insert insertStmt, AbstractDb::Backend backend) {
-		return insertStmt >= Insert::InsertCount ? nullptr : insert[insertStmt].get(backend);
-	}
+const char *get(Select selectStmt) {
+	return selectStmt >= Select::SelectCount ? nullptr : select[selectStmt];
 }
+
+const char *get(Insert insertStmt, AbstractDb::Backend backend) {
+	return insertStmt >= Insert::InsertCount ? nullptr : insert[insertStmt].get(backend);
+}
+} // namespace Statements
 
 LINPHONE_END_NAMESPACE

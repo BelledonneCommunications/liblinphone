@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "object/property-container.h"
 #include "dictionary/dictionary.h"
+#include "object/property-container.h"
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -30,13 +30,13 @@ using namespace std;
 
 using namespace LinphonePrivate;
 
-static void set_int_property () {
+static void set_int_property() {
 	PropertyContainer properties;
 	properties.setProperty("integer", 42);
 	BC_ASSERT_EQUAL(properties.getProperty("integer").getValue<int>(), 42, int, "%d");
 }
 
-static void set_string_property () {
+static void set_string_property() {
 	PropertyContainer properties;
 	const string text = "Hey listen!";
 	properties.setProperty("string", text);
@@ -47,19 +47,19 @@ static void set_string_property () {
 	}
 }
 
-static void set_generic_property () {
+static void set_generic_property() {
 	PropertyContainer properties;
 	properties.setProperty("generic", reinterpret_cast<void *>(0x42));
 	BC_ASSERT_EQUAL(properties.getProperty("generic").getValue<void *>(), reinterpret_cast<void *>(0x42), void *, "%p");
 }
 
-static void set_int_dictionary () {
+static void set_int_dictionary() {
 	auto dictionary = Dictionary::create();
 	dictionary->setProperty("integer", 42);
 	BC_ASSERT_EQUAL(dictionary->getInt("integer"), 42, int, "%d");
 }
 
-static void set_string_dictionary () {
+static void set_string_dictionary() {
 	auto dictionary = Dictionary::create();
 	const string text = "Hey listen!";
 	dictionary->setProperty("string", text);
@@ -71,14 +71,14 @@ static void set_string_dictionary () {
 }
 
 test_t property_container_tests[] = {
-	TEST_NO_TAG("Set int property", set_int_property),
-	TEST_NO_TAG("Set string property", set_string_property),
-	TEST_NO_TAG("Set generic property", set_generic_property),
-	TEST_NO_TAG("Set int dictionary", set_int_dictionary),
-	TEST_NO_TAG("Set string dictionary", set_string_dictionary)
-};
+    TEST_NO_TAG("Set int property", set_int_property), TEST_NO_TAG("Set string property", set_string_property),
+    TEST_NO_TAG("Set generic property", set_generic_property), TEST_NO_TAG("Set int dictionary", set_int_dictionary),
+    TEST_NO_TAG("Set string dictionary", set_string_dictionary)};
 
-test_suite_t property_container_test_suite = {
-	"PropertyContainer", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(property_container_tests) / sizeof(property_container_tests[0]), property_container_tests
-};
+test_suite_t property_container_test_suite = {"PropertyContainer",
+                                              NULL,
+                                              NULL,
+                                              liblinphone_tester_before_each,
+                                              liblinphone_tester_after_each,
+                                              sizeof(property_container_tests) / sizeof(property_container_tests[0]),
+                                              property_container_tests};

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,16 +22,14 @@
 
 using namespace std;
 
-AudioStreamStopCommand::AudioStreamStopCommand() :
-		DaemonCommand("audio-stream-stop", "audio-stream-stop <stream_id>", "Stop an audio stream.") {
-	addExample(make_unique<DaemonCommandExample>("audio-stream-stop 1",
-						"Status: Ok"));
-	addExample(make_unique<DaemonCommandExample>("audio-stream-stop 2",
-						"Status: Error\n"
-						"Reason: No Audio Stream with such id."));
+AudioStreamStopCommand::AudioStreamStopCommand()
+    : DaemonCommand("audio-stream-stop", "audio-stream-stop <stream_id>", "Stop an audio stream.") {
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stop 1", "Status: Ok"));
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stop 2", "Status: Error\n"
+	                                                                    "Reason: No Audio Stream with such id."));
 }
 
-void AudioStreamStopCommand::exec(Daemon *app, const string& args) {
+void AudioStreamStopCommand::exec(Daemon *app, const string &args) {
 	int id;
 	istringstream ist(args);
 	ist >> id;
@@ -46,7 +44,7 @@ void AudioStreamStopCommand::exec(Daemon *app, const string& args) {
 		return;
 	}
 	app->removeAudioStream(id);
-	RtpProfile *prof=rtp_session_get_profile(stream->ms.sessions.rtp_session);
+	RtpProfile *prof = rtp_session_get_profile(stream->ms.sessions.rtp_session);
 	audio_stream_stop(stream);
 	rtp_profile_destroy(prof);
 	app->sendResponse(Response());

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,7 @@
 #ifndef LINPHONE_CONTACTPROVIDER_H_
 #define LINPHONE_CONTACTPROVIDER_H_
 
-
 #include "linphone/core.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,30 +29,34 @@ extern "C" {
 
 /* LinphoneContactSearchRequest */
 
-void linphone_contact_search_init(LinphoneContactSearch *obj, const char *predicate, ContactSearchCallback cb, void *cb_data);
+void linphone_contact_search_init(LinphoneContactSearch *obj,
+                                  const char *predicate,
+                                  ContactSearchCallback cb,
+                                  void *cb_data);
 LinphoneContactSearchID linphone_contact_search_get_id(LinphoneContactSearch *obj);
-const char* linphone_contact_search_get_predicate(LinphoneContactSearch *obj);
+const char *linphone_contact_search_get_predicate(LinphoneContactSearch *obj);
 void linphone_contact_search_invoke_cb(LinphoneContactSearch *req, MSList *friends, bool_t haveMoreResults);
-LINPHONE_PUBLIC LinphoneContactSearch* linphone_contact_search_ref(void *obj);
+LINPHONE_PUBLIC LinphoneContactSearch *linphone_contact_search_ref(void *obj);
 LINPHONE_PUBLIC void linphone_contact_search_unref(void *obj);
-LinphoneContactSearch* linphone_contact_search_cast(void *obj);
-
+LinphoneContactSearch *linphone_contact_search_cast(void *obj);
 
 /* LinphoneContactProvider */
 
 void linphone_contact_provider_init(LinphoneContactProvider *obj, LinphoneCore *lc);
-LinphoneCore * linphone_contact_provider_get_core(LinphoneContactProvider *obj);
-const char * linphone_contact_provider_get_name(LinphoneContactProvider *obj);
-LinphoneContactProvider* linphone_contact_provider_ref(void *obj);
+LinphoneCore *linphone_contact_provider_get_core(LinphoneContactProvider *obj);
+const char *linphone_contact_provider_get_name(LinphoneContactProvider *obj);
+LinphoneContactProvider *linphone_contact_provider_ref(void *obj);
 LINPHONE_PUBLIC void linphone_contact_provider_unref(void *obj);
-LINPHONE_PUBLIC LinphoneContactProvider * linphone_contact_provider_cast(void *obj);
+LINPHONE_PUBLIC LinphoneContactProvider *linphone_contact_provider_cast(void *obj);
 
-LINPHONE_PUBLIC LinphoneContactSearch * linphone_contact_provider_begin_search(LinphoneContactProvider *obj, const char *predicate, ContactSearchCallback cb, void *data);
+LINPHONE_PUBLIC LinphoneContactSearch *linphone_contact_provider_begin_search(LinphoneContactProvider *obj,
+                                                                              const char *predicate,
+                                                                              ContactSearchCallback cb,
+                                                                              void *data);
 unsigned int linphone_contact_provider_cancel_search(LinphoneContactProvider *obj, LinphoneContactSearch *request);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* LINPHONE_CONTACTPROVIDER_H_ */

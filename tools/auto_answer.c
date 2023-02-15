@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,45 +18,48 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <signal.h>
+
+#include <bctoolbox/defs.h>
 
 #include "linphone/core.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <signal.h>
 
-static bool_t running=TRUE;
-static bool_t print_stats=FALSE;
-static bool_t dump_stats=FALSE;
+static bool_t running = TRUE;
+static bool_t print_stats = FALSE;
+static bool_t dump_stats = FALSE;
 
-static void stop(int signum){
-	running=FALSE;
+static void stop(BCTBX_UNUSED(int signum)) {
+	running = FALSE;
 }
 #ifndef _WIN32
-static void stats(int signum){
-	print_stats=TRUE;
+static void stats(BCTBX_UNUSED(int signum)) {
+	print_stats = TRUE;
 }
-static void dump_call_logs(int signum){
-	dump_stats=TRUE;
+static void dump_call_logs(BCTBX_UNUSED(int signum)) {
+	dump_stats = TRUE;
 }
 
 #endif
 /*
  * Call state notification callback
  */
-static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg){
-	LinphoneCallParams * call_params;
-	switch(cstate){
+static void
+call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *msg)) {
+	LinphoneCallParams *call_params;
+	switch (cstate) {
 		case LinphoneCallIncomingReceived:
 			ms_message("Incoming call arriving !\n");
 			/* accept the incoming call*/
 			call_params = linphone_core_create_call_params(lc, call);
-			linphone_call_params_enable_video(call_params,TRUE);
-			linphone_call_params_set_audio_direction(call_params,LinphoneMediaDirectionSendOnly);
-			linphone_call_params_set_video_direction(call_params,LinphoneMediaDirectionSendOnly);
-			linphone_core_accept_call_with_params(lc,call,call_params);
+			linphone_call_params_enable_video(call_params, TRUE);
+			linphone_call_params_set_audio_direction(call_params, LinphoneMediaDirectionSendOnly);
+			linphone_call_params_set_video_direction(call_params, LinphoneMediaDirectionSendOnly);
+			linphone_core_accept_call_with_params(lc, call, call_params);
 			linphone_call_params_unref(call_params);
-		break;
+			break;
 		default:
 			break;
 	}
@@ -64,56 +67,57 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
 extern MSWebCamDesc mire_desc;
 static void helper(const char *progname) {
 	printf("%s --help\n"
-			"\t\t\t--listening-uri <uri> uri to listen on, default [sip:localhost:5060]\n"
-			"\t\t\t--max-call-duration max duration of a call in seconds, default [3600]\n"
-			"\t\t\t--media-file <wav or mkv file to play to caller>\n"
-			"\t\t\t--verbose\n", progname);
+	       "\t\t\t--listening-uri <uri> uri to listen on, default [sip:localhost:5060]\n"
+	       "\t\t\t--max-call-duration max duration of a call in seconds, default [3600]\n"
+	       "\t\t\t--media-file <wav or mkv file to play to caller>\n"
+	       "\t\t\t--verbose\n",
+	       progname);
 	exit(0);
 }
 
-int main(int argc, char *argv[]){
-	LinphoneCoreVTable vtable={0};
+int main(int argc, char *argv[]) {
+	LinphoneCoreVTable vtable = {0};
 	LinphoneCore *lc;
 	LinphoneVideoPolicy policy;
 	int i;
-	LinphoneAddress *addr=NULL;
+	LinphoneAddress *addr = NULL;
 	LCSipTransports tp;
-	char * tmp = NULL;
-	LpConfig * lp_config = linphone_config_new(NULL);
-	int max_call_duration=3600;
+	char *tmp = NULL;
+	LpConfig *lp_config = linphone_config_new(NULL);
+	int max_call_duration = 3600;
 	static const char *media_file = NULL;
 
-	policy.automatically_accept=TRUE;
-	signal(SIGINT,stop);
+	policy.automatically_accept = TRUE;
+	signal(SIGINT, stop);
 #ifndef _WIN32
-	signal(SIGUSR1,stats);
-	signal(SIGUSR2,dump_call_logs);
+	signal(SIGUSR1, stats);
+	signal(SIGUSR2, dump_call_logs);
 #endif
-	for(i = 1; i < argc; ++i) {
+	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--verbose") == 0) {
-			linphone_core_set_log_level_mask(ORTP_MESSAGE|ORTP_WARNING|ORTP_ERROR|ORTP_FATAL);
-		} else if (strcmp(argv[i], "--max-call-duration") == 0){
+			linphone_core_set_log_level_mask(ORTP_MESSAGE | ORTP_WARNING | ORTP_ERROR | ORTP_FATAL);
+		} else if (strcmp(argv[i], "--max-call-duration") == 0) {
 			max_call_duration = atoi(argv[++i]);
-		} else if (strcmp(argv[i], "--listening-uri") == 0){
+		} else if (strcmp(argv[i], "--listening-uri") == 0) {
 			addr = linphone_address_new(argv[++i]);
 			if (!addr) {
 				printf("Error, bad sip uri");
 				helper(argv[0]);
 			}
-/*			switch(linphone_address_get_transport(addr)) {
-			case LinphoneTransportUdp:
-			case LinphoneTransportTcp:
-				break;
-			default:
-				ms_error("Error, bad sip uri [%s] transport, should be udp | tcp",argv[i]);
-				helper();
-				break;
-			}*/
-		} else if (strcmp(argv[i], "--media-file") == 0){
+			/*			switch(linphone_address_get_transport(addr)) {
+			            case LinphoneTransportUdp:
+			            case LinphoneTransportTcp:
+			                break;
+			            default:
+			                ms_error("Error, bad sip uri [%s] transport, should be udp | tcp",argv[i]);
+			                helper();
+			                break;
+			            }*/
+		} else if (strcmp(argv[i], "--media-file") == 0) {
 			i++;
-			if (i<argc){
+			if (i < argc) {
 				media_file = argv[i];
-			}else helper(argv[0]);
+			} else helper(argv[0]);
 		} else {
 			helper(argv[0]);
 		}
@@ -123,33 +127,32 @@ int main(int argc, char *argv[]){
 		addr = linphone_address_new("sip:bot@0.0.0.0:5060");
 	}
 
-	linphone_config_set_string(lp_config,"sip","bind_address",linphone_address_get_domain(addr));
-	linphone_config_set_string(lp_config,"rtp","bind_address",linphone_address_get_domain(addr));
-	linphone_config_set_int(lp_config,"misc","history_max_size",100000);
+	linphone_config_set_string(lp_config, "sip", "bind_address", linphone_address_get_domain(addr));
+	linphone_config_set_string(lp_config, "rtp", "bind_address", linphone_address_get_domain(addr));
+	linphone_config_set_int(lp_config, "misc", "history_max_size", 100000);
 
-	vtable.call_state_changed=call_state_changed;
+	vtable.call_state_changed = call_state_changed;
 
-	lc=linphone_core_new_with_config(&vtable,lp_config,NULL);
-	linphone_core_enable_video_capture(lc,TRUE);
-	linphone_core_enable_video_display(lc,FALSE);
-	linphone_core_set_video_policy(lc,&policy);
-	linphone_core_enable_keep_alive(lc,FALSE);
-
+	lc = linphone_core_new_with_config(&vtable, lp_config, NULL);
+	linphone_core_enable_video_capture(lc, TRUE);
+	linphone_core_enable_video_display(lc, FALSE);
+	linphone_core_set_video_policy(lc, &policy);
+	linphone_core_enable_keep_alive(lc, FALSE);
 
 	/*instead of using sound capture card, a file is played to the calling party*/
-	linphone_core_set_use_files(lc,TRUE);
+	linphone_core_set_use_files(lc, TRUE);
 	linphone_core_enable_echo_cancellation(lc, FALSE); /*no need for local echo cancellation when playing files*/
-	if (!media_file){
+	if (!media_file) {
 		LinphoneFactory *factory = linphone_factory_get();
 		const char *sound_resources_dir = linphone_factory_get_sound_resources_dir(factory);
 		char *play_file = bctbx_strdup_printf("%s/hello16000.wav", sound_resources_dir);
 		linphone_core_set_play_file(lc, play_file);
 		bctbx_free(play_file);
-		linphone_core_set_preferred_framerate(lc,5);
-	}else{
+		linphone_core_set_preferred_framerate(lc, 5);
+	} else {
 		PayloadType *pt = linphone_core_find_payload_type(lc, "opus", 48000, -1);
 		/*if opus is present, give it a bitrate for good quality with music, and stereo enabled*/
-		if (pt){
+		if (pt) {
 			linphone_core_set_payload_type_bitrate(lc, pt, 150);
 			payload_type_set_send_fmtp(pt, "stereo=1");
 			payload_type_set_recv_fmtp(pt, "stereo=1");
@@ -160,57 +163,57 @@ int main(int argc, char *argv[]){
 
 	{
 		MSWebCamDesc *desc = ms_mire_webcam_desc_get();
-		if (desc){
-			ms_web_cam_manager_add_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(lc)),ms_web_cam_new(desc));
-			linphone_core_set_video_device(lc,"Mire: Mire (synthetic moving picture)");
+		if (desc) {
+			ms_web_cam_manager_add_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(lc)),
+			                           ms_web_cam_new(desc));
+			linphone_core_set_video_device(lc, "Mire: Mire (synthetic moving picture)");
 		}
 	}
 
-
-
-	memset(&tp,0,sizeof(LCSipTransports));
+	memset(&tp, 0, sizeof(LCSipTransports));
 
 	tp.udp_port = linphone_address_get_port(addr);
 	tp.tcp_port = linphone_address_get_port(addr);
 
-	linphone_core_set_sip_transports(lc,&tp);
-	linphone_core_set_audio_port_range(lc,1024,65000);
-	linphone_core_set_video_port_range(lc,1024,65000);
-	linphone_core_set_primary_contact(lc,tmp=linphone_address_as_string(addr));
+	linphone_core_set_sip_transports(lc, &tp);
+	linphone_core_set_audio_port_range(lc, 1024, 65000);
+	linphone_core_set_video_port_range(lc, 1024, 65000);
+	linphone_core_set_primary_contact(lc, tmp = linphone_address_as_string(addr));
 	ms_free(tmp);
 
 	/* main loop for receiving notifications and doing background linphonecore work: */
-	while(running){
-		const bctbx_list_t * iterator;
+	while (running) {
+		const bctbx_list_t *iterator;
 		linphone_core_iterate(lc);
 		ms_usleep(50000);
 		if (print_stats) {
 			ms_message("*********************************");
-			ms_message("*Current number of calls   [%10u]  *", (unsigned int)bctbx_list_size(linphone_core_get_calls(lc)));
-			ms_message("*Number of calls until now [%10u]  *", (unsigned int)bctbx_list_size(linphone_core_get_call_logs(lc)));
+			ms_message("*Current number of calls   [%10u]  *",
+			           (unsigned int)bctbx_list_size(linphone_core_get_calls(lc)));
+			ms_message("*Number of calls until now [%10u]  *",
+			           (unsigned int)bctbx_list_size(linphone_core_get_call_logs(lc)));
 			ms_message("*********************************");
-			print_stats=FALSE;
+			print_stats = FALSE;
 		}
 		if (dump_stats) {
 			ms_message("*********************************");
-			for (iterator=linphone_core_get_call_logs(lc);iterator!=NULL;iterator=iterator->next) {
-				LinphoneCallLog *call_log=(LinphoneCallLog *)iterator->data;
-				char * tmp_str = linphone_call_log_to_str(call_log);
-				ms_message("\n%s",tmp_str);
+			for (iterator = linphone_core_get_call_logs(lc); iterator != NULL; iterator = iterator->next) {
+				LinphoneCallLog *call_log = (LinphoneCallLog *)iterator->data;
+				char *tmp_str = linphone_call_log_to_str(call_log);
+				ms_message("\n%s", tmp_str);
 				ms_free(tmp_str);
 			}
-			dump_stats=FALSE;
+			dump_stats = FALSE;
 			ms_message("*********************************");
 		}
-		for (iterator=linphone_core_get_calls(lc);iterator!=NULL;iterator=iterator->next) {
-			LinphoneCall *call=(LinphoneCall *)iterator->data;
+		for (iterator = linphone_core_get_calls(lc); iterator != NULL; iterator = iterator->next) {
+			LinphoneCall *call = (LinphoneCall *)iterator->data;
 			if (linphone_call_get_duration(call) > max_call_duration) {
-				ms_message("Terminating call [%p] after [%i] s",call,linphone_call_get_duration(call));
-				linphone_core_terminate_call(lc,call);
+				ms_message("Terminating call [%p] after [%i] s", call, linphone_call_get_duration(call));
+				linphone_core_terminate_call(lc, call);
 				break;
 			}
 		}
-
 	}
 
 	ms_message("Shutting down...\n");
@@ -218,7 +221,3 @@ int main(int argc, char *argv[]){
 	ms_message("Exited\n");
 	return 0;
 }
-
-
-
-

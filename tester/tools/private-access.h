@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,32 +33,31 @@
 
 #include "linphone/utils/utils.h"
 
-#define L_INTERNAL_STRUCT_L_ATTR_GET(CLASS, ATTR_NAME) AttrGet ## _ ## CLASS ## _ ## ATTR_NAME
-#define L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME) AttrSpy ## _ ## ATTR_NAME
+#define L_INTERNAL_STRUCT_L_ATTR_GET(CLASS, ATTR_NAME) AttrGet##_##CLASS##_##ATTR_NAME
+#define L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME) AttrSpy##_##ATTR_NAME
 
-#define L_ENABLE_ATTR_ACCESS(CLASS, ATTR_TYPE, ATTR_NAME) \
-	template<typename AttrSpy, ATTR_TYPE CLASS::*Attr> \
-	struct L_INTERNAL_STRUCT_L_ATTR_GET(CLASS, ATTR_NAME) { \
-		friend constexpr ATTR_TYPE CLASS::*get(AttrSpy *) { \
-			return Attr; \
-		} \
-	}; \
-	template<typename T> \
-	struct L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME); \
-	template<> \
-	struct L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME)<CLASS> { \
-		friend constexpr ATTR_TYPE CLASS::*get(L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME)<CLASS> *); \
-	}; \
-	template struct L_INTERNAL_STRUCT_L_ATTR_GET(CLASS, ATTR_NAME)< \
-		L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME)<CLASS>, \
-		&CLASS::ATTR_NAME \
-	>;
+#define L_ENABLE_ATTR_ACCESS(CLASS, ATTR_TYPE, ATTR_NAME)                                                              \
+	template <typename AttrSpy, ATTR_TYPE CLASS::*Attr>                                                                \
+	struct L_INTERNAL_STRUCT_L_ATTR_GET(CLASS, ATTR_NAME) {                                                            \
+		friend constexpr ATTR_TYPE CLASS::*get(AttrSpy *) {                                                            \
+			return Attr;                                                                                               \
+		}                                                                                                              \
+	};                                                                                                                 \
+	template <typename T>                                                                                              \
+	struct L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME);                                                                      \
+	template <>                                                                                                        \
+	struct L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME)<CLASS> {                                                              \
+		friend constexpr ATTR_TYPE CLASS::*get(L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME) < CLASS > *);                     \
+	};                                                                                                                 \
+	template struct L_INTERNAL_STRUCT_L_ATTR_GET(CLASS, ATTR_NAME)<L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME) < CLASS>,     \
+	    &CLASS::ATTR_NAME > ;
 
 // Warning: Allow to modify const data.
 // Returns a ref to `ATTR_NAME`.
-#define L_ATTR_GET(OBJECT, ATTR_NAME) \
-	(const_cast<std::remove_pointer<std::decay<decltype(OBJECT)>::type>::type *>(LinphonePrivate::Utils::getPtr(OBJECT)))->*get( \
-		static_cast<L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME)<std::remove_pointer<std::decay<decltype(OBJECT)>::type>::type> *>(nullptr) \
-	)
+#define L_ATTR_GET(OBJECT, ATTR_NAME)                                                                                  \
+	(const_cast<std::remove_pointer<std::decay<decltype(OBJECT)>::type>::type *>(                                      \
+	     LinphonePrivate::Utils::getPtr(OBJECT)))                                                                      \
+	        ->*get(static_cast<L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME) <                                                 \
+	                           std::remove_pointer<std::decay<decltype(OBJECT)>::type>::type> * > (nullptr))
 
 #endif // ifndef _L_PRIVATE_ACCESS_H_

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "chat/chat-message/notification-message-p.h"
 #include "chat/chat-message/is-composing-message.h"
+#include "chat/chat-message/notification-message-p.h"
 #include "sip-tools/sip-headers.h"
 
 // =============================================================================
@@ -30,11 +30,10 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-IsComposingMessage::IsComposingMessage (
-	const shared_ptr<AbstractChatRoom> &chatRoom,
-	IsComposing &isComposingHandler,
-	bool isComposing
-) : NotificationMessage(*new NotificationMessagePrivate(chatRoom, ChatMessage::Direction::Outgoing)) {
+IsComposingMessage::IsComposingMessage(const shared_ptr<AbstractChatRoom> &chatRoom,
+                                       IsComposing &isComposingHandler,
+                                       bool isComposing)
+    : NotificationMessage(*new NotificationMessagePrivate(chatRoom, ChatMessage::Direction::Outgoing)) {
 	L_D();
 	Content *content = new Content();
 	content->setContentType(ContentType::ImIsComposing);

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,24 +33,27 @@ LINPHONE_BEGIN_NAMESPACE
 
 class RecorderParams : public bellesip::HybridObject<LinphoneRecorderParams, RecorderParams> {
 public:
-	RecorderParams (std::shared_ptr<const AudioDevice> device, const std::string &webcamName, void *windowId,
-				   LinphoneRecorderFileFormat format = LinphoneRecorderFileFormatWav, const std::string &videoCodec = "");
-	RecorderParams (const RecorderParams &other);
-	~RecorderParams () = default;
+	RecorderParams(std::shared_ptr<const AudioDevice> device,
+	               const std::string &webcamName,
+	               void *windowId,
+	               LinphoneRecorderFileFormat format = LinphoneRecorderFileFormatWav,
+	               const std::string &videoCodec = "");
+	RecorderParams(const RecorderParams &other);
+	~RecorderParams() = default;
 
-	RecorderParams* clone() const override;
+	RecorderParams *clone() const override;
 
-	void setAudioDevice (std::shared_ptr<const AudioDevice> audioDevice);
-	void setWebcamName (const std::string &webcamName);
-	void setVideoCodec (const std::string &videoCodec);
-	void setFileFormat (LinphoneRecorderFileFormat format);
-	void setWindowId (void *windowId);
+	void setAudioDevice(std::shared_ptr<const AudioDevice> audioDevice);
+	void setWebcamName(const std::string &webcamName);
+	void setVideoCodec(const std::string &videoCodec);
+	void setFileFormat(LinphoneRecorderFileFormat format);
+	void setWindowId(void *windowId);
 
-	std::shared_ptr<const AudioDevice> getAudioDevice () const;
-	const std::string& getWebcamName () const;
-	const std::string& getVideoCodec () const;
-	LinphoneRecorderFileFormat getFileFormat () const;
-	void* getWindowId () const;
+	std::shared_ptr<const AudioDevice> getAudioDevice() const;
+	const std::string &getWebcamName() const;
+	const std::string &getVideoCodec() const;
+	LinphoneRecorderFileFormat getFileFormat() const;
+	void *getWindowId() const;
 
 private:
 	std::shared_ptr<const AudioDevice> mAudioDevice;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,29 +39,18 @@ const int PayloadTypeHandler::rtpHeaderSize = 12;
 const int PayloadTypeHandler::ipv4HeaderSize = 20;
 
 const VbrCodecBitrate PayloadTypeHandler::defaultVbrCodecBitrates[] = {
-	{ 64, 44100, 50 },
-	{ 64, 16000, 40 },
-	{ 32, 16000, 32 },
-	{ 32, 8000, 32 },
-	{ 0, 8000, 24 },
-	{ 0, 0, 0 }
-};
+    {64, 44100, 50}, {64, 16000, 40}, {32, 16000, 32}, {32, 8000, 32}, {0, 8000, 24}, {0, 0, 0}};
 
 // =============================================================================
 
-int PayloadTypeHandler::findPayloadTypeNumber (const std::list<OrtpPayloadType*> & assigned, const OrtpPayloadType *pt) {
+int PayloadTypeHandler::findPayloadTypeNumber(const std::list<OrtpPayloadType *> &assigned, const OrtpPayloadType *pt) {
 	const OrtpPayloadType *candidate = nullptr;
-	for (const auto & it : assigned) {
-		if (
-			strcasecmp(pt->mime_type, payload_type_get_mime(it)) == 0 &&
-			it->clock_rate == pt->clock_rate &&
-			((it->channels == pt->channels) || (pt->channels <= 0))
-		) {
+	for (const auto &it : assigned) {
+		if (strcasecmp(pt->mime_type, payload_type_get_mime(it)) == 0 && it->clock_rate == pt->clock_rate &&
+		    ((it->channels == pt->channels) || (pt->channels <= 0))) {
 			candidate = it;
-			if (
-				(it->recv_fmtp && pt->recv_fmtp && (strcasecmp(it->recv_fmtp, pt->recv_fmtp) == 0)) ||
-				(!it->recv_fmtp && !pt->recv_fmtp)
-			)
+			if ((it->recv_fmtp && pt->recv_fmtp && (strcasecmp(it->recv_fmtp, pt->recv_fmtp) == 0)) ||
+			    (!it->recv_fmtp && !pt->recv_fmtp))
 				// Exact match.
 				break;
 		}
@@ -69,15 +58,14 @@ int PayloadTypeHandler::findPayloadTypeNumber (const std::list<OrtpPayloadType*>
 	return candidate ? payload_type_get_number(candidate) : -1;
 }
 
-bool PayloadTypeHandler::hasTelephoneEventPayloadType (const std::list<OrtpPayloadType*> & tev, int rate) {
-	for (const auto & pt : tev) {
-		if (pt->clock_rate == rate)
-			return true;
+bool PayloadTypeHandler::hasTelephoneEventPayloadType(const std::list<OrtpPayloadType *> &tev, int rate) {
+	for (const auto &pt : tev) {
+		if (pt->clock_rate == rate) return true;
 	}
 	return false;
 }
 
-bool PayloadTypeHandler::isPayloadTypeUsableForBandwidth (const OrtpPayloadType *pt, int bandwidthLimit) {
+bool PayloadTypeHandler::isPayloadTypeUsableForBandwidth(const OrtpPayloadType *pt, int bandwidthLimit) {
 	const int videoEnablementLimit = 99;
 	double codecBand = 0;
 	switch (pt->type) {
@@ -87,8 +75,7 @@ bool PayloadTypeHandler::isPayloadTypeUsableForBandwidth (const OrtpPayloadType 
 			return bandwidthIsGreater(bandwidthLimit, (int)codecBand);
 		case PAYLOAD_VIDEO:
 			// Infinite or greater than videoEnablementLimit.
-			if (bandwidthLimit <= 0 || bandwidthLimit >= videoEnablementLimit)
-				return true;
+			if (bandwidthLimit <= 0 || bandwidthLimit >= videoEnablementLimit) return true;
 			break;
 		case PAYLOAD_TEXT:
 			return true;
@@ -96,12 +83,10 @@ bool PayloadTypeHandler::isPayloadTypeUsableForBandwidth (const OrtpPayloadType 
 	return false;
 }
 
-int PayloadTypeHandler::lookupTypicalVbrBitrate (int maxBandwidth, int clockRate) {
-	if (maxBandwidth <= 0)
-		maxBandwidth = defaultVbrCodecBitrates[0].maxAvailableBitrate;
+int PayloadTypeHandler::lookupTypicalVbrBitrate(int maxBandwidth, int clockRate) {
+	if (maxBandwidth <= 0) maxBandwidth = defaultVbrCodecBitrates[0].maxAvailableBitrate;
 	for (const VbrCodecBitrate *it = &defaultVbrCodecBitrates[0]; it->minClockRate != 0; it++) {
-		if ((maxBandwidth >= it->maxAvailableBitrate) && (clockRate >= it->minClockRate))
-			return it->recommendedBitrate;
+		if ((maxBandwidth >= it->maxAvailableBitrate) && (clockRate >= it->minClockRate)) return it->recommendedBitrate;
 	}
 	lError() << "lookupTypicalVbrBitrate(): should not happen";
 	return 32;
@@ -109,17 +94,19 @@ int PayloadTypeHandler::lookupTypicalVbrBitrate (int maxBandwidth, int clockRate
 
 // -----------------------------------------------------------------------------
 
-void PayloadTypeHandler::assignPayloadTypeNumbers (const std::list<OrtpPayloadType*> & codecs) {
+void PayloadTypeHandler::assignPayloadTypeNumbers(const std::list<OrtpPayloadType *> &codecs) {
 	OrtpPayloadType *red = nullptr;
 	OrtpPayloadType *t140 = nullptr;
 
-	for (const auto & pt : codecs) {
+	for (const auto &pt : codecs) {
 		int number = payload_type_get_number(pt);
 
-		// Check if number is duplicated: it could be the case if the remote forced us to use a mapping with a previous offer.
+		// Check if number is duplicated: it could be the case if the remote forced us to use a mapping with a previous
+		// offer.
 		if ((number != -1) && !(pt->flags & PAYLOAD_TYPE_FROZEN_NUMBER)) {
 			if (!isPayloadTypeNumberAvailable(codecs, number, pt)) {
-				lInfo() << "Reassigning payload type " << number << " " << pt->mime_type << "/" << pt->clock_rate << " because already offered";
+				lInfo() << "Reassigning payload type " << number << " " << pt->mime_type << "/" << pt->clock_rate
+				        << " because already offered";
 				// Need to be re-assigned.
 				number = -1;
 			}
@@ -136,82 +123,80 @@ void PayloadTypeHandler::assignPayloadTypeNumbers (const std::list<OrtpPayloadTy
 				dynNumber++;
 			}
 			if (dynNumber == 127) {
-				lError() << "Too many payload types configured ! codec " << pt->mime_type << "/" << pt->clock_rate << " is disabled";
+				lError() << "Too many payload types configured ! codec " << pt->mime_type << "/" << pt->clock_rate
+				         << " is disabled";
 				payload_type_set_enable(pt, false);
 			}
 		}
 
-		if (strcmp(pt->mime_type, payload_type_t140_red.mime_type) == 0)
-			red = pt;
-		else if (strcmp(pt->mime_type, payload_type_t140.mime_type) == 0)
-			t140 = pt;
+		if (strcmp(pt->mime_type, payload_type_t140_red.mime_type) == 0) red = pt;
+		else if (strcmp(pt->mime_type, payload_type_t140.mime_type) == 0) t140 = pt;
 	}
 
 	if (t140 && red) {
 		int t140_payload_type_number = payload_type_get_number(t140);
-		char *red_fmtp = ms_strdup_printf("%i/%i/%i", t140_payload_type_number, t140_payload_type_number, t140_payload_type_number);
+		char *red_fmtp =
+		    ms_strdup_printf("%i/%i/%i", t140_payload_type_number, t140_payload_type_number, t140_payload_type_number);
 		payload_type_set_recv_fmtp(red, red_fmtp);
 		ms_free(red_fmtp);
 	}
 }
 
-std::list<OrtpPayloadType*> PayloadTypeHandler::createSpecialPayloadTypes (const std::list<OrtpPayloadType*> & codecs) {
-	std::list<OrtpPayloadType*> result;
-	
-	if (linphone_core_get_use_rfc2833_for_dtmf(getCore()->getCCore())){
+std::list<OrtpPayloadType *> PayloadTypeHandler::createSpecialPayloadTypes(const std::list<OrtpPayloadType *> &codecs) {
+	std::list<OrtpPayloadType *> result;
+
+	if (linphone_core_get_use_rfc2833_for_dtmf(getCore()->getCCore())) {
 		result = createTelephoneEventPayloadTypes(codecs);
 	}
 	if (linphone_core_generic_comfort_noise_enabled(getCore()->getCCore())) {
 		OrtpPayloadType *cn = payload_type_clone(&payload_type_cn);
 		payload_type_set_number(cn, 13);
 		result.push_back(cn);
-	} 
+	}
 	return result;
 }
 
-std::list<OrtpPayloadType*> PayloadTypeHandler::createTelephoneEventPayloadTypes (const std::list<OrtpPayloadType*> & codecs) {
-	std::list<OrtpPayloadType*> result;
-	for (const auto & pt : codecs) {
-		if (hasTelephoneEventPayloadType(result, pt->clock_rate))
-			continue;
+std::list<OrtpPayloadType *>
+PayloadTypeHandler::createTelephoneEventPayloadTypes(const std::list<OrtpPayloadType *> &codecs) {
+	std::list<OrtpPayloadType *> result;
+	for (const auto &pt : codecs) {
+		if (hasTelephoneEventPayloadType(result, pt->clock_rate)) continue;
 
 		OrtpPayloadType *tev = payload_type_clone(&payload_type_telephone_event);
 		tev->clock_rate = pt->clock_rate;
 		// Let it choose the number dynamically as for normal codecs.
 		payload_type_set_number(tev, -1);
 		// But for first telephone-event, prefer the number that was configured in the core.
-		if (!result.empty() && isPayloadTypeNumberAvailable(codecs, getCore()->getCCore()->codecs_conf.telephone_event_pt, nullptr))
+		if (!result.empty() &&
+		    isPayloadTypeNumberAvailable(codecs, getCore()->getCCore()->codecs_conf.telephone_event_pt, nullptr))
 			payload_type_set_number(tev, getCore()->getCCore()->codecs_conf.telephone_event_pt);
 		result.push_back(tev);
 	}
 	return result;
 }
 
-OrtpPayloadType* PayloadTypeHandler::createFecPayloadType () {
-	
+OrtpPayloadType *PayloadTypeHandler::createFecPayloadType() {
+
 	OrtpPayloadType *fec_pt = payload_type_clone(&payload_type_flexfec);
 	payload_type_set_number(fec_pt, -1);
 	return fec_pt;
 }
 
-bool PayloadTypeHandler::isPayloadTypeUsable (const OrtpPayloadType *pt) {
-	return isPayloadTypeUsableForBandwidth(
-		pt, getMinBandwidth(
-			linphone_core_get_download_bandwidth(getCore()->getCCore()),
-			linphone_core_get_upload_bandwidth(getCore()->getCCore())
-		)
-	);
+bool PayloadTypeHandler::isPayloadTypeUsable(const OrtpPayloadType *pt) {
+	return isPayloadTypeUsableForBandwidth(pt,
+	                                       getMinBandwidth(linphone_core_get_download_bandwidth(getCore()->getCCore()),
+	                                                       linphone_core_get_upload_bandwidth(getCore()->getCCore())));
 }
 
 // -----------------------------------------------------------------------------
 
-bool PayloadTypeHandler::bandwidthIsGreater (int bandwidth1, int bandwidth2) {
+bool PayloadTypeHandler::bandwidthIsGreater(int bandwidth1, int bandwidth2) {
 	if (bandwidth1 <= 0) return true;
 	if (bandwidth2 <= 0) return false;
 	return bandwidth1 >= bandwidth2;
 }
 
-int PayloadTypeHandler::getAudioPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth) {
+int PayloadTypeHandler::getAudioPayloadTypeBandwidth(const OrtpPayloadType *pt, int maxBandwidth) {
 	if (payload_type_is_vbr(pt)) {
 		if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE) {
 			lDebug() << "PayloadType " << pt->mime_type << "/" << pt->clock_rate << " has bitrate override";
@@ -223,61 +208,59 @@ int PayloadTypeHandler::getAudioPayloadTypeBandwidth (const OrtpPayloadType *pt,
 	return (int)ceil(getAudioPayloadTypeBandwidthFromCodecBitrate(pt) / 1000.0);
 }
 
-int PayloadTypeHandler::getVideoPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth) {
+int PayloadTypeHandler::getVideoPayloadTypeBandwidth(const OrtpPayloadType *pt, int maxBandwidth) {
 	if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE) {
 		lDebug() << "PayloadType " << pt->mime_type << "/" << pt->clock_rate << " has bitrate override";
 		return getMinBandwidth(maxBandwidth, pt->normal_bitrate / 1000);
-	}else
-		return maxBandwidth;
+	} else return maxBandwidth;
 }
 
 /*
  *((codec-birate*ptime/8) + RTP header + UDP header + IP header)*8/ptime;
  * ptime=1/npacket
  */
-double PayloadTypeHandler::getAudioPayloadTypeBandwidthFromCodecBitrate (const OrtpPayloadType *pt) {
+double PayloadTypeHandler::getAudioPayloadTypeBandwidthFromCodecBitrate(const OrtpPayloadType *pt) {
 	double npacket = 50;
 	if (strcmp(payload_type_get_mime(&payload_type_aaceld_44k), payload_type_get_mime(pt)) == 0)
 		// Special case of aac 44K because ptime=10ms.
 		npacket = 100;
-	else if (strcmp(payload_type_get_mime(&payload_type_ilbc), payload_type_get_mime(pt)) == 0)
-		npacket = 1000 / 30.0;
+	else if (strcmp(payload_type_get_mime(&payload_type_ilbc), payload_type_get_mime(pt)) == 0) npacket = 1000 / 30.0;
 
 	int bitrate = pt->normal_bitrate;
 	double packet_size = (((double)bitrate) / (npacket * 8)) + udpHeaderSize + rtpHeaderSize + ipv4HeaderSize;
 	return packet_size * 8.0 * npacket;
 }
 
-int PayloadTypeHandler::getMaxCodecSampleRate (const std::list<OrtpPayloadType*> & codecs) {
+int PayloadTypeHandler::getMaxCodecSampleRate(const std::list<OrtpPayloadType *> &codecs) {
 	int maxSampleRate = 0;
-	for (const auto & pt : codecs) {
+	for (const auto &pt : codecs) {
 		int sampleRate;
 		if (strcasecmp("G722", pt->mime_type) == 0)
 			// G722 spec says 8000 but the codec actually requires 16000.
 			sampleRate = 16000;
-		else
-			sampleRate = pt->clock_rate;
+		else sampleRate = pt->clock_rate;
 
-		if (sampleRate > maxSampleRate)
-			maxSampleRate = sampleRate;
+		if (sampleRate > maxSampleRate) maxSampleRate = sampleRate;
 	}
 	return maxSampleRate;
 }
 
-int PayloadTypeHandler::getMinBandwidth (int downBandwidth, int upBandwidth) {
+int PayloadTypeHandler::getMinBandwidth(int downBandwidth, int upBandwidth) {
 	if (downBandwidth <= 0) return upBandwidth;
 	if (upBandwidth <= 0) return downBandwidth;
 	return MIN(downBandwidth, upBandwidth);
 }
 
-int PayloadTypeHandler::getRemainingBandwidthForVideo (int total, int audio) {
+int PayloadTypeHandler::getRemainingBandwidthForVideo(int total, int audio) {
 	int remaining = total - audio - 10;
 	if (remaining < 0) remaining = 0;
 	return remaining;
 }
 
-bool PayloadTypeHandler::isPayloadTypeNumberAvailable (const std::list<OrtpPayloadType*> & codecs, int number, const OrtpPayloadType *ignore) {
-	for (const auto & pt : codecs) {
+bool PayloadTypeHandler::isPayloadTypeNumberAvailable(const std::list<OrtpPayloadType *> &codecs,
+                                                      int number,
+                                                      const OrtpPayloadType *ignore) {
+	for (const auto &pt : codecs) {
 		if (!pt) continue;
 		if (pt && (pt != ignore) && (payload_type_get_number(pt) == number)) return false;
 	}
@@ -286,7 +269,11 @@ bool PayloadTypeHandler::isPayloadTypeNumberAvailable (const std::list<OrtpPaylo
 
 // -----------------------------------------------------------------------------
 
-std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const std::list<OrtpPayloadType*> & previousList, bool bundle_enabled) {
+std::list<OrtpPayloadType *> PayloadTypeHandler::makeCodecsList(SalStreamType type,
+                                                                int bandwidthLimit,
+                                                                int maxCodecs,
+                                                                const std::list<OrtpPayloadType *> &previousList,
+                                                                bool bundle_enabled) {
 	const bctbx_list_t *allCodecs = nullptr;
 	switch (type) {
 		default:
@@ -302,15 +289,14 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType ty
 	}
 
 	int nb = 0;
-	std::list<OrtpPayloadType*> result;
+	std::list<OrtpPayloadType *> result;
 	for (const bctbx_list_t *it = allCodecs; it != nullptr; it = bctbx_list_next(it)) {
 		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
-		if (!payload_type_enabled(pt))
-			continue;
+		if (!payload_type_enabled(pt)) continue;
 
 		if (bandwidthLimit > 0 && !isPayloadTypeUsableForBandwidth(pt, bandwidthLimit)) {
-			lInfo() << "Codec " << pt->mime_type << "/" << pt->clock_rate << " eliminated because of audio bandwidth constraint of " <<
-				bandwidthLimit << " kbit/s";
+			lInfo() << "Codec " << pt->mime_type << "/" << pt->clock_rate
+			        << " eliminated because of audio bandwidth constraint of " << bandwidthLimit << " kbit/s";
 			continue;
 		}
 
@@ -336,8 +322,8 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType ty
 		auto specials = createSpecialPayloadTypes(result);
 		result.insert(result.cend(), specials.cbegin(), specials.cend());
 	}
-	if(type == SalVideo && bundle_enabled && linphone_core_fec_enabled(getCore()->getCCore())){
-		
+	if (type == SalVideo && bundle_enabled && linphone_core_fec_enabled(getCore()->getCCore())) {
+
 		auto fec_pt = createFecPayloadType();
 		result.push_back(fec_pt);
 	}
@@ -345,8 +331,8 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType ty
 	return result;
 }
 
-void PayloadTypeHandler::clearPayloadList(std::list<OrtpPayloadType*> & payloads) {
-	for (auto & pt : payloads) {
+void PayloadTypeHandler::clearPayloadList(std::list<OrtpPayloadType *> &payloads) {
+	for (auto &pt : payloads) {
 		payload_type_destroy(pt);
 	}
 	payloads.clear();

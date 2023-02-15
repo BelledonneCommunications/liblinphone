@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,16 +21,14 @@
 #ifndef LINPHONE_CHAT_H_
 #define LINPHONE_CHAT_H_
 
-
-#include "linphone/callbacks.h"
-#include "linphone/types.h"
-#include "linphone/api/c-types.h"
-#include "linphone/api/c-chat-message.h"
 #include "linphone/api/c-chat-message-cbs.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room-cbs.h"
 #include "linphone/api/c-chat-room-params.h"
 #include "linphone/api/c-chat-room.h"
-#include "linphone/api/c-chat-room-cbs.h"
-
+#include "linphone/api/c-types.h"
+#include "linphone/callbacks.h"
+#include "linphone/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,14 +43,14 @@ extern "C" {
  * Returns a list of chat rooms
  * @param core #LinphoneCore object @notnil
  * @return List of chat rooms. \bctbx_list{LinphoneChatRoom} @maybenil
-**/
-LINPHONE_PUBLIC const bctbx_list_t* linphone_core_get_chat_rooms(LinphoneCore *core);
+ **/
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_chat_rooms(LinphoneCore *core);
 
 /**
  * Creates and returns the default chat room parameters.
  * @param core #LinphoneCore object @notnil
  * @return A #LinphoneChatRoomParams object @notnil
-**/
+ **/
 LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_core_create_default_chat_room_params(LinphoneCore *core);
 
 /**
@@ -62,6 +60,5 @@ LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_core_create_default_chat_room_p
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* LINPHONE_CHAT_H_ */

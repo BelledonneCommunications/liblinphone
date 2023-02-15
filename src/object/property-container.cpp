@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,61 +38,59 @@ public:
 
 // -----------------------------------------------------------------------------
 
-PropertyContainer::PropertyContainer () : mPrivate(nullptr) {}
+PropertyContainer::PropertyContainer() : mPrivate(nullptr) {
+}
 
 /*
  * Empty copy constructor. Don't change this pattern.
  * PropertyContainer is an Entity component, not a simple structure.
  * An Entity is UNIQUE.
  */
-PropertyContainer::PropertyContainer (const PropertyContainer &) : mPrivate(nullptr) {}
+PropertyContainer::PropertyContainer(const PropertyContainer &) : mPrivate(nullptr) {
+}
 
-PropertyContainer::~PropertyContainer () {
+PropertyContainer::~PropertyContainer() {
 	delete mPrivate;
 }
 
-PropertyContainer &PropertyContainer::operator= (const PropertyContainer &) {
+PropertyContainer &PropertyContainer::operator=(const PropertyContainer &) {
 	return *this;
 }
 
-const Variant &PropertyContainer::getProperty (const string &name) const {
-	if (!mPrivate)
-		return bctoolbox::Utils::getEmptyConstRefObject<Variant>();
+const Variant &PropertyContainer::getProperty(const string &name) const {
+	if (!mPrivate) return bctoolbox::Utils::getEmptyConstRefObject<Variant>();
 	auto &properties = mPrivate->properties;
 	auto it = properties.find(name);
 	return it == properties.cend() ? bctoolbox::Utils::getEmptyConstRefObject<Variant>() : it->second;
 }
 
-void PropertyContainer::setProperty (const string &name, const Variant &value) {
-	if (!mPrivate)
-		mPrivate = new PropertyContainerPrivate();
+void PropertyContainer::setProperty(const string &name, const Variant &value) {
+	if (!mPrivate) mPrivate = new PropertyContainerPrivate();
 	mPrivate->properties[name] = value;
 }
 
-void PropertyContainer::setProperty (const string &name, Variant &&value) {
-	if (!mPrivate)
-		mPrivate = new PropertyContainerPrivate();
+void PropertyContainer::setProperty(const string &name, Variant &&value) {
+	if (!mPrivate) mPrivate = new PropertyContainerPrivate();
 	mPrivate->properties[name] = move(value);
 }
 
-int PropertyContainer::remove (const std::string &name) const {
-	if (mPrivate){
+int PropertyContainer::remove(const std::string &name) const {
+	if (mPrivate) {
 		auto it = mPrivate->properties.find(name);
-		if (it == mPrivate->properties.end())
-			return -1;
+		if (it == mPrivate->properties.end()) return -1;
 		mPrivate->properties.erase(it);
 		return 0;
 	}
 	return -2;
 }
 
-void PropertyContainer::clear () {
+void PropertyContainer::clear() {
 	if (mPrivate) {
 		mPrivate->properties.clear();
 	}
 }
 
-bool PropertyContainer::hasKey (const std::string &name) const {
+bool PropertyContainer::hasKey(const std::string &name) const {
 	if (mPrivate) {
 		return mPrivate->properties.find(name) != mPrivate->properties.end();
 	}

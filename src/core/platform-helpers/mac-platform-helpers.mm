@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <bctoolbox/defs.h>
 
 #ifdef __APPLE__
 #include "TargetConditionals.h"
@@ -197,7 +198,7 @@ string MacPlatformHelpers::toUTF8String(CFStringRef str) {
 
 // -----------------------------------------------------------------------------
 
-PlatformHelpers *createMacPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
+PlatformHelpers *createMacPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, BCTBX_UNUSED(void *systemContext)) {
 	return new MacPlatformHelpers(core);
 }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,16 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "register-info.h"
 #include <stdexcept>
 #include <string>
-#include "register-info.h"
 
 using namespace std;
 
-class RegisterInfoResponse: public Response {
+class RegisterInfoResponse : public Response {
 public:
-	RegisterInfoResponse(): Response() {}
-	RegisterInfoResponse(int id, const ::LinphoneProxyConfig *cfg): Response() {
+	RegisterInfoResponse() : Response() {
+	}
+	RegisterInfoResponse(int id, const ::LinphoneProxyConfig *cfg) : Response() {
 		append(id, cfg);
 	}
 	void append(int id, const ::LinphoneProxyConfig *cfg) {
@@ -48,34 +49,30 @@ public:
 	}
 };
 
-RegisterInfoCommand::RegisterInfoCommand():
-	DaemonCommand("register-info", "register-info <register_id>|ALL",
-		"Get informations about one or more registrations.")
-{
-	addExample(make_unique<DaemonCommandExample>("register-info 1",
-						"Status: Ok\n\n"
-						"Id: 1\n"
-						"Identity: sip:toto@sip.linphone.org\n"
-						"Proxy: <sip:sip.linphone.org;transport=tls>\n"
-						"Route: <sip:sip.linphone.org;transport=tls>\n"
-						"State: LinphoneRegistrationOk"));
-	addExample(make_unique<DaemonCommandExample>("register-info ALL",
-						"Status: Ok\n\n"
-						"Id: 1\n"
-						"Identity: sip:toto@sip.linphone.org\n"
-						"Proxy: <sip:sip.linphone.org;transport=tls>\n"
-						"Route: <sip:sip.linphone.org;transport=tls>\n"
-						"State: LinphoneRegistrationOk\n\n"
-						"Id: 2\n"
-						"Identity: sip:toto2@sip.linphone.org\n"
-						"Proxy: <sip:sip.linphone.org;transport=udp>\n"
-						"State: LinphoneRegistrationFailed"));
-	addExample(make_unique<DaemonCommandExample>("register-info 3",
-						"Status: Error\n"
-						"Reason: No register with such id."));
+RegisterInfoCommand::RegisterInfoCommand()
+    : DaemonCommand(
+          "register-info", "register-info <register_id>|ALL", "Get informations about one or more registrations.") {
+	addExample(make_unique<DaemonCommandExample>("register-info 1", "Status: Ok\n\n"
+	                                                                "Id: 1\n"
+	                                                                "Identity: sip:toto@sip.linphone.org\n"
+	                                                                "Proxy: <sip:sip.linphone.org;transport=tls>\n"
+	                                                                "Route: <sip:sip.linphone.org;transport=tls>\n"
+	                                                                "State: LinphoneRegistrationOk"));
+	addExample(make_unique<DaemonCommandExample>("register-info ALL", "Status: Ok\n\n"
+	                                                                  "Id: 1\n"
+	                                                                  "Identity: sip:toto@sip.linphone.org\n"
+	                                                                  "Proxy: <sip:sip.linphone.org;transport=tls>\n"
+	                                                                  "Route: <sip:sip.linphone.org;transport=tls>\n"
+	                                                                  "State: LinphoneRegistrationOk\n\n"
+	                                                                  "Id: 2\n"
+	                                                                  "Identity: sip:toto2@sip.linphone.org\n"
+	                                                                  "Proxy: <sip:sip.linphone.org;transport=udp>\n"
+	                                                                  "State: LinphoneRegistrationFailed"));
+	addExample(make_unique<DaemonCommandExample>("register-info 3", "Status: Error\n"
+	                                                                "Reason: No register with such id."));
 }
 
-void RegisterInfoCommand::exec(Daemon *app, const string& args) {
+void RegisterInfoCommand::exec(Daemon *app, const string &args) {
 	string param;
 	istringstream ist(args);
 	ist >> param;
@@ -85,7 +82,7 @@ void RegisterInfoCommand::exec(Daemon *app, const string& args) {
 	}
 	if (param == "ALL") {
 		RegisterInfoResponse response;
-		for (int i=1; i<=app->maxProxyId(); i++) {
+		for (int i = 1; i <= app->maxProxyId(); i++) {
 			::LinphoneProxyConfig *cfg = app->findProxy(i);
 			if (cfg != NULL) {
 				response.append(i, cfg);
@@ -96,10 +93,10 @@ void RegisterInfoCommand::exec(Daemon *app, const string& args) {
 		int id;
 		try {
 			id = atoi(param.c_str());
-		} catch (invalid_argument&) {
+		} catch (invalid_argument &) {
 			app->sendResponse(Response("Invalid ID.", Response::Error));
 			return;
-		} catch (out_of_range&) {
+		} catch (out_of_range &) {
 			app->sendResponse(Response("Out of range ID.", Response::Error));
 			return;
 		}

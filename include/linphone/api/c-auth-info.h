@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,22 +36,20 @@
 extern "C" {
 #endif
 
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new(
-	const char *username,
-	const char *userid,
-	const char *passwd,
-	const char *ha1,
-	const char *realm,
-	const char *domain);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new(const char *username,
+                                                         const char *userid,
+                                                         const char *passwd,
+                                                         const char *ha1,
+                                                         const char *realm,
+                                                         const char *domain);
 
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(
-	const char *username,
-	const char *userid,
-	const char *passwd,
-	const char *ha1,
-	const char *realm,
-	const char *domain,
-	const char *algorithm);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(const char *username,
+                                                                       const char *userid,
+                                                                       const char *passwd,
+                                                                       const char *ha1,
+                                                                       const char *realm,
+                                                                       const char *domain,
+                                                                       const char *algorithm);
 
 /**
  * Instantiates a new auth info with values from source.
@@ -77,49 +75,50 @@ LINPHONE_PUBLIC void linphone_auth_info_unref(LinphoneAuthInfo *auth_info);
  * Sets the password.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param password The password. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_password(LinphoneAuthInfo *auth_info, const char *password);
 
 /**
  * Sets the username.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param username The username. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_username(LinphoneAuthInfo *auth_info, const char *username);
 
 /**
  * Sets the algorithm to use.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param algorithm The algorithm. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_algorithm(LinphoneAuthInfo *auth_info, const char *algorithm);
 
 /**
  * Sets the available algorithms list without testing unicity
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param algorithms The available algorithms list. @bctbx_list{const char *} @maybenil
-*/
-LINPHONE_PUBLIC void linphone_auth_info_set_available_algorithms(LinphoneAuthInfo *auth_info, const bctbx_list_t *algorithms);
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_available_algorithms(LinphoneAuthInfo *auth_info,
+                                                                 const bctbx_list_t *algorithms);
 
 /**
  * Add an unique algorithm in the the available algorithms list : Algorithms that already exist will not be added.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param algorithm The algorithm to add. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_add_available_algorithm(LinphoneAuthInfo *auth_info, const char *algorithm);
 
 /**
  * Sets the user ID.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param user_id The userid.@maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_userid(LinphoneAuthInfo *auth_info, const char *user_id);
 
 /**
  * Sets the realm.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param realm The realm. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_realm(LinphoneAuthInfo *auth_info, const char *realm);
 
 /**
@@ -127,58 +126,58 @@ LINPHONE_PUBLIC void linphone_auth_info_set_realm(LinphoneAuthInfo *auth_info, c
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param domain The domain. @maybenil
  * This should not be necessary because realm is supposed to be unique and sufficient.
- * However, many SIP servers don't set realm correctly, then domain has to be used to distinguish between several SIP account bearing the same username.
-**/
+ * However, many SIP servers don't set realm correctly, then domain has to be used to distinguish between several SIP
+ *account bearing the same username.
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_domain(LinphoneAuthInfo *auth_info, const char *domain);
 
 /**
  * Sets the ha1.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param ha1 The ha1. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_ha1(LinphoneAuthInfo *auth_info, const char *ha1);
 
 /**
  * Sets the TLS certificate.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param tls_cert The TLS certificate. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_tls_cert(LinphoneAuthInfo *auth_info, const char *tls_cert);
 
 /**
  * Sets the TLS key.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param tls_key The TLS key. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_tls_key(LinphoneAuthInfo *auth_info, const char *tls_key);
 
 /**
  * Sets the TLS certificate path.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param tls_cert_path The TLS certificate path. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_tls_cert_path(LinphoneAuthInfo *auth_info, const char *tls_cert_path);
 
 /**
  * Sets the TLS key path.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param tls_key_path The TLS key path. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *auth_info, const char *tls_key_path);
 
 /**
  * Remove all algorithms from the available algorithms list.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *auth_info);
 
 /*
  * Sets the TLS key password, this is only usefull is the TLS key is encrypted.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param tls_key_password The TLS key password. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_password(LinphoneAuthInfo *auth_info, const char *tls_key_password);
-
 
 /**
  * Gets the username.
@@ -199,7 +198,7 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthI
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @return A list of available algorithms. @bctbx_list{const char *} @maybenil
  */
-LINPHONE_PUBLIC bctbx_list_t * linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *auth_info);
+LINPHONE_PUBLIC bctbx_list_t *linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the password.
@@ -277,7 +276,8 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_password(const Linpho
  * @param auth_info_2 The second #LinphoneAuthInfo object. @maybenil
  * @return TRUE if all fields (Username, UserId, Realm, Domain) are the same.
  */
-LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *auth_info_1,const LinphoneAuthInfo *auth_info_2);
+LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *auth_info_1,
+                                                                  const LinphoneAuthInfo *auth_info_2);
 
 /* you don't need those function*/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *info);
@@ -296,7 +296,7 @@ LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig *config, int 
  * @param passwd The password.
  * @deprecated 13/10/2017 use linphone_auth_info_set_password instead
  * @donotwrap
-**/
+ **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_set_passwd(LinphoneAuthInfo *auth_info, const char *passwd);
 
 /**

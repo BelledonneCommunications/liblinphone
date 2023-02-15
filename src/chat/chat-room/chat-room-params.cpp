@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,8 +22,8 @@
 #include "chat-room.h"
 #include "core/core.h"
 #include "linphone/core.h"
-#include "logger/logger.h"
 #include "linphone/utils/utils.h"
+#include "logger/logger.h"
 
 using namespace std;
 
@@ -41,20 +41,29 @@ ChatRoomParams::ChatRoomParams() {
 }
 
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
-	: ChatRoomParams("", encrypted, group, backend) {}
+    : ChatRoomParams("", encrypted, group, backend) {
+}
 
 ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatRoomBackend backend)
-	: ChatRoomParams(subject, encrypted, group, AbstractChatRoom::EphemeralMode::DeviceManaged, backend) {}
+    : ChatRoomParams(subject, encrypted, group, AbstractChatRoom::EphemeralMode::DeviceManaged, backend) {
+}
 
-ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, ChatRoomBackend backend)
-	: ChatRoomParams(subject, encrypted, group, mode, 0, backend) {}
+ChatRoomParams::ChatRoomParams(
+    string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, ChatRoomBackend backend)
+    : ChatRoomParams(subject, encrypted, group, mode, 0, backend) {
+}
 
-ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, long lifetime, ChatRoomBackend backend)
-	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject), mEphemeralMode(mode), mEphemeralLifetime(lifetime) {
+ChatRoomParams::ChatRoomParams(string subject,
+                               bool encrypted,
+                               bool group,
+                               AbstractChatRoom::EphemeralMode mode,
+                               long lifetime,
+                               ChatRoomBackend backend)
+    : mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject), mEphemeralMode(mode),
+      mEphemeralLifetime(lifetime) {
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
-	}else
-		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::None;
+	} else mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::None;
 }
 
 ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other) {
@@ -68,26 +77,48 @@ ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other
 	mEphemeralLifetime = other.mEphemeralLifetime;
 }
 
-ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const { return mChatRoomBackend; }
+ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const {
+	return mChatRoomBackend;
+}
 
-ChatRoomParams::ChatRoomEncryptionBackend ChatRoomParams::getChatRoomEncryptionBackend() const { return mChatRoomEncryptionBackend; }
+ChatRoomParams::ChatRoomEncryptionBackend ChatRoomParams::getChatRoomEncryptionBackend() const {
+	return mChatRoomEncryptionBackend;
+}
 
-bool ChatRoomParams::isEncrypted() const { return mEncrypted; }
+bool ChatRoomParams::isEncrypted() const {
+	return mEncrypted;
+}
 
-bool ChatRoomParams::isGroup() const { return mGroup; }
+bool ChatRoomParams::isGroup() const {
+	return mGroup;
+}
 
-bool ChatRoomParams::isRealTimeText() const { return mRtt; }
+bool ChatRoomParams::isRealTimeText() const {
+	return mRtt;
+}
 
-const string& ChatRoomParams::getSubject() const { return mSubject; }
-const string ChatRoomParams::getUtf8Subject() const { return Utils::utf8ToLocale(getSubject()); }
+const string &ChatRoomParams::getSubject() const {
+	return mSubject;
+}
+const string ChatRoomParams::getUtf8Subject() const {
+	return Utils::utf8ToLocale(getSubject());
+}
 
-AbstractChatRoom::EphemeralMode ChatRoomParams::getEphemeralMode() const { return mEphemeralMode; }
+AbstractChatRoom::EphemeralMode ChatRoomParams::getEphemeralMode() const {
+	return mEphemeralMode;
+}
 
-long ChatRoomParams::getEphemeralLifetime() const { return mEphemeralLifetime; }
+long ChatRoomParams::getEphemeralLifetime() const {
+	return mEphemeralLifetime;
+}
 
-void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
+void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) {
+	mChatRoomBackend = backend;
+}
 
-void ChatRoomParams::setChatRoomEncryptionBackend(ChatRoomParams::ChatRoomEncryptionBackend backend) { mChatRoomEncryptionBackend = backend; }
+void ChatRoomParams::setChatRoomEncryptionBackend(ChatRoomParams::ChatRoomEncryptionBackend backend) {
+	mChatRoomEncryptionBackend = backend;
+}
 
 void ChatRoomParams::setEncrypted(bool encrypted) {
 	mEncrypted = encrypted;
@@ -104,24 +135,35 @@ void ChatRoomParams::setGroup(bool group) {
 	}
 }
 
-void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
+void ChatRoomParams::setRealTimeText(bool rtt) {
+	mRtt = rtt;
+}
 
-void ChatRoomParams::setSubject(string subject) { mSubject = subject; }
-void ChatRoomParams::setUtf8Subject(string subject) { setSubject(Utils::utf8ToLocale(subject)); }
+void ChatRoomParams::setSubject(string subject) {
+	mSubject = subject;
+}
+void ChatRoomParams::setUtf8Subject(string subject) {
+	setSubject(Utils::utf8ToLocale(subject));
+}
 
-void ChatRoomParams::setEphemeralMode(AbstractChatRoom::EphemeralMode mode) { mEphemeralMode = mode; }
+void ChatRoomParams::setEphemeralMode(AbstractChatRoom::EphemeralMode mode) {
+	mEphemeralMode = mode;
+}
 
-void ChatRoomParams::setEphemeralLifetime(long lifetime) { mEphemeralLifetime = lifetime; }
+void ChatRoomParams::setEphemeralLifetime(long lifetime) {
+	mEphemeralLifetime = lifetime;
+}
 
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults() {
 	return ChatRoomParams::create();
 }
 
-//Later define default params from core specs (group chat enabled, lime enabled, ...)
+// Later define default params from core specs (group chat enabled, lime enabled, ...)
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults(const std::shared_ptr<Core> &core) {
 	auto params = getDefaults();
-	const auto & cCore = core->getCCore();
-	params->mEphemeralMode = static_cast<decltype(params->mEphemeralMode)>(linphone_core_chat_room_get_default_ephemeral_mode(cCore));
+	const auto &cCore = core->getCCore();
+	params->mEphemeralMode =
+	    static_cast<decltype(params->mEphemeralMode)>(linphone_core_chat_room_get_default_ephemeral_mode(cCore));
 	params->mEphemeralLifetime = linphone_core_get_default_ephemeral_lifetime(cCore);
 	return params;
 }
@@ -181,7 +223,7 @@ ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<
 	return mask;
 }
 
-//Returns false	if there are any inconsistencies between parameters
+// Returns false	if there are any inconsistencies between parameters
 bool ChatRoomParams::isValid() const {
 	if (mEncrypted && mChatRoomEncryptionBackend != ChatRoomEncryptionBackend::Lime) {
 		lError() << "Currently only Lime encryption backend is supported";
@@ -195,7 +237,8 @@ bool ChatRoomParams::isValid() const {
 		lError() << "FlexisipChat backend must be used when group is enabled";
 		return false;
 	}
-	if ((mEphemeralMode == AbstractChatRoom::EphemeralMode::AdminManaged) && mChatRoomBackend != ChatRoomBackend::FlexisipChat) {
+	if ((mEphemeralMode == AbstractChatRoom::EphemeralMode::AdminManaged) &&
+	    mChatRoomBackend != ChatRoomBackend::FlexisipChat) {
 		lError() << "FlexisipChat backend must be used when ephemeral messages are enabled";
 		return false;
 	}
@@ -219,12 +262,11 @@ std::string ChatRoomParams::toString() const {
 	ss << "Rtt[" << mRtt << "];";
 
 	ss << "Backend[";
-	if (mChatRoomBackend == ChatRoomBackend::Basic)
-		ss << "Basic];";
-	else
-		ss << "FlexisipChat];";
-	
-	ss << "EncryptionBackend[" << ((mChatRoomEncryptionBackend == ChatRoomEncryptionBackend::None) ? "None" : "Lime X3DH")  << "];";
+	if (mChatRoomBackend == ChatRoomBackend::Basic) ss << "Basic];";
+	else ss << "FlexisipChat];";
+
+	ss << "EncryptionBackend["
+	   << ((mChatRoomEncryptionBackend == ChatRoomEncryptionBackend::None) ? "None" : "Lime X3DH") << "];";
 	ss << "EphemeralMode[" << mEphemeralMode << "];";
 
 	return ss.str();

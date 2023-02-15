@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #ifndef _L_CALL_SESSION_P_H_
 #define _L_CALL_SESSION_P_H_
 
-#include <queue>
 #include <functional>
+#include <queue>
 
 #include "object/object-p.h"
 
@@ -35,79 +35,99 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_INTERNAL_PUBLIC CallSessionPrivate : public ObjectPrivate, public CoreListener {
 public:
-	int computeDuration () const;
-	void handleIncoming (bool tryStartRingtone);
-	virtual void initializeParamsAccordingToIncomingCallParams ();
-	void notifyReferState ();
-	virtual void setState (CallSession::State newState, const std::string &message);
+	int computeDuration() const;
+	void handleIncoming(bool tryStartRingtone);
+	virtual void initializeParamsAccordingToIncomingCallParams();
+	void notifyReferState();
+	virtual void setState(CallSession::State newState, const std::string &message);
 	void restorePreviousState();
-	void setTransferState (CallSession::State newState);
-	void startIncomingNotification ();
-	bool startPing ();
-	void setPingTime (int value) { pingTime = value; }
+	void setTransferState(CallSession::State newState);
+	void startIncomingNotification();
+	bool startPing();
+	void setPingTime(int value) {
+		pingTime = value;
+	}
 
-	void createOp ();
-	CallSessionParams *getCurrentParams () const { return currentParams; }
-	LinphoneProxyConfig * getDestProxy () const { return destProxy; }
-	SalCallOp * getOp () const { return op; }
-	bool isBroken () const { return broken; }
-	bool isInConference () const;
-	const std::string getConferenceId () const;
-	void setConferenceId (const std::string id);
-	void setParams (CallSessionParams *csp);
-	void setReferPending (bool value) { referPending = value; }
-	void setTransferTarget (std::shared_ptr<CallSession> session) { transferTarget = session; }
+	void createOp();
+	CallSessionParams *getCurrentParams() const {
+		return currentParams;
+	}
+	LinphoneProxyConfig *getDestProxy() const {
+		return destProxy;
+	}
+	SalCallOp *getOp() const {
+		return op;
+	}
+	bool isBroken() const {
+		return broken;
+	}
+	bool isInConference() const;
+	const std::string getConferenceId() const;
+	void setConferenceId(const std::string id);
+	void setParams(CallSessionParams *csp);
+	void setReferPending(bool value) {
+		referPending = value;
+	}
+	void setTransferTarget(std::shared_ptr<CallSession> session) {
+		transferTarget = session;
+	}
 
-	virtual void abort (const std::string &errorMsg);
-	virtual void accepted ();
-	void ackBeingSent (LinphoneHeaders *headers);
-	virtual void ackReceived (LinphoneHeaders *headers);
-	void cancelDone ();
-	virtual bool failure ();
-	void infoReceived (SalBodyHandler *bodyHandler);
-	void pingReply ();
-	void referred (const Address &referToAddr);
-	virtual void remoteRinging ();
-	virtual void replaceOp (SalCallOp *newOp);
-	virtual void terminated ();
-	void updated (bool isUpdate);
-	void updatedByRemote ();
-	virtual void updating (bool isUpdate);
+	virtual void abort(const std::string &errorMsg);
+	virtual void accepted();
+	void ackBeingSent(LinphoneHeaders *headers);
+	virtual void ackReceived(LinphoneHeaders *headers);
+	void cancelDone();
+	virtual bool failure();
+	void infoReceived(SalBodyHandler *bodyHandler);
+	void pingReply();
+	void referred(const Address &referToAddr);
+	virtual void remoteRinging();
+	virtual void replaceOp(SalCallOp *newOp);
+	virtual void terminated();
+	void updated(bool isUpdate);
+	void updatedByRemote();
+	virtual void updating(bool isUpdate);
 	virtual void refreshed(); /* Called when an incoming UPDATE is received (for session timers)*/
 
-	void setCallSessionListener (CallSessionListener *listener) { this->listener = listener; }
-	CallSessionListener *getCallSessionListener()const{
+	void setCallSessionListener(CallSessionListener *listener) {
+		this->listener = listener;
+	}
+	CallSessionListener *getCallSessionListener() const {
 		return listener;
 	}
 
-	void init ();
+	void init();
 
-	void accept (const CallSessionParams *params);
-	void acceptOrTerminateReplacedSessionInIncomingNotification ();
-	virtual LinphoneStatus acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const std::string &stateInfo);
-	LinphoneStatus checkForAcceptation ();
-	virtual void handleIncomingReceivedStateInIncomingNotification ();
-	virtual bool isReadyForInvite () const;
-	bool isUpdateAllowed (CallSession::State &nextState) const;
-	virtual int restartInvite ();
-	virtual void setReleased ();
-	virtual void setTerminated ();
-	virtual LinphoneStatus startAcceptUpdate (CallSession::State nextState, const std::string &stateInfo);
-	virtual LinphoneStatus startUpdate (const CallSession::UpdateMethod method = CallSession::UpdateMethod::Default, const std::string &subject = "");
-	virtual void terminate ();
-	virtual void updateCurrentParams () const;
-	virtual void setDestProxy (LinphoneProxyConfig *proxy);// Set destProxy and update the proxy of currentParams
+	void accept(const CallSessionParams *params);
+	void acceptOrTerminateReplacedSessionInIncomingNotification();
+	virtual LinphoneStatus
+	acceptUpdate(const CallSessionParams *csp, CallSession::State nextState, const std::string &stateInfo);
+	LinphoneStatus checkForAcceptation();
+	virtual void handleIncomingReceivedStateInIncomingNotification();
+	virtual bool isReadyForInvite() const;
+	bool isUpdateAllowed(CallSession::State &nextState) const;
+	virtual int restartInvite();
+	virtual void setReleased();
+	virtual void setTerminated();
+	virtual LinphoneStatus startAcceptUpdate(CallSession::State nextState, const std::string &stateInfo);
+	virtual LinphoneStatus startUpdate(const CallSession::UpdateMethod method = CallSession::UpdateMethod::Default,
+	                                   const std::string &subject = "");
+	virtual void terminate();
+	virtual void updateCurrentParams() const;
+	virtual void setDestProxy(LinphoneProxyConfig *proxy); // Set destProxy and update the proxy of currentParams
 
-	void setBroken ();
-	void setContactOp ();
+	void setBroken();
+	void setContactOp();
 
-	virtual void reinviteToRecoverFromConnectionLoss ();
-	virtual void repairByInviteWithReplaces ();
+	virtual void reinviteToRecoverFromConnectionLoss();
+	virtual void repairByInviteWithReplaces();
 
 	// CoreListener
-	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
-	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const std::string &message) override;
-	void onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) override;
+	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
+	void onRegistrationStateChanged(LinphoneProxyConfig *cfg,
+	                                LinphoneRegistrationState cstate,
+	                                const std::string &message) override;
+	void onCallStateChanged(LinphoneCall *call, LinphoneCallState state, const std::string &message) override;
 
 protected:
 	CallSessionListener *listener = nullptr;
@@ -133,7 +153,8 @@ protected:
 	mutable Address referToAddress;
 	mutable Address requestAddress; // cached from the op because we have to return a const reference.
 	// This counter is used to keep active track of reINVITEs and UPDATEs under processing at any given time.
-	// In fact Linphone can have multiple active transaction at the same time on the same dialog as the transaction queue is popped after receiving the 100 Trying and not the 200 Ok
+	// In fact Linphone can have multiple active transaction at the same time on the same dialog as the transaction
+	// queue is popped after receiving the 100 Trying and not the 200 Ok
 	int nbProcessingUpdates = 0;
 
 	SalCallOp *op = nullptr;
@@ -157,14 +178,13 @@ protected:
 	std::queue<std::function<LinphoneStatus()>> pendingActions;
 
 private:
-	void completeLog ();
-	void createOpTo (const LinphoneAddress *to);
+	void completeLog();
+	void createOpTo(const LinphoneAddress *to);
 	void executePendingActions();
 
-	LinphoneAddress * getFixedContact () const;
+	LinphoneAddress *getFixedContact() const;
 
-	void repairIfBroken ();
-
+	void repairIfBroken();
 
 	L_DECLARE_PUBLIC(CallSession);
 };

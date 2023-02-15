@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,23 +29,23 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Cpim {
-	class ParserPrivate;
+class ParserPrivate;
 
-	class Parser : public Singleton<Parser> {
-		friend class Singleton<Parser>;
+class Parser : public Singleton<Parser> {
+	friend class Singleton<Parser>;
 
-	public:
-		std::shared_ptr<Message> parseMessage (const std::string &input);
+public:
+	std::shared_ptr<Message> parseMessage(const std::string &input);
 
-		std::shared_ptr<Header> cloneHeader (const Header &header);
+	std::shared_ptr<Header> cloneHeader(const Header &header);
 
-	private:
-		Parser ();
+private:
+	Parser();
 
-		L_DECLARE_PRIVATE(Parser);
-		L_DISABLE_COPY(Parser);
-	};
-}
+	L_DECLARE_PRIVATE(Parser);
+	L_DISABLE_COPY(Parser);
+};
+} // namespace Cpim
 
 LINPHONE_END_NAMESPACE
 

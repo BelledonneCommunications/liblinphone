@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,15 +35,15 @@ public:
 
 	L_OVERRIDE_SHARED_FROM_THIS(NotificationMessage);
 
-	virtual ~NotificationMessage () = default;
+	virtual ~NotificationMessage() = default;
 
-	void setToBeStored (bool value) override;
+	void setToBeStored(bool value) override;
 
 protected:
-	explicit NotificationMessage (NotificationMessagePrivate &p);
+	explicit NotificationMessage(NotificationMessagePrivate &p);
 
 private:
-	NotificationMessage (const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction);
+	NotificationMessage(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction);
 
 	L_DECLARE_PRIVATE(NotificationMessage);
 	L_DISABLE_COPY(NotificationMessage);

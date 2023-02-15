@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,25 +33,27 @@ class LINPHONE_PUBLIC ConferenceNotifiedEvent : public ConferenceEvent {
 	friend class MainDbPrivate;
 	friend class ClientGroupChatRoom;
 	friend class RemoteConference;
-public:
-	ConferenceNotifiedEvent (
-		Type type, time_t creationTime,
-		const ConferenceId &conferenceId
-	);
 
-	unsigned int getNotifyId () const;
-	inline bool getFullState () const { return fullState; };
+public:
+	ConferenceNotifiedEvent(Type type, time_t creationTime, const ConferenceId &conferenceId);
+
+	unsigned int getNotifyId() const;
+	inline bool getFullState() const {
+		return fullState;
+	};
 
 protected:
-	ConferenceNotifiedEvent (
-		ConferenceNotifiedEventPrivate &p,
-		Type type,
-		time_t creationTime,
-		const ConferenceId &conferenceId
-	);
+	ConferenceNotifiedEvent(ConferenceNotifiedEventPrivate &p,
+	                        Type type,
+	                        time_t creationTime,
+	                        const ConferenceId &conferenceId);
 
-	inline void setFullState (const bool fullState) { this->fullState = fullState; };
-	inline void setNotifyId (unsigned int notifyId) { this->notifyId = notifyId; }
+	inline void setFullState(const bool fullState) {
+		this->fullState = fullState;
+	};
+	inline void setNotifyId(unsigned int notifyId) {
+		this->notifyId = notifyId;
+	}
 
 	bool fullState = false;
 	unsigned int notifyId = 0;

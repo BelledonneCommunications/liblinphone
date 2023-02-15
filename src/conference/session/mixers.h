@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #ifndef mixing_h
 #define mixing_h
 
-#include "streams.h"
 #include "ms2-streams.h"
+#include "streams.h"
 
 #include "mediastreamer2/msconference.h"
 
@@ -38,7 +38,7 @@ class MS2VideoStream;
  * It reports the active talker by providing a StreamsGroup pointer.
  * By convention, a null StreamsGroup means that the local participant is talking.
  */
-class AudioMixerListener{
+class AudioMixerListener {
 public:
 	virtual ~AudioMixerListener() = default;
 	/*
@@ -50,7 +50,7 @@ public:
 /**
  * Base class for multi-stream mixing session.
  */
-class MixerSession : protected AudioMixerListener{
+class MixerSession : protected AudioMixerListener {
 public:
 	MixerSession(Core &core);
 	~MixerSession();
@@ -76,18 +76,19 @@ public:
 	 * of a specific participant refered by its StreamsGroup pointer.
 	 */
 	void setFocus(StreamsGroup *sg);
-	Core & getCore() const;
-	LinphoneCore *getCCore()const;
+	Core &getCore() const;
+	LinphoneCore *getCCore() const;
 
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
+
 private:
-	Core & mCore;
+	Core &mCore;
 	std::map<SalStreamType, std::unique_ptr<StreamMixer>> mMixers;
 };
 
-inline std::ostream & operator<<(std::ostream &str, const MixerSession & session){
-	str << "MixerSession [" << (void*) &session << "]";
+inline std::ostream &operator<<(std::ostream &str, const MixerSession &session) {
+	str << "MixerSession [" << (void *)&session << "]";
 	return str;
 }
 
@@ -97,14 +98,14 @@ inline std::ostream & operator<<(std::ostream &str, const MixerSession & session
  * The purpose of the StreamMixers is to connect Stream(s) object together.
  * However, the way streams do connect with their mixers is left to the implementors.
  */
-class StreamMixer{
+class StreamMixer {
 public:
-	StreamMixer(MixerSession & session);
+	StreamMixer(MixerSession &session);
 	virtual ~StreamMixer() = default;
 	/**
 	 * Returns a back pointer to the MixerSession owning the StreamMixer.
 	 */
-	MixerSession & getSession() const{
+	MixerSession &getSession() const {
 		return mSession;
 	}
 	/**
@@ -117,14 +118,14 @@ public:
 	virtual std::string getLocalLabel() const {
 		return mLocalLabel;
 	};
+
 protected:
-	
-	MixerSession & mSession;
+	MixerSession &mSession;
 	std::string mLocalLabel;
 };
 
-inline std::ostream & operator<<(std::ostream &str, const StreamMixer & mixer){
-	str << "StreamMixer [" << (void*) &mixer << "]";
+inline std::ostream &operator<<(std::ostream &str, const StreamMixer &mixer) {
+	str << "StreamMixer [" << (void *)&mixer << "]";
 	return str;
 }
 
@@ -133,24 +134,24 @@ inline std::ostream & operator<<(std::ostream &str, const StreamMixer & mixer){
  * This StreamMixer also inherits from AudioControlInterface, to give control
  * on the local participant, if enabled.
  */
-class MS2AudioMixer : public StreamMixer, public AudioControlInterface{
+class MS2AudioMixer : public StreamMixer, public AudioControlInterface {
 public:
-	MS2AudioMixer(MixerSession & session);
+	MS2AudioMixer(MixerSession &session);
 	~MS2AudioMixer();
 	void connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool muted);
 	void disconnectEndpoint(Stream *as, MSAudioEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setRecordPath(const std::string &path) override;
-	
+
 	/* AudioControlInterface methods */
 	virtual void enableMic(bool value) override;
 	virtual void enableSpeaker(bool value) override;
-	virtual bool micEnabled()const override;
-	virtual bool speakerEnabled()const override;
+	virtual bool micEnabled() const override;
+	virtual bool speakerEnabled() const override;
 	virtual bool startRecording() override;
 	virtual void stopRecording() override;
 	virtual bool isRecording() override;
-	virtual float getPlayVolume() override; /* Measured playback volume */
+	virtual float getPlayVolume() override;   /* Measured playback volume */
 	virtual float getRecordVolume() override; /* Measured record volume */
 	virtual float getMicGain() override;
 	virtual void setMicGain(float value) override;
@@ -159,26 +160,26 @@ public:
 	virtual bool supportsTelephoneEvents() override;
 	virtual void sendDtmf(int dtmf) override;
 	virtual void enableEchoCancellation(bool value) override;
-	virtual bool echoCancellationEnabled()const override;
+	virtual bool echoCancellationEnabled() const override;
 	void addListener(AudioMixerListener *listener);
 	void removeListener(AudioMixerListener *listener);
 	virtual void setInputDevice(const std::shared_ptr<AudioDevice> &audioDevice) override;
 	virtual void setOutputDevice(const std::shared_ptr<AudioDevice> &audioDevice) override;
 	virtual std::shared_ptr<AudioDevice> getInputDevice() const override;
 	virtual std::shared_ptr<AudioDevice> getOutputDevice() const override;
-	
 	// Used for the tone manager.
-	AudioStream * getAudioStream();
+	AudioStream *getAudioStream();
 
 	// Used to retrieve participant volumes;
-	MSAudioConference * getAudioConference();
+	MSAudioConference *getAudioConference();
+
 private:
 	void onActiveTalkerChanged(MSAudioEndpoint *ep);
 	static void sOnActiveTalkerChanged(MSAudioConference *audioconf, MSAudioEndpoint *ep);
 	void addLocalParticipant();
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile(int samplerate);
-	std::list<AudioMixerListener*> mListeners;
+	std::list<AudioMixerListener *> mListeners;
 	MSAudioConference *mConference = nullptr;
 	AudioStream *mLocalParticipantStream = nullptr;
 	MSAudioEndpoint *mLocalEndpoint = nullptr;
@@ -192,34 +193,43 @@ private:
 #ifdef VIDEO_ENABLED
 /**
  * A video mixer based on mediastreamer2.
- * It inherits from MS2VideoControl (which is in fact a VideoControlInterface) to let control the local participant, if any.
- * FIXME: a Participant class shall give access to Audio/Video controls instead, it doesn't have to be directly on the mixer class.
+ * It inherits from MS2VideoControl (which is in fact a VideoControlInterface) to let control the local participant, if
+ * any.
+ * FIXME: a Participant class shall give access to Audio/Video controls instead, it doesn't have to be directly on the
+ * mixer class.
  */
-class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
+class MS2VideoMixer : public StreamMixer, public MS2VideoControl {
 	friend MS2VideoStream;
+
 public:
-	MS2VideoMixer(MixerSession & session);
+	MS2VideoMixer(MixerSession &session);
 	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool thumbnail);
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setFocus(StreamsGroup *sg);
-	void setLocalParticipantLabel(const std::string & label);
+	void setLocalParticipantLabel(const std::string &label);
 	std::string getLocalParticipantLabel() const;
-	virtual VideoStream *getVideoStream()const override;
+	virtual VideoStream *getVideoStream() const override;
 	~MS2VideoMixer();
+
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
-	virtual MSWebCam *getVideoDevice()const override;
+	virtual MSWebCam *getVideoDevice() const override;
+
 private:
 	void addLocalParticipant();
 	void createLocalMember(bool isThumbnail);
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
 	int getOutputBandwidth();
-	MSVideoConference *mConferenceMix = nullptr; // Add only normal streams to get switched stream (active speaker) and all routed normal streams (mosaic)
-	MSVideoConference *mConferenceThumbnail = nullptr; // Add only mini streams and get all routed mini streams (active speaker)
+	MSVideoConference *mConferenceMix = nullptr; // Add only normal streams to get switched stream (active speaker) and
+	                                             // all routed normal streams (mosaic)
+	MSVideoConference *mConferenceThumbnail =
+	    nullptr; // Add only mini streams and get all routed mini streams (active speaker)
 	VideoStream *mLocalParticipantStream = nullptr;
-	VideoStream *mLocalParticipantItcStream = nullptr; // TODO WORKAROUND - Stores the pointer to a stream created for active speaker layout so that it can be stopped when removing the local participant
+	VideoStream *mLocalParticipantItcStream =
+	    nullptr; // TODO WORKAROUND - Stores the pointer to a stream created for active speaker layout so that it can be
+	             // stopped when removing the local participant
 	MSVideoEndpoint *mMainLocalEndpoint = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
 	std::string mLocalParticipantLabel;
@@ -231,5 +241,3 @@ private:
 LINPHONE_END_NAMESPACE
 
 #endif
-
-

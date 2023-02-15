@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
  */
 
 #include "conference-participant-device-event.h"
-#include "conference-participant-event.h"
 #include "conference-participant-event-p.h"
+#include "conference-participant-event.h"
 #include "conference/participant-device.h"
 
 // =============================================================================
@@ -39,38 +39,29 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
-	Type type,
-	time_t creationTime,
-	const ConferenceId &conferenceId,
-	const IdentityAddress &participantAddress,
-	const IdentityAddress &deviceAddress,
-	const string &name
-) : ConferenceParticipantEvent(
-	*new ConferenceParticipantDeviceEventPrivate,
-	type,
-	creationTime,
-	conferenceId,
-	participantAddress
-) {
+ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent(Type type,
+                                                                   time_t creationTime,
+                                                                   const ConferenceId &conferenceId,
+                                                                   const IdentityAddress &participantAddress,
+                                                                   const IdentityAddress &deviceAddress,
+                                                                   const string &name)
+    : ConferenceParticipantEvent(
+          *new ConferenceParticipantDeviceEventPrivate, type, creationTime, conferenceId, participantAddress) {
 	L_D();
-	L_ASSERT(
-		type == Type::ConferenceParticipantDeviceAdded ||
-		type == Type::ConferenceParticipantDeviceRemoved ||
-		type == Type::ConferenceParticipantDeviceStatusChanged ||
-		type == Type::ConferenceParticipantDeviceMediaCapabilityChanged ||
-		type == Type::ConferenceParticipantDeviceMediaAvailabilityChanged
-	);
+	L_ASSERT(type == Type::ConferenceParticipantDeviceAdded || type == Type::ConferenceParticipantDeviceRemoved ||
+	         type == Type::ConferenceParticipantDeviceStatusChanged ||
+	         type == Type::ConferenceParticipantDeviceMediaCapabilityChanged ||
+	         type == Type::ConferenceParticipantDeviceMediaAvailabilityChanged);
 	d->deviceAddress = deviceAddress;
 	d->deviceName = name;
 }
 
-const IdentityAddress &ConferenceParticipantDeviceEvent::getDeviceAddress () const {
+const IdentityAddress &ConferenceParticipantDeviceEvent::getDeviceAddress() const {
 	L_D();
 	return d->deviceAddress;
 }
 
-const string &ConferenceParticipantDeviceEvent::getDeviceName () const {
+const string &ConferenceParticipantDeviceEvent::getDeviceName() const {
 	L_D();
 	return d->deviceName;
 }

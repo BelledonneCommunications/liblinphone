@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,12 @@
 #ifndef _L_ACCOUNT_PARAMS_H_
 #define _L_ACCOUNT_PARAMS_H_
 
-#include <belle-sip/object++.hh>
 #include "address/address.h"
-#include "linphone/api/c-types.h"
 #include "linphone/api/c-push-notification-config.h"
+#include "linphone/api/c-types.h"
 #include "linphone/types.h"
 #include "utils/custom-params.h"
+#include <belle-sip/object++.hh>
 
 // =============================================================================
 
@@ -37,105 +37,105 @@ class AccountParams : public bellesip::HybridObject<LinphoneAccountParams, Accou
 	friend class Account;
 
 public:
-	AccountParams (LinphoneCore *lc);
-	AccountParams (LinphoneCore *lc, int index);
-	AccountParams (const AccountParams &other);
-	virtual ~AccountParams ();
+	AccountParams(LinphoneCore *lc);
+	AccountParams(LinphoneCore *lc, int index);
+	AccountParams(const AccountParams &other);
+	virtual ~AccountParams();
 
-	AccountParams* clone () const override;
+	AccountParams *clone() const override;
 
 	// Setters
-	void setExpires (int expires);
-	void setQualityReportingInterval (int qualityReportingInterval);
-	void setPublishExpires (int publishExpires);
-	void setAvpfRrInterval (uint8_t avpfRrInterval);
-	void setRegisterEnabled (bool enable);
-	void setDialEscapePlusEnabled (bool enable);
-	void setQualityReportingEnabled (bool enable);
-	void setPublishEnabled (bool enable);
-	void setOutboundProxyEnabled (bool enable);
-	void setPushNotificationAllowed (bool allow);
-	void setRemotePushNotificationAllowed (bool allow);
-	void setUseInternationalPrefixForCallsAndChats (bool enable);
-	void setCpimMessagesAllowedInBasicChatRooms (bool allow);
-	void setUserData (void *userData);
-	void setInternationalPrefix (const std::string &internationalPrefix);
-	void setProxy (const std::string &proxy);
-	void setRealm (const std::string &realm);
-	void setQualityReportingCollector (const std::string &qualityReportingCollector);
-	void setContactParameters (const std::string &contactParameters);
-	void setContactUriParameters (const std::string &contactUriParameters);
-	void setRefKey (const std::string &refKey);
-	void setDependsOn (const std::string &dependsOn);
-	void setIdKey (const std::string &idKey);
-	void setConferenceFactoryUri (const std::string &conferenceFactoryUri);
-	void setFileTranferServer (const std::string &fileTransferServer);
-	void setPrivacy (LinphonePrivacyMask privacy);
-	void setAvpfMode (LinphoneAVPFMode avpfMode);
-	void setNatPolicy (LinphoneNatPolicy *natPolicy);
-	void setPushNotificationConfig (PushNotificationConfig *pushNotificationConfig);
-	LinphoneStatus setIdentityAddress (const LinphoneAddress* identityAddress);
-	LinphoneStatus setRoutes (const bctbx_list_t *routes);
-	LinphoneStatus setRoutesFromStringList (const bctbx_list_t *routes);
-	void setAudioVideoConferenceFactoryAddress (const LinphoneAddress *audioVideoConferenceFactoryAddress);
+	void setExpires(int expires);
+	void setQualityReportingInterval(int qualityReportingInterval);
+	void setPublishExpires(int publishExpires);
+	void setAvpfRrInterval(uint8_t avpfRrInterval);
+	void setRegisterEnabled(bool enable);
+	void setDialEscapePlusEnabled(bool enable);
+	void setQualityReportingEnabled(bool enable);
+	void setPublishEnabled(bool enable);
+	void setOutboundProxyEnabled(bool enable);
+	void setPushNotificationAllowed(bool allow);
+	void setRemotePushNotificationAllowed(bool allow);
+	void setUseInternationalPrefixForCallsAndChats(bool enable);
+	void setCpimMessagesAllowedInBasicChatRooms(bool allow);
+	void setUserData(void *userData);
+	void setInternationalPrefix(const std::string &internationalPrefix);
+	void setProxy(const std::string &proxy);
+	void setRealm(const std::string &realm);
+	void setQualityReportingCollector(const std::string &qualityReportingCollector);
+	void setContactParameters(const std::string &contactParameters);
+	void setContactUriParameters(const std::string &contactUriParameters);
+	void setRefKey(const std::string &refKey);
+	void setDependsOn(const std::string &dependsOn);
+	void setIdKey(const std::string &idKey);
+	void setConferenceFactoryUri(const std::string &conferenceFactoryUri);
+	void setFileTranferServer(const std::string &fileTransferServer);
+	void setPrivacy(LinphonePrivacyMask privacy);
+	void setAvpfMode(LinphoneAVPFMode avpfMode);
+	void setNatPolicy(LinphoneNatPolicy *natPolicy);
+	void setPushNotificationConfig(PushNotificationConfig *pushNotificationConfig);
+	LinphoneStatus setIdentityAddress(const LinphoneAddress *identityAddress);
+	LinphoneStatus setRoutes(const bctbx_list_t *routes);
+	LinphoneStatus setRoutesFromStringList(const bctbx_list_t *routes);
+	void setAudioVideoConferenceFactoryAddress(const LinphoneAddress *audioVideoConferenceFactoryAddress);
 	void enableRtpBundle(bool value);
 	void enableRtpBundleAssumption(bool value);
-	void setCustomContact(const LinphoneAddress* contact);
+	void setCustomContact(const LinphoneAddress *contact);
 	void setLimeServerUrl(const std::string &url);
 
 	// Getters
-	int getExpires () const;
-	int getQualityReportingInterval () const;
-	int getPublishExpires () const;
-	uint8_t getAvpfRrInterval () const;
-	bool getRegisterEnabled () const;
-	bool getDialEscapePlusEnabled () const;
-	bool getQualityReportingEnabled () const;
-	bool getPublishEnabled () const;
-	bool getOutboundProxyEnabled () const;
-	bool getPushNotificationAllowed () const;
-	bool getRemotePushNotificationAllowed () const;
-	bool getUseInternationalPrefixForCallsAndChats () const;
-	bool isPushNotificationAvailable () const;
-	bool isCpimMessagesAllowedInBasicChatRooms () const;
-	void* getUserData () const;
-	const std::string& getInternationalPrefix () const;
-	const std::string& getProxy () const;
-	const std::string& getRealm () const;
-	const std::string& getQualityReportingCollector () const;
-	const std::string& getContactParameters () const;
-	const std::string& getContactUriParameters () const;
-	const std::string& getRefKey () const;
-	const std::string& getDependsOn () const;
-	const std::string& getIdKey () const;
-	const std::string& getConferenceFactoryUri () const;
-	const std::string& getFileTransferServer () const;
-	const std::string& getIdentity () const;
-	const char* getDomain () const;
-	const bctbx_list_t* getRoutes () const;
-	const bctbx_list_t* getRoutesString () const;
-	LinphonePrivacyMask getPrivacy () const;
-	LinphoneAddress* getIdentityAddress () const;
-	LinphoneAVPFMode getAvpfMode () const;
-	LinphoneNatPolicy* getNatPolicy () const;
-	PushNotificationConfig* getPushNotificationConfig () const;
-	const LinphoneAddress* getAudioVideoConferenceFactoryAddress () const;
-	bool rtpBundleEnabled()const;
-	bool rtpBundleAssumptionEnabled()const;
-	const LinphoneAddress * getCustomContact()const;
+	int getExpires() const;
+	int getQualityReportingInterval() const;
+	int getPublishExpires() const;
+	uint8_t getAvpfRrInterval() const;
+	bool getRegisterEnabled() const;
+	bool getDialEscapePlusEnabled() const;
+	bool getQualityReportingEnabled() const;
+	bool getPublishEnabled() const;
+	bool getOutboundProxyEnabled() const;
+	bool getPushNotificationAllowed() const;
+	bool getRemotePushNotificationAllowed() const;
+	bool getUseInternationalPrefixForCallsAndChats() const;
+	bool isPushNotificationAvailable() const;
+	bool isCpimMessagesAllowedInBasicChatRooms() const;
+	void *getUserData() const;
+	const std::string &getInternationalPrefix() const;
+	const std::string &getProxy() const;
+	const std::string &getRealm() const;
+	const std::string &getQualityReportingCollector() const;
+	const std::string &getContactParameters() const;
+	const std::string &getContactUriParameters() const;
+	const std::string &getRefKey() const;
+	const std::string &getDependsOn() const;
+	const std::string &getIdKey() const;
+	const std::string &getConferenceFactoryUri() const;
+	const std::string &getFileTransferServer() const;
+	const std::string &getIdentity() const;
+	const char *getDomain() const;
+	const bctbx_list_t *getRoutes() const;
+	const bctbx_list_t *getRoutesString() const;
+	LinphonePrivacyMask getPrivacy() const;
+	LinphoneAddress *getIdentityAddress() const;
+	LinphoneAVPFMode getAvpfMode() const;
+	LinphoneNatPolicy *getNatPolicy() const;
+	PushNotificationConfig *getPushNotificationConfig() const;
+	const LinphoneAddress *getAudioVideoConferenceFactoryAddress() const;
+	bool rtpBundleEnabled() const;
+	bool rtpBundleAssumptionEnabled() const;
+	const LinphoneAddress *getCustomContact() const;
 	const std::string &getLimeServerUrl() const;
 
 	// Other
-	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
+	LinphoneStatus setServerAddress(const LinphoneAddress *serverAddr);
 	const LinphoneAddress *getServerAddress() const;
 
-	LinphoneStatus setServerAddressAsString (const std::string &serverAddr);
-	const std::string& getServerAddressAsString () const;
+	LinphoneStatus setServerAddressAsString(const std::string &serverAddr);
+	const std::string &getServerAddressAsString() const;
 
-	void setTransport (LinphoneTransportType transport);
-	LinphoneTransportType getTransport () const;
+	void setTransport(LinphoneTransportType transport);
+	LinphoneTransportType getTransport() const;
 
-	void writeToConfigFile (LinphoneConfig *config, int index);
+	void writeToConfigFile(LinphoneConfig *config, int index);
 
 private:
 	void setCustomContact(const std::string &contact);

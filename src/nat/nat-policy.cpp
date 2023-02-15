@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "nat-policy.h"
 
 #include <cstring>
@@ -27,20 +26,21 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionMethod method, const std::string &value) : CoreAccessor(core){
+NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionMethod method, const std::string &value)
+    : CoreAccessor(core) {
 	LpConfig *config = linphone_core_get_config(core->getCCore());
-	if (method == ConstructionMethod::Default){
+	if (method == ConstructionMethod::Default) {
 		mRef = value;
-		if (mRef.empty()){
-			char ref[17] = { 0 };
+		if (mRef.empty()) {
+			char ref[17] = {0};
 			belle_sip_random_token(ref, 16);
 			mRef = ref;
 		}
-	}else if (method == ConstructionMethod::FromSectionName){
+	} else if (method == ConstructionMethod::FromSectionName) {
 		initFromSection(config, value.c_str());
-	} else if (method == ConstructionMethod::FromRefName){
+	} else if (method == ConstructionMethod::FromRefName) {
 		int index;
-		for (index = 0; ; index++) {
+		for (index = 0;; index++) {
 			std::ostringstream section;
 			section << "nat_policy_" << index;
 			if (linphone_config_has_section(config, section.str().c_str())) {
@@ -57,12 +57,13 @@ NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionM
 	}
 }
 
-NatPolicy::NatPolicy(const NatPolicy &other): HybridObject<LinphoneNatPolicy, NatPolicy>(other), CoreAccessor(other.getCore()){
+NatPolicy::NatPolicy(const NatPolicy &other)
+    : HybridObject<LinphoneNatPolicy, NatPolicy>(other), CoreAccessor(other.getCore()) {
 	mStunServer = other.mStunServer;
 	mStunServerUsername = other.mStunServerUsername;
 	mRef = other.mRef;
-	if (mRef.empty()){
-		char ref[17] = { 0 };
+	if (mRef.empty()) {
+		char ref[17] = {0};
 		belle_sip_random_token(ref, 16);
 		mRef = ref;
 	}
@@ -75,32 +76,32 @@ NatPolicy::NatPolicy(const NatPolicy &other): HybridObject<LinphoneNatPolicy, Na
 	mTurnTlsEnabled = false;
 }
 
-NatPolicy::~NatPolicy(){
+NatPolicy::~NatPolicy() {
 	clearResolverContexts();
 }
 
-void NatPolicy::clearResolverContexts(){
+void NatPolicy::clearResolverContexts() {
 	if (mStunResolverContext) {
 		belle_sip_resolver_context_cancel(mStunResolverContext);
 		belle_sip_object_unref(mStunResolverContext);
 		mStunResolverContext = nullptr;
 	}
-	if (mResolverResults){
+	if (mResolverResults) {
 		belle_sip_object_unref(mResolverResults);
 		mResolverResults = nullptr;
 	}
 }
 
 /* Simply cancel pending DNS resoltion, as the core is going to shutdown.*/
-void NatPolicy::release(){
+void NatPolicy::release() {
 	clearResolverContexts();
 }
 
-bool NatPolicy::stunServerActivated() const{
+bool NatPolicy::stunServerActivated() const {
 	return !mStunServer.empty() && (mStunEnabled || mTurnEnabled);
 }
 
-void NatPolicy::saveToConfig(LinphoneConfig *config, int index) const{
+void NatPolicy::saveToConfig(LinphoneConfig *config, int index) const {
 	char *section;
 	bctbx_list_t *l = NULL;
 
@@ -142,7 +143,7 @@ void NatPolicy::saveToConfig() {
 	}
 }
 
-void NatPolicy::clear(){
+void NatPolicy::clear() {
 	clearResolverContexts();
 	mStunServer.clear();
 	mStunServerUsername.clear();
@@ -155,44 +156,44 @@ void NatPolicy::clear(){
 	mTurnTlsEnabled = false;
 }
 
-void NatPolicy::setStunServer(const std::string &stunServer){
+void NatPolicy::setStunServer(const std::string &stunServer) {
 	mStunServer = stunServer;
 	clearResolverContexts();
 	resolveStunServer();
 }
 
-const std::string &NatPolicy::getStunServer()const{
+const std::string &NatPolicy::getStunServer() const {
 	return mStunServer;
 }
 
-void NatPolicy::setStunServerUsername(const std::string &stunServerUsername){
+void NatPolicy::setStunServerUsername(const std::string &stunServerUsername) {
 	mStunServerUsername = stunServerUsername;
 }
-const std::string &NatPolicy::getStunServerUsername()const{
+const std::string &NatPolicy::getStunServerUsername() const {
 	return mStunServerUsername;
 }
 
-void NatPolicy::setNatV4Address(const std::string &natV4Address){
+void NatPolicy::setNatV4Address(const std::string &natV4Address) {
 	mNatV4Address = natV4Address;
 }
 
-const std::string & NatPolicy::getNatV4Address()const{
+const std::string &NatPolicy::getNatV4Address() const {
 	return mNatV4Address;
 }
 
-void NatPolicy::setNatV6Address(const std::string &natV6Address){
+void NatPolicy::setNatV6Address(const std::string &natV6Address) {
 	mNatV6Address = natV6Address;
 }
-const std::string & NatPolicy::getNatV6Address()const{
+const std::string &NatPolicy::getNatV6Address() const {
 	return mNatV6Address;
 }
 
-void NatPolicy::stunServerResolved(belle_sip_resolver_results_t *results){
+void NatPolicy::stunServerResolved(belle_sip_resolver_results_t *results) {
 	if (mResolverResults) {
 		belle_sip_object_unref(mResolverResults);
 		mResolverResults = nullptr;
 	}
-	
+
 	if (belle_sip_resolver_results_get_addrinfos(results)) {
 		ms_message("Stun server resolution successful.");
 		belle_sip_object_ref(results);
@@ -200,15 +201,14 @@ void NatPolicy::stunServerResolved(belle_sip_resolver_results_t *results){
 	} else {
 		ms_warning("Stun server resolution failed.");
 	}
-	if (mStunResolverContext){
+	if (mStunResolverContext) {
 		belle_sip_object_unref(mStunResolverContext);
 		mStunResolverContext = nullptr;
 	}
-	
 }
 
 void NatPolicy::sStunServerResolved(void *data, belle_sip_resolver_results_t *results) {
-	NatPolicy *policy = static_cast<NatPolicy*>(data);
+	NatPolicy *policy = static_cast<NatPolicy *>(data);
 	policy->stunServerResolved(results);
 }
 
@@ -237,16 +237,17 @@ void NatPolicy::resolveStunServer() {
 	}
 }
 
-const struct addrinfo * NatPolicy::getStunServerAddrinfo() {
+const struct addrinfo *NatPolicy::getStunServerAddrinfo() {
 	/*
-	 * It is critical not to block for a long time if it can't be resolved, otherwise this stucks the main thread when making a call.
-	 * On the contrary, a fully asynchronous call initiation is complex to develop.
-	 * The compromise is then:
+	 * It is critical not to block for a long time if it can't be resolved, otherwise this stucks the main thread when
+	 * making a call. On the contrary, a fully asynchronous call initiation is complex to develop. The compromise is
+	 * then:
 	 *  - have a cache of the stun server addrinfo
 	 *  - this cached value is returned when it is non-null
-	 *  - an asynchronous resolution is asked each time this function is called to ensure frequent refreshes of the cached value.
-	 *  - if no cached value exists, block for a short time; this case must be unprobable because the resolution will be asked each
-	 *    time the stun server value is changed.
+	 *  - an asynchronous resolution is asked each time this function is called to ensure frequent refreshes of the
+	 * cached value.
+	 *  - if no cached value exists, block for a short time; this case must be unprobable because the resolution will be
+	 * asked each time the stun server value is changed.
 	 */
 	if (stunServerActivated() && (mResolverResults == nullptr)) {
 		int wait_ms = 0;
@@ -261,7 +262,7 @@ const struct addrinfo * NatPolicy::getStunServerAddrinfo() {
 	return mResolverResults ? belle_sip_resolver_results_get_addrinfos(mResolverResults) : nullptr;
 }
 
-void NatPolicy::initFromSection(const LinphoneConfig *config, const char* section) {
+void NatPolicy::initFromSection(const LinphoneConfig *config, const char *section) {
 	mRef = linphone_config_get_string(config, section, "ref", "");
 	mStunServer = linphone_config_get_string(config, section, "stun_server", "");
 	mStunServerUsername = linphone_config_get_string(config, section, "stun_server_username", "");
@@ -269,7 +270,7 @@ void NatPolicy::initFromSection(const LinphoneConfig *config, const char* sectio
 	mTurnTcpEnabled = !!linphone_config_get_bool(config, section, "turn_enable_tcp", FALSE);
 	mTurnTlsEnabled = !!linphone_config_get_bool(config, section, "turn_enable_tls", FALSE);
 	bctbx_list_t *l = linphone_config_get_string_list(config, section, "protocols", NULL);
-	
+
 	if (l != NULL) {
 		bctbx_list_t *elem;
 		for (elem = l; elem != NULL; elem = elem->next) {

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,6 @@
 
 #ifndef _PRIVATE_TYPES_H_
 #define _PRIVATE_TYPES_H_
-
 
 typedef struct _CallCallbackObj CallCallbackObj;
 
@@ -62,7 +61,7 @@ typedef struct _EcCalibrator EcCalibrator;
 
 typedef struct _xmlparsing_context xmlparsing_context_t;
 
-typedef struct _VTableReference  VTableReference;
+typedef struct _VTableReference VTableReference;
 
 typedef struct _EchoTester EchoTester;
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,14 +21,16 @@
 #ifndef _L_ENCRYPTION_ENGINE_H_
 #define _L_ENCRYPTION_ENGINE_H_
 
+#include <bctoolbox/defs.h>
+
 #include <memory>
 
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/modifier/chat-message-modifier.h"
 #include "core/core-accessor.h"
 #include "linphone/lpconfig.h"
-#include "sal/sal_media_description.h"
 #include "sal/sal.h"
+#include "sal/sal_media_description.h"
 
 // =============================================================================
 
@@ -44,105 +46,110 @@ using EncryptionParameter = std::pair<std::string, std::string>;
 
 class EncryptionEngine : public CoreAccessor {
 public:
-	enum class EngineType {
-		Undefined = -1,
-		LimeX3dh = 0,
-		LimeX3dhServer = 1
-	};
+	enum class EngineType { Undefined = -1, LimeX3dh = 0, LimeX3dhServer = 1 };
 
-	virtual ~EncryptionEngine () = default;
+	virtual ~EncryptionEngine() = default;
 
-	virtual ChatMessageModifier::Result processOutgoingMessage (
-		const std::shared_ptr<ChatMessage> &message,
-		int &errorCode
-	) { return ChatMessageModifier::Result::Skipped; }
+	virtual ChatMessageModifier::Result
+	processOutgoingMessage(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message), BCTBX_UNUSED(int &errorCode)) {
+		return ChatMessageModifier::Result::Skipped;
+	}
 
-	virtual ChatMessageModifier::Result processIncomingMessage (
-		const std::shared_ptr<ChatMessage> &message,
-		int &errorCode
-	) { return ChatMessageModifier::Result::Skipped; }
+	virtual ChatMessageModifier::Result
+	processIncomingMessage(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message), BCTBX_UNUSED(int &errorCode)) {
+		return ChatMessageModifier::Result::Skipped;
+	}
 
-	virtual bool isEncryptionEnabledForFileTransfer (
-		const std::shared_ptr<AbstractChatRoom> &ChatRoom
-	) { return false; }
+	virtual bool isEncryptionEnabledForFileTransfer(BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &ChatRoom)) {
+		return false;
+	}
 
-	virtual void generateFileTransferKey (
-		const std::shared_ptr<AbstractChatRoom> &ChatRoom,
-		const std::shared_ptr<ChatMessage> &message,
-		FileTransferContent *fileTransferContent
-	) {}
+	virtual void generateFileTransferKey(BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &ChatRoom),
+	                                     BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message),
+	                                     BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+	}
 
-	virtual int downloadingFile (
-		const std::shared_ptr<ChatMessage> &message,
-		size_t offset,
-		const uint8_t *buffer,
-		size_t size,
-		uint8_t *decryptedBuffer,
-		FileTransferContent *fileTransferContent
-	) { return 0; }
+	virtual int downloadingFile(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message),
+	                            BCTBX_UNUSED(size_t offset),
+	                            BCTBX_UNUSED(const uint8_t *buffer),
+	                            BCTBX_UNUSED(size_t size),
+	                            BCTBX_UNUSED(uint8_t *decryptedBuffer),
+	                            BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+		return 0;
+	}
 
-	virtual int uploadingFile (
-		const std::shared_ptr<ChatMessage> &message,
-		size_t offset,
-		const uint8_t *buffer,
-		size_t *size,
-		uint8_t *encryptedBuffer,
-		FileTransferContent *fileTransferContent
-	) { return 0; }
+	virtual int uploadingFile(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message),
+	                          BCTBX_UNUSED(size_t offset),
+	                          BCTBX_UNUSED(const uint8_t *buffer),
+	                          BCTBX_UNUSED(size_t *size),
+	                          BCTBX_UNUSED(uint8_t *encryptedBuffer),
+	                          BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+		return 0;
+	}
 
-	virtual int cancelFileTransfer (
-		FileTransferContent *fileTransferContent
-	) { return 0; }
+	virtual int cancelFileTransfer(BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+		return 0;
+	}
 
-	virtual void mutualAuthentication (
-		MSZrtpContext *zrtpContext,
-		const std::shared_ptr<SalMediaDescription> & localMediaDescription,
-		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
-		LinphoneCallDir direction
-	) {}
+	virtual void mutualAuthentication(BCTBX_UNUSED(MSZrtpContext *zrtpContext),
+	                                  BCTBX_UNUSED(const std::shared_ptr<SalMediaDescription> &localMediaDescription),
+	                                  BCTBX_UNUSED(const std::shared_ptr<SalMediaDescription> &remoteMediaDescription),
+	                                  BCTBX_UNUSED(LinphoneCallDir direction)) {
+	}
 
-	virtual void authenticationVerified (
-		MSZrtpContext *zrtpContext,
-		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
-		const char *peerDeviceId
-	) {}
+	virtual void
+	authenticationVerified(BCTBX_UNUSED(MSZrtpContext *zrtpContext),
+	                       BCTBX_UNUSED(const std::shared_ptr<SalMediaDescription> &remoteMediaDescription),
+	                       BCTBX_UNUSED(const char *peerDeviceId)) {
+	}
 
-	virtual void authenticationRejected (
-		const char *peerDeviceId
-	) {}
+	virtual void authenticationRejected(BCTBX_UNUSED(const char *peerDeviceId)) {
+	}
 
-	virtual void addSecurityEventInChatrooms (
-		const IdentityAddress &peerDeviceAddr,
-		ConferenceSecurityEvent::SecurityEventType securityEventType
-	) {}
+	virtual void
+	addSecurityEventInChatrooms(BCTBX_UNUSED(const IdentityAddress &peerDeviceAddr),
+	                            BCTBX_UNUSED(ConferenceSecurityEvent::SecurityEventType securityEventType)) {
+	}
 
-	virtual std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded (
-		const IdentityAddress &newDeviceAddr,
-		std::shared_ptr<Participant> participant,
-		const std::shared_ptr<AbstractChatRoom> &chatRoom,
-		ChatRoom::SecurityLevel currentSecurityLevel
-	) { return nullptr; }
+	virtual std::shared_ptr<ConferenceSecurityEvent>
+	onDeviceAdded(BCTBX_UNUSED(const IdentityAddress &newDeviceAddr),
+	              BCTBX_UNUSED(std::shared_ptr<Participant> participant),
+	              BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom),
+	              BCTBX_UNUSED(ChatRoom::SecurityLevel currentSecurityLevel)) {
+		return nullptr;
+	}
 
-	virtual void cleanDb () {}
-	virtual void update () {}
-	virtual EngineType getEngineType () { return EngineType::Undefined; }
-	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::ClearText; }
-	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::list<std::string> &deviceIds) const { return AbstractChatRoom::SecurityLevel::ClearText; }
-	virtual std::list<EncryptionParameter> getEncryptionParameters () { return std::list<EncryptionParameter>(); }
+	virtual void cleanDb() {
+	}
+	virtual void update() {
+	}
+	virtual EngineType getEngineType() {
+		return EngineType::Undefined;
+	}
+	virtual AbstractChatRoom::SecurityLevel getSecurityLevel(BCTBX_UNUSED(const std::string &deviceId)) const {
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+	virtual AbstractChatRoom::SecurityLevel
+	getSecurityLevel(BCTBX_UNUSED(const std::list<std::string> &deviceIds)) const {
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+	virtual std::list<EncryptionParameter> getEncryptionParameters() {
+		return std::list<EncryptionParameter>();
+	}
 
-	virtual void staleSession (const std::string localDeviceId, const std::string peerDeviceId) {};
+	virtual void staleSession(BCTBX_UNUSED(const std::string localDeviceId),
+	                          BCTBX_UNUSED(const std::string peerDeviceId)){};
 
-	virtual void setTestForceDecryptionFailureFlag(
-			bool flag
-	) {}
+	virtual void setTestForceDecryptionFailureFlag(BCTBX_UNUSED(bool flag)) {
+	}
 
-	virtual void onServerUrlChanged(
-		const std::shared_ptr<Account> & account,
-		const std::string& limeServerUrl
-	) {}
+	virtual void onServerUrlChanged(BCTBX_UNUSED(const std::shared_ptr<Account> &account),
+	                                BCTBX_UNUSED(const std::string &limeServerUrl)) {
+	}
 
 protected:
-	EncryptionEngine (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
+	EncryptionEngine(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
+	}
 
 	EngineType engineType;
 };

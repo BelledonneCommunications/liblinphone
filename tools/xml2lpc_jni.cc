@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,8 @@ extern "C" {
 #include "xml2lpc_jni.h"
 #endif
 
-#include <stdio.h>
 #include "mediastreamer2/mscommon.h"
+#include <stdio.h>
 
 struct jni_xml2lpc_ctx {
 	JNIEnv *env;
@@ -36,63 +36,61 @@ struct jni_xml2lpc_ctx {
 };
 
 static bool update_and_check_context(jni_xml2lpc_ctx *jni_ctx, JNIEnv *env, jobject obj) {
-	if(jni_ctx != NULL && jni_ctx->ctx != NULL) {
+	if (jni_ctx != NULL && jni_ctx->ctx != NULL) {
 		jni_ctx->env = env;
-		jni_ctx->obj = obj; 
+		jni_ctx->obj = obj;
 		return true;
 	}
 	return false;
 }
 
-#define XML2LPC_CALLBACK_BUFFER_SIZE  1024
+#define XML2LPC_CALLBACK_BUFFER_SIZE 1024
 
-extern "C" void Java_org_linphone_tools_Xml2Lpc_callback (void *ctx, xml2lpc_log_level level, const char *fmt, va_list list) {
+extern "C" void
+Java_org_linphone_tools_Xml2Lpc_callback(void *ctx, xml2lpc_log_level level, const char *fmt, va_list list) {
 	jni_xml2lpc_ctx *jni_ctx = (jni_xml2lpc_ctx *)ctx;
-	if(jni_ctx->ctx != NULL) {
+	if (jni_ctx->ctx != NULL) {
 		JNIEnv *env = jni_ctx->env;
 		jobject obj = jni_ctx->obj;
-		
+
 		char buffer[XML2LPC_CALLBACK_BUFFER_SIZE];
 		vsnprintf(buffer, XML2LPC_CALLBACK_BUFFER_SIZE, fmt, list);
 
-		if (level == XML2LPC_ERROR)
-			ms_error("%s", buffer);
-		else if (level == XML2LPC_WARNING)
-			ms_warning("%s", buffer);
-		else
-			ms_message("%s", buffer);
-	}		
+		if (level == XML2LPC_ERROR) ms_error("%s", buffer);
+		else if (level == XML2LPC_WARNING) ms_warning("%s", buffer);
+		else ms_message("%s", buffer);
+	}
 }
 
 extern "C" void Java_org_linphone_tools_Xml2Lpc_init(JNIEnv *env, jobject obj) {
 	jni_xml2lpc_ctx *jni_ctx = new jni_xml2lpc_ctx();
 	jni_ctx->env = env;
-	jni_ctx->obj = obj; 
+	jni_ctx->obj = obj;
 	jni_ctx->ctx = xml2lpc_context_new(Java_org_linphone_tools_Xml2Lpc_callback, jni_ctx);
-	bool result = my_jni::setLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr", jni_ctx);
-	if(!result) {
+	bool result = my_jni::setLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr", jni_ctx);
+	if (!result) {
 		xml2lpc_context_destroy(jni_ctx->ctx);
 		delete jni_ctx;
-	}	
+	}
 }
 
 extern "C" void Java_org_linphone_tools_Xml2Lpc_destroy(JNIEnv *env, jobject obj) {
-	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr");
-	if(jni_ctx != NULL) {
+	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr");
+	if (jni_ctx != NULL) {
 		jni_ctx->env = env;
-		jni_ctx->obj = obj; 
-		if(jni_ctx->ctx) {
+		jni_ctx->obj = obj;
+		if (jni_ctx->ctx) {
 			xml2lpc_context_destroy(jni_ctx->ctx);
 		}
 		delete jni_ctx;
-		my_jni::setLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr", NULL);
+		my_jni::setLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr", NULL);
 	}
 }
 
 extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXmlFile(JNIEnv *env, jobject obj, jstring javaXmlFile) {
-	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr");
+	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr");
 	jint ret = -666;
-	if(update_and_check_context(jni_ctx, env, obj)) {
+	if (update_and_check_context(jni_ctx, env, obj)) {
 		const char *xmlFile = env->GetStringUTFChars(javaXmlFile, 0);
 		ret = xml2lpc_set_xml_file(jni_ctx->ctx, xmlFile);
 		env->ReleaseStringChars(javaXmlFile, (jchar *)xmlFile);
@@ -101,9 +99,9 @@ extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXmlFile(JNIEnv *env, jobject 
 }
 
 extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXmlString(JNIEnv *env, jobject obj, jstring javaXmlString) {
-	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr");
+	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr");
 	jint ret = -666;
-	if(update_and_check_context(jni_ctx, env, obj)) {
+	if (update_and_check_context(jni_ctx, env, obj)) {
 		const char *xmlString = env->GetStringUTFChars(javaXmlString, 0);
 		ret = xml2lpc_set_xml_string(jni_ctx->ctx, xmlString);
 		env->ReleaseStringChars(javaXmlString, (jchar *)xmlString);
@@ -112,9 +110,9 @@ extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXmlString(JNIEnv *env, jobjec
 }
 
 extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXsdFile(JNIEnv *env, jobject obj, jstring javaXsdFile) {
-	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr");
+	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr");
 	jint ret = -666;
-	if(update_and_check_context(jni_ctx, env, obj)) {
+	if (update_and_check_context(jni_ctx, env, obj)) {
 		const char *xsdFile = env->GetStringUTFChars(javaXsdFile, 0);
 		ret = xml2lpc_set_xsd_file(jni_ctx->ctx, xsdFile);
 		env->ReleaseStringChars(javaXsdFile, (jchar *)xsdFile);
@@ -123,9 +121,9 @@ extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXsdFile(JNIEnv *env, jobject 
 }
 
 extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXsdString(JNIEnv *env, jobject obj, jstring javaXsdString) {
-	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr");
+	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr");
 	jint ret = -666;
-	if(update_and_check_context(jni_ctx, env, obj)) {
+	if (update_and_check_context(jni_ctx, env, obj)) {
 		const char *xsdString = env->GetStringUTFChars(javaXsdString, 0);
 		ret = xml2lpc_set_xsd_string(jni_ctx->ctx, xsdString);
 		env->ReleaseStringChars(javaXsdString, (jchar *)xsdString);
@@ -134,22 +132,22 @@ extern "C" jint Java_org_linphone_tools_Xml2Lpc_setXsdString(JNIEnv *env, jobjec
 }
 
 extern "C" jint Java_org_linphone_tools_Xml2Lpc_validate(JNIEnv *env, jobject obj) {
-	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr");
+	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr");
 	jint ret = -666;
-	if(update_and_check_context(jni_ctx, env, obj)) {
+	if (update_and_check_context(jni_ctx, env, obj)) {
 		ret = xml2lpc_validate(jni_ctx->ctx);
 	}
 	return ret;
 }
 
 extern "C" jint Java_org_linphone_tools_Xml2Lpc_convert(JNIEnv *env, jobject obj, jobject javaLpc) {
-	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx*>(env, obj, "Xml2Lpc", "internalPtr");
+	jni_xml2lpc_ctx *jni_ctx = my_jni::getLongField<jni_xml2lpc_ctx *>(env, obj, "Xml2Lpc", "internalPtr");
 	jint ret = -666;
-	if(update_and_check_context(jni_ctx, env, obj)) {
-		LpConfig *lpc = my_jni::getLongField<LpConfig*>(env, javaLpc, "LpConfigImpl", "nativePtr");
-		if(lpc != NULL) {
+	if (update_and_check_context(jni_ctx, env, obj)) {
+		LpConfig *lpc = my_jni::getLongField<LpConfig *>(env, javaLpc, "LpConfigImpl", "nativePtr");
+		if (lpc != NULL) {
 			ret = xml2lpc_convert(jni_ctx->ctx, lpc);
-		} 
+		}
 	}
 	return ret;
 }

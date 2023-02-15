@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,70 +18,72 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/core.h"
-#include "tester_utils.h"
-#include "linphone/wrapper_utils.h"
-#include "liblinphone_tester.h"
-#include "bctoolbox/logging.h"
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <list>
 
 #include <linphone++/linphone.hh>
 
+#include "bctoolbox/logging.h"
+#include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-tools.h"
+#include "liblinphone_tester.h"
+#include "linphone/core.h"
+#include "linphone/wrapper_utils.h"
+#include "tester_utils.h"
 
-static void create_chat_room(){
-// Init from C
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+static void create_chat_room() {
+	// Init from C
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
-// Get C++ and start working from it.
+	// Get C++ and start working from it.
 	auto core = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
 
-// Chat room parameters
+	// Chat room parameters
 	auto params = core->createDefaultChatRoomParams();
-	std::list<std::shared_ptr<linphone::Address> > participants;
+	std::list<std::shared_ptr<linphone::Address>> participants;
 	std::shared_ptr<const linphone::Address> localAddress;
 	participants.push_back(linphone::Object::cPtrToSharedPtr<linphone::Address>(pauline->identity));
 	params->setBackend(linphone::ChatRoom::Backend::Basic);
 
 	// Creation, store the result inside a variable to test variable scope.
 	auto chatRoom = core->createChatRoom(params, localAddress, participants);
-	
-	auto cChatRoom = (LinphoneChatRoom*)linphone::Object::sharedPtrToCPtr(chatRoom);
+
+	auto cChatRoom = (LinphoneChatRoom *)linphone::Object::sharedPtrToCPtr(chatRoom);
 	linphone_chat_room_ref(cChatRoom);
-	linphone_chat_room_unref(cChatRoom);// Should not delete chat room. Refs are : Core + chatRoom
-	
+	linphone_chat_room_unref(cChatRoom); // Should not delete chat room. Refs are : Core + chatRoom
+
 	auto chatRooms = core->getChatRooms();
-	BC_ASSERT_EQUAL((int)chatRooms.size(), 1, int,"%d");
-	auto cr = chatRooms.front();	// Use only one item.
+	BC_ASSERT_EQUAL((int)chatRooms.size(), 1, int, "%d");
+	auto cr = chatRooms.front(); // Use only one item.
 	chatRooms.clear();
-	
-	auto cCr = (LinphoneChatRoom*)linphone::Object::sharedPtrToCPtr(cr);
+
+	auto cCr = (LinphoneChatRoom *)linphone::Object::sharedPtrToCPtr(cr);
 	linphone_chat_room_ref(cCr);
-	linphone_chat_room_unref(cCr);			// Refs are : Core + chatRoom + cr
-	cr = nullptr;							// Refs are : Core + chatRoom
-	
+	linphone_chat_room_unref(cCr); // Refs are : Core + chatRoom + cr
+	cr = nullptr;                  // Refs are : Core + chatRoom
+
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 	core->deleteChatRoom(chatRoom);
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 500);
-	
-	cChatRoom = (LinphoneChatRoom*)linphone::Object::sharedPtrToCPtr(chatRoom);
+
+	cChatRoom = (LinphoneChatRoom *)linphone::Object::sharedPtrToCPtr(chatRoom);
 	linphone_chat_room_ref(cChatRoom);
-	linphone_chat_room_unref(cChatRoom);// Ref is : chatRoom
-	
-	chatRoom = nullptr;	// Delete chat room.
-	
-	core = nullptr;// C++ Core deletion
+	linphone_chat_room_unref(cChatRoom); // Ref is : chatRoom
+
+	chatRoom = nullptr; // Delete chat room.
+
+	core = nullptr; // C++ Core deletion
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 500);
-	
-// C clean
+
+	// C clean
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void various_api_checks(void){
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+static void various_api_checks(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
 	auto core = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
 
@@ -104,18 +106,13 @@ static void various_api_checks(void){
 	linphone_core_manager_destroy(marie);
 }
 
-test_t wrapper_cpp_tests[] = {
-	TEST_NO_TAG("Create chat room", create_chat_room),
-	TEST_NO_TAG("Various API checks", various_api_checks)
-};
+test_t wrapper_cpp_tests[] = {TEST_NO_TAG("Create chat room", create_chat_room),
+                              TEST_NO_TAG("Various API checks", various_api_checks)};
 
-test_suite_t wrapper_cpp_test_suite = {
-	"Wrapper Cpp",
-	NULL,
-	NULL,
-	liblinphone_tester_before_each,
-	liblinphone_tester_after_each,
-	sizeof(wrapper_cpp_tests) / sizeof(wrapper_cpp_tests[0]), wrapper_cpp_tests
-};
-
-
+test_suite_t wrapper_cpp_test_suite = {"Wrapper Cpp",
+                                       NULL,
+                                       NULL,
+                                       liblinphone_tester_before_each,
+                                       liblinphone_tester_after_each,
+                                       sizeof(wrapper_cpp_tests) / sizeof(wrapper_cpp_tests[0]),
+                                       wrapper_cpp_tests};

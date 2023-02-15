@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,53 +31,53 @@ class FileContentPrivate;
 
 class LINPHONE_PUBLIC FileContent : public Content {
 public:
-	FileContent ();
-	FileContent (const FileContent &other);
-	FileContent (FileContent &&other);
+	FileContent();
+	FileContent(const FileContent &other);
+	FileContent(FileContent &&other);
 
-	FileContent* clone () const override {
+	FileContent *clone() const override {
 		return new FileContent(*this);
 	}
 
-	FileContent &operator= (const FileContent &other);
-	FileContent &operator= (FileContent &&other);
+	FileContent &operator=(const FileContent &other);
+	FileContent &operator=(FileContent &&other);
 
-	bool operator== (const FileContent &other) const;
+	bool operator==(const FileContent &other) const;
 
-	void setFileSize (size_t size);
-	size_t getFileSize () const;
+	void setFileSize(size_t size);
+	size_t getFileSize() const;
 
-	void setFileName (const std::string &name);// App Locale
-	const std::string &getFileName () const;
-	
-	void setFileNameSys (const std::string &name);// System Locale
-	std::string getFileNameSys () const;
-	
-	void setFileNameUtf8 (const std::string &name);// UTF8
-	std::string getFileNameUtf8 () const;
+	void setFileName(const std::string &name); // App Locale
+	const std::string &getFileName() const;
 
-	void setFilePath (const std::string &path);// App Locale
-	const std::string &getFilePath () const;
-	
-	void setFilePathSys (const std::string &path);// System Locale
-	std::string getFilePathSys () const;
-	
-	void setFilePathUtf8 (const std::string &path);// UTF8
-	std::string getFilePathUtf8 () const;
+	void setFileNameSys(const std::string &name); // System Locale
+	std::string getFileNameSys() const;
 
-	void setFileDuration (int durationInSeconds);
-	int getFileDuration () const;
+	void setFileNameUtf8(const std::string &name); // UTF8
+	std::string getFileNameUtf8() const;
 
-	bool isFile () const override;
-	bool isFileTransfer () const override;
+	void setFilePath(const std::string &path); // App Locale
+	const std::string &getFilePath() const;
 
-	bool isEncrypted () const;
+	void setFilePathSys(const std::string &path); // System Locale
+	std::string getFilePathSys() const;
+
+	void setFilePathUtf8(const std::string &path); // UTF8
+	std::string getFilePathUtf8() const;
+
+	void setFileDuration(int durationInSeconds);
+	int getFileDuration() const;
+
+	bool isFile() const override;
+	bool isFileTransfer() const override;
+
+	bool isEncrypted() const;
 	/**
 	 * Return the path to a file's plain version.
 	 * This shall be a temporary copy
 	 * Caller is then responsible to delete it when no more needed
 	 */
-	const std::string exportPlainFile () const;
+	const std::string exportPlainFile() const;
 
 private:
 	L_DECLARE_PRIVATE(FileContent);

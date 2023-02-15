@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,46 +27,45 @@ public:
 	ConfigResponse(const string &value);
 };
 
-ConfigResponse::ConfigResponse(const string& value) : Response() {
+ConfigResponse::ConfigResponse(const string &value) : Response() {
 	ostringstream ost;
 	ost << "Value: " << value ? value : "<unset>";
 	setBody(ost.str());
 }
 
-ConfigGetCommand::ConfigGetCommand() :
-		DaemonCommand("config-get", "config-get <section> <key>",
-				"Reads a configuration value from linphone's configuration database.") {
-	addExample(make_unique<DaemonCommandExample>("config-get rtp symmetric",
-						"Status: Ok\n\n"
-						"Value: <unset>"));
+ConfigGetCommand::ConfigGetCommand()
+    : DaemonCommand("config-get",
+                    "config-get <section> <key>",
+                    "Reads a configuration value from linphone's configuration database.") {
+	addExample(make_unique<DaemonCommandExample>("config-get rtp symmetric", "Status: Ok\n\n"
+	                                                                         "Value: <unset>"));
 }
 
-void ConfigGetCommand::exec(Daemon *app, const string& args) {
-	string section,key;
+void ConfigGetCommand::exec(Daemon *app, const string &args) {
+	string section, key;
 	istringstream ist(args);
 	ist >> section >> key;
 	if (ist.fail()) {
 		app->sendResponse(Response("Missing section and/or key names."));
 		return;
 	}
-	const char *read_value=linphone_config_get_string(linphone_core_get_config(app->getCore()),section.c_str(),key.c_str(),NULL);
+	const char *read_value =
+	    linphone_config_get_string(linphone_core_get_config(app->getCore()), section.c_str(), key.c_str(), NULL);
 	app->sendResponse(ConfigResponse(read_value));
 }
 
-
-ConfigSetCommand::ConfigSetCommand() :
-		DaemonCommand("config-set", "config-set <section> <key> <value>",
-				"Sets a configuration value into linphone's configuration database.") {
-	addExample(make_unique<DaemonCommandExample>("config-set rtp symmetric 1",
-						"Status: Ok\n\n"
-						"Value: 2"));
-	addExample(make_unique<DaemonCommandExample>("config-set rtp symmetric",
-						"Status: Ok\n\n"
-						"Value: <unset>"));
+ConfigSetCommand::ConfigSetCommand()
+    : DaemonCommand("config-set",
+                    "config-set <section> <key> <value>",
+                    "Sets a configuration value into linphone's configuration database.") {
+	addExample(make_unique<DaemonCommandExample>("config-set rtp symmetric 1", "Status: Ok\n\n"
+	                                                                           "Value: 2"));
+	addExample(make_unique<DaemonCommandExample>("config-set rtp symmetric", "Status: Ok\n\n"
+	                                                                         "Value: <unset>"));
 }
 
-void ConfigSetCommand::exec(Daemon *app, const string& args) {
-	string section,key,value,temp;
+void ConfigSetCommand::exec(Daemon *app, const string &args) {
+	string section, key, value, temp;
 	istringstream ist(args);
 	ist >> section >> key;
 	if (ist.fail()) {
@@ -74,14 +73,12 @@ void ConfigSetCommand::exec(Daemon *app, const string& args) {
 		return;
 	}
 	bool first = true;
-	while(ist>>temp){
-		if(!first)
-			value += ' ';
-		else
-			first = false;
-        value += temp;
+	while (ist >> temp) {
+		if (!first) value += ' ';
+		else first = false;
+		value += temp;
 	}
-	linphone_config_set_string(linphone_core_get_config(app->getCore()), section.c_str(), key.c_str(), value.size()>0 ? value.c_str() : NULL);
+	linphone_config_set_string(linphone_core_get_config(app->getCore()), section.c_str(), key.c_str(),
+	                           value.size() > 0 ? value.c_str() : NULL);
 	app->sendResponse(ConfigResponse(value.c_str()));
 }
-

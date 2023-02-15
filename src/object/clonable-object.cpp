@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "clonable-object.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "clonable-object-p.h"
-#include "clonable-object.h"
 
 // =============================================================================
 
@@ -32,34 +32,31 @@ LINPHONE_BEGIN_NAMESPACE
 
 L_OBJECT_IMPL(ClonableObject);
 
-ClonableObject::ClonableObject (ClonableObjectPrivate &p) {
+ClonableObject::ClonableObject(ClonableObjectPrivate &p) {
 	setRef(p);
 }
 
-#define UNREF() \
-	do { \
-		auto &h = mPrivate->mPublic; \
-		h.erase(this); \
-		if (h.empty()) \
-			delete mPrivate; \
+#define UNREF()                                                                                                        \
+	do {                                                                                                               \
+		auto &h = mPrivate->mPublic;                                                                                   \
+		h.erase(this);                                                                                                 \
+		if (h.empty()) delete mPrivate;                                                                                \
 	} while (false);
 
-ClonableObject::~ClonableObject () {
+ClonableObject::~ClonableObject() {
 	Wrapper::handleClonableObjectDestruction(this);
 	UNREF();
 }
 
-void ClonableObject::setRef (const ClonableObjectPrivate &p) {
+void ClonableObject::setRef(const ClonableObjectPrivate &p) {
 	// Q-pointer must exist if private data is defined.
 	L_ASSERT(!mPrivate || !mPrivate->mPublic.empty());
 
 	// Nothing, same reference.
-	if (&p == mPrivate)
-		return;
+	if (&p == mPrivate) return;
 
 	// Unref previous private data.
-	if (mPrivate)
-		UNREF();
+	if (mPrivate) UNREF();
 
 	// Add and reference new private data.
 	mPrivate = const_cast<ClonableObjectPrivate *>(&p);

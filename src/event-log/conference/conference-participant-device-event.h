@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,18 +34,17 @@ class ParticipantDevice;
 
 class LINPHONE_PUBLIC ConferenceParticipantDeviceEvent : public ConferenceParticipantEvent {
 	friend class Conference;
-public:
-	ConferenceParticipantDeviceEvent (
-		Type type,
-		time_t creationTime,
-		const ConferenceId &conferenceId,
-		const IdentityAddress &participantAddress,
-		const IdentityAddress &deviceAddress,
-		const std::string &name = ""
-	);
 
-	const IdentityAddress &getDeviceAddress () const;
-	const std::string &getDeviceName () const;
+public:
+	ConferenceParticipantDeviceEvent(Type type,
+	                                 time_t creationTime,
+	                                 const ConferenceId &conferenceId,
+	                                 const IdentityAddress &participantAddress,
+	                                 const IdentityAddress &deviceAddress,
+	                                 const std::string &name = "");
+
+	const IdentityAddress &getDeviceAddress() const;
+	const std::string &getDeviceName() const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceParticipantDeviceEvent);

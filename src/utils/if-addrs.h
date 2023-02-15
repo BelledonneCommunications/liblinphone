@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,9 +26,10 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class IfAddrs{
+class IfAddrs {
 public:
 	static std::list<std::string> fetchLocalAddresses();
+
 private:
 	static std::list<std::string> fetchWithGetIfAddrs();
 	static std::list<std::string> fetchWithGetAdaptersAddresses();

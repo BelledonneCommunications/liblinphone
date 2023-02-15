@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,8 +24,8 @@
 #include <list>
 #include <sstream>
 
-#include <bctoolbox/port.h>
 #include <bctoolbox/charconv.h>
+#include <bctoolbox/port.h>
 
 #include "linphone/utils/utils.h"
 
@@ -45,14 +45,12 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-bool Utils::iequals (const string &a, const string &b) {
+bool Utils::iequals(const string &a, const string &b) {
 	size_t size = a.size();
-	if (b.size() != size)
-		return false;
+	if (b.size() != size) return false;
 
 	for (size_t i = 0; i < size; ++i) {
-		if (tolower(a[i]) != tolower(b[i]))
-			return false;
+		if (tolower(a[i]) != tolower(b[i])) return false;
 	}
 
 	return true;
@@ -61,16 +59,16 @@ bool Utils::iequals (const string &a, const string &b) {
 // -----------------------------------------------------------------------------
 
 #ifndef __ANDROID__
-#define TO_STRING_IMPL(TYPE) \
-	string Utils::toString (TYPE val) { \
-		return to_string(val); \
+#define TO_STRING_IMPL(TYPE)                                                                                           \
+	string Utils::toString(TYPE val) {                                                                                 \
+		return to_string(val);                                                                                         \
 	}
 #else
-#define TO_STRING_IMPL(TYPE) \
-	string Utils::toString (TYPE val) { \
-		ostringstream os; \
-		os << val; \
-		return os.str(); \
+#define TO_STRING_IMPL(TYPE)                                                                                           \
+	string Utils::toString(TYPE val) {                                                                                 \
+		ostringstream os;                                                                                              \
+		os << val;                                                                                                     \
+		return os.str();                                                                                               \
 	}
 #endif // ifndef __ANDROID__
 
@@ -86,7 +84,7 @@ TO_STRING_IMPL(long double)
 
 #undef TO_STRING_IMPL
 
-string Utils::toString (const void *val) {
+string Utils::toString(const void *val) {
 	ostringstream ss;
 	ss << val;
 	return ss.str();
@@ -94,29 +92,27 @@ string Utils::toString (const void *val) {
 
 // -----------------------------------------------------------------------------
 
-#define STRING_TO_NUMBER_IMPL(TYPE, SUFFIX) \
-	TYPE Utils::sto ## SUFFIX (const string &str, size_t *idx, int base) { \
-		return sto ## SUFFIX(str.c_str(), idx, base); \
-	} \
-	TYPE Utils::sto ## SUFFIX (const char *str, size_t *idx, int base) { \
-		char *p; \
-		TYPE v = strto ## SUFFIX(str, &p, base); \
-		if (idx) \
-			*idx = static_cast<size_t>(p - str); \
-		return v; \
-	} \
+#define STRING_TO_NUMBER_IMPL(TYPE, SUFFIX)                                                                            \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx, int base) {                                                \
+		return sto##SUFFIX(str.c_str(), idx, base);                                                                    \
+	}                                                                                                                  \
+	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx, int base) {                                                  \
+		char *p;                                                                                                       \
+		TYPE v = strto##SUFFIX(str, &p, base);                                                                         \
+		if (idx) *idx = static_cast<size_t>(p - str);                                                                  \
+		return v;                                                                                                      \
+	}
 
-#define STRING_TO_NUMBER_IMPL_BASE_LESS(TYPE, SUFFIX) \
-	TYPE Utils::sto ## SUFFIX(const string &str, size_t * idx) { \
-		return sto ## SUFFIX(str.c_str(), idx); \
-	} \
-	TYPE Utils::sto ## SUFFIX(const char *str, size_t * idx) { \
-		char *p; \
-		TYPE v = strto ## SUFFIX(str, &p); \
-		if (idx) \
-			*idx = static_cast<size_t>(p - str); \
-		return v; \
-	} \
+#define STRING_TO_NUMBER_IMPL_BASE_LESS(TYPE, SUFFIX)                                                                  \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx) {                                                          \
+		return sto##SUFFIX(str.c_str(), idx);                                                                          \
+	}                                                                                                                  \
+	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx) {                                                            \
+		char *p;                                                                                                       \
+		TYPE v = strto##SUFFIX(str, &p);                                                                               \
+		if (idx) *idx = static_cast<size_t>(p - str);                                                                  \
+		return v;                                                                                                      \
+	}
 
 #define strtoi(STR, IDX, BASE) static_cast<int>(strtol(STR, IDX, BASE))
 STRING_TO_NUMBER_IMPL(int, i)
@@ -131,14 +127,14 @@ STRING_TO_NUMBER_IMPL_BASE_LESS(float, f)
 #undef STRING_TO_NUMBER_IMPL
 #undef STRING_TO_NUMBER_IMPL_BASE_LESS
 
-bool Utils::stob (const string &str) {
+bool Utils::stob(const string &str) {
 	const string lowerStr = stringToLower(str);
 	return !lowerStr.empty() && (lowerStr == "true" || lowerStr == "1");
 }
 
 // -----------------------------------------------------------------------------
 
-string Utils::stringToLower (const string &str) {
+string Utils::stringToLower(const string &str) {
 	string result(str.size(), ' ');
 	transform(str.cbegin(), str.cend(), result.begin(), ::tolower);
 	return result;
@@ -146,9 +142,9 @@ string Utils::stringToLower (const string &str) {
 
 // -----------------------------------------------------------------------------
 
-string Utils::unicodeToUtf8 (uint32_t ic) {
+string Utils::unicodeToUtf8(uint32_t ic) {
 	string result;
-	
+
 	result.resize(5);
 	size_t size = 0;
 	if (ic < 0x80) {
@@ -177,7 +173,7 @@ string Utils::unicodeToUtf8 (uint32_t ic) {
 /*
  * TODO: not optmized at all. Good enough for small vectors.
  */
-std::string Utils::unicodeToUtf8 (const std::vector<uint32_t>& chars) {
+std::string Utils::unicodeToUtf8(const std::vector<uint32_t> &chars) {
 	std::ostringstream ss;
 	for (auto character : chars) {
 		ss << Utils::unicodeToUtf8(character);
@@ -185,13 +181,13 @@ std::string Utils::unicodeToUtf8 (const std::vector<uint32_t>& chars) {
 	return ss.str();
 }
 
-string Utils::trim (const string &str) {
-	auto itFront = find_if_not(str.begin(), str.end(), [] (unsigned char c) { return isspace(c); });
-	auto itBack = find_if_not(str.rbegin(), str.rend(), [] (unsigned char c) { return isspace(c); }).base();
+string Utils::trim(const string &str) {
+	auto itFront = find_if_not(str.begin(), str.end(), [](unsigned char c) { return isspace(c); });
+	auto itBack = find_if_not(str.rbegin(), str.rend(), [](unsigned char c) { return isspace(c); }).base();
 	return (itBack <= itFront ? string() : string(itFront, itBack));
 }
 
-std::string Utils::normalizeFilename(const std::string& str){
+std::string Utils::normalizeFilename(const std::string &str) {
 	std::string result(str);
 #ifdef _WIN32
 	const std::string illegalCharacters = "\\/:*\"<>|";
@@ -200,51 +196,55 @@ std::string Utils::normalizeFilename(const std::string& str){
 #else
 	const std::string illegalCharacters = "/";
 #endif
-// Invisible and illegal characters should not be part of a filename
-	result.erase(std::remove_if(result.begin(), result.end(), [illegalCharacters](const unsigned char& c){
-		return c < ' ' || illegalCharacters.find((char)c) != std::string::npos;
-	}), result.end());
+	// Invisible and illegal characters should not be part of a filename
+	result.erase(std::remove_if(result.begin(), result.end(),
+	                            [illegalCharacters](const unsigned char &c) {
+		                            return c < ' ' || illegalCharacters.find((char)c) != std::string::npos;
+	                            }),
+	             result.end());
 	return result;
 }
 
 // -----------------------------------------------------------------------------
 
-tm Utils::getTimeTAsTm (time_t t) {
-	#ifdef _WIN32
-		return *gmtime(&t);
-	#else
-		tm result;
-		return *gmtime_r(&t, &result);
-	#endif
+tm Utils::getTimeTAsTm(time_t t) {
+#ifdef _WIN32
+	return *gmtime(&t);
+#else
+	tm result;
+	return *gmtime_r(&t, &result);
+#endif
 }
 
-time_t Utils::getTmAsTimeT (const tm &t) {
+time_t Utils::getTmAsTimeT(const tm &t) {
 	tm tCopy = t;
 	time_t result;
 
-	#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-		long adjustTimezone;
-	#else
-		time_t adjustTimezone;
-	#endif
+#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
+	long adjustTimezone;
+#else
+	time_t adjustTimezone;
+#endif
 
-	#if TARGET_IPHONE_SIMULATOR
-		result = timegm(&tCopy);
-		adjustTimezone = 0;
-	#else
-		// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
-		result = mktime(&tCopy);
+#if TARGET_IPHONE_SIMULATOR
+	result = timegm(&tCopy);
+	adjustTimezone = 0;
+#else
+	// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
+	result = mktime(&tCopy);
 
-		#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-			_get_timezone(&adjustTimezone);
-		#else
-			adjustTimezone = timezone;
-		#endif
-	#endif
+#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
+	_get_timezone(&adjustTimezone);
+#else
+	adjustTimezone = timezone;
+#endif
+#endif
 
 	if (result == time_t(-1)) {
-		if( tCopy.tm_hour == 0 && tCopy.tm_min == 0 && tCopy.tm_sec == 0 && tCopy.tm_year == 70 && tCopy.tm_mon == 0 && tCopy.tm_mday == 1)
-			return time_t(0);// Not really an error as we try to getTmAsTimeT from initial day (Error comes from timezones)
+		if (tCopy.tm_hour == 0 && tCopy.tm_min == 0 && tCopy.tm_sec == 0 && tCopy.tm_year == 70 && tCopy.tm_mon == 0 &&
+		    tCopy.tm_mday == 1)
+			return time_t(
+			    0); // Not really an error as we try to getTmAsTimeT from initial day (Error comes from timezones)
 		lError() << "timegm/mktime failed: " << strerror(errno);
 		return time_t(-1);
 	}
@@ -252,7 +252,7 @@ time_t Utils::getTmAsTimeT (const tm &t) {
 	return result - time_t(adjustTimezone);
 }
 
-std::string Utils::getTimeAsString (const std::string &format, time_t t) {
+std::string Utils::getTimeAsString(const std::string &format, time_t t) {
 	tm dateTime = getTimeTAsTm(t);
 
 	std::ostringstream os;
@@ -260,7 +260,7 @@ std::string Utils::getTimeAsString (const std::string &format, time_t t) {
 	return os.str();
 }
 
-time_t Utils::getStringToTime (const std::string &format, const std::string &s) {
+time_t Utils::getStringToTime(const std::string &format, const std::string &s) {
 #ifndef _WIN32
 	tm dateTime;
 
@@ -274,7 +274,7 @@ time_t Utils::getStringToTime (const std::string &format, const std::string &s) 
 // -----------------------------------------------------------------------------
 
 // TODO: Improve perf!!! Avoid c <--> cpp string conversions.
-string Utils::localeToUtf8 (const string &str) {
+string Utils::localeToUtf8(const string &str) {
 	if (str.empty()) return std::string();
 	char *cStr = bctbx_locale_to_utf8(str.c_str());
 	string utf8Str = cStringToCppString(cStr);
@@ -282,7 +282,7 @@ string Utils::localeToUtf8 (const string &str) {
 	return utf8Str;
 }
 
-string Utils::utf8ToLocale (const string &str) {
+string Utils::utf8ToLocale(const string &str) {
 	if (str.empty()) return std::string();
 	char *cStr = bctbx_utf8_to_locale(str.c_str());
 	string localeStr = cStringToCppString(cStr);
@@ -290,14 +290,14 @@ string Utils::utf8ToLocale (const string &str) {
 	return localeStr;
 }
 
-string Utils::convertAnyToUtf8 (const string &str, const string &encoding) {
+string Utils::convertAnyToUtf8(const string &str, const string &encoding) {
 	char *cStr = bctbx_convert_any_to_utf8(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
 	string convertedStr = cStringToCppString(cStr);
 	bctbx_free(cStr);
 	return convertedStr;
 }
 
-string Utils::convertUtf8ToAny (const string &str, const string &encoding) {
+string Utils::convertUtf8ToAny(const string &str, const string &encoding) {
 	char *cStr = bctbx_convert_utf8_to_any(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
 	string convertedStr = cStringToCppString(cStr);
 	bctbx_free(cStr);
@@ -305,34 +305,33 @@ string Utils::convertUtf8ToAny (const string &str, const string &encoding) {
 }
 
 string Utils::convert(const string &str, const string &fromEncoding, const string &toEncoding) {
-	char *cStr = bctbx_convert_string(str.c_str(), fromEncoding.empty() ? NULL : fromEncoding.c_str(), toEncoding.empty() ? NULL : toEncoding.c_str());
+	char *cStr = bctbx_convert_string(str.c_str(), fromEncoding.empty() ? NULL : fromEncoding.c_str(),
+	                                  toEncoding.empty() ? NULL : toEncoding.c_str());
 	string convertedStr = cStringToCppString(cStr);
 	bctbx_free(cStr);
 	return convertedStr;
 }
 
-string Utils::quoteStringIfNotAlready(const string &str){
+string Utils::quoteStringIfNotAlready(const string &str) {
 	if (str.empty() || str[0] == '"') return str;
 	return string("\"") + str + string("\"");
 }
 
-
-map<string, Utils::Version> Utils::parseCapabilityDescriptor(const string &descriptor){
+map<string, Utils::Version> Utils::parseCapabilityDescriptor(const string &descriptor) {
 	map<string, Utils::Version> result;
 	istringstream istr(descriptor);
 	string cap;
 	string version;
-	while (std::getline(istr, cap, ',')){
+	while (std::getline(istr, cap, ',')) {
 		istringstream capversion(cap);
-		if (std::getline(capversion, cap, '/') && std::getline(capversion, version, '/')){
+		if (std::getline(capversion, cap, '/') && std::getline(capversion, version, '/')) {
 			result[cap] = Utils::Version(version);
-		}else result[cap] = Utils::Version(1, 0);
-		
+		} else result[cap] = Utils::Version(1, 0);
 	}
 	return result;
 }
 
-std::string Utils::getSipFragAddress(const Content & content) {
+std::string Utils::getSipFragAddress(const Content &content) {
 	if (content.getContentType() != ContentType::SipFrag) {
 		lError() << "Content type is not SipFrag hence " << __func__ << " is unable to extract the address";
 		return std::string();
@@ -346,7 +345,11 @@ std::string Utils::getSipFragAddress(const Content & content) {
 	return tmpIdentityAddress.asString();
 }
 
-std::string Utils::getResourceLists (const std::list<IdentityAddress> &addresses) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+std::string Utils::getResourceLists(const std::list<IdentityAddress> &addresses) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
@@ -365,21 +368,24 @@ std::string Utils::getResourceLists (const std::list<IdentityAddress> &addresses
 	return "";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // -----------------------------------------------------------------------------
 
-std::list<IdentityAddress> Utils::parseResourceLists (const Content &content) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+std::list<IdentityAddress> Utils::parseResourceLists(const Content &content) {
 #ifdef HAVE_ADVANCED_IM
-	if ((content.getContentType() == ContentType::ResourceLists)
-		&& ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList))
-			|| (content.getContentDisposition().weakEqual(ContentDisposition::RecipientListHistory))
-		)
-	) {
+	if ((content.getContentType() == ContentType::ResourceLists) &&
+	    ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList)) ||
+	     (content.getContentDisposition().weakEqual(ContentDisposition::RecipientListHistory)))) {
 		std::istringstream data(content.getBodyAsString());
-		std::unique_ptr<Xsd::ResourceLists::ResourceLists> rl(Xsd::ResourceLists::parseResourceLists(
-			data,
-			Xsd::XmlSchema::Flags::dont_validate
-		));
+		std::unique_ptr<Xsd::ResourceLists::ResourceLists> rl(
+		    Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate));
 		std::list<IdentityAddress> addresses;
 		for (const auto &l : rl->getList()) {
 			for (const auto &entry : l.getEntry()) {
@@ -395,8 +401,11 @@ std::list<IdentityAddress> Utils::parseResourceLists (const Content &content) {
 	return std::list<IdentityAddress>();
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op, bool remote) {
+std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op, bool remote) {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
 	if (!op) return info;
 	const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
@@ -413,16 +422,17 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op
 		}
 	}
 
-	char * remoteContactAddressStr = sal_address_as_string(remote ? op->getRemoteContactAddress() : op->getContactAddress());
+	char *remoteContactAddressStr =
+	    sal_address_as_string(remote ? op->getRemoteContactAddress() : op->getContactAddress());
 	const ConferenceAddress conferenceAddress(remoteContactAddressStr);
 	ms_free(remoteContactAddressStr);
 	if (conferenceAddress.isValid()) {
 		info->setUri(conferenceAddress);
 	}
 
-	auto & md = remote ? op->getRemoteMediaDescription() : op->getLocalMediaDescription();
+	auto &md = remote ? op->getRemoteMediaDescription() : op->getLocalMediaDescription();
 	if (md && md->times.size() > 0) {
-		const auto & timePair = md->times.front();
+		const auto &timePair = md->times.front();
 		auto startTime = timePair.first;
 		auto endTime = timePair.second;
 		if (startTime >= 0) {

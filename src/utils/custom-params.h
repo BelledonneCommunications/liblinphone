@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,8 +24,8 @@
 #include <map>
 #include <string>
 
-#include "linphone/utils/general.h"
 #include "linphone/lpconfig.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
@@ -35,15 +35,15 @@ class CustomParams {
 
 public:
 	CustomParams();
-	CustomParams (const CustomParams &other);
-	virtual ~CustomParams ();
+	CustomParams(const CustomParams &other);
+	virtual ~CustomParams();
 
-	void addCustomParam(const std::string & key, const std::string & value);
-	const std::string & getCustomParam(const std::string & key) const;
+	void addCustomParam(const std::string &key, const std::string &value);
+	const std::string &getCustomParam(const std::string &key) const;
 
 protected:
-	void writeCustomParamsToConfigFile (LinphoneConfig *config, std::string configKey) const;
-	void readCustomParamsFromConfigFile (LinphoneConfig *config, const char * key);
+	void writeCustomParamsToConfigFile(LinphoneConfig *config, std::string configKey) const;
+	void readCustomParamsFromConfigFile(LinphoneConfig *config, const char *key);
 
 private:
 	static const std::string paramPrefix;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,15 @@
 
 #include <ctype.h>
 
-#include "account/account.h"
+#include <bctoolbox/defs.h>
+
 #include "account/account-params.h"
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
-#include "linphone/api/c-account.h"
 #include "linphone/api/c-account-cbs.h"
 #include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
 #include "linphone/wrapper_utils.h"
 #include "utils/enum.h"
 
@@ -34,19 +36,20 @@
 
 using namespace LinphonePrivate;
 
-LinphoneAccount* linphone_account_new(LinphoneCore *lc, LinphoneAccountParams *params) {
+LinphoneAccount *linphone_account_new(LinphoneCore *lc, LinphoneAccountParams *params) {
 	return Account::createCObject(lc, AccountParams::toCpp(params)->getSharedFromThis());
 }
 
-LinphoneAccount* linphone_account_new_with_config(LinphoneCore *lc, LinphoneAccountParams *params, LinphoneProxyConfig *config) {
+LinphoneAccount *
+linphone_account_new_with_config(LinphoneCore *lc, LinphoneAccountParams *params, LinphoneProxyConfig *config) {
 	return Account::createCObject(lc, AccountParams::toCpp(params)->getSharedFromThis(), config);
 }
 
-LinphoneAccount* linphone_account_clone(const LinphoneAccount *account) {
+LinphoneAccount *linphone_account_clone(const LinphoneAccount *account) {
 	return Account::toCpp(account)->clone()->toC();
 }
 
-LinphoneAccount* linphone_account_ref(LinphoneAccount *account) {
+LinphoneAccount *linphone_account_ref(LinphoneAccount *account) {
 	Account::toCpp(account)->ref();
 	return account;
 }
@@ -55,19 +58,19 @@ void linphone_account_unref(LinphoneAccount *account) {
 	Account::toCpp(account)->unref();
 }
 
-int linphone_account_set_params(LinphoneAccount *account, LinphoneAccountParams* params) {
+int linphone_account_set_params(LinphoneAccount *account, LinphoneAccountParams *params) {
 	return Account::toCpp(account)->setAccountParams(AccountParams::toCpp(params)->getSharedFromThis());
 }
 
-const LinphoneAccountParams* linphone_account_get_params(const LinphoneAccount *account) {
+const LinphoneAccountParams *linphone_account_get_params(const LinphoneAccount *account) {
 	return Account::toCpp(account)->getAccountParams()->toC();
 }
 
-void linphone_account_add_custom_param(LinphoneAccount *account, const char * key, const char * value) {
+void linphone_account_add_custom_param(LinphoneAccount *account, const char *key, const char *value) {
 	Account::toCpp(account)->addCustomParam(L_C_TO_STRING(key), L_C_TO_STRING(value));
 }
 
-const char * linphone_account_get_custom_param(const LinphoneAccount *account, const char * key) {
+const char *linphone_account_get_custom_param(const LinphoneAccount *account, const char *key) {
 	return L_STRING_TO_C(Account::toCpp(account)->getCustomParam(L_C_TO_STRING(key)));
 }
 
@@ -75,7 +78,7 @@ void linphone_account_set_user_data(LinphoneAccount *account, void *user_data) {
 	Account::toCpp(account)->setUserData(user_data);
 }
 
-void* linphone_account_get_user_data(LinphoneAccount *account) {
+void *linphone_account_get_user_data(LinphoneAccount *account) {
 	return Account::toCpp(account)->getUserData();
 }
 
@@ -83,7 +86,7 @@ void linphone_account_set_custom_header(LinphoneAccount *account, const char *he
 	Account::toCpp(account)->setCustomheader(std::string(header_name), std::string(header_value));
 }
 
-const char* linphone_account_get_custom_header(LinphoneAccount *account, const char *header_name) {
+const char *linphone_account_get_custom_header(LinphoneAccount *account, const char *header_name) {
 	return Account::toCpp(account)->getCustomHeader(std::string(header_name));
 }
 
@@ -91,7 +94,7 @@ void linphone_account_set_dependency(LinphoneAccount *account, LinphoneAccount *
 	Account::toCpp(account)->setDependency(depends_on ? Account::toCpp(depends_on)->getSharedFromThis() : nullptr);
 }
 
-LinphoneAccount* linphone_account_get_dependency(LinphoneAccount *account) {
+LinphoneAccount *linphone_account_get_dependency(LinphoneAccount *account) {
 	if (Account::toCpp(account)->getDependency() != nullptr) {
 		return Account::toCpp(account)->getDependency()->toC();
 	}
@@ -99,15 +102,15 @@ LinphoneAccount* linphone_account_get_dependency(LinphoneAccount *account) {
 	return NULL;
 }
 
-LinphoneCore* linphone_account_get_core(LinphoneAccount *account) {
+LinphoneCore *linphone_account_get_core(LinphoneAccount *account) {
 	return Account::toCpp(account)->getCore();
 }
 
-const LinphoneErrorInfo* linphone_account_get_error_info(LinphoneAccount *account) {
+const LinphoneErrorInfo *linphone_account_get_error_info(LinphoneAccount *account) {
 	return Account::toCpp(account)->getErrorInfo();
 }
 
-const LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account) {
+const LinphoneAddress *linphone_account_get_contact_address(LinphoneAccount *account) {
 	return Account::toCpp(account)->getContactAddress();
 }
 
@@ -143,7 +146,7 @@ bool_t linphone_account_avpf_enabled(LinphoneAccount *account) {
 	return Account::toCpp(account)->isAvpfEnabled();
 }
 
-const LinphoneAuthInfo* linphone_account_find_auth_info(LinphoneAccount *account) {
+const LinphoneAuthInfo *linphone_account_find_auth_info(LinphoneAccount *account) {
 	return Account::toCpp(account)->findAuthInfo();
 }
 
@@ -171,26 +174,22 @@ const bctbx_list_t *linphone_account_get_callbacks_list(const LinphoneAccount *a
 	return Account::toCpp(account)->getCCallbacksList();
 }
 
-void _linphone_account_notify_registration_state_changed(LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, Account::toCpp(account), linphone_account_cbs_get_registration_state_changed, state, message);
+void _linphone_account_notify_registration_state_changed(LinphoneAccount *account,
+                                                         LinphoneRegistrationState state,
+                                                         const char *message) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, Account::toCpp(account),
+	                                  linphone_account_cbs_get_registration_state_changed, state, message);
 }
 
-bool_t linphone_account_is_phone_number(LinphoneAccount *account, const char *username) {
+bool_t linphone_account_is_phone_number(BCTBX_UNUSED(LinphoneAccount *account), const char *username) {
 	if (!username) return FALSE;
 
 	const char *p;
-	char* unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
+	char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
 	for (p = unescaped_username; *p != '\0'; ++p) {
-		if (isdigit(*p) ||
-				*p==' ' ||
-				*p=='.' ||
-				*p=='-' ||
-				*p==')' ||
-				*p=='(' ||
-				*p=='/' ||
-				*p=='+' ||
-				// non-breakable space (iOS uses it to format contacts phone number)
-				(unsigned char)*p == 0xca || (unsigned char)*p == 0xc2 || (unsigned char)*p == 0xa0) {
+		if (isdigit(*p) || *p == ' ' || *p == '.' || *p == '-' || *p == ')' || *p == '(' || *p == '/' || *p == '+' ||
+		    // non-breakable space (iOS uses it to format contacts phone number)
+		    (unsigned char)*p == 0xca || (unsigned char)*p == 0xc2 || (unsigned char)*p == 0xa0) {
 			continue;
 		}
 
@@ -213,23 +212,23 @@ static char *linphone_account_flatten_phone_number(const char *number) {
 			*w++ = *r;
 		}
 	}
-	
+
 	*w++ = '\0';
 	belle_sip_free(unescaped_phone_number);
 	return result;
 }
 
-static char* replace_icp_with_plus(char *phone, const char *icp){
-	return (strstr(phone, icp) == phone) ?  ms_strdup_printf("+%s", phone+strlen(icp)) : ms_strdup(phone);
+static char *replace_icp_with_plus(char *phone, const char *icp) {
+	return (strstr(phone, icp) == phone) ? ms_strdup_printf("+%s", phone + strlen(icp)) : ms_strdup(phone);
 }
 
-char* linphone_account_normalize_phone_number(LinphoneAccount *account, const char *username) {
+char *linphone_account_normalize_phone_number(LinphoneAccount *account, const char *username) {
 	LinphoneAccountParams *tmpparams = account ? NULL : linphone_account_params_new(NULL);
 	LinphoneAccount *tmpaccount = account ? account : linphone_account_new(NULL, tmpparams);
 	if (tmpparams) linphone_account_params_unref(tmpparams);
-	char* result = NULL;
+	char *result = NULL;
 	std::shared_ptr<DialPlan> dialplan;
-	char * nationnal_significant_number = NULL;
+	char *nationnal_significant_number = NULL;
 	int ccc = -1;
 
 	if (linphone_account_is_phone_number(tmpaccount, username)) {
@@ -247,19 +246,21 @@ char* linphone_account_normalize_phone_number(LinphoneAccount *account, const ch
 			ms_message("Unknown ccc for e164 like number [%s]", flatten);
 			goto end;
 		} else {
-			const char *dial_prefix = linphone_account_params_get_international_prefix(linphone_account_get_params(tmpaccount));
+			const char *dial_prefix =
+			    linphone_account_params_get_international_prefix(linphone_account_get_params(tmpaccount));
 			if (dial_prefix) {
-				dialplan = DialPlan::findByCcc(dial_prefix); //copy dial plan;
+				dialplan = DialPlan::findByCcc(dial_prefix); // copy dial plan;
 			} else {
 				dialplan = DialPlan::MostCommon;
 			}
 			if (dial_prefix) {
-				if (strcmp(dial_prefix, dialplan->getCountryCallingCode().c_str()) != 0){
-					//probably generic dialplan, preserving proxy dial prefix
+				if (strcmp(dial_prefix, dialplan->getCountryCallingCode().c_str()) != 0) {
+					// probably generic dialplan, preserving proxy dial prefix
 					dialplan->setCountryCallingCode(dial_prefix);
 				}
 
-				/*it does not make sens to try replace icp with + if we are not sure from the country we are (I.E dial_prefix==NULL)*/
+				/*it does not make sens to try replace icp with + if we are not sure from the country we are (I.E
+				 * dial_prefix==NULL)*/
 				if (strstr(flatten, dialplan->getInternationalCallPrefix().c_str()) == flatten) {
 					char *e164 = replace_icp_with_plus(flatten, dialplan->getInternationalCallPrefix().c_str());
 					result = linphone_account_normalize_phone_number(tmpaccount, e164);
@@ -275,38 +276,37 @@ char* linphone_account_normalize_phone_number(LinphoneAccount *account, const ch
 		if (dialplan->getCountryCallingCode().c_str()[0] != '\0') {
 			/* the number already starts with + or international prefix*/
 			/*0. keep at most national number significant digits */
-			char* nationnal_significant_number_start = nationnal_significant_number
-														+ MAX(0, (int)strlen(nationnal_significant_number)
-														- (int)dialplan->getNationalNumberLength());
-			ms_debug("Prefix not present. Keeping at most %d digits: %s", dialplan->getNationalNumberLength(), nationnal_significant_number_start);
+			char *nationnal_significant_number_start =
+			    nationnal_significant_number +
+			    MAX(0, (int)strlen(nationnal_significant_number) - (int)dialplan->getNationalNumberLength());
+			ms_debug("Prefix not present. Keeping at most %d digits: %s", dialplan->getNationalNumberLength(),
+			         nationnal_significant_number_start);
 
 			/*1. First prepend international calling prefix or +*/
 			/*2. Second add prefix*/
 			/*3. Finally add user digits */
-			bool_t dial_escape_plus = linphone_account_params_get_dial_escape_plus_enabled(linphone_account_get_params(tmpaccount));
-			result = ms_strdup_printf("%s%s%s"
-										, dial_escape_plus ? dialplan->getInternationalCallPrefix().c_str() : "+"
-										, dialplan->getCountryCallingCode().c_str()
-										, nationnal_significant_number_start);
+			bool_t dial_escape_plus =
+			    linphone_account_params_get_dial_escape_plus_enabled(linphone_account_get_params(tmpaccount));
+			result = ms_strdup_printf("%s%s%s", dial_escape_plus ? dialplan->getInternationalCallPrefix().c_str() : "+",
+			                          dialplan->getCountryCallingCode().c_str(), nationnal_significant_number_start);
 			ms_debug("Prepended prefix resulted in %s", result);
 		}
 
 	end:
-		if (result==NULL) {
+		if (result == NULL) {
 			result = flatten;
 		} else {
 			ms_free(flatten);
 		}
 	}
 	if (account == NULL) {
-		//linphone_account_params_unref(tmpparams);
+		// linphone_account_params_unref(tmpparams);
 		linphone_account_unref(tmpaccount);
 	}
 	return result;
 }
 
-
-static LinphoneAddress* _destroy_addr_if_not_sip(LinphoneAddress* addr) {
+static LinphoneAddress *_destroy_addr_if_not_sip(LinphoneAddress *addr) {
 	if (linphone_address_is_sip(addr)) {
 		return addr;
 	} else {
@@ -315,49 +315,51 @@ static LinphoneAddress* _destroy_addr_if_not_sip(LinphoneAddress* addr) {
 	}
 }
 
-LinphoneAddress* linphone_account_normalize_sip_uri(LinphoneAccount *account, const char* username) {
-	enum_lookup_res_t *enumres=NULL;
-	char *enum_domain=NULL;
+LinphoneAddress *linphone_account_normalize_sip_uri(LinphoneAccount *account, const char *username) {
+	enum_lookup_res_t *enumres = NULL;
+	char *enum_domain = NULL;
 	char *tmpurl;
 	LinphoneAddress *uri;
 
-	if (!username || *username=='\0') return NULL;
+	if (!username || *username == '\0') return NULL;
 
-	if (is_enum(username,&enum_domain)){
-		if (enum_lookup(enum_domain,&enumres)<0){
+	if (is_enum(username, &enum_domain)) {
+		if (enum_lookup(enum_domain, &enumres) < 0) {
 			ms_free(enum_domain);
 			return NULL;
 		}
 		ms_free(enum_domain);
-		tmpurl=enumres->sip_address[0];
-		uri=linphone_address_new(tmpurl);
+		tmpurl = enumres->sip_address[0];
+		uri = linphone_address_new(tmpurl);
 		enum_lookup_res_free(enumres);
 		return _destroy_addr_if_not_sip(uri);
 	}
 	/* check if we have a "sip:" or a "sips:" */
-	if ( (strstr(username,"sip:")==NULL) && (strstr(username,"sips:")==NULL) ){
+	if ((strstr(username, "sip:") == NULL) && (strstr(username, "sips:") == NULL)) {
 		/* this doesn't look like a true sip uri */
-		if (strchr(username,'@')!=NULL){
+		if (strchr(username, '@') != NULL) {
 			/* seems like sip: is missing !*/
-			tmpurl=ms_strdup_printf("sip:%s",username);
-			uri=linphone_address_new(tmpurl);
+			tmpurl = ms_strdup_printf("sip:%s", username);
+			uri = linphone_address_new(tmpurl);
 			ms_free(tmpurl);
-			if (uri){
+			if (uri) {
 				return _destroy_addr_if_not_sip(uri);
 			}
 		}
 
-		if (account!=NULL && linphone_account_params_get_identity_address(linphone_account_get_params(account))!=NULL){
+		if (account != NULL &&
+		    linphone_account_params_get_identity_address(linphone_account_get_params(account)) != NULL) {
 			/* append the proxy domain suffix but remove any custom parameters/headers */
-			LinphoneAddress *uri=linphone_address_clone(linphone_account_params_get_identity_address(linphone_account_get_params(account)));
-			if (uri==NULL){
+			LinphoneAddress *uri = linphone_address_clone(
+			    linphone_account_params_get_identity_address(linphone_account_get_params(account)));
+			if (uri == NULL) {
 				return NULL;
 			} else {
 				linphone_address_clean(uri);
-				linphone_address_set_display_name(uri,NULL);
+				linphone_address_set_display_name(uri, NULL);
 				// Unescape character if possible
 				char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
-				linphone_address_set_username(uri,unescaped_username);
+				linphone_address_set_username(uri, unescaped_username);
 				belle_sip_free(unescaped_username);
 				return _destroy_addr_if_not_sip(uri);
 			}
@@ -365,8 +367,8 @@ LinphoneAddress* linphone_account_normalize_sip_uri(LinphoneAccount *account, co
 			return NULL;
 		}
 	}
-	uri=linphone_address_new(username);
-	if (uri!=NULL){
+	uri = linphone_address_new(username);
+	if (uri != NULL) {
 		return _destroy_addr_if_not_sip(uri);
 	}
 

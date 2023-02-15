@@ -217,8 +217,8 @@ void linphone_call_send_dtmf__char__SIP_INFO_does_not_depend_on_callee_config() 
 }
 
 constexpr test_t new_tests[] = {
-	TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__char__not_received),
-	TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__char__SIP_INFO_does_not_depend_on_callee_config),
+    TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__char__not_received),
+    TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__char__SIP_INFO_does_not_depend_on_callee_config),
 };
 
 test_t merged[sizeof(dtmf_tests) / sizeof(dtmf_tests[0]) + sizeof(new_tests) / sizeof(new_tests[0])];
@@ -235,13 +235,13 @@ constexpr test_suite_t test_suite() {
 	}
 
 	return {
-		"DTMF",							// Suite name
-		nullptr,						// Before suite
-		nullptr,						// After suite
-		liblinphone_tester_before_each, // Before each test
-		liblinphone_tester_after_each,	// After each test
-		i,								// test array length
-		merged							// test array
+	    "DTMF",                         // Suite name
+	    nullptr,                        // Before suite
+	    nullptr,                        // After suite
+	    liblinphone_tester_before_each, // Before each test
+	    liblinphone_tester_after_each,  // After each test
+	    i,                              // test array length
+	    merged                          // test array
 	};
 }
 

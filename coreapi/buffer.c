@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,33 +31,32 @@ static void linphone_buffer_destroy(LinphoneBuffer *buffer) {
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneBuffer);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneBuffer, belle_sip_object_t,
-	(belle_sip_object_destroy_t)linphone_buffer_destroy,
-	NULL, // clone
-	NULL, // marshal
-	TRUE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneBuffer,
+                           belle_sip_object_t,
+                           (belle_sip_object_destroy_t)linphone_buffer_destroy,
+                           NULL, // clone
+                           NULL, // marshal
+                           TRUE);
 
-
-LinphoneBuffer * linphone_buffer_new(void) {
+LinphoneBuffer *linphone_buffer_new(void) {
 	LinphoneBuffer *buffer = belle_sip_object_new(LinphoneBuffer);
 	belle_sip_object_ref(buffer);
 	return buffer;
 }
 
-LinphoneBuffer * linphone_buffer_new_from_data(const uint8_t *data, size_t size) {
+LinphoneBuffer *linphone_buffer_new_from_data(const uint8_t *data, size_t size) {
 	LinphoneBuffer *buffer = linphone_buffer_new();
 	linphone_buffer_set_content(buffer, data, size);
 	return buffer;
 }
 
-LinphoneBuffer * linphone_buffer_new_from_string(const char *data) {
+LinphoneBuffer *linphone_buffer_new_from_string(const char *data) {
 	LinphoneBuffer *buffer = linphone_buffer_new();
 	linphone_buffer_set_string_content(buffer, data);
 	return buffer;
 }
 
-LinphoneBuffer * linphone_buffer_ref(LinphoneBuffer *buffer) {
+LinphoneBuffer *linphone_buffer_ref(LinphoneBuffer *buffer) {
 	belle_sip_object_ref(buffer);
 	return buffer;
 }
@@ -74,7 +73,7 @@ void linphone_buffer_set_user_data(LinphoneBuffer *buffer, void *ud) {
 	buffer->user_data = ud;
 }
 
-const uint8_t * linphone_buffer_get_content(const LinphoneBuffer *buffer) {
+const uint8_t *linphone_buffer_get_content(const LinphoneBuffer *buffer) {
 	return buffer->content;
 }
 
@@ -83,10 +82,10 @@ void linphone_buffer_set_content(LinphoneBuffer *buffer, const uint8_t *content,
 	if (buffer->content) belle_sip_free(buffer->content);
 	buffer->content = reinterpret_cast<uint8_t *>(belle_sip_malloc(size + 1));
 	memcpy(buffer->content, content, size);
-    ((char *)buffer->content)[size] = '\0';
+	((char *)buffer->content)[size] = '\0';
 }
 
-const char * linphone_buffer_get_string_content(const LinphoneBuffer *buffer) {
+const char *linphone_buffer_get_string_content(const LinphoneBuffer *buffer) {
 	return (const char *)buffer->content;
 }
 

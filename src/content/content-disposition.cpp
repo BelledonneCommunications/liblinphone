@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -45,18 +45,17 @@ const ContentDisposition ContentDisposition::RecipientListHistory("recipient-lis
 
 // -----------------------------------------------------------------------------
 
-ContentDisposition::ContentDisposition (const string &disposition) : ClonableObject(*new ContentDispositionPrivate) {
+ContentDisposition::ContentDisposition(const string &disposition) : ClonableObject(*new ContentDispositionPrivate) {
 	L_D();
 	size_t posParam = disposition.find(";");
 	d->disposition = Utils::trim(disposition.substr(0, posParam));
-	if (posParam != string::npos)
-		setParameter(Utils::trim(disposition.substr(posParam + 1)));
+	if (posParam != string::npos) setParameter(Utils::trim(disposition.substr(posParam + 1)));
 }
 
-ContentDisposition::ContentDisposition (const ContentDisposition &other)
-	: ContentDisposition(other.asString()) {}
+ContentDisposition::ContentDisposition(const ContentDisposition &other) : ContentDisposition(other.asString()) {
+}
 
-ContentDisposition &ContentDisposition::operator= (const ContentDisposition &other) {
+ContentDisposition &ContentDisposition::operator=(const ContentDisposition &other) {
 	L_D();
 	if (this != &other) {
 		d->disposition = other.getPrivate()->disposition;
@@ -65,45 +64,44 @@ ContentDisposition &ContentDisposition::operator= (const ContentDisposition &oth
 	return *this;
 }
 
-bool ContentDisposition::weakEqual (const ContentDisposition &other) const {
+bool ContentDisposition::weakEqual(const ContentDisposition &other) const {
 	L_D();
 	return d->disposition == other.getPrivate()->disposition;
 }
 
-bool ContentDisposition::operator== (const ContentDisposition &other) const {
+bool ContentDisposition::operator==(const ContentDisposition &other) const {
 	return weakEqual(other) && (getParameter() == other.getParameter());
 }
 
-bool ContentDisposition::operator!= (const ContentDisposition &other) const {
+bool ContentDisposition::operator!=(const ContentDisposition &other) const {
 	return !(*this == other);
 }
 
-bool ContentDisposition::isEmpty () const {
+bool ContentDisposition::isEmpty() const {
 	L_D();
 	return d->disposition.empty();
 }
 
-bool ContentDisposition::isValid () const {
+bool ContentDisposition::isValid() const {
 	L_D();
 	return !d->disposition.empty();
 }
 
-const string &ContentDisposition::getParameter () const {
+const string &ContentDisposition::getParameter() const {
 	L_D();
 	return d->parameter;
 }
 
-void ContentDisposition::setParameter (const string &parameter) {
+void ContentDisposition::setParameter(const string &parameter) {
 	L_D();
 	d->parameter = parameter;
 }
 
-string ContentDisposition::asString () const {
+string ContentDisposition::asString() const {
 	L_D();
 	if (isValid()) {
 		string asString = d->disposition;
-		if (!d->parameter.empty())
-			asString += ";" + d->parameter;
+		if (!d->parameter.empty()) asString += ";" + d->parameter;
 		return asString;
 	}
 	return "";

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,39 +33,40 @@ class StreamsGroup;
 class MediaSessionPrivate;
 class IceServiceListener;
 
-class IceService : public MediaDescriptionRenderer{
+class IceService : public MediaDescriptionRenderer {
 public:
-	IceService(StreamsGroup & sg);
+	IceService(StreamsGroup &sg);
 	virtual ~IceService();
-	
+
 	bool isActive() const;
-	
+
 	/* Returns true if ICE has completed succesfully. */
 	bool hasCompleted() const;
 
 	/* Returns true if ICE is running. */
 	bool isRunning() const;
 
-	/* Returns true if ICE has finished with the check lists processing, even if it has failed for some of the check list.*/
-	bool hasCompletedCheckList()const;
-	
-	bool isControlling () const;
-	
+	/* Returns true if ICE has finished with the check lists processing, even if it has failed for some of the check
+	 * list.*/
+	bool hasCompletedCheckList() const;
+
+	bool isControlling() const;
+
 	/* The ICE restart procedure as in RFC */
 	void restartSession(IceRole role);
-	
+
 	/* Called after a network connectivity change, to restart ICE from the beginning.*/
 	void resetSession();
-	
+
 	/* Returns true if the incoming offer requires a defered response, due to check-list(s) not yet completed.*/
 	bool reinviteNeedsDeferedResponse(const std::shared_ptr<SalMediaDescription> &remoteMd);
-	
+
 	void createStreams(const OfferAnswerContext &params);
 	/**
 	 * Called by the StreamsGroup when the local media description must be filled with ICE parameters.
 	 *
 	 */
-	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx) override;
+	virtual void fillLocalMediaDescription(OfferAnswerContext &ctx) override;
 	/*
 	 * Prepare to run.
 	 */
@@ -79,7 +80,7 @@ public:
 	/*
 	 * Render the streams according to offer answer context.
 	 */
-	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
+	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	/*
 	 * Called to notify that the session is confirmed (corresponding to SIP ACK).
 	 */
@@ -92,53 +93,65 @@ public:
 	 * Release engine's resource, pending object destruction.
 	 */
 	virtual void finish() override;
-	
+
 	/*
-	 * Set the listener to get notified of major ICE events. Used by the MediaSession to perform required signaling operations.
+	 * Set the listener to get notified of major ICE events. Used by the MediaSession to perform required signaling
+	 * operations.
 	 */
 	void setListener(IceServiceListener *listener);
-	
+
 	/*
 	 * Called by streams (who receive oRTP events) to notify ICE related events to the IceService.
-	 * Ideally the IceService should place its own listener to these ortp events, but well oRTP is C and has to be simple.
+	 * Ideally the IceService should place its own listener to these ortp events, but well oRTP is C and has to be
+	 * simple.
 	 */
 	void handleIceEvent(const OrtpEvent *ev);
-	
+
 	/**
 	 * used by non-regression tests only.
 	 */
-	IceSession *getSession()const{
+	IceSession *getSession() const {
 		return mIceSession;
 	}
-	/** 
+	/**
 	 * Check that the host has the "local network permission".
-	 * This is useful for iOS. If not, ICE cannot be used because the socket API will refuse to send packets to a local address.
-	 * In addition the source address specification (with sendmsg()/recvmsg() and control data block) does not work.
+	 * This is useful for iOS. If not, ICE cannot be used because the socket API will refuse to send packets to a local
+	 * address. In addition the source address specification (with sendmsg()/recvmsg() and control data block) does not
+	 * work.
 	 */
-	static bool hasLocalNetworkPermission(const std::list<std::string> & localAddrs);
+	static bool hasLocalNetworkPermission(const std::list<std::string> &localAddrs);
 	static bool hasLocalNetworkPermission();
+
 private:
 	static bool checkLocalNetworkPermission(const std::string &localAddr);
-	MediaSessionPrivate &getMediaSessionPrivate()const;
-	LinphoneCore *getCCore()const;
-	bool iceFoundInMediaDescription (const std::shared_ptr<SalMediaDescription> &md);
-	const struct addrinfo *getIcePreferredStunServerAddrinfo (const struct addrinfo *ai);
+	MediaSessionPrivate &getMediaSessionPrivate() const;
+	LinphoneCore *getCCore() const;
+	bool iceFoundInMediaDescription(const std::shared_ptr<SalMediaDescription> &md);
+	const struct addrinfo *getIcePreferredStunServerAddrinfo(const struct addrinfo *ai);
 	void updateLocalMediaDescriptionFromIce(std::shared_ptr<SalMediaDescription> &desc);
-	void getIceDefaultAddrAndPort(uint16_t componentID, const std::shared_ptr<SalMediaDescription> & md, const SalStreamDescription & stream, std::string & addr, int & port);
-	void clearUnusedIceCandidates (const std::shared_ptr<SalMediaDescription> &localDesc, const std::shared_ptr<SalMediaDescription> &remoteDesc, bool localIsOfferer);
-	bool checkForIceRestartAndSetRemoteCredentials (const std::shared_ptr<SalMediaDescription> &md, bool isOffer);
-	void createIceCheckListsAndParseIceAttributes (const std::shared_ptr<SalMediaDescription> &md, bool iceRestarted);
-	void updateFromRemoteMediaDescription (const std::shared_ptr<SalMediaDescription> &localDesc, const std::shared_ptr<SalMediaDescription> &remoteDesc, bool isOffer);
+	void getIceDefaultAddrAndPort(uint16_t componentID,
+	                              const std::shared_ptr<SalMediaDescription> &md,
+	                              const SalStreamDescription &stream,
+	                              std::string &addr,
+	                              int &port);
+	void clearUnusedIceCandidates(const std::shared_ptr<SalMediaDescription> &localDesc,
+	                              const std::shared_ptr<SalMediaDescription> &remoteDesc,
+	                              bool localIsOfferer);
+	bool checkForIceRestartAndSetRemoteCredentials(const std::shared_ptr<SalMediaDescription> &md, bool isOffer);
+	void createIceCheckListsAndParseIceAttributes(const std::shared_ptr<SalMediaDescription> &md, bool iceRestarted);
+	void updateFromRemoteMediaDescription(const std::shared_ptr<SalMediaDescription> &localDesc,
+	                                      const std::shared_ptr<SalMediaDescription> &remoteDesc,
+	                                      bool isOffer);
 	void gatheringFinished();
 	void deleteSession();
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);
-	int gatherIceCandidates ();
+	int gatherIceCandidates();
 	int gatherLocalCandidates();
 	void addPredefinedSflrxCandidates(const NatPolicy *natPolicy);
-	bool hasRelayCandidates(const SalMediaDescription &md)const;
-	void chooseDefaultCandidates(const OfferAnswerContext & ctx);
-	StreamsGroup & mStreamsGroup;
-	IceSession * mIceSession = nullptr;
+	bool hasRelayCandidates(const SalMediaDescription &md) const;
+	void chooseDefaultCandidates(const OfferAnswerContext &ctx);
+	StreamsGroup &mStreamsGroup;
+	IceSession *mIceSession = nullptr;
 	IceServiceListener *mListener = nullptr;
 	bool mGatheringFinished = false;
 	bool mAllowLateIce = false;
@@ -147,16 +160,15 @@ private:
 	bool mIceWasDisabled = false; // Remember that at some point ICE was disabled by an incoming offer or answer.
 };
 
-class LINPHONE_INTERNAL_PUBLIC IceServiceListener{
+class LINPHONE_INTERNAL_PUBLIC IceServiceListener {
 public:
 	virtual void onGatheringFinished(IceService &service) = 0;
 	virtual void onIceCompleted(IceService &service) = 0;
 	virtual void onLosingPairsCompleted(IceService &service) = 0;
-	virtual void onIceRestartNeeded(IceService & service) = 0;
+	virtual void onIceRestartNeeded(IceService &service) = 0;
 	virtual ~IceServiceListener() = default;
 };
 
 LINPHONE_END_NAMESPACE
 
 #endif
-

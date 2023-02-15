@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,19 +18,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/api/c-content.h"
-#include "linphone/core_utils.h"
 #include "linphone/core.h"
+#include "linphone/core_utils.h"
 #include "linphone/logging.h"
 #include "linphone/lpconfig.h"
 #include "linphone/utils/utils.h"
 
-#include "private.h"
 #include "logging-private.h"
+#include "private.h"
 
 using namespace LinphonePrivate;
 
-LinphoneUpdateCheck * linphone_update_check_new(LinphoneCore *lc, const char *version, belle_http_request_listener_t *listener) {
+LinphoneUpdateCheck *
+linphone_update_check_new(LinphoneCore *lc, const char *version, belle_http_request_listener_t *listener) {
 	LinphoneUpdateCheck *update = ms_new0(LinphoneUpdateCheck, 1);
 
 	update->lc = lc;
@@ -48,7 +51,10 @@ static void linphone_update_check_destroy(LinphoneUpdateCheck *update) {
 	ms_free(update);
 }
 
-static void update_check_process_terminated(LinphoneUpdateCheck *update, LinphoneVersionUpdateCheckResult result, const char *version, const char *url) {
+static void update_check_process_terminated(LinphoneUpdateCheck *update,
+                                            LinphoneVersionUpdateCheckResult result,
+                                            const char *version,
+                                            const char *url) {
 	linphone_core_notify_version_update_check_result_received(update->lc, result, version, url);
 	linphone_update_check_destroy(update);
 }
@@ -89,17 +95,17 @@ static void update_check_process_response_event(void *ctx, const belle_http_resp
 	}
 }
 
-static void update_check_process_io_error(void *ctx, const belle_sip_io_error_event_t *event) {
+static void update_check_process_io_error(void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
 	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
 
-static void update_check_process_timeout(void *ctx, const belle_sip_timeout_event_t *event) {
+static void update_check_process_timeout(void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
 	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
 	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
 
-static void update_check_process_auth_requested(void *ctx, belle_sip_auth_event_t *event) {
+static void update_check_process_auth_requested(void *ctx, BCTBX_UNUSED(belle_sip_auth_event_t *event)) {
 	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
 	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
@@ -116,7 +122,7 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 	}
 
 	if (version_check_url_root != NULL) {
-		belle_http_request_listener_callbacks_t belle_request_listener = { 0 };
+		belle_http_request_listener_callbacks_t belle_request_listener = {0};
 		belle_http_request_t *request;
 		belle_generic_uri_t *uri;
 		char *version_check_url;
@@ -152,7 +158,8 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 
 		update = linphone_update_check_new(lc, current_version, NULL);
 		update->http_listener = belle_http_request_listener_create_from_callbacks(&belle_request_listener, update);
-		request = belle_http_request_create("GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), NULL);
+		request = belle_http_request_create(
+		    "GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), NULL);
 		belle_http_provider_send_request(lc->http_provider, request, update->http_listener);
 	}
 }

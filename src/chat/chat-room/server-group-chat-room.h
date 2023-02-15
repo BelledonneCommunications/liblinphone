@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,77 +31,85 @@ LINPHONE_BEGIN_NAMESPACE
 class SalCallOp;
 class ServerGroupChatRoomPrivate;
 
-class ServerGroupChatRoom : public ChatRoom , public ConferenceListener {
+class ServerGroupChatRoom : public ChatRoom, public ConferenceListener {
 public:
-	ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op);
+	ServerGroupChatRoom(const std::shared_ptr<Core> &core, SalCallOp *op);
 
-	ServerGroupChatRoom (
-		const std::shared_ptr<Core> &core,
-		const ConferenceAddress &peerAddress,
-		AbstractChatRoom::CapabilitiesMask capabilities,
-		const std::shared_ptr<ChatRoomParams> &params,
-		const std::string &subject,
-		std::list<std::shared_ptr<Participant>> &&participants,
-		unsigned int lastNotifyId
-	);
+	ServerGroupChatRoom(const std::shared_ptr<Core> &core,
+	                    const ConferenceAddress &peerAddress,
+	                    AbstractChatRoom::CapabilitiesMask capabilities,
+	                    const std::shared_ptr<ChatRoomParams> &params,
+	                    const std::string &subject,
+	                    std::list<std::shared_ptr<Participant>> &&participants,
+	                    unsigned int lastNotifyId);
 
-	virtual ~ServerGroupChatRoom ();
+	virtual ~ServerGroupChatRoom();
 
-	std::shared_ptr<Core> getCore () const;
+	std::shared_ptr<Core> getCore() const;
 
-	void allowCpim (bool value) override;
-	void allowMultipart (bool value) override;
-	bool canHandleCpim () const override;
-	bool canHandleMultipart () const override;
+	void allowCpim(bool value) override;
+	void allowMultipart(bool value) override;
+	bool canHandleCpim() const override;
+	bool canHandleMultipart() const override;
 
-	CapabilitiesMask getCapabilities () const override;
-	bool hasBeenLeft () const override;
-	bool isReadOnly () const override;
+	CapabilitiesMask getCapabilities() const override;
+	bool hasBeenLeft() const override;
+	bool isReadOnly() const override;
 
-	const ConferenceAddress &getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress() const override;
 
-	bool addParticipant (const IdentityAddress &participantAddress) override;
-	bool addParticipant (std::shared_ptr<Call> call) override {return getConference()->addParticipant(call); };
+	bool addParticipant(const IdentityAddress &participantAddress) override;
+	bool addParticipant(std::shared_ptr<Call> call) override {
+		return getConference()->addParticipant(call);
+	};
 
-	void join (const IdentityAddress &participantAddress) override { getConference()->join(participantAddress); };
-	bool update(const ConferenceParamsInterface &newParameters) override { return getConference()->update(newParameters); };
+	void join(const IdentityAddress &participantAddress) override {
+		getConference()->join(participantAddress);
+	};
+	bool update(const ConferenceParamsInterface &newParameters) override {
+		return getConference()->update(newParameters);
+	};
 
-	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
+	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
 
-	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const override;
-	std::shared_ptr<Participant> findCachedParticipant (const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<Participant> findCachedParticipant (const IdentityAddress &participantAddress) const;
-	std::shared_ptr<ParticipantDevice> findCachedParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<Participant> findParticipant(const IdentityAddress &participantAddress) const override;
+	std::shared_ptr<Participant> findCachedParticipant(const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<Participant> findCachedParticipant(const IdentityAddress &participantAddress) const;
+	std::shared_ptr<ParticipantDevice>
+	findCachedParticipantDevice(const std::shared_ptr<const CallSession> &session) const;
 
-	std::shared_ptr<Participant> getMe () const override;
-	int getParticipantCount () const override;
-	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
-	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
+	std::shared_ptr<Participant> getMe() const override;
+	int getParticipantCount() const override;
+	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
+	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices() const override;
 
-	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
+	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	const std::string & getSubject () const override;
-	void setSubject (const std::string &subject) override;
+	const std::string &getSubject() const override;
+	void setSubject(const std::string &subject) override;
 
-	void join () override;
-	void leave () override;
-	void onFirstNotifyReceived (const IdentityAddress &addr) override;
+	void join() override;
+	void leave() override;
+	void onFirstNotifyReceived(const IdentityAddress &addr) override;
 
-	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
+	const ConferenceId &getConferenceId() const override {
+		return getConference()->getConferenceId();
+	};
 
-	void setState (ConferenceInterface::State state) override;
-	void subscribeReceived (LinphoneEvent *event);
+	void setState(ConferenceInterface::State state) override;
+	void subscribeReceived(LinphoneEvent *event);
 
 private:
-
-	std::list<std::shared_ptr<Participant>> cachedParticipants; /*list of participant that have been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.*/
+	std::list<std::shared_ptr<Participant>>
+	    cachedParticipants; /*list of participant that have been added to the chat room. It includes participants that
+	                           are currently active in the chat room as well as past participants.*/
 
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);
 };
 
-std::ostream &operator<< (std::ostream &stream, const ServerGroupChatRoom *chatRoom);
+std::ostream &operator<<(std::ostream &stream, const ServerGroupChatRoom *chatRoom);
 
 LINPHONE_END_NAMESPACE
 

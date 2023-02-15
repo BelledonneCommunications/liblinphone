@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,19 +22,20 @@
 
 using namespace std;
 
-PlayWavCommand::PlayWavCommand() :
-		DaemonCommand("play-wav", "play-wav <filename>",
-				"Play an WAV audio file (needs to have enabled the linphone sound daemon (LSD).\n"
-				"<filename> is the WAV file to be played.") {
-	addExample(make_unique<DaemonCommandExample>("play-wav /usr/local/share/sounds/linphone/hello8000.wav",
-						"Status: Ok"));
+PlayWavCommand::PlayWavCommand()
+    : DaemonCommand("play-wav",
+                    "play-wav <filename>",
+                    "Play an WAV audio file (needs to have enabled the linphone sound daemon (LSD).\n"
+                    "<filename> is the WAV file to be played.") {
+	addExample(
+	    make_unique<DaemonCommandExample>("play-wav /usr/local/share/sounds/linphone/hello8000.wav", "Status: Ok"));
 }
 
 void playWavFinished(LsdPlayer *p) {
 	linphone_sound_daemon_release_player(lsd_player_get_daemon(p), p);
 }
 
-void PlayWavCommand::exec(Daemon *app, const string& args) {
+void PlayWavCommand::exec(Daemon *app, const string &args) {
 	LinphoneSoundDaemon *lsd = app->getLSD();
 	if (!lsd) {
 		app->sendResponse(Response("The linphone sound daemon (LSD) is not enabled.", Response::Error));

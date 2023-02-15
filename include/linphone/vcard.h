@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -175,14 +175,16 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_phone_numbers(const LinphoneVca
  * @param vCard the #LinphoneVcard @notnil
  * @param phoneNumber the #LinphoneFriendPhoneNumber to add @notnil
  */
-LINPHONE_PUBLIC void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard, LinphoneFriendPhoneNumber *phoneNumber);
+LINPHONE_PUBLIC void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard,
+                                                                LinphoneFriendPhoneNumber *phoneNumber);
 
 /**
  * Removes a #LinphoneFriendPhoneNumber in the vCard (if it exists), using the TEL property
  * @param vCard the #LinphoneVcard @notnil
  * @param phoneNumber the #LinphoneFriendPhoneNumber to remove @notnil
  */
-LINPHONE_PUBLIC void linphone_vcard_remove_phone_number_with_label(LinphoneVcard *vCard, const LinphoneFriendPhoneNumber *phoneNumber);
+LINPHONE_PUBLIC void linphone_vcard_remove_phone_number_with_label(LinphoneVcard *vCard,
+                                                                   const LinphoneFriendPhoneNumber *phoneNumber);
 
 /**
  * Returns the list of phone numbers in the vCard (all the TEL attributes) or NULL
@@ -214,7 +216,8 @@ LINPHONE_PUBLIC void linphone_vcard_remove_organization(LinphoneVcard *vCard);
 /**
  * Sets a picture URI in the vCard, using the PHOTO property
  * @param vCard the #LinphoneVcard @notnil
- * @param picture the picture URI to add. If NULL it will have the same effet as linphone_vcard_remove_photo(). @maybenil
+ * @param picture the picture URI to add. If NULL it will have the same effet as linphone_vcard_remove_photo().
+ * @maybenil
  */
 LINPHONE_PUBLIC void linphone_vcard_set_photo(LinphoneVcard *vCard, const char *picture);
 
@@ -288,7 +291,7 @@ LINPHONE_PUBLIC const char *linphone_vcard_get_url(const LinphoneVcard *vCard);
  * @return The extended properties values as string. \bctbx_list{const char *} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(const LinphoneVcard *vCard,
-																					const char *name);
+                                                                                    const char *name);
 
 /**
  * Adds an extended property to the vCard

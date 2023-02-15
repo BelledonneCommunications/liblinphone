@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #ifndef _L_NOTIFICATION_MESSAGE_P_H_
 #define _L_NOTIFICATION_MESSAGE_P_H_
 
+#include <bctoolbox/defs.h>
+
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-message/notification-message.h"
 
@@ -34,14 +36,18 @@ class NotificationMessagePrivate : public ChatMessagePrivate {
 
 protected:
 	NotificationMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir)
-		: ChatMessagePrivate(cr, dir) {}
+	    : ChatMessagePrivate(cr, dir) {
+	}
 
-	void setState (ChatMessage::State newState) override {};
+	void setState(BCTBX_UNUSED(ChatMessage::State state)) override{};
 
 private:
-	void setDisplayNotificationRequired (bool value) override {}
-	void setNegativeDeliveryNotificationRequired (bool value) override {}
-	void setPositiveDeliveryNotificationRequired (bool value) override {}
+	void setDisplayNotificationRequired(BCTBX_UNUSED(bool value)) override {
+	}
+	void setNegativeDeliveryNotificationRequired(BCTBX_UNUSED(bool value)) override {
+	}
+	void setPositiveDeliveryNotificationRequired(BCTBX_UNUSED(bool value)) override {
+	}
 
 	L_DECLARE_PUBLIC(NotificationMessage);
 };

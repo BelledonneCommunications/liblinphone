@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -63,11 +63,11 @@ LinphoneTunnelConfig *linphone_tunnel_config_new() {
 }
 
 void linphone_tunnel_config_set_host(LinphoneTunnelConfig *tunnel, const char *host) {
-	if(tunnel->host != NULL) {
+	if (tunnel->host != NULL) {
 		ms_free(tunnel->host);
 		tunnel->host = NULL;
 	}
-	if(host != NULL && strlen(host)) {
+	if (host != NULL && strlen(host)) {
 		tunnel->host = ms_strdup(host);
 	}
 }
@@ -85,11 +85,11 @@ int linphone_tunnel_config_get_port(const LinphoneTunnelConfig *tunnel) {
 }
 
 void linphone_tunnel_config_set_host2(LinphoneTunnelConfig *tunnel, const char *host) {
-	if(tunnel->host2 != NULL) {
+	if (tunnel->host2 != NULL) {
 		ms_free(tunnel->host2);
 		tunnel->host2 = NULL;
 	}
-	if(host != NULL && strlen(host)) {
+	if (host != NULL && strlen(host)) {
 		tunnel->host2 = ms_strdup(host);
 	}
 }
@@ -127,27 +127,27 @@ static void _linphone_tunnel_config_destroy(LinphoneTunnelConfig *tunnel) {
 	if (tunnel->host2) ms_free(tunnel->host2);
 }
 
-LinphoneTunnelConfig * linphone_tunnel_config_ref(LinphoneTunnelConfig *cfg){
-	return (LinphoneTunnelConfig*)belle_sip_object_ref(cfg);
+LinphoneTunnelConfig *linphone_tunnel_config_ref(LinphoneTunnelConfig *cfg) {
+	return (LinphoneTunnelConfig *)belle_sip_object_ref(cfg);
 }
 
-void linphone_tunnel_config_unref(LinphoneTunnelConfig *cfg){
+void linphone_tunnel_config_unref(LinphoneTunnelConfig *cfg) {
 	belle_sip_object_unref(cfg);
 }
 
-void linphone_tunnel_config_set_user_data(LinphoneTunnelConfig *cfg, void *ud){
+void linphone_tunnel_config_set_user_data(LinphoneTunnelConfig *cfg, void *ud) {
 	cfg->user_data = ud;
 }
 
-void *linphone_tunnel_config_get_user_data(LinphoneTunnelConfig *cfg){
+void *linphone_tunnel_config_get_user_data(LinphoneTunnelConfig *cfg) {
 	return cfg->user_data;
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneTunnelConfig);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneTunnelConfig, belle_sip_object_t,
-	(belle_sip_object_destroy_t)_linphone_tunnel_config_destroy,
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneTunnelConfig,
+                           belle_sip_object_t,
+                           (belle_sip_object_destroy_t)_linphone_tunnel_config_destroy,
+                           NULL, // clone
+                           NULL, // marshal
+                           FALSE);

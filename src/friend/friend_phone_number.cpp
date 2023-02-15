@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,76 +25,73 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-FriendPhoneNumber::FriendPhoneNumber (const string &phoneNumber, const string label) {
-    mLabel = label;
-    mPhoneNumber = phoneNumber;
+FriendPhoneNumber::FriendPhoneNumber(const string &phoneNumber, const string label) {
+	mLabel = label;
+	mPhoneNumber = phoneNumber;
 }
 
-FriendPhoneNumber::FriendPhoneNumber (const string &phoneNumber): FriendPhoneNumber(phoneNumber, "") {
-    
+FriendPhoneNumber::FriendPhoneNumber(const string &phoneNumber) : FriendPhoneNumber(phoneNumber, "") {
 }
 
 #ifdef VCARD_ENABLED
-FriendPhoneNumber::FriendPhoneNumber (const std::shared_ptr<belcard::BelCardPhoneNumber>& belcardPhoneNumber) {
-    shared_ptr<belcard::BelCardTypeParam> type = belcardPhoneNumber->getTypeParam();
-    if (type) {
-        string label = type->getValue();
-        std::replace(label.begin(), label.end(), ',', ' ');
-        mLabel = label;
-    } else {
-        mLabel = "";
-    }
-    mPhoneNumber = belcardPhoneNumber->getValue();
+FriendPhoneNumber::FriendPhoneNumber(const std::shared_ptr<belcard::BelCardPhoneNumber> &belcardPhoneNumber) {
+	shared_ptr<belcard::BelCardTypeParam> type = belcardPhoneNumber->getTypeParam();
+	if (type) {
+		string label = type->getValue();
+		std::replace(label.begin(), label.end(), ',', ' ');
+		mLabel = label;
+	} else {
+		mLabel = "";
+	}
+	mPhoneNumber = belcardPhoneNumber->getValue();
 }
 #endif
 
-FriendPhoneNumber::FriendPhoneNumber (const FriendPhoneNumber &other) : HybridObject(other) {
-    
+FriendPhoneNumber::FriendPhoneNumber(const FriendPhoneNumber &other) : HybridObject(other) {
 }
 
-FriendPhoneNumber::~FriendPhoneNumber () {
-
+FriendPhoneNumber::~FriendPhoneNumber() {
 }
 
 // -----------------------------------------------------------------------------
 
-FriendPhoneNumber* FriendPhoneNumber::clone () const {
+FriendPhoneNumber *FriendPhoneNumber::clone() const {
 	return new FriendPhoneNumber(*this);
 }
 
-
 #ifdef VCARD_ENABLED
 shared_ptr<belcard::BelCardPhoneNumber> FriendPhoneNumber::toBelcardPhoneNumber() const {
-    shared_ptr<belcard::BelCardPhoneNumber> phoneNumber = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
-    phoneNumber->setValue(mPhoneNumber);
-    if (!mLabel.empty()) {
-        shared_ptr<belcard::BelCardTypeParam> label = belcard::BelCardGeneric::create<belcard::BelCardTypeParam>();
-        label->setName("TYPE");
-        string value = mLabel;
-        std::replace(value.begin(), value.end(), ' ', ',');
-        label->setValue(value);
-        phoneNumber->setTypeParam(label);
-    }
-    return phoneNumber;
+	shared_ptr<belcard::BelCardPhoneNumber> phoneNumber =
+	    belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+	phoneNumber->setValue(mPhoneNumber);
+	if (!mLabel.empty()) {
+		shared_ptr<belcard::BelCardTypeParam> label = belcard::BelCardGeneric::create<belcard::BelCardTypeParam>();
+		label->setName("TYPE");
+		string value = mLabel;
+		std::replace(value.begin(), value.end(), ' ', ',');
+		label->setValue(value);
+		phoneNumber->setTypeParam(label);
+	}
+	return phoneNumber;
 }
 #endif
 
 // -----------------------------------------------------------------------------
 
-void FriendPhoneNumber::setPhoneNumber(const std::string& phoneNumber) {
-    mPhoneNumber = phoneNumber;
+void FriendPhoneNumber::setPhoneNumber(const std::string &phoneNumber) {
+	mPhoneNumber = phoneNumber;
 }
 
-const std::string& FriendPhoneNumber::getPhoneNumber() const {
-    return mPhoneNumber;
+const std::string &FriendPhoneNumber::getPhoneNumber() const {
+	return mPhoneNumber;
 }
 
-void FriendPhoneNumber::setLabel(const std::string& label) {
-    mLabel = label;
+void FriendPhoneNumber::setLabel(const std::string &label) {
+	mLabel = label;
 }
 
-const std::string& FriendPhoneNumber::getLabel() const {
-    return mLabel;
+const std::string &FriendPhoneNumber::getLabel() const {
+	return mLabel;
 }
 
 // -----------------------------------------------------------------------------

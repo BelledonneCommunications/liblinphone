@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/algorithm.h"
 
 #include "chat/chat-message/imdn-message-p.h"
@@ -26,9 +28,9 @@
 #include "logger/logger.h"
 
 #ifdef HAVE_ADVANCED_IM
+#include "chat/encryption/encryption-engine.h"
 #include "xml/imdn.h"
 #include "xml/linphone-imdn.h"
-#include "chat/encryption/encryption-engine.h"
 #endif
 
 #include "imdn.h"
@@ -41,43 +43,40 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-Imdn::Imdn (ChatRoom *chatRoom) : chatRoom(chatRoom) {
+Imdn::Imdn(ChatRoom *chatRoom) : chatRoom(chatRoom) {
 	chatRoom->getCore()->getPrivate()->registerListener(this);
 	auto config = linphone_core_get_config(chatRoom->getCore()->getCCore());
 	aggregationAllowed = linphone_config_get_bool(config, "misc", "aggregate_imdn", TRUE);
 }
 
-Imdn::~Imdn () {
+Imdn::~Imdn() {
 	stopTimer();
-	try { //getCore may no longuer be available when deleting, specially in case of managed enviroment like java
+	try { // getCore may no longuer be available when deleting, specially in case of managed enviroment like java
 		chatRoom->getCore()->getPrivate()->unregisterListener(this);
-	} catch (const bad_weak_ptr &) {}
+	} catch (const bad_weak_ptr &) {
+	}
 }
 
 // -----------------------------------------------------------------------------
 
-void Imdn::notifyDelivery (const shared_ptr<ChatMessage> &message) {
+void Imdn::notifyDelivery(const shared_ptr<ChatMessage> &message) {
 	if (find(deliveredMessages, message) == deliveredMessages.end()) {
 		deliveredMessages.push_back(message);
 		startTimer();
 	}
 }
 
-void Imdn::notifyDeliveryError (const shared_ptr<ChatMessage> &message, LinphoneReason reason) {
-	if (
-		findIf(nonDeliveredMessages, [message](const MessageReason &mr) {
-			return message == mr.message;
-		}) == nonDeliveredMessages.end()
-	) {
+void Imdn::notifyDeliveryError(const shared_ptr<ChatMessage> &message, LinphoneReason reason) {
+	if (findIf(nonDeliveredMessages, [message](const MessageReason &mr) { return message == mr.message; }) ==
+	    nonDeliveredMessages.end()) {
 		nonDeliveredMessages.emplace_back(message, reason);
 		startTimer();
 	}
 }
 
-void Imdn::notifyDisplay (const shared_ptr<ChatMessage> &message) {
+void Imdn::notifyDisplay(const shared_ptr<ChatMessage> &message) {
 	auto it = find(deliveredMessages.begin(), deliveredMessages.end(), message);
-	if (it != deliveredMessages.end())
-		deliveredMessages.erase(it);
+	if (it != deliveredMessages.end()) deliveredMessages.erase(it);
 
 	if (find(displayedMessages.begin(), displayedMessages.end(), message) == displayedMessages.end()) {
 		displayedMessages.push_back(message);
@@ -87,7 +86,7 @@ void Imdn::notifyDisplay (const shared_ptr<ChatMessage> &message) {
 
 // -----------------------------------------------------------------------------
 
-void Imdn::onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message) {
+void Imdn::onImdnMessageDelivered(const std::shared_ptr<ImdnMessage> &message) {
 	// If an IMDN has been successfully delivered, remove it from the list so that
 	// it does not get sent again
 	auto context = message->getPrivate()->getContext();
@@ -107,7 +106,7 @@ void Imdn::onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message) 
 	sentImdnMessages.remove(message);
 }
 
-void Imdn::onImdnMessageNotDelivered (const std::shared_ptr<ImdnMessage> &message) {
+void Imdn::onImdnMessageNotDelivered(const std::shared_ptr<ImdnMessage> &message) {
 	sentImdnMessages.remove(message);
 }
 
@@ -116,11 +115,11 @@ bool Imdn::isCurrentlySendingImdnMessages() {
 	// that are still in the message data base
 	if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
 		LinphoneProxyConfig *cfg = getRelatedProxyConfig();
-		if (!cfg || linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk ){
+		if (!cfg || linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk) {
 			return false;
 		}
 	}
-	
+
 	// IMDNs are pending if the timer before sending them is not NULL or if the list of IMDN chat message isn't empty
 	return timer != NULL || !sentImdnMessages.empty();
 }
@@ -135,15 +134,17 @@ void Imdn::onLinphoneCoreStop() {
 	sentImdnMessages.clear();
 }
 
-void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message){
-	if (state == LinphoneRegistrationOk && cfg == getRelatedProxyConfig()){
+void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
+                                      LinphoneRegistrationState state,
+                                      BCTBX_UNUSED(const std::string &message)) {
+	if (state == LinphoneRegistrationOk && cfg == getRelatedProxyConfig()) {
 		// When we are registered to the proxy, then send pending notification if any.
 		sentImdnMessages.clear();
 		send();
 	}
 }
 
-void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+void Imdn::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable && getRelatedProxyConfig() == nullptr) {
 		// When the SIP network gets up and this chatroom isn't related to any proxy configuration, retry notification
 		sentImdnMessages.clear();
@@ -151,11 +152,13 @@ void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReacha
 	}
 }
 
-
-
 // -----------------------------------------------------------------------------
 
-string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType, LinphoneReason reason) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+string Imdn::createXml(const string &id, time_t timestamp, Imdn::Type imdnType, LinphoneReason reason) {
 #ifdef HAVE_ADVANCED_IM
 	char *datetime = linphone_timestamp_to_rfc3339_string(timestamp);
 	Xsd::Imdn::Imdn imdn(id, datetime);
@@ -187,8 +190,7 @@ string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType,
 	stringstream ss;
 	Xsd::XmlSchema::NamespaceInfomap map;
 	map[""].name = "urn:ietf:params:xml:ns:imdn";
-	if (needLinphoneImdnNamespace)
-		map["imdn"].name = "http://www.linphone.org/xsds/imdn.xsd";
+	if (needLinphoneImdnNamespace) map["imdn"].name = "http://www.linphone.org/xsds/imdn.xsd";
 	Xsd::Imdn::serializeImdn(ss, imdn, map, "UTF-8", Xsd::XmlSchema::Flags::dont_pretty_print);
 	return ss.str();
 #else
@@ -196,8 +198,15 @@ string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType,
 	return "";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 #ifdef HAVE_ADVANCED_IM
 	shared_ptr<AbstractChatRoom> cr = chatMessage->getChatRoom();
 	list<string> messagesIds;
@@ -211,17 +220,17 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 		} catch (const exception &e) {
 			lError() << "IMDN parsing exception: " << e.what();
 		}
-		if (!imdn)
-			continue;
-		
+		if (!imdn) continue;
+
 		messagesIds.push_back(imdn->getMessageId());
 		imdns.push_back(move(imdn));
 	}
 
-	// It seems to be more efficient to only make one database request to get all chat messages from their IMDN message ID
+	// It seems to be more efficient to only make one database request to get all chat messages from their IMDN message
+	// ID
 	list<shared_ptr<ChatMessage>> chatMessages = cr->findChatMessages(messagesIds);
 
-	for (const auto& imdn: imdns)  {
+	for (const auto &imdn : imdns) {
 		shared_ptr<ChatMessage> cm = nullptr;
 		for (const auto &chatMessage : chatMessages) {
 			if (chatMessage->getImdnMessageId() == imdn->getMessageId()) {
@@ -243,24 +252,32 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 			if (deliveryNotification.present()) {
 				auto &status = deliveryNotification.get().getStatus();
 				if (status.getDelivered().present() && linphone_im_notif_policy_get_recv_imdn_delivered(policy)) {
-					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::DeliveredToUser, imdnTime);
-				} else if ((status.getFailed().present() || status.getError().present()) && linphone_im_notif_policy_get_recv_imdn_delivered(policy)) {
-					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::NotDelivered, imdnTime);
-					// When the IMDN status is failed for reason code 488 (Not acceptable here) and the chatroom is encrypted,
-					// something is wrong with our encryption session with this peer, stale the active session the next
-					// message (which can be a resend of this one) will be encrypted with a new session
-					if (cr->getLocalAddress() == cm->getFromAddress() // check the imdn is in response to a message sent by the local user
-							&& status.getFailed().present() // that we have a fail tag
-							&& status.getReason().present() // and a reason tag
-							&& (cr->getCapabilities() & ChatRoom::Capabilities::Encrypted)) { // and the chatroom is encrypted
+					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::DeliveredToUser,
+					                                      imdnTime);
+				} else if ((status.getFailed().present() || status.getError().present()) &&
+				           linphone_im_notif_policy_get_recv_imdn_delivered(policy)) {
+					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::NotDelivered,
+					                                      imdnTime);
+					// When the IMDN status is failed for reason code 488 (Not acceptable here) and the chatroom is
+					// encrypted, something is wrong with our encryption session with this peer, stale the active
+					// session the next message (which can be a resend of this one) will be encrypted with a new session
+					if (cr->getLocalAddress() ==
+					        cm->getFromAddress() // check the imdn is in response to a message sent by the local user
+					    && status.getFailed().present() // that we have a fail tag
+					    && status.getReason().present() // and a reason tag
+					    &&
+					    (cr->getCapabilities() & ChatRoom::Capabilities::Encrypted)) { // and the chatroom is encrypted
 						// Check the reason code is 488
 						auto reason = status.getReason().get();
 						auto imee = cm->getCore()->getEncryptionEngine();
 						if ((reason.getCode() == 488) && imee) {
-							// stale the encryption sessions with this device: something went wrong, we will create a new one at next encryption
-							lWarning()<<"Peer "<<chatMessage->getFromAddress().asString()<<" could not decrypt message from "
-								<< cm->getFromAddress().asString()<<" -> Stale the lime X3DH session";
-							imee->staleSession(cm->getFromAddress().asString(), chatMessage->getFromAddress().asString());
+							// stale the encryption sessions with this device: something went wrong, we will create a
+							// new one at next encryption
+							lWarning() << "Peer " << chatMessage->getFromAddress().asString()
+							           << " could not decrypt message from " << cm->getFromAddress().asString()
+							           << " -> Stale the lime X3DH session";
+							imee->staleSession(cm->getFromAddress().asString(),
+							                   chatMessage->getFromAddress().asString());
 						}
 					}
 				}
@@ -268,10 +285,12 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 				auto &status = displayNotification.get().getStatus();
 				if (status.getDisplayed().present() && linphone_im_notif_policy_get_recv_imdn_displayed(policy)) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::Displayed, imdnTime);
-					if (cr->getLocalAddress().getAddressWithoutGruu() == chatMessage->getFromAddress().getAddressWithoutGruu()) {
+					if (cr->getLocalAddress().getAddressWithoutGruu() ==
+					    chatMessage->getFromAddress().getAddressWithoutGruu()) {
 						auto lastMsg = cr->getLastChatMessageInHistory();
 						if (lastMsg == cm) {
-							lInfo() << "Received Display IMDN from ourselves for last message in this chat room, marking it as read";
+							lInfo() << "Received Display IMDN from ourselves for last message in this chat room, "
+							           "marking it as read";
 							cr->markAsRead();
 						}
 					}
@@ -283,13 +302,19 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+bool Imdn::isError(const shared_ptr<ChatMessage> &chatMessage) {
 #ifdef HAVE_ADVANCED_IM
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
-		if (content->getContentType() != ContentType::Imdn)
-			continue;
-		
+		if (content->getContentType() != ContentType::Imdn) continue;
+
 		istringstream data(content->getBodyAsString());
 		unique_ptr<Xsd::Imdn::Imdn> imdn;
 		try {
@@ -297,14 +322,12 @@ bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 		} catch (const exception &e) {
 			lError() << "IMDN parsing exception: " << e.what();
 		}
-		if (!imdn)
-			continue;
-		
+		if (!imdn) continue;
+
 		auto &deliveryNotification = imdn->getDeliveryNotification();
 		if (deliveryNotification.present()) {
 			auto &status = deliveryNotification.get().getStatus();
-			if (status.getFailed().present() || status.getError().present())
-				return true;
+			if (status.getFailed().present() || status.getError().present()) return true;
 		}
 	}
 	return false;
@@ -313,10 +336,13 @@ bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 	return false;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // -----------------------------------------------------------------------------
 
-int Imdn::timerExpired (void *data, unsigned int revents) {
+int Imdn::timerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
 	Imdn *d = static_cast<Imdn *>(data);
 	d->stopTimer();
 	d->send();
@@ -325,11 +351,11 @@ int Imdn::timerExpired (void *data, unsigned int revents) {
 
 // -----------------------------------------------------------------------------
 
-bool Imdn::aggregationEnabled () const {
+bool Imdn::aggregationEnabled() const {
 	return chatRoom->canHandleCpim() && chatRoom->canHandleMultipart() && aggregationAllowed;
 }
 
-LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
+LinphoneProxyConfig *Imdn::getRelatedProxyConfig() {
 	LinphoneAddress *addr = linphone_address_new(chatRoom->getLocalAddress().asString().c_str());
 	if (!addr) {
 		return NULL;
@@ -339,20 +365,19 @@ LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
 	return cfg;
 }
 
-void Imdn::send () {
+void Imdn::send() {
 	try {
 		if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
 			LinphoneProxyConfig *cfg = getRelatedProxyConfig();
 			if (!cfg) {
 				lInfo() << "No matching proxy config found, will wait to send pending IMDNs";
 				return;
-			} else if (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
+			} else if (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk) {
 				lInfo() << "Proxy config not registered, will wait to send pending IMDNs";
 				return;
 			}
 
-			if (!linphone_core_is_network_reachable(chatRoom->getCore()->getCCore()))
-				return;
+			if (!linphone_core_is_network_reachable(chatRoom->getCore()->getCCore())) return;
 		}
 	} catch (const bad_weak_ptr &) {
 		return; // Cannot send imdn if core is destroyed.
@@ -420,7 +445,7 @@ void Imdn::send () {
 	}
 }
 
-void Imdn::startTimer () {
+void Imdn::startTimer() {
 	if (!aggregationEnabled()) {
 		// Compatibility mode for basic chat rooms, do not aggregate notifications
 		send();
@@ -428,18 +453,15 @@ void Imdn::startTimer () {
 	}
 
 	unsigned int duration = 500;
-	if (!timer)
-		timer = chatRoom->getCore()->getCCore()->sal->createTimer(timerExpired, this, duration, "imdn timeout");
-	else
-		belle_sip_source_set_timeout_int64(timer, duration);
+	if (!timer) timer = chatRoom->getCore()->getCCore()->sal->createTimer(timerExpired, this, duration, "imdn timeout");
+	else belle_sip_source_set_timeout_int64(timer, duration);
 	bgTask.start(chatRoom->getCore(), 1);
 }
 
-void Imdn::stopTimer () {
+void Imdn::stopTimer() {
 	if (timer) {
 		auto core = chatRoom->getCore()->getCCore();
-		if (core && core->sal)
-			core->sal->cancelTimer(timer);
+		if (core && core->sal) core->sal->cancelTimer(timer);
 		belle_sip_object_unref(timer);
 		timer = nullptr;
 	}

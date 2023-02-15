@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,20 +22,15 @@
 
 using namespace std;
 
-TerminateCommand::TerminateCommand() :
-		DaemonCommand("terminate", "terminate [<call_id>]", "Terminate a call.") {
-	addExample(make_unique<DaemonCommandExample>("terminate 2",
-						"Status: Error\n"
-						"Reason: No call with such id."));
-	addExample(make_unique<DaemonCommandExample>("terminate 1",
-						"Status: Ok\n"));
-	addExample(make_unique<DaemonCommandExample>("terminate",
-						"Status: Ok\n"));
-	addExample(make_unique<DaemonCommandExample>("terminate",
-						"Status: Error\n"
-						"Reason: No active call."));
+TerminateCommand::TerminateCommand() : DaemonCommand("terminate", "terminate [<call_id>]", "Terminate a call.") {
+	addExample(make_unique<DaemonCommandExample>("terminate 2", "Status: Error\n"
+	                                                            "Reason: No call with such id."));
+	addExample(make_unique<DaemonCommandExample>("terminate 1", "Status: Ok\n"));
+	addExample(make_unique<DaemonCommandExample>("terminate", "Status: Ok\n"));
+	addExample(make_unique<DaemonCommandExample>("terminate", "Status: Error\n"
+	                                                          "Reason: No active call."));
 }
-void TerminateCommand::exec(Daemon *app, const string& args) {
+void TerminateCommand::exec(Daemon *app, const string &args) {
 	LinphoneCall *call = NULL;
 	int cid;
 	const MSList *elem;
@@ -44,7 +39,7 @@ void TerminateCommand::exec(Daemon *app, const string& args) {
 	if (ist.fail()) {
 		elem = linphone_core_get_calls(app->getCore());
 		if (elem != NULL && elem->next == NULL) {
-			call = (LinphoneCall*)elem->data;
+			call = (LinphoneCall *)elem->data;
 		}
 	} else {
 		call = app->findCall(cid);

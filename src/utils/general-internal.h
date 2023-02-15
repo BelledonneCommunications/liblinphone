@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,19 +32,19 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 
 #ifndef LINPHONE_INTERNAL_PUBLIC
-	#if defined(_MSC_VER)
-		#ifdef LINPHONE_STATIC
-			#define LINPHONE_INTERNAL_PUBLIC
-		#else
-			#ifdef LINPHONE_EXPORTS
-				#define LINPHONE_INTERNAL_PUBLIC __declspec(dllexport)
-			#else
-				#define LINPHONE_INTERNAL_PUBLIC __declspec(dllimport)
-			#endif
-		#endif
-	#else
-		#define LINPHONE_INTERNAL_PUBLIC
-	#endif
+#if defined(_MSC_VER)
+#ifdef LINPHONE_STATIC
+#define LINPHONE_INTERNAL_PUBLIC
+#else
+#ifdef LINPHONE_EXPORTS
+#define LINPHONE_INTERNAL_PUBLIC __declspec(dllexport)
+#else
+#define LINPHONE_INTERNAL_PUBLIC __declspec(dllimport)
+#endif
+#endif
+#else
+#define LINPHONE_INTERNAL_PUBLIC
+#endif
 #endif
 
 LINPHONE_END_NAMESPACE

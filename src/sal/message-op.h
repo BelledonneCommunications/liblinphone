@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,26 +21,28 @@
 #ifndef _L_SAL_MESSAGE_OP_H_
 #define _L_SAL_MESSAGE_OP_H_
 
-#include "sal/op.h"
 #include "sal/message-op-interface.h"
+#include "sal/op.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC SalMessageOp : public SalOp, public SalMessageOpInterface {
 public:
-	SalMessageOp (Sal *sal);
+	SalMessageOp(Sal *sal);
 
-	int sendMessage (const Content &content) override;
-	int reply (SalReason reason) override { return SalOp::replyMessage(reason); }
+	int sendMessage(const Content &content) override;
+	int reply(SalReason reason) override {
+		return SalOp::replyMessage(reason);
+	}
 
 private:
-	void fillCallbacks () override;
-	void processError ();
+	void fillCallbacks() override;
+	void processError();
 
-	static void processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
-	static void processResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
-	static void processTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event);
-	static void processRequestEventCb (void *userCtx, const belle_sip_request_event_t *event);
+	static void processIoErrorCb(void *userCtx, const belle_sip_io_error_event_t *event);
+	static void processResponseEventCb(void *userCtx, const belle_sip_response_event_t *event);
+	static void processTimeoutCb(void *userCtx, const belle_sip_timeout_event_t *event);
+	static void processRequestEventCb(void *userCtx, const belle_sip_request_event_t *event);
 };
 
 LINPHONE_END_NAMESPACE

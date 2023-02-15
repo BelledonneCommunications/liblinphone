@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,16 +33,18 @@ class ParticipantImdnStatePrivate;
 
 class ParticipantImdnState : public ClonableObject {
 public:
-	ParticipantImdnState (const std::shared_ptr<Participant> &participant, ChatMessage::State state, time_t stateChangeTime);
-	ParticipantImdnState (const ParticipantImdnState &other);
+	ParticipantImdnState(const std::shared_ptr<Participant> &participant,
+	                     ChatMessage::State state,
+	                     time_t stateChangeTime);
+	ParticipantImdnState(const ParticipantImdnState &other);
 
-	ParticipantImdnState* clone () const override {
+	ParticipantImdnState *clone() const override {
 		return new ParticipantImdnState(*this);
 	}
 
-	std::shared_ptr<Participant> getParticipant () const;
-	ChatMessage::State getState () const;
-	time_t getStateChangeTime () const;
+	std::shared_ptr<Participant> getParticipant() const;
+	ChatMessage::State getState() const;
+	time_t getStateChangeTime() const;
 
 private:
 	L_DECLARE_PRIVATE(ParticipantImdnState);

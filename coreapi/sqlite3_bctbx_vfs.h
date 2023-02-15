@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,15 +21,14 @@
 #ifndef sqlite3_bctx_vfs_h
 #define sqlite3_bctx_vfs_h
 
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <fcntl.h>
 
 #include <bctoolbox/vfs.h>
 
 #include "sqlite3.h"
-
 
 /*
 ** The maximum pathname length supported by this VFS.
@@ -37,48 +36,43 @@
 #define MAXPATHNAME 512
 #define BCTBX_SQLITE3_VFS "sqlite3bctbx_vfs"
 
-
 /**
  * sqlite3_bctbx_file_t VFS file structure.
  */
 typedef struct sqlite3_bctbx_file_t sqlite3_bctbx_file_t;
 struct sqlite3_bctbx_file_t {
-	sqlite3_file base;              /* Base class. Must be first. */
-	bctbx_vfs_file_t* pbctbx_file;
+	sqlite3_file base; /* Base class. Must be first. */
+	bctbx_vfs_file_t *pbctbx_file;
 };
 
-
-
 /**
- * Very simple VFS structure based on sqlite3_vfs. 
- * Only the Open function is implemented, 
+ * Very simple VFS structure based on sqlite3_vfs.
+ * Only the Open function is implemented,
  */
 typedef struct sqlite3_bctbx_vfs_t sqlite3_bctbx_vfs_t;
 struct sqlite3_bctbx_vfs_t {
-	sqlite3_bctbx_vfs_t *pNext;      /* Next registered VFS */
-	const char *vfsName;       /* Virtual file system name */
-	int (*xOpen)(sqlite3_vfs* pVfs, const char *fName, sqlite3_file *pFile,int flags, int *pOutFlags);
-	
+	sqlite3_bctbx_vfs_t *pNext; /* Next registered VFS */
+	const char *vfsName;        /* Virtual file system name */
+	int (*xOpen)(sqlite3_vfs *pVfs, const char *fName, sqlite3_file *pFile, int flags, int *pOutFlags);
 };
-
 
 /****************************************************
 VFS API to register this VFS to sqlite3 VFS
 *****************************************************/
 
 /**
- * Returns a sqlite3_vfs pointer to the VFS named sqlite3bctbx_vfs 
+ * Returns a sqlite3_vfs pointer to the VFS named sqlite3bctbx_vfs
  * implemented in this file.
  * Methods not implemented:
- *			xDelete 
- *			xAccess 
- *			xFullPathname 
- *			xDlOpen 
- *			xDlError 
- *			xDlSym 
- *			xDlClose 
- *			xRandomness 
- *			xSleep 
+ *			xDelete
+ *			xAccess
+ *			xFullPathname
+ *			xDlOpen
+ *			xDlError
+ *			xDlSym
+ *			xDlClose
+ *			xRandomness
+ *			xSleep
  *			xCurrentTime , xCurrentTimeInt64,
  *			xGetLastError
  *			xGetSystemCall
@@ -92,12 +86,11 @@ sqlite3_vfs *sqlite3_bctbx_vfs_create(void);
 /**
  * Registers sqlite3bctbx_vfs to SQLite VFS. If makeDefault is 1,
  * the VFS will be used by default.
- * Methods not implemented by sqlite3_bctbx_vfs_t are initialized to the one 
- * used by the unix-none VFS where all locking file operations are no-ops. 
+ * Methods not implemented by sqlite3_bctbx_vfs_t are initialized to the one
+ * used by the unix-none VFS where all locking file operations are no-ops.
  * @param  makeDefault  set to 1 to make the newly registered VFS be the default one, set to 0 instead.
  */
 void sqlite3_bctbx_vfs_register(int makeDefault);
-
 
 /**
  * Unregisters sqlite3bctbx_vfs from SQLite.

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,24 +20,24 @@
 
 #include <ctype.h>
 
+#include "c-wrapper/c-wrapper.h"
 #include "friend/friend_phone_number.h"
 #include "linphone/api/c-friend-phone-number.h"
-#include "c-wrapper/c-wrapper.h"
 #include "linphone/wrapper_utils.h"
 
 using namespace LinphonePrivate;
 
 // =============================================================================
 
-LinphoneFriendPhoneNumber* linphone_friend_phone_number_new(const char *phone_number, const char *label) {
+LinphoneFriendPhoneNumber *linphone_friend_phone_number_new(const char *phone_number, const char *label) {
 	return FriendPhoneNumber::createCObject(L_C_TO_STRING(phone_number), L_C_TO_STRING(label));
 }
 
-LinphoneFriendPhoneNumber* linphone_friend_phone_number_clone(const LinphoneFriendPhoneNumber *phone_number) {
+LinphoneFriendPhoneNumber *linphone_friend_phone_number_clone(const LinphoneFriendPhoneNumber *phone_number) {
 	return FriendPhoneNumber::toCpp(phone_number)->clone()->toC();
 }
 
-LinphoneFriendPhoneNumber* linphone_friend_phone_number_ref(LinphoneFriendPhoneNumber *phone_number) {
+LinphoneFriendPhoneNumber *linphone_friend_phone_number_ref(LinphoneFriendPhoneNumber *phone_number) {
 	FriendPhoneNumber::toCpp(phone_number)->ref();
 	return phone_number;
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,8 @@
 
 #include "event-log/event-log.h"
 
-#include "conference/conference-info.h"
 #include "call/call-log.h"
+#include "conference/conference-info.h"
 
 // =============================================================================
 
@@ -34,10 +34,13 @@ class ConferenceCallEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceCallEvent : public EventLog {
 public:
-	ConferenceCallEvent (Type type, time_t creationTime, const std::shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
+	ConferenceCallEvent(Type type,
+	                    time_t creationTime,
+	                    const std::shared_ptr<CallLog> &callLog,
+	                    const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 
-	std::shared_ptr<CallLog> getCallLog () const;
-	std::shared_ptr<ConferenceInfo> getConferenceInfo () const;
+	std::shared_ptr<CallLog> getCallLog() const;
+	std::shared_ptr<ConferenceInfo> getConferenceInfo() const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceCallEvent);

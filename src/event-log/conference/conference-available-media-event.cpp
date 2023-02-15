@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 
 #include <map>
 
-#include "conference/conference-enums.h"
-#include "conference-notified-event-p.h"
 #include "conference-available-media-event.h"
+#include "conference-notified-event-p.h"
+#include "conference/conference-enums.h"
 
 // =============================================================================
 
@@ -39,16 +39,14 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ConferenceAvailableMediaEvent::ConferenceAvailableMediaEvent (
-	time_t creationTime,
-	const ConferenceId &conferenceId,
-	const std::map<ConferenceMediaCapabilities, bool> mediaCapabilties
-) : ConferenceNotifiedEvent(
-	*new ConferenceAvailableMediaEventPrivate,
-	Type::ConferenceAvailableMediaChanged,
-	creationTime,
-	conferenceId
-) {
+ConferenceAvailableMediaEvent::ConferenceAvailableMediaEvent(
+    time_t creationTime,
+    const ConferenceId &conferenceId,
+    const std::map<ConferenceMediaCapabilities, bool> mediaCapabilties)
+    : ConferenceNotifiedEvent(*new ConferenceAvailableMediaEventPrivate,
+                              Type::ConferenceAvailableMediaChanged,
+                              creationTime,
+                              conferenceId) {
 	L_D();
 	d->mediaCapabilties = mediaCapabilties;
 }
@@ -62,7 +60,7 @@ bool ConferenceAvailableMediaEvent::audioEnabled() const {
 	L_D();
 	try {
 		return d->mediaCapabilties.at(ConferenceMediaCapabilities::Audio);
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		return false;
 	}
 }
@@ -71,7 +69,7 @@ bool ConferenceAvailableMediaEvent::videoEnabled() const {
 	L_D();
 	try {
 		return d->mediaCapabilties.at(ConferenceMediaCapabilities::Video);
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		return false;
 	}
 }
@@ -80,7 +78,7 @@ bool ConferenceAvailableMediaEvent::chatEnabled() const {
 	L_D();
 	try {
 		return d->mediaCapabilties.at(ConferenceMediaCapabilities::Text);
-	} catch (std::out_of_range&) {
+	} catch (std::out_of_range &) {
 		return false;
 	}
 }

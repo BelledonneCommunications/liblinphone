@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,31 +27,38 @@ LINPHONE_BEGIN_NAMESPACE
 
 class SalPresenceOp : public SalSubscribeOp {
 public:
-	SalPresenceOp (Sal *sal);
+	SalPresenceOp(Sal *sal);
 
-	int subscribe (int expires);
-	int unsubscribe () { return SalOp::unsubscribe(); }
-	int notifyPresence (SalPresenceModel *presence);
-	int notifyPresenceClose ();
+	int subscribe(int expires);
+	int unsubscribe() {
+		return SalOp::unsubscribe();
+	}
+	int notifyPresence(SalPresenceModel *presence);
+	int notifyPresenceClose();
 
 private:
-	void fillCallbacks () override;
-	void handleNotify (belle_sip_request_t *request, belle_sip_dialog_t *dialog);
-	SalPresenceModel *processPresenceNotification (belle_sip_request_t *request);
-	int checkDialogState ();
-	belle_sip_request_t *createPresenceNotify ();
-	void addPresenceInfo (belle_sip_message_t *notify, SalPresenceModel *presence);
+	void fillCallbacks() override;
+	void handleNotify(belle_sip_request_t *request, belle_sip_dialog_t *dialog);
+	SalPresenceModel *processPresenceNotification(belle_sip_request_t *request);
+	int checkDialogState();
+	belle_sip_request_t *createPresenceNotify();
+	void addPresenceInfo(belle_sip_message_t *notify, SalPresenceModel *presence);
 
-	static SalSubscribeStatus getSubscriptionState (const belle_sip_message_t *message);
+	static SalSubscribeStatus getSubscriptionState(const belle_sip_message_t *message);
 
-	static void presenceProcessIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
-	static void presenceResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
-	static void presenceRefresherListenerCb (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry);
-	static void presenceProcessTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event);
-	static void presenceProcessTransactionTerminatedCb (void *userCtx, const belle_sip_transaction_terminated_event_t *event);
-	static void presenceProcessRequestEventCb (void *userCtx, const belle_sip_request_event_t *event);
-	static void presenceProcessDialogTerminatedCb (void *userCtx, const belle_sip_dialog_terminated_event_t *event);
-	static void releaseCb (SalOp *op);
+	static void presenceProcessIoErrorCb(void *userCtx, const belle_sip_io_error_event_t *event);
+	static void presenceResponseEventCb(void *userCtx, const belle_sip_response_event_t *event);
+	static void presenceRefresherListenerCb(belle_sip_refresher_t *refresher,
+	                                        void *userCtx,
+	                                        unsigned int statusCode,
+	                                        const char *reasonPhrase,
+	                                        int willRetry);
+	static void presenceProcessTimeoutCb(void *userCtx, const belle_sip_timeout_event_t *event);
+	static void presenceProcessTransactionTerminatedCb(void *userCtx,
+	                                                   const belle_sip_transaction_terminated_event_t *event);
+	static void presenceProcessRequestEventCb(void *userCtx, const belle_sip_request_event_t *event);
+	static void presenceProcessDialogTerminatedCb(void *userCtx, const belle_sip_dialog_terminated_event_t *event);
+	static void releaseCb(SalOp *op);
 };
 
 LINPHONE_END_NAMESPACE

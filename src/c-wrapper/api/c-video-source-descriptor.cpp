@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,25 +18,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/api/c-video-source-descriptor.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "call/call.h"
 #include "call/video-source/video-source-descriptor.h"
-#include "linphone/api/c-video-source-descriptor.h"
 
 // =============================================================================
 
 using namespace LinphonePrivate;
 
-LinphoneVideoSourceDescriptor* linphone_video_source_descriptor_new() {
+LinphoneVideoSourceDescriptor *linphone_video_source_descriptor_new() {
 	return VideoSourceDescriptor::createCObject();
 }
 
-LinphoneVideoSourceDescriptor* linphone_video_source_descriptor_clone(const LinphoneVideoSourceDescriptor *descriptor) {
+LinphoneVideoSourceDescriptor *linphone_video_source_descriptor_clone(const LinphoneVideoSourceDescriptor *descriptor) {
 	return VideoSourceDescriptor::toCpp(descriptor)->clone()->toC();
 }
 
-LinphoneVideoSourceDescriptor* linphone_video_source_descriptor_ref(LinphoneVideoSourceDescriptor *descriptor) {
+LinphoneVideoSourceDescriptor *linphone_video_source_descriptor_ref(LinphoneVideoSourceDescriptor *descriptor) {
 	VideoSourceDescriptor::toCpp(descriptor)->ref();
 	return descriptor;
 }
@@ -49,7 +49,7 @@ LinphoneVideoSourceType linphone_video_source_descriptor_get_type(const Linphone
 	return static_cast<LinphoneVideoSourceType>(VideoSourceDescriptor::toCpp(descriptor)->getType());
 }
 
-LinphoneCall* linphone_video_source_descriptor_get_call(const LinphoneVideoSourceDescriptor *descriptor) {
+LinphoneCall *linphone_video_source_descriptor_get_call(const LinphoneVideoSourceDescriptor *descriptor) {
 	return VideoSourceDescriptor::toCpp(descriptor)->getCall()->toC();
 }
 
@@ -57,7 +57,7 @@ void linphone_video_source_descriptor_set_call(LinphoneVideoSourceDescriptor *de
 	VideoSourceDescriptor::toCpp(descriptor)->setCall(Call::toCpp(call)->getSharedFromThis());
 }
 
-const char* linphone_video_source_descriptor_get_camera_id(const LinphoneVideoSourceDescriptor *descriptor) {
+const char *linphone_video_source_descriptor_get_camera_id(const LinphoneVideoSourceDescriptor *descriptor) {
 	return L_STRING_TO_C(VideoSourceDescriptor::toCpp(descriptor)->getCameraId());
 }
 
@@ -65,7 +65,7 @@ void linphone_video_source_descriptor_set_camera_id(LinphoneVideoSourceDescripto
 	VideoSourceDescriptor::toCpp(descriptor)->setCameraId(L_C_TO_STRING(camera_id));
 }
 
-const char* linphone_video_source_descriptor_get_image(const LinphoneVideoSourceDescriptor *descriptor) {
+const char *linphone_video_source_descriptor_get_image(const LinphoneVideoSourceDescriptor *descriptor) {
 	return L_STRING_TO_C(VideoSourceDescriptor::toCpp(descriptor)->getImage());
 }
 

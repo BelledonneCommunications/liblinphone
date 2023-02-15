@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,17 +34,17 @@ class AppDataContainerPrivate;
 
 class LINPHONE_PUBLIC AppDataContainer {
 public:
-	AppDataContainer ();
-	AppDataContainer (const AppDataContainer &other);
-	virtual ~AppDataContainer ();
+	AppDataContainer();
+	AppDataContainer(const AppDataContainer &other);
+	virtual ~AppDataContainer();
 
-	AppDataContainer &operator= (const AppDataContainer &other);
+	AppDataContainer &operator=(const AppDataContainer &other);
 
-	const std::unordered_map<std::string, std::string> &getAppDataMap () const;
+	const std::unordered_map<std::string, std::string> &getAppDataMap() const;
 
-	const std::string &getAppData (const std::string &name) const;
-	void setAppData (const std::string &name, const std::string &appData);
-	void setAppData (const std::string &name, std::string &&appData);
+	const std::string &getAppData(const std::string &name) const;
+	void setAppData(const std::string &name, const std::string &appData);
+	void setAppData(const std::string &name, std::string &&appData);
 
 private:
 	AppDataContainerPrivate *mPrivate = nullptr;

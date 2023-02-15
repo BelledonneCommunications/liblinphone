@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,52 +21,51 @@
 #ifndef LINPHONE_INFO_MESSAGE_H_
 #define LINPHONE_INFO_MESSAGE_H_
 
-
 #include "linphone/types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @addtogroup misc
  * @{
  */
 
-
 /**
  * Add a header to an info message to be sent.
  * @param info_message the #LinphoneInfoMessage object @notnil
  * @param name the header'name @notnil
  * @param value the header's value @maybenil
-**/
-LINPHONE_PUBLIC void linphone_info_message_add_header(LinphoneInfoMessage *info_message, const char *name, const char *value);
+ **/
+LINPHONE_PUBLIC void
+linphone_info_message_add_header(LinphoneInfoMessage *info_message, const char *name, const char *value);
 
 /**
  * Obtain a header value from a received info message.
  * @param info_message the #LinphoneInfoMessage object @notnil
  * @param name the header'name @notnil
  * @return the corresponding header's value, or NULL if not exists. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_info_message_get_header(const LinphoneInfoMessage *info_message, const char *name);
 
 /**
  * Assign a content to the info message.
- * 
- * All fields of the #LinphoneContent are copied, thus the application can destroy/modify/recycloe the content object freely ater the function returns.
+ *
+ * All fields of the #LinphoneContent are copied, thus the application can destroy/modify/recycloe the content object
+ *freely ater the function returns.
  * @param info_message the #LinphoneInfoMessage object @notnil
  * @param content the content described as a #LinphoneContent structure. @maybenil
-**/
-LINPHONE_PUBLIC void linphone_info_message_set_content(LinphoneInfoMessage *info_message, const LinphoneContent *content);
+ **/
+LINPHONE_PUBLIC void linphone_info_message_set_content(LinphoneInfoMessage *info_message,
+                                                       const LinphoneContent *content);
 
 /**
  * Returns the info message's content as a #LinphoneContent structure.
  * @param info_message the #LinphoneInfoMessage object @notnil
  * @return the #LinphoneContent object. @maybenil
-**/
-LINPHONE_PUBLIC const LinphoneContent * linphone_info_message_get_content(const LinphoneInfoMessage *info_message);
+ **/
+LINPHONE_PUBLIC const LinphoneContent *linphone_info_message_get_content(const LinphoneInfoMessage *info_message);
 
 /**
  * Take a reference on a #LinphoneInfoMessage.
@@ -83,11 +82,9 @@ LINPHONE_PUBLIC void linphone_info_message_unref(LinphoneInfoMessage *info_messa
 
 LINPHONE_PUBLIC LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *info_message);
 
-
 /**
  * @}
  */
-
 
 #ifdef __cplusplus
 }

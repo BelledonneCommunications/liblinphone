@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,52 +38,51 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace {
-	string IdentityGrammar("identity_grammar");
+string IdentityGrammar("identity_grammar");
 }
 
 // -----------------------------------------------------------------------------
 
 class IdentityAddressParserPrivate : public ObjectPrivate {
 public:
-	shared_ptr<belr::Parser<shared_ptr<IdentityAddress> >> parser;
-    unordered_map<string, shared_ptr<IdentityAddress >> cache;
+	shared_ptr<belr::Parser<shared_ptr<IdentityAddress>>> parser;
+	unordered_map<string, shared_ptr<IdentityAddress>> cache;
 };
 
-IdentityAddressParser::IdentityAddressParser () : Singleton(*new IdentityAddressParserPrivate) {
+IdentityAddressParser::IdentityAddressParser() : Singleton(*new IdentityAddressParserPrivate) {
 	L_D();
 
 	shared_ptr<belr::Grammar> grammar = belr::GrammarLoader::get().load(IdentityGrammar);
-	if (!grammar)
-		lFatal() << "Unable to load Identity Address grammar.";
+	if (!grammar) lFatal() << "Unable to load Identity Address grammar.";
 	d->parser = make_shared<belr::Parser<shared_ptr<IdentityAddress>>>(grammar);
-	
+
 	d->parser->setHandler("address", belr::make_fn(make_shared<IdentityAddress>))
-		->setCollector("scheme", belr::make_sfn(&IdentityAddress::setScheme))
-		->setCollector("user", belr::make_sfn(&IdentityAddress::setUsername))
-		->setCollector("host", belr::make_sfn(&IdentityAddress::setDomain))
-		->setCollector("gruu-value", belr::make_sfn(&IdentityAddress::setGruu));
+	    ->setCollector("scheme", belr::make_sfn(&IdentityAddress::setScheme))
+	    ->setCollector("user", belr::make_sfn(&IdentityAddress::setUsername))
+	    ->setCollector("host", belr::make_sfn(&IdentityAddress::setDomain))
+	    ->setCollector("gruu-value", belr::make_sfn(&IdentityAddress::setGruu));
 }
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<IdentityAddress> IdentityAddressParser::parseAddress (const string &input) {
+shared_ptr<IdentityAddress> IdentityAddressParser::parseAddress(const string &input) {
 	L_D();
 
-    auto it = d->cache.find(input);
-    if (it == d->cache.end()) {
-        size_t parsedSize;
-        shared_ptr<IdentityAddress> identityAddress = d->parser->parseInput("Address", input, &parsedSize);
-        if (!identityAddress) {
-            lDebug() << "Unable to parse identity address from " << input;
-            return nullptr;
-        }
-        // Remove identity address from leak detector as the IdentityAddressParser is a used as static variable
-        identityAddress->removeFromLeakDetector();
-        d->cache[input] = identityAddress;
-        return identityAddress;
-    } else {
-        return it->second;
-    }
+	auto it = d->cache.find(input);
+	if (it == d->cache.end()) {
+		size_t parsedSize;
+		shared_ptr<IdentityAddress> identityAddress = d->parser->parseInput("Address", input, &parsedSize);
+		if (!identityAddress) {
+			lDebug() << "Unable to parse identity address from " << input;
+			return nullptr;
+		}
+		// Remove identity address from leak detector as the IdentityAddressParser is a used as static variable
+		identityAddress->removeFromLeakDetector();
+		d->cache[input] = identityAddress;
+		return identityAddress;
+	} else {
+		return it->second;
+	}
 }
 
 LINPHONE_END_NAMESPACE

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #endif
 
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/defs.h"
 #include "liblinphone_tester.h"
 #include "linphone/api/c-chat-room-params.h"
 #include "linphone/api/c-types.h"
@@ -65,7 +66,7 @@ static void shared_main_core_prevent_executor_core_start(void) {
 #endif
 }
 
-void *thread_shared_main_core_stops_executor_core(void *arguments) {
+void *thread_shared_main_core_stops_executor_core(BCTBX_UNUSED(void *arguments)) {
 #if TARGET_OS_IPHONE
 	LinphoneCoreManager *executor_mgr = (LinphoneCoreManager *)arguments;
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("", TEST_GROUP_ID, TRUE, executor_mgr);
@@ -96,7 +97,7 @@ static void shared_main_core_stops_executor_core(void) {
 	linphone_core_get_new_message_from_callid(executor_mgr->lc, "dummy_call_id");
 
 	BC_ASSERT_TRUE(
-		wait_for_until(executor_mgr->lc, NULL, &executor_mgr->stat.number_of_LinphoneGlobalShutdown, 1, 2000));
+	    wait_for_until(executor_mgr->lc, NULL, &executor_mgr->stat.number_of_LinphoneGlobalShutdown, 1, 2000));
 
 	if (pthread_join(main_core_thread, NULL)) {
 		ms_fatal("Error joining thread main_core_thread");
@@ -107,8 +108,8 @@ static void shared_main_core_stops_executor_core(void) {
 #endif
 }
 
-const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, LinphoneCoreManager *receiver,
-												 const char *text) {
+const char *
+shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, LinphoneCoreManager *receiver, const char *text) {
 	stats initial_sender_stat = sender->stat;
 	const char *content_type = "text/plain";
 	LinphoneChatRoom *room = linphone_core_get_chat_room(sender->lc, receiver->identity);
@@ -120,7 +121,7 @@ const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, Li
 	linphone_chat_message_send(msg);
 
 	BC_ASSERT_TRUE(wait_for_until(sender->lc, NULL, &sender->stat.number_of_LinphoneMessageDelivered,
-								  initial_sender_stat.number_of_LinphoneMessageDelivered + 1, 30000));
+	                              initial_sender_stat.number_of_LinphoneMessageDelivered + 1, 30000));
 	const char *call_id = linphone_chat_message_get_message_id(msg);
 	linphone_chat_message_unref(msg);
 	BC_ASSERT_FALSE(strcmp(call_id, "") == 0);
@@ -129,8 +130,10 @@ const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, Li
 }
 
 // receiver needs to be a shared core
-void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, LinphoneCore *receiver, const char *text,
-										  const char *call_id) {
+void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr,
+                                          LinphoneCore *receiver,
+                                          const char *text,
+                                          const char *call_id) {
 
 	BC_ASSERT_PTR_NOT_NULL(call_id);
 	if (call_id != NULL) {
@@ -141,13 +144,15 @@ void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, Linph
 			LinphoneProxyConfig *receiver_cfg = linphone_core_get_proxy_config_list(receiver)->data;
 			const LinphoneAddress *receiver_addr = linphone_proxy_config_get_identity_address(receiver_cfg);
 			const LinphoneAddress *local_addr = linphone_push_notification_message_get_local_addr(received_msg);
-			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(receiver_addr), linphone_address_get_username(local_addr));
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(receiver_addr),
+			                       linphone_address_get_username(local_addr));
 			linphone_address_unref((LinphoneAddress *)local_addr);
 
 			LinphoneProxyConfig *sender_cfg = linphone_core_get_proxy_config_list(sender_mgr->lc)->data;
 			const LinphoneAddress *sender_addr = linphone_proxy_config_get_identity_address(sender_cfg);
 			const LinphoneAddress *from_addr = linphone_push_notification_message_get_from_addr(received_msg);
-			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(sender_addr), linphone_address_get_username(from_addr));
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(sender_addr),
+			                       linphone_address_get_username(from_addr));
 			linphone_address_unref((LinphoneAddress *)from_addr);
 
 			BC_ASSERT_STRING_EQUAL(linphone_push_notification_message_get_text_content(received_msg), text);
@@ -156,11 +161,11 @@ void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, Linph
 	}
 }
 
-void *thread_shared_core_get_message_from_call_id(void *arguments) {
+void *thread_shared_core_get_message_from_call_id(BCTBX_UNUSED(void *arguments)) {
 #if TARGET_OS_IPHONE
 	struct get_msg_args *args = (struct get_msg_args *)arguments;
 	LinphoneCoreManager *receiver_mgr =
-	linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
+	    linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
 
 	shared_core_get_message_from_call_id(args->sender_mgr, receiver_mgr->lc, args->text, args->call_id);
 
@@ -198,9 +203,11 @@ static void shared_executor_core_get_message_with_user_defaults_mono_thread(void
 	linphone_core_manager_start(main_mgr, TRUE);
 
 	const char *call_id = shared_core_send_msg_and_get_call_id(sender_mgr, main_mgr, text);
-	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 1, 30000));
+	BC_ASSERT_TRUE(
+	    wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 1, 30000));
 	if (call_id) {
-		LinphoneCoreManager *executor_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
+		LinphoneCoreManager *executor_mgr =
+		    linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
 		shared_core_get_message_from_call_id(sender_mgr, executor_mgr->lc, text, call_id);
 		ms_free((void *)call_id);
 		linphone_core_manager_destroy(executor_mgr);
@@ -212,7 +219,8 @@ static void shared_executor_core_get_message_with_user_defaults_mono_thread(void
 
 static void shared_executor_core_get_message_with_user_defaults_multi_thread(void) {
 #if TARGET_OS_IPHONE
-	/* multi thread means that the executor core waits for the msg to be written by the main core into the user defaults */
+	/* multi thread means that the executor core waits for the msg to be written by the main core into the user defaults
+	 */
 	const char *text = "Bli bli bli \n blu";
 	const char *secondText = "Blu blu blu \n bli";
 	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
@@ -220,7 +228,8 @@ static void shared_executor_core_get_message_with_user_defaults_multi_thread(voi
 	linphone_core_manager_start(main_mgr, TRUE);
 
 	const char *callid = shared_core_send_msg_and_get_call_id(sender_mgr, main_mgr, text);
-	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 1, 50000));
+	BC_ASSERT_TRUE(
+	    wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 1, 50000));
 
 	pthread_t executor;
 	struct get_msg_args *args = ms_malloc(sizeof(struct get_msg_args));
@@ -236,7 +245,8 @@ static void shared_executor_core_get_message_with_user_defaults_multi_thread(voi
 	ms_sleep(1);
 
 	shared_core_send_msg_and_get_call_id(sender_mgr, main_mgr, secondText);
-	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 2, 50000));
+	BC_ASSERT_TRUE(
+	    wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 2, 50000));
 
 	if (pthread_join(executor, NULL)) {
 		ms_fatal("Error joining thread executor");
@@ -256,11 +266,9 @@ static void two_shared_executor_cores_get_messages(void) {
 
 	linphone_core_manager_start(receiver_mgr, TRUE);
 	const char *call_id1 = shared_core_send_msg_and_get_call_id(sender_mgr, receiver_mgr, "message1");
-	if (strcmp(call_id1, "") == 0)
-		return;
+	if (strcmp(call_id1, "") == 0) return;
 	const char *call_id2 = shared_core_send_msg_and_get_call_id(sender_mgr, receiver_mgr, "message2");
-	if (strcmp(call_id2, "") == 0)
-		return;
+	if (strcmp(call_id2, "") == 0) return;
 	linphone_core_stop(receiver_mgr->lc);
 
 	pthread_t executor1;
@@ -307,8 +315,8 @@ static void two_shared_executor_cores_get_messages(void) {
 #endif
 }
 
-LinphoneChatRoom *shared_core_create_chat_room(LinphoneCoreManager *sender, LinphoneCoreManager *receiver,
-											   const char *subject) {
+LinphoneChatRoom *
+shared_core_create_chat_room(LinphoneCoreManager *sender, LinphoneCoreManager *receiver, const char *subject) {
 	LinphoneAddress *receiverAddr = linphone_address_new(linphone_core_get_identity(receiver->lc));
 	bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, (void *)receiverAddr);
 
@@ -320,10 +328,10 @@ LinphoneChatRoom *shared_core_create_chat_room(LinphoneCoreManager *sender, Linp
 	LinphoneChatRoom *senderCr = linphone_core_create_chat_room_2(sender->lc, params, subject, participantsAddresses);
 	linphone_chat_room_params_unref(params);
 	BC_ASSERT_PTR_NOT_NULL(senderCr);
-	
+
 	BC_ASSERT_TRUE(wait_for_until(sender->lc, NULL, &sender->stat.number_of_LinphoneConferenceStateCreated, 1, 10000));
 	LinphoneAddress *senderAddr =
-		linphone_address_new(linphone_proxy_config_get_identity(linphone_core_get_default_proxy_config(sender->lc)));
+	    linphone_address_new(linphone_proxy_config_get_identity(linphone_core_get_default_proxy_config(sender->lc)));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_room_get_local_address(senderCr), senderAddr));
 	linphone_address_unref(senderAddr);
 
@@ -334,37 +342,40 @@ LinphoneChatRoom *shared_core_create_chat_room(LinphoneCoreManager *sender, Linp
 }
 
 // receiver needs to be a shared core
-void shared_core_get_new_chat_room_from_addr(LinphoneCoreManager *sender, LinphoneCoreManager *receiver,
-											 LinphoneChatRoom *senderCr, const char *subject) {
+void shared_core_get_new_chat_room_from_addr(LinphoneCoreManager *sender,
+                                             LinphoneCoreManager *receiver,
+                                             LinphoneChatRoom *senderCr,
+                                             const char *subject) {
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(senderCr);
 	BC_ASSERT_PTR_NOT_NULL(confAddr);
 	if (confAddr) {
 		LinphoneChatRoom *receiverCr =
-			linphone_core_get_new_chat_room_from_conf_addr(receiver->lc, linphone_address_get_username(confAddr));
+		    linphone_core_get_new_chat_room_from_conf_addr(receiver->lc, linphone_address_get_username(confAddr));
 
 		BC_ASSERT_PTR_NOT_NULL(receiverCr);
 		if (receiverCr != NULL) {
 			ms_message("chat room [%p] chat room params [%p]", receiverCr,
-					linphone_chat_room_get_current_params(receiverCr));
+			           linphone_chat_room_get_current_params(receiverCr));
 
 			LinphoneAddress *receiverAddr = linphone_address_new(linphone_core_get_identity(receiver->lc));
 			BC_ASSERT_TRUE(strcmp(linphone_chat_room_get_subject(receiverCr), subject) == 0);
 			BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_room_get_local_address(receiverCr), receiverAddr));
 			linphone_address_unref(receiverAddr);
-			
+
 			stats mgrStats = receiver->stat;
 			linphone_core_delete_chat_room(receiver->lc, receiverCr);
-			BC_ASSERT_TRUE(wait_for_until(receiver->lc, sender->lc, &receiver->stat.number_of_LinphoneConferenceStateDeleted,
-										mgrStats.number_of_LinphoneConferenceStateDeleted + 1, 10000));
+			BC_ASSERT_TRUE(wait_for_until(receiver->lc, sender->lc,
+			                              &receiver->stat.number_of_LinphoneConferenceStateDeleted,
+			                              mgrStats.number_of_LinphoneConferenceStateDeleted + 1, 10000));
 		}
 	}
 }
 
-void *thread_shared_core_get_new_chat_room_from_addr(void *arguments) {
+void *thread_shared_core_get_new_chat_room_from_addr(BCTBX_UNUSED(void *arguments)) {
 #if TARGET_OS_IPHONE
 	struct get_msg_args *args = (struct get_msg_args *)arguments;
 	LinphoneCoreManager *receiver_mgr =
-		linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
+	    linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, receiver_mgr);
 	init_core_for_conference(coresManagerList);
@@ -418,12 +429,10 @@ static void two_shared_executor_cores_get_message_and_chat_room(void) {
 	start_core_for_conference(coresManagerList);
 
 	LinphoneChatRoom *senderCr = shared_core_create_chat_room(sender, receiver, subject);
-	if (senderCr == NULL)
-		return;
+	if (senderCr == NULL) return;
 
 	const char *call_id = shared_core_send_msg_and_get_call_id(sender, receiver, text);
-	if (strcmp(call_id, "") == 0)
-		return;
+	if (strcmp(call_id, "") == 0) return;
 
 	linphone_core_set_network_reachable(receiver->lc, FALSE);
 	linphone_core_stop(receiver->lc);
@@ -479,7 +488,7 @@ static void stop_async_core_when_belle_sip_task_failed(void) {
 		return;
 	}
 
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create2("pauline_tcp_rc", NULL);
 	// simulate bad net work to trash the message without generating error
 	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "net", "bad_net", 1);
@@ -487,10 +496,9 @@ static void stop_async_core_when_belle_sip_task_failed(void) {
 
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
-	
 
-	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
-	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
+	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(chat_room, "Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageSent, 0, int, "%d");
@@ -501,12 +509,13 @@ static void stop_async_core_when_belle_sip_task_failed(void) {
 	BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
-	
+
 	linphone_core_stop_async(pauline->lc);
 
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneMessageDelivered,0));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered, 0));
 
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneGlobalOff, pauline->stat.number_of_LinphoneGlobalOff+1, 30000));
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneGlobalOff,
+	                              pauline->stat.number_of_LinphoneGlobalOff + 1, 30000));
 
 	ms_free(message_id);
 	linphone_chat_message_unref(msg);
@@ -523,14 +532,14 @@ static void shared_executor_core_doesnt_modify_rc_file_when_main_shared_core_is_
 	linphone_core_manager_start(main_mgr, TRUE);
 	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, NULL, &main_mgr->stat.number_of_LinphoneGlobalOn, 1, 2000));
 
-    LinphoneConfig *config = linphone_core_get_config(main_mgr->lc);
+	LinphoneConfig *config = linphone_core_get_config(main_mgr->lc);
 	struct stat fileStat;
 	stat(linphone_config_get_filename(config), &fileStat);
 	time_t last_modified_time = fileStat.st_mtimespec.tv_sec;
 
 	BC_ASSERT_EQUAL(linphone_core_start(executor_mgr->lc), -1, int, "%d");
 
-    config = linphone_core_get_config(executor_mgr->lc);
+	config = linphone_core_get_config(executor_mgr->lc);
 	stat(linphone_config_get_filename(config), &fileStat);
 	BC_ASSERT_EQUAL(last_modified_time, fileStat.st_mtimespec.tv_sec, time_t, "%ld");
 
@@ -540,17 +549,22 @@ static void shared_executor_core_doesnt_modify_rc_file_when_main_shared_core_is_
 }
 
 test_t shared_core_tests[] = {
-	TEST_NO_TAG("Executor Shared Core can't start because Main Shared Core runs", shared_main_core_prevent_executor_core_start),
-	TEST_NO_TAG("Executor Shared Core stopped by Main Shared Core", shared_main_core_stops_executor_core),
-	TEST_NO_TAG("Executor Shared Core get message from callId by starting a core", shared_executor_core_get_message_by_starting_a_core),
-	TEST_NO_TAG("Executor Shared Core get message from callId with user defaults on one thread", shared_executor_core_get_message_with_user_defaults_mono_thread),
-	TEST_NO_TAG("Executor Shared Core get message from callId with user defaults on two threads", shared_executor_core_get_message_with_user_defaults_multi_thread),
-	TEST_NO_TAG("Two Executor Shared Cores get messages", two_shared_executor_cores_get_messages),
-	TEST_NO_TAG("Executor Shared Core get new chat room from invite", shared_executor_core_get_chat_room),
-	TEST_NO_TAG("Two Executor Shared Cores get one msg and one chat room", two_shared_executor_cores_get_message_and_chat_room),
-	TEST_NO_TAG("stop async core when belle sip task failed", stop_async_core_when_belle_sip_task_failed),
-	TEST_NO_TAG("Executor Shared Core does not modify rc file when Main Shared Core is started", shared_executor_core_doesnt_modify_rc_file_when_main_shared_core_is_started)
-};
+    TEST_NO_TAG("Executor Shared Core can't start because Main Shared Core runs",
+                shared_main_core_prevent_executor_core_start),
+    TEST_NO_TAG("Executor Shared Core stopped by Main Shared Core", shared_main_core_stops_executor_core),
+    TEST_NO_TAG("Executor Shared Core get message from callId by starting a core",
+                shared_executor_core_get_message_by_starting_a_core),
+    TEST_NO_TAG("Executor Shared Core get message from callId with user defaults on one thread",
+                shared_executor_core_get_message_with_user_defaults_mono_thread),
+    TEST_NO_TAG("Executor Shared Core get message from callId with user defaults on two threads",
+                shared_executor_core_get_message_with_user_defaults_multi_thread),
+    TEST_NO_TAG("Two Executor Shared Cores get messages", two_shared_executor_cores_get_messages),
+    TEST_NO_TAG("Executor Shared Core get new chat room from invite", shared_executor_core_get_chat_room),
+    TEST_NO_TAG("Two Executor Shared Cores get one msg and one chat room",
+                two_shared_executor_cores_get_message_and_chat_room),
+    TEST_NO_TAG("stop async core when belle sip task failed", stop_async_core_when_belle_sip_task_failed),
+    TEST_NO_TAG("Executor Shared Core does not modify rc file when Main Shared Core is started",
+                shared_executor_core_doesnt_modify_rc_file_when_main_shared_core_is_started)};
 
 void shared_core_tester_before_each(void) {
 	liblinphone_tester_before_each();
@@ -560,9 +574,9 @@ void shared_core_tester_before_each(void) {
 }
 
 test_suite_t shared_core_test_suite = {"Shared Core",
-									   NULL,
-									   NULL,
-									   shared_core_tester_before_each,
-									   liblinphone_tester_after_each,
-									   sizeof(shared_core_tests) / sizeof(shared_core_tests[0]),
-									   shared_core_tests};
+                                       NULL,
+                                       NULL,
+                                       shared_core_tester_before_each,
+                                       liblinphone_tester_after_each,
+                                       sizeof(shared_core_tests) / sizeof(shared_core_tests[0]),
+                                       shared_core_tests};

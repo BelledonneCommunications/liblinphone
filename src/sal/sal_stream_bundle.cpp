@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,40 +21,40 @@
 #include <algorithm>
 
 #include "sal/sal_stream_bundle.h"
-#include "sal/sal_stream_description.h"
 #include "sal/sal_stream_configuration.h"
+#include "sal/sal_stream_description.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-SalStreamBundle::SalStreamBundle(){
+SalStreamBundle::SalStreamBundle() {
 	mids.clear();
 }
 
-SalStreamBundle::SalStreamBundle(const char * ids){
-	char *tmp = (char*)ms_malloc0(strlen(ids) + 1);
+SalStreamBundle::SalStreamBundle(const char *ids) {
+	char *tmp = (char *)ms_malloc0(strlen(ids) + 1);
 	int err;
-	do{
+	do {
 		int consumed = 0;
 		err = sscanf(ids, "%s%n", tmp, &consumed);
-		if (err > 0){
+		if (err > 0) {
 			mids.push_back(tmp);
 			ids += consumed;
-		}else break;
-	}while( *ids != '\0');
+		} else break;
+	} while (*ids != '\0');
 	ms_free(tmp);
 }
 
-SalStreamBundle::SalStreamBundle(const SalStreamBundle &other){
+SalStreamBundle::SalStreamBundle(const SalStreamBundle &other) {
 	mids = other.mids;
 }
 
-SalStreamBundle::~SalStreamBundle(){
+SalStreamBundle::~SalStreamBundle() {
 	mids.clear();
 }
 
-void SalStreamBundle::addToSdp(belle_sdp_session_description_t * session_desc) const {
+void SalStreamBundle::addToSdp(belle_sdp_session_description_t *session_desc) const {
 	char *attr_value = ms_strdup("BUNDLE");
-	for (const auto & mid : mids){
+	for (const auto &mid : mids) {
 		char *tmp = ms_strdup_printf("%s %s", attr_value, mid.c_str());
 		ms_free(attr_value);
 		attr_value = tmp;
@@ -63,32 +63,31 @@ void SalStreamBundle::addToSdp(belle_sdp_session_description_t * session_desc) c
 	bctbx_free(attr_value);
 }
 
-SalStreamBundle &SalStreamBundle::operator=(const SalStreamBundle & other){
+SalStreamBundle &SalStreamBundle::operator=(const SalStreamBundle &other) {
 	mids = other.mids;
 	return *this;
 }
 
-bool SalStreamBundle::operator==(const SalStreamBundle & other) const {
+bool SalStreamBundle::operator==(const SalStreamBundle &other) const {
 	return (mids == other.mids);
 }
 
-bool SalStreamBundle::operator!=(const SalStreamBundle & other) const {
+bool SalStreamBundle::operator!=(const SalStreamBundle &other) const {
 	return !(*this == other);
 }
 
-void SalStreamBundle::addStream(SalStreamConfiguration & cfg, const std::string &mid){
+void SalStreamBundle::addStream(SalStreamConfiguration &cfg, const std::string &mid) {
 	cfg.mid = mid;
 	mids.push_back(mid);
 }
 
-const std::string & SalStreamBundle::getMidOfTransportOwner() const {
+const std::string &SalStreamBundle::getMidOfTransportOwner() const {
 	return mids.front(); /* the first one is the transport owner*/
 }
 
-bool SalStreamBundle::hasMid(const std::string & mid) const{
-	const auto & midIt = std::find_if(mids.cbegin(), mids.cend(), [&mid] (const auto & bundleMid) {
-		return (bundleMid.compare(mid) == 0);
-	});
+bool SalStreamBundle::hasMid(const std::string &mid) const {
+	const auto &midIt = std::find_if(mids.cbegin(), mids.cend(),
+	                                 [&mid](const auto &bundleMid) { return (bundleMid.compare(mid) == 0); });
 	return (midIt != mids.cend());
 }
 

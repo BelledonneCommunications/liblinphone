@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "core/core-p.h"
 #include "main-db-event-key.h"
+#include "core/core-p.h"
 #include "main-db-key-p.h"
 #include "main-db-p.h"
 
@@ -31,22 +31,21 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-MainDbEventKey::MainDbEventKey () : MainDbKey() {};
+MainDbEventKey::MainDbEventKey() : MainDbKey(){};
 
-MainDbEventKey::MainDbEventKey (const shared_ptr<Core> &core, long long storageId) : MainDbKey(core, storageId) {}
+MainDbEventKey::MainDbEventKey(const shared_ptr<Core> &core, long long storageId) : MainDbKey(core, storageId) {
+}
 
-MainDbEventKey::~MainDbEventKey () {
+MainDbEventKey::~MainDbEventKey() {
 	resetStorageId();
 }
 
 void MainDbEventKey::resetStorageId() {
 	L_D();
 
-	if (isValid())
-		d->core.lock()->getPrivate()->mainDb->getPrivate()->storageIdToEvent.erase(d->storageId);
+	if (isValid()) d->core.lock()->getPrivate()->mainDb->getPrivate()->storageIdToEvent.erase(d->storageId);
 
 	d->storageId = -1;
 }
-
 
 LINPHONE_END_NAMESPACE

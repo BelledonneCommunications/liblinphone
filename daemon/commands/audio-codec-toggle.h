@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 
 #include "daemon.h"
 
-class AudioCodecToggleCommand: public DaemonCommand {
+class AudioCodecToggleCommand : public DaemonCommand {
 public:
 	AudioCodecToggleCommand(const char *name, const char *proto, const char *help, bool enable);
 
@@ -33,12 +33,12 @@ protected:
 	bool mEnable;
 };
 
-class AudioCodecEnableCommand: public AudioCodecToggleCommand {
+class AudioCodecEnableCommand : public AudioCodecToggleCommand {
 public:
 	AudioCodecEnableCommand();
 };
 
-class AudioCodecDisableCommand: public AudioCodecToggleCommand {
+class AudioCodecDisableCommand : public AudioCodecToggleCommand {
 public:
 	AudioCodecDisableCommand();
 };

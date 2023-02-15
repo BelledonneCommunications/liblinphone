@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,17 +18,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
-#include "c-wrapper/c-wrapper.h"
+
+#include "private_functions.h"
 
 #ifdef HAVE_FLEXIAPI
 #include "linphone/FlexiAPIClient.hh"
 #include <json/json.h>
 using namespace Json;
 #endif
-
 
 typedef struct _LinphoneFriendListStats {
 	int new_list_count;
@@ -147,7 +149,7 @@ static void remote_provisioning_file(void) {
 static void flexiapi_remote_provisioning_flow(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 	linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "config-uri",
-							   "http://provisioning.example.org:10080/flexiapi/provisioning");
+	                           "http://provisioning.example.org:10080/flexiapi/provisioning");
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 	flexiAPIClient->useTestAdminAccount(true);
@@ -162,14 +164,13 @@ static void flexiapi_remote_provisioning_flow(void) {
 	string confirmationKey;
 	int id;
 
-	flexiAPIClient
-		->adminAccountCreate(username, "1234", "MD5", activated)
-		->then([&code, &fetched, &confirmationKey, &id](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-			confirmationKey = response.json()["confirmation_key"].asString();
-			id = response.json()["id"].asInt();
-		});
+	flexiAPIClient->adminAccountCreate(username, "1234", "MD5", activated)
+	    ->then([&code, &fetched, &confirmationKey, &id](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+		    confirmationKey = response.json()["confirmation_key"].asString();
+		    id = response.json()["id"].asInt();
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -182,7 +183,8 @@ static void flexiapi_remote_provisioning_flow(void) {
 	linphone_core_set_provisioning_uri(marie->lc, remoteProvisioningURIWithConfirmationKey.c_str());
 	linphone_core_manager_start(marie, FALSE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1,
+	                              liblinphone_tester_sip_timeout));
 
 	// Re-provision it, without the confirmationKey
 	string remoteProvisioningURIAuthenticated = remoteProvisioningURI;
@@ -192,7 +194,8 @@ static void flexiapi_remote_provisioning_flow(void) {
 	linphone_core_set_provisioning_uri(marie->lc, remoteProvisioningURIAuthenticated.c_str());
 	linphone_core_manager_start(marie, FALSE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1,
+	                              liblinphone_tester_sip_timeout));
 
 	flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 
@@ -211,7 +214,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 	linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "config-uri",
-							   "http://provisioning.example.org:10080/flexiapi/provisioning");
+	                           "http://provisioning.example.org:10080/flexiapi/provisioning");
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 	flexiAPIClient->useTestAdminAccount(true);
@@ -230,7 +233,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	int contactId2;
 
 	char *addr = linphone_address_as_string_uri_only(
-		linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(marie->lc)));
+	    linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(marie->lc)));
 
 	// Get the contact account id
 	flexiAPIClient->adminAccountSearch(addr)->then([&code, &fetched, &contactId0](FlexiAPIClient::Response response) {
@@ -245,11 +248,11 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 	// Create the contacts accounts
 	flexiAPIClient->adminAccountCreate(usernameContact1, "1234", "MD5", "", true, "", "", "sipinfo")
-		->then([&code, &fetched, &contactId1](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-			contactId1 = response.json()["id"].asInt();
-		});
+	    ->then([&code, &fetched, &contactId1](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+		    contactId1 = response.json()["id"].asInt();
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -257,11 +260,11 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	fetched = code = 0;
 
 	flexiAPIClient->adminAccountCreate(usernameContact2, "1234", "MD5", "", true, "", "", "rfc2833")
-		->then([&code, &fetched, &contactId2](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-			contactId2 = response.json()["id"].asInt();
-		});
+	    ->then([&code, &fetched, &contactId2](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+		    contactId2 = response.json()["id"].asInt();
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -271,10 +274,10 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	// Link the contacts
 	flexiAPIClient->adminAccountContactAdd(contactId0, contactId1);
 	flexiAPIClient->adminAccountContactAdd(contactId0, contactId2)
-		->then([&code, &fetched](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-		});
+	    ->then([&code, &fetched](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -288,9 +291,9 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	// Registering the callbacks
 	LinphoneFriendListStats *stats = (LinphoneFriendListStats *)ms_new0(LinphoneFriendListStats, 1);
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_friend_list_created(cbs, [](LinphoneCore *lc, LinphoneFriendList *list) {
+	linphone_core_cbs_set_friend_list_created(cbs, [](LinphoneCore *lc, BCTBX_UNUSED(LinphoneFriendList * list)) {
 		LinphoneFriendListStats *stats =
-			(LinphoneFriendListStats *)linphone_core_cbs_get_user_data(linphone_core_get_current_callbacks(lc));
+		    (LinphoneFriendListStats *)linphone_core_cbs_get_user_data(linphone_core_get_current_callbacks(lc));
 		stats->new_list_count++;
 	});
 
@@ -301,13 +304,15 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	linphone_core_set_provisioning_uri(marie->lc, remoteProvisioningURIWithConfirmationKey.c_str());
 	linphone_core_manager_start(marie, FALSE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1,
+	                              liblinphone_tester_sip_timeout));
 
 	// Check if the friend list has been parsed
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 1, liblinphone_tester_sip_timeout));// Added 'contacts-vcard-list'
-	
-	std::string url=
-		linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", NULL);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 1,
+	                              liblinphone_tester_sip_timeout)); // Added 'contacts-vcard-list'
+
+	std::string url =
+	    linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", NULL);
 	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 
 	BC_ASSERT_PTR_NOT_NULL(friendList);
@@ -322,14 +327,14 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 		string fullName = string(linphone_vcard_get_full_name(vcard)).substr(0, usernameContact2.length());
 		BC_ASSERT_STRING_EQUAL(fullName.c_str(), usernameContact2.c_str());
 		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
-								vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
-							"rfc2833");
+		                           vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
+		                       "rfc2833");
 
 		linphone_vcard_remove_extented_properties_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
 		linphone_vcard_add_extended_property(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL", "test");
 		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
-								vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
-							"test");
+		                           vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
+		                       "test");
 	}
 
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_friends_lists(marie->lc)), 2, int, "%i");
@@ -344,10 +349,10 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	flexiAPIClient->useTestAdminAccount(true);
 
 	flexiAPIClient->adminAccountContactDelete(contactId0, contactId2)
-		->then([&code, &fetched](FlexiAPIClient::Response response) {
-			code = response.code;
-			fetched = 1;
-		});
+	    ->then([&code, &fetched](FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 
@@ -355,7 +360,8 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	linphone_friend_list_set_type(friendList2, LinphoneFriendListTypeVCard4);
 	linphone_friend_list_synchronize_friends_from_server(friendList2);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2, liblinphone_tester_sip_timeout));// + 'contacts-vcard-list' sync
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2,
+	                              liblinphone_tester_sip_timeout)); // + 'contacts-vcard-list' sync
 
 	linphone_friend_list_unref(friendList2);
 
@@ -363,28 +369,33 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 1, int, "%i");
 	LinphoneFriendList *friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NOT_NULL(friendList3);
-	
+
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int, "%i");
-	
+
 	linphone_core_stop(marie->lc);
 	stats->new_list_count = 0;
 	linphone_core_start(marie->lc);
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2, liblinphone_tester_sip_timeout));	// Init for 2 lists : Default and 'contacts-vcard-list'
-	
+	BC_ASSERT_TRUE(
+	    wait_for_until(marie->lc, NULL, &stats->new_list_count, 2,
+	                   liblinphone_tester_sip_timeout)); // Init for 2 lists : Default and 'contacts-vcard-list'
+
 	// Resync the friends lists from the DB
-	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int, "%i");// No friend list in DB
+	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int,
+	                "%i"); // No friend list in DB
 	friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NOT_NULL(friendList3);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int, "%i");// No Friend in DB but have subscribed in RAM.
-	
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int,
+	                "%i"); // No Friend in DB but have subscribed in RAM.
+
 	linphone_core_remove_friend_list(marie->lc, friendList3);
-	
+
 	LinphoneFriendList *friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NULL(friendList4);
-	
-	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int, "%i");// Still no friend list in DB
+
+	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int,
+	                "%i"); // Still no friend list in DB
 	friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
-	BC_ASSERT_PTR_NULL(friendList4);// No change after resync
+	BC_ASSERT_PTR_NULL(friendList4); // No change after resync
 
 	// Clean up
 	flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
@@ -409,9 +420,9 @@ static void remote_provisioning_check_push_params(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_remote_rc");
 
 	linphone_push_notification_config_set_voip_token(linphone_core_get_push_notification_config(marie->lc),
-													 "token:voip");
+	                                                 "token:voip");
 	linphone_push_notification_config_set_bundle_identifier(linphone_core_get_push_notification_config(marie->lc),
-															"linphone-tester");
+	                                                        "linphone-tester");
 	linphone_push_notification_config_set_param(linphone_core_get_push_notification_config(marie->lc), "param");
 
 	linphone_core_manager_start(marie, FALSE);
@@ -427,14 +438,14 @@ static void remote_provisioning_check_push_params(void) {
 	LinphoneAccountParams *marie_params = linphone_account_params_clone(linphone_account_get_params(marie_account));
 
 	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_voip_token(
-							   linphone_account_params_get_push_notification_config(marie_params)),
-						   "token:voip");
+	                           linphone_account_params_get_push_notification_config(marie_params)),
+	                       "token:voip");
 	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_bundle_identifier(
-							   linphone_account_params_get_push_notification_config(marie_params)),
-						   "linphone-tester");
+	                           linphone_account_params_get_push_notification_config(marie_params)),
+	                       "linphone-tester");
 	BC_ASSERT_STRING_EQUAL(
-		linphone_push_notification_config_get_param(linphone_account_params_get_push_notification_config(marie_params)),
-		"param");
+	    linphone_push_notification_config_get_param(linphone_account_params_get_push_notification_config(marie_params)),
+	    "param");
 
 	linphone_account_params_set_push_notification_allowed(marie_params, TRUE);
 	linphone_account_set_params(marie_account, marie_params);
@@ -445,34 +456,34 @@ static void remote_provisioning_check_push_params(void) {
 
 	const LinphoneAccountParams *updated_marie_params = linphone_account_get_params(marie_account);
 	const char *prid = linphone_push_notification_config_get_prid(
-		linphone_account_params_get_push_notification_config(updated_marie_params));
+	    linphone_account_params_get_push_notification_config(updated_marie_params));
 	BC_ASSERT_STRING_EQUAL(prid, "token:voip"); // Ensure that push parameters have been generated for the new register
 
 	linphone_core_manager_destroy(marie);
 }
 
 test_t remote_provisioning_tests[] = {
-	TEST_NO_TAG("Remote provisioning skipped", remote_provisioning_skipped),
-	TEST_NO_TAG("Remote provisioning successful behind http", remote_provisioning_http),
-	TEST_NO_TAG("Remote provisioning successful behind https", remote_provisioning_https),
-	TEST_NO_TAG("Remote provisioning 404 not found", remote_provisioning_not_found),
-	TEST_NO_TAG("Remote provisioning invalid", remote_provisioning_invalid),
-	TEST_NO_TAG("Remote provisioning transient successful", remote_provisioning_transient),
-	TEST_NO_TAG("Remote provisioning default values", remote_provisioning_default_values),
-	TEST_NO_TAG("Remote provisioning from file", remote_provisioning_file),
-	TEST_NO_TAG("Remote provisioning invalid URI", remote_provisioning_invalid_uri),
-	TEST_NO_TAG("Remote provisioning check if push tokens are not lost", remote_provisioning_check_push_params)
+    TEST_NO_TAG("Remote provisioning skipped", remote_provisioning_skipped),
+    TEST_NO_TAG("Remote provisioning successful behind http", remote_provisioning_http),
+    TEST_NO_TAG("Remote provisioning successful behind https", remote_provisioning_https),
+    TEST_NO_TAG("Remote provisioning 404 not found", remote_provisioning_not_found),
+    TEST_NO_TAG("Remote provisioning invalid", remote_provisioning_invalid),
+    TEST_NO_TAG("Remote provisioning transient successful", remote_provisioning_transient),
+    TEST_NO_TAG("Remote provisioning default values", remote_provisioning_default_values),
+    TEST_NO_TAG("Remote provisioning from file", remote_provisioning_file),
+    TEST_NO_TAG("Remote provisioning invalid URI", remote_provisioning_invalid_uri),
+    TEST_NO_TAG("Remote provisioning check if push tokens are not lost", remote_provisioning_check_push_params)
 #ifdef HAVE_FLEXIAPI
-		,
-	TEST_NO_TAG("Remote Provisioning Flow", flexiapi_remote_provisioning_flow),
-	TEST_NO_TAG("Remote Provisioning Contacts List Flow", flexiapi_remote_provisioning_contacts_list_flow)
+        ,
+    TEST_NO_TAG("Remote Provisioning Flow", flexiapi_remote_provisioning_flow),
+    TEST_NO_TAG("Remote Provisioning Contacts List Flow", flexiapi_remote_provisioning_contacts_list_flow)
 #endif
 };
 
 test_suite_t remote_provisioning_test_suite = {"RemoteProvisioning",
-											   NULL,
-											   NULL,
-											   liblinphone_tester_before_each,
-											   liblinphone_tester_after_each,
-											   sizeof(remote_provisioning_tests) / sizeof(remote_provisioning_tests[0]),
-											   remote_provisioning_tests};
+                                               NULL,
+                                               NULL,
+                                               liblinphone_tester_before_each,
+                                               liblinphone_tester_after_each,
+                                               sizeof(remote_provisioning_tests) / sizeof(remote_provisioning_tests[0]),
+                                               remote_provisioning_tests};

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,21 +39,20 @@ IPv6Response::IPv6Response(LinphoneCore *core) : Response() {
 	setBody(ost.str());
 }
 
-IPv6Command::IPv6Command() :
-		DaemonCommand("ipv6", "ipv6 [enable|disable]",
-				"Enable or disable IPv6 respectively with the 'enable' and 'disable' parameters, return the status of the use of IPv6 without parameter.") {
-	addExample(make_unique<DaemonCommandExample>("ipv6 enable",
-						"Status: Ok\n\n"
-						"State: enabled"));
-	addExample(make_unique<DaemonCommandExample>("ipv6 disable",
-						"Status: Ok\n\n"
-						"State: disabled"));
-	addExample(make_unique<DaemonCommandExample>("ipv6",
-						"Status: Ok\n\n"
-						"State: disabled"));
+IPv6Command::IPv6Command()
+    : DaemonCommand("ipv6",
+                    "ipv6 [enable|disable]",
+                    "Enable or disable IPv6 respectively with the 'enable' and 'disable' parameters, return the status "
+                    "of the use of IPv6 without parameter.") {
+	addExample(make_unique<DaemonCommandExample>("ipv6 enable", "Status: Ok\n\n"
+	                                                            "State: enabled"));
+	addExample(make_unique<DaemonCommandExample>("ipv6 disable", "Status: Ok\n\n"
+	                                                             "State: disabled"));
+	addExample(make_unique<DaemonCommandExample>("ipv6", "Status: Ok\n\n"
+	                                                     "State: disabled"));
 }
 
-void IPv6Command::exec(Daemon *app, const string& args) {
+void IPv6Command::exec(Daemon *app, const string &args) {
 	string status;
 	istringstream ist(args);
 	ist >> status;

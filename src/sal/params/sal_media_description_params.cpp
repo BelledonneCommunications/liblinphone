@@ -18,30 +18,29 @@
  */
 
 #include "sal_media_description_params.h"
-#include "conference/params/call-session-params.h"
 #include "conference/params/call-session-params-p.h"
+#include "conference/params/call-session-params.h"
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
 SalMediaDescriptionParams::SalMediaDescriptionParams() {
-
 }
 
-SalMediaDescriptionParams::SalMediaDescriptionParams(const CallSessionParams * callParams) {
+SalMediaDescriptionParams::SalMediaDescriptionParams(const CallSessionParams *callParams) {
 	capabilityNegotiation = callParams->getPrivate()->capabilityNegotiationEnabled();
 	mergeTcapLines = callParams->getPrivate()->tcapLinesMerged();
 	mergeCfgLines = callParams->getPrivate()->cfgLinesMerged();
 }
 
-SalMediaDescriptionParams::SalMediaDescriptionParams(const SalMediaDescriptionParams & other) {
+SalMediaDescriptionParams::SalMediaDescriptionParams(const SalMediaDescriptionParams &other) {
 	capabilityNegotiation = other.capabilityNegotiation;
 	mergeTcapLines = other.mergeTcapLines;
 	mergeCfgLines = other.mergeCfgLines;
 }
 
-SalMediaDescriptionParams & SalMediaDescriptionParams::operator=(const SalMediaDescriptionParams & other) {
+SalMediaDescriptionParams &SalMediaDescriptionParams::operator=(const SalMediaDescriptionParams &other) {
 	capabilityNegotiation = other.capabilityNegotiation;
 	mergeTcapLines = other.mergeTcapLines;
 	mergeCfgLines = other.mergeCfgLines;
@@ -50,14 +49,13 @@ SalMediaDescriptionParams & SalMediaDescriptionParams::operator=(const SalMediaD
 }
 
 SalMediaDescriptionParams::~SalMediaDescriptionParams() {
-
 }
 
-bool SalMediaDescriptionParams::capabilityNegotiationSupported () const {
+bool SalMediaDescriptionParams::capabilityNegotiationSupported() const {
 	return capabilityNegotiation;
 }
 
-void SalMediaDescriptionParams::enableCapabilityNegotiationSupport (const bool enable) {
+void SalMediaDescriptionParams::enableCapabilityNegotiationSupport(const bool enable) {
 	capabilityNegotiation = enable;
 }
 
@@ -69,7 +67,7 @@ bool SalMediaDescriptionParams::cfgLinesMerged() const {
 	return false;
 }
 
-void SalMediaDescriptionParams::enableCfgLinesMerging (const bool enable) {
+void SalMediaDescriptionParams::enableCfgLinesMerging(const bool enable) {
 	mergeCfgLines = enable;
 }
 
@@ -81,7 +79,7 @@ bool SalMediaDescriptionParams::tcapLinesMerged() const {
 	return false;
 }
 
-void SalMediaDescriptionParams::enableTcapLineMerging (const bool enable) {
+void SalMediaDescriptionParams::enableTcapLineMerging(const bool enable) {
 	mergeTcapLines = enable;
 }
 

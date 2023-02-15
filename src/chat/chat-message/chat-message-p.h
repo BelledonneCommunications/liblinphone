@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@
 #include <belle-sip/types.h>
 
 #include "chat/chat-message/chat-message.h"
-#include "conference/conference-id.h"
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "chat/notification/imdn.h"
 #include "conference/conference-id.h"
@@ -48,7 +47,7 @@ class ChatMessagePrivate : public ObjectPrivate {
 	friend class NotificationMessagePrivate;
 
 public:
-	enum Step: int {
+	enum Step : int {
 		None = 1 << 0,
 		FileUpload = 1 << 1,
 		Multipart = 1 << 2,
@@ -61,166 +60,189 @@ public:
 		Sending = 1 << 9
 	};
 
-	void setApplyModifiers (bool value) { applyModifiers = value; }
+	void setApplyModifiers(bool value) {
+		applyModifiers = value;
+	}
 
-	void setStorageId (long long id);
-	void resetStorageId ();
+	void setStorageId(long long id);
+	void resetStorageId();
 
-	void setDirection (ChatMessage::Direction dir);
+	void setDirection(ChatMessage::Direction dir);
 
-	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
+	void
+	setParticipantState(const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
 
-	virtual void setState (ChatMessage::State newState);
-	void forceState (ChatMessage::State newState) {
+	virtual void setState(ChatMessage::State newState);
+	void forceState(ChatMessage::State newState) {
 		state = newState;
 	}
 
-	void setTime (time_t time);
+	void setTime(time_t time);
 
-	void setIsReadOnly (bool readOnly);
+	void setIsReadOnly(bool readOnly);
 
-	void markAsRead ();
+	void markAsRead();
 
-	bool isMarkedAsRead () const;
+	bool isMarkedAsRead() const;
 
-	void setImdnMessageId (const std::string &imdnMessageId);
+	void setImdnMessageId(const std::string &imdnMessageId);
 
-	void setForwardInfo (const std::string &fInfo);
-	void setReplyToMessageIdAndSenderAddress (const std::string &id, const IdentityAddress &sender);
+	void setForwardInfo(const std::string &fInfo);
+	void setReplyToMessageIdAndSenderAddress(const std::string &id, const IdentityAddress &sender);
 
-	void enableEphemeralWithTime (long time);
+	void enableEphemeralWithTime(long time);
 
-	void setEphemeralExpireTime (time_t expireTime);
+	void setEphemeralExpireTime(time_t expireTime);
 
-	void startEphemeralCountDown ();
+	void startEphemeralCountDown();
 
-	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
+	void setAuthenticatedFromAddress(const IdentityAddress &authenticatedFromAddress) {
 		this->authenticatedFromAddress = authenticatedFromAddress;
 	}
 
-	void forceFromAddress (const ConferenceAddress &fromAddress) {
+	void forceFromAddress(const ConferenceAddress &fromAddress) {
 		this->fromAddress = fromAddress;
 	}
 
-	void forceToAddress (const ConferenceAddress &toAddress) {
+	void forceToAddress(const ConferenceAddress &toAddress) {
 		this->toAddress = toAddress;
 	}
 
 	// Used by the ConferenceScheduler to keep track of the recipient Address in One-To-One Flexisip chat room
-	void setRecipientAddress (const IdentityAddress &recipientAddress) {
+	void setRecipientAddress(const IdentityAddress &recipientAddress) {
 		this->recipientAddress = recipientAddress;
 	}
 
-	void markContentsAsNotLoaded () {
+	void markContentsAsNotLoaded() {
 		contentsNotLoadedFromDatabase = true;
 	}
 
-	void loadContentsFromDatabase () const;
+	void loadContentsFromDatabase() const;
 
-	std::list<Content* > &getContents () {
+	std::list<Content *> &getContents() {
 		loadContentsFromDatabase();
 		return contents;
 	}
 
-	const std::list<Content* > &getContents () const {
+	const std::list<Content *> &getContents() const {
 		loadContentsFromDatabase();
 		return contents;
 	}
 
-	void setAutoFileTransferDownloadInProgress (bool yesno) {
+	void setAutoFileTransferDownloadInProgress(bool yesno) {
 		isAutoDownloadAttachedFilesInProgress = yesno;
 	}
 
-	bool isAutoFileTransferDownloadInProgress () const {
+	bool isAutoFileTransferDownloadInProgress() const {
 		return isAutoDownloadAttachedFilesInProgress;
 	}
 
 	void handleAutoDownload();
 
-	belle_http_request_t *getHttpRequest () const;
-	void setHttpRequest (belle_http_request_t *request);
+	belle_http_request_t *getHttpRequest() const;
+	void setHttpRequest(belle_http_request_t *request);
 
-	bool getDisplayNotificationRequired () const { return displayNotificationRequired; }
-	bool getNegativeDeliveryNotificationRequired () const { return negativeDeliveryNotificationRequired; }
-	bool getPositiveDeliveryNotificationRequired () const { return positiveDeliveryNotificationRequired; }
-	virtual void setDisplayNotificationRequired (bool value) { displayNotificationRequired = value; }
-	virtual void setNegativeDeliveryNotificationRequired (bool value) { negativeDeliveryNotificationRequired = value; }
-	virtual void setPositiveDeliveryNotificationRequired (bool value) { positiveDeliveryNotificationRequired = value; }
+	bool getDisplayNotificationRequired() const {
+		return displayNotificationRequired;
+	}
+	bool getNegativeDeliveryNotificationRequired() const {
+		return negativeDeliveryNotificationRequired;
+	}
+	bool getPositiveDeliveryNotificationRequired() const {
+		return positiveDeliveryNotificationRequired;
+	}
+	virtual void setDisplayNotificationRequired(bool value) {
+		displayNotificationRequired = value;
+	}
+	virtual void setNegativeDeliveryNotificationRequired(bool value) {
+		negativeDeliveryNotificationRequired = value;
+	}
+	virtual void setPositiveDeliveryNotificationRequired(bool value) {
+		positiveDeliveryNotificationRequired = value;
+	}
 
-	SalOp *getSalOp () const;
-	void setSalOp (SalOp *op);
+	SalOp *getSalOp() const;
+	void setSalOp(SalOp *op);
 
-	void disableDeliveryNotificationRequiredInDatabase ();
-	void disableDisplayNotificationRequiredInDatabase ();
+	void disableDeliveryNotificationRequiredInDatabase();
+	void disableDisplayNotificationRequiredInDatabase();
 
-	SalCustomHeader *getSalCustomHeaders () const;
-	void setSalCustomHeaders (SalCustomHeader *headers);
+	SalCustomHeader *getSalCustomHeaders() const;
+	void setSalCustomHeaders(SalCustomHeader *headers);
 
-	void addSalCustomHeader (const std::string &name, const std::string &value);
-	void removeSalCustomHeader (const std::string &name);
-	std::string getSalCustomHeaderValue (const std::string &name) const;
+	void addSalCustomHeader(const std::string &name, const std::string &value);
+	void removeSalCustomHeader(const std::string &name);
+	std::string getSalCustomHeaderValue(const std::string &name) const;
 
-	void loadFileTransferUrlFromBodyToContent ();
+	void loadFileTransferUrlFromBodyToContent();
 	std::string createFakeFileTransferFromUrl(const std::string &url);
 
-	void setChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
+	void setChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom);
 
-	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
+	void setEncryptionPrevented(bool value) {
+		encryptionPrevented = value;
+	}
 
 	void doNotRetryAutoDownload() {
 		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
 	}
-	void enableSenderAuthentication (bool value) { senderAuthenticationEnabled = value; }
+	void enableSenderAuthentication(bool value) {
+		senderAuthenticationEnabled = value;
+	}
 
-	void setUnencryptedContentWarning (bool value) { unencryptedContentWarning = value; }
-	bool getUnencryptedContentWarning () { return unencryptedContentWarning; }
+	void setUnencryptedContentWarning(bool value) {
+		unencryptedContentWarning = value;
+	}
+	bool getUnencryptedContentWarning() {
+		return unencryptedContentWarning;
+	}
 
 	// -----------------------------------------------------------------------------
 	// Deprecated methods only used for C wrapper, to be removed some day...
 	// -----------------------------------------------------------------------------
 
-	const ContentType &getContentType () const;
-	void setContentType (const ContentType &contentType);
+	const ContentType &getContentType() const;
+	void setContentType(const ContentType &contentType);
 
-	const std::string &getText () const;// Deprecated. Use UTF8
-	void setText (const std::string &text);// Deprecated. Use UTF8
-	
-	const std::string &getUtf8Text () const;
-	void setUtf8Text (const std::string &text);
+	const std::string &getText() const;    // Deprecated. Use UTF8
+	void setText(const std::string &text); // Deprecated. Use UTF8
 
-	const std::string &getFileTransferFilepath () const;
-	void setFileTransferFilepath (const std::string &path);
+	const std::string &getUtf8Text() const;
+	void setUtf8Text(const std::string &text);
 
-	const std::string &getAppdata () const;
-	void setAppdata (const std::string &appData);
+	const std::string &getFileTransferFilepath() const;
+	void setFileTransferFilepath(const std::string &path);
 
-	const std::string &getExternalBodyUrl () const;
-	void setExternalBodyUrl (const std::string &url);
+	const std::string &getAppdata() const;
+	void setAppdata(const std::string &appData);
 
-	const std::string &getCallId () const;
-	void setCallId (const std::string &id);
+	const std::string &getExternalBodyUrl() const;
+	void setExternalBodyUrl(const std::string &url);
 
-	bool hasTextContent () const;
-	const Content *getTextContent () const;
+	const std::string &getCallId() const;
+	void setCallId(const std::string &id);
+
+	bool hasTextContent() const;
+	const Content *getTextContent() const;
 	bool hasConferenceInvitationContent() const;
 
-	bool hasFileTransferContent () const;
-	const Content *getFileTransferContent () const;
-	const Content *getFileTransferInformation () const;
+	bool hasFileTransferContent() const;
+	const Content *getFileTransferContent() const;
+	const Content *getFileTransferInformation() const;
 
-	void addContent (Content *content);
-	void removeContent (Content *content);
-	void replaceContent (Content *contentToRemove, Content *contentToAdd);
+	void addContent(Content *content);
+	void removeContent(Content *content);
+	void replaceContent(Content *contentToRemove, Content *contentToAdd);
 
-	bool downloadFile ();
+	bool downloadFile();
 
-	LinphoneReason receive ();
-	void send ();
+	LinphoneReason receive();
+	void send();
 
-	void storeInDb ();
-	void updateInDb ();
+	void storeInDb();
+	void updateInDb();
 
-	static bool isValidStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
+	static bool isValidStateTransition(ChatMessage::State currentState, ChatMessage::State newState);
 
 	void restoreFileTransferContentAsFileContent();
 

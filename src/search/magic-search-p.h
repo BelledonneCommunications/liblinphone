@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,29 +22,29 @@
 #define _L_MAGIC_SEARCH_P_H_
 
 #include "magic-search.h"
-#include "search-async-data.h"
 #include "object/object-p.h"
+#include "search-async-data.h"
 #include <vector>
 
 LINPHONE_BEGIN_NAMESPACE
 
-class MagicSearchPrivate : public ObjectPrivate{
+class MagicSearchPrivate : public ObjectPrivate {
 private:
 	unsigned int mMaxWeight;
 	unsigned int mMinWeight;
 	unsigned int mSearchLimit; // Number of ResultSearch maximum when the search is limited
-	bool mLimitedSearch; // Limit the search
-	int mRequestDelay = 500;	// Delay the first request in ms
-	std::string mDelimiter; // Delimiter use for the search
+	bool mLimitedSearch;       // Limit the search
+	int mRequestDelay = 500;   // Delay the first request in ms
+	std::string mDelimiter;    // Delimiter use for the search
 	bool mUseDelimiter;
 	std::string mFilter;
 	bool_t mAutoResetCache; // When a new search start, let MagicSearch to clean its cache
-	
-	belle_sip_source_t * mIteration;
 
-	std::shared_ptr< std::list<std::shared_ptr<SearchResult>>> mCacheResult;
+	belle_sip_source_t *mIteration;
+
+	std::shared_ptr<std::list<std::shared_ptr<SearchResult>>> mCacheResult;
 	SearchAsyncData mAsyncData;
-	
+
 	L_DECLARE_PUBLIC(MagicSearch);
 };
 

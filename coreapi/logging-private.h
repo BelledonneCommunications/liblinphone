@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #ifndef _LOGGING_PRIVATE_H_
 #define _LOGGING_PRIVATE_H_
 
-#include <bctoolbox/logging.h>
 #include "linphone/logging.h"
+#include <bctoolbox/logging.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,9 +55,10 @@ unsigned int _linphone_log_mask_to_bctbx_log_mask(unsigned int mask);
  */
 void _linphone_logging_service_clean(void);
 
-void _linphone_logging_service_clear_callbacks (LinphoneLoggingService *log_service);
+void _linphone_logging_service_clear_callbacks(LinphoneLoggingService *log_service);
 
-void linphone_logging_service_set_current_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs);
+void linphone_logging_service_set_current_callbacks(LinphoneLoggingService *log_service,
+                                                    LinphoneLoggingServiceCbs *cbs);
 
 #ifdef __cplusplus
 }

@@ -32,7 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 
 class LINPHONE_PUBLIC PayloadType : public bellesip::HybridObject<LinphonePayloadType, PayloadType>,
-									public CoreAccessor {
+                                    public CoreAccessor {
 public:
 	struct Deleter {
 		void operator()(::PayloadType *p) {

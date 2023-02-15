@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #ifndef CONFERENCE_ENUMS_H
 #define CONFERENCE_ENUMS_H
 
-#include "linphone/utils/general.h"
 #include "linphone/enums/conference-enums.h"
+#include "linphone/utils/general.h"
 #include <string>
 
 LINPHONE_BEGIN_NAMESPACE
@@ -37,18 +37,20 @@ enum class ConferenceMediaCapabilities {
 	Text = 2   // Text capabilities
 };
 
-std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e);
+std::ostream &operator<<(std::ostream &lhs, ConferenceMediaCapabilities e);
 
 /**
  * Conference layout
  */
-enum class ConferenceLayout{
-	ActiveSpeaker = LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
-	Grid = LinphoneConferenceLayoutGrid,                   /**< Grid - each participant is given an equal sized image size */
+enum class ConferenceLayout {
+	ActiveSpeaker =
+	    LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in
+	                                              the center of the screen and other participants are minimized */
+	Grid = LinphoneConferenceLayoutGrid,       /**< Grid - each participant is given an equal sized image size */
 };
 
-std::ostream & operator<<(std::ostream & str, ConferenceLayout layout);
-std::string operator+(const std::string & str, ConferenceLayout layout);
+std::ostream &operator<<(std::ostream &str, ConferenceLayout layout);
+std::string operator+(const std::string &str, ConferenceLayout layout);
 
 LINPHONE_END_NAMESPACE
 

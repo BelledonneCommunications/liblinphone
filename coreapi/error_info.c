@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,11 +29,11 @@ BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneErrorInfo);
 
 static void linphone_error_info_reset(LinphoneErrorInfo *ei);
 
-static void error_info_destroy(LinphoneErrorInfo *ei){
+static void error_info_destroy(LinphoneErrorInfo *ei) {
 	linphone_error_info_reset(ei);
 }
 
-static void error_info_clone(LinphoneErrorInfo *ei, const LinphoneErrorInfo *other){
+static void error_info_clone(LinphoneErrorInfo *ei, const LinphoneErrorInfo *other) {
 	linphone_error_info_set_reason(ei, linphone_error_info_get_reason(other));
 	ei->protocol = bctbx_strdup(other->protocol);
 	ei->phrase = bctbx_strdup(other->phrase);
@@ -43,29 +43,28 @@ static void error_info_clone(LinphoneErrorInfo *ei, const LinphoneErrorInfo *oth
 	ei->retry_after = other->retry_after;
 }
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneErrorInfo, belle_sip_object_t,
-	error_info_destroy, // destroy
-	error_info_clone, // clone
-	NULL, // Marshall
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneErrorInfo,
+                           belle_sip_object_t,
+                           error_info_destroy, // destroy
+                           error_info_clone,   // clone
+                           NULL,               // Marshall
+                           FALSE);
 
-LinphoneErrorInfo *linphone_error_info_new(void){
+LinphoneErrorInfo *linphone_error_info_new(void) {
 	LinphoneErrorInfo *ei = belle_sip_object_new(LinphoneErrorInfo);
 	return ei;
 }
 
-LinphoneErrorInfo* linphone_error_info_ref ( LinphoneErrorInfo* ei ) {
-	return (LinphoneErrorInfo*) belle_sip_object_ref(ei);
+LinphoneErrorInfo *linphone_error_info_ref(LinphoneErrorInfo *ei) {
+	return (LinphoneErrorInfo *)belle_sip_object_ref(ei);
 }
 
-void linphone_error_info_unref ( LinphoneErrorInfo* ei ) {
+void linphone_error_info_unref(LinphoneErrorInfo *ei) {
 	belle_sip_object_unref(ei);
 }
 
-
-const char *linphone_reason_to_string(LinphoneReason err){
-	switch(err) {
+const char *linphone_reason_to_string(LinphoneReason err) {
+	switch (err) {
 		case LinphoneReasonNone:
 			return "No error";
 		case LinphoneReasonNoResponse:
@@ -123,37 +122,30 @@ typedef struct _error_code_reason_map {
 	LinphoneReason reason;
 } error_code_reason_map_t;
 
-static const error_code_reason_map_t error_code_reason_map[] = {
-	{ 200, LinphoneReasonNone },
-	{ 301, LinphoneReasonMovedPermanently },
-	{ 400, LinphoneReasonUnknown },
-	{ 401, LinphoneReasonUnauthorized },
-	{ 403, LinphoneReasonForbidden },
-	{ 404, LinphoneReasonNotFound },
-	{ 410, LinphoneReasonGone },
-	{ 415, LinphoneReasonUnsupportedContent },
-	{ 480, LinphoneReasonTemporarilyUnavailable },
-	{ 481, LinphoneReasonNoMatch },
-	{ 484, LinphoneReasonAddressIncomplete },
-	{ 486, LinphoneReasonBusy },
-	{ 488, LinphoneReasonNotAcceptable },
-	{ 489, LinphoneReasonBadEvent },
-	{ 501, LinphoneReasonNotImplemented },
-	{ 502, LinphoneReasonBadGateway },
-	{ 503, LinphoneReasonIOError },
-	{ 504, LinphoneReasonServerTimeout },
-	{ 600, LinphoneReasonDoNotDisturb },
-	{ 603, LinphoneReasonDeclined }
-};
+static const error_code_reason_map_t error_code_reason_map[] = {{200, LinphoneReasonNone},
+                                                                {301, LinphoneReasonMovedPermanently},
+                                                                {400, LinphoneReasonUnknown},
+                                                                {401, LinphoneReasonUnauthorized},
+                                                                {403, LinphoneReasonForbidden},
+                                                                {404, LinphoneReasonNotFound},
+                                                                {410, LinphoneReasonGone},
+                                                                {415, LinphoneReasonUnsupportedContent},
+                                                                {480, LinphoneReasonTemporarilyUnavailable},
+                                                                {481, LinphoneReasonNoMatch},
+                                                                {484, LinphoneReasonAddressIncomplete},
+                                                                {486, LinphoneReasonBusy},
+                                                                {488, LinphoneReasonNotAcceptable},
+                                                                {489, LinphoneReasonBadEvent},
+                                                                {501, LinphoneReasonNotImplemented},
+                                                                {502, LinphoneReasonBadGateway},
+                                                                {503, LinphoneReasonIOError},
+                                                                {504, LinphoneReasonServerTimeout},
+                                                                {600, LinphoneReasonDoNotDisturb},
+                                                                {603, LinphoneReasonDeclined}};
 
 static const error_code_reason_map_t retry_after_code_reason_map[] = {
-	{ 404, LinphoneReasonNotFound },
-	{ 480, LinphoneReasonTemporarilyUnavailable },
-	{ 486, LinphoneReasonBusy },
-	{ 503, LinphoneReasonIOError },
-	{ 600, LinphoneReasonDoNotDisturb },
-	{ 603, LinphoneReasonDeclined }
-};
+    {404, LinphoneReasonNotFound}, {480, LinphoneReasonTemporarilyUnavailable}, {486, LinphoneReasonBusy},
+    {503, LinphoneReasonIOError},  {600, LinphoneReasonDoNotDisturb},           {603, LinphoneReasonDeclined}};
 
 bool_t linphone_error_code_is_retry_after(int err) {
 	size_t i;
@@ -179,7 +171,7 @@ int linphone_reason_to_error_code(LinphoneReason reason) {
 	return 400;
 }
 
-static void linphone_error_info_reset(LinphoneErrorInfo *ei){
+static void linphone_error_info_reset(LinphoneErrorInfo *ei) {
 	ei->reason = LinphoneReasonNone;
 	STRING_RESET(ei->protocol);
 	STRING_RESET(ei->phrase);
@@ -193,7 +185,7 @@ static void linphone_error_info_reset(LinphoneErrorInfo *ei){
 	}
 }
 
-void linphone_error_info_from_sal(LinphoneErrorInfo *ei, const SalErrorInfo *sei){
+void linphone_error_info_from_sal(LinphoneErrorInfo *ei, const SalErrorInfo *sei) {
 	ei->reason = linphone_reason_from_sal(sei->reason);
 	ei->phrase = bctbx_strdup(sei->status_string);
 	ei->full_string = bctbx_strdup(sei->full_string);
@@ -203,36 +195,36 @@ void linphone_error_info_from_sal(LinphoneErrorInfo *ei, const SalErrorInfo *sei
 	ei->protocol = bctbx_strdup(sei->protocol);
 }
 
-/* If a reason header is provided (in reason_ei), then create a sub LinphoneErrorInfo attached to the first one, unless the reason header
- is in the request, in which case no primary error is given.*/
-void linphone_error_info_from_sal_reason_ei(LinphoneErrorInfo *ei, const SalErrorInfo *reason_ei){
-	if (ei->reason == LinphoneReasonNone){
+/* If a reason header is provided (in reason_ei), then create a sub LinphoneErrorInfo attached to the first one, unless
+ the reason header is in the request, in which case no primary error is given.*/
+void linphone_error_info_from_sal_reason_ei(LinphoneErrorInfo *ei, const SalErrorInfo *reason_ei) {
+	if (ei->reason == LinphoneReasonNone) {
 		/*no primary error given*/
 		linphone_error_info_reset(ei);
 		linphone_error_info_from_sal(ei, reason_ei);
 		return;
 	}
 
-	if (ei->sub_ei){
-		if (reason_ei->reason == SalReasonNone){
+	if (ei->sub_ei) {
+		if (reason_ei->reason == SalReasonNone) {
 			linphone_error_info_unref(ei->sub_ei);
 			ei->sub_ei = NULL;
 		}
-	}else{
-		if (reason_ei->reason != SalReasonNone){
+	} else {
+		if (reason_ei->reason != SalReasonNone) {
 			ei->sub_ei = linphone_error_info_new();
 		}
 	}
-	if (reason_ei->reason != SalReasonNone){
+	if (reason_ei->reason != SalReasonNone) {
 		linphone_error_info_from_sal(ei->sub_ei, reason_ei);
 	}
 }
 
-void linphone_error_info_from_sal_op(LinphoneErrorInfo *ei, const LinphonePrivate::SalOp *op){
-	if (op==NULL) {
+void linphone_error_info_from_sal_op(LinphoneErrorInfo *ei, const LinphonePrivate::SalOp *op) {
+	if (op == NULL) {
 		/*leave previous values in LinphoneErrorInfo, the op may have been released already.*/
 		return;
-	}else{
+	} else {
 		const SalErrorInfo *sei;
 		linphone_error_info_reset(ei);
 		sei = op->getErrorInfo();
@@ -242,7 +234,7 @@ void linphone_error_info_from_sal_op(LinphoneErrorInfo *ei, const LinphonePrivat
 	}
 }
 
-void linphone_error_info_fields_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei){
+void linphone_error_info_fields_to_sal(const LinphoneErrorInfo *ei, SalErrorInfo *sei) {
 	sei->reason = linphone_reason_to_sal(linphone_error_info_get_reason(ei));
 	sei->status_string = bctbx_strdup(ei->phrase);
 	sei->full_string = bctbx_strdup(ei->full_string);
@@ -252,26 +244,30 @@ void linphone_error_info_fields_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo
 	sei->protocol = bctbx_strdup(ei->protocol);
 }
 
-void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei){
+void linphone_error_info_to_sal(const LinphoneErrorInfo *ei, SalErrorInfo *sei) {
 
 	linphone_error_info_fields_to_sal(ei, sei);
-	if (ei->sub_ei !=NULL) {
+	if (ei->sub_ei != NULL) {
 
 		linphone_error_info_to_sal(ei->sub_ei, sei->sub_sei);
 	}
 }
 
-
-void linphone_error_info_set(LinphoneErrorInfo *ei, const char *protocol, LinphoneReason reason, int code, const char *status_string, const char *warning){
+void linphone_error_info_set(LinphoneErrorInfo *ei,
+                             const char *protocol,
+                             LinphoneReason reason,
+                             int code,
+                             const char *status_string,
+                             const char *warning) {
 	linphone_error_info_reset(ei);
 	ei->reason = reason;
 	ei->protocol_code = code;
-	ei->protocol = bctbx_strdup(protocol ?  protocol : "SIP");
+	ei->protocol = bctbx_strdup(protocol ? protocol : "SIP");
 	ei->phrase = bctbx_strdup(status_string);
 	ei->warnings = bctbx_strdup(warning);
 }
 
-int linphone_error_info_get_retry_after(const LinphoneErrorInfo *ei){
+int linphone_error_info_get_retry_after(const LinphoneErrorInfo *ei) {
 	return ei->retry_after;
 }
 
@@ -279,7 +275,7 @@ LinphoneReason linphone_error_info_get_reason(const LinphoneErrorInfo *ei) {
 	return ei->reason;
 }
 
-const char *linphone_error_info_get_protocol(const LinphoneErrorInfo *ei){
+const char *linphone_error_info_get_protocol(const LinphoneErrorInfo *ei) {
 	return ei->protocol;
 }
 
@@ -288,7 +284,7 @@ const char *linphone_error_info_get_phrase(const LinphoneErrorInfo *ei) {
 }
 
 /*deprecated, kept for binary compatibility*/
-const char *linphone_error_info_get_details(const LinphoneErrorInfo *ei){
+const char *linphone_error_info_get_details(const LinphoneErrorInfo *ei) {
 	return linphone_error_info_get_warnings(ei);
 }
 
@@ -300,40 +296,40 @@ int linphone_error_info_get_protocol_code(const LinphoneErrorInfo *ei) {
 	return ei->protocol_code;
 }
 
-LinphoneErrorInfo * linphone_error_info_get_sub_error_info(const LinphoneErrorInfo *ei){
+LinphoneErrorInfo *linphone_error_info_get_sub_error_info(const LinphoneErrorInfo *ei) {
 	return ei->sub_ei;
 }
 
-void linphone_error_info_set_retry_after(LinphoneErrorInfo *ei, int retry_after){
+void linphone_error_info_set_retry_after(LinphoneErrorInfo *ei, int retry_after) {
 	ei->retry_after = retry_after;
 }
 
-void linphone_error_info_set_reason(LinphoneErrorInfo *ei, LinphoneReason reason){
+void linphone_error_info_set_reason(LinphoneErrorInfo *ei, LinphoneReason reason) {
 	ei->reason = reason;
 }
 
-void linphone_error_info_set_protocol(LinphoneErrorInfo *ei, const char *proto){
+void linphone_error_info_set_protocol(LinphoneErrorInfo *ei, const char *proto) {
 	STRING_SET(ei->protocol, proto);
 }
 
-void linphone_error_info_set_protocol_code(LinphoneErrorInfo *ei, int code){
+void linphone_error_info_set_protocol_code(LinphoneErrorInfo *ei, int code) {
 	ei->protocol_code = code;
 }
 
-void linphone_error_info_set_phrase(LinphoneErrorInfo *ei, const char *phrase){
+void linphone_error_info_set_phrase(LinphoneErrorInfo *ei, const char *phrase) {
 	STRING_SET(ei->phrase, phrase);
 }
 
-void linphone_error_info_set_warnings(LinphoneErrorInfo *ei, const char *warnings){
+void linphone_error_info_set_warnings(LinphoneErrorInfo *ei, const char *warnings) {
 	STRING_SET(ei->warnings, warnings);
 }
 
-void linphone_error_info_set_sub_error_info(LinphoneErrorInfo *ei, LinphoneErrorInfo *appended_ei){
-	if (ei->sub_ei){
+void linphone_error_info_set_sub_error_info(LinphoneErrorInfo *ei, LinphoneErrorInfo *appended_ei) {
+	if (ei->sub_ei) {
 		linphone_error_info_unref(ei->sub_ei);
 		ei->sub_ei = NULL;
 	}
-	if (appended_ei != NULL){
+	if (appended_ei != NULL) {
 		ei->sub_ei = linphone_error_info_ref(appended_ei);
 	}
 }

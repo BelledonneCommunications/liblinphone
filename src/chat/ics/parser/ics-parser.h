@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,21 +29,21 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Ics {
-	class ParserPrivate;
+class ParserPrivate;
 
-	class LINPHONE_PUBLIC Parser : public Singleton<Parser> {
-		friend class Singleton<Parser>;
+class LINPHONE_PUBLIC Parser : public Singleton<Parser> {
+	friend class Singleton<Parser>;
 
-	public:
-		std::shared_ptr<Icalendar> parseIcs (const std::string &input);
+public:
+	std::shared_ptr<Icalendar> parseIcs(const std::string &input);
 
-	private:
-		Parser ();
+private:
+	Parser();
 
-		L_DECLARE_PRIVATE(Parser);
-		L_DISABLE_COPY(Parser);
-	};
-}
+	L_DECLARE_PRIVATE(Parser);
+	L_DISABLE_COPY(Parser);
+};
+} // namespace Ics
 
 LINPHONE_END_NAMESPACE
 

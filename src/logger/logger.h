@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,18 +33,12 @@ class LoggerPrivate;
 
 class LINPHONE_PUBLIC Logger : public BaseObject {
 public:
-	enum Level {
-		Debug,
-		Info,
-		Warning,
-		Error,
-		Fatal
-	};
+	enum Level { Debug, Info, Warning, Error, Fatal };
 
-	explicit Logger (Level level);
-	~Logger ();
+	explicit Logger(Level level);
+	~Logger();
 
-	std::ostringstream &getOutput ();
+	std::ostringstream &getOutput();
 
 private:
 	L_DECLARE_PRIVATE(Logger);
@@ -55,8 +49,8 @@ class DurationLoggerPrivate;
 
 class DurationLogger : public BaseObject {
 public:
-	DurationLogger (const std::string &label, Logger::Level level = Logger::Info);
-	~DurationLogger ();
+	DurationLogger(const std::string &label, Logger::Level level = Logger::Info);
+	~DurationLogger();
 
 private:
 	L_DECLARE_PRIVATE(DurationLogger);
@@ -73,9 +67,10 @@ LINPHONE_END_NAMESPACE
 
 #define L_BEGIN_LOG_EXCEPTION try {
 
-#define L_END_LOG_EXCEPTION \
-	} catch (const exception &e) { \
-		lWarning() << "Error: " << e.what(); \
+#define L_END_LOG_EXCEPTION                                                                                            \
+	}                                                                                                                  \
+	catch (const exception &e) {                                                                                       \
+		lWarning() << "Error: " << e.what();                                                                           \
 	}
 
 #endif // ifndef _L_LOGGER_H_

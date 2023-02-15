@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,28 +22,23 @@
 
 using namespace std;
 
-CallTransferCommand::CallTransferCommand() :
-	DaemonCommand("call-transfer",
-				  "call-transfer <call_to_transfer_id> <call_to_transfer_to_id>|<sip_url_to_transfer_to>",
-				  "Transfer a call that you aswered to another party")
-{
-	addExample(make_unique<DaemonCommandExample>("call-transfer 1 sip:john",
-										"Status: Ok\n\n"
-										"Call ID: 1\n"
-										"Transfer to: sip:john"));
+CallTransferCommand::CallTransferCommand()
+    : DaemonCommand("call-transfer",
+                    "call-transfer <call_to_transfer_id> <call_to_transfer_to_id>|<sip_url_to_transfer_to>",
+                    "Transfer a call that you aswered to another party") {
+	addExample(make_unique<DaemonCommandExample>("call-transfer 1 sip:john", "Status: Ok\n\n"
+	                                                                         "Call ID: 1\n"
+	                                                                         "Transfer to: sip:john"));
 
-	addExample(make_unique<DaemonCommandExample>("call-transfer 2 sip:john",
-										"Status: Error\n"
-										"Reason: No call with such id."));
+	addExample(make_unique<DaemonCommandExample>("call-transfer 2 sip:john", "Status: Error\n"
+	                                                                         "Reason: No call with such id."));
 
-	addExample(make_unique<DaemonCommandExample>("call-transfer 1 2",
-										"Status: Ok\n\n"
-										"Call ID: 1\n"
-										"Transfer to: 2"));
+	addExample(make_unique<DaemonCommandExample>("call-transfer 1 2", "Status: Ok\n\n"
+	                                                                  "Call ID: 1\n"
+	                                                                  "Transfer to: 2"));
 }
 
-void CallTransferCommand::exec(Daemon* app, const string& args)
-{
+void CallTransferCommand::exec(Daemon *app, const string &args) {
 	LinphoneCall *call_to_transfer = NULL;
 	LinphoneCall *call_to_transfer_to = NULL;
 	istringstream ist(args);
@@ -62,14 +57,16 @@ void CallTransferCommand::exec(Daemon* app, const string& args)
 		return;
 	}
 	if (ist.peek() == EOF) {
-		app->sendResponse(Response("Missing call_to_transfer_to_id or sip_uri_to_transfer_to parameter.", Response::Error));
+		app->sendResponse(
+		    Response("Missing call_to_transfer_to_id or sip_uri_to_transfer_to parameter.", Response::Error));
 	}
 	ist >> call_to_transfer_to_id;
 	if (ist.fail()) {
 		ist.clear();
 		ist >> sip_uri_to_transfer_to;
 		if (ist.fail()) {
-			app->sendResponse(Response("Invalid command format (wrong call_to_transfer_to_id or sip_uri_to_transfer_to parameter."));
+			app->sendResponse(
+			    Response("Invalid command format (wrong call_to_transfer_to_id or sip_uri_to_transfer_to parameter."));
 			return;
 		}
 	}

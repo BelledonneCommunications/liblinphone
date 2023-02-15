@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,16 +29,17 @@ LINPHONE_BEGIN_NAMESPACE
 
 class CpimChatMessageModifier : public ChatMessageModifier {
 public:
-	CpimChatMessageModifier () = default;
+	CpimChatMessageModifier() = default;
 
-	Result encode (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	Result decode (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	Content* createMinimalCpimContentForLimeMessage(const std::shared_ptr<ChatMessage> &message) const;
-	std::string parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message, const Content& cpimContent) const;
+	Result encode(const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
+	Result decode(const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
+	Content *createMinimalCpimContentForLimeMessage(const std::shared_ptr<ChatMessage> &message) const;
+	std::string parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message,
+	                                                 const Content &cpimContent) const;
 
 private:
-	std::string cpimAddressDisplayName (const Address &addr) const;
-	std::string cpimAddressUri (const Address &addr) const;
+	std::string cpimAddressDisplayName(const Address &addr) const;
+	std::string cpimAddressUri(const Address &addr) const;
 };
 
 LINPHONE_END_NAMESPACE

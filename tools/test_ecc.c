@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "linphone/core.h"
 #include "linphone/core_utils.h"
 #if _MSC_VER
@@ -25,10 +27,12 @@
 #endif
 static int done = 0;
 
-static void calibration_finished(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay, void *data) {
+static void calibration_finished(BCTBX_UNUSED(LinphoneCore *lc),
+                                 LinphoneEcCalibratorStatus status,
+                                 int delay,
+                                 BCTBX_UNUSED(void *data)) {
 	ms_message("echo calibration finished %s.", status == LinphoneEcCalibratorDone ? "successfully" : "with faillure");
-	if (status == LinphoneEcCalibratorDone)
-		ms_message("Measured delay is %i", delay);
+	if (status == LinphoneEcCalibratorDone) ms_message("Measured delay is %i", delay);
 	done = 1;
 }
 
@@ -48,9 +52,8 @@ void parse_args(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
 	LinphoneCoreVTable vtable = {0};
 	LinphoneCore *lc;
-	if (argc > 1)
-		parse_args(argc, argv);
-	lc = linphone_core_new(&vtable, config_file[0] ?  config_file  : NULL, NULL, NULL);
+	if (argc > 1) parse_args(argc, argv);
+	lc = linphone_core_new(&vtable, config_file[0] ? config_file : NULL, NULL, NULL);
 
 	linphone_core_enable_logs(NULL);
 

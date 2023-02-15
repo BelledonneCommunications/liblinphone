@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,10 +34,10 @@ class IdentityAddressParser : public Singleton<IdentityAddressParser> {
 	friend class Singleton<IdentityAddressParser>;
 
 public:
-	std::shared_ptr<IdentityAddress> parseAddress (const std::string &input);
+	std::shared_ptr<IdentityAddress> parseAddress(const std::string &input);
 
 private:
-	IdentityAddressParser ();
+	IdentityAddressParser();
 
 	L_DECLARE_PRIVATE(IdentityAddressParser);
 	L_DISABLE_COPY(IdentityAddressParser);

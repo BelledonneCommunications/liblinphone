@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
  */
 
 #include "basic-to-client-group-chat-room.h"
+#include "c-wrapper/c-wrapper.h"
 #include "chat-room-p.h"
 #include "proxy-chat-room-p.h"
-#include "c-wrapper/c-wrapper.h"
 
 // =============================================================================
 
@@ -29,19 +29,19 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-void ProxyChatRoomPrivate::setupProxy () {
+void ProxyChatRoomPrivate::setupProxy() {
 	L_Q();
 	static_pointer_cast<ChatRoom>(chatRoom)->getPrivate()->setProxyChatRoom(q);
 }
 
-void ProxyChatRoomPrivate::teardownProxy () {
+void ProxyChatRoomPrivate::teardownProxy() {
 	static_pointer_cast<ChatRoom>(chatRoom)->getPrivate()->setProxyChatRoom(nullptr);
 }
 
 // -----------------------------------------------------------------------------
 
-ProxyChatRoom::ProxyChatRoom (ProxyChatRoomPrivate &p, const shared_ptr<ChatRoom> &chatRoom) :
-	AbstractChatRoom(p, chatRoom->getCore()) {
+ProxyChatRoom::ProxyChatRoom(ProxyChatRoomPrivate &p, const shared_ptr<ChatRoom> &chatRoom)
+    : AbstractChatRoom(p, chatRoom->getCore()) {
 	L_D();
 
 	d->chatRoom = chatRoom;
@@ -50,73 +50,73 @@ ProxyChatRoom::ProxyChatRoom (ProxyChatRoomPrivate &p, const shared_ptr<ChatRoom
 
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<Conference> ProxyChatRoom::getConference () const {
+std::shared_ptr<Conference> ProxyChatRoom::getConference() const {
 	L_D();
 	return d->chatRoom->getConference();
 }
 
-const ConferenceId &ProxyChatRoom::getConferenceId () const {
+const ConferenceId &ProxyChatRoom::getConferenceId() const {
 	L_D();
 	return d->chatRoom->getConferenceId();
 }
 
-const IdentityAddress &ProxyChatRoom::getPeerAddress () const {
+const IdentityAddress &ProxyChatRoom::getPeerAddress() const {
 	L_D();
 	return d->chatRoom->getPeerAddress();
 }
 
-const IdentityAddress &ProxyChatRoom::getLocalAddress () const {
+const IdentityAddress &ProxyChatRoom::getLocalAddress() const {
 	L_D();
 	return d->chatRoom->getLocalAddress();
 }
 
 // -----------------------------------------------------------------------------
 
-time_t ProxyChatRoom::getCreationTime () const {
+time_t ProxyChatRoom::getCreationTime() const {
 	L_D();
 	return d->chatRoom->getCreationTime();
 }
 
-time_t ProxyChatRoom::getLastUpdateTime () const {
+time_t ProxyChatRoom::getLastUpdateTime() const {
 	L_D();
 	return d->chatRoom->getLastUpdateTime();
 }
 
 // -----------------------------------------------------------------------------
 
-ProxyChatRoom::CapabilitiesMask ProxyChatRoom::getCapabilities () const {
+ProxyChatRoom::CapabilitiesMask ProxyChatRoom::getCapabilities() const {
 	L_D();
 	return d->chatRoom->getCapabilities() | ProxyChatRoom::Capabilities::Proxy;
 }
 
-ProxyChatRoom::SecurityLevel ProxyChatRoom::getSecurityLevel () const {
+ProxyChatRoom::SecurityLevel ProxyChatRoom::getSecurityLevel() const {
 	L_D();
 	return d->chatRoom->getSecurityLevel();
 }
 
-ConferenceInterface::State ProxyChatRoom::getState () const {
+ConferenceInterface::State ProxyChatRoom::getState() const {
 	L_D();
 	return d->chatRoom->getState();
 }
 
-bool ProxyChatRoom::hasBeenLeft () const {
+bool ProxyChatRoom::hasBeenLeft() const {
 	L_D();
 	return d->chatRoom->hasBeenLeft();
 }
 
-bool ProxyChatRoom::isReadOnly () const {
+bool ProxyChatRoom::isReadOnly() const {
 	L_D();
 	return d->chatRoom->isReadOnly();
 }
 
 // -----------------------------------------------------------------------------
 
-list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistory (int nLast) const {
+list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistory(int nLast) const {
 	L_D();
 	return d->chatRoom->getMessageHistory(nLast);
 }
 
-list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistoryRange (int begin, int end) const {
+list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistoryRange(int begin, int end) const {
 	L_D();
 	return d->chatRoom->getMessageHistoryRange(begin, end);
 }
@@ -126,149 +126,147 @@ list<shared_ptr<ChatMessage>> ProxyChatRoom::getUnreadChatMessages() const {
 	return d->chatRoom->getUnreadChatMessages();
 }
 
-int ProxyChatRoom::getMessageHistorySize () const {
+int ProxyChatRoom::getMessageHistorySize() const {
 	L_D();
 	return d->chatRoom->getMessageHistorySize();
 }
 
-list<shared_ptr<EventLog>> ProxyChatRoom::getHistory (int nLast) const {
+list<shared_ptr<EventLog>> ProxyChatRoom::getHistory(int nLast) const {
 	L_D();
 	return d->chatRoom->getHistory(nLast);
 }
 
-list<shared_ptr<EventLog>> ProxyChatRoom::getHistoryRange (int begin, int end) const {
+list<shared_ptr<EventLog>> ProxyChatRoom::getHistoryRange(int begin, int end) const {
 	L_D();
 	return d->chatRoom->getHistoryRange(begin, end);
 }
 
-int ProxyChatRoom::getHistorySize () const {
+int ProxyChatRoom::getHistorySize() const {
 	L_D();
 	return d->chatRoom->getHistorySize();
 }
 
-void ProxyChatRoom::deleteFromDb () {
+void ProxyChatRoom::deleteFromDb() {
 	L_D();
 	d->chatRoom->deleteFromDb();
 }
 
-void ProxyChatRoom::deleteHistory () {
+void ProxyChatRoom::deleteHistory() {
 	L_D();
 	d->chatRoom->deleteHistory();
 }
 
-void ProxyChatRoom::deleteMessageFromHistory (const shared_ptr<ChatMessage> &message) {
+void ProxyChatRoom::deleteMessageFromHistory(const shared_ptr<ChatMessage> &message) {
 	L_D();
 	d->chatRoom->deleteMessageFromHistory(message);
 }
 
-shared_ptr<ChatMessage> ProxyChatRoom::getLastChatMessageInHistory () const {
+shared_ptr<ChatMessage> ProxyChatRoom::getLastChatMessageInHistory() const {
 	L_D();
 	return d->chatRoom->getLastChatMessageInHistory();
 }
 
-bool ProxyChatRoom::isEmpty () const {
+bool ProxyChatRoom::isEmpty() const {
 	L_D();
 	return d->chatRoom->isEmpty();
 }
 
-int ProxyChatRoom::getChatMessageCount () const {
+int ProxyChatRoom::getChatMessageCount() const {
 	L_D();
 	return d->chatRoom->getChatMessageCount();
 }
 
-int ProxyChatRoom::getUnreadChatMessageCount () const {
+int ProxyChatRoom::getUnreadChatMessageCount() const {
 	L_D();
 	return d->chatRoom->getUnreadChatMessageCount();
 }
 
 // -----------------------------------------------------------------------------
 
-void ProxyChatRoom::compose () {
+void ProxyChatRoom::compose() {
 	L_D();
 	return d->chatRoom->compose();
 }
 
-bool ProxyChatRoom::isRemoteComposing () const {
+bool ProxyChatRoom::isRemoteComposing() const {
 	L_D();
 	return d->chatRoom->isRemoteComposing();
 }
 
-list<IdentityAddress> ProxyChatRoom::getComposingAddresses () const {
+list<IdentityAddress> ProxyChatRoom::getComposingAddresses() const {
 	L_D();
 	return d->chatRoom->getComposingAddresses();
 }
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<ChatMessage> ProxyChatRoom::createChatMessage () {
+shared_ptr<ChatMessage> ProxyChatRoom::createChatMessage() {
 	L_D();
 	return d->chatRoom->createChatMessage();
 }
 
-//Deprecated
-shared_ptr<ChatMessage> ProxyChatRoom::createChatMessage (const string &text) {
+// Deprecated
+shared_ptr<ChatMessage> ProxyChatRoom::createChatMessage(const string &text) {
 	L_D();
 	return d->chatRoom->createChatMessage(text);
 }
-shared_ptr<ChatMessage> ProxyChatRoom::createChatMessageFromUtf8 (const string &text) {
+shared_ptr<ChatMessage> ProxyChatRoom::createChatMessageFromUtf8(const string &text) {
 	L_D();
 	return d->chatRoom->createChatMessageFromUtf8(text);
 }
-shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage (FileContent *content) {
+shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage(FileContent *content) {
 	L_D();
 	return d->chatRoom->createFileTransferMessage(content);
 }
 
-shared_ptr<ChatMessage> ProxyChatRoom::createForwardMessage (const shared_ptr<ChatMessage> &msg) {
+shared_ptr<ChatMessage> ProxyChatRoom::createForwardMessage(const shared_ptr<ChatMessage> &msg) {
 	L_D();
 	return d->chatRoom->createForwardMessage(msg);
 }
 
-shared_ptr<ChatMessage> ProxyChatRoom::createReplyMessage (const shared_ptr<ChatMessage> &msg) {
+shared_ptr<ChatMessage> ProxyChatRoom::createReplyMessage(const shared_ptr<ChatMessage> &msg) {
 	L_D();
 	return d->chatRoom->createReplyMessage(msg);
 }
 // -----------------------------------------------------------------------------
 
-list<shared_ptr<ChatMessage>> ProxyChatRoom::findChatMessages (const list<string> &messageIds) const {
+list<shared_ptr<ChatMessage>> ProxyChatRoom::findChatMessages(const list<string> &messageIds) const {
 	L_D();
 	return d->chatRoom->findChatMessages(messageIds);
 }
 
-shared_ptr<ChatMessage> ProxyChatRoom::findChatMessage (const string &messageId) const {
+shared_ptr<ChatMessage> ProxyChatRoom::findChatMessage(const string &messageId) const {
 	L_D();
 	return d->chatRoom->findChatMessage(messageId);
 }
 
-shared_ptr<ChatMessage> ProxyChatRoom::findChatMessage (
-	const string &messageId,
-	ChatMessage::Direction direction
-) const {
+shared_ptr<ChatMessage> ProxyChatRoom::findChatMessage(const string &messageId,
+                                                       ChatMessage::Direction direction) const {
 	L_D();
 	return d->chatRoom->findChatMessage(messageId, direction);
 }
 
-void ProxyChatRoom::markAsRead () {
+void ProxyChatRoom::markAsRead() {
 	L_D();
 	d->chatRoom->markAsRead();
 }
 
-void ProxyChatRoom::enableEphemeral (bool ephem, bool updateDb) {
+void ProxyChatRoom::enableEphemeral(bool ephem, bool updateDb) {
 	L_D();
 	d->chatRoom->enableEphemeral(ephem, updateDb);
 }
 
-bool ProxyChatRoom::ephemeralEnabled () const {
+bool ProxyChatRoom::ephemeralEnabled() const {
 	L_D();
 	return d->chatRoom->ephemeralEnabled();
 }
 
-void ProxyChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
+void ProxyChatRoom::setEphemeralLifetime(long lifetime, bool updateDb) {
 	L_D();
 	d->chatRoom->setEphemeralLifetime(lifetime, updateDb);
 }
 
-long ProxyChatRoom::getEphemeralLifetime () const {
+long ProxyChatRoom::getEphemeralLifetime() const {
 	L_D();
 	return d->chatRoom->getEphemeralLifetime();
 }
@@ -283,125 +281,115 @@ AbstractChatRoom::EphemeralMode ProxyChatRoom::getEphemeralMode() const {
 	return d->chatRoom->getEphemeralMode();
 }
 
-
-bool ProxyChatRoom::ephemeralSupportedByAllParticipants () const {
+bool ProxyChatRoom::ephemeralSupportedByAllParticipants() const {
 	L_D();
 	return d->chatRoom->ephemeralSupportedByAllParticipants();
 }
 
 // -----------------------------------------------------------------------------
 
-const ConferenceAddress &ProxyChatRoom::getConferenceAddress () const {
+const ConferenceAddress &ProxyChatRoom::getConferenceAddress() const {
 	L_D();
 	return d->chatRoom->getConferenceAddress();
 }
 
 // -----------------------------------------------------------------------------
-
-void ProxyChatRoom::allowCpim (bool value) {
-
+void ProxyChatRoom::allowCpim(bool) {
 }
 
-void ProxyChatRoom::allowMultipart (bool value) {
-
+void ProxyChatRoom::allowMultipart(bool) {
 }
 
-bool ProxyChatRoom::canHandleCpim () const {
+bool ProxyChatRoom::canHandleCpim() const {
 	L_D();
 	return d->chatRoom->canHandleCpim();
 }
 
-bool ProxyChatRoom::canHandleMultipart () const {
+bool ProxyChatRoom::canHandleMultipart() const {
 	L_D();
 	return d->chatRoom->canHandleMultipart();
 }
 
-bool ProxyChatRoom::addParticipant (
-	std::shared_ptr<Call> call
-) {
+bool ProxyChatRoom::addParticipant(std::shared_ptr<Call> call) {
 	L_D();
 	return d->chatRoom->addParticipant(call);
 }
 
-bool ProxyChatRoom::addParticipant (
-	const IdentityAddress &participantAddress
-) {
+bool ProxyChatRoom::addParticipant(const IdentityAddress &participantAddress) {
 	L_D();
 	return d->chatRoom->addParticipant(participantAddress);
 }
 
-bool ProxyChatRoom::addParticipants (
-	const list<IdentityAddress> &addresses
-) {
+bool ProxyChatRoom::addParticipants(const list<IdentityAddress> &addresses) {
 	L_D();
 	return d->chatRoom->addParticipants(addresses);
 }
 
-bool ProxyChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
+bool ProxyChatRoom::removeParticipant(const shared_ptr<Participant> &participant) {
 	L_D();
 	return d->chatRoom->removeParticipant(participant);
 }
 
-bool ProxyChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
+bool ProxyChatRoom::removeParticipants(const list<shared_ptr<Participant>> &participants) {
 	L_D();
 	return d->chatRoom->removeParticipants(participants);
 }
 
-shared_ptr<Participant> ProxyChatRoom::findParticipant (const IdentityAddress &participantAddress) const {
+shared_ptr<Participant> ProxyChatRoom::findParticipant(const IdentityAddress &participantAddress) const {
 	L_D();
 	return d->chatRoom->findParticipant(participantAddress);
 }
 
-shared_ptr<Participant> ProxyChatRoom::getMe () const {
+shared_ptr<Participant> ProxyChatRoom::getMe() const {
 	L_D();
 	return d->chatRoom->getMe();
 }
 
-int ProxyChatRoom::getParticipantCount () const {
+int ProxyChatRoom::getParticipantCount() const {
 	L_D();
 	return d->chatRoom->getParticipantCount();
 }
 
-const list<shared_ptr<Participant>> &ProxyChatRoom::getParticipants () const {
+const list<shared_ptr<Participant>> &ProxyChatRoom::getParticipants() const {
 	L_D();
 	return d->chatRoom->getParticipants();
 }
 
-const list<shared_ptr<ParticipantDevice>> ProxyChatRoom::getParticipantDevices () const {
+const list<shared_ptr<ParticipantDevice>> ProxyChatRoom::getParticipantDevices() const {
 	L_D();
 	return d->chatRoom->getParticipantDevices();
 }
 
-void ProxyChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
+void ProxyChatRoom::setParticipantAdminStatus(const shared_ptr<Participant> &participant, bool isAdmin) {
 	L_D();
 	d->chatRoom->setParticipantAdminStatus(participant, isAdmin);
 }
 
 // -----------------------------------------------------------------------------
 
-const string & ProxyChatRoom::getSubject () const {
+const string &ProxyChatRoom::getSubject() const {
 	L_D();
 	return d->chatRoom->getSubject();
 }
 
-void ProxyChatRoom::setSubject (const string &subject) {
+void ProxyChatRoom::setSubject(const string &subject) {
 	L_D();
 	d->chatRoom->setSubject(subject);
 }
 
 // -----------------------------------------------------------------------------
 
-void ProxyChatRoom::join () {
+void ProxyChatRoom::join() {
 	L_D();
 	d->chatRoom->join();
 }
 
-void ProxyChatRoom::join (const IdentityAddress &participantAddress) {
+void ProxyChatRoom::join(const IdentityAddress &participantAddress) {
 	L_D();
 	d->chatRoom->join(participantAddress);
 }
 
-void ProxyChatRoom::leave () {
+void ProxyChatRoom::leave() {
 	L_D();
 	d->chatRoom->leave();
 }
@@ -413,7 +401,7 @@ bool ProxyChatRoom::update(const ConferenceParamsInterface &newParameters) {
 	return d->chatRoom->update(newParameters);
 }
 
-const shared_ptr<AbstractChatRoom> &ProxyChatRoom::getProxiedChatRoom () const {
+const shared_ptr<AbstractChatRoom> &ProxyChatRoom::getProxiedChatRoom() const {
 	L_D();
 	return d->chatRoom;
 }
@@ -424,22 +412,22 @@ const std::shared_ptr<ChatRoomParams> &ProxyChatRoom::getCurrentParams() const {
 	return d->chatRoom->getCurrentParams();
 }
 
-void ProxyChatRoom::setState (ConferenceInterface::State state) {
+void ProxyChatRoom::setState(ConferenceInterface::State state) {
 	L_D();
 	d->chatRoom->setState(state);
 }
 
-bool ProxyChatRoom::canHandleParticipants () const {
+bool ProxyChatRoom::canHandleParticipants() const {
 	L_D();
 	return d->chatRoom->canHandleParticipants();
 }
 
-uint32_t ProxyChatRoom::getChar () {
+uint32_t ProxyChatRoom::getChar() {
 	L_D();
 	return d->chatRoom->getChar();
 }
 
-std::shared_ptr<Call> ProxyChatRoom::getCall () const {
+std::shared_ptr<Call> ProxyChatRoom::getCall() const {
 	L_D();
 	return d->chatRoom->getCall();
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,22 +35,30 @@ class Core;
 
 class BackgroundTask {
 public:
-	BackgroundTask () {}
-	BackgroundTask (const std::string &name) : mName(name) {}
-	virtual ~BackgroundTask () { stop(); }
+	BackgroundTask() {
+	}
+	BackgroundTask(const std::string &name) : mName(name) {
+	}
+	virtual ~BackgroundTask() {
+		stop();
+	}
 
-	void setName (const std::string &name) { mName = name; }
+	void setName(const std::string &name) {
+		mName = name;
+	}
 
-	const std::string &getName () const { return mName; }
+	const std::string &getName() const {
+		return mName;
+	}
 
 	/**
 	 * Start a long running task for at most max_duration_seconds, after which it is automatically terminated
 	 */
-	void start (const std::shared_ptr<Core> &core, int maxDurationSeconds = 15 * 60); // 15 min by default, like on iOS
-	void stop ();
+	void start(const std::shared_ptr<Core> &core, int maxDurationSeconds = 15 * 60); // 15 min by default, like on iOS
+	void stop();
 
 protected:
-	virtual void handleTimeout ();
+	virtual void handleTimeout();
 	virtual void handleSalTimeout();
 
 private:
@@ -63,12 +71,16 @@ private:
 	unsigned long mId = 0;
 };
 
-class ExtraBackgroundTask: public BackgroundTask {
+class ExtraBackgroundTask : public BackgroundTask {
 public:
-	ExtraBackgroundTask (const std::string &name) : BackgroundTask(name)  {}
-	~ExtraBackgroundTask () = default;
-	
-	void start (const std::shared_ptr<Core> &core, const std::function<void ()> &extraFunc, const std::function<void ()> &extraSalFunc, int maxDurationSeconds = 15 * 60);
+	ExtraBackgroundTask(const std::string &name) : BackgroundTask(name) {
+	}
+	~ExtraBackgroundTask() = default;
+
+	void start(const std::shared_ptr<Core> &core,
+	           const std::function<void()> &extraFunc,
+	           const std::function<void()> &extraSalFunc,
+	           int maxDurationSeconds = 15 * 60);
 
 protected:
 	void handleTimeout() override;

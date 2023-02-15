@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,9 +24,9 @@
 #include <list>
 #include <vector>
 
-#include "sal/sal_stream_configuration.h"
-#include "linphone/utils/general.h"
 #include "linphone/types.h"
+#include "linphone/utils/general.h"
+#include "sal/sal_stream_configuration.h"
 
 #include "c-wrapper/internal/c-sal.h"
 #include "logger/logger.h"
@@ -42,45 +42,49 @@ class SalReferOp;
 
 class Sal {
 public:
-	using OnCallReceivedCb = void (*) (SalCallOp *op);
-	using OnCallRingingCb = void (*) (SalOp *op);
-	using OnCallAcceptedCb = void (*) (SalOp *op);
-	using OnCallAckReceivedCb = void (*) (SalOp *op, SalCustomHeader *ack);
-	using OnCallAckBeingSentCb = void (*) (SalOp *op, SalCustomHeader *ack);
-	using OnCallUpdatingCb = void (*) (SalOp *op, bool_t isUpdate); // Called when a reINVITE/UPDATE is received
-	using OnCallRefreshedCb = void (*) (SalOp *op);
-	using OnCallRefreshingCb = void (*) (SalOp *op);
-	using OnCallTerminatedCb = void (*) (SalOp *op, const char *from);
-	using OnCallFailureCb = void (*) (SalOp *op);
-	using OnCallReleasedCb = void (*) (SalOp *op);
-	using OnCallCancelDoneCb = void (*) (SalOp *op);
-	using OnAuthRequestedLegacyCb = void (*) (SalOp *op, const char *realm, const char *username);
-	using OnAuthRequestedCb = bool_t (*) (Sal *sal, SalAuthInfo *info);
-	using OnAuthFailureCb = void (*) (SalOp *op, SalAuthInfo *info);
-	using OnRegisterSuccessCb = void (*) (SalOp *op, bool_t registered);
-	using OnRegisterFailureCb = void (*) (SalOp *op);
-	using OnVfuRequestCb = void (*) (SalOp *op);
-	using OnDtmfReceivedCb = void (*) (SalOp *op, char dtmf);
-	using OnCallReferCb = void (*) (SalOp *op, const SalAddress *referTo);
-	using OnReferCb = void (*) (SalOp *op, const SalAddress *referTo);
-	using OnMessageReceivedCb = void (*) (SalOp *op, const SalMessage *msg);
-	using OnMessageDeliveryUpdateCb = void (*) (SalOp *op, SalMessageDeliveryStatus status);
-	using OnNotifyReferCb = void (*) (SalOp *op, SalReferStatus status);
-	using OnSubscribeResponseCb = void (*) (SalOp *op, SalSubscribeStatus status, int willRetry);
-	using OnNotifyCb = void (*) (SalSubscribeOp *op, SalSubscribeStatus status, const char *event, SalBodyHandler *body);
-	using OnSubscribeReceivedCb = void (*) (SalSubscribeOp *op, const char *event, const SalBodyHandler *body);
-	using OnIncomingSubscribeClosedCb = void (*) (SalOp *op);
-	using OnParsePresenceRequestedCb = void (*) (SalOp *op, const char *contentType, const char *contentSubtype, const char *content, SalPresenceModel **result);
-	using OnConvertPresenceToXMLRequestedCb = void (*) (SalOp *op, SalPresenceModel *presence, const char *contact, char **content);
-	using OnNotifyPresenceCb = void (*) (SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model, const char *msg);
-	using OnRedirectCb = int (*) (SalOp *op);
-	using OnSubscribePresenceReceivedCb = void (*) (SalPresenceOp *op, const char *from);
-	using OnSubscribePresenceClosedCb = void (*) (SalPresenceOp *op, const char *from);
-	using OnPingReplyCb = void (*) (SalOp *op);
-	using OnInfoReceivedCb = void (*) (SalOp *op, SalBodyHandler *body);
-	using OnPublishResponseCb = void (*) (SalOp *op);
-	using OnNotifyResponseCb = void (*) (SalOp *op);
-	using OnExpireCb = void (*) (SalOp *op);
+	using OnCallReceivedCb = void (*)(SalCallOp *op);
+	using OnCallRingingCb = void (*)(SalOp *op);
+	using OnCallAcceptedCb = void (*)(SalOp *op);
+	using OnCallAckReceivedCb = void (*)(SalOp *op, SalCustomHeader *ack);
+	using OnCallAckBeingSentCb = void (*)(SalOp *op, SalCustomHeader *ack);
+	using OnCallUpdatingCb = void (*)(SalOp *op, bool_t isUpdate); // Called when a reINVITE/UPDATE is received
+	using OnCallRefreshedCb = void (*)(SalOp *op);
+	using OnCallRefreshingCb = void (*)(SalOp *op);
+	using OnCallTerminatedCb = void (*)(SalOp *op, const char *from);
+	using OnCallFailureCb = void (*)(SalOp *op);
+	using OnCallReleasedCb = void (*)(SalOp *op);
+	using OnCallCancelDoneCb = void (*)(SalOp *op);
+	using OnAuthRequestedLegacyCb = void (*)(SalOp *op, const char *realm, const char *username);
+	using OnAuthRequestedCb = bool_t (*)(Sal *sal, SalAuthInfo *info);
+	using OnAuthFailureCb = void (*)(SalOp *op, SalAuthInfo *info);
+	using OnRegisterSuccessCb = void (*)(SalOp *op, bool_t registered);
+	using OnRegisterFailureCb = void (*)(SalOp *op);
+	using OnVfuRequestCb = void (*)(SalOp *op);
+	using OnDtmfReceivedCb = void (*)(SalOp *op, char dtmf);
+	using OnCallReferCb = void (*)(SalOp *op, const SalAddress *referTo);
+	using OnReferCb = void (*)(SalOp *op, const SalAddress *referTo);
+	using OnMessageReceivedCb = void (*)(SalOp *op, const SalMessage *msg);
+	using OnMessageDeliveryUpdateCb = void (*)(SalOp *op, SalMessageDeliveryStatus status);
+	using OnNotifyReferCb = void (*)(SalOp *op, SalReferStatus status);
+	using OnSubscribeResponseCb = void (*)(SalOp *op, SalSubscribeStatus status, int willRetry);
+	using OnNotifyCb = void (*)(SalSubscribeOp *op, SalSubscribeStatus status, const char *event, SalBodyHandler *body);
+	using OnSubscribeReceivedCb = void (*)(SalSubscribeOp *op, const char *event, const SalBodyHandler *body);
+	using OnIncomingSubscribeClosedCb = void (*)(SalOp *op);
+	using OnParsePresenceRequestedCb = void (*)(
+	    SalOp *op, const char *contentType, const char *contentSubtype, const char *content, SalPresenceModel **result);
+	using OnConvertPresenceToXMLRequestedCb = void (*)(SalOp *op,
+	                                                   SalPresenceModel *presence,
+	                                                   const char *contact,
+	                                                   char **content);
+	using OnNotifyPresenceCb = void (*)(SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model, const char *msg);
+	using OnRedirectCb = int (*)(SalOp *op);
+	using OnSubscribePresenceReceivedCb = void (*)(SalPresenceOp *op, const char *from);
+	using OnSubscribePresenceClosedCb = void (*)(SalPresenceOp *op, const char *from);
+	using OnPingReplyCb = void (*)(SalOp *op);
+	using OnInfoReceivedCb = void (*)(SalOp *op, SalBodyHandler *body);
+	using OnPublishResponseCb = void (*)(SalOp *op);
+	using OnNotifyResponseCb = void (*)(SalOp *op);
+	using OnExpireCb = void (*)(SalOp *op);
 
 	struct Callbacks {
 		OnCallReceivedCb call_received;
@@ -128,156 +132,254 @@ public:
 	Sal(MSFactory *factory);
 	~Sal();
 
-	void setFactory (MSFactory *value) { mFactory = value; }
+	void setFactory(MSFactory *value) {
+		mFactory = value;
+	}
 
-	void setUserPointer (void *value) { mUserPointer = value; }
-	void *getUserPointer () const { return mUserPointer; }
+	void setUserPointer(void *value) {
+		mUserPointer = value;
+	}
+	void *getUserPointer() const {
+		return mUserPointer;
+	}
 
-	void setCallbacks (const Callbacks *cbs);
+	void setCallbacks(const Callbacks *cbs);
 
-	void *getStackImpl() const { return mStack; }
+	void *getStackImpl() const {
+		return mStack;
+	}
 
-	int iterate () { belle_sip_stack_sleep(mStack, 0); return 0; }
+	int iterate() {
+		belle_sip_stack_sleep(mStack, 0);
+		return 0;
+	}
 
-	void setSendError (int value) { belle_sip_stack_set_send_error(mStack, value); }
-	void setRecvError (int value) { belle_sip_provider_set_recv_error(mProvider, value); }
-	void setClientBindPort(int port){ belle_sip_stack_set_client_bind_port(mStack, port); }
-
+	void setSendError(int value) {
+		belle_sip_stack_set_send_error(mStack, value);
+	}
+	void setRecvError(int value) {
+		belle_sip_provider_set_recv_error(mProvider, value);
+	}
+	void setClientBindPort(int port) {
+		belle_sip_stack_set_client_bind_port(mStack, port);
+	}
 
 	// ---------------------------------------------------------------------------
 	// SIP parameters
 	// ---------------------------------------------------------------------------
-	void setSupportedTags (const std::string &tags);
-	const std::string &getSupportedTags () const;
-	void addSupportedTag (const std::string &tag);
-	void removeSupportedTag (const std::string &tag);
+	void setSupportedTags(const std::string &tags);
+	const std::string &getSupportedTags() const;
+	void addSupportedTag(const std::string &tag);
+	void removeSupportedTag(const std::string &tag);
 
-	static void setWellKnownPort (int value);
-	static void setTLSWellKnownPort (int value);
+	static void setWellKnownPort(int value);
+	static void setTLSWellKnownPort(int value);
 
+	void setUserAgent(const std::string &value);
+	const std::string &getUserAgent() const;
+	void appendStackStringToUserAgent();
 
-	void setUserAgent (const std::string &value);
-	const std::string &getUserAgent () const;
-	void appendStackStringToUserAgent ();
+	bool isContentEncodingAvailable(const std::string &contentEncoding) const;
+	bool isContentTypeSupported(const std::string &contentType) const;
+	void addContentTypeSupport(const std::string &contentType);
+	void removeContentTypeSupport(const std::string &contentType);
 
-	bool isContentEncodingAvailable (const std::string &contentEncoding) const;
-	bool isContentTypeSupported (const std::string &contentType) const;
-	void addContentTypeSupport (const std::string &contentType);
-	void removeContentTypeSupport (const std::string &contentType);
+	void setDefaultSdpHandling(SalOpSDPHandling sdpHandlingMethod);
 
-	void setDefaultSdpHandling (SalOpSDPHandling sdpHandlingMethod);
+	void setUuid(const std::string &value) {
+		mUuid = value;
+	}
+	std::string createUuid();
+	static std::string generateUuid();
 
-	void setUuid (const std::string &value) { mUuid = value; }
-	std::string createUuid ();
-	static std::string generateUuid ();
+	void enableNatHelper(bool value);
+	bool natHelperEnabled() const {
+		return mNatHelperEnabled;
+	}
 
-	void enableNatHelper (bool value);
-	bool natHelperEnabled () const { return mNatHelperEnabled; }
+	bool pendingTransactionCheckingEnabled() const {
+		return mPendingTransactionChecking;
+	}
+	void enablePendingTransactionChecking(bool value) {
+		mPendingTransactionChecking = value;
+	}
 
-	bool pendingTransactionCheckingEnabled () const { return mPendingTransactionChecking; }
-	void enablePendingTransactionChecking (bool value) { mPendingTransactionChecking = value; }
+	void setRefresherRetryAfter(int value) {
+		mRefresherRetryAfter = value;
+	}
+	int getRefresherRetryAfter() const {
+		return mRefresherRetryAfter;
+	}
 
-	void setRefresherRetryAfter (int value) { mRefresherRetryAfter = value; }
-	int getRefresherRetryAfter () const { return mRefresherRetryAfter; }
-
-	void enableSipUpdateMethod (bool value) { mEnableSipUpdate = value; }
+	void enableSipUpdateMethod(bool value) {
+		mEnableSipUpdate = value;
+	}
 
 	// RFC 4028
-	void setSessionTimersEnabled (bool value) { mSessionExpiresEnabled = value; }
-	void setSessionTimersValue (int expires) { mSessionExpiresValue = expires; }
-	int getSessionTimersExpire () { return mSessionExpiresValue; }
-	void setSessionTimersRefresher (LinphoneSessionExpiresRefresher refresher) { mSessionExpiresRefresher = static_cast<belle_sip_header_session_expires_refresher_t>(refresher); }
-	void setSessionTimersMin (int min) { mSessionExpiresMin = min; }
+	void setSessionTimersEnabled(bool value) {
+		mSessionExpiresEnabled = value;
+	}
+	void setSessionTimersValue(int expires) {
+		mSessionExpiresValue = expires;
+	}
+	int getSessionTimersExpire() {
+		return mSessionExpiresValue;
+	}
+	void setSessionTimersRefresher(LinphoneSessionExpiresRefresher refresher) {
+		mSessionExpiresRefresher = static_cast<belle_sip_header_session_expires_refresher_t>(refresher);
+	}
+	void setSessionTimersMin(int min) {
+		mSessionExpiresMin = min;
+	}
 
-	void useDates (bool value) { mUseDates = value; }
-	void useOneMatchingCodecPolicy (bool value) { mOneMatchingCodec = value; }
-	void useRport (bool value);
-	void enableAutoContacts (bool value) { mAutoContacts = value; }
-	void enableTestFeatures (bool value) { mEnableTestFeatures = value; }
-	void useNoInitialRoute (bool value) { mNoInitialRoute = value; }
-	void enableUnconditionalAnswer (int value) { belle_sip_provider_enable_unconditional_answer(mProvider, value); }
-	void setUnconditionalAnswer (unsigned short value) { belle_sip_provider_set_unconditional_answer(mProvider, value); }
-	void enableReconnectToPrimaryAsap (bool value) { belle_sip_stack_enable_reconnect_to_primary_asap(mStack, value); }
+	void useDates(bool value) {
+		mUseDates = value;
+	}
+	void useOneMatchingCodecPolicy(bool value) {
+		mOneMatchingCodec = value;
+	}
+	void useRport(bool value);
+	void enableAutoContacts(bool value) {
+		mAutoContacts = value;
+	}
+	void enableTestFeatures(bool value) {
+		mEnableTestFeatures = value;
+	}
+	void useNoInitialRoute(bool value) {
+		mNoInitialRoute = value;
+	}
+	void enableUnconditionalAnswer(int value) {
+		belle_sip_provider_enable_unconditional_answer(mProvider, value);
+	}
+	void setUnconditionalAnswer(unsigned short value) {
+		belle_sip_provider_set_unconditional_answer(mProvider, value);
+	}
+	void enableReconnectToPrimaryAsap(bool value) {
+		belle_sip_stack_enable_reconnect_to_primary_asap(mStack, value);
+	}
 
-	const std::list<SalOp *> &getPendingAuths () const { return mPendingAuths; }
+	const std::list<SalOp *> &getPendingAuths() const {
+		return mPendingAuths;
+	}
 
-	void setContactLinphoneSpecs (const std::string &value) { mLinphoneSpecs = value; }
+	void setContactLinphoneSpecs(const std::string &value) {
+		mLinphoneSpecs = value;
+	}
 
 	// ---------------------------------------------------------------------------
 	// Network parameters
 	// ---------------------------------------------------------------------------
-	int setListenPort (const std::string &addr, int port, SalTransport tr, bool isTunneled);
-	int getListeningPort (SalTransport tr);
-	bool isTransportAvailable (SalTransport tr);
+	int setListenPort(const std::string &addr, int port, SalTransport tr, bool isTunneled);
+	int getListeningPort(SalTransport tr);
+	bool isTransportAvailable(SalTransport tr);
 
-	void setTransportTimeout (int value) { belle_sip_stack_set_transport_timeout(mStack, value); }
-	int getTransportTimeout () const { return belle_sip_stack_get_transport_timeout(mStack); }
-	
-	void setUnreliableConnectionTimeout(int value){ belle_sip_stack_set_unreliable_connection_timeout(mStack, value); }
-	int getUnreliableConnectionTimeout() const { return belle_sip_stack_get_unreliable_connection_timeout(mStack);}
+	void setTransportTimeout(int value) {
+		belle_sip_stack_set_transport_timeout(mStack, value);
+	}
+	int getTransportTimeout() const {
+		return belle_sip_stack_get_transport_timeout(mStack);
+	}
 
-	void setKeepAlivePeriod (unsigned int value);
-	unsigned int getKeepAlivePeriod () const { return mKeepAlive; }
-	void useTcpTlsKeepAlive (bool value) { mUseTcpTlsKeepAlive = value; }
-	void sendKeepAlive ();
+	void setUnreliableConnectionTimeout(int value) {
+		belle_sip_stack_set_unreliable_connection_timeout(mStack, value);
+	}
+	int getUnreliableConnectionTimeout() const {
+		return belle_sip_stack_get_unreliable_connection_timeout(mStack);
+	}
 
-	void setDscp (int dscp) { belle_sip_stack_set_default_dscp(mStack, dscp); }
+	void setKeepAlivePeriod(unsigned int value);
+	unsigned int getKeepAlivePeriod() const {
+		return mKeepAlive;
+	}
+	void useTcpTlsKeepAlive(bool value) {
+		mUseTcpTlsKeepAlive = value;
+	}
+	void sendKeepAlive();
 
-	int setTunnel (void *tunnelClient);
+	void setDscp(int dscp) {
+		belle_sip_stack_set_default_dscp(mStack, dscp);
+	}
 
-	void setHttpProxyHost (const std::string &value);
-	const std::string &getHttpProxyHost () const;
+	int setTunnel(void *tunnelClient);
 
-	void setHttpProxyPort (int value) { belle_sip_stack_set_http_proxy_port(mStack, value); }
-	int getHttpProxyPort () const { return belle_sip_stack_get_http_proxy_port(mStack); }
+	void setHttpProxyHost(const std::string &value);
+	const std::string &getHttpProxyHost() const;
 
-	void unlistenPorts ();
-	void resetTransports ();
+	void setHttpProxyPort(int value) {
+		belle_sip_stack_set_http_proxy_port(mStack, value);
+	}
+	int getHttpProxyPort() const {
+		return belle_sip_stack_get_http_proxy_port(mStack);
+	}
+
+	void unlistenPorts();
+	void resetTransports();
 	void cleanUnreliableConnections();
-
 
 	// ---------------------------------------------------------------------------
 	// TLS parameters
 	// ---------------------------------------------------------------------------
-	void setSslConfig (void *sslConfig);
-	void setRootCa (const std::string &value);
-	void setRootCaData (const std::string &value);
-	const std::string &getRootCa () const { return mRootCa; }
+	void setSslConfig(void *sslConfig);
+	void setRootCa(const std::string &value);
+	void setRootCaData(const std::string &value);
+	const std::string &getRootCa() const {
+		return mRootCa;
+	}
 
-	void verifyServerCertificates (bool value);
-	void verifyServerCn (bool value);
+	void verifyServerCertificates(bool value);
+	void verifyServerCn(bool value);
 	void setTlsPostcheckCallback(int (*cb)(void *, const bctbx_x509_certificate_t *), void *data);
 
 	// ---------------------------------------------------------------------------
 	// DNS resolution
 	// ---------------------------------------------------------------------------
-	void setDnsTimeout (int value) { belle_sip_stack_set_dns_timeout(mStack, value); }
-	int getDnsTimeout () const { return belle_sip_stack_get_dns_timeout(mStack); }
+	void setDnsTimeout(int value) {
+		belle_sip_stack_set_dns_timeout(mStack, value);
+	}
+	int getDnsTimeout() const {
+		return belle_sip_stack_get_dns_timeout(mStack);
+	}
 
-	void setDnsServers (const bctbx_list_t *servers);
+	void setDnsServers(const bctbx_list_t *servers);
 
-	void enableDnsSearch (bool value) { belle_sip_stack_enable_dns_search(mStack, (unsigned char)value); }
-	bool dnsSearchEnabled () const { return !!belle_sip_stack_dns_search_enabled(mStack); }
+	void enableDnsSearch(bool value) {
+		belle_sip_stack_enable_dns_search(mStack, (unsigned char)value);
+	}
+	bool dnsSearchEnabled() const {
+		return !!belle_sip_stack_dns_search_enabled(mStack);
+	}
 
-	void enableDnsSrv (bool value) { belle_sip_stack_enable_dns_srv(mStack, (unsigned char)value); }
-	bool dnsSrvEnabled () const { return !!belle_sip_stack_dns_srv_enabled(mStack); }
+	void enableDnsSrv(bool value) {
+		belle_sip_stack_enable_dns_srv(mStack, (unsigned char)value);
+	}
+	bool dnsSrvEnabled() const {
+		return !!belle_sip_stack_dns_srv_enabled(mStack);
+	}
 
-	void setDnsUserHostsFile (const std::string &value);
-	const std::string &getDnsUserHostsFile () const;
+	void setDnsUserHostsFile(const std::string &value);
+	const std::string &getDnsUserHostsFile() const;
 
-	belle_sip_resolver_context_t *resolveA (const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
-	belle_sip_resolver_context_t *resolve (const std::string &service, const std::string &transport, const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
-
+	belle_sip_resolver_context_t *
+	resolveA(const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
+	belle_sip_resolver_context_t *resolve(const std::string &service,
+	                                      const std::string &transport,
+	                                      const std::string &name,
+	                                      int port,
+	                                      int family,
+	                                      belle_sip_resolver_callback_t cb,
+	                                      void *data);
 
 	// ---------------------------------------------------------------------------
 	// Timers
 	// ---------------------------------------------------------------------------
-	belle_sip_source_t *createTimer (const std::function<bool ()> &something, unsigned int milliseconds, const std::string &name);
-	belle_sip_source_t *createTimer (belle_sip_source_func_t func, void *data, unsigned int timeoutValueMs, const std::string &timerName);
-	void cancelTimer (belle_sip_source_t *timer);
+	belle_sip_source_t *
+	createTimer(const std::function<bool()> &something, unsigned int milliseconds, const std::string &name);
+	belle_sip_source_t *
+	createTimer(belle_sip_source_func_t func, void *data, unsigned int timeoutValueMs, const std::string &timerName);
+	void cancelTimer(belle_sip_source_t *timer);
 
-	//utils
-	static int findCryptoIndexFromTag (const std::vector<SalSrtpCryptoAlgo> & crypto, unsigned int tag);
+	// utils
+	static int findCryptoIndexFromTag(const std::vector<SalSrtpCryptoAlgo> &crypto, unsigned int tag);
 
 private:
 	struct SalUuid {
@@ -289,29 +391,31 @@ private:
 		unsigned char node[6];
 	};
 
-	void setTlsProperties ();
-	int addListenPort (SalAddress *addr, bool isTunneled);
-	void makeSupportedHeader ();
-	void addPendingAuth (SalOp *op);
-	void removePendingAuth (SalOp *op);
-	belle_sip_response_t *createResponseFromRequest (belle_sip_request_t *req, int code);
+	void setTlsProperties();
+	int addListenPort(SalAddress *addr, bool isTunneled);
+	void makeSupportedHeader();
+	void addPendingAuth(SalOp *op);
+	void removePendingAuth(SalOp *op);
+	belle_sip_response_t *createResponseFromRequest(belle_sip_request_t *req, int code);
 
-	static void unimplementedStub() { lWarning() << "Unimplemented SAL callback"; }
-	static void removeListeningPoint (belle_sip_listening_point_t *lp,belle_sip_provider_t *prov) {
+	static void unimplementedStub() {
+		lWarning() << "Unimplemented SAL callback";
+	}
+	static void removeListeningPoint(belle_sip_listening_point_t *lp, belle_sip_provider_t *prov) {
 		belle_sip_provider_remove_listening_point(prov, lp);
 	}
 
 	// Internal callbacks
-	static void processDialogTerminatedCb (void *userCtx, const belle_sip_dialog_terminated_event_t *event);
-	static void processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
-	static void processRequestEventCb (void *userCtx, const belle_sip_request_event_t *event);
-	static void processResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
-	static void processTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event);
-	static void processTransactionTerminatedCb (void *userCtx, const belle_sip_transaction_terminated_event_t *event);
-	static void processAuthRequestedCb (void *userCtx, belle_sip_auth_event_t *event);
+	static void processDialogTerminatedCb(void *userCtx, const belle_sip_dialog_terminated_event_t *event);
+	static void processIoErrorCb(void *userCtx, const belle_sip_io_error_event_t *event);
+	static void processRequestEventCb(void *userCtx, const belle_sip_request_event_t *event);
+	static void processResponseEventCb(void *userCtx, const belle_sip_response_event_t *event);
+	static void processTimeoutCb(void *userCtx, const belle_sip_timeout_event_t *event);
+	static void processTransactionTerminatedCb(void *userCtx, const belle_sip_transaction_terminated_event_t *event);
+	static void processAuthRequestedCb(void *userCtx, belle_sip_auth_event_t *event);
 
 	MSFactory *mFactory = nullptr;
-	Callbacks mCallbacks = { 0 };
+	Callbacks mCallbacks = {0};
 	std::list<SalOp *> mPendingAuths;
 	belle_sip_stack_t *mStack = nullptr;
 	belle_sip_provider_t *mProvider = nullptr;
@@ -322,9 +426,11 @@ private:
 
 	// RFC 4028
 	bool mSessionExpiresEnabled = false;
-	int mSessionExpiresValue = 0; // disabled = 0, or not lower than mSessionExpiresMin, https://tools.ietf.org/html/rfc4028#page-16
+	int mSessionExpiresValue =
+	    0; // disabled = 0, or not lower than mSessionExpiresMin, https://tools.ietf.org/html/rfc4028#page-16
 	int mSessionExpiresMin = 0; // disabled = 0, min 90, max 86400
-	belle_sip_header_session_expires_refresher_t mSessionExpiresRefresher = BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED; // 0 = auto, 1 = uas, 2 = uac
+	belle_sip_header_session_expires_refresher_t mSessionExpiresRefresher =
+	    BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED; // 0 = auto, 1 = uas, 2 = uac
 
 	unsigned int mKeepAlive = 0;
 	std::string mRootCa;
@@ -367,7 +473,7 @@ private:
 	friend class SalReferOp;
 };
 
-int toSipCode (SalReason reason);
+int toSipCode(SalReason reason);
 
 LINPHONE_END_NAMESPACE
 

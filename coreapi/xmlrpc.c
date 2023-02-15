@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,29 +25,30 @@
 #include <libxml/xmlwriter.h>
 #endif
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/core.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-auth-info.h"
-
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneXmlRpcRequestCbs);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneXmlRpcRequestCbs, belle_sip_object_t,
-	NULL, // destroy
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneXmlRpcRequestCbs,
+                           belle_sip_object_t,
+                           NULL, // destroy
+                           NULL, // clone
+                           NULL, // marshal
+                           FALSE);
 
-LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void) {
+LinphoneXmlRpcRequestCbs *linphone_xml_rpc_request_cbs_new(void) {
 	return belle_sip_object_new(LinphoneXmlRpcRequestCbs);
 }
 
-LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_ref(LinphoneXmlRpcRequestCbs *cbs) {
+LinphoneXmlRpcRequestCbs *linphone_xml_rpc_request_cbs_ref(LinphoneXmlRpcRequestCbs *cbs) {
 	belle_sip_object_ref(cbs);
 	return cbs;
 }
@@ -72,17 +73,17 @@ void linphone_xml_rpc_request_cbs_set_response(LinphoneXmlRpcRequestCbs *cbs, Li
 	cbs->response = cb;
 }
 
-#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
-	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_xml_rpc_request_get_callbacks_list(request)); \
-	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
-		linphone_xml_rpc_request_set_current_callbacks(request, reinterpret_cast<LinphoneXmlRpcRequestCbs *>(bctbx_list_get_data(it))); \
-		LinphoneXmlRpcRequestCbs ## cbName ## Cb cb = linphone_xml_rpc_request_cbs_get_ ## functionName (linphone_xml_rpc_request_get_current_callbacks(request)); \
-		if (cb) \
-			cb(__VA_ARGS__); \
-	} \
-	linphone_xml_rpc_request_set_current_callbacks(request, nullptr); \
+#define NOTIFY_IF_EXIST(cbName, functionName, ...)                                                                     \
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_xml_rpc_request_get_callbacks_list(request));               \
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {                                             \
+		linphone_xml_rpc_request_set_current_callbacks(                                                                \
+		    request, reinterpret_cast<LinphoneXmlRpcRequestCbs *>(bctbx_list_get_data(it)));                           \
+		LinphoneXmlRpcRequestCbs##cbName##Cb cb =                                                                      \
+		    linphone_xml_rpc_request_cbs_get_##functionName(linphone_xml_rpc_request_get_current_callbacks(request));  \
+		if (cb) cb(__VA_ARGS__);                                                                                       \
+	}                                                                                                                  \
+	linphone_xml_rpc_request_set_current_callbacks(request, nullptr);                                                  \
 	bctbx_list_free(callbacksCopy);
-
 
 static void format_request(LinphoneXmlRpcRequest *request) {
 #ifdef HAVE_XML2
@@ -141,7 +142,8 @@ static void format_request(LinphoneXmlRpcRequest *request) {
 				err = xmlTextWriterWriteElement(writer, (const xmlChar *)"int", (const xmlChar *)si);
 				break;
 			case LinphoneXmlRpcArgString:
-				err = xmlTextWriterWriteElement(writer, (const xmlChar *)"string", arg->data.s ? (const xmlChar *)arg->data.s : (const xmlChar *)"");
+				err = xmlTextWriterWriteElement(writer, (const xmlChar *)"string",
+				                                arg->data.s ? (const xmlChar *)arg->data.s : (const xmlChar *)"");
 				break;
 		}
 		if (err >= 0) {
@@ -176,7 +178,6 @@ static void format_request(LinphoneXmlRpcRequest *request) {
 #endif
 }
 
-
 static void free_arg(LinphoneXmlRpcArg *arg) {
 	if ((arg->type == LinphoneXmlRpcArgString) && (arg->data.s != NULL)) {
 		belle_sip_free(arg->data.s);
@@ -184,19 +185,21 @@ static void free_arg(LinphoneXmlRpcArg *arg) {
 	belle_sip_free(arg);
 }
 
-static bool_t linphone_xml_rpc_request_aborted(LinphoneXmlRpcRequest *req){
-	LinphoneXmlRpcSession *session = (LinphoneXmlRpcSession*) belle_sip_object_data_get(BELLE_SIP_OBJECT(req), "session");
-	if (!session){
+static bool_t linphone_xml_rpc_request_aborted(LinphoneXmlRpcRequest *req) {
+	LinphoneXmlRpcSession *session =
+	    (LinphoneXmlRpcSession *)belle_sip_object_data_get(BELLE_SIP_OBJECT(req), "session");
+	if (!session) {
 		ms_error("linphone_xml_rpc_request_aborted(): no session, this should not happen.");
 		return FALSE;
 	}
 	return session->released;
 }
 
-static void process_io_error_from_post_xml_rpc_request(void *data, const belle_sip_io_error_event_t *event) {
+static void process_io_error_from_post_xml_rpc_request(void *data,
+                                                       BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneXmlRpcRequest *request = (LinphoneXmlRpcRequest *)data;
 	ms_error("I/O Error during XML-RPC request sending");
-	if (!linphone_xml_rpc_request_aborted(request)){
+	if (!linphone_xml_rpc_request_aborted(request)) {
 		request->status = LinphoneXmlRpcStatusFailed;
 		if (request->callbacks->response != NULL) {
 			request->callbacks->response(request);
@@ -214,7 +217,8 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 	const char *domain = belle_sip_auth_event_get_domain(event);
 	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
-	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(request->core, realm, username, domain, algorithm, TRUE);
+	const LinphoneAuthInfo *auth_info =
+	    _linphone_core_find_auth_info(request->core, realm, username, domain, algorithm, TRUE);
 	linphone_auth_info_fill_belle_sip_event(auth_info, event);
 }
 
@@ -223,7 +227,7 @@ static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const c
 	xmlparsing_context_t *xml_ctx = linphone_xmlparsing_context_new();
 	xmlSetGenericErrorFunc(xml_ctx, linphone_xmlparsing_genericxml_error);
 	request->status = LinphoneXmlRpcStatusFailed;
-	xml_ctx->doc = xmlReadDoc((const unsigned char*)response_body, 0, NULL, 0);
+	xml_ctx->doc = xmlReadDoc((const unsigned char *)response_body, 0, NULL, 0);
 	if (xml_ctx->doc != NULL) {
 		char *response_str = NULL;
 		if (linphone_create_xml_xpath_context(xml_ctx) < 0) goto end;
@@ -242,15 +246,15 @@ static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const c
 					request->status = LinphoneXmlRpcStatusOk;
 				}
 				break;
-			case LinphoneXmlRpcArgStringStruct:
-			{
+			case LinphoneXmlRpcArgStringStruct: {
 				response_str = linphone_get_xml_text_content(xml_ctx, "/methodResponse/params/param/value/string");
 				if (response_str != NULL) {
 					request->response.data.s = belle_sip_strdup(response_str);
 				} else {
-					xmlXPathObjectPtr responses = linphone_get_xml_xpath_object_for_node_list(xml_ctx, "/methodResponse/params/param/value/struct/member");
+					xmlXPathObjectPtr responses = linphone_get_xml_xpath_object_for_node_list(
+					    xml_ctx, "/methodResponse/params/param/value/struct/member");
 					if (responses != NULL && responses->nodesetval != NULL) {
-						//request->response.data.m = bctbx_mmap_cchar_new();
+						// request->response.data.m = bctbx_mmap_cchar_new();
 						request->response.data.l = NULL;
 						request->status = LinphoneXmlRpcStatusOk;
 
@@ -262,12 +266,14 @@ static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const c
 								xml_ctx->xpath_ctx->node = response_node;
 								{
 									char *name = linphone_get_xml_text_content(xml_ctx, "name");
-									char *value =  linphone_get_xml_text_content(xml_ctx, "value/string");
+									char *value = linphone_get_xml_text_content(xml_ctx, "value/string");
 									ms_message("Found pair with key=[%s] and value=[%s]", name, value);
-									request->response.data.l = bctbx_list_append(request->response.data.l, bctbx_strdup(value));
+									request->response.data.l =
+									    bctbx_list_append(request->response.data.l, bctbx_strdup(value));
 
-									/*bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(name, (void *)bctbx_strdup(value));
-									bctbx_map_cchar_insert_and_delete(request->response.data.m, pair);*/
+									/*bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(name, (void
+									*)bctbx_strdup(value)); bctbx_map_cchar_insert_and_delete(request->response.data.m,
+									pair);*/
 
 									linphone_free_xml_text_content(name);
 									linphone_free_xml_text_content(value);
@@ -310,7 +316,7 @@ static void process_response_from_post_xml_rpc_request(void *data, const belle_h
 	if (!linphone_xml_rpc_request_aborted(request) && event->response) {
 		int code = belle_http_response_get_status_code(event->response);
 		if (code == 200) { /* Valid response from the server. */
-			const char * body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
+			const char *body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
 			if (body) request->raw_response = bctbx_strdup(body);
 			parse_valid_xml_rpc_response(request, body);
 		} else {
@@ -325,8 +331,7 @@ static void process_response_from_post_xml_rpc_request(void *data, const belle_h
 	linphone_xml_rpc_request_unref(request);
 }
 
-
-static LinphoneXmlRpcRequest * _linphone_xml_rpc_request_new(LinphoneXmlRpcArgType return_type, const char *method) {
+static LinphoneXmlRpcRequest *_linphone_xml_rpc_request_new(LinphoneXmlRpcArgType return_type, const char *method) {
 	LinphoneXmlRpcRequest *request = belle_sip_object_new(LinphoneXmlRpcRequest);
 	request->callbacks = linphone_xml_rpc_request_cbs_new();
 	request->status = LinphoneXmlRpcStatusPending;
@@ -350,14 +355,14 @@ static void _linphone_xml_rpc_request_add_string_arg(LinphoneXmlRpcRequest *requ
 }
 
 static void _linphone_xml_rpc_request_destroy(LinphoneXmlRpcRequest *request) {
-	belle_sip_list_free_with_data(request->arg_list, (void (*)(void*))free_arg);
+	belle_sip_list_free_with_data(request->arg_list, (void (*)(void *))free_arg);
 	if ((request->response.type == LinphoneXmlRpcArgString) && (request->response.data.s != NULL)) {
 		belle_sip_free(request->response.data.s);
 	} else if (request->response.type == LinphoneXmlRpcArgStringStruct) {
 		if (request->status == LinphoneXmlRpcStatusOk) {
 			/*if (request->response.data.m != NULL) {
-				bctbx_mmap_cchar_delete_with_data(request->response.data.m, bctbx_free);
-				request->response.data.m = NULL;
+			    bctbx_mmap_cchar_delete_with_data(request->response.data.m, bctbx_free);
+			    request->response.data.m = NULL;
 			}*/
 
 			if (request->response.data.l) {
@@ -373,9 +378,7 @@ static void _linphone_xml_rpc_request_destroy(LinphoneXmlRpcRequest *request) {
 	linphone_xml_rpc_request_cbs_unref(request->callbacks);
 	bctbx_list_free_with_data(request->callbacks_list, (bctbx_list_free_func)linphone_xml_rpc_request_cbs_unref);
 	request->callbacks_list = nullptr;
-	if (request->raw_response)
-		bctbx_free(request->raw_response);
-
+	if (request->raw_response) bctbx_free(request->raw_response);
 }
 
 static void _linphone_xml_rpc_session_destroy(LinphoneXmlRpcSession *session) {
@@ -385,28 +388,27 @@ static void _linphone_xml_rpc_session_destroy(LinphoneXmlRpcSession *session) {
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneXmlRpcRequest);
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneXmlRpcSession);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneXmlRpcRequest, belle_sip_object_t,
-	(belle_sip_object_destroy_t)_linphone_xml_rpc_request_destroy,
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneXmlRpcRequest,
+                           belle_sip_object_t,
+                           (belle_sip_object_destroy_t)_linphone_xml_rpc_request_destroy,
+                           NULL, // clone
+                           NULL, // marshal
+                           FALSE);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneXmlRpcSession, belle_sip_object_t,
-	(belle_sip_object_destroy_t)_linphone_xml_rpc_session_destroy,
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneXmlRpcSession,
+                           belle_sip_object_t,
+                           (belle_sip_object_destroy_t)_linphone_xml_rpc_session_destroy,
+                           NULL, // clone
+                           NULL, // marshal
+                           FALSE);
 
-
-LinphoneXmlRpcRequest * linphone_xml_rpc_request_new(LinphoneXmlRpcArgType return_type, const char *method) {
+LinphoneXmlRpcRequest *linphone_xml_rpc_request_new(LinphoneXmlRpcArgType return_type, const char *method) {
 	LinphoneXmlRpcRequest *request = _linphone_xml_rpc_request_new(return_type, method);
 	format_request(request);
 	return request;
 }
 
-LinphoneXmlRpcRequest * linphone_xml_rpc_request_ref(LinphoneXmlRpcRequest *request) {
+LinphoneXmlRpcRequest *linphone_xml_rpc_request_ref(LinphoneXmlRpcRequest *request) {
 	belle_sip_object_ref(request);
 	return request;
 }
@@ -433,7 +435,7 @@ void linphone_xml_rpc_request_add_string_arg(LinphoneXmlRpcRequest *request, con
 	format_request(request);
 }
 
-LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_get_callbacks(const LinphoneXmlRpcRequest *request) {
+LinphoneXmlRpcRequestCbs *linphone_xml_rpc_request_get_callbacks(const LinphoneXmlRpcRequest *request) {
 	return request->callbacks;
 }
 
@@ -458,7 +460,7 @@ const bctbx_list_t *linphone_xml_rpc_request_get_callbacks_list(const LinphoneXm
 	return request->callbacks_list;
 }
 
-const char * linphone_xml_rpc_request_get_content(const LinphoneXmlRpcRequest *request) {
+const char *linphone_xml_rpc_request_get_content(const LinphoneXmlRpcRequest *request) {
 	return request->content;
 }
 
@@ -470,31 +472,32 @@ int linphone_xml_rpc_request_get_int_response(const LinphoneXmlRpcRequest *reque
 	return request->response.data.i;
 }
 
-const char * linphone_xml_rpc_request_get_string_response(const LinphoneXmlRpcRequest *request) {
+const char *linphone_xml_rpc_request_get_string_response(const LinphoneXmlRpcRequest *request) {
 	return request->response.data.s;
 }
 
-const char * linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcRequest *request) {
+const char *linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcRequest *request) {
 	return request->raw_response;
 }
 
-const bctbx_map_t* linphone_xml_rpc_request_get_string_struct_response(const LinphoneXmlRpcRequest *request) {
+const bctbx_map_t *
+linphone_xml_rpc_request_get_string_struct_response(BCTBX_UNUSED(const LinphoneXmlRpcRequest *request)) {
 	return NULL;
-	//return request->response.data.m;
+	// return request->response.data.m;
 }
 
 const bctbx_list_t *linphone_xml_rpc_request_get_list_response(const LinphoneXmlRpcRequest *request) {
 	return request->response.data.l;
 }
 
-LinphoneXmlRpcSession * linphone_xml_rpc_session_new(LinphoneCore *core, const char *url) {
+LinphoneXmlRpcSession *linphone_xml_rpc_session_new(LinphoneCore *core, const char *url) {
 	LinphoneXmlRpcSession *session = belle_sip_object_new(LinphoneXmlRpcSession);
 	session->core = core;
 	session->url = belle_sip_strdup(url);
 	return session;
 }
 
-LinphoneXmlRpcSession * linphone_xml_rpc_session_ref(LinphoneXmlRpcSession *session) {
+LinphoneXmlRpcSession *linphone_xml_rpc_session_ref(LinphoneXmlRpcSession *session) {
 	belle_sip_object_ref(session);
 	return session;
 }
@@ -511,14 +514,16 @@ void linphone_xml_rpc_session_set_user_data(LinphoneXmlRpcSession *session, void
 	session->user_data = ud;
 }
 
-LinphoneXmlRpcRequest * linphone_xml_rpc_session_create_request(LinphoneXmlRpcSession *session, LinphoneXmlRpcArgType return_type, const char *method) {
+LinphoneXmlRpcRequest *linphone_xml_rpc_session_create_request(LinphoneXmlRpcSession *session,
+                                                               LinphoneXmlRpcArgType return_type,
+                                                               const char *method) {
 	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(return_type, method);
 	request->core = session->core;
 	return request;
 }
 
 void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, LinphoneXmlRpcRequest *request) {
-	belle_http_request_listener_callbacks_t cbs = { 0 };
+	belle_http_request_listener_callbacks_t cbs = {0};
 	belle_http_request_listener_t *l;
 	belle_generic_uri_t *uri;
 	belle_http_request_t *req;
@@ -526,8 +531,7 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	const char *data;
 	linphone_xml_rpc_request_ref(request);
 
-	if (request->core == NULL)
-		request->core = session->core;
+	if (request->core == NULL) request->core = session->core;
 
 	uri = belle_generic_uri_parse(session->url);
 	if (!uri) {
@@ -539,15 +543,11 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(session->core);
 	if (cfg) {
 		char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
-		req = belle_http_request_create("POST", uri,
-			belle_sip_header_content_type_create("text", "xml"),
-			belle_http_header_create("From", addr),
-			NULL);
+		req = belle_http_request_create("POST", uri, belle_sip_header_content_type_create("text", "xml"),
+		                                belle_http_header_create("From", addr), NULL);
 		bctbx_free(addr);
 	} else {
-		req = belle_http_request_create("POST", uri,
-			belle_sip_header_content_type_create("text", "xml"),
-			NULL);
+		req = belle_http_request_create("POST", uri, belle_sip_header_content_type_create("text", "xml"), NULL);
 	}
 	if (!req) {
 		belle_sip_object_unref(uri);
@@ -566,10 +566,11 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	/*ensure that the listener object will be destroyed with the request*/
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(request), "listener", l, belle_sip_object_unref);
 	/*prevent destruction of the session while there are still pending http requests*/
-	belle_sip_object_data_set(BELLE_SIP_OBJECT(request), "session", belle_sip_object_ref(session), belle_sip_object_unref);
+	belle_sip_object_data_set(BELLE_SIP_OBJECT(request), "session", belle_sip_object_ref(session),
+	                          belle_sip_object_unref);
 }
 
-void linphone_xml_rpc_session_release(LinphoneXmlRpcSession *session){
+void linphone_xml_rpc_session_release(LinphoneXmlRpcSession *session) {
 	session->released = TRUE;
 	belle_sip_object_unref(session);
 }

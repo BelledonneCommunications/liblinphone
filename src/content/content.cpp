@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,9 @@
 // TODO: Remove me later.
 #include "linphone/core.h"
 
+#include "factory/factory.h"
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
-#include "factory/factory.h"
 
 #include "content-p.h"
 #include "content-type.h"
@@ -41,13 +41,14 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-Content::Content () : ClonableObject(*new ContentPrivate) {}
+Content::Content() : ClonableObject(*new ContentPrivate) {
+}
 
-Content::Content (const Content &other) : ClonableObject(*new ContentPrivate), AppDataContainer(other) {
+Content::Content(const Content &other) : ClonableObject(*new ContentPrivate), AppDataContainer(other) {
 	copy(other);
 }
 
-Content::Content (Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(move(other)) {
+Content::Content(Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(move(other)) {
 	L_D();
 	ContentPrivate *dOther = other.getPrivate();
 	d->body = move(dOther->body);
@@ -57,9 +58,10 @@ Content::Content (Content &&other) : ClonableObject(*new ContentPrivate), AppDat
 	d->headers = move(dOther->headers);
 }
 
-Content::Content (ContentPrivate &p) : ClonableObject(p) {}
+Content::Content(ContentPrivate &p) : ClonableObject(p) {
+}
 
-Content::~Content () {
+Content::~Content() {
 	L_D();
 	/*
 	 * Fills the body with zeros before releasing since it may contain
@@ -68,7 +70,7 @@ Content::~Content () {
 	d->body.assign(d->body.size(), 0);
 }
 
-Content &Content::operator= (const Content &other) {
+Content &Content::operator=(const Content &other) {
 	if (this != &other) {
 		AppDataContainer::operator=(other);
 		copy(other);
@@ -76,7 +78,7 @@ Content &Content::operator= (const Content &other) {
 	return *this;
 }
 
-Content &Content::operator= (Content &&other) {
+Content &Content::operator=(Content &&other) {
 	L_D();
 	AppDataContainer::operator=(move(other));
 	ContentPrivate *dOther = other.getPrivate();
@@ -88,13 +90,11 @@ Content &Content::operator= (Content &&other) {
 	return *this;
 }
 
-bool Content::operator== (const Content &other) const {
+bool Content::operator==(const Content &other) const {
 	L_D();
-	return d->contentType == other.getContentType() &&
-		d->body == other.getBody() &&
-		d->contentDisposition == other.getContentDisposition() &&
-		d->contentEncoding == other.getContentEncoding() &&
-		d->headers == other.getHeaders();
+	return d->contentType == other.getContentType() && d->body == other.getBody() &&
+	       d->contentDisposition == other.getContentDisposition() && d->contentEncoding == other.getContentEncoding() &&
+	       d->headers == other.getHeaders();
 }
 
 void Content::copy(const Content &other) {
@@ -106,132 +106,130 @@ void Content::copy(const Content &other) {
 	d->headers = other.getHeaders();
 }
 
-const ContentType &Content::getContentType () const {
+const ContentType &Content::getContentType() const {
 	L_D();
 	return d->contentType;
 }
 
-ContentType &Content::getContentType () {
+ContentType &Content::getContentType() {
 	L_D();
 	return d->contentType;
 }
 
-void Content::setContentType (const ContentType &contentType) {
+void Content::setContentType(const ContentType &contentType) {
 	L_D();
 	d->contentType = contentType;
 }
 
-const ContentDisposition &Content::getContentDisposition () const {
+const ContentDisposition &Content::getContentDisposition() const {
 	L_D();
 	return d->contentDisposition;
 }
 
-void Content::setContentDisposition (const ContentDisposition &contentDisposition) {
+void Content::setContentDisposition(const ContentDisposition &contentDisposition) {
 	L_D();
 	d->contentDisposition = contentDisposition;
 }
 
-const string &Content::getContentEncoding () const {
+const string &Content::getContentEncoding() const {
 	L_D();
 	return d->contentEncoding;
 }
 
-void Content::setContentEncoding (const string &contentEncoding) {
+void Content::setContentEncoding(const string &contentEncoding) {
 	L_D();
 	d->contentEncoding = contentEncoding;
 }
 
-const vector<char> &Content::getBody () const {
+const vector<char> &Content::getBody() const {
 	L_D();
 	return d->body;
 }
 
-string Content::getBodyAsString () const {
+string Content::getBodyAsString() const {
 	L_D();
 	return Utils::utf8ToLocale(string(d->body.begin(), d->body.end()));
 }
 
-string Content::getBodyAsUtf8String () const {
+string Content::getBodyAsUtf8String() const {
 	L_D();
 	return string(d->body.begin(), d->body.end());
 }
 
-void Content::setBody (const vector<char> &body) {
+void Content::setBody(const vector<char> &body) {
 	L_D();
 	d->body = body;
 }
 
-void Content::setBody (vector<char> &&body) {
+void Content::setBody(vector<char> &&body) {
 	L_D();
 	d->body = move(body);
 }
 
-void Content::setBodyFromLocale (const string &body) {
+void Content::setBodyFromLocale(const string &body) {
 	L_D();
 	string toUtf8 = Utils::localeToUtf8(body);
 	d->body = vector<char>(toUtf8.cbegin(), toUtf8.cend());
 }
 
-void Content::setBody (const void *buffer, size_t size) {
+void Content::setBody(const void *buffer, size_t size) {
 	L_D();
 	const char *start = static_cast<const char *>(buffer);
-	if(start != nullptr)
-		d->body = vector<char>(start, start + size);
-	else
-		d->body.clear();
+	if (start != nullptr) d->body = vector<char>(start, start + size);
+	else d->body.clear();
 }
 
-void Content::setBodyFromUtf8 (const string &body) {
+void Content::setBodyFromUtf8(const string &body) {
 	L_D();
 	d->body = vector<char>(body.cbegin(), body.cend());
 }
 
-size_t Content::getSize () const {
+size_t Content::getSize() const {
 	L_D();
 	return d->body.size();
 }
 
-bool Content::isEmpty () const {
+bool Content::isEmpty() const {
 	return getSize() == 0;
 }
 
-bool Content::isMultipart () const {
+bool Content::isMultipart() const {
 	L_D();
 	return d->contentType.isValid() && d->contentType == ContentType::Multipart;
 }
 
-bool Content::isValid () const {
+bool Content::isValid() const {
 	L_D();
 	return d->contentType.isValid() || (d->contentType.isEmpty() && d->body.empty());
 }
 
-bool Content::isFile () const {
+bool Content::isFile() const {
 	return false;
 }
 
-bool Content::isFileTransfer () const {
+bool Content::isFileTransfer() const {
 	return false;
 }
 
-void Content::addHeader (const string &headerName, const string &headerValue) {
+void Content::addHeader(const string &headerName, const string &headerValue) {
 	L_D();
 	removeHeader(headerName);
 	Header header = Header(headerName, headerValue);
 	d->headers.push_back(header);
 }
 
-void Content::addHeader (const Header &header) {
+void Content::addHeader(const Header &header) {
 	L_D();
 	removeHeader(header.getName());
 	d->headers.push_back(header);
 }
 
-const list<Header> &Content::getHeaders () const {
+const list<Header> &Content::getHeaders() const {
 	L_D();
 	return d->headers;
 }
 
-const Header &Content::getHeader (const string &headerName) const {
+const Header &Content::getHeader(const string &headerName) const {
 	L_D();
 	list<Header>::const_iterator it = findHeader(headerName);
 	if (it != d->headers.cend()) {
@@ -240,18 +238,15 @@ const Header &Content::getHeader (const string &headerName) const {
 	return Utils::getEmptyConstRefObject<Header>();
 }
 
-void Content::removeHeader (const string &headerName) {
+void Content::removeHeader(const string &headerName) {
 	L_D();
 	auto it = findHeader(headerName);
-	if (it != d->headers.cend())
-		d->headers.remove(*it);
+	if (it != d->headers.cend()) d->headers.remove(*it);
 }
 
-list<Header>::const_iterator Content::findHeader (const string &headerName) const {
+list<Header>::const_iterator Content::findHeader(const string &headerName) const {
 	L_D();
-	return findIf(d->headers, [&headerName](const Header &header) {
-		return header.getName() == headerName;
-	});
+	return findIf(d->headers, [&headerName](const Header &header) { return header.getName() == headerName; });
 }
 
 void Content::setUserData(const Variant &userData) {
@@ -262,11 +257,11 @@ Variant Content::getUserData() const {
 	return getProperty("LinphonePrivate::Content::userData");
 }
 
-bool Content::isFileEncrypted (const string& filePath) const {
+bool Content::isFileEncrypted(const string &filePath) const {
 	if (filePath.empty()) {
 		return false;
 	}
-	
+
 	// is the encryptedVfs set up?
 	if (bctoolbox::VfsEncryption::openCallbackGet() == nullptr) {
 		// no: we can't open the file using encryptedVFS
@@ -287,7 +282,7 @@ bool Content::isFileEncrypted (const string& filePath) const {
 	return (ret == TRUE);
 }
 
-const string Content::exportPlainFileFromEncryptedFile(const string& filePath) const {
+const string Content::exportPlainFileFromEncryptedFile(const string &filePath) const {
 	if (filePath.empty()) {
 		return filePath;
 	}
@@ -321,28 +316,28 @@ const string Content::exportPlainFileFromEncryptedFile(const string& filePath) c
 	// open the file using encrypted vfs
 	auto cf = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.c_str(), "r");
 	// open the plain file using standard vfs
-	if (cf == NULL)   {
+	if (cf == NULL) {
 		lError() << "[Content] Can't open file " << filePath << " to decrypt it";
 		return std::string();
 	}
 
 	auto fileSize = bctbx_file_size(cf);
 	if (fileSize < 0) {
-		lError() << "[Content] Can't read size of file "<< filePath;
+		lError() << "[Content] Can't read size of file " << filePath;
 		bctbx_file_close(cf);
 		return std::string();
 	}
 
 	auto pf = bctbx_file_open(bctbx_vfs_get_standard(), plainPath.c_str(), "w");
-	if (pf == NULL)   {
-		lError() << "[Content] Can't create file " << plainPath << " to decrypt "<< filePath;
+	if (pf == NULL) {
+		lError() << "[Content] Can't create file " << plainPath << " to decrypt " << filePath;
 		return std::string();
 	}
-	
-	size_t constexpr bufSize = 100*1024; // read by chunks of 100 kB
+
+	size_t constexpr bufSize = 100 * 1024; // read by chunks of 100 kB
 	uint8_t *readBuf = new uint8_t[bufSize];
 	ssize_t readSize = 0;
-	while(readSize < fileSize) {
+	while (readSize < fileSize) {
 		auto read = bctbx_file_read(cf, readBuf, bufSize, readSize);
 		if (read < 0) {
 			lError() << "[Content] Can't read file " << filePath << " to decrypt it";
@@ -362,7 +357,7 @@ const string Content::exportPlainFileFromEncryptedFile(const string& filePath) c
 			delete[] readBuf;
 			return std::string();
 		}
-		
+
 		readSize += read;
 	}
 
@@ -372,6 +367,5 @@ const string Content::exportPlainFileFromEncryptedFile(const string& filePath) c
 
 	return plainPath;
 }
-
 
 LINPHONE_END_NAMESPACE

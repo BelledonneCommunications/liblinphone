@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,9 +22,9 @@
 #include "config.h"
 #endif
 
-#include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "core/core-p.h"
 #include "linphone/event.h"
 
 #ifdef HAVE_ADVANCED_IM
@@ -43,13 +43,16 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-LocalConference::LocalConference (
-	const shared_ptr<Core> &core,
-	const IdentityAddress &myAddress,
-	CallSessionListener *listener,
-	const std::shared_ptr<ConferenceParams> params ,
-	ConferenceListener *confListener
-	) : Conference(core, myAddress, listener, params) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+LocalConference::LocalConference(const shared_ptr<Core> &core,
+                                 const IdentityAddress &myAddress,
+                                 CallSessionListener *listener,
+                                 const std::shared_ptr<ConferenceParams> params,
+                                 ConferenceListener *confListener)
+    : Conference(core, myAddress, listener, params) {
 	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
 	// Remote conference sets last notify to 0 in its constructor
 	lastNotify = 1;
@@ -61,14 +64,17 @@ LocalConference::LocalConference (
 	addListener(eventHandler);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-LocalConference::~LocalConference () {
+LocalConference::~LocalConference() {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif
 }
 
-bool LocalConference::isIn() const{
+bool LocalConference::isIn() const {
 	return true;
 }
 
@@ -78,7 +84,7 @@ std::shared_ptr<Call> LocalConference::getCall() const {
 
 // -----------------------------------------------------------------------------
 
-void LocalConference::subscribeReceived (LinphoneEvent *event) {
+void LocalConference::subscribeReceived(LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
 	if (event) {
 		const LinphoneAddress *lAddr = linphone_event_get_from(event);
@@ -86,7 +92,7 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 		Address participantAddress(addrStr);
 		bctbx_free(addrStr);
 
-		shared_ptr<Participant> participant = findParticipant (participantAddress);
+		shared_ptr<Participant> participant = findParticipant(participantAddress);
 
 		if (participant) {
 			const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
@@ -97,9 +103,10 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 
 			if (device) {
 				vector<string> acceptedContents = vector<string>();
-				const auto message = (belle_sip_message_t*)event->op->getRecvCustomHeaders();
+				const auto message = (belle_sip_message_t *)event->op->getRecvCustomHeaders();
 				if (message) {
-					for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
+					for (belle_sip_header_t *acceptHeader = belle_sip_message_get_header(message, "Accept");
+					     acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
 						acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
 					}
 				}
@@ -107,7 +114,7 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 				const auto ephemeral = protocols.find("ephemeral");
 				if (ephemeral != protocols.end()) {
 					const auto ephemeralVersion = ephemeral->second;
-					device->enableAdminModeSupport((ephemeralVersion > Utils::Version(1,1)));
+					device->enableAdminModeSupport((ephemeralVersion > Utils::Version(1, 1)));
 				} else {
 					device->enableAdminModeSupport(false);
 				}
@@ -116,89 +123,115 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 	}
 
 	eventHandler->subscribeReceived(event);
-#else // !HAVE_ADVANCED_IM
+#else  // !HAVE_ADVANCED_IM
 	linphone_event_deny_subscription(event, LinphoneReasonNotAcceptable);
 #endif // HAVE_ADVANCED_IM
 }
 
-void LocalConference::notifyFullState () {
+void LocalConference::notifyFullState() {
 	++lastNotify;
 	Conference::notifyFullState();
 }
 
-shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded(
+    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantAdded (creationTime,  isFullState, participant);
+	return Conference::notifyParticipantAdded(creationTime, isFullState, participant);
 }
 
-shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved(
+    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantRemoved (creationTime,  isFullState, participant);
+	return Conference::notifyParticipantRemoved(creationTime, isFullState, participant);
 }
 
-shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin(
+    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantSetAdmin (creationTime,  isFullState, participant, isAdmin);
+	return Conference::notifyParticipantSetAdmin(creationTime, isFullState, participant, isAdmin);
 }
 
-shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
+shared_ptr<ConferenceSubjectEvent>
+LocalConference::notifySubjectChanged(time_t creationTime, const bool isFullState, const std::string subject) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
+	return Conference::notifySubjectChanged(creationTime, isFullState, subject);
 }
 
-shared_ptr<ConferenceEphemeralMessageEvent> LocalConference::notifyEphemeralModeChanged (time_t creationTime, const bool isFullState, const EventLog::Type type) {
+shared_ptr<ConferenceEphemeralMessageEvent>
+LocalConference::notifyEphemeralModeChanged(time_t creationTime, const bool isFullState, const EventLog::Type type) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyEphemeralModeChanged (creationTime, isFullState, type);
+	return Conference::notifyEphemeralModeChanged(creationTime, isFullState, type);
 }
 
-shared_ptr<ConferenceEphemeralMessageEvent> LocalConference::notifyEphemeralMessageEnabled (time_t creationTime, const bool isFullState, const bool enable) {
+shared_ptr<ConferenceEphemeralMessageEvent>
+LocalConference::notifyEphemeralMessageEnabled(time_t creationTime, const bool isFullState, const bool enable) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyEphemeralMessageEnabled (creationTime, isFullState, enable);
+	return Conference::notifyEphemeralMessageEnabled(creationTime, isFullState, enable);
 }
 
-shared_ptr<ConferenceEphemeralMessageEvent> LocalConference::notifyEphemeralLifetimeChanged (time_t creationTime, const bool isFullState, const long lifetime) {
+shared_ptr<ConferenceEphemeralMessageEvent>
+LocalConference::notifyEphemeralLifetimeChanged(time_t creationTime, const bool isFullState, const long lifetime) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyEphemeralLifetimeChanged (creationTime, isFullState, lifetime);
+	return Conference::notifyEphemeralLifetimeChanged(creationTime, isFullState, lifetime);
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceParticipantDeviceEvent>
+LocalConference::notifyParticipantDeviceAdded(time_t creationTime,
+                                              const bool isFullState,
+                                              const std::shared_ptr<Participant> &participant,
+                                              const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, participant, participantDevice);
+	return Conference::notifyParticipantDeviceAdded(creationTime, isFullState, participant, participantDevice);
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceParticipantDeviceEvent>
+LocalConference::notifyParticipantDeviceRemoved(time_t creationTime,
+                                                const bool isFullState,
+                                                const std::shared_ptr<Participant> &participant,
+                                                const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
+	return Conference::notifyParticipantDeviceRemoved(creationTime, isFullState, participant, participantDevice);
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceStateChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceParticipantDeviceEvent>
+LocalConference::notifyParticipantDeviceStateChanged(time_t creationTime,
+                                                     const bool isFullState,
+                                                     const std::shared_ptr<Participant> &participant,
+                                                     const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
 	// This method is called by participant devices whenever they change state
-	auto event = Conference::notifyParticipantDeviceStateChanged (creationTime,  isFullState, participant, participantDevice);
+	auto event =
+	    Conference::notifyParticipantDeviceStateChanged(creationTime, isFullState, participant, participantDevice);
 	getCore()->getPrivate()->mainDb->addEvent(event);
 	return event;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceMediaCapabilityChanged(
+    time_t creationTime,
+    const bool isFullState,
+    const std::shared_ptr<Participant> &participant,
+    const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceMediaCapabilityChanged (creationTime,  isFullState, participant, participantDevice);
+	return Conference::notifyParticipantDeviceMediaCapabilityChanged(creationTime, isFullState, participant,
+	                                                                 participantDevice);
 }
 
-shared_ptr<ConferenceAvailableMediaEvent> LocalConference::notifyAvailableMediaChanged (time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
+shared_ptr<ConferenceAvailableMediaEvent> LocalConference::notifyAvailableMediaChanged(
+    time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyAvailableMediaChanged (creationTime, isFullState, mediaCapabilities);
+	return Conference::notifyAvailableMediaChanged(creationTime, isFullState, mediaCapabilities);
 }
 
 LINPHONE_END_NAMESPACE

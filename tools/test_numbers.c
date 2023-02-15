@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,16 +26,14 @@ int main(int argc, char *argv[]) {
 	char *normalized_number;
 	if (argc < 2) {
 		fprintf(stderr, "Usage:\n%s <phone number> [<country code>] [--escape-plus]\nReturns normalized number.",
-				argv[0]);
+		        argv[0]);
 		return -1;
 	}
 	linphone_core_enable_logs(stderr);
 	linphone_core_set_log_level(ORTP_DEBUG);
 	cfg = linphone_core_create_proxy_config(NULL);
-	if (argc > 2)
-		linphone_proxy_config_set_dial_prefix(cfg, argv[2]);
-	if (argc > 3 && strcmp(argv[3], "--escape-plus") == 0)
-		linphone_proxy_config_set_dial_escape_plus(cfg, TRUE);
+	if (argc > 2) linphone_proxy_config_set_dial_prefix(cfg, argv[2]);
+	if (argc > 3 && strcmp(argv[3], "--escape-plus") == 0) linphone_proxy_config_set_dial_escape_plus(cfg, TRUE);
 	normalized_number = linphone_proxy_config_normalize_phone_number(cfg, argv[1]);
 
 	if (!normalized_number) {
@@ -45,9 +43,9 @@ int main(int argc, char *argv[]) {
 		/*check extracted ccc*/
 		if (linphone_proxy_config_get_dial_prefix(cfg) != NULL) {
 			if (linphone_dial_plan_lookup_ccc_from_e164(normalized_number) !=
-				atoi(linphone_proxy_config_get_dial_prefix(cfg))) {
+			    atoi(linphone_proxy_config_get_dial_prefix(cfg))) {
 				printf("Error ccc [%i] not correctly parsed\n",
-					   linphone_dial_plan_lookup_ccc_from_e164(normalized_number));
+				       linphone_dial_plan_lookup_ccc_from_e164(normalized_number));
 			} else {
 				printf("Extracted ccc is [%i] \n", linphone_dial_plan_lookup_ccc_from_e164(normalized_number));
 			}

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,13 +34,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
 #include "c-wrapper/c-wrapper.h"
 
-struct _LinphoneInfoMessage{
+struct _LinphoneInfoMessage {
 	belle_sip_object_t base;
 	LinphoneContent *content;
 	SalCustomHeader *headers;
@@ -51,12 +53,12 @@ static void _linphone_info_message_copy(LinphoneInfoMessage *im, const LinphoneI
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneInfoMessage);
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneInfoMessage);
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneInfoMessage, belle_sip_object_t,
-	_linphone_info_message_uninit, // uninit
-	_linphone_info_message_copy, // clone
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneInfoMessage,
+                           belle_sip_object_t,
+                           _linphone_info_message_uninit, // uninit
+                           _linphone_info_message_copy,   // clone
+                           NULL,                          // marshal
+                           FALSE);
 
 static void _linphone_info_message_uninit(LinphoneInfoMessage *im) {
 	if (im->content) linphone_content_unref(im->content);
@@ -71,51 +73,48 @@ void linphone_info_message_unref(LinphoneInfoMessage *im) {
 	belle_sip_object_unref(im);
 }
 
-void linphone_info_message_destroy(LinphoneInfoMessage *im){
+void linphone_info_message_destroy(LinphoneInfoMessage *im) {
 	linphone_info_message_unref(im);
 }
 
 static void _linphone_info_message_copy(LinphoneInfoMessage *im, const LinphoneInfoMessage *orig) {
-	if (orig->content) im->content=linphone_content_copy(orig->content);
-	if (orig->headers) im->headers=sal_custom_header_clone(orig->headers);
+	if (orig->content) im->content = linphone_content_copy(orig->content);
+	if (orig->headers) im->headers = sal_custom_header_clone(orig->headers);
 }
 
-LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *orig){
+LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *orig) {
 	return (LinphoneInfoMessage *)belle_sip_object_clone((const belle_sip_object_t *)orig);
 }
 
-LinphoneInfoMessage *linphone_core_create_info_message(LinphoneCore *lc){
+LinphoneInfoMessage *linphone_core_create_info_message(BCTBX_UNUSED(LinphoneCore *lc)) {
 	return belle_sip_object_new(LinphoneInfoMessage);
 }
 
-void linphone_info_message_add_header(LinphoneInfoMessage *im, const char *name, const char *value){
-	im->headers=sal_custom_header_append(im->headers, name, value);
+void linphone_info_message_add_header(LinphoneInfoMessage *im, const char *name, const char *value) {
+	im->headers = sal_custom_header_append(im->headers, name, value);
 }
 
-const char *linphone_info_message_get_header(const LinphoneInfoMessage *im, const char *name){
-	return sal_custom_header_find(im->headers,name);
+const char *linphone_info_message_get_header(const LinphoneInfoMessage *im, const char *name) {
+	return sal_custom_header_find(im->headers, name);
 }
 
-void linphone_info_message_set_content (LinphoneInfoMessage *im, const LinphoneContent *content) {
-	if (im->content)
-		linphone_content_unref(im->content);
-	if (content)
-		im->content = linphone_content_copy(content);
+void linphone_info_message_set_content(LinphoneInfoMessage *im, const LinphoneContent *content) {
+	if (im->content) linphone_content_unref(im->content);
+	if (content) im->content = linphone_content_copy(content);
 }
 
-const LinphoneContent * linphone_info_message_get_content(const LinphoneInfoMessage *im){
+const LinphoneContent *linphone_info_message_get_content(const LinphoneInfoMessage *im) {
 	return (im->content && linphone_content_get_type(im->content)) ? im->content : NULL;
 }
 
-SalCustomHeader *linphone_info_message_get_headers (const LinphoneInfoMessage *im) {
+SalCustomHeader *linphone_info_message_get_headers(const LinphoneInfoMessage *im) {
 	return im->headers;
 }
 
-void linphone_info_message_set_headers (LinphoneInfoMessage *im, const SalCustomHeader *headers) {
+void linphone_info_message_set_headers(LinphoneInfoMessage *im, const SalCustomHeader *headers) {
 	if (im->headers) {
 		sal_custom_header_free(im->headers);
 		im->headers = nullptr;
 	}
-	if (headers)
-		im->headers = sal_custom_header_clone(headers);
+	if (headers) im->headers = sal_custom_header_clone(headers);
 }

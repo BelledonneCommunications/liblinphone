@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #ifndef _L_CONFERENCE_EPHEMERAL_MESSAGE_EVENT_H_
 #define _L_CONFERENCE_EPHEMERAL_MESSAGE_EVENT_H_
 
-#include "conference-event-p.h"
+#include "conference-notified-event.h"
 
 // =============================================================================
 
@@ -31,16 +31,15 @@ class ConferenceEphemeralMessageEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceEphemeralMessageEvent : public ConferenceNotifiedEvent {
 	friend class Conference;
+
 public:
-	ConferenceEphemeralMessageEvent (
-							Type type,
-							time_t creationTime,
-							const ConferenceId &conferenceId,
-							long ephemeralLifetime
-							);
-	
+	ConferenceEphemeralMessageEvent(Type type,
+	                                time_t creationTime,
+	                                const ConferenceId &conferenceId,
+	                                long ephemeralLifetime);
+
 	long getEphemeralMessageLifetime() const;
-	
+
 private:
 	L_DECLARE_PRIVATE(ConferenceEphemeralMessageEvent);
 	L_DISABLE_COPY(ConferenceEphemeralMessageEvent);

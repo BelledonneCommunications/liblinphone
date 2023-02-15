@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,15 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bctoolbox/defs.h"
 #include "sal/register-op.h"
+#include "bctoolbox/defs.h"
 #include "bellesip_sal/sal_impl.h"
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-int SalRegisterOp::sendRegister (const string &proxy, const string &from, int expires, const std::list<SalAddress *> &customContacts) {
+int SalRegisterOp::sendRegister(const string &proxy,
+                                const string &from,
+                                int expires,
+                                const std::list<SalAddress *> &customContacts) {
 	if (mRefresher) {
 		belle_sip_refresher_stop(mRefresher);
 		belle_sip_object_unref(mRefresher);
@@ -42,16 +45,15 @@ int SalRegisterOp::sendRegister (const string &proxy, const string &from, int ex
 	belle_sip_uri_set_user(requestUri, nullptr); // Remove userinfo if there is any
 	if (mRoot->mUseDates) {
 		time_t curtime = time(nullptr);
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(belle_sip_header_date_create_from_time(&curtime)));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request),
+		                             BELLE_SIP_HEADER(belle_sip_header_date_create_from_time(&curtime)));
 	}
-	auto acceptHeader = belle_sip_header_create(
-		"Accept",
-		"application/sdp, text/plain, application/vnd.gsma.rcs-ft-http+xml"
-	);
+	auto acceptHeader =
+	    belle_sip_header_create("Accept", "application/sdp, text/plain, application/vnd.gsma.rcs-ft-http+xml");
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), acceptHeader);
 	belle_sip_message_set_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(createContact(true)));
 
-	for (const SalAddress * customContact : customContacts) {
+	for (const SalAddress *customContact : customContacts) {
 		auto contactHeader = belle_sip_header_contact_create(BELLE_SIP_HEADER_ADDRESS(customContact));
 		if (contactHeader) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(contactHeader));
@@ -66,22 +68,27 @@ int SalRegisterOp::sendRegister (const string &proxy, const string &from, int ex
 	return sendRequestAndCreateRefresher(request, expires, registerRefresherListener);
 }
 
-void SalRegisterOp::registerRefresherListener (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry) {
+void SalRegisterOp::registerRefresherListener(belle_sip_refresher_t *refresher,
+                                              void *userCtx,
+                                              unsigned int statusCode,
+                                              const char *reasonPhrase,
+                                              BCTBX_UNUSED(int willRetry)) {
 	auto op = static_cast<SalRegisterOp *>(userCtx);
-	auto response = belle_sip_transaction_get_response(BELLE_SIP_TRANSACTION(belle_sip_refresher_get_transaction(refresher)));
+	auto response =
+	    belle_sip_transaction_get_response(BELLE_SIP_TRANSACTION(belle_sip_refresher_get_transaction(refresher)));
 
-	lInfo() << "Register refresher [" << statusCode << "] reason [" << reasonPhrase << "] for proxy [" << op->getProxy() << "]";
+	lInfo() << "Register refresher [" << statusCode << "] reason [" << reasonPhrase << "] for proxy [" << op->getProxy()
+	        << "]";
 
 	if (belle_sip_refresher_get_auth_events(refresher)) {
-		if (op->mAuthInfo)
-			sal_auth_info_delete(op->mAuthInfo);
+		if (op->mAuthInfo) sal_auth_info_delete(op->mAuthInfo);
 		// Only take first one for now
-		op->mAuthInfo = sal_auth_info_create(reinterpret_cast<belle_sip_auth_event_t *>(belle_sip_refresher_get_auth_events(refresher)->data));
+		op->mAuthInfo = sal_auth_info_create(
+		    reinterpret_cast<belle_sip_auth_event_t *>(belle_sip_refresher_get_auth_events(refresher)->data));
 	}
 	sal_error_info_set(&op->mErrorInfo, SalReasonUnknown, "SIP", (int)statusCode, reasonPhrase, nullptr);
 
-	if (statusCode >= 200)
-		op->assignRecvHeaders(BELLE_SIP_MESSAGE(response));
+	if (statusCode >= 200) op->assignRecvHeaders(BELLE_SIP_MESSAGE(response));
 
 	if (statusCode == 200) {
 		// Check service route rfc3608
@@ -90,13 +97,10 @@ void SalRegisterOp::registerRefresherListener (belle_sip_refresher_t *refresher,
 		belle_sip_header_address_t *serviceRouteAddressHeader = nullptr;
 		if (serviceRouteHeader) {
 			serviceRouteAddressHeader = belle_sip_header_address_create(
-				nullptr,
-				belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(serviceRouteHeader))
-			);
+			    nullptr, belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(serviceRouteHeader)));
 		}
 		op->setServiceRoute(reinterpret_cast<const SalAddress *>(serviceRouteAddressHeader));
-		if (serviceRouteAddressHeader)
-			belle_sip_object_unref(serviceRouteAddressHeader);
+		if (serviceRouteAddressHeader) belle_sip_object_unref(serviceRouteAddressHeader);
 
 		op->mRoot->removePendingAuth(op); // Just in case
 
@@ -128,7 +132,7 @@ void SalRegisterOp::registerRefresherListener (belle_sip_refresher_t *refresher,
 		op->ref(); // Take a ref while invoking the callback to make sure the operations done after are valid
 		op->mRoot->mCallbacks.register_failure(op);
 		if ((op->mState != State::Terminated) && op->mAuthInfo) {
-			switch (statusCode){
+			switch (statusCode) {
 				case 401:
 					BCTBX_NO_BREAK;
 				case 407:

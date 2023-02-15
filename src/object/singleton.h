@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,18 +27,19 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-template<class T>
+template <class T>
 class LINPHONE_PUBLIC Singleton : public Object {
 public:
-	virtual ~Singleton () = default;
+	virtual ~Singleton() = default;
 
-	static T *getInstance () {
+	static T *getInstance() {
 		static T instance;
 		return &instance;
 	}
 
 protected:
-	explicit Singleton (ObjectPrivate &p) : Object(p) {}
+	explicit Singleton(ObjectPrivate &p) : Object(p) {
+	}
 
 private:
 	L_DISABLE_COPY(Singleton);

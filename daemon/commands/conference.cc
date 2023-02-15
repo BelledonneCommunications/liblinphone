@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,33 +22,30 @@
 
 using namespace std;
 
-ConferenceCommand::ConferenceCommand() :
-	DaemonCommand("conference", "conference add|rm|leave|enter <call_id>",
-				  "Create and manage an audio conference.\n"
-				  "You can:\n"
-				  "- add   : join the call with id 'call id' into the audio conference. Creates new one if none exists.\n"
-				  "- rm    : remove the call with id 'call id' from the audio conference.\n"
-				  "- leave : temporarily leave the current conference.\n"
-				  "- enter : re-join the conference after leaving it.")
-{
-	addExample(make_unique<DaemonCommandExample>("conference add 1",
-										"Status: Ok\n\n"
-										"Call Id: 1\n"
-										"Conference: add OK"));
-	addExample(make_unique<DaemonCommandExample>("conference leave 1",
-										"Status: Ok\n\n"
-										"Call Id: 1\n"
-										"Conference: leave OK"));
-	addExample(make_unique<DaemonCommandExample>("conference azerty 1",
-										"Status: Error\n\n"
-										"Reason: Invalid command format"));
-	addExample(make_unique<DaemonCommandExample>("conference leave 2",
-										"Status: Error\n\n"
-										"Reason: No call with such id."));
+ConferenceCommand::ConferenceCommand()
+    : DaemonCommand(
+          "conference",
+          "conference add|rm|leave|enter <call_id>",
+          "Create and manage an audio conference.\n"
+          "You can:\n"
+          "- add   : join the call with id 'call id' into the audio conference. Creates new one if none exists.\n"
+          "- rm    : remove the call with id 'call id' from the audio conference.\n"
+          "- leave : temporarily leave the current conference.\n"
+          "- enter : re-join the conference after leaving it.") {
+	addExample(make_unique<DaemonCommandExample>("conference add 1", "Status: Ok\n\n"
+	                                                                 "Call Id: 1\n"
+	                                                                 "Conference: add OK"));
+	addExample(make_unique<DaemonCommandExample>("conference leave 1", "Status: Ok\n\n"
+	                                                                   "Call Id: 1\n"
+	                                                                   "Conference: leave OK"));
+	addExample(make_unique<DaemonCommandExample>("conference azerty 1", "Status: Error\n\n"
+	                                                                    "Reason: Invalid command format"));
+	addExample(make_unique<DaemonCommandExample>("conference leave 2", "Status: Error\n\n"
+	                                                                   "Reason: No call with such id."));
 }
 
-void ConferenceCommand::exec(Daemon* app, const string& args) {
-	LinphoneCore* lc = app->getCore();
+void ConferenceCommand::exec(Daemon *app, const string &args) {
+	LinphoneCore *lc = app->getCore();
 	int id;
 	string subcommand;
 	int ret;
@@ -60,7 +57,7 @@ void ConferenceCommand::exec(Daemon* app, const string& args) {
 		return;
 	}
 
-	LinphoneCall *call=app->findCall(id);
+	LinphoneCall *call = app->findCall(id);
 	if (call == NULL) {
 		app->sendResponse(Response("No call with such id.", Response::Error));
 		return;
@@ -82,7 +79,8 @@ void ConferenceCommand::exec(Daemon* app, const string& args) {
 	if (ret == 0) {
 		ostringstream ostr;
 		ostr << "Call ID: " << id << "\n";
-		ostr << "Conference: " << subcommand << " OK" << "\n";
+		ostr << "Conference: " << subcommand << " OK"
+		     << "\n";
 		app->sendResponse(Response(ostr.str(), Response::Ok));
 		return;
 	}

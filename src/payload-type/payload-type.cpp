@@ -20,6 +20,8 @@
 
 #include <sstream>
 
+#include <bctoolbox/defs.h>
+
 #include "payload-type.h"
 
 #include "c-wrapper/c-wrapper.h"
@@ -31,8 +33,8 @@ using namespace std;
 
 static bool_t _payload_type_is_in_core(const OrtpPayloadType *pt, const LinphoneCore *lc) {
 	return (bctbx_list_find(lc->codecs_conf.audio_codecs, pt) != NULL) ||
-		   (bctbx_list_find(lc->codecs_conf.video_codecs, pt) != NULL) ||
-		   (bctbx_list_find(lc->codecs_conf.text_codecs, pt) != NULL);
+	       (bctbx_list_find(lc->codecs_conf.video_codecs, pt) != NULL) ||
+	       (bctbx_list_find(lc->codecs_conf.text_codecs, pt) != NULL);
 }
 
 static char *_payload_type_get_description(const OrtpPayloadType *pt) {
@@ -56,12 +58,12 @@ LinphoneStatus linphone_core_enable_payload_type(LinphoneCore *lc, OrtpPayloadTy
 	return _linphone_core_enable_payload_type(lc, pt, enabled);
 }
 
-bool_t linphone_core_payload_type_enabled(const LinphoneCore *lc, const OrtpPayloadType *pt) {
+bool_t linphone_core_payload_type_enabled(BCTBX_UNUSED(const LinphoneCore *lc), const OrtpPayloadType *pt) {
 	return payload_type_enabled(pt);
 }
 
 static const char *_linphone_core_get_payload_type_codec_description(const LinphoneCore *lc,
-																	 const OrtpPayloadType *pt) {
+                                                                     const OrtpPayloadType *pt) {
 	if (ms_factory_codec_supported(lc->factory, pt->mime_type)) {
 		MSFilterDesc *desc = ms_factory_get_encoder(lc->factory, pt->mime_type);
 		return desc->text;
@@ -81,7 +83,7 @@ const char *linphone_core_get_payload_type_description(LinphoneCore *lc, const O
 
 static int _linphone_core_get_payload_type_normal_bitrate(const LinphoneCore *lc, const OrtpPayloadType *pt) {
 	int maxbw = LinphonePrivate::PayloadTypeHandler::getMinBandwidth(linphone_core_get_download_bandwidth(lc),
-																	 linphone_core_get_upload_bandwidth(lc));
+	                                                                 linphone_core_get_upload_bandwidth(lc));
 	if (pt->type == PAYLOAD_AUDIO_CONTINUOUS || pt->type == PAYLOAD_AUDIO_PACKETIZED) {
 		return LinphonePrivate::PayloadTypeHandler::getAudioPayloadTypeBandwidth(pt, maxbw);
 	} else if (pt->type == PAYLOAD_VIDEO) {
@@ -130,21 +132,21 @@ void linphone_core_set_payload_type_bitrate(LinphoneCore *lc, OrtpPayloadType *p
 	}
 }
 
-int linphone_core_get_payload_type_number(LinphoneCore *lc, const OrtpPayloadType *pt) {
+int linphone_core_get_payload_type_number(BCTBX_UNUSED(LinphoneCore *lc), const OrtpPayloadType *pt) {
 	return payload_type_get_number(pt);
 }
 
-void linphone_core_set_payload_type_number(LinphoneCore *lc, OrtpPayloadType *pt, int number) {
+void linphone_core_set_payload_type_number(BCTBX_UNUSED(LinphoneCore *lc), OrtpPayloadType *pt, int number) {
 	payload_type_set_number(pt, number);
 }
 
-bool_t linphone_core_payload_type_is_vbr(const LinphoneCore *lc, const OrtpPayloadType *pt) {
+bool_t linphone_core_payload_type_is_vbr(BCTBX_UNUSED(const LinphoneCore *lc), const OrtpPayloadType *pt) {
 	return payload_type_is_vbr(pt);
 }
 
 bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const OrtpPayloadType *pt) {
 	int maxbw = LinphonePrivate::PayloadTypeHandler::getMinBandwidth(linphone_core_get_download_bandwidth(lc),
-																	 linphone_core_get_upload_bandwidth(lc));
+	                                                                 linphone_core_get_upload_bandwidth(lc));
 	return linphone_core_is_payload_type_usable_for_bandwidth(lc, pt, maxbw);
 }
 
@@ -163,10 +165,8 @@ OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt
 }
 
 void payload_type_set_enable(OrtpPayloadType *pt, bool_t value) {
-	if (value)
-		payload_type_set_flag(pt, PAYLOAD_TYPE_ENABLED);
-	else
-		payload_type_unset_flag(pt, PAYLOAD_TYPE_ENABLED);
+	if (value) payload_type_set_flag(pt, PAYLOAD_TYPE_ENABLED);
+	else payload_type_unset_flag(pt, PAYLOAD_TYPE_ENABLED);
 }
 
 bool_t payload_type_enabled(const OrtpPayloadType *pt) {
@@ -174,17 +174,15 @@ bool_t payload_type_enabled(const OrtpPayloadType *pt) {
 }
 
 LinphonePayloadType *linphone_payload_type_new(LinphoneCore *lc, OrtpPayloadType *ortp_pt) {
-	if (ortp_pt == NULL)
-		return NULL;
-	if (lc)
-		return LinphonePrivate::PayloadType::createCObject(lc->cppPtr, ortp_pt);
+	if (ortp_pt == NULL) return NULL;
+	if (lc) return LinphonePrivate::PayloadType::createCObject(lc->cppPtr, ortp_pt);
 	return LinphonePrivate::PayloadType::createCObject(nullptr, ortp_pt);
 }
 
 LINPHONE_BEGIN_NAMESPACE
 
-PayloadType::PayloadType(const PayloadType &payloadType, shared_ptr<Core> core) :
-	HybridObject(payloadType), CoreAccessor(core) {
+PayloadType::PayloadType(const PayloadType &payloadType, shared_ptr<Core> core)
+    : HybridObject(payloadType), CoreAccessor(core) {
 	this->mPt = payload_type_clone(payloadType.mPt);
 	this->setCore(payloadType.getCore());
 	this->mOwnOrtpPayloadType = true;
@@ -276,7 +274,7 @@ int PayloadType::getNormalBitrate() const {
 	}
 	auto cCore = core->getCCore();
 	int maxbw = LinphonePrivate::PayloadTypeHandler::getMinBandwidth(linphone_core_get_download_bandwidth(cCore),
-																	 linphone_core_get_upload_bandwidth(cCore));
+	                                                                 linphone_core_get_upload_bandwidth(cCore));
 	if (mPt->type == PAYLOAD_AUDIO_CONTINUOUS || mPt->type == PAYLOAD_AUDIO_PACKETIZED) {
 		return LinphonePrivate::PayloadTypeHandler::getAudioPayloadTypeBandwidth(mPt, maxbw);
 	} else if (mPt->type == PAYLOAD_VIDEO) {
@@ -332,8 +330,7 @@ bool PayloadType::isEnabled() const {
 }
 
 bool PayloadType::isVbr() const {
-	if (mPt->type == PAYLOAD_VIDEO)
-		return true;
+	if (mPt->type == PAYLOAD_VIDEO) return true;
 	return !!(mPt->flags & PAYLOAD_TYPE_IS_VBR);
 }
 
@@ -346,7 +343,7 @@ bool PayloadType::isUsable() const {
 	}
 	auto cCore = core->getCCore();
 	int maxbw = LinphonePrivate::PayloadTypeHandler::getMinBandwidth(linphone_core_get_download_bandwidth(cCore),
-																	 linphone_core_get_upload_bandwidth(cCore));
+	                                                                 linphone_core_get_upload_bandwidth(cCore));
 	return linphone_core_is_payload_type_usable_for_bandwidth(cCore, mPt, maxbw);
 }
 

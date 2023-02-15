@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "linphone/utils/general.h"
 #include "core/core-accessor.h"
 #include "core/core.h"
+#include "linphone/utils/general.h"
 #include "push-notification-message/push-notification-message.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -32,44 +32,45 @@ typedef enum {
 	mainCoreStarted,
 	executorCoreStarted,
 	executorCoreStopping, // A Main Core needs to start. Executor Cores have to stop.
-	executorCoreStopped // A Main Core has stopped the Executor Cores. Only a Main Core can start here.
+	executorCoreStopped   // A Main Core has stopped the Executor Cores. Only a Main Core can start here.
 } SharedCoreState;
 
 /**
  * This interface aims at abstracting some features offered by the platform, most often mobile platforms.
  * A per platform implementation is to be made to implement these features, if available on the platform.
  */
-class SharedCoreHelpers: public CoreAccessor {
+class SharedCoreHelpers : public CoreAccessor {
 public:
-	virtual ~SharedCoreHelpers () = default;
+	virtual ~SharedCoreHelpers() = default;
 
-	virtual	void onLinphoneCoreStop () = 0;
+	virtual void onLinphoneCoreStop() = 0;
 
-	virtual	bool isCoreShared() = 0;
+	virtual bool isCoreShared() = 0;
 	virtual bool canCoreStart() = 0;
 	virtual void registerSharedCoreMsgCallback() = 0;
 	virtual std::shared_ptr<PushNotificationMessage> getPushNotificationMessage(const std::string &callId) = 0;
-	virtual	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) = 0;
+	virtual std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) = 0;
 	virtual void resetSharedCoreState() = 0;
 	virtual void unlockSharedCoreIfNeeded() = 0;
 	virtual bool isCoreStopRequired() = 0;
 	virtual void onMsgWrittenInUserDefaults() = 0;
 
-    virtual void *getPathContext () = 0;
+	virtual void *getPathContext() = 0;
 	virtual void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) = 0;
 
 	virtual SharedCoreState getSharedCoreState() = 0;
 
 protected:
-	inline explicit SharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
+	inline explicit SharedCoreHelpers(std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {
+	}
 };
 
 class GenericSharedCoreHelpers : public SharedCoreHelpers {
 public:
-	explicit GenericSharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core);
-	~GenericSharedCoreHelpers () = default;
+	explicit GenericSharedCoreHelpers(std::shared_ptr<LinphonePrivate::Core> core);
+	~GenericSharedCoreHelpers() = default;
 
-	void onLinphoneCoreStop () override;
+	void onLinphoneCoreStop() override;
 
 	bool isCoreShared() override;
 	bool canCoreStart() override;
@@ -81,13 +82,13 @@ public:
 	bool isCoreStopRequired() override;
 	void onMsgWrittenInUserDefaults() override;
 
-    void *getPathContext () override;
+	void *getPathContext() override;
 	void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) override;
 
 	SharedCoreState getSharedCoreState() override;
 };
 
-std::shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core);
+std::shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers(std::shared_ptr<LinphonePrivate::Core> core);
 void uninitSharedCore(LinphoneCore *lc);
 
 LINPHONE_END_NAMESPACE

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,16 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "pop-event.h"
 
 using namespace std;
 
-PopEventCommand::PopEventCommand() :
-		DaemonCommand("pop-event", "pop-event", "Pop an event from event queue and display it.") {
-	addExample(make_unique<DaemonCommandExample>("pop-event",
-						"Status: Ok\n\n"
-						"Size: 0"));
+PopEventCommand::PopEventCommand()
+    : DaemonCommand("pop-event", "pop-event", "Pop an event from event queue and display it.") {
+	addExample(make_unique<DaemonCommandExample>("pop-event", "Status: Ok\n\n"
+	                                                          "Size: 0"));
 }
-void PopEventCommand::exec(Daemon *app, const string& args) {
+void PopEventCommand::exec(Daemon *app, BCTBX_UNUSED(const string &args)) {
 	app->pullEvent();
 }

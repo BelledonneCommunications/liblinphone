@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,79 +30,79 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ProxyChatRoomPrivate : public AbstractChatRoomPrivate {
 public:
-	inline void setCreationTime (time_t creationTime) override {
+	inline void setCreationTime(time_t creationTime) override {
 		chatRoom->getPrivate()->setCreationTime(creationTime);
 	}
 
-	inline void setLastUpdateTime (time_t lastUpdateTime) override {
+	inline void setLastUpdateTime(time_t lastUpdateTime) override {
 		chatRoom->getPrivate()->setLastUpdateTime(lastUpdateTime);
 	}
 
-	inline void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override {
+	inline void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->sendChatMessage(chatMessage);
 	}
 
-	inline void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) override {
+	inline void onChatMessageSent(const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->onChatMessageSent(chatMessage);
 	}
 
-	inline void addEvent (const std::shared_ptr<EventLog> &eventLog) override {
+	inline void addEvent(const std::shared_ptr<EventLog> &eventLog) override {
 		chatRoom->getPrivate()->addEvent(eventLog);
 	}
 
-	inline void addTransientEvent (const std::shared_ptr<EventLog> &eventLog) override {
+	inline void addTransientEvent(const std::shared_ptr<EventLog> &eventLog) override {
 		chatRoom->getPrivate()->addTransientEvent(eventLog);
 	}
 
-	inline void removeTransientEvent (const std::shared_ptr<EventLog> &eventLog) override {
+	inline void removeTransientEvent(const std::shared_ptr<EventLog> &eventLog) override {
 		chatRoom->getPrivate()->removeTransientEvent(eventLog);
 	}
 
-	inline void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override {
+	inline void addTransientChatMessage(const std::shared_ptr<ChatMessage> &message) override {
 		chatRoom->getPrivate()->addTransientChatMessage(message);
 	}
 
-	inline void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override {
+	inline void removeTransientChatMessage(const std::shared_ptr<ChatMessage> &message) override {
 		chatRoom->getPrivate()->removeTransientChatMessage(message);
 	}
 
-	inline std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages () override {
+	inline std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages() override {
 		return chatRoom->getPrivate()->getTransientChatMessages();
 	}
 
-	inline void setIsEmpty (const bool empty) override {
+	inline void setIsEmpty(const bool empty) override {
 		chatRoom->getPrivate()->setIsEmpty(empty);
 	}
 
-	inline void sendDeliveryNotifications (const std::shared_ptr<ChatMessage> &chatMessage) override {
+	inline void sendDeliveryNotifications(const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->sendDeliveryNotifications(chatMessage);
 	}
 
-	inline void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override {
+	inline void notifyChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->notifyChatMessageReceived(chatMessage);
 	}
 
-	inline void notifyAggregatedChatMessages () override {
+	inline void notifyAggregatedChatMessages() override {
 		chatRoom->getPrivate()->notifyAggregatedChatMessages();
 	}
 
-	inline void notifyUndecryptableChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override {
+	inline void notifyUndecryptableChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->notifyUndecryptableChatMessageReceived(chatMessage);
 	}
 
-	inline LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override {
+	inline LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) override {
 		return chatRoom->getPrivate()->onSipMessageReceived(op, message);
 	}
 
-	inline void onChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override {
+	inline void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->onChatMessageReceived(chatMessage);
 	}
 
-	inline void realtimeTextReceived (uint32_t character, const std::shared_ptr<Call> &call) override {
+	inline void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) override {
 		chatRoom->getPrivate()->realtimeTextReceived(character, call);
 	}
 
-	inline void setCallId (const std::string &value) override { 
+	inline void setCallId(const std::string &value) override {
 		chatRoom->getPrivate()->setCallId(value);
 	};
 
@@ -114,8 +114,8 @@ public:
 		chatRoom->getPrivate()->addPendingMessage(chatMessage);
 	}
 
-	void setupProxy ();
-	void teardownProxy ();
+	void setupProxy();
+	void teardownProxy();
 
 	std::shared_ptr<AbstractChatRoom> chatRoom;
 

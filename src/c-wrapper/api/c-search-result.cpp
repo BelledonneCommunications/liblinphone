@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,44 +18,45 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "search/search-result.h"
 #include "c-wrapper/c-wrapper.h"
+#include "search/search-result.h"
 
 using namespace LinphonePrivate;
 
-LinphoneSearchResult *linphone_search_result_ref (LinphoneSearchResult *searchResult) {
+LinphoneSearchResult *linphone_search_result_ref(LinphoneSearchResult *searchResult) {
 	belle_sip_object_ref(searchResult);
 	return searchResult;
 }
 
-void linphone_search_result_unref (LinphoneSearchResult *searchResult) {
+void linphone_search_result_unref(LinphoneSearchResult *searchResult) {
 	belle_sip_object_unref(searchResult);
 }
 
-const LinphoneFriend *linphone_search_result_get_friend (const LinphoneSearchResult *searchResult) {
+const LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *searchResult) {
 	return SearchResult::toCpp(searchResult)->getFriend();
 }
 
-const LinphoneAddress *linphone_search_result_get_address (const LinphoneSearchResult *searchResult) {
+const LinphoneAddress *linphone_search_result_get_address(const LinphoneSearchResult *searchResult) {
 	return SearchResult::toCpp(searchResult)->getAddress();
 }
 
-const char *linphone_search_result_get_phone_number (const LinphoneSearchResult *searchResult) {
+const char *linphone_search_result_get_phone_number(const LinphoneSearchResult *searchResult) {
 	return L_STRING_TO_C(SearchResult::toCpp(searchResult)->getPhoneNumber());
 }
 
-int linphone_search_result_get_capabilities (const LinphoneSearchResult *searchResult) {
+int linphone_search_result_get_capabilities(const LinphoneSearchResult *searchResult) {
 	return SearchResult::toCpp(searchResult)->getCapabilities();
 }
 
-bool_t linphone_search_result_has_capability (const LinphoneSearchResult *searchResult, const LinphoneFriendCapability capability) {
+bool_t linphone_search_result_has_capability(const LinphoneSearchResult *searchResult,
+                                             const LinphoneFriendCapability capability) {
 	return SearchResult::toCpp(searchResult)->hasCapability(capability);
 }
 
-unsigned int linphone_search_result_get_weight (const LinphoneSearchResult *searchResult) {
+unsigned int linphone_search_result_get_weight(const LinphoneSearchResult *searchResult) {
 	return SearchResult::toCpp(searchResult)->getWeight();
 }
 
-int linphone_search_result_get_source_flags (const LinphoneSearchResult *searchResult) {
+int linphone_search_result_get_source_flags(const LinphoneSearchResult *searchResult) {
 	return SearchResult::toCpp(searchResult)->getSourceFlags();
 }

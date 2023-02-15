@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,69 +19,79 @@
  */
 
 #include "linphone/api/c-participant-device-cbs.h"
-#include "conference/participant-device.h"
 #include "c-wrapper/c-wrapper.h"
+#include "conference/participant-device.h"
 
 using namespace LinphonePrivate;
 // =============================================================================
 
-LinphoneParticipantDeviceCbs * linphone_participant_device_cbs_new (void) {
+LinphoneParticipantDeviceCbs *linphone_participant_device_cbs_new(void) {
 	return ParticipantDeviceCbs::createCObject();
 }
 
-LinphoneParticipantDeviceCbs * linphone_participant_device_cbs_ref (LinphoneParticipantDeviceCbs *cbs) {
+LinphoneParticipantDeviceCbs *linphone_participant_device_cbs_ref(LinphoneParticipantDeviceCbs *cbs) {
 	ParticipantDeviceCbs::toCpp(cbs)->ref();
 	return cbs;
 }
 
-void linphone_participant_device_cbs_unref (LinphoneParticipantDeviceCbs *cbs) {
+void linphone_participant_device_cbs_unref(LinphoneParticipantDeviceCbs *cbs) {
 	ParticipantDeviceCbs::toCpp(cbs)->unref();
 }
 
-void * linphone_participant_device_cbs_get_user_data (const LinphoneParticipantDeviceCbs *cbs) {
+void *linphone_participant_device_cbs_get_user_data(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getUserData();
 }
 
-void linphone_participant_device_cbs_set_user_data (LinphoneParticipantDeviceCbs *cbs, void *ud) {
+void linphone_participant_device_cbs_set_user_data(LinphoneParticipantDeviceCbs *cbs, void *ud) {
 	ParticipantDeviceCbs::toCpp(cbs)->setUserData(ud);
 }
 
-LinphoneParticipantDeviceCbsIsSpeakingChangedCb linphone_participant_device_cbs_get_is_speaking_changed (const LinphoneParticipantDeviceCbs *cbs) {
+LinphoneParticipantDeviceCbsIsSpeakingChangedCb
+linphone_participant_device_cbs_get_is_speaking_changed(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getIsSpeakingChanged();
 }
 
-void linphone_participant_device_cbs_set_is_speaking_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb) {
+void linphone_participant_device_cbs_set_is_speaking_changed(LinphoneParticipantDeviceCbs *cbs,
+                                                             LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb) {
 	ParticipantDeviceCbs::toCpp(cbs)->setIsSpeakingChanged(cb);
 }
 
-LinphoneParticipantDeviceCbsIsMutedCb linphone_participant_device_cbs_get_is_muted (const LinphoneParticipantDeviceCbs *cbs) {
+LinphoneParticipantDeviceCbsIsMutedCb
+linphone_participant_device_cbs_get_is_muted(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getIsMuted();
 }
 
-void linphone_participant_device_cbs_set_is_muted (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsMutedCb cb) {
+void linphone_participant_device_cbs_set_is_muted(LinphoneParticipantDeviceCbs *cbs,
+                                                  LinphoneParticipantDeviceCbsIsMutedCb cb) {
 	ParticipantDeviceCbs::toCpp(cbs)->setIsMuted(cb);
 }
 
-LinphoneParticipantDeviceCbsStateChangedCb linphone_participant_device_cbs_get_state_changed (const LinphoneParticipantDeviceCbs *cbs) {
+LinphoneParticipantDeviceCbsStateChangedCb
+linphone_participant_device_cbs_get_state_changed(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getStateChanged();
 }
 
-void linphone_participant_device_cbs_set_state_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStateChangedCb cb) {
+void linphone_participant_device_cbs_set_state_changed(LinphoneParticipantDeviceCbs *cbs,
+                                                       LinphoneParticipantDeviceCbsStateChangedCb cb) {
 	ParticipantDeviceCbs::toCpp(cbs)->setStateChanged(cb);
 }
 
-void linphone_participant_device_cbs_set_stream_availability_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
+void linphone_participant_device_cbs_set_stream_availability_changed(
+    LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
 	ParticipantDeviceCbs::toCpp(cbs)->setStreamAvailabilityChanged(cb);
 }
 
-LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb linphone_participant_device_cbs_get_stream_availability_changed (const LinphoneParticipantDeviceCbs *cbs) {
+LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb
+linphone_participant_device_cbs_get_stream_availability_changed(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getStreamAvailabilityChanged();
 }
 
-void linphone_participant_device_cbs_set_stream_capability_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb) {
+void linphone_participant_device_cbs_set_stream_capability_changed(
+    LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb) {
 	ParticipantDeviceCbs::toCpp(cbs)->setStreamCapabilityChanged(cb);
 }
 
-LinphoneParticipantDeviceCbsStreamCapabilityChangedCb linphone_participant_device_cbs_get_stream_capability_changed (const LinphoneParticipantDeviceCbs *cbs) {
+LinphoneParticipantDeviceCbsStreamCapabilityChangedCb
+linphone_participant_device_cbs_get_stream_capability_changed(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getStreamCapabilityChanged();
 }

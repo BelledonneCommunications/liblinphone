@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,9 @@
 #ifndef LINPHONE_RECORDER_H
 #define LINPHONE_RECORDER_H
 
-#include "linphone/types.h"
-#include "linphone/api/c-types.h"
 #include "linphone/api/c-recorder-params.h"
+#include "linphone/api/c-types.h"
+#include "linphone/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,14 +40,14 @@ extern "C" {
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the newly created #LinphoneRecorder object. @notnil
  */
-LINPHONE_PUBLIC LinphoneRecorder* linphone_recorder_new(LinphoneCore *core, LinphoneRecorderParams *params);
+LINPHONE_PUBLIC LinphoneRecorder *linphone_recorder_new(LinphoneCore *core, LinphoneRecorderParams *params);
 
 /**
  * Take a reference on a #LinphoneRecorder object.
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return the same #LinphoneRecorder object. @notnil
  */
-LINPHONE_PUBLIC LinphoneRecorder* linphone_recorder_ref(LinphoneRecorder *recorder);
+LINPHONE_PUBLIC LinphoneRecorder *linphone_recorder_ref(LinphoneRecorder *recorder);
 
 /**
  * Release a #LinphoneRecorder object.
@@ -73,7 +73,7 @@ LINPHONE_PUBLIC void linphone_recorder_close(LinphoneRecorder *recorder);
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return the file used for the recording if any. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_recorder_get_file(const LinphoneRecorder *recorder);
+LINPHONE_PUBLIC const char *linphone_recorder_get_file(const LinphoneRecorder *recorder);
 
 /**
  * Start the recording into the opened file.

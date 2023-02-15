@@ -2,7 +2,7 @@
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  * Copyright (C) 2005  Sandro Santilli <strk@keybit.net>
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -45,7 +45,7 @@
 
 #undef PARAMS
 
-#define INT_TO_VOIDPTR(i) ((void*)(intptr_t)(i))
+#define INT_TO_VOIDPTR(i) ((void *)(intptr_t)(i))
 #define VOIDPTR_TO_INT(p) ((int)(intptr_t)(p))
 
 /**************************************************************************
@@ -54,9 +54,9 @@
  *
  **************************************************************************/
 
-#define HISTSIZE 500		/* how many lines of input history */
-#define PROMPT_MAX_LEN 256	/* max len of prompt string */
-#define LINE_MAX_LEN 256	/* really needed ? */
+#define HISTSIZE 500       /* how many lines of input history */
+#define PROMPT_MAX_LEN 256 /* max len of prompt string */
+#define LINE_MAX_LEN 256   /* really needed ? */
 
 /*
  * Define this to have your primary contact
@@ -92,19 +92,18 @@
  */
 typedef int (*lpc_cmd_handler)(LinphoneCore *, char *);
 typedef struct {
-	char *name;		/* User printable name of the function. */
-	lpc_cmd_handler func;	/* Function to call to do the job. */
-	char *help;		/* Short help for this function.  */
-	char *doc;		/* Long description.  */
+	char *name;           /* User printable name of the function. */
+	lpc_cmd_handler func; /* Function to call to do the job. */
+	char *help;           /* Short help for this function.  */
+	char *doc;            /* Long description.  */
 } LPC_COMMAND;
 
 typedef struct {
-	int x,y,w,h;
+	int x, y, w, h;
 	void *wid;
 	bool_t show;
 	bool_t refresh;
 } VideoParams;
-
 
 extern VideoParams lpc_video_params;
 extern VideoParams lpc_preview_params;
@@ -125,7 +124,7 @@ bool_t linphonec_get_autoanswer(void);
 void linphonec_command_finished(void);
 void linphonec_set_caller(const char *caller);
 LinphoneCall *linphonec_get_call(int id);
-void linphonec_call_identify(LinphoneCall* call);
+void linphonec_call_identify(LinphoneCall *call);
 
 extern bool_t linphonec_camera_enabled;
 

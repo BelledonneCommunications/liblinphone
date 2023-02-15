@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "bctoolbox/crypto.h"
 #include "liblinphone_tester.h"
 #include "lime.h"
@@ -79,7 +81,9 @@ static const char *pauline_zid_sqlcache =
 static const char *xmlCacheMigration = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<cache><selfZID>00112233445566778899aabb</selfZID><peer><ZID>99887766554433221100ffee</ZID><rs1>c4274f13a2b6fa05c15ec93158f930e7264b0a893393376dbc80c6eb1cccdc5a</rs1><uri>sip:bob@sip.linphone.org</uri><sndKey>219d9e445d10d4ed64083c7ccbb83a23bc17a97df0af5de4261f3fe026b05b0b</sndKey><rcvKey>747e72a5cc996413cb9fa6e3d18d8b370436e274cd6ba4efc1a4580340af57ca</rcvKey><sndSId>df2bf38e719fa89e17332cf8d5e774ee70d347baa74d16dee01f306c54789869</sndSId><rcvSId>928ce78b0bfc30427a02b1b668b2b3b0496d5664d7e89b75ed292ee97e3fc850</rcvSId><sndIndex>496bcc89</sndIndex><rcvIndex>59337abe</rcvIndex><rs2>5dda11f388384b349d210612f30824268a3753a7afa52ef6df5866dca76315c4</rs2><uri>sip:bob2@sip.linphone.org</uri></peer><peer><ZID>ffeeddccbbaa987654321012</ZID><rs1>858b495dfad483af3c088f26d68c4beebc638bd44feae45aea726a771727235e</rs1><uri>sip:bob@sip.linphone.org</uri><sndKey>b6aac945057bc4466bfe9a23771c6a1b3b8d72ec3e7d8f30ed63cbc5a9479a25</sndKey><rcvKey>bea5ac3225edd0545b816f061a8190370e3ee5160e75404846a34d1580e0c263</rcvKey><sndSId>17ce70fdf12e500294bcb5f2ffef53096761bb1c912b21e972ae03a5a9f05c47</sndSId><rcvSId>7e13a20e15a517700f0be0921f74b96d4b4a0c539d5e14d5cdd8706441874ac0</rcvSId><sndIndex>75e18caa</sndIndex><rcvIndex>2cfbbf06</rcvIndex><rs2>1533dee20c8116dc2c282cae9adfea689b87bc4c6a4e18a846f12e3e7fea3959</rs2></peer><peer><ZID>0987654321fedcba5a5a5a5a</ZID><rs1>cb6ecc87d1dd87b23f225eec53a26fc541384917623e0c46abab8c0350c6929e</rs1><sndKey>92bb03988e8f0ccfefa37a55fd7c5893bea3bfbb27312f49dd9b10d0e3c15fc7</sndKey><rcvKey>2315705a5830b98f68458fcd49623144cb34a667512c4d44686aee125bb8b622</rcvKey><sndSId>94c56eea0dd829379263b6da3f6ac0a95388090f168a3568736ca0bd9f8d595f</sndSId><rcvSId>c319ae0d41183fec90afc412d42253c5b456580f7a463c111c7293623b8631f4</rcvSId><uri>sip:bob@sip.linphone.org</uri><sndIndex>2c46ddcc</sndIndex><rcvIndex>15f5779e</rcvIndex><valid>0000000058f095bf</valid><pvs>01</pvs></peer></cache>";
 #endif
 
-void liblinphone_tester_chat_message_state_change(LinphoneChatMessage *msg, LinphoneChatMessageState state, void *ud) {
+void liblinphone_tester_chat_message_state_change(LinphoneChatMessage *msg,
+                                                  LinphoneChatMessageState state,
+                                                  BCTBX_UNUSED(void *ud)) {
 	liblinphone_tester_chat_message_msg_state_changed(msg, state);
 }
 
@@ -670,12 +674,13 @@ static LinphoneAuthInfo *text_message_with_credential_from_auth_cb_auth_info;
 static void text_message_with_credential_from_auth_cb_auth_info_requested(LinphoneCore *lc,
                                                                           const char *realm,
                                                                           const char *username,
-                                                                          const char *domain) {
+                                                                          BCTBX_UNUSED(const char *domain)) {
 	ms_message("text_message_with_credential_from_auth_callback:Auth info requested  for user id [%s] at realm [%s]\n",
 	           username, realm);
 	linphone_core_add_auth_info(
 	    lc, text_message_with_credential_from_auth_cb_auth_info); /*add stored authentication info to LinphoneCore*/
 }
+
 static void text_message_with_credential_from_auth_callback(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -2297,7 +2302,8 @@ static void info_message_with_body(void) {
 	info_message_base(TRUE);
 }
 
-static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
+static int enable_lime_for_message_test(BCTBX_UNUSED(LinphoneCoreManager *marie),
+                                        BCTBX_UNUSED(LinphoneCoreManager *pauline)) {
 #ifdef HAVE_SQLITE
 	char *stmt = NULL;
 	char *errmsg = NULL;
@@ -3118,7 +3124,7 @@ static void lime_unit(void) {
 	}
 }
 
-int check_no_strange_time(void *data, int argc, char **argv, char **cNames) {
+int check_no_strange_time(BCTBX_UNUSED(void *data), int argc, char **argv, char **cNames) {
 	BC_ASSERT_EQUAL(argc, 1, int, "%d");
 	BC_ASSERT_STRING_EQUAL(cNames[0], "COUNT(*)"); // count of non updated messages should be 0
 	BC_ASSERT_STRING_EQUAL(argv[0], "0");          // count of non updated messages should be 0
@@ -4077,8 +4083,8 @@ void text_message_with_unsupported_content_type_and_lime(void) {
 	_text_message_with_custom_content_type(TRUE, FALSE);
 }
 
-static int im_encryption_engine_process_incoming_message_cb(LinphoneImEncryptionEngine *engine,
-                                                            LinphoneChatRoom *room,
+static int im_encryption_engine_process_incoming_message_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine),
+                                                            BCTBX_UNUSED(LinphoneChatRoom *room),
                                                             LinphoneChatMessage *msg) {
 	ms_debug("IM encryption process incoming message with content type %s",
 	         linphone_chat_message_get_content_type(msg));
@@ -4122,8 +4128,8 @@ static bool_t im_encryption_engine_process_incoming_message_async_impl(LinphoneC
 	return TRUE;
 }
 
-static int im_encryption_engine_process_outgoing_message_cb(LinphoneImEncryptionEngine *engine,
-                                                            LinphoneChatRoom *room,
+static int im_encryption_engine_process_outgoing_message_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine),
+                                                            BCTBX_UNUSED(LinphoneChatRoom *room),
                                                             LinphoneChatMessage *msg) {
 	if (strcmp(linphone_chat_message_get_content_type(msg), "text/plain") == 0) {
 		size_t b64Size = 0;
@@ -4152,8 +4158,8 @@ static bool_t im_encryption_engine_process_outgoing_message_async_impl(LinphoneC
 	return TRUE;
 }
 
-static int im_encryption_engine_process_outgoing_message_async(LinphoneImEncryptionEngine *engine,
-                                                               LinphoneChatRoom *room,
+static int im_encryption_engine_process_outgoing_message_async(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine),
+                                                               BCTBX_UNUSED(LinphoneChatRoom *room),
                                                                LinphoneChatMessage *msg) {
 	if (strcmp(linphone_chat_message_get_content_type(msg), "cipher/b64") == 0) return 0; // already ciphered;
 	pending_message = msg;
@@ -4164,7 +4170,7 @@ static int im_encryption_engine_process_outgoing_message_async(LinphoneImEncrypt
 	return 1; /*temporaly code to defer message sending*/
 }
 
-static int im_encryption_engine_process_incoming_message_async(LinphoneImEncryptionEngine *engine,
+static int im_encryption_engine_process_incoming_message_async(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine),
                                                                LinphoneChatRoom *room,
                                                                LinphoneChatMessage *msg) {
 	incoming_pending_message = msg;

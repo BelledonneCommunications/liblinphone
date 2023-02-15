@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -81,8 +81,10 @@ FlexiAPIClient *FlexiAPIClient::sendAccountCreationTokenByPush(string pnProvider
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string password,
-																	  string algorithm, string accountCreationToken) {
+FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username,
+                                                                      string password,
+                                                                      string algorithm,
+                                                                      string accountCreationToken) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("password", password);
@@ -92,8 +94,8 @@ FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string use
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string domain, string password,
-																	  string algorithm, string accountCreationToken) {
+FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(
+    string username, string domain, string password, string algorithm, string accountCreationToken) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("domain", domain);
@@ -140,8 +142,8 @@ FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, 
 	return accountCreate(username, password, "", "", email, "");
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, string algorithm, string domain,
-											  string email, string phone) {
+FlexiAPIClient *FlexiAPIClient::accountCreate(
+    string username, string password, string algorithm, string domain, string email, string phone) {
 	JsonParams params;
 
 	if (!username.empty()) {
@@ -280,23 +282,29 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 	return adminAccountCreate(username, password, algorithm, "", activated);
 }
 
-FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
-												   bool activated) {
+FlexiAPIClient *
+FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain, bool activated) {
 	return adminAccountCreate(username, password, algorithm, domain, activated, "");
 }
 
-FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
-												   bool activated, string email) {
+FlexiAPIClient *FlexiAPIClient::adminAccountCreate(
+    string username, string password, string algorithm, string domain, bool activated, string email) {
 	return adminAccountCreate(username, password, algorithm, domain, activated, email, "");
 }
 
-FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
-												   bool activated, string email, string phone) {
+FlexiAPIClient *FlexiAPIClient::adminAccountCreate(
+    string username, string password, string algorithm, string domain, bool activated, string email, string phone) {
 	return adminAccountCreate(username, password, algorithm, domain, activated, email, phone, "");
 }
 
-FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
-												   bool activated, string email, string phone, string dtmfProtocol) {
+FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username,
+                                                   string password,
+                                                   string algorithm,
+                                                   string domain,
+                                                   bool activated,
+                                                   string email,
+                                                   string phone,
+                                                   string dtmfProtocol) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("password", password);
@@ -356,13 +364,13 @@ FlexiAPIClient *FlexiAPIClient::adminAccountContacts(int id) {
 
 FlexiAPIClient *FlexiAPIClient::adminAccountContactAdd(int id, int contactId) {
 	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)),
-						  "POST");
+	                      "POST");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountContactDelete(int id, int contactId) {
 	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)),
-						  "DELETE");
+	                      "DELETE");
 	return this;
 }
 
@@ -414,8 +422,8 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 	string uri = accountCreatorUrl ? accountCreatorUrl : "";
 
 	req = belle_http_request_create(type.c_str(), belle_generic_uri_parse(uri.append(path).c_str()),
-									belle_sip_header_content_type_create("application", "json"),
-									belle_sip_header_accept_create("application", "json"), NULL);
+	                                belle_sip_header_content_type_create("application", "json"),
+	                                belle_sip_header_accept_create("application", "json"), NULL);
 	if (!req) {
 		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]";
 		return;
@@ -423,7 +431,7 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
 	if (mUseTestAdminAccount) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
-									 belle_http_header_create("From", "sip:admin_test@sip.example.org"));
+		                             belle_http_header_create("From", "sip:admin_test@sip.example.org"));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", "no_secret_at_all"));
 	} else if (cfg != nullptr) {
 		char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));

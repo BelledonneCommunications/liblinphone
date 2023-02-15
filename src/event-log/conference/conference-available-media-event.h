@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,8 @@
 
 #include <map>
 
-#include "conference/conference-enums.h"
 #include "conference-notified-event.h"
+#include "conference/conference-enums.h"
 
 // =============================================================================
 
@@ -34,12 +34,11 @@ class ConferenceAvailableMediaEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceAvailableMediaEvent : public ConferenceNotifiedEvent {
 	friend class Conference;
+
 public:
-	ConferenceAvailableMediaEvent (
-		time_t creationTime,
-		const ConferenceId &conferenceId,
-		const std::map<ConferenceMediaCapabilities, bool> mediaCapabilties
-	);
+	ConferenceAvailableMediaEvent(time_t creationTime,
+	                              const ConferenceId &conferenceId,
+	                              const std::map<ConferenceMediaCapabilities, bool> mediaCapabilties);
 
 	const std::map<ConferenceMediaCapabilities, bool> &getAvailableMediaType() const;
 	bool audioEnabled() const;

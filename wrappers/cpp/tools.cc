@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,9 +26,8 @@
 using namespace linphone;
 using namespace std;
 
-
-StringBctbxListWrapper::StringBctbxListWrapper(const std::list<std::string> &cppList): AbstractBctbxListWrapper() {
-	for(const auto &str : cppList) {
+StringBctbxListWrapper::StringBctbxListWrapper(const std::list<std::string> &cppList) : AbstractBctbxListWrapper() {
+	for (const auto &str : cppList) {
 		mCList = bctbx_list_append(mCList, const_cast<char *>(str.c_str()));
 	}
 }
@@ -39,7 +38,7 @@ StringBctbxListWrapper::~StringBctbxListWrapper() {
 
 list<string> StringBctbxListWrapper::bctbxListToCppList(const ::bctbx_list_t *bctbxList) {
 	list<string> cppList;
-	for(auto it=bctbxList; it; it=it->next) {
+	for (auto it = bctbxList; it; it = it->next) {
 		cppList.push_back(string(static_cast<char *>(it->data)));
 	}
 	return cppList;
@@ -80,7 +79,7 @@ const char *StringUtilities::cppStringToC(const std::string &cppstr) {
 std::list<std::string> StringUtilities::cStringArrayToCppList(const char **cArray) {
 	list<string> cppList;
 	if (cArray == NULL) return cppList;
-	for(int i=0; cArray[i]!=NULL; i++) {
+	for (int i = 0; cArray[i] != NULL; i++) {
 		cppList.push_back(cArray[i]);
 	}
 	return cppList;

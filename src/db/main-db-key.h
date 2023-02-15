@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,14 +35,14 @@ class MainDbKey : public ClonableObject {
 	friend class MainDbPrivate;
 
 public:
-	MainDbKey ();
-	MainDbKey (const std::shared_ptr<Core> &core, long long storageId);
-	MainDbKey (const MainDbKey &other);
-	virtual ~MainDbKey () = 0;
+	MainDbKey();
+	MainDbKey(const std::shared_ptr<Core> &core, long long storageId);
+	MainDbKey(const MainDbKey &other);
+	virtual ~MainDbKey() = 0;
 
-	MainDbKey &operator= (const MainDbKey &other);
+	MainDbKey &operator=(const MainDbKey &other);
 
-	bool isValid () const;
+	bool isValid() const;
 
 private:
 	L_DECLARE_PRIVATE(MainDbKey);

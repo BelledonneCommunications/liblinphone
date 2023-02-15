@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,30 +29,30 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-VideoSourceDescriptor::VideoSourceDescriptor (const VideoSourceDescriptor &other) : HybridObject(other) {
+VideoSourceDescriptor::VideoSourceDescriptor(const VideoSourceDescriptor &other) : HybridObject(other) {
 	mType = other.mType;
 	mCall = other.mCall;
 	mCameraId = other.mCameraId;
 	mImagePath = other.mImagePath;
 }
 
-VideoSourceDescriptor* VideoSourceDescriptor::clone () const {
+VideoSourceDescriptor *VideoSourceDescriptor::clone() const {
 	return new VideoSourceDescriptor(*this);
 }
 
 // =============================================================================
 
-VideoSourceDescriptor::Type VideoSourceDescriptor::getType () const {
+VideoSourceDescriptor::Type VideoSourceDescriptor::getType() const {
 	return mType;
 }
 
-shared_ptr<Call> VideoSourceDescriptor::getCall () const {
+shared_ptr<Call> VideoSourceDescriptor::getCall() const {
 	auto call = mCall.lock();
 	if (call) return call;
 	return nullptr;
 }
 
-void VideoSourceDescriptor::setCall (shared_ptr<Call> call) {
+void VideoSourceDescriptor::setCall(shared_ptr<Call> call) {
 	mCall = call;
 	mType = call != nullptr ? VideoSourceDescriptor::Type::Call : VideoSourceDescriptor::Type::Unknown;
 
@@ -60,11 +60,11 @@ void VideoSourceDescriptor::setCall (shared_ptr<Call> call) {
 	mImagePath = "";
 }
 
-const string &VideoSourceDescriptor::getCameraId () const {
+const string &VideoSourceDescriptor::getCameraId() const {
 	return mCameraId;
 }
 
-void VideoSourceDescriptor::setCameraId (string cameraId) {
+void VideoSourceDescriptor::setCameraId(string cameraId) {
 	mCameraId = cameraId;
 	mType = !cameraId.empty() ? VideoSourceDescriptor::Type::Camera : VideoSourceDescriptor::Type::Unknown;
 
@@ -72,11 +72,11 @@ void VideoSourceDescriptor::setCameraId (string cameraId) {
 	mImagePath = "";
 }
 
-const std::string &VideoSourceDescriptor::getImage () const {
+const std::string &VideoSourceDescriptor::getImage() const {
 	return mImagePath;
 }
 
-void VideoSourceDescriptor::setImage (std::string imagePath) {
+void VideoSourceDescriptor::setImage(std::string imagePath) {
 	mImagePath = imagePath;
 	mType = !imagePath.empty() ? VideoSourceDescriptor::Type::Image : VideoSourceDescriptor::Type::Unknown;
 

@@ -34,9 +34,9 @@ typedef struct belle_http_response_event belle_http_response_event_t;
 typedef struct belle_sip_auth_event belle_sip_auth_event_t;
 
 class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
-  public:
+public:
 	class LINPHONE_PUBLIC Response {
-	  public:
+	public:
 		int code = 0;
 		string body = "";
 
@@ -44,7 +44,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	};
 
 	class LINPHONE_PUBLIC JsonParams {
-	  public:
+	public:
 		Json::Value jsonParameters;
 
 		void push(string key, string value) {
@@ -64,7 +64,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	};
 
 	class LINPHONE_PUBLIC Callbacks {
-	  public:
+	public:
 		function<void(const Response &)> success;
 		function<void(const Response &)> error;
 		LinphoneCore *core;
@@ -76,8 +76,10 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	// Public endpoinds
 	FlexiAPIClient *ping();
 	FlexiAPIClient *sendAccountCreationTokenByPush(string pnProvider, string pnParam, string pnPrid);
-	FlexiAPIClient *accountCreateWithAccountCreationToken(string username, string password, string algorithm, string token);
-	FlexiAPIClient *accountCreateWithAccountCreationToken(string username, string domain, string password, string algorithm, string token);
+	FlexiAPIClient *
+	accountCreateWithAccountCreationToken(string username, string password, string algorithm, string token);
+	FlexiAPIClient *accountCreateWithAccountCreationToken(
+	    string username, string domain, string password, string algorithm, string token);
 	FlexiAPIClient *accountInfo(string sip);
 	FlexiAPIClient *accountActivateEmail(string sip, string code);
 	FlexiAPIClient *accountActivatePhone(string sip, string code);
@@ -89,7 +91,8 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *accountRecoverByPhone(string phone);
 	FlexiAPIClient *accountRecoverUsingRecoverKey(string sip, string recoverKey);
 	FlexiAPIClient *accountCreate(string username, string password, string email);
-	FlexiAPIClient *accountCreate(string username, string password, string algorithm, string domain, string email, string phone);
+	FlexiAPIClient *
+	accountCreate(string username, string password, string algorithm, string domain, string email, string phone);
 
 	// Authenticated endpoints
 	FlexiAPIClient *me();
@@ -110,14 +113,20 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm);
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain);
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, bool activated);
-	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
-									   bool activated);
-	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
-									   bool activated, string email);
-	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
-									   bool activated, string email, string phone);
-	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
-									   bool activated, string email, string phone, string dtmfProtocol);
+	FlexiAPIClient *
+	adminAccountCreate(string username, string password, string algorithm, string domain, bool activated);
+	FlexiAPIClient *
+	adminAccountCreate(string username, string password, string algorithm, string domain, bool activated, string email);
+	FlexiAPIClient *adminAccountCreate(
+	    string username, string password, string algorithm, string domain, bool activated, string email, string phone);
+	FlexiAPIClient *adminAccountCreate(string username,
+	                                   string password,
+	                                   string algorithm,
+	                                   string domain,
+	                                   bool activated,
+	                                   string email,
+	                                   string phone,
+	                                   string dtmfProtocol);
 	FlexiAPIClient *adminAccounts();
 	FlexiAPIClient *adminAccount(int id);
 	FlexiAPIClient *adminAccountDelete(int id);
@@ -137,7 +146,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *then(function<void(Response)> success);
 	FlexiAPIClient *error(function<void(Response)> error);
 
-  private:
+private:
 	LinphoneCore *mCore;
 	Callbacks mRequestCallbacks;
 	const char *mApiKey;

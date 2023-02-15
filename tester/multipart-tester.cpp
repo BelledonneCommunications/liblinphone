@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "bctoolbox/defs.h"
 
 #include "address/address.h"
 #include "chat/chat-message/chat-message.h"
@@ -38,12 +40,11 @@ using namespace std;
 
 using namespace LinphonePrivate;
 
-static void check_contents(const bctbx_list_t *contents, bool first_file_transfer, bool second_file_transfer, bool third_content) {
+static void
+check_contents(const bctbx_list_t *contents, bool first_file_transfer, bool second_file_transfer, bool third_content) {
 	BC_ASSERT_PTR_NOT_NULL(contents);
-	if (third_content)
-		BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 3, int, "%d");
-	else
-		BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 2, int, "%d");
+	if (third_content) BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 3, int, "%d");
+	else BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 2, int, "%d");
 
 	int textContentCount = 0;
 	int fileTransferContentCount = 0;
@@ -115,7 +116,8 @@ static void check_contents(const bctbx_list_t *contents, bool first_file_transfe
 			}
 		} else {
 			unexpectedContentCount += 1;
-			lError() << "Content type is " << linphone_content_get_type(content) << "/" << linphone_content_get_subtype(content);
+			lError() << "Content type is " << linphone_content_get_type(content) << "/"
+			         << linphone_content_get_subtype(content);
 		}
 	}
 
@@ -134,9 +136,12 @@ static void check_contents(const bctbx_list_t *contents, bool first_file_transfe
 	}
 }
 
-static void chat_message_multipart_modifier_base(bool first_file_transfer, bool second_file_transfer, bool third_content, bool use_cpim) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+static void chat_message_multipart_modifier_base(bool first_file_transfer,
+                                                 bool second_file_transfer,
+                                                 bool third_content,
+                                                 BCTBX_UNUSED(bool cpim)) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	char *paulineUriStr = linphone_address_as_string_uri_only(pauline->identity);
 	IdentityAddress paulineAddress(paulineUriStr);
@@ -188,10 +193,10 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
 	marieMessage->send();
 
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
-	
-	if (pauline->stat.last_received_chat_message){
+
+	if (pauline->stat.last_received_chat_message) {
 		const bctbx_list_t *contents = linphone_chat_message_get_contents(pauline->stat.last_received_chat_message);
 		check_contents(contents, first_file_transfer, second_file_transfer, third_content);
 	}
@@ -235,17 +240,22 @@ static void multipart_two_file_content_and_one_text_with_cpim(void) {
 }
 
 test_t multipart_tests[] = {
-	TEST_NO_TAG("Chat message multipart 2 text content", multipart_two_text_content),
-	TEST_NO_TAG("Chat message multipart 2 text content with CPIM", multipart_two_text_content_with_cpim),
-	TEST_NO_TAG("Chat message multipart 1 file content and 1 text content", multipart_one_text_and_one_file_content),
-	TEST_NO_TAG("Chat message multipart 1 file content and 1 text content with CPIM", multipart_one_text_and_one_file_content_with_cpim),
-	TEST_NO_TAG("Chat message multipart 2 file content", multipart_two_file_content),
-	TEST_NO_TAG("Chat message multipart 2 file content with CPIM", multipart_two_file_content_with_cpim),
-	TEST_NO_TAG("Chat message multipart 2 file content and 1 text", multipart_two_file_content_and_one_text),
-	TEST_NO_TAG("Chat message multipart 2 file content and 1 text with CPIM", multipart_two_file_content_and_one_text_with_cpim),
+    TEST_NO_TAG("Chat message multipart 2 text content", multipart_two_text_content),
+    TEST_NO_TAG("Chat message multipart 2 text content with CPIM", multipart_two_text_content_with_cpim),
+    TEST_NO_TAG("Chat message multipart 1 file content and 1 text content", multipart_one_text_and_one_file_content),
+    TEST_NO_TAG("Chat message multipart 1 file content and 1 text content with CPIM",
+                multipart_one_text_and_one_file_content_with_cpim),
+    TEST_NO_TAG("Chat message multipart 2 file content", multipart_two_file_content),
+    TEST_NO_TAG("Chat message multipart 2 file content with CPIM", multipart_two_file_content_with_cpim),
+    TEST_NO_TAG("Chat message multipart 2 file content and 1 text", multipart_two_file_content_and_one_text),
+    TEST_NO_TAG("Chat message multipart 2 file content and 1 text with CPIM",
+                multipart_two_file_content_and_one_text_with_cpim),
 };
 
-test_suite_t multipart_test_suite = {
-	"Multipart", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(multipart_tests) / sizeof(multipart_tests[0]), multipart_tests
-};
+test_suite_t multipart_test_suite = {"Multipart",
+                                     NULL,
+                                     NULL,
+                                     liblinphone_tester_before_each,
+                                     liblinphone_tester_after_each,
+                                     sizeof(multipart_tests) / sizeof(multipart_tests[0]),
+                                     multipart_tests};

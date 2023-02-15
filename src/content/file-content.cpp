@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,10 +22,9 @@
 #include "linphone/core.h"
 #include "linphone/utils/utils.h"
 
-
+#include "bctoolbox/charconv.h"
 #include "content-p.h"
 #include "file-content.h"
-#include "bctoolbox/charconv.h"
 #include <algorithm>
 
 // =============================================================================
@@ -46,9 +45,10 @@ public:
 
 // -----------------------------------------------------------------------------
 
-FileContent::FileContent () : Content(*new FileContentPrivate) {}
+FileContent::FileContent() : Content(*new FileContentPrivate) {
+}
 
-FileContent::FileContent (const FileContent &other) : Content(*new FileContentPrivate) {
+FileContent::FileContent(const FileContent &other) : Content(*new FileContentPrivate) {
 	L_D();
 	Content::copy(other);
 	setFileName(other.getFileName());
@@ -57,7 +57,7 @@ FileContent::FileContent (const FileContent &other) : Content(*new FileContentPr
 	d->fileDuration = other.getFileDuration();
 }
 
-FileContent::FileContent (FileContent &&other) : Content(*new FileContentPrivate) {
+FileContent::FileContent(FileContent &&other) : Content(*new FileContentPrivate) {
 	L_D();
 	Content::copy(other);
 	d->fileName = move(other.getPrivate()->fileName);
@@ -66,7 +66,7 @@ FileContent::FileContent (FileContent &&other) : Content(*new FileContentPrivate
 	d->fileDuration = move(other.getPrivate()->fileDuration);
 }
 
-FileContent &FileContent::operator= (const FileContent &other) {
+FileContent &FileContent::operator=(const FileContent &other) {
 	L_D();
 	Content::operator=(other);
 	setFileName(other.getFileName());
@@ -76,7 +76,7 @@ FileContent &FileContent::operator= (const FileContent &other) {
 	return *this;
 }
 
-FileContent &FileContent::operator= (FileContent &&other) {
+FileContent &FileContent::operator=(FileContent &&other) {
 	L_D();
 	Content::operator=(move(other));
 	d->fileName = move(other.getPrivate()->fileName);
@@ -86,96 +86,93 @@ FileContent &FileContent::operator= (FileContent &&other) {
 	return *this;
 }
 
-bool FileContent::operator== (const FileContent &other) const {
+bool FileContent::operator==(const FileContent &other) const {
 	L_D();
-	return Content::operator==(other) &&
-		getFileName() == other.getFileName() &&
-		getFilePath() == other.getFilePath() &&
-		d->fileSize == other.getFileSize() &&
-		d->fileDuration == other.getFileDuration();
+	return Content::operator==(other) && getFileName() == other.getFileName() && getFilePath() == other.getFilePath() &&
+	       d->fileSize == other.getFileSize() && d->fileDuration == other.getFileDuration();
 }
 
-void FileContent::setFileSize (size_t size) {
+void FileContent::setFileSize(size_t size) {
 	L_D();
 	d->fileSize = size;
 }
 
-size_t FileContent::getFileSize () const {
+size_t FileContent::getFileSize() const {
 	L_D();
 	return d->fileSize;
 }
 
-void FileContent::setFileName (const string &name) {
+void FileContent::setFileName(const string &name) {
 	L_D();
 	d->fileName = Utils::normalizeFilename(name);
 }
 
-const string &FileContent::getFileName () const {
+const string &FileContent::getFileName() const {
 	L_D();
 	return d->fileName;
 }
 
-void FileContent::setFileNameSys (const string &name) {
+void FileContent::setFileNameSys(const string &name) {
 	setFileName(Utils::convert(name, "", bctbx_get_default_encoding()));
 }
 
-string FileContent::getFileNameSys () const {
+string FileContent::getFileNameSys() const {
 	return Utils::convert(getFileName(), bctbx_get_default_encoding(), "");
 }
 
-void FileContent::setFileNameUtf8 (const string &name) {
+void FileContent::setFileNameUtf8(const string &name) {
 	setFileName(Utils::utf8ToLocale(name));
 }
 
-string FileContent::getFileNameUtf8 () const {
+string FileContent::getFileNameUtf8() const {
 	return Utils::localeToUtf8(getFileName());
 }
 
-void FileContent::setFilePath (const string &path) {
+void FileContent::setFilePath(const string &path) {
 	L_D();
 	d->filePath = path;
 }
 
-const string &FileContent::getFilePath () const {
+const string &FileContent::getFilePath() const {
 	L_D();
 	return d->filePath;
 }
 
-void FileContent::setFilePathSys (const string &path) {
+void FileContent::setFilePathSys(const string &path) {
 	setFilePath(Utils::convert(path, "", bctbx_get_default_encoding()));
 }
 
-string FileContent::getFilePathSys () const {
+string FileContent::getFilePathSys() const {
 	return Utils::convert(getFilePath(), bctbx_get_default_encoding(), "");
 }
 
-void FileContent::setFilePathUtf8 (const string &path) {
+void FileContent::setFilePathUtf8(const string &path) {
 	setFilePath(Utils::utf8ToLocale(path));
 }
 
-string FileContent::getFilePathUtf8 () const {
+string FileContent::getFilePathUtf8() const {
 	return Utils::localeToUtf8(getFilePath());
 }
 
-void FileContent::setFileDuration (int durationInSeconds) {
+void FileContent::setFileDuration(int durationInSeconds) {
 	L_D();
 	d->fileDuration = durationInSeconds;
 }
 
-int FileContent::getFileDuration () const {
+int FileContent::getFileDuration() const {
 	L_D();
 	return d->fileDuration;
 }
 
-bool FileContent::isFile () const {
+bool FileContent::isFile() const {
 	return true;
 }
 
-bool FileContent::isFileTransfer () const {
+bool FileContent::isFileTransfer() const {
 	return false;
 }
 
-bool FileContent::isEncrypted () const {
+bool FileContent::isEncrypted() const {
 	return isFileEncrypted(getFilePathSys());
 }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #include "linphone/api/c-participant-imdn-state.h"
 
 #include "c-wrapper/c-wrapper.h"
-#include "conference/participant.h"
 #include "conference/participant-imdn-state.h"
+#include "conference/participant.h"
 
 // =============================================================================
 
@@ -30,12 +30,12 @@ using namespace std;
 
 L_DECLARE_C_CLONABLE_OBJECT_IMPL(ParticipantImdnState);
 
-LinphoneParticipantImdnState *linphone_participant_imdn_state_ref (LinphoneParticipantImdnState *state) {
+LinphoneParticipantImdnState *linphone_participant_imdn_state_ref(LinphoneParticipantImdnState *state) {
 	belle_sip_object_ref(state);
 	return state;
 }
 
-void linphone_participant_imdn_state_unref (LinphoneParticipantImdnState *state) {
+void linphone_participant_imdn_state_unref(LinphoneParticipantImdnState *state) {
 	belle_sip_object_unref(state);
 }
 
@@ -47,7 +47,7 @@ void linphone_participant_imdn_state_set_user_data(LinphoneParticipantImdnState 
 	L_SET_USER_DATA_FROM_C_OBJECT(state, ud);
 }
 
-const LinphoneParticipant *linphone_participant_imdn_state_get_participant (const LinphoneParticipantImdnState *state) {
+const LinphoneParticipant *linphone_participant_imdn_state_get_participant(const LinphoneParticipantImdnState *state) {
 	std::shared_ptr<LinphonePrivate::Participant> participant = L_GET_CPP_PTR_FROM_C_OBJECT(state)->getParticipant();
 	if (participant) {
 		return participant->toC();
@@ -55,14 +55,15 @@ const LinphoneParticipant *linphone_participant_imdn_state_get_participant (cons
 	return NULL;
 }
 
-LinphoneChatMessageState linphone_participant_imdn_state_get_state (const LinphoneParticipantImdnState *state) {
+LinphoneChatMessageState linphone_participant_imdn_state_get_state(const LinphoneParticipantImdnState *state) {
 	return (LinphoneChatMessageState)L_GET_CPP_PTR_FROM_C_OBJECT(state)->getState();
 }
 
-time_t linphone_participant_imdn_state_get_state_change_time (const LinphoneParticipantImdnState *state) {
+time_t linphone_participant_imdn_state_get_state_change_time(const LinphoneParticipantImdnState *state) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(state)->getStateChangeTime();
 }
 
-const LinphoneParticipantImdnState *_linphone_participant_imdn_state_from_cpp_obj (const LinphonePrivate::ParticipantImdnState &state) {
+const LinphoneParticipantImdnState *
+_linphone_participant_imdn_state_from_cpp_obj(const LinphonePrivate::ParticipantImdnState &state) {
 	return L_GET_C_BACK_PTR(&state);
 }

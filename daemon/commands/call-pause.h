@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,12 +23,11 @@
 
 #include "daemon.h"
 
-class CallPauseCommand : public DaemonCommand
-{
+class CallPauseCommand : public DaemonCommand {
 public:
 	CallPauseCommand();
 
-	void exec(Daemon *app, const std::string& args) override;
+	void exec(Daemon *app, const std::string &args) override;
 };
 
 #endif // LINPHONE_DAEMON_COMMAND_CALL_PAUSE_H

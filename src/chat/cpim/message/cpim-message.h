@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,36 +29,36 @@
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Cpim {
-	class MessagePrivate;
+class MessagePrivate;
 
-	class LINPHONE_PUBLIC Message : public Object {
-	public:
-		Message ();
+class LINPHONE_PUBLIC Message : public Object {
+public:
+	Message();
 
-		typedef std::shared_ptr<std::list<std::shared_ptr<const Cpim::Header>>> HeaderList;
+	typedef std::shared_ptr<std::list<std::shared_ptr<const Cpim::Header>>> HeaderList;
 
-		HeaderList getMessageHeaders (const std::string &ns = "") const;
-		bool addMessageHeader (const Header &messageHeader, const std::string &ns = "");
-		void removeMessageHeader (const Header &messageHeader, const std::string &ns = "");
-		std::shared_ptr<const Cpim::Header> getMessageHeader (const std::string &name, const std::string &ns = "") const;
+	HeaderList getMessageHeaders(const std::string &ns = "") const;
+	bool addMessageHeader(const Header &messageHeader, const std::string &ns = "");
+	void removeMessageHeader(const Header &messageHeader, const std::string &ns = "");
+	std::shared_ptr<const Cpim::Header> getMessageHeader(const std::string &name, const std::string &ns = "") const;
 
-		HeaderList getContentHeaders () const;
-		bool addContentHeader (const Header &contentHeader);
-		void removeContentHeader (const Header &contentHeader);
-		std::shared_ptr<const Cpim::Header> getContentHeader (const std::string &name) const;
+	HeaderList getContentHeaders() const;
+	bool addContentHeader(const Header &contentHeader);
+	void removeContentHeader(const Header &contentHeader);
+	std::shared_ptr<const Cpim::Header> getContentHeader(const std::string &name) const;
 
-		std::string getContent () const;
-		bool setContent (const std::string &content);
+	std::string getContent() const;
+	bool setContent(const std::string &content);
 
-		std::string asString () const;
+	std::string asString() const;
 
-		static std::shared_ptr<const Message> createFromString (const std::string &str);
+	static std::shared_ptr<const Message> createFromString(const std::string &str);
 
-	private:
-		L_DECLARE_PRIVATE(Message);
-		L_DISABLE_COPY(Message);
-	};
-}
+private:
+	L_DECLARE_PRIVATE(Message);
+	L_DISABLE_COPY(Message);
+};
+} // namespace Cpim
 
 LINPHONE_END_NAMESPACE
 

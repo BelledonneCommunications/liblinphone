@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,15 +30,16 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-MainDbKey::MainDbKey () : ClonableObject(*new MainDbKeyPrivate) {}
+MainDbKey::MainDbKey() : ClonableObject(*new MainDbKeyPrivate) {
+}
 
-MainDbKey::MainDbKey (const shared_ptr<Core> &core, long long storageId) : MainDbKey() {
+MainDbKey::MainDbKey(const shared_ptr<Core> &core, long long storageId) : MainDbKey() {
 	L_D();
 	d->core = core;
 	d->storageId = storageId;
 }
 
-MainDbKey::MainDbKey (const MainDbKey &other) : MainDbKey() {
+MainDbKey::MainDbKey(const MainDbKey &other) : MainDbKey() {
 	L_D();
 	const MainDbKeyPrivate *dOther = other.getPrivate();
 
@@ -46,9 +47,10 @@ MainDbKey::MainDbKey (const MainDbKey &other) : MainDbKey() {
 	d->storageId = dOther->storageId;
 }
 
-MainDbKey::~MainDbKey () {}
+MainDbKey::~MainDbKey() {
+}
 
-MainDbKey &MainDbKey::operator= (const MainDbKey &other) {
+MainDbKey &MainDbKey::operator=(const MainDbKey &other) {
 	L_D();
 
 	if (this != &other) {
@@ -60,7 +62,7 @@ MainDbKey &MainDbKey::operator= (const MainDbKey &other) {
 	return *this;
 }
 
-bool MainDbKey::isValid () const {
+bool MainDbKey::isValid() const {
 	L_D();
 	return !d->core.expired() && d->storageId >= 0;
 }

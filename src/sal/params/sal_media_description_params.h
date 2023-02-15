@@ -31,17 +31,17 @@ class LINPHONE_PUBLIC SalMediaDescriptionParams {
 
 public:
 	SalMediaDescriptionParams();
-	SalMediaDescriptionParams(const CallSessionParams * callParams);
-	SalMediaDescriptionParams(const SalMediaDescriptionParams & other);
-	SalMediaDescriptionParams & operator=(const SalMediaDescriptionParams & other);
+	SalMediaDescriptionParams(const CallSessionParams *callParams);
+	SalMediaDescriptionParams(const SalMediaDescriptionParams &other);
+	SalMediaDescriptionParams &operator=(const SalMediaDescriptionParams &other);
 	virtual ~SalMediaDescriptionParams();
 
-	void enableCapabilityNegotiationSupport (const bool enable);
-	bool capabilityNegotiationSupported () const;
-	void enableCfgLinesMerging (const bool enable);
-	bool cfgLinesMerged () const;
-	void enableTcapLineMerging (const bool enable);
-	bool tcapLinesMerged () const;
+	void enableCapabilityNegotiationSupport(const bool enable);
+	bool capabilityNegotiationSupported() const;
+	void enableCfgLinesMerging(const bool enable);
+	bool cfgLinesMerged() const;
+	void enableTcapLineMerging(const bool enable);
+	bool tcapLinesMerged() const;
 
 private:
 	bool capabilityNegotiation = false;

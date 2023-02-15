@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "search-request.h"
 
 // =============================================================================
@@ -27,7 +26,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-SearchRequest::SearchRequest(const std::string& filter, const std::string& withDomain, int sourceFlags, LinphoneMagicSearchAggregation aggregation) {
+SearchRequest::SearchRequest(const std::string &filter,
+                             const std::string &withDomain,
+                             int sourceFlags,
+                             LinphoneMagicSearchAggregation aggregation) {
 	mFilter = filter;
 	mWithDomain = withDomain;
 	mSourceFlags = sourceFlags;
@@ -35,7 +37,7 @@ SearchRequest::SearchRequest(const std::string& filter, const std::string& withD
 	mStartTime = 0;
 }
 
-SearchRequest::SearchRequest(const SearchRequest& request){
+SearchRequest::SearchRequest(const SearchRequest &request) {
 	mFilter = request.mFilter;
 	mWithDomain = request.mWithDomain;
 	mSourceFlags = request.mSourceFlags;
@@ -43,10 +45,10 @@ SearchRequest::SearchRequest(const SearchRequest& request){
 	mStartTime = request.mStartTime;
 }
 
-SearchRequest::~SearchRequest(){
+SearchRequest::~SearchRequest() {
 }
 
-void SearchRequest::operator= (const SearchRequest &request){
+void SearchRequest::operator=(const SearchRequest &request) {
 	mFilter = request.mFilter;
 	mWithDomain = request.mWithDomain;
 	mSourceFlags = request.mSourceFlags;
@@ -54,15 +56,15 @@ void SearchRequest::operator= (const SearchRequest &request){
 	mStartTime = request.mStartTime;
 }
 
-const std::string &SearchRequest::getFilter()const {
+const std::string &SearchRequest::getFilter() const {
 	return mFilter;
 }
 
-const std::string &SearchRequest::getWithDomain() const{
+const std::string &SearchRequest::getWithDomain() const {
 	return mWithDomain;
 }
 
-int SearchRequest::getSourceFlags() const{
+int SearchRequest::getSourceFlags() const {
 	return mSourceFlags;
 }
 
@@ -74,7 +76,7 @@ void SearchRequest::initStartTime() {
 	mStartTime = bctbx_get_cur_time_ms();
 }
 
-uint64_t SearchRequest::getStartTime() const{
+uint64_t SearchRequest::getStartTime() const {
 	return mStartTime;
 }
 

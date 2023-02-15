@@ -41,6 +41,8 @@
 #include "address/address.h"
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/vfs_encrypted.hh"
+#include <bctoolbox/defs.h>
+
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
 #include "content/file-content.h"
@@ -195,7 +197,7 @@ LinphoneCore *Factory::createCore(const std::string &config_path,
 	return _createCore(NULL, config_path, factory_config_path, NULL, system_context, FALSE);
 }
 
-LinphoneCore *Factory::createSharedCore(const std::string &config_filename,
+LinphoneCore *Factory::createSharedCore(BCTBX_UNUSED(const std::string &config_filename),
                                         const std::string &factory_config_path,
                                         void *system_context,
                                         const std::string &app_group_id,
@@ -239,6 +241,10 @@ LinphoneParticipantDeviceCbs *Factory::createParticipantDeviceCbs() const {
 	return linphone_participant_device_cbs_new();
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LinphoneParticipantDeviceIdentity *Factory::createParticipantDeviceIdentity(const LinphoneAddress *address,
                                                                             const std::string &name) const {
 #ifdef HAVE_ADVANCED_IM
@@ -248,6 +254,9 @@ LinphoneParticipantDeviceIdentity *Factory::createParticipantDeviceIdentity(cons
 	return NULL;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 LinphoneAuthInfo *Factory::createAuthInfo(const std::string &username,
                                           const std::string &userid,
@@ -617,6 +626,10 @@ LinphoneConferenceSchedulerCbs *Factory::createConferenceSchedulerCbs() const {
 	return linphone_conference_scheduler_cbs_new();
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 bool_t Factory::isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_backend) const {
 #ifdef HAVE_ADVANCED_IM
 	return TRUE;
@@ -624,6 +637,9 @@ bool_t Factory::isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_back
 	return (chatroom_backend != LinphoneChatRoomBackendFlexisipChat);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 bool_t Factory::isDatabaseStorageAvailable() const {
 #ifdef HAVE_DB_STORAGE
@@ -715,6 +731,10 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfo() const {
 	return ConferenceInfo::create();
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarContent(LinphoneContent *content) const {
 #ifdef HAVE_ADVANCED_IM
 	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
@@ -761,7 +781,14 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarConten
 	return nullptr;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 LinphoneContent *Factory::createQRCode(const std::string &code,
                                        const unsigned int &width,
                                        const unsigned int &height,
@@ -796,7 +823,14 @@ LinphoneContent *Factory::createQRCode(const std::string &code,
 	return nullptr;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 int Factory::writeQRCodeFile(const std::string &code,
                              const std::string &filePath,
                              const unsigned int &width,
@@ -869,5 +903,8 @@ cleanMemory:
 	return -2;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 LINPHONE_END_NAMESPACE

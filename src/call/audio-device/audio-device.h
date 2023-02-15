@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 #ifndef AUDIO_DEVICE_H
 #define AUDIO_DEVICE_H
 
-#include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
 #include "linphone/enums/call-enums.h"
+#include <belle-sip/object++.hh>
 #include <mediastreamer2/mssndcard.h>
 
 LINPHONE_BEGIN_NAMESPACE
@@ -30,53 +30,53 @@ LINPHONE_BEGIN_NAMESPACE
 class AudioDevice : public bellesip::HybridObject<LinphoneAudioDevice, AudioDevice> {
 public:
 	enum Type {
-        Unknown = LinphoneAudioDeviceTypeUnknown,
+		Unknown = LinphoneAudioDeviceTypeUnknown,
 		Microphone = LinphoneAudioDeviceTypeMicrophone,
-        Earpiece = LinphoneAudioDeviceTypeEarpiece,
-        Speaker = LinphoneAudioDeviceTypeSpeaker,
-        Bluetooth = LinphoneAudioDeviceTypeBluetooth,
-        BluetoothA2DP = LinphoneAudioDeviceTypeBluetoothA2DP,
-        Telephony = LinphoneAudioDeviceTypeTelephony,
-        AuxLine = LinphoneAudioDeviceTypeAuxLine,
-        GenericUsb = LinphoneAudioDeviceTypeGenericUsb,
-        Headset = LinphoneAudioDeviceTypeHeadset,
-        Headphones = LinphoneAudioDeviceTypeHeadphones,
-        HearingAid = LinphoneAudioDeviceTypeHearingAid
+		Earpiece = LinphoneAudioDeviceTypeEarpiece,
+		Speaker = LinphoneAudioDeviceTypeSpeaker,
+		Bluetooth = LinphoneAudioDeviceTypeBluetooth,
+		BluetoothA2DP = LinphoneAudioDeviceTypeBluetoothA2DP,
+		Telephony = LinphoneAudioDeviceTypeTelephony,
+		AuxLine = LinphoneAudioDeviceTypeAuxLine,
+		GenericUsb = LinphoneAudioDeviceTypeGenericUsb,
+		Headset = LinphoneAudioDeviceTypeHeadset,
+		Headphones = LinphoneAudioDeviceTypeHeadphones,
+		HearingAid = LinphoneAudioDeviceTypeHearingAid
 	};
 
-    enum Capabilities {
-        Record = LinphoneAudioDeviceCapabilityRecord,
-        Play = LinphoneAudioDeviceCapabilityPlay,
-        All = Record | Play
-    };
+	enum Capabilities {
+		Record = LinphoneAudioDeviceCapabilityRecord,
+		Play = LinphoneAudioDeviceCapabilityPlay,
+		All = Record | Play
+	};
 
-    AudioDevice(MSSndCard *soundCard);
-    ~AudioDevice();
+	AudioDevice(MSSndCard *soundCard);
+	~AudioDevice();
 
-    MSSndCard *getSoundCard() const;
-    const std::string& getId() const;
-    const std::string& getDeviceName() const;
-    const std::string& getDriverName() const;
-    const Capabilities& getCapabilities() const;
-    const Type& getType() const;
+	MSSndCard *getSoundCard() const;
+	const std::string &getId() const;
+	const std::string &getDeviceName() const;
+	const std::string &getDriverName() const;
+	const Capabilities &getCapabilities() const;
+	const Type &getType() const;
 
-    std::string toString() const override;
+	std::string toString() const override;
 
-    std::ostream& operator << (std::ostream& str) {
-        str << this->toString();
-        return str;
-    }
+	std::ostream &operator<<(std::ostream &str) {
+		str << this->toString();
+		return str;
+	}
 
-    bool operator== (const AudioDevice &device) const;
-    bool operator!= (const AudioDevice &device) const;
+	bool operator==(const AudioDevice &device) const;
+	bool operator!=(const AudioDevice &device) const;
 
 private:
-    MSSndCard *soundCard;
-    std::string deviceId;
-    std::string deviceName;
-    std::string driverName;
-    Capabilities capabilities;
-    Type deviceType;
+	MSSndCard *soundCard;
+	std::string deviceId;
+	std::string deviceName;
+	std::string driverName;
+	Capabilities capabilities;
+	Type deviceType;
 };
 
 LINPHONE_END_NAMESPACE

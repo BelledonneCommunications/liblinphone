@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,35 +35,57 @@ class CallSession;
 
 class CallSessionParamsPrivate : public ClonableObjectPrivate {
 public:
-	void clone (const CallSessionParamsPrivate *src);
+	void clone(const CallSessionParamsPrivate *src);
 
-	bool getInConference () const { return inConference; }
-	void setInConference (bool value) { inConference = value; }
-	const char * getConferenceId () const { return conferenceId.c_str(); }
-	void setConferenceId (const std::string value) { conferenceId = value; }
-	bool getInternalCallUpdate () const { return internalCallUpdate; }
-	void setInternalCallUpdate (bool value) { internalCallUpdate = value; }
-	bool getNoUserConsent () const { return noUserConsent; }
-	void setNoUserConsent (bool value) { noUserConsent = value; }
-	void enableCapabilityNegotiationReInvite (const bool enable);
-	bool capabilityNegotiationReInviteEnabled () const;
-	void enableCapabilityNegotiation (const bool enable);
-	bool capabilityNegotiationEnabled () const;
-	void enableCfgLinesMerging (const bool enable);
-	bool cfgLinesMerged () const;
-	void enableTcapLineMerging (const bool enable);
-	bool tcapLinesMerged () const;
+	bool getInConference() const {
+		return inConference;
+	}
+	void setInConference(bool value) {
+		inConference = value;
+	}
+	const char *getConferenceId() const {
+		return conferenceId.c_str();
+	}
+	void setConferenceId(const std::string value) {
+		conferenceId = value;
+	}
+	bool getInternalCallUpdate() const {
+		return internalCallUpdate;
+	}
+	void setInternalCallUpdate(bool value) {
+		internalCallUpdate = value;
+	}
+	bool getNoUserConsent() const {
+		return noUserConsent;
+	}
+	void setNoUserConsent(bool value) {
+		noUserConsent = value;
+	}
+	void enableCapabilityNegotiationReInvite(const bool enable);
+	bool capabilityNegotiationReInviteEnabled() const;
+	void enableCapabilityNegotiation(const bool enable);
+	bool capabilityNegotiationEnabled() const;
+	void enableCfgLinesMerging(const bool enable);
+	bool cfgLinesMerged() const;
+	void enableTcapLineMerging(const bool enable);
+	bool tcapLinesMerged() const;
 	bool isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
-	void setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions);
+	void setSupportedEncryptions(const std::list<LinphoneMediaEncryption> encryptions);
 
-	SalCustomHeader * getCustomHeaders () const;
-	void setCustomHeaders (const SalCustomHeader *ch);
+	SalCustomHeader *getCustomHeaders() const;
+	void setCustomHeaders(const SalCustomHeader *ch);
 
-	const std::unordered_map<std::string, std::string> &getCustomContactParameters () const { return customContactParameters; }
+	const std::unordered_map<std::string, std::string> &getCustomContactParameters() const {
+		return customContactParameters;
+	}
 
-	std::shared_ptr<CallSession> getReferer () const { return referer; }
-	void setReferer (std::shared_ptr<CallSession> session) { referer = session; }
+	std::shared_ptr<CallSession> getReferer() const {
+		return referer;
+	}
+	void setReferer(std::shared_ptr<CallSession> session) {
+		referer = session;
+	}
 
 	void setStartTime(time_t time);
 	time_t getStartTime() const;
@@ -72,10 +94,10 @@ public:
 	time_t getEndTime() const;
 
 	void setDescription(std::string description);
-	const std::string & getDescription() const;
+	const std::string &getDescription() const;
 
-	void setConferenceCreation (const bool enable);
-	bool isConferenceCreation () const;
+	void setConferenceCreation(const bool enable);
+	bool isConferenceCreation() const;
 
 public:
 	std::string sessionName;
@@ -90,7 +112,8 @@ private:
 	bool mergeTcapLines = false;
 	std::list<LinphoneMediaEncryption> supportedEncryptions;
 	// This parameter is used to disallow ZRTP if capability negotiation is not enabled.
-	// Currently it is not possible to set it by the user nor get its value. It is initialized by initDefault and it is a copy of LinphoneCore member zrtp_not_available_simulation. It can only be set to TRUE for testing purposes.
+	// Currently it is not possible to set it by the user nor get its value. It is initialized by initDefault and it is
+	// a copy of LinphoneCore member zrtp_not_available_simulation. It can only be set to TRUE for testing purposes.
 	bool disallowZrtp = false;
 	bool inConference = false;
 	ConferenceLayout conferenceVideoLayout = ConferenceLayout::ActiveSpeaker;
@@ -101,7 +124,8 @@ private:
 	std::string from = "";
 	std::string description = "";
 	std::unordered_map<std::string, std::string> customContactParameters;
-	std::shared_ptr<CallSession> referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
+	std::shared_ptr<CallSession>
+	    referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
 	std::list<Content> customContents;
 	std::list<LinphoneSrtpSuite> srtpSuites{};
 

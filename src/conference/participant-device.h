@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 #ifndef _L_PARTICIPANT_DEVICE_H_
 #define _L_PARTICIPANT_DEVICE_H_
 
-#include <string>
 #include <ctime>
+#include <string>
 
 #include <belle-sip/object++.hh>
 
@@ -48,7 +48,9 @@ class Core;
 class Participant;
 class ParticipantDeviceCbs;
 
-class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>, public UserDataAccessor, public CallbacksHolder<ParticipantDeviceCbs> {
+class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>,
+                          public UserDataAccessor,
+                          public CallbacksHolder<ParticipantDeviceCbs> {
 public:
 	enum class State {
 		Joining = LinphoneParticipantDeviceStateJoining,
@@ -75,65 +77,105 @@ public:
 		Failed = LinphoneParticipantDeviceDisconnectionMethodFailed
 	};
 
-	ParticipantDevice ();
-	explicit ParticipantDevice (std::shared_ptr<Participant> participant, const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name = "");
-	explicit ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const std::string &name = "");
-	virtual ~ParticipantDevice ();
+	ParticipantDevice();
+	explicit ParticipantDevice(std::shared_ptr<Participant> participant,
+	                           const std::shared_ptr<LinphonePrivate::CallSession> &session,
+	                           const std::string &name = "");
+	explicit ParticipantDevice(std::shared_ptr<Participant> participant,
+	                           const IdentityAddress &gruu,
+	                           const std::string &name = "");
+	virtual ~ParticipantDevice();
 	// non clonable object
-	ParticipantDevice *clone() const override { return nullptr; }
+	ParticipantDevice *clone() const override {
+		return nullptr;
+	}
 
-	bool operator== (const ParticipantDevice &device) const;
+	bool operator==(const ParticipantDevice &device) const;
 
-	std::shared_ptr<Core> getCore () const;
+	std::shared_ptr<Core> getCore() const;
 
-	const IdentityAddress & getAddress () const;
-	void setAddress (const IdentityAddress & address);
-	void setAddress (const Address & address);
-	inline const std::string &getLabel () const { return mLabel; }
-	inline void setLabel (const std::string &label) { mLabel = label; };
-	const std::string &getCallId ();
-	void setCallId (const std::string &callId);
-	const std::string &getFromTag ();
-	void setFromTag (const std::string &tag);
-	const std::string &getToTag ();
-	void setToTag (const std::string &tag);
-	inline const std::string &getName () const { return mName; }
-	inline void setName (const std::string &name) { mName = name; }
-	inline std::shared_ptr<CallSession> getSession () const { return mSession; }
-	std::shared_ptr<Participant> getParticipant () const;
-	void setSession (std::shared_ptr<CallSession> session);
-	inline State getState () const { return mState; }
-	void setState (State newState, bool notify = true);
-	inline void setJoiningMethod (JoiningMethod joiningMethod) { mJoiningMethod = joiningMethod; };
-	inline JoiningMethod getJoiningMethod () const { return mJoiningMethod; };
+	const IdentityAddress &getAddress() const;
+	void setAddress(const IdentityAddress &address);
+	void setAddress(const Address &address);
+	inline const std::string &getLabel() const {
+		return mLabel;
+	}
+	inline void setLabel(const std::string &label) {
+		mLabel = label;
+	};
+	const std::string &getCallId();
+	void setCallId(const std::string &callId);
+	const std::string &getFromTag();
+	void setFromTag(const std::string &tag);
+	const std::string &getToTag();
+	void setToTag(const std::string &tag);
+	inline const std::string &getName() const {
+		return mName;
+	}
+	inline void setName(const std::string &name) {
+		mName = name;
+	}
+	inline std::shared_ptr<CallSession> getSession() const {
+		return mSession;
+	}
+	std::shared_ptr<Participant> getParticipant() const;
+	void setSession(std::shared_ptr<CallSession> session);
+	inline State getState() const {
+		return mState;
+	}
+	void setState(State newState, bool notify = true);
+	inline void setJoiningMethod(JoiningMethod joiningMethod) {
+		mJoiningMethod = joiningMethod;
+	};
+	inline JoiningMethod getJoiningMethod() const {
+		return mJoiningMethod;
+	};
 	void setDisconnectionData(bool initiated, int code, LinphoneReason reason);
-	inline void setDisconnectionMethod (DisconnectionMethod disconnectionMethod) { mDisconnectionMethod = disconnectionMethod; };
-	inline DisconnectionMethod getDisconnectionMethod () const { return mDisconnectionMethod; };
-	inline const std::string & getDisconnectionReason () const { return mDisconnectionReason; }
-	inline void setDisconnectionReason (const std::string &disconnectionReason) { mDisconnectionReason = disconnectionReason; }
-	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
+	inline void setDisconnectionMethod(DisconnectionMethod disconnectionMethod) {
+		mDisconnectionMethod = disconnectionMethod;
+	};
+	inline DisconnectionMethod getDisconnectionMethod() const {
+		return mDisconnectionMethod;
+	};
+	inline const std::string &getDisconnectionReason() const {
+		return mDisconnectionReason;
+	}
+	inline void setDisconnectionReason(const std::string &disconnectionReason) {
+		mDisconnectionReason = disconnectionReason;
+	}
+	AbstractChatRoom::SecurityLevel getSecurityLevel() const;
 
-	inline bool isSubscribedToConferenceEventPackage () const { return mConferenceSubscribeEvent != nullptr; }
-	LinphoneEvent *getConferenceSubscribeEvent () const { return mConferenceSubscribeEvent; }
-	void setConferenceSubscribeEvent (LinphoneEvent *ev);
+	inline bool isSubscribedToConferenceEventPackage() const {
+		return mConferenceSubscribeEvent != nullptr;
+	}
+	LinphoneEvent *getConferenceSubscribeEvent() const {
+		return mConferenceSubscribeEvent;
+	}
+	void setConferenceSubscribeEvent(LinphoneEvent *ev);
 
-	bool isValid () const { return getAddress().isValid(); }
-	bool isInConference () const;
+	bool isValid() const {
+		return getAddress().isValid();
+	}
+	bool isInConference() const;
 
-	inline void setTimeOfJoining(time_t joiningTime) { mTimeOfJoining = joiningTime; }
+	inline void setTimeOfJoining(time_t joiningTime) {
+		mTimeOfJoining = joiningTime;
+	}
 	time_t getTimeOfJoining() const;
-	inline void setTimeOfDisconnection(time_t disconnectionTime) { mTimeOfDisconnection = disconnectionTime; }
+	inline void setTimeOfDisconnection(time_t disconnectionTime) {
+		mTimeOfDisconnection = disconnectionTime;
+	}
 	time_t getTimeOfDisconnection() const;
 	void setCapabilityDescriptor(const std::string &capabilities);
-	const std::string & getCapabilityDescriptor()const{
+	const std::string &getCapabilityDescriptor() const {
 		return mCapabilityDescriptor;
 	}
 
-	bool setSsrc (const LinphoneStreamType type, uint32_t newSsrc);
-	uint32_t getSsrc (const LinphoneStreamType type) const;
+	bool setSsrc(const LinphoneStreamType type, uint32_t newSsrc);
+	uint32_t getSsrc(const LinphoneStreamType type) const;
 
-	void *getUserData () const;
-	void setUserData (void *ud);
+	void *getUserData() const;
+	void setUserData(void *ud);
 
 	// Media getters and setters
 	bool updateMediaCapabilities();
@@ -142,11 +184,11 @@ public:
 	bool adminModeSupported() const;
 	void enableAdminModeSupport(bool support);
 
-	void * createWindowId() const;
-	void setWindowId(void * newWindowId) const;
-	void * getWindowId() const;
+	void *createWindowId() const;
+	void setWindowId(void *newWindowId) const;
+	void *getWindowId() const;
 
-	bool setStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type);
+	bool setStreamCapability(const LinphoneMediaDirection &direction, const LinphoneStreamType type);
 	LinphoneMediaDirection getStreamCapability(const LinphoneStreamType type) const;
 
 	bool setStreamAvailability(const bool available, const LinphoneStreamType type);
@@ -158,10 +200,10 @@ public:
 	void setIsMuted(bool isMuted);
 	bool getIsMuted() const;
 
-	static bool isLeavingState(const ParticipantDevice::State & state);
+	static bool isLeavingState(const ParticipantDevice::State &state);
 
 protected:
-	Conference *getConference () const;
+	Conference *getConference() const;
 
 private:
 	std::weak_ptr<Participant> mParticipant;
@@ -181,7 +223,7 @@ private:
 	time_t mTimeOfJoining = -1;
 	time_t mTimeOfDisconnection = -1;
 	bool mSupportAdminMode = false;
-	mutable void * mWindowId = NULL;
+	mutable void *mWindowId = NULL;
 	bool mIsMuted = false;
 	bool mIsSpeaking = false;
 
@@ -191,28 +233,33 @@ private:
 
 	void *mUserData = nullptr;
 
-	LinphoneMediaDirection computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
-	bool computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
+	LinphoneMediaDirection computeDeviceMediaDirection(const bool conferenceEnable,
+	                                                   const bool callEnable,
+	                                                   const LinphoneMediaDirection dir) const;
+	bool
+	computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
 	LinphoneMediaDirection getStreamDirectionFromSession(const LinphoneStreamType type) const;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };
 
-std::ostream &operator<< (std::ostream &stream, ParticipantDevice::State state);
+std::ostream &operator<<(std::ostream &stream, ParticipantDevice::State state);
 
-class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDeviceCbs, ParticipantDeviceCbs>, public Callbacks {
-	public:
-		LinphoneParticipantDeviceCbsIsSpeakingChangedCb getIsSpeakingChanged()const;
-		void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
-		LinphoneParticipantDeviceCbsIsMutedCb getIsMuted()const;
-		void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
-		LinphoneParticipantDeviceCbsStateChangedCb getStateChanged()const;
-		void setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb);
-		LinphoneParticipantDeviceCbsStreamCapabilityChangedCb getStreamCapabilityChanged()const;
-		void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
-		LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged()const;
-		void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
-	private:
+class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDeviceCbs, ParticipantDeviceCbs>,
+                             public Callbacks {
+public:
+	LinphoneParticipantDeviceCbsIsSpeakingChangedCb getIsSpeakingChanged() const;
+	void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
+	LinphoneParticipantDeviceCbsIsMutedCb getIsMuted() const;
+	void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
+	LinphoneParticipantDeviceCbsStateChangedCb getStateChanged() const;
+	void setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb);
+	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb getStreamCapabilityChanged() const;
+	void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
+	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged() const;
+	void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
+
+private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsIsMutedCb mIsMutedCb = nullptr;
 	LinphoneParticipantDeviceCbsStateChangedCb mStateChangedCb = nullptr;

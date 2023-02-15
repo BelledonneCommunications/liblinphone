@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,8 @@
  */
 
 #include <iterator>
+
+#include <bctoolbox/defs.h>
 
 #include "linphone/utils/algorithm.h"
 
@@ -55,8 +57,8 @@ LINPHONE_BEGIN_NAMESPACE
 /*
  * Returns the best local address to talk with peer address.
  * If peerAddress is not defined, returns the local address of the default proxy config.
- * If withGruu is true, returns the local address with its gruu parameter. FlexisipChat kind of chatroom (also refered as ClientGroupChatRoom)
- * require a local address with gruu, unlike basic chatrooms.
+ * If withGruu is true, returns the local address with its gruu parameter. FlexisipChat kind of chatroom (also refered
+ * as ClientGroupChatRoom) require a local address with gruu, unlike basic chatrooms.
  */
 IdentityAddress CorePrivate::getDefaultLocalAddress(const IdentityAddress *peerAddress, bool withGruu) const {
 	LinphoneCore *cCore = getCCore();
@@ -70,17 +72,16 @@ IdentityAddress CorePrivate::getDefaultLocalAddress(const IdentityAddress *peerA
 		}
 	}
 
-	if (!proxy)
-		proxy =	linphone_core_get_default_proxy_config(cCore);
+	if (!proxy) proxy = linphone_core_get_default_proxy_config(cCore);
 
 	IdentityAddress localAddress;
 	if (proxy) {
-		char *identity = linphone_address_as_string(
-			(withGruu && linphone_proxy_config_get_contact(proxy))? linphone_proxy_config_get_contact(proxy) : linphone_proxy_config_get_identity_address(proxy));
+		char *identity = linphone_address_as_string((withGruu && linphone_proxy_config_get_contact(proxy))
+		                                                ? linphone_proxy_config_get_contact(proxy)
+		                                                : linphone_proxy_config_get_identity_address(proxy));
 		localAddress = IdentityAddress(identity);
 		bctbx_free(identity);
-	} else
-		localAddress = IdentityAddress(linphone_core_get_primary_contact(cCore));
+	} else localAddress = IdentityAddress(linphone_core_get_primary_contact(cCore));
 
 	return localAddress;
 }
@@ -110,16 +111,18 @@ IdentityAddress CorePrivate::getIdentityAddressWithGruu(const IdentityAddress &i
 
 // -----------------------------------------------------------------------------
 
-//Base client group chat room creator
-shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
-	const std::string &subject,
-	const IdentityAddress &conferenceFactoryUri,
-	const ConferenceId &conferenceId,
-	const Content &content,
-	AbstractChatRoom::CapabilitiesMask capabilities,
-	const std::shared_ptr<ChatRoomParams> &params,
-	bool fallback
-) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+// Base client group chat room creator
+shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const std::string &subject,
+                                                                    const IdentityAddress &conferenceFactoryUri,
+                                                                    const ConferenceId &conferenceId,
+                                                                    const Content &content,
+                                                                    AbstractChatRoom::CapabilitiesMask capabilities,
+                                                                    const std::shared_ptr<ChatRoomParams> &params,
+                                                                    bool fallback) {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 
@@ -127,23 +130,18 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 		lWarning() << "Invalid chat room parameters given for client group chat room creation";
 		return nullptr;
 	}
-	if (!conferenceId.getLocalAddress().hasGruu()){
-		lError() << "createClientGroupChatRoom(): local address [" << conferenceId.getLocalAddress() << "] must have a gruu.";
+	if (!conferenceId.getLocalAddress().hasGruu()) {
+		lError() << "createClientGroupChatRoom(): local address [" << conferenceId.getLocalAddress()
+		         << "] must have a gruu.";
 		return nullptr;
 	}
-	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(q->getSharedFromThis(),
-										    conferenceFactoryUri,
-										    conferenceId,
-										    subject,
-										    content,
-										    capabilities,
-										    params
-										    ));
+	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
+	    q->getSharedFromThis(), conferenceFactoryUri, conferenceId, subject, content, capabilities, params));
 
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (fallback && (clientGroupChatRoom->getCapabilities() & ClientGroupChatRoom::Capabilities::OneToOne)) {
-		//Create a ClientGroupToBasicChatRoom to handle fallback from ClientGroupChatRoom to BasicGroupChatRoom if
-		//only one participant is invited and that it does not support group chat.
+		// Create a ClientGroupToBasicChatRoom to handle fallback from ClientGroupChatRoom to BasicGroupChatRoom if
+		// only one participant is invited and that it does not support group chat.
 		chatRoom = make_shared<ClientGroupToBasicChatRoom>(clientGroupChatRoom);
 		ClientGroupChatRoomPrivate *dClientGroupChatRoom = clientGroupChatRoom->getPrivate();
 		dClientGroupChatRoom->setCallSessionListener(chatRoom->getPrivate());
@@ -159,29 +157,29 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	return nullptr;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
-	const string &subject,
-	const ConferenceId &conferenceId,
-	const Content &content,
-	bool encrypted,
-	AbstractChatRoom::EphemeralMode ephemerableMode,
-	long ephemeralLifeTime
-) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string &subject,
+                                                                    const ConferenceId &conferenceId,
+                                                                    const Content &content,
+                                                                    bool encrypted,
+                                                                    AbstractChatRoom::EphemeralMode ephemerableMode,
+                                                                    long ephemeralLifeTime) {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 
-	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, true, ephemerableMode, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, true, ephemerableMode,
+	                                                           ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	params->setEphemeralLifetime(ephemeralLifeTime);
-	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
-										    q->getSharedFromThis(),
-										    conferenceId.getPeerAddress(),
-										    conferenceId,
-										    subject,
-										    content,
-										    ChatRoomParams::toCapabilities(params),
-										    params
-										    ));
+	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(
+	    new ClientGroupChatRoom(q->getSharedFromThis(), conferenceId.getPeerAddress(), conferenceId, subject, content,
+	                            ChatRoomParams::toCapabilities(params), params));
 
 	clientGroupChatRoom->setState(ConferenceInterface::State::Instantiated);
 	noCreatedClientGroupChatRooms[clientGroupChatRoom.get()] = clientGroupChatRoom;
@@ -191,23 +189,28 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	return nullptr;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-//From deprecated public API
-shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string &subject, bool fallback, bool encrypted) {
+// From deprecated public API
+shared_ptr<AbstractChatRoom>
+CorePrivate::createClientGroupChatRoom(const string &subject, bool fallback, bool encrypted) {
 	L_Q();
 
 	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(nullptr, true);
 	IdentityAddress conferenceFactoryUri(Core::getConferenceFactoryUri(q->getSharedFromThis(), defaultLocalAddress));
-	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, !fallback, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	shared_ptr<ChatRoomParams> params =
+	    ChatRoomParams::create(subject, encrypted, !fallback, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 
-	return createClientGroupChatRoom(subject, conferenceFactoryUri, ConferenceId(IdentityAddress(), defaultLocalAddress), Content(), ChatRoomParams::toCapabilities(params), params, fallback);
+	return createClientGroupChatRoom(subject, conferenceFactoryUri,
+	                                 ConferenceId(IdentityAddress(), defaultLocalAddress), Content(),
+	                                 ChatRoomParams::toCapabilities(params), params, fallback);
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
-	const ConferenceId &conferenceId,
-	ChatRoom::CapabilitiesMask capabilities,
-	const shared_ptr<ChatRoomParams> &params
-) {
+shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom(const ConferenceId &conferenceId,
+                                                              ChatRoom::CapabilitiesMask capabilities,
+                                                              const shared_ptr<ChatRoomParams> &params) {
 	L_Q();
 
 	shared_ptr<AbstractChatRoom> chatRoom;
@@ -222,8 +225,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 #ifdef HAVE_ADVANCED_IM
 	if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
 		chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
-	}
-	else {
+	} else {
 #endif
 		chatRoom.reset(basicChatRoom);
 #ifdef HAVE_ADVANCED_IM
@@ -235,7 +237,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const {
+shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom(const shared_ptr<ChatRoomParams> &params,
+                                                         const IdentityAddress &localAddress,
+                                                         const IdentityAddress &remoteAddress,
+                                                         const std::list<IdentityAddress> &participants) const {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const IdentityAddress &curLocalAddress = chatRoom->getLocalAddress();
@@ -243,26 +248,21 @@ shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatR
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
 
 		if (params) {
-			if (params->getChatRoomBackend() != chatRoom->getCurrentParams()->getChatRoomBackend())
-				continue;
+			if (params->getChatRoomBackend() != chatRoom->getCurrentParams()->getChatRoomBackend()) continue;
 
-			if (!params->isGroup() && !(capabilities & ChatRoom::Capabilities::OneToOne))
-				continue;
+			if (!params->isGroup() && !(capabilities & ChatRoom::Capabilities::OneToOne)) continue;
 
-			if (params->isGroup() && !(capabilities & ChatRoom::Capabilities::Conference))
-				continue;
+			if (params->isGroup() && !(capabilities & ChatRoom::Capabilities::Conference)) continue;
 
-			if (params->isEncrypted() != bool(capabilities & ChatRoom::Capabilities::Encrypted))
-				continue;
+			if (params->isEncrypted() != bool(capabilities & ChatRoom::Capabilities::Encrypted)) continue;
 
-			if (!params->getSubject().empty() && params->getSubject() != chatRoom->getSubject())
-				continue;
+			if (!params->getSubject().empty() && params->getSubject() != chatRoom->getSubject()) continue;
 		}
 
-		if (localAddress.getAddressWithoutGruu() != curLocalAddress.getAddressWithoutGruu())
-			continue;
+		if (localAddress.getAddressWithoutGruu() != curLocalAddress.getAddressWithoutGruu()) continue;
 
-		if (remoteAddress.isValid() && remoteAddress.getAddressWithoutGruu() != curRemoteAddress.getAddressWithoutGruu())
+		if (remoteAddress.isValid() &&
+		    remoteAddress.getAddressWithoutGruu() != curRemoteAddress.getAddressWithoutGruu())
 			continue;
 
 		bool allFound = true;
@@ -286,12 +286,17 @@ shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatR
 	return nullptr;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const std::string &subject, const std::list<IdentityAddress> &participants) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params,
+                                                         const IdentityAddress &localAddr,
+                                                         const std::string &subject,
+                                                         const std::list<IdentityAddress> &participants) {
 	params->setSubject(subject);
 	return createChatRoom(params, localAddr, participants);
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params,
+                                                         const IdentityAddress &localAddr,
+                                                         const std::list<IdentityAddress> &participants) {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 #endif
@@ -304,9 +309,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 		return nullptr;
 	}
 	if (!linphone_factory_is_chatroom_backend_available(
-			linphone_factory_get(),
-			static_cast<LinphoneChatRoomBackend>(params->getChatRoomBackend()))
-	) {
+	        linphone_factory_get(), static_cast<LinphoneChatRoomBackend>(params->getChatRoomBackend()))) {
 		lWarning() << "Tying to create chat room with unavailable backend";
 		return nullptr;
 	}
@@ -316,10 +319,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 #ifdef HAVE_ADVANCED_IM
 		string conferenceFactoryUri = Core::getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
 		if (conferenceFactoryUri.empty()) {
-			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr << "]";
+			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr
+			           << "]";
 			return nullptr;
 		}
-
 
 		ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
 		if (!localAddr.hasGruu()) {
@@ -329,10 +332,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 				lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";
 				conferenceId = ConferenceId(IdentityAddress(), localAddrWithGruu);
 			} else {
-				lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr << "], client group chat room creation will fail!";
+				lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr
+				         << "], client group chat room creation will fail!";
 			}
 		}
-		if (!params->isGroup() && participants.size()>0) {
+		if (!params->isGroup() && participants.size() > 0) {
 			// Prevent multiple 1-1 conference based chat room with same local/remote addresses
 			chatRoom = q->findOneToOneChatRoom(localAddr, participants.front(), false, true, params->isEncrypted());
 			if (chatRoom != nullptr) {
@@ -341,16 +345,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			}
 		}
 
-		chatRoom = createClientGroupChatRoom(params->getSubject(),
-						     IdentityAddress(conferenceFactoryUri),
-						     conferenceId,
-						     Content(),
-						     ChatRoomParams::toCapabilities(params),
-						     params,
-						     false);
+		chatRoom = createClientGroupChatRoom(params->getSubject(), IdentityAddress(conferenceFactoryUri), conferenceId,
+		                                     Content(), ChatRoomParams::toCapabilities(params), params, false);
 
 		if (!chatRoom) {
-			lWarning() << "Cannot create createClientGroupChatRoom with subject [" << params->getSubject() <<"]";
+			lWarning() << "Cannot create createClientGroupChatRoom with subject [" << params->getSubject() << "]";
 			return nullptr;
 		}
 		if (!chatRoom->addParticipants(participants)) {
@@ -383,35 +382,42 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const std::string &subject, const std::list<IdentityAddress> &participants) {
-	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(nullptr, params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat);
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params,
+                                                         const std::string &subject,
+                                                         const std::list<IdentityAddress> &participants) {
+	IdentityAddress defaultLocalAddress =
+	    getDefaultLocalAddress(nullptr, params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	return createChatRoom(params, defaultLocalAddress, subject, participants);
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subject, const std::list<IdentityAddress> &participants) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subject,
+                                                         const std::list<IdentityAddress> &participants) {
 	L_Q();
 
 	shared_ptr<ChatRoomParams> params = ChatRoomParams::getDefaults(q->getSharedFromThis());
 	if (participants.size() > 1) {
-		//Try to infer chat room type based on requested participants number
+		// Try to infer chat room type based on requested participants number
 		params->setChatRoomBackend(ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	} else {
 		params->setChatRoomBackend(ChatRoomParams::ChatRoomBackend::Basic);
 	}
-	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(nullptr, params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	IdentityAddress defaultLocalAddress =
+	    getDefaultLocalAddress(nullptr, params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	return createChatRoom(params, defaultLocalAddress, subject, participants);
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const IdentityAddress &participant) {
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params,
+                                                         const IdentityAddress &localAddr,
+                                                         const IdentityAddress &participant) {
 	return createChatRoom(params, localAddr, "", {participant});
 }
 
-//Assume basic chat room creation
+// Assume basic chat room creation
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const IdentityAddress &participant) {
 	return createChatRoom("", {participant});
 }
 
-void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
+void CorePrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_ASSERT(chatRoom);
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	auto it = chatRoomsById.find(conferenceId);
@@ -427,16 +433,15 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 	}
 }
 
-void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
+void CorePrivate::insertChatRoomWithDb(const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
 	L_ASSERT(chatRoom->getState() == ConferenceInterface::State::Created);
 	if (mainDb->isInitialized()) mainDb->insertChatRoom(chatRoom, notifyId);
 }
 
-void CorePrivate::loadChatRooms () {
+void CorePrivate::loadChatRooms() {
 	chatRoomsById.clear();
 #ifdef HAVE_ADVANCED_IM
-	if (remoteListEventHandler)
-		remoteListEventHandler->clearHandlers();
+	if (remoteListEventHandler) remoteListEventHandler->clearHandlers();
 #endif
 
 	if (!mainDb->isInitialized()) return;
@@ -446,17 +451,18 @@ void CorePrivate::loadChatRooms () {
 	sendDeliveryNotifications();
 }
 
-void CorePrivate::handleEphemeralMessages (time_t currentTime) {
+void CorePrivate::handleEphemeralMessages(time_t currentTime) {
 	if (!ephemeralMessages.empty()) {
 		shared_ptr<ChatMessage> msg = ephemeralMessages.front();
 		time_t expireTime = msg->getEphemeralExpireTime();
 		if (currentTime > expireTime) {
-			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEvent(mainDb, msg->getStorageId());
+			shared_ptr<LinphonePrivate::EventLog> event =
+			    LinphonePrivate::MainDb::getEvent(mainDb, msg->getStorageId());
 			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
 			if (chatRoom && event) {
 				LinphonePrivate::EventLog::deleteFromDatabase(event);
 				lInfo() << "[Ephemeral] Message deleted from database";
-				
+
 				// Notify ephemeral message deleted to message if exists.
 				LinphoneChatMessage *message = L_GET_C_BACK_PTR(msg.get());
 				if (message) {
@@ -471,7 +477,6 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 				LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
 				_linphone_chat_room_notify_ephemeral_message_deleted(cr, L_GET_C_BACK_PTR(event));
 				linphone_core_notify_chat_room_ephemeral_message_deleted(linphone_chat_room_get_core(cr), cr);
-
 			}
 
 			// Delete message from this list even when chatroom is gone.
@@ -485,7 +490,7 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 	}
 }
 
-void CorePrivate::initEphemeralMessages () {
+void CorePrivate::initEphemeralMessages() {
 	L_Q();
 	if (mainDb && mainDb->isInitialized()) {
 		ephemeralMessages.clear();
@@ -498,17 +503,19 @@ void CorePrivate::initEphemeralMessages () {
 	}
 }
 
-void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &message) {
+void CorePrivate::updateEphemeralMessages(const shared_ptr<ChatMessage> &message) {
 	if (ephemeralMessages.empty()) {
 		// Can not determine this message will expire most quickly, so init this list.
 		initEphemeralMessages();
 	} else {
 		shared_ptr<ChatMessage> lastmsg = ephemeralMessages.back();
 		if (lastmsg->getEphemeralLifetime() < message->getEphemeralLifetime()) {
-			// The last message of this list will expire more quickly than this message, can not determine this message will expire most quickly in the remaining messages.
+			// The last message of this list will expire more quickly than this message, can not determine this message
+			// will expire most quickly in the remaining messages.
 			return;
 		}
-		for (std::list<shared_ptr<ChatMessage>>::iterator it=ephemeralMessages.begin(); it!=ephemeralMessages.end(); ++it) {
+		for (std::list<shared_ptr<ChatMessage>>::iterator it = ephemeralMessages.begin(); it != ephemeralMessages.end();
+		     ++it) {
 			shared_ptr<ChatMessage> msg = *it;
 			if (msg->getEphemeralExpireTime() > message->getEphemeralExpireTime()) {
 				// This message will expire more quickly than the last message of this list, add it.
@@ -525,7 +532,7 @@ void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &messag
 	}
 }
 
-void CorePrivate::sendDeliveryNotifications () {
+void CorePrivate::sendDeliveryNotifications() {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCCore());
 	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
@@ -536,7 +543,8 @@ void CorePrivate::sendDeliveryNotifications () {
 	}
 }
 
-void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedChatRoom, const shared_ptr<AbstractChatRoom> &newChatRoom) {
+void CorePrivate::replaceChatRoom(const shared_ptr<AbstractChatRoom> &replacedChatRoom,
+                                  const shared_ptr<AbstractChatRoom> &newChatRoom) {
 	const ConferenceId &replacedConferenceId = replacedChatRoom->getConferenceId();
 	const ConferenceId &newConferenceId = newChatRoom->getConferenceId();
 
@@ -549,36 +557,50 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 	}
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
-		const IdentityAddress &localAddress,
-		const IdentityAddress &participantAddress,
-		bool encrypted) const {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom(const IdentityAddress &localAddress,
+                                                                        const IdentityAddress &participantAddress,
+                                                                        bool encrypted) const {
 #ifdef HAVE_ADVANCED_IM
-	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << localAddress.asString() << "] and participant [" << participantAddress.asString() << "]";
-	
+	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << localAddress.asString()
+	        << "] and participant [" << participantAddress.asString() << "]";
+
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const IdentityAddress &curLocalAddress = chatRoom->getLocalAddress();
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
 		// Don't check if terminated, it can be exhumed before the BYE has been received
 		if (/*chatRoom->getState() == ChatRoom::State::Terminated
-				&& */capabilities & ChatRoom::Capabilities::Conference
-				&& capabilities & ChatRoom::Capabilities::OneToOne
-				&& encrypted == bool(capabilities & ChatRoom::Capabilities::Encrypted)) {
-			if (chatRoom->getParticipants().size() > 0 
-					&& localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()
-					&& participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress().getAddressWithoutGruu()) {
+		        && */
+		    capabilities & ChatRoom::Capabilities::Conference && capabilities & ChatRoom::Capabilities::OneToOne &&
+		    encrypted == bool(capabilities & ChatRoom::Capabilities::Encrypted)) {
+			if (chatRoom->getParticipants().size() > 0 &&
+			    localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu() &&
+			    participantAddress.getAddressWithoutGruu() ==
+			        chatRoom->getParticipants().front()->getAddress().getAddressWithoutGruu()) {
 				return chatRoom;
 			}
 		}
 	}
 
-	lInfo() << "Unable to find exhumable 1-1 chat room with local address [" << localAddress.asString() << "] and participant [" << participantAddress.asString() << "]";
+	lInfo() << "Unable to find exhumable 1-1 chat room with local address [" << localAddress.asString()
+	        << "] and participant [" << participantAddress.asString() << "]";
 #endif
 	return nullptr;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-shared_ptr<AbstractChatRoom> CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+shared_ptr<AbstractChatRoom>
+CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const {
 #ifdef HAVE_ADVANCED_IM
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const shared_ptr<AbstractChatRoom> &chatRoom = it->second;
@@ -587,11 +609,12 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExumedChatRoomFromPreviousConferen
 		// We are looking for a one to one chatroom which isn't basic
 		if ((capabilities & ChatRoom::Capabilities::Basic) || !(capabilities & ChatRoom::Capabilities::OneToOne))
 			continue;
-		
-		const shared_ptr<ClientGroupChatRoom> &clientGroupChatRoom = dynamic_pointer_cast<ClientGroupChatRoom>(chatRoom);
+
+		const shared_ptr<ClientGroupChatRoom> &clientGroupChatRoom =
+		    dynamic_pointer_cast<ClientGroupChatRoom>(chatRoom);
 		// Check it isn't a ServerGroupChatRoom
 		if (clientGroupChatRoom) {
-			const list<ConferenceId>& previousIds = clientGroupChatRoom->getPrivate()->getPreviousConferenceIds();
+			const list<ConferenceId> &previousIds = clientGroupChatRoom->getPrivate()->getPreviousConferenceIds();
 			auto prevIdIt = find(previousIds.begin(), previousIds.end(), conferenceId);
 			if (prevIdIt != previousIds.cend()) {
 				return chatRoom;
@@ -601,8 +624,16 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExumedChatRoomFromPreviousConferen
 #endif
 	return nullptr;
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-void CorePrivate::updateChatRoomConferenceId (const shared_ptr<AbstractChatRoom> &chatRoom, ConferenceId oldConferenceId) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void CorePrivate::updateChatRoomConferenceId(const shared_ptr<AbstractChatRoom> &chatRoom,
+                                             ConferenceId oldConferenceId) {
 #ifdef HAVE_ADVANCED_IM
 	const ConferenceId &newConferenceId = chatRoom->getConferenceId();
 	lInfo() << "Chat room [" << oldConferenceId << "] has been exhumed into [" << newConferenceId << "]";
@@ -613,27 +644,29 @@ void CorePrivate::updateChatRoomConferenceId (const shared_ptr<AbstractChatRoom>
 	mainDb->updateChatRoomConferenceId(oldConferenceId, newConferenceId);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 // -----------------------------------------------------------------------------
 
-static bool compare_chat_room (const shared_ptr<AbstractChatRoom>& first, const shared_ptr<AbstractChatRoom>& second) {
+static bool compare_chat_room(const shared_ptr<AbstractChatRoom> &first, const shared_ptr<AbstractChatRoom> &second) {
 	return first->getLastUpdateTime() > second->getLastUpdateTime();
 }
 
 //
 string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const IdentityAddress &localAddress) {
 	Address addr(localAddress.asAddress());
-	LinphoneAccount *account= linphone_core_lookup_account_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
+	LinphoneAccount *account = linphone_core_lookup_account_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
 	if (!account) {
 		lWarning() << "No account found for local address: [" << localAddress.asString() << "]";
 		return string();
-	}else
-		return getConferenceFactoryUri(core, account);
+	} else return getConferenceFactoryUri(core, account);
 }
 
-string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const LinphoneAccount *account) {
+string Core::getConferenceFactoryUri(BCTBX_UNUSED(const shared_ptr<Core> &core), const LinphoneAccount *account) {
 	const LinphoneAccountParams *params = linphone_account_get_params(account);
-	if(params){
+	if (params) {
 		const char *uri = linphone_account_params_get_conference_factory_uri(params);
 		if (uri) {
 			return uri;
@@ -644,13 +677,14 @@ string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const Linphon
 
 // -----------------------------------------------------------------------------
 
-list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
+list<shared_ptr<AbstractChatRoom>> Core::getChatRooms() const {
 	L_D();
 
 	LinphoneCore *lc = getCCore();
 	LinphoneConfig *config = linphone_core_get_config(lc);
 	bool hideEmptyChatRooms = !!linphone_config_get_int(config, "misc", "hide_empty_chat_rooms", 1);
-	bool hideChatRoomsFromRemovedProxyConfig = !!linphone_config_get_int(config, "misc", "hide_chat_rooms_from_removed_proxies", 1);
+	bool hideChatRoomsFromRemovedProxyConfig =
+	    !!linphone_config_get_int(config, "misc", "hide_chat_rooms_from_removed_proxies", 1);
 
 	list<shared_ptr<AbstractChatRoom>> rooms;
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
@@ -684,7 +718,7 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 	return rooms;
 }
 
-shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceId, bool logIfNotFound) const {
+shared_ptr<AbstractChatRoom> Core::findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
 	auto it = d->chatRoomsById.find(conferenceId);
 	if (it != d->chatRoomsById.cend()) {
@@ -694,17 +728,17 @@ shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceI
 
 	auto alreadyExhumedOneToOne = d->findExumedChatRoomFromPreviousConferenceId(conferenceId);
 	if (alreadyExhumedOneToOne) {
-		lWarning() << "Found conference id as already exhumed chat room with new conference ID " << alreadyExhumedOneToOne->getConferenceId() << ".";
+		lWarning() << "Found conference id as already exhumed chat room with new conference ID "
+		           << alreadyExhumedOneToOne->getConferenceId() << ".";
 		return alreadyExhumedOneToOne;
 	}
 
-	if (logIfNotFound)
-		lInfo() << "Unable to find chat room in RAM: " << conferenceId << ".";
-	
+	if (logIfNotFound) lInfo() << "Unable to find chat room in RAM: " << conferenceId << ".";
+
 	return nullptr;
 }
 
-list<shared_ptr<AbstractChatRoom>> Core::findChatRooms (const IdentityAddress &peerAddress) const {
+list<shared_ptr<AbstractChatRoom>> Core::findChatRooms(const IdentityAddress &peerAddress) const {
 	L_D();
 
 	list<shared_ptr<AbstractChatRoom>> output;
@@ -718,13 +752,11 @@ list<shared_ptr<AbstractChatRoom>> Core::findChatRooms (const IdentityAddress &p
 	return output;
 }
 
-shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
-	const IdentityAddress &localAddress,
-	const IdentityAddress &participantAddress,
-	bool basicOnly,
-	bool conferenceOnly,
-	bool encrypted
-) const {
+shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom(const IdentityAddress &localAddress,
+                                                        const IdentityAddress &participantAddress,
+                                                        bool basicOnly,
+                                                        bool conferenceOnly,
+                                                        bool encrypted) const {
 	L_D();
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
@@ -733,37 +765,28 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 
 		// We are looking for a one to one chatroom
 		// Do not return a group chat room that everyone except one person has left
-		if (!(capabilities & ChatRoom::Capabilities::OneToOne))
-			continue;
+		if (!(capabilities & ChatRoom::Capabilities::OneToOne)) continue;
 
-		if (encrypted != bool(capabilities & ChatRoom::Capabilities::Encrypted))
-			continue;
+		if (encrypted != bool(capabilities & ChatRoom::Capabilities::Encrypted)) continue;
 
 		// One to one client group chat room
 		// The only participant's address must match the participantAddress argument
-		if (
-			!basicOnly &&
-		        (capabilities & ChatRoom::Capabilities::Conference) &&
-			!chatRoom->getParticipants().empty() &&
-			localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu() &&
-			participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress()
-		)
+		if (!basicOnly && (capabilities & ChatRoom::Capabilities::Conference) && !chatRoom->getParticipants().empty() &&
+		    localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu() &&
+		    participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress())
 			return chatRoom;
 
 		// One to one basic chat room (addresses without gruu)
 		// The peer address must match the participantAddress argument
-		if (
-			!conferenceOnly && 
-				(capabilities & ChatRoom::Capabilities::Basic) &&
-			localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu() &&
-			participantAddress.getAddressWithoutGruu() == chatRoom->getPeerAddress().getAddressWithoutGruu()
-		)
+		if (!conferenceOnly && (capabilities & ChatRoom::Capabilities::Basic) &&
+		    localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu() &&
+		    participantAddress.getAddressWithoutGruu() == chatRoom->getPeerAddress().getAddressWithoutGruu())
 			return chatRoom;
 	}
 	return nullptr;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom(const ConferenceId &conferenceId) {
 	L_D();
 
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
@@ -781,29 +804,29 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId 
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddress &localAddress, const IdentityAddress &peerAddress) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom(const IdentityAddress &localAddress,
+                                                            const IdentityAddress &peerAddress) {
 	L_D();
 
 	shared_ptr<AbstractChatRoom> chatRoom = findOneToOneChatRoom(localAddress, peerAddress, true, false, false);
-	if(chatRoom)
-		return chatRoom;
+	if (chatRoom) return chatRoom;
 
 	ChatRoom::CapabilitiesMask capabilities(ChatRoom::Capabilities::OneToOne);
 	if (d->basicToFlexisipChatroomMigrationEnabled()) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
 	chatRoom = d->createBasicChatRoom(
-	       ConferenceId(peerAddress, (localAddress.isValid()?localAddress : d->getDefaultLocalAddress(&peerAddress, false) )),
-	       capabilities,
-	       ChatRoomParams::fromCapabilities(capabilities)
-	);
+	    ConferenceId(peerAddress,
+	                 (localAddress.isValid() ? localAddress : d->getDefaultLocalAddress(&peerAddress, false))),
+	    capabilities, ChatRoomParams::fromCapabilities(capabilities));
 	d->insertChatRoom(chatRoom);
 	d->insertChatRoomWithDb(chatRoom);
 
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const std::string& localAddressUri, const std::string &peerAddressUri) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri(const std::string &localAddressUri,
+                                                                   const std::string &peerAddressUri) {
 	Address peerAddress(interpretUrl(peerAddressUri, true));
 	if (!peerAddress.isValid()) {
 		lError() << "Cannot make a valid address with: `" << peerAddressUri << "`.";
@@ -817,7 +840,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const std::s
 	return getOrCreateBasicChatRoom(localAddress, peerAddress);
 }
 
-void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
+void Core::deleteChatRoom(const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	CorePrivate *d = chatRoom->getCore()->getPrivate();
 
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
@@ -845,7 +868,7 @@ const std::string Core::ephemeralVersionAsString() {
 	return os.str();
 }
 
-void CorePrivate::stopChatMessagesAggregationTimer () {
+void CorePrivate::stopChatMessagesAggregationTimer() {
 	L_Q();
 
 	if (chatMessagesAggregationTimer) {
@@ -867,27 +890,33 @@ void CorePrivate::stopChatMessagesAggregationTimer () {
 	chatMessagesAggregationBackgroundTask.stop();
 }
 
-bool Core::isCurrentlyAggregatingChatMessages () {
+bool Core::isCurrentlyAggregatingChatMessages() {
 	L_D();
 
 	return d->chatMessagesAggregationTimer != nullptr;
 }
 
-LinphoneReason Core::handleChatMessagesAggregation(shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg) {
+LinphoneReason
+Core::handleChatMessagesAggregation(shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg) {
 	L_D();
 	LinphoneCore *cCore = getCCore();
 
 	bool chatMessagesAggregationEnabled = !!linphone_core_get_chat_messages_aggregation_enabled(cCore);
-	int chatMessagesAggregationDelay = linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
-	lDebug() << "Chat messages aggregation enabled? " << chatMessagesAggregationEnabled << " with delay " << chatMessagesAggregationDelay;
+	int chatMessagesAggregationDelay =
+	    linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
+	lDebug() << "Chat messages aggregation enabled? " << chatMessagesAggregationEnabled << " with delay "
+	         << chatMessagesAggregationDelay;
 	if (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0) {
 		if (!d->chatMessagesAggregationTimer) {
-			d->chatMessagesAggregationTimer = cCore->sal->createTimer([d]() -> bool {
-				d->stopChatMessagesAggregationTimer();
-				return false; // BELLE_SIP_STOP
-			}, (unsigned int)chatMessagesAggregationDelay, "chat messages aggregation timeout");
+			d->chatMessagesAggregationTimer = cCore->sal->createTimer(
+			    [d]() -> bool {
+				    d->stopChatMessagesAggregationTimer();
+				    return false; // BELLE_SIP_STOP
+			    },
+			    (unsigned int)chatMessagesAggregationDelay, "chat messages aggregation timeout");
 		} else {
-			belle_sip_source_set_timeout_int64(d->chatMessagesAggregationTimer, (unsigned int)chatMessagesAggregationDelay);
+			belle_sip_source_set_timeout_int64(d->chatMessagesAggregationTimer,
+			                                   (unsigned int)chatMessagesAggregationDelay);
 		}
 		d->chatMessagesAggregationBackgroundTask.start(getSharedFromThis());
 	}
@@ -910,10 +939,7 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 		localAddress = op->getTo();
 	}
 
-	ConferenceId conferenceId {
-		ConferenceAddress(peerAddress),
-		ConferenceAddress(localAddress)
-	};
+	ConferenceId conferenceId{ConferenceAddress(peerAddress), ConferenceAddress(localAddress)};
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	if (chatRoom) {
 		reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
@@ -927,7 +953,7 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 			chatRoom = getOrCreateBasicChatRoom(conferenceId);
 			if (chatRoom) {
 				reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
-			}				
+			}
 		}
 	} else {
 		/* Server mode but chatroom not found. */
@@ -942,6 +968,14 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 	}
 
 	return reason;
+}
+
+void Core::enableEmptyChatroomsDeletion(const bool enable) {
+	deleteEmptyChatrooms = enable;
+}
+
+bool Core::emptyChatroomsDeletionEnabled() const {
+	return deleteEmptyChatrooms;
 }
 
 LINPHONE_END_NAMESPACE

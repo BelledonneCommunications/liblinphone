@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,10 +19,10 @@
  */
 
 #include "linphone/api/c-chat-room-params.h"
-#include "chat/chat-room/chat-room-params.h"
 #include "c-wrapper/c-wrapper.h"
-#include "linphone/wrapper_utils.h"
+#include "chat/chat-room/chat-room-params.h"
 #include "core/core-p.h"
+#include "linphone/wrapper_utils.h"
 
 // =============================================================================
 
@@ -59,8 +59,10 @@ LinphoneChatRoomBackend linphone_chat_room_params_get_backend(const LinphoneChat
 	return static_cast<LinphoneChatRoomBackend>(ChatRoomParams::toCpp(params)->getChatRoomBackend());
 }
 
-LinphoneChatRoomEncryptionBackend linphone_chat_room_params_get_encryption_backend(const LinphoneChatRoomParams *params) {
-	return static_cast<LinphoneChatRoomEncryptionBackend>(ChatRoomParams::toCpp(params)->getChatRoomEncryptionBackend());
+LinphoneChatRoomEncryptionBackend
+linphone_chat_room_params_get_encryption_backend(const LinphoneChatRoomParams *params) {
+	return static_cast<LinphoneChatRoomEncryptionBackend>(
+	    ChatRoomParams::toCpp(params)->getChatRoomEncryptionBackend());
 }
 
 bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *params) {
@@ -87,8 +89,10 @@ void linphone_chat_room_params_set_backend(LinphoneChatRoomParams *params, Linph
 	ChatRoomParams::toCpp(params)->setChatRoomBackend(static_cast<ChatRoomParams::ChatRoomBackend>(backend));
 }
 
-void linphone_chat_room_params_set_encryption_backend(LinphoneChatRoomParams *params, LinphoneChatRoomEncryptionBackend backend) {
-	ChatRoomParams::toCpp(params)->setChatRoomEncryptionBackend(static_cast<ChatRoomParams::ChatRoomEncryptionBackend>(backend));
+void linphone_chat_room_params_set_encryption_backend(LinphoneChatRoomParams *params,
+                                                      LinphoneChatRoomEncryptionBackend backend) {
+	ChatRoomParams::toCpp(params)->setChatRoomEncryptionBackend(
+	    static_cast<ChatRoomParams::ChatRoomEncryptionBackend>(backend));
 }
 
 void linphone_chat_room_params_enable_group(LinphoneChatRoomParams *params, bool_t group) {
@@ -111,7 +115,7 @@ void linphone_chat_room_params_enable_rtt(LinphoneChatRoomParams *params, bool_t
 	ChatRoomParams::toCpp(params)->setRealTimeText(!!rtt);
 }
 
-const char * linphone_chat_room_params_get_subject(const LinphoneChatRoomParams *params) {
+const char *linphone_chat_room_params_get_subject(const LinphoneChatRoomParams *params) {
 	return L_STRING_TO_C(ChatRoomParams::toCpp(params)->getSubject());
 }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,39 +18,39 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/api/c-account-params.h"
 #include "account/account-params.h"
-#include "push-notification/push-notification-config.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
-#include "linphone/api/c-account-params.h"
 #include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
+#include "push-notification/push-notification-config.h"
 
 // =============================================================================
 
 using namespace LinphonePrivate;
 
-LinphoneAccountParams* linphone_account_params_new(LinphoneCore *lc) {
+LinphoneAccountParams *linphone_account_params_new(LinphoneCore *lc) {
 	return AccountParams::createCObject(lc);
 }
 
-LinphoneAccountParams* linphone_account_params_new_with_config(LinphoneCore *lc, int index) {
+LinphoneAccountParams *linphone_account_params_new_with_config(LinphoneCore *lc, int index) {
 	char key[50];
 	sprintf(key, "proxy_%i", index); // TODO: change to account
 
-	if (!linphone_config_has_section(linphone_core_get_config(lc), key)){
+	if (!linphone_config_has_section(linphone_core_get_config(lc), key)) {
 		return NULL;
 	}
 
 	return AccountParams::createCObject(lc, index);
 }
 
-LinphoneAccountParams* linphone_account_params_clone(const LinphoneAccountParams *params) {
+LinphoneAccountParams *linphone_account_params_clone(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->clone()->toC();
 }
 
-LinphoneAccountParams* linphone_account_params_ref(LinphoneAccountParams *params) {
+LinphoneAccountParams *linphone_account_params_ref(LinphoneAccountParams *params) {
 	AccountParams::toCpp(params)->ref();
 	return params;
 }
@@ -63,11 +63,12 @@ void linphone_account_params_set_user_data(LinphoneAccountParams *params, void *
 	AccountParams::toCpp(params)->setUserData(user_data);
 }
 
-void* linphone_account_params_get_user_data(const LinphoneAccountParams *params) {
+void *linphone_account_params_get_user_data(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getUserData();
 }
 
-LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params, const LinphoneAddress *server_address) {
+LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params,
+                                                          const LinphoneAddress *server_address) {
 	return AccountParams::toCpp(params)->setServerAddress(server_address);
 }
 
@@ -75,7 +76,8 @@ LinphoneStatus linphone_account_params_set_server_addr(LinphoneAccountParams *pa
 	return AccountParams::toCpp(params)->setServerAddressAsString(server_address);
 }
 
-LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params, const LinphoneAddress *identity) {
+LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params,
+                                                            const LinphoneAddress *identity) {
 	return AccountParams::toCpp(params)->setIdentityAddress(identity);
 }
 
@@ -123,7 +125,8 @@ void linphone_account_params_set_international_prefix(LinphoneAccountParams *par
 	AccountParams::toCpp(params)->setInternationalPrefix(L_C_TO_STRING(prefix));
 }
 
-void linphone_account_params_set_use_international_prefix_for_calls_and_chats(LinphoneAccountParams* params, bool_t enable) {
+void linphone_account_params_set_use_international_prefix_for_calls_and_chats(LinphoneAccountParams *params,
+                                                                              bool_t enable) {
 	AccountParams::toCpp(params)->setUseInternationalPrefixForCallsAndChats(enable);
 }
 
@@ -147,7 +150,7 @@ void linphone_account_params_set_quality_reporting_collector(LinphoneAccountPara
 	AccountParams::toCpp(params)->setQualityReportingCollector(L_C_TO_STRING(collector));
 }
 
-const char* linphone_account_params_get_quality_reporting_collector(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_quality_reporting_collector(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getQualityReportingCollector());
 }
 
@@ -159,11 +162,11 @@ int linphone_account_params_get_quality_reporting_interval(const LinphoneAccount
 	return AccountParams::toCpp(params)->getQualityReportingInterval();
 }
 
-const char* linphone_account_params_get_domain(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_domain(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getDomain();
 }
 
-const char* linphone_account_params_get_realm(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_realm(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getRealm());
 }
 
@@ -171,7 +174,7 @@ void linphone_account_params_set_realm(LinphoneAccountParams *params, const char
 	AccountParams::toCpp(params)->setRealm(L_C_TO_STRING(realm));
 }
 
-const bctbx_list_t* linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params) {
+const bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getRoutes();
 }
 
@@ -195,7 +198,7 @@ const LinphoneAddress *linphone_account_params_get_server_address(const Linphone
 	return AccountParams::toCpp(params)->getServerAddress();
 }
 
-const char* linphone_account_params_get_server_addr(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_server_addr(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getServerAddressAsString());
 }
 
@@ -211,7 +214,7 @@ bool_t linphone_account_params_register_enabled(const LinphoneAccountParams *par
 	return AccountParams::toCpp(params)->getRegisterEnabled();
 }
 
-const char* linphone_account_params_get_contact_parameters(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_contact_parameters(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getContactParameters());
 }
 
@@ -223,7 +226,7 @@ void linphone_account_params_set_contact_uri_parameters(LinphoneAccountParams *p
 	AccountParams::toCpp(params)->setContactUriParameters(L_C_TO_STRING(contact_uri_params));
 }
 
-const char* linphone_account_params_get_contact_uri_parameters(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_contact_uri_parameters(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getContactUriParameters());
 }
 
@@ -235,7 +238,7 @@ bool_t linphone_account_params_dial_escape_plus_enabled(const LinphoneAccountPar
 	return AccountParams::toCpp(params)->getDialEscapePlusEnabled();
 }
 
-const char* linphone_account_params_get_international_prefix(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_international_prefix(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getInternationalPrefix());
 }
 
@@ -255,7 +258,7 @@ void linphone_account_params_set_file_transfer_server(LinphoneAccountParams *par
 	AccountParams::toCpp(params)->setFileTranferServer(std::string(server_url));
 }
 
-const char* linphone_account_params_get_file_transfer_server(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_file_transfer_server(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getFileTransferServer());
 }
 
@@ -275,7 +278,7 @@ void linphone_account_params_set_avpf_mode(LinphoneAccountParams *params, Linpho
 	AccountParams::toCpp(params)->setAvpfMode(mode);
 }
 
-const char* linphone_account_params_get_ref_key(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_ref_key(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getRefKey());
 }
 
@@ -283,7 +286,7 @@ void linphone_account_params_set_ref_key(LinphoneAccountParams *params, const ch
 	AccountParams::toCpp(params)->setRefKey(L_C_TO_STRING(refkey));
 }
 
-const char* linphone_account_params_get_idkey(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_idkey(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getIdKey());
 }
 
@@ -291,7 +294,7 @@ void linphone_account_params_set_idkey(LinphoneAccountParams *params, const char
 	AccountParams::toCpp(params)->setIdKey(L_C_TO_STRING(idkey));
 }
 
-LinphoneNatPolicy* linphone_account_params_get_nat_policy(const LinphoneAccountParams *params) {
+LinphoneNatPolicy *linphone_account_params_get_nat_policy(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getNatPolicy();
 }
 
@@ -303,15 +306,17 @@ void linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *p
 	AccountParams::toCpp(params)->setConferenceFactoryUri(L_C_TO_STRING(uri));
 }
 
-const char* linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params) {
+const char *linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getConferenceFactoryUri());
 }
 
-void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params, const LinphoneAddress *address) {
+void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
+                                                                        const LinphoneAddress *address) {
 	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(address);
 }
 
-const LinphoneAddress* linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params) {
+const LinphoneAddress *
+linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params) {
 	const LinphoneAddress *address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
 	return address != nullptr ? address : nullptr;
 }
@@ -336,11 +341,13 @@ bool_t linphone_account_params_is_push_notification_available(const LinphoneAcco
 	return AccountParams::toCpp(params)->isPushNotificationAvailable();
 }
 
-void linphone_account_params_set_push_notification_config(LinphoneAccountParams *params, LinphonePushNotificationConfig *config) {
+void linphone_account_params_set_push_notification_config(LinphoneAccountParams *params,
+                                                          LinphonePushNotificationConfig *config) {
 	AccountParams::toCpp(params)->setPushNotificationConfig(PushNotificationConfig::toCpp(config));
 }
 
-LinphonePushNotificationConfig *linphone_account_params_get_push_notification_config(const LinphoneAccountParams *params) {
+LinphonePushNotificationConfig *
+linphone_account_params_get_push_notification_config(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getPushNotificationConfig()->toC();
 }
 
@@ -368,19 +375,19 @@ LinphoneTransportType linphone_account_params_get_transport(const LinphoneAccoun
 	return AccountParams::toCpp(params)->getTransport();
 }
 
-void linphone_account_params_enable_rtp_bundle(LinphoneAccountParams *params, bool_t value){
+void linphone_account_params_enable_rtp_bundle(LinphoneAccountParams *params, bool_t value) {
 	AccountParams::toCpp(params)->enableRtpBundle(!!value);
 }
 
-bool_t linphone_account_params_rtp_bundle_enabled(const LinphoneAccountParams *params){
+bool_t linphone_account_params_rtp_bundle_enabled(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->rtpBundleEnabled();
 }
 
-void linphone_account_params_enable_rtp_bundle_assumption(LinphoneAccountParams *params, bool_t value){
+void linphone_account_params_enable_rtp_bundle_assumption(LinphoneAccountParams *params, bool_t value) {
 	AccountParams::toCpp(params)->enableRtpBundleAssumption(!!value);
 }
 
-bool_t linphone_account_params_rtp_bundle_assumption_enabled(const LinphoneAccountParams *params){
+bool_t linphone_account_params_rtp_bundle_assumption_enabled(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->rtpBundleAssumptionEnabled();
 }
 
@@ -392,19 +399,19 @@ void linphone_account_params_enable_cpim_in_basic_chat_room(LinphoneAccountParam
 	AccountParams::toCpp(params)->setCpimMessagesAllowedInBasicChatRooms(enable);
 }
 
-void linphone_account_params_add_custom_param(LinphoneAccountParams *params, const char * key, const char * value) {
+void linphone_account_params_add_custom_param(LinphoneAccountParams *params, const char *key, const char *value) {
 	AccountParams::toCpp(params)->addCustomParam(L_C_TO_STRING(key), L_C_TO_STRING(value));
 }
 
-const char * linphone_account_params_get_custom_param(const LinphoneAccountParams *params, const char * key) {
+const char *linphone_account_params_get_custom_param(const LinphoneAccountParams *params, const char *key) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getCustomParam(L_C_TO_STRING(key)));
 }
 
-void linphone_account_params_set_custom_contact(LinphoneAccountParams *params, const LinphoneAddress *contact){
+void linphone_account_params_set_custom_contact(LinphoneAccountParams *params, const LinphoneAddress *contact) {
 	AccountParams::toCpp(params)->setCustomContact(contact);
 }
 
-const LinphoneAddress * linphone_account_params_get_custom_contact(const LinphoneAccountParams *params){
+const LinphoneAddress *linphone_account_params_get_custom_contact(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getCustomContact();
 }
 

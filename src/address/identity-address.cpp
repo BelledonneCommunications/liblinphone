@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <belle-sip/utils.h>
 #include "linphone/utils/utils.h"
+#include <belle-sip/utils.h>
 
 #include "identity-address-parser.h"
 
@@ -35,8 +35,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-IdentityAddress::IdentityAddress (const string &address) {
-	if (!address.empty()){
+IdentityAddress::IdentityAddress(const string &address) {
+	if (!address.empty()) {
 		shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
 		if (parsedAddress != nullptr) {
 			char *tmp;
@@ -47,14 +47,14 @@ IdentityAddress::IdentityAddress (const string &address) {
 			setDomain(parsedAddress->getDomain());
 			setGruu(parsedAddress->getGruu());
 		} else {
-			//lInfo() << "Fallback parsing used for " <<address;
+			// lInfo() << "Fallback parsing used for " <<address;
 			Address tmpAddress(address);
 			fillFromAddress(tmpAddress);
 		}
 	}
 }
 
-IdentityAddress::IdentityAddress (const Address &address) {
+IdentityAddress::IdentityAddress(const Address &address) {
 	fillFromAddress(address);
 }
 
@@ -69,95 +69,94 @@ void IdentityAddress::fillFromAddress(const Address &address) {
 	}
 }
 
-IdentityAddress::IdentityAddress (const IdentityAddress &other) : Address(other) {
-
+IdentityAddress::IdentityAddress(const IdentityAddress &other) : Address(other) {
 }
 
-IdentityAddress::IdentityAddress () {
-	
+IdentityAddress::IdentityAddress() {
 }
 
-IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
+IdentityAddress &IdentityAddress::operator=(const IdentityAddress &other) {
 	if (this != &other) {
-		Address::operator= (other);
+		Address::operator=(other);
 	}
 	return *this;
 }
 
-bool IdentityAddress::operator== (const IdentityAddress &other) const {
-	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
+bool IdentityAddress::operator==(const IdentityAddress &other) const {
+	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same
+	 * person. */
 	return getUsername() == other.getUsername() && getDomain() == other.getDomain() && getGruu() == other.getGruu();
 }
 
-bool IdentityAddress::operator!= (const IdentityAddress &other) const {
+bool IdentityAddress::operator!=(const IdentityAddress &other) const {
 	return !(*this == other);
 }
 
-bool IdentityAddress::operator< (const IdentityAddress &other) const {
+bool IdentityAddress::operator<(const IdentityAddress &other) const {
 	int diff = getUsername().compare(other.getUsername());
-	if (diff == 0){
+	if (diff == 0) {
 		diff = getDomain().compare(other.getDomain());
-		if (diff == 0){
+		if (diff == 0) {
 			diff = getGruu().compare(other.getGruu());
 		}
 	}
 	return diff < 0;
 }
 
-bool IdentityAddress::isValid () const {
+bool IdentityAddress::isValid() const {
 	return !getScheme().empty() && !getDomain().empty();
 }
 
-const string &IdentityAddress::getScheme () const {
+const string &IdentityAddress::getScheme() const {
 	return Address::getScheme();
 }
 
-void IdentityAddress::setScheme (const string &scheme) {
-	Address::setSecure (scheme.compare("sips") == 0);
+void IdentityAddress::setScheme(const string &scheme) {
+	Address::setSecure(scheme.compare("sips") == 0);
 }
 
-const string &IdentityAddress::getUsername () const {
+const string &IdentityAddress::getUsername() const {
 	return Address::getUsername();
 }
 
-void IdentityAddress::setUsername (const string &username) {
+void IdentityAddress::setUsername(const string &username) {
 	Address::setUsername(username);
 }
 
-const string &IdentityAddress::getDomain () const {
+const string &IdentityAddress::getDomain() const {
 	return Address::getDomain();
 }
 
-void IdentityAddress::setDomain (const string &domain) {
+void IdentityAddress::setDomain(const string &domain) {
 	Address::setDomain(domain);
 }
 
-bool IdentityAddress::hasGruu () const {
+bool IdentityAddress::hasGruu() const {
 	return hasUriParam("gr");
 }
 
-const string &IdentityAddress::getGruu () const {
+const string &IdentityAddress::getGruu() const {
 	return getUriParamValue("gr");
 }
 
-void IdentityAddress::setGruu (const string &gruu) {
+void IdentityAddress::setGruu(const string &gruu) {
 	if (gruu.empty() == true) {
-		removeUriParam ("gr");
+		removeUriParam("gr");
 	} else {
-		setUriParam("gr",gruu);
+		setUriParam("gr", gruu);
 	}
 }
 
-IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
+IdentityAddress IdentityAddress::getAddressWithoutGruu() const {
 	IdentityAddress address(*this);
 	address.removeUriParam("gr");
 	return address;
 }
 
-string IdentityAddress::asString () const {
+string IdentityAddress::asString() const {
 	ostringstream res;
 	res << getScheme() << ":";
-	if (!getUsername().empty()){
+	if (!getUsername().empty()) {
 		char *tmp = belle_sip_uri_to_escaped_username(getUsername().c_str());
 		res << tmp << "@";
 		ms_free(tmp);
@@ -169,13 +168,13 @@ string IdentityAddress::asString () const {
 		res << getDomain();
 	}
 
-	if (!getGruu().empty()){
+	if (!getGruu().empty()) {
 		res << ";gr=" << getGruu();
 	}
 	return res.str();
 }
 
-const Address & IdentityAddress::asAddress() const {
+const Address &IdentityAddress::asAddress() const {
 	return *this;
 }
 
@@ -183,19 +182,18 @@ void IdentityAddress::removeFromLeakDetector() const {
 	Address::removeFromLeakDetector();
 }
 
-ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
+ConferenceAddress::ConferenceAddress(const Address &address) : IdentityAddress(address) {
 	fillUriParams(address);
 };
-ConferenceAddress::ConferenceAddress (const std::string &address) : ConferenceAddress(Address(address)) {
+ConferenceAddress::ConferenceAddress(const std::string &address) : ConferenceAddress(Address(address)) {
 }
-ConferenceAddress::ConferenceAddress (const ConferenceAddress &other) :IdentityAddress(other) {
+ConferenceAddress::ConferenceAddress(const ConferenceAddress &other) : IdentityAddress(other) {
 	fillUriParams(other);
 }
 
-ConferenceAddress::ConferenceAddress (const IdentityAddress &other) :IdentityAddress(other) {
-
+ConferenceAddress::ConferenceAddress(const IdentityAddress &other) : IdentityAddress(other) {
 }
-ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other) {
+ConferenceAddress &ConferenceAddress::operator=(const ConferenceAddress &other) {
 	if (this != &other) {
 		IdentityAddress::operator=(other);
 		fillUriParams(other);
@@ -203,32 +201,32 @@ ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other)
 	return *this;
 }
 
-bool ConferenceAddress::operator== (const ConferenceAddress &other) const {
+bool ConferenceAddress::operator==(const ConferenceAddress &other) const {
 	return Address::operator==(other);
 }
 
-bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
+bool ConferenceAddress::operator!=(const ConferenceAddress &other) const {
 	return !(*this == other);
 }
 
-bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
+bool ConferenceAddress::operator<(const ConferenceAddress &other) const {
 	return Address::operator<(other);
 }
 
-string ConferenceAddress::asString () const {
+string ConferenceAddress::asString() const {
 	std::string addressStr = IdentityAddress::asString();
-	bctbx_map_t* uriParamMap = getUriParams();
-	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
-	bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);
-	for (;!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+	bctbx_map_t *uriParamMap = getUriParams();
+	bctbx_iterator_t *uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+	bctbx_iterator_t *it = bctbx_map_cchar_begin(uriParamMap);
+	for (; !bctbx_iterator_cchar_equals(it, uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
 		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
-		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+		const char *key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
 		// GRUU is already added by Identity address asString() function
 		if (strcmp(key, "gr") != 0) {
-			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+			const char *value = (const char *)bctbx_pair_cchar_get_second(pair);
 			addressStr = addressStr + ";" + key;
 			if (value) {
-				addressStr = addressStr  + "=" + value;
+				addressStr = addressStr + "=" + value;
 			}
 		}
 	}
@@ -238,27 +236,27 @@ string ConferenceAddress::asString () const {
 	return addressStr;
 }
 
-const string &ConferenceAddress::getConfId () const {
+const string &ConferenceAddress::getConfId() const {
 	return getUriParamValue("conf-id");
 }
 
-void ConferenceAddress::setConfId (const string &confId) {
+void ConferenceAddress::setConfId(const string &confId) {
 	setUriParam("conf-id", confId);
 }
 
-bool ConferenceAddress::hasConfId () const {
+bool ConferenceAddress::hasConfId() const {
 	return hasUriParam("conf-id");
 }
 
-void ConferenceAddress::fillUriParams (const Address &address) {
-	bctbx_map_t* uriParamMap = address.getUriParams();
-	if(uriParamMap){
-		bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
-		bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);
-		for (;!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+void ConferenceAddress::fillUriParams(const Address &address) {
+	bctbx_map_t *uriParamMap = address.getUriParams();
+	if (uriParamMap) {
+		bctbx_iterator_t *uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+		bctbx_iterator_t *it = bctbx_map_cchar_begin(uriParamMap);
+		for (; !bctbx_iterator_cchar_equals(it, uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
 			bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
-			const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
-			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+			const char *key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+			const char *value = (const char *)bctbx_pair_cchar_get_second(pair);
 			setUriParam(L_C_TO_STRING(key), L_C_TO_STRING(value));
 		}
 		bctbx_iterator_cchar_delete(it);
@@ -267,31 +265,31 @@ void ConferenceAddress::fillUriParams (const Address &address) {
 	}
 }
 
-int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) const {
-	bctbx_map_t* thisUriParamMap = getUriParams();
+int ConferenceAddress::compareUriParams(const bctbx_map_t *otherUriParamMap) const {
+	bctbx_map_t *thisUriParamMap = getUriParams();
 	// Check that this and other uri parameter maps have the same number of elements
 	size_t thisMapSize = bctbx_map_cchar_size(thisUriParamMap);
 	size_t otherMapSize = bctbx_map_cchar_size(otherUriParamMap);
 	int diff = (int)(thisMapSize - otherMapSize);
 
-	bctbx_iterator_t * thisUriParamMapEnd = bctbx_map_cchar_end(thisUriParamMap);
-	bctbx_iterator_t * otherUriParamMapEnd = bctbx_map_cchar_end(otherUriParamMap);
+	bctbx_iterator_t *thisUriParamMapEnd = bctbx_map_cchar_end(thisUriParamMap);
+	bctbx_iterator_t *otherUriParamMapEnd = bctbx_map_cchar_end(otherUriParamMap);
 
-	bctbx_iterator_t * thisIt = bctbx_map_cchar_begin(thisUriParamMap);
+	bctbx_iterator_t *thisIt = bctbx_map_cchar_begin(thisUriParamMap);
 
 	// Loop through URI parameter map until:
 	// - diff is 0
 	// - end of map has not been reached
-	while((diff == 0) && (!bctbx_iterator_cchar_equals(thisIt, thisUriParamMapEnd))) {
+	while ((diff == 0) && (!bctbx_iterator_cchar_equals(thisIt, thisUriParamMapEnd))) {
 		bctbx_pair_t *thisPair = bctbx_iterator_cchar_get_pair(thisIt);
-		const char * thisKey = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(thisPair));
-		const char * thisValue = (const char *)bctbx_pair_cchar_get_second(thisPair);
+		const char *thisKey = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(thisPair));
+		const char *thisValue = (const char *)bctbx_pair_cchar_get_second(thisPair);
 
-		bctbx_iterator_t * otherIt = bctbx_map_cchar_find_key(otherUriParamMap, thisKey);
+		bctbx_iterator_t *otherIt = bctbx_map_cchar_find_key(otherUriParamMap, thisKey);
 		// Test that key exists
 		if (!bctbx_iterator_cchar_equals(otherIt, otherUriParamMapEnd)) {
 			bctbx_pair_t *otherPair = bctbx_iterator_cchar_get_pair(otherIt);
-			const char * otherValue = (const char *)bctbx_pair_cchar_get_second(otherPair);
+			const char *otherValue = (const char *)bctbx_pair_cchar_get_second(otherPair);
 			if ((otherValue == NULL) || (thisValue == NULL)) {
 				// keep diff at 0 if both other and this value are NULL
 				diff = ((otherValue == NULL) && (thisValue == NULL)) ? 0 : -1;
@@ -314,7 +312,7 @@ int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) co
 	return diff;
 }
 
-ConferenceAddress ConferenceAddress::getAddressWithoutGruu () const {
+ConferenceAddress ConferenceAddress::getAddressWithoutGruu() const {
 	Address address(asString());
 	address.removeUriParam("gr");
 	return address;

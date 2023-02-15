@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,20 +20,22 @@
 
 #include "register.h"
 #include "linphone/core.h"
-#include "private.h"
 #include "linphone/lpconfig.h"
+#include "private.h"
 #include <string.h>
-
 
 using namespace std;
 
-RegisterCommand::RegisterCommand() :
-		DaemonCommand("register", "register <identity> <proxy_address> [<password>] [<userid>] [<realm>] [<parameter>]", "Register the daemon to a SIP proxy. If one of the parameters <password>, <userid> and <realm> is not needed, send the string \"NULL\"") {
-	addExample(make_unique<DaemonCommandExample>("register sip:daemon-test@sip.linphone.org sip.linphone.org password bob linphone.org",
-						"Status: Ok\n\n"
-						"Id: 1"));
+RegisterCommand::RegisterCommand()
+    : DaemonCommand("register",
+                    "register <identity> <proxy_address> [<password>] [<userid>] [<realm>] [<parameter>]",
+                    "Register the daemon to a SIP proxy. If one of the parameters <password>, <userid> and <realm> is "
+                    "not needed, send the string \"NULL\"") {
+	addExample(make_unique<DaemonCommandExample>(
+	    "register sip:daemon-test@sip.linphone.org sip.linphone.org password bob linphone.org", "Status: Ok\n\n"
+	                                                                                            "Id: 1"));
 }
-void RegisterCommand::exec(Daemon *app, const string& args) {
+void RegisterCommand::exec(Daemon *app, const string &args) {
 	LinphoneCore *lc = app->getCore();
 	ostringstream ostr;
 	string identity;
@@ -70,7 +72,8 @@ void RegisterCommand::exec(Daemon *app, const string& args) {
 	LinphoneAddress *from = linphone_address_new(cidentity);
 	if (cpassword != NULL) {
 		if (from != NULL) {
-			LinphoneAuthInfo *info = linphone_auth_info_new(linphone_address_get_username(from), cuserid, cpassword, NULL, crealm, NULL);
+			LinphoneAuthInfo *info =
+			    linphone_auth_info_new(linphone_address_get_username(from), cuserid, cpassword, NULL, crealm, NULL);
 			linphone_core_add_auth_info(lc, info); /* Add authentication info to LinphoneCore */
 			linphone_auth_info_unref(info);
 		}

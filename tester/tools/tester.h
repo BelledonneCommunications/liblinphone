@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,10 +35,10 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Tester {
 public:
-	Tester () = delete;
+	Tester() = delete;
 
-	template<typename T>
-	static constexpr decltype(std::declval<T>().getPrivate()) getPrivate (T *object) {
+	template <typename T>
+	static constexpr decltype(std::declval<T>().getPrivate()) getPrivate(T *object) {
 		return object->getPrivate();
 	}
 
@@ -52,10 +52,8 @@ LINPHONE_END_NAMESPACE
 // Public.
 // -----------------------------------------------------------------------------
 
-#define L_GET_PRIVATE(OBJECT) \
-	LinphonePrivate::Tester::getPrivate(LinphonePrivate::Utils::getPtr(OBJECT))
+#define L_GET_PRIVATE(OBJECT) LinphonePrivate::Tester::getPrivate(LinphonePrivate::Utils::getPtr(OBJECT))
 
-#define L_GET_PTR(OBJECT) \
-	(OBJECT).get();
+#define L_GET_PTR(OBJECT) (OBJECT).get();
 
 #endif // ifndef _L_TESTER_H_

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,19 +28,20 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class SharedObject {
-template<typename T>
-friend class ClonableSharedPointer;
+	template <typename T>
+	friend class ClonableSharedPointer;
 
 public:
-	int getRefCount () {
+	int getRefCount() {
 		return mRefCounter;
 	}
 
 protected:
-	SharedObject () : mRefCounter(1) {}
+	SharedObject() : mRefCounter(1) {
+	}
 
 	// Do not use virtual here. Avoid extra storage (little bonus).
-	~SharedObject () = default;
+	~SharedObject() = default;
 
 private:
 	int mRefCounter;
@@ -50,26 +51,27 @@ private:
 
 // -----------------------------------------------------------------------------
 
-template<typename T>
+template <typename T>
 class ClonableSharedPointer {
 	static_assert(std::is_base_of<SharedObject, T>::value, "T must be a inherited class of SharedObject.");
 
 public:
-	explicit ClonableSharedPointer (T *pointer = nullptr) : mPointer(pointer) {}
+	explicit ClonableSharedPointer(T *pointer = nullptr) : mPointer(pointer) {
+	}
 
-	ClonableSharedPointer (const ClonableSharedPointer &other) : mPointer(other.mPointer) {
+	ClonableSharedPointer(const ClonableSharedPointer &other) : mPointer(other.mPointer) {
 		ref();
 	}
 
-	ClonableSharedPointer (ClonableSharedPointer &&other) : mPointer(other.mPointer) {
+	ClonableSharedPointer(ClonableSharedPointer &&other) : mPointer(other.mPointer) {
 		other.mPointer = nullptr;
 	}
 
-	~ClonableSharedPointer () {
+	~ClonableSharedPointer() {
 		unref();
 	}
 
-	ClonableSharedPointer &operator= (const ClonableSharedPointer &other) {
+	ClonableSharedPointer &operator=(const ClonableSharedPointer &other) {
 		if (mPointer != other.mPointer) {
 			unref();
 			mPointer = other.mPointer;
@@ -78,73 +80,71 @@ public:
 		return *this;
 	}
 
-	ClonableSharedPointer &operator= (ClonableSharedPointer &&other) {
+	ClonableSharedPointer &operator=(ClonableSharedPointer &&other) {
 		std::swap(mPointer, other.mPointer);
 		return *this;
 	}
 
-	bool operator== (const ClonableSharedPointer &other) const {
+	bool operator==(const ClonableSharedPointer &other) const {
 		return mPointer == other.mPointer;
 	}
 
-	bool operator!= (const ClonableSharedPointer &other) const {
+	bool operator!=(const ClonableSharedPointer &other) const {
 		return mPointer != other.mPointer;
 	}
 
-	T &operator* () {
+	T &operator*() {
 		N_ASSERT(mPointer);
 		tryClone();
 		return *mPointer;
 	}
 
-	const T &operator* () const {
+	const T &operator*() const {
 		N_ASSERT(mPointer);
 		return *mPointer;
 	}
 
-	T *operator-> () {
+	T *operator->() {
 		tryClone();
 		return mPointer;
 	}
 
-	const T *operator-> () const {
+	const T *operator->() const {
 		return mPointer;
 	}
 
-	explicit operator bool () const {
+	explicit operator bool() const {
 		return mPointer;
 	}
 
-	bool operator! () const {
+	bool operator!() const {
 		return !mPointer;
 	}
 
-	T *get () {
+	T *get() {
 		return mPointer;
 	}
 
-	const T *get () const {
+	const T *get() const {
 		return mPointer;
 	}
 
 private:
-	void ref () {
-		if (mPointer)
-			++mPointer->mRefCounter;
+	void ref() {
+		if (mPointer) ++mPointer->mRefCounter;
 	}
 
-	void unref () {
+	void unref() {
 		if (mPointer && --mPointer->mRefCounter == 0) {
 			delete mPointer;
 			mPointer = nullptr;
 		}
 	}
 
-	void tryClone () {
+	void tryClone() {
 		if (mPointer && mPointer->mRefCounter > 1) {
 			T *newPointer = new T(*mPointer);
-			if (--mPointer->mRefCounter == 0)
-				delete mPointer;
+			if (--mPointer->mRefCounter == 0) delete mPointer;
 			mPointer = newPointer;
 		}
 	}

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,21 +22,17 @@
 
 using namespace std;
 
-CallCommand::CallCommand() :
-		DaemonCommand("call", "call <sip_address> [--early-media]", "Place a call.") {
-	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org",
-						"Status: Ok\n\n"
-						"Id: 1"));
-	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org --early-media",
-						"Status: Ok\n\n"
-						"Early media: Ok\n"
-						"Id: 1"));
-	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org",
-						"Status: Error\n"
-						"Reason: Call creation failed."));
+CallCommand::CallCommand() : DaemonCommand("call", "call <sip_address> [--early-media]", "Place a call.") {
+	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org", "Status: Ok\n\n"
+	                                                                                  "Id: 1"));
+	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org --early-media", "Status: Ok\n\n"
+	                                                                                                "Early media: Ok\n"
+	                                                                                                "Id: 1"));
+	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org", "Status: Error\n"
+	                                                                                  "Reason: Call creation failed."));
 }
 
-void CallCommand::exec(Daemon *app, const string& args) {
+void CallCommand::exec(Daemon *app, const string &args) {
 	string address;
 	string early_media;
 	LinphoneCall *call;
@@ -60,7 +56,7 @@ void CallCommand::exec(Daemon *app, const string& args) {
 	} else {
 		call = linphone_core_invite(app->getCore(), address.c_str());
 	}
-	
+
 	if (call == NULL) {
 		app->sendResponse(Response("Call creation failed."));
 		return;

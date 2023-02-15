@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,12 +29,12 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace Fs {
-	bool copy (const string &srcPath, const string &destPath) {
-		ifstream src(srcPath, ios::binary);
-		ofstream dest(destPath, ios::binary);
-		dest << src.rdbuf();
-		return !dest.fail();
-	}
+bool copy(const string &srcPath, const string &destPath) {
+	ifstream src(srcPath, ios::binary);
+	ofstream dest(destPath, ios::binary);
+	dest << src.rdbuf();
+	return !dest.fail();
 }
+} // namespace Fs
 
 LINPHONE_END_NAMESPACE

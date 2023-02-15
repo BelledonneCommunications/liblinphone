@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,8 +24,8 @@
 #include "sal/op.h"
 #include <ctime>
 
-#include "content/content.h"
 #include "content/content-type.h"
+#include "content/content.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -33,44 +33,33 @@ class LINPHONE_PUBLIC SalMessageOpInterface {
 public:
 	virtual ~SalMessageOpInterface() = default;
 
-	virtual int sendMessage (const Content &content) = 0;
-	virtual int reply (SalReason reason) = 0;
+	virtual int sendMessage(const Content &content) = 0;
+	virtual int reply(SalReason reason) = 0;
 
 protected:
-	void prepareMessageRequest (belle_sip_request_t *req, const Content &content) {
+	void prepareMessageRequest(belle_sip_request_t *req, const Content &content) {
 		time_t curtime = std::time(nullptr);
-		belle_sip_message_add_header(
-			BELLE_SIP_MESSAGE(req),
-			BELLE_SIP_HEADER(belle_sip_header_date_create_from_time(&curtime))
-		);
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+		                             BELLE_SIP_HEADER(belle_sip_header_date_create_from_time(&curtime)));
 		std::string contentEncoding = content.getContentEncoding();
 		if (!contentEncoding.empty())
-			belle_sip_message_add_header(
-				BELLE_SIP_MESSAGE(req),
-				belle_sip_header_create("Content-Encoding", contentEncoding.c_str())
-			);
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+			                             belle_sip_header_create("Content-Encoding", contentEncoding.c_str()));
 		const ContentType &contentType = content.getContentType();
 		std::string contentTypeStr = contentType.asString();
-		belle_sip_message_add_header(
-			BELLE_SIP_MESSAGE(req),
-			BELLE_SIP_HEADER(belle_sip_header_content_type_parse(contentTypeStr.c_str()))
-		);
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+		                             BELLE_SIP_HEADER(belle_sip_header_content_type_parse(contentTypeStr.c_str())));
 		if (content.isEmpty()) {
-			belle_sip_message_add_header(
-				BELLE_SIP_MESSAGE(req),
-				BELLE_SIP_HEADER(belle_sip_header_content_length_create(0))
-			);
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+			                             BELLE_SIP_HEADER(belle_sip_header_content_length_create(0)));
 		} else {
 			std::string body = content.getBodyAsUtf8String();
 			size_t contentLength = body.size();
-			belle_sip_message_add_header(
-				BELLE_SIP_MESSAGE(req),
-				BELLE_SIP_HEADER(belle_sip_header_content_length_create(contentLength))
-			);
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+			                             BELLE_SIP_HEADER(belle_sip_header_content_length_create(contentLength)));
 			belle_sip_message_set_body(BELLE_SIP_MESSAGE(req), body.c_str(), contentLength);
 		}
 	}
-
 };
 
 LINPHONE_END_NAMESPACE

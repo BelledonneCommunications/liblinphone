@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,31 +31,31 @@ class ContentDispositionPrivate;
 
 class LINPHONE_PUBLIC ContentDisposition : public ClonableObject {
 public:
-	explicit ContentDisposition (const std::string &contentDisposition = "");
-	ContentDisposition (const ContentDisposition &other);
+	explicit ContentDisposition(const std::string &contentDisposition = "");
+	ContentDisposition(const ContentDisposition &other);
 
-	ContentDisposition* clone () const override {
+	ContentDisposition *clone() const override {
 		return new ContentDisposition(*this);
 	}
 
-	ContentDisposition &operator= (const ContentDisposition &other);
+	ContentDisposition &operator=(const ContentDisposition &other);
 
-	bool weakEqual (const ContentDisposition &other) const;
-	bool operator== (const ContentDisposition &other) const;
-	bool operator!= (const ContentDisposition &other) const;
+	bool weakEqual(const ContentDisposition &other) const;
+	bool operator==(const ContentDisposition &other) const;
+	bool operator!=(const ContentDisposition &other) const;
 
 	// Delete these operators to prevent putting complicated content-disposition strings
 	// in the code. Instead define static const ContentDisposition objects below.
-	bool operator== (const std::string &other) const = delete;
-	bool operator!= (const std::string &other) const = delete;
+	bool operator==(const std::string &other) const = delete;
+	bool operator!=(const std::string &other) const = delete;
 
-	bool isEmpty () const;
-	bool isValid () const;
+	bool isEmpty() const;
+	bool isValid() const;
 
-	const std::string &getParameter () const;
-	void setParameter (const std::string &parameter);
+	const std::string &getParameter() const;
+	void setParameter(const std::string &parameter);
 
-	std::string asString () const;
+	std::string asString() const;
 
 	static const ContentDisposition Notification;
 	static const ContentDisposition RecipientList;

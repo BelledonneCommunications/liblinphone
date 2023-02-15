@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,8 +24,8 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-id.h"
-#include "conference/participant.h"
 #include "conference/participant-device.h"
+#include "conference/participant.h"
 #include "event-log/events.h"
 
 // =============================================================================
@@ -38,7 +38,7 @@ L_DECLARE_C_OBJECT_IMPL(EventLog);
 // Helpers.
 // -----------------------------------------------------------------------------
 
-static bool isConferenceType (LinphoneEventLogType type) {
+static bool isConferenceType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceCallEnded:
 		case LinphoneEventLogTypeConferenceCallStarted:
@@ -69,7 +69,7 @@ static bool isConferenceType (LinphoneEventLogType type) {
 	return false;
 }
 
-static bool isConferenceCallType (LinphoneEventLogType type) {
+static bool isConferenceCallType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceCallEnded:
 		case LinphoneEventLogTypeConferenceCallStarted:
@@ -82,7 +82,7 @@ static bool isConferenceCallType (LinphoneEventLogType type) {
 	return false;
 }
 
-static bool isConferenceChatMessageType (LinphoneEventLogType type) {
+static bool isConferenceChatMessageType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceChatMessage:
 			return true;
@@ -94,7 +94,7 @@ static bool isConferenceChatMessageType (LinphoneEventLogType type) {
 	return false;
 }
 
-static bool isConferenceNotifiedType (LinphoneEventLogType type) {
+static bool isConferenceNotifiedType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
@@ -115,7 +115,7 @@ static bool isConferenceNotifiedType (LinphoneEventLogType type) {
 	return false;
 }
 
-static bool isConferenceParticipantType (LinphoneEventLogType type) {
+static bool isConferenceParticipantType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
@@ -135,7 +135,7 @@ static bool isConferenceParticipantType (LinphoneEventLogType type) {
 	return false;
 }
 
-static bool isConferenceParticipantDeviceType (LinphoneEventLogType type) {
+static bool isConferenceParticipantDeviceType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
@@ -151,7 +151,7 @@ static bool isConferenceParticipantDeviceType (LinphoneEventLogType type) {
 	return false;
 }
 
-static bool isConferenceSubjectType (LinphoneEventLogType type) {
+static bool isConferenceSubjectType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceSubjectChanged:
 			return true;
@@ -163,11 +163,11 @@ static bool isConferenceSubjectType (LinphoneEventLogType type) {
 	return false;
 }
 
-static bool isConferenceSecurityType (LinphoneEventLogType type) {
+static bool isConferenceSecurityType(LinphoneEventLogType type) {
 	return (type == LinphoneEventLogTypeConferenceSecurityEvent);
 }
 
-static bool isConferenceEphemeralMessageType (LinphoneEventLogType type) {
+static bool isConferenceEphemeralMessageType(LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged:
 		case LinphoneEventLogTypeConferenceEphemeralMessageEnabled:
@@ -185,26 +185,24 @@ static bool isConferenceEphemeralMessageType (LinphoneEventLogType type) {
 // EventLog.
 // -----------------------------------------------------------------------------
 
-LinphoneEventLog *linphone_event_log_ref (LinphoneEventLog *event_log) {
+LinphoneEventLog *linphone_event_log_ref(LinphoneEventLog *event_log) {
 	belle_sip_object_ref(event_log);
 	return event_log;
 }
 
-void linphone_event_log_unref (LinphoneEventLog *event_log) {
+void linphone_event_log_unref(LinphoneEventLog *event_log) {
 	belle_sip_object_unref(event_log);
 }
 
-LinphoneEventLogType linphone_event_log_get_type (const LinphoneEventLog *event_log) {
-	return static_cast<LinphoneEventLogType>(
-		L_GET_CPP_PTR_FROM_C_OBJECT(event_log)->getType()
-	);
+LinphoneEventLogType linphone_event_log_get_type(const LinphoneEventLog *event_log) {
+	return static_cast<LinphoneEventLogType>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log)->getType());
 }
 
-time_t linphone_event_log_get_creation_time (const LinphoneEventLog *event_log) {
+time_t linphone_event_log_get_creation_time(const LinphoneEventLog *event_log) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(event_log)->getCreationTime();
 }
 
-void linphone_event_log_delete_from_database (LinphoneEventLog *event_log) {
+void linphone_event_log_delete_from_database(LinphoneEventLog *event_log) {
 	LinphonePrivate::EventLog::deleteFromDatabase(L_GET_CPP_PTR_FROM_C_OBJECT(event_log));
 }
 
@@ -212,26 +210,26 @@ void linphone_event_log_delete_from_database (LinphoneEventLog *event_log) {
 // ConferenceEvent.
 // -----------------------------------------------------------------------------
 
-const LinphoneAddress *linphone_event_log_get_peer_address (const LinphoneEventLog *event_log) {
-	if (!isConferenceType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+const LinphoneAddress *linphone_event_log_get_peer_address(const LinphoneEventLog *event_log) {
+	if (!isConferenceType(linphone_event_log_get_type(event_log))) return nullptr;
 
-	const LinphonePrivate::Address & addr =
-		static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getConferenceId().getPeerAddress().asAddress();
+	const LinphonePrivate::Address &addr =
+	    static_pointer_cast<const LinphonePrivate::ConferenceEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getConferenceId()
+	        .getPeerAddress()
+	        .asAddress();
 
 	return L_GET_C_BACK_PTR(&addr);
 }
 
-const LinphoneAddress *linphone_event_log_get_local_address (const LinphoneEventLog *event_log) {
-	if (!isConferenceType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+const LinphoneAddress *linphone_event_log_get_local_address(const LinphoneEventLog *event_log) {
+	if (!isConferenceType(linphone_event_log_get_type(event_log))) return nullptr;
 
-	const LinphonePrivate::Address & addr =
-		static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getConferenceId().getLocalAddress().asAddress();
+	const LinphonePrivate::Address &addr =
+	    static_pointer_cast<const LinphonePrivate::ConferenceEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getConferenceId()
+	        .getLocalAddress()
+	        .asAddress();
 
 	return L_GET_C_BACK_PTR(&addr);
 }
@@ -240,39 +238,35 @@ const LinphoneAddress *linphone_event_log_get_local_address (const LinphoneEvent
 // ConferenceNotifiedEvent.
 // -----------------------------------------------------------------------------
 
-unsigned int linphone_event_log_get_notify_id (const LinphoneEventLog *event_log) {
-	if (!isConferenceNotifiedType(linphone_event_log_get_type(event_log)))
-		return 0;
+unsigned int linphone_event_log_get_notify_id(const LinphoneEventLog *event_log) {
+	if (!isConferenceNotifiedType(linphone_event_log_get_type(event_log))) return 0;
 
-	return static_pointer_cast<const LinphonePrivate::ConferenceNotifiedEvent>(
-		L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-	)->getNotifyId();
+	return static_pointer_cast<const LinphonePrivate::ConferenceNotifiedEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	    ->getNotifyId();
 }
 
 // -----------------------------------------------------------------------------
 // ConferenceCallEvent.
 // -----------------------------------------------------------------------------
 
-LinphoneCallLog *linphone_event_log_get_call_log (const LinphoneEventLog *event_log) {
-	if (!isConferenceCallType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+LinphoneCallLog *linphone_event_log_get_call_log(const LinphoneEventLog *event_log) {
+	if (!isConferenceCallType(linphone_event_log_get_type(event_log))) return nullptr;
 
-	std::shared_ptr<LinphonePrivate::CallLog> callLog = static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getCallLog();
+	std::shared_ptr<LinphonePrivate::CallLog> callLog =
+	    static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getCallLog();
 	if (callLog) {
 		return callLog->toC();
 	}
 	return NULL;
 }
 
-LinphoneConferenceInfo *linphone_event_log_get_conference_info (const LinphoneEventLog *event_log) {
-	if (!isConferenceCallType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+LinphoneConferenceInfo *linphone_event_log_get_conference_info(const LinphoneEventLog *event_log) {
+	if (!isConferenceCallType(linphone_event_log_get_type(event_log))) return nullptr;
 
-	std::shared_ptr<LinphonePrivate::ConferenceInfo> confInfo = static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getConferenceInfo();
+	std::shared_ptr<LinphonePrivate::ConferenceInfo> confInfo =
+	    static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getConferenceInfo();
 	if (confInfo) {
 		return confInfo->toC();
 	}
@@ -283,29 +277,25 @@ LinphoneConferenceInfo *linphone_event_log_get_conference_info (const LinphoneEv
 // ConferenceChatMessageEvent.
 // -----------------------------------------------------------------------------
 
-LinphoneChatMessage *linphone_event_log_get_chat_message (const LinphoneEventLog *event_log) {
-	if (!isConferenceChatMessageType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+LinphoneChatMessage *linphone_event_log_get_chat_message(const LinphoneEventLog *event_log) {
+	if (!isConferenceChatMessageType(linphone_event_log_get_type(event_log))) return nullptr;
 
 	return L_GET_C_BACK_PTR(
-		static_pointer_cast<const LinphonePrivate::ConferenceChatMessageEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getChatMessage()
-	);
+	    static_pointer_cast<const LinphonePrivate::ConferenceChatMessageEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getChatMessage());
 }
 
 // -----------------------------------------------------------------------------
 // ConferenceParticipantEvent.
 // -----------------------------------------------------------------------------
 
-const LinphoneAddress *linphone_event_log_get_participant_address (const LinphoneEventLog *event_log) {
-	if (!isConferenceParticipantType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+const LinphoneAddress *linphone_event_log_get_participant_address(const LinphoneEventLog *event_log) {
+	if (!isConferenceParticipantType(linphone_event_log_get_type(event_log))) return nullptr;
 
-	const LinphonePrivate::Address & addr =
-		static_pointer_cast<const LinphonePrivate::ConferenceParticipantEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getParticipantAddress().asAddress();
+	const LinphonePrivate::Address &addr =
+	    static_pointer_cast<const LinphonePrivate::ConferenceParticipantEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getParticipantAddress()
+	        .asAddress();
 
 	return L_GET_C_BACK_PTR(&addr);
 }
@@ -314,14 +304,13 @@ const LinphoneAddress *linphone_event_log_get_participant_address (const Linphon
 // ConferenceParticipantDeviceEvent.
 // -----------------------------------------------------------------------------
 
-const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEventLog *event_log) {
-	if (!isConferenceParticipantDeviceType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+const LinphoneAddress *linphone_event_log_get_device_address(const LinphoneEventLog *event_log) {
+	if (!isConferenceParticipantDeviceType(linphone_event_log_get_type(event_log))) return nullptr;
 
-	const LinphonePrivate::Address & addr =
-		static_pointer_cast<const LinphonePrivate::ConferenceParticipantDeviceEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getDeviceAddress().asAddress();
+	const LinphonePrivate::Address &addr = static_pointer_cast<const LinphonePrivate::ConferenceParticipantDeviceEvent>(
+	                                           L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	                                           ->getDeviceAddress()
+	                                           .asAddress();
 
 	return L_GET_C_BACK_PTR(&addr);
 }
@@ -330,50 +319,46 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 // ConferenceSecurityEvent.
 // -----------------------------------------------------------------------------
 
-LINPHONE_PUBLIC LinphoneSecurityEventType linphone_event_log_get_security_event_type (const LinphoneEventLog *event_log) {
-	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
-		return LinphoneSecurityEventTypeNone;
+LINPHONE_PUBLIC LinphoneSecurityEventType
+linphone_event_log_get_security_event_type(const LinphoneEventLog *event_log) {
+	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log))) return LinphoneSecurityEventTypeNone;
 
-	const auto securityEvent = static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
-		L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-	);
+	const auto securityEvent =
+	    static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log));
 	return static_cast<LinphoneSecurityEventType>(securityEvent->getSecurityEventType());
 }
 
-LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_device_address (const LinphoneEventLog *event_log) {
-	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+LINPHONE_PUBLIC LinphoneAddress *
+linphone_event_log_get_security_event_faulty_device_address(const LinphoneEventLog *event_log) {
+	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log))) return nullptr;
 
 	return linphone_address_new(
-		static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getFaultyDeviceAddress().asString().c_str()
-	);
+	    static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getFaultyDeviceAddress()
+	        .asString()
+	        .c_str());
 }
 
 // -----------------------------------------------------------------------------
 // ConferenceSubjectEvent.
 // -----------------------------------------------------------------------------
 
-LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventLog *event_log) {
-	if (!isConferenceSubjectType(linphone_event_log_get_type(event_log)))
-		return nullptr;
+LINPHONE_PUBLIC const char *linphone_event_log_get_subject(const LinphoneEventLog *event_log) {
+	if (!isConferenceSubjectType(linphone_event_log_get_type(event_log))) return nullptr;
 
 	return L_STRING_TO_C(
-		static_pointer_cast<const LinphonePrivate::ConferenceSubjectEvent>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getSubject()
-	);
+	    static_pointer_cast<const LinphonePrivate::ConferenceSubjectEvent>(L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	        ->getSubject());
 }
 
 // -----------------------------------------------------------------------------
 // ConferenceEphemeralMessageEvent.
 // -----------------------------------------------------------------------------
 
-LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_message_lifetime (const LinphoneEventLog *event_log) {
-	if (!isConferenceEphemeralMessageType(linphone_event_log_get_type(event_log)))
-		return -1;
+LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_message_lifetime(const LinphoneEventLog *event_log) {
+	if (!isConferenceEphemeralMessageType(linphone_event_log_get_type(event_log))) return -1;
 
 	return static_pointer_cast<const LinphonePrivate::ConferenceEphemeralMessageEvent>(
-		L_GET_CPP_PTR_FROM_C_OBJECT(event_log))->getEphemeralMessageLifetime();
+	           L_GET_CPP_PTR_FROM_C_OBJECT(event_log))
+	    ->getEphemeralMessageLifetime();
 }

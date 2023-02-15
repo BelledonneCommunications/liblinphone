@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,44 +29,28 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-ConferenceParticipantEvent::ConferenceParticipantEvent (
-	Type type,
-	time_t creationTime,
-	const ConferenceId &conferenceId,
-	const IdentityAddress &participantAddress
-) : ConferenceNotifiedEvent(
-	*new ConferenceParticipantEventPrivate,
-	type,
-	creationTime,
-	conferenceId
-) {
+ConferenceParticipantEvent::ConferenceParticipantEvent(Type type,
+                                                       time_t creationTime,
+                                                       const ConferenceId &conferenceId,
+                                                       const IdentityAddress &participantAddress)
+    : ConferenceNotifiedEvent(*new ConferenceParticipantEventPrivate, type, creationTime, conferenceId) {
 	L_D();
-	L_ASSERT(
-		type == Type::ConferenceParticipantAdded ||
-		type == Type::ConferenceParticipantRemoved ||
-		type == Type::ConferenceParticipantSetAdmin ||
-		type == Type::ConferenceParticipantUnsetAdmin
-	);
+	L_ASSERT(type == Type::ConferenceParticipantAdded || type == Type::ConferenceParticipantRemoved ||
+	         type == Type::ConferenceParticipantSetAdmin || type == Type::ConferenceParticipantUnsetAdmin);
 	d->participantAddress = participantAddress;
 }
 
-ConferenceParticipantEvent::ConferenceParticipantEvent (
-	ConferenceParticipantEventPrivate &p,
-	Type type,
-	time_t creationTime,
-	const ConferenceId &conferenceId,
-	const IdentityAddress &participantAddress
-) : ConferenceNotifiedEvent(
-	p,
-	type,
-	creationTime,
-	conferenceId
-) {
+ConferenceParticipantEvent::ConferenceParticipantEvent(ConferenceParticipantEventPrivate &p,
+                                                       Type type,
+                                                       time_t creationTime,
+                                                       const ConferenceId &conferenceId,
+                                                       const IdentityAddress &participantAddress)
+    : ConferenceNotifiedEvent(p, type, creationTime, conferenceId) {
 	L_D();
 	d->participantAddress = participantAddress;
 }
 
-const IdentityAddress &ConferenceParticipantEvent::getParticipantAddress () const {
+const IdentityAddress &ConferenceParticipantEvent::getParticipantAddress() const {
 	L_D();
 	return d->participantAddress;
 }

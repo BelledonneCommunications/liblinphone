@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,20 +30,23 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-
 class LINPHONE_PUBLIC SearchRequest {
 public:
-	SearchRequest(){}
-	SearchRequest(const std::string& filter, const std::string& withDomain, int sourceFlags, LinphoneMagicSearchAggregation aggregation);
-	SearchRequest( const SearchRequest& request);
+	SearchRequest() {
+	}
+	SearchRequest(const std::string &filter,
+	              const std::string &withDomain,
+	              int sourceFlags,
+	              LinphoneMagicSearchAggregation aggregation);
+	SearchRequest(const SearchRequest &request);
 	~SearchRequest();
-	
-	void operator= (const SearchRequest &other);
+
+	void operator=(const SearchRequest &other);
 
 	/**
 	 * @return filter of the search
 	 **/
-	const std::string &getFilter()const;
+	const std::string &getFilter() const;
 
 	/**
 	 * @return domain which we want to search only
@@ -59,10 +62,10 @@ public:
 	 * @return The #LinphoneMagicSearchAggregation mode set for this request
 	 **/
 	LinphoneMagicSearchAggregation getAggregation() const;
-	
+
 	/**
-	* @brief initStartTime To be call when starting a search. This will store the start time when the request begin.
-	*/
+	 * @brief initStartTime To be call when starting a search. This will store the start time when the request begin.
+	 */
 	void initStartTime();
 
 	/**
@@ -70,9 +73,8 @@ public:
 	 * @return The start time.
 	 */
 	uint64_t getStartTime() const;
-	
-private:
 
+private:
 	std::string mFilter;
 	std::string mWithDomain;
 	int mSourceFlags = LinphoneMagicSearchSourceAll;

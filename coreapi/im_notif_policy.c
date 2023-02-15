@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,12 +27,12 @@
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneImNotifPolicy);
 
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneImNotifPolicy, belle_sip_object_t,
-	NULL, // destroy
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneImNotifPolicy,
+                           belle_sip_object_t,
+                           NULL, // destroy
+                           NULL, // clone
+                           NULL, // marshal
+                           FALSE);
 
 static void load_im_notif_policy_from_config(LinphoneImNotifPolicy *policy) {
 #ifdef HAVE_ADVANCED_IM
@@ -84,43 +84,38 @@ static void load_im_notif_policy_from_config(LinphoneImNotifPolicy *policy) {
 #endif
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 static void save_im_notif_policy_to_config(LinphoneImNotifPolicy *policy) {
 #ifdef HAVE_ADVANCED_IM
 	bctbx_list_t *values = NULL;
-	if ((policy->send_is_composing == TRUE)
-		&& (policy->recv_is_composing == TRUE)
-		&& (policy->send_imdn_delivered == TRUE)
-		&& (policy->recv_imdn_delivered == TRUE)
-		&& (policy->send_imdn_displayed == TRUE)
-		&& (policy->recv_imdn_displayed == TRUE)) {
+	if ((policy->send_is_composing == TRUE) && (policy->recv_is_composing == TRUE) &&
+	    (policy->send_imdn_delivered == TRUE) && (policy->recv_imdn_delivered == TRUE) &&
+	    (policy->send_imdn_displayed == TRUE) && (policy->recv_imdn_displayed == TRUE)) {
 		/* Do not save anything, the default is everything enabled */
-	} else if ((policy->send_is_composing == FALSE)
-		&& (policy->recv_is_composing == FALSE)
-		&& (policy->send_imdn_delivered == FALSE)
-		&& (policy->recv_imdn_delivered == FALSE)
-		&& (policy->send_imdn_displayed == FALSE)
-		&& (policy->recv_imdn_displayed == FALSE)) {
+	} else if ((policy->send_is_composing == FALSE) && (policy->recv_is_composing == FALSE) &&
+	           (policy->send_imdn_delivered == FALSE) && (policy->recv_imdn_delivered == FALSE) &&
+	           (policy->send_imdn_displayed == FALSE) && (policy->recv_imdn_displayed == FALSE)) {
 		values = bctbx_list_append(values, (void *)"none");
 	} else {
-		if (policy->send_is_composing == TRUE)
-			values = bctbx_list_append(values, (void *)"send_is_comp");
-		if (policy->recv_is_composing == TRUE)
-			values = bctbx_list_append(values, (void *)"recv_is_comp");
-		if (policy->send_imdn_delivered == TRUE)
-			values = bctbx_list_append(values, (void *)"send_imdn_delivered");
-		if (policy->recv_imdn_delivered == TRUE)
-			values = bctbx_list_append(values, (void *)"recv_imdn_delivered");
-		if (policy->send_imdn_displayed == TRUE)
-			values = bctbx_list_append(values, (void *)"send_imdn_displayed");
-		if (policy->recv_imdn_displayed == TRUE)
-			values = bctbx_list_append(values, (void *)"recv_imdn_displayed");
+		if (policy->send_is_composing == TRUE) values = bctbx_list_append(values, (void *)"send_is_comp");
+		if (policy->recv_is_composing == TRUE) values = bctbx_list_append(values, (void *)"recv_is_comp");
+		if (policy->send_imdn_delivered == TRUE) values = bctbx_list_append(values, (void *)"send_imdn_delivered");
+		if (policy->recv_imdn_delivered == TRUE) values = bctbx_list_append(values, (void *)"recv_imdn_delivered");
+		if (policy->send_imdn_displayed == TRUE) values = bctbx_list_append(values, (void *)"send_imdn_displayed");
+		if (policy->recv_imdn_displayed == TRUE) values = bctbx_list_append(values, (void *)"recv_imdn_displayed");
 	}
 	linphone_config_set_string_list(policy->lc->config, "sip", "im_notif_policy", values);
 	if (values != NULL) bctbx_list_free(values);
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-LinphoneImNotifPolicy * linphone_im_notif_policy_ref(LinphoneImNotifPolicy *policy) {
+LinphoneImNotifPolicy *linphone_im_notif_policy_ref(LinphoneImNotifPolicy *policy) {
 	belle_sip_object_ref(policy);
 	return policy;
 }
@@ -137,7 +132,6 @@ void linphone_im_notif_policy_set_user_data(LinphoneImNotifPolicy *policy, void 
 	policy->user_data = ud;
 }
 
-
 void linphone_im_notif_policy_clear(LinphoneImNotifPolicy *policy) {
 	policy->send_is_composing = FALSE;
 	policy->recv_is_composing = FALSE;
@@ -148,6 +142,10 @@ void linphone_im_notif_policy_clear(LinphoneImNotifPolicy *policy) {
 	save_im_notif_policy_to_config(policy);
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_im_notif_policy_enable_all(LinphoneImNotifPolicy *policy) {
 #ifdef HAVE_ADVANCED_IM
 	policy->send_is_composing = TRUE;
@@ -161,6 +159,9 @@ void linphone_im_notif_policy_enable_all(LinphoneImNotifPolicy *policy) {
 	ms_warning("Cannot enable im policy because ENABLE_ADVANCED_IM is OFF");
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 bool_t linphone_im_notif_policy_get_send_is_composing(const LinphoneImNotifPolicy *policy) {
 	return policy->send_is_composing;
@@ -216,13 +217,12 @@ void linphone_im_notif_policy_set_recv_imdn_displayed(LinphoneImNotifPolicy *pol
 	save_im_notif_policy_to_config(policy);
 }
 
-LinphoneImNotifPolicy * linphone_core_get_im_notif_policy(const LinphoneCore *lc) {
+LinphoneImNotifPolicy *linphone_core_get_im_notif_policy(const LinphoneCore *lc) {
 	return lc->im_notif_policy;
 }
 
 void linphone_core_create_im_notif_policy(LinphoneCore *lc) {
-	if (lc->im_notif_policy)
-		linphone_im_notif_policy_unref(lc->im_notif_policy);
+	if (lc->im_notif_policy) linphone_im_notif_policy_unref(lc->im_notif_policy);
 	lc->im_notif_policy = belle_sip_object_new(LinphoneImNotifPolicy);
 	lc->im_notif_policy->lc = lc;
 	load_im_notif_policy_from_config(lc->im_notif_policy);

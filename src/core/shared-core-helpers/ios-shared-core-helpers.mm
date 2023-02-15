@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <bctoolbox/defs.h>
 
 #ifdef __APPLE__
 #include "TargetConditionals.h"
@@ -432,7 +433,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 // push notification: get new message already received by the main core
 // -----------------------------------------------------------------------------
 
-void on_msg_written_in_user_defaults(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+void on_msg_written_in_user_defaults(BCTBX_UNUSED(CFNotificationCenterRef center), void *observer, BCTBX_UNUSED(CFStringRef name), BCTBX_UNUSED(const void *object), BCTBX_UNUSED(CFDictionaryRef userInfo)) {
 	lInfo() << "[push] " << __FUNCTION__;
 	if (observer) {
 		IosSharedCoreHelpers *myself = (IosSharedCoreHelpers *) observer;
@@ -613,7 +614,7 @@ void IosSharedCoreHelpers::reinitTimer() {
 	mTimer = ms_get_cur_time_ms();
 }
 
-static void on_push_notification_chat_room_joined(LinphoneChatRoom *cr, const LinphoneEventLog *evlog){
+static void on_push_notification_chat_room_joined(LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *evlog)){
 	LinphoneCore *lc = linphone_chat_room_get_core(cr);
 	PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
 	IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
@@ -678,7 +679,7 @@ shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crA
 // shared core
 // -----------------------------------------------------------------------------
 
-void unlock_shared_core_if_needed(CFRunLoopTimerRef timer, void *info) {
+void unlock_shared_core_if_needed(BCTBX_UNUSED(CFRunLoopTimerRef timer), void *info) {
 	IosSharedCoreHelpers *platform_helper = (IosSharedCoreHelpers *) info;
 	platform_helper->unlockSharedCoreIfNeeded();
 }
@@ -814,7 +815,7 @@ void IosSharedCoreHelpers::subscribeToMainCoreNotifs() {
    	CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_core_must_stop, CFSTR(ACTIVE_SHARED_CORE), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 }
 
-void on_core_must_stop(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+void on_core_must_stop(BCTBX_UNUSED(CFNotificationCenterRef center), void *observer, BCTBX_UNUSED(CFStringRef name), BCTBX_UNUSED(const void *object), BCTBX_UNUSED(CFDictionaryRef userInfo)) {
    	lInfo() << "[SHARED] " << __FUNCTION__;
 	if (observer) {
 		IosSharedCoreHelpers *myself = (IosSharedCoreHelpers *) observer;

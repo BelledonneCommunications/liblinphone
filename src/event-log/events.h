@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,12 @@
 #ifndef _L_EVENTS_H_
 #define _L_EVENTS_H_
 
+#include "conference/conference-available-media-event.h"
 #include "conference/conference-call-event.h"
 #include "conference/conference-chat-message-event.h"
+#include "conference/conference-ephemeral-message-event.h"
 #include "conference/conference-participant-device-event.h"
 #include "conference/conference-security-event.h"
-#include "conference/conference-available-media-event.h"
 #include "conference/conference-subject-event.h"
-#include "conference/conference-ephemeral-message-event.h"
 
 #endif // ifndef _L_EVENTS_H_

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,20 +22,11 @@
 
 using namespace std;
 
-enum Protocol {
-	UDPProtocol = 0,
-	TCPProtocol = 1,
-	TLSProtocol = 2
-};
+enum Protocol { UDPProtocol = 0, TCPProtocol = 1, TLSProtocol = 2 };
 
 class PortResponse : public Response {
 public:
-	enum PortType {
-		SIPPort = 0,
-		AudioRTPPort = 1,
-		VideoRTPPort = 2,
-		AllPorts = 3
-	};
+	enum PortType { SIPPort = 0, AudioRTPPort = 1, VideoRTPPort = 2, AllPorts = 3 };
 
 	PortResponse(LinphoneCore *core, PortType type);
 
@@ -87,36 +78,31 @@ void PortResponse::outputVideoRTPPort(LinphoneCore *core, ostringstream &ost) {
 	ost << "Video RTP: " << linphone_core_get_video_port(core) << "\n";
 }
 
-PortCommand::PortCommand() :
-		DaemonCommand("port", "port [sip|audio|video] [<port>] [udp|tcp|tls]",
-				"Set the port to use for type if port is set, otherwise return the port used for type if specified or all the used ports if no type is specified.\n"
-				"The protocol should be defined only for sip port and have one of these values: udp, tcp, tls.") {
-	addExample(make_unique<DaemonCommandExample>("port sip 5060 tls",
-						"Status: Ok\n\n"
-						"SIP: 5060 TLS"));
-	addExample(make_unique<DaemonCommandExample>("port sip 5060 udp",
-						"Status: Ok\n\n"
-						"SIP: 5060 UDP"));
-	addExample(make_unique<DaemonCommandExample>("port audio 7078",
-						"Status: Ok\n\n"
-						"Audio RTP: 7078"));
-	addExample(make_unique<DaemonCommandExample>("port video 9078",
-						"Status: Ok\n\n"
-						"Video RTP: 9078"));
-	addExample(make_unique<DaemonCommandExample>("port sip",
-						"Status: Ok\n\n"
-						"SIP: 5060 UDP"));
-	addExample(make_unique<DaemonCommandExample>("port audio",
-						"Status: Ok\n\n"
-						"Audio RTP: 7078"));
-	addExample(make_unique<DaemonCommandExample>("port",
-						"Status: Ok\n\n"
-						"SIP: 5060 UDP\n"
-						"Audio RTP: 7078\n"
-						"Video RTP: 9078"));
+PortCommand::PortCommand()
+    : DaemonCommand("port",
+                    "port [sip|audio|video] [<port>] [udp|tcp|tls]",
+                    "Set the port to use for type if port is set, otherwise return the port used for type if specified "
+                    "or all the used ports if no type is specified.\n"
+                    "The protocol should be defined only for sip port and have one of these values: udp, tcp, tls.") {
+	addExample(make_unique<DaemonCommandExample>("port sip 5060 tls", "Status: Ok\n\n"
+	                                                                  "SIP: 5060 TLS"));
+	addExample(make_unique<DaemonCommandExample>("port sip 5060 udp", "Status: Ok\n\n"
+	                                                                  "SIP: 5060 UDP"));
+	addExample(make_unique<DaemonCommandExample>("port audio 7078", "Status: Ok\n\n"
+	                                                                "Audio RTP: 7078"));
+	addExample(make_unique<DaemonCommandExample>("port video 9078", "Status: Ok\n\n"
+	                                                                "Video RTP: 9078"));
+	addExample(make_unique<DaemonCommandExample>("port sip", "Status: Ok\n\n"
+	                                                         "SIP: 5060 UDP"));
+	addExample(make_unique<DaemonCommandExample>("port audio", "Status: Ok\n\n"
+	                                                           "Audio RTP: 7078"));
+	addExample(make_unique<DaemonCommandExample>("port", "Status: Ok\n\n"
+	                                                     "SIP: 5060 UDP\n"
+	                                                     "Audio RTP: 7078\n"
+	                                                     "Video RTP: 9078"));
 }
 
-void PortCommand::exec(Daemon *app, const string& args) {
+void PortCommand::exec(Daemon *app, const string &args) {
 	string type;
 	int port;
 	istringstream ist(args);

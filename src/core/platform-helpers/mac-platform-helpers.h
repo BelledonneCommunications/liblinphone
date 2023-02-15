@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,24 +35,22 @@ LINPHONE_BEGIN_NAMESPACE
  */
 class MacPlatformHelpers : public GenericPlatformHelpers {
 public:
-	MacPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core);
-	virtual ~MacPlatformHelpers ();
-	string getDataResource (const string &filename) const override;
-	string getImageResource (const string &filename) const override;
-	string getRingResource (const string &filename) const override;
-	string getSoundResource (const string &filename) const override;
-	void setHttpProxy (const string &host, int port) override;
+	MacPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core);
+	virtual ~MacPlatformHelpers();
+	string getDataResource(const string &filename) const override;
+	string getImageResource(const string &filename) const override;
+	string getRingResource(const string &filename) const override;
+	string getSoundResource(const string &filename) const override;
+	void setHttpProxy(const string &host, int port) override;
 
 protected:
 	static const string Framework;
 	void getHttpProxySettings(void);
 	string toUTF8String(CFStringRef str);
+
 private:
-	
-	
-	static string getResourceDirPath (const string &framework, const string &resource);
-	static string getResourcePath (const string &framework, const string &resource);
-    
+	static string getResourceDirPath(const string &framework, const string &resource);
+	static string getResourcePath(const string &framework, const string &resource);
 };
 
 LINPHONE_END_NAMESPACE

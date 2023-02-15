@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,14 +21,11 @@
 #ifndef LINPHONE_HEADERS_H_
 #define LINPHONE_HEADERS_H_
 
-
 #include "linphone/types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @addtogroup misc
@@ -37,12 +34,12 @@ extern "C" {
 
 /**
  * Increments ref count.
-**/
-LINPHONE_PUBLIC LinphoneHeaders * linphone_headers_ref(LinphoneHeaders *obj);
+ **/
+LINPHONE_PUBLIC LinphoneHeaders *linphone_headers_ref(LinphoneHeaders *obj);
 
 /**
  * Decrements ref count.
-**/
+ **/
 LINPHONE_PUBLIC void linphone_headers_unref(LinphoneHeaders *obj);
 
 /**
@@ -50,29 +47,28 @@ LINPHONE_PUBLIC void linphone_headers_unref(LinphoneHeaders *obj);
  * @param headers the #LinphoneHeaders object @notnil
  * @param name the header's name @notnil
  * @return the header's value or NULL if not found. @maybenil
-**/
+ **/
 
-LINPHONE_PUBLIC const char* linphone_headers_get_value(LinphoneHeaders *headers, const char *header_name);
+LINPHONE_PUBLIC const char *linphone_headers_get_value(LinphoneHeaders *headers, const char *header_name);
 
 /**
  * Add given header name and corresponding value.
  * @param headers the #LinphoneHeaders object @notnil
  * @param name the header's name @notnil
  * @param value the header's value @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_headers_add(LinphoneHeaders *headers, const char *name, const char *value);
 
 /**
  * Add given header name and corresponding value.
  * @param headers the #LinphoneHeaders object @notnil
  * @param name the header's name @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_headers_remove(LinphoneHeaders *headers, const char *name);
-
 
 /**
  * @}
-**/
+ **/
 
 #ifdef __cplusplus
 }

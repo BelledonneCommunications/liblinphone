@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 // #include "logger/logger.h"
 #include "shared-core-helpers.h"
 
@@ -30,10 +32,12 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-GenericSharedCoreHelpers::GenericSharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core) : SharedCoreHelpers(core) {}
+GenericSharedCoreHelpers::GenericSharedCoreHelpers(std::shared_ptr<LinphonePrivate::Core> core)
+    : SharedCoreHelpers(core) {
+}
 
-void GenericSharedCoreHelpers::onLinphoneCoreStop () {}
-
+void GenericSharedCoreHelpers::onLinphoneCoreStop() {
+}
 
 bool GenericSharedCoreHelpers::isCoreShared() {
 	return false;
@@ -43,31 +47,38 @@ bool GenericSharedCoreHelpers::canCoreStart() {
 	return true;
 }
 
-void GenericSharedCoreHelpers::registerSharedCoreMsgCallback() {}
+void GenericSharedCoreHelpers::registerSharedCoreMsgCallback() {
+}
 
-std::shared_ptr<PushNotificationMessage> GenericSharedCoreHelpers::getPushNotificationMessage(const string &callId) {
+std::shared_ptr<PushNotificationMessage>
+GenericSharedCoreHelpers::getPushNotificationMessage(BCTBX_UNUSED(const string &callId)) {
 	return nullptr;
 }
 
-std::shared_ptr<ChatRoom> GenericSharedCoreHelpers::getPushNotificationChatRoom(const string &chatRoomAddr) {
+std::shared_ptr<ChatRoom>
+GenericSharedCoreHelpers::getPushNotificationChatRoom(BCTBX_UNUSED(const string &chatRoomAddr)) {
 	return nullptr;
 }
 
-void GenericSharedCoreHelpers::resetSharedCoreState() {}
+void GenericSharedCoreHelpers::resetSharedCoreState() {
+}
 
-void GenericSharedCoreHelpers::unlockSharedCoreIfNeeded() {}
+void GenericSharedCoreHelpers::unlockSharedCoreIfNeeded() {
+}
 
 bool GenericSharedCoreHelpers::isCoreStopRequired() {
 	return false;
 }
 
-void GenericSharedCoreHelpers::onMsgWrittenInUserDefaults() {}
-
-void *GenericSharedCoreHelpers::getPathContext() {
-    return NULL;
+void GenericSharedCoreHelpers::onMsgWrittenInUserDefaults() {
 }
 
-void GenericSharedCoreHelpers::setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) {}
+void *GenericSharedCoreHelpers::getPathContext() {
+	return NULL;
+}
+
+void GenericSharedCoreHelpers::setChatRoomInvite(BCTBX_UNUSED(std::shared_ptr<ChatRoom> cr)) {
+}
 
 SharedCoreState GenericSharedCoreHelpers::getSharedCoreState() {
 	return SharedCoreState::noCoreStarted;

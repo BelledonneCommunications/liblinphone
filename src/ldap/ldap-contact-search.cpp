@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,18 +24,21 @@
 #include <algorithm>
 #include <bctoolbox/utils.hh>
 
-#define FILTER_MAX_SIZE      512
+#define FILTER_MAX_SIZE 512
 
 LINPHONE_BEGIN_NAMESPACE
 
-LdapContactSearch::LdapContactSearch(const int& msgId){
+LdapContactSearch::LdapContactSearch(const int &msgId) {
 	mMsgId = msgId;
 	mFoundCount = 0;
 	complete = 0;
 	mHaveMoreResults = FALSE;
 }
 
-LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string predicate, ContactSearchCallback cb, void* cbData){
+LdapContactSearch::LdapContactSearch(LdapContactProvider *parent,
+                                     std::string predicate,
+                                     ContactSearchCallback cb,
+                                     void *cbData) {
 	mPredicate = predicate; // Save original predicate
 	mCb = cb;
 	mCbData = cbData;
@@ -43,31 +46,31 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string p
 	mFoundCount = 0;
 	complete = 0;
 	mHaveMoreResults = 0;
-	
-// Replace specials characters first : manual characters should be encoded
-	bctoolbox::Utils::replace( predicate, "\\", "\\5c");
-	bctoolbox::Utils::replace( predicate, "*", "\\2a");
-	bctoolbox::Utils::replace( predicate, "(", "\\28");
-	bctoolbox::Utils::replace( predicate, ")", "\\29");
-	bctoolbox::Utils::replace( predicate, "/", "\\2f");
-	
-// Replace space characters into wild characters
-	std::replace( predicate.begin(), predicate.end(), ' ', '*');
-// Apply predicate into requested filter
+
+	// Replace specials characters first : manual characters should be encoded
+	bctoolbox::Utils::replace(predicate, "\\", "\\5c");
+	bctoolbox::Utils::replace(predicate, "*", "\\2a");
+	bctoolbox::Utils::replace(predicate, "(", "\\28");
+	bctoolbox::Utils::replace(predicate, ")", "\\29");
+	bctoolbox::Utils::replace(predicate, "/", "\\2f");
+
+	// Replace space characters into wild characters
+	std::replace(predicate.begin(), predicate.end(), ' ', '*');
+	// Apply predicate into requested filter
 	char temp[FILTER_MAX_SIZE];
-	snprintf(temp, FILTER_MAX_SIZE-1, parent->getFilter().c_str(), predicate.c_str());
-	temp[FILTER_MAX_SIZE-1] = '\0';
-	
-// Replace all '**' by '*' in filter.
+	snprintf(temp, FILTER_MAX_SIZE - 1, parent->getFilter().c_str(), predicate.c_str());
+	temp[FILTER_MAX_SIZE - 1] = '\0';
+
+	// Replace all '**' by '*' in filter.
 	mFilter = temp;
-	bctoolbox::Utils::replace( mFilter, "**", "*", false);// Do not step as replacement can still contain double stars.
+	bctoolbox::Utils::replace(mFilter, "**", "*", false); // Do not step as replacement can still contain double stars.
 }
 
-LdapContactSearch::~LdapContactSearch(){
+LdapContactSearch::~LdapContactSearch() {
 }
 
-void LdapContactSearch::callCallback(){
-	bctbx_list_t* results = SearchResult::getCListFromCppList(mFoundEntries, false);
+void LdapContactSearch::callCallback() {
+	bctbx_list_t *results = SearchResult::getCListFromCppList(mFoundEntries, false);
 	mCb(NULL, results, mCbData, mHaveMoreResults);
 	if (results) {
 		bctbx_list_free(results);

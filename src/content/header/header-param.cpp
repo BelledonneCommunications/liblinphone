@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ public:
 
 // -----------------------------------------------------------------------------
 
-HeaderParam::HeaderParam (const string &param) : ClonableObject(*new HeaderParamPrivate) {
+HeaderParam::HeaderParam(const string &param) : ClonableObject(*new HeaderParamPrivate) {
 	size_t pos = param.find("=");
 	size_t end = param.length();
 
@@ -51,14 +51,15 @@ HeaderParam::HeaderParam (const string &param) : ClonableObject(*new HeaderParam
 	}
 }
 
-HeaderParam::HeaderParam (const string &name, const string &value) : ClonableObject(*new HeaderParamPrivate) {
+HeaderParam::HeaderParam(const string &name, const string &value) : ClonableObject(*new HeaderParamPrivate) {
 	setName(name);
 	setValue(value);
 }
 
-HeaderParam::HeaderParam (const HeaderParam &other) : HeaderParam(other.getName(), other.getValue()) {}
+HeaderParam::HeaderParam(const HeaderParam &other) : HeaderParam(other.getName(), other.getValue()) {
+}
 
-HeaderParam &HeaderParam::operator= (const HeaderParam &other) {
+HeaderParam &HeaderParam::operator=(const HeaderParam &other) {
 	if (this != &other) {
 		setName(other.getName());
 		setValue(other.getValue());
@@ -67,42 +68,40 @@ HeaderParam &HeaderParam::operator= (const HeaderParam &other) {
 	return *this;
 }
 
-bool HeaderParam::operator== (const HeaderParam &other) const {
-	return getName() == other.getName() &&
-		getValue() == other.getValue();
+bool HeaderParam::operator==(const HeaderParam &other) const {
+	return getName() == other.getName() && getValue() == other.getValue();
 }
 
-bool HeaderParam::operator!= (const HeaderParam &other) const {
+bool HeaderParam::operator!=(const HeaderParam &other) const {
 	return !(*this == other);
 }
 
-const string &HeaderParam::getName () const {
+const string &HeaderParam::getName() const {
 	L_D();
 	return d->name;
 }
 
-bool HeaderParam::setName (const string &name) {
+bool HeaderParam::setName(const string &name) {
 	L_D();
 	d->name = name;
 	return true;
 }
 
-const string &HeaderParam::getValue () const {
+const string &HeaderParam::getValue() const {
 	L_D();
 	return d->value;
 }
 
-bool HeaderParam::setValue (const string &value) {
+bool HeaderParam::setValue(const string &value) {
 	L_D();
 	d->value = value;
 	return true;
 }
 
-string HeaderParam::asString () const {
+string HeaderParam::asString() const {
 	L_D();
 	string asString = ";" + d->name;
-	if (!d->value.empty())
-		asString += "=" + d->value;
+	if (!d->value.empty()) asString += "=" + d->value;
 	return asString;
 }
 

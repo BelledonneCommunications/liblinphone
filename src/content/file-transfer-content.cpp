@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,10 +22,10 @@
 #include "linphone/core.h"
 #include "linphone/utils/utils.h"
 
+#include "bctoolbox/charconv.h"
+#include "bctoolbox/crypto.h"
 #include "content-p.h"
 #include "file-transfer-content.h"
-#include "bctoolbox/crypto.h"
-#include "bctoolbox/charconv.h"
 
 #include <algorithm>
 
@@ -57,11 +57,11 @@ public:
 
 // -----------------------------------------------------------------------------
 
-FileTransferContent::FileTransferContent () : Content(*new FileTransferContentPrivate) {
+FileTransferContent::FileTransferContent() : Content(*new FileTransferContentPrivate) {
 	setContentType(ContentType::FileTransfer);
 }
 
-FileTransferContent::FileTransferContent (const FileTransferContent &other) : Content(*new FileTransferContentPrivate) {
+FileTransferContent::FileTransferContent(const FileTransferContent &other) : Content(*new FileTransferContentPrivate) {
 	L_D();
 	Content::copy(other);
 	setFileName(other.getFileName());
@@ -75,7 +75,7 @@ FileTransferContent::FileTransferContent (const FileTransferContent &other) : Co
 	d->fileDuration = other.getFileDuration();
 }
 
-FileTransferContent::FileTransferContent (FileTransferContent &&other) : Content(*new FileTransferContentPrivate) {
+FileTransferContent::FileTransferContent(FileTransferContent &&other) : Content(*new FileTransferContentPrivate) {
 	L_D();
 	Content::copy(other);
 	d->fileName = move(other.getPrivate()->fileName);
@@ -89,7 +89,7 @@ FileTransferContent::FileTransferContent (FileTransferContent &&other) : Content
 	d->fileDuration = move(other.getPrivate()->fileDuration);
 }
 
-FileTransferContent &FileTransferContent::operator= (const FileTransferContent &other) {
+FileTransferContent &FileTransferContent::operator=(const FileTransferContent &other) {
 	L_D();
 	if (this != &other) {
 		Content::operator=(other);
@@ -107,7 +107,7 @@ FileTransferContent &FileTransferContent::operator= (const FileTransferContent &
 	return *this;
 }
 
-FileTransferContent &FileTransferContent::operator= (FileTransferContent &&other) {
+FileTransferContent &FileTransferContent::operator=(FileTransferContent &&other) {
 	L_D();
 	Content::operator=(move(other));
 	d->fileName = move(other.getPrivate()->fileName);
@@ -123,115 +123,111 @@ FileTransferContent &FileTransferContent::operator= (FileTransferContent &&other
 	return *this;
 }
 
-bool FileTransferContent::operator== (const FileTransferContent &other) const {
+bool FileTransferContent::operator==(const FileTransferContent &other) const {
 	L_D();
-	return Content::operator==(other) &&
-		getFileName() == other.getFileName() &&
-		d->fileUrl == other.getFileUrl() &&
-		getFilePath() == other.getFilePath() &&
-		d->fileSize == other.getFileSize() &&
-		d->fileContentType == other.getFileContentType() &&
-		d->fileDuration == other.getFileDuration();
+	return Content::operator==(other) && getFileName() == other.getFileName() && d->fileUrl == other.getFileUrl() &&
+	       getFilePath() == other.getFilePath() && d->fileSize == other.getFileSize() &&
+	       d->fileContentType == other.getFileContentType() && d->fileDuration == other.getFileDuration();
 }
 
-void FileTransferContent::setFileName (const string &name) {
+void FileTransferContent::setFileName(const string &name) {
 	L_D();
 	d->fileName = Utils::normalizeFilename(name);
 }
 
-const string &FileTransferContent::getFileName () const {
+const string &FileTransferContent::getFileName() const {
 	L_D();
 	return d->fileName;
 }
 
-void FileTransferContent::setFileNameSys (const string &name) {
+void FileTransferContent::setFileNameSys(const string &name) {
 	setFileName(Utils::convert(name, "", bctbx_get_default_encoding()));
 }
 
-string FileTransferContent::getFileNameSys () const {
+string FileTransferContent::getFileNameSys() const {
 	return Utils::convert(getFileName(), bctbx_get_default_encoding(), "");
 }
 
-void FileTransferContent::setFileNameUtf8 (const string &name) {
+void FileTransferContent::setFileNameUtf8(const string &name) {
 	setFileName(Utils::utf8ToLocale(name));
 }
 
-string FileTransferContent::getFileNameUtf8 () const {
+string FileTransferContent::getFileNameUtf8() const {
 	return Utils::localeToUtf8(getFileName());
 }
 
-void FileTransferContent::setFileUrl (const string &url) {
+void FileTransferContent::setFileUrl(const string &url) {
 	L_D();
 	d->fileUrl = url;
 }
 
-const string &FileTransferContent::getFileUrl () const {
+const string &FileTransferContent::getFileUrl() const {
 	L_D();
 	return d->fileUrl;
 }
 
-void FileTransferContent::setFilePath (const string &path) {
+void FileTransferContent::setFilePath(const string &path) {
 	L_D();
 	d->filePath = path;
 }
 
-const string &FileTransferContent::getFilePath () const {
+const string &FileTransferContent::getFilePath() const {
 	L_D();
 	return d->filePath;
 }
 
-void FileTransferContent::setFilePathSys (const string &path) {
+void FileTransferContent::setFilePathSys(const string &path) {
 	setFilePath(Utils::convert(path, "", bctbx_get_default_encoding()));
 }
 
-string FileTransferContent::getFilePathSys () const {
+string FileTransferContent::getFilePathSys() const {
 	return Utils::convert(getFilePath(), bctbx_get_default_encoding(), "");
 }
 
-void FileTransferContent::setFilePathUtf8 (const string &path) {
+void FileTransferContent::setFilePathUtf8(const string &path) {
 	setFilePath(Utils::utf8ToLocale(path));
 }
 
-string FileTransferContent::getFilePathUtf8 () const {
+string FileTransferContent::getFilePathUtf8() const {
 	return Utils::localeToUtf8(getFilePath());
 }
 
-void FileTransferContent::setFileContent (FileContent *content) {
+void FileTransferContent::setFileContent(FileContent *content) {
 	L_D();
 	d->fileContent = content;
 }
 
-FileContent *FileTransferContent::getFileContent () const {
+FileContent *FileTransferContent::getFileContent() const {
 	L_D();
 	return d->fileContent;
 }
 
-void FileTransferContent::setFileSize (size_t size) {
+void FileTransferContent::setFileSize(size_t size) {
 	L_D();
 	d->fileSize = size;
 }
 
-size_t FileTransferContent::getFileSize () const {
+size_t FileTransferContent::getFileSize() const {
 	L_D();
 	return d->fileSize;
 }
 
-void FileTransferContent::setFileDuration (int durationInSeconds) {
+void FileTransferContent::setFileDuration(int durationInSeconds) {
 	L_D();
 	d->fileDuration = durationInSeconds;
 }
 
-int FileTransferContent::getFileDuration () const {
+int FileTransferContent::getFileDuration() const {
 	L_D();
 	return d->fileDuration;
 }
 
-void FileTransferContent::setFileKey (const char *key, size_t size) {
+void FileTransferContent::setFileKey(const char *key, size_t size) {
 	L_D();
 	d->fileKey = vector<char>(key, key + size);
 }
 
-const vector<char> &FileTransferContent::getFileKey () const {
+const vector<char> &FileTransferContent::getFileKey() const {
 	L_D();
 	return d->fileKey;
 }
@@ -241,12 +237,12 @@ size_t FileTransferContent::getFileKeySize() const {
 	return d->fileKey.size();
 }
 
-void FileTransferContent::setFileAuthTag (const char *tag, size_t size) {
+void FileTransferContent::setFileAuthTag(const char *tag, size_t size) {
 	L_D();
 	d->fileAuthTag = vector<char>(tag, tag + size);
 }
 
-const vector<char> &FileTransferContent::getFileAuthTag () const {
+const vector<char> &FileTransferContent::getFileAuthTag() const {
 	L_D();
 	return d->fileAuthTag;
 }
@@ -256,30 +252,30 @@ size_t FileTransferContent::getFileAuthTagSize() const {
 	return d->fileAuthTag.size();
 }
 
-void FileTransferContent::setFileContentType(const ContentType& contentType) {
+void FileTransferContent::setFileContentType(const ContentType &contentType) {
 	L_D();
 	d->fileContentType = contentType;
 }
 
-const ContentType& FileTransferContent::getFileContentType () const {
+const ContentType &FileTransferContent::getFileContentType() const {
 	L_D();
 	return d->fileContentType;
 }
 
-bool FileTransferContent::isFile () const {
+bool FileTransferContent::isFile() const {
 	return false;
 }
 
-bool FileTransferContent::isFileTransfer () const {
+bool FileTransferContent::isFileTransfer() const {
 	return true;
 }
 
-bool FileTransferContent::isEncrypted () const {
+bool FileTransferContent::isEncrypted() const {
 	return isFileEncrypted(getFilePathSys());
 }
 
 const string FileTransferContent::exportPlainFile() const {
-	return Utils::convert( exportPlainFileFromEncryptedFile(getFilePathSys()), "", bctbx_get_default_encoding());
+	return Utils::convert(exportPlainFileFromEncryptedFile(getFilePathSys()), "", bctbx_get_default_encoding());
 }
 
 LINPHONE_END_NAMESPACE

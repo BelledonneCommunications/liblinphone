@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,15 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef LINPHONE_VCARD_PRIVATE_H
 #define LINPHONE_VCARD_PRIVATE_H
 
 #include "linphone/core.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /**
@@ -38,7 +36,7 @@ typedef struct _LinphoneVcardContext LinphoneVcardContext;
  * Creates a vCard context to reuse the same BelCardParser object
  * @return a new LinphoneVcardContext object
  */
-LINPHONE_PUBLIC LinphoneVcardContext* linphone_vcard_context_new(void);
+LINPHONE_PUBLIC LinphoneVcardContext *linphone_vcard_context_new(void);
 
 /**
  * Destroys the vCard context
@@ -51,7 +49,7 @@ LINPHONE_PUBLIC void linphone_vcard_context_destroy(LinphoneVcardContext *contex
  * @param[in] context a LinphoneVcardContext object
  * @return the user data pointer
  */
-LINPHONE_PUBLIC void* linphone_vcard_context_get_user_data(const LinphoneVcardContext *context);
+LINPHONE_PUBLIC void *linphone_vcard_context_get_user_data(const LinphoneVcardContext *context);
 
 /**
  * Sets the user data in the LinphoneVcardContext
@@ -61,20 +59,24 @@ LINPHONE_PUBLIC void* linphone_vcard_context_get_user_data(const LinphoneVcardCo
 LINPHONE_PUBLIC void linphone_vcard_context_set_user_data(LinphoneVcardContext *context, void *data);
 
 /**
- * Uses belcard to parse the content of a file and returns all the vcards it contains as LinphoneVcards, or NULL if it contains none.
+ * Uses belcard to parse the content of a file and returns all the vcards it contains as LinphoneVcards, or NULL if it
+ * contains none.
  * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
  * @param[in] file the path to the file to parse
  * @return A list of VCards. \bctbx_list{LinphoneVcard}
  */
-LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_file(LinphoneVcardContext *context, const char *file);
+LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_context_get_vcard_list_from_file(LinphoneVcardContext *context,
+                                                                              const char *file);
 
 /**
- * Uses belcard to parse the content of a buffer and returns all the vcards it contains as LinphoneVcards, or NULL if it contains none.
+ * Uses belcard to parse the content of a buffer and returns all the vcards it contains as LinphoneVcards, or NULL if it
+ * contains none.
  * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
  * @param[in] buffer the buffer to parse
  * @return A list of VCards. \bctbx_list{LinphoneVcard}
  */
-LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_buffer(LinphoneVcardContext *context, const char *buffer);
+LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_context_get_vcard_list_from_buffer(LinphoneVcardContext *context,
+                                                                                const char *buffer);
 
 /**
  * Uses belcard to parse the content of a buffer and returns one vCard if possible, or NULL otherwise.
@@ -82,8 +84,8 @@ LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_buffer(
  * @param[in] buffer the buffer to parse
  * @return a LinphoneVcard if one could be parsed, or NULL otherwise
  */
-LINPHONE_PUBLIC LinphoneVcard* linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext *context, const char *buffer);
-
+LINPHONE_PUBLIC LinphoneVcard *linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext *context,
+                                                                            const char *buffer);
 
 /**
  * Computes the md5 hash for the vCard
@@ -100,7 +102,7 @@ bool_t linphone_vcard_compare_md5_hash(LinphoneVcard *vCard);
 
 void linphone_vcard_clean_cache(LinphoneVcard *vCard);
 
-LinphoneVcard* _linphone_vcard_new(void);
+LinphoneVcard *_linphone_vcard_new(void);
 
 #ifdef __cplusplus
 }

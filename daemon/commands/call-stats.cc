@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,38 +22,35 @@
 
 using namespace std;
 
-CallStatsCommand::CallStatsCommand() :
-		DaemonCommand("call-stats", "call-stats [<call_id>]", "Return all stats of a call.") {
-	addExample(make_unique<DaemonCommandExample>("call-stats 1",
-						"Status: Ok\n\n"
-						"Audio-ICE state: Not activated\n"
-						"Audio-RoundTripDelay: 0.0859833\n"
-						"Audio-Jitter: 296\n"
-						"Audio-JitterBufferSizeMs: 47.7778\n"
-						"Audio-Received-InterarrivalJitter: 154\n"
-						"Audio-Received-FractionLost: 0\n"
-						"Audio-Sent-InterarrivalJitter: 296\n"
-						"Audio-Sent-FractionLost: 0\n"
-						"Audio-Payload-type-number: 111\n"
-						"Audio-Clock-rate: 16000\n"
-						"Audio-Bitrate: 44000\n"
-						"Audio-Mime: speex\n"
-						"Audio-Channels: 1\n"
-						"Audio-Recv-fmtp: vbr=on\n"
-						"Audio-Send-fmtp: vbr=on\n\n"
-						"Video-ICE state: Not activated\n"
-						"Video-RoundTripDelay: 0\n"
-						"Video-Jitter: 0\n"
-						"Video-JitterBufferSizeMs: 0State: disabled"));
-	addExample(make_unique<DaemonCommandExample>("call-stats 2",
-						"Status: Error\n"
-						"Reason: No call with such id."));
-	addExample(make_unique<DaemonCommandExample>("call-stats",
-						"Status: Error\n"
-						"Reason: No current call available."));
+CallStatsCommand::CallStatsCommand()
+    : DaemonCommand("call-stats", "call-stats [<call_id>]", "Return all stats of a call.") {
+	addExample(make_unique<DaemonCommandExample>("call-stats 1", "Status: Ok\n\n"
+	                                                             "Audio-ICE state: Not activated\n"
+	                                                             "Audio-RoundTripDelay: 0.0859833\n"
+	                                                             "Audio-Jitter: 296\n"
+	                                                             "Audio-JitterBufferSizeMs: 47.7778\n"
+	                                                             "Audio-Received-InterarrivalJitter: 154\n"
+	                                                             "Audio-Received-FractionLost: 0\n"
+	                                                             "Audio-Sent-InterarrivalJitter: 296\n"
+	                                                             "Audio-Sent-FractionLost: 0\n"
+	                                                             "Audio-Payload-type-number: 111\n"
+	                                                             "Audio-Clock-rate: 16000\n"
+	                                                             "Audio-Bitrate: 44000\n"
+	                                                             "Audio-Mime: speex\n"
+	                                                             "Audio-Channels: 1\n"
+	                                                             "Audio-Recv-fmtp: vbr=on\n"
+	                                                             "Audio-Send-fmtp: vbr=on\n\n"
+	                                                             "Video-ICE state: Not activated\n"
+	                                                             "Video-RoundTripDelay: 0\n"
+	                                                             "Video-Jitter: 0\n"
+	                                                             "Video-JitterBufferSizeMs: 0State: disabled"));
+	addExample(make_unique<DaemonCommandExample>("call-stats 2", "Status: Error\n"
+	                                                             "Reason: No call with such id."));
+	addExample(make_unique<DaemonCommandExample>("call-stats", "Status: Error\n"
+	                                                           "Reason: No current call available."));
 }
 
-void CallStatsCommand::exec(Daemon *app, const string& args) {
+void CallStatsCommand::exec(Daemon *app, const string &args) {
 	LinphoneCore *lc = app->getCore();
 	int cid;
 	LinphoneCall *call = NULL;

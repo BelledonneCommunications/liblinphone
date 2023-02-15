@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,63 +33,69 @@ class AbstractChatRoom;
 
 class ClientGroupChatRoomPrivate : public ChatRoomPrivate {
 public:
-	ClientGroupChatRoomPrivate(void) : ChatRoomPrivate(AbstractChatRoom::CapabilitiesMask({ChatRoom::Capabilities::Conference})) {};
-	ClientGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)) {};
+	ClientGroupChatRoomPrivate(void)
+	    : ChatRoomPrivate(AbstractChatRoom::CapabilitiesMask({ChatRoom::Capabilities::Conference})){};
+	ClientGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value)
+	    : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)){};
 
 	virtual ~ClientGroupChatRoomPrivate() = default;
 
-	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
-	std::shared_ptr<CallSession> createSessionTo (Address sessionTo);
-	std::shared_ptr<CallSession> createSession ();
-	void notifyReceived (const Content &content);
-	void multipartNotifyReceived (const Content &content);
+	std::list<IdentityAddress> cleanAddressesList(const std::list<IdentityAddress> &addresses) const;
+	std::shared_ptr<CallSession> createSessionTo(Address sessionTo);
+	std::shared_ptr<CallSession> createSession();
+	void notifyReceived(const Content &content);
+	void multipartNotifyReceived(const Content &content);
 
-	void confirmJoining (SalCallOp *op);
-	void setCallSessionListener (CallSessionListener *listener);
-	void setChatRoomListener (ChatRoomListener *listener) { chatRoomListener = listener; }
+	void confirmJoining(SalCallOp *op);
+	void setCallSessionListener(CallSessionListener *listener);
+	void setChatRoomListener(ChatRoomListener *listener) {
+		chatRoomListener = listener;
+	}
 
 	std::pair<bool, std::shared_ptr<AbstractChatRoom>> needToMigrate() const;
 
-	void addOneToOneCapability ();
-	unsigned int getLastNotifyId () const;
+	void addOneToOneCapability();
+	unsigned int getLastNotifyId() const;
 
-	void enableEphemeral (bool ephem);
+	void enableEphemeral(bool ephem);
 
 	// ChatRoomListener
-	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
-	void onChatRoomInsertInDatabaseRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
-	void onChatRoomDeleteRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
+	void onChatRoomInsertRequested(const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
+	void onChatRoomInsertInDatabaseRequested(const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
+	void onChatRoomDeleteRequested(const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
 
 	// CallSessionListener
-	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
-	void onCallSessionStateChanged (const std::shared_ptr<CallSession> &session, CallSession::State state, const std::string &message) override;
+	void onCallSessionSetReleased(const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
+	                               CallSession::State state,
+	                               const std::string &message) override;
 
-	void onChatRoomCreated (const Address &remoteContact);
-	void onExhumedConference(const ConferenceId& oldConfId, const ConferenceId& newConfId);
-	void onLocallyExhumedConference (const Address &remoteContact);
-	void onRemotelyExhumedConference (SalCallOp *op);
-	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void onChatRoomCreated(const Address &remoteContact);
+	void onExhumedConference(const ConferenceId &oldConfId, const ConferenceId &newConfId);
+	void onLocallyExhumedConference(const Address &remoteContact);
+	void onRemotelyExhumedConference(SalCallOp *op);
+	void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	// 1-1 exhume related
-	const std::list<ConferenceId>& getPreviousConferenceIds() const {
+	const std::list<ConferenceId> &getPreviousConferenceIds() const {
 		return previousConferenceIds;
 	};
-	void addConferenceIdToPreviousList(const ConferenceId& confId) {
+	void addConferenceIdToPreviousList(const ConferenceId &confId) {
 		previousConferenceIds.push_back(confId);
 	}
-	void removeConferenceIdFromPreviousList(const ConferenceId& confId);
+	void removeConferenceIdFromPreviousList(const ConferenceId &confId);
 
 	virtual bool isSubscriptionUnderWay() const override;
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 private:
-	void acceptSession (const std::shared_ptr<CallSession> &session);
+	void acceptSession(const std::shared_ptr<CallSession> &session);
 
 	CallSessionListener *callSessionListener = this;
 	ChatRoomListener *chatRoomListener = this;
 	bool deletionOnTerminationEnabled = false;
 	bool listHandlerUsed = false;
-	BackgroundTask bgTask { "Subscribe/notify of full state conference" };
+	BackgroundTask bgTask{"Subscribe/notify of full state conference"};
 
 	bool isEphemeral = false;
 
@@ -98,7 +104,7 @@ private:
 	std::list<std::shared_ptr<ChatMessage>> pendingExhumeMessages;
 	std::list<std::shared_ptr<ChatMessage>> pendingCreationMessages;
 	std::list<ConferenceId> previousConferenceIds;
-	
+
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);
 };
 

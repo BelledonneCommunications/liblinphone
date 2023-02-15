@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,13 +21,15 @@
 #ifndef _L_DB_TRANSACTION_H_
 #define _L_DB_TRANSACTION_H_
 
+#include <bctoolbox/defs.h>
+
 #include "db/main-db-p.h"
 #include "logger/logger.h"
 
 // =============================================================================
 
-#define L_DB_TRANSACTION_C(CONTEXT) \
-	LinphonePrivate::DbTransactionInfo().set(__func__, CONTEXT) * [&](SmartTransaction &tr)
+#define L_DB_TRANSACTION_C(CONTEXT)                                                                                    \
+	LinphonePrivate::DbTransactionInfo().set(__func__, CONTEXT) *[&](BCTBX_UNUSED(SmartTransaction & tr))
 
 #define L_DB_TRANSACTION L_DB_TRANSACTION_C(this)
 
@@ -35,25 +37,24 @@ LINPHONE_BEGIN_NAMESPACE
 
 class SmartTransaction {
 public:
-	SmartTransaction (soci::session *session, const char *name) :
-	mSession(session), mName(name), mIsCommitted(false) {
+	SmartTransaction(soci::session *session, const char *name) : mSession(session), mName(name), mIsCommitted(false) {
 		lDebug() << "Start transaction " << this << " in MainDb::" << mName << ".";
 		mSession->begin();
 	}
 
-	~SmartTransaction () {
+	~SmartTransaction() {
 		if (!mIsCommitted) {
 			lDebug() << "Rollback transaction " << this << " in MainDb::" << mName << ".";
 			try {
 				mSession->rollback();
 			} catch (std::runtime_error &e) {
 				lError() << "Error during rollback transaction " << this << " in MainDb::" << mName
-						 << ". Error : " << e.what();
+				         << ". Error : " << e.what();
 			}
 		}
 	}
 
-	void commit () {
+	void commit() {
 		if (mIsCommitted) {
 			lError() << "Transaction " << this << " in MainDb::" << mName << " already committed!!!";
 			return;
@@ -73,7 +74,7 @@ private:
 };
 
 struct DbTransactionInfo {
-	DbTransactionInfo &set (const char *_name, const MainDb *_mainDb) {
+	DbTransactionInfo &set(const char *_name, const MainDb *_mainDb) {
 		name = _name;
 		mainDb = const_cast<MainDb *>(_mainDb);
 		return *this;
@@ -83,20 +84,16 @@ struct DbTransactionInfo {
 	MainDb *mainDb = nullptr;
 };
 
-template<typename Function>
+template <typename Function>
 class DbTransaction {
-	using InternalReturnType = typename std::remove_reference<
-		decltype(std::declval<Function>()(std::declval<SmartTransaction &>()))
-	>::type;
+	using InternalReturnType =
+	    typename std::remove_reference<decltype(std::declval<Function>()(std::declval<SmartTransaction &>()))>::type;
 
 public:
-	using ReturnType = typename std::conditional<
-		std::is_same<InternalReturnType, void>::value,
-		bool,
-		InternalReturnType
-	>::type;
+	using ReturnType =
+	    typename std::conditional<std::is_same<InternalReturnType, void>::value, bool, InternalReturnType>::type;
 
-	DbTransaction (DbTransactionInfo &info, Function &&function) : mFunction(std::move(function)) {
+	DbTransaction(DbTransactionInfo &info, Function &&function) : mFunction(std::move(function)) {
 		MainDb *mainDb = info.mainDb;
 		const char *name = info.name;
 		soci::session *session = mainDb->getPrivate()->dbSession.getBackendSession();
@@ -107,46 +104,46 @@ public:
 		} catch (const soci::soci_error &e) {
 			lWarning() << "Caught exception in MainDb::" << name << "(" << e.what() << ").";
 			soci::soci_error::error_category category = e.get_error_category();
-			if (
-				(category == soci::soci_error::connection_error || category == soci::soci_error::unknown) &&
-				mainDb->forceReconnect()
-			) {
+			if ((category == soci::soci_error::connection_error || category == soci::soci_error::unknown) &&
+			    mainDb->forceReconnect()) {
 				try {
 					SmartTransaction tr(session, name);
 					mResult = exec<InternalReturnType>(tr);
 				} catch (const std::exception &e) {
-					lError() << "Unable to execute query after reconnect in MainDb::" << name << "(" << e.what() << ").";
+					lError() << "Unable to execute query after reconnect in MainDb::" << name << "(" << e.what()
+					         << ").";
 				}
 				return;
 			}
-			lError() << "Unhandled [" << getErrorCategoryAsString(category) << "] exception in MainDb::" <<
-				name << ": `" << e.what() << "`.";
+			lError() << "Unhandled [" << getErrorCategoryAsString(category) << "] exception in MainDb::" << name
+			         << ": `" << e.what() << "`.";
 		} catch (const std::exception &e) {
 			lError() << "Unhandled generic exception in MainDb::" << name << ": `" << e.what() << "`.";
 		}
 	}
 
-	DbTransaction (DbTransaction &&DbTransaction) : mFunction(std::move(DbTransaction.mFunction)) {}
+	DbTransaction(DbTransaction &&DbTransaction) : mFunction(std::move(DbTransaction.mFunction)) {
+	}
 
-	operator ReturnType () const {
+	operator ReturnType() const {
 		return mResult;
 	}
 
 private:
 	// Exec function with no return type.
-	template<typename T>
-	typename std::enable_if<std::is_same<T, void>::value, bool>::type exec (SmartTransaction &tr) const {
+	template <typename T>
+	typename std::enable_if<std::is_same<T, void>::value, bool>::type exec(SmartTransaction &tr) const {
 		mFunction(tr);
 		return true;
 	}
 
 	// Exec function with return type.
-	template<typename T>
-	typename std::enable_if<!std::is_same<T, void>::value, T>::type exec (SmartTransaction &tr) const {
+	template <typename T>
+	typename std::enable_if<!std::is_same<T, void>::value, T>::type exec(SmartTransaction &tr) const {
 		return mFunction(tr);
 	}
 
-	static const char *getErrorCategoryAsString (soci::soci_error::error_category category) {
+	static const char *getErrorCategoryAsString(soci::soci_error::error_category category) {
 		switch (category) {
 			case soci::soci_error::connection_error:
 				return "CONNECTION ERROR";
@@ -177,8 +174,8 @@ private:
 	L_DISABLE_COPY(DbTransaction);
 };
 
-template<typename Function>
-typename DbTransaction<Function>::ReturnType operator* (DbTransactionInfo &info, Function &&function) {
+template <typename Function>
+typename DbTransaction<Function>::ReturnType operator*(DbTransactionInfo &info, Function &&function) {
 	return DbTransaction<Function>(info, std::forward<Function>(function));
 }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,8 +25,7 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-
-xmlparsing_context_t * linphone_xmlparsing_context_new(void) {
+xmlparsing_context_t *linphone_xmlparsing_context_new(void) {
 	xmlparsing_context_t *xmlCtx = (xmlparsing_context_t *)malloc(sizeof(xmlparsing_context_t));
 	if (xmlCtx != NULL) {
 		xmlCtx->doc = NULL;
@@ -68,11 +67,11 @@ int linphone_create_xml_xpath_context(xmlparsing_context_t *xml_ctx) {
 }
 
 void linphone_xml_xpath_context_set_node(xmlparsing_context_t *xml_ctx, xmlNodePtr node) {
-	//xmlXPathSetContextNode(node, xml_ctx->xpath_ctx);
+	// xmlXPathSetContextNode(node, xml_ctx->xpath_ctx);
 	xml_ctx->xpath_ctx->node = node;
 }
 
-char * linphone_get_xml_text_content(xmlparsing_context_t *xml_ctx, const char *xpath_expression) {
+char *linphone_get_xml_text_content(xmlparsing_context_t *xml_ctx, const char *xpath_expression) {
 	xmlXPathObjectPtr xpath_obj;
 	xmlChar *text = NULL;
 	int i;
@@ -94,7 +93,9 @@ char * linphone_get_xml_text_content(xmlparsing_context_t *xml_ctx, const char *
 	return (char *)text;
 }
 
-char * linphone_get_xml_attribute_text_content(xmlparsing_context_t *xml_ctx, const char *xpath_expression, const char *attribute_name) {
+char *linphone_get_xml_attribute_text_content(xmlparsing_context_t *xml_ctx,
+                                              const char *xpath_expression,
+                                              const char *attribute_name) {
 	xmlXPathObjectPtr xpath_obj;
 	xmlChar *text = NULL;
 
@@ -118,23 +119,23 @@ char * linphone_get_xml_attribute_text_content(xmlparsing_context_t *xml_ctx, co
 		xmlXPathFreeObject(xpath_obj);
 	}
 
-	return (char*)text;
+	return (char *)text;
 }
 
 void linphone_free_xml_text_content(char *text) {
 	xmlFree((xmlChar *)text);
 }
 
-xmlXPathObjectPtr linphone_get_xml_xpath_object_for_node_list(xmlparsing_context_t *xml_ctx, const char *xpath_expression) {
+xmlXPathObjectPtr linphone_get_xml_xpath_object_for_node_list(xmlparsing_context_t *xml_ctx,
+                                                              const char *xpath_expression) {
 	return xmlXPathEvalExpression((const xmlChar *)xpath_expression, xml_ctx->xpath_ctx);
 }
 
 void linphone_xml_xpath_context_init_carddav_ns(xmlparsing_context_t *xml_ctx) {
 	if (xml_ctx && xml_ctx->xpath_ctx) {
-		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar*)"d", (const xmlChar*)"DAV:");
-		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar*)"card", (const xmlChar*)"urn:ietf:params:xml:ns:carddav");
-		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar*)"x1", (const xmlChar*)"http://calendarserver.org/ns/");
+		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar *)"d", (const xmlChar *)"DAV:");
+		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar *)"card",
+		                   (const xmlChar *)"urn:ietf:params:xml:ns:carddav");
+		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar *)"x1", (const xmlChar *)"http://calendarserver.org/ns/");
 	}
 }
-
-

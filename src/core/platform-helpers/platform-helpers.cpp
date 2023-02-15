@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "logger/logger.h"
 #include "platform-helpers.h"
 
@@ -30,11 +32,12 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-GenericPlatformHelpers::GenericPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : PlatformHelpers(core), mMonitorTimer(nullptr) {
+GenericPlatformHelpers::GenericPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core)
+    : PlatformHelpers(core), mMonitorTimer(nullptr) {
 	mSharedCoreHelpers = make_shared<GenericSharedCoreHelpers>(core);
 }
 
-GenericPlatformHelpers::~GenericPlatformHelpers () {
+GenericPlatformHelpers::~GenericPlatformHelpers() {
 	if (mMonitorTimer) {
 		if (getCore()->getCCore() && getCore()->getCCore()->sal) getCore()->getCCore()->sal->cancelTimer(mMonitorTimer);
 		belle_sip_object_unref(mMonitorTimer);
@@ -42,140 +45,146 @@ GenericPlatformHelpers::~GenericPlatformHelpers () {
 	}
 }
 
+void GenericPlatformHelpers::acquireWifiLock() {
+}
 
-void GenericPlatformHelpers::acquireWifiLock () {}
+void GenericPlatformHelpers::releaseWifiLock() {
+}
 
-void GenericPlatformHelpers::releaseWifiLock () {}
+void GenericPlatformHelpers::acquireMcastLock() {
+}
 
-void GenericPlatformHelpers::acquireMcastLock () {}
+void GenericPlatformHelpers::releaseMcastLock() {
+}
 
-void GenericPlatformHelpers::releaseMcastLock () {}
+void GenericPlatformHelpers::acquireCpuLock() {
+}
 
-void GenericPlatformHelpers::acquireCpuLock () {}
+void GenericPlatformHelpers::releaseCpuLock() {
+}
 
-void GenericPlatformHelpers::releaseCpuLock () {}
-
-
-string GenericPlatformHelpers::getConfigPath () const {
+string GenericPlatformHelpers::getConfigPath() const {
 	return "";
 }
 
-string GenericPlatformHelpers::getDataPath () const {
+string GenericPlatformHelpers::getDataPath() const {
 	return "";
 }
 
-string GenericPlatformHelpers::getDataResource (const string &filename) const {
-	return getFilePath(
-		linphone_factory_get_data_resources_dir(linphone_factory_get()),
-		filename
-	);
+string GenericPlatformHelpers::getDataResource(const string &filename) const {
+	return getFilePath(linphone_factory_get_data_resources_dir(linphone_factory_get()), filename);
 }
 
-string GenericPlatformHelpers::getImageResource (const string &filename) const {
-	return getFilePath(
-		linphone_factory_get_image_resources_dir(linphone_factory_get()),
-		filename
-	);
+string GenericPlatformHelpers::getImageResource(const string &filename) const {
+	return getFilePath(linphone_factory_get_image_resources_dir(linphone_factory_get()), filename);
 }
 
-string GenericPlatformHelpers::getRingResource (const string &filename) const {
-	return getFilePath(
-		linphone_factory_get_ring_resources_dir(linphone_factory_get()),
-		filename
-	);
+string GenericPlatformHelpers::getRingResource(const string &filename) const {
+	return getFilePath(linphone_factory_get_ring_resources_dir(linphone_factory_get()), filename);
 }
 
-string GenericPlatformHelpers::getSoundResource (const string &filename) const {
-	return getFilePath(
-		linphone_factory_get_sound_resources_dir(linphone_factory_get()),
-		filename
-	);
+string GenericPlatformHelpers::getSoundResource(const string &filename) const {
+	return getFilePath(linphone_factory_get_sound_resources_dir(linphone_factory_get()), filename);
 }
 
-void *GenericPlatformHelpers::getPathContext () {
+void *GenericPlatformHelpers::getPathContext() {
 	return nullptr;
 }
 
-void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
+void GenericPlatformHelpers::setVideoPreviewWindow(BCTBX_UNUSED(void *windowId)) {
+}
 
-void GenericPlatformHelpers::setVideoWindow (void *windowId) {}
+void GenericPlatformHelpers::setVideoWindow(BCTBX_UNUSED(void *widowId)) {
+}
 
-void GenericPlatformHelpers::setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) {}
+void GenericPlatformHelpers::setParticipantDeviceVideoWindow(
+    BCTBX_UNUSED(const LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void *windowId)) {
+}
 
-void GenericPlatformHelpers::resizeVideoPreview (int width, int height) {}
+void GenericPlatformHelpers::resizeVideoPreview(BCTBX_UNUSED(int width), BCTBX_UNUSED(int height)) {
+}
 
-bool GenericPlatformHelpers::isNetworkReachable () {
+bool GenericPlatformHelpers::isNetworkReachable() {
 	return mNetworkReachable;
 }
 
-void GenericPlatformHelpers::updateNetworkReachability() { }
+void GenericPlatformHelpers::updateNetworkReachability() {
+}
 
-bool GenericPlatformHelpers::isActiveNetworkWifiOnlyCompliant () const {
+bool GenericPlatformHelpers::isActiveNetworkWifiOnlyCompliant() const {
 	return false;
 }
 
-void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
+void GenericPlatformHelpers::onWifiOnlyEnabled(BCTBX_UNUSED(bool enabled)) {
+}
 
-void GenericPlatformHelpers::setDnsServers () {}
+void GenericPlatformHelpers::setDnsServers() {
+}
 
-void GenericPlatformHelpers::setHttpProxy (const string &host, int port) {}
+void GenericPlatformHelpers::setHttpProxy(BCTBX_UNUSED(const string &host), BCTBX_UNUSED(int port)) {
+}
 
-PlatformHelpers::NetworkType GenericPlatformHelpers::getNetworkType()const{
+PlatformHelpers::NetworkType GenericPlatformHelpers::getNetworkType() const {
 	return NetworkType::Unknown;
 }
 
-string GenericPlatformHelpers::getWifiSSID() { return mCurrentSSID; }
+string GenericPlatformHelpers::getWifiSSID() {
+	return mCurrentSSID;
+}
 
-void GenericPlatformHelpers::setWifiSSID(const string &ssid) { mCurrentSSID = ssid; }
+void GenericPlatformHelpers::setWifiSSID(const string &ssid) {
+	mCurrentSSID = ssid;
+}
 
-void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
+void GenericPlatformHelpers::setNetworkReachable(bool reachable) {
 	mNetworkReachable = reachable;
 	linphone_core_set_network_reachable_internal(getCore()->getCCore(), reachable);
 }
 
-bool GenericPlatformHelpers::startNetworkMonitoring() { return true; }
+bool GenericPlatformHelpers::startNetworkMonitoring() {
+	return true;
+}
 
-void GenericPlatformHelpers::stopNetworkMonitoring() {}
+void GenericPlatformHelpers::stopNetworkMonitoring() {
+}
 
-void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
+void GenericPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
 
 	if (!mMonitorTimer) {
-		mMonitorTimer = getCore()->getCCore()->sal->createTimer(
-			monitorTimerExpired,
-			this,
-			DefaultMonitorTimeout * 1000,
-			"monitor network timeout"
-		);
+		mMonitorTimer = getCore()->getCCore()->sal->createTimer(monitorTimerExpired, this, DefaultMonitorTimeout * 1000,
+		                                                        "monitor network timeout");
 	} else {
-		belle_sip_source_set_timeout_int64(mMonitorTimer, (int64_t) DefaultMonitorTimeout * 1000);
+		belle_sip_source_set_timeout_int64(mMonitorTimer, (int64_t)DefaultMonitorTimeout * 1000);
 	}
 
 	// Get ip right now to avoid waiting for 5s
 	monitorTimerExpired(this, 0);
 }
 
-void GenericPlatformHelpers::onLinphoneCoreStop () {}
+void GenericPlatformHelpers::onLinphoneCoreStop() {
+}
 
-void GenericPlatformHelpers::startAudioForEchoTestOrCalibration () { }
+void GenericPlatformHelpers::startAudioForEchoTestOrCalibration() {
+}
 
-void GenericPlatformHelpers::stopAudioForEchoTestOrCalibration () { }
+void GenericPlatformHelpers::stopAudioForEchoTestOrCalibration() {
+}
 
-bool GenericPlatformHelpers::checkIpAddressChanged(){
+bool GenericPlatformHelpers::checkIpAddressChanged() {
 	LinphoneCore *core = getCore()->getCCore();
 	bool ipv6Enabled = linphone_core_ipv6_enabled(core);
 
 	char newIp4[LINPHONE_IPADDR_SIZE] = {0};
 	char newIp6[LINPHONE_IPADDR_SIZE] = {0};
 	linphone_core_get_local_ip(core, AF_INET, nullptr, newIp4);
-	if (ipv6Enabled)
-		linphone_core_get_local_ip(core, AF_INET6, nullptr, newIp6);
+	if (ipv6Enabled) linphone_core_get_local_ip(core, AF_INET6, nullptr, newIp6);
 
-	bool status = strcmp(newIp6,"::1") != 0 || strcmp(newIp4,"127.0.0.1") != 0;
+	bool status = strcmp(newIp6, "::1") != 0 || strcmp(newIp4, "127.0.0.1") != 0;
 	bool ipChanged = false;
-	
-	if (status && core->network_last_status){
-		
+
+	if (status && core->network_last_status) {
+
 		// Check for IP address changes:
 		if (strcmp(newIp4, core->localip4) != 0) {
 			lInfo() << "IPv4 address change detected";
@@ -195,14 +204,14 @@ bool GenericPlatformHelpers::checkIpAddressChanged(){
 	return ipChanged;
 }
 
-int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
+int GenericPlatformHelpers::monitorTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
 	LinphoneCore *core = helper->getCore()->getCCore();
-	
-	bool status = strcmp(core->localip6,"::1") != 0 || strcmp(core->localip4,"127.0.0.1") != 0;
+
+	bool status = strcmp(core->localip6, "::1") != 0 || strcmp(core->localip4, "127.0.0.1") != 0;
 	bool ipChanged = helper->checkIpAddressChanged();
-	
-	if (ipChanged){
+
+	if (ipChanged) {
 		helper->setNetworkReachable(false);
 		core->network_last_status = FALSE;
 	}
@@ -215,7 +224,7 @@ int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revent
 	return BELLE_SIP_CONTINUE;
 }
 
-string GenericPlatformHelpers::getDownloadPath () {
+string GenericPlatformHelpers::getDownloadPath() {
 	return "";
 }
 

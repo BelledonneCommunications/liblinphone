@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,31 +31,31 @@ class HeaderParamPrivate;
 
 class LINPHONE_PUBLIC HeaderParam : public ClonableObject {
 public:
-	explicit HeaderParam (const std::string &header = "");
-	HeaderParam (const std::string &name, const std::string &value);
-	HeaderParam (const HeaderParam &other);
+	explicit HeaderParam(const std::string &header = "");
+	HeaderParam(const std::string &name, const std::string &value);
+	HeaderParam(const HeaderParam &other);
 
-	HeaderParam* clone () const override {
+	HeaderParam *clone() const override {
 		return new HeaderParam(*this);
 	}
 
-	HeaderParam &operator= (const HeaderParam &other);
+	HeaderParam &operator=(const HeaderParam &other);
 
-	bool operator== (const HeaderParam &other) const;
-	bool operator!= (const HeaderParam &other) const;
+	bool operator==(const HeaderParam &other) const;
+	bool operator!=(const HeaderParam &other) const;
 
 	// Delete these operators to prevent putting complicated content-type strings
 	// in the code. Instead define static const HeaderParam objects below.
-	bool operator== (const std::string &other) const = delete;
-	bool operator!= (const std::string &other) const = delete;
+	bool operator==(const std::string &other) const = delete;
+	bool operator!=(const std::string &other) const = delete;
 
-	const std::string &getName () const;
-	bool setName (const std::string &name);
+	const std::string &getName() const;
+	bool setName(const std::string &name);
 
-	const std::string &getValue () const;
-	bool setValue (const std::string &value);
+	const std::string &getValue() const;
+	bool setValue(const std::string &value);
 
-	std::string asString () const;
+	std::string asString() const;
 
 private:
 	L_DECLARE_PRIVATE(HeaderParam);

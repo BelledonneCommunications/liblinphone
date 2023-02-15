@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,54 +19,55 @@
  */
 
 #include "linphone/api/c-audio-device.h"
-#include "call/audio-device/audio-device.h"
 #include "c-wrapper/c-wrapper.h"
+#include "call/audio-device/audio-device.h"
 
 using namespace LinphonePrivate;
 
 const char *linphone_audio_device_get_id(const LinphoneAudioDevice *audioDevice) {
-    if (audioDevice) {
-        return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getId());
-    }
-    return NULL;
+	if (audioDevice) {
+		return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getId());
+	}
+	return NULL;
 }
 
 const char *linphone_audio_device_get_device_name(const LinphoneAudioDevice *audioDevice) {
-    if (audioDevice) {
-        return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getDeviceName());
-    }
-    return NULL;
+	if (audioDevice) {
+		return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getDeviceName());
+	}
+	return NULL;
 }
 
 const char *linphone_audio_device_get_driver_name(const LinphoneAudioDevice *audioDevice) {
-    if (audioDevice) {
-        return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getDriverName());
-    }
-    return NULL;
+	if (audioDevice) {
+		return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getDriverName());
+	}
+	return NULL;
 }
 
 LinphoneAudioDeviceCapabilities linphone_audio_device_get_capabilities(const LinphoneAudioDevice *audioDevice) {
-    return static_cast<LinphoneAudioDeviceCapabilities>(AudioDevice::toCpp(audioDevice)->getCapabilities());
+	return static_cast<LinphoneAudioDeviceCapabilities>(AudioDevice::toCpp(audioDevice)->getCapabilities());
 }
 
 LinphoneAudioDeviceType linphone_audio_device_get_type(const LinphoneAudioDevice *audioDevice) {
-    return static_cast<LinphoneAudioDeviceType>(AudioDevice::toCpp(audioDevice)->getType());
+	return static_cast<LinphoneAudioDeviceType>(AudioDevice::toCpp(audioDevice)->getType());
 }
 
-bool_t linphone_audio_device_has_capability(const LinphoneAudioDevice *audioDevice, const LinphoneAudioDeviceCapabilities capability) {
+bool_t linphone_audio_device_has_capability(const LinphoneAudioDevice *audioDevice,
+                                            const LinphoneAudioDeviceCapabilities capability) {
 	return static_cast<bool_t>(linphone_audio_device_get_capabilities(audioDevice) & capability);
 }
 
 LinphoneAudioDevice *linphone_audio_device_ref(LinphoneAudioDevice *audioDevice) {
-    if (audioDevice) {
-        AudioDevice::toCpp(audioDevice)->ref();
-        return audioDevice;
-    }
-    return NULL;
+	if (audioDevice) {
+		AudioDevice::toCpp(audioDevice)->ref();
+		return audioDevice;
+	}
+	return NULL;
 }
 
 void linphone_audio_device_unref(LinphoneAudioDevice *audioDevice) {
-    if (audioDevice) {
-        AudioDevice::toCpp(audioDevice)->unref();
-    }
+	if (audioDevice) {
+		AudioDevice::toCpp(audioDevice)->unref();
+	}
 }

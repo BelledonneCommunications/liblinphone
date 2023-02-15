@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "sal_impl.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "sal_impl.h"
 
 inline OrtpRtcpXrStatSummaryFlag operator|=(OrtpRtcpXrStatSummaryFlag a, OrtpRtcpXrStatSummaryFlag b) {
 	int ia = static_cast<int>(a);
@@ -34,7 +34,9 @@ void add_rtcp_fb_trr_int_attribute(belle_sdp_media_description_t *media_desc, in
 	belle_sdp_media_description_add_attribute(media_desc, BELLE_SDP_ATTRIBUTE(attribute));
 }
 
-void add_rtcp_fb_ack_attribute(belle_sdp_media_description_t *media_desc, int8_t id, belle_sdp_rtcp_fb_val_param_t param) {
+void add_rtcp_fb_ack_attribute(belle_sdp_media_description_t *media_desc,
+                               int8_t id,
+                               belle_sdp_rtcp_fb_val_param_t param) {
 	belle_sdp_rtcp_fb_attribute_t *attribute = belle_sdp_rtcp_fb_attribute_new();
 	belle_sdp_rtcp_fb_attribute_set_id(attribute, id);
 	belle_sdp_rtcp_fb_attribute_set_type(attribute, BELLE_SDP_RTCP_FB_ACK);
@@ -42,7 +44,9 @@ void add_rtcp_fb_ack_attribute(belle_sdp_media_description_t *media_desc, int8_t
 	belle_sdp_media_description_add_attribute(media_desc, BELLE_SDP_ATTRIBUTE(attribute));
 }
 
-void add_rtcp_fb_nack_attribute(belle_sdp_media_description_t *media_desc, int8_t id, belle_sdp_rtcp_fb_val_param_t param) {
+void add_rtcp_fb_nack_attribute(belle_sdp_media_description_t *media_desc,
+                                int8_t id,
+                                belle_sdp_rtcp_fb_val_param_t param) {
 	belle_sdp_rtcp_fb_attribute_t *attribute = belle_sdp_rtcp_fb_attribute_new();
 	belle_sdp_rtcp_fb_attribute_set_id(attribute, id);
 	belle_sdp_rtcp_fb_attribute_set_type(attribute, BELLE_SDP_RTCP_FB_NACK);
@@ -50,7 +54,9 @@ void add_rtcp_fb_nack_attribute(belle_sdp_media_description_t *media_desc, int8_
 	belle_sdp_media_description_add_attribute(media_desc, BELLE_SDP_ATTRIBUTE(attribute));
 }
 
-void add_rtcp_fb_ccm_attribute(belle_sdp_media_description_t *media_desc, int8_t id, belle_sdp_rtcp_fb_val_param_t param) {
+void add_rtcp_fb_ccm_attribute(belle_sdp_media_description_t *media_desc,
+                               int8_t id,
+                               belle_sdp_rtcp_fb_val_param_t param) {
 	belle_sdp_rtcp_fb_attribute_t *attribute = belle_sdp_rtcp_fb_attribute_new();
 	belle_sdp_rtcp_fb_attribute_set_id(attribute, id);
 	belle_sdp_rtcp_fb_attribute_set_type(attribute, BELLE_SDP_RTCP_FB_CCM);
@@ -58,20 +64,27 @@ void add_rtcp_fb_ccm_attribute(belle_sdp_media_description_t *media_desc, int8_t
 	belle_sdp_media_description_add_attribute(media_desc, BELLE_SDP_ATTRIBUTE(attribute));
 }
 
-belle_sdp_attribute_t * create_rtcp_xr_attribute(const OrtpRtcpXrConfiguration *config) {
+belle_sdp_attribute_t *create_rtcp_xr_attribute(const OrtpRtcpXrConfiguration *config) {
 	belle_sdp_rtcp_xr_attribute_t *attribute = belle_sdp_rtcp_xr_attribute_new();
 	if (config->rcvr_rtt_mode != OrtpRtcpXrRcvrRttNone) {
-		if (config->rcvr_rtt_mode == OrtpRtcpXrRcvrRttAll) belle_sdp_rtcp_xr_attribute_set_rcvr_rtt_mode(attribute, "all");
-		else if (config->rcvr_rtt_mode == OrtpRtcpXrRcvrRttSender) belle_sdp_rtcp_xr_attribute_set_rcvr_rtt_mode(attribute, "sender");
+		if (config->rcvr_rtt_mode == OrtpRtcpXrRcvrRttAll)
+			belle_sdp_rtcp_xr_attribute_set_rcvr_rtt_mode(attribute, "all");
+		else if (config->rcvr_rtt_mode == OrtpRtcpXrRcvrRttSender)
+			belle_sdp_rtcp_xr_attribute_set_rcvr_rtt_mode(attribute, "sender");
 		belle_sdp_rtcp_xr_attribute_set_rcvr_rtt_max_size(attribute, config->rcvr_rtt_max_size);
 	}
 	belle_sdp_rtcp_xr_attribute_set_stat_summary(attribute, (config->stat_summary_enabled == TRUE));
 	if (config->stat_summary_enabled == TRUE) {
-		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryLoss) belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "loss");
-		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryDup) belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "dup");
-		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryJitt) belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "jitt");
-		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryTTL) belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "TTL");
-		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryHL) belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "HL");
+		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryLoss)
+			belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "loss");
+		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryDup)
+			belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "dup");
+		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryJitt)
+			belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "jitt");
+		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryTTL)
+			belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "TTL");
+		if (config->stat_summary_flags & OrtpRtcpXrStatSummaryHL)
+			belle_sdp_rtcp_xr_attribute_add_stat_summary_flag(attribute, "HL");
 	}
 	belle_sdp_rtcp_xr_attribute_set_voip_metrics(attribute, (config->voip_metrics_enabled == TRUE));
 	return BELLE_SDP_ATTRIBUTE(attribute);
@@ -103,7 +116,8 @@ static void sdp_parse_rtcp_xr_parameters(const belle_sdp_attribute_t *attribute,
 		config->stat_summary_enabled = (belle_sdp_rtcp_xr_attribute_has_stat_summary(xr_attr) != 0);
 		if (config->stat_summary_enabled) {
 			const belle_sip_list_t *stat_summary_flag_it;
-			for (stat_summary_flag_it = belle_sdp_rtcp_xr_attribute_get_stat_summary_flags(xr_attr); stat_summary_flag_it != NULL; stat_summary_flag_it = stat_summary_flag_it->next ) {
+			for (stat_summary_flag_it = belle_sdp_rtcp_xr_attribute_get_stat_summary_flags(xr_attr);
+			     stat_summary_flag_it != NULL; stat_summary_flag_it = stat_summary_flag_it->next) {
 				const char *flag = (const char *)stat_summary_flag_it->data;
 				if (flag != NULL) {
 					if (strcasecmp(flag, "loss") == 0) config->stat_summary_flags |= OrtpRtcpXrStatSummaryLoss;
@@ -119,13 +133,14 @@ static void sdp_parse_rtcp_xr_parameters(const belle_sdp_attribute_t *attribute,
 	}
 }
 
-void sdp_parse_session_rtcp_xr_parameters(const belle_sdp_session_description_t *session_desc, OrtpRtcpXrConfiguration *config) {
+void sdp_parse_session_rtcp_xr_parameters(const belle_sdp_session_description_t *session_desc,
+                                          OrtpRtcpXrConfiguration *config) {
 	const belle_sdp_attribute_t *attribute = belle_sdp_session_description_get_attribute(session_desc, "rtcp-xr");
 	sdp_parse_rtcp_xr_parameters(attribute, config);
 }
 
-void sdp_parse_media_rtcp_xr_parameters(const belle_sdp_media_description_t *media_desc, OrtpRtcpXrConfiguration *config) {
+void sdp_parse_media_rtcp_xr_parameters(const belle_sdp_media_description_t *media_desc,
+                                        OrtpRtcpXrConfiguration *config) {
 	const belle_sdp_attribute_t *attribute = belle_sdp_media_description_get_attribute(media_desc, "rtcp-xr");
 	sdp_parse_rtcp_xr_parameters(attribute, config);
 }
-

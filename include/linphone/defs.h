@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,7 @@
 #ifndef LINPHONE_DEFS_H_
 #define LINPHONE_DEFS_H_
 
-
 #include "mediastreamer2/mscommon.h"
-
 
 #define LINPHONE_IPADDR_SIZE 64
 #define LINPHONE_HOSTNAME_SIZE 128
@@ -34,9 +32,9 @@
 #define LINPHONE_PUBLIC
 #else
 #ifdef LINPHONE_EXPORTS
-#define LINPHONE_PUBLIC	__declspec(dllexport)
+#define LINPHONE_PUBLIC __declspec(dllexport)
 #else
-#define LINPHONE_PUBLIC	__declspec(dllimport)
+#define LINPHONE_PUBLIC __declspec(dllimport)
 #endif
 #endif
 #else
@@ -44,10 +42,8 @@
 #endif
 #endif
 
-
 #ifndef LINPHONE_DEPRECATED
 #define LINPHONE_DEPRECATED MS2_DEPRECATED
 #endif
-
 
 #endif /* LINPHONE_DEFS_H_ */

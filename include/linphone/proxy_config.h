@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,9 @@
 #ifndef LINPHONE_PROXY_CONFIG_H
 #define LINPHONE_PROXY_CONFIG_H
 
-#include "linphone/types.h"
-#include "linphone/sipsetup.h"
 #include "linphone/api/c-push-notification-config.h"
+#include "linphone/sipsetup.h"
+#include "linphone/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,33 +32,33 @@ extern "C" {
 /**
  * @addtogroup proxies
  * @{
-**/
+ **/
 
 /**
  * Acquire a reference to the proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The same proxy config. @notnil
-**/
+ **/
 LINPHONE_PUBLIC LinphoneProxyConfig *linphone_proxy_config_ref(LinphoneProxyConfig *proxy_config);
 
 /**
  * Release reference to the proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_unref(LinphoneProxyConfig *proxy_config);
 
 /**
  * Retrieve the user pointer associated with the proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The user pointer associated with the proxy config. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void *linphone_proxy_config_get_user_data(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Assign a user pointer to the proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param user_data The user pointer to associate with the proxy config. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_user_data(LinphoneProxyConfig *proxy_config, void *user_data);
 
 /**
@@ -68,12 +68,13 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_user_data(LinphoneProxyConfig *pr
  * - IP address: sip:87.98.157.38
  * - IP address with port: sip:87.98.157.38:5062
  * - hostnames : sip:sip.example.net
- * 
+ *
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param server_address the proxy address to set. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_server_addr(LinphoneProxyConfig *proxy_config, const char *server_address);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_server_addr(LinphoneProxyConfig *proxy_config,
+                                                                     const char *server_address);
 
 /**
  * Sets the user identity as a SIP address.
@@ -84,8 +85,9 @@ LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_server_addr(LinphonePro
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param identity the #LinphoneAddress of the identity to set @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *proxy_config, const LinphoneAddress *identity);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *proxy_config,
+                                                                          const LinphoneAddress *identity);
 
 /**
  * Sets a list of SIP route.
@@ -95,15 +97,16 @@ LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_identity_address(Linpho
  * @param routes A \bctbx_list{const char *} of routes @maybenil
  * @return -1 if routes are invalid, 0 otherwise.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_routes(LinphoneProxyConfig *proxy_config, const bctbx_list_t *routes);
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_routes(LinphoneProxyConfig *proxy_config,
+                                                                const bctbx_list_t *routes);
 
 /**
  * Sets the registration expiration time in seconds.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param expires the expiration time to set
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_expires(LinphoneProxyConfig *proxy_config, int expires);
 
 #define linphone_proxy_config_expires linphone_proxy_config_set_expires
@@ -130,7 +133,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_enable_register(LinphoneProxyConfig *
  * linphone_proxy_config_done() to commit the changes.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_edit(LinphoneProxyConfig *proxy_config);
 
 /**
@@ -138,7 +141,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_edit(LinphoneProxyConfig *proxy_confi
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return 0 if successful, -1 otherwise
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_done(LinphoneProxyConfig *proxy_config);
 
 /**
@@ -173,7 +176,7 @@ LINPHONE_PUBLIC int linphone_proxy_config_get_publish_expires(const LinphoneProx
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param enable TRUE to replace + by the international prefix, FALSE otherwise.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_dial_escape_plus(LinphoneProxyConfig *proxy_config, bool_t enable);
 
 /**
@@ -183,10 +186,10 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_dial_escape_plus(LinphoneProxyCon
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param prefix the prefix to set (withouth the +) @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_dial_prefix(LinphoneProxyConfig *proxy_config, const char *prefix);
 
- /**
+/**
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param enable True to store quality statistics and send them to the collector, false to disable it.
@@ -202,7 +205,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_enable_quality_reporting(LinphoneProx
  */
 LINPHONE_PUBLIC bool_t linphone_proxy_config_quality_reporting_enabled(LinphoneProxyConfig *proxy_config);
 
- /**
+/**
  * Set the route of the collector end-point when using quality reporting. This SIP address
  * should be used on server-side to process packets directly before discarding packets. Collector address
  * should be a non existing account and will not receive any messages.
@@ -211,9 +214,10 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_quality_reporting_enabled(LinphoneP
  * @param collector route of the collector end-point, if NULL PUBLISH will be sent to the proxy domain. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC void linphone_proxy_config_set_quality_reporting_collector(LinphoneProxyConfig *proxy_config, const char *collector);
+LINPHONE_PUBLIC void linphone_proxy_config_set_quality_reporting_collector(LinphoneProxyConfig *proxy_config,
+                                                                           const char *collector);
 
- /**
+/**
  * Get the route of the collector end-point when using quality reporting. This SIP address
  * should be used on server-side to process packets directly before discarding packets. Collector address
  * should be a non existing account and will not receive any messages.
@@ -222,7 +226,8 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_quality_reporting_collector(Linph
  * @return The SIP address of the collector end-point. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC const char *linphone_proxy_config_get_quality_reporting_collector(const LinphoneProxyConfig *proxy_config);
+LINPHONE_PUBLIC const char *
+linphone_proxy_config_get_quality_reporting_collector(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Set the interval between 2 interval reports sending when using quality reporting. If call exceed interval size, an
@@ -232,7 +237,8 @@ LINPHONE_PUBLIC const char *linphone_proxy_config_get_quality_reporting_collecto
  * @param interval The interval in seconds, 0 means interval reports are disabled.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC void linphone_proxy_config_set_quality_reporting_interval(LinphoneProxyConfig *proxy_config, int interval);
+LINPHONE_PUBLIC void linphone_proxy_config_set_quality_reporting_interval(LinphoneProxyConfig *proxy_config,
+                                                                          int interval);
 
 /**
  * Get the interval between interval reports when using quality reporting.
@@ -247,7 +253,7 @@ LINPHONE_PUBLIC int linphone_proxy_config_get_quality_reporting_interval(Linphon
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The #LinphoneRegistrationState of the proxy config.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC LinphoneRegistrationState linphone_proxy_config_get_state(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -255,7 +261,7 @@ LINPHONE_PUBLIC LinphoneRegistrationState linphone_proxy_config_get_state(const 
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The domain name of the proxy config. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_proxy_config_get_domain(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -263,7 +269,7 @@ LINPHONE_PUBLIC const char *linphone_proxy_config_get_domain(const LinphoneProxy
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The realm of the proxy config. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_proxy_config_get_realm(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -271,8 +277,8 @@ LINPHONE_PUBLIC const char *linphone_proxy_config_get_realm(const LinphoneProxyC
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param realm New realm value. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC void linphone_proxy_config_set_realm(LinphoneProxyConfig *proxy_config, const char * realm);
+ **/
+LINPHONE_PUBLIC void linphone_proxy_config_set_realm(LinphoneProxyConfig *proxy_config, const char *realm);
 
 /**
  * Gets the list of the routes set for this proxy config.
@@ -280,22 +286,23 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_realm(LinphoneProxyConfig *proxy_
  * @return The list of routes as string. \bctbx_list{const char *} @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC const bctbx_list_t* linphone_proxy_config_get_routes(const LinphoneProxyConfig *proxy_config);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_proxy_config_get_routes(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Gets the identity addres of the proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return the SIP identity that belongs to this proxy configuration. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_proxy_config_get_identity_address(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *
+linphone_proxy_config_get_identity_address(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Gets if the PUBLISH is enabled.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return TRUE if PUBLISH request is enabled for this proxy.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_proxy_config_publish_enabled(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -303,8 +310,8 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_publish_enabled(const LinphoneProxy
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return the proxy's SIP address. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC	const char *linphone_proxy_config_get_server_addr(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_server_addr(const LinphoneProxyConfig *proxy_config);
 
 #define linphone_proxy_config_get_addr linphone_proxy_config_get_server_addr
 
@@ -313,7 +320,7 @@ LINPHONE_PUBLIC	const char *linphone_proxy_config_get_server_addr(const Linphone
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return the duration of registration.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC int linphone_proxy_config_get_expires(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -321,7 +328,7 @@ LINPHONE_PUBLIC int linphone_proxy_config_get_expires(const LinphoneProxyConfig 
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return TRUE if registration to the proxy is enabled.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_proxy_config_register_enabled(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -329,18 +336,18 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_register_enabled(const LinphoneProx
  * This is useful if for example you resuming from suspend, thus IP address may have changed.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_refresh_register(LinphoneProxyConfig *proxy_config);
 
 /**
  * Prevent a proxy config from refreshing its registration.
  * This is useful to let registrations to expire naturally (or) when the application wants to keep control on when
  * refreshes are sent.
- * However, linphone_core_set_network_reachable(lc,TRUE) will always request the proxy configs to refresh their registrations.
- * The refreshing operations can be resumed with linphone_proxy_config_refresh_register().
+ * However, linphone_core_set_network_reachable(lc,TRUE) will always request the proxy configs to refresh their
+ *registrations. The refreshing operations can be resumed with linphone_proxy_config_refresh_register().
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_pause_register(LinphoneProxyConfig *proxy_config);
 
 /**
@@ -348,61 +355,68 @@ LINPHONE_PUBLIC void linphone_proxy_config_pause_register(LinphoneProxyConfig *p
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return a #LinphoneAddress correspong to the contact address of the proxy config. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC const LinphoneAddress* linphone_proxy_config_get_contact(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_proxy_config_get_contact(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Returns the contact parameters.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return previously set contact parameters. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC const char *linphone_proxy_config_get_contact_parameters(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Set optional contact parameters that will be added to the contact information sent in the registration.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @param contact_params a string contaning the additional parameters in text form, like "myparam=something;myparam2=something_else" @maybenil
+ * @param contact_params a string contaning the additional parameters in text form, like
+ *"myparam=something;myparam2=something_else" @maybenil
  *
- * The main use case for this function is provide the proxy additional information regarding the user agent, like for example unique identifier or apple push id.
- * As an example, the contact address in the SIP register sent will look like <sip:joe@15.128.128.93:50421>;apple-push-id=43143-DFE23F-2323-FA2232.
+ * The main use case for this function is provide the proxy additional information regarding the user agent, like for
+ *example unique identifier or apple push id. As an example, the contact address in the SIP register sent will look like
+ *<sip:joe@15.128.128.93:50421>;apple-push-id=43143-DFE23F-2323-FA2232.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC void linphone_proxy_config_set_contact_parameters(LinphoneProxyConfig *proxy_config, const char *contact_params);
+ **/
+LINPHONE_PUBLIC void linphone_proxy_config_set_contact_parameters(LinphoneProxyConfig *proxy_config,
+                                                                  const char *contact_params);
 
 /**
- * Set optional contact parameters that will be added to the contact information sent in the registration, inside the URI.
+ * Set optional contact parameters that will be added to the contact information sent in the registration, inside the
+ *URI.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @param contact_uri_params a string containing the additional parameters in text form, like "myparam=something;myparam2=something_else" @maybenil
+ * @param contact_uri_params a string containing the additional parameters in text form, like
+ *"myparam=something;myparam2=something_else" @maybenil
  *
- * The main use case for this function is provide the proxy additional information regarding the user agent, like for example unique identifier or apple push id.
- * As an example, the contact address in the SIP register sent will look like <sip:joe@15.128.128.93:50421;apple-push-id=43143-DFE23F-2323-FA2232>.
+ * The main use case for this function is provide the proxy additional information regarding the user agent, like for
+ *example unique identifier or apple push id. As an example, the contact address in the SIP register sent will look like
+ *<sip:joe@15.128.128.93:50421;apple-push-id=43143-DFE23F-2323-FA2232>.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC void linphone_proxy_config_set_contact_uri_parameters(LinphoneProxyConfig *proxy_config, const char *contact_uri_params);
+ **/
+LINPHONE_PUBLIC void linphone_proxy_config_set_contact_uri_parameters(LinphoneProxyConfig *proxy_config,
+                                                                      const char *contact_uri_params);
 
 /**
  * Returns the contact URI parameters.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return previously set contact URI parameters. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC const char* linphone_proxy_config_get_contact_uri_parameters(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_contact_uri_parameters(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Get the #LinphoneCore object to which is associated the #LinphoneProxyConfig.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The #LinphoneCore object to which is associated the #LinphoneProxyConfig. @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC LinphoneCore * linphone_proxy_config_get_core(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC LinphoneCore *linphone_proxy_config_get_core(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Returns whether or not the + should be replaced by 00.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return whether liblinphone should replace "+" by "00" in dialed numbers (passed to #linphone_core_invite()).
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_proxy_config_get_dial_escape_plus(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -410,15 +424,15 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_get_dial_escape_plus(const Linphone
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return dialing prefix. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC	const char * linphone_proxy_config_get_dial_prefix(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_dial_prefix(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Get the reason why registration failed when the proxy config state is LinphoneRegistrationFailed.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The #LinphoneReason why registration failed for this proxy config.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC LinphoneReason linphone_proxy_config_get_error(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -426,7 +440,7 @@ LINPHONE_PUBLIC LinphoneReason linphone_proxy_config_get_error(const LinphonePro
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The #LinphoneErrorInfo explaining why registration failed for this proxy config. @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_proxy_config_get_error_info(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -434,8 +448,8 @@ LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_proxy_config_get_error_info(co
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The transport as a string (I.E udp, tcp, tls, dtls) @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC const char* linphone_proxy_config_get_transport(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_transport(const LinphoneProxyConfig *proxy_config);
 
 LINPHONE_PUBLIC void linphone_proxy_config_set_sip_setup(LinphoneProxyConfig *proxy_config, const char *type);
 
@@ -447,28 +461,34 @@ LINPHONE_PUBLIC SipSetup *linphone_proxy_config_get_sip_setup(LinphoneProxyConfi
  * Normalize a human readable phone number into a basic string. 888-444-222 becomes 888444222
  * or +33888444222 depending on the #LinphoneProxyConfig object.
  * This function will always generate a normalized username if input is a phone number.
- * @param proxy_config #LinphoneProxyConfig object containing country code and/or escape symbol. If NULL passed, will use default configuration. @maybenil
+ * @param proxy_config #LinphoneProxyConfig object containing country code and/or escape symbol. If NULL passed, will
+ * use default configuration. @maybenil
  * @param username the string to parse @notnil
- * @return NULL if input is an invalid phone number, normalized phone number from username input otherwise. @maybenil @tobefreed
+ * @return NULL if input is an invalid phone number, normalized phone number from username input otherwise. @maybenil
+ * @tobefreed
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-*/
-LINPHONE_PUBLIC char* linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy_config, const char *username);
+ */
+LINPHONE_PUBLIC char *linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy_config,
+                                                                   const char *username);
 
 /**
  * Normalize a human readable sip uri into a fully qualified LinphoneAddress.
  * A sip address should look like DisplayName \<sip:username\@domain:port\> .
  * Basically this function performs the following tasks
  * - if a phone number is entered, prepend country prefix and eventually escape the '+' by 00 of the proxy config.
- * - if no domain part is supplied, append the domain name of the proxy config. Returns NULL if no proxy is provided at this point.
+ * - if no domain part is supplied, append the domain name of the proxy config. Returns NULL if no proxy is provided at
+ * this point.
  * - if no sip: is present, prepend it.
  *
  * The result is a syntactically correct SIP address.
- * @param proxy_config #LinphoneProxyConfig object containing country code, escape symbol and/or domain name. Can be NULL if domain is already provided. @maybenil
+ * @param proxy_config #LinphoneProxyConfig object containing country code, escape symbol and/or domain name. Can be
+ * NULL if domain is already provided. @maybenil
  * @param username the string to parse @notnil
  * @return NULL if invalid input, normalized sip address otherwise. @maybenil @tobefreed
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-*/
-LINPHONE_PUBLIC LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *proxy_config, const char *username);
+ */
+LINPHONE_PUBLIC LinphoneAddress *linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *proxy_config,
+                                                                         const char *username);
 
 /**
  * Set default privacy policy for all calls routed through this proxy.
@@ -494,7 +514,8 @@ LINPHONE_PUBLIC LinphonePrivacyMask linphone_proxy_config_get_privacy(const Linp
  * @warning That function isn't implemented yet.
  * @donotwrap
  * */
-LINPHONE_PUBLIC void linphone_proxy_config_set_file_transfer_server(LinphoneProxyConfig *proxy_config, const char * server_url);
+LINPHONE_PUBLIC void linphone_proxy_config_set_file_transfer_server(LinphoneProxyConfig *proxy_config,
+                                                                    const char *server_url);
 
 /**
  * Get the http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml
@@ -504,7 +525,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_file_transfer_server(LinphoneProx
  * @warning That function isn't implemented yet.
  * @donotwrap
  * */
-LINPHONE_PUBLIC const char* linphone_proxy_config_get_file_transfer_server(const LinphoneProxyConfig *proxy_config);
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_file_transfer_server(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Indicates whether AVPF/SAVPF is being used for calls using this proxy config.
@@ -533,17 +554,19 @@ LINPHONE_PUBLIC uint8_t linphone_proxy_config_get_avpf_rr_interval(const Linphon
 /**
  * Get enablement status of RTCP feedback (also known as AVPF profile).
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @return the enablement mode, which can be #LinphoneAVPFDefault (use LinphoneCore's mode), #LinphoneAVPFEnabled (avpf is enabled), or #LinphoneAVPFDisabled (disabled).
+ * @return the enablement mode, which can be #LinphoneAVPFDefault (use LinphoneCore's mode), #LinphoneAVPFEnabled (avpf
+ *is enabled), or #LinphoneAVPFDisabled (disabled).
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC LinphoneAVPFMode linphone_proxy_config_get_avpf_mode(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Enable the use of RTCP feedback (also known as AVPF profile).
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @param mode the enablement mode, which can be #LinphoneAVPFDefault (use LinphoneCore's mode), #LinphoneAVPFEnabled (avpf is enabled), or #LinphoneAVPFDisabled (disabled).
+ * @param mode the enablement mode, which can be #LinphoneAVPFDefault (use LinphoneCore's mode), #LinphoneAVPFEnabled
+ *(avpf is enabled), or #LinphoneAVPFDisabled (disabled).
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_avpf_mode(LinphoneProxyConfig *proxy_config, LinphoneAVPFMode mode);
 
 /**
@@ -552,8 +575,9 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_avpf_mode(LinphoneProxyConfig *pr
  * @param header_name the header name for which to fetch corresponding value @notnil
  * @return the value of the queried header. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC const char *linphone_proxy_config_get_custom_header(LinphoneProxyConfig *proxy_config, const char *header_name);
+ **/
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_custom_header(LinphoneProxyConfig *proxy_config,
+                                                                    const char *header_name);
 
 /**
  * Set the value of a custom header sent to the server in REGISTERs request.
@@ -561,16 +585,18 @@ LINPHONE_PUBLIC const char *linphone_proxy_config_get_custom_header(LinphoneProx
  * @param header_name the header name @notnil
  * @param header_value the header's value @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC void linphone_proxy_config_set_custom_header(LinphoneProxyConfig *proxy_config, const char *header_name, const char *header_value);
+ **/
+LINPHONE_PUBLIC void linphone_proxy_config_set_custom_header(LinphoneProxyConfig *proxy_config,
+                                                             const char *header_name,
+                                                             const char *header_value);
 
 /**
  * Find authentication info matching proxy config, if any, similarly to linphone_core_find_auth_info.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return a #LinphoneAuthInfo matching proxy config criteria if possible, NULL if nothing can be found. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC const LinphoneAuthInfo* linphone_proxy_config_find_auth_info(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const LinphoneAuthInfo *linphone_proxy_config_find_auth_info(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Get the persistent reference key associated to the proxy config.
@@ -579,10 +605,11 @@ LINPHONE_PUBLIC const LinphoneAuthInfo* linphone_proxy_config_find_auth_info(con
  * It is stored in the config file, thus can survive to process exits/restarts.
  *
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @return The reference key string that has been associated to the proxy config, or NULL if none has been associated. @maybenil
+ * @return The reference key string that has been associated to the proxy config, or NULL if none has been associated.
+ *@maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
-LINPHONE_PUBLIC const char * linphone_proxy_config_get_ref_key(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_ref_key(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Associate a persistent reference key to the proxy config.
@@ -593,7 +620,7 @@ LINPHONE_PUBLIC const char * linphone_proxy_config_get_ref_key(const LinphonePro
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param refkey The reference key string to associate to the proxy config. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-**/
+ **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_ref_key(LinphoneProxyConfig *proxy_config, const char *refkey);
 
 /**
@@ -611,7 +638,8 @@ LINPHONE_PUBLIC LinphoneProxyConfig *linphone_proxy_config_get_dependency(Linpho
  *
  * @see linphone_proxy_config_set_idkey()
  *
- * The proxy configuration marked as dependent will wait for successful registration on its dependency before triggering its own.
+ * The proxy configuration marked as dependent will wait for successful registration on its dependency before triggering
+ *its own.
  *
  * Once registered, both proxy configurations will share the same contact address (the 'dependency' one).
  *
@@ -621,7 +649,8 @@ LINPHONE_PUBLIC LinphoneProxyConfig *linphone_proxy_config_get_dependency(Linpho
  * @param depends_on The #LinphoneProxyConfig this one shall be depend on. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  **/
-LINPHONE_PUBLIC void linphone_proxy_config_set_dependency(LinphoneProxyConfig *proxy_config, LinphoneProxyConfig *depends_on);
+LINPHONE_PUBLIC void linphone_proxy_config_set_dependency(LinphoneProxyConfig *proxy_config,
+                                                          LinphoneProxyConfig *depends_on);
 
 /**
  * Get the idkey property of a #LinphoneProxyConfig.
@@ -634,7 +663,8 @@ LINPHONE_PUBLIC const char *linphone_proxy_config_get_idkey(LinphoneProxyConfig 
 
 /**
  * Set the idkey property on the given proxy configuration.
- * This property can the be referenced by another proxy config 'depends_on' to create a dependency relation between them.
+ * This property can the be referenced by another proxy config 'depends_on' to create a dependency relation between
+ *them.
  * @see linphone_proxy_config_set_depends_on()
  *
  * @param proxy_config #LinphoneProxyConfig object. @notnil
@@ -651,7 +681,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_idkey(LinphoneProxyConfig *proxy_
  * @see linphone_core_get_nat_policy()
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC LinphoneNatPolicy * linphone_proxy_config_get_nat_policy(const LinphoneProxyConfig *proxy_config);
+LINPHONE_PUBLIC LinphoneNatPolicy *linphone_proxy_config_get_nat_policy(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Set the policy to use to pass through NATs/firewalls when using this proxy config.
@@ -669,7 +699,8 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_nat_policy(LinphoneProxyConfig *p
  * @param uri The uri of the conference factory. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *proxy_config, const char *uri);
+LINPHONE_PUBLIC void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *proxy_config,
+                                                                      const char *uri);
 
 /**
  * Get the conference factory uri.
@@ -677,18 +708,21 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_conference_factory_uri(LinphonePr
  * @return The uri of the conference factory. @maybenil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC const char * linphone_proxy_config_get_conference_factory_uri(const LinphoneProxyConfig *proxy_config);
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_conference_factory_uri(const LinphoneProxyConfig *proxy_config);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates to VOIP push notification.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates to VOIP
+ * push notification.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param allow TRUE to allow push notification information, FALSE otherwise.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *proxy_config, bool_t allow);
+LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *proxy_config,
+                                                                         bool_t allow);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates to VOIP push notification.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates to VOIP
+ * push notification.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return TRUE if push notification informations should be added, FALSE otherwise.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
@@ -696,27 +730,30 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_allowed(Linphon
 LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyConfig *proxy_config);
 
 /**
-* Indicates whether to add to the contact parameters the remote push notification information (IOS only). Default value is FALSE.
-* @param proxy_config #LinphoneProxyConfig object. @notnil
-* @return TRUE if remote push notification informations should be added, FALSE otherwise.
+ * Indicates whether to add to the contact parameters the remote push notification information (IOS only). Default value
+ * is FALSE.
+ * @param proxy_config #LinphoneProxyConfig object. @notnil
+ * @return TRUE if remote push notification informations should be added, FALSE otherwise.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-*/
-LINPHONE_PUBLIC bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *proxy_config);
+ */
+LINPHONE_PUBLIC bool_t
+linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *proxy_config);
 
 /**
-* Indicates whether to add to the contact parameters the  remote push notification information (IOS only).
-* @param proxy_config #LinphoneProxyConfig object. @notnil
-* @param allow TRUE to allow remote push notification information, FALSE otherwise.
+ * Indicates whether to add to the contact parameters the  remote push notification information (IOS only).
+ * @param proxy_config #LinphoneProxyConfig object. @notnil
+ * @param allow TRUE to allow remote push notification information, FALSE otherwise.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-*/
-LINPHONE_PUBLIC void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *proxy_config, bool_t allow);
+ */
+LINPHONE_PUBLIC void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *proxy_config,
+                                                                                bool_t allow);
 
 /**
-* Gets whether push notifications are available or not (Android & iOS only).
-* @param proxy_config #LinphoneProxyConfig object. @notnil
-* @return TRUE if push notifications are available, FALSE otherwise
+ * Gets whether push notifications are available or not (Android & iOS only).
+ * @param proxy_config #LinphoneProxyConfig object. @notnil
+ * @return TRUE if push notifications are available, FALSE otherwise
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
-*/
+ */
 LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_available(const LinphoneProxyConfig *proxy_config);
 
 /**
@@ -725,7 +762,7 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_available(cons
  * @return The unread chat message count.
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *proxy_config);
+LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count(const LinphoneProxyConfig *proxy_config);
 
 /**
  * Sets the push notification configuration.
@@ -733,7 +770,8 @@ LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count (const L
  * @param push_cfg #LinphonePushNotificationConfig to set. @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_config(LinphoneProxyConfig *cfg, LinphonePushNotificationConfig *push_cfg);
+LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_config(LinphoneProxyConfig *cfg,
+                                                                        LinphonePushNotificationConfig *push_cfg);
 
 /**
  * Retrieves the push notification configuration.
@@ -741,7 +779,8 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_config(Linphone
  * @return The #LinphonePushNotificationConfig. @notnil
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  */
-LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_proxy_config_get_push_notification_config(const LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC LinphonePushNotificationConfig *
+linphone_proxy_config_get_push_notification_config(const LinphoneProxyConfig *cfg);
 
 /************ */
 /* DEPRECATED */
@@ -755,20 +794,22 @@ LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_proxy_config_get_push_n
  * @param route the SIP route to set @maybenil
  * @return -1 if route is invalid, 0 otherwise.
  * @deprecated 08/07/2020 use linphone_proxy_config_set_routes() instead
-**/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_proxy_config_set_route(LinphoneProxyConfig *proxy_config, const char *route);
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_proxy_config_set_route(LinphoneProxyConfig *proxy_config,
+                                                                                   const char *route);
 
 /**
  * @return the route set for this proxy configuration.
  * @deprecated 09/03/2018 Use linphone_proxy_config_get_routes() instead.
  * @donotwrap
-**/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_route(const LinphoneProxyConfig *proxy_config);
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *
+linphone_proxy_config_get_route(const LinphoneProxyConfig *proxy_config);
 
 /**
  * @deprecated 29/07/2015 use linphone_proxy_config_get_identity_address()
  * @donotwrap
-**/
+ **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_identity(const LinphoneProxyConfig *cfg);
 
 /**

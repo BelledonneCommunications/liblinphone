@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,200 +35,203 @@ LINPHONE_BEGIN_NAMESPACE
 
 const std::string ConferenceInfo::sequenceParam = "X-SEQ";
 
-ConferenceInfo::ConferenceInfo () {
+ConferenceInfo::ConferenceInfo() {
 }
 
-ConferenceInfo::~ConferenceInfo(){
+ConferenceInfo::~ConferenceInfo() {
 }
 
-const ConferenceInfo::organizer_t &ConferenceInfo::getOrganizer () const {
+const ConferenceInfo::organizer_t &ConferenceInfo::getOrganizer() const {
 	return mOrganizer;
 }
 
-const IdentityAddress &ConferenceInfo::getOrganizerAddress () const {
+const IdentityAddress &ConferenceInfo::getOrganizerAddress() const {
 	return getOrganizer().first;
 }
 
-void ConferenceInfo::setOrganizer (const IdentityAddress & organizer, const participant_params_t & params) {
+void ConferenceInfo::setOrganizer(const IdentityAddress &organizer, const participant_params_t &params) {
 	mOrganizer = std::make_pair(organizer, params);
 }
 
-void ConferenceInfo::setOrganizer (const IdentityAddress & organizer) {
+void ConferenceInfo::setOrganizer(const IdentityAddress &organizer) {
 	ConferenceInfo::participant_params_t params;
 	setOrganizer(organizer, params);
 }
 
-void ConferenceInfo::addOrganizerParam (const std::string & param, const std::string & value) {
+void ConferenceInfo::addOrganizerParam(const std::string &param, const std::string &value) {
 	mOrganizer.second[param] = value;
 }
 
-const std::string ConferenceInfo::getOrganizerParam (const std::string & param) const {
+const std::string ConferenceInfo::getOrganizerParam(const std::string &param) const {
 	try {
-		const auto & params = mOrganizer.second;
+		const auto &params = mOrganizer.second;
 		return params.at(param);
 	} catch (std::out_of_range &) {
 		return std::string();
 	}
 }
 
-const ConferenceInfo::participant_list_t & ConferenceInfo::getParticipants () const {
+const ConferenceInfo::participant_list_t &ConferenceInfo::getParticipants() const {
 	return mParticipants;
 }
 
-const bctbx_list_t *ConferenceInfo::getParticipantsCList() const{
-	return mParticipantsList.construct(mParticipants, []( const pair<IdentityAddress, participant_params_t> &p) -> LinphoneAddress* {
-		return linphone_address_new(p.first.asString().c_str());
-	});
+const bctbx_list_t *ConferenceInfo::getParticipantsCList() const {
+	return mParticipantsList.construct(mParticipants,
+	                                   [](const pair<IdentityAddress, participant_params_t> &p) -> LinphoneAddress * {
+		                                   return linphone_address_new(p.first.asString().c_str());
+	                                   });
 }
 
-void ConferenceInfo::setParticipants (const participant_list_t & participants) {
+void ConferenceInfo::setParticipants(const participant_list_t &participants) {
 	mParticipants = participants;
 }
 
-void ConferenceInfo::addParticipant (const IdentityAddress & participant) {
+void ConferenceInfo::addParticipant(const IdentityAddress &participant) {
 	ConferenceInfo::participant_params_t params;
 	addParticipant(participant, params);
 }
 
-void ConferenceInfo::addParticipant (const IdentityAddress & participant, const participant_params_t & params) {
+void ConferenceInfo::addParticipant(const IdentityAddress &participant, const participant_params_t &params) {
 	mParticipants.insert(std::make_pair(participant, params));
 }
 
-void ConferenceInfo::removeParticipant (const IdentityAddress & participant) {
-	const auto it = std::find_if(mParticipants.cbegin(), mParticipants.cend(), [&participant] ( const auto & p) {
-	return (p.first == participant);
-	});
+void ConferenceInfo::removeParticipant(const IdentityAddress &participant) {
+	const auto it = std::find_if(mParticipants.cbegin(), mParticipants.cend(),
+	                             [&participant](const auto &p) { return (p.first == participant); });
 	if (it == mParticipants.cend()) {
-		lInfo() << "Unable to find participant with address " << participant << " in conference info " << this << " (address " << getUri() << ")";
+		lInfo() << "Unable to find participant with address " << participant << " in conference info " << this
+		        << " (address " << getUri() << ")";
 	} else {
 		mParticipants.erase(it);
 	}
 }
 
-void ConferenceInfo::addParticipantParam (const IdentityAddress & participant, const std::string & param, const std::string & value) {
+void ConferenceInfo::addParticipantParam(const IdentityAddress &participant,
+                                         const std::string &param,
+                                         const std::string &value) {
 	try {
-		auto & params = mParticipants.at(participant);
+		auto &params = mParticipants.at(participant);
 		params[param] = value;
 	} catch (std::out_of_range &) {
-
 	}
 }
 
-const std::string ConferenceInfo::getParticipantParam (const IdentityAddress & participant, const std::string & param) const {
+const std::string ConferenceInfo::getParticipantParam(const IdentityAddress &participant,
+                                                      const std::string &param) const {
 	try {
-		const auto & params = mParticipants.at(participant);
+		const auto &params = mParticipants.at(participant);
 		return params.at(param);
 	} catch (std::out_of_range &) {
 		return std::string();
 	}
 }
 
-bool ConferenceInfo::isValidUri () const {
+bool ConferenceInfo::isValidUri() const {
 	return (mUri != ConferenceAddress());
 }
 
-const ConferenceAddress &ConferenceInfo::getUri () const {
+const ConferenceAddress &ConferenceInfo::getUri() const {
 	return mUri;
 }
 
-void ConferenceInfo::setUri (const ConferenceAddress uri) {
+void ConferenceInfo::setUri(const ConferenceAddress uri) {
 	mUri = uri;
 }
 
-time_t ConferenceInfo::getDateTime () const {
+time_t ConferenceInfo::getDateTime() const {
 	return mDateTime;
 }
 
-void ConferenceInfo::setDateTime (time_t dateTime) {
+void ConferenceInfo::setDateTime(time_t dateTime) {
 	mDateTime = dateTime;
 }
 
-unsigned int ConferenceInfo::getDuration () const {
+unsigned int ConferenceInfo::getDuration() const {
 	return mDuration;
 }
 
-void ConferenceInfo::setDuration (unsigned int duration) {
+void ConferenceInfo::setDuration(unsigned int duration) {
 	mDuration = duration;
 }
 
-const std::string & ConferenceInfo::getSubject () const {
+const std::string &ConferenceInfo::getSubject() const {
 	return mSubject;
 }
 
-const std::string ConferenceInfo::getUtf8Subject () const {
+const std::string ConferenceInfo::getUtf8Subject() const {
 	return Utils::localeToUtf8(mSubject);
 }
 
-void ConferenceInfo::setSubject (const std::string &subject) {
+void ConferenceInfo::setSubject(const std::string &subject) {
 	mSubject = Utils::trim(subject);
 }
 
-void ConferenceInfo::setUtf8Subject (const std::string &subject) {
+void ConferenceInfo::setUtf8Subject(const std::string &subject) {
 	mSubject = Utils::trim(Utils::utf8ToLocale(subject));
 }
 
-unsigned int ConferenceInfo::getIcsSequence () const {
+unsigned int ConferenceInfo::getIcsSequence() const {
 	return mIcsSequence;
 }
 
-void ConferenceInfo::setIcsSequence (unsigned int icsSequence) {
+void ConferenceInfo::setIcsSequence(unsigned int icsSequence) {
 	mIcsSequence = icsSequence;
 }
 
-const std::string ConferenceInfo::getUtf8IcsUid () const {
+const std::string ConferenceInfo::getUtf8IcsUid() const {
 	return Utils::localeToUtf8(mIcsUid);
 }
 
-const std::string & ConferenceInfo::getIcsUid () const {
+const std::string &ConferenceInfo::getIcsUid() const {
 	return mIcsUid;
 }
 
-void ConferenceInfo::setUtf8IcsUid (const std::string &uid) {
+void ConferenceInfo::setUtf8IcsUid(const std::string &uid) {
 	mIcsUid = Utils::trim(Utils::utf8ToLocale(uid));
 }
 
-void ConferenceInfo::setIcsUid (const std::string &uid) {
+void ConferenceInfo::setIcsUid(const std::string &uid) {
 	mIcsUid = Utils::trim(uid);
 }
 
-const string ConferenceInfo::getUtf8Description () const {
+const string ConferenceInfo::getUtf8Description() const {
 	return Utils::localeToUtf8(mDescription);
 }
 
-const string & ConferenceInfo::getDescription () const {
+const string &ConferenceInfo::getDescription() const {
 	return mDescription;
 }
 
-void ConferenceInfo::setDescription (const string &description) {
+void ConferenceInfo::setDescription(const string &description) {
 	mDescription = Utils::trim(description);
 }
 
-void ConferenceInfo::setUtf8Description (const string &description) {
+void ConferenceInfo::setUtf8Description(const string &description) {
 	mDescription = Utils::trim(Utils::utf8ToLocale(description));
 }
 
-const ConferenceInfo::State &ConferenceInfo::getState () const {
+const ConferenceInfo::State &ConferenceInfo::getState() const {
 	return mState;
 }
 
-void ConferenceInfo::setState (const ConferenceInfo::State &state) {
+void ConferenceInfo::setState(const ConferenceInfo::State &state) {
 	if (mState != state) {
 		lInfo() << "[Conference Info] [" << this << "] moving from state " << mState << " to state " << state;
 		mState = state;
 	}
 }
 
-void ConferenceInfo::updateFrom (const std::shared_ptr<ConferenceInfo> & info) {
+void ConferenceInfo::updateFrom(const std::shared_ptr<ConferenceInfo> &info) {
 	setUri(info->getUri());
 	setIcsUid(info->getIcsUid());
 	setIcsSequence(info->getIcsSequence() + 1);
 
-	const auto & participants = info->getParticipants();
+	const auto &participants = info->getParticipants();
 
-	for (auto & participant : mParticipants) {
-		const auto & otherParticipant = std::find_if(participants.cbegin(), participants.cend(), [&participant] (const auto & p) {
-			return (p.first == participant.first);
-		});
+	for (auto &participant : mParticipants) {
+		const auto &otherParticipant =
+		    std::find_if(participants.cbegin(), participants.cend(),
+		                 [&participant](const auto &p) { return (p.first == participant.first); });
 
 		if (otherParticipant != participants.cend()) {
 			participant.second = otherParticipant->second;
@@ -236,7 +239,11 @@ void ConferenceInfo::updateFrom (const std::shared_ptr<ConferenceInfo> & info) {
 	}
 }
 
-const string ConferenceInfo::toIcsString (bool cancel, int sequence) const {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+const string ConferenceInfo::toIcsString(bool cancel, int sequence) const {
 #ifdef HAVE_ADVANCED_IM
 	Ics::Icalendar cal;
 
@@ -257,7 +264,7 @@ const string ConferenceInfo::toIcsString (bool cancel, int sequence) const {
 	cal.setMethod(method);
 
 	auto event = make_shared<Ics::Event>();
-	const auto & organizerAddress = getOrganizerAddress();
+	const auto &organizerAddress = getOrganizerAddress();
 	if (organizerAddress.isValid()) {
 		const auto uri = organizerAddress.getAddressWithoutGruu().asString();
 		event->setOrganizer(uri, mOrganizer.second);
@@ -270,9 +277,9 @@ const string ConferenceInfo::toIcsString (bool cancel, int sequence) const {
 		const auto uri = mUri.asString();
 		event->setXConfUri(uri);
 	}
-	
-	for (const auto & participant : mParticipants) {
-		const auto & address = participant.first;
+
+	for (const auto &participant : mParticipants) {
+		const auto &address = participant.first;
 		if (address.isValid()) {
 			const auto uri = address.getAddressWithoutGruu().asString();
 			event->addAttendee(uri, participant.second);
@@ -294,7 +301,7 @@ const string ConferenceInfo::toIcsString (bool cancel, int sequence) const {
 
 	cal.addEvent(event);
 
-	if (mCreationTime != (time_t) -1) {
+	if (mCreationTime != (time_t)-1) {
 		cal.setCreationTime(mCreationTime);
 	}
 	const auto icsString = cal.asString();
@@ -312,14 +319,17 @@ const string ConferenceInfo::toIcsString (bool cancel, int sequence) const {
 	return string();
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 void ConferenceInfo::setCreationTime(time_t time) {
 	mCreationTime = time;
 }
 
-const std::string ConferenceInfo::memberParametersToString(const ConferenceInfo::participant_params_t & params) {
+const std::string ConferenceInfo::memberParametersToString(const ConferenceInfo::participant_params_t &params) {
 	std::string str;
-	for (const auto & param : params) {
+	for (const auto &param : params) {
 		if (!str.empty()) {
 			str.append(";");
 		}
@@ -328,11 +338,11 @@ const std::string ConferenceInfo::memberParametersToString(const ConferenceInfo:
 	return str;
 }
 
-const ConferenceInfo::participant_params_t ConferenceInfo::stringToMemberParameters(const std::string & paramsString) {
+const ConferenceInfo::participant_params_t ConferenceInfo::stringToMemberParameters(const std::string &paramsString) {
 	ConferenceInfo::participant_params_t params;
 	if (!paramsString.empty()) {
 		const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(paramsString), ";");
-		for (const auto & param : splittedValue) {
+		for (const auto &param : splittedValue) {
 			auto equal = param.find("=");
 			string name = param.substr(0, equal);
 			string value = param.substr(equal + 1, param.size());
@@ -343,7 +353,7 @@ const ConferenceInfo::participant_params_t ConferenceInfo::stringToMemberParamet
 	return params;
 }
 
-std::ostream& operator<<(std::ostream& lhs, ConferenceInfo::State s) {
+std::ostream &operator<<(std::ostream &lhs, ConferenceInfo::State s) {
 	switch (s) {
 		case ConferenceInfo::State::New:
 			return lhs << "New";

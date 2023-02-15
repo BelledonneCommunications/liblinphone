@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,143 +27,169 @@ using namespace LinphonePrivate;
 
 // =============================================================================
 
-LinphoneConferenceCbs * _linphone_conference_cbs_new (void) {
+LinphoneConferenceCbs *_linphone_conference_cbs_new(void) {
 	return ConferenceCbs::createCObject();
 }
 
-LinphoneConferenceCbs * linphone_conference_cbs_ref (LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbs *linphone_conference_cbs_ref(LinphoneConferenceCbs *cbs) {
 	belle_sip_object_ref(cbs);
 	return cbs;
 }
 
-void linphone_conference_cbs_unref (LinphoneConferenceCbs *cbs) {
+void linphone_conference_cbs_unref(LinphoneConferenceCbs *cbs) {
 	belle_sip_object_unref(cbs);
 }
 
-void * linphone_conference_cbs_get_user_data (const LinphoneConferenceCbs *cbs) {
+void *linphone_conference_cbs_get_user_data(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->getUserData();
 }
 
-void linphone_conference_cbs_set_user_data (LinphoneConferenceCbs *cbs, void *ud) {
+void linphone_conference_cbs_set_user_data(LinphoneConferenceCbs *cbs, void *ud) {
 	ConferenceCbs::toCpp(cbs)->setUserData(ud);
 }
 
-LinphoneConferenceCbsParticipantAddedCb linphone_conference_cbs_get_participant_added (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantAddedCb
+linphone_conference_cbs_get_participant_added(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantAddedCb;
 }
 
-void linphone_conference_cbs_set_participant_added (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantAddedCb cb) {
+void linphone_conference_cbs_set_participant_added(LinphoneConferenceCbs *cbs,
+                                                   LinphoneConferenceCbsParticipantAddedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantAddedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantRemovedCb linphone_conference_cbs_get_participant_removed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantRemovedCb
+linphone_conference_cbs_get_participant_removed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantRemovedCb;
 }
 
-void linphone_conference_cbs_set_participant_removed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantRemovedCb cb) {
+void linphone_conference_cbs_set_participant_removed(LinphoneConferenceCbs *cbs,
+                                                     LinphoneConferenceCbsParticipantRemovedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantRemovedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceAddedCb linphone_conference_cbs_get_participant_device_added (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantDeviceAddedCb
+linphone_conference_cbs_get_participant_device_added(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceAddedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_added (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceAddedCb cb) {
+void linphone_conference_cbs_set_participant_device_added(LinphoneConferenceCbs *cbs,
+                                                          LinphoneConferenceCbsParticipantDeviceAddedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantDeviceAddedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceRemovedCb linphone_conference_cbs_get_participant_device_removed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantDeviceRemovedCb
+linphone_conference_cbs_get_participant_device_removed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceRemovedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_removed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceRemovedCb cb) {
+void linphone_conference_cbs_set_participant_device_removed(LinphoneConferenceCbs *cbs,
+                                                            LinphoneConferenceCbsParticipantDeviceRemovedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantDeviceRemovedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantAdminStatusChangedCb linphone_conference_cbs_get_participant_admin_status_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantAdminStatusChangedCb
+linphone_conference_cbs_get_participant_admin_status_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantAdminStatusChangedCb;
 }
 
-void linphone_conference_cbs_set_participant_admin_status_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantAdminStatusChangedCb cb) {
+void linphone_conference_cbs_set_participant_admin_status_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantAdminStatusChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantAdminStatusChangedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceStateChangedCb linphone_conference_cbs_get_participant_device_state_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantDeviceStateChangedCb
+linphone_conference_cbs_get_participant_device_state_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceStateChangedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_state_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceStateChangedCb cb) {
+void linphone_conference_cbs_set_participant_device_state_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceStateChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantDeviceStateChangedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb linphone_conference_cbs_get_participant_device_media_availability_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb
+linphone_conference_cbs_get_participant_device_media_availability_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceMediaAvailabilityChangedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_media_availability_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb cb) {
+void linphone_conference_cbs_set_participant_device_media_availability_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantDeviceMediaAvailabilityChangedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb linphone_conference_cbs_get_participant_device_media_capability_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb
+linphone_conference_cbs_get_participant_device_media_capability_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceMediaCapabilityChangedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_media_capability_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb cb) {
+void linphone_conference_cbs_set_participant_device_media_capability_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantDeviceMediaCapabilityChangedCb = cb;
 }
 
-LinphoneConferenceCbsStateChangedCb linphone_conference_cbs_get_state_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsStateChangedCb linphone_conference_cbs_get_state_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->stateChangedCb;
 }
 
-void linphone_conference_cbs_set_state_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsStateChangedCb cb) {
+void linphone_conference_cbs_set_state_changed(LinphoneConferenceCbs *cbs, LinphoneConferenceCbsStateChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->stateChangedCb = cb;
 }
 
-LinphoneConferenceCbsAvailableMediaChangedCb linphone_conference_cbs_get_available_media_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsAvailableMediaChangedCb
+linphone_conference_cbs_get_available_media_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->availableMediaChangedCb;
 }
 
-void linphone_conference_cbs_set_available_media_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsAvailableMediaChangedCb cb) {
+void linphone_conference_cbs_set_available_media_changed(LinphoneConferenceCbs *cbs,
+                                                         LinphoneConferenceCbsAvailableMediaChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->availableMediaChangedCb = cb;
 }
 
-LinphoneConferenceCbsSubjectChangedCb linphone_conference_cbs_get_subject_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsSubjectChangedCb linphone_conference_cbs_get_subject_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->subjectChangedCb;
 }
 
-void linphone_conference_cbs_set_subject_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsSubjectChangedCb cb) {
+void linphone_conference_cbs_set_subject_changed(LinphoneConferenceCbs *cbs, LinphoneConferenceCbsSubjectChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->subjectChangedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb linphone_conference_cbs_get_participant_device_is_speaking_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb
+linphone_conference_cbs_get_participant_device_is_speaking_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceIsSpeakingChangedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_is_speaking_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb cb) {
+void linphone_conference_cbs_set_participant_device_is_speaking_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantDeviceIsSpeakingChangedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceIsMutedCb linphone_conference_cbs_get_participant_device_is_muted (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsParticipantDeviceIsMutedCb
+linphone_conference_cbs_get_participant_device_is_muted(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceIsMutedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_is_muted (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceIsMutedCb cb) {
+void linphone_conference_cbs_set_participant_device_is_muted(LinphoneConferenceCbs *cbs,
+                                                             LinphoneConferenceCbsParticipantDeviceIsMutedCb cb) {
 	ConferenceCbs::toCpp(cbs)->participantDeviceIsMutedCb = cb;
 }
 
-LinphoneConferenceCbsAudioDeviceChangedCb linphone_conference_cbs_get_audio_device_changed (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsAudioDeviceChangedCb
+linphone_conference_cbs_get_audio_device_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->audioDeviceChangedCb;
 }
 
-void linphone_conference_cbs_set_audio_device_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsAudioDeviceChangedCb cb) {
+void linphone_conference_cbs_set_audio_device_changed(LinphoneConferenceCbs *cbs,
+                                                      LinphoneConferenceCbsAudioDeviceChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->audioDeviceChangedCb = cb;
 }
 
-LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb linphone_conference_cbs_get_active_speaker_participant_device (const LinphoneConferenceCbs *cbs) {
+LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb
+linphone_conference_cbs_get_active_speaker_participant_device(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->activeSpeakerParticipantDeviceCb;
 }
 
-void linphone_conference_cbs_set_active_speaker_participant_device (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb cb) {
+void linphone_conference_cbs_set_active_speaker_participant_device(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb cb) {
 	ConferenceCbs::toCpp(cbs)->activeSpeakerParticipantDeviceCb = cb;
 }

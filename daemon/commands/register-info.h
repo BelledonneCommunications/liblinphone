@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,14 +21,14 @@
 #ifndef LINPHONE_DAEMON_COMMAND_REGISTER_INFO_H_
 #define LINPHONE_DAEMON_COMMAND_REGISTER_INFO_H_
 
-#include <string>
 #include "daemon.h"
+#include <string>
 
-class RegisterInfoCommand: public DaemonCommand {
+class RegisterInfoCommand : public DaemonCommand {
 public:
 	RegisterInfoCommand();
 
-	void exec(Daemon *app, const std::string& args) override;
+	void exec(Daemon *app, const std::string &args) override;
 };
 
 #endif // LINPHONE_DAEMON_COMMAND_REGISTER_INFO_H_

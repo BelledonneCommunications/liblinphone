@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,11 +27,11 @@
  * #LinphoneChatRoomSecurityLevel is used to indicate the encryption security level of a chat room.
  * @ingroup chatroom
  */
-typedef enum _LinphoneChatRoomSecurityLevel{
-	LinphoneChatRoomSecurityLevelUnsafe = 0, /**< Security failure */
+typedef enum _LinphoneChatRoomSecurityLevel {
+	LinphoneChatRoomSecurityLevelUnsafe = 0,    /**< Security failure */
 	LinphoneChatRoomSecurityLevelClearText = 1, /**< No encryption */
 	LinphoneChatRoomSecurityLevelEncrypted = 2, /**< Encrypted */
-	LinphoneChatRoomSecurityLevelSafe = 3 /**< Encrypted and verified */
+	LinphoneChatRoomSecurityLevelSafe = 3       /**< Encrypted and verified */
 } LinphoneChatRoomSecurityLevel;
 
 #endif // ifndef _L_ENCRYPTION_ENGINE_ENUMS_H_

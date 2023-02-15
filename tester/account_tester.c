@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
 #include <bctoolbox/vfs.h>
 
 #include "liblinphone_tester.h"
@@ -60,14 +61,18 @@ static void simple_account_creation(void) {
 	linphone_account_unref(new_account);
 
 	// Verify that the config has the custom parameters
-	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(marie->lc), "proxy_0", "x-custom-property:main-account", 0), 1, int, "%0d");
-	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "x-custom-property:default", 0), "yes");
+	BC_ASSERT_EQUAL(
+	    linphone_config_get_int(linphone_core_get_config(marie->lc), "proxy_0", "x-custom-property:main-account", 0), 1,
+	    int, "%0d");
+	BC_ASSERT_STRING_EQUAL(
+	    linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "x-custom-property:default", 0),
+	    "yes");
 
-	char * local_rc = ms_strdup(marie->rc_local);
+	char *local_rc = ms_strdup(marie->rc_local);
 	linphone_core_manager_destroy(marie);
 
 	// Verify that the custom parameters are written to the rc file
-	bctbx_vfs_file_t* cfg_file = bctbx_file_open(bctbx_vfs_get_default(), local_rc, "r");
+	bctbx_vfs_file_t *cfg_file = bctbx_file_open(bctbx_vfs_get_default(), local_rc, "r");
 	size_t cfg_file_size = (size_t)bctbx_file_size(cfg_file);
 	char *buf = bctbx_malloc(cfg_file_size);
 	bctbx_file_read(cfg_file, buf, cfg_file_size, 0);
@@ -79,22 +84,35 @@ static void simple_account_creation(void) {
 	ms_free(local_rc);
 }
 
-void registration_state_changed_on_account(LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {
+void registration_state_changed_on_account(LinphoneAccount *account,
+                                           LinphoneRegistrationState state,
+                                           BCTBX_UNUSED(const char *message)) {
 	LinphoneCore *lc = linphone_account_get_core(account);
-	stats* counters;
-	ms_message("New registration state %s for user id [%s] at account [%s]\n"
-		   ,linphone_registration_state_to_string(state)
-		   ,linphone_account_params_get_identity(linphone_account_get_params(account))
-		   ,linphone_account_params_get_server_addr(linphone_account_get_params(account)));
+	stats *counters;
+	ms_message("New registration state %s for user id [%s] at account [%s]\n",
+	           linphone_registration_state_to_string(state),
+	           linphone_account_params_get_identity(linphone_account_get_params(account)),
+	           linphone_account_params_get_server_addr(linphone_account_get_params(account)));
 	counters = get_stats(lc);
 	switch (state) {
-	case LinphoneRegistrationNone:counters->number_of_LinphoneRegistrationNone++;break;
-	case LinphoneRegistrationProgress:counters->number_of_LinphoneRegistrationProgress++;break;
-	case LinphoneRegistrationOk:counters->number_of_LinphoneRegistrationOk++;break;
-	case LinphoneRegistrationCleared:counters->number_of_LinphoneRegistrationCleared++;break;
-	case LinphoneRegistrationFailed:counters->number_of_LinphoneRegistrationFailed++;break;
-	default:
-		BC_FAIL("unexpected event");break;
+		case LinphoneRegistrationNone:
+			counters->number_of_LinphoneRegistrationNone++;
+			break;
+		case LinphoneRegistrationProgress:
+			counters->number_of_LinphoneRegistrationProgress++;
+			break;
+		case LinphoneRegistrationOk:
+			counters->number_of_LinphoneRegistrationOk++;
+			break;
+		case LinphoneRegistrationCleared:
+			counters->number_of_LinphoneRegistrationCleared++;
+			break;
+		case LinphoneRegistrationFailed:
+			counters->number_of_LinphoneRegistrationFailed++;
+			break;
+		default:
+			BC_FAIL("unexpected event");
+			break;
 	}
 }
 
@@ -128,18 +146,22 @@ static void no_unregister_when_changing_transport(void) {
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
-	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	participantsAddresses =
+	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
+	LinphoneChatRoom *marieCr =
+	    create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE,
+	                                 LinphoneChatRoomEphemeralModeDeviceManaged);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
+	                                                                   confAddr, initialSubject, 1, FALSE);
 
 	initialPaulineStats = pauline->stat;
 
@@ -151,7 +173,8 @@ static void no_unregister_when_changing_transport(void) {
 	linphone_account_params_unref(params);
 
 	// Check that pauline does not receive another invite
-	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 10000));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined,
+	                              initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 10000));
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -164,13 +187,14 @@ static void no_unregister_when_changing_transport(void) {
 }
 
 test_t account_tests[] = {
-	TEST_NO_TAG("Simple account creation", simple_account_creation),
-	TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
-	TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport)
-};
+    TEST_NO_TAG("Simple account creation", simple_account_creation),
+    TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
+    TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport)};
 
-test_suite_t account_test_suite = {
-	"Account", NULL, NULL,
-	liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(account_tests) / sizeof(account_tests[0]), account_tests
-};
+test_suite_t account_test_suite = {"Account",
+                                   NULL,
+                                   NULL,
+                                   liblinphone_tester_before_each,
+                                   liblinphone_tester_after_each,
+                                   sizeof(account_tests) / sizeof(account_tests[0]),
+                                   account_tests};

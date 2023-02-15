@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
+
 #include "call/call.h"
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
@@ -41,7 +43,7 @@ static std::string generateRandomFilename(const std::string &name) {
 static void call_paused_resumed_with_video_base_call_cb(LinphoneCore *lc,
                                                         LinphoneCall *call,
                                                         LinphoneCallState cstate,
-                                                        const char *message) {
+                                                        BCTBX_UNUSED(const char *message)) {
 	if (cstate == LinphoneCallUpdatedByRemote) {
 		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 		linphone_call_params_enable_video(params, TRUE);
@@ -263,7 +265,7 @@ static void zrtp_video_call(void) {
 static void call_state_changed_callback_to_accept_video(LinphoneCore *lc,
                                                         LinphoneCall *call,
                                                         LinphoneCallState state,
-                                                        const char *message) {
+                                                        BCTBX_UNUSED(const char *message)) {
 	LinphoneCoreCbs *cbs;
 	if (state == LinphoneCallUpdatedByRemote) {
 		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
@@ -2890,7 +2892,10 @@ static const char *_linphone_media_direction_to_string(LinphoneMediaDirection di
 	return "bug";
 }
 
-static void on_call_state_change(LinphoneCore *core, LinphoneCall *call, LinphoneCallState state, const char *msg) {
+static void on_call_state_change(BCTBX_UNUSED(LinphoneCore *core),
+                                 LinphoneCall *call,
+                                 LinphoneCallState state,
+                                 BCTBX_UNUSED(const char *msg)) {
 	switch (state) {
 		case LinphoneCallIncomingReceived:
 			BC_ASSERT_TRUE(linphone_call_params_get_video_direction(linphone_call_get_remote_params(call)) ==

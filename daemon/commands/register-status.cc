@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ RegisterStatusResponse::RegisterStatusResponse(int id, const LinphoneProxyConfig
 	append(id, cfg);
 }
 
-void RegisterStatusResponse::append(int id, const LinphoneProxyConfig* cfg) {
+void RegisterStatusResponse::append(int id, const LinphoneProxyConfig *cfg) {
 	ostringstream ost;
 	ost << getBody();
 	if (ost.tellp() > 0) {
@@ -47,24 +47,23 @@ void RegisterStatusResponse::append(int id, const LinphoneProxyConfig* cfg) {
 	setBody(ost.str());
 }
 
-RegisterStatusCommand::RegisterStatusCommand() :
-		DaemonCommand("register-status", "register-status <register_id>|ALL", "Return status of a registration or of all registrations.") {
-	addExample(make_unique<DaemonCommandExample>("register-status 1",
-						"Status: Ok\n\n"
-						"Id: 1\n"
-						"State: LinphoneRegistrationOk"));
-	addExample(make_unique<DaemonCommandExample>("register-status ALL",
-						"Status: Ok\n\n"
-						"Id: 1\n"
-						"State: LinphoneRegistrationOk\n\n"
-						"Id: 2\n"
-						"State: LinphoneRegistrationFailed"));
-	addExample(make_unique<DaemonCommandExample>("register-status 3",
-						"Status: Error\n"
-						"Reason: No register with such id."));
+RegisterStatusCommand::RegisterStatusCommand()
+    : DaemonCommand("register-status",
+                    "register-status <register_id>|ALL",
+                    "Return status of a registration or of all registrations.") {
+	addExample(make_unique<DaemonCommandExample>("register-status 1", "Status: Ok\n\n"
+	                                                                  "Id: 1\n"
+	                                                                  "State: LinphoneRegistrationOk"));
+	addExample(make_unique<DaemonCommandExample>("register-status ALL", "Status: Ok\n\n"
+	                                                                    "Id: 1\n"
+	                                                                    "State: LinphoneRegistrationOk\n\n"
+	                                                                    "Id: 2\n"
+	                                                                    "State: LinphoneRegistrationFailed"));
+	addExample(make_unique<DaemonCommandExample>("register-status 3", "Status: Error\n"
+	                                                                  "Reason: No register with such id."));
 }
 
-void RegisterStatusCommand::exec(Daemon *app, const string& args) {
+void RegisterStatusCommand::exec(Daemon *app, const string &args) {
 	LinphoneProxyConfig *cfg = NULL;
 	string param;
 	int pid;

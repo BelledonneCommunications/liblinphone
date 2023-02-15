@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@
 
 #include <algorithm>
 
-#include "participant.h"
 #include "params/media-session-params.h"
+#include "participant.h"
 #include "session/media-session.h"
 
 using namespace std;
@@ -30,19 +30,22 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-Participant::Participant (Conference *conference, const IdentityAddress &address) {
+Participant::Participant(Conference *conference, const IdentityAddress &address) {
 	configure(conference, address);
 	creationTime = time(nullptr);
 }
 
-Participant::Participant (Conference *conference, const IdentityAddress &address, std::shared_ptr<CallSession> callSession) : Participant(conference, address) {
+Participant::Participant(Conference *conference,
+                         const IdentityAddress &address,
+                         std::shared_ptr<CallSession> callSession)
+    : Participant(conference, address) {
 	session = callSession;
 }
 
-Participant::Participant () {
+Participant::Participant() {
 }
 
-void Participant::configure (Conference *conference, const IdentityAddress &address) {
+void Participant::configure(Conference *conference, const IdentityAddress &address) {
 	mConference = conference;
 	addr = address.getAddressWithoutGruu();
 }
@@ -53,16 +56,18 @@ Participant::~Participant() {
 
 // =============================================================================
 
-shared_ptr<CallSession> Participant::createSession (
-	const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
-) {
+shared_ptr<CallSession> Participant::createSession(const Conference &conference,
+                                                   const CallSessionParams *params,
+                                                   bool hasMedia,
+                                                   CallSessionListener *listener) {
 	session = createSession(conference.getCore(), params, hasMedia, listener);
 	return session;
 }
 
-shared_ptr<CallSession> Participant::createSession (
-	const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
-) {
+shared_ptr<CallSession> Participant::createSession(const std::shared_ptr<Core> &core,
+                                                   const CallSessionParams *params,
+                                                   bool hasMedia,
+                                                   CallSessionListener *listener) {
 	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
 		session = make_shared<MediaSession>(core, getSharedFromThis(), params, listener);
 	} else {
@@ -73,43 +78,45 @@ shared_ptr<CallSession> Participant::createSession (
 
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<ParticipantDevice> Participant::addDevice (const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name) {
+std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<LinphonePrivate::CallSession> &session,
+                                                          const std::string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(session, false);
-	if (device)
-		return device;
+	if (device) return device;
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
-		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session << " to participant " << getAddress().asString();
+		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session
+		        << " to participant " << getAddress().asString();
 	} else {
-		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session << " to participant " << getAddress().asString();
+		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session
+		         << " to participant " << getAddress().asString();
 	}
 	device = ParticipantDevice::create(getSharedFromThis(), session, name);
 	devices.push_back(device);
 	return device;
 }
 
-std::shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gruu, const string &name) {
+std::shared_ptr<ParticipantDevice> Participant::addDevice(const IdentityAddress &gruu, const string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(gruu, false);
-	if (device)
-		return device;
+	if (device) return device;
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
-		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString() << " to participant " << getAddress().asString();
+		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString()
+		        << " to participant " << getAddress().asString();
 	} else {
-		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString() << " to participant " << getAddress().asString();
+		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString()
+		         << " to participant " << getAddress().asString();
 	}
 	device = ParticipantDevice::create(getSharedFromThis(), gruu, name);
 	devices.push_back(device);
 	return device;
 }
 
-void Participant::clearDevices () {
+void Participant::clearDevices() {
 	devices.clear();
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice (const std::string &label, const bool logFailure) const {
+shared_ptr<ParticipantDevice> Participant::findDevice(const std::string &label, const bool logFailure) const {
 	for (const auto &device : devices) {
-		const auto & deviceLabel = device->getLabel();
-		if (!label.empty() && !deviceLabel.empty() && (deviceLabel.compare(label) == 0))
-			return device;
+		const auto &deviceLabel = device->getLabel();
+		if (!label.empty() && !deviceLabel.empty() && (deviceLabel.compare(label) == 0)) return device;
 	}
 	if (logFailure) {
 		lInfo() << "Unable to find device with label " << label;
@@ -117,10 +124,9 @@ shared_ptr<ParticipantDevice> Participant::findDevice (const std::string &label,
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Participant::findDeviceByCallId (const std::string &callId, const bool logFailure) const {
+shared_ptr<ParticipantDevice> Participant::findDeviceByCallId(const std::string &callId, const bool logFailure) const {
 	for (const auto &device : devices) {
-		if (device->getCallId() == callId)
-			return device;
+		if (device->getCallId() == callId) return device;
 	}
 	if (logFailure) {
 		lInfo() << "Unable to find device with call id " << callId;
@@ -128,10 +134,9 @@ shared_ptr<ParticipantDevice> Participant::findDeviceByCallId (const std::string
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gruu, const bool logFailure) const {
+shared_ptr<ParticipantDevice> Participant::findDevice(const IdentityAddress &gruu, const bool logFailure) const {
 	for (const auto &device : devices) {
-		if (device->getAddress() == gruu)
-			return device;
+		if (device->getAddress() == gruu) return device;
 	}
 	if (logFailure) {
 		lInfo() << "Unable to find device with address " << gruu;
@@ -139,10 +144,10 @@ shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gr
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice (const shared_ptr<const CallSession> &session, const bool logFailure) const {
+shared_ptr<ParticipantDevice> Participant::findDevice(const shared_ptr<const CallSession> &session,
+                                                      const bool logFailure) const {
 	for (const auto &device : devices) {
-		if (device->getSession() == session)
-			return device;
+		if (device->getSession() == session) return device;
 	}
 	if (logFailure) {
 		lInfo() << "Unable to find device with call session " << session;
@@ -150,11 +155,11 @@ shared_ptr<ParticipantDevice> Participant::findDevice (const shared_ptr<const Ca
 	return nullptr;
 }
 
-const list<shared_ptr<ParticipantDevice>> &Participant::getDevices () const {
+const list<shared_ptr<ParticipantDevice>> &Participant::getDevices() const {
 	return devices;
 }
 
-void Participant::removeDevice (const shared_ptr<const CallSession> &session) {
+void Participant::removeDevice(const shared_ptr<const CallSession> &session) {
 	for (auto it = devices.begin(); it != devices.end(); it++) {
 		if ((*it)->getSession() == session) {
 			devices.erase(it);
@@ -163,7 +168,7 @@ void Participant::removeDevice (const shared_ptr<const CallSession> &session) {
 	}
 }
 
-void Participant::removeDevice (const IdentityAddress &gruu) {
+void Participant::removeDevice(const IdentityAddress &gruu) {
 	for (auto it = devices.begin(); it != devices.end(); it++) {
 		if ((*it)->getAddress() == gruu) {
 			devices.erase(it);
@@ -174,7 +179,7 @@ void Participant::removeDevice (const IdentityAddress &gruu) {
 
 // -----------------------------------------------------------------------------
 
-const IdentityAddress& Participant::getAddress () const {
+const IdentityAddress &Participant::getAddress() const {
 	return addr;
 }
 
@@ -182,7 +187,8 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel() const {
 	return getSecurityLevelExcept(nullptr);
 }
 
-AbstractChatRoom::SecurityLevel Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
+AbstractChatRoom::SecurityLevel
+Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (!encryptionEngine) {
 		lWarning() << "Asking participant security level but there is no encryption engine enabled";
@@ -200,32 +206,32 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevelExcept(const std::s
 	if (participantDevices.empty()) {
 		return AbstractChatRoom::SecurityLevel::Safe; // There is no device to query status on, return safe
 	}
-	return  encryptionEngine->getSecurityLevel(participantDevices);
+	return encryptionEngine->getSecurityLevel(participantDevices);
 }
 
 // -----------------------------------------------------------------------------
 
-bool Participant::isAdmin () const {
+bool Participant::isAdmin() const {
 	return isThisAdmin;
 }
 
-bool Participant::isFocus () const {
+bool Participant::isFocus() const {
 	return isThisFocus;
 }
 
-time_t Participant::getCreationTime () const {
+time_t Participant::getCreationTime() const {
 	return creationTime;
 }
 
-bool Participant::getPreserveSession () const {
+bool Participant::getPreserveSession() const {
 	return preserveSession;
 }
 
-void *Participant::getUserData () const{
+void *Participant::getUserData() const {
 	return mUserData;
 }
 
-void Participant::setUserData (void *ud) {
+void Participant::setUserData(void *ud) {
 	mUserData = ud;
 }
 

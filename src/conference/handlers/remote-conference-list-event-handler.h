@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -40,36 +40,39 @@ class Address;
 class Content;
 class RemoteConferenceEventHandler;
 
-class RemoteConferenceListEventHandler : public RemoteConferenceEventHandlerBase, public CoreAccessor, public CoreListener {
+class RemoteConferenceListEventHandler : public RemoteConferenceEventHandlerBase,
+                                         public CoreAccessor,
+                                         public CoreListener {
 public:
-	RemoteConferenceListEventHandler (const std::shared_ptr<Core> &core);
-	~RemoteConferenceListEventHandler ();
+	RemoteConferenceListEventHandler(const std::shared_ptr<Core> &core);
+	~RemoteConferenceListEventHandler();
 
-	void subscribe () override;
-	void subscribe (LinphoneAccount * c_account);
-	void unsubscribe () override;
-	void unsubscribe (LinphoneAccount * c_account);
-	void invalidateSubscription () override;
-	void notifyReceived (std::string from, const Content *notifyContent);
-	void addHandler (RemoteConferenceEventHandler *handler);
-	void removeHandler (RemoteConferenceEventHandler *handler);
-	void clearHandlers ();
-	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
-	bool getInitialSubscriptionUnderWayFlag(const ConferenceId & conferenceId) const;
+	void subscribe() override;
+	void subscribe(LinphoneAccount *c_account);
+	void unsubscribe() override;
+	void unsubscribe(LinphoneAccount *c_account);
+	void invalidateSubscription() override;
+	void notifyReceived(std::string from, const Content *notifyContent);
+	void addHandler(RemoteConferenceEventHandler *handler);
+	void removeHandler(RemoteConferenceEventHandler *handler);
+	void clearHandlers();
+	RemoteConferenceEventHandler *findHandler(const ConferenceId &conferenceId) const;
+	bool getInitialSubscriptionUnderWayFlag(const ConferenceId &conferenceId) const;
 
 private:
-	bool isHandlerInSameDomainAsCore(const ConferenceId & conferenceId) const;
+	bool isHandlerInSameDomainAsCore(const ConferenceId &conferenceId) const;
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
 	std::list<LinphoneEvent *> levs;
 
-	std::map<std::string, IdentityAddress> parseRlmi (const std::string &xmlBody) const;
-
+	std::map<std::string, IdentityAddress> parseRlmi(const std::string &xmlBody) const;
 
 	// CoreListener
-	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
-	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
-	void onEnteringBackground () override;
-	void onEnteringForeground () override;
+	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
+	void onRegistrationStateChanged(LinphoneProxyConfig *cfg,
+	                                LinphoneRegistrationState state,
+	                                const std::string &message) override;
+	void onEnteringBackground() override;
+	void onEnteringForeground() override;
 };
 
 LINPHONE_END_NAMESPACE

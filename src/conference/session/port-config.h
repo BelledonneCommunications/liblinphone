@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,8 @@
 
 #include <string>
 
-#include "linphone/utils/general.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 

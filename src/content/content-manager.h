@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,12 +32,14 @@ LINPHONE_BEGIN_NAMESPACE
 class Content;
 
 namespace ContentManager {
-	LINPHONE_PUBLIC std::list<Content> multipartToContentList (const Content &content);
-	LINPHONE_PUBLIC Content contentListToMultipart (const std::list<Content *> &contents, const std::string &boundary, bool encrypted);
-	/* There is no reason to set the boundary, prefer this form of the encode method: */
-	LINPHONE_PUBLIC Content contentListToMultipart (const std::list<Content *> &contents, bool encrypted);
-	LINPHONE_PUBLIC Content contentListToMultipart (const std::list<Content *> &contents);
-}
+LINPHONE_PUBLIC std::list<Content> multipartToContentList(const Content &content);
+LINPHONE_PUBLIC Content contentListToMultipart(const std::list<Content *> &contents,
+                                               const std::string &boundary,
+                                               bool encrypted);
+/* There is no reason to set the boundary, prefer this form of the encode method: */
+LINPHONE_PUBLIC Content contentListToMultipart(const std::list<Content *> &contents, bool encrypted);
+LINPHONE_PUBLIC Content contentListToMultipart(const std::list<Content *> &contents);
+} // namespace ContentManager
 
 LINPHONE_END_NAMESPACE
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,65 +34,65 @@ class FileTransferContentPrivate;
 
 class LINPHONE_PUBLIC FileTransferContent : public Content {
 public:
-	FileTransferContent ();
-	FileTransferContent (const FileTransferContent &other);
-	FileTransferContent (FileTransferContent &&other);
+	FileTransferContent();
+	FileTransferContent(const FileTransferContent &other);
+	FileTransferContent(FileTransferContent &&other);
 
-	FileTransferContent* clone () const override {
+	FileTransferContent *clone() const override {
 		return new FileTransferContent(*this);
 	}
 
-	FileTransferContent &operator= (const FileTransferContent &other);
-	FileTransferContent &operator= (FileTransferContent &&other);
+	FileTransferContent &operator=(const FileTransferContent &other);
+	FileTransferContent &operator=(FileTransferContent &&other);
 
-	bool operator== (const FileTransferContent &other) const;
+	bool operator==(const FileTransferContent &other) const;
 
-	void setFileName (const std::string &name);// App Locale
-	const std::string &getFileName () const;
-	
-	void setFileNameSys (const std::string &name);// System Locale
-	std::string getFileNameSys () const;
-	
-	void setFileNameUtf8 (const std::string &name);// UTF8
-	std::string getFileNameUtf8 () const;
+	void setFileName(const std::string &name); // App Locale
+	const std::string &getFileName() const;
 
-	void setFileUrl (const std::string &url);
-	const std::string &getFileUrl () const;
+	void setFileNameSys(const std::string &name); // System Locale
+	std::string getFileNameSys() const;
 
-	void setFilePath (const std::string &path);// App Locale
-	const std::string &getFilePath () const;
-	
-	void setFilePathSys (const std::string &path);// System Locale
-	std::string getFilePathSys () const;
-	
-	void setFilePathUtf8 (const std::string &path);// UTF8
-	std::string getFilePathUtf8 () const;
+	void setFileNameUtf8(const std::string &name); // UTF8
+	std::string getFileNameUtf8() const;
 
-	void setFileContent (FileContent *content);
-	FileContent *getFileContent () const;
+	void setFileUrl(const std::string &url);
+	const std::string &getFileUrl() const;
 
-	void setFileSize (size_t size);
-	size_t getFileSize () const;
+	void setFilePath(const std::string &path); // App Locale
+	const std::string &getFilePath() const;
 
-	void setFileDuration (int durationInSeconds);
-	int getFileDuration () const;
+	void setFilePathSys(const std::string &path); // System Locale
+	std::string getFilePathSys() const;
 
-	void setFileKey (const char *key, size_t size);
-	const std::vector<char> &getFileKey () const;
+	void setFilePathUtf8(const std::string &path); // UTF8
+	std::string getFilePathUtf8() const;
+
+	void setFileContent(FileContent *content);
+	FileContent *getFileContent() const;
+
+	void setFileSize(size_t size);
+	size_t getFileSize() const;
+
+	void setFileDuration(int durationInSeconds);
+	int getFileDuration() const;
+
+	void setFileKey(const char *key, size_t size);
+	const std::vector<char> &getFileKey() const;
 	size_t getFileKeySize() const;
 
-	void setFileAuthTag (const char *authTag, size_t size);
-	const std::vector<char> &getFileAuthTag () const;
+	void setFileAuthTag(const char *authTag, size_t size);
+	const std::vector<char> &getFileAuthTag() const;
 	size_t getFileAuthTagSize() const;
 
-	const ContentType &getFileContentType () const;
-	void setFileContentType (const ContentType &contentType);
+	const ContentType &getFileContentType() const;
+	void setFileContentType(const ContentType &contentType);
 
-	bool isFile () const override;
-	bool isFileTransfer () const override;
+	bool isFile() const override;
+	bool isFileTransfer() const override;
 
-	bool isEncrypted () const;
-	const std::string exportPlainFile () const;
+	bool isEncrypted() const;
+	const std::string exportPlainFile() const;
 
 private:
 	L_DECLARE_PRIVATE(FileTransferContent);

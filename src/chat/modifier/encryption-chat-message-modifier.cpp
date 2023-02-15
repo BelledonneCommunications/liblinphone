@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "encryption-chat-message-modifier.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message.h"
@@ -26,7 +27,6 @@
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core.h"
-#include "encryption-chat-message-modifier.h"
 
 // =============================================================================
 
@@ -34,10 +34,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result EncryptionChatMessageModifier::encode(const shared_ptr<ChatMessage> &message,
+                                                                  int &errorCode) {
 	auto imee = message->getCore()->getEncryptionEngine();
 	if (imee != nullptr) {
 		ChatMessageModifier::Result result = imee->processOutgoingMessage(message, errorCode);
@@ -49,10 +47,8 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
 	return ChatMessageModifier::Result::Skipped;
 }
 
-ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result EncryptionChatMessageModifier::decode(const shared_ptr<ChatMessage> &message,
+                                                                  int &errorCode) {
 	auto imee = message->getCore()->getEncryptionEngine();
 	if (imee != nullptr) {
 		ChatMessageModifier::Result result = imee->processIncomingMessage(message, errorCode);

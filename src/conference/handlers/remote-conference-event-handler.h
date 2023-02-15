@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,12 +23,12 @@
 
 #include "linphone/types.h"
 
-#include "xml/conference-info.h"
-#include "xml/conference-info-linphone-extension.h"
+#include "chat/chat-room/client-group-chat-room-p.h"
 #include "conference/conference-id.h"
 #include "core/core-listener.h"
 #include "remote-conference-event-handler-base.h"
-#include "chat/chat-room/client-group-chat-room-p.h"
+#include "xml/conference-info-linphone-extension.h"
+#include "xml/conference-info.h"
 
 // =============================================================================
 
@@ -44,36 +44,37 @@ class LINPHONE_PUBLIC RemoteConferenceEventHandler : public RemoteConferenceEven
 	friend class ClientGroupChatRoom;
 
 public:
+	static LinphoneMediaDirection mediaStatusToMediaDirection(Xsd::ConferenceInfo::MediaStatusType status);
+	RemoteConferenceEventHandler(Conference *remoteConference, ConferenceListener *listener);
+	~RemoteConferenceEventHandler();
 
-	static LinphoneMediaDirection mediaStatusToMediaDirection (Xsd::ConferenceInfo::MediaStatusType status);
-	RemoteConferenceEventHandler (Conference *remoteConference, ConferenceListener * listener);
-	~RemoteConferenceEventHandler ();
-
-	void subscribe (const ConferenceId &conferenceId);
+	void subscribe(const ConferenceId &conferenceId);
 	bool alreadySubscribed() const;
-	void notifyReceived (const Content &content);
-	void multipartNotifyReceived (const Content &content);
-	void unsubscribe () override;
+	void notifyReceived(const Content &content);
+	void multipartNotifyReceived(const Content &content);
+	void unsubscribe() override;
 
-	void invalidateSubscription () override;
+	void invalidateSubscription() override;
 
 	const ConferenceId &getConferenceId() const;
-	unsigned int getLastNotify () const;
+	unsigned int getLastNotify() const;
 	void requestFullState();
 
 	void setInitialSubscriptionUnderWayFlag(bool on);
 	bool getInitialSubscriptionUnderWayFlag() const;
 
 protected:
-	void conferenceInfoNotifyReceived (const std::string &xmlBody);
-	void conferenceInfoLinphoneExtensionNotifyReceived (const std::string &xmlBody);
-	void subscribe () override;
+	void conferenceInfoNotifyReceived(const std::string &xmlBody);
+	void conferenceInfoLinphoneExtensionNotifyReceived(const std::string &xmlBody);
+	void subscribe() override;
 
 	// CoreListener
-	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
-	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
-	void onEnteringBackground () override;
-	void onEnteringForeground () override;
+	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
+	void onRegistrationStateChanged(LinphoneProxyConfig *cfg,
+	                                LinphoneRegistrationState state,
+	                                const std::string &message) override;
+	void onEnteringBackground() override;
+	void onEnteringForeground() override;
 
 	LinphoneEvent *lev = nullptr;
 	Conference *conf = nullptr;
@@ -85,7 +86,7 @@ protected:
 	bool initialSubscriptionUnderWay = false;
 
 private:
-	void unsubscribePrivate ();
+	void unsubscribePrivate();
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

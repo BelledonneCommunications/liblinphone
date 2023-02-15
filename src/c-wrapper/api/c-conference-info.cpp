@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,27 +18,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference/conference-info.h"
-#include "c-wrapper/internal/c-tools.h"
-#include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-conference-info.h"
+#include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-tools.h"
+#include "conference/conference-info.h"
 #include "linphone/api/c-address.h"
 
 // =============================================================================
 
 using namespace LinphonePrivate;
 
-LinphoneConferenceInfo* linphone_conference_info_new() {
+LinphoneConferenceInfo *linphone_conference_info_new() {
 	return ConferenceInfo::createCObject();
 }
 
-LinphoneConferenceInfo* linphone_conference_info_ref(LinphoneConferenceInfo *conference_info) {
+LinphoneConferenceInfo *linphone_conference_info_ref(LinphoneConferenceInfo *conference_info) {
 	ConferenceInfo::toCpp(conference_info)->ref();
 	return conference_info;
 }
 
-LinphoneConferenceInfo *linphone_conference_info_clone (const LinphoneConferenceInfo *info) {
-	return static_cast<ConferenceInfo*>(ConferenceInfo::toCpp(info)->clone())->toC();
+LinphoneConferenceInfo *linphone_conference_info_clone(const LinphoneConferenceInfo *info) {
+	return static_cast<ConferenceInfo *>(ConferenceInfo::toCpp(info)->clone())->toC();
 }
 
 void linphone_conference_info_unref(LinphoneConferenceInfo *conference_info) {
@@ -46,7 +46,7 @@ void linphone_conference_info_unref(LinphoneConferenceInfo *conference_info) {
 }
 
 const LinphoneAddress *linphone_conference_info_get_organizer(const LinphoneConferenceInfo *conference_info) {
-	const LinphonePrivate::Address & address = ConferenceInfo::toCpp(conference_info)->getOrganizerAddress().asAddress();
+	const LinphonePrivate::Address &address = ConferenceInfo::toCpp(conference_info)->getOrganizerAddress().asAddress();
 	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
 }
 
@@ -58,14 +58,17 @@ const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConf
 	return ConferenceInfo::toCpp(conference_info)->getParticipantsCList();
 }
 
-void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info, const bctbx_list_t *participants) {
-	const std::list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
-		return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)) : LinphonePrivate::IdentityAddress();
-	});
+void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info,
+                                               const bctbx_list_t *participants) {
+	const std::list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(
+	    participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [](LinphoneAddress *addr) {
+		    return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
+		                : LinphonePrivate::IdentityAddress();
+	    });
 
 	ConferenceInfo::participant_list_t participantsMap;
 	ConferenceInfo::participant_params_t participantsParams;
-	for (const auto & p : participantsList) {
+	for (const auto &p : participantsList) {
 		participantsMap[p] = participantsParams;
 	}
 	ConferenceInfo::toCpp(conference_info)->setParticipants(participantsMap);
@@ -75,12 +78,13 @@ void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference
 	ConferenceInfo::toCpp(conference_info)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(participant));
 }
 
-void linphone_conference_info_remove_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant) {
+void linphone_conference_info_remove_participant(LinphoneConferenceInfo *conference_info,
+                                                 LinphoneAddress *participant) {
 	ConferenceInfo::toCpp(conference_info)->removeParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(participant));
 }
 
 const LinphoneAddress *linphone_conference_info_get_uri(const LinphoneConferenceInfo *conference_info) {
-	const LinphonePrivate::Address & address = ConferenceInfo::toCpp(conference_info)->getUri().asAddress();
+	const LinphonePrivate::Address &address = ConferenceInfo::toCpp(conference_info)->getUri().asAddress();
 	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
 }
 

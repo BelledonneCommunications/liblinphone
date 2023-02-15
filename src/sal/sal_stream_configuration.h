@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,10 +21,13 @@
 #ifndef _SAL_STREAM_CONFIGURATION_H_
 #define _SAL_STREAM_CONFIGURATION_H_
 
+#include <list>
 #include <vector>
-#include "linphone/utils/general.h"
-#include "c-wrapper/internal/c-sal.h"
+
 #include "ortp/rtpsession.h"
+
+#include "c-wrapper/internal/c-sal.h"
+#include "linphone/utils/general.h"
 
 #define SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN 64
 #define SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN 32
@@ -76,108 +79,107 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 	friend class SalCallOp;
 	friend class OfferAnswerEngine;
 
-	public:
+public:
+	SalStreamConfiguration();
+	SalStreamConfiguration(const SalStreamConfiguration &other);
+	virtual ~SalStreamConfiguration();
+	SalStreamConfiguration &operator=(const SalStreamConfiguration &other);
+	int equal(const SalStreamConfiguration &other) const;
+	bool operator==(const SalStreamConfiguration &other) const;
+	bool operator!=(const SalStreamConfiguration &other) const;
+	void disable();
 
-		SalStreamConfiguration();
-		SalStreamConfiguration(const SalStreamConfiguration & other);
-		virtual ~SalStreamConfiguration();
-		SalStreamConfiguration &operator=(const SalStreamConfiguration& other);
-		int equal(const SalStreamConfiguration & other) const;
-		bool operator==(const SalStreamConfiguration & other) const;
-		bool operator!=(const SalStreamConfiguration & other) const;
-		void disable();
+	/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
+	bool hasAvpf() const;
+	bool hasIpv6() const;
+	bool hasImplicitAvpf() const;
 
-		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
-		bool hasAvpf() const;
-		bool hasIpv6() const;
-		bool hasImplicitAvpf() const;
+	/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
+	bool hasSrtp() const;
+	bool hasDtls() const;
+	bool hasZrtp() const;
+	bool hasLimeIk() const;
 
-		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
-		bool hasSrtp() const;
-		bool hasDtls() const;
-		bool hasZrtp() const;
-		bool hasLimeIk() const;
+	bool hasZrtpHash() const;
+	const uint8_t *getZrtpHash() const;
 
-		bool hasZrtpHash() const;
-		const uint8_t * getZrtpHash() const;
+	const std::list<PayloadType *> &getPayloads() const;
+	const int &getMaxRate() const;
+	const std::string &getMid() const;
+	const int &getMidRtpExtHeaderId() const;
 
-		const std::list<PayloadType*> & getPayloads() const;
-		const int & getMaxRate() const;
-		const std::string & getMid() const;
-		const int & getMidRtpExtHeaderId() const;
+	const SalStreamType &getType() const;
+	const std::string getTypeAsString() const;
+	const SalMediaProto &getProto() const;
+	const std::string getProtoAsString() const;
+	SalStreamDir getDirection() const;
+	std::string getSdpString() const;
 
-		const SalStreamType & getType() const;
-		const std::string getTypeAsString() const;
-		const SalMediaProto & getProto() const;
-		const std::string getProtoAsString() const;
-		SalStreamDir getDirection() const;
-		std::string getSdpString() const;
+	const int &getMixerToClientExtensionId() const;
+	const int &getClientToMixerExtensionId() const;
+	const int &getFrameMarkingExtensionId() const;
 
-		const int & getMixerToClientExtensionId() const;
-		const int & getClientToMixerExtensionId() const;
-		const int & getFrameMarkingExtensionId() const;
+	void replacePayloads(const std::list<PayloadType *> &newPayloads);
 
-		void replacePayloads(const std::list<PayloadType*> & newPayloads);
+	void addToSdpMediaDescription(belle_sdp_media_description_t *media_desc) const;
 
-		void addToSdpMediaDescription(belle_sdp_media_description_t * media_desc) const;
+	void mergeAcaps(const std::list<std::list<unsigned int>> &acaps);
+	const std::list<std::list<unsigned int>> &getAcapIndexes() const;
+	const unsigned int &getTcapIndex() const;
 
-		void mergeAcaps(const std::list<std::list<unsigned int>> & acaps);
-		const std::list<std::list<unsigned int>> & getAcapIndexes() const;
-		const unsigned int & getTcapIndex() const;
+	static std::string cryptoToSdpValue(const SalSrtpCryptoAlgo &crypto);
+	static SalSrtpCryptoAlgo fillStrpCryptoAlgoFromString(const std::string &value);
 
-		static std::string cryptoToSdpValue(const SalSrtpCryptoAlgo & crypto);
-		static SalSrtpCryptoAlgo fillStrpCryptoAlgoFromString(const std::string & value);
+private:
+	unsigned int index = 0;
+	SalMediaProto proto = SalProtoRtpAvp;
+	std::string proto_other;
+	unsigned int rtp_ssrc = 0;
+	std::string rtcp_cname;
+	std::list<PayloadType *> payloads; /**<list of PayloadType */
+	int ptime = 0;
+	int maxptime = 0;
+	SalStreamDir dir = SalStreamInactive;
+	std::vector<SalSrtpCryptoAlgo> crypto;
+	unsigned int crypto_local_tag = 0;
+	int max_rate = 0;
+	bool bundle_only = false;
+	bool implicit_rtcp_fb = false;
+	bool pad[2]; /* Use me */
+	OrtpRtcpFbConfiguration rtcp_fb{};
+	OrtpRtcpXrConfiguration rtcp_xr{};
+	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
+	std::string mid;               /* Media line identifier for RTP bundle mode */
+	int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
+	int mixer_to_client_extension_id = 0;
+	int client_to_mixer_extension_id = 0;
+	int frame_marking_extension_id = 0;
+	uint32_t conference_ssrc = 0;
+	bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
+	bool rtcp_mux = false;
+	uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
+	uint8_t haveLimeIk = 0;   /**< flag for lime Ik presence */
+	uint8_t zrtphash[128] = {0};
+	std::string dtls_fingerprint;
+	SalDtlsRole dtls_role = SalDtlsRoleInvalid;
+	int ttl = 0; /*for multicast -1 to disable*/
 
-	private:
-		unsigned int index = 0;
-		SalMediaProto proto = SalProtoRtpAvp;
-		std::string proto_other;
-		unsigned int rtp_ssrc = 0;
-		std::string rtcp_cname;
-		std::list<PayloadType*> payloads; /**<list of PayloadType */
-		int ptime = 0;
-		int maxptime = 0;
-		SalStreamDir dir = SalStreamInactive;
-		std::vector<SalSrtpCryptoAlgo> crypto;
-		unsigned int crypto_local_tag = 0;
-		int max_rate = 0;
-		bool bundle_only = false;
-		bool implicit_rtcp_fb = false;
-		bool pad[2]; /* Use me */
-		OrtpRtcpFbConfiguration rtcp_fb{};
-		OrtpRtcpXrConfiguration rtcp_xr{};
-		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
-		std::string mid; /* Media line identifier for RTP bundle mode */
-		int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
-		int mixer_to_client_extension_id = 0;
-		int client_to_mixer_extension_id = 0;
-		int frame_marking_extension_id = 0;
-		uint32_t conference_ssrc = 0;
-		bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
-		bool rtcp_mux = false;
-		uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
-		uint8_t haveLimeIk = 0; /**< flag for lime Ik presence */
-		uint8_t zrtphash[128] = {0};
-		std::string dtls_fingerprint;
-		SalDtlsRole dtls_role = SalDtlsRoleInvalid;
-		int ttl = 0; /*for multicast -1 to disable*/
+	bool delete_media_attributes = false;
+	bool delete_session_attributes = false;
+	unsigned int tcapIndex = 0;
+	std::list<std::list<unsigned int>> acapIndexes;
 
-		bool delete_media_attributes = false;
-		bool delete_session_attributes = false;
-		unsigned int tcapIndex = 0;
-		std::list<std::list<unsigned int>> acapIndexes;
+	static bool isRecvOnly(const PayloadType *p);
+	static bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2);
+	static bool isSamePayloadList(const std::list<PayloadType *> &l1, const std::list<PayloadType *> &l2);
+	static std::string getSetupAttributeForDtlsRole(const SalDtlsRole &role);
+	static SalDtlsRole getDtlsRoleFromSetupAttribute(const std::string setupAtte);
 
-		static bool isRecvOnly(const PayloadType *p);
-		static bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2);
-		static bool isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2);
-		static std::string getSetupAttributeForDtlsRole(const SalDtlsRole & role);
-		static SalDtlsRole getDtlsRoleFromSetupAttribute(const std::string setupAtte);
-
-		bool isBundleOnly() const {
-			return bundle_only;
-		}
-		void enableAvpfForStream();
-		void disableAvpfForStream();
+	bool isBundleOnly() const {
+		return bundle_only;
+	}
+	void enableAvpfForStream();
+	void disableAvpfForStream();
 };
 
 LINPHONE_END_NAMESPACE

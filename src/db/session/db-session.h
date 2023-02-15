@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,37 +33,37 @@ class DbSessionPrivate;
 
 class DbSession {
 public:
-	DbSession ();
-	explicit DbSession (const std::string &uri);
-	DbSession (DbSession &&other);
-	~DbSession ();
+	DbSession();
+	explicit DbSession(const std::string &uri);
+	DbSession(DbSession &&other);
+	~DbSession();
 
-	DbSession &operator= (DbSession &&other);
+	DbSession &operator=(DbSession &&other);
 
-	operator bool () const;
+	operator bool() const;
 
-	soci::session *getBackendSession () const;
+	soci::session *getBackendSession() const;
 
-	std::string primaryKeyStr (const std::string &type = "INT") const;
-	std::string primaryKeyRefStr (const std::string &type = "INT") const;
-	std::string varcharPrimaryKeyStr (int length) const;
+	std::string primaryKeyStr(const std::string &type = "INT") const;
+	std::string primaryKeyRefStr(const std::string &type = "INT") const;
+	std::string varcharPrimaryKeyStr(int length) const;
 
-	std::string currentTimestamp () const;
-	std::string timestampType () const;
+	std::string currentTimestamp() const;
+	std::string timestampType() const;
 
-	std::string noLimitValue () const;
+	std::string noLimitValue() const;
 
-	long long getLastInsertId () const;
+	long long getLastInsertId() const;
 
-	void enableForeignKeys (bool status);
+	void enableForeignKeys(bool status);
 
-	bool checkTableExists (const std::string &table) const;
+	bool checkTableExists(const std::string &table) const;
 
-	long long resolveId (const soci::row &row, int col) const;
+	long long resolveId(const soci::row &row, int col) const;
 
-	std::time_t getTime (const soci::row &row, int col) const;
+	std::time_t getTime(const soci::row &row, int col) const;
 
-	unsigned int getUnsignedInt (const soci::row &row, std::size_t col, const unsigned int def = 0) const;
+	unsigned int getUnsignedInt(const soci::row &row, std::size_t col, const unsigned int def = 0) const;
 
 private:
 	DbSessionPrivate *mPrivate;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,21 +38,23 @@ extern "C" {
  * @param label the type of phone number, for example "home", "cell", etc. Use NULL or empty for no label. @maybenil
  * @return The newly created #LinphoneFriendPhoneNumber object. @notnil
  */
-LINPHONE_PUBLIC LinphoneFriendPhoneNumber* linphone_friend_phone_number_new(const char *phone_number, const char *label);
+LINPHONE_PUBLIC LinphoneFriendPhoneNumber *linphone_friend_phone_number_new(const char *phone_number,
+                                                                            const char *label);
 
 /**
  * Clones a phone number.
  * @param phone_number The #LinphoneFriendPhoneNumber object to be cloned. @notnil
  * @return The newly created #LinphoneFriendPhoneNumber object. @notnil
  */
-LINPHONE_PUBLIC LinphoneFriendPhoneNumber* linphone_friend_phone_number_clone(const LinphoneFriendPhoneNumber *phone_number);
+LINPHONE_PUBLIC LinphoneFriendPhoneNumber *
+linphone_friend_phone_number_clone(const LinphoneFriendPhoneNumber *phone_number);
 
 /**
  * Takes a reference on a #LinphoneFriendPhoneNumber.
  * @param phone_number The #LinphoneFriendPhoneNumber object. @notnil
  * @return the same #LinphoneFriendPhoneNumber object. @notnil
  */
-LINPHONE_PUBLIC LinphoneFriendPhoneNumber* linphone_friend_phone_number_ref(LinphoneFriendPhoneNumber *phone_number);
+LINPHONE_PUBLIC LinphoneFriendPhoneNumber *linphone_friend_phone_number_ref(LinphoneFriendPhoneNumber *phone_number);
 
 /**
  * Releases a #LinphoneFriendPhoneNumber.
@@ -67,14 +69,16 @@ LINPHONE_PUBLIC void linphone_friend_phone_number_unref(LinphoneFriendPhoneNumbe
  * @param phone_number The #LinphoneFriendPhoneNumber object. @notnil
  * @param number the phone number to set. @notnil
  */
-LINPHONE_PUBLIC void linphone_friend_phone_number_set_phone_number(LinphoneFriendPhoneNumber *phone_number, const char *number);
+LINPHONE_PUBLIC void linphone_friend_phone_number_set_phone_number(LinphoneFriendPhoneNumber *phone_number,
+                                                                   const char *number);
 
 /**
  * Gets the phone number.
  * @param phone_number The #LinphoneFriendPhoneNumber object. @notnil
  * @return the phone number stored. @notnil
  */
-LINPHONE_PUBLIC const char *linphone_friend_phone_number_get_phone_number(const LinphoneFriendPhoneNumber *phone_number);
+LINPHONE_PUBLIC const char *
+linphone_friend_phone_number_get_phone_number(const LinphoneFriendPhoneNumber *phone_number);
 
 /**
  * Sets the label for this phone number.

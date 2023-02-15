@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,6 @@
  *                                                                         *
  ***************************************************************************/
 
-
 #include "../coreapi/linphonecore.h"
 #include "../coreapi/sdphandler.h"
 #include <eXosip2/eXosip.h>
@@ -38,12 +37,10 @@
 #include <ortp/ortp.h>
 #include <ortp/telephonyevents.h>
 
+#define ANNOUCE_FILE8000HZ "hello8000.wav"
+#define ANNOUCE_FILE16000HZ "hello16000.wav"
 
-#define ANNOUCE_FILE8000HZ	"hello8000.wav"
-#define ANNOUCE_FILE16000HZ	"hello16000.wav"
-
-struct _Sipomatic
-{
+struct _Sipomatic {
 	ms_mutex_t lock;
 	MSList *calls;
 	double acceptance_time;
@@ -54,7 +51,7 @@ struct _Sipomatic
 };
 
 typedef struct _Sipomatic Sipomatic;
-	
+
 void sipomatic_init(Sipomatic *obj, char *url, bool_t ipv6);
 void sipomatic_uninit(Sipomatic *obj);
 void sipomatic_iterate(Sipomatic *obj);
@@ -63,7 +60,7 @@ void sipomatic_iterate(Sipomatic *obj);
 
 void sipomatic_set_annouce_file(Sipomatic *obj, char *file);
 
-struct stream_params{
+struct stream_params {
 	int ncodecs;
 	int line;
 	int localport;
@@ -72,8 +69,7 @@ struct stream_params{
 	char *remaddr;
 };
 
-struct _Call
-{
+struct _Call {
 	Sipomatic *root;
 	sdp_context_t *sdpc;
 	int time;
@@ -97,10 +93,9 @@ struct _Call
 
 typedef struct _Call Call;
 
-	
-Call * call_new(Sipomatic *obj, eXosip_event_t *ev);
+Call *call_new(Sipomatic *obj, eXosip_event_t *ev);
 void call_accept(Call *call);
 void call_release(Call *call);
 void call_destroy(Call *call);
 
-Call* sipomatic_find_call(Sipomatic *obj,int cid);
+Call *sipomatic_find_call(Sipomatic *obj, int cid);

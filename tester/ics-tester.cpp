@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -41,17 +41,17 @@ using namespace std;
 
 using namespace LinphonePrivate;
 
-static void parse_minimal_ics () {
+static void parse_minimal_ics() {
 	const string str = "BEGIN:VCALENDAR\r\n"
-		"METHOD:REQUEST\r\n"
-		"PRODID:-//Linphone//Conference calendar//EN\r\n"
-		"VERSION:2.0\r\n"
-		"BEGIN:VEVENT\r\n"
-		"DTSTART:00000100T000000Z\r\n"
-		"DTSTAMP:19700101T000000Z\r\n"
-		"UID:19700101T000000Z@sip.linphone.org\r\n"
-		"END:VEVENT\r\n"
-		"END:VCALENDAR\r\n";
+	                   "METHOD:REQUEST\r\n"
+	                   "PRODID:-//Linphone//Conference calendar//EN\r\n"
+	                   "VERSION:2.0\r\n"
+	                   "BEGIN:VEVENT\r\n"
+	                   "DTSTART:00000100T000000Z\r\n"
+	                   "DTSTAMP:19700101T000000Z\r\n"
+	                   "UID:19700101T000000Z@sip.linphone.org\r\n"
+	                   "END:VEVENT\r\n"
+	                   "END:VCALENDAR\r\n";
 
 	shared_ptr<Ics::Icalendar> ics = Ics::Parser::getInstance()->parseIcs(str);
 	if (!BC_ASSERT_PTR_NOT_NULL(ics)) return;
@@ -61,75 +61,78 @@ static void parse_minimal_ics () {
 	BC_ASSERT_STRING_EQUAL(str2.c_str(), str.c_str());
 }
 
-static void parse_rfc_example () {
-	const string str = "BEGIN:VCALENDAR\r\n"
-		"PRODID:-//xyz Corp//NONSGML PDA Calendar Version 1.0//EN\r\n"
-		"VERSION:2.0\r\n"
-		"BEGIN:VEVENT\r\n"
-		"DTSTAMP:19960704T120000Z\r\n"
-		"UID:uid1@example.com\r\n"
-		"ORGANIZER:mailto:jsmith@example.com\r\n"
-		"DTSTART:19960918T143000Z\r\n"
-		"DTEND:19960920T220000Z\r\n"
-		"STATUS:CONFIRMED\r\n"
-		"CATEGORIES:CONFERENCE\r\n"
-		"SUMMARY:Networld+Interop Conference\r\n"
-		"DESCRIPTION:Networld+Interop Conference and Exhibit\\nAtlanta World Congress Center\\n Atlanta\\, Georgia\r\n"
-		"END:VEVENT\r\n"
-		"END:VCALENDAR\r\n";
+static void parse_rfc_example() {
+	const string str =
+	    "BEGIN:VCALENDAR\r\n"
+	    "PRODID:-//xyz Corp//NONSGML PDA Calendar Version 1.0//EN\r\n"
+	    "VERSION:2.0\r\n"
+	    "BEGIN:VEVENT\r\n"
+	    "DTSTAMP:19960704T120000Z\r\n"
+	    "UID:uid1@example.com\r\n"
+	    "ORGANIZER:mailto:jsmith@example.com\r\n"
+	    "DTSTART:19960918T143000Z\r\n"
+	    "DTEND:19960920T220000Z\r\n"
+	    "STATUS:CONFIRMED\r\n"
+	    "CATEGORIES:CONFERENCE\r\n"
+	    "SUMMARY:Networld+Interop Conference\r\n"
+	    "DESCRIPTION:Networld+Interop Conference and Exhibit\\nAtlanta World Congress Center\\n Atlanta\\, Georgia\r\n"
+	    "END:VEVENT\r\n"
+	    "END:VCALENDAR\r\n";
 
 	shared_ptr<const Ics::Icalendar> ics = Ics::Icalendar::createFromString(str);
 	BC_ASSERT_PTR_NOT_NULL(ics);
 
-	const string expectedDescription = "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\n Atlanta, Georgia";
+	const string expectedDescription =
+	    "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\n Atlanta, Georgia";
 	auto confInfo = ics->toConferenceInfo();
 	BC_ASSERT_STRING_EQUAL(confInfo->getDescription().c_str(), expectedDescription.c_str());
 }
 
-static void parse_folded_example () {
+static void parse_folded_example() {
 	const string str = "BEGIN:VCALENDAR\r\n"
-		"PRODID:-//xyz Corp//NONSGML PDA Calendar Version 1.0//EN\r\n"
-		"VERSION:2.0\r\n"
-		"BEGIN:VEVENT\r\n"
-		"DTSTAMP:19960704T120000Z\r\n"
-		"UID:uid1@example.com\r\n"
-		"ORGANIZER:mailto:jsmith@example.com\r\n"
-		"ATTENDEE;X-PARAM=TEST;RSVP=TRUE:sip:jdoe@sip.example.org\r\n"
-		"ATTENDEE;ROLE=CHAIR:sip:pwhite@sip.example.org\r\n"
-		//"ATTENDEE;MEMBER=\"sips:devs@example.com\";X-PARAM=TEST-EN:sip:tmurphy@sip.example.org\r\n"
-		"ATTENDEE;X-PARAM=TEST-EN:sip:tmurphy@sip.example.org\r\n"
-		"DTSTART:19960918T143000Z\r\n"
-		"DTEND:19960920T220000Z\r\n"
-		"STATUS:CONFIRMED\r\n"
-		"CATEGORIES:CONFERENCE\r\n"
-		"SUMMARY:Networld+Interop Conference\r\n"
-		"DESCRIPTION:Networld+Interop Conference\r\n"
-		"  and Exhibit\\nAtlanta World Congress Center\\n\r\n"
-		" Atlanta\\, Georgia\r\n"
-		"END:VEVENT\r\n"
-		"END:VCALENDAR\r\n";
+	                   "PRODID:-//xyz Corp//NONSGML PDA Calendar Version 1.0//EN\r\n"
+	                   "VERSION:2.0\r\n"
+	                   "BEGIN:VEVENT\r\n"
+	                   "DTSTAMP:19960704T120000Z\r\n"
+	                   "UID:uid1@example.com\r\n"
+	                   "ORGANIZER:mailto:jsmith@example.com\r\n"
+	                   "ATTENDEE;X-PARAM=TEST;RSVP=TRUE:sip:jdoe@sip.example.org\r\n"
+	                   "ATTENDEE;ROLE=CHAIR:sip:pwhite@sip.example.org\r\n"
+	                   //"ATTENDEE;MEMBER=\"sips:devs@example.com\";X-PARAM=TEST-EN:sip:tmurphy@sip.example.org\r\n"
+	                   "ATTENDEE;X-PARAM=TEST-EN:sip:tmurphy@sip.example.org\r\n"
+	                   "DTSTART:19960918T143000Z\r\n"
+	                   "DTEND:19960920T220000Z\r\n"
+	                   "STATUS:CONFIRMED\r\n"
+	                   "CATEGORIES:CONFERENCE\r\n"
+	                   "SUMMARY:Networld+Interop Conference\r\n"
+	                   "DESCRIPTION:Networld+Interop Conference\r\n"
+	                   "  and Exhibit\\nAtlanta World Congress Center\\n\r\n"
+	                   " Atlanta\\, Georgia\r\n"
+	                   "END:VEVENT\r\n"
+	                   "END:VCALENDAR\r\n";
 
 	shared_ptr<const Ics::Icalendar> ics = Ics::Icalendar::createFromString(str);
 	BC_ASSERT_PTR_NOT_NULL(ics);
 
 	if (ics) {
-		const string expectedDescription = "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\nAtlanta, Georgia";
+		const string expectedDescription =
+		    "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\nAtlanta, Georgia";
 		auto confInfo = ics->toConferenceInfo();
 		BC_ASSERT_PTR_NOT_NULL(confInfo);
 		if (confInfo) {
 			BC_ASSERT_STRING_EQUAL(confInfo->getDescription().c_str(), expectedDescription.c_str());
-			const auto & participants = confInfo->getParticipants();
+			const auto &participants = confInfo->getParticipants();
 			BC_ASSERT_EQUAL(participants.size(), 3, size_t, "%0zu");
-			for (const auto & participant : participants) {
-				const auto & address = participant.first;
-				const auto & params = participant.second;
+			for (const auto &participant : participants) {
+				const auto &address = participant.first;
+				const auto &params = participant.second;
 				size_t no_params = 0;
 				bool found = false;
 				if (address == IdentityAddress("sip:jdoe@sip.example.org")) {
 					no_params = 2;
-					for (const auto & param : params) {
-						const auto & name = param.first;
-						const auto & value = param.second;
+					for (const auto &param : params) {
+						const auto &name = param.first;
+						const auto &value = param.second;
 						BC_ASSERT_TRUE((name.compare("RSVP") == 0) || (name.compare("X-PARAM") == 0));
 						if (name.compare("RSVP") == 0) {
 							BC_ASSERT_STRING_EQUAL(value.c_str(), "TRUE");
@@ -141,9 +144,9 @@ static void parse_folded_example () {
 					}
 				} else if (address == IdentityAddress("sip:pwhite@sip.example.org")) {
 					no_params = 1;
-					for (const auto & param : params) {
-						const auto & name = param.first;
-						const auto & value = param.second;
+					for (const auto &param : params) {
+						const auto &name = param.first;
+						const auto &value = param.second;
 						BC_ASSERT_TRUE((name.compare("ROLE") == 0));
 						if (name.compare("ROLE") == 0) {
 							BC_ASSERT_STRING_EQUAL(value.c_str(), "CHAIR");
@@ -151,11 +154,11 @@ static void parse_folded_example () {
 						}
 					}
 				} else if (address == IdentityAddress("sip:tmurphy@sip.example.org")) {
-					//no_params = 2;
+					// no_params = 2;
 					no_params = 1;
-					for (const auto & param : params) {
-						const auto & name = param.first;
-						const auto & value = param.second;
+					for (const auto &param : params) {
+						const auto &name = param.first;
+						const auto &value = param.second;
 						BC_ASSERT_TRUE((name.compare("MEMBER") == 0) || (name.compare("X-PARAM") == 0));
 						if (name.compare("MEMBER") == 0) {
 							BC_ASSERT_STRING_EQUAL(value.c_str(), "mailto:devs@example.com");
@@ -174,12 +177,13 @@ static void parse_folded_example () {
 	}
 }
 
-static void build_ics () {
+static void build_ics() {
 	Ics::Icalendar calendar;
 	auto event = make_shared<Ics::Event>();
 
 	event->setSummary("\n\n    Conf chat audio\\vidéo");
-	event->setDescription("Parler de la vidéo conférence et \nrépartir les tâches, puis le développement ;-\\.\n\n\n    ");
+	event->setDescription(
+	    "Parler de la vidéo conférence et \nrépartir les tâches, puis le développement ;-\\.\n\n\n    ");
 	event->setOrganizer("sip:marie@sip.linphone.org");
 	Ics::Event::attendee_params_t params;
 	params.insert(std::make_pair("X-TEST", "99"));
@@ -206,25 +210,25 @@ static void build_ics () {
 	calendar.setCreationTime(0);
 
 	const string strIcs = calendar.asString();
-	const string expectedIcs= "BEGIN:VCALENDAR\r\n"
-		"METHOD:REQUEST\r\n"
-		"PRODID:-//Linphone//Conference calendar//EN\r\n"
-		"VERSION:2.0\r\n"
-		"BEGIN:VEVENT\r\n"
-		"DTSTART:20210822T103000Z\r\n"
-		"DURATION:PT2H45M\r\n"
-		"ORGANIZER:sip:marie@sip.linphone.org\r\n"
-		"ATTENDEE;X-TEST=99:sip:laure@sip.linphone.org\r\n"
-		"ATTENDEE;X-TEST=99:sip:pauline@sip.linphone.org\r\n"
-		"X-CONFURI:sip:videoconf1@sip.linphone.org\r\n"
-		"SUMMARY:Conf chat audio\\\\vidéo\r\n"
-		"DESCRIPTION:Parler de la vidéo conférence et \\nrépartir les tâches\\, p\r\n"
-		" uis le développement \\;-\\\\.\r\n"
-		"SEQUENCE:10\r\n"
-		"DTSTAMP:19700101T000000Z\r\n"
-		"UID:uidtest\r\n"
-		"END:VEVENT\r\n"
-		"END:VCALENDAR\r\n";
+	const string expectedIcs = "BEGIN:VCALENDAR\r\n"
+	                           "METHOD:REQUEST\r\n"
+	                           "PRODID:-//Linphone//Conference calendar//EN\r\n"
+	                           "VERSION:2.0\r\n"
+	                           "BEGIN:VEVENT\r\n"
+	                           "DTSTART:20210822T103000Z\r\n"
+	                           "DURATION:PT2H45M\r\n"
+	                           "ORGANIZER:sip:marie@sip.linphone.org\r\n"
+	                           "ATTENDEE;X-TEST=99:sip:laure@sip.linphone.org\r\n"
+	                           "ATTENDEE;X-TEST=99:sip:pauline@sip.linphone.org\r\n"
+	                           "X-CONFURI:sip:videoconf1@sip.linphone.org\r\n"
+	                           "SUMMARY:Conf chat audio\\\\vidéo\r\n"
+	                           "DESCRIPTION:Parler de la vidéo conférence et \\nrépartir les tâches\\, p\r\n"
+	                           " uis le développement \\;-\\\\.\r\n"
+	                           "SEQUENCE:10\r\n"
+	                           "DTSTAMP:19700101T000000Z\r\n"
+	                           "UID:uidtest\r\n"
+	                           "END:VEVENT\r\n"
+	                           "END:VCALENDAR\r\n";
 
 	BC_ASSERT_STRING_EQUAL(strIcs.c_str(), expectedIcs.c_str());
 
@@ -241,13 +245,15 @@ static void build_ics () {
 	BC_ASSERT_STRING_EQUAL(confStr.c_str(), expectedIcs.c_str());
 }
 
-static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, const bctbx_list_t *failed_addresses) {
+static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler,
+                                                  const bctbx_list_t *failed_addresses) {
 	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 	BC_ASSERT_PTR_NULL(failed_addresses);
 }
 
-static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceScheduler *scheduler, const bctbx_list_t *failed_addresses) {
+static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceScheduler *scheduler,
+                                                             const bctbx_list_t *failed_addresses) {
 	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 	BC_ASSERT_PTR_NOT_NULL(failed_addresses);
@@ -255,17 +261,20 @@ static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceS
 		int failed_addresses_size = (int)(bctbx_list_size(failed_addresses));
 		BC_ASSERT_EQUAL(failed_addresses_size, 1, int, "%d");
 		LinphoneAddress *failed = (LinphoneAddress *)bctbx_list_get_data(failed_addresses);
-		char * failed_str = linphone_address_as_string(failed);
+		char *failed_str = linphone_address_as_string(failed);
 		BC_ASSERT_STRING_EQUAL(failed_str, "sip:error404@sip.example.org");
 		ms_free(failed_str);
 	}
 }
 
-static void send_conference_invitations(bool_t enable_encryption, const char *subject, int curveId, bool_t add_participant_in_error) {
+static void send_conference_invitations(bool_t enable_encryption,
+                                        const char *subject,
+                                        int curveId,
+                                        bool_t add_participant_in_error) {
 	bctbx_list_t *coresManagerList = NULL;
-	LinphoneCoreManager* marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_create( "pauline_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_create("laure_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
@@ -280,9 +289,12 @@ static void send_conference_invitations(bool_t enable_encryption, const char *su
 	stats initialLaureStats = laure->stat;
 
 	// Wait for lime users to be created on x3dh server
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, 15000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, 15000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_X3dhUserCreationSuccess, initialLaureStats.number_of_X3dhUserCreationSuccess+1, 15000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess,
+	                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1, 15000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess,
+	                             initialPaulineStats.number_of_X3dhUserCreationSuccess + 1, 15000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_X3dhUserCreationSuccess,
+	                             initialLaureStats.number_of_X3dhUserCreationSuccess + 1, 15000));
 
 	// Check encryption status for all participants
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
@@ -331,8 +343,9 @@ static void send_conference_invitations(bool_t enable_encryption, const char *su
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneConferenceStateCreated, 1, 30000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomConferenceJoined, 1, 30000));
 	}
-	
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_ConferenceSchedulerInvitationsSent, 1, 30000));
+
+	BC_ASSERT_TRUE(
+	    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_ConferenceSchedulerInvitationsSent, 1, 30000));
 	linphone_conference_info_unref(conf_info);
 	linphone_conference_scheduler_unref(conference_scheduler);
 
@@ -340,19 +353,23 @@ static void send_conference_invitations(bool_t enable_encryption, const char *su
 	LinphoneChatRoom *marieCr = linphone_core_search_chat_room(marie->lc, NULL, marie->identity, NULL, participants);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	bctbx_list_free(participants);
-	
+
 	if (marieCr) {
 		LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(marieCr);
 
-		const bctbx_list_t* original_contents = linphone_chat_message_get_contents(msg);
+		const bctbx_list_t *original_contents = linphone_chat_message_get_contents(msg);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
-		LinphoneContent *original_content = (LinphoneContent *) bctbx_list_get_data(original_contents);
+		LinphoneContent *original_content = (LinphoneContent *)bctbx_list_get_data(original_contents);
 
-		LinphoneConferenceInfo *conf_info_from_original_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), original_content);
+		LinphoneConferenceInfo *conf_info_from_original_content =
+		    linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), original_content);
 		if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
-			BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
-			BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
-			const bctbx_list_t * participants = linphone_conference_info_get_participants(conf_info_from_original_content);
+			BC_ASSERT_TRUE(linphone_address_weak_equal(
+			    marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
+			BC_ASSERT_TRUE(linphone_address_weak_equal(
+			    conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
+			const bctbx_list_t *participants =
+			    linphone_conference_info_get_participants(conf_info_from_original_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
@@ -367,21 +384,25 @@ static void send_conference_invitations(bool_t enable_encryption, const char *su
 		linphone_chat_room_unref(marieCr);
 	}
 
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
-	BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceived,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
+	BC_ASSERT_TRUE(wait_for(laure->lc, marie->lc, &laure->stat.number_of_LinphoneMessageReceived, 1));
 
 	if (linphone_core_conference_ics_in_message_body_enabled(marie->lc)) {
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1, 60000));
-		BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceived,1, 60000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1, 60000));
+		BC_ASSERT_TRUE(wait_for_until(laure->lc, marie->lc, &laure->stat.number_of_LinphoneMessageReceived, 1, 60000));
 	} else {
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
-		BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(laure->lc, marie->lc, &laure->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000));
 	}
 
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message != NULL) {
 		const string expected = ContentType::Icalendar.getMediaType();
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), expected.c_str());
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message),
+		                       expected.c_str());
 		LinphoneChatRoom *paulineCr = linphone_chat_message_get_chat_room(pauline->stat.last_received_chat_message);
 		linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 	}
@@ -389,17 +410,21 @@ static void send_conference_invitations(bool_t enable_encryption, const char *su
 	BC_ASSERT_PTR_NOT_NULL(laure->stat.last_received_chat_message);
 	if (laure->stat.last_received_chat_message != NULL) {
 		const string expected = ContentType::Icalendar.getMediaType();
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(laure->stat.last_received_chat_message), expected.c_str());
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(laure->stat.last_received_chat_message),
+		                       expected.c_str());
 
-		const bctbx_list_t* contents = linphone_chat_message_get_contents(laure->stat.last_received_chat_message);
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(laure->stat.last_received_chat_message);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int, "%d");
-		LinphoneContent *content = (LinphoneContent *) bctbx_list_get_data(contents);
+		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
 
-		LinphoneConferenceInfo *conf_info_from_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), content);
+		LinphoneConferenceInfo *conf_info_from_content =
+		    linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), content);
 		if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_content)) {
-			BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_content)));
-			BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_content)));
-			const bctbx_list_t * participants = linphone_conference_info_get_participants(conf_info_from_content);
+			BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity,
+			                                           linphone_conference_info_get_organizer(conf_info_from_content)));
+			BC_ASSERT_TRUE(
+			    linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_content)));
+			const bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
@@ -438,7 +463,7 @@ static void send_conference_invitations_1(void) {
 
 static void send_conference_invitations_2(void) {
 	send_conference_invitations(TRUE, "dummy subject", 25519, FALSE);
-	//send_conference_invitations(TRUE, "dummy subject", 448, FALSE);
+	// send_conference_invitations(TRUE, "dummy subject", 448, FALSE);
 }
 
 static void send_conference_invitations_error_1(void) {
@@ -447,26 +472,30 @@ static void send_conference_invitations_error_1(void) {
 
 static void send_conference_invitations_error_2(void) {
 	send_conference_invitations(TRUE, "dummy subject", 25519, TRUE);
-	//send_conference_invitations(TRUE, "dummy subject", 448, TRUE);
+	// send_conference_invitations(TRUE, "dummy subject", 448, TRUE);
 }
 
 test_t ics_tests[] = {
-	TEST_NO_TAG("Parse minimal Ics", parse_minimal_ics),
-	TEST_NO_TAG("Parse RFC example", parse_rfc_example),
-	TEST_NO_TAG("Parse folded example", parse_folded_example),
-	TEST_NO_TAG("Build Ics", build_ics),
-	TEST_NO_TAG("Send conference invitations in basic chat room", send_conference_invitations_1),
-	TEST_NO_TAG("Send conference invitations in one-to-one encrypted chat room", send_conference_invitations_2),
-	TEST_NO_TAG("Send conference invitations error in basic chat room", send_conference_invitations_error_1),
-	TEST_NO_TAG("Send conference invitations error in one-to-one encrypted chat room", send_conference_invitations_error_2),
+    TEST_NO_TAG("Parse minimal Ics", parse_minimal_ics),
+    TEST_NO_TAG("Parse RFC example", parse_rfc_example),
+    TEST_NO_TAG("Parse folded example", parse_folded_example),
+    TEST_NO_TAG("Build Ics", build_ics),
+    TEST_NO_TAG("Send conference invitations in basic chat room", send_conference_invitations_1),
+    TEST_NO_TAG("Send conference invitations in one-to-one encrypted chat room", send_conference_invitations_2),
+    TEST_NO_TAG("Send conference invitations error in basic chat room", send_conference_invitations_error_1),
+    TEST_NO_TAG("Send conference invitations error in one-to-one encrypted chat room",
+                send_conference_invitations_error_2),
 };
 
 static int suite_begin(void) {
-	//Supposed to be done by platform helper, but in this case, we don't have it"
+	// Supposed to be done by platform helper, but in this case, we don't have it"
 	belr::GrammarLoader::get().addPath(std::string(bc_tester_get_resource_dir_prefix()).append("/share/belr/grammars"));
 	return 0;
 }
-test_suite_t ics_test_suite = {
-	"Ics", suite_begin, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(ics_tests) / sizeof(ics_tests[0]), ics_tests
-};
+test_suite_t ics_test_suite = {"Ics",
+                               suite_begin,
+                               NULL,
+                               liblinphone_tester_before_each,
+                               liblinphone_tester_after_each,
+                               sizeof(ics_tests) / sizeof(ics_tests[0]),
+                               ics_tests};

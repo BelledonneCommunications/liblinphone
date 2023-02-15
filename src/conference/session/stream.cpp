@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,135 +20,136 @@
 
 #include "bctoolbox/defs.h"
 
-#include "streams.h"
-#include "media-session.h"
-#include "media-session-p.h"
-#include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "conference/participant.h"
-#include "utils/payload-type-handler.h"
 #include "conference/params/media-session-params-p.h"
+#include "conference/participant.h"
+#include "core/core.h"
+#include "media-session-p.h"
+#include "media-session.h"
+#include "streams.h"
+#include "utils/payload-type-handler.h"
 
 #include "linphone/core.h"
 
-
-using namespace::std;
+using namespace ::std;
 
 LINPHONE_BEGIN_NAMESPACE
-
 
 /*
  * Stream implementation.
  */
 
-
-Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.getLocalStreamDescription().type), mIndex(params.streamIndex){
+Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params)
+    : mStreamsGroup(sg), mStreamType(params.getLocalStreamDescription().type), mIndex(params.streamIndex) {
 	setPortConfig();
 	initMulticast(params);
 	memset(&mInternalStats, 0, sizeof(mInternalStats));
 }
 
-void Stream::resetMain(){
+void Stream::resetMain() {
 	mIsMain = false;
 }
 
-void Stream::setMain(){
+void Stream::setMain() {
 	mIsMain = true;
 }
 
-LinphoneCore *Stream::getCCore()const{
+LinphoneCore *Stream::getCCore() const {
 	return getCore().getCCore();
 }
 
-Core &Stream::getCore()const{
+Core &Stream::getCore() const {
 	return *getMediaSession().getCore();
 }
 
-MediaSession &Stream::getMediaSession()const{
+MediaSession &Stream::getMediaSession() const {
 	return mStreamsGroup.getMediaSession();
 }
 
-MediaSessionPrivate &Stream::getMediaSessionPrivate()const{
+MediaSessionPrivate &Stream::getMediaSessionPrivate() const {
 	return *getMediaSession().getPrivate();
 }
 
-void Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
+void Stream::fillLocalMediaDescription(BCTBX_UNUSED(OfferAnswerContext &ctx)) {
 }
 
-bool Stream::prepare(){
+bool Stream::prepare() {
 	mState = Preparing;
 	return false;
 }
 
-void Stream::finishPrepare(){
+void Stream::finishPrepare() {
 	mState = Stopped;
 }
 
-void Stream::tryEarlyMediaForking(const OfferAnswerContext &ctx){
+void Stream::tryEarlyMediaForking(BCTBX_UNUSED(const OfferAnswerContext &ctx)) {
 }
 
-void Stream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
+void Stream::render(BCTBX_UNUSED(const OfferAnswerContext &ctx), BCTBX_UNUSED(CallSession::State state)) {
 	mState = Running;
 }
 
-void Stream::sessionConfirmed(const OfferAnswerContext &ctx){
+void Stream::sessionConfirmed(BCTBX_UNUSED(const OfferAnswerContext &ctx)) {
 }
 
-void Stream::stop(){
+void Stream::stop() {
 	mState = Stopped;
 	mInternalStats.number_of_stops++;
 }
 
-void Stream::setIceCheckList(IceCheckList *cl){
+void Stream::setIceCheckList(BCTBX_UNUSED(IceCheckList *cl)) {
 }
 
-void Stream::iceStateChanged(){
+void Stream::iceStateChanged() {
 }
 
-void Stream::goClearAckSent(){
+void Stream::goClearAckSent() {
 }
 
-void Stream::confirmGoClear(){
+void Stream::confirmGoClear() {
 }
 
-void Stream::connectToMixer(StreamMixer *mixer){
+void Stream::connectToMixer(StreamMixer *mixer) {
 	mMixer = mixer;
 }
 
-void Stream::disconnectFromMixer(){
+void Stream::disconnectFromMixer() {
 	mMixer = nullptr;
 }
 
-StreamMixer * Stream::getMixer()const{
+StreamMixer *Stream::getMixer() const {
 	return mMixer;
 }
 
-void Stream::setRandomPortConfig () {
+void Stream::setRandomPortConfig() {
 	mPortConfig.rtpPort = -1;
 	mPortConfig.rtcpPort = -1;
 }
 
-int Stream::selectRandomPort (pair<int, int> portRange) {
+int Stream::selectRandomPort(pair<int, int> portRange) {
 	unsigned int rangeSize = static_cast<unsigned int>(portRange.second - portRange.first);
-	
+
 	for (int nbTries = 0; nbTries < 100; nbTries++) {
 		bool alreadyUsed = false;
 		unsigned int randomInRangeSize = (bctbx_random() % rangeSize) & (unsigned int)~0x1; /* Select an even number */
 		int triedPort = ((int)randomInRangeSize) + portRange.first;
-		/*If portRange.first is even, the triedPort will be even too. The one who configures a port range that starts with an odd number will
-		 * get odd RTP port numbers.*/
-		
-		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr; elem = bctbx_list_next(elem)) {
+		/*If portRange.first is even, the triedPort will be even too. The one who configures a port range that starts
+		 * with an odd number will get odd RTP port numbers.*/
+
+		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr;
+		     elem = bctbx_list_next(elem)) {
 			LinphoneCall *lcall = static_cast<LinphoneCall *>(bctbx_list_get_data(elem));
-			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
+			shared_ptr<MediaSession> session =
+			    static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
 			if (session->getPrivate()->getStreamsGroup().isPortUsed(triedPort)) {
 				alreadyUsed = true;
 				break;
 			}
 		}
-		if (!alreadyUsed){
-			lInfo() << "Port " << triedPort << " randomly taken from range [ " << portRange.first << " , " << portRange.second << "]";
+		if (!alreadyUsed) {
+			lInfo() << "Port " << triedPort << " randomly taken from range [ " << portRange.first << " , "
+			        << portRange.second << "]";
 			return triedPort;
 		}
 	}
@@ -157,19 +158,20 @@ int Stream::selectRandomPort (pair<int, int> portRange) {
 	return -1;
 }
 
-int Stream::selectFixedPort (pair<int, int> portRange) {
+int Stream::selectFixedPort(pair<int, int> portRange) {
 	for (int triedPort = portRange.first; triedPort < (portRange.first + 100); triedPort += 2) {
 		bool alreadyUsed = false;
-		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr; elem = bctbx_list_next(elem)) {
+		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr;
+		     elem = bctbx_list_next(elem)) {
 			LinphoneCall *lcall = static_cast<LinphoneCall *>(bctbx_list_get_data(elem));
-			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
+			shared_ptr<MediaSession> session =
+			    static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
 			if (session->getPrivate()->getStreamsGroup().isPortUsed(triedPort)) {
 				alreadyUsed = true;
 				break;
 			}
 		}
-		if (!alreadyUsed)
-			return triedPort;
+		if (!alreadyUsed) return triedPort;
 	}
 
 	lError() << "Could not find any free port !";
@@ -192,42 +194,41 @@ void Stream::setPortConfig(pair<int, int> portRange) {
 	else mPortConfig.rtcpPort = mPortConfig.rtpPort + 1;
 }
 
-pair<int, int> Stream::getPortRange(LinphoneCore * core, const SalStreamType type) {
+pair<int, int> Stream::getPortRange(LinphoneCore *core, const SalStreamType type) {
 	int minPort = 0, maxPort = 0;
-	switch(type){
+	switch (type) {
 		case SalAudio:
 			linphone_core_get_audio_port_range(core, &minPort, &maxPort);
-		break;
+			break;
 		case SalVideo:
 			linphone_core_get_video_port_range(core, &minPort, &maxPort);
-		break;
+			break;
 		case SalText:
 			linphone_core_get_text_port_range(core, &minPort, &maxPort);
-		break;
+			break;
 		case SalOther:
-		break;
+			break;
 	}
 
 	return make_pair(minPort, maxPort);
 }
 
-void Stream::setPortConfig(){
+void Stream::setPortConfig() {
 	setPortConfig(Stream::getPortRange(getCCore(), getType()));
 }
 
 void Stream::initMulticast(const OfferAnswerContext &params) {
 	mPortConfig.multicastRole = params.getLocalStreamDescription().multicast_role;
-	lInfo() << *this << ": multicast role is ["
-		<< sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
-	
-	if (mPortConfig.multicastRole == SalMulticastReceiver){
+	lInfo() << *this << ": multicast role is [" << sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
+
+	if (mPortConfig.multicastRole == SalMulticastReceiver) {
 		mPortConfig.multicastIp = params.getRemoteStreamDescription().rtp_addr;
 		mPortConfig.rtpPort = params.getRemoteStreamDescription().rtp_port;
 		mPortConfig.rtcpPort = 0; /* RTCP is disabled for multicast */
-	}else if (mPortConfig.multicastRole == SalMulticastSender){
-		if (getType() == SalAudio && getMediaSession().getPrivate()->getParams()->audioMulticastEnabled()){
+	} else if (mPortConfig.multicastRole == SalMulticastSender) {
+		if (getType() == SalAudio && getMediaSession().getPrivate()->getParams()->audioMulticastEnabled()) {
 			mPortConfig.multicastIp = linphone_core_get_audio_multicast_addr(getCCore());
-		} else if (getType() == SalVideo && getMediaSession().getPrivate()->getParams()->videoMulticastEnabled()){
+		} else if (getType() == SalVideo && getMediaSession().getPrivate()->getParams()->videoMulticastEnabled()) {
 			mPortConfig.multicastIp = linphone_core_get_video_multicast_addr(getCCore());
 		}
 		/* multicastRtpPort is the one that will be advertised.
@@ -238,29 +239,28 @@ void Stream::initMulticast(const OfferAnswerContext &params) {
 		mPortConfig.multicastRtpPort = mPortConfig.rtpPort;
 		if (mPortConfig.multicastRtpPort == -1) {
 			/* we have to choose the multicast port now and the system can't choose it for us.*/
-			mPortConfig.multicastRtpPort = selectRandomPort(make_pair(1024,65535));
+			mPortConfig.multicastRtpPort = selectRandomPort(make_pair(1024, 65535));
 		}
 		setRandomPortConfig();
 	}
 }
 
-bool Stream::isPortUsed(int port)const{
+bool Stream::isPortUsed(int port) const {
 	return port == mPortConfig.rtpPort || port == mPortConfig.rtcpPort || port == mPortConfig.multicastRtpPort;
 }
 
-IceService & Stream::getIceService()const{
+IceService &Stream::getIceService() const {
 	return mStreamsGroup.getIceService();
 }
 
-const string & Stream::getPublicIp() const{
-	if (!mPortConfig.multicastIp.empty()){
-			return mPortConfig.multicastIp;
+const string &Stream::getPublicIp() const {
+	if (!mPortConfig.multicastIp.empty()) {
+		return mPortConfig.multicastIp;
 	}
 	return getMediaSessionPrivate().getMediaLocalIp();
 }
 
-
-void Stream::finish(){
+void Stream::finish() {
 }
 
 LINPHONE_END_NAMESPACE

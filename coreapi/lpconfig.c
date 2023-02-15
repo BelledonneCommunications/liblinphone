@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,15 +39,16 @@
 #include "bctoolbox/vfs.h"
 #include "belle-sip/object.h"
 #include "xml2lpc.h"
+#include <bctoolbox/defs.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #if !defined(_WIN32_WCE)
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #if _MSC_VER
 #include <io.h>
 #endif
@@ -67,7 +68,7 @@
 #define RENAME_REQUIRES_NONEXISTENT_NEW_PATH 1
 #endif
 
-#define lp_new0(type,n)	(type*)calloc(sizeof(type),n)
+#define lp_new0(type, n) (type *)calloc(sizeof(type), n)
 
 #include "linphone/lpconfig.h"
 #include "lpc2xml.h"
@@ -75,157 +76,162 @@
 #include "c-wrapper/c-wrapper.h"
 #include "core/paths/paths.h"
 
-typedef struct _LpItem{
+typedef struct _LpItem {
 	char *key;
 	char *value;
 	int is_comment;
 	bool_t overwrite; // If set to true, will add overwrite=true when converted to xml
-	bool_t skip; // If set to true, won't be dumped when converted to xml
+	bool_t skip;      // If set to true, won't be dumped when converted to xml
 } LpItem;
 
-typedef struct _LpSectionParam{
+typedef struct _LpSectionParam {
 	char *key;
 	char *value;
 } LpSectionParam;
 
-typedef struct _LpSection{
+typedef struct _LpSection {
 	char *name;
 	bctbx_list_t *items;
 	bctbx_list_t *params;
 	bool_t overwrite; // If set to true, will add overwrite=true to all items of this section when converted to xml
-	bool_t skip; // If set to true, won't be dumped when converted to xml
+	bool_t skip;      // If set to true, won't be dumped when converted to xml
 } LpSection;
 
-struct _LpConfig{
+struct _LpConfig {
 	belle_sip_object_t base;
-	bctbx_vfs_file_t* pFile;
+	bctbx_vfs_file_t *pFile;
 	char *filename;
 	char *tmpfilename;
 	char *factory_filename;
 	bctbx_list_t *sections;
 	bool_t modified;
 	bool_t readonly;
-	bctbx_vfs_t* g_bctbx_vfs;
+	bctbx_vfs_t *g_bctbx_vfs;
 };
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneConfig);
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneConfig);
 
-
-char* lp_realpath(const char* file, char* name) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+char *lp_realpath(const char *file, char *name) {
 #if defined(_WIN32) || defined(__QNX__) || defined(__ANDROID__)
 	return ms_strdup(file);
 #else
-	char * output = realpath(file, name);
-	char * msoutput = ms_strdup(output);
+	char *output = realpath(file, name);
+	char *msoutput = ms_strdup(output);
 	free(output);
 	return msoutput;
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-LpItem * lp_item_new(const char *key, const char *value){
-	LpItem *item=lp_new0(LpItem,1);
-	item->key=ortp_strdup(key);
-	item->value=ortp_strdup(value);
+LpItem *lp_item_new(const char *key, const char *value) {
+	LpItem *item = lp_new0(LpItem, 1);
+	item->key = ortp_strdup(key);
+	item->value = ortp_strdup(value);
 	return item;
 }
 
-LpItem * lp_comment_new(const char *comment){
-	LpItem *item=lp_new0(LpItem,1);
-	char* pos = NULL;
-	item->value=ortp_strdup(comment);
+LpItem *lp_comment_new(const char *comment) {
+	LpItem *item = lp_new0(LpItem, 1);
+	char *pos = NULL;
+	item->value = ortp_strdup(comment);
 
-	pos=strchr(item->value,'\r');
-	if (pos==NULL)
-		pos=strchr(item->value,'\n');
+	pos = strchr(item->value, '\r');
+	if (pos == NULL) pos = strchr(item->value, '\n');
 
-	if(pos) {
-		*pos='\0'; /*replace the '\n' */
+	if (pos) {
+		*pos = '\0'; /*replace the '\n' */
 	}
-	item->is_comment=TRUE;
+	item->is_comment = TRUE;
 	return item;
 }
 
-LpSectionParam *lp_section_param_new(const char *key, const char *value){
+LpSectionParam *lp_section_param_new(const char *key, const char *value) {
 	LpSectionParam *param = lp_new0(LpSectionParam, 1);
 	param->key = ortp_strdup(key);
 	param->value = ortp_strdup(value);
 	return param;
 }
 
-LpSection *lp_section_new(const char *name){
-	LpSection *sec=lp_new0(LpSection,1);
-	sec->name=ortp_strdup(name);
+LpSection *lp_section_new(const char *name) {
+	LpSection *sec = lp_new0(LpSection, 1);
+	sec->name = ortp_strdup(name);
 	return sec;
 }
 
-void lp_item_destroy(void *pitem){
-	LpItem *item=(LpItem*)pitem;
+void lp_item_destroy(void *pitem) {
+	LpItem *item = (LpItem *)pitem;
 	if (item->key) ortp_free(item->key);
 	ortp_free(item->value);
 	free(item);
 }
 
-void lp_section_param_destroy(void *section_param){
-	LpSectionParam *param = (LpSectionParam*)section_param;
+void lp_section_param_destroy(void *section_param) {
+	LpSectionParam *param = (LpSectionParam *)section_param;
 	ortp_free(param->key);
 	ortp_free(param->value);
 	free(param);
 }
 
-void lp_section_destroy(LpSection *sec){
+void lp_section_destroy(LpSection *sec) {
 	ortp_free(sec->name);
-	bctbx_list_for_each(sec->items,lp_item_destroy);
-	bctbx_list_for_each(sec->params,lp_section_param_destroy);
+	bctbx_list_for_each(sec->items, lp_item_destroy);
+	bctbx_list_for_each(sec->params, lp_section_param_destroy);
 	bctbx_list_free(sec->items);
 	free(sec);
 }
 
-void lp_section_add_item(LpSection *sec,LpItem *item){
-	sec->items=bctbx_list_append(sec->items,(void *)item);
+void lp_section_add_item(LpSection *sec, LpItem *item) {
+	sec->items = bctbx_list_append(sec->items, (void *)item);
 }
 
-void linphone_config_add_section(LpConfig *lpconfig, LpSection *section){
-	lpconfig->sections=bctbx_list_append(lpconfig->sections,(void *)section);
+void linphone_config_add_section(LpConfig *lpconfig, LpSection *section) {
+	lpconfig->sections = bctbx_list_append(lpconfig->sections, (void *)section);
 }
 
-void linphone_config_add_section_param(LpSection *section, LpSectionParam *param){
+void linphone_config_add_section_param(LpSection *section, LpSectionParam *param) {
 	section->params = bctbx_list_append(section->params, (void *)param);
 }
 
-void linphone_config_remove_section(LpConfig *lpconfig, LpSection *section){
-	lpconfig->sections=bctbx_list_remove(lpconfig->sections,(void *)section);
+void linphone_config_remove_section(LpConfig *lpconfig, LpSection *section) {
+	lpconfig->sections = bctbx_list_remove(lpconfig->sections, (void *)section);
 	lp_section_destroy(section);
 }
 
-void lp_section_remove_item(LpSection *sec, LpItem *item){
-	sec->items=bctbx_list_remove(sec->items,(void *)item);
+void lp_section_remove_item(LpSection *sec, LpItem *item) {
+	sec->items = bctbx_list_remove(sec->items, (void *)item);
 	lp_item_destroy(item);
 }
 
-static bool_t is_first_char(const char *start, const char *pos){
+static bool_t is_first_char(const char *start, const char *pos) {
 	const char *p;
-	for(p=start;p<pos;p++){
-		if (*p!=' ') return FALSE;
+	for (p = start; p < pos; p++) {
+		if (*p != ' ') return FALSE;
 	}
 	return TRUE;
 }
 
-static int is_a_comment(const char *str){
-	while (*str==' '){
+static int is_a_comment(const char *str) {
+	while (*str == ' ') {
 		str++;
 	}
-	if (*str=='#') return 1;
+	if (*str == '#') return 1;
 	return 0;
 }
 
-LpSection *linphone_config_find_section(const LpConfig *lpconfig, const char *name){
+LpSection *linphone_config_find_section(const LpConfig *lpconfig, const char *name) {
 	LpSection *sec;
 	bctbx_list_t *elem = lpconfig->sections;
 	/*printf("Looking for section %s\n",name);*/
-	for (;elem!=NULL;elem=bctbx_list_next(elem)){
-		sec=(LpSection*)elem->data;
-		if (strcmp(sec->name,name)==0){
+	for (; elem != NULL; elem = bctbx_list_next(elem)) {
+		sec = (LpSection *)elem->data;
+		if (strcmp(sec->name, name) == 0) {
 			/*printf("Section %s found\n",name);*/
 			return sec;
 		}
@@ -233,11 +239,11 @@ LpSection *linphone_config_find_section(const LpConfig *lpconfig, const char *na
 	return NULL;
 }
 
-LpSectionParam *lp_section_find_param(const LpSection *sec, const char *key){
+LpSectionParam *lp_section_find_param(const LpSection *sec, const char *key) {
 	bctbx_list_t *elem;
 	LpSectionParam *param;
-	for (elem = sec->params; elem != NULL; elem = bctbx_list_next(elem)){
-		param = (LpSectionParam*)elem->data;
+	for (elem = sec->params; elem != NULL; elem = bctbx_list_next(elem)) {
+		param = (LpSectionParam *)elem->data;
 		if (strcmp(param->key, key) == 0) {
 			return param;
 		}
@@ -245,13 +251,13 @@ LpSectionParam *lp_section_find_param(const LpSection *sec, const char *key){
 	return NULL;
 }
 
-LpItem *lp_section_find_comment(const LpSection *sec, const char *comment){
+LpItem *lp_section_find_comment(const LpSection *sec, const char *comment) {
 	bctbx_list_t *elem;
 	LpItem *item;
 	/*printf("Looking for item %s\n",name);*/
-	for (elem=sec->items;elem!=NULL;elem=bctbx_list_next(elem)){
-		item=(LpItem*)elem->data;
-		if (item->is_comment && strcmp(item->value,comment)==0) {
+	for (elem = sec->items; elem != NULL; elem = bctbx_list_next(elem)) {
+		item = (LpItem *)elem->data;
+		if (item->is_comment && strcmp(item->value, comment) == 0) {
 			/*printf("Item %s found\n",name);*/
 			return item;
 		}
@@ -259,13 +265,13 @@ LpItem *lp_section_find_comment(const LpSection *sec, const char *comment){
 	return NULL;
 }
 
-LpItem *lp_section_find_item(const LpSection *sec, const char *name){
+LpItem *lp_section_find_item(const LpSection *sec, const char *name) {
 	bctbx_list_t *elem;
 	LpItem *item;
 	/*printf("Looking for item %s\n",name);*/
-	for (elem=sec->items;elem!=NULL;elem=bctbx_list_next(elem)){
-		item=(LpItem*)elem->data;
-		if (!item->is_comment && strcmp(item->key,name)==0) {
+	for (elem = sec->items; elem != NULL; elem = bctbx_list_next(elem)) {
+		item = (LpItem *)elem->data;
+		if (!item->is_comment && strcmp(item->key, name) == 0) {
 			/*printf("Item %s found\n",name);*/
 			return item;
 		}
@@ -273,13 +279,13 @@ LpItem *lp_section_find_item(const LpSection *sec, const char *name){
 	return NULL;
 }
 
-bctbx_list_t *lp_section_get_items(const LpSection *sec){
+bctbx_list_t *lp_section_get_items(const LpSection *sec) {
 	bctbx_list_t *items = NULL;
 	bctbx_list_t *elem;
 	LpItem *item;
 	/*printf("Looking for item %s\n",name);*/
-	for (elem=sec->items;elem!=NULL;elem=bctbx_list_next(elem)){
-		item=(LpItem*)elem->data;
+	for (elem = sec->items; elem != NULL; elem = bctbx_list_next(elem)) {
+		item = (LpItem *)elem->data;
 		if (!item->is_comment) {
 			/*printf("Item %s found\n",name);*/
 			items = bctbx_list_append(items, item);
@@ -288,27 +294,27 @@ bctbx_list_t *lp_section_get_items(const LpSection *sec){
 	return items;
 }
 
-static LpSection* linphone_config_parse_line(LpConfig* lpconfig, char* line, LpSection* cur) {
+static LpSection *linphone_config_parse_line(LpConfig *lpconfig, char *line, LpSection *cur) {
 	LpSectionParam *params = NULL;
-	char *pos1,*pos2;
+	char *pos1, *pos2;
 	int nbs;
-	size_t size=strlen(line)+1;
-	char *secname=reinterpret_cast<char *>(ms_malloc(size));
-	char *key=reinterpret_cast<char *>(ms_malloc(size));
-	char *value=reinterpret_cast<char *>(ms_malloc(size));
+	size_t size = strlen(line) + 1;
+	char *secname = reinterpret_cast<char *>(ms_malloc(size));
+	char *key = reinterpret_cast<char *>(ms_malloc(size));
+	char *value = reinterpret_cast<char *>(ms_malloc(size));
 	LpItem *item;
 
-	pos1=strchr(line,'[');
-	if (pos1!=NULL && is_first_char(line,pos1) ){
-		pos2=strchr(pos1,']');
-		if (pos2!=NULL){
-			secname[0]='\0';
+	pos1 = strchr(line, '[');
+	if (pos1 != NULL && is_first_char(line, pos1)) {
+		pos2 = strchr(pos1, ']');
+		if (pos2 != NULL) {
+			secname[0] = '\0';
 			/* found section */
-			*pos2='\0';
-			nbs = sscanf(pos1+1, "%s", secname);
+			*pos2 = '\0';
+			nbs = sscanf(pos1 + 1, "%s", secname);
 			if (nbs >= 1) {
 				if (strlen(secname) > 0) {
-					cur = linphone_config_find_section (lpconfig,secname);
+					cur = linphone_config_find_section(lpconfig, secname);
 					if (cur == NULL) {
 						cur = lp_section_new(secname);
 						linphone_config_add_section(lpconfig, cur);
@@ -327,7 +333,8 @@ static LpSection* linphone_config_parse_line(LpConfig* lpconfig, char* line, LpS
 								params = lp_section_param_new(key, value);
 								linphone_config_add_section_param(cur, params);
 
-								pos2 += strlen(key) + strlen(value) + 2; // Remove the = sign + the white space after each param
+								pos2 += strlen(key) + strlen(value) +
+								        2; // Remove the = sign + the white space after each param
 								pos1 = strchr(pos2, '=');
 							} else {
 								ms_warning("parse section params error !");
@@ -340,48 +347,48 @@ static LpSection* linphone_config_parse_line(LpConfig* lpconfig, char* line, LpS
 				ms_warning("parse error!");
 			}
 		}
-	}else {
-		if (is_a_comment(line)){
-			if (cur){
-				LpItem *comment=lp_comment_new(line);
-				item=lp_section_find_comment(cur,comment->value);
-				if (item!=NULL) {
+	} else {
+		if (is_a_comment(line)) {
+			if (cur) {
+				LpItem *comment = lp_comment_new(line);
+				item = lp_section_find_comment(cur, comment->value);
+				if (item != NULL) {
 					lp_section_remove_item(cur, item);
 				}
-				lp_section_add_item(cur,comment);
+				lp_section_add_item(cur, comment);
 			}
-		}else{
-			pos1=strchr(line,'=');
-			if (pos1!=NULL){
-				key[0]='\0';
+		} else {
+			pos1 = strchr(line, '=');
+			if (pos1 != NULL) {
+				key[0] = '\0';
 
-				*pos1='\0';
-				if (sscanf(line,"%s",key)>0){
+				*pos1 = '\0';
+				if (sscanf(line, "%s", key) > 0) {
 
 					pos1++;
-					pos2=strchr(pos1,'\r');
-					if (pos2==NULL)
-						pos2=strchr(pos1,'\n');
-					if (pos2==NULL) pos2=pos1+strlen(pos1);
+					pos2 = strchr(pos1, '\r');
+					if (pos2 == NULL) pos2 = strchr(pos1, '\n');
+					if (pos2 == NULL) pos2 = pos1 + strlen(pos1);
 					else {
-						*pos2='\0'; /*replace the '\n' */
+						*pos2 = '\0'; /*replace the '\n' */
 					}
 					/* remove ending white spaces */
-					for (; pos2>pos1 && pos2[-1]==' ';pos2--) pos2[-1]='\0';
+					for (; pos2 > pos1 && pos2[-1] == ' '; pos2--)
+						pos2[-1] = '\0';
 
-					if (pos2-pos1>0){
+					if (pos2 - pos1 > 0) {
 						/* found a pair key,value */
 
-						if (cur!=NULL){
-							item=lp_section_find_item(cur,key);
-							if (item==NULL){
-								lp_section_add_item(cur,lp_item_new(key,pos1));
-							}else{
+						if (cur != NULL) {
+							item = lp_section_find_item(cur, key);
+							if (item == NULL) {
+								lp_section_add_item(cur, lp_item_new(key, pos1));
+							} else {
 								ortp_free(item->value);
-								item->value=ortp_strdup(pos1);
+								item->value = ortp_strdup(pos1);
 							}
 							/*ms_message("Found %s=%s",key,pos1);*/
-						}else{
+						} else {
 							ms_warning("found key,item but no sections");
 						}
 					}
@@ -395,87 +402,90 @@ static LpSection* linphone_config_parse_line(LpConfig* lpconfig, char* line, LpS
 	return cur;
 }
 
-void linphone_config_parse(LpConfig *lpconfig, bctbx_vfs_file_t* pFile){
-	char tmp[MAX_LEN]= {'\0'};
-	LpSection* current_section = NULL;
-	int size  =0;
-	if (pFile==NULL) return;
-	while(( size = bctbx_file_get_nxtline(pFile, tmp, MAX_LEN)) > 0){
-		//tmp[size] = '\0';
+void linphone_config_parse(LpConfig *lpconfig, bctbx_vfs_file_t *pFile) {
+	char tmp[MAX_LEN] = {'\0'};
+	LpSection *current_section = NULL;
+	int size = 0;
+	if (pFile == NULL) return;
+	while ((size = bctbx_file_get_nxtline(pFile, tmp, MAX_LEN)) > 0) {
+		// tmp[size] = '\0';
 		current_section = linphone_config_parse_line(lpconfig, tmp, current_section);
 	}
 }
 
-LpConfig * linphone_config_new(const char *filename){
+LpConfig *linphone_config_new(const char *filename) {
 	return linphone_config_new_with_factory(filename, NULL);
 }
 
 static void _linphone_config_init_from_buffer(LinphoneConfig *conf, const char *buffer) {
-	LpSection* current_section = NULL;
+	LpSection *current_section = NULL;
 
-	char* ptr = ms_strdup(buffer);
-	char* strtok_storage = NULL;
-	char* line = strtok_r(ptr, "\n", &strtok_storage);
+	char *ptr = ms_strdup(buffer);
+	char *strtok_storage = NULL;
+	char *line = strtok_r(ptr, "\n", &strtok_storage);
 
-	while( line != NULL ){
-		current_section = linphone_config_parse_line(conf,line,current_section);
+	while (line != NULL) {
+		current_section = linphone_config_parse_line(conf, line, current_section);
 		line = strtok_r(NULL, "\n", &strtok_storage);
 	}
 
 	ms_free(ptr);
 }
 
-void _linphone_config_apply_factory_config (LpConfig *config) {
-	if (config->factory_filename)
-		linphone_config_read_file(config, config->factory_filename);
+void _linphone_config_apply_factory_config(LpConfig *config) {
+	if (config->factory_filename) linphone_config_read_file(config, config->factory_filename);
 }
 
-LpConfig * linphone_config_new_from_buffer(const char *buffer){
-	LpConfig* conf = belle_sip_object_new(LinphoneConfig);
+LpConfig *linphone_config_new_from_buffer(const char *buffer) {
+	LpConfig *conf = belle_sip_object_new(LinphoneConfig);
 	_linphone_config_init_from_buffer(conf, buffer);
 	return conf;
 }
 
-static int _linphone_config_init_from_files(LinphoneConfig *lpconfig, const char *config_filename, const char *factory_config_filename) {
+static int _linphone_config_init_from_files(LinphoneConfig *lpconfig,
+                                            const char *config_filename,
+                                            BCTBX_UNUSED(const char *factory_config_filename)) {
 	lpconfig->g_bctbx_vfs = bctbx_vfs_get_default();
 
-	if (config_filename != NULL && config_filename[0] != '\0'){
-		if(bctbx_file_exist(config_filename) == 0) {
-			lpconfig->filename=lp_realpath(config_filename, NULL);
-			if(lpconfig->filename == NULL) {
+	if (config_filename != NULL && config_filename[0] != '\0') {
+		if (bctbx_file_exist(config_filename) == 0) {
+			lpconfig->filename = lp_realpath(config_filename, NULL);
+			if (lpconfig->filename == NULL) {
 				ms_error("Could not find the real path of %s: %s", config_filename, strerror(errno));
 				goto fail;
 			}
 		} else {
 			lpconfig->filename = ms_strdup(config_filename);
 		}
-		lpconfig->tmpfilename=ortp_strdup_printf("%s.tmp",lpconfig->filename);
+		lpconfig->tmpfilename = ortp_strdup_printf("%s.tmp", lpconfig->filename);
 		ms_message("Using (r/w) config information from %s", lpconfig->filename);
 
 #if !defined(_WIN32)
 		{
 			struct stat fileStat;
-			if ((stat(lpconfig->filename,&fileStat) == 0) && (S_ISREG(fileStat.st_mode))) {
+			if ((stat(lpconfig->filename, &fileStat) == 0) && (S_ISREG(fileStat.st_mode))) {
 				/* make existing configuration files non-group/world-accessible */
 				if (chmod(lpconfig->filename, S_IRUSR | S_IWUSR) == -1) {
 					ms_warning("unable to correct permissions on "
-						"configuration file: %s", strerror(errno));
+					           "configuration file: %s",
+					           strerror(errno));
 				}
 			}
 		}
 #endif /*_WIN32*/
 
 		/*open with r+ to check if we can write on it later*/
-		lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,lpconfig->filename, "r+");
+		lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->filename, "r+");
 #ifdef RENAME_REQUIRES_NONEXISTENT_NEW_PATH
-		if (lpconfig->pFile == NULL){
-			lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,lpconfig->tmpfilename, "r+");
-			if (lpconfig->pFile != NULL){
-				ms_warning("Could not open %s but %s works, app may have crashed during last sync.",lpconfig->filename,lpconfig->tmpfilename);
+		if (lpconfig->pFile == NULL) {
+			lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->tmpfilename, "r+");
+			if (lpconfig->pFile != NULL) {
+				ms_warning("Could not open %s but %s works, app may have crashed during last sync.", lpconfig->filename,
+				           lpconfig->tmpfilename);
 			}
 		}
 #endif
-		if (lpconfig->pFile != NULL){
+		if (lpconfig->pFile != NULL) {
 			linphone_config_parse(lpconfig, lpconfig->pFile);
 			bctbx_file_close(lpconfig->pFile);
 			lpconfig->pFile = NULL;
@@ -490,7 +500,7 @@ fail:
 }
 
 LpConfig *linphone_config_new_with_factory(const char *config_filename, const char *factory_config_filename) {
-	LpConfig *lpconfig=belle_sip_object_new(LinphoneConfig);
+	LpConfig *lpconfig = belle_sip_object_new(LinphoneConfig);
 	if (factory_config_filename && strcmp(factory_config_filename, "") != 0)
 		lpconfig->factory_filename = bctbx_strdup(factory_config_filename);
 	if (_linphone_config_init_from_files(lpconfig, config_filename, factory_config_filename) == 0) {
@@ -501,35 +511,37 @@ LpConfig *linphone_config_new_with_factory(const char *config_filename, const ch
 	}
 }
 
-LpConfig *linphone_config_new_for_shared_core(const char *app_group_id, const char* config_filename, const char *factory_path) {
-	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, const_cast<void *>(static_cast<const void*>(app_group_id)));
+LpConfig *
+linphone_config_new_for_shared_core(const char *app_group_id, const char *config_filename, const char *factory_path) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config,
+	                                                   const_cast<void *>(static_cast<const void *>(app_group_id)));
 	path = path + "/" + config_filename;
 	return linphone_config_new_with_factory(path.c_str(), factory_path);
 }
 
-const char * linphone_config_get_filename(const LinphoneConfig *config) {
+const char *linphone_config_get_filename(const LinphoneConfig *config) {
 	return config->filename;
 }
 
-const char * linphone_config_get_factory_filename(const LinphoneConfig *config) {
+const char *linphone_config_get_factory_filename(const LinphoneConfig *config) {
 	return config->factory_filename;
 }
 
-const char * linphone_config_get_temporary_filename(const LinphoneConfig *config) {
+const char *linphone_config_get_temporary_filename(const LinphoneConfig *config) {
 	return config->tmpfilename;
 }
 
-LinphoneStatus linphone_config_read_file(LpConfig *lpconfig, const char *filename){
-	char* path = lp_realpath(filename, NULL);
-	bctbx_vfs_file_t* pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, path, "r");
-	if (pFile != NULL){
+LinphoneStatus linphone_config_read_file(LpConfig *lpconfig, const char *filename) {
+	char *path = lp_realpath(filename, NULL);
+	bctbx_vfs_file_t *pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, path, "r");
+	if (pFile != NULL) {
 		ms_message("Reading config information from %s", path);
 		linphone_config_parse(lpconfig, pFile);
 		bctbx_file_close(pFile);
 		ms_free(path);
 		return 0;
 	}
-	ms_warning("Fail to open file %s",path);
+	ms_warning("Fail to open file %s", path);
 	ms_free(path);
 	return -1;
 }
@@ -540,13 +552,14 @@ static const char *empty_xml = "empty provisioning file";
 static const char *xml_to_lpc_failed = "xml to lpc failed";
 static const char *invalid_xml = "invalid xml";
 
-static const char* _linphone_config_xml_convert(LpConfig *lpc, xml2lpc_context *context, int result) {
-	const char* error_msg = NULL;
+static const char *_linphone_config_xml_convert(LpConfig *lpc, xml2lpc_context *context, int result) {
+	const char *error_msg = NULL;
 	if (result == 0) {
 		result = xml2lpc_convert(context, lpc);
 		if (result == 0) {
 			// if the remote provisioning added a proxy config and none was set before, set it
-			if (linphone_config_has_section(lpc, "proxy_0") && linphone_config_get_int(lpc, "sip", "default_proxy", -1) == -1){
+			if (linphone_config_has_section(lpc, "proxy_0") &&
+			    linphone_config_get_int(lpc, "sip", "default_proxy", -1) == -1) {
 				linphone_config_set_int(lpc, "sip", "default_proxy", 0);
 			}
 			linphone_config_sync(lpc);
@@ -559,10 +572,10 @@ static const char* _linphone_config_xml_convert(LpConfig *lpc, xml2lpc_context *
 	return error_msg;
 }
 
-const char* linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *filename) {
+const char *linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *filename) {
 	xml2lpc_context *context = NULL;
-	char* path = lp_realpath(filename, NULL);
-	const char* error_msg = NULL;
+	char *path = lp_realpath(filename, NULL);
+	const char *error_msg = NULL;
 
 	if (path) {
 		context = xml2lpc_context_new(NULL, NULL);
@@ -573,37 +586,44 @@ const char* linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *
 	return error_msg;
 }
 
-static void xml2lpc_callback(void *ctx, xml2lpc_log_level level, const char *fmt, va_list list) {
+static void xml2lpc_callback(BCTBX_UNUSED(void *ctx), xml2lpc_log_level level, const char *fmt, va_list list) {
 	BctbxLogLevel bctbx_level;
-	switch(level) {
-		case XML2LPC_DEBUG: bctbx_level = BCTBX_LOG_DEBUG; break;
-		case XML2LPC_MESSAGE: bctbx_level = BCTBX_LOG_MESSAGE;break;
-		case XML2LPC_WARNING: bctbx_level = BCTBX_LOG_WARNING;break;
+	switch (level) {
+		case XML2LPC_DEBUG:
+			bctbx_level = BCTBX_LOG_DEBUG;
+			break;
+		case XML2LPC_MESSAGE:
+			bctbx_level = BCTBX_LOG_MESSAGE;
+			break;
+		case XML2LPC_WARNING:
+			bctbx_level = BCTBX_LOG_WARNING;
+			break;
 		case XML2LPC_ERROR:
 		default:
-			bctbx_level = BCTBX_LOG_ERROR;break;
+			bctbx_level = BCTBX_LOG_ERROR;
+			break;
 	}
-	bctbx_logv(BCTBX_LOG_DOMAIN, bctbx_level,fmt,list);
+	bctbx_logv(BCTBX_LOG_DOMAIN, bctbx_level, fmt, list);
 }
 
 #else
 
-const char* linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *filename) {
+const char *linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *filename) {
 	ms_warning("linphone_config_load_from_xml_file(): stubbed.");
 	return "No libxml2 support";
 }
 
 #endif
 
-const char* _linphone_config_load_from_xml_string(LpConfig *lpc, const char *buffer) {
-	const char* error_msg = NULL;
+const char *_linphone_config_load_from_xml_string(LpConfig *lpc, const char *buffer) {
+	const char *error_msg = NULL;
 #ifdef HAVE_XML2
 	xml2lpc_context *context = NULL;
 
 	if (buffer != NULL) {
 		context = xml2lpc_context_new(xml2lpc_callback, NULL);
 		error_msg = _linphone_config_xml_convert(lpc, context, xml2lpc_set_xml_string(context, buffer));
-	}else{
+	} else {
 		error_msg = empty_xml;
 	}
 	if (context) xml2lpc_context_destroy(context);
@@ -616,42 +636,43 @@ const char* _linphone_config_load_from_xml_string(LpConfig *lpc, const char *buf
 
 LinphoneStatus linphone_config_load_from_xml_string(LpConfig *lpc, const char *buffer) {
 	const char *status;
-	if ((status =_linphone_config_load_from_xml_string(lpc,buffer))) {
-		ms_error("%s",status);
+	if ((status = _linphone_config_load_from_xml_string(lpc, buffer))) {
+		ms_error("%s", status);
 		return -1;
-	} else
-		return 0;
+	} else return 0;
 }
 
-void lp_item_set_value(LpItem *item, const char *value){
+void lp_item_set_value(LpItem *item, const char *value) {
 	if (item->value != value) {
-		char *prev_value=item->value;
-		item->value=ortp_strdup(value);
+		char *prev_value = item->value;
+		item->value = ortp_strdup(value);
 		ortp_free(prev_value);
 	}
 }
 
-
-static void _linphone_config_uninit(LpConfig *lpconfig){
-	if (lpconfig->filename!=NULL) ortp_free(lpconfig->filename);
+static void _linphone_config_uninit(LpConfig *lpconfig) {
+	if (lpconfig->filename != NULL) ortp_free(lpconfig->filename);
 	if (lpconfig->tmpfilename) ortp_free(lpconfig->tmpfilename);
 	if (lpconfig->factory_filename) bctbx_free(lpconfig->factory_filename);
 	if (lpconfig->sections) bctbx_list_free_with_data(lpconfig->sections, (bctbx_list_free_func)lp_section_destroy);
 }
 
-LpConfig *linphone_config_ref(LpConfig *lpconfig){
+LpConfig *linphone_config_ref(LpConfig *lpconfig) {
 	return (LinphoneConfig *)belle_sip_object_ref(BELLE_SIP_OBJECT(lpconfig));
 }
 
-void linphone_config_unref(LpConfig *lpconfig){
+void linphone_config_unref(LpConfig *lpconfig) {
 	belle_sip_object_unref(BELLE_SIP_OBJECT(lpconfig));
 }
 
-void linphone_config_destroy(LpConfig *lpconfig){
+void linphone_config_destroy(LpConfig *lpconfig) {
 	linphone_config_unref(lpconfig);
 }
 
-const char *linphone_config_get_section_param_string(const LpConfig *lpconfig, const char *section, const char *key, const char *default_value){
+const char *linphone_config_get_section_param_string(const LpConfig *lpconfig,
+                                                     const char *section,
+                                                     const char *key,
+                                                     const char *default_value) {
 	LpSection *sec;
 	LpSectionParam *param;
 	sec = linphone_config_find_section(lpconfig, section);
@@ -662,18 +683,22 @@ const char *linphone_config_get_section_param_string(const LpConfig *lpconfig, c
 	return default_value;
 }
 
-const char *linphone_config_get_string(const LpConfig *lpconfig, const char *section, const char *key, const char *default_string){
+const char *
+linphone_config_get_string(const LpConfig *lpconfig, const char *section, const char *key, const char *default_string) {
 	LpSection *sec;
 	LpItem *item;
-	sec=linphone_config_find_section(lpconfig,section);
-	if (sec!=NULL){
-		item=lp_section_find_item(sec,key);
-		if (item!=NULL) return item->value;
+	sec = linphone_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		item = lp_section_find_item(sec, key);
+		if (item != NULL) return item->value;
 	}
 	return default_string;
 }
 
-bctbx_list_t * linphone_config_get_string_list(const LpConfig *lpconfig, const char *section, const char *key, bctbx_list_t *default_list) {
+bctbx_list_t *linphone_config_get_string_list(const LpConfig *lpconfig,
+                                              const char *section,
+                                              const char *key,
+                                              bctbx_list_t *default_list) {
 	LpItem *item;
 	LpSection *sec = linphone_config_find_section(lpconfig, section);
 	if (sec != NULL) {
@@ -698,7 +723,13 @@ bctbx_list_t * linphone_config_get_string_list(const LpConfig *lpconfig, const c
 	return default_list;
 }
 
-bool_t linphone_config_get_range(const LpConfig *lpconfig, const char *section, const char *key, int *min, int *max, int default_min, int default_max) {
+bool_t linphone_config_get_range(const LpConfig *lpconfig,
+                                 const char *section,
+                                 const char *key,
+                                 int *min,
+                                 int *max,
+                                 int default_min,
+                                 int default_max) {
 	const char *str = linphone_config_get_string(lpconfig, section, key, NULL);
 	if (str != NULL) {
 		const char *minusptr = strchr(str, '-');
@@ -717,18 +748,16 @@ bool_t linphone_config_get_range(const LpConfig *lpconfig, const char *section, 
 	}
 }
 
-int linphone_config_get_int(const LpConfig *lpconfig,const char *section, const char *key, int default_value){
-	const char *str=linphone_config_get_string(lpconfig,section,key,NULL);
-	if (str!=NULL) {
-		int ret=0;
+int linphone_config_get_int(const LpConfig *lpconfig, const char *section, const char *key, int default_value) {
+	const char *str = linphone_config_get_string(lpconfig, section, key, NULL);
+	if (str != NULL) {
+		int ret = 0;
 
-		if (strstr(str,"0x")==str){
-			sscanf(str,"%x",&ret);
-		}else
-			sscanf(str,"%i",&ret);
+		if (strstr(str, "0x") == str) {
+			sscanf(str, "%x", &ret);
+		} else sscanf(str, "%i", &ret);
 		return ret;
-	}
-	else return default_value;
+	} else return default_value;
 }
 
 bool_t linphone_config_get_bool(const LpConfig *lpconfig, const char *section, const char *key, bool_t default_value) {
@@ -741,23 +770,23 @@ bool_t linphone_config_get_bool(const LpConfig *lpconfig, const char *section, c
 	return default_value;
 }
 
-int64_t linphone_config_get_int64(const LpConfig *lpconfig,const char *section, const char *key, int64_t default_value){
-	const char *str=linphone_config_get_string(lpconfig,section,key,NULL);
-	if (str!=NULL) {
+int64_t
+linphone_config_get_int64(const LpConfig *lpconfig, const char *section, const char *key, int64_t default_value) {
+	const char *str = linphone_config_get_string(lpconfig, section, key, NULL);
+	if (str != NULL) {
 #ifdef _WIN32
 		return (int64_t)_atoi64(str);
 #else
 		return atoll(str);
 #endif
-	}
-	else return default_value;
+	} else return default_value;
 }
 
-float linphone_config_get_float(const LpConfig *lpconfig,const char *section, const char *key, float default_value){
-	const char *str=linphone_config_get_string(lpconfig,section,key,NULL);
-	float ret=default_value;
-	if (str==NULL) return default_value;
-	sscanf(str,"%f",&ret);
+float linphone_config_get_float(const LpConfig *lpconfig, const char *section, const char *key, float default_value) {
+	const char *str = linphone_config_get_string(lpconfig, section, key, NULL);
+	float ret = default_value;
+	if (str == NULL) return default_value;
+	sscanf(str, "%f", &ret);
 	return ret;
 }
 
@@ -765,7 +794,7 @@ bool_t linphone_config_get_overwrite_flag_for_entry(const LpConfig *lpconfig, co
 	LpSection *sec;
 	LpItem *item;
 	sec = linphone_config_find_section(lpconfig, section);
-	if (sec != NULL){
+	if (sec != NULL) {
 		item = lp_section_find_item(sec, key);
 		if (item != NULL) return item->overwrite;
 	}
@@ -775,7 +804,7 @@ bool_t linphone_config_get_overwrite_flag_for_entry(const LpConfig *lpconfig, co
 bool_t linphone_config_get_overwrite_flag_for_section(const LpConfig *lpconfig, const char *section) {
 	LpSection *sec;
 	sec = linphone_config_find_section(lpconfig, section);
-	if (sec != NULL){
+	if (sec != NULL) {
 		return sec->overwrite;
 	}
 	return FALSE;
@@ -785,7 +814,7 @@ bool_t linphone_config_get_skip_flag_for_entry(const LpConfig *lpconfig, const c
 	LpSection *sec;
 	LpItem *item;
 	sec = linphone_config_find_section(lpconfig, section);
-	if (sec != NULL){
+	if (sec != NULL) {
 		item = lp_section_find_item(sec, key);
 		if (item != NULL) return item->skip;
 	}
@@ -795,37 +824,39 @@ bool_t linphone_config_get_skip_flag_for_entry(const LpConfig *lpconfig, const c
 bool_t linphone_config_get_skip_flag_for_section(const LpConfig *lpconfig, const char *section) {
 	LpSection *sec;
 	sec = linphone_config_find_section(lpconfig, section);
-	if (sec != NULL){
+	if (sec != NULL) {
 		return sec->skip;
 	}
 	return FALSE;
 }
 
-void linphone_config_set_string(LpConfig *lpconfig,const char *section, const char *key, const char *value){
+void linphone_config_set_string(LpConfig *lpconfig, const char *section, const char *key, const char *value) {
 	LpItem *item;
-	LpSection *sec=linphone_config_find_section(lpconfig,section);
-	if (sec!=NULL){
-		item=lp_section_find_item(sec,key);
-		if (item!=NULL){
+	LpSection *sec = linphone_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		item = lp_section_find_item(sec, key);
+		if (item != NULL) {
 			if ((value != NULL) && (value[0] != '\0')) {
 				if (strcmp(value, item->value) == 0) return;
 				lp_item_set_value(item, value);
 			} else {
 				lp_section_remove_item(sec, item);
 			}
-		}else{
-			if (value!=NULL && value[0] != '\0')
-				lp_section_add_item(sec,lp_item_new(key,value));
+		} else {
+			if (value != NULL && value[0] != '\0') lp_section_add_item(sec, lp_item_new(key, value));
 		}
-	}else if (value!=NULL && value[0] != '\0'){
-		sec=lp_section_new(section);
-		linphone_config_add_section(lpconfig,sec);
-		lp_section_add_item(sec,lp_item_new(key,value));
+	} else if (value != NULL && value[0] != '\0') {
+		sec = lp_section_new(section);
+		linphone_config_add_section(lpconfig, sec);
+		lp_section_add_item(sec, lp_item_new(key, value));
 	}
 	lpconfig->modified = TRUE;
 }
 
-void linphone_config_set_string_list(LpConfig *lpconfig, const char *section, const char *key, const bctbx_list_t *value) {
+void linphone_config_set_string_list(LpConfig *lpconfig,
+                                     const char *section,
+                                     const char *key,
+                                     const bctbx_list_t *value) {
 	char *strvalue = NULL;
 	char *tmp = NULL;
 	const bctbx_list_t *elem;
@@ -834,8 +865,7 @@ void linphone_config_set_string_list(LpConfig *lpconfig, const char *section, co
 			tmp = ms_strdup_printf("%s,%s", strvalue, (const char *)elem->data);
 			ms_free(strvalue);
 			strvalue = tmp;
-		}
-		else strvalue = ms_strdup((const char *)elem->data);
+		} else strvalue = ms_strdup((const char *)elem->data);
 	}
 	linphone_config_set_string(lpconfig, section, key, strvalue);
 	if (strvalue) ms_free(strvalue);
@@ -847,10 +877,10 @@ void linphone_config_set_range(LpConfig *lpconfig, const char *section, const ch
 	linphone_config_set_string(lpconfig, section, key, tmp);
 }
 
-void linphone_config_set_int(LpConfig *lpconfig,const char *section, const char *key, int value){
+void linphone_config_set_int(LpConfig *lpconfig, const char *section, const char *key, int value) {
 	char tmp[30];
-	snprintf(tmp,sizeof(tmp),"%i",value);
-	linphone_config_set_string(lpconfig,section,key,tmp);
+	snprintf(tmp, sizeof(tmp), "%i", value);
+	linphone_config_set_string(lpconfig, section, key, tmp);
 }
 
 void linphone_config_set_bool(LpConfig *lpconfig, const char *section, const char *key, bool_t value) {
@@ -861,26 +891,28 @@ void linphone_config_set_bool(LpConfig *lpconfig, const char *section, const cha
 	}
 }
 
-void linphone_config_set_int_hex(LpConfig *lpconfig,const char *section, const char *key, int value){
+void linphone_config_set_int_hex(LpConfig *lpconfig, const char *section, const char *key, int value) {
 	char tmp[30];
-	snprintf(tmp,sizeof(tmp),"0x%x",value);
-	linphone_config_set_string(lpconfig,section,key,tmp);
+	snprintf(tmp, sizeof(tmp), "0x%x", value);
+	linphone_config_set_string(lpconfig, section, key, tmp);
 }
 
-void linphone_config_set_int64(LpConfig *lpconfig,const char *section, const char *key, int64_t value){
+void linphone_config_set_int64(LpConfig *lpconfig, const char *section, const char *key, int64_t value) {
 	char tmp[30];
-	snprintf(tmp,sizeof(tmp),"%lli",(long long)value);
-	linphone_config_set_string(lpconfig,section,key,tmp);
+	snprintf(tmp, sizeof(tmp), "%lli", (long long)value);
+	linphone_config_set_string(lpconfig, section, key, tmp);
 }
 
-
-void linphone_config_set_float(LpConfig *lpconfig,const char *section, const char *key, float value){
+void linphone_config_set_float(LpConfig *lpconfig, const char *section, const char *key, float value) {
 	char tmp[30];
-	snprintf(tmp,sizeof(tmp),"%f",value);
-	linphone_config_set_string(lpconfig,section,key,tmp);
+	snprintf(tmp, sizeof(tmp), "%f", value);
+	linphone_config_set_string(lpconfig, section, key, tmp);
 }
 
-void linphone_config_set_overwrite_flag_for_entry(LpConfig *lpconfig, const char *section, const char *key, bool_t value) {
+void linphone_config_set_overwrite_flag_for_entry(LpConfig *lpconfig,
+                                                  const char *section,
+                                                  const char *key,
+                                                  bool_t value) {
 	LpSection *sec;
 	LpItem *item;
 	sec = linphone_config_find_section(lpconfig, section);
@@ -916,26 +948,25 @@ void linphone_config_set_skip_flag_for_section(LpConfig *lpconfig, const char *s
 	}
 }
 
-void lp_item_write(LpItem *item, LpConfig *lpconfig){
-	int ret =-1 ;
-	if (item->is_comment){
-		ret = (int)bctbx_file_fprintf(lpconfig->pFile, 0, "%s\n",item->value);
+void lp_item_write(LpItem *item, LpConfig *lpconfig) {
+	int ret = -1;
+	if (item->is_comment) {
+		ret = (int)bctbx_file_fprintf(lpconfig->pFile, 0, "%s\n", item->value);
 
-	}
-	else if (item->value && item->value[0] != '\0' ){
-		ret = (int)bctbx_file_fprintf(lpconfig->pFile, 0, "%s=%s\n",item->key,item->value);
+	} else if (item->value && item->value[0] != '\0') {
+		ret = (int)bctbx_file_fprintf(lpconfig->pFile, 0, "%s=%s\n", item->key, item->value);
 	}
 
 	else {
 		ms_warning("Not writing item %s to file, it is empty", item->key);
 	}
-	if (ret < 0){
-		ms_error("lp_item_write : not writing item to file" );
+	if (ret < 0) {
+		ms_error("lp_item_write : not writing item to file");
 	}
 }
 
-void lp_section_param_write(LpSectionParam *param, LpConfig *lpconfig){
-	if( param->value && param->value[0] != '\0') {
+void lp_section_param_write(LpSectionParam *param, LpConfig *lpconfig) {
+	if (param->value && param->value[0] != '\0') {
 		bctbx_file_fprintf(lpconfig->pFile, 0, " %s=%s", param->key, param->value);
 
 	} else {
@@ -943,95 +974,99 @@ void lp_section_param_write(LpSectionParam *param, LpConfig *lpconfig){
 	}
 }
 
-void lp_section_write(LpSection *sec,LpConfig *lpconfig){
+void lp_section_write(LpSection *sec, LpConfig *lpconfig) {
 
-	if (bctbx_file_fprintf(lpconfig->pFile, 0, "[%s",sec->name) < 0) ms_error("lp_section_write : write error on %s", sec->name);
-	bctbx_list_for_each2(sec->params, (void (*)(void*, void*))lp_section_param_write, (void *)lpconfig);
+	if (bctbx_file_fprintf(lpconfig->pFile, 0, "[%s", sec->name) < 0)
+		ms_error("lp_section_write : write error on %s", sec->name);
+	bctbx_list_for_each2(sec->params, (void (*)(void *, void *))lp_section_param_write, (void *)lpconfig);
 
-	if (bctbx_file_fprintf(lpconfig->pFile, 0, "]\n")< 0) ms_error("lp_section_write : write error ");
-	bctbx_list_for_each2(sec->items, (void (*)(void*, void*))lp_item_write, (void *)lpconfig);
+	if (bctbx_file_fprintf(lpconfig->pFile, 0, "]\n") < 0) ms_error("lp_section_write : write error ");
+	bctbx_list_for_each2(sec->items, (void (*)(void *, void *))lp_item_write, (void *)lpconfig);
 
-	if (bctbx_file_fprintf(lpconfig->pFile, 0, "\n")< 0) ms_error("lp_section_write : write error");
-
+	if (bctbx_file_fprintf(lpconfig->pFile, 0, "\n") < 0) ms_error("lp_section_write : write error");
 }
 
-LinphoneStatus linphone_config_sync(LpConfig *lpconfig){
+LinphoneStatus linphone_config_sync(LpConfig *lpconfig) {
 	bctbx_vfs_file_t *pFile = NULL;
-	if (lpconfig->filename==NULL) return -1;
+	if (lpconfig->filename == NULL) return -1;
 	if (lpconfig->readonly) return 0;
 
 #ifndef _WIN32
 	/* don't create group/world-accessible files */
-	(void) umask(S_IRWXG | S_IRWXO);
+	(void)umask(S_IRWXG | S_IRWXO);
 #endif
-	pFile  = bctbx_file_open(lpconfig->g_bctbx_vfs,lpconfig->tmpfilename, "w");
+	pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->tmpfilename, "w");
 	lpconfig->pFile = pFile;
-	if (pFile == NULL){
-		ms_warning("Could not write %s ! Maybe it is read-only. Configuration will not be saved.",lpconfig->filename);
+	if (pFile == NULL) {
+		ms_warning("Could not write %s ! Maybe it is read-only. Configuration will not be saved.", lpconfig->filename);
 		lpconfig->readonly = TRUE;
 		return -1;
 	}
 
-	bctbx_list_for_each2(lpconfig->sections,(void (*)(void *,void*))lp_section_write,(void *)lpconfig);
+	bctbx_list_for_each2(lpconfig->sections, (void (*)(void *, void *))lp_section_write, (void *)lpconfig);
 	bctbx_file_close(pFile);
 
 #ifdef RENAME_REQUIRES_NONEXISTENT_NEW_PATH
 	/* On windows, rename() does not accept that the newpath is an existing file, while it is accepted on Unix.
 	 * As a result, we are forced to first delete the linphonerc file, and then rename.*/
-	if (remove(lpconfig->filename)!=0){
-		ms_error("Cannot remove %s: %s",lpconfig->filename, strerror(errno));
+	if (remove(lpconfig->filename) != 0) {
+		ms_error("Cannot remove %s: %s", lpconfig->filename, strerror(errno));
 	}
 #endif
-	if (rename(lpconfig->tmpfilename,lpconfig->filename)!=0){
-		ms_error("Cannot rename %s into %s: %s",lpconfig->tmpfilename,lpconfig->filename,strerror(errno));
+	if (rename(lpconfig->tmpfilename, lpconfig->filename) != 0) {
+		ms_error("Cannot rename %s into %s: %s", lpconfig->tmpfilename, lpconfig->filename, strerror(errno));
 	}
 	lpconfig->modified = FALSE;
 	return 0;
 }
 
 void linphone_config_reload(LinphoneConfig *lpconfig) {
-	bctbx_list_for_each(lpconfig->sections, (void (*)(void*)) lp_section_destroy);
+	bctbx_list_for_each(lpconfig->sections, (void (*)(void *))lp_section_destroy);
 	bctbx_list_free(lpconfig->sections);
 	lpconfig->sections = NULL;
 	linphone_config_read_file(lpconfig, lpconfig->filename);
 }
 
-int linphone_config_has_section(const LpConfig *lpconfig, const char *section){
-	if (linphone_config_find_section(lpconfig,section)!=NULL) return 1;
+int linphone_config_has_section(const LpConfig *lpconfig, const char *section) {
+	if (linphone_config_find_section(lpconfig, section) != NULL) return 1;
 	return 0;
 }
 
-void linphone_config_for_each_section(const LpConfig *lpconfig, void (*callback)(const char *section, void *ctx), void *ctx) {
+void linphone_config_for_each_section(const LpConfig *lpconfig,
+                                      void (*callback)(const char *section, void *ctx),
+                                      void *ctx) {
 	LpSection *sec;
 	bctbx_list_t *elem;
-	for (elem=lpconfig->sections;elem!=NULL;elem=bctbx_list_next(elem)){
-		sec=(LpSection*)elem->data;
+	for (elem = lpconfig->sections; elem != NULL; elem = bctbx_list_next(elem)) {
+		sec = (LpSection *)elem->data;
 		callback(sec->name, ctx);
 	}
 }
 
-void linphone_config_for_each_entry(const LpConfig *lpconfig, const char *section, void (*callback)(const char *entry, void *ctx), void *ctx) {
+void linphone_config_for_each_entry(const LpConfig *lpconfig,
+                                    const char *section,
+                                    void (*callback)(const char *entry, void *ctx),
+                                    void *ctx) {
 	LpItem *item;
 	bctbx_list_t *elem;
-	LpSection *sec=linphone_config_find_section(lpconfig,section);
-	if (sec!=NULL){
-		for (elem=sec->items;elem!=NULL;elem=bctbx_list_next(elem)){
-			item=(LpItem*)elem->data;
-			if (!item->is_comment)
-				callback(item->key, ctx);
+	LpSection *sec = linphone_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		for (elem = sec->items; elem != NULL; elem = bctbx_list_next(elem)) {
+			item = (LpItem *)elem->data;
+			if (!item->is_comment) callback(item->key, ctx);
 		}
 	}
 }
 
-void linphone_config_clean_section(LpConfig *lpconfig, const char *section){
-	LpSection *sec=linphone_config_find_section(lpconfig,section);
-	if (sec!=NULL){
-		linphone_config_remove_section(lpconfig,sec);
+void linphone_config_clean_section(LpConfig *lpconfig, const char *section) {
+	LpSection *sec = linphone_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		linphone_config_remove_section(lpconfig, sec);
 	}
 	lpconfig->modified = TRUE;
 }
 
-bool_t linphone_config_needs_commit(const LpConfig *lpconfig){
+bool_t linphone_config_needs_commit(const LpConfig *lpconfig) {
 	return lpconfig->modified;
 }
 
@@ -1045,7 +1080,10 @@ int linphone_config_get_default_int(const LpConfig *lpconfig, const char *sectio
 	return linphone_config_get_int(lpconfig, default_section, key, default_value);
 }
 
-int64_t linphone_config_get_default_int64(const LpConfig *lpconfig, const char *section, const char *key, int64_t default_value) {
+int64_t linphone_config_get_default_int64(const LpConfig *lpconfig,
+                                          const char *section,
+                                          const char *key,
+                                          int64_t default_value) {
 	char default_section[MAX_LEN];
 	strcpy(default_section, section);
 	strcat(default_section, DEFAULT_VALUES_SUFFIX);
@@ -1053,7 +1091,10 @@ int64_t linphone_config_get_default_int64(const LpConfig *lpconfig, const char *
 	return linphone_config_get_int64(lpconfig, default_section, key, default_value);
 }
 
-float linphone_config_get_default_float(const LpConfig *lpconfig, const char *section, const char *key, float default_value) {
+float linphone_config_get_default_float(const LpConfig *lpconfig,
+                                        const char *section,
+                                        const char *key,
+                                        float default_value) {
 	char default_section[MAX_LEN];
 	strcpy(default_section, section);
 	strcat(default_section, DEFAULT_VALUES_SUFFIX);
@@ -1061,7 +1102,10 @@ float linphone_config_get_default_float(const LpConfig *lpconfig, const char *se
 	return linphone_config_get_float(lpconfig, default_section, key, default_value);
 }
 
-const char* linphone_config_get_default_string(const LpConfig *lpconfig, const char *section, const char *key, const char *default_value) {
+const char *linphone_config_get_default_string(const LpConfig *lpconfig,
+                                               const char *section,
+                                               const char *key,
+                                               const char *default_value) {
 	char default_section[MAX_LEN];
 	strcpy(default_section, section);
 	strcat(default_section, DEFAULT_VALUES_SUFFIX);
@@ -1109,9 +1153,9 @@ bool_t linphone_config_relative_file_exists(const LpConfig *lpconfig, const char
 		ms_free(conf_path);
 		ms_free(filepath);
 
-		if(realfilepath == NULL) return FALSE;
+		if (realfilepath == NULL) return FALSE;
 
-		pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,realfilepath, "r");
+		pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, realfilepath, "r");
 		ms_free(realfilepath);
 		if (pFile != NULL) {
 			bctbx_file_close(pFile);
@@ -1129,7 +1173,7 @@ void linphone_config_write_relative_file(const LpConfig *lpconfig, const char *f
 
 	if (lpconfig->filename == NULL) return;
 
-	if(strlen(data) == 0) {
+	if (strlen(data) == 0) {
 		ms_warning("%s has not been created because there is no data to write", filename);
 		return;
 	}
@@ -1138,32 +1182,33 @@ void linphone_config_write_relative_file(const LpConfig *lpconfig, const char *f
 	dir = _linphone_config_dirname(dup_config_file);
 	filepath = ms_strdup_printf("%s/%s", dir, filename);
 	realfilepath = lp_realpath(filepath, NULL);
-	if(realfilepath == NULL) {
+	if (realfilepath == NULL) {
 		ms_error("Could not resolv %s: %s", filepath, strerror(errno));
 		goto end;
 	}
 
-	pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,realfilepath, "w");
-	if(pFile == NULL) {
+	pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, realfilepath, "w");
+	if (pFile == NULL) {
 		ms_error("Could not open %s for write", realfilepath);
 		goto end;
 	}
-	bctbx_file_fprintf(pFile, 0, "%s",data);
+	bctbx_file_fprintf(pFile, 0, "%s", data);
 	bctbx_file_close(pFile);
 
 end:
 	ms_free(dup_config_file);
 	ms_free(filepath);
-	if(realfilepath) ms_free(realfilepath);
+	if (realfilepath) ms_free(realfilepath);
 }
 
-LinphoneStatus linphone_config_read_relative_file(const LpConfig *lpconfig, const char *filename, char *data, size_t max_length) {
+LinphoneStatus
+linphone_config_read_relative_file(const LpConfig *lpconfig, const char *filename, char *data, size_t max_length) {
 	char *dup_config_file = NULL;
 	const char *dir = NULL;
 	char *filepath = NULL;
-	bctbx_vfs_file_t* pFile = NULL;
+	bctbx_vfs_file_t *pFile = NULL;
 
-	char* realfilepath = NULL;
+	char *realfilepath = NULL;
 
 	if (lpconfig->filename == NULL) return -1;
 
@@ -1171,21 +1216,20 @@ LinphoneStatus linphone_config_read_relative_file(const LpConfig *lpconfig, cons
 	dir = _linphone_config_dirname(dup_config_file);
 	filepath = ms_strdup_printf("%s/%s", dir, filename);
 	realfilepath = lp_realpath(filepath, NULL);
-	if(realfilepath == NULL) {
+	if (realfilepath == NULL) {
 		ms_error("Could not resolv %s: %s", filepath, strerror(errno));
 		goto err;
 	}
 
-	pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,realfilepath,"r");
+	pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, realfilepath, "r");
 	if (pFile == NULL) {
 		ms_error("Could not open %s for read.", realfilepath);
 		goto err;
 	}
 
-	if(bctbx_file_read(pFile, data, 1, (off_t)max_length) < 0){
+	if (bctbx_file_read(pFile, data, 1, (off_t)max_length) < 0) {
 		ms_error("%s could not be loaded.", realfilepath);
 		goto err;
-
 	}
 
 	bctbx_file_close(pFile);
@@ -1198,11 +1242,11 @@ LinphoneStatus linphone_config_read_relative_file(const LpConfig *lpconfig, cons
 err:
 	ms_free(dup_config_file);
 	ms_free(filepath);
-	if(realfilepath) ms_free(realfilepath);
+	if (realfilepath) ms_free(realfilepath);
 	return -1;
 }
 
-const char** linphone_config_get_sections_names(LpConfig *lpconfig) {
+const char **linphone_config_get_sections_names(LpConfig *lpconfig) {
 	const char **sections_names;
 	const bctbx_list_t *sections = lpconfig->sections;
 	size_t ndev;
@@ -1220,7 +1264,7 @@ const char** linphone_config_get_sections_names(LpConfig *lpconfig) {
 	return sections_names;
 }
 
-bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpconfig) {
+bctbx_list_t *linphone_config_get_sections_names_list(LinphoneConfig *lpconfig) {
 	const bctbx_list_t *sections = lpconfig->sections;
 	bctbx_list_t *sections_names = NULL;
 	int i;
@@ -1233,23 +1277,22 @@ bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpconfig)
 	return sections_names;
 }
 
-bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *lpconfig, const char *section ) {
+bctbx_list_t *linphone_config_get_keys_names_list(LinphoneConfig *lpconfig, const char *section) {
 	LpSection *sec;
 	bctbx_list_t *keys_names = NULL, *items;
-	sec=linphone_config_find_section(lpconfig,section);
-	if (sec!=NULL){
+	sec = linphone_config_find_section(lpconfig, section);
+	if (sec != NULL) {
 		items = lp_section_get_items(sec);
-		for(bctbx_list_t * item_it = items ; item_it != NULL ; item_it = item_it->next) {
+		for (bctbx_list_t *item_it = items; item_it != NULL; item_it = item_it->next) {
 			LpItem *item = (LpItem *)item_it->data;
 			keys_names = bctbx_list_append(keys_names, item->key);
 		}
-		if( items)
-			bctbx_list_free(items);
+		if (items) bctbx_list_free(items);
 	}
 	return keys_names;
 }
 
-char* linphone_config_dump_as_xml(const LpConfig *lpconfig) {
+char *linphone_config_dump_as_xml(const LpConfig *lpconfig) {
 	char *buffer = NULL;
 #ifdef HAVE_XML2
 	lpc2xml_context *ctx = lpc2xml_context_new(NULL, NULL);
@@ -1265,25 +1308,25 @@ char* linphone_config_dump_as_xml(const LpConfig *lpconfig) {
 struct _entry_data {
 	const LpConfig *conf;
 	const char *section;
-	char** buffer;
+	char **buffer;
 };
 
 static void dump_entry(const char *entry, void *data) {
-	struct _entry_data *d = (struct _entry_data *) data;
+	struct _entry_data *d = (struct _entry_data *)data;
 	const char *value = linphone_config_get_string(d->conf, d->section, entry, "");
 	*d->buffer = ms_strcat_printf(*d->buffer, "\t%s=%s\n", entry, value);
 }
 
 static void dump_section(const char *section, void *data) {
-	struct _entry_data *d = (struct _entry_data *) data;
+	struct _entry_data *d = (struct _entry_data *)data;
 	d->section = section;
 	*d->buffer = ms_strcat_printf(*d->buffer, "[%s]\n", section);
 	linphone_config_for_each_entry(d->conf, section, dump_entry, d);
 }
 
-char* linphone_config_dump(const LpConfig *lpconfig) {
-	char* buffer = NULL;
-	struct _entry_data d = { lpconfig, NULL, &buffer };
+char *linphone_config_dump(const LpConfig *lpconfig) {
+	char *buffer = NULL;
+	struct _entry_data d = {lpconfig, NULL, &buffer};
 	linphone_config_for_each_section(lpconfig, dump_section, &d);
 
 	return buffer;
@@ -1292,29 +1335,24 @@ char* linphone_config_dump(const LpConfig *lpconfig) {
 void linphone_config_clean_entry(LpConfig *lpconfig, const char *section, const char *key) {
 	LpSection *sec;
 	LpItem *item;
-	sec=linphone_config_find_section(lpconfig,section);
-	if (sec!=NULL){
-		item=lp_section_find_item(sec,key);
-		if (item!=NULL)
-			lp_section_remove_item(sec,item);
+	sec = linphone_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		item = lp_section_find_item(sec, key);
+		if (item != NULL) lp_section_remove_item(sec, item);
 	}
-	return ;
+	return;
 }
 int linphone_config_has_entry(const LpConfig *lpconfig, const char *section, const char *key) {
 	LpSection *sec;
-	sec=linphone_config_find_section(lpconfig,section);
-	if (sec!=NULL){
-		return lp_section_find_item(sec,key) != NULL;
-	} else
-		return FALSE;
-
+	sec = linphone_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		return lp_section_find_item(sec, key) != NULL;
+	} else return FALSE;
 }
 
-BELLE_SIP_INSTANCIATE_VPTR(
-	LinphoneConfig,
-	belle_sip_object_t,
-	_linphone_config_uninit, // uninit
-	NULL, // copy
-	NULL, // marshal
-	FALSE
-);
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneConfig,
+                           belle_sip_object_t,
+                           _linphone_config_uninit, // uninit
+                           NULL,                    // copy
+                           NULL,                    // marshal
+                           FALSE);

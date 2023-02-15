@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,22 +22,19 @@
 
 using namespace std;
 
-CallStatusCommand::CallStatusCommand() :
-		DaemonCommand("call-status", "call-status [<call_id>]", "Return status of a call.") {
-	addExample(make_unique<DaemonCommandExample>("call-status 1",
-						"Status: Ok\n\n"
-						"State: LinphoneCallStreamsRunning\n"
-						"From: <sip:daemon-test@sip.linphone.org>\n"
-						"Direction: out\n"
-						"Duration: 6"));
-	addExample(make_unique<DaemonCommandExample>("call-status 2",
-						"Status: Error\n"
-						"Reason: No call with such id."));
-	addExample(make_unique<DaemonCommandExample>("call-status",
-						"Status: Error\n"
-						"Reason: No current call available."));
+CallStatusCommand::CallStatusCommand()
+    : DaemonCommand("call-status", "call-status [<call_id>]", "Return status of a call.") {
+	addExample(make_unique<DaemonCommandExample>("call-status 1", "Status: Ok\n\n"
+	                                                              "State: LinphoneCallStreamsRunning\n"
+	                                                              "From: <sip:daemon-test@sip.linphone.org>\n"
+	                                                              "Direction: out\n"
+	                                                              "Duration: 6"));
+	addExample(make_unique<DaemonCommandExample>("call-status 2", "Status: Error\n"
+	                                                              "Reason: No call with such id."));
+	addExample(make_unique<DaemonCommandExample>("call-status", "Status: Error\n"
+	                                                            "Reason: No current call available."));
 }
-void CallStatusCommand::exec(Daemon *app, const string& args) {
+void CallStatusCommand::exec(Daemon *app, const string &args) {
 	LinphoneCore *lc = app->getCore();
 	int cid;
 	LinphoneCall *call = NULL;
@@ -64,26 +61,26 @@ void CallStatusCommand::exec(Daemon *app, const string& args) {
 	ostr << "State: " << linphone_call_state_to_string(call_state) << "\n";
 
 	switch (call_state) {
-	case LinphoneCallOutgoingInit:
-	case LinphoneCallOutgoingProgress:
-	case LinphoneCallOutgoingRinging:
-	case LinphoneCallPaused:
-	case LinphoneCallStreamsRunning:
-	case LinphoneCallConnected:
-	case LinphoneCallIncomingReceived:
-		ostr << "From: " << linphone_address_as_string(remoteAddress) << "\n";
-		break;
-	default:
-		break;
+		case LinphoneCallOutgoingInit:
+		case LinphoneCallOutgoingProgress:
+		case LinphoneCallOutgoingRinging:
+		case LinphoneCallPaused:
+		case LinphoneCallStreamsRunning:
+		case LinphoneCallConnected:
+		case LinphoneCallIncomingReceived:
+			ostr << "From: " << linphone_address_as_string(remoteAddress) << "\n";
+			break;
+		default:
+			break;
 	}
 	switch (call_state) {
-	case LinphoneCallStreamsRunning:
-	case LinphoneCallConnected:
-		ostr << "Direction: " << ((linphone_call_get_dir(call) == LinphoneCallOutgoing) ? "out" : "in") << "\n";
-		ostr << "Duration: " << linphone_call_get_duration(call) << "\n";
-		break;
-	default:
-		break;
+		case LinphoneCallStreamsRunning:
+		case LinphoneCallConnected:
+			ostr << "Direction: " << ((linphone_call_get_dir(call) == LinphoneCallOutgoing) ? "out" : "in") << "\n";
+			ostr << "Duration: " << linphone_call_get_duration(call) << "\n";
+			break;
+		default:
+			break;
 	}
 	app->sendResponse(Response(ostr.str(), Response::Ok));
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,14 +21,11 @@
 #ifndef LINPHONE_BUFFER_H_
 #define LINPHONE_BUFFER_H_
 
-
 #include "linphone/types.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @addtogroup misc
@@ -39,7 +36,7 @@ extern "C" {
  * Create a new empty #LinphoneBuffer object.
  * @return A new #LinphoneBuffer object. @notnil
  */
-LINPHONE_PUBLIC LinphoneBuffer * linphone_buffer_new(void);
+LINPHONE_PUBLIC LinphoneBuffer *linphone_buffer_new(void);
 
 /**
  * Create a new #LinphoneBuffer object from existing data.
@@ -47,40 +44,40 @@ LINPHONE_PUBLIC LinphoneBuffer * linphone_buffer_new(void);
  * @param size The size of the initial data to stroe in the LinphoneBuffer.
  * @return A new #LinphoneBuffer object. @notnil
  */
-LINPHONE_PUBLIC LinphoneBuffer * linphone_buffer_new_from_data(const uint8_t *data, size_t size);
+LINPHONE_PUBLIC LinphoneBuffer *linphone_buffer_new_from_data(const uint8_t *data, size_t size);
 
 /**
  * Create a new #LinphoneBuffer object from a string.
  * @param data The initial string content of the LinphoneBuffer. @notnil
  * @return A new #LinphoneBuffer object. @notnil
  */
-LINPHONE_PUBLIC LinphoneBuffer * linphone_buffer_new_from_string(const char *data);
+LINPHONE_PUBLIC LinphoneBuffer *linphone_buffer_new_from_string(const char *data);
 
 /**
  * Acquire a reference to the buffer.
  * @param buffer #LinphoneBuffer object. @notnil
  * @return The same #LinphoneBuffer object. @notnil
-**/
-LINPHONE_PUBLIC LinphoneBuffer * linphone_buffer_ref(LinphoneBuffer *buffer);
+ **/
+LINPHONE_PUBLIC LinphoneBuffer *linphone_buffer_ref(LinphoneBuffer *buffer);
 
 /**
  * Release reference to the buffer.
  * @param buffer #LinphoneBuffer object. @notnil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_buffer_unref(LinphoneBuffer *buffer);
 
 /**
  * Retrieve the user pointer associated with the buffer.
  * @param buffer #LinphoneBuffer object. @notnil
  * @return The user pointer associated with the buffer. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void *linphone_buffer_get_user_data(const LinphoneBuffer *buffer);
 
 /**
  * Assign a user pointer to the buffer.
  * @param buffer #LinphoneBuffer object. @notnil
  * @param user_data The user pointer to associate with the buffer. @maybenil
-**/
+ **/
 LINPHONE_PUBLIC void linphone_buffer_set_user_data(LinphoneBuffer *buffer, void *user_data);
 
 /**
@@ -88,7 +85,7 @@ LINPHONE_PUBLIC void linphone_buffer_set_user_data(LinphoneBuffer *buffer, void 
  * @param buffer #LinphoneBuffer object. @notnil
  * @return The content of the data buffer.  @notnil
  */
-LINPHONE_PUBLIC const uint8_t * linphone_buffer_get_content(const LinphoneBuffer *buffer);
+LINPHONE_PUBLIC const uint8_t *linphone_buffer_get_content(const LinphoneBuffer *buffer);
 
 /**
  * Set the content of the data buffer.
@@ -103,7 +100,7 @@ LINPHONE_PUBLIC void linphone_buffer_set_content(LinphoneBuffer *buffer, const u
  * @param buffer #LinphoneBuffer object
  * @return The string content of the data buffer. @notnil
  */
-LINPHONE_PUBLIC const char * linphone_buffer_get_string_content(const LinphoneBuffer *buffer);
+LINPHONE_PUBLIC const char *linphone_buffer_get_string_content(const LinphoneBuffer *buffer);
 
 /**
  * Set the string content of the data buffer.
@@ -136,7 +133,6 @@ LINPHONE_PUBLIC bool_t linphone_buffer_is_empty(const LinphoneBuffer *buffer);
 /**
  * @}
  */
-
 
 #ifdef __cplusplus
 }

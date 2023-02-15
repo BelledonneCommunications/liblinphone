@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,9 +25,9 @@
 
 #define MAX_ENUM_LOOKUP_RESULTS 10
 
-typedef struct enum_lookup_res{
+typedef struct enum_lookup_res {
 	char *sip_address[MAX_ENUM_LOOKUP_RESULTS];
-}enum_lookup_res_t;
+} enum_lookup_res_t;
 
 bool_t is_enum(const char *sipaddress, char **enum_domain);
 int enum_lookup(const char *enum_domain, enum_lookup_res_t **res);

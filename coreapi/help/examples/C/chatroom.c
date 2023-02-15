@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,29 +37,28 @@
 
 #include <signal.h>
 
-static bool_t running=TRUE;
+static bool_t running = TRUE;
 
-static void stop(int signum){
-	running=FALSE;
+static void stop(int signum) {
+	running = FALSE;
 }
 void text_received(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message) {
-	printf(" Message [%s] received from [%s] \n",message,linphone_address_as_string (from));
+	printf(" Message [%s] received from [%s] \n", message, linphone_address_as_string(from));
 }
 
-
 LinphoneCore *lc;
-int main(int argc, char *argv[]){
-	LinphoneCoreVTable vtable={0};
+int main(int argc, char *argv[]) {
+	LinphoneCoreVTable vtable = {0};
 
-	char* dest_friend=NULL;
-	LinphoneChatRoom* chat_room;
+	char *dest_friend = NULL;
+	LinphoneChatRoom *chat_room;
 
 	/* takes   sip uri  identity from the command line arguments */
-	if (argc>1){
-		dest_friend=argv[1];
+	if (argc > 1) {
+		dest_friend = argv[1];
 	}
 
-	signal(SIGINT,stop);
+	signal(SIGINT, stop);
 //#define DEBUG_LOGS
 #ifdef DEBUG_LOGS
 	linphone_core_enable_logs(NULL); /*enable liblinphone logs.*/
@@ -69,23 +68,22 @@ int main(int argc, char *argv[]){
 	 All are optional. Here we only use the text_received callback
 	 in order to get notifications about incoming message.
 	 */
-	vtable.text_received=text_received;
+	vtable.text_received = text_received;
 
 	/*
 	 Instantiate a LinphoneCore object given the LinphoneCoreVTable
 	*/
-	lc=linphone_core_new(&vtable,NULL,NULL,NULL);
-
+	lc = linphone_core_new(&vtable, NULL, NULL, NULL);
 
 	/*Next step is to create a chat root*/
 	chat_room = linphone_core_create_chat_room(lc, dest_friend);
 
-	linphone_chat_room_send_message(chat_room,"Hello world"); /*sending message*/
-	
+	linphone_chat_room_send_message(chat_room, "Hello world"); /*sending message*/
+
 	linphone_chat_room_unref(chat_room);
 
 	/* main loop for receiving incoming messages and doing background linphone core work: */
-	while(running){
+	while (running) {
 		linphone_core_iterate(lc);
 		ms_usleep(50000);
 	}
@@ -95,4 +93,3 @@ int main(int argc, char *argv[]){
 	printf("Exited\n");
 	return 0;
 }
-

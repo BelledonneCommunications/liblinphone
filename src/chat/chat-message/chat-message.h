@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -67,7 +67,7 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);
 
-	enum class State{
+	enum class State {
 		Idle = LinphoneChatMessageStateIdle,
 		InProgress = LinphoneChatMessageStateInProgress,
 		Delivered = LinphoneChatMessageStateDelivered,
@@ -79,96 +79,98 @@ public:
 		FileTransferInProgress
 	};
 
-	//casting to int to get rid of the enum compare warning.
-	//Here we are comparing two enums serving the same purpose
-	static_assert((int)ChatMessage::State::FileTransferInProgress == (int)LinphoneChatMessageStateFileTransferInProgress, "LinphoneChatMessageState and ChatMessage::State are not synchronized, fix this !");
+	// casting to int to get rid of the enum compare warning.
+	// Here we are comparing two enums serving the same purpose
+	static_assert((int)ChatMessage::State::FileTransferInProgress ==
+	                  (int)LinphoneChatMessageStateFileTransferInProgress,
+	              "LinphoneChatMessageState and ChatMessage::State are not synchronized, fix this !");
 
-	enum class Direction{
+	enum class Direction {
 		Incoming = LinphoneChatMessageDirectionIncoming,
 		Outgoing = LinphoneChatMessageDirectionOutgoing
 	};
 
-	//casting to int to get rid of the enum compare warning.
-	//Here we are comparing two enums serving the same purpose
-	static_assert((int)ChatMessage::Direction::Outgoing == (int)LinphoneChatMessageDirectionOutgoing, "LinphoneChatMessageDirection and ChatMessage::Direction are not synchronized, fix this !");
+	// casting to int to get rid of the enum compare warning.
+	// Here we are comparing two enums serving the same purpose
+	static_assert((int)ChatMessage::Direction::Outgoing == (int)LinphoneChatMessageDirectionOutgoing,
+	              "LinphoneChatMessageDirection and ChatMessage::Direction are not synchronized, fix this !");
 
-	virtual ~ChatMessage ();
+	virtual ~ChatMessage();
 
 	// ----- TODO: Remove me.
-	void cancelFileTransfer ();
-	int putCharacter (uint32_t character);
-	void setIsSecured (bool isSecured);
+	void cancelFileTransfer();
+	int putCharacter(uint32_t character);
+	void setIsSecured(bool isSecured);
 	// ----- TODO: Remove me.
 
-	long long getStorageId () const;
-	void deleteChatMessageFromCache ();
+	long long getStorageId() const;
+	void deleteChatMessageFromCache();
 
-	std::shared_ptr<AbstractChatRoom> getChatRoom () const;
+	std::shared_ptr<AbstractChatRoom> getChatRoom() const;
 
-	void send ();
+	void send();
 
-	time_t getTime () const;
+	time_t getTime() const;
 
-	bool isSecured () const;
-	bool isValid () const;
-	State getState () const;
-	Direction getDirection () const;
+	bool isSecured() const;
+	bool isValid() const;
+	State getState() const;
+	Direction getDirection() const;
 
-	const std::string &getImdnMessageId () const;
+	const std::string &getImdnMessageId() const;
 
-	const IdentityAddress &getAuthenticatedFromAddress () const;
-	const ConferenceAddress &getFromAddress () const;
-	const ConferenceAddress &getToAddress () const;
-	const ConferenceAddress &getLocalAddress () const;
-	const IdentityAddress &getRecipientAddress () const;
-	const std::string &getForwardInfo () const;
+	const IdentityAddress &getAuthenticatedFromAddress() const;
+	const ConferenceAddress &getFromAddress() const;
+	const ConferenceAddress &getToAddress() const;
+	const ConferenceAddress &getLocalAddress() const;
+	const IdentityAddress &getRecipientAddress() const;
+	const std::string &getForwardInfo() const;
 
-	bool isReply () const;
-	const std::string &getReplyToMessageId () const;
-	const IdentityAddress& getReplyToSenderAddress () const;
+	bool isReply() const;
+	const std::string &getReplyToMessageId() const;
+	const IdentityAddress &getReplyToSenderAddress() const;
 	std::shared_ptr<ChatMessage> getReplyToMessage() const;
 
-	bool isEphemeral () const;
-	long getEphemeralLifetime () const;
-	time_t getEphemeralExpireTime () const;
+	bool isEphemeral() const;
+	long getEphemeralLifetime() const;
+	time_t getEphemeralExpireTime() const;
 
 	// TODO: Return a cpp reference.
-	const LinphoneErrorInfo *getErrorInfo () const;
+	const LinphoneErrorInfo *getErrorInfo() const;
 
-	bool isRead () const;
-	bool isReadOnly () const;
+	bool isRead() const;
+	bool isReadOnly() const;
 
-	bool getToBeStored () const;
-	virtual void setToBeStored (bool value);
+	bool getToBeStored() const;
+	virtual void setToBeStored(bool value);
 
+	std::list<ParticipantImdnState> getParticipantsByImdnState(State state) const;
 
-	std::list<ParticipantImdnState> getParticipantsByImdnState (State state) const;
+	const std::list<Content *> &getContents() const;
+	void addContent(Content *content);
+	void removeContent(Content *content);
 
-	const std::list<Content *> &getContents () const;
-	void addContent (Content *content);
-	void removeContent (Content *content);
+	const Content &getInternalContent() const;
+	void setInternalContent(const Content &content);
 
-	const Content &getInternalContent () const;
-	void setInternalContent (const Content &content);
-
-	bool downloadFile (FileTransferContent *content);
-	bool isFileTransferInProgress () const;
-	void fileUploadEndBackgroundTask ();
+	bool downloadFile(FileTransferContent *content);
+	bool isFileTransferInProgress() const;
+	void fileUploadEndBackgroundTask();
 
 	void addListener(std::shared_ptr<ChatMessageListener> listener);
 	void removeListener(std::shared_ptr<ChatMessageListener> listener);
 
 protected:
-	explicit ChatMessage (ChatMessagePrivate &p);
+	explicit ChatMessage(ChatMessagePrivate &p);
 
 private:
-	ChatMessage (const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction);
+	ChatMessage(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction);
 
 	L_DECLARE_PRIVATE(ChatMessage);
 	L_DISABLE_COPY(ChatMessage);
 };
 
-std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e);
+std::ostream &operator<<(std::ostream &lhs, ChatMessage::State e);
 
 LINPHONE_END_NAMESPACE
 

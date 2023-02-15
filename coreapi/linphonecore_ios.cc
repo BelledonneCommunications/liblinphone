@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <stdio.h>
 #include "linphone/core.h"
+#include <stdio.h>
 
 #ifdef __APPLE__
 #include "TargetConditionals.h"
@@ -26,11 +26,10 @@
 
 #if TARGET_OS_IPHONE
 static void linphone_iphone_log_handler(const char *domain, OrtpLogLevel lev, const char *fmt, va_list args) {
-	char* str = bctbx_strdup_vprintf(fmt, args);
-    const char *levname = "undef";
+	char *str = bctbx_strdup_vprintf(fmt, args);
+	const char *levname = "undef";
 
-	if (!domain)
-		domain = "lib";
+	if (!domain) domain = "lib";
 
 	switch (lev) {
 		case ORTP_FATAL:
@@ -54,7 +53,7 @@ static void linphone_iphone_log_handler(const char *domain, OrtpLogLevel lev, co
 		case ORTP_LOGLEV_END:
 			return;
 	}
-	fprintf(stdout,"[%s] %s\n", levname, str);
+	fprintf(stdout, "[%s] %s\n", levname, str);
 }
 
 extern "C" void linphone_iphone_enable_logs() {

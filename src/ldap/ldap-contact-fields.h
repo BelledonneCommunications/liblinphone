@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,8 +22,8 @@
 #define LINPHONE_LDAP_CONTACT_FIELDS_H_
 
 #include "linphone/types.h"
-#include <vector>
 #include <map>
+#include <vector>
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -33,11 +33,11 @@ public:
 
 	/**
 	 * Regroup findings and keep the best choices.
-	 * 
+	 *
 	 * A map of sip addresses to ensure having uniques. Value is the number associated to the address
 	 * A list can be all mobile numbers
 	 */
-	std::pair< std::string, int> mName;
+	std::pair<std::string, int> mName;
 	std::map<std::string, std::string> mSip;
 };
 

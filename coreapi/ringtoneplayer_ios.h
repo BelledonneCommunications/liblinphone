@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,13 +24,16 @@
 extern "C" {
 #endif
 
-LinphoneRingtonePlayer* linphone_ringtoneplayer_ios_new(void);
-void linphone_ringtoneplayer_ios_destroy(LinphoneRingtonePlayer* rp);
-int linphone_ringtoneplayer_ios_start_with_cb(LinphoneRingtonePlayer* rp, const char* ringtone, int loop_pause_ms, LinphoneRingtonePlayerFunc end_of_ringtone, void * user_data);
-bool_t linphone_ringtoneplayer_ios_is_started(LinphoneRingtonePlayer* rp);
-int linphone_ringtoneplayer_ios_stop(LinphoneRingtonePlayer* rp);
+LinphoneRingtonePlayer *linphone_ringtoneplayer_ios_new(void);
+void linphone_ringtoneplayer_ios_destroy(LinphoneRingtonePlayer *rp);
+int linphone_ringtoneplayer_ios_start_with_cb(LinphoneRingtonePlayer *rp,
+                                              const char *ringtone,
+                                              int loop_pause_ms,
+                                              LinphoneRingtonePlayerFunc end_of_ringtone,
+                                              void *user_data);
+bool_t linphone_ringtoneplayer_ios_is_started(LinphoneRingtonePlayer *rp);
+int linphone_ringtoneplayer_ios_stop(LinphoneRingtonePlayer *rp);
 
 #ifdef __cplusplus
 }
 #endif
-

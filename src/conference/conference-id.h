@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,36 +29,34 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ConferenceId {
 public:
-	ConferenceId ();
-	ConferenceId (const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress);
-	ConferenceId (const ConferenceId &other);
+	ConferenceId();
+	ConferenceId(const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress);
+	ConferenceId(const ConferenceId &other);
 
 	virtual ~ConferenceId() = default;
 
-	ConferenceId *clone () const {
+	ConferenceId *clone() const {
 		return new ConferenceId(*this);
 	}
 
-	ConferenceId &operator= (const ConferenceId &other);
+	ConferenceId &operator=(const ConferenceId &other);
 
-	bool operator== (const ConferenceId &other) const;
-	bool operator!= (const ConferenceId &other) const;
+	bool operator==(const ConferenceId &other) const;
+	bool operator!=(const ConferenceId &other) const;
 
-	bool operator< (const ConferenceId &other) const;
+	bool operator<(const ConferenceId &other) const;
 
-	const ConferenceAddress &getPeerAddress () const;
-	const ConferenceAddress &getLocalAddress () const;
+	const ConferenceAddress &getPeerAddress() const;
+	const ConferenceAddress &getLocalAddress() const;
 
-	bool isValid () const;
+	bool isValid() const;
 
 private:
-
 	ConferenceAddress peerAddress;
 	ConferenceAddress localAddress;
-
 };
 
-inline std::ostream &operator<< (std::ostream &os, const ConferenceId &conferenceId) {
+inline std::ostream &operator<<(std::ostream &os, const ConferenceId &conferenceId) {
 	os << "ConferenceId(peer=" << conferenceId.getPeerAddress() << ", local=" << conferenceId.getLocalAddress() << ")";
 	return os;
 }
@@ -67,13 +65,13 @@ LINPHONE_END_NAMESPACE
 
 // Add map key support.
 namespace std {
-	template<>
-	struct hash<LinphonePrivate::ConferenceId> {
-		std::size_t operator() (const LinphonePrivate::ConferenceId &conferenceId) const {
-			return hash<string>()(conferenceId.getPeerAddress().asString()) ^
-				(hash<string>()(conferenceId.getLocalAddress().asString()) << 1);
-		}
-	};
-}
+template <>
+struct hash<LinphonePrivate::ConferenceId> {
+	std::size_t operator()(const LinphonePrivate::ConferenceId &conferenceId) const {
+		return hash<string>()(conferenceId.getPeerAddress().asString()) ^
+		       (hash<string>()(conferenceId.getLocalAddress().asString()) << 1);
+	}
+};
+} // namespace std
 
 #endif // ifndef _L_CONFERENCE_ID_H_

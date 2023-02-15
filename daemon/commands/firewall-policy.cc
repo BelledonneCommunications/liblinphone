@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -54,24 +54,24 @@ FirewallPolicyResponse::FirewallPolicyResponse(LinphoneCore *core) : Response() 
 	setBody(ost.str());
 }
 
-FirewallPolicyCommand::FirewallPolicyCommand() :
-		DaemonCommand("firewall-policy", "firewall-policy [none|nat|stun|ice|upnp] [<address>]",
-				"Set the firewall policy if type is set, otherwise return the used firewall policy.\n"
-				"<address> must be specified for the 'nat' and 'stun' types. "
-				"It represents the public address of the gateway for the 'nat' type and the STUN server address for the 'stun' and 'ice' types.") {
+FirewallPolicyCommand::FirewallPolicyCommand()
+    : DaemonCommand("firewall-policy",
+                    "firewall-policy [none|nat|stun|ice|upnp] [<address>]",
+                    "Set the firewall policy if type is set, otherwise return the used firewall policy.\n"
+                    "<address> must be specified for the 'nat' and 'stun' types. "
+                    "It represents the public address of the gateway for the 'nat' type and the STUN server address "
+                    "for the 'stun' and 'ice' types.") {
 	addExample(make_unique<DaemonCommandExample>("firewall-policy stun stun.linphone.org",
-						"Status: Ok\n\n"
-						"Type: stun\n"
-						"Address: stun.linphone.org"));
-	addExample(make_unique<DaemonCommandExample>("firewall-policy none",
-						"Status: Ok\n\n"
-						"Type: none"));
-	addExample(make_unique<DaemonCommandExample>("firewall-policy",
-						"Status: Ok\n\n"
-						"Type: none"));
+	                                             "Status: Ok\n\n"
+	                                             "Type: stun\n"
+	                                             "Address: stun.linphone.org"));
+	addExample(make_unique<DaemonCommandExample>("firewall-policy none", "Status: Ok\n\n"
+	                                                                     "Type: none"));
+	addExample(make_unique<DaemonCommandExample>("firewall-policy", "Status: Ok\n\n"
+	                                                                "Type: none"));
 }
 
-void FirewallPolicyCommand::exec(Daemon *app, const string& args) {
+void FirewallPolicyCommand::exec(Daemon *app, const string &args) {
 	string type;
 	string address;
 	istringstream ist(args);

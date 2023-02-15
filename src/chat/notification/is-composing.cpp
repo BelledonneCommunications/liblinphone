@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 
 #include <utility>
 
+#include <bctoolbox/defs.h>
+
 #include "linphone/utils/utils.h"
 
 #include "chat/chat-room/chat-room-p.h"
@@ -30,7 +32,6 @@
 #include "xml/is-composing.h"
 #endif
 
-
 // =============================================================================
 
 using namespace std;
@@ -38,8 +39,9 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 struct IsRemoteComposingData {
-	IsRemoteComposingData (IsComposing *isComposingHandler, string uri)
-		: isComposingHandler(isComposingHandler), uri(uri) {}
+	IsRemoteComposingData(IsComposing *isComposingHandler, string uri)
+	    : isComposingHandler(isComposingHandler), uri(uri) {
+	}
 
 	IsComposing *isComposingHandler;
 	string uri;
@@ -47,20 +49,25 @@ struct IsRemoteComposingData {
 
 // -----------------------------------------------------------------------------
 
-IsComposing::IsComposing (LinphoneCore *core, IsComposingListener *listener)
-	: core(core), listener(listener) {}
+IsComposing::IsComposing(LinphoneCore *core, IsComposingListener *listener) : core(core), listener(listener) {
+}
 
-IsComposing::~IsComposing () {
+IsComposing::~IsComposing() {
 	stopTimers();
 }
 
 // -----------------------------------------------------------------------------
 
-string IsComposing::createXml (bool isComposing) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+string IsComposing::createXml(bool isComposing) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::IsComposing::IsComposing node(isComposing ? "active" : "idle");
 	if (isComposing)
-		node.setRefresh(static_cast<unsigned long long>(linphone_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout)));
+		node.setRefresh(static_cast<unsigned long long>(
+		    linphone_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout)));
 
 	stringstream ss;
 	Xsd::XmlSchema::NamespaceInfomap map;
@@ -72,18 +79,24 @@ string IsComposing::createXml (bool isComposing) {
 	return "";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-void IsComposing::parse (const Address &remoteAddr, const string &text) {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void IsComposing::parse(const Address &remoteAddr, const string &text) {
 #ifdef HAVE_ADVANCED_IM
 	istringstream data(text);
-	unique_ptr<Xsd::IsComposing::IsComposing> node(Xsd::IsComposing::parseIsComposing(data, Xsd::XmlSchema::Flags::dont_validate));
-	if (!node)
-		return;
+	unique_ptr<Xsd::IsComposing::IsComposing> node(
+	    Xsd::IsComposing::parseIsComposing(data, Xsd::XmlSchema::Flags::dont_validate));
+	if (!node) return;
 
 	if (node->getState() == "active") {
 		unsigned long long refresh = 0;
-		if (node->getRefresh().present())
-			refresh = node->getRefresh().get();
+		if (node->getRefresh().present()) refresh = node->getRefresh().get();
 		startRemoteRefreshTimer(remoteAddr.asStringUriOnly(), refresh);
 		listener->onIsRemoteComposingStateChanged(remoteAddr, true);
 	} else if (node->getState() == "idle") {
@@ -94,28 +107,29 @@ void IsComposing::parse (const Address &remoteAddr, const string &text) {
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
-void IsComposing::startIdleTimer () {
+void IsComposing::startIdleTimer() {
 	unsigned int duration = getIdleTimerDuration();
 	if (!idleTimer) {
-		idleTimer = core->sal->createTimer(idleTimerExpired, this,
-			duration * 1000, "composing idle timeout");
+		idleTimer = core->sal->createTimer(idleTimerExpired, this, duration * 1000, "composing idle timeout");
 	} else {
 		belle_sip_source_set_timeout_int64(idleTimer, duration * 1000LL);
 	}
 }
 
-void IsComposing::startRefreshTimer () {
+void IsComposing::startRefreshTimer() {
 	unsigned int duration = getRefreshTimerDuration();
 	if (!refreshTimer) {
-		refreshTimer = core->sal->createTimer(refreshTimerExpired, this,
-			duration * 1000, "composing refresh timeout");
+		refreshTimer = core->sal->createTimer(refreshTimerExpired, this, duration * 1000, "composing refresh timeout");
 	} else {
 		belle_sip_source_set_timeout_int64(refreshTimer, duration * 1000LL);
 	}
 }
 
-void IsComposing::stopTimers () {
+void IsComposing::stopTimers() {
 	stopIdleTimer();
 	stopRefreshTimer();
 	stopAllRemoteRefreshTimers();
@@ -123,86 +137,84 @@ void IsComposing::stopTimers () {
 
 // -----------------------------------------------------------------------------
 
-void IsComposing::stopIdleTimer () {
+void IsComposing::stopIdleTimer() {
 	if (idleTimer) {
-		if (core && core->sal)
-			core->sal->cancelTimer(idleTimer);
+		if (core && core->sal) core->sal->cancelTimer(idleTimer);
 		belle_sip_object_unref(idleTimer);
 		idleTimer = nullptr;
 	}
 }
 
-void IsComposing::stopRefreshTimer () {
+void IsComposing::stopRefreshTimer() {
 	if (refreshTimer) {
-		if (core && core->sal)
-			core->sal->cancelTimer(refreshTimer);
+		if (core && core->sal) core->sal->cancelTimer(refreshTimer);
 		belle_sip_object_unref(refreshTimer);
 		refreshTimer = nullptr;
 	}
 }
 
-void IsComposing::stopRemoteRefreshTimer (const string &uri) {
+void IsComposing::stopRemoteRefreshTimer(const string &uri) {
 	auto it = remoteRefreshTimers.find(uri);
-	if (it != remoteRefreshTimers.end())
-		stopRemoteRefreshTimer(it);
+	if (it != remoteRefreshTimers.end()) stopRemoteRefreshTimer(it);
 }
 
 // -----------------------------------------------------------------------------
 
-unsigned int IsComposing::getIdleTimerDuration () {
+unsigned int IsComposing::getIdleTimerDuration() {
 	int idleTimerDuration = linphone_config_get_int(core->config, "sip", "composing_idle_timeout", defaultIdleTimeout);
 	return idleTimerDuration < 0 ? 0 : static_cast<unsigned int>(idleTimerDuration);
 }
 
-unsigned int IsComposing::getRefreshTimerDuration () {
-	int refreshTimerDuration = linphone_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout);
+unsigned int IsComposing::getRefreshTimerDuration() {
+	int refreshTimerDuration =
+	    linphone_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout);
 	return refreshTimerDuration < 0 ? 0 : static_cast<unsigned int>(refreshTimerDuration);
 }
 
-unsigned int IsComposing::getRemoteRefreshTimerDuration () {
-	int remoteRefreshTimerDuration = linphone_config_get_int(core->config, "sip", "composing_remote_refresh_timeout", defaultRemoteRefreshTimeout);
+unsigned int IsComposing::getRemoteRefreshTimerDuration() {
+	int remoteRefreshTimerDuration =
+	    linphone_config_get_int(core->config, "sip", "composing_remote_refresh_timeout", defaultRemoteRefreshTimeout);
 	return remoteRefreshTimerDuration < 0 ? 0 : static_cast<unsigned int>(remoteRefreshTimerDuration);
 }
 
-int IsComposing::idleTimerExpired () {
+int IsComposing::idleTimerExpired() {
 	stopRefreshTimer();
 	stopIdleTimer();
 	listener->onIsComposingStateChanged(false);
 	return BELLE_SIP_STOP;
 }
 
-int IsComposing::refreshTimerExpired () {
+int IsComposing::refreshTimerExpired() {
 	listener->onIsComposingRefreshNeeded();
 	return BELLE_SIP_CONTINUE;
 }
 
-int IsComposing::remoteRefreshTimerExpired (const string &uri) {
+int IsComposing::remoteRefreshTimerExpired(const string &uri) {
 	listener->onIsRemoteComposingStateChanged(Address(uri), false);
 	stopRemoteRefreshTimer(uri);
 	return BELLE_SIP_STOP;
 }
 
-void IsComposing::startRemoteRefreshTimer (const string &uri, unsigned long long refresh) {
+void IsComposing::startRemoteRefreshTimer(const string &uri, unsigned long long refresh) {
 	unsigned int duration = getRemoteRefreshTimerDuration();
-	if (refresh != 0)
-		duration = static_cast<unsigned int>(refresh);
+	if (refresh != 0) duration = static_cast<unsigned int>(refresh);
 	auto it = remoteRefreshTimers.find(uri);
 	if (it == remoteRefreshTimers.end()) {
 		IsRemoteComposingData *data = new IsRemoteComposingData(this, uri);
-		belle_sip_source_t *timer = core->sal->createTimer(remoteRefreshTimerExpired, data,
-			duration * 1000, "composing remote refresh timeout");
+		belle_sip_source_t *timer = core->sal->createTimer(remoteRefreshTimerExpired, data, duration * 1000,
+		                                                   "composing remote refresh timeout");
 		pair<string, belle_sip_source_t *> p(uri, timer);
 		remoteRefreshTimers.insert(p);
-	} else
-		belle_sip_source_set_timeout_int64(it->second, duration * 1000LL);
+	} else belle_sip_source_set_timeout_int64(it->second, duration * 1000LL);
 }
 
-void IsComposing::stopAllRemoteRefreshTimers () {
+void IsComposing::stopAllRemoteRefreshTimers() {
 	for (auto it = remoteRefreshTimers.begin(); it != remoteRefreshTimers.end();)
 		it = stopRemoteRefreshTimer(it);
 }
 
-unordered_map<string, belle_sip_source_t *>::iterator IsComposing::stopRemoteRefreshTimer (const unordered_map<string, belle_sip_source_t *>::const_iterator it) {
+unordered_map<string, belle_sip_source_t *>::iterator
+IsComposing::stopRemoteRefreshTimer(const unordered_map<string, belle_sip_source_t *>::const_iterator it) {
 	belle_sip_source_t *timer = it->second;
 	if (core && core->sal) {
 		core->sal->cancelTimer(timer);
@@ -212,17 +224,17 @@ unordered_map<string, belle_sip_source_t *>::iterator IsComposing::stopRemoteRef
 	return remoteRefreshTimers.erase(it);
 }
 
-int IsComposing::idleTimerExpired (void *data, unsigned int revents) {
+int IsComposing::idleTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
 	IsComposing *d = static_cast<IsComposing *>(data);
 	return d->idleTimerExpired();
 }
 
-int IsComposing::refreshTimerExpired (void *data, unsigned int revents) {
+int IsComposing::refreshTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
 	IsComposing *d = static_cast<IsComposing *>(data);
 	return d->refreshTimerExpired();
 }
 
-int IsComposing::remoteRefreshTimerExpired (void *data, unsigned int revents) {
+int IsComposing::remoteRefreshTimerExpired(void *data, BCTBX_UNUSED(unsigned int revents)) {
 	IsRemoteComposingData *d = static_cast<IsRemoteComposingData *>(data);
 	int result = d->isComposingHandler->remoteRefreshTimerExpired(d->uri);
 	return result;

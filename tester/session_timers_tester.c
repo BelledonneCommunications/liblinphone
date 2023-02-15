@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,21 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/core.h"
 #include "liblinphone_tester.h"
+#include "linphone/core.h"
 #include "tester_utils.h"
 
-static void session_timer_disabled(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_disabled(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	// Session Timers is disabled both sides
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -50,7 +49,6 @@ static void session_timer_disabled(void)
 
 	const char *marie_value_require = linphone_call_params_get_custom_header(marie_params, "Require");
 	BC_ASSERT_PTR_NULL(marie_value_require);
-
 
 	const char *marie_value_supported = linphone_call_params_get_custom_header(marie_params, "Supported");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_value_supported)) {
@@ -80,10 +78,9 @@ static void session_timer_disabled(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_too_small(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_too_small(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -96,7 +93,7 @@ static void session_timer_interval_too_small(void)
 	linphone_core_set_session_expires_value(pauline->lc, 10);
 	linphone_core_set_session_expires_min_value(pauline->lc, 10);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	linphone_call_ref(out_call); // Keep the reference, we'll clean it later
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
@@ -131,7 +128,8 @@ static void session_timer_interval_too_small(void)
 	// Marie UPDATE
 	const LinphoneCallParams *marie_update_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update_value_session_expires = linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
+	const char *marie_update_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update_value_session_expires, "10;refresher=uac");
 	}
@@ -144,7 +142,8 @@ static void session_timer_interval_too_small(void)
 	// Marie re-UPDATE
 	const LinphoneCallParams *marie_update2_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update2_value_session_expires = linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
+	const char *marie_update2_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update2_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update2_value_session_expires, "10;refresher=uac");
 	}
@@ -161,10 +160,9 @@ static void session_timer_interval_too_small(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_ok_refresher_invite(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_ok_refresher_invite(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -175,7 +173,7 @@ static void session_timer_interval_ok_refresher_invite(void)
 	linphone_core_set_session_expires_value(pauline->lc, 8);
 	linphone_core_set_enable_sip_update(pauline->lc, FALSE);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -198,7 +196,8 @@ static void session_timer_interval_ok_refresher_invite(void)
 	// Pauline INVITE
 	const LinphoneCallParams *pauline_invite_params = linphone_call_get_remote_params(out_call);
 
-	const char *pauline_invite_value_session_expires = linphone_call_params_get_custom_header(pauline_invite_params, "Session-Expires");
+	const char *pauline_invite_value_session_expires =
+	    linphone_call_params_get_custom_header(pauline_invite_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(pauline_invite_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(pauline_invite_value_session_expires, "8;refresher=uac");
 	}
@@ -209,7 +208,8 @@ static void session_timer_interval_ok_refresher_invite(void)
 	// Pauline re-INVITE
 	const LinphoneCallParams *pauline_invite2_params = linphone_call_get_remote_params(out_call);
 
-	const char *pauline_invite2_value_session_expires = linphone_call_params_get_custom_header(pauline_invite2_params, "Session-Expires");
+	const char *pauline_invite2_value_session_expires =
+	    linphone_call_params_get_custom_header(pauline_invite2_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(pauline_invite2_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(pauline_invite2_value_session_expires, "8;refresher=uac");
 	}
@@ -226,10 +226,9 @@ static void session_timer_interval_ok_refresher_invite(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_disabled_client(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_disabled_client(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -238,7 +237,7 @@ static void session_timer_disabled_client(void)
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 8);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -269,10 +268,9 @@ static void session_timer_disabled_client(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_disabled_server(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_disabled_server(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -282,7 +280,7 @@ static void session_timer_disabled_server(void)
 	pauline = linphone_core_manager_new("pauline_rc");
 	linphone_core_set_session_expires_enabled(pauline->lc, FALSE);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -324,7 +322,8 @@ static void session_timer_disabled_server(void)
 	// Marie UPDATE
 	const LinphoneCallParams *marie_update_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update_value_session_expires = linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
+	const char *marie_update_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update_value_session_expires, "8;refresher=uac");
 	}
@@ -337,7 +336,8 @@ static void session_timer_disabled_server(void)
 	// Marie re-UPDATE
 	const LinphoneCallParams *marie_update2_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update2_value_session_expires = linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
+	const char *marie_update2_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update2_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update2_value_session_expires, "8;refresher=uac");
 	}
@@ -354,10 +354,9 @@ static void session_timer_disabled_server(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_ok_refresher_none_uas(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_ok_refresher_none_uas(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -368,7 +367,7 @@ static void session_timer_interval_ok_refresher_none_uas(void)
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 8);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	linphone_call_ref(out_call);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
@@ -418,7 +417,8 @@ static void session_timer_interval_ok_refresher_none_uas(void)
 	// Pauline UPDATE
 	const LinphoneCallParams *pauline_update_params = linphone_call_get_remote_params(out_call);
 
-	const char *pauline_update_value_session_expires = linphone_call_params_get_custom_header(pauline_update_params, "Session-Expires");
+	const char *pauline_update_value_session_expires =
+	    linphone_call_params_get_custom_header(pauline_update_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(pauline_update_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(pauline_update_value_session_expires, "8;refresher=uac");
 	}
@@ -429,7 +429,8 @@ static void session_timer_interval_ok_refresher_none_uas(void)
 	// Pauline re-UPDATE
 	const LinphoneCallParams *pauline_update2_params = linphone_call_get_remote_params(out_call);
 
-	const char *pauline_update2_value_session_expires = linphone_call_params_get_custom_header(pauline_update2_params, "Session-Expires");
+	const char *pauline_update2_value_session_expires =
+	    linphone_call_params_get_custom_header(pauline_update2_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(pauline_update2_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(pauline_update2_value_session_expires, "8;refresher=uac");
 	}
@@ -447,17 +448,17 @@ static void session_timer_interval_ok_refresher_none_uas(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_ok_refresher_uac_uac(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_ok_refresher_uac_uac(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_create("marie_session_timers_rc");
 
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_value(marie->lc) == 8);
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_min_value(marie->lc) == 5);
-	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) ==
+	               (int)LinphoneSessionExpiresRefresherUAC);
 	linphone_core_manager_start(marie, TRUE);
 
 	pauline = linphone_core_manager_new("pauline_rc");
@@ -465,7 +466,7 @@ static void session_timer_interval_ok_refresher_uac_uac(void)
 	linphone_core_set_session_expires_value(pauline->lc, 6);
 	linphone_core_manager_start(pauline, TRUE);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -501,7 +502,8 @@ static void session_timer_interval_ok_refresher_uac_uac(void)
 	// Marie UPDATE
 	const LinphoneCallParams *marie_update_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update_value_session_expires = linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
+	const char *marie_update_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update_value_session_expires, "6;refresher=uac");
 	}
@@ -519,7 +521,8 @@ static void session_timer_interval_ok_refresher_uac_uac(void)
 	// Marie re-UPDATE
 	const LinphoneCallParams *marie_update2_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update2_value_session_expires = linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
+	const char *marie_update2_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update2_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update2_value_session_expires, "6;refresher=uac");
 	}
@@ -541,10 +544,9 @@ static void session_timer_interval_ok_refresher_uac_uac(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_smaller(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_smaller(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_create("marie_session_timers_rc");
@@ -552,7 +554,8 @@ static void session_timer_interval_smaller(void)
 	linphone_core_set_session_expires_value(marie->lc, 5); // Client value smaller but above the server Min-SE
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_value(marie->lc) == 5);
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_min_value(marie->lc) == 5);
-	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) ==
+	               (int)LinphoneSessionExpiresRefresherUAC);
 	linphone_core_manager_start(marie, TRUE);
 
 	pauline = linphone_core_manager_new("pauline_rc");
@@ -561,7 +564,7 @@ static void session_timer_interval_smaller(void)
 	linphone_core_set_session_expires_min_value(pauline->lc, 3);
 	linphone_core_manager_start(pauline, TRUE);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -597,20 +600,28 @@ static void session_timer_interval_smaller(void)
 	// UPDATE
 	LinphoneCallParams *params;
 	int dummy = 0;
-	params = linphone_core_create_call_params(pauline->lc,linphone_core_get_current_call(pauline->lc));
+	params = linphone_core_create_call_params(pauline->lc, linphone_core_get_current_call(pauline->lc));
 
-	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
-	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
-	linphone_call_update(linphone_core_get_current_call(pauline->lc),params);
+	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1),
+	                                  FALSE); /*disable PCMU*/
+	linphone_core_enable_payload_type(pauline->lc, linphone_core_find_payload_type(pauline->lc, "PCMU", 8000, 1),
+	                                  FALSE); /*disable PCMU*/
+	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1),
+	                                  TRUE); /*enable PCMA*/
+	linphone_core_enable_payload_type(pauline->lc, linphone_core_find_payload_type(pauline->lc, "PCMA", 8000, 1),
+	                                  TRUE); /*enable PCMA*/
+	linphone_call_update(linphone_core_get_current_call(pauline->lc), params);
 	linphone_call_params_unref(params);
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,3));
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
-	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))), "PCMA");
-	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))), "PCMA");
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(
+	                           linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))),
+	                       "PCMA");
+	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(
+	                           linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))),
+	                       "PCMA");
 	wait_for_until(pauline->lc, marie->lc, &dummy, 1, 5000);
 
 	// Wait for the 200 OK
@@ -625,10 +636,9 @@ static void session_timer_interval_smaller(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_larger(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_larger(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_create("marie_session_timers_rc");
@@ -637,7 +647,8 @@ static void session_timer_interval_larger(void)
 	linphone_core_set_session_expires_min_value(marie->lc, 0);
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_value(marie->lc) == 5);
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_min_value(marie->lc) == 0);
-	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) ==
+	               (int)LinphoneSessionExpiresRefresherUAC);
 	linphone_core_manager_start(marie, TRUE);
 
 	pauline = linphone_core_manager_new("pauline_rc");
@@ -646,7 +657,7 @@ static void session_timer_interval_larger(void)
 	linphone_core_set_session_expires_min_value(pauline->lc, 2);
 	linphone_core_manager_start(pauline, TRUE);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -689,10 +700,9 @@ static void session_timer_interval_larger(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_ok_refresher_uas_uas(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_ok_refresher_uas_uas(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -704,7 +714,7 @@ static void session_timer_interval_ok_refresher_uas_uas(void)
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 8);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -735,7 +745,8 @@ static void session_timer_interval_ok_refresher_uas_uas(void)
 	// Pauline UPDATE
 	const LinphoneCallParams *pauline_update_params = linphone_call_get_remote_params(out_call);
 
-	const char *pauline_update_value_session_expires = linphone_call_params_get_custom_header(pauline_update_params, "Session-Expires");
+	const char *pauline_update_value_session_expires =
+	    linphone_call_params_get_custom_header(pauline_update_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(pauline_update_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(pauline_update_value_session_expires, "8;refresher=uac");
 	}
@@ -748,7 +759,8 @@ static void session_timer_interval_ok_refresher_uas_uas(void)
 	// Pauline re-UPDATE
 	const LinphoneCallParams *pauline_update2_params = linphone_call_get_remote_params(out_call);
 
-	const char *pauline_update2_value_session_expires = linphone_call_params_get_custom_header(pauline_update2_params, "Session-Expires");
+	const char *pauline_update2_value_session_expires =
+	    linphone_call_params_get_custom_header(pauline_update2_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(pauline_update2_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(pauline_update2_value_session_expires, "8;refresher=uac");
 	}
@@ -767,10 +779,9 @@ static void session_timer_interval_ok_refresher_uas_uas(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_ok_refresher_none_uac(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_ok_refresher_none_uac(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -782,7 +793,7 @@ static void session_timer_interval_ok_refresher_none_uac(void)
 	linphone_core_set_session_expires_value(pauline->lc, 8);
 	linphone_core_set_session_expires_refresher_value(pauline->lc, LinphoneSessionExpiresRefresherUAC);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -813,7 +824,8 @@ static void session_timer_interval_ok_refresher_none_uac(void)
 	// Marie UPDATE
 	const LinphoneCallParams *marie_update_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update_value_session_expires = linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
+	const char *marie_update_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update_value_session_expires, "8;refresher=uac");
 	}
@@ -826,7 +838,8 @@ static void session_timer_interval_ok_refresher_none_uac(void)
 	// Marie re-UPDATE
 	const LinphoneCallParams *marie_update2_params = linphone_call_get_remote_params(pauline_call);
 
-	const char *marie_update2_value_session_expires = linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
+	const char *marie_update2_value_session_expires =
+	    linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update2_value_session_expires)) {
 		BC_ASSERT_STRING_EQUAL(marie_update2_value_session_expires, "8;refresher=uac");
 	}
@@ -843,10 +856,9 @@ static void session_timer_interval_ok_refresher_none_uac(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_ok_no_se(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_ok_no_se(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_session_timers_rc");
@@ -856,14 +868,15 @@ static void session_timer_interval_ok_no_se(void)
 
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_value(marie->lc) == 0);
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_min_value(marie->lc) == 6);
-	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) ==
+	               (int)LinphoneSessionExpiresRefresherUAC);
 	linphone_core_manager_start(marie, TRUE);
 
 	pauline = linphone_core_manager_new("pauline_rc");
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 4);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -899,10 +912,9 @@ static void session_timer_interval_ok_no_se(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_interval_ok_no_se_smaller(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_interval_ok_no_se_smaller(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_session_timers_rc");
@@ -915,7 +927,7 @@ static void session_timer_interval_ok_no_se_smaller(void)
 	linphone_core_set_session_expires_value(pauline->lc, 5);
 	linphone_core_set_session_expires_min_value(pauline->lc, 4);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -954,10 +966,9 @@ static void session_timer_interval_ok_no_se_smaller(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void session_timer_cancel_timer(void)
-{
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+static void session_timer_cancel_timer(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -967,7 +978,7 @@ static void session_timer_cancel_timer(void)
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 4);
 
-	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	LinphoneCall *out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -992,8 +1003,8 @@ static void session_timer_cancel_timer(void)
 }
 
 static void session_timer_update_during_paused_call(void) {
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *marie_call;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -1006,21 +1017,25 @@ static void session_timer_update_during_paused_call(void) {
 	linphone_core_set_session_expires_refresher_value(pauline->lc, LinphoneSessionExpiresRefresherUAC);
 
 	if (BC_ASSERT_TRUE(call(marie, pauline))) {
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
 
 		marie_call = linphone_core_get_current_call(marie->lc);
 		linphone_call_pause(marie_call);
 
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 1, 10000));
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 10000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 10000));
 
 		// Wait for an update
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1, 10000));
 
 		// The call should still be in pause
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 2, 10000));
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 2, 10000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 2, 10000));
 
 		end_call(marie, pauline);
 	}
@@ -1030,26 +1045,35 @@ static void session_timer_update_during_paused_call(void) {
 }
 
 test_t session_timers_tests[] = {
-	TEST_ONE_TAG("Session timer disabled", session_timer_disabled, "Session Timer"),
-	TEST_ONE_TAG("Session timer disabled client", session_timer_disabled_client, "Session Timer"),
-	TEST_ONE_TAG("Session timer disabled server", session_timer_disabled_server, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite 422", session_timer_interval_too_small, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite OK, smaller", session_timer_interval_smaller, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite OK, larger", session_timer_interval_larger, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite OK, no SE", session_timer_interval_ok_no_se, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite 422, no SE, smaller", session_timer_interval_ok_no_se_smaller, "Session Timer"),
+    TEST_ONE_TAG("Session timer disabled", session_timer_disabled, "Session Timer"),
+    TEST_ONE_TAG("Session timer disabled client", session_timer_disabled_client, "Session Timer"),
+    TEST_ONE_TAG("Session timer disabled server", session_timer_disabled_server, "Session Timer"),
+    TEST_ONE_TAG("Session timer invite 422", session_timer_interval_too_small, "Session Timer"),
+    TEST_ONE_TAG("Session timer invite OK, smaller", session_timer_interval_smaller, "Session Timer"),
+    TEST_ONE_TAG("Session timer invite OK, larger", session_timer_interval_larger, "Session Timer"),
+    TEST_ONE_TAG("Session timer invite OK, no SE", session_timer_interval_ok_no_se, "Session Timer"),
+    TEST_ONE_TAG("Session timer invite 422, no SE, smaller", session_timer_interval_ok_no_se_smaller, "Session Timer"),
 
-	// https://tools.ietf.org/html/rfc4028#page-15
-	TEST_ONE_TAG("Session timer INVITE (UPDATE not supported)", session_timer_interval_ok_refresher_invite, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite OK, c = none, s = auto", session_timer_interval_ok_refresher_none_uas, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite OK, c = uac, s = auto", session_timer_interval_ok_refresher_uac_uac, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite OK, c = uas, s = auto", session_timer_interval_ok_refresher_uas_uas, "Session Timer"),
-	TEST_ONE_TAG("Session timer invite OK, c = none, s = uac", session_timer_interval_ok_refresher_none_uac, "Session Timer"),
-	TEST_ONE_TAG("Session timer cancel OK", session_timer_cancel_timer, "Session Timer"),
+    // https://tools.ietf.org/html/rfc4028#page-15
+    TEST_ONE_TAG(
+        "Session timer INVITE (UPDATE not supported)", session_timer_interval_ok_refresher_invite, "Session Timer"),
+    TEST_ONE_TAG(
+        "Session timer invite OK, c = none, s = auto", session_timer_interval_ok_refresher_none_uas, "Session Timer"),
+    TEST_ONE_TAG(
+        "Session timer invite OK, c = uac, s = auto", session_timer_interval_ok_refresher_uac_uac, "Session Timer"),
+    TEST_ONE_TAG(
+        "Session timer invite OK, c = uas, s = auto", session_timer_interval_ok_refresher_uas_uas, "Session Timer"),
+    TEST_ONE_TAG(
+        "Session timer invite OK, c = none, s = uac", session_timer_interval_ok_refresher_none_uac, "Session Timer"),
+    TEST_ONE_TAG("Session timer cancel OK", session_timer_cancel_timer, "Session Timer"),
 
-	TEST_ONE_TAG("Session timer update during a paused call", session_timer_update_during_paused_call, "Session Timer"),
+    TEST_ONE_TAG("Session timer update during a paused call", session_timer_update_during_paused_call, "Session Timer"),
 };
 
-test_suite_t session_timers_test_suite = {"Session Timers", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-										  sizeof(session_timers_tests) / sizeof(session_timers_tests[0]),
-										  session_timers_tests};
+test_suite_t session_timers_test_suite = {"Session Timers",
+                                          NULL,
+                                          NULL,
+                                          liblinphone_tester_before_each,
+                                          liblinphone_tester_after_each,
+                                          sizeof(session_timers_tests) / sizeof(session_timers_tests[0]),
+                                          session_timers_tests};

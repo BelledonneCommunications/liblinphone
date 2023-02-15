@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 // TODO: Remove me later.
 #include "private.h"
 
 #include "chat/chat-message/chat-message.h"
-#include "content/content-type.h"
-#include "content/header/header.h"
 #include "content/content-manager.h"
+#include "content/content-type.h"
 #include "content/file-transfer-content.h"
+#include "content/header/header.h"
 
 #include "multipart-chat-message-modifier.h"
 
@@ -35,12 +37,9 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ChatMessageModifier::Result MultipartChatMessageModifier::encode (
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
-	if (message->getContents().size() <= 1)
-		return ChatMessageModifier::Result::Skipped;
+ChatMessageModifier::Result MultipartChatMessageModifier::encode(const shared_ptr<ChatMessage> &message,
+                                                                 BCTBX_UNUSED(int &errorCode)) {
+	if (message->getContents().size() <= 1) return ChatMessageModifier::Result::Skipped;
 
 	Content content = ContentManager::contentListToMultipart(message->getContents());
 	message->setInternalContent(content);
@@ -48,7 +47,8 @@ ChatMessageModifier::Result MultipartChatMessageModifier::encode (
 	return ChatMessageModifier::Result::Done;
 }
 
-ChatMessageModifier::Result MultipartChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, int &errorCode) {
+ChatMessageModifier::Result MultipartChatMessageModifier::decode(const shared_ptr<ChatMessage> &message,
+                                                                 BCTBX_UNUSED(int &errorCode)) {
 	if (message->getInternalContent().getContentType().isMultipart()) {
 		for (Content &c : ContentManager::multipartToContentList(message->getInternalContent())) {
 			Content *content;

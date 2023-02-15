@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,11 +21,9 @@
 #ifndef LINPHONE_CORE_UTILS_H_
 #define LINPHONE_CORE_UTILS_H_
 
-
+#include "linphone/callbacks.h"
 #include "linphone/logging.h"
 #include "linphone/types.h"
-#include "linphone/callbacks.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,38 +41,48 @@ LINPHONE_PUBLIC bool_t lsd_player_loop_enabled(const LsdPlayer *p);
 LINPHONE_PUBLIC void lsd_player_set_gain(LsdPlayer *p, float gain);
 LINPHONE_PUBLIC LinphoneSoundDaemon *lsd_player_get_daemon(const LsdPlayer *p);
 
-LINPHONE_PUBLIC LinphoneSoundDaemon * linphone_sound_daemon_new(MSFactory* factory, const char *cardname, int rate, int nchannels);
-LINPHONE_PUBLIC LsdPlayer * linphone_sound_daemon_get_player(LinphoneSoundDaemon *lsd);
+LINPHONE_PUBLIC LinphoneSoundDaemon *
+linphone_sound_daemon_new(MSFactory *factory, const char *cardname, int rate, int nchannels);
+LINPHONE_PUBLIC LsdPlayer *linphone_sound_daemon_get_player(LinphoneSoundDaemon *lsd);
 LINPHONE_PUBLIC void linphone_sound_daemon_release_player(LinphoneSoundDaemon *lsd, LsdPlayer *lsdplayer);
 LINPHONE_PUBLIC void linphone_sound_daemon_stop_all_players(LinphoneSoundDaemon *obj);
 LINPHONE_PUBLIC void linphone_sound_daemon_release_all_players(LinphoneSoundDaemon *obj);
 LINPHONE_PUBLIC void linphone_core_use_sound_daemon(LinphoneCore *lc, LinphoneSoundDaemon *lsd);
 LINPHONE_PUBLIC void linphone_sound_daemon_destroy(LinphoneSoundDaemon *obj);
 
-
 /*These typedefs are deprecated, but we don't mark them LINPHONE_DEPRECATED otherwise we get deprecation warnings with
  * the deprecated linphone_core_start_echo_calibration() that make use of them*/
-typedef void (*LinphoneEcCalibrationCallback)(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms, void *data);
+typedef void (*LinphoneEcCalibrationCallback)(LinphoneCore *lc,
+                                              LinphoneEcCalibratorStatus status,
+                                              int delay_ms,
+                                              void *data);
 typedef void (*LinphoneEcCalibrationAudioInit)(void *data);
 typedef void (*LinphoneEcCalibrationAudioUninit)(void *data);
 
 /**
- * @brief Starts an echo calibration of the sound devices, in order to find adequate settings for the echo canceler automatically.
- * @deprecated 16/10/2017 Use #linphone_core_start_echo_canceller_calibration() instead. To set the callbacks create or get an already instantiated
- * #LinphoneCoreCbs and call #linphone_core_cbs_set_ec_calibration_result(), #linphone_core_cbs_set_ec_calibration_audio_init() and
- * #linphone_core_cbs_set_ec_callibration_audio_uninit(). Deprecated since 2017-10-16.
+ * @brief Starts an echo calibration of the sound devices, in order to find adequate settings for the echo canceler
+ *automatically.
+ * @deprecated 16/10/2017 Use #linphone_core_start_echo_canceller_calibration() instead. To set the callbacks create or
+ *get an already instantiated #LinphoneCoreCbs and call #linphone_core_cbs_set_ec_calibration_result(),
+ *#linphone_core_cbs_set_ec_calibration_audio_init() and #linphone_core_cbs_set_ec_callibration_audio_uninit().
+ *Deprecated since 2017-10-16.
  * @ingroup misc
  * @donotwrap
-**/
-LINPHONE_DEPRECATED LINPHONE_PUBLIC int linphone_core_start_echo_calibration(LinphoneCore *lc, LinphoneEcCalibrationCallback cb,
-					 LinphoneEcCalibrationAudioInit audio_init_cb, LinphoneEcCalibrationAudioUninit audio_uninit_cb, void *cb_data);
+ **/
+LINPHONE_DEPRECATED LINPHONE_PUBLIC int
+linphone_core_start_echo_calibration(LinphoneCore *lc,
+                                     LinphoneEcCalibrationCallback cb,
+                                     LinphoneEcCalibrationAudioInit audio_init_cb,
+                                     LinphoneEcCalibrationAudioUninit audio_uninit_cb,
+                                     void *cb_data);
 
 /**
- * @brief Starts an echo calibration of the sound devices, in order to find adequate settings for the echo canceler automatically.
+ * @brief Starts an echo calibration of the sound devices, in order to find adequate settings for the echo canceler
+ *automatically.
  * @param core #LinphoneCore object. @notnil
  * @return #LinphoneStatus whether calibration has started or not.
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_start_echo_canceller_calibration(LinphoneCore *core);
 
 /**
@@ -83,14 +91,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_start_echo_canceller_calibration(Li
  * @param rate Sound sample rate.
  * @return -1 in case of failure, 1 otherwise.
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_start_echo_tester(LinphoneCore *core, unsigned int rate);
 
 /**
  * Stop the simulation of call
  * @param core The #LinphoneCore object. @notnil
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_stop_echo_tester(LinphoneCore *core);
 
 /**
@@ -98,7 +106,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_stop_echo_tester(LinphoneCore *core
  * @param core The #LinphoneCore object. @notnil
  * @return TRUE if crappy opengl flag is set, FALSE otherwise
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_core_has_crappy_opengl(LinphoneCore *core);
 
 /**
@@ -106,7 +114,7 @@ LINPHONE_PUBLIC bool_t linphone_core_has_crappy_opengl(LinphoneCore *core);
  * @param core The #LinphoneCore object. @notnil
  * @return TRUE if it does, FALSE otherwise
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_core_has_builtin_echo_canceller(LinphoneCore *core);
 
 /**
@@ -114,37 +122,40 @@ LINPHONE_PUBLIC bool_t linphone_core_has_builtin_echo_canceller(LinphoneCore *co
  * @param core The #LinphoneCore object. @notnil
  * @return TRUE if it is required, FALSE otherwise
  * @ingroup misc
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_core_is_echo_canceller_calibration_required(LinphoneCore *core);
 
 /**
  * @ingroup IOS
  * @param core The #LinphoneCore object. @notnil
- * Special function to warm up  dtmf feeback stream. #linphone_core_stop_dtmf_stream() must be called before entering FG mode
+ * Special function to warm up  dtmf feeback stream. #linphone_core_stop_dtmf_stream() must be called before entering FG
+ * mode
  */
-LINPHONE_PUBLIC void linphone_core_start_dtmf_stream(LinphoneCore* core);
+LINPHONE_PUBLIC void linphone_core_start_dtmf_stream(LinphoneCore *core);
 
 /**
  * @ingroup IOS
  * @param core The #LinphoneCore object. @notnil
  * Special function to stop dtmf feed back function. Must be called before entering BG mode
  */
-LINPHONE_PUBLIC void linphone_core_stop_dtmf_stream(LinphoneCore* core);
+LINPHONE_PUBLIC void linphone_core_stop_dtmf_stream(LinphoneCore *core);
 
 /**
- * Special function to indicate if the audio session is activated. Must be called when ProviderDelegate of the callkit notifies that the audio session is activated or deactivated.
+ * Special function to indicate if the audio session is activated. Must be called when ProviderDelegate of the callkit
+ * notifies that the audio session is activated or deactivated.
  * @param core The #LinphoneCore object. @notnil
  * @param activated TRUE to activate the audio session, FALSE to disable it.
  * @ingroup IOS
  */
-LINPHONE_PUBLIC void linphone_core_activate_audio_session(LinphoneCore* core, bool_t actived);
+LINPHONE_PUBLIC void linphone_core_activate_audio_session(LinphoneCore *core, bool_t actived);
 
 /**
- * Special function to configure audio session with default settings. Must be called in ProviderDelegate's callbacks when answer an incoming call and start an outgoing call.
+ * Special function to configure audio session with default settings. Must be called in ProviderDelegate's callbacks
+ * when answer an incoming call and start an outgoing call.
  * @param core The #LinphoneCore object. @notnil
  * @ingroup IOS
  */
-LINPHONE_PUBLIC void linphone_core_configure_audio_session(LinphoneCore* core);
+LINPHONE_PUBLIC void linphone_core_configure_audio_session(LinphoneCore *core);
 
 /**
  * Special function to enable the callkit.
@@ -152,24 +163,24 @@ LINPHONE_PUBLIC void linphone_core_configure_audio_session(LinphoneCore* core);
  * @param enabled TRUE to enable callkit, FALSE to disable it.
  * @ingroup IOS
  */
-LINPHONE_PUBLIC void linphone_core_enable_callkit (LinphoneCore* core, bool_t enabled);
+LINPHONE_PUBLIC void linphone_core_enable_callkit(LinphoneCore *core, bool_t enabled);
 
 /**
- * Special function to indicate if the audio route is changed. Must be called in the callback of AVAudioSessionRouteChangeNotification.
+ * Special function to indicate if the audio route is changed. Must be called in the callback of
+ * AVAudioSessionRouteChangeNotification.
  * @param core The #LinphoneCore object. @notnil
  * @ingroup IOS
  * @deprecated 07/01/2020 now handled in the linphone SDK directly
-*/
-LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_audio_route_changed (LinphoneCore *core);
+ */
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_audio_route_changed(LinphoneCore *core);
 
 /**
  * Special function to check if the callkit is enabled, False by default.
  * @param core The #LinphoneCore object. @notnil
  * @return TRUE if callkit is enabled, FALSE otherwise.
  * @ingroup IOS
-*/
-LINPHONE_PUBLIC bool_t linphone_core_callkit_enabled (const LinphoneCore *core);
-
+ */
+LINPHONE_PUBLIC bool_t linphone_core_callkit_enabled(const LinphoneCore *core);
 
 /**
  * Special function to check if the local network permission has been granted by the user (useful for iOS).
@@ -178,8 +189,8 @@ LINPHONE_PUBLIC bool_t linphone_core_callkit_enabled (const LinphoneCore *core);
  * @param core The #LinphoneCore object. @notnil
  * @return TRUE if local permission request is granted, FALSE otherwise.
  * @ingroup IOS
-*/
-LINPHONE_PUBLIC bool_t linphone_core_local_permission_enabled (const LinphoneCore *core);
+ */
+LINPHONE_PUBLIC bool_t linphone_core_local_permission_enabled(const LinphoneCore *core);
 
 typedef bool_t (*LinphoneCoreIterateHook)(void *data);
 
@@ -190,7 +201,8 @@ LINPHONE_PUBLIC void linphone_core_remove_iterate_hook(LinphoneCore *lc, Linphon
 LINPHONE_PUBLIC const bctbx_list_t *linphone_player_get_callbacks_list(const LinphonePlayer *player);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_callbacks_list(const LinphoneFriendList *friend_list);
-LINPHONE_PUBLIC const bctbx_list_t *linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service);
+LINPHONE_PUBLIC const bctbx_list_t *
+linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_account_creator_get_callbacks_list(const LinphoneAccountCreator *creator);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_xml_rpc_request_get_callbacks_list(const LinphoneXmlRpcRequest *request);
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,9 +23,9 @@
 
 #include "linphone/utils/utils.h"
 
-#include "logger/logger.h"
 #include "chat/cpim/parser/cpim-parser.h"
 #include "content/content-type.h"
+#include "logger/logger.h"
 #include "object/object-p.h"
 
 #include "cpim-message.h"
@@ -46,25 +46,24 @@ public:
 	string content;
 };
 
-Cpim::Message::Message () : Object(*new MessagePrivate) {}
+Cpim::Message::Message() : Object(*new MessagePrivate) {
+}
 
 // -----------------------------------------------------------------------------
 
-Cpim::Message::HeaderList Cpim::Message::getMessageHeaders (const string &ns) const {
+Cpim::Message::HeaderList Cpim::Message::getMessageHeaders(const string &ns) const {
 	L_D();
 
-	if (d->messageHeaders.find(ns) == d->messageHeaders.end())
-		return nullptr;
+	if (d->messageHeaders.find(ns) == d->messageHeaders.end()) return nullptr;
 
 	return d->messageHeaders.at(ns);
 }
 
-bool Cpim::Message::addMessageHeader (const Header &messageHeader, const string &ns) {
+bool Cpim::Message::addMessageHeader(const Header &messageHeader, const string &ns) {
 	L_D();
 
 	auto header = Parser::getInstance()->cloneHeader(messageHeader);
-	if (header == nullptr)
-		return false;
+	if (header == nullptr) return false;
 
 	if (d->messageHeaders.find(ns) == d->messageHeaders.end())
 		d->messageHeaders[ns] = make_shared<Cpim::MessagePrivate::PrivHeaderList>();
@@ -75,25 +74,23 @@ bool Cpim::Message::addMessageHeader (const Header &messageHeader, const string 
 	return true;
 }
 
-void Cpim::Message::removeMessageHeader (const Header &messageHeader, const string &ns) {
+void Cpim::Message::removeMessageHeader(const Header &messageHeader, const string &ns) {
 	L_D();
 
 	if (d->messageHeaders.find(ns) != d->messageHeaders.end())
 		d->messageHeaders.at(ns)->remove_if([&messageHeader](const shared_ptr<const Header> &header) {
-				return messageHeader.getName() == header->getName() && messageHeader.getValue() == header->getValue();
-			});
+			return messageHeader.getName() == header->getName() && messageHeader.getValue() == header->getValue();
+		});
 }
 
-shared_ptr<const Cpim::Header> Cpim::Message::getMessageHeader (const string &name, const string &ns) const {
+shared_ptr<const Cpim::Header> Cpim::Message::getMessageHeader(const string &name, const string &ns) const {
 	L_D();
 
-	if (d->messageHeaders.find(ns) == d->messageHeaders.end())
-		return nullptr;
+	if (d->messageHeaders.find(ns) == d->messageHeaders.end()) return nullptr;
 
 	auto list = d->messageHeaders.at(ns);
 	for (const auto &messageHeader : *list) {
-		if (messageHeader->getName() == name)
-			return messageHeader;
+		if (messageHeader->getName() == name) return messageHeader;
 	}
 
 	return nullptr;
@@ -101,36 +98,34 @@ shared_ptr<const Cpim::Header> Cpim::Message::getMessageHeader (const string &na
 
 // -----------------------------------------------------------------------------
 
-Cpim::Message::HeaderList Cpim::Message::getContentHeaders () const {
+Cpim::Message::HeaderList Cpim::Message::getContentHeaders() const {
 	L_D();
 	return d->contentHeaders;
 }
 
-bool Cpim::Message::addContentHeader (const Header &contentHeader) {
+bool Cpim::Message::addContentHeader(const Header &contentHeader) {
 	L_D();
 
 	auto header = Parser::getInstance()->cloneHeader(contentHeader);
-	if (header == nullptr)
-		return false;
+	if (header == nullptr) return false;
 
 	d->contentHeaders->push_back(header);
 
 	return true;
 }
 
-void Cpim::Message::removeContentHeader (const Header &contentHeader) {
+void Cpim::Message::removeContentHeader(const Header &contentHeader) {
 	L_D();
 	d->contentHeaders->remove_if([&contentHeader](const shared_ptr<const Header> &header) {
-			return contentHeader.getName() == header->getName() && contentHeader.getValue() == header->getValue();
-		});
+		return contentHeader.getName() == header->getName() && contentHeader.getValue() == header->getValue();
+	});
 }
 
 shared_ptr<const Cpim::Header> Cpim::Message::getContentHeader(const string &name) const {
 	L_D();
 
 	for (const auto &contentHeader : *d->contentHeaders) {
-		if (contentHeader->getName() == name)
-			return contentHeader;
+		if (contentHeader->getName() == name) return contentHeader;
 	}
 
 	return nullptr;
@@ -138,12 +133,12 @@ shared_ptr<const Cpim::Header> Cpim::Message::getContentHeader(const string &nam
 
 // -----------------------------------------------------------------------------
 
-string Cpim::Message::getContent () const {
+string Cpim::Message::getContent() const {
 	L_D();
 	return d->content;
 }
 
-bool Cpim::Message::setContent (const string &content) {
+bool Cpim::Message::setContent(const string &content) {
 	L_D();
 	d->content = content;
 	return true;
@@ -151,7 +146,7 @@ bool Cpim::Message::setContent (const string &content) {
 
 // -----------------------------------------------------------------------------
 
-string Cpim::Message::asString () const {
+string Cpim::Message::asString() const {
 	L_D();
 
 	string output;
@@ -159,8 +154,7 @@ string Cpim::Message::asString () const {
 		for (const auto &entry : d->messageHeaders) {
 			auto list = entry.second;
 			for (const auto &messageHeader : *list) {
-				if (entry.first != "")
-					output += entry.first + ".";
+				if (entry.first != "") output += entry.first + ".";
 				output += messageHeader->asString();
 			}
 		}
@@ -170,7 +164,7 @@ string Cpim::Message::asString () const {
 
 	for (const auto &contentHeaders : *d->contentHeaders)
 		output += contentHeaders->asString();
-		
+
 	output += "\r\n";
 
 	output += getContent();
@@ -180,7 +174,7 @@ string Cpim::Message::asString () const {
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<const Cpim::Message> Cpim::Message::createFromString (const string &str) {
+shared_ptr<const Cpim::Message> Cpim::Message::createFromString(const string &str) {
 	return Parser::getInstance()->parseMessage(str);
 }
 

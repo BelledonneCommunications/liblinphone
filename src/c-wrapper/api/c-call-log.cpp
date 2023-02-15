@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,20 +18,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "call/call-log.h"
-#include "linphone/wrapper_utils.h"
-#include "linphone/utils/utils.h"
-#include "c-wrapper/c-wrapper.h"
-#include "core/core-p.h"
 #include "linphone/api/c-call-log.h"
-#include "private.h"
+#include "c-wrapper/c-wrapper.h"
+#include "call/call-log.h"
+#include "core/core-p.h"
 #include "db/main-db.h"
+#include "linphone/utils/utils.h"
+#include "linphone/wrapper_utils.h"
+#include "private.h"
 
 // =============================================================================
 
 using namespace LinphonePrivate;
 
-LinphoneCallLog *linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress * to) {
+LinphoneCallLog *
+linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to) {
 	return CallLog::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getSharedFromThis(), dir, from, to);
 }
 
@@ -44,7 +45,7 @@ void linphone_call_log_unref(LinphoneCallLog *call_log) {
 	CallLog::toCpp(call_log)->unref();
 }
 
-const char * linphone_call_log_get_call_id(const LinphoneCallLog *call_log) {
+const char *linphone_call_log_get_call_id(const LinphoneCallLog *call_log) {
 	return L_STRING_TO_C(CallLog::toCpp(call_log)->getCallId());
 }
 
@@ -60,7 +61,7 @@ int linphone_call_log_get_duration(const LinphoneCallLog *call_log) {
 	return CallLog::toCpp(call_log)->getDuration();
 }
 
-const LinphoneAddress * linphone_call_log_get_from_address(const LinphoneCallLog *call_log) {
+const LinphoneAddress *linphone_call_log_get_from_address(const LinphoneCallLog *call_log) {
 	return CallLog::toCpp(call_log)->getFromAddress();
 }
 
@@ -68,7 +69,7 @@ float linphone_call_log_get_quality(const LinphoneCallLog *call_log) {
 	return CallLog::toCpp(call_log)->getQuality();
 }
 
-const char * linphone_call_log_get_ref_key(const LinphoneCallLog *call_log) {
+const char *linphone_call_log_get_ref_key(const LinphoneCallLog *call_log) {
 	return L_STRING_TO_C(CallLog::toCpp(call_log)->getRefKey());
 }
 
@@ -76,11 +77,11 @@ const LinphoneAddress *linphone_call_log_get_local_address(const LinphoneCallLog
 	return CallLog::toCpp(call_log)->getLocalAddress();
 }
 
-const LinphoneAddress * linphone_call_log_get_remote_address(const LinphoneCallLog *call_log) {
+const LinphoneAddress *linphone_call_log_get_remote_address(const LinphoneCallLog *call_log) {
 	return CallLog::toCpp(call_log)->getRemoteAddress();
 }
 
-void linphone_call_log_set_remote_address(LinphoneCallLog *call_log, LinphoneAddress * address) {
+void linphone_call_log_set_remote_address(LinphoneCallLog *call_log, LinphoneAddress *address) {
 	CallLog::toCpp(call_log)->setRemoteAddress(address);
 }
 
@@ -92,7 +93,7 @@ LinphoneCallStatus linphone_call_log_get_status(const LinphoneCallLog *call_log)
 	return CallLog::toCpp(call_log)->getStatus();
 }
 
-const LinphoneAddress * linphone_call_log_get_to_address(const LinphoneCallLog *call_log) {
+const LinphoneAddress *linphone_call_log_get_to_address(const LinphoneCallLog *call_log) {
 	return CallLog::toCpp(call_log)->getToAddress();
 }
 
@@ -136,9 +137,18 @@ LinphoneConferenceInfo *linphone_call_log_get_conference_info(LinphoneCallLog *c
 	return nullptr;
 }
 
-LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *core, LinphoneAddress *from, LinphoneAddress *to, LinphoneCallDir dir, 
-		int duration, time_t start_time, time_t connected_time, LinphoneCallStatus status, bool_t video_enabled, float quality) {
-	auto log = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(core), dir, linphone_address_ref(from), linphone_address_ref(to));
+LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *core,
+                                               LinphoneAddress *from,
+                                               LinphoneAddress *to,
+                                               LinphoneCallDir dir,
+                                               int duration,
+                                               time_t start_time,
+                                               time_t connected_time,
+                                               LinphoneCallStatus status,
+                                               bool_t video_enabled,
+                                               float quality) {
+	auto log =
+	    CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(core), dir, linphone_address_ref(from), linphone_address_ref(to));
 
 	log->setDuration(duration);
 	log->setStartTime(start_time);
@@ -165,8 +175,8 @@ void call_logs_write_to_config_file(LinphoneCore *lc) {
 
 	if (lc->max_call_logs == LINPHONE_MAX_CALL_HISTORY_UNLIMITED) return;
 
-	for(i = 0, elem = lc->call_logs; elem != NULL; elem = elem->next, ++i) {
-		LinphoneCallLog *cl = (LinphoneCallLog*)elem->data;
+	for (i = 0, elem = lc->call_logs; elem != NULL; elem = elem->next, ++i) {
+		LinphoneCallLog *cl = (LinphoneCallLog *)elem->data;
 		auto log = CallLog::toCpp(cl);
 
 		snprintf(logsection, sizeof(logsection), "call_log_%i", i);
@@ -181,8 +191,7 @@ void call_logs_write_to_config_file(LinphoneCore *lc) {
 		ms_free(tmp);
 		if (log->getStartTime())
 			linphone_config_set_int64(cfg, logsection, "start_date_time", (int64_t)log->getStartTime());
-		else
-			linphone_config_set_string(cfg, logsection, "start_date", log->getStartTimeString().c_str());
+		else linphone_config_set_string(cfg, logsection, "start_date", log->getStartTimeString().c_str());
 		linphone_config_set_int(cfg, logsection, "duration", log->getDuration());
 		if (!log->getRefKey().empty()) linphone_config_set_string(cfg, logsection, "refkey", log->getRefKey().c_str());
 		linphone_config_set_float(cfg, logsection, "quality", log->getQuality());
@@ -190,7 +199,7 @@ void call_logs_write_to_config_file(LinphoneCore *lc) {
 		linphone_config_set_string(cfg, logsection, "call_id", log->getCallId().c_str());
 	}
 
-	for(; i < lc->max_call_logs; ++i) {
+	for (; i < lc->max_call_logs; ++i) {
 		snprintf(logsection, sizeof(logsection), "call_log_%i", i);
 		linphone_config_clean_section(cfg, logsection);
 	}
@@ -204,7 +213,7 @@ bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc) {
 	LpConfig *cfg = lc->config;
 	bctbx_list_t *call_logs = NULL;
 
-	for(i = 0; ; ++i) {
+	for (i = 0;; ++i) {
 		snprintf(logsection, sizeof(logsection), "call_log_%i", i);
 		if (linphone_config_has_section(cfg, logsection)) {
 			LinphoneAddress *from = NULL, *to = NULL;
@@ -212,10 +221,11 @@ bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc) {
 			if (tmp) from = linphone_address_new(tmp);
 			tmp = linphone_config_get_string(cfg, logsection, "to", NULL);
 			if (tmp) to = linphone_address_new(tmp);
-			if (!from || !to)
-				continue;
+			if (!from || !to) continue;
 
-			auto cl = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc), static_cast<LinphoneCallDir>(linphone_config_get_int(cfg, logsection, "dir", 0)), from, to);
+			auto cl = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc),
+			                          static_cast<LinphoneCallDir>(linphone_config_get_int(cfg, logsection, "dir", 0)),
+			                          from, to);
 			cl->setStatus(static_cast<LinphoneCallStatus>(linphone_config_get_int(cfg, logsection, "status", 0)));
 			sec = (uint64_t)linphone_config_get_int64(cfg, logsection, "start_date_time", 0);
 			if (sec) {
@@ -243,6 +253,10 @@ bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc) {
 
 // =============================================================================
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	if (!lc) return;
 
@@ -253,6 +267,9 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 
 	lc->call_logs = bctbx_list_prepend(lc->call_logs, linphone_call_log_ref(log));
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	if (!lc) return NULL;
@@ -262,11 +279,11 @@ const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	if (!mainDb) return lc->call_logs;
 
 	if (lc->call_logs != NULL) {
-		size_t callLogsDatabaseSize = (size_t) mainDb->getCallHistorySize();
+		size_t callLogsDatabaseSize = (size_t)mainDb->getCallHistorySize();
 		if (bctbx_list_size(lc->call_logs) >= callLogsDatabaseSize) return lc->call_logs;
-		// If some call logs were added to the Core before the full history was loaded from database, 
+		// If some call logs were added to the Core before the full history was loaded from database,
 		// clean memory cache and reload everything from database
-		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func) linphone_call_log_unref);
+		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 		lc->call_logs = NULL;
 	}
 
@@ -292,11 +309,15 @@ void linphone_core_delete_call_history(LinphoneCore *lc) {
 #endif
 
 	if (lc->call_logs) {
-		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func) linphone_call_log_unref);
+		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 		lc->call_logs = NULL;
 	}
 }
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	if (!lc) return;
 
@@ -308,10 +329,13 @@ void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 #endif
 
 	if (lc->call_logs) {
-		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func) linphone_call_log_unref);
+		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 		lc->call_logs = NULL;
 	}
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 int linphone_core_get_call_history_size(LinphoneCore *lc) {
 	if (!lc) return 0;
@@ -326,7 +350,7 @@ int linphone_core_get_call_history_size(LinphoneCore *lc) {
 #endif
 }
 
-bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr) {
+bctbx_list_t *linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr) {
 	if (!lc || addr == NULL) return NULL;
 
 #ifdef HAVE_DB_STORAGE
@@ -349,18 +373,17 @@ bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, cons
 #endif
 }
 
-bctbx_list_t *linphone_core_get_call_history_2(
-	LinphoneCore *lc,
-	const LinphoneAddress *peer_addr,
-	const LinphoneAddress *local_addr
-) {
+bctbx_list_t *linphone_core_get_call_history_2(LinphoneCore *lc,
+                                               const LinphoneAddress *peer_addr,
+                                               const LinphoneAddress *local_addr) {
 	if (!lc || !peer_addr || !local_addr) return NULL;
 
 #ifdef HAVE_DB_STORAGE
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return NULL;
 
-	auto list = mainDb->getCallHistory(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)), ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)));
+	auto list = mainDb->getCallHistory(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
+	                                   ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)));
 
 	bctbx_list_t *results = NULL;
 	if (!list.empty()) {
@@ -376,7 +399,7 @@ bctbx_list_t *linphone_core_get_call_history_2(
 #endif
 }
 
-LinphoneCallLog * linphone_core_get_last_outgoing_call_log(LinphoneCore *lc) {
+LinphoneCallLog *linphone_core_get_last_outgoing_call_log(LinphoneCore *lc) {
 	if (!lc) return NULL;
 
 #ifdef HAVE_DB_STORAGE
@@ -392,7 +415,7 @@ LinphoneCallLog * linphone_core_get_last_outgoing_call_log(LinphoneCore *lc) {
 #endif
 }
 
-LinphoneCallLog * linphone_core_find_call_log(LinphoneCore *lc, const char *call_id, int limit) {
+LinphoneCallLog *linphone_core_find_call_log(LinphoneCore *lc, const char *call_id, int limit) {
 	if (!lc) return NULL;
 
 #ifdef HAVE_DB_STORAGE
@@ -408,14 +431,13 @@ LinphoneCallLog * linphone_core_find_call_log(LinphoneCore *lc, const char *call
 
 	for (item = lc->call_logs, i = 0; item != NULL && (limit < 1 || i < limit); item = bctbx_list_next(item), i++) {
 		LinphoneCallLog *call_log = reinterpret_cast<LinphoneCallLog *>(bctbx_list_get_data(item));
-		if ((strcmp(linphone_call_log_get_call_id(call_log), call_id) == 0))
-			return linphone_call_log_ref(call_log);
+		if ((strcmp(linphone_call_log_get_call_id(call_log), call_id) == 0)) return linphone_call_log_ref(call_log);
 	}
 
 	return NULL;
 #endif
 }
 
-LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, const char *call_id) {
+LinphoneCallLog *linphone_core_find_call_log_from_call_id(LinphoneCore *lc, const char *call_id) {
 	return linphone_core_find_call_log(lc, call_id, -1);
 }

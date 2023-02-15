@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -48,21 +48,20 @@ MediaEncryptionResponse::MediaEncryptionResponse(LinphoneCore *core) : Response(
 	setBody(ost.str());
 }
 
-MediaEncryptionCommand::MediaEncryptionCommand() :
-		DaemonCommand("media-encryption", "media-encryption [none|srtp|zrtp]",
-				"Set the media encryption policy if a parameter is given, otherwise return the media encrytion in use.") {
-	addExample(make_unique<DaemonCommandExample>("media-encryption none",
-						"Status: Ok\n\n"
-						"Encryption: none"));
-	addExample(make_unique<DaemonCommandExample>("media-encryption srtp",
-						"Status: Ok\n\n"
-						"Encryption: srtp"));
-	addExample(make_unique<DaemonCommandExample>("media-encryption",
-						"Status: Ok\n\n"
-						"Encryption: srtp"));
+MediaEncryptionCommand::MediaEncryptionCommand()
+    : DaemonCommand(
+          "media-encryption",
+          "media-encryption [none|srtp|zrtp]",
+          "Set the media encryption policy if a parameter is given, otherwise return the media encrytion in use.") {
+	addExample(make_unique<DaemonCommandExample>("media-encryption none", "Status: Ok\n\n"
+	                                                                      "Encryption: none"));
+	addExample(make_unique<DaemonCommandExample>("media-encryption srtp", "Status: Ok\n\n"
+	                                                                      "Encryption: srtp"));
+	addExample(make_unique<DaemonCommandExample>("media-encryption", "Status: Ok\n\n"
+	                                                                 "Encryption: srtp"));
 }
 
-void MediaEncryptionCommand::exec(Daemon *app, const string& args) {
+void MediaEncryptionCommand::exec(Daemon *app, const string &args) {
 	string encryption_str;
 	istringstream ist(args);
 	ist >> encryption_str;
@@ -87,7 +86,7 @@ void MediaEncryptionCommand::exec(Daemon *app, const string& args) {
 	}
 	if (linphone_core_set_media_encryption(app->getCore(), encryption) == 0) {
 		app->sendResponse(MediaEncryptionResponse(app->getCore()));
-	}else{
+	} else {
 		app->sendResponse(Response("Unsupported media encryption", Response::Error));
 	}
 }

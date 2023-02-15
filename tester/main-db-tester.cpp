@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,9 +39,10 @@ using namespace LinphonePrivate;
 
 class MainDbProvider {
 public:
-	MainDbProvider () : MainDbProvider("db/linphone.db") { }
+	MainDbProvider() : MainDbProvider("db/linphone.db") {
+	}
 
-	MainDbProvider (const char *db_file) {
+	MainDbProvider(const char *db_file) {
 		mCoreManager = linphone_core_manager_create("empty_rc");
 		char *roDbPath = bc_tester_res(db_file);
 		char *rwDbPath = bc_tester_file("linphone.db");
@@ -52,11 +53,11 @@ public:
 		linphone_core_manager_start(mCoreManager, false);
 	}
 
-	~MainDbProvider () {
+	~MainDbProvider() {
 		linphone_core_manager_destroy(mCoreManager);
 	}
 
-	MainDb &getMainDb () {
+	MainDb &getMainDb() {
 		return *L_GET_PRIVATE(mCoreManager->lc->cppPtr)->mainDb;
 	}
 
@@ -66,7 +67,7 @@ private:
 
 // -----------------------------------------------------------------------------
 
-static void get_events_count (void) {
+static void get_events_count(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	BC_ASSERT_EQUAL(mainDb.getEventCount(), 5175, int, "%d");
@@ -76,81 +77,61 @@ static void get_events_count (void) {
 	BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::NoFilter), 5175, int, "%d");
 }
 
-static void get_messages_count (void) {
+static void get_messages_count(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	BC_ASSERT_EQUAL(mainDb.getChatMessageCount(), 5157, int, "%d");
-	BC_ASSERT_EQUAL(
-		mainDb.getChatMessageCount(
-			ConferenceId(IdentityAddress("sip:test-3@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org"))
-		),
-		861, int, "%d"
-	);
+	BC_ASSERT_EQUAL(mainDb.getChatMessageCount(ConferenceId(IdentityAddress("sip:test-3@sip.linphone.org"),
+	                                                        IdentityAddress("sip:test-1@sip.linphone.org"))),
+	                861, int, "%d");
 }
 
-static void get_unread_messages_count (void) {
+static void get_unread_messages_count(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(), 2, int, "%d");
-	BC_ASSERT_EQUAL(
-		mainDb.getUnreadChatMessageCount(
-			ConferenceId(IdentityAddress("sip:test-3@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org"))
-		),
-		0, int, "%d"
-	);
+	BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(ConferenceId(IdentityAddress("sip:test-3@sip.linphone.org"),
+	                                                              IdentityAddress("sip:test-1@sip.linphone.org"))),
+	                0, int, "%d");
 }
 
-static void get_history (void) {
+static void get_history(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	BC_ASSERT_EQUAL((int)
-		mainDb.getHistoryRange(
-			ConferenceId(IdentityAddress("sip:test-4@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
-			0, -1, MainDb::Filter::ConferenceChatMessageFilter
-		).size(),
-		54,
-		int,
-		"%d"
-	);
-	BC_ASSERT_EQUAL((int)
-		mainDb.getHistoryRange(
-			ConferenceId(IdentityAddress("sip:test-7@sip.linphone.org"), IdentityAddress("sip:test-7@sip.linphone.org")),
-			0, -1, MainDb::Filter::ConferenceCallFilter
-		).size(),
-		0,
-		int,
-		"%d"
-	);
-	BC_ASSERT_EQUAL((int)
-		mainDb.getHistoryRange(
-			ConferenceId(IdentityAddress("sip:test-1@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
-			0, -1, MainDb::Filter::ConferenceChatMessageFilter
-		).size(),
-		804,
-		int,
-		"%d"
-	);
-	BC_ASSERT_EQUAL((int)
-		mainDb.getHistory(
-			ConferenceId(IdentityAddress("sip:test-1@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
-			100, MainDb::Filter::ConferenceChatMessageFilter
-		).size(),
-		100,
-		int,
-		"%d"
-	);
+	BC_ASSERT_EQUAL((int)mainDb
+	                    .getHistoryRange(ConferenceId(IdentityAddress("sip:test-4@sip.linphone.org"),
+	                                                  IdentityAddress("sip:test-1@sip.linphone.org")),
+	                                     0, -1, MainDb::Filter::ConferenceChatMessageFilter)
+	                    .size(),
+	                54, int, "%d");
+	BC_ASSERT_EQUAL((int)mainDb
+	                    .getHistoryRange(ConferenceId(IdentityAddress("sip:test-7@sip.linphone.org"),
+	                                                  IdentityAddress("sip:test-7@sip.linphone.org")),
+	                                     0, -1, MainDb::Filter::ConferenceCallFilter)
+	                    .size(),
+	                0, int, "%d");
+	BC_ASSERT_EQUAL((int)mainDb
+	                    .getHistoryRange(ConferenceId(IdentityAddress("sip:test-1@sip.linphone.org"),
+	                                                  IdentityAddress("sip:test-1@sip.linphone.org")),
+	                                     0, -1, MainDb::Filter::ConferenceChatMessageFilter)
+	                    .size(),
+	                804, int, "%d");
+	BC_ASSERT_EQUAL((int)mainDb
+	                    .getHistory(ConferenceId(IdentityAddress("sip:test-1@sip.linphone.org"),
+	                                             IdentityAddress("sip:test-1@sip.linphone.org")),
+	                                100, MainDb::Filter::ConferenceChatMessageFilter)
+	                    .size(),
+	                100, int, "%d");
 }
 
-static void get_conference_notified_events (void) {
+static void get_conference_notified_events(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	list<shared_ptr<EventLog>> events = mainDb.getConferenceNotifiedEvents(
-		ConferenceId(IdentityAddress("sip:test-44@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
-		1
-	);
+	    ConferenceId(IdentityAddress("sip:test-44@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
+	    1);
 	BC_ASSERT_EQUAL((int)events.size(), 3, int, "%d");
-	if (events.size() != 3)
-		return;
+	if (events.size() != 3) return;
 
 	shared_ptr<EventLog> event;
 	auto it = events.cbegin();
@@ -158,8 +139,10 @@ static void get_conference_notified_events (void) {
 	event = *it;
 	if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantRemoved)) return;
 	{
-		shared_ptr<ConferenceParticipantEvent> participantEvent = static_pointer_cast<ConferenceParticipantEvent>(event);
-		BC_ASSERT_TRUE(participantEvent->getConferenceId().getPeerAddress().asString() == "sip:test-44@sip.linphone.org");
+		shared_ptr<ConferenceParticipantEvent> participantEvent =
+		    static_pointer_cast<ConferenceParticipantEvent>(event);
+		BC_ASSERT_TRUE(participantEvent->getConferenceId().getPeerAddress().asString() ==
+		               "sip:test-44@sip.linphone.org");
 		BC_ASSERT_TRUE(participantEvent->getParticipantAddress().asString() == "sip:test-11@sip.linphone.org");
 		BC_ASSERT_TRUE(participantEvent->getNotifyId() == 2);
 	}
@@ -167,9 +150,8 @@ static void get_conference_notified_events (void) {
 	event = *++it;
 	if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantDeviceAdded)) return;
 	{
-		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = static_pointer_cast<
-			ConferenceParticipantDeviceEvent
-		>(event);
+		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent =
+		    static_pointer_cast<ConferenceParticipantDeviceEvent>(event);
 		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress().asString() == "sip:test-44@sip.linphone.org");
 		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress().asString() == "sip:test-11@sip.linphone.org");
 		BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 3);
@@ -179,9 +161,8 @@ static void get_conference_notified_events (void) {
 	event = *++it;
 	if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantDeviceRemoved)) return;
 	{
-		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = static_pointer_cast<
-			ConferenceParticipantDeviceEvent
-		>(event);
+		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent =
+		    static_pointer_cast<ConferenceParticipantDeviceEvent>(event);
 		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress().asString() == "sip:test-44@sip.linphone.org");
 		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress().asString() == "sip:test-11@sip.linphone.org");
 		BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 4);
@@ -231,9 +212,9 @@ static void get_chat_rooms() {
 		lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
 		BC_ASSERT_PTR_NOT_NULL(lastMessage);
 		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
-		mainDb.loadChatMessageContents(lastMessage);// Force read Database
-		for (const Content *content : lastMessage->getContents()){
-			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt),0, int, "%d");
+		mainDb.loadChatMessageContents(lastMessage); // Force read Database
+		for (const Content *content : lastMessage->getContents()) {
+			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
 		}
 	}
 
@@ -247,7 +228,8 @@ static void get_chat_rooms() {
 		BC_ASSERT_PTR_NULL(lastMessage);
 	}
 
-	// Check last_message_id is updated to previous message id if we remove the last message from a chat room with more than 1 message
+	// Check last_message_id is updated to previous message id if we remove the last message from a chat room with more
+	// than 1 message
 	BC_ASSERT_PTR_NOT_NULL(multiMessageRoom);
 	if (multiMessageRoom != nullptr) {
 		shared_ptr<ChatMessage> lastMessage = multiMessageRoom->getLastChatMessageInHistory();
@@ -264,9 +246,9 @@ static void get_chat_rooms() {
 		BC_ASSERT_PTR_NOT_NULL(lastMessage);
 		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
 		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
-		mainDb.loadChatMessageContents(lastMessage);// Force read Database
-		for (const Content *content : lastMessage->getContents()){
-			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt),0, int, "%d");
+		mainDb.loadChatMessageContents(lastMessage); // Force read Database
+		for (const Content *content : lastMessage->getContents()) {
+			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
 		}
 	}
 }
@@ -274,7 +256,7 @@ static void load_a_lot_of_chatrooms(void) {
 	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 	MainDbProvider provider("db/chatrooms.db");
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
-	long ms = (long) chrono::duration_cast<chrono::milliseconds>(end - start).count();
+	long ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
 #if __APPLE__
 	BC_ASSERT_LOWER(ms, 1000, long, "%li");
 #else
@@ -282,17 +264,18 @@ static void load_a_lot_of_chatrooms(void) {
 #endif
 }
 
-test_t main_db_tests[] = {
-	TEST_NO_TAG("Get events count", get_events_count),
-	TEST_NO_TAG("Get messages count", get_messages_count),
-	TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
-	TEST_NO_TAG("Get history", get_history),
-	TEST_NO_TAG("Get conference events", get_conference_notified_events),
-	TEST_NO_TAG("Get chat rooms", get_chat_rooms),
-	TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)
-};
+test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
+                          TEST_NO_TAG("Get messages count", get_messages_count),
+                          TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
+                          TEST_NO_TAG("Get history", get_history),
+                          TEST_NO_TAG("Get conference events", get_conference_notified_events),
+                          TEST_NO_TAG("Get chat rooms", get_chat_rooms),
+                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)};
 
-test_suite_t main_db_test_suite = {
-	"MainDb", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(main_db_tests) / sizeof(main_db_tests[0]), main_db_tests
-};
+test_suite_t main_db_test_suite = {"MainDb",
+                                   NULL,
+                                   NULL,
+                                   liblinphone_tester_before_each,
+                                   liblinphone_tester_after_each,
+                                   sizeof(main_db_tests) / sizeof(main_db_tests[0]),
+                                   main_db_tests};

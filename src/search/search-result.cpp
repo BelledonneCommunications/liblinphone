@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,8 +30,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-
-void SearchResult::updateCapabilities () {
+void SearchResult::updateCapabilities() {
 	if (!mFriend) return;
 
 	mCapabilities = LinphoneFriendCapabilityNone;
@@ -47,25 +46,22 @@ void SearchResult::updateCapabilities () {
 		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, mPhoneNumber.c_str());
 	}
 
-	if (presenceModel)
-		mCapabilities = linphone_presence_model_get_capabilities(presenceModel);
+	if (presenceModel) mCapabilities = linphone_presence_model_get_capabilities(presenceModel);
 }
 
 // ------------------------------------------------------------------------------
-SearchResult::SearchResult(){
+SearchResult::SearchResult() {
 	mWeight = 0;
 	mAddress = NULL;
 	mFriend = NULL;
 	mSourceFlags = LinphoneMagicSearchSourceNone;
 }
 
-SearchResult::SearchResult (
-	const unsigned int weight,
-	const LinphoneAddress *address,
-	const string &phoneNumber,
-	const LinphoneFriend *linphoneFriend,
-	int sourceFlags
-) {
+SearchResult::SearchResult(const unsigned int weight,
+                           const LinphoneAddress *address,
+                           const string &phoneNumber,
+                           const LinphoneFriend *linphoneFriend,
+                           int sourceFlags) {
 	mWeight = weight;
 	mAddress = address;
 	if (mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
@@ -76,7 +72,7 @@ SearchResult::SearchResult (
 	updateCapabilities();
 }
 
-SearchResult::SearchResult (const SearchResult &sr) : HybridObject(sr) {
+SearchResult::SearchResult(const SearchResult &sr) : HybridObject(sr) {
 	mWeight = sr.getWeight();
 	mAddress = sr.getAddress();
 	if (mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
@@ -87,25 +83,25 @@ SearchResult::SearchResult (const SearchResult &sr) : HybridObject(sr) {
 	mCapabilities = sr.getCapabilities();
 }
 
-SearchResult::~SearchResult () {
+SearchResult::~SearchResult() {
 	// FIXME: Ugly temporary workaround to solve weak. Remove me later.
 	if (mAddress) linphone_address_unref(const_cast<LinphoneAddress *>(mAddress));
 	if (mFriend) linphone_friend_unref(const_cast<LinphoneFriend *>(mFriend));
 };
 
-bool SearchResult::operator< (const SearchResult &other) const {
+bool SearchResult::operator<(const SearchResult &other) const {
 	return getWeight() < other.getWeight();
 }
 
-bool SearchResult::operator> (const SearchResult &other) const {
+bool SearchResult::operator>(const SearchResult &other) const {
 	return getWeight() > other.getWeight();
 }
 
-bool SearchResult::operator>= (const SearchResult &other) const {
+bool SearchResult::operator>=(const SearchResult &other) const {
 	return getWeight() >= other.getWeight();
 }
 
-bool SearchResult::operator== (const SearchResult &other) const {
+bool SearchResult::operator==(const SearchResult &other) const {
 	return getWeight() == other.getWeight();
 }
 
@@ -113,27 +109,27 @@ std::string SearchResult::toString() const {
 	std::ostringstream ss;
 	ss << getDisplayName();
 
-	const LinphoneAddress* addr = getAddress();
+	const LinphoneAddress *addr = getAddress();
 	if (addr) {
 		ss << " address [" << linphone_address_as_string(addr) << "]";
 	}
 
-	const string & phoneNumber = getPhoneNumber();
+	const string &phoneNumber = getPhoneNumber();
 	if (!phoneNumber.empty()) {
 		ss << " phone number [" << phoneNumber << "]";
 	}
-	
+
 	return ss.str();
 }
 
-const char* SearchResult::getDisplayName() const {
+const char *SearchResult::getDisplayName() const {
 	const char *name = NULL;
 	if (getFriend()) {
 		name = linphone_friend_get_name(getFriend());
 	}
-	if (!name && getAddress()){
-		name = linphone_address_get_display_name(getAddress()) ?
-			linphone_address_get_display_name(getAddress()) : linphone_address_get_username(getAddress());
+	if (!name && getAddress()) {
+		name = linphone_address_get_display_name(getAddress()) ? linphone_address_get_display_name(getAddress())
+		                                                       : linphone_address_get_username(getAddress());
 	}
 	if (!name) {
 		return getPhoneNumber().c_str();
@@ -141,31 +137,31 @@ const char* SearchResult::getDisplayName() const {
 	return name;
 }
 
-const LinphoneFriend *SearchResult::getFriend () const {
+const LinphoneFriend *SearchResult::getFriend() const {
 	return mFriend;
 }
 
-const LinphoneAddress *SearchResult::getAddress () const {
+const LinphoneAddress *SearchResult::getAddress() const {
 	return mAddress;
 }
 
-const string &SearchResult::getPhoneNumber () const {
+const string &SearchResult::getPhoneNumber() const {
 	return mPhoneNumber;
 }
 
-int SearchResult::getCapabilities () const {
+int SearchResult::getCapabilities() const {
 	return mCapabilities;
 }
 
-bool SearchResult::hasCapability (const LinphoneFriendCapability capability) const {
+bool SearchResult::hasCapability(const LinphoneFriendCapability capability) const {
 	return static_cast<bool>(mCapabilities & capability);
 }
 
-unsigned int SearchResult::getWeight () const {
+unsigned int SearchResult::getWeight() const {
 	return mWeight;
 }
 
-void SearchResult::setWeight(const unsigned int& weight){
+void SearchResult::setWeight(const unsigned int &weight) {
 	mWeight = weight;
 }
 
@@ -173,35 +169,31 @@ int SearchResult::getSourceFlags() const {
 	return mSourceFlags;
 }
 
-void SearchResult::merge(const std::shared_ptr<SearchResult>& withResult) {
+void SearchResult::merge(const std::shared_ptr<SearchResult> &withResult) {
 	bool doOverride = mWeight <= withResult->getWeight();
-	
-	if(doOverride)
-		mWeight = withResult->getWeight();
+
+	if (doOverride) mWeight = withResult->getWeight();
 	mSourceFlags |= withResult->getSourceFlags();
-	
-	if( withResult->getAddress()){// There is a new data
-		if( doOverride && mAddress)
-			linphone_address_unref(const_cast<LinphoneAddress *>(mAddress));
-		if(doOverride || !mAddress) {
+
+	if (withResult->getAddress()) { // There is a new data
+		if (doOverride && mAddress) linphone_address_unref(const_cast<LinphoneAddress *>(mAddress));
+		if (doOverride || !mAddress) {
 			mAddress = withResult->getAddress();
 			linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
 		}
 	}
-	
-	if(doOverride || mPhoneNumber.empty())
-		mPhoneNumber = withResult->getPhoneNumber();
-		
-	const LinphoneFriend* other = withResult->getFriend();
-	if (other && other != mFriend) {// There is a new data
-		if (doOverride && mFriend)
-			linphone_friend_unref(const_cast<LinphoneFriend *>(mFriend));
+
+	if (doOverride || mPhoneNumber.empty()) mPhoneNumber = withResult->getPhoneNumber();
+
+	const LinphoneFriend *other = withResult->getFriend();
+	if (other && other != mFriend) { // There is a new data
+		if (doOverride && mFriend) linphone_friend_unref(const_cast<LinphoneFriend *>(mFriend));
 		if (doOverride || !mFriend) {
 			mFriend = other;
 			linphone_friend_ref(const_cast<LinphoneFriend *>(mFriend));
 		}
-	}	
-	
+	}
+
 	updateCapabilities();
 }
 LINPHONE_END_NAMESPACE

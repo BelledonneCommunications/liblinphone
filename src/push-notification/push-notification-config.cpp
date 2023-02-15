@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ PushNotificationConfig::PushNotificationConfig() {
 	mPushParams[PushConfigGroupChatStrKey] = "GC_MSG";
 	mPushParams[PushConfigCallSoundKey] = "notes_of_the_optimistic.caf";
 	mPushParams[PushConfigMsgSoundKey] = "msg.caf";
-	
+
 	mTeamId = "ABCD1234";
 	mBundleIdentifer = "";
 	mVoipToken = "";
@@ -52,29 +52,25 @@ PushNotificationConfig::PushNotificationConfig(const PushNotificationConfig &oth
 	mTokensHaveChanged = other.mTokensHaveChanged;
 }
 
-PushNotificationConfig* PushNotificationConfig::clone () const {
+PushNotificationConfig *PushNotificationConfig::clone() const {
 	return new PushNotificationConfig(*this);
 }
 
-PushNotificationConfig& PushNotificationConfig::operator=(const PushNotificationConfig& other)
- {
-	 if (this != &other) {
-		 mPushParams = other.mPushParams;
-		 mTeamId = other.mTeamId;
-		 mBundleIdentifer = other.mBundleIdentifer;
-		 mVoipToken = other.mVoipToken;
-		 mRemoteToken = other.mRemoteToken;
-		 mTokensHaveChanged = other.mTokensHaveChanged;
-	 }
-	 return *this;
- }
+PushNotificationConfig &PushNotificationConfig::operator=(const PushNotificationConfig &other) {
+	if (this != &other) {
+		mPushParams = other.mPushParams;
+		mTeamId = other.mTeamId;
+		mBundleIdentifer = other.mBundleIdentifer;
+		mVoipToken = other.mVoipToken;
+		mRemoteToken = other.mRemoteToken;
+		mTokensHaveChanged = other.mTokensHaveChanged;
+	}
+	return *this;
+}
 
-bool PushNotificationConfig::isEqual(const PushNotificationConfig& other) const {
-	return 	mPushParams == other.mPushParams &&
-	mTeamId == other.mTeamId &&
-	mBundleIdentifer == other.mBundleIdentifer &&
-	mVoipToken == other.mVoipToken &&
-	mRemoteToken == other.mRemoteToken;
+bool PushNotificationConfig::isEqual(const PushNotificationConfig &other) const {
+	return mPushParams == other.mPushParams && mTeamId == other.mTeamId && mBundleIdentifer == other.mBundleIdentifer &&
+	       mVoipToken == other.mVoipToken && mRemoteToken == other.mRemoteToken;
 }
 
 const string &PushNotificationConfig::getProvider() const {
@@ -133,8 +129,6 @@ void PushNotificationConfig::setParam(const string &param) {
 	mPushParams[PushConfigParamKey] = param;
 }
 
-
-
 const string &PushNotificationConfig::getBundleIdentifer() const {
 	return mBundleIdentifer;
 }
@@ -170,7 +164,7 @@ void PushNotificationConfig::setTeamId(const string &teamId) {
 }
 
 void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remotePushAllowed) {
-	
+
 	if (mPushParams[PushConfigProviderKey].empty()) {
 #ifdef __ANDROID__
 		mPushParams[PushConfigProviderKey] = "fcm";
@@ -178,53 +172,48 @@ void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remot
 		mPushParams[PushConfigProviderKey] = "apns";
 #endif
 	}
-	
+
 	if (mPushParams[PushConfigParamKey].empty()) {
 		string services;
 		if (voipPushAllowed) {
 			services += "voip";
-			if (remotePushAllowed)
-				services += "&";
+			if (remotePushAllowed) services += "&";
 		}
-		if (remotePushAllowed)
-			services += "remote";
+		if (remotePushAllowed) services += "remote";
 
 		mPushParams[PushConfigParamKey] = mTeamId + "." + mBundleIdentifer + "." + services;
 	}
 
-	if (mPushParams[PushConfigPridKey].empty()
-		|| (mTokensHaveChanged && (!mVoipToken.empty() || !mRemoteToken.empty()) )) {
+	if (mPushParams[PushConfigPridKey].empty() ||
+	    (mTokensHaveChanged && (!mVoipToken.empty() || !mRemoteToken.empty()))) {
 		string newPrid;
 		if (voipPushAllowed) {
 			newPrid += mVoipToken;
-			if (remotePushAllowed)
-				newPrid += "&";
+			if (remotePushAllowed) newPrid += "&";
 		}
-		if (remotePushAllowed)
-			newPrid += mRemoteToken;
+		if (remotePushAllowed) newPrid += mRemoteToken;
 		mPushParams[PushConfigPridKey] = newPrid;
 	}
 	mTokensHaveChanged = false;
 }
 
-map<string, string> const& PushNotificationConfig::getPushParamsMap() {
+map<string, string> const &PushNotificationConfig::getPushParamsMap() {
 	return mPushParams;
 }
 
 string PushNotificationConfig::asString(bool withRemoteSpecificParams) const {
 	string serializedConfig;
-	
-	auto appendParam = [&](string const& paramName) {
-		if (!mPushParams.at(paramName).empty())
-			serializedConfig += paramName + "=" + mPushParams.at(paramName) + ";";
+
+	auto appendParam = [&](string const &paramName) {
+		if (!mPushParams.at(paramName).empty()) serializedConfig += paramName + "=" + mPushParams.at(paramName) + ";";
 	};
-	
+
 	appendParam(PushConfigPridKey);
 	appendParam(PushConfigProviderKey);
 	appendParam(PushConfigParamKey);
 	appendParam(PushConfigSilentKey);
 	appendParam(PushConfigTimeoutKey);
-	
+
 	if (withRemoteSpecificParams) {
 		appendParam(PushConfigMsgStrKey);
 		appendParam(PushConfigCallStrKey);
@@ -232,16 +221,15 @@ string PushNotificationConfig::asString(bool withRemoteSpecificParams) const {
 		appendParam(PushConfigCallSoundKey);
 		appendParam(PushConfigMsgSoundKey);
 	}
-	
+
 	return serializedConfig;
 }
 
-void PushNotificationConfig::readPushParamsFromString(string const& serializedConfig) {
+void PushNotificationConfig::readPushParamsFromString(string const &serializedConfig) {
 	Address pushParamsWrapper("sip:dummy;" + serializedConfig);
 	for (auto &param : mPushParams) {
 		string paramValue = pushParamsWrapper.getUriParamValue(param.first);
-		if (!paramValue.empty())
-			param.second = paramValue;
+		if (!paramValue.empty()) param.second = paramValue;
 	}
 }
 
