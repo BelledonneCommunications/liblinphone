@@ -326,9 +326,13 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
         // Let's restore the default output device before the echo calibration or test
         Core core = CoreManager.instance().getCore();
-        core.setDefaultOutputAudioDevice(mPreviousDefaultOutputAudioDevice);
-        Log.i("[Audio Helper] Restored previous default output audio device: " + mPreviousDefaultOutputAudioDevice);
-        mPreviousDefaultOutputAudioDevice = null;
+        if (core != null) {
+            core.setDefaultOutputAudioDevice(mPreviousDefaultOutputAudioDevice);
+            Log.i("[Audio Helper] Restored previous default output audio device: " + mPreviousDefaultOutputAudioDevice);
+            mPreviousDefaultOutputAudioDevice = null;
+        } else {
+            Log.e("[Audio Helper] CoreManager instance found but Core is null!");
+        }
     }
 
     private void routeAudioToSpeaker() {
@@ -339,21 +343,25 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
         // For echo canceller calibration & echo tester, we can't change the soundcard dynamically as the stream isn't created yet...
         Core core = CoreManager.instance().getCore();
-        mPreviousDefaultOutputAudioDevice = core.getDefaultOutputAudioDevice();
-        if (mPreviousDefaultOutputAudioDevice.getType() == AudioDevice.Type.Speaker) {
-            Log.i("[Audio Helper] Current default output audio device is already the speaker: " + mPreviousDefaultOutputAudioDevice);
-            return;
-        }
-        Log.i("[Audio Helper] Saved current default output audio device: " + mPreviousDefaultOutputAudioDevice);
-        
-        for (AudioDevice audioDevice : core.getAudioDevices()) {
-            if (audioDevice.getType() == AudioDevice.Type.Speaker) {
-                Log.i("[Audio Helper] Found speaker device, replacing default output audio device with: " + audioDevice);
-                core.setDefaultOutputAudioDevice(audioDevice);
+        if (core != null) {
+            mPreviousDefaultOutputAudioDevice = core.getDefaultOutputAudioDevice();
+            if (mPreviousDefaultOutputAudioDevice.getType() == AudioDevice.Type.Speaker) {
+                Log.i("[Audio Helper] Current default output audio device is already the speaker: " + mPreviousDefaultOutputAudioDevice);
                 return;
             }
+            Log.i("[Audio Helper] Saved current default output audio device: " + mPreviousDefaultOutputAudioDevice);
+        
+            for (AudioDevice audioDevice : core.getAudioDevices()) {
+                if (audioDevice.getType() == AudioDevice.Type.Speaker) {
+                    Log.i("[Audio Helper] Found speaker device, replacing default output audio device with: " + audioDevice);
+                    core.setDefaultOutputAudioDevice(audioDevice);
+                    return;
+                }
+            }
+            Log.e("[Audio Helper] Couldn't find speaker audio device");
+        } else {
+            Log.e("[Audio Helper] CoreManager instance found but Core is null!");
         }
-        Log.e("[Audio Helper] Couldn't find speaker audio device");
     }
 
     private void playSoundUsingMediaPlayer(Context context, AudioAttributes audioAttrs, String ringtone) {
@@ -387,7 +395,14 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             Log.e("[Audio Helper] CoreManager has been destroyed already!");
             return false;
         }
-        return CoreManager.instance().getCore().getConfig().getBool("audio", "android_disable_audio_focus_requests", false);
+
+        Core core = CoreManager.instance().getCore();
+        if (core != null) {
+            return core.getConfig().getBool("audio", "android_disable_audio_focus_requests", false);
+        }
+
+        Log.w("[Audio Helper] Core has been destroyed already");
+        return false;
     }
 
     private Uri getDefaultRingtoneUri(Context context) {
