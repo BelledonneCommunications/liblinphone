@@ -191,7 +191,7 @@ LinphoneStatus Account::setAccountParams(std::shared_ptr<AccountParams> params) 
 	computePublishParamsHash();
 
 	if (mParams->mPublishEnabled && mPresencePublishEvent) {
-		linphone_event_pause_publish(mPresencePublishEvent);
+		mPresencePublishEvent->pause();
 	}
 
 	// Replacing the old params by the updated one
@@ -418,7 +418,7 @@ void Account::setCustomheader(const std::string &headerName, const std::string &
 	mRegisterChanged = true;
 }
 
-void Account::setPresencePublishEvent(LinphoneEvent *presencePublishEvent) {
+void Account::setPresencePublishEvent(const std::shared_ptr<EventPublish> &presencePublishEvent) {
 	mPresencePublishEvent = presencePublishEvent;
 }
 
@@ -508,7 +508,7 @@ const char *Account::getCustomHeader(const std::string &headerName) const {
 	return sal_custom_header_find(mOp->getRecvCustomHeaders(), headerName.c_str());
 }
 
-LinphoneEvent *Account::getPresencePublishEvent() const {
+std::shared_ptr<EventPublish> Account::getPresencePublishEvent() const {
 	return mPresencePublishEvent;
 }
 
@@ -734,10 +734,10 @@ void Account::unregister() {
 }
 
 void Account::unpublish() {
-	if (mPresencePublishEvent && (linphone_event_get_publish_state(mPresencePublishEvent) == LinphonePublishOk ||
-	                              (linphone_event_get_publish_state(mPresencePublishEvent) == LinphonePublishProgress &&
-	                               mParams->mPublishExpires != 0))) {
-		linphone_event_unpublish(mPresencePublishEvent);
+	if (mPresencePublishEvent &&
+	    (mPresencePublishEvent->getState() == LinphonePublishOk ||
+	     (mPresencePublishEvent->getState() == LinphonePublishProgress && mParams->mPublishExpires != 0))) {
+		mPresencePublishEvent->unpublish();
 	}
 	if (!mSipEtag.empty()) {
 		mSipEtag = "";
@@ -751,12 +751,12 @@ void Account::notifyPublishStateChanged(LinphonePublishState state) {
 				setSipEtag("");
 				BCTBX_NO_BREAK;
 			case LinphonePublishError:
-				linphone_event_unref(mPresencePublishEvent);
-				mPresencePublishEvent = NULL;
+				mPresencePublishEvent->unref();
+				mPresencePublishEvent = nullptr;
 				break;
 			case LinphonePublishOk: {
-				const char *etag = linphone_event_get_custom_header(mPresencePublishEvent, "SIP-ETag");
-				if (etag) setSipEtag(etag);
+				const string &etag = mPresencePublishEvent->getCustomHeader("SIP-ETag");
+				if (!etag.empty()) setSipEtag(etag);
 				else {
 					lWarning() << "SIP-Etag is missing in custom header. The server must provide it for PUBLISH.";
 					setSipEtag("");
@@ -790,8 +790,8 @@ void Account::stopRefreshing() {
 	}
 
 	if (mPresencePublishEvent) { /*might probably do better*/
-		linphone_event_set_publish_state(mPresencePublishEvent, LinphonePublishNone);
-		linphone_event_unref(mPresencePublishEvent);
+		mPresencePublishEvent->setState(LinphonePublishNone);
+		mPresencePublishEvent->unref();
 		mPresencePublishEvent = nullptr;
 	}
 
@@ -952,7 +952,7 @@ int Account::done() {
 		lInfo() << "Publish params have changed on account [" << this->toC() << "]";
 		if (mPresencePublishEvent) {
 			/*publish is terminated*/
-			linphone_event_terminate(mPresencePublishEvent);
+			mPresencePublishEvent->terminate();
 		}
 		if (mParams->mPublishEnabled) mSendPublish = true;
 	} else {
@@ -999,12 +999,13 @@ void Account::apply(LinphoneCore *lc) {
 	done();
 }
 
-LinphoneEvent *Account::createPublish(const char *event, int expires) {
+shared_ptr<EventPublish> Account::createPublish(const char *event, int expires) {
 	if (!mCore) {
 		lError() << "Cannot create publish from account [" << this->toC() << "] not attached to any core";
 		return nullptr;
 	}
-	return _linphone_core_create_publish(mCore, this->toC(), NULL, event, expires);
+	return dynamic_pointer_cast<EventPublish>(
+	    Event::toCpp(_linphone_core_create_publish(mCore, this->toC(), NULL, event, expires))->getSharedFromThis());
 }
 
 int Account::sendPublish(LinphonePresenceModel *presence) {
@@ -1015,10 +1016,10 @@ int Account::sendPublish(LinphonePresenceModel *presence) {
 	if (mState == LinphoneRegistrationOk || mState == LinphoneRegistrationCleared) {
 		LinphoneContent *content;
 		char *presence_body;
-		if (mPresencePublishEvent == NULL) {
+		if (mPresencePublishEvent == nullptr) {
 			mPresencePublishEvent = createPublish("presence", mParams->getPublishExpires());
 		}
-		mPresencePublishEvent->internal = TRUE;
+		mPresencePublishEvent->setInternal(true);
 
 		if (linphone_presence_model_get_presentity(presence) == NULL) {
 			lInfo() << "No presentity set for model [" << presence << "], using identity from account [" << this->toC()
@@ -1048,10 +1049,10 @@ int Account::sendPublish(LinphonePresenceModel *presence) {
 		linphone_content_set_type(content, "application");
 		linphone_content_set_subtype(content, "pidf+xml");
 		if (!mSipEtag.empty()) {
-			linphone_event_add_custom_header(mPresencePublishEvent, "SIP-If-Match", mSipEtag.c_str());
+			mPresencePublishEvent->addCustomHeader("SIP-If-Match", mSipEtag);
 			mSipEtag = "";
 		}
-		err = linphone_event_send_publish(mPresencePublishEvent, content);
+		err = mPresencePublishEvent->send(content);
 		linphone_content_unref(content);
 		ms_free(presence_body);
 		if (presentity_address) {
@@ -1082,8 +1083,8 @@ void Account::releaseOps() {
 	}
 
 	if (mPresencePublishEvent) {
-		linphone_event_terminate(mPresencePublishEvent);
-		linphone_event_unref(mPresencePublishEvent);
+		mPresencePublishEvent->terminate();
+		mPresencePublishEvent->unref();
 		mPresencePublishEvent = nullptr;
 	}
 

@@ -37,6 +37,7 @@
 #include "linphone/account_creator.h"
 #include "linphone/account_creator_service.h"
 
+#include "linphone/api/c-event.h"
 #include "linphone/buffer.h"
 #include "linphone/call.h"
 #include "linphone/call_params.h"
@@ -44,7 +45,6 @@
 #include "linphone/chat.h"
 #include "linphone/conference.h"
 #include "linphone/error_info.h"
-#include "linphone/event.h"
 #include "linphone/factory.h"
 #include "linphone/friend.h"
 #include "linphone/friendlist.h"
@@ -5071,13 +5071,12 @@ LINPHONE_PUBLIC const char *linphone_core_get_provisioning_uri(const LinphoneCor
 
 /**
  * Add an extra header for retrieving the remote provisioning (check linphone_core_set_provisioning_uri()).
- * This can also be set from configuration file or factory config file, from [misc] section, item "config-uri-headers_X"
- *where X is the index of the header starting by 0.
+ * This can also be set from configuration file or factory config file, from[misc] section, item "config-uri-headers_X"
+ * where X is the index of the header starting by 0.
  * @param core the #LinphoneCore object @notnil
  * @param header_name the header to use when downloading the configuration. @notnil
  * @param value the value to use when downloading the configuration. @notnil
- * @ingroup initializing
- **/
+ * @ingroup initializing **/
 LINPHONE_PUBLIC void
 linphone_core_add_provisioning_header(LinphoneCore *core, const char *header_name, const char *value);
 
@@ -5364,7 +5363,7 @@ LINPHONE_PUBLIC void linphone_core_enable_call_tone_indications(const LinphoneCo
  * @param core #LinphoneCore @notnil
  * @return TRUE if call tone indications are enabled
  * @ingroup media_parameters
-**/
+ **/
 LINPHONE_PUBLIC bool_t linphone_core_call_tone_indications_enabled(const LinphoneCore *lc);
 
 /**

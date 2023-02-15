@@ -2323,7 +2323,7 @@ void send_device_added_notify() {
 	LinphoneEvent *lev = linphone_event_new_with_op(pauline->lc, op, LinphoneSubscriptionIncoming, "conference");
 	linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
 
-	localConf->subscribeReceived(lev);
+	localConf->subscribeReceived(dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis()));
 
 	linphone_event_unref(lev);
 	sal_address_unref(toAddr);

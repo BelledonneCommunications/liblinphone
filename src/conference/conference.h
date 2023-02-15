@@ -28,6 +28,7 @@
 
 #include "address/address.h"
 
+#include "conference/conference-id.h"
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
 #include "conference/conference-params.h"

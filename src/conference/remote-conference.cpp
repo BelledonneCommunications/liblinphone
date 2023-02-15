@@ -27,6 +27,7 @@
 #ifdef HAVE_ADVANCED_IM
 #include "handlers/remote-conference-event-handler.h"
 #endif
+#include "core/core.h"
 #include "logger/logger.h"
 #include "participant.h"
 #include "remote-conference.h"

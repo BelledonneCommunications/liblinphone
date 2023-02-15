@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -91,10 +91,10 @@ void LocalConferenceEventHandler::notifyAll(const Content &notify) {
 	}
 }
 
-Content LocalConferenceEventHandler::createNotifyFullState(LinphoneEvent *lev) {
+Content LocalConferenceEventHandler::createNotifyFullState(const shared_ptr<EventSubscribe> &ev) {
 	vector<string> acceptedContents = vector<string>();
-	if (lev) {
-		const auto message = (belle_sip_message_t *)lev->op->getRecvCustomHeaders();
+	if (ev) {
+		const auto message = (belle_sip_message_t *)ev->getOp()->getRecvCustomHeaders();
 		for (belle_sip_header_t *acceptHeader = belle_sip_message_get_header(message, "Accept"); acceptHeader != NULL;
 		     acceptHeader = belle_sip_header_get_next(acceptHeader)) {
 			acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
@@ -743,14 +743,14 @@ string LocalConferenceEventHandler::createNotifySubjectChanged() {
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandler::notifyResponseCb(const LinphoneEvent *ev) {
-	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
-	LocalConferenceEventHandler *handler =
-	    static_cast<LocalConferenceEventHandler *>(linphone_event_cbs_get_user_data(cbs));
-	linphone_event_cbs_set_user_data(cbs, nullptr);
-	linphone_event_cbs_set_notify_response(cbs, nullptr);
+void LocalConferenceEventHandler::notifyResponseCb(const LinphoneEvent *lev) {
+	auto ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(const_cast<LinphoneEvent *>(lev))->getSharedFromThis());
+	auto cbs = EventCbs::create();
+	LocalConferenceEventHandler *handler = static_cast<LocalConferenceEventHandler *>(cbs->getUserData());
+	cbs->setUserData(nullptr);
+	cbs->notifyResponseCb = nullptr;
 
-	if (linphone_event_get_reason(ev) != LinphoneReasonNone) return;
+	if (ev->getReason() != LinphoneReasonNone) return;
 
 	if (handler && handler->conf) {
 		LinphonePrivate::ConferenceInterface::State confState = handler->conf->getState();
@@ -943,20 +943,21 @@ void LocalConferenceEventHandler::notifyParticipantDevice(const Content &notify,
                                                           const shared_ptr<ParticipantDevice> &device) {
 	if (!device->isSubscribedToConferenceEventPackage() || notify.isEmpty()) return;
 
-	LinphoneEvent *ev = device->getConferenceSubscribeEvent();
-	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
-	linphone_event_cbs_set_user_data(cbs, this);
-	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
+	shared_ptr<EventSubscribe> ev = device->getConferenceSubscribeEvent();
+	shared_ptr<EventCbs> cbs = EventCbs::create();
+	cbs->setUserData(this);
+	cbs->notifyResponseCb = notifyResponseCb;
+	ev->addCallbacks(cbs);
 
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&notify);
-	linphone_event_notify(ev, cContent);
-	linphone_core_notify_notify_sent(conf->getCore()->getCCore(), ev, cContent);
+	ev->notify(cContent);
+	linphone_core_notify_notify_sent(conf->getCore()->getCCore(), ev->toC(), cContent);
 }
 
 // -----------------------------------------------------------------------------
 
-LinphoneStatus LocalConferenceEventHandler::subscribeReceived(LinphoneEvent *lev) {
-	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
+LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<EventSubscribe> &ev) {
+	const LinphoneAddress *lAddr = ev->getFrom();
 	char *addrStr = linphone_address_as_string(lAddr);
 	Address participantAddress(addrStr);
 	bctbx_free(addrStr);
@@ -967,11 +968,11 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(LinphoneEvent *lev
 		ConferenceAddress conferenceAddress = conf->getConferenceAddress();
 		lError() << "Received SUBSCRIBE corresponds to no participant of the conference [" << conferenceAddress
 		         << "], no NOTIFY sent";
-		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}
 
-	const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(lev);
+	const LinphoneAddress *lContactAddr = ev->getRemoteContact();
 	char *contactAddrStr = linphone_address_as_string(lContactAddr);
 	IdentityAddress contactAddr(contactAddrStr);
 	bctbx_free(contactAddrStr);
@@ -981,19 +982,18 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(LinphoneEvent *lev
 	    ((deviceState != ParticipantDevice::State::Present) && (deviceState != ParticipantDevice::State::Joining))) {
 		lError() << "Received SUBSCRIBE for conference [" << conf->getConferenceAddress()
 		         << "], device sending subscribe [" << contactAddr << "] is not known, no NOTIFY sent";
-		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}
 
-	linphone_event_accept_subscription(lev);
-	if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
-		unsigned int evLastNotify =
-		    static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
+	ev->accept();
+	if (ev->getState() == LinphoneSubscriptionActive) {
+		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(ev->getCustomHeader("Last-Notify-Version")));
 
-		auto oldLev = device->getConferenceSubscribeEvent();
-		device->setConferenceSubscribeEvent(lev);
-		if (oldLev) {
-			linphone_event_terminate(oldLev);
+		auto oldEv = device->getConferenceSubscribeEvent();
+		device->setConferenceSubscribeEvent(ev);
+		if (oldEv) {
+			oldEv->terminate();
 		}
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress()
@@ -1005,7 +1005,7 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(LinphoneEvent *lev
 			} else {
 				conf->setLastNotify(lastNotify + 1);
 			}
-			notifyFullState(createNotifyFullState(lev), device);
+			notifyFullState(createNotifyFullState(ev), device);
 			// Do not notify everybody that a particiant has been added if it was already part of the conference. It may
 			// mean that the client and the server wanted to synchronize to each other
 			if (deviceState != ParticipantDevice::State::Present) {
@@ -1024,7 +1024,7 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(LinphoneEvent *lev
 			// not stored in the database
 			const auto &audioVideoConference = conf->getCore()->findAudioVideoConference(conf->getConferenceId());
 			if (audioVideoConference) {
-				notifyFullState(createNotifyFullState(lev), device);
+				notifyFullState(createNotifyFullState(ev), device);
 			} else {
 				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
 			}
@@ -1032,28 +1032,29 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(LinphoneEvent *lev
 			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference ["
 			           << conf->getConferenceAddress() << "] should not be higher than last notify sent by server ["
 			           << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
-			notifyFullState(createNotifyFullState(lev), device);
+			notifyFullState(createNotifyFullState(ev), device);
 		}
 	}
 
 	return 0;
 }
 
-void LocalConferenceEventHandler::subscriptionStateChanged(LinphoneEvent *lev, LinphoneSubscriptionState state) {
+void LocalConferenceEventHandler::subscriptionStateChanged(const shared_ptr<EventSubscribe> &ev,
+                                                           LinphoneSubscriptionState state) {
 	if (state == LinphoneSubscriptionTerminated && conf) {
-		const LinphoneAddress *lAddr = linphone_event_get_from(lev);
+		const LinphoneAddress *lAddr = ev->getFrom();
 		char *addrStr = linphone_address_as_string(lAddr);
 		Address participantAddress(addrStr);
 		shared_ptr<Participant> participant = getConferenceParticipant(participantAddress);
 		bctbx_free(addrStr);
 		if (!participant) return;
-		const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(lev);
+		const LinphoneAddress *lContactAddr = ev->getRemoteContact();
 		char *contactAddrStr = linphone_address_as_string(lContactAddr);
 		IdentityAddress contactAddr(contactAddrStr);
 		bctbx_free(contactAddrStr);
 		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		if (!device) return;
-		if (lev == device->getConferenceSubscribeEvent()) {
+		if (ev == device->getConferenceSubscribeEvent()) {
 			lInfo() << "End of subscription for device [" << device->getAddress() << "] of conference ["
 			        << conf->getConferenceAddress() << "]";
 			device->setConferenceSubscribeEvent(nullptr);
@@ -1061,10 +1062,10 @@ void LocalConferenceEventHandler::subscriptionStateChanged(LinphoneEvent *lev, L
 	}
 }
 
-Content LocalConferenceEventHandler::getNotifyForId(int notifyId, LinphoneEvent *lev) {
+Content LocalConferenceEventHandler::getNotifyForId(int notifyId, const shared_ptr<EventSubscribe> &ev) {
 	unsigned int lastNotify = conf->getLastNotify();
 	if ((notifyId == 0) || (notifyId > static_cast<int>(lastNotify))) {
-		auto content = createNotifyFullState(lev);
+		auto content = createNotifyFullState(ev);
 		list<Content *> contentPtrs;
 		contentPtrs.push_back(&content);
 		auto multipart = ContentManager::contentListToMultipart(contentPtrs);

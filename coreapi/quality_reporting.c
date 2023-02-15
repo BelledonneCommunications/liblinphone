@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -47,6 +47,7 @@
 #include "call/call-log.h"
 #include "call/call.h"
 #include "conference/session/media-session-p.h"
+#include "event/event.h"
 
 #define STR_REASSIGN(dest, src)                                                                                        \
 	{                                                                                                                  \
@@ -411,7 +412,7 @@ static int send_report(LinphoneCall *call, reporting_session_report_t *report, c
 	if (sal_address_has_uri_param(salAddress, "transport") || sal_address_has_uri_param(salAddress, "maddr") ||
 	    linphone_address_get_port(request_uri) != 0) {
 		ms_message("Publishing report with custom route %s", collector_uri);
-		lev->op->setRoute(collector_uri);
+		Event::toCpp(lev)->getOp()->setRoute(collector_uri);
 	}
 
 	if (linphone_event_send_publish(lev, content) != 0) {
@@ -424,7 +425,6 @@ static int send_report(LinphoneCall *call, reporting_session_report_t *report, c
 		STR_REASSIGN(report->qos_analyzer.output_leg, NULL);
 		STR_REASSIGN(report->qos_analyzer.output, NULL);
 	}
-	linphone_event_unref(lev);
 	linphone_address_unref(request_uri);
 	linphone_content_unref(content);
 	if (collector_uri_allocated) ms_free(collector_uri_allocated);

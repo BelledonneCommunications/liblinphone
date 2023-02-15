@@ -428,8 +428,23 @@ typedef int LinphoneChatRoomCapabilitiesMask;
 typedef struct _LinphoneChatRoomCbs LinphoneChatRoomCbs;
 
 // -----------------------------------------------------------------------------
-// EventLog.
+// Event.
 // -----------------------------------------------------------------------------
+
+/**
+ * @brief Object representing an event state, which is subcribed or published.
+ *
+ * @see linphone_core_publish()
+ * @see linphone_core_subscribe()
+ * @ingroup events
+ **/
+typedef struct _LinphoneEvent LinphoneEvent;
+
+/**
+ * @brief An object to handle the callbacks for handling the LinphoneEvent operations.
+ * @ingroup events
+ **/
+typedef struct _LinphoneEventCbs LinphoneEventCbs;
 
 /**
  * @brief Object that represents an event that must be stored in database.

@@ -26,6 +26,7 @@
 #endif
 
 #include "conference.h"
+#include "event/event-subscribe.h"
 
 // =============================================================================
 
@@ -43,7 +44,7 @@ public:
 	                ConferenceListener *confListener = nullptr);
 	virtual ~LocalConference();
 
-	void subscribeReceived(LinphoneEvent *event);
+	void subscribeReceived(const std::shared_ptr<EventSubscribe> &event);
 
 	virtual bool isIn() const override;
 

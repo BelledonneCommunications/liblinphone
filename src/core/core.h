@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -27,11 +27,13 @@
 
 #include "object/object.h"
 
+#include "account/account.h"
 #include "call/audio-device/audio-device.h"
 #include "call/call-log.h"
 #include "conference/conference-id.h"
 #include "event-log/event-log.h"
 #include "linphone/types.h"
+#include "sal/event-op.h"
 
 // =============================================================================
 

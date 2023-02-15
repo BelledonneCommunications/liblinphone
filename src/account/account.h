@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -23,10 +23,10 @@
 
 #include <memory>
 
-#include "c-wrapper/c-wrapper.h"
-
 #include "account-params.h"
+#include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "event/event-publish.h"
 #include "linphone/api/c-types.h"
 #include "sal/register-op.h"
 
@@ -73,7 +73,7 @@ public:
 	void setState(LinphoneRegistrationState state, const std::string &message);
 	void setOp(SalRegisterOp *op);
 	void setCustomheader(const std::string &headerName, const std::string &headerValue);
-	void setPresencePublishEvent(LinphoneEvent *presencePublishEvent);
+	void setPresencePublishEvent(const std::shared_ptr<EventPublish> &presencePublishEvent);
 	void setDependency(std::shared_ptr<Account> dependency);
 
 	// Getters
@@ -90,7 +90,7 @@ public:
 	LinphoneRegistrationState getState() const;
 	SalRegisterOp *getOp() const;
 	const char *getCustomHeader(const std::string &headerName) const;
-	LinphoneEvent *getPresencePublishEvent() const;
+	std::shared_ptr<EventPublish> getPresencePublishEvent() const;
 	std::shared_ptr<Account> getDependency();
 
 	// Other
@@ -112,7 +112,7 @@ public:
 	const std::string &getCustomParam(const std::string &key) const;
 	void writeToConfigFile(int index);
 	const LinphoneAuthInfo *findAuthInfo() const;
-	LinphoneEvent *createPublish(const char *event, int expires);
+	std::shared_ptr<EventPublish> createPublish(const char *event, int expires);
 	LinphoneReason getError();
 	LinphoneTransportType getTransport();
 
@@ -172,7 +172,7 @@ private:
 	SalRegisterOp *mOp = nullptr;
 	SalCustomHeader *mSentHeaders = nullptr;
 
-	LinphoneEvent *mPresencePublishEvent = nullptr;
+	std::shared_ptr<EventPublish> mPresencePublishEvent = nullptr;
 
 	std::shared_ptr<Account> mDependency = nullptr;
 

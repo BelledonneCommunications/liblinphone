@@ -25,7 +25,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "core/core-p.h"
-#include "linphone/event.h"
+#include "linphone/api/c-event.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include "handlers/local-conference-event-handler.h"
@@ -84,10 +84,10 @@ std::shared_ptr<Call> LocalConference::getCall() const {
 
 // -----------------------------------------------------------------------------
 
-void LocalConference::subscribeReceived(LinphoneEvent *event) {
+void LocalConference::subscribeReceived(const shared_ptr<EventSubscribe> &event) {
 #ifdef HAVE_ADVANCED_IM
 	if (event) {
-		const LinphoneAddress *lAddr = linphone_event_get_from(event);
+		const LinphoneAddress *lAddr = event->getFrom();
 		char *addrStr = linphone_address_as_string(lAddr);
 		Address participantAddress(addrStr);
 		bctbx_free(addrStr);
@@ -95,7 +95,7 @@ void LocalConference::subscribeReceived(LinphoneEvent *event) {
 		shared_ptr<Participant> participant = findParticipant(participantAddress);
 
 		if (participant) {
-			const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
+			const LinphoneAddress *lContactAddr = event->getRemoteContact();
 			char *contactAddrStr = linphone_address_as_string(lContactAddr);
 			IdentityAddress contactAddr(contactAddrStr);
 			bctbx_free(contactAddrStr);
@@ -103,7 +103,7 @@ void LocalConference::subscribeReceived(LinphoneEvent *event) {
 
 			if (device) {
 				vector<string> acceptedContents = vector<string>();
-				const auto message = (belle_sip_message_t *)event->op->getRecvCustomHeaders();
+				const auto message = (belle_sip_message_t *)event->getOp()->getRecvCustomHeaders();
 				if (message) {
 					for (belle_sip_header_t *acceptHeader = belle_sip_message_get_header(message, "Accept");
 					     acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
@@ -124,7 +124,7 @@ void LocalConference::subscribeReceived(LinphoneEvent *event) {
 
 	eventHandler->subscribeReceived(event);
 #else  // !HAVE_ADVANCED_IM
-	linphone_event_deny_subscription(event, LinphoneReasonNotAcceptable);
+	event->deny(LinphoneReasonNotAcceptable);
 #endif // HAVE_ADVANCED_IM
 }
 

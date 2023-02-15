@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -38,9 +38,12 @@ class Content;
 class ConferenceId;
 class Conference;
 class ConferenceListener;
+class EventSubscribe;
 class RemoteConferenceEventHandlerBase;
 
-class LINPHONE_PUBLIC RemoteConferenceEventHandler : public RemoteConferenceEventHandlerBase, public CoreListener {
+class LINPHONE_PUBLIC RemoteConferenceEventHandler : public std::enable_shared_from_this<RemoteConferenceEventHandler>,
+                                                     public RemoteConferenceEventHandlerBase,
+                                                     public CoreListener {
 	friend class ClientGroupChatRoom;
 
 public:
@@ -76,7 +79,7 @@ protected:
 	void onEnteringBackground() override;
 	void onEnteringForeground() override;
 
-	LinphoneEvent *lev = nullptr;
+	std::shared_ptr<EventSubscribe> ev = nullptr;
 	Conference *conf = nullptr;
 	ConferenceListener *confListener = nullptr;
 

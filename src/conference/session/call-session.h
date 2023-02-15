@@ -22,6 +22,7 @@
 #define _L_CALL_SESSION_H_
 
 #include "address/address.h"
+#include "conference/conference-id.h"
 #include "conference/conference.h"
 #include "conference/params/call-session-params.h"
 #include "core/core-listener.h"

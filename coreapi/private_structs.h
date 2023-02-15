@@ -30,12 +30,18 @@
 #include <libxml/xpathInternals.h>
 #endif
 
-#ifndef HAVE_SQLITE
+#ifdef HAVE_SQLITE
+#include "sqlite3.h"
+#else
 typedef struct _sqlite3 sqlite3;
 #endif
 
 #include "carddav.h"
+#include "linphone/core_utils.h"
+#include "linphone/sipsetup.h"
+#include "sal/event-op.h"
 #include "sal/register-op.h"
+#include "vcard_private.h"
 
 struct _CallCallbackObj {
 	LinphoneCallCbFunc _func;
@@ -314,46 +320,6 @@ struct _LCCallbackObj {
 	LinphoneCoreCbFunc _func;
 	void *_user_data;
 };
-
-struct _LinphoneEventCbs {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneEventCbsNotifyResponseCb notify_response_cb;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneEventCbs);
-
-struct _LinphoneEvent {
-	belle_sip_object_t base;
-	LinphoneErrorInfo *ei;
-	LinphoneSubscriptionDir dir;
-	LinphoneCore *lc;
-	LinphonePrivate::SalEventOp *op;
-	SalCustomHeader *send_custom_headers;
-	LinphoneSubscriptionState subscription_state;
-	LinphonePublishState publish_state;
-	void *userdata;
-	char *name;
-
-	LinphoneEventCbs *callbacks; // Deprecated, use a list of Cbs instead
-	bctbx_list_t *callbacks_list;
-	LinphoneEventCbs *currentCbs;
-
-	// For migration purpose. (Do not use directly!)
-	// Cache.
-	LinphoneAddress *to_address;
-	LinphoneAddress *from_address;
-	LinphoneAddress *remote_contact_address;
-
-	int expires;
-	bool_t terminating;
-	bool_t is_out_of_dialog_op; /*used for out of dialog notify*/
-	bool_t internal;
-	bool_t oneshot;
-	bool_t unref_when_terminated;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneEvent);
 
 struct _EcCalibrator {
 	MSFactory *factory;

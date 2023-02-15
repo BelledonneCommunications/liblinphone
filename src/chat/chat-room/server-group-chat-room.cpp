@@ -427,7 +427,8 @@ void ServerGroupChatRoomPrivate::removeParticipant(const shared_ptr<Participant>
 	if (!isAdminLeft()) designateAdmin();
 }
 
-void ServerGroupChatRoomPrivate::subscriptionStateChanged(LinphoneEvent *event, LinphoneSubscriptionState state) {
+void ServerGroupChatRoomPrivate::subscriptionStateChanged(const shared_ptr<EventSubscribe> &event,
+                                                          LinphoneSubscriptionState state) {
 	L_Q();
 	static_pointer_cast<LocalConference>(q->getConference())->eventHandler->subscriptionStateChanged(event, state);
 }
@@ -1131,10 +1132,9 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft(const std::shared_ptr<P
 	if (device->isSubscribedToConferenceEventPackage()) {
 		lError() << q << " still subscription pending for [" << device << "], terminating in emergency";
 		// try to terminate subscription if any, but do not wait for anser.
-		LinphoneEventCbs *cbs = linphone_event_get_callbacks(device->getConferenceSubscribeEvent());
-		linphone_event_cbs_set_user_data(cbs, nullptr);
-		linphone_event_cbs_set_notify_response(cbs, nullptr);
-		linphone_event_terminate(device->getConferenceSubscribeEvent());
+		auto ev = device->getConferenceSubscribeEvent();
+		ev->clearCallbacksList();
+		ev->terminate();
 		device->setConferenceSubscribeEvent(nullptr);
 	}
 
@@ -1693,10 +1693,10 @@ void ServerGroupChatRoom::setState(ConferenceInterface::State state) {
 	}
 }
 
-void ServerGroupChatRoom::subscribeReceived(LinphoneEvent *event) {
+void ServerGroupChatRoom::subscribeReceived(const shared_ptr<EventSubscribe> &event) {
 	L_D();
 
-	const LinphoneAddress *lAddr = linphone_event_get_from(event);
+	const LinphoneAddress *lAddr = event->getFrom();
 	char *addrStr = linphone_address_as_string(lAddr);
 	Address participantAddress(addrStr);
 	bctbx_free(addrStr);
@@ -1704,7 +1704,7 @@ void ServerGroupChatRoom::subscribeReceived(LinphoneEvent *event) {
 	shared_ptr<Participant> participant = findCachedParticipant(participantAddress);
 
 	if (participant) {
-		const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
+		const LinphoneAddress *lContactAddr = event->getRemoteContact();
 		char *contactAddrStr = linphone_address_as_string(lContactAddr);
 		IdentityAddress contactAddr(contactAddrStr);
 		bctbx_free(contactAddrStr);

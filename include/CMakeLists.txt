@@ -36,7 +36,6 @@ set(ROOT_HEADER_FILES
 	core.h
 	defs.h
 	error_info.h
-	event.h
 	factory.h
 	FlexiAPIClient.hh
 	friend.h
@@ -94,7 +93,9 @@ set(C_API_HEADER_FILES
 	c-conference-scheduler.h
 	c-dial-plan.h
 	c-dictionary.h
+	c-event-cbs.h
 	c-event-log.h
+	c-event.h
 	c-factory.h
 	c-friend-phone-number.h
 	c-ldap.h

@@ -18,10 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "participant.h"
+
 #include <algorithm>
 
+#include "core/core.h"
 #include "params/media-session-params.h"
-#include "participant.h"
 #include "session/media-session.h"
 
 using namespace std;

@@ -25,7 +25,6 @@
 
 #include "address/address.h"
 #include "conference/conference-interface.h"
-#include "core/core.h"
 #include "linphone/core.h"
 
 #include "belle-sip/object++.hh"

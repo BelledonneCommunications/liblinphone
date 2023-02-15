@@ -2746,7 +2746,8 @@ _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *le
 	if (body && linphone_event_get_custom_header(lev, "Content-Disposition") &&
 	    strcasecmp(linphone_event_get_custom_header(lev, "Content-Disposition"), "recipient-list") == 0) {
 		// List subscription
-		L_GET_PRIVATE_FROM_C_OBJECT(lc)->localListEventHandler->subscribeReceived(lev, body);
+		auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->localListEventHandler->subscribeReceived(evSub, body);
 		return;
 	}
 
@@ -2759,10 +2760,10 @@ _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *le
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 	shared_ptr<MediaConference::Conference> audioVideoConference =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
-
-	if (chatRoom) static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(lev);
+	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
+	if (chatRoom) static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(evSub);
 	else if (audioVideoConference)
-		static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscribeReceived(lev);
+		static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscribeReceived(evSub);
 	else linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 #else  // !HAVE_ADVANCED_IM
 	linphone_event_deny_subscription(lev, LinphoneReasonNotAcceptable);
@@ -2790,16 +2791,16 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
                                                                  LinphoneEvent *lev,
                                                                  LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
+	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
 	if (!linphone_core_conference_server_enabled(lc)) {
 		/* Liblinphone in a client application. */
-		RemoteConferenceEventHandler *handler = static_cast<RemoteConferenceEventHandler *>(
-		    belle_sip_object_data_get(BELLE_SIP_OBJECT(lev), "event-handler-private"));
+		auto handler = evSub->getProperty("event-handler-private").getValue<RemoteConferenceEventHandler *>();
 		if (handler && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
 			handler->invalidateSubscription();
 		}
 	} else {
 		/* This has to be done only when running as server */
-		const LinphoneAddress *resource = linphone_event_get_resource(lev);
+		const LinphoneAddress *resource = evSub->getResource();
 		char *resourceAddressStr = linphone_address_as_string(resource);
 		const ConferenceAddress conferenceAddress = ConferenceAddress(resourceAddressStr);
 		bctbx_free(resourceAddressStr);
@@ -2809,10 +2810,10 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
 		shared_ptr<MediaConference::Conference> audioVideoConference =
 		    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
 		if (chatRoom)
-			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
+			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(evSub, state);
 		else if (audioVideoConference)
 			static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)
-			    ->subscriptionStateChanged(lev, state);
+			    ->subscriptionStateChanged(evSub, state);
 	}
 #else
 	ms_warning("Advanced IM such as group chat is disabled!");
@@ -2839,7 +2840,7 @@ linphone_core_internal_publish_state_changed(LinphoneCore *lc, LinphoneEvent *le
 		const bctbx_list_t *item;
 		for (item = accs; item != NULL; item = bctbx_list_next(item)) {
 			LinphoneAccount *acc = (LinphoneAccount *)bctbx_list_get_data(item);
-			if (Account::toCpp(acc)->getPresencePublishEvent() == lev) {
+			if (Account::toCpp(acc)->getPresencePublishEvent()->toC() == lev) {
 				Account::toCpp(acc)->notifyPublishStateChanged(state);
 				break;
 			}

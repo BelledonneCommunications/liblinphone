@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,11 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINPHONE_EVENT_H_
-#define LINPHONE_EVENT_H_
+#ifndef _L_C_EVENT_H_
+#define _L_C_EVENT_H_
 
 #include "linphone/callbacks.h"
-#include "linphone/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -279,59 +278,6 @@ LINPHONE_PUBLIC void linphone_event_remove_callbacks(LinphoneEvent *linphone_eve
 LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *linphone_event);
 
 /**
- * Acquire a reference to a LinphoneEventCbs object.
- * @return The same LinphoneEventCbs object. @notnil
- **/
-LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_cbs_ref(LinphoneEventCbs *cbs);
-
-/**
- * Release a reference to a LinphoneEventCbs object.
- * @param cbs LinphoneEventCbs object. @notnil
- **/
-LINPHONE_PUBLIC void linphone_event_cbs_unref(LinphoneEventCbs *cbs);
-
-/**
- * Retrieve the user pointer associated with a LinphoneEventCbs object.
- * @param cbs LinphoneEventCbs object. @notnil
- * @return The user pointer associated with the LinphoneEventCbs object. @maybenil
- **/
-LINPHONE_PUBLIC void *linphone_event_cbs_get_user_data(const LinphoneEventCbs *cbs);
-
-/**
- * Assign a user pointer to a LinphoneEventCbs object.
- * @param cbs LinphoneEventCbs object. @notnil
- * @param user_data The user pointer to associate with the LinphoneEventCbs object. @maybenil
- **/
-LINPHONE_PUBLIC void linphone_event_cbs_set_user_data(LinphoneEventCbs *cbs, void *user_data);
-
-/**
- * Get the notify response callback.
- * @param cbs LinphoneEventCbs object. @notnil
- * @return The current notify response callback.
- **/
-LINPHONE_PUBLIC LinphoneEventCbsNotifyResponseCb linphone_event_cbs_get_notify_response(const LinphoneEventCbs *cbs);
-
-/**
- * Set the notify response callback.
- * @param cbs LinphoneEventCbs object. @notnil
- * @param cb The notify response callback to be used.
- **/
-LINPHONE_PUBLIC void linphone_event_cbs_set_notify_response(LinphoneEventCbs *cbs, LinphoneEventCbsNotifyResponseCb cb);
-
-/************ */
-/* DEPRECATED */
-/* ********** */
-
-/**
- * Get the LinphoneEventCbs object associated with a LinphoneEvent.
- * @param linphone_event #LinphoneEvent object @notnil
- * @return The LinphoneEventCbs object associated with the LinphoneEvent. @notnil
- * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneEventCbs *linphone_event_get_callbacks(const LinphoneEvent *linphone_event);
-
-/**
  * @}
  **/
 
@@ -339,4 +285,4 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneEventCbs *linphone_event_get_callbac
 }
 #endif
 
-#endif /* LINPHONE_EVENT_H_ */
+#endif /* _L_C_EVENT_H_ */

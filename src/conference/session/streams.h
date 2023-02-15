@@ -44,6 +44,7 @@ class MediaSessionParams;
 class IceService;
 class StreamMixer;
 class MixerSession;
+class AudioDevice;
 
 /**
  * Base class for any kind of stream that may be setup with SDP.

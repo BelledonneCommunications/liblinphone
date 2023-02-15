@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -20,8 +20,8 @@
 
 #include <bctoolbox/defs.h>
 
+#include "linphone/api/c-event.h"
 #include "linphone/core.h"
-#include "linphone/event.h"
 #include "linphone/proxy_config.h"
 #include "linphone/utils/utils.h"
 
@@ -31,6 +31,7 @@
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "event/event-subscribe.h"
 #include "logger/logger.h"
 #include "remote-conference-event-handler.h"
 #include "remote-conference-list-event-handler.h"
@@ -131,30 +132,30 @@ void RemoteConferenceListEventHandler::subscribe(LinphoneAccount *c_account) {
 
 	LinphoneCore *lc = getCore()->getCCore();
 	LinphoneEvent *lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
+	shared_ptr<EventSubscribe> evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
 	char *from = linphone_address_as_string(account->getContactAddress());
-	lev->op->setFrom(from);
+	evSub->getOp()->setFrom(from);
 	bctbx_free(from);
 	linphone_address_unref(rlsAddr);
-	linphone_event_set_internal(lev, TRUE);
-	linphone_event_add_custom_header(lev, "Require", "recipient-list-subscribe");
-	linphone_event_add_custom_header(lev, "Accept",
-	                                 "multipart/related, application/conference-info+xml, application/rlmi+xml");
-	linphone_event_add_custom_header(lev, "Content-Disposition", "recipient-list");
+	evSub->setInternal(true);
+	evSub->addCustomHeader("Require", "recipient-list-subscribe");
+	evSub->addCustomHeader("Accept", "multipart/related, application/conference-info+xml, application/rlmi+xml");
+	evSub->addCustomHeader("Content-Disposition", "recipient-list");
 	if (linphone_core_content_encoding_supported(lc, "deflate")) {
 		content.setContentEncoding("deflate");
-		linphone_event_add_custom_header(lev, "Accept-Encoding", "deflate");
+		evSub->addCustomHeader("Accept-Encoding", "deflate");
 	}
-	belle_sip_object_data_set(BELLE_SIP_OBJECT(lev), "list-event-handler", this, NULL);
+	evSub->setProperty("event-handler-private", this);
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
-	linphone_event_send_subscribe(lev, cContent);
+	evSub->send(cContent);
 
-	levs.push_back(lev);
+	levs.push_back(evSub);
 }
 
 void RemoteConferenceListEventHandler::unsubscribe() {
-	for (auto &lev : levs) {
-		linphone_event_terminate(lev);
-		linphone_event_unref(lev);
+	for (auto &evSub : levs) {
+		evSub->terminate();
+		evSub->unref();
 	}
 	levs.clear();
 }
@@ -163,14 +164,15 @@ void RemoteConferenceListEventHandler::unsubscribe(LinphoneAccount *c_account) {
 	auto account = Account::toCpp(c_account);
 	if (!account || !account->getContactAddress()) return;
 	char *from = linphone_address_as_string(account->getContactAddress());
-	auto it = std::find_if(levs.begin(), levs.end(), [from](const auto &lev) { return (lev->op->getFrom() == from); });
+	auto it = std::find_if(levs.begin(), levs.end(),
+	                       [from](const auto &evSub) { return (evSub->getOp()->getFrom() == from); });
 	bctbx_free(from);
 
 	if (it != levs.end()) {
-		LinphoneEvent *lev = *it;
+		shared_ptr<EventSubscribe> evSub = *it;
 		levs.erase(it);
-		linphone_event_terminate(lev);
-		linphone_event_unref(lev);
+		evSub->terminate();
+		evSub->unref();
 	}
 }
 
@@ -357,8 +359,8 @@ void RemoteConferenceListEventHandler::onRegistrationStateChanged(LinphoneProxyC
 	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config is
 		                                             // the current subscription
 		const LinphoneAddress *cfgAddress = linphone_proxy_config_get_contact(cfg);
-		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &lev) {
-			LinphoneAddress *currentAddress = linphone_address_new(lev->op->getFrom().c_str());
+		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &evSub) {
+			LinphoneAddress *currentAddress = linphone_address_new(evSub->getOp()->getFrom().c_str());
 			return linphone_address_weak_equal(currentAddress, cfgAddress);
 		});
 

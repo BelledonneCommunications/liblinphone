@@ -52,8 +52,6 @@ LINPHONE_END_NAMESPACE
 // Public.
 // -----------------------------------------------------------------------------
 
-#define L_GET_PRIVATE(OBJECT) LinphonePrivate::Tester::getPrivate(LinphonePrivate::Utils::getPtr(OBJECT))
-
 #define L_GET_PTR(OBJECT) (OBJECT).get();
 
 #endif // ifndef _L_TESTER_H_

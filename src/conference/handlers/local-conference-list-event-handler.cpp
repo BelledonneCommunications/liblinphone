@@ -58,46 +58,46 @@ LocalConferenceListEventHandler::LocalConferenceListEventHandler(const std::shar
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceListEventHandler::notifyResponseCb(const LinphoneEvent *ev) {
-	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
-	LocalConferenceListEventHandler *listHandler =
-	    static_cast<LocalConferenceListEventHandler *>(linphone_event_cbs_get_user_data(cbs));
-	linphone_event_cbs_set_user_data(cbs, nullptr);
-	linphone_event_cbs_set_notify_response(cbs, nullptr);
+void LocalConferenceListEventHandler::notifyResponseCb(const LinphoneEvent *lev) {
+	auto ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(const_cast<LinphoneEvent *>(lev))->getSharedFromThis());
+	shared_ptr<EventCbs> cbs = ev->getCurrentCallbacks();
+	LocalConferenceListEventHandler *listHandler = static_cast<LocalConferenceListEventHandler *>(cbs->getUserData());
+	cbs->setUserData(nullptr);
+	cbs->notifyResponseCb = nullptr;
 
-	if (linphone_event_get_reason(ev) != LinphoneReasonNone) return;
+	if (ev->getReason() != LinphoneReasonNone) return;
 
 	for (const auto &p : listHandler->handlers) {
-		linphone_event_cbs_set_user_data(cbs, p.second);
-		LocalConferenceEventHandler::notifyResponseCb(ev);
+		cbs->setUserData(p.second);
+		LocalConferenceEventHandler::notifyResponseCb(ev->toC());
 	}
-	linphone_event_cbs_set_user_data(cbs, nullptr);
-	linphone_event_cbs_set_notify_response(cbs, nullptr);
+	cbs->setUserData(nullptr);
 }
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceListEventHandler::subscribeReceived(LinphoneEvent *lev, const LinphoneContent *body) {
-	LinphoneSubscriptionState subscriptionState = linphone_event_get_subscription_state(lev);
+void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<EventSubscribe> &ev,
+                                                        const LinphoneContent *body) {
+	LinphoneSubscriptionState subscriptionState = ev->getState();
 
 	const string &xmlBody = string(linphone_content_get_utf8_text(body));
 	if (xmlBody.empty()) {
-		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+		ev->deny(LinphoneReasonDeclined);
 		return;
 	}
 
-	linphone_event_accept_subscription(lev);
+	ev->accept();
 
 	if (subscriptionState != LinphoneSubscriptionIncomingReceived &&
 	    subscriptionState != LinphoneSubscriptionTerminated)
 		return;
 
-	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
+	const LinphoneAddress *lAddr = ev->getFrom();
 	char *addrStr = linphone_address_as_string(lAddr);
 	IdentityAddress participantAddr(addrStr);
 	bctbx_free(addrStr);
 
-	const LinphoneAddress *lDeviceAddr = linphone_event_get_remote_contact(lev);
+	const LinphoneAddress *lDeviceAddr = ev->getRemoteContact();
 	char *deviceAddrStr = linphone_address_as_string(lDeviceAddr);
 	IdentityAddress deviceAddr(deviceAddrStr);
 	bctbx_free(deviceAddrStr);
@@ -126,8 +126,7 @@ void LocalConferenceListEventHandler::subscribeReceived(LinphoneEvent *lev, cons
 			LocalConferenceEventHandler *handler = findHandler(conferenceId);
 			if (!handler) continue;
 
-			shared_ptr<AbstractChatRoom> chatRoom =
-			    L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(lev))->findChatRoom(conferenceId);
+			shared_ptr<AbstractChatRoom> chatRoom = ev->getCore()->findChatRoom(conferenceId);
 			if (!chatRoom) {
 				lError() << "Received subscribe for unknown chat room: " << conferenceId;
 				continue;
@@ -146,7 +145,7 @@ void LocalConferenceListEventHandler::subscribeReceived(LinphoneEvent *lev, cons
 				         << " for participant: " << participantAddr << " for chat room: " << conferenceId;
 				continue;
 			}
-			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? lev
+			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? ev
 			                                                                                                : nullptr);
 
 			int notifyId = (notifyIdStr.empty() || device->getState() == ParticipantDevice::State::Joining)
@@ -194,10 +193,11 @@ void LocalConferenceListEventHandler::subscribeReceived(LinphoneEvent *lev, cons
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
 		multipart.setContentEncoding("deflate");
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&multipart);
-	LinphoneEventCbs *cbs = linphone_event_get_callbacks(lev);
-	linphone_event_cbs_set_user_data(cbs, this);
-	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
-	linphone_event_notify(lev, cContent);
+	shared_ptr<EventCbs> cbs = EventCbs::create();
+	cbs->setUserData(this);
+	cbs->notifyResponseCb = notifyResponseCb;
+	ev->addCallbacks(cbs);
+	ev->notify(cContent);
 }
 
 // -----------------------------------------------------------------------------

@@ -25,6 +25,7 @@
 
 #include "conference/conference-id.h"
 #include "core/core-accessor.h"
+#include "event/event-subscribe.h"
 #include "linphone/utils/general.h"
 
 // =============================================================================
@@ -37,12 +38,12 @@ class LocalConferenceListEventHandler : public CoreAccessor {
 public:
 	LocalConferenceListEventHandler(const std::shared_ptr<Core> &core);
 
-	void subscribeReceived(LinphoneEvent *lev, const LinphoneContent *body);
+	void subscribeReceived(const std::shared_ptr<EventSubscribe> &lev, const LinphoneContent *body);
 	void addHandler(LocalConferenceEventHandler *handler);
 	void removeHandler(LocalConferenceEventHandler *handler);
 	LocalConferenceEventHandler *findHandler(const ConferenceId &conferenceId) const;
 
-	static void notifyResponseCb(const LinphoneEvent *ev);
+	static void notifyResponseCb(const LinphoneEvent *lev);
 
 private:
 	std::unordered_map<ConferenceId, LocalConferenceEventHandler *> handlers;

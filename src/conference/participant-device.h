@@ -31,6 +31,7 @@
 #include "address/identity-address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/encryption/encryption-engine.h"
+#include "event/event-subscribe.h"
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
@@ -148,10 +149,10 @@ public:
 	inline bool isSubscribedToConferenceEventPackage() const {
 		return mConferenceSubscribeEvent != nullptr;
 	}
-	LinphoneEvent *getConferenceSubscribeEvent() const {
+	std::shared_ptr<EventSubscribe> getConferenceSubscribeEvent() const {
 		return mConferenceSubscribeEvent;
 	}
-	void setConferenceSubscribeEvent(LinphoneEvent *ev);
+	void setConferenceSubscribeEvent(const std::shared_ptr<EventSubscribe> &ev);
 
 	bool isValid() const {
 		return getAddress().isValid();
@@ -215,7 +216,7 @@ private:
 	std::string mCallId;
 	std::string mFromTag;
 	std::string mToTag;
-	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
+	std::shared_ptr<EventSubscribe> mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	JoiningMethod mJoiningMethod = JoiningMethod::DialedIn;
 	DisconnectionMethod mDisconnectionMethod = DisconnectionMethod::Departed;

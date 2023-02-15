@@ -1188,7 +1188,7 @@ int linphone_proxy_config_get_unread_chat_message_count(const LinphoneProxyConfi
 }
 
 LinphoneEvent *linphone_proxy_config_create_publish(LinphoneProxyConfig *cfg, const char *event, int expires) {
-	return Account::toCpp(cfg->account)->createPublish(event, expires);
+	return Account::toCpp(cfg->account)->createPublish(event, expires)->toC();
 }
 
 SalRegisterOp *linphone_proxy_config_get_op(const LinphoneProxyConfig *cfg) {

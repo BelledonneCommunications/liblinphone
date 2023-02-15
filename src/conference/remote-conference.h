@@ -29,6 +29,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class RemoteConferenceEventHandler;
+class Core;
 
 class LINPHONE_PUBLIC RemoteConference : public Conference, public ConferenceListenerInterface {
 	friend class ClientGroupChatRoomPrivate;

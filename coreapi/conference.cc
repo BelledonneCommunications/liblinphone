@@ -337,13 +337,11 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 		// If device is not found, then add it
 		if (device != nullptr) {
 			device->setState(ParticipantDevice::State::ScheduledForLeaving);
-			LinphoneEvent *event = device->getConferenceSubscribeEvent();
-			if (event) {
-				// try to terminate subscription if any, but do not wait for anser.
-				LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
-				linphone_event_cbs_set_user_data(cbs, nullptr);
-				linphone_event_cbs_set_notify_response(cbs, nullptr);
-				linphone_event_terminate(event);
+			shared_ptr<EventSubscribe> ev = device->getConferenceSubscribeEvent();
+			if (ev) {
+				// try to terminate subscription if any, but do not wait for answer.
+				ev->clearCallbacksList();
+				ev->terminate();
 			}
 
 			const auto ei = session->getErrorInfo();
@@ -414,13 +412,11 @@ bool Conference::removeParticipant(const std::shared_ptr<LinphonePrivate::Partic
 	while (deviceIt != participant->getDevices().end()) {
 
 		auto device = (*deviceIt);
-		LinphoneEvent *event = device->getConferenceSubscribeEvent();
-		if (event) {
+		shared_ptr<EventSubscribe> ev = device->getConferenceSubscribeEvent();
+		if (ev) {
 			// try to terminate subscription if any, but do not wait for answer.
-			LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
-			linphone_event_cbs_set_user_data(cbs, nullptr);
-			linphone_event_cbs_set_notify_response(cbs, nullptr);
-			linphone_event_terminate(event);
+			ev->clearCallbacksList();
+			ev->terminate();
 		}
 
 		auto session = device->getSession();
@@ -1006,7 +1002,7 @@ void LocalConference::finalizeCreation() {
 	}
 }
 
-void LocalConference::subscribeReceived(LinphoneEvent *event) {
+void LocalConference::subscribeReceived(shared_ptr<EventSubscribe> event) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
 		const auto ret = eventHandler->subscribeReceived(event);
@@ -1014,14 +1010,14 @@ void LocalConference::subscribeReceived(LinphoneEvent *event) {
 			// A client joins when the conference receives the SUBSCRIBE. This allows to ensure that no NOTIFY is missed
 			// and we don't have to necessarely wait for the client reINVITE or ICE reINVITE to start sending NOTIFYs
 			// regarding the conference to him/her
-			const LinphoneAddress *lAddr = linphone_event_get_from(event);
+			const LinphoneAddress *lAddr = event->getFrom();
 			char *addrStr = linphone_address_as_string(lAddr);
 			Address participantAddress(addrStr);
 			bctbx_free(addrStr);
 
 			auto participant = findParticipant(participantAddress);
 			if (participant) {
-				const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
+				const LinphoneAddress *lContactAddr = event->getRemoteContact();
 				char *contactAddrStr = linphone_address_as_string(lContactAddr);
 				IdentityAddress contactAddr(contactAddrStr);
 				bctbx_free(contactAddrStr);
@@ -1039,7 +1035,7 @@ void LocalConference::subscribeReceived(LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
-	linphone_event_deny_subscription(event, LinphoneReasonNotAcceptable);
+	event->deny(LinphoneReasonNotAcceptable);
 }
 
 void LocalConference::setParticipantAdminStatus(const shared_ptr<Participant> &participant, bool isAdmin) {
@@ -2126,7 +2122,7 @@ void LocalConference::setSubject(const std::string &subject) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void LocalConference::subscriptionStateChanged(LinphoneEvent *event, LinphoneSubscriptionState state) {
+void LocalConference::subscriptionStateChanged(shared_ptr<EventSubscribe> event, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
 		eventHandler->subscriptionStateChanged(event, state);
@@ -3868,13 +3864,11 @@ void RemoteConference::onParticipantRemoved(const shared_ptr<ConferenceParticipa
 		// Unsubscribe all devices of me
 		std::for_each(getMe()->getDevices().cbegin(), getMe()->getDevices().cend(),
 		              [&](const std::shared_ptr<ParticipantDevice> &device) {
-			              LinphoneEvent *event = device->getConferenceSubscribeEvent();
-			              if (event) {
+			              shared_ptr<EventSubscribe> ev = device->getConferenceSubscribeEvent();
+			              if (ev) {
 				              // try to terminate subscription if any, but do not wait for answer.
-				              LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
-				              linphone_event_cbs_set_user_data(cbs, nullptr);
-				              linphone_event_cbs_set_notify_response(cbs, nullptr);
-				              linphone_event_terminate(event);
+				              ev->clearCallbacksList();
+				              ev->terminate();
 			              }
 		              });
 	} else if (!findParticipant(pAddr)) {

@@ -636,7 +636,6 @@ void linphone_error_info_to_sal(const LinphoneErrorInfo *ei, SalErrorInfo *sei);
 
 SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type);
 LinphoneEventCbs *linphone_event_cbs_new(void);
-LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc,
@@ -644,7 +643,7 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc,
                                                           LinphoneSubscriptionDir dir,
                                                           const char *name);
 LinphoneEvent *_linphone_core_create_publish(
-    LinphoneCore *core, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires);
+    LinphoneCore *lc, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 /**
@@ -660,6 +659,8 @@ LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscr
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state);
 void _linphone_event_notify_notify_response(LinphoneEvent *lev);
 LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatus ss);
+int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneContent *body, bool_t notify_err);
+LINPHONE_PUBLIC bool_t linphone_event_is_out_of_dialog_op(const LinphoneEvent *linphone_event);
 LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *ref, bool parseMultipart = true);
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 void linphone_core_register_offer_answer_providers(LinphoneCore *lc);

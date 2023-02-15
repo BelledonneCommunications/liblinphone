@@ -28,7 +28,7 @@
 #include "participant.h"
 #include "private_functions.h"
 
-#include "linphone/event.h"
+#include "linphone/api/c-event.h"
 
 using namespace std;
 
@@ -67,7 +67,7 @@ ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
 }
 
 ParticipantDevice::~ParticipantDevice() {
-	if (mConferenceSubscribeEvent) linphone_event_unref(mConferenceSubscribeEvent);
+	if (mConferenceSubscribeEvent) mConferenceSubscribeEvent->unref();
 }
 
 bool ParticipantDevice::operator==(const ParticipantDevice &device) const {
@@ -110,10 +110,10 @@ std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
 	return participant;
 }
 
-void ParticipantDevice::setConferenceSubscribeEvent(LinphoneEvent *ev) {
-	if (ev) linphone_event_ref(ev);
+void ParticipantDevice::setConferenceSubscribeEvent(const shared_ptr<EventSubscribe> &ev) {
+	if (ev) ev->ref();
 	if (mConferenceSubscribeEvent) {
-		linphone_event_unref(mConferenceSubscribeEvent);
+		mConferenceSubscribeEvent->unref();
 		mConferenceSubscribeEvent = nullptr;
 	}
 	mConferenceSubscribeEvent = ev;
@@ -718,4 +718,5 @@ LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb ParticipantDeviceCbs::ge
 void ParticipantDeviceCbs::setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
 	mStreamAvailabilityChangedCb = cb;
 }
+
 LINPHONE_END_NAMESPACE

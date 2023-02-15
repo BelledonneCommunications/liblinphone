@@ -19,6 +19,8 @@
  */
 
 #include "linphone/api/c-nat-policy.h"
+
+#include "core/core.h"
 #include "nat/nat-policy.h"
 
 using namespace ::LinphonePrivate;

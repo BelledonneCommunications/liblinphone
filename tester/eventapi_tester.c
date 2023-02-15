@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -19,10 +19,10 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-event.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "tester_utils.h"
-#include <linphone/event.h>
 
 static const char *notify_content = "<somexml2>blabla</somexml2>";
 static const char *subscribe_content = "<somexml>blabla</somexml>";

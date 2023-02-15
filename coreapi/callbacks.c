@@ -55,6 +55,7 @@
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
+#include "event/event.h"
 #include "factory/factory.h"
 
 using namespace std;
@@ -560,7 +561,7 @@ static void register_failure(SalOp *op) {
 	}
 	if (Account::toCpp(account)->getPresencePublishEvent()) {
 		/*prevent publish to be sent now until registration gets successful*/
-		linphone_event_terminate(Account::toCpp(account)->getPresencePublishEvent());
+		Account::toCpp(account)->getPresencePublishEvent()->terminate();
 		Account::toCpp(account)->setPresencePublishEvent(NULL);
 		Account::toCpp(account)->setSendPublish(
 		    linphone_account_params_get_publish_enabled(linphone_account_get_params(account)));
@@ -866,7 +867,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 	if (out_of_dialog) {
 		/*out of dialog notify */
 		lev = linphone_event_new_with_out_of_dialog_op(lc, op, LinphoneSubscriptionOutgoing, eventname);
-		lev->unref_when_terminated = TRUE;
+		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
 	}
 	linphone_event_ref(lev);
 	{
@@ -897,7 +898,8 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 
 	if (lev == NULL) {
 		lev = linphone_event_new_with_op(lc, op, LinphoneSubscriptionIncoming, eventname);
-		lev->unref_when_terminated = TRUE;
+		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
+		if (strcmp(linphone_event_get_name(lev), "conference") == 0) linphone_event_set_internal(lev, TRUE);
 		linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 		Address to(op->getTo());
@@ -915,7 +917,7 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 static void incoming_subscribe_closed(SalOp *op) {
 	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
 
-	linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
+	if (lev) linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
 }
 
 static void on_publish_response(SalOp *op) {
@@ -924,10 +926,11 @@ static void on_publish_response(SalOp *op) {
 
 	if (lev == NULL) return;
 	if (ei->reason == SalReasonNone) {
-		if (!lev->terminating) linphone_event_set_publish_state(lev, LinphonePublishOk);
+		if (linphone_event_get_publish_state(lev) != LinphonePublishTerminating)
+			linphone_event_set_publish_state(lev, LinphonePublishOk);
 		else linphone_event_set_publish_state(lev, LinphonePublishCleared);
 	} else {
-		if (lev->publish_state == LinphonePublishOk) {
+		if (linphone_event_get_publish_state(lev) == LinphonePublishOk) {
 			linphone_event_set_publish_state(lev, LinphonePublishProgress);
 		} else {
 			linphone_event_set_publish_state(lev, LinphonePublishError);
@@ -951,7 +954,7 @@ static void on_notify_response(SalOp *op) {
 	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
 	if (!lev) return;
 
-	if (lev->is_out_of_dialog_op) {
+	if (linphone_event_is_out_of_dialog_op(lev)) {
 		switch (linphone_event_get_subscription_state(lev)) {
 			case LinphoneSubscriptionIncomingReceived:
 				if (op->getErrorInfo()->reason == SalReasonNone)

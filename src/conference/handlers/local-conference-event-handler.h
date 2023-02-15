@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -21,12 +21,14 @@
 #ifndef _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
 #define _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
 
+#include <memory>
 #include <string>
 
 #include "linphone/types.h"
 
 #include "address/address.h"
 #include "core/core-accessor.h"
+#include "event/event-subscribe.h"
 
 #include "conference/conference-id.h"
 #include "conference/conference-interface.h"
@@ -35,7 +37,6 @@
 #include "xml/conference-info.h"
 
 #include "content/content.h"
-#include <memory>
 
 // =============================================================================
 
@@ -48,7 +49,8 @@ class ConferenceSubjectEvent;
 class Participant;
 class ParticipantDevice;
 
-class LINPHONE_PUBLIC LocalConferenceEventHandler : public ConferenceListenerInterface {
+class LINPHONE_PUBLIC LocalConferenceEventHandler : public std::enable_shared_from_this<LocalConferenceEventHandler>,
+                                                    public ConferenceListenerInterface {
 	friend class LocalConferenceListEventHandler;
 #ifdef LINPHONE_TESTER
 	friend class Tester;
@@ -57,17 +59,17 @@ public:
 	static Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus(LinphoneMediaDirection direction);
 	LocalConferenceEventHandler(Conference *conference, ConferenceListener *listener = nullptr);
 
-	LinphoneStatus subscribeReceived(LinphoneEvent *lev);
-	void subscriptionStateChanged(LinphoneEvent *lev, LinphoneSubscriptionState state);
+	LinphoneStatus subscribeReceived(const std::shared_ptr<EventSubscribe> &ev);
+	void subscriptionStateChanged(const std::shared_ptr<EventSubscribe> &ev, LinphoneSubscriptionState state);
 
-	Content getNotifyForId(int notifyId, LinphoneEvent *lev);
+	Content getNotifyForId(int notifyId, const std::shared_ptr<EventSubscribe> &ev);
 
 	// protected:
 	void notifyFullState(const Content &notify, const std::shared_ptr<ParticipantDevice> &device);
 	void notifyAllExcept(const Content &notify, const std::shared_ptr<Participant> &exceptParticipant);
 	void notifyAllExceptDevice(const Content &notify, const std::shared_ptr<ParticipantDevice> &exceptDevice);
 	void notifyAll(const Content &notify);
-	Content createNotifyFullState(LinphoneEvent *lev);
+	Content createNotifyFullState(const std::shared_ptr<EventSubscribe> &ev);
 	Content createNotifyMultipart(int notifyId);
 
 	// Conference
@@ -84,7 +86,7 @@ public:
 	std::string createNotifyParticipantDeviceRemoved(const Address &pAddress, const Address &dAddress);
 	std::string createNotifyParticipantDeviceDataChanged(const Address &pAddress, const Address &dAddress);
 
-	static void notifyResponseCb(const LinphoneEvent *ev);
+	static void notifyResponseCb(const LinphoneEvent *lev);
 
 	/*
 	 * This fonction is called each time a full state notification is receied from the focus.

@@ -468,7 +468,7 @@ void ChatRoomPrivate::notifyAggregatedChatMessages() {
 	}
 
 	bctbx_list_free_with_data(cMessages, (bctbx_list_free_func)linphone_chat_message_unref);
-	bctbx_list_free_with_data(cEvents, (bctbx_list_free_func)linphone_event_unref);
+	bctbx_list_free_with_data(cEvents, (bctbx_list_free_func)linphone_event_log_unref);
 
 	aggregatedMessages.clear();
 }

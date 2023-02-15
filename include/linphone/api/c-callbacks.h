@@ -492,6 +492,21 @@ typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb)(Linp
  **/
 
 /**
+ * @addtogroup event_api
+ * @{
+ */
+
+/**
+ * Callback used to notify the response to a sent NOTIFY
+ * @param linphone_event The #LinphoneEvent object that has sent the NOTIFY and for which we received a response @notnil
+ **/
+typedef void (*LinphoneEventCbsNotifyResponseCb)(const LinphoneEvent *linphone_event);
+
+/**
+ * @}
+ */
+
+/**
  * @addtogroup misc
  * @{
  */

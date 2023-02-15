@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -38,6 +38,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Address;
 class Content;
+class EventSubscribe;
 class RemoteConferenceEventHandler;
 
 class RemoteConferenceListEventHandler : public RemoteConferenceEventHandlerBase,
@@ -62,7 +63,7 @@ public:
 private:
 	bool isHandlerInSameDomainAsCore(const ConferenceId &conferenceId) const;
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
-	std::list<LinphoneEvent *> levs;
+	std::list<std::shared_ptr<EventSubscribe>> levs;
 
 	std::map<std::string, IdentityAddress> parseRlmi(const std::string &xmlBody) const;
 

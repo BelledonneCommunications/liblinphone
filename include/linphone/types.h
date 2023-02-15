@@ -641,21 +641,6 @@ typedef enum _LinphoneEcCalibratorStatus {
 typedef struct _LinphoneErrorInfo LinphoneErrorInfo;
 
 /**
- * @brief Object representing an event state, which is subcribed or published.
- *
- * @see linphone_core_publish()
- * @see linphone_core_subscribe()
- * @ingroup event_api
- **/
-typedef struct _LinphoneEvent LinphoneEvent;
-
-/**
- * @brief An object to handle the callbacks for handling the LinphoneEvent operations.
- * @ingroup event_api
- **/
-typedef struct _LinphoneEventCbs LinphoneEventCbs;
-
-/**
  * @brief Policy to use to pass through firewalls.
  * @ingroup network_parameters
  * @deprecated 03/02/2017 Use #LinphoneNatPolicy instead.
@@ -1100,7 +1085,8 @@ typedef enum _LinphonePublishState {
 	LinphonePublishError = 3,    /**< Publish encoutered an error, linphone_event_get_reason() gives reason code */
 	LinphonePublishExpiring =
 	    4, /**< Publish is about to expire, only sent if [sip]->refresh_generic_publish property is set to 0 */
-	LinphonePublishCleared = 5 /**< Event has been un published */
+	LinphonePublishCleared = 5,    /**< Event has been un published */
+	LinphonePublishTerminating = 6 /**< Publish is about to terminate */
 } LinphonePublishState;
 
 /**
@@ -1124,19 +1110,19 @@ typedef enum _LinphoneReason {
 	LinphoneReasonDoNotDisturb = 10,      /**< Do not disturb reason */
 	LinphoneReasonUnauthorized = 11,      /**< Operation is unauthorized because missing credential */
 	LinphoneReasonNotAcceptable = 12, /**< Operation is rejected due to incompatible or unsupported media parameters */
-	LinphoneReasonNoMatch =
-	    13, /**< Operation could not be executed by server or remote client because it didn't have any context for it */
-	LinphoneReasonMovedPermanently = 14,       /**< Resource moved permanently */
-	LinphoneReasonGone = 15,                   /**< Resource no longer exists */
-	LinphoneReasonTemporarilyUnavailable = 16, /**< Temporarily unavailable */
-	LinphoneReasonAddressIncomplete = 17,      /**< Address incomplete */
-	LinphoneReasonNotImplemented = 18,         /**< Not implemented */
-	LinphoneReasonBadGateway = 19,             /**< Bad gateway */
-	LinphoneReasonSessionIntervalTooSmall =
-	    20, /**< The received request contains a Session-Expires header field with a duration below the minimum timer */
-	LinphoneReasonServerTimeout = 21, /**< Server timeout */
-	LinphoneReasonUnknown = 22,       /**< Unknown reason */
-	LinphoneReasonTransferred = 23    /**< The call has been transferred */
+	LinphoneReasonNoMatch = 13,       /**< Operation could not be executed by server or remote client because it didn't
+	                                     have any context for it */
+	LinphoneReasonMovedPermanently = 14,        /**< Resource moved permanently */
+	LinphoneReasonGone = 15,                    /**< Resource no longer exists */
+	LinphoneReasonTemporarilyUnavailable = 16,  /**< Temporarily unavailable */
+	LinphoneReasonAddressIncomplete = 17,       /**< Address incomplete */
+	LinphoneReasonNotImplemented = 18,          /**< Not implemented */
+	LinphoneReasonBadGateway = 19,              /**< Bad gateway */
+	LinphoneReasonSessionIntervalTooSmall = 20, /**< The received request contains a Session-Expires header field
+	                                               with a duration below the minimum timer */
+	LinphoneReasonServerTimeout = 21,           /**< Server timeout */
+	LinphoneReasonUnknown = 22,                 /**< Unknown reason */
+	LinphoneReasonTransferred = 23              /**< The call has been transferred */
 } LinphoneReason;
 
 #define LinphoneReasonBadCredentials LinphoneReasonForbidden

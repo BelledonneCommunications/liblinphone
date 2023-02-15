@@ -98,7 +98,7 @@ public:
 	};
 
 	void setState(ConferenceInterface::State state) override;
-	void subscribeReceived(LinphoneEvent *event);
+	void subscribeReceived(const std::shared_ptr<EventSubscribe> &event);
 
 private:
 	std::list<std::shared_ptr<Participant>>

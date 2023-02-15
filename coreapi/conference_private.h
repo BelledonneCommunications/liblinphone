@@ -24,6 +24,7 @@
 #include "call/audio-device/audio-device.h"
 #include "conference/conference-info.h"
 #include "conference/conference.h"
+#include "event/event-subscribe.h"
 #include "linphone/conference.h"
 #include "linphone/core.h"
 
@@ -287,8 +288,8 @@ public:
 	virtual VideoControlInterface *getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
-	void subscribeReceived(LinphoneEvent *event);
-	void subscriptionStateChanged(LinphoneEvent *event, LinphoneSubscriptionState state);
+	void subscribeReceived(std::shared_ptr<EventSubscribe> event);
+	void subscriptionStateChanged(std::shared_ptr<EventSubscribe> event, LinphoneSubscriptionState state);
 
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> &session) override;

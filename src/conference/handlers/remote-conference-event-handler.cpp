@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "remote-conference-event-handler.h"
+
 #include <sstream>
 
 #include <bctoolbox/defs.h>
@@ -31,8 +33,8 @@
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core-p.h"
+#include "event/event-subscribe.h"
 #include "logger/logger.h"
-#include "remote-conference-event-handler.h"
 
 #include <xsd/cxx/xml/string.hxx>
 
@@ -645,7 +647,7 @@ LinphoneMediaDirection RemoteConferenceEventHandler::mediaStatusToMediaDirection
 // -----------------------------------------------------------------------------
 
 bool RemoteConferenceEventHandler::alreadySubscribed() const {
-	return (!lev && subscriptionWanted);
+	return (!ev && subscriptionWanted);
 }
 
 void RemoteConferenceEventHandler::subscribe() {
@@ -665,31 +667,31 @@ void RemoteConferenceEventHandler::subscribe() {
 	const string &peerAddress = getConferenceId().getPeerAddress().asString();
 	LinphoneAddress *peerAddr = linphone_address_new(peerAddress.c_str());
 
-	lev = linphone_core_create_subscribe_2(conf->getCore()->getCCore(), peerAddr, cfg, "conference", 600);
-	lev->op->setFrom(localAddress);
+	ev = dynamic_pointer_cast<EventSubscribe>(
+	    (new EventSubscribe(conf->getCore(), peerAddr, cfg, "conference", 600))->toSharedPtr());
+	ev->getOp()->setFrom(localAddress);
 	setInitialSubscriptionUnderWayFlag((getLastNotify() == 0));
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
-	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
+	ev->addCustomHeader("Last-Notify-Version", lastNotifyStr.c_str());
 	linphone_address_unref(lAddr);
 	linphone_address_unref(peerAddr);
-	linphone_event_set_internal(lev, TRUE);
-	belle_sip_object_data_set(BELLE_SIP_OBJECT(lev), "event-handler-private", this, NULL);
+	ev->setInternal(true);
+	ev->setProperty("event-handler-private", this);
 	lInfo() << localAddress << " is subscribing to chat room or conference: " << peerAddress
 	        << " with last notify: " << lastNotifyStr;
-	linphone_event_send_subscribe(lev, nullptr);
+	ev->send(nullptr);
 }
 
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceEventHandler::unsubscribePrivate() {
-	if (lev) {
+	if (ev) {
 		/* The following tricky code is to break a cycle. Indeed linphone_event_terminate() will chage the event's
 		 * state, which will be notified to the core, that will call us immediately in invalidateSubscription(), which
-		 * resets 'lev' while we still have to unref it.*/
-		LinphoneEvent *tmpEv = lev;
-		lev = nullptr;
-		linphone_event_terminate(tmpEv);
-		linphone_event_unref(tmpEv);
+		 * resets 'ev' while we still have to unref it.*/
+		shared_ptr<EventSubscribe> tmpEv = ev;
+		ev = nullptr;
+		tmpEv->terminate();
 	}
 }
 
@@ -717,15 +719,14 @@ void RemoteConferenceEventHandler::onEnteringForeground() {
 }
 
 void RemoteConferenceEventHandler::invalidateSubscription() {
-	if (lev) {
-		if ((lev->subscription_state == LinphoneSubscriptionError) &&
+	if (ev) {
+		if ((ev->getState() == LinphoneSubscriptionError) &&
 		    (conf->getState() == ConferenceInterface::State::CreationPending)) {
 			// The conference received an answer to its SUBSCRIBE and the server is not supporting the conference event
 			// package
 			conf->setState(ConferenceInterface::State::Created);
 		}
-		linphone_event_unref(lev);
-		lev = nullptr;
+		ev = nullptr;
 	}
 }
 

@@ -232,6 +232,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	dial-plan/dial-plan.h
 	dictionary/dictionary.h
 	enums.h
+	event/event.h
+	event/event-publish.h
+	event/event-subscribe.h
 	event-log/conference/conference-call-event.h
 	event-log/conference/conference-event-p.h
 	event-log/conference/conference-event.h
@@ -376,7 +379,9 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-dictionary.cpp
+	c-wrapper/api/c-event-cbs.cpp
 	c-wrapper/api/c-event-log.cpp
+	c-wrapper/api/c-event.cpp
 	c-wrapper/api/c-factory.cpp
 	c-wrapper/api/c-friend-phone-number.cpp
 	c-wrapper/api/c-ldap.cpp
@@ -465,6 +470,9 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	db/main-db.cpp
 	dial-plan/dial-plan.cpp
 	dictionary/dictionary.cpp
+	event/event.cpp
+	event/event-publish.cpp
+	event/event-subscribe.cpp
 	event-log/conference/conference-call-event.cpp
 	event-log/conference/conference-chat-message-event.cpp
 	event-log/conference/conference-event.cpp

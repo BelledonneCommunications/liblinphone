@@ -49,7 +49,6 @@ set(LINPHONE_SOURCE_FILES_C
 	echo-tester.c
 	enum.c
 	error_info.c
-	event.c
 	friend.c
 	friendlist.c
 	im_notif_policy.c
