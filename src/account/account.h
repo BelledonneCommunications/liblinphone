@@ -80,11 +80,11 @@ public:
 	time_t getDeletionDate () const;
 	const std::string& getSipEtag () const;
 	LinphoneCore* getCore () const;
-	LinphoneErrorInfo* getErrorInfo ();
-	LinphoneAddress* getContactAddress () const;
-	LinphoneAddress* getContactAddressWithoutParams () const;
-	LinphoneAddress* getPendingContactAddress () const;
-	LinphoneAddress* getServiceRouteAddress ();
+	const LinphoneErrorInfo* getErrorInfo ();
+	const LinphoneAddress* getContactAddress () const;
+	const LinphoneAddress* getContactAddressWithoutParams () const;
+	const LinphoneAddress* getPendingContactAddress () const;
+	const LinphoneAddress* getServiceRouteAddress ();
 	LinphoneRegistrationState getState () const;
 	SalRegisterOp* getOp() const;
 	const char* getCustomHeader (const std::string& headerName) const;

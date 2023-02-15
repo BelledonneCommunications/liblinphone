@@ -25,6 +25,8 @@
 #include "linphone/types.h"
 #include "private.h"
 
+#include "c-wrapper/c-wrapper.h"
+
 // =============================================================================
 
 using namespace std;
@@ -34,6 +36,9 @@ LINPHONE_BEGIN_NAMESPACE
 const std::string ConferenceInfo::sequenceParam = "X-SEQ";
 
 ConferenceInfo::ConferenceInfo () {
+}
+
+ConferenceInfo::~ConferenceInfo(){
 }
 
 const ConferenceInfo::organizer_t &ConferenceInfo::getOrganizer () const {
@@ -68,6 +73,12 @@ const std::string ConferenceInfo::getOrganizerParam (const std::string & param) 
 
 const ConferenceInfo::participant_list_t & ConferenceInfo::getParticipants () const {
 	return mParticipants;
+}
+
+const bctbx_list_t *ConferenceInfo::getParticipantsCList() const{
+	return mParticipantsList.construct(mParticipants, []( const pair<IdentityAddress, participant_params_t> &p) -> LinphoneAddress* {
+		return L_GET_C_BACK_PTR(&p.first.asAddress());
+	});
 }
 
 void ConferenceInfo::setParticipants (const participant_list_t & participants) {

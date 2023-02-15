@@ -456,25 +456,25 @@ LinphoneCore *Account::getCore () const {
 	return mCore;
 }
 
-LinphoneErrorInfo *Account::getErrorInfo () {
+const LinphoneErrorInfo *Account::getErrorInfo () {
 	if (!mErrorInfo) mErrorInfo = linphone_error_info_new();
 	linphone_error_info_from_sal_op(mErrorInfo, mOp);
 	return mErrorInfo;
 }
 
-LinphoneAddress *Account::getContactAddress () const {
+const LinphoneAddress *Account::getContactAddress () const {
 	return mContactAddress;
 }
 
-LinphoneAddress* Account::getContactAddressWithoutParams () const {
+const LinphoneAddress* Account::getContactAddressWithoutParams () const {
 	return mContactAddressWithoutParams;
 }
 
-LinphoneAddress* Account::getPendingContactAddress () const {
+const LinphoneAddress* Account::getPendingContactAddress () const {
 	return mPendingContactAddress;
 }
 
-LinphoneAddress* Account::getServiceRouteAddress () {
+const LinphoneAddress* Account::getServiceRouteAddress () {
 	if (!mOp) return nullptr;
 
 	const auto salAddr = ownership::borrowed(mOp->getServiceRoute());

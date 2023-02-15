@@ -28,13 +28,41 @@
 #include "address/address.h"
 #include "address/identity-address.h"
 
-#include <belle-sip/object++.hh>
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+/* Temporary utility for non HybridObject, that does almost the same as ListHolder
+ FIXME: it has to be declared in c-wrapper.h like other c-wrapping utilities, however this cannot be
+ done because of circular dependencies within liblinphone internal include files (linphone/utils/utils.h is problematic).
+ This has to be fixed first.
+ */
+class CListCache{
+public:
+	CListCache() = default;
+	CListCache(const CListCache& other) : mList(nullptr){
+	}
+	template<typename _container, typename _functor>
+	const bctbx_list_t * construct(const _container & container, _functor fun) const{
+		if (mList) {
+			bctbx_list_free(mList);
+			mList = nullptr;
+		}
+		for (const auto & obj : container){
+			mList = bctbx_list_append(mList, fun(obj));
+		}
+		return mList;
+	}
+	~CListCache(){
+		if (mList) bctbx_list_free(mList);
+	}
+private:
+	mutable bctbx_list_t *mList = nullptr;
+};
 
 class LINPHONE_PUBLIC ConferenceInfo : public bellesip::HybridObject<LinphoneConferenceInfo, ConferenceInfo> {
 public:
@@ -50,6 +78,7 @@ public:
 	};
 
 	ConferenceInfo ();
+	~ConferenceInfo();
 
 	ConferenceInfo *clone()const override{
 		return new ConferenceInfo(*this);
@@ -67,6 +96,7 @@ public:
 	const std::string getOrganizerParam (const std::string & param) const;
 
 	const participant_list_t &getParticipants () const;
+	const bctbx_list_t *getParticipantsCList() const;
 	void setParticipants (const participant_list_t & participants);
 	void addParticipant (const IdentityAddress & participant);
 	void addParticipant (const IdentityAddress & participant, const participant_params_t & params);
@@ -123,7 +153,7 @@ private:
 	mutable unsigned int mIcsSequence = 0;
 	mutable std::string mIcsUid = "";
 	State mState = State::New;
-
+	CListCache mParticipantsList;
 	time_t mCreationTime = (time_t) -1;
 };
 

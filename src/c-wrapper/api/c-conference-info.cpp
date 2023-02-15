@@ -54,14 +54,8 @@ void linphone_conference_info_set_organizer(LinphoneConferenceInfo *conference_i
 	ConferenceInfo::toCpp(conference_info)->setOrganizer(*L_GET_CPP_PTR_FROM_C_OBJECT(organizer));
 }
 
-bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
-	const auto & participants = ConferenceInfo::toCpp(conference_info)->getParticipants();
-	bctbx_list_t * participant_addresses = NULL;
-	for (const auto & participant : participants) {
-		const auto & address = participant.first.asAddress();
-		participant_addresses = bctbx_list_append(participant_addresses, L_GET_C_BACK_PTR(&address));
-	}
-	return participant_addresses;
+const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
+	return ConferenceInfo::toCpp(conference_info)->getParticipantsCList();
 }
 
 void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info, const bctbx_list_t *participants) {
