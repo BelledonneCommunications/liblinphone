@@ -18,97 +18,82 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <belle-sip/sip-uri.h>
+#include <bctoolbox/defs.h>
+
+#include "belle-sip/sip-uri.h"
 
 #include "address.h"
 #include "c-wrapper/c-wrapper.h"
-#include "containers/lru-cache.h"
 #include "logger/logger.h"
-
-// TODO: delete after Addres is not derived anymore from ClonableObject
-#include "object/clonable-object-p.h"
 
 // =============================================================================
 
 using namespace std;
-using namespace ownership;
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace {
-class SalAddressWrap {
-public:
-	explicit SalAddressWrap(SalAddress *salAddress = nullptr) : mSalAddress(salAddress) {
-	}
+std::unordered_map<std::string, std::unique_ptr<SalAddress, Address::SalAddressDeleter>> Address::sAddressCache;
 
-	SalAddressWrap(const SalAddressWrap &other) : mSalAddress(other.mSalAddress) {
-		if (mSalAddress) sal_address_ref(mSalAddress);
-	}
+SalAddress *Address::getSalAddressFromCache(const string &uri,
+                                            std::function<SalAddress *(const std::string &)> alternateParserFunction) {
+	auto &ptr = sAddressCache[uri];
+	if (ptr) return sal_address_clone(ptr.get());
 
-	SalAddressWrap(SalAddressWrap &&other) : mSalAddress(other.mSalAddress) {
-		other.mSalAddress = nullptr;
-	}
-
-	~SalAddressWrap() {
-		if (mSalAddress) sal_address_unref(mSalAddress);
-	}
-
-	const SalAddress *get() {
-		return mSalAddress;
-	}
-
-private:
-	SalAddress *mSalAddress;
-};
-LruCache<string, SalAddressWrap> addressesCache;
-} // namespace
-
-static Owned<SalAddress> getSalAddressFromCache(const string &uri) {
-	SalAddressWrap *wrap = addressesCache[uri];
-	if (wrap) return owned(sal_address_clone(wrap->get()));
-
-	SalAddress *address = sal_address_new(L_STRING_TO_C(uri));
+	// lInfo() << "Creating SalAddress for " << uri;
+	SalAddress *address = nullptr;
+	if (alternateParserFunction) {
+		address = alternateParserFunction(uri);
+	} else address = sal_address_new(L_STRING_TO_C(uri));
 	if (address) {
-		addressesCache.insert(uri, SalAddressWrap(address));
-		return owned(sal_address_clone(address));
+		removeFromLeakDetector(address);
+		ptr = (unique_ptr<SalAddress, SalAddressDeleter>(address, SalAddressDeleter()));
+		return sal_address_clone(address);
 	}
-
 	return nullptr;
 }
 
 // -----------------------------------------------------------------------------
 
-Address::Address(const string &address) : ClonableObject(*new ClonableObjectPrivate) {
-	if (!(internalAddress = getSalAddressFromCache(address))) {
+Address::Address(const string &address) {
+	if (address.empty()) {
+		mImpl = sal_address_new_empty();
+	} else if (!(mImpl = getSalAddressFromCache(address, nullptr))) {
 		lWarning() << "Cannot create Address, bad uri [" << address << "]";
 	}
 }
 
-Address::Address(const Address &other)
-    : ClonableObject(*new ClonableObjectPrivate),
-      internalAddress(other.internalAddress ? owned(sal_address_clone(other.internalAddress)) : nullptr) {
+Address::Address(const Address &other) : HybridObject(other) {
+	SalAddress *salAddress = other.mImpl;
+	if (salAddress) mImpl = sal_address_clone(salAddress);
+	else mImpl = sal_address_new_empty();
 }
 
-Address::Address(BorrowedMut<SalAddress> source)
-    : ClonableObject(*new ClonableObjectPrivate), internalAddress(source ? owned(sal_address_ref(source)) : nullptr) {
+Address::Address(SalAddress *addr) {
+	mImpl = addr;
+}
+
+Address::Address() {
+	mImpl = sal_address_new_empty();
+}
+
+Address::Address(Address &&other) {
+	mImpl = other.mImpl;
+	other.mImpl = nullptr;
 }
 
 Address::~Address() {
-	if (internalAddress) sal_address_unref(internalAddress.take());
+	if (mImpl) sal_address_unref(mImpl);
+}
+
+Address *Address::clone() const {
+	return new Address(*this);
 }
 
 Address &Address::operator=(const Address &other) {
 	if (this != &other) {
-		setInternalAddress(other.internalAddress);
-	}
-
-	return *this;
-}
-
-Address &Address::operator=(Address &&other) {
-	if (this != &other) {
-		if (internalAddress) sal_address_unref(internalAddress.take());
-		internalAddress = std::move(other.internalAddress);
+		if (mImpl) sal_address_unref(mImpl);
+		SalAddress *salAddress = other.mImpl;
+		mImpl = salAddress ? sal_address_clone(salAddress) : nullptr;
 	}
 
 	return *this;
@@ -116,8 +101,8 @@ Address &Address::operator=(Address &&other) {
 
 bool Address::operator==(const Address &other) const {
 	// If either internal addresses is NULL, then the two addresses are not the same
-	if (!internalAddress || !other.internalAddress) return false;
-	return (sal_address_equals(internalAddress, other.internalAddress) == 0);
+	if (!mImpl || !other.mImpl) return false;
+	return (sal_address_equals(mImpl, other.mImpl) == 0);
 }
 
 bool Address::operator!=(const Address &other) const {
@@ -130,162 +115,220 @@ bool Address::operator<(const Address &other) const {
 
 // -----------------------------------------------------------------------------
 
-void Address::setInternalAddress(const Borrowed<SalAddress> addr) {
-	if (internalAddress) sal_address_unref(internalAddress.take());
-	internalAddress = addr ? owned(sal_address_clone(addr)) : nullptr;
+Address Address::getUri() const {
+	if (mImpl) {
+		return Address(sal_address_new_uri_only(mImpl));
+	}
+	return Address();
+}
+
+Address Address::getUriWithoutGruu() const {
+	auto uri = getUri();
+	uri.removeUriParam("gr");
+	return uri;
+}
+
+void Address::setImpl(const SalAddress *addr) {
+	setImpl(sal_address_clone(addr));
+}
+
+void Address::setImpl(SalAddress *addr) {
+	if (mImpl) sal_address_unref(mImpl);
+	mImpl = addr;
 }
 
 void Address::clearSipAddressesCache() {
-	addressesCache.clear();
+	sAddressCache.clear();
 }
 
 bool Address::isValid() const {
-	return !!internalAddress;
+	return mImpl && sal_address_get_domain(mImpl);
 }
 
-const string &Address::getScheme() const {
-	if (!internalAddress) return Utils::getEmptyConstRefObject<string>();
-
-	string scheme(L_C_TO_STRING(sal_address_get_scheme(internalAddress)));
-	if (scheme != cache.scheme) cache.scheme = scheme;
-	return cache.scheme;
+bool Address::setScheme(const std::string &scheme) {
+	if (!mImpl) return false;
+	if (scheme == "sip") setSecure(false);
+	else if (scheme == "sips") setSecure(true);
+	else {
+		lError() << "Address::setScheme() can't be set to " << scheme;
+		return false;
+	}
+	return true;
 }
 
-const string &Address::getDisplayName() const {
-	if (!internalAddress) return Utils::getEmptyConstRefObject<string>();
+const char *Address::getSchemeCstr() const {
+	return mImpl ? sal_address_get_scheme(mImpl) : nullptr;
+}
 
-	string displayName(L_C_TO_STRING(sal_address_get_display_name(internalAddress)));
-	if (displayName != cache.displayName) cache.displayName = displayName;
-	return cache.displayName;
+std::string Address::getScheme() const {
+	return L_C_TO_STRING(getSchemeCstr());
+}
+
+const char *Address::getDisplayNameCstr() const {
+	return mImpl ? sal_address_get_display_name(mImpl) : nullptr;
+}
+
+std::string Address::getDisplayName() const {
+	return L_C_TO_STRING(getDisplayNameCstr());
 }
 
 bool Address::setDisplayName(const string &displayName) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_display_name(internalAddress.borrow(), L_STRING_TO_C(displayName));
+	sal_address_set_display_name(mImpl, L_STRING_TO_C(displayName));
 	return true;
 }
 
-const string &Address::getUsername() const {
-	if (!internalAddress) return Utils::getEmptyConstRefObject<string>();
+const char *Address::getUsernameCstr() const {
+	return mImpl ? sal_address_get_username(mImpl) : nullptr;
+}
 
-	string username(L_C_TO_STRING(sal_address_get_username(internalAddress)));
-	if (username != cache.username) cache.username = username;
-	return cache.username;
+const std::string Address::getUsername() const {
+	return L_C_TO_STRING(getUsernameCstr());
 }
 
 bool Address::setUsername(const string &username) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_username(internalAddress.borrow(), L_STRING_TO_C(username));
+	sal_address_set_username(mImpl, L_STRING_TO_C(username));
 	return true;
 }
 
-const string &Address::getDomain() const {
-	if (!internalAddress) return Utils::getEmptyConstRefObject<string>();
+const char *Address::getDomainCstr() const {
+	return mImpl ? sal_address_get_domain(mImpl) : nullptr;
+}
 
-	string domain(L_C_TO_STRING(sal_address_get_domain(internalAddress)));
-	if (domain != cache.domain) cache.domain = domain;
-	return cache.domain;
+std::string Address::getDomain() const {
+	return L_C_TO_STRING(getDomainCstr());
 }
 
 bool Address::setDomain(const string &domain) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_domain(internalAddress.borrow(), L_STRING_TO_C(domain));
+	sal_address_set_domain(mImpl, L_STRING_TO_C(domain));
 	return true;
 }
 
 int Address::getPort() const {
-	return internalAddress ? sal_address_get_port(internalAddress) : 0;
+	return mImpl ? sal_address_get_port(mImpl) : 0;
 }
 
 bool Address::setPort(int port) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_port(internalAddress.borrow(), port);
+	sal_address_set_port(mImpl, port);
 	return true;
 }
 
 Transport Address::getTransport() const {
-	return internalAddress ? static_cast<Transport>(sal_address_get_transport(internalAddress)) : Transport::Udp;
+	return mImpl ? static_cast<Transport>(sal_address_get_transport(mImpl)) : Transport::Udp;
 }
 
 bool Address::setTransport(Transport transport) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_transport(internalAddress.borrow(), static_cast<SalTransport>(transport));
+	sal_address_set_transport(mImpl, static_cast<SalTransport>(transport));
 	return true;
 }
 
 bool Address::getSecure() const {
-	return internalAddress && sal_address_is_secure(internalAddress);
+	return mImpl && sal_address_is_secure(mImpl);
 }
 
 bool Address::setSecure(bool enabled) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_secure(internalAddress.borrow(), enabled);
+	sal_address_set_secure(mImpl, enabled);
 	return true;
 }
 
 bool Address::isSip() const {
-	return internalAddress && sal_address_is_sip(internalAddress);
+	return mImpl && sal_address_is_sip(mImpl);
 }
 
-const string &Address::getMethodParam() const {
-	if (!internalAddress) return Utils::getEmptyConstRefObject<string>();
-
-	string methodParam(L_C_TO_STRING(sal_address_get_method_param(internalAddress)));
-	if (methodParam != cache.methodParam) cache.methodParam = methodParam;
-	return cache.methodParam;
-}
-
-bool Address::setMethodParam(const string &methodParam) {
-	if (!internalAddress) return false;
-
-	sal_address_set_method_param(internalAddress.borrow(), L_STRING_TO_C(methodParam));
+bool Address::setMethodParam(const std::string &value) {
+	if (!mImpl) return false;
+	sal_address_set_method_param(mImpl, value.c_str());
 	return true;
 }
 
-const string &Address::getPassword() const {
-	if (!internalAddress) return Utils::getEmptyConstRefObject<string>();
+const char *Address::getMethodParamCstr() const {
+	return mImpl ? sal_address_get_method_param(mImpl) : nullptr;
+}
 
-	string password(L_C_TO_STRING(sal_address_get_password(internalAddress)));
-	if (password != cache.password) cache.password = password;
-	return cache.password;
+std::string Address::getMethodParam() const {
+	return L_C_TO_STRING(getMethodParamCstr());
+}
+
+const char *Address::getPasswordCstr() const {
+	return mImpl ? sal_address_get_password(mImpl) : nullptr;
+}
+
+std::string Address::getPassword() const {
+	return L_C_TO_STRING(getPasswordCstr());
 }
 
 bool Address::setPassword(const string &password) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_password(internalAddress.borrow(), L_STRING_TO_C(password));
+	sal_address_set_password(mImpl, L_STRING_TO_C(password));
 	return true;
 }
 
 bool Address::clean() {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_clean(internalAddress.borrow());
+	sal_address_clean(mImpl);
 	return true;
 }
 
-string Address::asString() const {
-	if (!internalAddress) return "";
-
-	char *buf = sal_address_as_string(internalAddress);
-	string out = buf;
-	ms_free(buf);
-	return out;
+char *Address::toStringCstr() const {
+	return isValid() ? sal_address_as_string(mImpl) : nullptr;
 }
 
-string Address::asStringUriOnly() const {
-	if (!internalAddress) return "";
+std::string Address::toString() const {
+	char *tmp = toStringCstr();
+	std::string ret(L_C_TO_STRING(tmp));
+	bctbx_free(tmp);
+	return ret;
+}
 
-	char *buf = sal_address_as_string_uri_only(internalAddress);
-	string out = buf;
-	ms_free(buf);
-	return out;
+string Address::toStringUriOnlyOrdered() const {
+	ostringstream res;
+	res << getScheme() << ":";
+	if (!getUsername().empty()) {
+		char *tmp = belle_sip_uri_to_escaped_username(getUsername().c_str());
+		res << tmp << "@";
+		ms_free(tmp);
+	}
+
+	if (getDomain().find(":") != string::npos) {
+		res << "[" << getDomain() << "]";
+	} else {
+		res << getDomain();
+	}
+
+	const auto uriParams = getUriParams();
+	for (const auto &param : uriParams) {
+		const auto &name = param.first;
+		res << ";" << name;
+		const auto &value = param.second;
+		if (!value.empty()) {
+			res << "=" << value;
+		}
+	}
+	return res.str();
+}
+
+char *Address::asStringUriOnlyCstr() const {
+	return isValid() ? sal_address_as_string_uri_only(mImpl) : nullptr;
+}
+
+std::string Address::asStringUriOnly() const {
+	char *buf = asStringUriOnlyCstr();
+	std::string tmp(L_C_TO_STRING(buf));
+	bctbx_free(buf);
+	return tmp;
 }
 
 bool Address::weakEqual(const Address &address) const {
@@ -293,113 +336,95 @@ bool Address::weakEqual(const Address &address) const {
 	       getPort() == address.getPort();
 }
 
-const string &Address::getHeaderValue(const string &headerName) const {
-	if (internalAddress) {
-		const char *value = sal_address_get_header(internalAddress, L_STRING_TO_C(headerName));
-		if (value) {
-			cache.headers[headerName] = value;
-			return cache.headers[headerName];
-		}
-	}
+const char *Address::getHeaderValueCstr(const string &headerName) const {
+	return mImpl ? sal_address_get_header(mImpl, headerName.c_str()) : nullptr;
+}
 
-	return Utils::getEmptyConstRefObject<string>();
+std::string Address::getHeaderValue(const std::string &headerName) const {
+	return L_C_TO_STRING(getHeaderValueCstr(headerName));
 }
 
 bool Address::setHeader(const string &headerName, const string &headerValue) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_header(internalAddress.borrow(), L_STRING_TO_C(headerName), L_STRING_TO_C(headerValue));
+	sal_address_set_header(mImpl, L_STRING_TO_C(headerName), L_STRING_TO_C(headerValue));
 	return true;
 }
 
 bool Address::hasParam(const string &paramName) const {
-	return internalAddress && !!sal_address_has_param(internalAddress, L_STRING_TO_C(paramName));
+	return mImpl && !!sal_address_has_param(mImpl, L_STRING_TO_C(paramName));
 }
 
-const string &Address::getParamValue(const string &paramName) const {
-	if (internalAddress) {
-		const char *value = sal_address_get_param(internalAddress, L_STRING_TO_C(paramName));
-		if (value) {
-			cache.params[paramName] = value;
-			return cache.params[paramName];
-		}
-	}
+const char *Address::getParamValueCstr(const string &paramName) const {
+	return mImpl ? sal_address_get_param(mImpl, paramName.c_str()) : nullptr;
+}
 
-	return Utils::getEmptyConstRefObject<string>();
+const std::string Address::getParamValue(const std::string &paramName) const {
+	return L_C_TO_STRING(getParamValueCstr(paramName));
 }
 
 bool Address::setParam(const string &paramName, const string &paramValue) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_param(internalAddress.borrow(), L_STRING_TO_C(paramName), L_STRING_TO_C(paramValue));
+	sal_address_set_param(mImpl, L_STRING_TO_C(paramName), L_STRING_TO_C(paramValue));
 	return true;
 }
 
 bool Address::setParams(const string &params) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_params(internalAddress.borrow(), L_STRING_TO_C(params));
+	sal_address_set_params(mImpl, L_STRING_TO_C(params));
 	return true;
 }
 
 bool Address::removeParam(const string &uriParamName) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_remove_param(internalAddress, L_STRING_TO_C(uriParamName));
+	sal_address_remove_param(mImpl, L_STRING_TO_C(uriParamName));
 	return true;
 }
 
 bool Address::hasUriParam(const string &uriParamName) const {
-	return internalAddress && !!sal_address_has_uri_param(internalAddress, L_STRING_TO_C(uriParamName));
+	return mImpl && !!sal_address_has_uri_param(mImpl, L_STRING_TO_C(uriParamName));
 }
 
-const string &Address::getUriParamValue(const string &uriParamName) const {
-	if (internalAddress) {
-		const char *value = sal_address_get_uri_param(internalAddress, L_STRING_TO_C(uriParamName));
-		if (value) {
-			cache.uriParams[uriParamName] = value;
-			return cache.uriParams[uriParamName];
-		}
-	}
-
-	return Utils::getEmptyConstRefObject<string>();
+const char *Address::getUriParamValueCstr(const string &uriParamName) const {
+	return mImpl ? sal_address_get_uri_param(mImpl, uriParamName.c_str()) : nullptr;
 }
 
-bctbx_map_t *Address::getUriParams() const {
-	if (internalAddress) {
-		return sal_address_get_uri_params(internalAddress);
-	}
-	return nullptr;
+std::string Address::getUriParamValue(const std::string &uriParamName) const {
+	return L_C_TO_STRING(getUriParamValueCstr(uriParamName));
 }
 
 bool Address::setUriParam(const string &uriParamName, const string &uriParamValue) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_uri_param(internalAddress.borrow(), L_STRING_TO_C(uriParamName), L_STRING_TO_C(uriParamValue));
+	sal_address_set_uri_param(mImpl, L_STRING_TO_C(uriParamName), L_STRING_TO_C(uriParamValue));
 	return true;
 }
 
 bool Address::setUriParams(const string &uriParams) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_set_uri_params(internalAddress.borrow(), L_STRING_TO_C(uriParams));
+	sal_address_set_uri_params(mImpl, L_STRING_TO_C(uriParams));
 	return true;
 }
 
 bool Address::removeUriParam(const string &uriParamName) {
-	if (!internalAddress) return false;
+	if (!mImpl) return false;
 
-	sal_address_remove_uri_param(internalAddress, L_STRING_TO_C(uriParamName));
+	sal_address_remove_uri_param(mImpl, L_STRING_TO_C(uriParamName));
 	return true;
 }
 
-void Address::removeFromLeakDetector() const {
-	belle_sip_header_address_t *header_addr =
-	    BELLE_SIP_HEADER_ADDRESS(static_cast<const SalAddress *>(internalAddress));
+void Address::removeFromLeakDetector(SalAddress *addr) {
+	belle_sip_header_address_t *header_addr = BELLE_SIP_HEADER_ADDRESS(addr);
 	belle_sip_uri_t *sip_uri = belle_sip_header_address_get_uri(header_addr);
-	belle_sip_object_remove_from_leak_detector(
-	    BELLE_SIP_OBJECT(const_cast<belle_sip_parameters_t *>(belle_sip_uri_get_headers(sip_uri))));
-	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(sip_uri));
+	if (sip_uri) {
+		belle_sip_object_remove_from_leak_detector(
+		    BELLE_SIP_OBJECT(const_cast<belle_sip_parameters_t *>(belle_sip_uri_get_headers(sip_uri))));
+		belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(sip_uri));
+	}
 	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(header_addr));
 }
 

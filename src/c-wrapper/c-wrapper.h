@@ -165,7 +165,6 @@ private:
  * The invocation of callbacks can be done with the LINPHONE_HYBRID_OBJECT_INVOKE_CBS() macro.
  */
 template <typename _CppCbsType>
-
 class LINPHONE_PUBLIC CallbacksHolder {
 public:
 	void addCallbacks(const std::shared_ptr<_CppCbsType> &callbacks) {
@@ -256,33 +255,65 @@ LINPHONE_END_NAMESPACE
 
 #define L_REGISTER_ID(CPP_TYPE, C_TYPE) BELLE_SIP_TYPE_ID(Linphone##C_TYPE),
 
+// clang-format off
 /* Only pure belle_sip_object_t defined in C shall be declared here.
  * WARNING HybridObject<> derived don't need to be declared here */
 BELLE_SIP_DECLARE_TYPES_BEGIN(linphone, 10000)
 L_REGISTER_TYPES(L_REGISTER_ID)
-BELLE_SIP_TYPE_ID(LinphoneAccountCreator), BELLE_SIP_TYPE_ID(LinphoneAccountCreatorCbs),
-    BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService), BELLE_SIP_TYPE_ID(LinphoneBuffer),
-    BELLE_SIP_TYPE_ID(LinphoneCallStats), BELLE_SIP_TYPE_ID(LinphoneChatMessageCbs),
-    BELLE_SIP_TYPE_ID(LinphoneChatRoomCbs), BELLE_SIP_TYPE_ID(LinphoneConfig),
-    BELLE_SIP_TYPE_ID(LinphoneContactProvider), BELLE_SIP_TYPE_ID(LinphoneContactSearch),
-    BELLE_SIP_TYPE_ID(LinphoneCoreCbs), BELLE_SIP_TYPE_ID(LinphoneErrorInfo), BELLE_SIP_TYPE_ID(LinphoneFactory),
-    BELLE_SIP_TYPE_ID(LinphoneFriend), BELLE_SIP_TYPE_ID(LinphoneFriendCbs), BELLE_SIP_TYPE_ID(LinphoneFriendList),
-    BELLE_SIP_TYPE_ID(LinphoneFriendListCbs), BELLE_SIP_TYPE_ID(LinphoneImEncryptionEngine),
-    BELLE_SIP_TYPE_ID(LinphoneImEncryptionEngineCbs), BELLE_SIP_TYPE_ID(LinphoneImNotifPolicy),
-    BELLE_SIP_TYPE_ID(LinphoneInfoMessage), BELLE_SIP_TYPE_ID(LinphoneLDAPContactProvider),
-    BELLE_SIP_TYPE_ID(LinphoneLDAPContactSearch), BELLE_SIP_TYPE_ID(LinphoneLoggingService),
-    BELLE_SIP_TYPE_ID(LinphoneLoggingServiceCbs), BELLE_SIP_TYPE_ID(LinphoneMagicSearchCbs),
-    BELLE_SIP_TYPE_ID(LinphoneParticipant), BELLE_SIP_TYPE_ID(LinphoneParticipantDevice),
-    BELLE_SIP_TYPE_ID(LinphoneParticipantDeviceCbs), BELLE_SIP_TYPE_ID(LinphonePlayer),
-    BELLE_SIP_TYPE_ID(LinphonePlayerCbs), BELLE_SIP_TYPE_ID(LinphonePresenceActivity),
-    BELLE_SIP_TYPE_ID(LinphonePresenceModel), BELLE_SIP_TYPE_ID(LinphonePresenceNote),
-    BELLE_SIP_TYPE_ID(LinphonePresencePerson), BELLE_SIP_TYPE_ID(LinphonePresenceService),
-    BELLE_SIP_TYPE_ID(LinphoneProxyConfig), BELLE_SIP_TYPE_ID(LinphoneRange), BELLE_SIP_TYPE_ID(LinphoneRecorder),
-    BELLE_SIP_TYPE_ID(LinphoneRecorderParams), BELLE_SIP_TYPE_ID(LinphoneTransports), BELLE_SIP_TYPE_ID(LinphoneTunnel),
-    BELLE_SIP_TYPE_ID(LinphoneTunnelConfig), BELLE_SIP_TYPE_ID(LinphoneVcard),
-    BELLE_SIP_TYPE_ID(LinphoneVideoActivationPolicy), BELLE_SIP_TYPE_ID(LinphoneVideoDefinition),
-    BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequest), BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequestCbs),
-    BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession) BELLE_SIP_DECLARE_TYPES_END
+BELLE_SIP_TYPE_ID(LinphoneAccount),
+BELLE_SIP_TYPE_ID(LinphoneAccountParams),
+BELLE_SIP_TYPE_ID(LinphoneAccountCreator),
+BELLE_SIP_TYPE_ID(LinphoneAccountCreatorCbs),
+BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService),
+BELLE_SIP_TYPE_ID(LinphoneBuffer),
+BELLE_SIP_TYPE_ID(LinphoneCallStats),
+BELLE_SIP_TYPE_ID(LinphoneChatMessageCbs),
+BELLE_SIP_TYPE_ID(LinphoneChatRoomCbs),
+BELLE_SIP_TYPE_ID(LinphoneConfig),
+BELLE_SIP_TYPE_ID(LinphoneContactProvider),
+BELLE_SIP_TYPE_ID(LinphoneContactSearch),
+BELLE_SIP_TYPE_ID(LinphoneCoreCbs),
+BELLE_SIP_TYPE_ID(LinphoneErrorInfo),
+BELLE_SIP_TYPE_ID(LinphoneFactory),
+BELLE_SIP_TYPE_ID(LinphoneFriend),
+BELLE_SIP_TYPE_ID(LinphoneFriendCbs),
+BELLE_SIP_TYPE_ID(LinphoneFriendList),
+BELLE_SIP_TYPE_ID(LinphoneFriendListCbs),
+BELLE_SIP_TYPE_ID(LinphoneImEncryptionEngine),
+BELLE_SIP_TYPE_ID(LinphoneImEncryptionEngineCbs),
+BELLE_SIP_TYPE_ID(LinphoneImNotifPolicy),
+BELLE_SIP_TYPE_ID(LinphoneInfoMessage),
+BELLE_SIP_TYPE_ID(LinphoneLDAPContactProvider),
+BELLE_SIP_TYPE_ID(LinphoneLDAPContactSearch),
+BELLE_SIP_TYPE_ID(LinphoneLoggingService),
+BELLE_SIP_TYPE_ID(LinphoneLoggingServiceCbs),
+BELLE_SIP_TYPE_ID(LinphoneMagicSearchCbs),
+BELLE_SIP_TYPE_ID(LinphoneParticipant),
+BELLE_SIP_TYPE_ID(LinphoneParticipantDevice),
+BELLE_SIP_TYPE_ID(LinphoneParticipantDeviceCbs),
+BELLE_SIP_TYPE_ID(LinphonePayloadType),
+BELLE_SIP_TYPE_ID(LinphonePlayer),
+BELLE_SIP_TYPE_ID(LinphonePlayerCbs),
+BELLE_SIP_TYPE_ID(LinphonePresenceActivity),
+BELLE_SIP_TYPE_ID(LinphonePresenceModel),
+BELLE_SIP_TYPE_ID(LinphonePresenceNote),
+BELLE_SIP_TYPE_ID(LinphonePresencePerson),
+BELLE_SIP_TYPE_ID(LinphonePresenceService),
+BELLE_SIP_TYPE_ID(LinphoneProxyConfig),
+BELLE_SIP_TYPE_ID(LinphoneRange),
+BELLE_SIP_TYPE_ID(LinphoneRecorder),
+BELLE_SIP_TYPE_ID(LinphoneRecorderParams),
+BELLE_SIP_TYPE_ID(LinphoneTransports),
+BELLE_SIP_TYPE_ID(LinphoneTunnel),
+BELLE_SIP_TYPE_ID(LinphoneTunnelConfig),
+BELLE_SIP_TYPE_ID(LinphoneVcard),
+BELLE_SIP_TYPE_ID(LinphoneVideoActivationPolicy),
+BELLE_SIP_TYPE_ID(LinphoneVideoDefinition),
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequest),
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequestCbs),
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession)
+BELLE_SIP_DECLARE_TYPES_END
+// clang-format on
 
 #undef L_REGISTER_ID
 

@@ -128,8 +128,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	account/account.h
 	account/account-params.h
 	address/address.h
-	address/identity-address.h
-	address/identity-address-parser.h
+	address/address-parser.h
 	auth-info/auth-info.h
 	auth-info/auth-stack.h
 	c-wrapper/c-wrapper.h
@@ -349,8 +348,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	account_creator/main.cpp
 	account_creator/connector_xmlrpc.cpp
 	address/address.cpp
-	address/identity-address.cpp
-	address/identity-address-parser.cpp
+	address/address-parser.cpp
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
 	c-wrapper/c-wrapper.cpp

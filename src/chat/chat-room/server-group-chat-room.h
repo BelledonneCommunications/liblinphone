@@ -36,7 +36,7 @@ public:
 	ServerGroupChatRoom(const std::shared_ptr<Core> &core, SalCallOp *op);
 
 	ServerGroupChatRoom(const std::shared_ptr<Core> &core,
-	                    const ConferenceAddress &peerAddress,
+	                    const std::shared_ptr<Address> &peerAddress,
 	                    AbstractChatRoom::CapabilitiesMask capabilities,
 	                    const std::shared_ptr<ChatRoomParams> &params,
 	                    const std::string &subject,
@@ -56,14 +56,14 @@ public:
 	bool hasBeenLeft() const override;
 	bool isReadOnly() const override;
 
-	const ConferenceAddress &getConferenceAddress() const override;
+	const std::shared_ptr<Address> &getConferenceAddress() const override;
 
-	bool addParticipant(const IdentityAddress &participantAddress) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	bool addParticipant(std::shared_ptr<Call> call) override {
 		return getConference()->addParticipant(call);
 	};
 
-	void join(const IdentityAddress &participantAddress) override {
+	void join(const std::shared_ptr<Address> &participantAddress) override {
 		getConference()->join(participantAddress);
 	};
 	bool update(const ConferenceParamsInterface &newParameters) override {
@@ -73,9 +73,9 @@ public:
 	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
 
 	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<Participant> findParticipant(const IdentityAddress &participantAddress) const override;
+	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &participantAddress) const override;
 	std::shared_ptr<Participant> findCachedParticipant(const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<Participant> findCachedParticipant(const IdentityAddress &participantAddress) const;
+	std::shared_ptr<Participant> findCachedParticipant(const std::shared_ptr<Address> &participantAddress) const;
 	std::shared_ptr<ParticipantDevice>
 	findCachedParticipantDevice(const std::shared_ptr<const CallSession> &session) const;
 
@@ -91,7 +91,7 @@ public:
 
 	void join() override;
 	void leave() override;
-	void onFirstNotifyReceived(const IdentityAddress &addr) override;
+	void onFirstNotifyReceived(const std::shared_ptr<Address> &addr) override;
 
 	const ConferenceId &getConferenceId() const override {
 		return getConference()->getConferenceId();

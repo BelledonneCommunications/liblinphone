@@ -149,8 +149,14 @@ static void quality_reporting_not_used_without_config(void) {
 
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, NULL, NULL)) {
 		// Marie has stats collection enabled but Pauline has not
-		BC_ASSERT_TRUE(linphone_proxy_config_quality_reporting_enabled(linphone_call_get_dest_proxy(call_marie)));
-		BC_ASSERT_FALSE(linphone_proxy_config_quality_reporting_enabled(linphone_call_get_dest_proxy(call_pauline)));
+
+		const LinphoneAccount *marie_account = linphone_call_get_dest_account(call_marie);
+		const LinphoneAccountParams *marie_account_params = linphone_account_get_params(marie_account);
+		BC_ASSERT_TRUE(linphone_account_params_quality_reporting_enabled(marie_account_params));
+
+		const LinphoneAccount *pauline_account = linphone_call_get_dest_account(call_pauline);
+		const LinphoneAccountParams *pauline_account_params = linphone_account_get_params(pauline_account);
+		BC_ASSERT_FALSE(linphone_account_params_quality_reporting_enabled(pauline_account_params));
 
 		// This field should be already filled
 		quality_reports = linphone_quality_reporting_get_reports(
@@ -291,10 +297,11 @@ static void quality_reporting_interval_report(void) {
 
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, NULL, NULL)) {
 		linphone_reporting_set_on_report_send(call_marie, on_report_send_mandatory);
-		LinphoneProxyConfig *config = linphone_call_get_dest_proxy(call_marie);
-		linphone_proxy_config_edit(config);
-		linphone_proxy_config_set_quality_reporting_interval(config, 1);
-		linphone_proxy_config_done(config);
+		LinphoneAccount *account = linphone_call_get_dest_account(call_marie);
+		LinphoneAccountParams *account_params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_set_quality_reporting_interval(account_params, 1);
+		linphone_account_set_params(account, account_params);
+		linphone_account_params_unref(account_params);
 
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
@@ -429,10 +436,11 @@ static void quality_reporting_interval_report_video_and_rtt_base(bool_t enable_v
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, marie_params,
 	                                            pauline_params)) {
 		linphone_reporting_set_on_report_send(call_marie, on_report_send_mandatory);
-		LinphoneProxyConfig *config = linphone_call_get_dest_proxy(call_marie);
-		linphone_proxy_config_edit(config);
-		linphone_proxy_config_set_quality_reporting_interval(config, 3);
-		linphone_proxy_config_done(config);
+		LinphoneAccount *account = linphone_call_get_dest_account(call_marie);
+		LinphoneAccountParams *account_params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_set_quality_reporting_interval(account_params, 3);
+		linphone_account_set_params(account, account_params);
+		linphone_account_params_unref(account_params);
 
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 3000));
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)) ==

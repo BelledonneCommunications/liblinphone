@@ -20,7 +20,6 @@
 
 #include "linphone/api/c-account-params.h"
 #include "account/account-params.h"
-
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-address.h"
@@ -70,21 +69,22 @@ void *linphone_account_params_get_user_data(const LinphoneAccountParams *params)
 }
 
 LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params,
-                                                          const LinphoneAddress *server_address) {
-	return AccountParams::toCpp(params)->setServerAddress(server_address);
+                                                          LinphoneAddress *server_address) {
+	return AccountParams::toCpp(params)->setServerAddress(Address::toCpp(server_address)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_account_params_set_server_addr(LinphoneAccountParams *params, const char *server_address) {
-	return AccountParams::toCpp(params)->setServerAddressAsString(server_address);
+	return AccountParams::toCpp(params)->setServerAddressAsString(L_C_TO_STRING(server_address));
 }
 
-LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params,
-                                                            const LinphoneAddress *identity) {
-	return AccountParams::toCpp(params)->setIdentityAddress(identity);
+LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params, LinphoneAddress *identity) {
+	return AccountParams::toCpp(params)->setIdentityAddress(Address::toCpp(identity)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_account_params_set_routes_addresses(LinphoneAccountParams *params, const bctbx_list_t *routes) {
-	return AccountParams::toCpp(params)->setRoutes(routes);
+	const std::list<std::shared_ptr<LinphonePrivate::Address>> routeList =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(routes);
+	return AccountParams::toCpp(params)->setRoutes(routeList);
 }
 
 void linphone_account_params_set_expires(LinphoneAccountParams *params, int expires) {
@@ -165,7 +165,7 @@ int linphone_account_params_get_quality_reporting_interval(const LinphoneAccount
 }
 
 const char *linphone_account_params_get_domain(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getDomain();
+	return AccountParams::toCpp(params)->getDomainCstr();
 }
 
 const char *linphone_account_params_get_realm(const LinphoneAccountParams *params) {
@@ -176,12 +176,16 @@ void linphone_account_params_set_realm(LinphoneAccountParams *params, const char
 	AccountParams::toCpp(params)->setRealm(L_C_TO_STRING(realm));
 }
 
-const bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getRoutes();
+bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params) {
+	bctbx_list_t *route_list = NULL;
+	for (const auto &route : AccountParams::toCpp(params)->getRoutes()) {
+		route_list = bctbx_list_append(route_list, route->toC());
+	}
+	return route_list;
 }
 
 const LinphoneAddress *linphone_account_params_get_identity_address(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getIdentityAddress();
+	return AccountParams::toCpp(params)->getIdentityAddress()->toC();
 }
 
 const char *linphone_account_params_get_identity(const LinphoneAccountParams *params) {
@@ -197,7 +201,7 @@ bool_t linphone_account_params_publish_enabled(const LinphoneAccountParams *para
 }
 
 const LinphoneAddress *linphone_account_params_get_server_address(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getServerAddress();
+	return AccountParams::toCpp(params)->getServerAddress()->toC();
 }
 
 const char *linphone_account_params_get_server_addr(const LinphoneAccountParams *params) {
@@ -314,14 +318,14 @@ const char *linphone_account_params_get_conference_factory_uri(const LinphoneAcc
 }
 
 void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
-                                                                        const LinphoneAddress *address) {
-	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(address);
+                                                                        LinphoneAddress *address) {
+	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(Address::toCpp(address)->getSharedFromThis());
 }
 
 const LinphoneAddress *
 linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params) {
-	const LinphoneAddress *address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
-	return address != nullptr ? address : nullptr;
+	const auto &address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
+	return address != nullptr ? address->toC() : nullptr;
 }
 
 void linphone_account_params_set_push_notification_allowed(LinphoneAccountParams *params, bool_t allow) {
@@ -371,11 +375,11 @@ bool_t linphone_account_params_outbound_proxy_enabled(const LinphoneAccountParam
 }
 
 void linphone_account_params_set_transport(LinphoneAccountParams *params, LinphoneTransportType transport) {
-	AccountParams::toCpp(params)->setTransport(transport);
+	AccountParams::toCpp(params)->setTransport(static_cast<LinphonePrivate::Transport>(transport));
 }
 
 LinphoneTransportType linphone_account_params_get_transport(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getTransport();
+	return static_cast<LinphoneTransportType>(AccountParams::toCpp(params)->getTransport());
 }
 
 void linphone_account_params_enable_rtp_bundle(LinphoneAccountParams *params, bool_t value) {
@@ -410,12 +414,12 @@ const char *linphone_account_params_get_custom_param(const LinphoneAccountParams
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getCustomParam(L_C_TO_STRING(key)));
 }
 
-void linphone_account_params_set_custom_contact(LinphoneAccountParams *params, const LinphoneAddress *contact) {
-	AccountParams::toCpp(params)->setCustomContact(contact);
+void linphone_account_params_set_custom_contact(LinphoneAccountParams *params, LinphoneAddress *contact) {
+	AccountParams::toCpp(params)->setCustomContact(Address::toCpp(contact)->getSharedFromThis());
 }
 
 const LinphoneAddress *linphone_account_params_get_custom_contact(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getCustomContact();
+	return AccountParams::toCpp(params)->getCustomContact()->toC();
 }
 
 void linphone_account_params_set_lime_server_url(LinphoneAccountParams *params, const char *url) {

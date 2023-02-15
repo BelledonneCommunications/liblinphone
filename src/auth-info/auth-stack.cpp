@@ -29,6 +29,8 @@
 
 #include "private_functions.h"
 
+#include <algorithm>
+
 using namespace ::std;
 
 LINPHONE_BEGIN_NAMESPACE

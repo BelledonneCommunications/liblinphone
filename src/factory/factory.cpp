@@ -38,11 +38,11 @@
 #include <fstream>
 #include <sstream>
 
-#include "address/address.h"
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/vfs_encrypted.hh"
 #include <bctoolbox/defs.h>
 
+#include "address/address.h"
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
 #include "content/file-content.h"

@@ -31,6 +31,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Account;
 namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
 	                        // src/conference/*
 class Conference;
@@ -52,12 +53,12 @@ public:
 		return new ConferenceParams(*this);
 	}
 
-	virtual void setConferenceFactoryAddress(const Address &address) override {
+	virtual void setConferenceFactoryAddress(const std::shared_ptr<Address> &address) override {
 		m_useDefaultFactoryAddress = false;
-		m_factoryAddress = address; // Setting with Address("") means that we want a local conference
+		m_factoryAddress = address; // Setting to nullptr means that we want to host a conference on the local device
 	};
 
-	const Address &getConferenceFactoryAddress() const {
+	const std::shared_ptr<Address> &getConferenceFactoryAddress() const {
 		return m_factoryAddress;
 	};
 
@@ -103,10 +104,8 @@ public:
 		return m_allowOneParticipantConference;
 	}
 
-	virtual void setConferenceAddress(const ConferenceAddress conferenceAddress) override {
-		m_conferenceAddress = conferenceAddress;
-	};
-	const ConferenceAddress &getConferenceAddress() const {
+	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) override;
+	const std::shared_ptr<Address> &getConferenceAddress() const {
 		return m_conferenceAddress;
 	};
 
@@ -128,15 +127,15 @@ public:
 		return m_subject;
 	};
 
-	virtual void setMe(const IdentityAddress &participantAddress) override {
-		m_me = participantAddress;
+	virtual void setMe(const std::shared_ptr<Address> &participantAddress) override {
+		m_me = participantAddress ? participantAddress->clone()->toSharedPtr() : nullptr;
 	};
-	const IdentityAddress &getMe() const {
+	const std::shared_ptr<Address> &getMe() const {
 		return m_me;
 	};
 
-	void setAccount(LinphoneAccount *a);
-	LinphoneAccount *getAccount() const {
+	void setAccount(const std::shared_ptr<Account> &a);
+	const std::shared_ptr<Account> &getAccount() const {
 		return m_account;
 	};
 
@@ -169,7 +168,7 @@ public:
 	};
 
 private:
-	void updateFromAccount(LinphoneAccount *account); // Update Me and default factory from account.
+	void updateFromAccount(const std::shared_ptr<Account> &account); // Update Me and default factory from account.
 
 	bool m_enableVideo = false;
 	bool m_enableAudio = false;
@@ -178,15 +177,15 @@ private:
 	bool m_allowOneParticipantConference = false;
 	ParticipantListType m_participantListType = ParticipantListType::Open;
 	JoiningMode m_joinMode = JoiningMode::DialIn;
-	ConferenceAddress m_conferenceAddress = ConferenceAddress();
-	Address m_factoryAddress = Address();
+	std::shared_ptr<Address> m_conferenceAddress = nullptr;
+	std::shared_ptr<Address> m_factoryAddress = nullptr;
 	bool m_useDefaultFactoryAddress = true;
 	std::string m_subject = "";
 	std::string m_description = "";
-	IdentityAddress m_me = IdentityAddress();
+	std::shared_ptr<Address> m_me = nullptr;
 	time_t m_startTime = (time_t)-1;
 	time_t m_endTime = (time_t)-1;
-	LinphoneAccount *m_account = nullptr;
+	std::shared_ptr<Account> m_account = nullptr;
 	bool m_static = false;
 };
 

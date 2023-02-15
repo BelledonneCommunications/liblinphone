@@ -48,7 +48,7 @@ shared_ptr<CallSession> Call::getActiveSession() const {
 
 shared_ptr<AbstractChatRoom> Call::getChatRoom() {
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
-		mChatRoom = getCore()->getOrCreateBasicChatRoom(getLocalAddress(), *getRemoteAddress());
+		mChatRoom = getCore()->getOrCreateBasicChatRoom(getLocalAddress(), getRemoteAddress());
 		if (mChatRoom) {
 			lInfo() << "Setting call id [" << getLog()->getCallId() << "] to ChatRoom [" << mChatRoom << "]";
 			mChatRoom->getPrivate()->setCallId(getLog()->getCallId());
@@ -57,8 +57,8 @@ shared_ptr<AbstractChatRoom> Call::getChatRoom() {
 	return mChatRoom;
 }
 
-LinphoneProxyConfig *Call::getDestProxy() const {
-	return getActiveSession()->getPrivate()->getDestProxy();
+const shared_ptr<Account> &Call::getDestAccount() const {
+	return getActiveSession()->getPrivate()->getDestAccount();
 }
 
 /* This a test-only method.*/
@@ -220,7 +220,7 @@ void Call::pauseForTransfer() {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->pauseForTransfer();
 }
 
-int Call::startInvite(const Address *destination, const std::string subject, const Content *content) {
+int Call::startInvite(const std::shared_ptr<Address> &destination, const std::string subject, const Content *content) {
 	return getActiveSession()->startInvite(destination, subject, content);
 }
 
@@ -261,7 +261,7 @@ void Call::createPlayer() const {
 
 // -----------------------------------------------------------------------------
 void Call::terminateBecauseOfLostMedia() {
-	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
+	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->toString()
 	        << " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
 }
@@ -337,8 +337,8 @@ void Call::onCallSessionEarlyFailed(const shared_ptr<CallSession> &session, Linp
 		session->setStateToEnded();
 	}
 
-	getCore()->reportEarlyCallFailed(log->getDirection(), linphone_address_clone(log->getFromAddress()),
-	                                 linphone_address_clone(log->getToAddress()), ei, log->getCallId());
+	getCore()->reportEarlyCallFailed(log->getDirection(), log->getFromAddress(), log->getToAddress(), ei,
+	                                 log->getCallId());
 
 	cleanupSessionAndUnrefCObjectCall();
 }
@@ -390,6 +390,22 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
                                      const string &message) {
 	LinphoneCore *lc = getCore()->getCCore();
 	const auto op = session->getPrivate()->getOp();
+
+	bool remoteContactIsFocus = false;
+	std::shared_ptr<MediaConference::Conference> conference = nullptr;
+	if (op) {
+		if (op->getRemoteContactAddress()) {
+			Address remoteContactAddress;
+			remoteContactAddress.setImpl(op->getRemoteContactAddress());
+			remoteContactIsFocus = (remoteContactAddress.hasParam("isfocus"));
+		}
+
+		if (!op->getTo().empty()) {
+			const auto to = Address::create(op->getTo());
+			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(to, to));
+		}
+	}
+
 	switch (state) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
@@ -407,8 +423,6 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 			break;
 		case CallSession::State::Paused:
 			if (!getConference() && op && op->getRemoteContactAddress()) {
-				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(
-				    ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
 				if (!op->getTo().empty() && conference) {
 					// This code is usually executed when the following scenario occurs:
 					// - ICE is enabled
@@ -420,26 +434,18 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 			}
 			break;
 		case CallSession::State::UpdatedByRemote: {
-			if (op && op->getRemoteContactAddress() && !getConference()) {
-				char *remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-				Address remoteContactAddress(remoteContactAddressStr);
-				ms_free(remoteContactAddressStr);
-
-				if (remoteContactAddress.hasParam("isfocus")) {
-					// Check if the request was sent by the focus (remote conference)
-					createRemoteConference(session);
-					auto conference = getConference() ? MediaConference::Conference::toCpp(getConference()) : nullptr;
-					if (conference && conference->getState() == ConferenceInterface::State::CreationPending) {
-						conference->finalizeCreation();
-					}
+			if (op && !getConference() && remoteContactIsFocus) {
+				// Check if the request was sent by the focus (remote conference)
+				createRemoteConference(session);
+				auto conference = getConference() ? MediaConference::Conference::toCpp(getConference()) : nullptr;
+				if (conference && conference->getState() == ConferenceInterface::State::CreationPending) {
+					conference->finalizeCreation();
 				}
 			}
 		} break;
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning: {
 			if (op && !getConference()) {
-				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(
-				    ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
 				if (!op->getTo().empty() && conference) {
 					const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
 					if (resourceList.isEmpty()) {
@@ -447,16 +453,12 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 					}
 				} else if (op->getRemoteContactAddress()) {
 					const auto &confId = session->getPrivate()->getConferenceId();
-					char *remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-					Address remoteContactAddress(remoteContactAddressStr);
-					ms_free(remoteContactAddressStr);
-
 					// Check if the request was sent by the focus
-					if (remoteContactAddress.hasParam("isfocus")) {
+					if (remoteContactIsFocus) {
 						createRemoteConference(session);
 					} else if (!confId.empty()) {
 						auto localAddress = session->getContactAddress();
-						if (localAddress.isValid()) {
+						if (localAddress && localAddress->isValid()) {
 							ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
 							conference = getCore()->findAudioVideoConference(localConferenceId, false);
 							if (conference) {
@@ -503,9 +505,8 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	// If the call is for a conference stored in the core, then add call to conference once ICE negotiations are
 	// terminated
 	const auto op = session->getPrivate()->getOp();
-	char *remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-	Address remoteContactAddress(remoteContactAddressStr);
-	ms_free(remoteContactAddressStr);
+	std::shared_ptr<Address> remoteContactAddress = Address::create();
+	remoteContactAddress->setImpl(op->getRemoteContactAddress());
 	ConferenceId conferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 
 	const auto &conference = getCore()->findAudioVideoConference(conferenceId, false);
@@ -513,8 +514,8 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	std::shared_ptr<MediaConference::RemoteConference> remoteConference = nullptr;
 
 	if (conference) {
-		lInfo() << "Attaching call (local address " << session->getLocalAddress().asString() << " remote address "
-		        << session->getRemoteAddress()->asString() << ") to conference " << conference->getConferenceAddress()
+		lInfo() << "Attaching call (local address " << session->getLocalAddress()->toString() << " remote address "
+		        << session->getRemoteAddress()->toString() << ") to conference " << conference->getConferenceAddress()
 		        << " ID " << conferenceId;
 		remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
 		if (remoteConference) {
@@ -543,12 +544,12 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 				time_t endTime = startTime + static_cast<time_t>(duration) * 60;
 				confParams->setEndTime(endTime);
 			}
-			std::list<IdentityAddress> invitees{conferenceInfo->getOrganizerAddress()};
+			std::list<std::shared_ptr<Address>> invitees{conferenceInfo->getOrganizerAddress()};
 			for (const auto &participant : conferenceInfo->getParticipants()) {
 				invitees.push_back(participant.first);
 			}
 
-			const ConferenceAddress confAddr(conferenceInfo->getUri());
+			const std::shared_ptr<Address> confAddr = conferenceInfo->getUri();
 			const ConferenceId confId(confAddr, session->getLocalAddress());
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(
 			    new MediaConference::RemoteConference(getCore(), session, confAddr, confId, invitees, nullptr,
@@ -561,7 +562,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
 			auto organizer = Utils::getSipFragAddress(sipfrag);
 			auto invitees = Utils::parseResourceLists(resourceList);
-			invitees.push_back(IdentityAddress(organizer));
+			invitees.push_back(Address::create(organizer));
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(
 			    new MediaConference::RemoteConference(getCore(), session, remoteContactAddress, conferenceId, invitees,
 			                                          nullptr, confParams),
@@ -582,8 +583,8 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	setConference(remoteConference->toC());
 
 	// Record conf-id to be used later when terminating the remote conference
-	if (remoteContactAddress.hasUriParam("conf-id")) {
-		setConferenceId(remoteContactAddress.getUriParamValue("conf-id"));
+	if (remoteContactAddress->hasUriParam("conf-id")) {
+		setConferenceId(remoteContactAddress->getUriParamValue("conf-id"));
 	}
 }
 
@@ -779,8 +780,8 @@ void Call::onRemoteRecording(BCTBX_UNUSED(const std::shared_ptr<CallSession> &se
 
 Call::Call(shared_ptr<Core> core,
            LinphoneCallDir direction,
-           const Address &from,
-           const Address &to,
+           const std::shared_ptr<Address> &from,
+           const std::shared_ptr<Address> &to,
            LinphoneProxyConfig *cfg,
            SalCallOp *op,
            const MediaSessionParams *msp)
@@ -791,7 +792,7 @@ Call::Call(shared_ptr<Core> core,
 	mBgTask.setName("Liblinphone call notification");
 
 	// create session
-	mParticipant = Participant::create(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
+	mParticipant = Participant::create(nullptr, ((direction == LinphoneCallIncoming) ? to : from));
 	mParticipant->createSession(getCore(), msp, TRUE, this);
 	mParticipant->getSession()->configure(direction, cfg, op, from, to);
 
@@ -841,12 +842,12 @@ void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
 }
 
 void Call::configure(LinphoneCallDir direction,
-                     const Address &from,
-                     const Address &to,
+                     const std::shared_ptr<Address> &from,
+                     const std::shared_ptr<Address> &to,
                      LinphoneProxyConfig *cfg,
                      SalCallOp *op,
                      BCTBX_UNUSED(const MediaSessionParams *msp)) {
-	mParticipant->configure(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
+	mParticipant->configure(nullptr, (direction == LinphoneCallIncoming) ? to : from);
 	mParticipant->getSession()->configure(direction, cfg, op, from, to);
 }
 
@@ -908,8 +909,8 @@ LinphoneStatus Call::redirect(const string &redirectUri) {
 	return getActiveSession()->redirect(redirectUri);
 }
 
-LinphoneStatus Call::redirect(const Address &redirectAddress) {
-	return getActiveSession()->redirect(redirectAddress);
+LinphoneStatus Call::redirect(const std::shared_ptr<Address> &redirectAddress) {
+	return getActiveSession()->redirect(*redirectAddress);
 }
 
 LinphoneStatus Call::resume() {
@@ -982,7 +983,7 @@ LinphoneStatus Call::transfer(const string &dest) {
 	return getActiveSession()->transfer(dest);
 }
 
-LinphoneStatus Call::transfer(const Address &dest) {
+LinphoneStatus Call::transfer(const std::shared_ptr<Address> &dest) {
 	return getActiveSession()->transfer(dest);
 }
 
@@ -1060,7 +1061,7 @@ LinphoneCallDir Call::getDirection() const {
 	return getActiveSession()->getDirection();
 }
 
-const Address &Call::getDiversionAddress() const {
+const std::shared_ptr<Address> Call::getDiversionAddress() const {
 	return getActiveSession()->getDiversionAddress();
 }
 
@@ -1072,7 +1073,7 @@ const LinphoneErrorInfo *Call::getErrorInfo() const {
 	return getActiveSession()->getErrorInfo();
 }
 
-const Address &Call::getLocalAddress() const {
+const std::shared_ptr<Address> Call::getLocalAddress() const {
 	return getActiveSession()->getLocalAddress();
 }
 
@@ -1130,19 +1131,19 @@ shared_ptr<Call> Call::getReferer() const {
 	return nullptr;
 }
 
-const string &Call::getReferTo() const {
+const string Call::getReferTo() const {
 	return getActiveSession()->getReferTo();
 }
 
-const Address &Call::getReferToAddress() const {
+const std::shared_ptr<Address> &Call::getReferToAddress() const {
 	return getActiveSession()->getReferToAddress();
 }
 
-const Address *Call::getRemoteAddress() const {
+const std::shared_ptr<Address> Call::getRemoteAddress() const {
 	return getActiveSession()->getRemoteAddress();
 }
 
-const Address *Call::getRemoteContactAddress() const {
+const std::shared_ptr<Address> Call::getRemoteContactAddress() const {
 	return getActiveSession()->getRemoteContactAddress();
 }
 
@@ -1191,7 +1192,7 @@ LinphoneCallStats *Call::getTextStats() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getTextStats();
 }
 
-const Address &Call::getToAddress() const {
+const std::shared_ptr<Address> Call::getToAddress() const {
 	return getActiveSession()->getToAddress();
 }
 

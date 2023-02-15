@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "audio_bypass_wav_header.h" // This is a copy of mediastreamer2/src/audiofilters/wav_header.h
 #include <bctoolbox/defs.h>
 
+#include "audio_bypass_wav_header.h" // This is a copy of mediastreamer2/src/audiofilters/wav_header.h
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 

@@ -110,12 +110,13 @@ const LinphoneErrorInfo *linphone_account_get_error_info(LinphoneAccount *accoun
 	return Account::toCpp(account)->getErrorInfo();
 }
 
-const LinphoneAddress *linphone_account_get_contact_address(LinphoneAccount *account) {
-	return Account::toCpp(account)->getContactAddress();
+LinphoneAddress *linphone_account_get_contact_address(LinphoneAccount *account) {
+	return (Account::toCpp(account)->getContactAddress()) ? Account::toCpp(account)->getContactAddress()->toC() : NULL;
 }
 
 void linphone_account_set_contact_address(LinphoneAccount *account, const LinphoneAddress *addr) {
-	return Account::toCpp(account)->setContactAddress(addr);
+	return Account::toCpp(account)->setContactAddress(
+	    Address::toCpp(const_cast<LinphoneAddress *>(addr))->getSharedFromThis());
 }
 
 LinphoneRegistrationState linphone_account_get_state(LinphoneAccount *account) {

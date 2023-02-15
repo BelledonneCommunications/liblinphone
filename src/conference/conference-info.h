@@ -25,12 +25,11 @@
 #include <map>
 #include <string>
 
-#include "address/address.h"
-#include "address/identity-address.h"
+#include <belle-sip/object++.hh>
 
+#include "address/address.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
-#include <belle-sip/object++.hh>
 
 // =============================================================================
 
@@ -67,10 +66,16 @@ private:
 
 class LINPHONE_PUBLIC ConferenceInfo : public bellesip::HybridObject<LinphoneConferenceInfo, ConferenceInfo> {
 public:
+	struct AddressCmp {
+		bool operator()(const std::shared_ptr<Address> &lhs, const std::shared_ptr<Address> &rhs) const {
+			return *lhs < *rhs;
+		}
+	};
+
 	static const std::string sequenceParam;
 	using participant_params_t = std::map<std::string, std::string>;
-	using participant_list_t = std::map<IdentityAddress, participant_params_t>;
-	using organizer_t = std::pair<IdentityAddress, participant_params_t>;
+	using participant_list_t = std::map<std::shared_ptr<Address>, participant_params_t, AddressCmp>;
+	using organizer_t = std::pair<std::shared_ptr<Address>, participant_params_t>;
 
 	enum class State {
 		New = LinphoneConferenceInfoStateNew,
@@ -79,7 +84,6 @@ public:
 	};
 
 	ConferenceInfo();
-	virtual ~ConferenceInfo();
 
 	ConferenceInfo *clone() const override {
 		return new ConferenceInfo(*this);
@@ -89,26 +93,27 @@ public:
 	static const participant_params_t stringToMemberParameters(const std::string &params);
 
 	const organizer_t &getOrganizer() const;
-	const IdentityAddress &getOrganizerAddress() const;
-	void setOrganizer(const IdentityAddress &organizer, const participant_params_t &params);
-	void setOrganizer(const IdentityAddress &organizer);
+	const std::shared_ptr<Address> &getOrganizerAddress() const;
+	void setOrganizer(const std::shared_ptr<Address> &organizer, const participant_params_t &params);
+	void setOrganizer(const std::shared_ptr<Address> &organizer);
 
 	void addOrganizerParam(const std::string &param, const std::string &value);
 	const std::string getOrganizerParam(const std::string &param) const;
 
 	const participant_list_t &getParticipants() const;
-	const bctbx_list_t *getParticipantsCList() const;
 	void setParticipants(const participant_list_t &participants);
-	void addParticipant(const IdentityAddress &participant);
-	void addParticipant(const IdentityAddress &participant, const participant_params_t &params);
-	void removeParticipant(const IdentityAddress &participant);
+	void addParticipant(const std::shared_ptr<Address> &participant);
+	void addParticipant(const std::shared_ptr<Address> &participant, const participant_params_t &params);
+	void removeParticipant(const std::shared_ptr<Address> &participant);
 
-	void addParticipantParam(const IdentityAddress &participant, const std::string &param, const std::string &value);
-	const std::string getParticipantParam(const IdentityAddress &participant, const std::string &param) const;
+	void addParticipantParam(const std::shared_ptr<Address> &participant,
+	                         const std::string &param,
+	                         const std::string &value);
+	const std::string getParticipantParam(const std::shared_ptr<Address> &participant, const std::string &param) const;
 
 	bool isValidUri() const;
-	const ConferenceAddress &getUri() const;
-	void setUri(const ConferenceAddress uri);
+	const std::shared_ptr<Address> &getUri() const;
+	void setUri(const std::shared_ptr<Address> uri);
 
 	time_t getDateTime() const;
 	void setDateTime(time_t dateTime);
@@ -147,7 +152,7 @@ public:
 private:
 	organizer_t mOrganizer;
 	participant_list_t mParticipants;
-	ConferenceAddress mUri;
+	std::shared_ptr<Address> mUri;
 	time_t mDateTime = (time_t)-1;
 	unsigned int mDuration = 0;
 	std::string mSubject = "";
@@ -155,7 +160,6 @@ private:
 	mutable unsigned int mIcsSequence = 0;
 	mutable std::string mIcsUid = "";
 	State mState = State::New;
-	CListCache mParticipantsList;
 	time_t mCreationTime = (time_t)-1;
 };
 

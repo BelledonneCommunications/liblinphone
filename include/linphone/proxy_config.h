@@ -87,7 +87,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_server_addr(LinphonePro
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *proxy_config,
-                                                                          const LinphoneAddress *identity);
+                                                                          LinphoneAddress *identity);
 
 /**
  * Sets a list of SIP route.

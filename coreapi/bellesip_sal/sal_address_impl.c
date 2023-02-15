@@ -22,15 +22,22 @@
 /**/
 /* Address manipulation API*/
 SalAddress *sal_address_new(const char *uri) {
-	belle_sip_header_address_t *result;
-	if (uri && uri[0] != '\0') {
+	if (uri) {
+		belle_sip_header_address_t *result;
 		result = belle_sip_header_address_fast_parse(uri);
-		/*may return NULL*/
+		if (result) belle_sip_object_ref(result);
+		return (SalAddress *)result;
 	} else {
-		result = belle_sip_header_address_new();
-		belle_sip_header_address_set_uri(result, belle_sip_uri_new());
+		return sal_address_new_empty();
 	}
-	if (result) belle_sip_object_ref(result);
+	return NULL;
+}
+
+SalAddress *sal_address_new_empty(void) {
+	belle_sip_header_address_t *result;
+	result = belle_sip_header_address_new();
+	belle_sip_header_address_set_uri(result, belle_sip_uri_new());
+	belle_sip_object_ref(result);
 	return (SalAddress *)result;
 }
 
@@ -171,7 +178,8 @@ bool_t sal_address_is_sip(const SalAddress *addr) {
 }
 
 char *sal_address_as_string_uri_only(const SalAddress *addr) {
-	belle_sip_header_address_t *header_addr = BELLE_SIP_HEADER_ADDRESS(addr);
+	SalAddress *address_uri = sal_address_new_uri_only(addr);
+	belle_sip_header_address_t *header_addr = BELLE_SIP_HEADER_ADDRESS(address_uri);
 	belle_sip_uri_t *sip_uri = belle_sip_header_address_get_uri(header_addr);
 	belle_generic_uri_t *absolute_uri = belle_sip_header_address_get_absolute_uri(header_addr);
 	char tmp[1024] = {0};
@@ -187,7 +195,20 @@ char *sal_address_as_string_uri_only(const SalAddress *addr) {
 		return NULL;
 	}
 	belle_sip_object_marshal(uri, tmp, sizeof(tmp), &off);
-	return ms_strdup(tmp);
+	char *uri_string = ms_strdup(tmp);
+	sal_address_unref(address_uri);
+	return uri_string;
+}
+
+SalAddress *sal_address_new_uri_only(const SalAddress *addr) {
+	belle_sip_header_address_t *uri_only = belle_sip_header_address_new();
+	if (belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr))) {
+		belle_sip_header_address_set_uri(
+		    uri_only, BELLE_SIP_URI(belle_sip_object_clone(
+		                  BELLE_SIP_OBJECT(belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr))))));
+	}
+	belle_sip_object_ref(uri_only);
+	return (SalAddress *)uri_only;
 }
 
 void sal_address_set_param(SalAddress *addr, const char *name, const char *value) {
@@ -199,6 +220,11 @@ void sal_address_set_param(SalAddress *addr, const char *name, const char *value
 bool_t sal_address_has_param(const SalAddress *addr, const char *name) {
 	belle_sip_parameters_t *parameters = BELLE_SIP_PARAMETERS(addr);
 	return !!belle_sip_parameters_has_parameter(parameters, name);
+}
+
+void sal_address_clean_params(const SalAddress *addr) {
+	belle_sip_parameters_t *parameters = BELLE_SIP_PARAMETERS(addr);
+	belle_sip_parameters_clean(parameters);
 }
 
 void sal_address_remove_param(const SalAddress *addr, const char *name) {
@@ -234,19 +260,15 @@ bool_t sal_address_has_uri_param(const SalAddress *addr, const char *name) {
 	return !!belle_sip_parameters_has_parameter(parameters, name);
 }
 
-bctbx_map_t *sal_address_get_uri_params(const SalAddress *addr) {
+void sal_address_get_uri_params(const SalAddress *addr, std::map<std::string, std::string> &params) {
 	belle_sip_parameters_t *parameters =
 	    BELLE_SIP_PARAMETERS(belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr)));
 	const belle_sip_list_t *param_names = belle_sip_parameters_get_parameter_names(parameters);
-	bctbx_map_t *param_map = bctbx_mmap_cchar_new();
 	for (belle_sip_list_t *it = (belle_sip_list_t *)param_names; it != NULL; it = it->next) {
 		const char *name = (const char *)it->data;
 		const char *value = belle_sip_parameters_get_parameter(parameters, name);
-		bctbx_pair_t *pair = (bctbx_pair_t *)bctbx_pair_cchar_new(name, ms_strdup(value));
-		bctbx_map_cchar_insert_and_delete(param_map, pair);
+		params[name] = value ? value : "";
 	}
-
-	return param_map;
 }
 
 const char *sal_address_get_uri_param(const SalAddress *addr, const char *name) {

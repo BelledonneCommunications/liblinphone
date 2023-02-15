@@ -91,7 +91,7 @@ public:
 		return mToAddress;
 	}
 
-	BorrowedMut<SalAddress> getRequestAddress() {
+	SalAddress *getRequestAddress() {
 		return mRequestAddress.borrow();
 	}
 

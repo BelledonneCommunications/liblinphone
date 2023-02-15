@@ -39,6 +39,11 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Address;
+class Content;
+class ConferenceInfo;
+class SalCallOp;
+
 namespace Utils {
 template <typename T>
 constexpr T *getPtr(std::shared_ptr<T> &object) {
@@ -129,15 +134,7 @@ inline std::string join(const std::vector<T> &elems, const S &delim) {
 LINPHONE_PUBLIC std::string trim(const std::string &str);
 LINPHONE_PUBLIC std::string normalizeFilename(const std::string &str);
 
-template <typename T, typename std::enable_if<std::is_base_of<Address, T>::value>::type * = nullptr>
-inline const T &getEmptyConstRefObject() {
-	static const T object{};
-	object.removeFromLeakDetector();
-	return object;
-}
-
-template <typename T, typename std::enable_if<!std::is_base_of<Address, T>::value>::type * = nullptr>
-
+template <typename T>
 inline const T &getEmptyConstRefObject() {
 	return bctoolbox::Utils::getEmptyConstRefObject<T>();
 }
@@ -155,6 +152,29 @@ inline std::list<typename Container::value_type> toList(const Container &l) {
 	std::list<typename Container::value_type> v;
 	std::copy(std::begin(l), std::end(l), std::back_inserter(v));
 	return v;
+}
+
+template <typename cT,
+          typename cppT,
+          typename std::enable_if<std::is_base_of<bellesip::HybridObject<cT, cppT>, cppT>::value>::type * = nullptr>
+bctbx_list_t *listToCBctbxList(const std::list<std::shared_ptr<cppT>> &l) {
+	bctbx_list_t *bcList = NULL;
+	for (const auto &e : l) {
+		bcList = bctbx_list_append(bcList, e->toC());
+	}
+	return bcList;
+}
+
+template <typename cT,
+          typename cppT,
+          typename std::enable_if<std::is_base_of<bellesip::HybridObject<cT, cppT>, cppT>::value>::type * = nullptr>
+std::list<std::shared_ptr<cppT>> bctbxListToCppSharedPtrList(const bctbx_list_t *l) {
+	std::list<std::shared_ptr<cppT>> cppList;
+	for (const bctbx_list_t *elem = l; elem != NULL; elem = elem->next) {
+		cT *data = static_cast<cT *>(bctbx_list_get_data(elem));
+		cppList.push_back(cppT::toCpp(data)->getSharedFromThis());
+	}
+	return cppList;
 }
 
 template <class T>
@@ -175,6 +195,7 @@ std::list<T> bctbxListToList(bctbx_list_t *l) {
 	}
 	return cppList;
 }
+
 LINPHONE_PUBLIC std::tm getTimeTAsTm(time_t t);
 LINPHONE_PUBLIC time_t getTmAsTimeT(const std::tm &t);
 LINPHONE_PUBLIC std::string getTimeAsString(const std::string &format, time_t t);
@@ -239,8 +260,8 @@ private:
  */
 LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const std::string &descriptor);
 std::string getSipFragAddress(const Content &content);
-std::string getResourceLists(const std::list<IdentityAddress> &addresses);
-std::list<IdentityAddress> parseResourceLists(const Content &content);
+std::string getResourceLists(const std::list<std::shared_ptr<Address>> &addresses);
+std::list<std::shared_ptr<Address>> parseResourceLists(const Content &content);
 std::shared_ptr<ConferenceInfo> createConferenceInfoFromOp(SalCallOp *op, bool remote);
 } // namespace Utils
 

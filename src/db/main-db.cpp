@@ -24,6 +24,7 @@
 #endif // _MSC_VER
 
 #if (__GNUC__ == 9 && __GNUC_MINOR__ >= 1)
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
@@ -298,11 +299,11 @@ MainDbPrivate::findAudioVideoConference(const ConferenceId &conferenceId) const 
 // Low level API.
 // -----------------------------------------------------------------------------
 
-long long MainDbPrivate::insertSipAddress(const Address &address) {
+long long MainDbPrivate::insertSipAddress(BCTBX_UNUSED(const std::shared_ptr<Address> &address)) {
 #ifdef HAVE_DB_STORAGE
 	// This is a hack, because all addresses don't print their parameters in the same order.
-	const string sipAddress = ConferenceAddress(address).asString();
-	const string displayName = address.getDisplayName();
+	const string sipAddress = address->toStringUriOnlyOrdered();
+	const string displayName = address->getDisplayName();
 
 	long long sipAddressId = selectSipAddressId(sipAddress);
 
@@ -422,8 +423,8 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 	L_Q();
 	if (q->isInitialized()) {
 		const ConferenceId &conferenceId = chatRoom->getConferenceId();
-		const long long &peerSipAddressId = insertSipAddress(conferenceId.getPeerAddress().asString());
-		const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress().asString());
+		const long long &peerSipAddressId = insertSipAddress(conferenceId.getPeerAddress()->asStringUriOnly());
+		const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress()->asStringUriOnly());
 
 		long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
 		const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
@@ -468,19 +469,19 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 		// Do not add 'me' when creating a server-group-chat-room.
 		if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
 			shared_ptr<Participant> me = chatRoom->getMe();
-			long long meId =
-			    insertChatRoomParticipant(chatRoomId, insertSipAddress(me->getAddress().asString()), me->isAdmin());
+			long long meId = insertChatRoomParticipant(
+			    chatRoomId, insertSipAddress(me->getAddress()->asStringUriOnly()), me->isAdmin());
 			for (const auto &device : me->getDevices())
-				insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress().asString()),
+				insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress()->asStringUriOnly()),
 				                                device->getName());
 		}
 
 		for (const auto &participant : chatRoom->getParticipants()) {
 			long long participantId = insertChatRoomParticipant(
-			    chatRoomId, insertSipAddress(participant->getAddress().asString()), participant->isAdmin());
+			    chatRoomId, insertSipAddress(participant->getAddress()->asStringUriOnly()), participant->isAdmin());
 			for (const auto &device : participant->getDevices())
-				insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()),
-				                                device->getName());
+				insertChatRoomParticipantDevice(
+				    participantId, insertSipAddress(device->getAddress()->asStringUriOnly()), device->getName());
 		}
 
 		return chatRoomId;
@@ -561,12 +562,15 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		return -1;
 	}
 
-	if (!conferenceInfo->getOrganizerAddress().isValid() || !conferenceInfo->getUri().isValid()) {
+	const auto &conferenceUri = conferenceInfo->getUri();
+	if (!conferenceInfo->getOrganizerAddress() || !conferenceInfo->getOrganizerAddress()->isValid() || !conferenceUri ||
+	    !conferenceUri->isValid()) {
 		lError() << "Trying to insert a Conference Info without organizer or URI!";
 		return -1;
 	}
-	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizerAddress().asString());
-	const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
+
+	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizerAddress()->asStringUriOnly());
+	const long long &uriSipAddressid = insertSipAddress(conferenceUri->asStringUriOnly());
 	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
 	const unsigned int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getUtf8Subject();
@@ -580,7 +584,9 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	if (conferenceInfoId >= 0) {
 		// The conference info is already stored in DB, but still update it some information might have changed
 		lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
-		dbParticipantList = oldConferenceInfo->getParticipants();
+		if (oldConferenceInfo) {
+			dbParticipantList = oldConferenceInfo->getParticipants();
+		}
 
 		*dbSession.getBackendSession() << "UPDATE conference_info SET"
 		                                  "  organizer_sip_address_id = :organizerSipAddressId,"
@@ -615,19 +621,20 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 
 	const auto &participantList = conferenceInfo->getParticipants();
 	for (const auto &participantAddress : participantList) {
-		insertOrUpdateConferenceInfoParticipant(conferenceInfoId, insertSipAddress(participantAddress.first.asString()),
-		                                        false, participantAddress.second);
+		insertOrUpdateConferenceInfoParticipant(conferenceInfoId,
+		                                        insertSipAddress(participantAddress.first->asStringUriOnly()), false,
+		                                        participantAddress.second);
 	}
 
 	for (const auto &oldParticipantAddress : dbParticipantList) {
 		const bool deleted =
 		    (std::find_if(participantList.cbegin(), participantList.cend(), [&oldParticipantAddress](const auto &p) {
-			     return (p.first == oldParticipantAddress.first);
+			     return (p.first->weakEqual(*oldParticipantAddress.first));
 		     }) == participantList.cend());
 		if (deleted) {
 			insertOrUpdateConferenceInfoParticipant(conferenceInfoId,
-			                                        insertSipAddress(oldParticipantAddress.first.asString()), true,
-			                                        oldParticipantAddress.second);
+			                                        insertSipAddress(oldParticipantAddress.first->asStringUriOnly()),
+			                                        true, oldParticipantAddress.second);
 		}
 	}
 
@@ -703,12 +710,15 @@ long long MainDbPrivate::insertOrUpdateConferenceCall(const std::shared_ptr<Call
 	long long conferenceInfoId = -1;
 
 	if (conferenceInfo != nullptr) {
-		const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
-		conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
-		if (conferenceInfoId < 0) {
-			conferenceInfoId = insertConferenceInfo(conferenceInfo, nullptr);
+		const auto &conferenceAddress = conferenceInfo->getUri();
+		if (conferenceAddress) {
+			const long long &uriSipAddressid = insertSipAddress(conferenceAddress->asStringUriOnly());
+			conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
+			if (conferenceInfoId < 0) {
+				conferenceInfoId = insertConferenceInfo(conferenceInfo, nullptr);
+			}
+			callLog->setConferenceInfoId(conferenceInfoId);
 		}
-		callLog->setConferenceInfoId(conferenceInfoId);
 	}
 
 	int duration = callLog->getDuration();
@@ -724,8 +734,10 @@ long long MainDbPrivate::insertOrUpdateConferenceCall(const std::shared_ptr<Call
 	if (conferenceCallId < 0) {
 		lInfo() << "Insert new conference call in database: " << callLog->getCallId();
 
-		const long long fromSipAddressId = insertSipAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getFromAddress()));
-		const long long toSipAddressId = insertSipAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress()));
+		std::shared_ptr<Address> from = callLog->getFromAddress() ? callLog->getFromAddress() : nullptr;
+		const long long fromSipAddressId = insertSipAddress(from);
+		std::shared_ptr<Address> to = callLog->getToAddress() ? callLog->getToAddress() : nullptr;
+		const long long toSipAddressId = insertSipAddress(to);
 		int direction = static_cast<int>(callLog->getDirection());
 		const tm &startTime = Utils::getTimeTAsTm(callLog->getStartTime());
 
@@ -796,10 +808,12 @@ long long MainDbPrivate::selectChatRoomId(long long peerSipAddressId, long long 
 
 long long MainDbPrivate::selectChatRoomId(const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
-	long long peerSipAddressId = selectSipAddressId(conferenceId.getPeerAddress().asString());
+	long long peerSipAddressId =
+	    conferenceId.getPeerAddress() ? selectSipAddressId(conferenceId.getPeerAddress()->asStringUriOnly()) : -1;
 	if (peerSipAddressId < 0) return -1;
 
-	long long localSipAddressId = selectSipAddressId(conferenceId.getLocalAddress().asString());
+	long long localSipAddressId =
+	    conferenceId.getLocalAddress() ? selectSipAddressId(conferenceId.getLocalAddress()->asStringUriOnly()) : -1;
 	if (localSipAddressId < 0) return -1;
 
 	long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
@@ -822,7 +836,7 @@ ConferenceId MainDbPrivate::selectConferenceId(const long long chatRoomId) const
 	soci::session *session = dbSession.getBackendSession();
 	*session << query, soci::use(chatRoomId), soci::into(peerSipAddress), soci::into(localSipAddress);
 
-	ConferenceId conferenceId = ConferenceId(IdentityAddress(peerSipAddress), IdentityAddress(localSipAddress));
+	ConferenceId conferenceId = ConferenceId(Address::create(peerSipAddress), Address::create(localSipAddress));
 
 	if (conferenceId.isValid()) {
 		cache(conferenceId, chatRoomId);
@@ -1048,10 +1062,9 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent(const soci::row &r
 	long long conferenceCallId = dbSession.resolveId(row, 3);
 	auto callLog = getCallLogFromCache(conferenceCallId);
 	if (callLog == nullptr) {
-
-		callLog = CallLog::create(q->getCore(), static_cast<LinphoneCallDir>(row.get<int>(6)),
-		                          linphone_address_new(row.get<string>(4).c_str()),
-		                          linphone_address_new(row.get<string>(5).c_str()));
+		const std::shared_ptr<Address> from = Address::create(row.get<string>(4));
+		const std::shared_ptr<Address> to = Address::create(row.get<string>(5));
+		callLog = CallLog::create(q->getCore(), static_cast<LinphoneCallDir>(row.get<int>(6)), from, to);
 		callLog->setDuration(row.get<int>(7));
 		callLog->setStartTime(dbSession.getTime(row, 8));
 		callLog->setConnectedTime(dbSession.getTime(row, 9));
@@ -1077,10 +1090,10 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent(const soci::row &r
 		if (conferenceInfo == nullptr) {
 			conferenceInfo = ConferenceInfo::create();
 
-			IdentityAddress organizer = IdentityAddress(row.get<string>(16));
+			std::shared_ptr<Address> organizer = Address::create(row.get<string>(16));
 			conferenceInfo->setOrganizer(organizer);
 
-			ConferenceAddress uri = ConferenceAddress(row.get<string>(17));
+			std::shared_ptr<Address> uri = Address::create(row.get<string>(17));
 			conferenceInfo->setUri(uri);
 
 			conferenceInfo->setDateTime(dbSession.getTime(row, 18));
@@ -1097,7 +1110,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent(const soci::row &r
 			soci::session *session = dbSession.getBackendSession();
 			soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(conferenceInfoId));
 			for (const auto &participantRow : participantRows) {
-				IdentityAddress participant(participantRow.get<string>(0));
+				std::shared_ptr<Address> participant = Address::create(participantRow.get<string>(0));
 				ConferenceInfo::participant_params_t participantParams;
 				conferenceInfo->addParticipant(participant, participantParams);
 			}
@@ -1132,8 +1145,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent(const share
 		}
 		dChatMessage->forceState(messageState);
 
-		dChatMessage->forceFromAddress(IdentityAddress(row.get<string>(3)));
-		dChatMessage->forceToAddress(ConferenceAddress(row.get<string>(4)));
+		dChatMessage->forceFromAddress(Address::create(row.get<string>(3)));
+		dChatMessage->forceToAddress(Address::create(row.get<string>(4)));
 
 		dChatMessage->setTime(dbSession.getTime(row, 5));
 		dChatMessage->setImdnMessageId(row.get<string>(6));
@@ -1154,7 +1167,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent(const share
 		}
 		if (row.get_indicator(24) != soci::i_null) {
 			dChatMessage->setReplyToMessageIdAndSenderAddress(row.get<string>(23),
-			                                                  IdentityAddress(row.get<string>(24)));
+			                                                  Address::create(row.get<string>(24)));
 		}
 
 		cache(chatMessage, eventId);
@@ -1168,7 +1181,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantEvent(const Confe
                                                                      const soci::row &row) const {
 
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
-	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
+	std::shared_ptr<Address> participantAddress = Address::create(row.get<string>(12));
 
 	std::shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 	    type, getConferenceEventCreationTimeFromRow(row), conferenceId, participantAddress);
@@ -1180,8 +1193,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent(const
                                                                            EventLog::Type type,
                                                                            const soci::row &row) const {
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
-	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
-	IdentityAddress deviceAddress(IdentityAddress(row.get<string>(11)));
+	std::shared_ptr<Address> participantAddress = Address::create(row.get<string>(12));
+	std::shared_ptr<Address> deviceAddress = Address::create(row.get<string>(11));
 
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 	    type, getConferenceEventCreationTimeFromRow(row), conferenceId, participantAddress, deviceAddress);
@@ -1195,7 +1208,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent(const Conferen
 	return make_shared<ConferenceSecurityEvent>(
 	    getConferenceEventCreationTimeFromRow(row), conferenceId,
 	    static_cast<ConferenceSecurityEvent::SecurityEventType>(row.get<int>(16)),
-	    IdentityAddress(row.get<string>(17)));
+	    Address::create(row.get<string>(17)));
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralMessageEvent(const ConferenceId &conferenceId,
@@ -1337,8 +1350,8 @@ long long MainDbPrivate::insertConferenceChatMessageEvent(const shared_ptr<Event
 	if (eventId < 0) return -1;
 
 	shared_ptr<ChatMessage> chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage();
-	const long long &fromSipAddressId = insertSipAddress(chatMessage->getFromAddress().asString());
-	const long long &toSipAddressId = insertSipAddress(chatMessage->getToAddress().asString());
+	const long long &fromSipAddressId = insertSipAddress(chatMessage->getFromAddress()->asStringUriOnly());
+	const long long &toSipAddressId = insertSipAddress(chatMessage->getToAddress()->asStringUriOnly());
 	const string &forwardInfo = chatMessage->getForwardInfo();
 	const tm &messageTime = Utils::getTimeTAsTm(chatMessage->getTime());
 	const int &state = int(chatMessage->getState());
@@ -1350,11 +1363,10 @@ long long MainDbPrivate::insertConferenceChatMessageEvent(const shared_ptr<Event
 	const int &markedAsRead = chatMessage->getPrivate()->isMarkedAsRead() ? 1 : 0;
 	const bool &isEphemeral = chatMessage->isEphemeral();
 	const string &callId = chatMessage->getPrivate()->getCallId();
-
 	const string &replyMessageId = chatMessage->getReplyToMessageId();
 	long long sipAddressId = 0;
 	if (!replyMessageId.empty()) {
-		sipAddressId = insertSipAddress(chatMessage->getReplyToSenderAddress().asString());
+		sipAddressId = insertSipAddress(chatMessage->getReplyToSenderAddress()->asStringUriOnly());
 	}
 	const long long &replyToSipAddressId = sipAddressId;
 
@@ -1391,7 +1403,7 @@ long long MainDbPrivate::insertConferenceChatMessageEvent(const shared_ptr<Event
 
 	shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
 	for (const auto &participant : chatRoom->getParticipants()) {
-		const long long &participantSipAddressId = selectSipAddressId(participant->getAddress().asString());
+		const long long &participantSipAddressId = selectSipAddressId(participant->getAddress()->asStringUriOnly());
 		insertChatMessageParticipant(eventId, participantSipAddressId, state, chatMessage->getTime());
 	}
 
@@ -1509,7 +1521,8 @@ long long MainDbPrivate::insertConferenceParticipantEvent(const shared_ptr<Event
 
 	shared_ptr<ConferenceParticipantEvent> participantEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
 
-	const long long &participantAddressId = insertSipAddress(participantEvent->getParticipantAddress().asString());
+	const long long &participantAddressId =
+	    insertSipAddress(participantEvent->getParticipantAddress()->asStringUriOnly());
 
 	*dbSession.getBackendSession() << "INSERT INTO conference_participant_event (event_id, participant_sip_address_id)"
 	                                  " VALUES (:eventId, :participantAddressId)",
@@ -1553,7 +1566,7 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent(const shared_ptr
 	shared_ptr<ConferenceParticipantDeviceEvent> participantDeviceEvent =
 	    static_pointer_cast<ConferenceParticipantDeviceEvent>(eventLog);
 
-	const string participantAddress = participantDeviceEvent->getParticipantAddress().asString();
+	const string participantAddress = participantDeviceEvent->getParticipantAddress()->asStringUriOnly();
 	const long long &participantAddressId = selectSipAddressId(participantAddress);
 	if (participantAddressId < 0) {
 		lError() << "Unable to find sip address id of: `" << participantAddress << "`.";
@@ -1565,7 +1578,7 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent(const shared_ptr
 		         << " and participant address id = " << participantAddressId;
 		return -1;
 	}
-	const long long &deviceAddressId = insertSipAddress(participantDeviceEvent->getDeviceAddress().asString());
+	const long long &deviceAddressId = insertSipAddress(participantDeviceEvent->getDeviceAddress()->asStringUriOnly());
 
 	*dbSession.getBackendSession()
 	    << "INSERT INTO conference_participant_device_event (event_id, device_sip_address_id)"
@@ -1602,7 +1615,7 @@ long long MainDbPrivate::insertConferenceSecurityEvent(const shared_ptr<EventLog
 
 	const int &securityEventType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityEventType());
 	const string &faultyDevice =
-	    static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDeviceAddress().asString();
+	    static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDeviceAddress()->asStringUriOnly();
 
 	// insert security event into new table "conference_security_event"
 	soci::session *session = dbSession.getBackendSession();
@@ -1695,14 +1708,14 @@ long long MainDbPrivate::insertConferenceEphemeralMessageEvent(const shared_ptr<
 }
 
 void MainDbPrivate::setChatMessageParticipantState(const shared_ptr<EventLog> &eventLog,
-                                                   const IdentityAddress &participantAddress,
+                                                   const std::shared_ptr<Address> &participantAddress,
                                                    ChatMessage::State state,
                                                    time_t stateChangeTime) {
 #ifdef HAVE_DB_STORAGE
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
-	const long long &participantSipAddressId = selectSipAddressId(participantAddress.asString());
+	const long long &participantSipAddressId = selectSipAddressId(participantAddress->asStringUriOnly());
 
 	/* setChatMessageParticipantState can be called by updateConferenceChatMessageEvent, which try to update participant
 	 state by message state. However, we can not change state Displayed/DeliveredToUser to Delivered/NotDelivered. */
@@ -1742,11 +1755,11 @@ std::shared_ptr<CallLog> MainDbPrivate::selectCallLog(const soci::row &row) cons
 	auto callLog = getCallLogFromCache(dbCallLogId);
 	if (callLog) return callLog;
 
-	LinphoneAddress *from = linphone_address_new(row.get<string>(1).c_str());
-	if (row.get_indicator(2) == soci::i_ok) linphone_address_set_display_name(from, row.get<string>(2).c_str());
+	const std::shared_ptr<Address> from = Address::create(row.get<string>(1));
+	if (row.get_indicator(2) == soci::i_ok) from->setDisplayName(row.get<string>(2));
 
-	LinphoneAddress *to = linphone_address_new(row.get<string>(3).c_str());
-	if (row.get_indicator(4) == soci::i_ok) linphone_address_set_display_name(to, row.get<string>(4).c_str());
+	const std::shared_ptr<Address> to = Address::create(row.get<string>(3));
+	if (row.get_indicator(4) == soci::i_ok) to->setDisplayName(row.get<string>(4));
 
 	callLog = CallLog::create(q->getCore(), static_cast<LinphoneCallDir>(row.get<int>(5)), from, to);
 
@@ -1784,7 +1797,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	if (conferenceInfo) return conferenceInfo;
 
 	conferenceInfo = ConferenceInfo::create();
-	ConferenceAddress uri(row.get<string>(2));
+	std::shared_ptr<Address> uri = Address::create(row.get<string>(2));
 	conferenceInfo->setUri(uri);
 
 	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
@@ -1800,7 +1813,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	// For backward compability purposes, get the organizer from conference_info table and set the sequence number to
 	// that of the conference info stored in the db It may be overridden if the conference organizer has been stored in
 	// table conference_info_organizer.
-	IdentityAddress organizer(row.get<string>(1));
+	std::shared_ptr<Address> organizer = Address::create(row.get<string>(1));
 	ConferenceInfo::participant_params_t defaultOrganizerParams;
 	defaultOrganizerParams.insert(std::make_pair(ConferenceInfo::sequenceParam, std::to_string(icsSequence)));
 	conferenceInfo->setOrganizer(organizer, defaultOrganizerParams);
@@ -1818,7 +1831,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	for (const auto &participantRow : participantRows) {
 		int deleted = participantRow.get<int>(1);
 		if (deleted == 0) {
-			IdentityAddress participantAddress(participantRow.get<string>(0));
+			std::shared_ptr<Address> participantAddress = Address::create(participantRow.get<string>(0));
 			const string participantParamsStr = participantRow.get<string>(2);
 			ConferenceInfo::participant_params_t participantParams =
 			    ConferenceInfo::stringToMemberParameters(participantParamsStr);
@@ -1834,7 +1847,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 
 	soci::rowset<soci::row> organizerRows = (session->prepare << organizerQuery, soci::use(dbConferenceInfoId));
 	for (const auto &organizerRow : organizerRows) {
-		IdentityAddress organizerAddress(organizerRow.get<string>(0));
+		std::shared_ptr<Address> organizerAddress = Address::create(organizerRow.get<string>(0));
 		const string organizerParamsStr = organizerRow.get<string>(1);
 		ConferenceInfo::participant_params_t organizerParams =
 		    ConferenceInfo::stringToMemberParameters(organizerParamsStr);
@@ -2470,10 +2483,10 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 			    soci::use(creationTime);
 
 			const long long &eventId = dbSession.getLastInsertId();
-			const long long &localSipAddressId =
-			    insertSipAddress(IdentityAddress(message.get<string>(LegacyMessageColLocalAddress)).asString());
-			const long long &remoteSipAddressId =
-			    insertSipAddress(IdentityAddress(message.get<string>(LegacyMessageColRemoteAddress)).asString());
+			const auto localAddress = Address::create(message.get<string>(LegacyMessageColLocalAddress));
+			const long long &localSipAddressId = insertSipAddress(localAddress->asStringUriOnly());
+			const auto remoteAddress = Address::create(message.get<string>(LegacyMessageColRemoteAddress));
+			const long long &remoteSipAddressId = insertSipAddress(remoteAddress->asStringUriOnly());
 			const long long &chatRoomId =
 			    insertOrUpdateImportedBasicChatRoom(remoteSipAddressId, localSipAddressId, creationTime);
 			const int &isSecured = message.get<int>(LegacyMessageColIsSecured, 0);
@@ -2547,9 +2560,9 @@ void MainDbPrivate::importLegacyCallLogs(DbSession &inDbSession) {
 				continue;
 			}
 
-			auto callLog = CallLog::create(q->getCore(), static_cast<LinphoneCallDir>(direction),
-			                               linphone_address_new(log.get<string>(LegacyCallLogColFrom).c_str()),
-			                               linphone_address_new(log.get<string>(LegacyCallLogColTo).c_str()));
+			const std::shared_ptr<Address> from = Address::create(log.get<string>(LegacyCallLogColFrom));
+			const std::shared_ptr<Address> to = Address::create(log.get<string>(LegacyCallLogColTo));
+			auto callLog = CallLog::create(q->getCore(), static_cast<LinphoneCallDir>(direction), from, to);
 
 			callLog->setDuration(log.get<int>(LegacyCallLogColDuration));
 			callLog->setStartTime((time_t)std::stoul(log.get<string>(LegacyCallLogColStartTime)));
@@ -3512,7 +3525,8 @@ shared_ptr<EventLog> MainDb::getEvent(const unique_ptr<MainDb> &mainDb, const lo
 		*d->dbSession.getBackendSession() << Statements::get(Statements::SelectConferenceEvent), soci::into(row),
 		    soci::use(storageId);
 
-		ConferenceId conferenceId(ConferenceAddress(row.get<string>(16)), ConferenceAddress(row.get<string>(17)));
+		ConferenceId conferenceId(Address::create(row.get<string>(16))->getSharedFromThis(),
+		                          Address::create(row.get<string>(17)));
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom) return shared_ptr<EventLog>();
 
@@ -3546,8 +3560,8 @@ list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents(const ConferenceI
 
 	/*
 	DurationLogger durationLogger(
-	    "Get conference notified events of: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() +
+	    "Get conference notified events of: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() +
 	    ", lastNotifyId=" + Utils::toString(lastNotifyId) + ")."
 	);
 	*/
@@ -3574,8 +3588,8 @@ int MainDb::getChatMessageCount(const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	/*
 	DurationLogger durationLogger(
-	    "Get chat messages count of: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() + ")."
+	    "Get chat messages count of: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ")."
 	);
 	*/
 
@@ -3623,8 +3637,8 @@ int MainDb::getUnreadChatMessageCount(const ConferenceId &conferenceId) const {
 
 	/*
 	DurationLogger durationLogger(
-	    "Get unread chat messages count of: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() + ")."
+	    "Get unread chat messages count of: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ")."
 	);
 	*/
 
@@ -3660,8 +3674,8 @@ void MainDb::markChatMessagesAsRead(const ConferenceId &conferenceId) const {
 
 	/*
 	DurationLogger durationLogger(
-	    "Mark chat messages as read of: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() + ")."
+	    "Mark chat messages as read of: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ")."
 	);
 	*/
 
@@ -3731,8 +3745,9 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages(const ConferenceId &
 	static const string query =
 	    Statements::get(Statements::SelectConferenceEvents) + string(" AND marked_as_read == 0");
 
-	DurationLogger durationLogger("Get unread chat messages: (peer=" + conferenceId.getPeerAddress().asString() +
-	                              ", local=" + conferenceId.getLocalAddress().asString() + ").");
+	DurationLogger durationLogger(
+	    "Get unread chat messages: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ").");
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -3835,7 +3850,7 @@ list<MainDb::ParticipantState> MainDb::getChatMessageParticipantsByImdnState(con
 
 		list<MainDb::ParticipantState> result;
 		for (const auto &row : rows)
-			result.emplace_back(IdentityAddress(row.get<string>(0)), state, d->dbSession.getTime(row, 1));
+			result.emplace_back(Address::create(row.get<string>(0)), state, d->dbSession.getTime(row, 1));
 		return result;
 	};
 #else
@@ -3871,7 +3886,7 @@ list<ChatMessage::State> MainDb::getChatMessageParticipantStates(const shared_pt
 }
 
 ChatMessage::State MainDb::getChatMessageParticipantState(const shared_ptr<EventLog> &eventLog,
-                                                          const IdentityAddress &participantAddress) const {
+                                                          const std::shared_ptr<Address> &participantAddress) const {
 #ifdef HAVE_DB_STORAGE
 	return L_DB_TRANSACTION {
 		L_D();
@@ -3879,7 +3894,7 @@ ChatMessage::State MainDb::getChatMessageParticipantState(const shared_ptr<Event
 		const EventLogPrivate *dEventLog = eventLog->getPrivate();
 		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 		const long long &eventId = dEventKey->storageId;
-		const long long &participantSipAddressId = d->selectSipAddressId(participantAddress.asString());
+		const long long &participantSipAddressId = d->selectSipAddressId(participantAddress->asStringUriOnly());
 
 		unsigned int state;
 		*d->dbSession.getBackendSession()
@@ -3895,7 +3910,7 @@ ChatMessage::State MainDb::getChatMessageParticipantState(const shared_ptr<Event
 }
 
 void MainDb::setChatMessageParticipantState(const shared_ptr<EventLog> &eventLog,
-                                            const IdentityAddress &participantAddress,
+                                            const std::shared_ptr<Address> &participantAddress,
                                             ChatMessage::State state,
                                             time_t stateChangeTime) {
 #ifdef HAVE_DB_STORAGE
@@ -3979,8 +3994,8 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages(const ConferenceId &confe
 
 	/*
 	DurationLogger durationLogger(
-	    "Find chat messages: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() + ")."
+	    "Find chat messages: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ")."
 	);
 	*/
 	return L_DB_TRANSACTION {
@@ -4017,8 +4032,8 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages(const ConferenceId &confe
 
 	/*
 	DurationLogger durationLogger(
-	    "Find chat messages: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() + ")."
+	    "Find chat messages: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ")."
 	);
 	*/
 	return L_DB_TRANSACTION {
@@ -4132,8 +4147,8 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered() 
 
 	/*
 	DurationLogger durationLogger(
-	    "Find chat messages to be notified as delivered: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() + ")."
+	    "Find chat messages to be notified as delivered: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ")."
 	);
 	*/
 
@@ -4206,8 +4221,8 @@ MainDb::getHistoryRange(const ConferenceId &conferenceId, int begin, int end, Fi
 
 	/*
 	DurationLogger durationLogger(
-	    "Get history range of: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() +
+	    "Get history range of: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() +
 	    ", begin=" + Utils::toString(begin) + ", end=" + Utils::toString(end) + ")."
 	);
 	*/
@@ -4266,8 +4281,8 @@ void MainDb::cleanHistory(const ConferenceId &conferenceId, FilterMask mask) {
 
 	/*
 	DurationLogger durationLogger(
-	    "Clean history of: (peer=" + conferenceId.getPeerAddress().asString() +
-	    ", local=" + conferenceId.getLocalAddress().asString() +
+	    "Clean history of: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+	    ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() +
 	    ", mask=" + Utils::toString(mask) + ")."
 	);
 	*/
@@ -4435,8 +4450,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
-			ConferenceId conferenceId =
-			    ConferenceId(ConferenceAddress(row.get<string>(1)), ConferenceAddress(row.get<string>(2)));
+			ConferenceId conferenceId(Address::create(row.get<string>(1)), Address::create(row.get<string>(2)));
 
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
@@ -4473,7 +4487,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
 					shared_ptr<Participant> participant =
-					    Participant::create(nullptr, IdentityAddress(row.get<string>(1)));
+					    Participant::create(nullptr, Address::create(row.get<string>(1)));
 					participant->setAdmin(!!row.get<int>(2));
 
 					// Fetch devices.
@@ -4487,22 +4501,24 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(participantId));
 						for (const auto &row : rows) {
 							shared_ptr<ParticipantDevice> device =
-							    participant->addDevice(IdentityAddress(row.get<string>(0)), row.get<string>(2, ""));
+							    participant->addDevice(Address::create(row.get<string>(0)), row.get<string>(2, ""));
 							device->setState(ParticipantDevice::State(static_cast<unsigned int>(row.get<int>(1, 0))));
 						}
 					}
 
-					if (participant->getAddress() == conferenceId.getLocalAddress().getAddressWithoutGruu())
+					if (participant->getAddress()->weakEqual(*conferenceId.getLocalAddress())) {
 						me = participant;
-					else participants.push_back(participant);
+					} else {
+						participants.push_back(participant);
+					}
 				}
 
 				Conference *conference = nullptr;
 				if (!linphone_core_conference_server_enabled(core->getCCore())) {
 					bool hasBeenLeft = !!row.get<int>(8, 0);
 					if (!me) {
-						lError() << "Unable to find me in: (peer=" + conferenceId.getPeerAddress().asString() +
-						                ", local=" + conferenceId.getLocalAddress().asString() + ").";
+						lError() << "Unable to find me in: (peer=" + conferenceId.getPeerAddress()->asStringUriOnly() +
+						                ", local=" + conferenceId.getLocalAddress()->asStringUriOnly() + ").";
 						continue;
 					}
 					shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
@@ -4525,7 +4541,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 						for (const auto &row : rows) {
 							ConferenceId previousId =
-							    ConferenceId(ConferenceAddress(row.get<string>(0)), conferenceId.getLocalAddress());
+							    ConferenceId(Address::create(row.get<string>(0)), conferenceId.getLocalAddress());
 							if (previousId != conferenceId) {
 								lInfo() << "Keeping around previous chat room ID [" << previousId
 								        << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";
@@ -4559,8 +4575,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			dChatRoom->setLastUpdateTime(lastUpdateTime);
 			dChatRoom->setIsEmpty(lastMessageId == 0);
 
-			lDebug() << "Found chat room in DB: (peer=" << conferenceId.getPeerAddress().asString()
-			         << ", local=" << conferenceId.getLocalAddress().asString() << ").";
+			lDebug() << "Found chat room in DB: (peer=" << conferenceId.getPeerAddress()->asStringUriOnly()
+			         << ", local=" << conferenceId.getLocalAddress()->asStringUriOnly() << ").";
 
 			chatRooms.push_back(chatRoom);
 		}
@@ -4577,7 +4593,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 void MainDbPrivate::insertNewPreviousConferenceId(const ConferenceId &currentConfId,
                                                   const ConferenceId &previousConfId) {
 #ifdef HAVE_DB_STORAGE
-	const long long &previousConferenceSipAddressId = selectSipAddressId(previousConfId.getPeerAddress().asString());
+	const long long &previousConferenceSipAddressId =
+	    selectSipAddressId(previousConfId.getPeerAddress()->asStringUriOnly());
 	const long long &chatRoomId = selectChatRoomId(currentConfId);
 
 	*dbSession.getBackendSession() << "INSERT INTO one_to_one_chat_room_previous_conference_id ("
@@ -4603,7 +4620,8 @@ void MainDb::insertNewPreviousConferenceId(const ConferenceId &currentConfId, co
 
 void MainDbPrivate::removePreviousConferenceId(const ConferenceId &previousConfId) {
 #ifdef HAVE_DB_STORAGE
-	const long long &previousConferenceSipAddressId = selectSipAddressId(previousConfId.getPeerAddress().asString());
+	const long long &previousConferenceSipAddressId =
+	    selectSipAddressId(previousConfId.getPeerAddress()->asStringUriOnly());
 
 	*dbSession.getBackendSession() << "DELETE FROM one_to_one_chat_room_previous_conference_id WHERE "
 	                                  "sip_address_id = :previousConferenceSipAddressId",
@@ -4657,7 +4675,7 @@ void MainDb::updateChatRoomConferenceId(const ConferenceId oldConferenceId, cons
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().asString());
+		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress()->asStringUriOnly());
 		const long long &dbChatRoomId = d->selectChatRoomId(oldConferenceId);
 
 		*d->dbSession.getBackendSession() << "UPDATE chat_room"
@@ -4724,8 +4742,8 @@ void MainDb::migrateBasicToClientGroupChatRoom(const shared_ptr<AbstractChatRoom
 		const long long &dbChatRoomId = d->selectChatRoomId(basicChatRoom->getConferenceId());
 
 		const ConferenceId &newConferenceId = clientGroupChatRoom->getConferenceId();
-		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().asString());
-		const long long &localSipAddressId = d->insertSipAddress(newConferenceId.getLocalAddress().asString());
+		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress()->asStringUriOnly());
+		const long long &localSipAddressId = d->insertSipAddress(newConferenceId.getLocalAddress()->asStringUriOnly());
 		const int &capabilities = clientGroupChatRoom->getCapabilities();
 
 		*d->dbSession.getBackendSession() << "UPDATE chat_room"
@@ -4737,17 +4755,17 @@ void MainDb::migrateBasicToClientGroupChatRoom(const shared_ptr<AbstractChatRoom
 
 		shared_ptr<Participant> me = clientGroupChatRoom->getMe();
 		long long meId =
-		    d->insertChatRoomParticipant(dbChatRoomId, d->insertSipAddress(me->getAddress().asString()), true);
+		    d->insertChatRoomParticipant(dbChatRoomId, d->insertSipAddress(me->getAddress()->asStringUriOnly()), true);
 		for (const auto &device : me->getDevices())
-			d->insertChatRoomParticipantDevice(meId, d->insertSipAddress(device->getAddress().asString()),
+			d->insertChatRoomParticipantDevice(meId, d->insertSipAddress(device->getAddress()->asStringUriOnly()),
 			                                   device->getName());
 
 		for (const auto &participant : clientGroupChatRoom->getParticipants()) {
 			long long participantId = d->insertChatRoomParticipant(
-			    dbChatRoomId, d->insertSipAddress(participant->getAddress().asString()), true);
+			    dbChatRoomId, d->insertSipAddress(participant->getAddress()->asStringUriOnly()), true);
 			for (const auto &device : participant->getDevices())
-				d->insertChatRoomParticipantDevice(participantId, d->insertSipAddress(device->getAddress().asString()),
-				                                   device->getName());
+				d->insertChatRoomParticipantDevice(
+				    participantId, d->insertSipAddress(device->getAddress()->asStringUriOnly()), device->getName());
 		}
 
 		tr.commit();
@@ -4755,9 +4773,8 @@ void MainDb::migrateBasicToClientGroupChatRoom(const shared_ptr<AbstractChatRoom
 #endif
 }
 
-IdentityAddress
-MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress(const shared_ptr<AbstractChatRoom> &chatRoom,
-                                                                const IdentityAddress &presentParticipantAddr) {
+std::shared_ptr<Address> MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress(
+    const shared_ptr<AbstractChatRoom> &chatRoom, const std::shared_ptr<Address> &presentParticipantAddr) {
 #ifdef HAVE_DB_STORAGE
 	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
@@ -4781,32 +4798,34 @@ MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress(const shared_ptr
 		                                     " AND participant_b_sip_address_id = participant_b_sip_address.id",
 		    soci::into(participantASipAddress), soci::into(participantBSipAddress), soci::use(chatRoomId);
 
-		string presentParticipantAddress(presentParticipantAddr.asString());
+		string presentParticipantAddress(presentParticipantAddr->asStringUriOnly());
 		if (presentParticipantAddress == participantASipAddress) missingParticipantAddress = participantBSipAddress;
 		else if (presentParticipantAddress == participantBSipAddress)
 			missingParticipantAddress = participantASipAddress;
 
-		return IdentityAddress(missingParticipantAddress);
+		auto missingParticipant = Address::create(missingParticipantAddress);
+		return missingParticipant;
 	};
 #else
-	return IdentityAddress();
+	return nullptr;
 #endif
 }
 
-ConferenceAddress MainDb::findOneToOneConferenceChatRoomAddress(const IdentityAddress &participantA,
-                                                                const IdentityAddress &participantB,
-                                                                bool encrypted) const {
+std::shared_ptr<Address> MainDb::findOneToOneConferenceChatRoomAddress(const std::shared_ptr<Address> &participantA,
+                                                                       const std::shared_ptr<Address> &participantB,
+                                                                       bool encrypted) const {
 #ifdef HAVE_DB_STORAGE
 	return L_DB_TRANSACTION {
 		L_D();
 
-		const long long &participantASipAddressId = d->selectSipAddressId(participantA.asString());
-		const long long &participantBSipAddressId = d->selectSipAddressId(participantB.asString());
-		if (participantASipAddressId == -1 || participantBSipAddressId == -1) return ConferenceAddress();
+		std::shared_ptr<Address> address = nullptr;
+		const long long &participantASipAddressId = d->selectSipAddressId(participantA->asStringUriOnly());
+		const long long &participantBSipAddressId = d->selectSipAddressId(participantB->asStringUriOnly());
+		if (participantASipAddressId == -1 || participantBSipAddressId == -1) return address;
 
 		const long long &chatRoomId =
 		    d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
-		if (chatRoomId == -1) return ConferenceAddress();
+		if (chatRoomId == -1) return address;
 
 		string chatRoomAddress;
 		*d->dbSession.getBackendSession()
@@ -4815,10 +4834,11 @@ ConferenceAddress MainDb::findOneToOneConferenceChatRoomAddress(const IdentityAd
 		       " WHERE chat_room.id = :chatRoomId AND peer_sip_address_id = sip_address.id",
 		    soci::use(chatRoomId), soci::into(chatRoomAddress);
 
-		return ConferenceAddress(chatRoomAddress);
+		address = Address::create(chatRoomAddress);
+		return address;
 	};
 #else
-	return ConferenceAddress();
+	return nullptr;
 #endif
 }
 
@@ -4832,8 +4852,9 @@ void MainDb::insertOneToOneConferenceChatRoom(const shared_ptr<AbstractChatRoom>
 
 		const list<shared_ptr<Participant>> &participants = chatRoom->getParticipants();
 		const long long &participantASipAddressId =
-		    d->selectSipAddressId(participants.front()->getAddress().asString());
-		const long long &participantBSipAddressId = d->selectSipAddressId(participants.back()->getAddress().asString());
+		    d->selectSipAddressId(participants.front()->getAddress()->asStringUriOnly());
+		const long long &participantBSipAddressId =
+		    d->selectSipAddressId(participants.back()->getAddress()->asStringUriOnly());
 		L_ASSERT(participantASipAddressId != -1);
 		L_ASSERT(participantBSipAddressId != -1);
 
@@ -4881,9 +4902,10 @@ void MainDb::updateChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 			const long long &participantSipAddressId =
-			    d->selectSipAddressId(device->getParticipant()->getAddress().asString());
+			    d->selectSipAddressId(device->getParticipant()->getAddress()->asStringUriOnly());
 			const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
-			const long long &participantSipDeviceAddressId = d->selectSipAddressId(device->getAddress().asString());
+			const long long &participantSipDeviceAddressId =
+			    d->selectSipAddressId(device->getAddress()->asStringUriOnly());
 			unsigned int state = static_cast<unsigned int>(device->getState());
 			*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name"
 			                                     " WHERE chat_room_participant_id = :participantId AND "
@@ -4898,12 +4920,12 @@ void MainDb::updateChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 }
 
 void MainDb::deleteChatRoomParticipant(const std::shared_ptr<AbstractChatRoom> &chatRoom,
-                                       const IdentityAddress &participant) {
+                                       const std::shared_ptr<Address> &participant) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 	if (isInitialized()) {
 		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
-		const long long &participantSipAddressId = d->selectSipAddressId(participant.asString());
+		const long long &participantSipAddressId = d->selectSipAddressId(participant->asStringUriOnly());
 		d->deleteChatRoomParticipant(dbChatRoomId, participantSipAddressId);
 	}
 #endif
@@ -4916,7 +4938,7 @@ void MainDb::deleteChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 	if (isInitialized()) {
 		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 		const long long &participantSipAddressId =
-		    d->selectSipAddressId(device->getParticipant()->getAddress().asString());
+		    d->selectSipAddressId(device->getParticipant()->getAddress()->asStringUriOnly());
 		const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
 		d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
 	}
@@ -5004,16 +5026,16 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceIn
 #endif
 }
 
-std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const ConferenceAddress &uri) const {
+std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shared_ptr<Address> &uri) const {
 #ifdef HAVE_DB_STORAGE
-	if (isInitialized()) {
+	if (isInitialized() && uri) {
 		string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
 		               " start_time, duration, subject, description, state, ics_sequence, ics_uid"
 		               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"
 		               "  AND uri_sip_address.value = '" +
-		               uri.asString() + "'";
+		               uri->asStringUriOnly() + "'";
 
 		return L_DB_TRANSACTION {
 			L_D();
@@ -5058,7 +5080,7 @@ void MainDb::deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &confere
 		L_DB_TRANSACTION {
 			L_D();
 
-			const long long &uriSipAddressId = d->selectSipAddressId(conferenceInfo->getUri().asString());
+			const long long &uriSipAddressId = d->selectSipAddressId(conferenceInfo->getUri()->asStringUriOnly());
 			const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
 
 			*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId",
@@ -5184,7 +5206,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(int limit) {
 #endif
 }
 
-std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const ConferenceAddress &address, int limit) {
+std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const std::shared_ptr<Address> &address, int limit) {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
 	               "to_sip_address.value, to_sip_address.display_name,"
@@ -5194,10 +5216,10 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const ConferenceAddre
 	               " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
 	               "conference_call.to_sip_address_id = to_sip_address.id"
 	               "  AND (from_sip_address.value LIKE '%%" +
-	               address.asString() +
+	               address->asStringUriOnly() +
 	               "%%'"
 	               "  OR to_sip_address.value LIKE '%%" +
-	               address.asString() +
+	               address->asStringUriOnly() +
 	               "%%')"
 	               " ORDER BY conference_call.id DESC";
 
@@ -5228,7 +5250,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const ConferenceAddre
 }
 
 std::list<std::shared_ptr<CallLog>>
-MainDb::getCallHistory(const ConferenceAddress &peer, const ConferenceAddress &local, int limit) {
+MainDb::getCallHistory(const std::shared_ptr<Address> &peer, const std::shared_ptr<Address> &local, int limit) {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
 	               "to_sip_address.value, to_sip_address.display_name,"
@@ -5238,10 +5260,10 @@ MainDb::getCallHistory(const ConferenceAddress &peer, const ConferenceAddress &l
 	               " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
 	               "conference_call.to_sip_address_id = to_sip_address.id"
 	               "  AND ((from_sip_address.value LIKE '%%" +
-	               local.asString() + "%%' AND to_sip_address.value LIKE '%%" + peer.asString() +
+	               local->asStringUriOnly() + "%%' AND to_sip_address.value LIKE '%%" + peer->asStringUriOnly() +
 	               "%%' AND direction = 0) OR"
 	               "  (from_sip_address.value LIKE '%%" +
-	               peer.asString() + "%%' AND to_sip_address.value LIKE '%%" + local.asString() +
+	               peer->asStringUriOnly() + "%%' AND to_sip_address.value LIKE '%%" + local->asStringUriOnly() +
 	               "%%' AND DIRECTION = 1))"
 	               " ORDER BY conference_call.id DESC";
 

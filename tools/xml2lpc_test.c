@@ -23,7 +23,6 @@
 #include "bctoolbox/defs.h"
 
 #include "xml2lpc.h"
-#include <stdio.h>
 
 void cb_function(BCTBX_UNUSED(void *ctx), xml2lpc_log_level level, const char *msg, va_list list) {
 	const char *header = "";

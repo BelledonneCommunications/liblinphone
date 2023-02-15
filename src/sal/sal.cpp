@@ -23,9 +23,10 @@
 #include "bctoolbox/crypto.hh"
 #include "bctoolbox/defs.h"
 #include "bctoolbox/utils.hh"
-#include "bellesip_sal/sal_impl.h"
-#include "private.h"
 
+#include "bellesip_sal/sal_impl.h"
+
+#include "private.h"
 #include "sal/call-op.h"
 #include "sal/event-op.h"
 #include "sal/message-op.h"

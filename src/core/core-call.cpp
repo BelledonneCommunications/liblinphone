@@ -92,9 +92,9 @@ bool CorePrivate::inviteReplacesABrokenCall(SalCallOp *op) {
 	return false;
 }
 
-bool CorePrivate::isAlreadyInCallWithAddress(const Address &addr) const {
+bool CorePrivate::isAlreadyInCallWithAddress(const std::shared_ptr<Address> &addr) const {
 	for (const auto &call : calls) {
-		if (call->isOpConfigured() && call->getRemoteAddress()->weakEqual(addr)) return true;
+		if (call->isOpConfigured() && call->getRemoteAddress()->weakEqual(*addr)) return true;
 	}
 	return false;
 }
@@ -133,12 +133,12 @@ int CorePrivate::removeCall(const shared_ptr<Call> &call) {
 	L_ASSERT(call);
 	auto iter = find(calls.begin(), calls.end(), call);
 	if (iter == calls.end()) {
-		lWarning() << "Could not find the call (local address " << call->getLocalAddress().asString()
-		           << " remote address " << call->getRemoteAddress()->asString() << ") to remove";
+		lWarning() << "Could not find the call (local address " << call->getLocalAddress()->toString()
+		           << " remote address " << call->getRemoteAddress()->toString() << ") to remove";
 		return -1;
 	}
-	lInfo() << "Removing the call (local address " << call->getLocalAddress().asString() << " remote address "
-	        << (call->getRemoteAddress() ? call->getRemoteAddress()->asString() : "Unknown")
+	lInfo() << "Removing the call (local address " << call->getLocalAddress()->toString() << " remote address "
+	        << (call->getRemoteAddress() ? call->getRemoteAddress()->toString() : "Unknown")
 	        << ") from the list attached to the core";
 
 	calls.erase(iter);
@@ -221,8 +221,8 @@ bool Core::areSoundResourcesLocked() const {
 				case CallSession::State::Referred:
 				case CallSession::State::IncomingEarlyMedia:
 				case CallSession::State::Updating:
-					lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString()
-					        << " remote address " << call->getRemoteAddress()->asString()
+					lInfo() << "Call " << call << " (local address " << call->getLocalAddress()->toString()
+					        << " remote address " << call->getRemoteAddress()->toString()
 					        << ") is locking sound resources because it is state " << call->getState();
 					return true;
 				case CallSession::State::Connected:
@@ -230,8 +230,8 @@ bool Core::areSoundResourcesLocked() const {
 					return !call->getConference();
 				case CallSession::State::StreamsRunning:
 					if (call->mediaInProgress()) {
-						lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString()
-						        << " remote address " << call->getRemoteAddress()->asString()
+						lInfo() << "Call " << call << " (local address " << call->getLocalAddress()->toString()
+						        << " remote address " << call->getRemoteAddress()->toString()
 						        << ") is locking sound resources because it is state " << call->getState()
 						        << " and media is in progress";
 						return true;
@@ -245,10 +245,10 @@ bool Core::areSoundResourcesLocked() const {
 	return false;
 }
 
-shared_ptr<Call> Core::getCallByRemoteAddress(const Address &addr) const {
+shared_ptr<Call> Core::getCallByRemoteAddress(const std::shared_ptr<Address> &addr) const {
 	L_D();
 	for (const auto &call : d->calls) {
-		if (call->getRemoteAddress()->weakEqual(addr)) return call;
+		if (call->getRemoteAddress()->weakEqual(*addr)) return call;
 	}
 	return nullptr;
 }
@@ -340,6 +340,7 @@ LinphoneStatus Core::terminateAllCalls() {
 void Core::reportConferenceCallEvent(EventLog::Type type,
                                      std::shared_ptr<CallLog> &callLog,
                                      std::shared_ptr<ConferenceInfo> confInfo) {
+	std::shared_ptr<Address> to = callLog->getToAddress() ? callLog->getToAddress() : nullptr;
 	// TODO: This is a workaround that has to be removed ASAP
 #ifdef HAVE_DB_STORAGE
 	L_D();
@@ -348,9 +349,7 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 
 	if (confInfo == nullptr) {
 		// Let's see if we have a conference info in db with the corresponding URI
-		confInfo = callLog->wasConference() ? callLog->getConferenceInfo()
-		                                    : d->mainDb->getConferenceInfoFromURI(ConferenceAddress(
-		                                          *L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())));
+		confInfo = callLog->wasConference() ? callLog->getConferenceInfo() : d->mainDb->getConferenceInfoFromURI(to);
 	}
 #endif
 
@@ -358,38 +357,33 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 	// that have been merged in a conference. In fact, in such a scenario, the client that merges calls to put them in a
 	// conference will call the conference factory or the audio video conference factory directly but still its call
 	// must be added to the call logs
-	if (!confInfo) {
+	if (!confInfo && to) {
 		// Do not add calls made to the conference factory in the history
-		LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), callLog->getToAddress());
+		LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), to->toC());
+		std::shared_ptr<Address> from = callLog->getFromAddress() ? callLog->getFromAddress() : nullptr;
 		if (account) {
 			string conferenceFactoryUri = Account::toCpp(account)->getAccountParams()->getConferenceFactoryUri();
 			if (!conferenceFactoryUri.empty()) {
-				LinphoneAddress *conference_factory_addr = linphone_address_new(conferenceFactoryUri.c_str());
-				if (conference_factory_addr) {
-					if (linphone_address_weak_equal(callLog->getToAddress(), conference_factory_addr)) {
-						linphone_address_unref(conference_factory_addr);
-						return;
-					}
-					linphone_address_unref(conference_factory_addr);
+				std::shared_ptr<Address> conferenceFactory = Address::create(conferenceFactoryUri);
+				if (to->weakEqual(*conferenceFactory)) {
+					return;
 				}
 			}
 			// Do not add calls made to the audio/video conference factory in the history either
-			const LinphoneAddress *audioVideoConferenceFactoryAddress =
+			const auto &audioVideoConferenceFactoryAddress =
 			    Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 			if (audioVideoConferenceFactoryAddress != nullptr) {
-				if (linphone_address_weak_equal(callLog->getToAddress(), audioVideoConferenceFactoryAddress)) {
+				if (to->weakEqual(*audioVideoConferenceFactoryAddress)) {
 					return;
 				}
 			}
 		}
 
 		// For PushIncomingState call, from and to address are unknow.
-		const char *usernameFrom =
-		    callLog->getFromAddress() ? linphone_address_get_username(callLog->getFromAddress()) : nullptr;
-		const char *usernameTo =
-		    callLog->getToAddress() ? linphone_address_get_username(callLog->getToAddress()) : nullptr;
-		if ((usernameFrom && (strstr(usernameFrom, "chatroom-") == usernameFrom)) ||
-		    (usernameTo && (strstr(usernameTo, "chatroom-") == usernameTo)))
+		const std::string usernameFrom = from ? from->getUsername() : std::string();
+		const std::string usernameTo = to ? to->getUsername() : std::string();
+		if ((!usernameFrom.empty() && (usernameFrom.find("chatroom-") != std::string::npos)) ||
+		    (!usernameTo.empty() && (usernameTo.find("chatroom-") != std::string::npos)))
 			return;
 	}
 	// End of workaround
@@ -436,8 +430,11 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-void Core::reportEarlyCallFailed(
-    LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const std::string callId) {
+void Core::reportEarlyCallFailed(LinphoneCallDir dir,
+                                 const std::shared_ptr<Address> &from,
+                                 const std::shared_ptr<Address> &to,
+                                 LinphoneErrorInfo *ei,
+                                 const std::string callId) {
 	auto callLog = CallLog::create(getSharedFromThis(), dir, from, to);
 	callLog->setErrorInfo(ei);
 	callLog->setStatus(LinphoneCallEarlyAborted);

@@ -18,13 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "magic-search-p.h"
-#include "search-async-data.h"
+#include <algorithm>
 
 #include "bctoolbox/defs.h"
 #include <bctoolbox/list.h>
-
-#include <algorithm>
 
 #include "../ldap/ldap.h"
 #include "c-wrapper/c-wrapper.h"
@@ -33,7 +30,9 @@
 #include "linphone/types.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
+#include "magic-search-p.h"
 #include "private.h"
+#include "search-async-data.h"
 
 //#include "linphone/belle-sip/object.h"
 

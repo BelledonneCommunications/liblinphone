@@ -34,7 +34,7 @@ public:
 	virtual ~IsComposingListener() = default;
 
 	virtual void onIsComposingStateChanged(bool isComposing) = 0;
-	virtual void onIsRemoteComposingStateChanged(const Address &remoteAddr, bool isComposing) = 0;
+	virtual void onIsRemoteComposingStateChanged(const std::shared_ptr<Address> &remoteAddr, bool isComposing) = 0;
 	virtual void onIsComposingRefreshNeeded() = 0;
 };
 

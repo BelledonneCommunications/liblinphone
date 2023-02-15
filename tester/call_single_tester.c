@@ -22,13 +22,14 @@
 #include <sys/types.h>
 
 #include "bctoolbox/defs.h"
+
+#include "belle-sip/sipstack.h"
+
+#include "mediastreamer2/msutils.h"
+
 #include "liblinphone_tester.h"
-
-#include <bctoolbox/defs.h>
-
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
-#include "mediastreamer2/msutils.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
 
@@ -676,7 +677,9 @@ static void call_outbound_with_multiple_proxy(void) {
 	if (!BC_ASSERT_PTR_NOT_NULL(lpc) || !BC_ASSERT_PTR_NOT_NULL(registered_lpc)) return;
 
 	// create new LPC that will successfully register
-	linphone_proxy_config_set_identity_address(registered_lpc, linphone_proxy_config_get_identity_address(lpc));
+	LinphoneAddress *identity_address = linphone_address_clone(linphone_proxy_config_get_identity_address(lpc));
+	linphone_proxy_config_set_identity_address(registered_lpc, identity_address);
+	linphone_address_unref(identity_address);
 	linphone_proxy_config_set_server_addr(registered_lpc, linphone_proxy_config_get_addr(lpc));
 	linphone_proxy_config_set_route(registered_lpc, linphone_proxy_config_get_route(lpc));
 	linphone_proxy_config_enable_register(registered_lpc, TRUE);
@@ -721,7 +724,7 @@ static void call_outbound_using_different_proxies(void) {
 		call_count++;
 		if (BC_ASSERT_PTR_NOT_NULL(caller)) {
 			wait_for_until(marie->lc, pauline->lc, NULL, 5, 500);
-			const LinphoneCallParams *callerParameters = linphone_call_get_current_params(caller);
+			const LinphoneCallParams *callerParameters = linphone_call_get_params(caller);
 			if (BC_ASSERT_PTR_NOT_NULL(callerParameters)) {
 				const LinphoneProxyConfig *callerProxyConfig = linphone_call_params_get_proxy_config(callerParameters);
 				if (BC_ASSERT_PTR_NOT_NULL(callerProxyConfig)) {
@@ -2658,7 +2661,6 @@ static void call_callee_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *
                                                      LinphoneCall *call,
                                                      LinphoneCallState cstate,
                                                      BCTBX_UNUSED(const char *message)) {
-
 	const char *value;
 	if (cstate == LinphoneCallOutgoingInit) {
 		LinphoneCallParams *params = linphone_call_params_copy(linphone_call_get_params(call));

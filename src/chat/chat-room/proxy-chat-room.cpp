@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "basic-to-client-group-chat-room.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat-room-p.h"
@@ -60,12 +62,12 @@ const ConferenceId &ProxyChatRoom::getConferenceId() const {
 	return d->chatRoom->getConferenceId();
 }
 
-const IdentityAddress &ProxyChatRoom::getPeerAddress() const {
+const std::shared_ptr<Address> &ProxyChatRoom::getPeerAddress() const {
 	L_D();
 	return d->chatRoom->getPeerAddress();
 }
 
-const IdentityAddress &ProxyChatRoom::getLocalAddress() const {
+const std::shared_ptr<Address> &ProxyChatRoom::getLocalAddress() const {
 	L_D();
 	return d->chatRoom->getLocalAddress();
 }
@@ -193,7 +195,7 @@ bool ProxyChatRoom::isRemoteComposing() const {
 	return d->chatRoom->isRemoteComposing();
 }
 
-list<IdentityAddress> ProxyChatRoom::getComposingAddresses() const {
+list<std::shared_ptr<Address>> ProxyChatRoom::getComposingAddresses() const {
 	L_D();
 	return d->chatRoom->getComposingAddresses();
 }
@@ -288,16 +290,16 @@ bool ProxyChatRoom::ephemeralSupportedByAllParticipants() const {
 
 // -----------------------------------------------------------------------------
 
-const ConferenceAddress &ProxyChatRoom::getConferenceAddress() const {
+const std::shared_ptr<Address> &ProxyChatRoom::getConferenceAddress() const {
 	L_D();
 	return d->chatRoom->getConferenceAddress();
 }
 
 // -----------------------------------------------------------------------------
-void ProxyChatRoom::allowCpim(bool) {
+void ProxyChatRoom::allowCpim(BCTBX_UNUSED(bool value)) {
 }
 
-void ProxyChatRoom::allowMultipart(bool) {
+void ProxyChatRoom::allowMultipart(BCTBX_UNUSED(bool value)) {
 }
 
 bool ProxyChatRoom::canHandleCpim() const {
@@ -315,12 +317,12 @@ bool ProxyChatRoom::addParticipant(std::shared_ptr<Call> call) {
 	return d->chatRoom->addParticipant(call);
 }
 
-bool ProxyChatRoom::addParticipant(const IdentityAddress &participantAddress) {
+bool ProxyChatRoom::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	L_D();
 	return d->chatRoom->addParticipant(participantAddress);
 }
 
-bool ProxyChatRoom::addParticipants(const list<IdentityAddress> &addresses) {
+bool ProxyChatRoom::addParticipants(const list<std::shared_ptr<Address>> &addresses) {
 	L_D();
 	return d->chatRoom->addParticipants(addresses);
 }
@@ -335,7 +337,7 @@ bool ProxyChatRoom::removeParticipants(const list<shared_ptr<Participant>> &part
 	return d->chatRoom->removeParticipants(participants);
 }
 
-shared_ptr<Participant> ProxyChatRoom::findParticipant(const IdentityAddress &participantAddress) const {
+shared_ptr<Participant> ProxyChatRoom::findParticipant(const std::shared_ptr<Address> &participantAddress) const {
 	L_D();
 	return d->chatRoom->findParticipant(participantAddress);
 }
@@ -384,7 +386,7 @@ void ProxyChatRoom::join() {
 	d->chatRoom->join();
 }
 
-void ProxyChatRoom::join(const IdentityAddress &participantAddress) {
+void ProxyChatRoom::join(const std::shared_ptr<Address> &participantAddress) {
 	L_D();
 	d->chatRoom->join(participantAddress);
 }

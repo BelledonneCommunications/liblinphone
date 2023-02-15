@@ -32,7 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceSecurityEventPrivate : public ConferenceEventPrivate {
 public:
 	ConferenceSecurityEvent::SecurityEventType securityEventType;
-	IdentityAddress faultyDevice;
+	std::shared_ptr<Address> faultyDevice;
 };
 
 // -----------------------------------------------------------------------------
@@ -40,7 +40,7 @@ public:
 ConferenceSecurityEvent::ConferenceSecurityEvent(time_t creationTime,
                                                  const ConferenceId &conferenceId,
                                                  SecurityEventType securityEventType,
-                                                 const IdentityAddress &faultyDevice)
+                                                 const std::shared_ptr<Address> &faultyDevice)
     : ConferenceEvent(*new ConferenceSecurityEventPrivate, Type::ConferenceSecurityEvent, creationTime, conferenceId) {
 	L_D();
 	d->securityEventType = securityEventType;
@@ -60,7 +60,7 @@ ConferenceSecurityEvent::SecurityEventType ConferenceSecurityEvent::getSecurityE
 	return d->securityEventType;
 }
 
-const IdentityAddress &ConferenceSecurityEvent::getFaultyDeviceAddress() const {
+const std::shared_ptr<Address> &ConferenceSecurityEvent::getFaultyDeviceAddress() const {
 	L_D();
 	return d->faultyDevice;
 }

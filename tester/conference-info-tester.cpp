@@ -37,12 +37,13 @@ using namespace LinphonePrivate;
 static void get_conference_info_from_call_log() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
+	const shared_ptr<Address> from = Address::toCpp(marie->identity)->getSharedFromThis();
+	const shared_ptr<Address> to =
+	    Address::create("sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0");
+
 	// Create a fake call log
-	auto callLog = CallLog::create(
-	    L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallIncoming,
-	    linphone_address_clone(marie->identity),
-	    linphone_address_new(
-	        "sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0"));
+	auto callLog =
+	    CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallIncoming, from, to);
 
 	callLog->setDuration(120);
 	callLog->setStatus(LinphoneCallSuccess);
@@ -52,14 +53,14 @@ static void get_conference_info_from_call_log() {
 	// Create a conference info
 	auto conferenceInfo = ConferenceInfo::create();
 
-	conferenceInfo->setOrganizer(IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(marie->identity)));
-	conferenceInfo->setUri(ConferenceAddress(
-	    "sip:video-conf-test@sip.linphone.org;gr=60610d90-d695-0009-b3a1-331c5842bae0;conf-id=K4lHv"));
+	conferenceInfo->setOrganizer(Address::toCpp(marie->identity)->getSharedFromThis());
+	conferenceInfo->setUri(
+	    Address::create("sip:video-conf-test@sip.linphone.org;gr=60610d90-d695-0009-b3a1-331c5842bae0;conf-id=K4lHv"));
 	conferenceInfo->setDateTime(std::time(nullptr));
 	conferenceInfo->setDuration(30);
 	conferenceInfo->setSubject("Test de vidéo conférence");
 	conferenceInfo->setDescription("Réunion pour parler de la vidéo conférence.");
-	conferenceInfo->addParticipant(IdentityAddress("sip:laure@sip.linphone.org"));
+	conferenceInfo->addParticipant(Address::create("sip:laure@sip.linphone.org"));
 
 	L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, callLog,
 	                                                                  conferenceInfo);
@@ -73,12 +74,12 @@ static void get_conference_info_from_call_log() {
 static void get_existing_conference_info_from_call_log() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
+	const shared_ptr<Address> from = Address::toCpp(marie->identity)->getSharedFromThis();
+	const shared_ptr<Address> to =
+	    Address::create("sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0");
 	// Create a fake call log
-	auto callLog = CallLog::create(
-	    L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallIncoming,
-	    linphone_address_clone(marie->identity),
-	    linphone_address_new(
-	        "sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0"));
+	auto callLog =
+	    CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallIncoming, from, to);
 
 	callLog->setDuration(120);
 	callLog->setStatus(LinphoneCallSuccess);
@@ -88,14 +89,14 @@ static void get_existing_conference_info_from_call_log() {
 	// Create a conference info
 	auto conferenceInfo = ConferenceInfo::create();
 
-	conferenceInfo->setOrganizer(IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(marie->identity)));
-	conferenceInfo->setUri(ConferenceAddress(
-	    "sip:video-conf-test@sip.linphone.org;gr=60610d90-d695-0009-b3a1-331c5842bae0;conf-id=K4lHv"));
+	conferenceInfo->setOrganizer(Address::toCpp(marie->identity)->getSharedFromThis());
+	conferenceInfo->setUri(
+	    Address::create("sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0"));
 	conferenceInfo->setDateTime(std::time(nullptr));
 	conferenceInfo->setDuration(30);
 	conferenceInfo->setSubject("Test de vidéo conférence");
 	conferenceInfo->setDescription("Réunion pour parler de la vidéo conférence.");
-	conferenceInfo->addParticipant(IdentityAddress("sip:laure@sip.linphone.org"));
+	conferenceInfo->addParticipant(Address::create("sip:laure@sip.linphone.org"));
 
 	// First insert the conference info into DB
 	L_GET_PRIVATE_FROM_C_OBJECT(marie->lc)->mainDb->insertConferenceInfo(conferenceInfo);
@@ -112,12 +113,13 @@ static void get_existing_conference_info_from_call_log() {
 
 static void last_outgoing_call_without_conference() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneAddress *paulineAddr = linphone_address_new("sip:pauline@sip.linphone.org");
-	linphone_address_set_display_name(paulineAddr, "PauPau");
 
+	const shared_ptr<Address> from = Address::toCpp(marie->identity)->getSharedFromThis();
+	const shared_ptr<Address> to = Address::create("sip:pauline@sip.linphone.org");
+	to->setDisplayName("PauPau");
 	// Create a fake call log
-	auto callLog = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallOutgoing,
-	                               linphone_address_clone(marie->identity), linphone_address_clone(paulineAddr));
+	auto callLog =
+	    CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallOutgoing, from, to);
 
 	callLog->setDuration(60);
 	callLog->setStatus(LinphoneCallSuccess);
@@ -132,12 +134,11 @@ static void last_outgoing_call_without_conference() {
 	BC_ASSERT_STRING_EQUAL("PauPau", linphone_address_get_display_name(linphone_call_log_get_to_address(log)));
 	linphone_call_log_unref(log);
 
+	const shared_ptr<Address> to2 =
+	    Address::create("sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0");
 	// Create a new fake call log to a conference
-	callLog = CallLog::create(
-	    L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallOutgoing,
-	    linphone_address_clone(marie->identity),
-	    linphone_address_new(
-	        "sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0"));
+	callLog =
+	    CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(), LinphoneCallOutgoing, from, to2);
 
 	callLog->setDuration(120);
 	callLog->setStatus(LinphoneCallSuccess);
@@ -147,14 +148,14 @@ static void last_outgoing_call_without_conference() {
 	// Create a conference info
 	auto conferenceInfo = ConferenceInfo::create();
 
-	conferenceInfo->setOrganizer(IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(marie->identity)));
-	conferenceInfo->setUri(ConferenceAddress(
-	    "sip:video-conf-test@sip.linphone.org;gr=60610d90-d695-0009-b3a1-331c5842bae0;conf-id=K4lHv"));
+	conferenceInfo->setOrganizer(Address::toCpp(marie->identity)->getSharedFromThis());
+	conferenceInfo->setUri(
+	    Address::create("sip:video-conf-test@sip.linphone.org;gr=60610d90-d695-0009-b3a1-331c5842bae0;conf-id=K4lHv"));
 	conferenceInfo->setDateTime(std::time(nullptr));
 	conferenceInfo->setDuration(30);
 	conferenceInfo->setSubject("Test de vidéo conférence");
 	conferenceInfo->setDescription("Réunion pour parler de la vidéo conférence.");
-	conferenceInfo->addParticipant(IdentityAddress("sip:laure@sip.linphone.org"));
+	conferenceInfo->addParticipant(Address::create("sip:laure@sip.linphone.org"));
 
 	// Report the call event without specifying the conference info
 	L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, callLog,
@@ -164,10 +165,9 @@ static void last_outgoing_call_without_conference() {
 
 	BC_ASSERT_PTR_NOT_NULL(lastCall);
 	if (lastCall != nullptr) {
-		BC_ASSERT_TRUE(linphone_address_equal(lastCall->getToAddress(), paulineAddr));
+		BC_ASSERT_TRUE(*lastCall->getToAddress() == *to);
 	}
 
-	linphone_address_unref(paulineAddr);
 	linphone_core_manager_destroy(marie);
 }
 

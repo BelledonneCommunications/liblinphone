@@ -35,11 +35,14 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-CallLog::CallLog(shared_ptr<Core> core, LinphoneCallDir direction, LinphoneAddress *from, LinphoneAddress *to)
+CallLog::CallLog(shared_ptr<Core> core,
+                 LinphoneCallDir direction,
+                 const std::shared_ptr<Address> &from,
+                 const std::shared_ptr<Address> &to)
     : CoreAccessor(core) {
 	mDirection = direction;
-	mFrom = from;
-	mTo = to;
+	setFromAddress(from);
+	setToAddress(to);
 
 	mStartTime = std::time(nullptr);
 	mStartDate = Utils::getTimeAsString("%c", mStartTime);
@@ -50,8 +53,6 @@ CallLog::CallLog(shared_ptr<Core> core, LinphoneCallDir direction, LinphoneAddre
 }
 
 CallLog::~CallLog() {
-	if (mFrom != nullptr) linphone_address_unref(mFrom);
-	if (mTo != nullptr) linphone_address_unref(mTo);
 	if (mReporting.reports[LINPHONE_CALL_STATS_AUDIO] != nullptr)
 		linphone_reporting_destroy(mReporting.reports[LINPHONE_CALL_STATS_AUDIO]);
 	if (mReporting.reports[LINPHONE_CALL_STATS_VIDEO] != nullptr)
@@ -87,22 +88,20 @@ void CallLog::setQuality(float quality) {
 	mQuality = quality;
 }
 
-const LinphoneAddress *CallLog::getFromAddress() const {
+const std::shared_ptr<Address> &CallLog::getFromAddress() const {
 	return mFrom;
 }
 
-void CallLog::setFromAddress(LinphoneAddress *address) {
-	if (mFrom) linphone_address_unref(mFrom);
-	mFrom = address;
+void CallLog::setFromAddress(const std::shared_ptr<Address> &address) {
+	mFrom = address->clone()->toSharedPtr();
 }
 
-const LinphoneAddress *CallLog::getToAddress() const {
+const std::shared_ptr<Address> &CallLog::getToAddress() const {
 	return mTo;
 }
 
-void CallLog::setToAddress(LinphoneAddress *address) {
-	if (mTo) linphone_address_unref(mTo);
-	mTo = address;
+void CallLog::setToAddress(const std::shared_ptr<Address> &address) {
+	mTo = address->clone()->toSharedPtr();
 }
 
 const string &CallLog::getCallId() const {
@@ -167,17 +166,15 @@ void CallLog::setErrorInfo(LinphoneErrorInfo *errorInfo) {
 	mErrorInfo = errorInfo;
 }
 
-const LinphoneAddress *CallLog::getRemoteAddress() const {
+const std::shared_ptr<Address> &CallLog::getRemoteAddress() const {
 	return (mDirection == LinphoneCallIncoming) ? mFrom : mTo;
 }
 
-void CallLog::setRemoteAddress(const LinphoneAddress *remoteAddress) {
+void CallLog::setRemoteAddress(const std::shared_ptr<Address> &remoteAddress) {
 	if (mDirection == LinphoneCallIncoming) {
-		if (mFrom) linphone_address_unref(mFrom);
-		mFrom = linphone_address_clone(remoteAddress);
+		setFromAddress(remoteAddress);
 	} else {
-		if (mTo) linphone_address_unref(mTo);
-		mTo = linphone_address_clone(remoteAddress);
+		setToAddress(remoteAddress);
 	}
 }
 
@@ -189,7 +186,7 @@ void CallLog::setUserData(void *userData) {
 	mUserData = userData;
 }
 
-const LinphoneAddress *CallLog::getLocalAddress() const {
+const std::shared_ptr<Address> &CallLog::getLocalAddress() const {
 	return (mDirection == LinphoneCallIncoming) ? mTo : mFrom;
 }
 
@@ -229,13 +226,7 @@ string CallLog::toString() const {
 	os << (mDirection == LinphoneCallIncoming ? "Incoming call" : "Outgoing call") << " with call-id: " << mCallId
 	   << " at " << mStartDate << "\n";
 
-	char *from = linphone_address_as_string(mFrom);
-	char *to = linphone_address_as_string(mTo);
-
-	os << "From: " << from << "\nTo: " << to << "\n";
-
-	bctbx_free(from);
-	bctbx_free(to);
+	os << "From: " << *mFrom << "\nTo: " << *mTo << "\n";
 
 	string status;
 	switch (mStatus) {

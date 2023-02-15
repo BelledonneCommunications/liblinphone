@@ -61,6 +61,7 @@ public:
 	/* Used to temporarily override the audio output device. */
 	void setOutputDevice(const std::shared_ptr<CallSession> &session, const std::shared_ptr<AudioDevice> &audioDevice);
 	std::shared_ptr<AudioDevice> getOutputDevice(const std::shared_ptr<CallSession> &session) const;
+
 	/* Request the tone manager to immediately abandon any sound card usage. All running rings or tones are dropped. */
 	void freeAudioResources();
 

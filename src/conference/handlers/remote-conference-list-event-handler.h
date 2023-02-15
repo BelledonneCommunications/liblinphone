@@ -49,9 +49,9 @@ public:
 	~RemoteConferenceListEventHandler();
 
 	void subscribe() override;
-	void subscribe(LinphoneAccount *c_account);
+	void subscribe(const std::shared_ptr<Account> &account);
 	void unsubscribe() override;
-	void unsubscribe(LinphoneAccount *c_account);
+	void unsubscribe(const std::shared_ptr<Account> &account);
 	void invalidateSubscription() override;
 	void notifyReceived(std::string from, const Content *notifyContent);
 	void addHandler(RemoteConferenceEventHandler *handler);
@@ -65,7 +65,7 @@ private:
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
 	std::list<std::shared_ptr<EventSubscribe>> levs;
 
-	std::map<std::string, IdentityAddress> parseRlmi(const std::string &xmlBody) const;
+	std::map<std::string, std::shared_ptr<Address>> parseRlmi(const std::string &xmlBody) const;
 
 	// CoreListener
 	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;

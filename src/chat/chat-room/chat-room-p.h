@@ -90,17 +90,17 @@ public:
 	void notifyAggregatedChatMessages() override;
 	void notifyMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage);
 	void notifyChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override;
-	void notifyIsComposingReceived(const Address &remoteAddress, bool isComposing);
+	void notifyIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, bool isComposing);
 	void notifyStateChanged();
 	void notifyUndecryptableChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) override;
 	void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void onImdnReceived(const std::shared_ptr<ChatMessage> &chatMessage);
-	void onIsComposingReceived(const Address &remoteAddress, const std::string &text);
+	void onIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, const std::string &text);
 	void onIsComposingRefreshNeeded() override;
 	void onIsComposingStateChanged(bool isComposing) override;
-	void onIsRemoteComposingStateChanged(const Address &remoteAddress, bool isComposing) override;
+	void onIsRemoteComposingStateChanged(const std::shared_ptr<Address> &remoteAddress, bool isComposing) override;
 
 	void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) override;
 	void setCallId(const std::string &value) override {
@@ -113,7 +113,7 @@ public:
 
 	LinphoneChatRoom *getCChatRoom() const;
 
-	std::list<IdentityAddress> remoteIsComposing;
+	std::list<std::shared_ptr<Address>> remoteIsComposing;
 	std::list<std::shared_ptr<EventLog>> transientEvents;
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 	std::list<std::shared_ptr<ChatMessage>> aggregatedMessages;

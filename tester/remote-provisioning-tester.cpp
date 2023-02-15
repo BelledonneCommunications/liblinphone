@@ -20,11 +20,11 @@
 
 #include "bctoolbox/defs.h"
 
+#include "c-wrapper/c-wrapper.h"
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
-#include "tester_utils.h"
-
 #include "private_functions.h"
+#include "tester_utils.h"
 
 #ifdef HAVE_FLEXIAPI
 #include "linphone/FlexiAPIClient.hh"

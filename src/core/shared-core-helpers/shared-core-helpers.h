@@ -22,6 +22,7 @@
 
 #include "core/core-accessor.h"
 #include "core/core.h"
+#include "linphone/types.h"
 #include "linphone/utils/general.h"
 #include "push-notification-message/push-notification-message.h"
 
@@ -34,6 +35,10 @@ typedef enum {
 	executorCoreStopping, // A Main Core needs to start. Executor Cores have to stop.
 	executorCoreStopped   // A Main Core has stopped the Executor Cores. Only a Main Core can start here.
 } SharedCoreState;
+
+class Core;
+class ChatRoom;
+class PushNotificationMessage;
 
 /**
  * This interface aims at abstracting some features offered by the platform, most often mobile platforms.

@@ -22,6 +22,7 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "call/audio-device/audio-device.h"
+#include "linphone/api/c-recorder-params.h"
 #include "recorder/recorder-params.h"
 
 // =============================================================================

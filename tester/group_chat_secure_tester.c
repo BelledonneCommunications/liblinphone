@@ -2993,7 +2993,6 @@ static void group_chat_lime_x3dh_call_security_alert_curve(const int curveId) {
 	}
 
 end:
-
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);

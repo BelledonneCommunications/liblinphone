@@ -69,8 +69,8 @@ bool BasicChatRoom::canHandleCpim() const {
 	bool cpimAllowedInBasicChatRooms = false;
 
 	LinphoneCore *lc = getCore()->getCCore();
-	Address addr(conferenceId.getLocalAddress().asAddress());
-	LinphoneAccount *account = linphone_core_lookup_account_by_identity(lc, L_GET_C_BACK_PTR(&addr));
+	auto addr = conferenceId.getLocalAddress();
+	LinphoneAccount *account = linphone_core_lookup_account_by_identity(lc, addr->toC());
 	if (account) {
 		const LinphoneAccountParams *params = linphone_account_get_params(account);
 		cpimAllowedInBasicChatRooms = linphone_account_params_cpim_in_basic_chat_room_enabled(params);
@@ -100,9 +100,9 @@ bool BasicChatRoom::isReadOnly() const {
 	return false;
 }
 
-const ConferenceAddress &BasicChatRoom::getConferenceAddress() const {
+const std::shared_ptr<Address> &BasicChatRoom::getConferenceAddress() const {
 	lError() << "a BasicChatRoom does not have a conference address";
-	return Utils::getEmptyConstRefObject<ConferenceAddress>();
+	return Utils::getEmptyConstRefObject<std::shared_ptr<Address>>();
 }
 
 bool BasicChatRoom::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
@@ -110,27 +110,28 @@ bool BasicChatRoom::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
 	return false;
 }
 
-bool BasicChatRoom::addParticipant(BCTBX_UNUSED(const IdentityAddress &participantAddress)) {
+bool BasicChatRoom::addParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::addParticipants(BCTBX_UNUSED(const list<IdentityAddress> &addresses)) {
+bool BasicChatRoom::addParticipants(BCTBX_UNUSED(const list<std::shared_ptr<Address>> &addresses)) {
 	lError() << "addParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::removeParticipant(BCTBX_UNUSED(const shared_ptr<Participant> &participantAddress)) {
+bool BasicChatRoom::removeParticipant(BCTBX_UNUSED(const shared_ptr<Participant> &participant)) {
 	lError() << "removeParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::removeParticipants(BCTBX_UNUSED(const list<shared_ptr<Participant>> &participantAddress)) {
+bool BasicChatRoom::removeParticipants(BCTBX_UNUSED(const list<shared_ptr<Participant>> &participant)) {
 	lError() << "removeParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-shared_ptr<Participant> BasicChatRoom::findParticipant(const IdentityAddress &) const {
+shared_ptr<Participant>
+BasicChatRoom::findParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) const {
 	lError() << "findParticipant() is not allowed on a BasicChatRoom";
 	return nullptr;
 }
@@ -178,7 +179,7 @@ void BasicChatRoom::join() {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 
-void BasicChatRoom::join(BCTBX_UNUSED(const IdentityAddress &participantAddress)) {
+void BasicChatRoom::join(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 

@@ -21,7 +21,7 @@
 #ifndef _L_CONFERENCE_ID_H_
 #define _L_CONFERENCE_ID_H_
 
-#include "address/identity-address.h"
+#include "address/address.h"
 
 // =============================================================================
 
@@ -30,7 +30,8 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC ConferenceId {
 public:
 	ConferenceId();
-	ConferenceId(const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress);
+	ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<const Address> &localAddress);
+	ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<Address> &localAddress);
 	ConferenceId(const ConferenceId &other);
 
 	virtual ~ConferenceId() = default;
@@ -46,18 +47,25 @@ public:
 
 	bool operator<(const ConferenceId &other) const;
 
-	const ConferenceAddress &getPeerAddress() const;
-	const ConferenceAddress &getLocalAddress() const;
+	const std::shared_ptr<Address> &getPeerAddress() const;
+	const std::shared_ptr<Address> &getLocalAddress() const;
+
+	void setPeerAddress(const std::shared_ptr<Address> &addr);
+	void setLocalAddress(const std::shared_ptr<Address> &addr);
 
 	bool isValid() const;
 
 private:
-	ConferenceAddress peerAddress;
-	ConferenceAddress localAddress;
+	std::shared_ptr<Address> peerAddress;
+	std::shared_ptr<Address> localAddress;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const ConferenceId &conferenceId) {
-	os << "ConferenceId(peer=" << conferenceId.getPeerAddress() << ", local=" << conferenceId.getLocalAddress() << ")";
+	auto peerAddress =
+	    (conferenceId.getPeerAddress()) ? conferenceId.getPeerAddress()->asStringUriOnly() : std::string("<undefined>");
+	auto localAddress = (conferenceId.getLocalAddress()) ? conferenceId.getLocalAddress()->asStringUriOnly()
+	                                                     : std::string("<undefined>");
+	os << "ConferenceId(peer=" << peerAddress << ", local=" << localAddress << ")";
 	return os;
 }
 
@@ -68,8 +76,9 @@ namespace std {
 template <>
 struct hash<LinphonePrivate::ConferenceId> {
 	std::size_t operator()(const LinphonePrivate::ConferenceId &conferenceId) const {
-		return hash<string>()(conferenceId.getPeerAddress().asString()) ^
-		       (hash<string>()(conferenceId.getLocalAddress().asString()) << 1);
+		const auto peerAddress = conferenceId.getPeerAddress() ? conferenceId.getPeerAddress()->asString() : "sip:";
+		const auto localAddress = conferenceId.getLocalAddress() ? conferenceId.getLocalAddress()->asString() : "sip:";
+		return hash<string>()(peerAddress) ^ (hash<string>()(localAddress) << 1);
 	}
 };
 } // namespace std

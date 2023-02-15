@@ -98,12 +98,12 @@ void MS2AudioStream::configure(BCTBX_UNUSED(const OfferAnswerContext &params)) {
 }
 
 void MS2AudioStream::initZrtp() {
-	auto peerAddr = *(getMediaSession().getRemoteAddress());
-	auto selfAddr = getMediaSession().getLocalAddress();
-	peerAddr.clean();
-	selfAddr.clean();
-	char *peerUri = bctbx_strdup(peerAddr.asStringUriOnly().c_str());
-	char *selfUri = bctbx_strdup(selfAddr.asStringUriOnly().c_str());
+	auto peerAddr = getMediaSession().getRemoteAddress()->clone()->toSharedPtr();
+	auto selfAddr = getMediaSession().getLocalAddress()->clone()->toSharedPtr();
+	peerAddr->clean();
+	selfAddr->clean();
+	char *peerUri = bctbx_strdup(peerAddr->asStringUriOnly().c_str());
+	char *selfUri = bctbx_strdup(selfAddr->asStringUriOnly().c_str());
 
 	MSZrtpParams zrtpParams;
 	zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(getCCore());

@@ -139,7 +139,7 @@ linphone_proxy_config_address_equal(const LinphoneAddress *a, const LinphoneAddr
 LINPHONE_PUBLIC MediaStream *linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
 LINPHONE_PUBLIC VideoStream *linphone_core_get_preview_stream(LinphoneCore *call);
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
-LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_get_dest_proxy(const LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneAccount *linphone_call_get_dest_account(const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_audio_starts(const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_audio_stops(const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_video_starts(const LinphoneCall *call);
@@ -284,6 +284,8 @@ LINPHONE_PUBLIC void linphone_conference_info_set_uri(LinphoneConferenceInfo *co
 LINPHONE_PUBLIC bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant);
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_static(const LinphoneConferenceParams *params);
 
+LINPHONE_PUBLIC char *sal_get_random_token_lowercase(int size);
+
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);
 LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op(const LinphoneProxyConfig *cfg);
@@ -294,7 +296,6 @@ LINPHONE_PUBLIC void sal_uninit(Sal *sal);
 
 LINPHONE_PUBLIC int sal_create_uuid(Sal *ctx, char *uuid, size_t len);
 LINPHONE_PUBLIC char *sal_get_random_token(int size);
-LINPHONE_PUBLIC char *sal_get_random_token_lowercase(int size);
 LINPHONE_PUBLIC void sal_set_uuid(Sal *ctx, const char *uuid);
 
 LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal *h, SalOpSDPHandling handling_method);

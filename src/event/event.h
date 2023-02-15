@@ -67,13 +67,15 @@ public:
 
 	const std::string &getName() const;
 
-	const LinphoneAddress *getFrom() const;
-	void setFrom(const LinphoneAddress *fromAddress);
+	const std::shared_ptr<Address> getFrom() const;
+	void setFrom(const std::shared_ptr<Address> &fromAddress);
 
-	const LinphoneAddress *getTo() const;
-	void setTo(const LinphoneAddress *toAddress);
+	const std::shared_ptr<Address> getTo() const;
+	void setTo(const std::shared_ptr<Address> &toAddress);
 
-	const LinphoneAddress *getResource() const;
+	const std::shared_ptr<Address> getRemoteContact() const;
+
+	const std::shared_ptr<Address> getResource() const;
 
 	LinphonePrivate::SalEventOp *getOp() const;
 	void setManualRefresherMode(bool manual);
@@ -91,12 +93,12 @@ public:
 	virtual void terminate() = 0;
 
 protected:
-	const LinphoneAddress *cacheFrom() const;
-	const LinphoneAddress *cacheTo() const;
+	const std::shared_ptr<Address> cacheFrom() const;
+	const std::shared_ptr<Address> cacheTo() const;
 
-	mutable LinphoneAddress *mFromAddress = nullptr;
-	mutable LinphoneAddress *mToAddress = nullptr;
-	mutable LinphoneAddress *mRemoteContactAddress = nullptr;
+	mutable std::shared_ptr<Address> mFromAddress = nullptr;
+	mutable std::shared_ptr<Address> mToAddress = nullptr;
+	mutable std::shared_ptr<Address> mRemoteContactAddress = nullptr;
 	LinphonePrivate::SalEventOp *mOp = nullptr;
 	SalCustomHeader *mSendCustomHeaders = nullptr;
 

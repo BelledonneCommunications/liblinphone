@@ -119,7 +119,7 @@ bool ChatMessagePrivate::isMarkedAsRead() const {
 	return markedAsRead;
 }
 
-void ChatMessagePrivate::setParticipantState(const IdentityAddress &participantAddress,
+void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &participantAddress,
                                              ChatMessage::State newState,
                                              time_t stateChangeTime) {
 	L_Q();
@@ -138,7 +138,7 @@ void ChatMessagePrivate::setParticipantState(const IdentityAddress &participantA
 
 	if (!isValidStateTransition(currentState, newState)) return;
 
-	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving participant '" << participantAddress.asString()
+	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving participant '" << participantAddress->toString()
 	        << "' state to " << Utils::toString(newState);
 	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
 
@@ -146,7 +146,7 @@ void ChatMessagePrivate::setParticipantState(const IdentityAddress &participantA
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
 	auto me = q->getChatRoom()->getMe();
 	auto participant =
-	    participantAddress == me->getAddress() ? me : q->getChatRoom()->findParticipant(participantAddress);
+	    (*participantAddress == *me->getAddress()) ? me : q->getChatRoom()->findParticipant(participantAddress);
 	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
 	const LinphoneParticipantImdnState *c_state = _linphone_participant_imdn_state_from_cpp_obj(imdnState);
 
@@ -186,11 +186,13 @@ void ChatMessagePrivate::setParticipantState(const IdentityAddress &participantA
 		}
 	}
 
-	if (nbNotDeliveredStates > 0) setState(ChatMessage::State::NotDelivered);
-	else if (nbDisplayedStates == states.size()) {
+	if (nbNotDeliveredStates > 0) {
+		setState(ChatMessage::State::NotDelivered);
+	} else if ((states.size() > 0) && (nbDisplayedStates == states.size())) {
 		setState(ChatMessage::State::Displayed);
-	} else if ((nbDisplayedStates + nbDeliveredToUserStates) == states.size())
+	} else if ((states.size() > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == states.size())) {
 		setState(ChatMessage::State::DeliveredToUser);
+	}
 
 	// When we already marked an incoming message as displayed, start ephemeral countdown when all other recipients have
 	// displayed it as well
@@ -750,8 +752,8 @@ LinphoneReason ChatMessagePrivate::receive() {
 	// In plain text group chat rooms the sender authentication is disabled
 	if (!(q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
 		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
-			ConferenceAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
-			setAuthenticatedFromAddress(sipFromAddress);
+			const auto &sipFromAddress = q->getSharedFromThis()->getFromAddress();
+			setAuthenticatedFromAddress(*sipFromAddress);
 		} else {
 			lInfo() << "Sender authentication disabled for clear text group chat";
 			senderAuthenticationEnabled = false;
@@ -826,7 +828,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference &&
-	    chatRoom->getLocalAddress().asAddress().weakEqual(fromAddress.asAddress())) {
+	    chatRoom->getLocalAddress()->weakEqual(*fromAddress)) {
 		setDirection(ChatMessage::Direction::Outgoing);
 	}
 
@@ -1053,8 +1055,10 @@ void ChatMessagePrivate::send() {
 	}
 
 	shared_ptr<Core> core = q->getCore();
+	const auto toAddr = toAddress->toC();
+	const auto fromAddr = fromAddress->toC();
 	if (linphone_config_get_int(core->getCCore()->config, "sip", "chat_use_call_dialogs", 0) != 0) {
-		lcall = linphone_core_get_call_by_remote_address(core->getCCore(), toAddress.asString().c_str());
+		lcall = linphone_core_get_call_by_remote_address2(core->getCCore(), toAddr);
 		if (lcall) {
 			shared_ptr<Call> call = LinphonePrivate::Call::toCpp(lcall)->getSharedFromThis();
 			if ((call->getState() == CallSession::State::Connected) ||
@@ -1066,33 +1070,26 @@ void ChatMessagePrivate::send() {
 				string identity =
 				    linphone_core_find_best_identity(core->getCCore(), linphone_call_get_remote_address(lcall));
 				if (identity.empty()) {
-					LinphoneAddress *addr = linphone_address_new(toAddress.asString().c_str());
-					LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(core->getCCore(), addr);
+					LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(core->getCCore(), toAddr);
 					if (proxy) {
-						identity =
-						    L_GET_CPP_PTR_FROM_C_OBJECT(linphone_proxy_config_get_identity_address(proxy))->asString();
+						identity = Address::toCpp(linphone_proxy_config_get_identity_address(proxy))->toString();
 					} else {
 						identity = linphone_core_get_primary_contact(core->getCCore());
 					}
-					linphone_address_unref(addr);
 				}
 			}
 		}
 	}
 
 	if (!op) {
-		LinphoneAddress *peer = linphone_address_new(toAddress.asString().c_str());
-		LinphoneAddress *local = linphone_address_new(fromAddress.asString().c_str());
 		/* Sending out of call */
 		salOp = op = new SalMessageOp(core->getCCore()->sal.get());
-		linphone_configure_op_2(core->getCCore(), op, local, peer, getSalCustomHeaders(),
+		linphone_configure_op_2(core->getCCore(), op, fromAddr, toAddr, getSalCustomHeaders(),
 		                        !!linphone_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0));
 		op->setUserPointer(q); /* If out of call, directly store msg */
-		linphone_address_unref(local);
-		linphone_address_unref(peer);
 	}
-	op->setFrom(fromAddress.asString().c_str());
-	op->setTo(toAddress.asString().c_str());
+	op->setFromAddress(fromAddress->getImpl());
+	op->setToAddress(toAddress->getImpl());
 
 	// ---------------------------------------
 	// Start of message modification
@@ -1420,7 +1417,7 @@ void ChatMessagePrivate::setForwardInfo(const string &fInfo) {
 	forwardInfo = fInfo;
 }
 
-void ChatMessagePrivate::setReplyToMessageIdAndSenderAddress(const string &id, const IdentityAddress &sender) {
+void ChatMessagePrivate::setReplyToMessageIdAndSenderAddress(const string &id, const std::shared_ptr<Address> &sender) {
 	replyingToMessageId = id;
 	replyingToMessageSender = sender;
 }
@@ -1435,7 +1432,7 @@ const string &ChatMessage::getReplyToMessageId() const {
 	return d->replyingToMessageId;
 }
 
-const IdentityAddress &ChatMessage::getReplyToSenderAddress() const {
+const std::shared_ptr<Address> &ChatMessage::getReplyToSenderAddress() const {
 	L_D();
 	return d->replyingToMessageSender;
 }
@@ -1468,28 +1465,28 @@ bool ChatMessage::isRead() const {
 	return d->markedAsRead || d->state == State::Displayed;
 }
 
-const IdentityAddress &ChatMessage::getAuthenticatedFromAddress() const {
+const Address &ChatMessage::getAuthenticatedFromAddress() const {
 	L_D();
 	return d->authenticatedFromAddress;
 }
 
-const ConferenceAddress &ChatMessage::getFromAddress() const {
+const std::shared_ptr<Address> &ChatMessage::getFromAddress() const {
 	L_D();
 	return d->fromAddress;
 }
 
-const ConferenceAddress &ChatMessage::getToAddress() const {
+const std::shared_ptr<Address> &ChatMessage::getToAddress() const {
 	L_D();
 	return d->toAddress;
 }
 
-const ConferenceAddress &ChatMessage::getLocalAddress() const {
+const std::shared_ptr<Address> &ChatMessage::getLocalAddress() const {
 	L_D();
 	if (getDirection() == Direction::Outgoing) return d->fromAddress;
 	else return d->toAddress;
 }
 
-const IdentityAddress &ChatMessage::getRecipientAddress() const {
+const std::shared_ptr<Address> &ChatMessage::getRecipientAddress() const {
 	L_D();
 	return d->recipientAddress;
 }

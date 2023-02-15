@@ -52,14 +52,15 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 // Removes own address and existing participants from the list.
 // Also removes gruu from kept addresses
-list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList(const list<IdentityAddress> &addresses) const {
+list<std::shared_ptr<Address>>
+ClientGroupChatRoomPrivate::cleanAddressesList(const list<std::shared_ptr<Address>> &addresses) const {
 	L_Q();
-	list<IdentityAddress> cleanedList(addresses);
+	list<std::shared_ptr<Address>> cleanedList(addresses);
 
-	cleanedList.sort();
-	cleanedList.unique();
+	cleanedList.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
+	cleanedList.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
 	for (auto it = cleanedList.begin(); it != cleanedList.end();) {
-		if (q->findParticipant(*it) || (q->getMe()->getAddress() == *it)) {
+		if (q->findParticipant(*it) || (*q->getMe()->getAddress() == **it)) {
 			it = cleanedList.erase(it);
 		} else {
 			it++;
@@ -68,7 +69,7 @@ list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList(const list<
 	return cleanedList;
 }
 
-shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo(Address sessionTo) {
+shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo(std::shared_ptr<Address> sessionTo) {
 	L_Q();
 
 	CallSessionParams csp;
@@ -84,8 +85,7 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo(Address sess
 
 	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
 	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
-	Address meCleanedAddress(q->getMe()->getAddress().asAddress());
-	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
+	std::shared_ptr<Address> meCleanedAddress = Address::create(q->getMe()->getAddress()->getUriWithoutGruu());
 
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, sessionTo);
 	session->initiateOutgoing();
@@ -96,9 +96,10 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo(Address sess
 
 shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession() {
 	L_Q();
-	const ConferenceAddress &peerAddress(q->getConferenceId().getPeerAddress());
+	const std::shared_ptr<Address> &peerAddress(q->getConferenceId().getPeerAddress());
 	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
-	const Address sessionTo = peerAddress.isValid() ? peerAddress.asAddress() : focus->getAddress().asAddress();
+	const std::shared_ptr<Address> sessionTo =
+	    (peerAddress && peerAddress->isValid()) ? peerAddress : focus->getAddress();
 	return createSessionTo(sessionTo);
 }
 
@@ -148,27 +149,27 @@ void ClientGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 	auto focusSession = focus->getSession();
 	bool previousSession = (focusSession != nullptr);
 
+	auto from = Address::create(op->getFrom());
+	auto to = Address::create(op->getTo());
 	shared_ptr<AbstractChatRoom> exhumedChatRoom =
-	    q->getCore()->getPrivate()->findExumedChatRoomFromPreviousConferenceId(
-	        ConferenceId(ConferenceAddress(Address(op->getFrom())), ConferenceAddress(Address(op->getTo()))));
+	    q->getCore()->getPrivate()->findExumedChatRoomFromPreviousConferenceId(ConferenceId(from, to));
 
 	if (previousSession && !exhumedChatRoom) {
 		// Prevents leak
 		auto focusOp = focusSession->getPrivate()->getOp();
-		lInfo() << "Releasing focus session " << focusSession << " (from: " << Address(focusOp->getFrom()) << " to "
-		        << Address(focusOp->getTo()) << ")";
+		lInfo() << "Releasing focus session " << focusSession << " (from: " << *from << " to " << *to << ")";
 		focusOp->terminate();
 		focusOp->release();
 	}
 
 	auto session = focus->createSession(*q->getConference().get(), nullptr, false, this);
-	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
+	session->configure(LinphoneCallIncoming, nullptr, op, from, to);
 	session->startIncomingNotification(false);
 
 	bool found = false;
 	for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
 		ConferenceId confId = static_cast<ConferenceId>(*it);
-		if (confId.getPeerAddress() == op->getRemoteContact()) {
+		if (*confId.getPeerAddress() == Address(op->getRemoteContact())) {
 			found = true;
 			break;
 		}
@@ -178,7 +179,7 @@ void ClientGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 	if (!previousSession && !found) {
 		q->setState(ConferenceInterface::State::CreationPending);
 		// Handle participants addition
-		list<IdentityAddress> identAddresses = Utils::parseResourceLists(op->getRemoteBody());
+		list<std::shared_ptr<Address>> identAddresses = Utils::parseResourceLists(op->getRemoteBody());
 		for (const auto &addr : identAddresses) {
 			auto participant = q->findParticipant(addr);
 			if (!participant) {
@@ -268,9 +269,9 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
 			auto migration = needToMigrate();
 			if (localExhumePending) {
-				onLocallyExhumedConference(*session->getRemoteContactAddress());
+				onLocallyExhumedConference(session->getRemoteContactAddress());
 			} else {
-				onChatRoomCreated(*session->getRemoteContactAddress());
+				onChatRoomCreated(session->getRemoteContactAddress());
 			}
 
 			if (!migration.first) {
@@ -292,12 +293,11 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 			           << "] received a BYE with reason: " << linphone_error_info_get_protocol_code(errorInfo)
 			           << ", not leaving it.";
 		} else {
-			const auto &remoteAddress = session->getRemoteAddress();
-			ConferenceAddress remoteConferenceAddress = ConferenceAddress(*remoteAddress);
+			const auto &remoteConferenceAddress = session->getRemoteAddress();
 			bool found = false;
 			for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
 				ConferenceId confId = static_cast<ConferenceId>(*it);
-				if (confId.getPeerAddress() == remoteConferenceAddress) {
+				if (*confId.getPeerAddress() == *remoteConferenceAddress) {
 					lInfo() << "Found previous chat room conference ID [" << confId
 					        << "] for chat room with current ID [" << q->getConferenceId() << "]";
 					removeConferenceIdFromPreviousList(confId);
@@ -353,12 +353,11 @@ void ClientGroupChatRoomPrivate::addPendingMessage(const std::shared_ptr<ChatMes
 	pendingCreationMessages.push_back(chatMessage);
 }
 
-void ClientGroupChatRoomPrivate::onChatRoomCreated(const Address &remoteContact) {
+void ClientGroupChatRoomPrivate::onChatRoomCreated(const std::shared_ptr<Address> &remoteContact) {
 	L_Q();
 
-	ConferenceAddress addr(remoteContact);
-	q->onConferenceCreated(addr);
-	if (remoteContact.hasParam("isfocus")) {
+	q->onConferenceCreated(remoteContact);
+	if (remoteContact->hasParam("isfocus")) {
 		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
 			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
 		} else {
@@ -378,7 +377,7 @@ void ClientGroupChatRoomPrivate::acceptSession(const shared_ptr<CallSession> &se
 // =============================================================================
 
 ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
-                                         const IdentityAddress &focus,
+                                         const std::shared_ptr<Address> &focus,
                                          const ConferenceId &conferenceId,
                                          const string &subject,
                                          const Content &content,
@@ -419,17 +418,12 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
 
 ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
                                          const string &factoryUri,
-                                         const IdentityAddress &me,
+                                         const std::shared_ptr<const Address> &me,
                                          const string &subject,
                                          CapabilitiesMask capabilities,
                                          const std::shared_ptr<ChatRoomParams> &params)
-    : ClientGroupChatRoom(core,
-                          IdentityAddress(factoryUri),
-                          ConferenceId(ConferenceAddress(), me),
-                          subject,
-                          Content(),
-                          capabilities,
-                          params) {
+    : ClientGroupChatRoom(
+          core, Address::create(factoryUri), ConferenceId(nullptr, me), subject, Content(), capabilities, params) {
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
@@ -457,7 +451,7 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
 	    std::make_shared<RemoteConferenceEventHandler>(getConference().get(), this);
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this),
 	                                                         [](BCTBX_UNUSED(ConferenceListenerInterface * p)) {}));
-	const ConferenceAddress &peerAddress = conferenceId.getPeerAddress();
+	const std::shared_ptr<Address> &peerAddress = conferenceId.getPeerAddress();
 	static_pointer_cast<RemoteConference>(getConference())->focus =
 	    Participant::create(getConference().get(), peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(peerAddress);
@@ -514,14 +508,14 @@ void ClientGroupChatRoom::setConferenceId(const ConferenceId &conferenceId) {
 		shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 		if (session) {
 			shared_ptr<CallLog> sessionLog = session->getLog();
-			if (conferenceId.getPeerAddress().isValid()) {
+			if (conferenceId.getPeerAddress()->isValid()) {
 				// Use the peer address of the conference ID because it has also the conf-id param hence the To field
 				// can be used to search in the map of chat rooms
-				sessionLog->setToAddress(linphone_address_new(conferenceId.getPeerAddress().asString().c_str()));
+				sessionLog->setToAddress(conferenceId.getPeerAddress());
 			} else {
 				// If the conference ID peer address is not valid, use the address of the focus
 				shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(getConference())->focus;
-				sessionLog->setToAddress(linphone_address_new(focus->getAddress().asString().c_str()));
+				sessionLog->setToAddress(focus->getAddress());
 			}
 		}
 	}
@@ -588,13 +582,13 @@ ClientGroupChatRoom::getSecurityLevelExcept(const std::shared_ptr<ParticipantDev
 	std::list<std::string> allDevices{};
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-			allDevices.push_back(device->getAddress().asString());
+			allDevices.push_back(device->getAddress()->asStringUriOnly());
 		}
 	}
 	if (ignoredDevice != nullptr) {
-		allDevices.remove(ignoredDevice->getAddress().asString());
+		allDevices.remove(ignoredDevice->getAddress()->asStringUriOnly());
 	}
-	allDevices.remove(getLocalAddress().asString()); // remove local device from the list
+	allDevices.remove(getLocalAddress()->asStringUriOnly()); // remove local device from the list
 
 	if (allDevices.empty()) {
 		return AbstractChatRoom::SecurityLevel::Safe;
@@ -616,7 +610,7 @@ bool ClientGroupChatRoom::isReadOnly() const {
 	return getState() != State::Created;
 }
 
-const ConferenceAddress &ClientGroupChatRoom::getConferenceAddress() const {
+const std::shared_ptr<Address> &ClientGroupChatRoom::getConferenceAddress() const {
 	return getConference()->getConferenceAddress();
 }
 
@@ -660,13 +654,12 @@ int ClientGroupChatRoom::getHistorySize() const {
 	                                                 MainDb::Filter::ConferenceInfoNoDeviceFilter}));
 }
 
-bool ClientGroupChatRoom::addParticipant(const IdentityAddress &participantAddress) {
-	list<IdentityAddress> addressesList({participantAddress});
-
+bool ClientGroupChatRoom::addParticipant(const std::shared_ptr<Address> &participantAddress) {
+	list<std::shared_ptr<Address>> addressesList({participantAddress});
 	return addParticipants(addressesList);
 }
 
-bool ClientGroupChatRoom::addParticipants(const list<IdentityAddress> &addresses) {
+bool ClientGroupChatRoom::addParticipants(const list<std::shared_ptr<Address>> &addresses) {
 	L_D();
 	if ((getState() != ConferenceInterface::State::Instantiated) &&
 	    (getState() != ConferenceInterface::State::Created)) {
@@ -674,7 +667,7 @@ bool ClientGroupChatRoom::addParticipants(const list<IdentityAddress> &addresses
 		return false;
 	}
 
-	list<IdentityAddress> addressesList = d->cleanAddressesList(addresses);
+	list<std::shared_ptr<Address>> addressesList = d->cleanAddressesList(addresses);
 	if (addressesList.empty()) {
 		lError() << "No participants given.";
 		return false;
@@ -691,19 +684,20 @@ bool ClientGroupChatRoom::addParticipants(const list<IdentityAddress> &addresses
 		setState(ConferenceInterface::State::CreationPending);
 	} else {
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal.get());
-		LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
+		LinphoneAddress *lAddr = getConferenceAddress()->toC();
 		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, true);
 		for (const auto &addr : addresses) {
-			Address referToAddr = addr.asAddress();
+			Address referToAddr(*addr);
 			referToAddr.setParam("text");
-			referOp->sendRefer(referToAddr.getInternalAddress());
+			referOp->sendRefer(referToAddr.getImpl());
 		}
 		referOp->unref();
 	}
 	return true;
 }
 
-void ClientGroupChatRoom::sendInvite(std::shared_ptr<CallSession> &session, const list<IdentityAddress> &addressList) {
+void ClientGroupChatRoom::sendInvite(std::shared_ptr<CallSession> &session,
+                                     const list<std::shared_ptr<Address>> &addressList) {
 	Content content;
 	content.setBodyFromUtf8(Utils::getResourceLists(addressList));
 	content.setContentType(ContentType::ResourceLists);
@@ -719,18 +713,18 @@ bool ClientGroupChatRoom::removeParticipant(const shared_ptr<Participant> &parti
 
 	// TODO handle one-to-one case ?
 	SalReferOp *referOp = new SalReferOp(cCore->sal.get());
-	LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
+	LinphoneAddress *lAddr = getConferenceAddress()->toC();
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
-	Address referToAddr = participant->getAddress().asAddress();
+	Address referToAddr(*participant->getAddress());
 	referToAddr.setParam("text");
 	referToAddr.setUriParam("method", "BYE");
-	referOp->sendRefer(referToAddr.getInternalAddress());
+	referOp->sendRefer(referToAddr.getImpl());
 	referOp->unref();
 
 	return true;
 }
 
-shared_ptr<Participant> ClientGroupChatRoom::findParticipant(const IdentityAddress &addr) const {
+shared_ptr<Participant> ClientGroupChatRoom::findParticipant(const std::shared_ptr<Address> &addr) const {
 	return getConference()->findParticipant(addr);
 }
 
@@ -761,12 +755,12 @@ void ClientGroupChatRoom::setParticipantAdminStatus(const shared_ptr<Participant
 	LinphoneCore *cCore = getCore()->getCCore();
 
 	SalReferOp *referOp = new SalReferOp(cCore->sal.get());
-	LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
+	LinphoneAddress *lAddr = getConferenceAddress()->toC();
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
-	Address referToAddr = participant->getAddress().asAddress();
+	Address referToAddr(*participant->getAddress());
 	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
-	referOp->sendRefer(referToAddr.getInternalAddress());
+	referOp->sendRefer(referToAddr.getImpl());
 	referOp->unref();
 }
 
@@ -840,13 +834,13 @@ void ClientGroupChatRoom::exhume() {
 		return;
 	}
 
-	const IdentityAddress &remoteParticipant = getParticipants().front()->getAddress();
+	const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
 	lInfo() << "Exhuming chat room [" << conference->getConferenceId() << "] with participant [" << remoteParticipant
 	        << "]";
 	d->localExhumePending = true;
 
 	Content content;
-	list<IdentityAddress> addresses;
+	list<std::shared_ptr<Address>> addresses;
 	addresses.push_front(remoteParticipant);
 	content.setBodyFromUtf8(Utils::getResourceLists(addresses));
 	content.setContentType(ContentType::ResourceLists);
@@ -856,7 +850,7 @@ void ClientGroupChatRoom::exhume() {
 	}
 
 	string conferenceFactoryUri = Core::getConferenceFactoryUri(getCore(), getConferenceId().getLocalAddress());
-	Address conferenceFactoryAddress = Address(conferenceFactoryUri);
+	std::shared_ptr<Address> conferenceFactoryAddress = Address::create(conferenceFactoryUri);
 	auto session = d->createSessionTo(conferenceFactoryAddress);
 	session->startInvite(nullptr, getUtf8Subject(), &content);
 	setState(ConferenceInterface::State::CreationPending);
@@ -891,7 +885,7 @@ void ClientGroupChatRoomPrivate::onExhumedConference(const ConferenceId &oldConf
 	L_Q();
 
 	const auto &conference = q->getConference();
-	const ConferenceAddress &addr = newConfId.getPeerAddress();
+	const std::shared_ptr<Address> &addr = newConfId.getPeerAddress();
 
 	conference->setConferenceAddress(addr);
 	static_pointer_cast<RemoteConference>(conference)->confParams->setConferenceAddress(addr);
@@ -904,7 +898,7 @@ void ClientGroupChatRoomPrivate::onExhumedConference(const ConferenceId &oldConf
 }
 
 // Will be called on A when A is sending a message into a chat room with B previously terminated by B
-void ClientGroupChatRoomPrivate::onLocallyExhumedConference(const Address &remoteContact) {
+void ClientGroupChatRoomPrivate::onLocallyExhumedConference(const std::shared_ptr<Address> &remoteContact) {
 	L_Q();
 
 	const auto &conference = q->getConference();
@@ -940,7 +934,7 @@ void ClientGroupChatRoomPrivate::onRemotelyExhumedConference(SalCallOp *op) {
 
 	const auto &conference = q->getConference();
 	ConferenceId oldConfId = conference->getConferenceId();
-	ConferenceId newConfId = ConferenceId(op->getRemoteContact(), oldConfId.getLocalAddress());
+	ConferenceId newConfId = ConferenceId(Address::create(op->getRemoteContact()), oldConfId.getLocalAddress());
 
 	if (q->getState() != ChatRoom::State::Terminated) {
 		lWarning() << "Conference is being exhumed but wasn't terminated first!";
@@ -983,8 +977,7 @@ void ClientGroupChatRoomPrivate::removeConferenceIdFromPreviousList(const Confer
 }
 
 // -----------------------------------------------------------------------------
-
-void ClientGroupChatRoom::onConferenceCreated(const ConferenceAddress &addr) {
+void ClientGroupChatRoom::onConferenceCreated(const std::shared_ptr<Address> &addr) {
 	L_D();
 
 	setConferenceId(ConferenceId(addr, getConferenceId().getLocalAddress()));
@@ -1007,7 +1000,7 @@ void ClientGroupChatRoom::onConferenceKeywordsChanged(const vector<string> &keyw
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
 }
 
-void ClientGroupChatRoom::onConferenceTerminated(BCTBX_UNUSED(const IdentityAddress &addr)) {
+void ClientGroupChatRoom::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
 	L_D();
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler->unsubscribe();
@@ -1032,7 +1025,7 @@ void ClientGroupChatRoom::onConferenceTerminated(BCTBX_UNUSED(const IdentityAddr
 	}
 }
 
-void ClientGroupChatRoom::onFirstNotifyReceived(BCTBX_UNUSED(const IdentityAddress &addr)) {
+void ClientGroupChatRoom::onFirstNotifyReceived(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
 	L_D();
 
 	if (getState() != ConferenceInterface::State::Created) {
@@ -1141,8 +1134,8 @@ void ClientGroupChatRoom::onSecurityEvent(const shared_ptr<ConferenceSecurityEve
 	shared_ptr<ConferenceSecurityEvent> cleanEvent = nullptr;
 
 	// Remove faulty device if its address is invalid
-	IdentityAddress faultyDevice = event->getFaultyDeviceAddress();
-	if (!faultyDevice.isValid()) {
+	std::shared_ptr<Address> faultyDevice = event->getFaultyDeviceAddress();
+	if (!faultyDevice || !faultyDevice->isValid()) {
 		cleanEvent = make_shared<ConferenceSecurityEvent>(event->getCreationTime(), event->getConferenceId(),
 		                                                  event->getSecurityEventType());
 	}
@@ -1170,7 +1163,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded(const shared_ptr<ConferencePa
                                                    const std::shared_ptr<ParticipantDevice> &device) {
 	L_D();
 
-	const IdentityAddress &addr = event->getParticipantAddress();
+	const std::shared_ptr<Address> &addr = event->getParticipantAddress();
 	shared_ptr<Participant> participant;
 	if (getConference()->isMe(addr)) participant = getMe();
 	else participant = findParticipant(addr);
@@ -1456,7 +1449,7 @@ void ClientGroupChatRoom::sendEphemeralUpdate() {
 	} else {
 		session = d->createSession();
 
-		const IdentityAddress &remoteParticipant = getParticipants().front()->getAddress();
+		const std::shared_ptr<Address> &remoteParticipant = getParticipants().front()->getAddress();
 		lInfo() << "Re-INVITing " << remoteParticipant << " because ephemeral settings of chat room ["
 		        << conference->getConferenceId() << "] have changed";
 

@@ -62,7 +62,11 @@ using namespace LinphonePrivate;
 
 LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(const LinphoneAddress *a,
                                                                                const LinphoneAddress *b) {
-	return (LinphoneProxyConfigAddressComparisonResult)Account::compareLinphoneAddresses(a, b);
+	std::shared_ptr<Address> aAddr =
+	    a ? Address::toCpp(const_cast<LinphoneAddress *>(a))->getSharedFromThis() : nullptr;
+	std::shared_ptr<Address> bAddr =
+	    b ? Address::toCpp(const_cast<LinphoneAddress *>(b))->getSharedFromThis() : nullptr;
+	return (LinphoneProxyConfigAddressComparisonResult)Account::compareLinphoneAddresses(aAddr, bAddr);
 }
 
 LinphoneProxyConfigAddressComparisonResult
@@ -136,7 +140,7 @@ LinphoneStatus linphone_proxy_config_set_server_addr(LinphoneProxyConfig *cfg, c
 	return linphone_account_params_set_server_addr(cfg->edit, server_addr);
 }
 
-LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *cfg, const LinphoneAddress *addr) {
+LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *cfg, LinphoneAddress *addr) {
 	if (!cfg->edit) {
 		linphone_proxy_config_edit(cfg);
 	}
@@ -543,7 +547,7 @@ const char *linphone_proxy_config_get_route(const LinphoneProxyConfig *cfg) {
 
 const bctbx_list_t *linphone_proxy_config_get_routes(const LinphoneProxyConfig *cfg) {
 	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
-	return AccountParams::toCpp(params)->getRoutesString();
+	return L_GET_C_LIST_FROM_CPP_LIST(AccountParams::toCpp(params)->getRoutesString());
 }
 
 const LinphoneAddress *linphone_proxy_config_get_identity_address(const LinphoneProxyConfig *cfg) {
@@ -959,6 +963,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore *lc
 
 	LinphoneProxyConfig *cfg = belle_sip_object_new(LinphoneProxyConfig);
 	cfg->account = linphone_account_new_with_config(lc, params, cfg);
+
 	linphone_account_params_unref(params);
 	cfg->edit = NULL;
 
@@ -1010,7 +1015,8 @@ const LinphoneErrorInfo *linphone_proxy_config_get_error_info(const LinphoneProx
 }
 
 const LinphoneAddress *linphone_proxy_config_get_service_route(const LinphoneProxyConfig *cfg) {
-	return Account::toCpp(cfg->account)->getServiceRouteAddress();
+	const auto route = Account::toCpp(cfg->account)->getServiceRouteAddress();
+	return route ? route->toC() : nullptr;
 }
 
 const char *linphone_proxy_config_get_transport(const LinphoneProxyConfig *cfg) {
@@ -1093,7 +1099,7 @@ LinphoneAddress *linphone_proxy_config_get_transport_contact(LinphoneProxyConfig
 }
 
 const LinphoneAddress *_linphone_proxy_config_get_contact_without_params(const LinphoneProxyConfig *cfg) {
-	return Account::toCpp(cfg->account)->getContactAddressWithoutParams();
+	return Account::toCpp(cfg->account)->getContactAddressWithoutParams()->toC();
 }
 
 const struct _LinphoneAuthInfo *linphone_proxy_config_find_auth_info(const LinphoneProxyConfig *cfg) {

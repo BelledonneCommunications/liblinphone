@@ -215,8 +215,8 @@ private:
 	void updateBiggestDesc(std::shared_ptr<SalMediaDescription> &md);
 	void updateRemoteSessionIdAndVer();
 
-	void discoverMtu(const Address &remoteAddr);
-	void getLocalIp(const Address &remoteAddr);
+	void discoverMtu(const std::shared_ptr<Address> &remoteAddr);
+	void getLocalIp(const std::shared_ptr<Address> &remoteAddr);
 	void runStunTestsIfNeeded();
 	void selectIncomingIpVersion();
 	void selectOutgoingIpVersion();
@@ -276,7 +276,7 @@ private:
 	bool atLeastOneStreamStarted() const;
 	uint16_t getAvpfRrInterval() const;
 	unsigned int getNbActiveStreams() const;
-	void addSecurityEventInChatrooms(const IdentityAddress &faultyDevice,
+	void addSecurityEventInChatrooms(const std::shared_ptr<Address> &faultyDevice,
 	                                 ConferenceSecurityEvent::SecurityEventType securityEventType);
 	void propagateEncryptionChanged();
 

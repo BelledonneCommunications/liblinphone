@@ -35,7 +35,10 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC CallLog : public bellesip::HybridObject<LinphoneCallLog, CallLog>, public CoreAccessor {
 public:
-	CallLog(std::shared_ptr<Core> core, LinphoneCallDir direction, LinphoneAddress *from, LinphoneAddress *to);
+	CallLog(std::shared_ptr<Core> core,
+	        LinphoneCallDir direction,
+	        const std::shared_ptr<Address> &from,
+	        const std::shared_ptr<Address> &to);
 	~CallLog();
 
 	LinphoneCallDir getDirection() const;
@@ -47,11 +50,11 @@ public:
 	float getQuality() const;
 	void setQuality(float quality);
 
-	const LinphoneAddress *getFromAddress() const;
-	void setFromAddress(LinphoneAddress *address);
+	const std::shared_ptr<Address> &getFromAddress() const;
+	void setFromAddress(const std::shared_ptr<Address> &address);
 
-	const LinphoneAddress *getToAddress() const;
-	void setToAddress(LinphoneAddress *address);
+	const std::shared_ptr<Address> &getToAddress() const;
+	void setToAddress(const std::shared_ptr<Address> &address);
 
 	const std::string &getCallId() const;
 	void setCallId(const std::string &callId);
@@ -76,13 +79,13 @@ public:
 	const LinphoneErrorInfo *getErrorInfo() const;
 	void setErrorInfo(LinphoneErrorInfo *errorInfo);
 
-	const LinphoneAddress *getRemoteAddress() const;
-	void setRemoteAddress(const LinphoneAddress *remoteAddress);
+	const std::shared_ptr<Address> &getRemoteAddress() const;
+	void setRemoteAddress(const std::shared_ptr<Address> &remoteAddress);
 
 	void *getUserData() const;
 	void setUserData(void *userData);
 
-	const LinphoneAddress *getLocalAddress() const;
+	const std::shared_ptr<Address> &getLocalAddress() const;
 	const std::string &getStartTimeString() const;
 
 	LinphoneQualityReporting *getQualityReporting();
@@ -99,8 +102,8 @@ private:
 
 	LinphoneCallDir mDirection;                       /**< The direction of the call*/
 	LinphoneCallStatus mStatus = LinphoneCallAborted; /**< The status of the call*/
-	LinphoneAddress *mFrom = nullptr;                 /**<Originator of the call as a LinphoneAddress object*/
-	LinphoneAddress *mTo = nullptr;                   /**<Destination of the call as a LinphoneAddress object*/
+	std::shared_ptr<Address> mFrom = nullptr;         /**<Originator of the call as a LinphoneAddress object*/
+	std::shared_ptr<Address> mTo = nullptr;           /**<Destination of the call as a LinphoneAddress object*/
 	LinphoneQualityReporting mReporting = {};
 	LinphoneErrorInfo *mErrorInfo = nullptr;
 

@@ -52,9 +52,6 @@ Event::~Event() {
 	}
 
 	if (mSendCustomHeaders) sal_custom_header_free(mSendCustomHeaders);
-	if (mToAddress) linphone_address_unref(mToAddress);
-	if (mFromAddress) linphone_address_unref(mFromAddress);
-	if (mRemoteContactAddress) linphone_address_unref(mRemoteContactAddress);
 }
 
 LinphoneReason Event::getReason() const {
@@ -94,51 +91,47 @@ const string &Event::getName() const {
 	return mName;
 }
 
-const LinphoneAddress *Event::getFrom() const {
+const std::shared_ptr<Address> Event::getFrom() const {
 	return cacheFrom();
 }
 
-void Event::setFrom(const LinphoneAddress *fromAddress) {
-	if (mFromAddress) {
-		linphone_address_unref(mFromAddress);
-		mFromAddress = nullptr;
-	}
-	if (fromAddress) {
-		mFromAddress = linphone_address_clone(fromAddress);
-	}
+void Event::setFrom(const std::shared_ptr<Address> &fromAddress) {
+	mFromAddress = fromAddress->clone()->toSharedPtr();
 }
 
-const LinphoneAddress *Event::getTo() const {
+const std::shared_ptr<Address> Event::getTo() const {
 	return cacheTo();
 }
 
-void Event::setTo(const LinphoneAddress *toAddress) {
-	if (mToAddress) {
-		linphone_address_unref(mToAddress);
-		mToAddress = nullptr;
-	}
-	if (toAddress) {
-		mToAddress = linphone_address_clone(toAddress);
-	}
+void Event::setTo(const std::shared_ptr<Address> &toAddress) {
+	mToAddress = toAddress->clone()->toSharedPtr();
 }
 
-const LinphoneAddress *Event::getResource() const {
+const std::shared_ptr<Address> Event::getResource() const {
 	return cacheTo();
 }
 
-const LinphoneAddress *Event::cacheFrom() const {
-	if (mFromAddress) linphone_address_unref(mFromAddress);
-	char *buf = sal_address_as_string(mOp->getFromAddress());
-	mFromAddress = linphone_address_new(buf);
-	ms_free(buf);
+const std::shared_ptr<Address> Event::getRemoteContact() const {
+	if (!mRemoteContactAddress) {
+		mRemoteContactAddress = Address::create();
+	}
+	mRemoteContactAddress->setImpl(mOp->getRemoteContactAddress());
+	return mRemoteContactAddress;
+}
+
+const std::shared_ptr<Address> Event::cacheFrom() const {
+	if (!mFromAddress) {
+		mFromAddress = Address::create();
+	}
+	mFromAddress->setImpl(mOp->getFromAddress());
 	return mFromAddress;
 }
 
-const LinphoneAddress *Event::cacheTo() const {
-	if (mToAddress) linphone_address_unref(mToAddress);
-	char *buf = sal_address_as_string(mOp->getToAddress());
-	mToAddress = linphone_address_new(buf);
-	ms_free(buf);
+const std::shared_ptr<Address> Event::cacheTo() const {
+	if (!mToAddress) {
+		mToAddress = Address::create();
+	}
+	mToAddress->setImpl(mOp->getToAddress());
 	return mToAddress;
 }
 

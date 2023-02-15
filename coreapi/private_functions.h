@@ -81,7 +81,7 @@ LinphonePlayer *linphone_call_build_player(LinphoneCall *call);
 LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
-LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_get_dest_proxy(const LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneAccount *linphone_call_get_dest_account(const LinphoneCall *call);
 
 LINPHONE_PUBLIC MediaStream *linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
 LINPHONE_PUBLIC VideoStream *linphone_core_get_preview_stream(LinphoneCore *call);
@@ -220,7 +220,7 @@ void linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
 void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc);
 void _linphone_friend_list_release(LinphoneFriendList *list);
 /*get rls either from list or core if any*/
-const LinphoneAddress *_linphone_friend_list_get_rls_address(const LinphoneFriendList *list);
+LinphoneAddress *_linphone_friend_list_get_rls_address(const LinphoneFriendList *list);
 
 LINPHONE_PUBLIC void linphone_friend_invalidate_subscription(LinphoneFriend *lf);
 void linphone_friend_close_subscriptions(LinphoneFriend *lf);
@@ -437,7 +437,7 @@ void _linphone_participant_device_notify_stream_capability_changed(LinphoneParti
 void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceScheduler *conference_scheduler,
                                                         LinphoneConferenceSchedulerState state);
 void linphone_conference_scheduler_notify_invitations_sent(LinphoneConferenceScheduler *conference_scheduler,
-                                                           bctbx_list_t *failed_invites);
+                                                           const bctbx_list_t *failed_invites);
 
 LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,
                                                            LinphoneParticipantDeviceState state);
@@ -648,7 +648,7 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc,
                                                           LinphoneSubscriptionDir dir,
                                                           const char *name);
 LinphoneEvent *_linphone_core_create_publish(
-    LinphoneCore *lc, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires);
+    LinphoneCore *lc, LinphoneAccount *account, LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 void linphone_event_set_manual_refresher_mode(LinphoneEvent *lev, bool_t manual);
@@ -981,6 +981,7 @@ typedef struct _SrtpInfo SrtpInfo;
  * @return The srtp info
  */
 LINPHONE_PUBLIC const SrtpInfo *linphone_call_stats_get_srtp_info(const LinphoneCallStats *stats, bool_t is_inner);
+
 /**
  * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed ref.
  * @param core #LinphoneCore object @notnil

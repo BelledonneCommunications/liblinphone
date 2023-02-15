@@ -58,21 +58,24 @@ int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneContent *body
 }
 
 LinphoneEvent *_linphone_core_create_publish(
-    LinphoneCore *core, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires) {
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(core), Account::toCpp(account)->getSharedFromThis(), resource,
-	                         L_C_TO_STRING(event), expires))
+    LinphoneCore *core, LinphoneAccount *account, LinphoneAddress *resource, const char *event, int expires) {
+	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(core), Account::toCpp(account)->getSharedFromThis(),
+	                         Address::toCpp(resource)->getSharedFromThis(), L_C_TO_STRING(event), expires))
 	    ->toC();
 }
 
 LinphoneEvent *
-linphone_core_create_publish(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires) {
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NULL, resource, L_C_TO_STRING(event), expires))->toC();
+linphone_core_create_publish(LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires) {
+	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NULL, Address::toCpp(resource)->getSharedFromThis(),
+	                         L_C_TO_STRING(event), expires))
+	    ->toC();
 }
 
 LinphoneEvent *linphone_core_publish(
-    LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body) {
+    LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body) {
 	int err;
-	auto ev = (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), resource, L_C_TO_STRING(event), expires));
+	auto ev = (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
+	                            L_C_TO_STRING(event), expires));
 	ev->setUnrefWhenTerminated(true);
 	err = _linphone_event_send_publish(ev->toC(), body, FALSE);
 	if (err == -1) {
@@ -82,31 +85,39 @@ LinphoneEvent *linphone_core_publish(
 	return ev->toC();
 }
 
-LinphoneEvent *
-linphone_core_create_one_shot_publish(LinphoneCore *lc, const LinphoneAddress *resource, const char *event) {
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), resource, L_C_TO_STRING(event)))->toC();
+LinphoneEvent *linphone_core_create_one_shot_publish(LinphoneCore *lc, LinphoneAddress *resource, const char *event) {
+	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
+	                         L_C_TO_STRING(event)))
+	    ->toC();
 }
 
-LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, const LinphoneAddress *resource, const char *event) {
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), resource, L_C_TO_STRING(event)))->toC();
+LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, LinphoneAddress *resource, const char *event) {
+	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
+	                           L_C_TO_STRING(event)))
+	    ->toC();
 }
 
 LinphoneEvent *
-linphone_core_create_subscribe(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires) {
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), resource, L_C_TO_STRING(event), expires))->toC();
+linphone_core_create_subscribe(LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires) {
+	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
+	                           L_C_TO_STRING(event), expires))
+	    ->toC();
 }
 
 LinphoneEvent *linphone_core_subscribe(
-    LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body) {
-	auto ev = new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), resource, L_C_TO_STRING(event), expires);
+    LinphoneCore *lc, LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body) {
+	auto ev = new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
+	                             L_C_TO_STRING(event), expires);
 	ev->setUnrefWhenTerminated(true);
 	ev->send(body);
 	return ev->toC();
 }
 
 LinphoneEvent *linphone_core_create_subscribe_2(
-    LinphoneCore *lc, const LinphoneAddress *resource, LinphoneProxyConfig *cfg, const char *event, int expires) {
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), resource, cfg, L_C_TO_STRING(event), expires))->toC();
+    LinphoneCore *lc, LinphoneAddress *resource, LinphoneProxyConfig *cfg, const char *event, int expires) {
+	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(), cfg,
+	                           L_C_TO_STRING(event), expires))
+	    ->toC();
 }
 
 // =============================================================================
@@ -387,24 +398,19 @@ const char *linphone_event_get_name(const LinphoneEvent *linphone_event) {
 }
 
 const LinphoneAddress *linphone_event_get_from(const LinphoneEvent *linphone_event) {
-	return Event::toCpp(linphone_event)->getFrom();
+	return Event::toCpp(linphone_event)->getFrom()->toC();
 }
 
 const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *lev) {
-	return Event::toCpp(lev)->getTo();
+	return Event::toCpp(lev)->getTo()->toC();
 }
 
 const LinphoneAddress *linphone_event_get_resource(const LinphoneEvent *linphone_event) {
-	return Event::toCpp(linphone_event)->getResource();
+	return Event::toCpp(linphone_event)->getResource()->toC();
 }
 
 const LinphoneAddress *linphone_event_get_remote_contact(const LinphoneEvent *linphone_event) {
-	auto event_subscribe = dynamic_cast<const EventSubscribe *>(Event::toCpp(linphone_event));
-	if (!event_subscribe) {
-		log_bad_cast("linphone_event_get_remote_contact");
-		return NULL;
-	}
-	return event_subscribe->getRemoteContact();
+	return Event::toCpp(linphone_event)->getRemoteContact()->toC();
 }
 
 LinphoneCore *linphone_event_get_core(const LinphoneEvent *linphone_event) {

@@ -90,13 +90,18 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 	}
 
 	const auto &core = conf->getCore();
+	const auto &conferenceAddress = conf->getConferenceAddress();
+	const std::string conferenceAddressString =
+	    conferenceAddress ? conferenceAddress->toString() : std::string("<unknown>");
 	auto chatRoom = core->findChatRoom(getConferenceId());
 
-	ConferenceAddress entityAddress(confInfo->getEntity());
+	std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity());
+	const auto &peerAddress = getConferenceId().getPeerAddress();
 
-	if (entityAddress != getConferenceId().getPeerAddress()) {
-		lError() << "Unable to process received NOTIFY because the entity address " << entityAddress
-		         << " doesn't match the peer address " << getConferenceId().getPeerAddress();
+	if (!peerAddress || (*entityAddress != *peerAddress)) {
+		const std::string peerAddressString = peerAddress ? peerAddress->toString() : std::string("<unknown>");
+		lError() << "Unable to process received NOTIFY because the entity address " << entityAddress->toString()
+		         << " doesn't match the peer address " << peerAddressString;
 		return;
 	}
 
@@ -111,7 +116,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 	}
 
 	if (waitingFullState && !isFullState) {
-		lError() << "Unable to process received NOTIFY because conference " << conf->getConferenceAddress()
+		lError() << "Unable to process received NOTIFY because conference " << conferenceAddressString
 		         << " is waiting a full state";
 		return;
 	} else {
@@ -239,7 +244,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 	// 4. Notify changes on users.
 	for (auto &user : users->getUser()) {
-		Address address(core->interpretUrl(user.getEntity().get(), false));
+		std::shared_ptr<Address> address = core->interpretUrl(user.getEntity().get(), false);
 		StateType state = user.getState();
 
 		shared_ptr<Participant> participant = nullptr;
@@ -248,29 +253,28 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 		const auto &pIt =
 		    std::find_if(oldParticipants.cbegin(), oldParticipants.cend(), [&address](const auto &currentParticipant) {
-			    return (address == currentParticipant->getAddress().asAddress());
+			    return (*address == *currentParticipant->getAddress());
 		    });
 
 		if (state == StateType::deleted) {
 			if (conf->isMe(address)) {
-				lInfo() << "Participant " << address.asString() << " requested to be deleted is me.";
+				lInfo() << "Participant " << address->toString() << " requested to be deleted is me.";
 				continue;
 			} else if (participant) {
 				conf->participants.remove(participant);
 				lInfo() << "Participant " << *participant << " is successfully removed - conference "
-				        << conf->getConferenceAddress().asString() << " has " << conf->getParticipantCount()
-				        << " participants";
+				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
 				if (!isFullState) {
 					conf->notifyParticipantRemoved(creationTime, isFullState, participant);
 				}
 
 				continue;
 			} else {
-				lWarning() << "Participant " << address.asString() << " removed but not in the list of participants!";
+				lWarning() << "Participant " << address->toString() << " removed but not in the list of participants!";
 			}
 		} else if (state == StateType::full) {
 			if (conf->isMe(address)) {
-				lInfo() << "Participant " << address.asString() << " requested to be added is me.";
+				lInfo() << "Participant " << address->toString() << " requested to be added is me.";
 			} else if (participant) {
 				lWarning() << "Participant " << *participant << " added but already in the list of participants!";
 			} else {
@@ -278,8 +282,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				conf->participants.push_back(participant);
 				conf->updateParticipantsInConferenceInfo(address);
 				lInfo() << "Participant " << *participant << " is successfully added - conference "
-				        << conf->getConferenceAddress().asString() << " has " << conf->getParticipantCount()
-				        << " participants";
+				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
 
 				if (!isFullState ||
 				    (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !conf->isMe(address))) {
@@ -295,10 +298,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		}
 
 		if (!participant) {
-			lDebug() << "Participant " << address.asString()
+			lDebug() << "Participant " << address->toString()
 			         << " is not in the list of participants however it is trying to change the list of devices or "
 			            "change role! Resubscribing to conference "
-			         << conf->getConferenceAddress() << " to clear things up.";
+			         << conferenceAddressString << " to clear things up.";
 			requestFullState();
 		} else {
 
@@ -321,7 +324,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			for (const auto &endpoint : user.getEndpoint()) {
 				if (!endpoint.getEntity().present()) continue;
 
-				Address gruu(endpoint.getEntity().get());
+				std::shared_ptr<Address> gruu = Address::create(endpoint.getEntity().get());
 				StateType state = endpoint.getState();
 
 				shared_ptr<ParticipantDevice> device = nullptr;
@@ -542,14 +545,14 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					if (conf->isMe(address) && conf->getMainSession()) device->setSession(conf->getMainSession());
 
 					if (state == StateType::full) {
-						lInfo() << "Participant device " << gruu.asString() << " has been successfully added";
+						lInfo() << "Participant device " << gruu->toString() << " has been successfully added";
 						bool sendNotify =
 						    (!oldParticipants.empty() && (pIt == oldParticipants.cend())) && !conf->isMe(address);
 						if (pIt != oldParticipants.cend()) {
 							const auto &oldDevices = (*pIt)->getDevices();
 							const auto &dIt =
 							    std::find_if(oldDevices.cbegin(), oldDevices.cend(), [&gruu](const auto &oldDevice) {
-								    return (gruu == oldDevice->getAddress().asAddress());
+								    return (*gruu == *oldDevice->getAddress());
 							    });
 							sendNotify = (dIt == oldDevices.cend()) && !conf->isMe(address);
 						}
@@ -557,13 +560,12 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							conf->notifyParticipantDeviceAdded(creationTime, isFullState, participant, device);
 						}
 					} else {
-						lInfo() << "Participant device " << gruu.asString() << " has been successfully updated";
+						lInfo() << "Participant device " << gruu->toString() << " has been successfully updated";
 					}
 				} else {
-					lDebug() << "Unable to update media direction of device " << gruu
-					         << " because it has not been found in conference " << conf->getConferenceAddress()
-					         << ". Resubscribing to conference " << conf->getConferenceAddress()
-					         << " to clear things up.";
+					lDebug() << "Unable to update media direction of device " << *gruu
+					         << " because it has not been found in conference " << conferenceAddressString
+					         << ". Resubscribing to conference " << conferenceAddressString << " to clear things up.";
 					requestFullState();
 				}
 			}
@@ -576,9 +578,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		// Send participant and participant device removed notifys if the full state has less participants than the
 		// current chat room or conference
 		for (const auto &p : oldParticipants) {
-			const auto &pIt = std::find_if(
-			    currentParticipants.cbegin(), currentParticipants.cend(),
-			    [&p](const auto &currentParticipant) { return (p->getAddress() == currentParticipant->getAddress()); });
+			const auto &pIt = std::find_if(currentParticipants.cbegin(), currentParticipants.cend(),
+			                               [&p](const auto &currentParticipant) {
+				                               return (*p->getAddress() == *currentParticipant->getAddress());
+			                               });
 			for (const auto &d : p->getDevices()) {
 				bool deviceFound = false;
 				if (pIt == currentParticipants.cend()) {
@@ -587,31 +590,31 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					const auto &currentDevices = (*pIt)->getDevices();
 					const auto &dIt =
 					    std::find_if(currentDevices.cbegin(), currentDevices.cend(), [&d](const auto &currentDevice) {
-						    return (d->getAddress() == currentDevice->getAddress());
+						    return (*d->getAddress() == *currentDevice->getAddress());
 					    });
 					deviceFound = (dIt != currentDevices.cend());
 				}
 				if (!deviceFound) {
-					lInfo() << "Device " << d->getAddress() << " is no longer a member of chatroom or conference "
-					        << conf->getConferenceAddress();
+					lInfo() << "Device " << *d->getAddress() << " is no longer a member of chatroom or conference "
+					        << conferenceAddressString;
 					conf->notifyParticipantDeviceRemoved(creationTime, isFullState, p, d);
 				}
 			}
 			if (pIt == currentParticipants.cend()) {
-				lInfo() << "Participant " << p->getAddress() << " is no longer a member of chatroom or conference "
-				        << conf->getConferenceAddress();
+				lInfo() << "Participant " << *p->getAddress() << " is no longer a member of chatroom or conference "
+				        << conferenceAddressString;
 				conf->notifyParticipantRemoved(creationTime, isFullState, p);
 			}
 		}
 		for (const auto &d : oldMeDevices) {
 			const auto &dIt =
 			    std::find_if(currentMeDevices.cbegin(), currentMeDevices.cend(), [&d](const auto &currentDevice) {
-				    return (d->getAddress() == currentDevice->getAddress());
+				    return (*d->getAddress() == *currentDevice->getAddress());
 			    });
 			bool deviceFound = (dIt != currentMeDevices.cend());
 			if (!deviceFound) {
-				lInfo() << "Device " << d->getAddress() << " is no longer a member of chatroom or conference "
-				        << conf->getConferenceAddress();
+				lInfo() << "Device " << *d->getAddress() << " is no longer a member of chatroom or conference "
+				        << conferenceAddressString;
 				conf->notifyParticipantDeviceRemoved(creationTime, isFullState, conf->getMe(), d);
 			}
 		}
@@ -623,7 +626,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 }
 
 void RemoteConferenceEventHandler::requestFullState() {
-	lInfo() << "Requesting full state for conference " << conf->getConferenceAddress();
+	lInfo() << "Requesting full state for conference "
+	        << (conf->getConferenceAddress() ? conf->getConferenceAddress()->toString()
+	                                         : std::string("<unknown conference address>"));
 	unsubscribe();
 	conf->setLastNotify(0);
 	subscribe(getConferenceId());
@@ -653,7 +658,7 @@ bool RemoteConferenceEventHandler::alreadySubscribed() const {
 void RemoteConferenceEventHandler::subscribe() {
 	if (!alreadySubscribed()) return; // Already subscribed or application did not request subscription
 
-	const string &localAddress = getConferenceId().getLocalAddress().asString();
+	const string &localAddress = getConferenceId().getLocalAddress()->toString();
 	LinphoneAddress *lAddr = linphone_address_new(localAddress.c_str());
 
 	LinphoneCore *lc = conf->getCore()->getCCore();
@@ -664,17 +669,14 @@ void RemoteConferenceEventHandler::subscribe() {
 		return;
 	}
 
-	const string &peerAddress = getConferenceId().getPeerAddress().asString();
-	LinphoneAddress *peerAddr = linphone_address_new(peerAddress.c_str());
-
+	const auto &peerAddress = getConferenceId().getPeerAddress();
 	ev = dynamic_pointer_cast<EventSubscribe>(
-	    (new EventSubscribe(conf->getCore(), peerAddr, cfg, "conference", 600))->toSharedPtr());
+	    (new EventSubscribe(conf->getCore(), peerAddress, cfg, "conference", 600))->toSharedPtr());
 	ev->getOp()->setFrom(localAddress);
 	setInitialSubscriptionUnderWayFlag((getLastNotify() == 0));
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	ev->addCustomHeader("Last-Notify-Version", lastNotifyStr.c_str());
 	linphone_address_unref(lAddr);
-	linphone_address_unref(peerAddr);
 	ev->setInternal(true);
 	ev->setProperty("event-handler-private", this);
 	lInfo() << localAddress << " is subscribing to chat room or conference: " << peerAddress

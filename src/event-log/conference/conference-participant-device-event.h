@@ -39,11 +39,11 @@ public:
 	ConferenceParticipantDeviceEvent(Type type,
 	                                 time_t creationTime,
 	                                 const ConferenceId &conferenceId,
-	                                 const IdentityAddress &participantAddress,
-	                                 const IdentityAddress &deviceAddress,
+	                                 const std::shared_ptr<Address> &participantAddress,
+	                                 const std::shared_ptr<Address> &deviceAddress,
 	                                 const std::string &name = "");
 
-	const IdentityAddress &getDeviceAddress() const;
+	const std::shared_ptr<Address> &getDeviceAddress() const;
 	const std::string &getDeviceName() const;
 
 private:

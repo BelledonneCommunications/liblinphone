@@ -87,7 +87,7 @@ string IsComposing::createXml(bool isComposing) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void IsComposing::parse(const Address &remoteAddr, const string &text) {
+void IsComposing::parse(const std::shared_ptr<Address> &remoteAddr, const string &text) {
 #ifdef HAVE_ADVANCED_IM
 	istringstream data(text);
 	unique_ptr<Xsd::IsComposing::IsComposing> node(
@@ -97,10 +97,10 @@ void IsComposing::parse(const Address &remoteAddr, const string &text) {
 	if (node->getState() == "active") {
 		unsigned long long refresh = 0;
 		if (node->getRefresh().present()) refresh = node->getRefresh().get();
-		startRemoteRefreshTimer(remoteAddr.asStringUriOnly(), refresh);
+		startRemoteRefreshTimer(remoteAddr->asStringUriOnly(), refresh);
 		listener->onIsRemoteComposingStateChanged(remoteAddr, true);
 	} else if (node->getState() == "idle") {
-		stopRemoteRefreshTimer(remoteAddr.asStringUriOnly());
+		stopRemoteRefreshTimer(remoteAddr->asStringUriOnly());
 		listener->onIsRemoteComposingStateChanged(remoteAddr, false);
 	}
 #else
@@ -190,7 +190,7 @@ int IsComposing::refreshTimerExpired() {
 }
 
 int IsComposing::remoteRefreshTimerExpired(const string &uri) {
-	listener->onIsRemoteComposingStateChanged(Address(uri), false);
+	listener->onIsRemoteComposingStateChanged(Address::create(uri), false);
 	stopRemoteRefreshTimer(uri);
 	return BELLE_SIP_STOP;
 }

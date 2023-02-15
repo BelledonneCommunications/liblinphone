@@ -21,6 +21,7 @@
 #include <ctype.h>
 
 #include <bctoolbox/defs.h>
+
 #include <belle-sip/belle-sip.h>
 
 #include "liblinphone_tester.h"

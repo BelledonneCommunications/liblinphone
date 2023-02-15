@@ -19,6 +19,7 @@
  */
 
 #include "nat-policy.h"
+#include "core/core.h"
 
 #include <cstring>
 

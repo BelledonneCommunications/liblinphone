@@ -59,31 +59,33 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 	mIsOutOfDialogOp = is_out_of_dialog;
 }
 
-EventSubscribe::EventSubscribe(const shared_ptr<Core> &core, const LinphoneAddress *resource, const string &event)
+EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
+                               const std::shared_ptr<Address> resource,
+                               const string &event)
     : EventSubscribe(core, LinphoneSubscriptionIncoming, event, -1) {
-	linphone_configure_op(core->getCCore(), mOp, resource, NULL, TRUE);
+	linphone_configure_op(core->getCCore(), mOp, resource->toC(), NULL, TRUE);
 	setState(LinphoneSubscriptionIncomingReceived);
 	mOp->setEvent(event);
 	setIsOutOfDialogOp(true);
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const LinphoneAddress *resource,
+                               const std::shared_ptr<Address> resource,
                                const string &event,
                                int expires)
     : EventSubscribe(core, LinphoneSubscriptionOutgoing, event, expires) {
-	linphone_configure_op(core->getCCore(), mOp, resource, NULL, TRUE);
+	linphone_configure_op(core->getCCore(), mOp, resource->toC(), NULL, TRUE);
 	mOp->setManualRefresherMode(
 	    !linphone_config_get_int(core->getCCore()->config, "sip", "refresh_generic_subscribe", 1));
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               const LinphoneAddress *resource,
+                               const std::shared_ptr<Address> resource,
                                LinphoneProxyConfig *cfg,
                                const string &event,
                                int expires)
     : EventSubscribe(core, LinphoneSubscriptionOutgoing, event, expires) {
-	linphone_configure_op_with_proxy(core->getCCore(), mOp, resource, NULL, TRUE, cfg);
+	linphone_configure_op_with_proxy(core->getCCore(), mOp, resource->toC(), NULL, TRUE, cfg);
 	mOp->setManualRefresherMode(
 	    !linphone_config_get_int(core->getCCore()->config, "sip", "refresh_generic_subscribe", 1));
 }
@@ -215,16 +217,6 @@ bool EventSubscribe::isOutOfDialogOp() const {
 
 void EventSubscribe::setIsOutOfDialogOp(bool isOutOfDialogOp) {
 	mIsOutOfDialogOp = isOutOfDialogOp;
-}
-
-const LinphoneAddress *EventSubscribe::getRemoteContact() const {
-	if (mRemoteContactAddress) linphone_address_unref(mRemoteContactAddress);
-
-	char *buf = sal_address_as_string(mOp->getRemoteContactAddress());
-	mRemoteContactAddress = linphone_address_new(buf);
-	ms_free(buf);
-
-	return mRemoteContactAddress;
 }
 
 void EventSubscribe::unpublish() {

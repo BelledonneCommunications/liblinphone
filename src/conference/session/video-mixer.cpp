@@ -20,14 +20,13 @@
 
 #include <bctoolbox/defs.h>
 
-#include "mixers.h"
-#include "streams.h"
-
-#include "linphone/core.h"
-#include "private.h"
+#include "mediastreamer2/msitc.h"
 
 #include "c-wrapper/internal/c-tools.h"
-#include "mediastreamer2/msitc.h"
+#include "linphone/core.h"
+#include "mixers.h"
+#include "private.h"
+#include "streams.h"
 
 LINPHONE_BEGIN_NAMESPACE
 

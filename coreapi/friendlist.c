@@ -625,10 +625,10 @@ void linphone_friend_list_set_display_name(LinphoneFriendList *list, const char 
 	}
 }
 
-const LinphoneAddress *linphone_friend_list_get_rls_address(const LinphoneFriendList *list) {
+LinphoneAddress *linphone_friend_list_get_rls_address(const LinphoneFriendList *list) {
 	return list->rls_addr;
 }
-const LinphoneAddress *_linphone_friend_list_get_rls_address(const LinphoneFriendList *list) {
+LinphoneAddress *_linphone_friend_list_get_rls_address(const LinphoneFriendList *list) {
 	if (list->rls_addr) return list->rls_addr;
 	else if (list->lc) {
 		const char *rls_uri = linphone_config_get_string(list->lc->config, "sip", "rls_uri", NULL);
@@ -1203,8 +1203,7 @@ static void linphone_friend_list_close_subscriptions(LinphoneFriendList *list) {
 	bctbx_list_for_each(list->friends, (void (*)(void *))linphone_friend_close_subscriptions);
 }
 
-static void _linphone_friend_list_send_list_subscription_with_body(LinphoneFriendList *list,
-                                                                   const LinphoneAddress *address) {
+static void _linphone_friend_list_send_list_subscription_with_body(LinphoneFriendList *list, LinphoneAddress *address) {
 	char *xml_content = create_resource_list_xml(list);
 	if (!xml_content) return;
 
@@ -1253,7 +1252,7 @@ static void _linphone_friend_list_send_list_subscription_with_body(LinphoneFrien
 }
 
 static void _linphone_friend_list_send_list_subscription_without_body(LinphoneFriendList *list,
-                                                                      const LinphoneAddress *address) {
+                                                                      LinphoneAddress *address) {
 	bctbx_list_t *elem = NULL;
 	int expires = linphone_config_get_int(list->lc->config, "sip", "rls_presence_expires", 3600);
 	list->expected_notification_version = 0;
@@ -1280,7 +1279,7 @@ static void _linphone_friend_list_send_list_subscription_without_body(LinphoneFr
 }
 
 static void linphone_friend_list_send_list_subscription(LinphoneFriendList *list) {
-	const LinphoneAddress *address = _linphone_friend_list_get_rls_address(list);
+	LinphoneAddress *address = _linphone_friend_list_get_rls_address(list);
 	if (!address) {
 		ms_warning("Friend list's [%p] has no RLS address, can't send subscription", list);
 		return;
@@ -1297,7 +1296,7 @@ static void linphone_friend_list_send_list_subscription(LinphoneFriendList *list
 
 void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
 	LinphoneProxyConfig *cfg = NULL;
-	const LinphoneAddress *address = _linphone_friend_list_get_rls_address(list);
+	LinphoneAddress *address = _linphone_friend_list_get_rls_address(list);
 	bool_t only_when_registered = FALSE;
 	bool_t should_send_list_subscribe = FALSE;
 

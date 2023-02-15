@@ -20,6 +20,7 @@
 
 #include "account.h"
 
+#include "core/core.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "push-notification/push-notification-config.h"
@@ -27,7 +28,7 @@
 #ifdef HAVE_ADVANCED_IM
 #ifdef HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
-#endif // HAVE_ADVANCED_IM
+#endif // HAVE_LIME_X3DH
 #endif // HAVE_ADVANCED_IM
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
@@ -61,13 +62,8 @@ Account::Account(const Account &other) : HybridObject(other) {
 Account::~Account() {
 	bctbx_message("LinphoneAccount[%p] destroyed", toC());
 	if (mSentHeaders) sal_custom_header_free(mSentHeaders);
-	if (mPendingContactAddress) linphone_address_unref(mPendingContactAddress);
 	setDependency(nullptr);
 	if (mErrorInfo) linphone_error_info_unref(mErrorInfo);
-
-	if (mServiceRouteAddress) linphone_address_unref(mServiceRouteAddress);
-	if (mContactAddress) linphone_address_unref(mContactAddress);
-	if (mContactAddressWithoutParams) linphone_address_unref(mContactAddressWithoutParams);
 	if (mPresenceModel) linphone_presence_model_unref(mPresenceModel);
 
 	releaseOps();
@@ -79,47 +75,41 @@ Account *Account::clone() const {
 
 // -----------------------------------------------------------------------------
 
-static char *appendLinphoneAddress(LinphoneAddress *addr, char *out) {
-	char *res = out;
+static std::string appendLinphoneAddress(const std::shared_ptr<Address> &addr, const std::string &out) {
+	auto res = out;
 	if (addr) {
-		char *tmp;
-		tmp = linphone_address_as_string(addr);
-		res = ms_strcat_printf(out, "%s", tmp);
-		ms_free(tmp);
+		res.append(addr->toString());
 	}
 	return res;
 }
 
-static char *appendString(const char *string, char *out) {
-	char *res = out;
-	if (string) {
-		res = ms_strcat_printf(out, "%s", string);
+static std::string appendString(const std::string &string, const std::string &out) {
+	auto res = out;
+	if (!string.empty()) {
+		res.append(string);
 	}
 	return res;
 }
 
 bool Account::computePublishParamsHash() {
-	char *source = NULL;
+	std::string source;
 	char hash[33];
 	char saved;
 	unsigned long long previous_hash[2];
-	bctbx_list_t *routes_iterator = mParams->mRoutes;
 	previous_hash[0] = mPreviousPublishParamsHash[0];
 	previous_hash[1] = mPreviousPublishParamsHash[1];
 
-	source = ms_strcat_printf(source, "%i", mParams->mPrivacy);
+	source.append(std::to_string(static_cast<int>(mParams->mPrivacy)));
 	source = appendLinphoneAddress(mParams->mIdentityAddress, source);
-	source = appendString(mParams->mProxy.c_str(), source);
-	while (routes_iterator) {
-		const char *route = (const char *)bctbx_list_get_data(routes_iterator);
-		source = appendString(route, source);
-		routes_iterator = bctbx_list_next(routes_iterator);
+	source = appendString(mParams->mProxy, source);
+	const auto &routes = mParams->mRoutes;
+	for (const auto &route : routes) {
+		source = appendLinphoneAddress(route, source);
 	}
-	source = appendString(mParams->mRealm.c_str(), source);
-	source = ms_strcat_printf(source, "%i", mParams->mPublishExpires);
-	source = ms_strcat_printf(source, "%i", mParams->mPublishEnabled);
-	belle_sip_auth_helper_compute_ha1(source, "dummy", "dummy", hash);
-	ms_free(source);
+	source = appendString(mParams->mRealm, source);
+	source.append(std::to_string(mParams->mPublishExpires));
+	source.append(std::to_string(mParams->mPublishEnabled ? 1 : 0));
+	belle_sip_auth_helper_compute_ha1(source.c_str(), "dummy", "dummy", hash);
 	saved = hash[16];
 	hash[16] = '\0';
 	mPreviousPublishParamsHash[0] = strtoull(hash, (char **)NULL, 16);
@@ -128,16 +118,15 @@ bool Account::computePublishParamsHash() {
 	return previous_hash[0] != mPreviousPublishParamsHash[0] || previous_hash[1] != mPreviousPublishParamsHash[1];
 }
 
-LinphoneAccountAddressComparisonResult Account::compareLinphoneAddresses(const LinphoneAddress *a,
-                                                                         const LinphoneAddress *b) {
+LinphoneAccountAddressComparisonResult Account::compareLinphoneAddresses(const std::shared_ptr<Address> &a,
+                                                                         const std::shared_ptr<Address> &b) {
 	if (a == NULL && b == NULL) return LinphoneAccountAddressEqual;
 	else if (!a || !b) return LinphoneAccountAddressDifferent;
 
-	if (linphone_address_equal(a, b)) return LinphoneAccountAddressEqual;
-	if (linphone_address_weak_equal(a, b)) {
+	if (*a == *b) return LinphoneAccountAddressEqual;
+	if (a->weakEqual(*b)) {
 		/*also check both transport and uri */
-		if (linphone_address_get_secure(a) == linphone_address_get_secure(b) &&
-		    linphone_address_get_transport(a) == linphone_address_get_transport(b))
+		if (a->getSecure() == b->getSecure() && a->getTransport() == b->getTransport())
 			return LinphoneAccountAddressWeakEqual;
 		else return LinphoneAccountAddressDifferent;
 	}
@@ -146,9 +135,9 @@ LinphoneAccountAddressComparisonResult Account::compareLinphoneAddresses(const L
 
 LinphoneAccountAddressComparisonResult Account::isServerConfigChanged(std::shared_ptr<AccountParams> oldParams,
                                                                       std::shared_ptr<AccountParams> newParams) {
-	LinphoneAddress *oldProxy =
-	    oldParams != nullptr && !oldParams->mProxy.empty() ? linphone_address_new(oldParams->mProxy.c_str()) : NULL;
-	LinphoneAddress *newProxy = !newParams->mProxy.empty() ? linphone_address_new(newParams->mProxy.c_str()) : NULL;
+	std::shared_ptr<Address> oldProxy =
+	    oldParams != nullptr && !oldParams->mProxy.empty() ? Address::create(oldParams->mProxy) : NULL;
+	std::shared_ptr<Address> newProxy = !newParams->mProxy.empty() ? Address::create(newParams->mProxy) : NULL;
 	LinphoneAccountAddressComparisonResult result_identity;
 	LinphoneAccountAddressComparisonResult result;
 
@@ -159,13 +148,10 @@ LinphoneAccountAddressComparisonResult Account::isServerConfigChanged(std::share
 
 	result = compareLinphoneAddresses(oldProxy, newProxy);
 
-	if (mContactAddress != nullptr) {
-		IdentityAddress addr(*L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress));
-		if (!addr.getGruu().empty() && result != LinphoneAccountAddressEqual) {
-			// Returning weak equal to be sure no unregister will be done
-			result = LinphoneAccountAddressWeakEqual;
-			goto end;
-		}
+	if (mContactAddress && !mContactAddress->getUriParamValue("gr").empty() && result != LinphoneAccountAddressEqual) {
+		// Returning weak equal to be sure no unregister will be done
+		result = LinphoneAccountAddressWeakEqual;
+		goto end;
 	}
 
 	// This is the legacy mode, if there is no gruu and result is different,
@@ -178,8 +164,6 @@ LinphoneAccountAddressComparisonResult Account::isServerConfigChanged(std::share
 	if (result == LinphoneAccountAddressEqual) result = result_identity;
 
 end:
-	if (oldProxy) linphone_address_unref(oldProxy);
-	if (newProxy) linphone_address_unref(newProxy);
 	lInfo() << "linphoneAccountIsServerConfigChanged : " << result;
 
 	return result;
@@ -214,7 +198,7 @@ bool Account::customContactChanged() {
 	if (mParams->mCustomContact == nullptr && mOldParams->mCustomContact == nullptr) return false;
 	if (mParams->mCustomContact != nullptr && mOldParams->mCustomContact == nullptr) return true;
 	if (mParams->mCustomContact == nullptr && mOldParams->mCustomContact != nullptr) return true;
-	return !linphone_address_equal(mOldParams->mCustomContact, mParams->mCustomContact);
+	return !((*mOldParams->mCustomContact) != (*mParams->mCustomContact));
 }
 
 void Account::applyParamsChanges() {
@@ -229,8 +213,7 @@ void Account::applyParamsChanges() {
 	     (mParams->mAudioVideoConferenceFactoryAddress != nullptr)) ||
 	    ((mOldParams->mAudioVideoConferenceFactoryAddress != nullptr) &&
 	     (mParams->mAudioVideoConferenceFactoryAddress != nullptr) &&
-	     linphone_address_equal(mOldParams->mAudioVideoConferenceFactoryAddress,
-	                            mParams->mAudioVideoConferenceFactoryAddress)))
+	     (*mOldParams->mAudioVideoConferenceFactoryAddress == *mParams->mAudioVideoConferenceFactoryAddress)))
 		onAudioVideoConferenceFactoryAddressChanged(mParams->mAudioVideoConferenceFactoryAddress);
 
 	if (mOldParams == nullptr || mOldParams->mNatPolicy != mParams->mNatPolicy)
@@ -285,48 +268,36 @@ void Account::setErrorInfo(LinphoneErrorInfo *errorInfo) {
 	mErrorInfo = errorInfo;
 }
 
-void Account::setContactAddress(const LinphoneAddress *contact) {
-	if (mContactAddress) {
-		linphone_address_unref(mContactAddress);
-		mContactAddress = nullptr;
-	}
-
-	if (contact) mContactAddress = linphone_address_clone(contact);
-
+void Account::setContactAddress(const std::shared_ptr<Address> contact) {
+	mContactAddress = nullptr;
+	if (contact) mContactAddress = contact->clone()->toSharedPtr();
 	setContactAddressWithoutParams(contact);
 }
 
-void Account::setContactAddressWithoutParams(const LinphoneAddress *contact) {
-	if (mContactAddressWithoutParams) {
-		linphone_address_unref(mContactAddressWithoutParams);
-		mContactAddressWithoutParams = nullptr;
-	}
+void Account::setContactAddressWithoutParams(const std::shared_ptr<Address> contact) {
+	mContactAddressWithoutParams = nullptr;
 
 	if (contact) {
-		mContactAddressWithoutParams = linphone_address_clone(contact);
-		linphone_address_clean(mContactAddressWithoutParams);
-		linphone_address_set_port(mContactAddressWithoutParams, -1);
-		linphone_address_set_domain(mContactAddressWithoutParams, nullptr);
-		linphone_address_set_display_name(mContactAddressWithoutParams, nullptr);
+		mContactAddressWithoutParams = contact->clone()->toSharedPtr();
+		mContactAddressWithoutParams->clean();
+		mContactAddressWithoutParams->setPort(-1);
+		mContactAddressWithoutParams->setDomain(nullptr);
+		mContactAddressWithoutParams->setDisplayName(nullptr);
 	}
 }
 
-void Account::setPendingContactAddress(LinphoneAddress *contact) {
+void Account::setPendingContactAddress(std::shared_ptr<Address> contact) {
 	if (mPendingContactAddress) {
-		linphone_address_unref(mPendingContactAddress);
 		mPendingContactAddress = nullptr;
 	}
 
-	if (contact) mPendingContactAddress = linphone_address_clone(contact);
+	if (contact) mPendingContactAddress = contact;
 }
 
-void Account::setServiceRouteAddress(LinphoneAddress *serviceRoute) {
-	if (mServiceRouteAddress) {
-		linphone_address_unref(mServiceRouteAddress);
-		mServiceRouteAddress = nullptr;
-	}
+void Account::setServiceRouteAddress(std::shared_ptr<Address> serviceRoute) {
+	mServiceRouteAddress = nullptr;
 
-	if (serviceRoute) mServiceRouteAddress = linphone_address_clone(serviceRoute);
+	if (serviceRoute) mServiceRouteAddress = serviceRoute->clone()->toSharedPtr();
 }
 
 // Enable register on account dependent on the given one (if any).
@@ -354,13 +325,11 @@ void Account::updateDependentAccount(LinphoneRegistrationState state, const std:
 				copyParams->mRegisterEnabled = true;
 				const SalAddress *salAddr = mOp->getContactAddress();
 
+				if (!mContactAddress) {
+					mContactAddress = Address::create();
+				}
 				if (salAddr) {
-					if (mContactAddress) {
-						linphone_address_unref(mContactAddress);
-					}
-					char *sal_addr = sal_address_as_string(salAddr);
-					mContactAddress = linphone_address_new(sal_addr);
-					bctbx_free(sal_addr);
+					mContactAddress->setImpl(salAddr);
 				}
 			} else if (state == LinphoneRegistrationCleared || state == LinphoneRegistrationFailed) {
 				tmpCpp->pauseRegister();
@@ -375,15 +344,15 @@ void Account::updateDependentAccount(LinphoneRegistrationState state, const std:
 void Account::setState(LinphoneRegistrationState state, const std::string &message) {
 	if (mState != state ||
 	    state == LinphoneRegistrationOk) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
-		const char *identity = mParams ? mParams->mIdentity.c_str() : "";
+		const auto identity = (mParams) ? mParams->getIdentity().c_str() : std::string();
 		if (!mParams) lWarning() << "AccountParams not set for Account [" << this->toC() << "]";
 		lInfo() << "Account [" << this << "] for identity [" << identity << "] moving from state ["
 		        << linphone_registration_state_to_string(mState) << "] to ["
 		        << linphone_registration_state_to_string(state) << "] on core [" << mCore << "]";
 
 		if (state == LinphoneRegistrationOk) {
-			const auto salAddr = ownership::borrowed(mOp->getContactAddress());
-			if (salAddr) L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress)->setInternalAddress(salAddr);
+			const auto salAddr = mOp->getContactAddress();
+			if (salAddr) mContactAddress->setImpl(salAddr);
 			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
 		}
 
@@ -465,31 +434,28 @@ const LinphoneErrorInfo *Account::getErrorInfo() {
 	return mErrorInfo;
 }
 
-const LinphoneAddress *Account::getContactAddress() const {
+const std::shared_ptr<Address> &Account::getContactAddress() const {
 	return mContactAddress;
 }
 
-const LinphoneAddress *Account::getContactAddressWithoutParams() const {
+const std::shared_ptr<Address> &Account::getContactAddressWithoutParams() const {
 	return mContactAddressWithoutParams;
 }
 
-const LinphoneAddress *Account::getPendingContactAddress() const {
+const std::shared_ptr<Address> &Account::getPendingContactAddress() const {
 	return mPendingContactAddress;
 }
 
-const LinphoneAddress *Account::getServiceRouteAddress() {
+const std::shared_ptr<Address> Account::getServiceRouteAddress() const {
 	if (!mOp) return nullptr;
 
-	const auto salAddr = ownership::borrowed(mOp->getServiceRoute());
+	const auto salAddr = mOp->getServiceRoute();
 	if (!salAddr) return nullptr;
 
-	if (mServiceRouteAddress) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(mServiceRouteAddress)->setInternalAddress(salAddr);
-	} else {
-		char *buf = sal_address_as_string(salAddr);
-		mServiceRouteAddress = linphone_address_new(buf);
-		ms_free(buf);
+	if (!mServiceRouteAddress) {
+		mServiceRouteAddress = Address::create();
 	}
+	mServiceRouteAddress->setImpl(salAddr);
 
 	return mServiceRouteAddress;
 }
@@ -518,21 +484,21 @@ std::shared_ptr<Account> Account::getDependency() {
 
 // -----------------------------------------------------------------------------
 
-LinphoneAddress *Account::guessContactForRegister() {
-	LinphoneAddress *result = nullptr;
+std::shared_ptr<Address> Account::guessContactForRegister() {
+	std::shared_ptr<Address> result = nullptr;
 
 	if (mDependency) {
 		// In case of dependent account, force contact of 'master' account, but only after a successful register
-		return linphone_address_clone(mDependency->mContactAddress);
+		return mDependency->mContactAddress;
 	}
-	LinphoneAddress *proxy = linphone_address_new(mParams->mProxy.c_str());
+	std::shared_ptr<Address> proxy = Address::create(mParams->mProxy);
 	if (!proxy) return nullptr;
-	const char *host = linphone_address_get_domain(proxy);
-	if (host) {
-		result = linphone_address_clone(mParams->mIdentityAddress);
+	const auto host = proxy->getDomain();
+	if (!host.empty()) {
+		result = mParams->mIdentityAddress->clone()->toSharedPtr();
 		if (!mParams->mContactParameters.empty()) {
 			// We want to add a list of contacts params to the linphone address
-			linphone_address_set_params(result, mParams->mContactParameters.c_str());
+			result->setParams(mParams->mContactParameters);
 		}
 
 		bool successfullyPreparedPushParameters = false;
@@ -559,12 +525,13 @@ LinphoneAddress *Account::guessContactForRegister() {
 		if (!newParams->mContactUriParameters.empty()) {
 			if (successfullyPreparedPushParameters) {
 				// build an Address to make use of useful param management functions
-				Address contactParamsWrapper(string("sip:dummy;" + newParams->mContactUriParameters));
+				std::shared_ptr<Address> contactParamsWrapper =
+				    Address::create(string("sip:dummy;" + newParams->mContactUriParameters));
 				bool didRemoveParams = false;
 				for (auto pushParam : newParams->mPushNotificationConfig->getPushParamsMap()) {
 					string paramName = pushParam.first;
-					if (!contactParamsWrapper.getUriParamValue(paramName).empty()) {
-						contactParamsWrapper.removeUriParam(paramName);
+					if (!contactParamsWrapper->getUriParamValue(paramName).empty()) {
+						contactParamsWrapper->removeUriParam(paramName);
 						didRemoveParams = true;
 						lError() << "Removing '" << paramName << "' from account [" << this
 						         << "] contact uri parameters because it will be generated automatically since core "
@@ -574,54 +541,37 @@ LinphoneAddress *Account::guessContactForRegister() {
 
 				if (didRemoveParams) {
 					string newContactUriParams;
-					bctbx_map_t *uriParamMap = contactParamsWrapper.getUriParams();
-					bctbx_iterator_t *uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
-					bctbx_iterator_t *it = bctbx_map_cchar_begin(uriParamMap);
-					for (; !bctbx_iterator_cchar_equals(it, uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
-						bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
-						const char *key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
-						const char *value = (const char *)bctbx_pair_cchar_get_second(pair);
-						if (value) {
-							newContactUriParams = newContactUriParams + key + "=" + value + ";";
+					const auto &uriParamMap = contactParamsWrapper->getUriParams();
+					for (const auto &param : uriParamMap) {
+						if (!param.second.empty()) {
+							newContactUriParams = newContactUriParams + param.first + "=" + param.second + ";";
 						}
 					}
-					bctbx_iterator_cchar_delete(it);
-					bctbx_iterator_cchar_delete(uriParamMapEnd);
-					bctbx_mmap_cchar_delete_with_data(uriParamMap, bctbx_free);
 
 					lWarning() << "Account [" << this << "] contact uri parameters changed from '"
 					           << newParams->mContactUriParameters << "' to '" << newContactUriParams << "'";
 					newParams->mContactUriParameters = newContactUriParams;
 				}
 			}
-			linphone_address_set_uri_params(result, newParams->mContactUriParameters.c_str());
+			result->setUriParams(newParams->mContactUriParameters);
 		}
 
 		if (successfullyPreparedPushParameters) {
-			linphone_address_set_uri_param(result, PushConfigPridKey.c_str(),
-			                               newParams->getPushNotificationConfig()->getPrid().c_str());
-			linphone_address_set_uri_param(result, PushConfigProviderKey.c_str(),
-			                               newParams->getPushNotificationConfig()->getProvider().c_str());
-			linphone_address_set_uri_param(result, PushConfigParamKey.c_str(),
-			                               newParams->getPushNotificationConfig()->getParam().c_str());
+			result->setUriParam(PushConfigPridKey, newParams->getPushNotificationConfig()->getPrid());
+			result->setUriParam(PushConfigProviderKey, newParams->getPushNotificationConfig()->getProvider());
+			result->setUriParam(PushConfigParamKey, newParams->getPushNotificationConfig()->getParam());
 
 			auto &pushParams = newParams->getPushNotificationConfig()->getPushParamsMap();
-			linphone_address_set_uri_param(result, PushConfigSilentKey.c_str(),
-			                               pushParams.at(PushConfigSilentKey).c_str());
-			linphone_address_set_uri_param(result, PushConfigTimeoutKey.c_str(),
-			                               pushParams.at(PushConfigTimeoutKey).c_str());
+			result->setUriParam(PushConfigSilentKey, pushParams.at(PushConfigSilentKey));
+			result->setUriParam(PushConfigTimeoutKey, pushParams.at(PushConfigTimeoutKey));
 
 			if (mParams->mRemotePushNotificationAllowed) {
-				linphone_address_set_uri_param(result, PushConfigMsgStrKey.c_str(),
-				                               newParams->getPushNotificationConfig()->getMsgStr().c_str());
-				linphone_address_set_uri_param(result, PushConfigCallStrKey.c_str(),
-				                               newParams->getPushNotificationConfig()->getCallStr().c_str());
-				linphone_address_set_uri_param(result, PushConfigGroupChatStrKey.c_str(),
-				                               newParams->getPushNotificationConfig()->getGroupChatStr().c_str());
-				linphone_address_set_uri_param(result, PushConfigCallSoundKey.c_str(),
-				                               newParams->getPushNotificationConfig()->getCallSnd().c_str());
-				linphone_address_set_uri_param(result, PushConfigMsgSoundKey.c_str(),
-				                               newParams->getPushNotificationConfig()->getMsgSnd().c_str());
+				result->setUriParam(PushConfigMsgStrKey, newParams->getPushNotificationConfig()->getMsgStr());
+				result->setUriParam(PushConfigCallStrKey, newParams->getPushNotificationConfig()->getCallStr());
+				result->setUriParam(PushConfigGroupChatStrKey,
+				                    newParams->getPushNotificationConfig()->getGroupChatStr());
+				result->setUriParam(PushConfigCallSoundKey, newParams->getPushNotificationConfig()->getCallSnd());
+				result->setUriParam(PushConfigMsgSoundKey, newParams->getPushNotificationConfig()->getMsgSnd());
 			}
 			lInfo() << "Added push notification informations '"
 			        << newParams->getPushNotificationConfig()->asString(mParams->mRemotePushNotificationAllowed)
@@ -629,28 +579,24 @@ LinphoneAddress *Account::guessContactForRegister() {
 			setAccountParams(newParams);
 		}
 	}
-	linphone_address_unref(proxy);
 	return result;
 }
 
 std::list<SalAddress *> Account::getOtherContacts() {
 	std::list<SalAddress *> ret;
 	if (mPendingContactAddress) {
-		SalAddress *toRemove =
-		    sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(mPendingContactAddress)->getInternalAddress());
+		SalAddress *toRemove = sal_address_clone(mPendingContactAddress->getImpl());
 		sal_address_set_params(toRemove, "expires=0");
 		ret.push_back(toRemove);
 	}
 	if (mParams->mCustomContact) {
-		SalAddress *toAdd =
-		    sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(mParams->mCustomContact)->getInternalAddress());
+		SalAddress *toAdd = sal_address_clone(mParams->mCustomContact->getImpl());
 		ret.push_back(toAdd);
 	}
 	if (mOldParams && mOldParams->mCustomContact) {
-		if (!mParams->mCustomContact || !linphone_address_equal(mOldParams->mCustomContact, mParams->mCustomContact)) {
+		if (!mParams->mCustomContact || (*mOldParams->mCustomContact != *mParams->mCustomContact)) {
 			/* need to remove previously used custom contact */
-			SalAddress *toRemove =
-			    sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(mOldParams->mCustomContact)->getInternalAddress());
+			SalAddress *toRemove = sal_address_clone(mOldParams->mCustomContact->getImpl());
 			sal_address_set_params(toRemove, "expires=0");
 			ret.push_back(toRemove);
 		}
@@ -661,7 +607,7 @@ std::list<SalAddress *> Account::getOtherContacts() {
 void Account::registerAccount() {
 	if (mParams->mRegisterEnabled) {
 
-		LinphoneAddress *proxy = linphone_address_new(mParams->mProxy.c_str());
+		std::shared_ptr<Address> proxy = Address::create(mParams->mProxy);
 		if (proxy == nullptr) {
 			lError() << "Can't register LinphoneAccount [" << this << "] without a proxy";
 			return;
@@ -669,35 +615,32 @@ void Account::registerAccount() {
 
 		lInfo() << "LinphoneAccount [" << this
 		        << "] about to register (LinphoneCore version: " << linphone_core_get_version() << ")";
-		char *proxy_string = linphone_address_as_string_uri_only(proxy);
-		linphone_address_unref(proxy);
+		auto proxy_string = proxy->asStringUriOnly();
 
 		if (mOp) mOp->release();
 		mOp = new SalRegisterOp(mCore->sal.get());
 
-		linphone_configure_op(mCore, mOp, mParams->mIdentityAddress, mSentHeaders, FALSE);
+		linphone_configure_op(mCore, mOp, mParams->mIdentityAddress->toC(), mSentHeaders, FALSE);
 
-		LinphoneAddress *contactAddress = guessContactForRegister();
+		std::shared_ptr<Address> contactAddress = guessContactForRegister();
 		if (contactAddress) {
-			mOp->setContactAddress(L_GET_CPP_PTR_FROM_C_OBJECT(contactAddress)->getInternalAddress());
+			mOp->setContactAddress(contactAddress->getImpl());
 			if (!mContactAddress) {
-				mContactAddress = linphone_address_clone(contactAddress);
+				mContactAddress = contactAddress->clone()->toSharedPtr();
 			}
-			linphone_address_unref(contactAddress);
 		}
 		mOp->setUserPointer(this->toC());
 
 		auto otherContacts = getOtherContacts();
-		if (mOp->sendRegister(proxy_string, mParams->mIdentity, mParams->mExpires, otherContacts) == 0) {
+		const auto identity = (mParams) ? mParams->getIdentity() : std::string();
+		if (mOp->sendRegister(proxy_string.c_str(), identity, mParams->mExpires, otherContacts) == 0) {
 			if (mPendingContactAddress) {
-				linphone_address_unref(mPendingContactAddress);
 				mPendingContactAddress = nullptr;
 			}
 			setState(LinphoneRegistrationProgress, "Registration in progress");
 		} else {
 			setState(LinphoneRegistrationFailed, "Registration failed");
 		}
-		if (proxy_string != nullptr) ms_free(proxy_string);
 		for (auto ct : otherContacts)
 			sal_address_unref(ct);
 	} else {
@@ -770,22 +713,19 @@ void Account::notifyPublishStateChanged(LinphonePublishState state) {
 }
 
 void Account::stopRefreshing() {
-	LinphoneAddress *contact_addr = nullptr;
+	std::shared_ptr<Address> contact_addr = nullptr;
 	const SalAddress *sal_addr = mOp && mState == LinphoneRegistrationOk ? mOp->getContactAddress() : nullptr;
 	if (sal_addr) {
 		char *buf = sal_address_as_string(sal_addr);
-		contact_addr = buf ? linphone_address_new(buf) : nullptr;
+		contact_addr = buf ? Address::create(buf) : nullptr;
 		ms_free(buf);
 	}
 
 	/*with udp, there is a risk of port reuse, so I prefer to not do anything for now*/
 	if (contact_addr) {
-		if (linphone_address_get_transport(contact_addr) != LinphoneTransportUdp &&
+		if (contact_addr->getTransport() != LinphonePrivate::Transport::Udp &&
 		    linphone_config_get_int(mCore->config, "sip", "unregister_previous_contact", 0)) {
-			if (mPendingContactAddress) linphone_address_unref(mPendingContactAddress);
 			mPendingContactAddress = contact_addr;
-		} else {
-			linphone_address_unref(contact_addr);
 		}
 	}
 
@@ -827,30 +767,18 @@ LinphoneTransportType Account::getTransport() {
 	std::string addr;
 	LinphoneTransportType ret = LinphoneTransportUdp; /*default value*/
 	const SalAddress *route_addr = nullptr;
-	bool destroy_route_addr = false;
-
 	if (getServiceRouteAddress()) {
-		route_addr = L_GET_CPP_PTR_FROM_C_OBJECT(getServiceRouteAddress())->getInternalAddress();
-	} else if (mParams && mParams->getRoutes()) {
+		route_addr = getServiceRouteAddress()->getImpl();
+	} else if (mParams && !mParams->getRoutes().empty()) {
 		// get first route
-		char *tmp = linphone_address_as_string((LinphoneAddress *)bctbx_list_get_data(mParams->getRoutes()));
-		addr = tmp;
-		bctbx_free(tmp);
+		route_addr = mParams->getRoutes().front()->getImpl();
 	} else if (mParams && !mParams->getServerAddressAsString().empty()) {
-		addr = mParams->getServerAddressAsString();
+		route_addr = mParams->getServerAddress()->getImpl();
 	} else {
 		lError() << "Cannot guess transport for account with identity [" << this->toC() << "]";
 		return ret;
 	}
-
-	if (!route_addr) {
-		if (!((*(SalAddress **)&route_addr) = sal_address_new(addr.c_str()))) return ret;
-		destroy_route_addr = true;
-	}
-
 	ret = salTransportToLinphoneTransport(sal_address_get_transport(route_addr));
-
-	if (destroy_route_addr) sal_address_unref((SalAddress *)route_addr);
 
 	return ret;
 }
@@ -874,9 +802,9 @@ const LinphoneAuthInfo *Account::findAuthInfo() const {
 		return nullptr;
 	}
 
-	const char *username = mParams->mIdentityAddress ? linphone_address_get_username(mParams->mIdentityAddress) : NULL;
-	const char *domain = mParams->mIdentityAddress ? linphone_address_get_domain(mParams->mIdentityAddress) : NULL;
-	return linphone_core_find_auth_info(mCore, mParams->mRealm.c_str(), username, domain);
+	const std::string username = mParams->mIdentityAddress ? mParams->mIdentityAddress->getUsername() : std::string();
+	const std::string domain = mParams->mIdentityAddress ? mParams->mIdentityAddress->getDomain() : std::string();
+	return linphone_core_find_auth_info(mCore, mParams->mRealm.c_str(), username.c_str(), domain.c_str());
 }
 
 int Account::getUnreadChatMessageCount() const {
@@ -885,8 +813,7 @@ int Account::getUnreadChatMessageCount() const {
 		return -1;
 	}
 
-	return L_GET_CPP_PTR_FROM_C_OBJECT(mCore)->getUnreadChatMessageCount(
-	    LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(mParams->mIdentityAddress)));
+	return L_GET_CPP_PTR_FROM_C_OBJECT(mCore)->getUnreadChatMessageCount(mParams->mIdentityAddress);
 }
 
 void Account::writeToConfigFile(int index) {
@@ -1002,13 +929,14 @@ void Account::apply(LinphoneCore *lc) {
 	done();
 }
 
-shared_ptr<EventPublish> Account::createPublish(const char *event, int expires) {
+shared_ptr<EventPublish> Account::createPublish(const std::string event, int expires) {
 	if (!mCore) {
 		lError() << "Cannot create publish from account [" << this->toC() << "] not attached to any core";
 		return nullptr;
 	}
 	return dynamic_pointer_cast<EventPublish>(
-	    Event::toCpp(_linphone_core_create_publish(mCore, this->toC(), NULL, event, expires))->getSharedFromThis());
+	    (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(mCore), getSharedFromThis(), NULL, event, expires))
+	        ->getSharedFromThis());
 }
 
 void Account::setPresenceModel(LinphonePresenceModel *presence) {
@@ -1049,7 +977,8 @@ int Account::sendPublish() {
 			// when PUBLISH is about to expire, so we can update the presence model timestamp
 			mPresencePublishEvent->setManualRefresherMode(true);
 		}
-		mPresencePublishEvent->setUserData(mParams->getIdentityAddress());
+		const auto &identityAddress = mParams->getIdentityAddress();
+		mPresencePublishEvent->setUserData(identityAddress->toC());
 
 		LinphoneConfig *config = linphone_core_get_config(mCore);
 		if (linphone_config_get_bool(config, "sip", "update_presence_model_timestamp_before_publish_expires_refresh",
@@ -1064,22 +993,21 @@ int Account::sendPublish() {
 
 		if (linphone_presence_model_get_presentity(mPresenceModel) == NULL) {
 			lInfo() << "No presentity set for model [" << mPresenceModel << "], using identity from account ["
-			        << this->toC() << "]";
-			linphone_presence_model_set_presentity(mPresenceModel, mParams->getIdentityAddress());
+			        << this->toC() << "]: " << *identityAddress;
+			linphone_presence_model_set_presentity(mPresenceModel, identityAddress->toC());
 		}
 
-		LinphoneAddress *presentity_address = NULL;
+		const auto currentPresentity = linphone_presence_model_get_presentity(mPresenceModel);
+		std::shared_ptr<const Address> presentityAddress = nullptr;
 		char *contact = NULL;
-		if (!linphone_address_equal(linphone_presence_model_get_presentity(mPresenceModel),
-		                            mParams->getIdentityAddress())) {
-			lInfo() << "Presentity for model [" << mPresenceModel << "] differ account [" << this->toC()
-			        << "], using account";
-			presentity_address =
-			    linphone_address_clone(linphone_presence_model_get_presentity(mPresenceModel)); /*saved, just in case*/
+		if (!linphone_address_equal(currentPresentity, identityAddress->toC())) {
+			lInfo() << "Presentity for model [" << mPresenceModel << "] differs account [" << this->toC()
+			        << "], using account " << *identityAddress;
+			presentityAddress = Address::toCpp(currentPresentity)->getSharedFromThis(); /*saved, just in case*/
 			if (linphone_presence_model_get_contact(mPresenceModel)) {
 				contact = bctbx_strdup(linphone_presence_model_get_contact(mPresenceModel));
 			}
-			linphone_presence_model_set_presentity(mPresenceModel, mParams->getIdentityAddress());
+			linphone_presence_model_set_presentity(mPresenceModel, identityAddress->toC());
 			linphone_presence_model_set_contact(mPresenceModel, NULL); /*it will be automatically computed*/
 		}
 
@@ -1104,9 +1032,11 @@ int Account::sendPublish() {
 		linphone_content_unref(content);
 		ms_free(presence_body);
 
-		if (presentity_address) {
-			linphone_presence_model_set_presentity(mPresenceModel, presentity_address);
-			linphone_address_unref(presentity_address);
+		if (presentityAddress) {
+			lInfo() << "Restoring previous presentity address " << *presentityAddress << " for model ["
+			        << mPresenceModel << "]";
+
+			linphone_presence_model_set_presentity(mPresenceModel, presentityAddress->toC());
 		}
 		if (contact) {
 			linphone_presence_model_set_contact(mPresenceModel, contact);
@@ -1237,7 +1167,8 @@ void Account::onConferenceFactoryUriChanged(const std::string &conferenceFactory
 	}
 }
 
-void Account::onAudioVideoConferenceFactoryAddressChanged(const LinphoneAddress *audioVideoConferenceFactoryAddress) {
+void Account::onAudioVideoConferenceFactoryAddressChanged(
+    const std::shared_ptr<Address> &audioVideoConferenceFactoryAddress) {
 	std::string conferenceSpec("conference/");
 	conferenceSpec.append(Core::conferenceVersionAsString());
 

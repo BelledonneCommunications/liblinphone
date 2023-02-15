@@ -28,6 +28,8 @@
 #include <mutex>
 #include <set>
 
+#include "core/core.h"
+#include "linphone/core.h"
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
 #include "chat/chat-room/chat-room.h"

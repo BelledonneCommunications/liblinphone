@@ -32,13 +32,13 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-Participant::Participant(Conference *conference, const IdentityAddress &address) {
+Participant::Participant(Conference *conference, const std::shared_ptr<Address> &address) {
 	configure(conference, address);
 	creationTime = time(nullptr);
 }
 
 Participant::Participant(Conference *conference,
-                         const IdentityAddress &address,
+                         const std::shared_ptr<Address> &address,
                          std::shared_ptr<CallSession> callSession)
     : Participant(conference, address) {
 	session = callSession;
@@ -47,9 +47,10 @@ Participant::Participant(Conference *conference,
 Participant::Participant() {
 }
 
-void Participant::configure(Conference *conference, const IdentityAddress &address) {
+void Participant::configure(Conference *conference, const std::shared_ptr<Address> &address) {
 	mConference = conference;
-	addr = address.getAddressWithoutGruu();
+	auto identityAddress = Address::create(address->getUriWithoutGruu());
+	addr = identityAddress;
 }
 
 Participant::~Participant() {
@@ -86,25 +87,25 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<
 	if (device) return device;
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
 		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session
-		        << " to participant " << getAddress().asString();
+		        << " to participant " << getAddress()->toString();
 	} else {
 		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session
-		         << " to participant " << getAddress().asString();
+		         << " to participant " << getAddress()->toString();
 	}
 	device = ParticipantDevice::create(getSharedFromThis(), session, name);
 	devices.push_back(device);
 	return device;
 }
 
-std::shared_ptr<ParticipantDevice> Participant::addDevice(const IdentityAddress &gruu, const string &name) {
+std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<Address> &gruu, const string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(gruu, false);
 	if (device) return device;
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
-		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString()
-		        << " to participant " << getAddress().asString();
+		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
+		        << " to participant " << getAddress()->toString();
 	} else {
-		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString()
-		         << " to participant " << getAddress().asString();
+		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
+		         << " to participant " << getAddress()->toString();
 	}
 	device = ParticipantDevice::create(getSharedFromThis(), gruu, name);
 	devices.push_back(device);
@@ -121,7 +122,8 @@ shared_ptr<ParticipantDevice> Participant::findDevice(const std::string &label, 
 		if (!label.empty() && !deviceLabel.empty() && (deviceLabel.compare(label) == 0)) return device;
 	}
 	if (logFailure) {
-		lInfo() << "Unable to find device with label " << label;
+		lInfo() << "Unable to find device with label " << label << " among those belonging to participant "
+		        << getAddress()->toString();
 	}
 	return nullptr;
 }
@@ -131,26 +133,38 @@ shared_ptr<ParticipantDevice> Participant::findDeviceByCallId(const std::string 
 		if (device->getCallId() == callId) return device;
 	}
 	if (logFailure) {
-		lInfo() << "Unable to find device with call id " << callId;
+		lInfo() << "Unable to find device with call id " << callId << " among those belonging to participant "
+		        << getAddress()->toString();
 	}
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice(const IdentityAddress &gruu, const bool logFailure) const {
-	for (const auto &device : devices) {
-		if (device->getAddress() == gruu) return device;
+shared_ptr<ParticipantDevice> Participant::findDevice(const std::shared_ptr<Address> &gruu,
+                                                      const bool logFailure) const {
+	const auto &it = std::find_if(devices.cbegin(), devices.cend(), [&gruu](const auto &device) {
+		return (device->getAddress()->getUri() == gruu->getUri());
+	});
+
+	if (it != devices.cend()) {
+		return *it;
 	}
+
 	if (logFailure) {
-		lInfo() << "Unable to find device with address " << gruu;
+		lInfo() << "Unable to find device with address " << *gruu << " among those belonging to participant "
+		        << *getAddress();
 	}
 	return nullptr;
 }
 
 shared_ptr<ParticipantDevice> Participant::findDevice(const shared_ptr<const CallSession> &session,
                                                       const bool logFailure) const {
-	for (const auto &device : devices) {
-		if (device->getSession() == session) return device;
+	const auto &it = std::find_if(devices.cbegin(), devices.cend(),
+	                              [&session](const auto &device) { return (device->getSession() == session); });
+
+	if (it != devices.cend()) {
+		return *it;
 	}
+
 	if (logFailure) {
 		lInfo() << "Unable to find device with call session " << session;
 	}
@@ -162,26 +176,18 @@ const list<shared_ptr<ParticipantDevice>> &Participant::getDevices() const {
 }
 
 void Participant::removeDevice(const shared_ptr<const CallSession> &session) {
-	for (auto it = devices.begin(); it != devices.end(); it++) {
-		if ((*it)->getSession() == session) {
-			devices.erase(it);
-			return;
-		}
-	}
+	devices.erase(std::remove_if(devices.begin(), devices.end(),
+	                             [&session](auto &device) { return (device->getSession() == session); }));
 }
 
-void Participant::removeDevice(const IdentityAddress &gruu) {
-	for (auto it = devices.begin(); it != devices.end(); it++) {
-		if ((*it)->getAddress() == gruu) {
-			devices.erase(it);
-			return;
-		}
-	}
+void Participant::removeDevice(const std::shared_ptr<Address> &gruu) {
+	devices.erase(std::remove_if(devices.begin(), devices.end(),
+	                             [&gruu](auto &device) { return (device->getAddress()->getUri() == gruu->getUri()); }));
 }
 
 // -----------------------------------------------------------------------------
 
-const IdentityAddress &Participant::getAddress() const {
+const std::shared_ptr<Address> &Participant::getAddress() const {
 	return addr;
 }
 
@@ -200,10 +206,10 @@ Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ig
 	std::list<std::string> participantDevices{};
 	// build a list of participants devices address
 	for (const auto &device : getDevices()) {
-		participantDevices.push_back(device->getAddress().asString());
+		participantDevices.push_back(device->getAddress()->toString());
 	}
 	if (ignoredDevice != nullptr) {
-		participantDevices.remove(ignoredDevice->getAddress().asString());
+		participantDevices.remove(ignoredDevice->getAddress()->toString());
 	}
 	if (participantDevices.empty()) {
 		return AbstractChatRoom::SecurityLevel::Safe; // There is no device to query status on, return safe

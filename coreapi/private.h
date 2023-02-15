@@ -59,7 +59,6 @@
 
 #include "linphone/conference.h"
 
-#include "address/address.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/call-op.h"
 #include "sal/event-op.h"

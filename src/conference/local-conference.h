@@ -38,7 +38,7 @@ class LINPHONE_PUBLIC LocalConference : public Conference {
 
 public:
 	LocalConference(const std::shared_ptr<Core> &core,
-	                const IdentityAddress &myAddress,
+	                const std::shared_ptr<Address> &myAddress,
 	                CallSessionListener *listener,
 	                const std::shared_ptr<ConferenceParams> params,
 	                ConferenceListener *confListener = nullptr);

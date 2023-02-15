@@ -107,12 +107,12 @@ public:
 	}
 
 	virtual void
-	addSecurityEventInChatrooms(BCTBX_UNUSED(const IdentityAddress &peerDeviceAddr),
+	addSecurityEventInChatrooms(BCTBX_UNUSED(const std::shared_ptr<Address> &peerDeviceAddr),
 	                            BCTBX_UNUSED(ConferenceSecurityEvent::SecurityEventType securityEventType)) {
 	}
 
 	virtual std::shared_ptr<ConferenceSecurityEvent>
-	onDeviceAdded(BCTBX_UNUSED(const IdentityAddress &newDeviceAddr),
+	onDeviceAdded(BCTBX_UNUSED(const std::shared_ptr<Address> &newDeviceAddr),
 	              BCTBX_UNUSED(std::shared_ptr<Participant> participant),
 	              BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom),
 	              BCTBX_UNUSED(ChatRoom::SecurityLevel currentSecurityLevel)) {

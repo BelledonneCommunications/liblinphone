@@ -62,8 +62,8 @@ public:
 	BorrowedMut<LinphoneProxyConfig> getDefaultProxyConfig() {
 		return borrowed_mut(linphone_core_get_default_proxy_config(mMgr->lc));
 	}
-	LinphonePrivate::IdentityAddress getIdentity() {
-		return *L_GET_CPP_PTR_FROM_C_OBJECT(mMgr->identity);
+	std::shared_ptr<LinphonePrivate::Address> getIdentity() {
+		return LinphonePrivate::Address::toCpp(mMgr->identity)->getSharedFromThis();
 	}
 	void setUseRfc2833ForDtmf(bool value) {
 		linphone_core_set_use_rfc2833_for_dtmf(mMgr->lc, value);

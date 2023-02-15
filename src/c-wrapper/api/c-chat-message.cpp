@@ -238,13 +238,13 @@ void linphone_chat_message_set_appdata(LinphoneChatMessage *msg, const char *dat
 }
 
 const LinphoneAddress *linphone_chat_message_get_from_address(const LinphoneChatMessage *msg) {
-	const LinphonePrivate::Address &addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getFromAddress().asAddress();
-	return L_GET_C_BACK_PTR(&addr);
+	const auto &addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getFromAddress();
+	return addr->toC();
 }
 
 const LinphoneAddress *linphone_chat_message_get_to_address(const LinphoneChatMessage *msg) {
-	const LinphonePrivate::Address &addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getToAddress().asAddress();
-	return L_GET_C_BACK_PTR(&addr);
+	const auto addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getToAddress();
+	return addr->toC();
 }
 
 const char *linphone_chat_message_get_file_transfer_filepath(const LinphoneChatMessage *msg) {
@@ -273,9 +273,9 @@ const char *linphone_chat_message_get_reply_message_id(LinphoneChatMessage *msg)
 
 const LinphoneAddress *linphone_chat_message_get_reply_message_sender_address(LinphoneChatMessage *msg) {
 	if (L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isReply()) {
-		const LinphonePrivate::IdentityAddress &address = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToSenderAddress();
-		if (address.isValid()) {
-			return L_GET_C_BACK_PTR(&(address.asAddress()));
+		const auto &address = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToSenderAddress();
+		if (address && address->isValid()) {
+			return address->toC();
 		}
 	}
 	return NULL;
@@ -539,8 +539,8 @@ const LinphoneAddress *linphone_chat_message_get_peer_address(const LinphoneChat
 }
 
 const LinphoneAddress *linphone_chat_message_get_local_address(const LinphoneChatMessage *msg) {
-	const LinphonePrivate::Address &addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAddress().asAddress();
-	return L_GET_C_BACK_PTR(&addr);
+	const auto &addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAddress();
+	return addr->toC();
 }
 
 LinphoneReason linphone_chat_message_get_reason(const LinphoneChatMessage *msg) {

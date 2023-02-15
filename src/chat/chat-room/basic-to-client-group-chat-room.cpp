@@ -64,10 +64,8 @@ public:
 		ProxyChatRoomPrivate::sendChatMessage(chatMessage);
 		const list<string> &specs = chatMessage->getCore()->getSpecsList();
 		time_t currentRealTime = ms_time(nullptr);
-		LinphoneAddress *lAddr =
-		    linphone_address_new(chatMessage->getChatRoom()->getConferenceId().getLocalAddress().asString().c_str());
+		LinphoneAddress *lAddr = chatMessage->getChatRoom()->getConferenceId().getLocalAddress()->toC();
 		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(q->getCore()->getCCore(), lAddr);
-		linphone_address_unref(lAddr);
 		const char *conferenceFactoryUri = nullptr;
 		if (proxy) {
 			conferenceFactoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
@@ -83,9 +81,8 @@ public:
 			return;
 		}
 		migrationRealTime = currentRealTime;
-		char *tmp = linphone_address_as_string(linphone_proxy_config_get_contact(proxy)); // get the gruu address
-		IdentityAddress localAddress(tmp);
-		bctbx_free(tmp);
+		auto localAddress =
+		    Address::toCpp(linphone_proxy_config_get_contact(proxy))->getSharedFromThis(); // get the gruu address
 		string subject = chatRoom->getSubject();
 		if (subject.empty()) subject = "basic to client group migrated";
 		auto params = ChatRoomParams::create(subject, chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted,
@@ -93,7 +90,7 @@ public:
 		// make sure to have a one2one chatroom
 		clientGroupChatRoom =
 		    static_pointer_cast<ClientGroupChatRoom>(chatRoom->getCore()->getPrivate()->createChatRoom(
-		        params, localAddress, subject, {chatRoom->getPeerAddress().asAddress()}));
+		        params, localAddress, subject, {chatRoom->getPeerAddress()}));
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);
 	}

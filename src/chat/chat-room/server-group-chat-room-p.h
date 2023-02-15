@@ -39,18 +39,13 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ParticipantDevice;
-
 class ParticipantDeviceIdentity
     : public bellesip::HybridObject<LinphoneParticipantDeviceIdentity, ParticipantDeviceIdentity> {
 public:
-	ParticipantDeviceIdentity(const Address &address, const std::string &name);
+	ParticipantDeviceIdentity(const std::shared_ptr<Address> &address, const std::string &name);
 	void setCapabilityDescriptor(const std::string &capabilities);
-	const Address &getAddress() const {
+	const std::shared_ptr<Address> &getAddress() const {
 		return mDeviceAddress;
-	}
-	const LinphoneAddress *getLinphoneAddress() const {
-		return mDeviceAddressCache;
 	}
 	const std::string &getName() const {
 		return mDeviceName;
@@ -61,8 +56,7 @@ public:
 	virtual ~ParticipantDeviceIdentity();
 
 private:
-	Address mDeviceAddress;
-	LinphoneAddress *mDeviceAddressCache; // To be removed once Address becomes an HybridObject.
+	std::shared_ptr<Address> mDeviceAddress;
 	std::string mDeviceName;
 	std::string mCapabilityDescriptor; // +org.linphone.specs capability descriptor
 };
@@ -76,7 +70,7 @@ public:
 
 	virtual ~ServerGroupChatRoomPrivate() = default;
 
-	std::shared_ptr<Participant> addParticipant(const IdentityAddress &participantAddress);
+	std::shared_ptr<Participant> addParticipant(const std::shared_ptr<Address> &participantAddress);
 	void removeParticipant(const std::shared_ptr<Participant> &participant);
 
 	void setParticipantDeviceState(const std::shared_ptr<ParticipantDevice> &device,
@@ -101,17 +95,17 @@ public:
 
 	bool initializeParticipants(const std::shared_ptr<Participant> &initiator, SalCallOp *op);
 	void resumeParticipant(const std::shared_ptr<Participant> &participant);
-	bool subscribeRegistrationForParticipants(const std::list<IdentityAddress> &participants, bool newInvited);
-	void unSubscribeRegistrationForParticipant(const IdentityAddress &identAddresses);
+	bool subscribeRegistrationForParticipants(const std::list<std::shared_ptr<Address>> &participants, bool newInvited);
+	void unSubscribeRegistrationForParticipant(const std::shared_ptr<Address> &identAddresses);
 	void handleSubjectChange(SalCallOp *op);
 	void handleEphemeralSettingsChange(const std::shared_ptr<CallSession> &session);
 	void setEphemeralLifetime(long time, const std::shared_ptr<CallSession> &session);
 	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode, const std::shared_ptr<CallSession> &session);
 
-	void setConferenceAddress(const ConferenceAddress &conferenceAddress);
-	void updateParticipantDevices(const IdentityAddress &addr,
+	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
+	void updateParticipantDevices(const std::shared_ptr<Address> &addr,
 	                              const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
-	void setParticipantDevicesAtCreation(const IdentityAddress &addr,
+	void setParticipantDevicesAtCreation(const std::shared_ptr<Address> &addr,
 	                                     const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
 	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device,
 	                                    bool freslyRegistered = false);
@@ -122,9 +116,9 @@ public:
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) override;
 
 	/*These are the two methods called by the registration subscription module*/
-	void setParticipantDevices(const IdentityAddress &addr,
+	void setParticipantDevices(const std::shared_ptr<Address> &addr,
 	                           const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
-	void notifyParticipantDeviceRegistration(const IdentityAddress &participantDevice);
+	void notifyParticipantDeviceRegistration(const std::shared_ptr<Address> &participantDevice);
 
 private:
 	struct Message {
@@ -132,7 +126,7 @@ private:
 		        const ContentType &contentType,
 		        const std::string &text,
 		        const SalCustomHeader *salCustomHeaders)
-		    : fromAddr(from) {
+		    : fromAddr(Address::create(from)) {
 			content.setContentType(contentType);
 			if (!text.empty()) content.setBodyFromUtf8(text);
 			if (salCustomHeaders) customHeaders = sal_custom_header_clone(salCustomHeaders);
@@ -142,7 +136,7 @@ private:
 			if (customHeaders) sal_custom_header_free(customHeaders);
 		}
 
-		IdentityAddress fromAddr;
+		std::shared_ptr<Address> fromAddr;
 		Content content;
 		std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
 		SalCustomHeader *customHeaders = nullptr;
@@ -154,15 +148,16 @@ private:
 	void addParticipantDevice(const std::shared_ptr<Participant> &participant,
 	                          const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
 	void designateAdmin();
-	void sendMessage(const std::shared_ptr<Message> &message, const IdentityAddress &deviceAddr);
+	void sendMessage(const std::shared_ptr<Message> &message, const std::shared_ptr<Address> &deviceAddr);
 	void finalizeCreation();
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device);
 	void inviteDevice(const std::shared_ptr<ParticipantDevice> &device);
 	void byeDevice(const std::shared_ptr<ParticipantDevice> &device);
 	bool isAdminLeft() const;
 	void queueMessage(const std::shared_ptr<Message> &message);
-	void queueMessage(const std::shared_ptr<Message> &msg, const IdentityAddress &deviceAddress);
-	void removeParticipantDevice(const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress);
+	void queueMessage(const std::shared_ptr<Message> &msg, const std::shared_ptr<Address> &deviceAddress);
+	void removeParticipantDevice(const std::shared_ptr<Participant> &participant,
+	                             const std::shared_ptr<Address> &deviceAddress);
 
 	void onParticipantDeviceLeft(const std::shared_ptr<ParticipantDevice> &device);
 	void onBye(const std::shared_ptr<ParticipantDevice> &participantLeaving);
@@ -192,8 +187,8 @@ private:
 		                         // holding subscriptions.
 	};
 
-	std::list<IdentityAddress> invitedParticipants; // participants in the process of being added to the chatroom, while
-	                                                // for registration information.
+	std::list<Address> invitedParticipants; // participants in the process of being added to the chatroom, while for
+	                                        // registration information.
 	ChatRoomListener *chatRoomListener = this;
 	std::map<std::string, RegistrationSubscriptionContext>
 	    registrationSubscriptions;               /*map of registrationSubscriptions for each participant*/

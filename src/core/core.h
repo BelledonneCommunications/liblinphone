@@ -25,14 +25,16 @@
 #include <list>
 #include <unordered_map>
 
-#include "object/object.h"
+#include <mediastreamer2/mssndcard.h>
 
 #include "account/account.h"
+#include "c-wrapper/internal/c-sal.h"
 #include "call/audio-device/audio-device.h"
 #include "call/call-log.h"
 #include "conference/conference-id.h"
 #include "event-log/event-log.h"
 #include "linphone/types.h"
+#include "object/object.h"
 #include "sal/event-op.h"
 
 // =============================================================================
@@ -49,13 +51,15 @@ LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
 class Address;
+class AudioDevice;
 class Call;
+class CallLog;
 class CallSession;
 class ConferenceId;
+class ConferenceInfo;
 class Participant;
 class ConferenceParams;
 class CorePrivate;
-class IdentityAddress;
 class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
@@ -117,10 +121,11 @@ public:
 	// Return a new Core instance. Entry point of Linphone.
 	static std::shared_ptr<Core> create(LinphoneCore *cCore);
 
-	static std::string getConferenceFactoryUri(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
+	static std::string getConferenceFactoryUri(const std::shared_ptr<Core> &core,
+	                                           const std::shared_ptr<const Address> &localAddress);
 	static std::string getConferenceFactoryUri(const std::shared_ptr<Core> &core, const LinphoneAccount *account);
 	static LinphoneAddress *getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-	                                                              const IdentityAddress &localAddress);
+	                                                              const std::shared_ptr<Address> &localAddress);
 	static LinphoneAddress *getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
 	                                                              const LinphoneAccount *account);
 
@@ -144,7 +149,7 @@ public:
 	// ---------------------------------------------------------------------------
 
 	bool areSoundResourcesLocked() const;
-	std::shared_ptr<Call> getCallByRemoteAddress(const Address &addr) const;
+	std::shared_ptr<Call> getCallByRemoteAddress(const std::shared_ptr<Address> &addr) const;
 	std::shared_ptr<Call> getCallByCallId(const std::string &callId) const;
 	const std::list<std::shared_ptr<Call>> &getCalls() const;
 	unsigned int getCallCount() const;
@@ -164,8 +169,8 @@ public:
 	                               std::shared_ptr<CallLog> &callLog,
 	                               std::shared_ptr<ConferenceInfo> confInfo);
 	void reportEarlyCallFailed(LinphoneCallDir dir,
-	                           LinphoneAddress *from,
-	                           LinphoneAddress *to,
+	                           const std::shared_ptr<Address> &from,
+	                           const std::shared_ptr<Address> &to,
 	                           LinphoneErrorInfo *ei,
 	                           const std::string callId);
 
@@ -176,10 +181,10 @@ public:
 	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms() const;
 
 	std::shared_ptr<AbstractChatRoom> findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound = true) const;
-	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms(const IdentityAddress &peerAddress) const;
+	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms(const std::shared_ptr<Address> &peerAddress) const;
 
-	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom(const IdentityAddress &localAddress,
-	                                                       const IdentityAddress &participantAddress,
+	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom(const std::shared_ptr<const Address> &localAddress,
+	                                                       const std::shared_ptr<Address> &participantAddress,
 	                                                       bool basicOnly,
 	                                                       bool conferenceOnly,
 	                                                       bool encrypted) const;
@@ -189,14 +194,14 @@ public:
 	                                                            LinphoneChatRoomCapabilitiesMask capabilities,
 	                                                            bool fallback = true);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
-	                                                            const Address *localAddress,
+	                                                            const std::shared_ptr<Address> *localAddress,
 	                                                            LinphoneChatRoomCapabilitiesMask capabilities,
 	                                                            bool fallback = true);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom(const ConferenceId &conferenceId);
 
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom(const IdentityAddress &localAddress,
-	                                                           const IdentityAddress &peerAddress);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom(const std::shared_ptr<Address> &localAddress,
+	                                                           const std::shared_ptr<Address> &peerAddress);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoomFromUri(const std::string &localAddressUri,
 	                                                                  const std::string &peerAddressUri);
@@ -210,7 +215,6 @@ public:
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *sal_msg);
 	LinphoneReason
 	handleChatMessagesAggregation(std::shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg);
-
 	void enableEmptyChatroomsDeletion(const bool enable);
 	bool emptyChatroomsDeletionEnabled() const;
 
@@ -224,11 +228,11 @@ public:
 	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
 	std::shared_ptr<MediaConference::Conference>
 	searchAudioVideoConference(const std::shared_ptr<ConferenceParams> &params,
-	                           const ConferenceAddress &localAddress,
-	                           const ConferenceAddress &remoteAddress,
-	                           const std::list<IdentityAddress> &participants) const;
+	                           const std::shared_ptr<const Address> &localAddress,
+	                           const std::shared_ptr<const Address> &remoteAddress,
+	                           const std::list<std::shared_ptr<Address>> &participants) const;
 	std::shared_ptr<MediaConference::Conference>
-	searchAudioVideoConference(const ConferenceAddress &conferenceAddress) const;
+	searchAudioVideoConference(const std::shared_ptr<Address> &conferenceAddress) const;
 
 	// ---------------------------------------------------------------------------
 	// Paths.
@@ -299,7 +303,7 @@ public:
 
 	void pushNotificationReceived(const std::string &callId, const std::string &payload, bool isCoreStarting);
 	int getUnreadChatMessageCount() const;
-	int getUnreadChatMessageCount(const IdentityAddress &localAddress) const;
+	int getUnreadChatMessageCount(const std::shared_ptr<Address> &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals() const;
 	std::shared_ptr<PushNotificationMessage> getPushNotificationMessage(const std::string &callId) const;
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) const;
@@ -315,7 +319,7 @@ public:
 	void addLdap(std::shared_ptr<Ldap> ldap);
 	void removeLdap(std::shared_ptr<Ldap> ldap);
 
-	Address interpretUrl(const std::string &url, bool chatOrCallUse) const;
+	std::shared_ptr<Address> interpretUrl(const std::string &url, bool chatOrCallUse) const;
 
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later
 	// on main thread.
@@ -341,12 +345,13 @@ public:
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
 
 	std::shared_ptr<CallSession> createConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-	                                                      const Address &localAddr,
-	                                                      const std::list<IdentityAddress> &participants);
-	std::shared_ptr<CallSession> createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-	                                                              const Address &localAddr,
-	                                                              const std::list<IdentityAddress> &participants,
-	                                                              const ConferenceAddress &confAddr);
+	                                                      const std::shared_ptr<Address> &localAddr,
+	                                                      const std::list<std::shared_ptr<Address>> &participants);
+	std::shared_ptr<CallSession>
+	createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
+	                                 const std::shared_ptr<Address> &localAddr,
+	                                 const std::list<std::shared_ptr<Address>> &participants,
+	                                 const std::shared_ptr<Address> &confAddr);
 
 	bool isCurrentlyAggregatingChatMessages();
 
@@ -354,7 +359,6 @@ private:
 	Core();
 
 	bool deleteEmptyChatrooms = true;
-
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
 

@@ -77,14 +77,17 @@ public:
 	std::string createNotifySubjectChanged();
 
 	// Participant
-	std::string createNotifyParticipantAdded(const Address &pAddress);
-	std::string createNotifyParticipantAdminStatusChanged(const Address &pAddress, bool isAdmin);
-	std::string createNotifyParticipantRemoved(const Address &pAddress);
+	std::string createNotifyParticipantAdded(const std::shared_ptr<Address> &pAddress);
+	std::string createNotifyParticipantAdminStatusChanged(const std::shared_ptr<Address> &pAddress, bool isAdmin);
+	std::string createNotifyParticipantRemoved(const std::shared_ptr<Address> &pAddress);
 
 	// Participant device
-	std::string createNotifyParticipantDeviceAdded(const Address &pAddress, const Address &dAddress);
-	std::string createNotifyParticipantDeviceRemoved(const Address &pAddress, const Address &dAddress);
-	std::string createNotifyParticipantDeviceDataChanged(const Address &pAddress, const Address &dAddress);
+	std::string createNotifyParticipantDeviceAdded(const std::shared_ptr<Address> &pAddress,
+	                                               const std::shared_ptr<Address> &dAddress);
+	std::string createNotifyParticipantDeviceRemoved(const std::shared_ptr<Address> &pAddress,
+	                                                 const std::shared_ptr<Address> &dAddress);
+	std::string createNotifyParticipantDeviceDataChanged(const std::shared_ptr<Address> &pAddress,
+	                                                     const std::shared_ptr<Address> &dAddress);
 
 	static void notifyResponseCb(const LinphoneEvent *lev);
 
@@ -214,7 +217,7 @@ private:
 	void notifyParticipant(const Content &notify, const std::shared_ptr<Participant> &participant);
 	void notifyParticipantDevice(const Content &notify, const std::shared_ptr<ParticipantDevice> &device);
 
-	std::shared_ptr<Participant> getConferenceParticipant(const Address &address) const;
+	std::shared_ptr<Participant> getConferenceParticipant(const std::shared_ptr<Address> &address) const;
 
 	void addMediaCapabilities(const std::shared_ptr<ParticipantDevice> &device,
 	                          Xsd::ConferenceInfo::EndpointType &endpoint);

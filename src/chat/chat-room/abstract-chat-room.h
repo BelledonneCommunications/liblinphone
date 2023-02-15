@@ -99,8 +99,8 @@ public:
 	virtual bool canHandleCpim() const = 0;
 	virtual bool canHandleMultipart() const = 0;
 
-	virtual const IdentityAddress &getPeerAddress() const = 0;
-	virtual const IdentityAddress &getLocalAddress() const = 0;
+	virtual const std::shared_ptr<Address> &getPeerAddress() const = 0;
+	virtual const std::shared_ptr<Address> &getLocalAddress() const = 0;
 
 	virtual time_t getCreationTime() const = 0;
 	virtual time_t getLastUpdateTime() const = 0;
@@ -129,7 +129,7 @@ public:
 
 	virtual void compose() = 0;
 	virtual bool isRemoteComposing() const = 0;
-	virtual std::list<IdentityAddress> getComposingAddresses() const = 0;
+	virtual std::list<std::shared_ptr<Address>> getComposingAddresses() const = 0;
 
 	virtual std::shared_ptr<ChatMessage> createChatMessage() = 0;
 	virtual std::shared_ptr<ChatMessage> createChatMessage(const std::string &text) = 0;

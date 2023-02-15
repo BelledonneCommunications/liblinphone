@@ -210,17 +210,20 @@ public:
 		}
 	}
 
-	void setOrganizer(const string &organizer) {
-		if (!organizer.empty()) {
+	Ics::Event::organizer_t parseMemberLine(const string &line, const string keyword) {
+		if (!line.empty()) {
 			Ics::Event::attendee_params_t params;
-			size_t paramStart = organizer.find("ORGANIZER");
+			size_t paramStart = line.find(keyword);
 			// Chop off ATTENDEE
-			const auto &paramAddress = organizer.substr(paramStart + strlen("ORGANIZER"));
+			const auto &paramAddress = line.substr(paramStart + keyword.size());
 			size_t addressStart = paramAddress.find(":");
 			// Split parameters and address.
 			// Parameters end at the first : sign
 			const auto &paramsStr = paramAddress.substr(0, addressStart);
-			const auto &address = paramAddress.substr(addressStart + 1, organizer.size());
+			// The address length is the size of the string contaning member parameters and address minus the position
+			// at which the address starts minus 1
+			const auto addressLength = paramAddress.size() - addressStart - 3;
+			const auto &address = paramAddress.substr(addressStart + 1, addressLength);
 			if (!paramsStr.empty()) {
 				const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(paramsStr), ";");
 				for (const auto &param : splittedValue) {
@@ -232,33 +235,19 @@ public:
 					}
 				}
 			}
-			mOrganizer = std::make_pair(address, params);
+			return std::make_pair(address, params);
 		}
+		return Ics::Event::organizer_t();
+	}
+
+	void setOrganizer(const string &organizer) {
+		mOrganizer = parseMemberLine(organizer, "ORGANIZER");
 	}
 
 	void addAttendee(const string &attendee) {
-		if (!attendee.empty()) {
-			Ics::Event::attendee_params_t params;
-			size_t paramStart = attendee.find("ATTENDEE");
-			// Chop off ATTENDEE
-			const auto &paramAddress = attendee.substr(paramStart + strlen("ATTENDEE"));
-			size_t addressStart = paramAddress.find(":");
-			// Split parameters and address.
-			// Parameters end at the first : sign
-			const auto &paramsStr = paramAddress.substr(0, addressStart);
-			const auto &address = paramAddress.substr(addressStart + 1, attendee.size());
-			if (!paramsStr.empty()) {
-				const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(paramsStr), ";");
-				for (const auto &param : splittedValue) {
-					if (!param.empty()) {
-						auto equal = param.find("=");
-						string name = param.substr(0, equal);
-						string value = param.substr(equal + 1, param.size());
-						params.insert(std::make_pair(name, value));
-					}
-				}
-			}
-			mAttendees.insert(std::make_pair(address, params));
+		auto mAttendee = parseMemberLine(attendee, "ATTENDEE");
+		if (mAttendee != Ics::Event::organizer_t()) {
+			mAttendees.insert(mAttendee);
 		}
 	}
 

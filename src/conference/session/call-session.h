@@ -111,9 +111,11 @@ public:
 	virtual void acceptDefault();
 	LinphoneStatus accept(const CallSessionParams *csp = nullptr);
 	LinphoneStatus acceptUpdate(const CallSessionParams *csp = nullptr);
-	virtual void configure(
-	    LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to);
-	LinphoneProxyConfig *getDestProxy();
+	virtual void configure(LinphoneCallDir direction,
+	                       LinphoneProxyConfig *cfg,
+	                       SalCallOp *op,
+	                       const std::shared_ptr<Address> &from,
+	                       const std::shared_ptr<Address> &to);
 	void configure(LinphoneCallDir direction, const std::string &callid);
 	bool isOpConfigured();
 	LinphoneStatus decline(LinphoneReason reason);
@@ -131,11 +133,12 @@ public:
 	virtual void startIncomingNotification(bool notifyRinging = true);
 	void startBasicIncomingNotification(bool notifyRinging = true);
 	void startPushIncomingNotification();
-	virtual int
-	startInvite(const Address *destination, const std::string &subject = "", const Content *content = nullptr);
+	virtual int startInvite(const std::shared_ptr<Address> &destination,
+	                        const std::string &subject = "",
+	                        const Content *content = nullptr);
 	LinphoneStatus terminate(const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer(const std::shared_ptr<CallSession> &dest);
-	LinphoneStatus transfer(const Address &dest);
+	LinphoneStatus transfer(const std::shared_ptr<Address> &dest);
 	LinphoneStatus transfer(const std::string &dest);
 	LinphoneStatus update(const CallSessionParams *csp,
 	                      const UpdateMethod method = UpdateMethod::Default,
@@ -144,26 +147,26 @@ public:
 
 	CallSessionParams *getCurrentParams() const;
 	LinphoneCallDir getDirection() const;
-	const Address &getDiversionAddress() const;
+	const std::shared_ptr<Address> getDiversionAddress() const;
 	int getDuration() const;
 	const LinphoneErrorInfo *getErrorInfo() const;
-	const Address &getLocalAddress() const;
-	Address getContactAddress() const;
+	const std::shared_ptr<Address> getLocalAddress() const;
+	const std::shared_ptr<Address> getContactAddress() const;
 	std::shared_ptr<CallLog> getLog() const;
 	virtual const CallSessionParams *getParams() const;
 	LinphoneReason getReason() const;
 	std::shared_ptr<CallSession> getReferer() const;
-	const std::string &getReferTo() const;
-	const Address &getReferToAddress() const;
-	const Address *getRemoteAddress() const;
+	const std::string getReferTo() const;
+	const std::shared_ptr<Address> &getReferToAddress() const;
+	const std::shared_ptr<Address> getRemoteAddress() const;
 	const std::string &getRemoteContact() const;
-	const Address *getRemoteContactAddress() const;
+	const std::shared_ptr<Address> getRemoteContactAddress() const;
 	const CallSessionParams *getRemoteParams();
 	const std::string &getRemoteUserAgent() const;
 	std::shared_ptr<CallSession> getReplacedCallSession() const;
 	CallSession::State getState() const;
-	const Address &getToAddress() const;
-	const Address &getRequestAddress() const;
+	const std::shared_ptr<Address> getToAddress() const;
+	const std::shared_ptr<Address> getRequestAddress() const;
 	CallSession::State getTransferState() const;
 	std::shared_ptr<CallSession> getTransferTarget() const;
 	const char *getToHeader(const std::string &name) const;
@@ -171,7 +174,7 @@ public:
 	const std::string getFromTag() const;
 	const std::string getToTag() const;
 
-	void updateContactAddress(Address &contactAddress) const;
+	void updateContactAddressInOp();
 
 	static bool isEarlyState(CallSession::State state);
 	void accepting();
@@ -186,6 +189,7 @@ protected:
 	explicit CallSession(CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState() const;
 	CallSession::State getLastStableState() const;
+	void updateContactAddress(Address &contactAddress) const;
 
 private:
 	// bool mIsDeclining = false;

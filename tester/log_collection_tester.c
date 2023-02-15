@@ -23,25 +23,24 @@
 #endif
 #include <time.h>
 
+#ifdef __ANDROID__
+#include "android/api-level.h"
+#endif
+
 #include <bctoolbox/defs.h>
 
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
-#include <time.h>
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif
 
-#ifdef __ANDROID__
-#include "android/api-level.h"
-#endif
-
 /*getline is POSIX 2008, not available on many systems.*/
 
 /*It is declared since NDK14 unified headers, that can be detected by the presence of __ANDROID_API_O__ define*/
-#if (defined(__ANDROID__) && __ANDROID_API__ < 18) || defined(_WIN32) || defined(__QNX__)
+#if ((defined(__ANDROID__) && __ANDROID_API__ < 18) || defined(_WIN32) || defined(__QNX__))
 /* This code is public domain -- Will Hartung 4/9/09 */
 static ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
 	char *bufptr = NULL;
@@ -129,7 +128,7 @@ static LinphoneCoreManager *setup(LinphoneLogCollectionState log_collection_stat
 	return marie;
 }
 
-#if HAVE_ZLIB
+#ifdef HAVE_ZLIB
 
 /*returns uncompressed log file*/
 static FILE *gzuncompress(const char *filepath) {
@@ -187,7 +186,7 @@ static time_t check_file(BCTBX_UNUSED(LinphoneCoreManager *mgr)) {
 		time_t time_prev = 0;
 #endif
 
-#if HAVE_ZLIB
+#ifdef HAVE_ZLIB
 		// 0) if zlib is enabled, we must decompress the file first
 		file = gzuncompress(filepath);
 #else

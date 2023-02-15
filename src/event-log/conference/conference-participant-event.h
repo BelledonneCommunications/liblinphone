@@ -28,7 +28,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceParticipantEventPrivate;
-class IdentityAddress;
+class Address;
 class Conference;
 class Participant;
 
@@ -40,16 +40,16 @@ public:
 	ConferenceParticipantEvent(Type type,
 	                           time_t creationTime,
 	                           const ConferenceId &conferenceId,
-	                           const IdentityAddress &participantAddress);
+	                           const std::shared_ptr<Address> &participantAddress);
 
-	const IdentityAddress &getParticipantAddress() const;
+	const std::shared_ptr<Address> &getParticipantAddress() const;
 
 protected:
 	ConferenceParticipantEvent(ConferenceParticipantEventPrivate &p,
 	                           Type type,
 	                           time_t creationTime,
 	                           const ConferenceId &conferenceId,
-	                           const IdentityAddress &participantAddress);
+	                           const std::shared_ptr<Address> &participantAddress);
 
 private:
 	L_DECLARE_PRIVATE(ConferenceParticipantEvent);

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 
@@ -289,12 +290,12 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 
 	if (!event->getOrganizerAddress().empty()) {
 		const auto &org = event->getOrganizer();
-		const auto &orgAddress = IdentityAddress(org.first);
+		const auto &orgAddress = Address::create(org.first);
 		const auto &orgParams = org.second;
-		if (orgAddress.isValid()) {
+		if (orgAddress && orgAddress->isValid()) {
 			confInfo->setOrganizer(orgAddress, orgParams);
 		} else {
-			lWarning() << "Could not parse organizer's address:" << event->getOrganizerAddress()
+			lWarning() << "Could not parse organizer's address: " << event->getOrganizerAddress()
 			           << " because it is not a valid address";
 		}
 	}
@@ -303,11 +304,11 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 		auto address = attendee.first;
 		auto params = attendee.second;
 		if (!address.empty()) {
-			const auto &addr = IdentityAddress(address);
-			if (addr.isValid()) {
+			const auto addr = Address::create(address);
+			if (addr && addr->isValid()) {
 				confInfo->addParticipant(addr, params);
 			} else {
-				lWarning() << "Could not parse attendee's address:" << address << " because it is not a valid address";
+				lWarning() << "Could not parse attendee's address: " << address << " because it is not a valid address";
 			}
 		}
 	}
@@ -322,8 +323,8 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 	}
 
 	if (!event->getXConfUri().empty()) {
-		const ConferenceAddress uri(event->getXConfUri());
-		if (uri.isValid()) {
+		const std::shared_ptr<Address> uri = Address::create(event->getXConfUri());
+		if (uri && uri->isValid()) {
 			confInfo->setUri(uri);
 		} else {
 			lWarning() << "Could not parse conference's uri address:" << event->getXConfUri()

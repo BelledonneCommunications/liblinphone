@@ -19,6 +19,7 @@
  */
 
 #include "conference-id.h"
+#include "logger/logger.h"
 
 // =============================================================================
 
@@ -29,9 +30,15 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceId::ConferenceId() {
 }
 
-ConferenceId::ConferenceId(const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress) {
-	this->peerAddress = peerAddress;
-	this->localAddress = localAddress;
+ConferenceId::ConferenceId(const std::shared_ptr<Address> &peerAddress,
+                           const std::shared_ptr<const Address> &localAddress) {
+	this->peerAddress = (peerAddress) ? Address::create(peerAddress->getUri()) : nullptr;
+	this->localAddress = (localAddress) ? Address::create(localAddress->getUri()) : nullptr;
+}
+
+ConferenceId::ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<Address> &localAddress) {
+	this->peerAddress = (peerAddress) ? Address::create(peerAddress->getUri()) : nullptr;
+	this->localAddress = (localAddress) ? Address::create(localAddress->getUri()) : nullptr;
 }
 
 ConferenceId::ConferenceId(const ConferenceId &other)
@@ -45,7 +52,8 @@ ConferenceId &ConferenceId::operator=(const ConferenceId &other) {
 }
 
 bool ConferenceId::operator==(const ConferenceId &other) const {
-	return peerAddress == other.peerAddress && localAddress == other.localAddress;
+	return peerAddress && other.peerAddress && (*peerAddress == *(other.peerAddress)) && localAddress &&
+	       other.localAddress && (*localAddress == *(other.localAddress));
 }
 
 bool ConferenceId::operator!=(const ConferenceId &other) const {
@@ -53,19 +61,28 @@ bool ConferenceId::operator!=(const ConferenceId &other) const {
 }
 
 bool ConferenceId::operator<(const ConferenceId &other) const {
-	return peerAddress < other.peerAddress || (peerAddress == other.peerAddress && localAddress < other.localAddress);
+	return *peerAddress < *(other.peerAddress) ||
+	       (*peerAddress == *(other.peerAddress) && *localAddress < *(other.localAddress));
 }
 
-const ConferenceAddress &ConferenceId::getPeerAddress() const {
+void ConferenceId::setPeerAddress(const std::shared_ptr<Address> &addr) {
+	peerAddress = addr;
+}
+
+void ConferenceId::setLocalAddress(const std::shared_ptr<Address> &addr) {
+	localAddress = addr;
+}
+
+const std::shared_ptr<Address> &ConferenceId::getPeerAddress() const {
 	return peerAddress;
 }
 
-const ConferenceAddress &ConferenceId::getLocalAddress() const {
+const std::shared_ptr<Address> &ConferenceId::getLocalAddress() const {
 	return localAddress;
 }
 
 bool ConferenceId::isValid() const {
-	return peerAddress.isValid() && localAddress.isValid();
+	return peerAddress && peerAddress->isValid() && localAddress && localAddress->isValid();
 }
 
 LINPHONE_END_NAMESPACE

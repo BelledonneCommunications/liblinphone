@@ -66,10 +66,10 @@ public:
 	void setSipEtag(const std::string &sipEtag);
 	void setCore(LinphoneCore *lc);
 	void setErrorInfo(LinphoneErrorInfo *errorInfo);
-	void setContactAddress(const LinphoneAddress *contact);
-	void setContactAddressWithoutParams(const LinphoneAddress *contact);
-	void setPendingContactAddress(LinphoneAddress *contact);
-	void setServiceRouteAddress(LinphoneAddress *serviceRoute);
+	void setContactAddress(const std::shared_ptr<Address> contact);
+	void setContactAddressWithoutParams(const std::shared_ptr<Address> contact);
+	void setPendingContactAddress(std::shared_ptr<Address> contact);
+	void setServiceRouteAddress(std::shared_ptr<Address> serviceRoute);
 	void setState(LinphoneRegistrationState state, const std::string &message);
 	void setOp(SalRegisterOp *op);
 	void setCustomheader(const std::string &headerName, const std::string &headerValue);
@@ -83,10 +83,10 @@ public:
 	const std::string &getSipEtag() const;
 	LinphoneCore *getCore() const;
 	const LinphoneErrorInfo *getErrorInfo();
-	const LinphoneAddress *getContactAddress() const;
-	const LinphoneAddress *getContactAddressWithoutParams() const;
-	const LinphoneAddress *getPendingContactAddress() const;
-	const LinphoneAddress *getServiceRouteAddress();
+	const std::shared_ptr<Address> &getContactAddress() const;
+	const std::shared_ptr<Address> &getContactAddressWithoutParams() const;
+	const std::shared_ptr<Address> &getPendingContactAddress() const;
+	const std::shared_ptr<Address> getServiceRouteAddress() const;
 	LinphoneRegistrationState getState() const;
 	SalRegisterOp *getOp() const;
 	const char *getCustomHeader(const std::string &headerName) const;
@@ -113,15 +113,15 @@ public:
 	const std::string &getCustomParam(const std::string &key) const;
 	void writeToConfigFile(int index);
 	const LinphoneAuthInfo *findAuthInfo() const;
-	std::shared_ptr<EventPublish> createPublish(const char *event, int expires);
+	std::shared_ptr<EventPublish> createPublish(const std::string event, int expires);
 	LinphoneReason getError();
 	LinphoneTransportType getTransport();
 
 	// Callbacks
 
 	// Utils
-	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses(const LinphoneAddress *a,
-	                                                                       const LinphoneAddress *b);
+	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses(const std::shared_ptr<Address> &a,
+	                                                                       const std::shared_ptr<Address> &b);
 
 	// To be removed when not using proxy config anymore
 	LinphoneProxyConfig *getConfig() const;
@@ -137,11 +137,12 @@ private:
 	void updateDependentAccount(LinphoneRegistrationState state, const std::string &message);
 	LinphoneAccountAddressComparisonResult isServerConfigChanged(std::shared_ptr<AccountParams> oldParams,
 	                                                             std::shared_ptr<AccountParams> newParams);
-	LinphoneAddress *guessContactForRegister();
+	std::shared_ptr<Address> guessContactForRegister();
 
 	void onInternationalPrefixChanged();
 	void onConferenceFactoryUriChanged(const std::string &conferenceFactoryUri);
-	void onAudioVideoConferenceFactoryAddressChanged(const LinphoneAddress *audioVideoConferenceFactoryAddress);
+	void
+	onAudioVideoConferenceFactoryAddressChanged(const std::shared_ptr<Address> &audioVideoConferenceFactoryAddress);
 	void onNatPolicyChanged(const std::shared_ptr<NatPolicy> &policy);
 	void onLimeServerUrlChanged(const std::string &limeServerUrl);
 	bool customContactChanged();
@@ -163,10 +164,10 @@ private:
 
 	LinphoneErrorInfo *mErrorInfo = nullptr;
 
-	LinphoneAddress *mContactAddress = nullptr;
-	LinphoneAddress *mContactAddressWithoutParams = nullptr;
-	LinphoneAddress *mPendingContactAddress = nullptr;
-	LinphoneAddress *mServiceRouteAddress = nullptr;
+	std::shared_ptr<Address> mContactAddress = nullptr;
+	std::shared_ptr<Address> mContactAddressWithoutParams = nullptr;
+	std::shared_ptr<Address> mPendingContactAddress = nullptr;
+	mutable std::shared_ptr<Address> mServiceRouteAddress = nullptr;
 
 	LinphoneRegistrationState mState = LinphoneRegistrationNone;
 

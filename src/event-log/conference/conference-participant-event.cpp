@@ -32,7 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceParticipantEvent::ConferenceParticipantEvent(Type type,
                                                        time_t creationTime,
                                                        const ConferenceId &conferenceId,
-                                                       const IdentityAddress &participantAddress)
+                                                       const std::shared_ptr<Address> &participantAddress)
     : ConferenceNotifiedEvent(*new ConferenceParticipantEventPrivate, type, creationTime, conferenceId) {
 	L_D();
 	L_ASSERT(type == Type::ConferenceParticipantAdded || type == Type::ConferenceParticipantRemoved ||
@@ -44,13 +44,13 @@ ConferenceParticipantEvent::ConferenceParticipantEvent(ConferenceParticipantEven
                                                        Type type,
                                                        time_t creationTime,
                                                        const ConferenceId &conferenceId,
-                                                       const IdentityAddress &participantAddress)
+                                                       const std::shared_ptr<Address> &participantAddress)
     : ConferenceNotifiedEvent(p, type, creationTime, conferenceId) {
 	L_D();
 	d->participantAddress = participantAddress;
 }
 
-const IdentityAddress &ConferenceParticipantEvent::getParticipantAddress() const {
+const std::shared_ptr<Address> &ConferenceParticipantEvent::getParticipantAddress() const {
 	L_D();
 	return d->participantAddress;
 }

@@ -37,7 +37,7 @@ class LINPHONE_PUBLIC RemoteConference : public Conference, public ConferenceLis
 
 public:
 	RemoteConference(const std::shared_ptr<Core> &core,
-	                 const IdentityAddress &myAddress,
+	                 const std::shared_ptr<Address> &myAddress,
 	                 CallSessionListener *listener,
 	                 const std::shared_ptr<ConferenceParams> params);
 	virtual ~RemoteConference();
@@ -51,9 +51,9 @@ protected:
 #endif // HAVE_ADVANCED_IM
 
 	/* ConferenceListener */
-	void onConferenceCreated(const ConferenceAddress &addr) override;
-	void onConferenceTerminated(const IdentityAddress &addr) override;
-	void onFirstNotifyReceived(const IdentityAddress &addr) override;
+	void onConferenceCreated(const std::shared_ptr<Address> &addr) override;
+	void onConferenceTerminated(const std::shared_ptr<Address> &addr) override;
+	void onFirstNotifyReceived(const std::shared_ptr<Address> &addr) override;
 	void onParticipantAdded(const std::shared_ptr<ConferenceParticipantEvent> &event,
 	                        const std::shared_ptr<Participant> &participant) override;
 	void onParticipantRemoved(const std::shared_ptr<ConferenceParticipantEvent> &event,

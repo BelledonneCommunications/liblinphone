@@ -144,10 +144,10 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer,
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	char *paulineUriStr = linphone_address_as_string_uri_only(pauline->identity);
-	IdentityAddress paulineAddress(paulineUriStr);
+	std::shared_ptr<Address> paulineAddress = Address::create(paulineUriStr);
 	bctbx_free(paulineUriStr);
 	char *marieUri = linphone_address_as_string_uri_only(marie->identity);
-	IdentityAddress marieAddress(marieUri);
+	std::shared_ptr<Address> marieAddress = Address::create(marieUri);
 	bctbx_free(marieUri);
 	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(marieAddress, paulineAddress);
 	marieRoom->allowMultipart(true);

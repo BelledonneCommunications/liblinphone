@@ -38,22 +38,19 @@ const std::string ConferenceInfo::sequenceParam = "X-SEQ";
 ConferenceInfo::ConferenceInfo() {
 }
 
-ConferenceInfo::~ConferenceInfo() {
-}
-
 const ConferenceInfo::organizer_t &ConferenceInfo::getOrganizer() const {
 	return mOrganizer;
 }
 
-const IdentityAddress &ConferenceInfo::getOrganizerAddress() const {
+const std::shared_ptr<Address> &ConferenceInfo::getOrganizerAddress() const {
 	return getOrganizer().first;
 }
 
-void ConferenceInfo::setOrganizer(const IdentityAddress &organizer, const participant_params_t &params) {
-	mOrganizer = std::make_pair(organizer, params);
+void ConferenceInfo::setOrganizer(const std::shared_ptr<Address> &organizer, const participant_params_t &params) {
+	mOrganizer = std::make_pair(Address::create(organizer->getUri()), params);
 }
 
-void ConferenceInfo::setOrganizer(const IdentityAddress &organizer) {
+void ConferenceInfo::setOrganizer(const std::shared_ptr<Address> &organizer) {
 	ConferenceInfo::participant_params_t params;
 	setOrganizer(organizer, params);
 }
@@ -75,67 +72,67 @@ const ConferenceInfo::participant_list_t &ConferenceInfo::getParticipants() cons
 	return mParticipants;
 }
 
-const bctbx_list_t *ConferenceInfo::getParticipantsCList() const {
-	return mParticipantsList.construct(mParticipants,
-	                                   [](const pair<IdentityAddress, participant_params_t> &p) -> LinphoneAddress * {
-		                                   return linphone_address_new(p.first.asString().c_str());
-	                                   });
-}
-
 void ConferenceInfo::setParticipants(const participant_list_t &participants) {
-	mParticipants = participants;
+	for (const auto &p : participants) {
+		addParticipant(p.first, p.second);
+	}
 }
 
-void ConferenceInfo::addParticipant(const IdentityAddress &participant) {
+void ConferenceInfo::addParticipant(const std::shared_ptr<Address> &participant) {
 	ConferenceInfo::participant_params_t params;
 	addParticipant(participant, params);
 }
 
-void ConferenceInfo::addParticipant(const IdentityAddress &participant, const participant_params_t &params) {
-	mParticipants.insert(std::make_pair(participant, params));
+void ConferenceInfo::addParticipant(const std::shared_ptr<Address> &participant, const participant_params_t &params) {
+	mParticipants.insert(std::make_pair(Address::create(participant->getUri()), params));
 }
 
-void ConferenceInfo::removeParticipant(const IdentityAddress &participant) {
-	const auto it = std::find_if(mParticipants.cbegin(), mParticipants.cend(),
-	                             [&participant](const auto &p) { return (p.first == participant); });
+void ConferenceInfo::removeParticipant(const std::shared_ptr<Address> &participant) {
+	auto it = std::find_if(mParticipants.begin(), mParticipants.end(),
+	                       [&participant](const auto &p) { return (participant->weakEqual(*p.first)); });
 	if (it == mParticipants.cend()) {
 		lInfo() << "Unable to find participant with address " << participant << " in conference info " << this
-		        << " (address " << getUri() << ")";
+		        << " (address " << *getUri() << ")";
 	} else {
 		mParticipants.erase(it);
 	}
 }
 
-void ConferenceInfo::addParticipantParam(const IdentityAddress &participant,
+void ConferenceInfo::addParticipantParam(const std::shared_ptr<Address> &participant,
                                          const std::string &param,
                                          const std::string &value) {
-	try {
-		auto &params = mParticipants.at(participant);
+	auto it = std::find_if(mParticipants.begin(), mParticipants.end(),
+	                       [&participant](const auto &p) { return (participant->weakEqual(*p.first)); });
+	if (it != mParticipants.end()) {
+		auto &params = (*it).second;
 		params[param] = value;
-	} catch (std::out_of_range &) {
 	}
 }
 
-const std::string ConferenceInfo::getParticipantParam(const IdentityAddress &participant,
+const std::string ConferenceInfo::getParticipantParam(const std::shared_ptr<Address> &participant,
                                                       const std::string &param) const {
 	try {
-		const auto &params = mParticipants.at(participant);
-		return params.at(param);
+		auto it = std::find_if(mParticipants.begin(), mParticipants.end(),
+		                       [&participant](const auto &p) { return (participant->weakEqual(*p.first)); });
+		if (it != mParticipants.cend()) {
+			const auto &params = (*it).second;
+			return params.at(param);
+		}
 	} catch (std::out_of_range &) {
-		return std::string();
 	}
+	return std::string();
 }
 
 bool ConferenceInfo::isValidUri() const {
-	return (mUri != ConferenceAddress());
+	return (mUri != nullptr) && mUri->isValid();
 }
 
-const ConferenceAddress &ConferenceInfo::getUri() const {
+const std::shared_ptr<Address> &ConferenceInfo::getUri() const {
 	return mUri;
 }
 
-void ConferenceInfo::setUri(const ConferenceAddress uri) {
-	mUri = uri;
+void ConferenceInfo::setUri(const std::shared_ptr<Address> uri) {
+	mUri = Address::create(uri->getUri());
 }
 
 time_t ConferenceInfo::getDateTime() const {
@@ -265,23 +262,23 @@ const string ConferenceInfo::toIcsString(bool cancel, int sequence) const {
 
 	auto event = make_shared<Ics::Event>();
 	const auto &organizerAddress = getOrganizerAddress();
-	if (organizerAddress.isValid()) {
-		const auto uri = organizerAddress.getAddressWithoutGruu().asString();
+	if (organizerAddress && organizerAddress->isValid()) {
+		const auto uri = organizerAddress->asStringUriOnly();
 		event->setOrganizer(uri, mOrganizer.second);
 	}
 
 	event->setSummary(mSubject);
 	event->setDescription(mDescription);
 
-	if (mUri.isValid()) {
-		const auto uri = mUri.asString();
+	if (mUri && mUri->isValid()) {
+		const auto uri = mUri->asStringUriOnly();
 		event->setXConfUri(uri);
 	}
 
 	for (const auto &participant : mParticipants) {
 		const auto &address = participant.first;
-		if (address.isValid()) {
-			const auto uri = address.getAddressWithoutGruu().asString();
+		if (address && address->isValid()) {
+			const auto uri = address->asStringUriOnly();
 			event->addAttendee(uri, participant.second);
 		}
 	}

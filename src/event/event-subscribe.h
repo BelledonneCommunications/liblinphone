@@ -42,13 +42,15 @@ public:
 	               LinphoneSubscriptionDir dir,
 	               const std::string &name,
 	               bool_t is_out_of_dialog);
-	EventSubscribe(const std::shared_ptr<Core> &core, const LinphoneAddress *resource, const std::string &event);
 	EventSubscribe(const std::shared_ptr<Core> &core,
-	               const LinphoneAddress *resource,
+	               const std::shared_ptr<Address> resource,
+	               const std::string &event);
+	EventSubscribe(const std::shared_ptr<Core> &core,
+	               const std::shared_ptr<Address> resource,
 	               const std::string &event,
 	               int expires);
 	EventSubscribe(const std::shared_ptr<Core> &core,
-	               const LinphoneAddress *resource,
+	               const std::shared_ptr<Address> resource,
 	               LinphoneProxyConfig *cfg,
 	               const std::string &event,
 	               int expires);
@@ -71,8 +73,6 @@ public:
 
 	bool isOutOfDialogOp() const;
 	void setIsOutOfDialogOp(bool isOutOfDialogOp);
-
-	const LinphoneAddress *getRemoteContact() const;
 
 	void unpublish() override;
 

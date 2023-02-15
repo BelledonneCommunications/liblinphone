@@ -35,11 +35,11 @@ public:
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
-	bool addParticipant(const IdentityAddress &participantAddress) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipants;
-	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 
 private:
 	L_DECLARE_PRIVATE(ClientGroupToBasicChatRoom);

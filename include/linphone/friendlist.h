@@ -107,7 +107,7 @@ LINPHONE_PUBLIC void linphone_friend_list_set_rls_uri(LinphoneFriendList *friend
  * @param friend_list #LinphoneFriendList object. @notnil
  * @return The RLS URI as #LinphoneAddress associated with the friend list. @maybenil
  **/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_friend_list_get_rls_address(const LinphoneFriendList *friend_list);
+LINPHONE_PUBLIC LinphoneAddress *linphone_friend_list_get_rls_address(const LinphoneFriendList *friend_list);
 
 /**
  * Set the RLS (Resource List Server) URI associated with the friend list to subscribe to these friends presence.

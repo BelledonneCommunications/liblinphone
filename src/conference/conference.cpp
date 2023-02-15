@@ -47,7 +47,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 Conference::Conference(const shared_ptr<Core> &core,
-                       const IdentityAddress &myAddress,
+                       const std::shared_ptr<Address> &myAddress,
                        CallSessionListener *listener,
                        const std::shared_ptr<ConferenceParams> params)
     : CoreAccessor(core) {
@@ -87,16 +87,18 @@ bool Conference::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
 	return false;
 }
 
-bool Conference::addParticipant(const IdentityAddress &participantAddress) {
+bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	shared_ptr<Participant> participant = findParticipant(participantAddress);
 	if (participant) {
-		lWarning() << "Not adding participant '" << participantAddress.asString()
+		lWarning() << "Not adding participant '" << participantAddress->toString()
 		           << "' because it is already a participant of the Conference";
 		return false;
 	}
 	participant = Participant::create(this, participantAddress);
 	participant->createSession(*this, nullptr, (confParams->chatEnabled() == false), listener);
-	participant->setFocus(participantAddress == getConferenceAddress());
+	const auto confAddr = getConferenceAddress();
+	bool isFocus = participantAddress && confAddr && (*participantAddress == *confAddr);
+	participant->setFocus(isFocus);
 	participant->setPreserveSession(false);
 	participants.push_back(participant);
 	if (!activeParticipant) activeParticipant = participant;
@@ -107,10 +109,10 @@ const std::shared_ptr<CallSession> Conference::getMainSession() const {
 	return me->getSession();
 }
 
-bool Conference::addParticipants(const std::list<IdentityAddress> &addresses) {
-	list<IdentityAddress> sortedAddresses(addresses);
-	sortedAddresses.sort();
-	sortedAddresses.unique();
+bool Conference::addParticipants(const std::list<std::shared_ptr<Address>> &addresses) {
+	list<std::shared_ptr<Address>> sortedAddresses(addresses);
+	sortedAddresses.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
+	sortedAddresses.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
 
 	bool soFarSoGood = true;
 	for (const auto &address : sortedAddresses)
@@ -170,11 +172,11 @@ void Conference::setLayout(const ConferenceLayout layout) {
 	}
 }
 
-const ConferenceAddress &Conference::getConferenceAddress() const {
+const std::shared_ptr<Address> &Conference::getConferenceAddress() const {
 	return confParams->getConferenceAddress();
 }
 
-void Conference::setConferenceAddress(const ConferenceAddress &conferenceAddress) {
+void Conference::setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) {
 	confParams->setConferenceAddress(conferenceAddress);
 }
 
@@ -220,7 +222,7 @@ const string &Conference::getUsername() const {
 	return mUsername;
 }
 
-void Conference::join(BCTBX_UNUSED(const IdentityAddress &participantAddress)) {
+void Conference::join(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) {
 }
 
 void Conference::join() {
@@ -250,7 +252,7 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 
 bool Conference::removeParticipant(const shared_ptr<Participant> &participant) {
 	for (const auto &p : participants) {
-		if (participant->getAddress() == p->getAddress()) {
+		if (*participant->getAddress() == *p->getAddress()) {
 			participants.remove(p);
 			return true;
 		}
@@ -370,18 +372,16 @@ void Conference::setUsername(const string &username) {
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<Participant> Conference::findParticipant(const IdentityAddress &addr) const {
-
-	IdentityAddress searchedAddr(addr);
-	searchedAddr.setGruu("");
+shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<Address> &addr) const {
 	for (const auto &participant : participants) {
-		if (participant->getAddress() == searchedAddr) {
+		if (participant->getAddress()->weakEqual(*addr)) {
 			return participant;
 		}
 	}
 
-	lWarning() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this
-	           << ") with address " << addr.asString();
+	lWarning() << "Unable to find participant in conference "
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
+	           << " (" << this << ") with address " << addr->toString();
 	return nullptr;
 }
 
@@ -393,16 +393,17 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const std
 		}
 	}
 
-	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with label " << label;
+	lDebug() << "Unable to find participant device in conference "
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
+	         << " with label " << label;
 
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const IdentityAddress &pAddr,
-                                                                const IdentityAddress &dAddr) const {
-
+shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::shared_ptr<Address> &pAddr,
+                                                                const std::shared_ptr<Address> &dAddr) const {
 	for (const auto &participant : participants) {
-		if (pAddr == participant->getAddress()) {
+		if (pAddr->weakEqual(*participant->getAddress())) {
 			auto device = participant->findDevice(dAddr, false);
 			if (device) {
 				return device;
@@ -410,8 +411,9 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const IdentityAd
 		}
 	}
 
-	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with device address "
-	         << dAddr << " belonging to participant " << pAddr;
+	lDebug() << "Unable to find participant device in conference "
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown-address>"))
+	         << " with device address " << dAddr->toString() << " belonging to participant " << pAddr->toString();
 
 	return nullptr;
 }
@@ -425,8 +427,9 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const shared_ptr
 		}
 	}
 
-	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with call session "
-	         << session;
+	lDebug() << "Unable to find participant device in conference "
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown-address>"))
+	         << " with call session " << session;
 
 	return nullptr;
 }
@@ -445,11 +448,9 @@ std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() c
 
 // -----------------------------------------------------------------------------
 
-bool Conference::isMe(const IdentityAddress &addr) const {
-	IdentityAddress cleanedAddr(addr);
-	cleanedAddr.setGruu("");
-	IdentityAddress cleanedMeAddr(me->getAddress());
-	cleanedMeAddr.setGruu("");
+bool Conference::isMe(const std::shared_ptr<Address> &addr) const {
+	Address cleanedAddr = addr->getUriWithoutGruu();
+	Address cleanedMeAddr = me->getAddress()->getUriWithoutGruu();
 	return cleanedMeAddr == cleanedAddr;
 }
 
@@ -685,8 +686,8 @@ std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
 }
 
 std::shared_ptr<ConferenceInfo>
-Conference::createConferenceInfo(const IdentityAddress &organizer,
-                                 const std::list<IdentityAddress> invitedParticipants) const {
+Conference::createConferenceInfo(const std::shared_ptr<Address> &organizer,
+                                 const std::list<std::shared_ptr<Address>> invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
 	info->setOrganizer(organizer);
 	for (const auto &participant : invitedParticipants) {
@@ -694,7 +695,7 @@ Conference::createConferenceInfo(const IdentityAddress &organizer,
 	}
 
 	const auto &conferenceAddress = getConferenceAddress();
-	if (conferenceAddress.isValid()) {
+	if (conferenceAddress && conferenceAddress->isValid()) {
 		info->setUri(conferenceAddress);
 	}
 
@@ -724,7 +725,7 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 			// contact address of the call
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
-				lInfo() << "Updating conference information of conference " << getConferenceAddress()
+				lInfo() << "Updating conference information of conference " << *getConferenceAddress()
 				        << " because its subject has been changed to " << subject;
 				mainDb->insertConferenceInfo(info);
 			}
@@ -732,7 +733,7 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 	}
 }
 
-void Conference::updateParticipantsInConferenceInfo(const IdentityAddress &participantAddress) const {
+void Conference::updateParticipantsInConferenceInfo(const std::shared_ptr<Address> &participantAddress) const {
 	if ((getState() == ConferenceInterface::State::CreationPending) ||
 	    (getState() == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
@@ -740,7 +741,7 @@ void Conference::updateParticipantsInConferenceInfo(const IdentityAddress &parti
 			const auto &currentParticipants = info->getParticipants();
 			const auto participantAddressIt =
 			    std::find_if(currentParticipants.begin(), currentParticipants.end(),
-			                 [&participantAddress](const auto &p) { return (p.first == participantAddress); });
+			                 [&participantAddress](const auto &p) { return (*p.first == *participantAddress); });
 			if (participantAddressIt == currentParticipants.end()) {
 				info->addParticipant(participantAddress);
 
@@ -748,8 +749,8 @@ void Conference::updateParticipantsInConferenceInfo(const IdentityAddress &parti
 				// the contact address of the call
 				auto &mainDb = getCore()->getPrivate()->mainDb;
 				if (mainDb) {
-					lInfo() << "Updating conference information of conference " << getConferenceAddress()
-					        << " because participant " << participantAddress << " has been added";
+					lInfo() << "Updating conference information of conference " << *getConferenceAddress()
+					        << " because participant " << *participantAddress << " has been added";
 					mainDb->insertConferenceInfo(info);
 				}
 			}

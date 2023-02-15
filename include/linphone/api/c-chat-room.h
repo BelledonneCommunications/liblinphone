@@ -454,7 +454,7 @@ LINPHONE_PUBLIC time_t linphone_chat_room_get_last_update_time(const LinphoneCha
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param addr The address of the participant to add to the chat room @notnil
  */
-LINPHONE_PUBLIC void linphone_chat_room_add_participant(LinphoneChatRoom *chat_room, const LinphoneAddress *addr);
+LINPHONE_PUBLIC void linphone_chat_room_add_participant(LinphoneChatRoom *chat_room, LinphoneAddress *addr);
 
 /**
  * Add several participants to a chat room at once. This may fail if this type of chat room does not handle
@@ -479,7 +479,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_can_handle_participants(const Linphone
  * @return The participant if found, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC LinphoneParticipant *linphone_chat_room_find_participant(const LinphoneChatRoom *chat_room,
-                                                                         const LinphoneAddress *address);
+                                                                         LinphoneAddress *address);
 
 /**
  * Get the capabilities of a chat room.
@@ -592,7 +592,7 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_composing_addresses(L
  * @param conference_address The conference #LinphoneAddress to be used by the group chat room @maybenil
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_conference_address(LinphoneChatRoom *chat_room,
-                                                               const LinphoneAddress *conference_address);
+                                                               LinphoneAddress *conference_address);
 
 /**
  * Set the list of participant devices in the form of SIP URIs with GRUUs for a given participant.
@@ -603,7 +603,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_conference_address(LinphoneChatRoom 
  * \bctbx_list{LinphoneParticipantDeviceIdentity} @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices(LinphoneChatRoom *chat_room,
-                                                                const LinphoneAddress *participant_address,
+                                                                LinphoneAddress *participant_address,
                                                                 const bctbx_list_t *device_identities);
 
 /**

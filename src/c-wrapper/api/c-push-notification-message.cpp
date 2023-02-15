@@ -75,16 +75,15 @@ const char *linphone_push_notification_message_get_subject(const LinphonePushNot
 }
 
 const LinphoneAddress *linphone_push_notification_message_get_from_addr(const LinphonePushNotificationMessage *msg) {
-	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getFromAddr()->asString().c_str());
+	return PushNotificationMessage::toCpp(msg)->getFromAddr()->toC();
 }
 
 const LinphoneAddress *linphone_push_notification_message_get_local_addr(const LinphonePushNotificationMessage *msg) {
-	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getLocalAddr()->asString().c_str());
+	return PushNotificationMessage::toCpp(msg)->getLocalAddr()->toC();
 }
 
 const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *msg) {
-	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getPeerAddr()->asString().c_str());
-	;
+	return PushNotificationMessage::toCpp(msg)->getPeerAddr()->toC();
 }
 
 bool_t linphone_push_notification_message_is_icalendar(const LinphonePushNotificationMessage *msg) {

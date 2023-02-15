@@ -32,6 +32,8 @@
 #include <belr/grammarbuilder.h>
 #include <AVFoundation/AVAudioSession.h>
 
+#include "core/core.h"
+#include "linphone/core.h"
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
 #include "c-wrapper/c-wrapper.h"

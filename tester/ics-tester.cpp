@@ -90,6 +90,7 @@ static void parse_rfc_example() {
 
 static void parse_folded_example() {
 	const string str = "BEGIN:VCALENDAR\r\n"
+	                   "METHOD:REQUEST\r\n"
 	                   "PRODID:-//xyz Corp//NONSGML PDA Calendar Version 1.0//EN\r\n"
 	                   "VERSION:2.0\r\n"
 	                   "BEGIN:VEVENT\r\n"
@@ -128,7 +129,7 @@ static void parse_folded_example() {
 				const auto &params = participant.second;
 				size_t no_params = 0;
 				bool found = false;
-				if (address == IdentityAddress("sip:jdoe@sip.example.org")) {
+				if (*address == *Address::create("sip:jdoe@sip.example.org")) {
 					no_params = 2;
 					for (const auto &param : params) {
 						const auto &name = param.first;
@@ -142,7 +143,7 @@ static void parse_folded_example() {
 							found = true;
 						}
 					}
-				} else if (address == IdentityAddress("sip:pwhite@sip.example.org")) {
+				} else if (*address == *Address::create("sip:pwhite@sip.example.org")) {
 					no_params = 1;
 					for (const auto &param : params) {
 						const auto &name = param.first;
@@ -153,7 +154,7 @@ static void parse_folded_example() {
 							found = true;
 						}
 					}
-				} else if (address == IdentityAddress("sip:tmurphy@sip.example.org")) {
+				} else if (*address == *Address::create("sip:tmurphy@sip.example.org")) {
 					// no_params = 2;
 					no_params = 1;
 					for (const auto &param : params) {
@@ -234,8 +235,8 @@ static void build_ics() {
 
 	auto confInfo = calendar.toConferenceInfo();
 
-	BC_ASSERT_TRUE(confInfo->getOrganizerAddress().isValid());
-	BC_ASSERT_TRUE(confInfo->getUri().isValid());
+	BC_ASSERT_TRUE(confInfo->getOrganizerAddress()->isValid());
+	BC_ASSERT_TRUE(confInfo->getUri()->isValid());
 	BC_ASSERT_EQUAL(confInfo->getParticipants().size(), 2, size_t, "%zu");
 	BC_ASSERT_EQUAL(confInfo->getDuration(), 165, int, "%d");
 	BC_ASSERT_EQUAL(confInfo->getIcsSequence(), 10, int, "%d");
@@ -368,13 +369,13 @@ static void send_conference_invitations(bool_t enable_encryption,
 			    marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
 			BC_ASSERT_TRUE(linphone_address_weak_equal(
 			    conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
-			const bctbx_list_t *participants =
-			    linphone_conference_info_get_participants(conf_info_from_original_content);
+			bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_original_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
 			}
+			bctbx_list_free(participants);
 			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_original_content), 120, int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_original_content) == conf_time);
 			linphone_conference_info_unref(conf_info_from_original_content);
@@ -424,12 +425,13 @@ static void send_conference_invitations(bool_t enable_encryption,
 			                                           linphone_conference_info_get_organizer(conf_info_from_content)));
 			BC_ASSERT_TRUE(
 			    linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_content)));
-			const bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_content);
+			bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
 			}
+			bctbx_list_free(participants);
 			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_content), 120, int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_content) == conf_time);
 			linphone_conference_info_unref(conf_info_from_content);

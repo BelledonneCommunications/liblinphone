@@ -22,9 +22,6 @@
 
 #include <bctoolbox/defs.h>
 
-#include "linphone/utils/algorithm.h"
-#include "linphone/utils/utils.h"
-
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
@@ -34,6 +31,8 @@
 #include "chat/chat-room/chat-room-p.h"
 #include "content/content-manager.h"
 #include "core/core-p.h"
+#include "linphone/utils/algorithm.h"
+#include "linphone/utils/utils.h"
 #include "logger/logger.h"
 
 // =============================================================================
@@ -275,29 +274,33 @@ void ChatRoomPrivate::notifyChatMessageReceived(const shared_ptr<ChatMessage> &c
 	LinphoneChatRoom *cr = getCChatRoom();
 	if (!chatMessage->getPrivate()->getText().empty()) {
 		/* Legacy API */
-		LinphoneAddress *fromAddress = linphone_address_new(chatMessage->getFromAddress().asString().c_str());
+		LinphoneAddress *fromAddress = chatMessage->getFromAddress()->toC();
 		linphone_core_notify_text_message_received(q->getCore()->getCCore(), cr, fromAddress,
 		                                           chatMessage->getPrivate()->getText().c_str());
-		linphone_address_unref(fromAddress);
 	}
 	_linphone_chat_room_notify_message_received(cr, L_GET_C_BACK_PTR(chatMessage));
 	linphone_core_notify_message_received(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
 }
 
-void ChatRoomPrivate::notifyIsComposingReceived(const Address &remoteAddress, bool isComposing) {
+void ChatRoomPrivate::notifyIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, bool isComposing) {
 	L_Q();
 
+	auto it = find_if(remoteIsComposing.cbegin(), remoteIsComposing.cend(),
+	                  [&remoteAddress](const auto &address) { return (*remoteAddress == *address); });
+
 	if (isComposing) {
-		auto it = find(remoteIsComposing.cbegin(), remoteIsComposing.cend(), remoteAddress);
-		if (it == remoteIsComposing.cend()) remoteIsComposing.push_back(remoteAddress);
+		if (it == remoteIsComposing.cend()) {
+			remoteIsComposing.push_back(remoteAddress);
+		}
 	} else {
-		remoteIsComposing.remove(remoteAddress);
+		if (it != remoteIsComposing.cend()) {
+			remoteIsComposing.erase(it);
+		}
 	}
 
 	LinphoneChatRoom *cr = getCChatRoom();
-	LinphoneAddress *lAddr = linphone_address_new(remoteAddress.asString().c_str());
+	LinphoneAddress *lAddr = remoteAddress->toC();
 	_linphone_chat_room_notify_is_composing_received(cr, lAddr, !!isComposing);
-	linphone_address_unref(lAddr);
 	// Legacy notification
 	linphone_core_notify_is_composing_received(q->getCore()->getCCore(), cr);
 }
@@ -331,8 +334,9 @@ std::shared_ptr<ChatMessage> ChatRoomPrivate::getMessageFromSal(SalOp *op, const
 
 	shared_ptr<ChatMessage> msg;
 
-	msg = createChatMessage(IdentityAddress(op->getFrom()) == q->getLocalAddress() ? ChatMessage::Direction::Outgoing
-	                                                                               : ChatMessage::Direction::Incoming);
+	auto from = Address::create(op->getFrom());
+	msg = createChatMessage((*from == *q->getLocalAddress()) ? ChatMessage::Direction::Outgoing
+	                                                         : ChatMessage::Direction::Incoming);
 
 	Content content;
 	if (message->url && ContentType(message->content_type) == ContentType::ExternalBody) {
@@ -385,18 +389,18 @@ void ChatRoomPrivate::onChatMessageReceived(const shared_ptr<ChatMessage> &chatM
 	LinphoneCore *cCore = core->getCCore();
 
 	if (chatMessage->getPrivate()->getContentType() == ContentType::ImIsComposing) {
-		onIsComposingReceived(chatMessage->getFromAddress().asAddress(), chatMessage->getPrivate()->getText());
+		onIsComposingReceived(chatMessage->getFromAddress(), chatMessage->getPrivate()->getText());
 		if (linphone_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1) return;
 	} else if (chatMessage->getPrivate()->getContentType() == ContentType::Imdn) {
 		onImdnReceived(chatMessage);
 		if (linphone_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1) return;
 	}
 
-	const IdentityAddress &fromAddress = chatMessage->getFromAddress();
+	const std::shared_ptr<Address> &fromAddress = chatMessage->getFromAddress();
 	if ((chatMessage->getPrivate()->getContentType() != ContentType::ImIsComposing) &&
 	    (chatMessage->getPrivate()->getContentType() != ContentType::Imdn)) {
-		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
-		notifyIsComposingReceived(fromAddress.asAddress(), false);
+		isComposingHandler->stopRemoteRefreshTimer(fromAddress->toString());
+		notifyIsComposingReceived(fromAddress, false);
 	}
 
 	if (core->isCurrentlyAggregatingChatMessages()) {
@@ -477,7 +481,7 @@ void ChatRoomPrivate::onImdnReceived(const shared_ptr<ChatMessage> &chatMessage)
 	Imdn::parse(chatMessage);
 }
 
-void ChatRoomPrivate::onIsComposingReceived(const Address &remoteAddress, const string &text) {
+void ChatRoomPrivate::onIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, const string &text) {
 	isComposingHandler->parse(remoteAddress, text);
 }
 
@@ -490,7 +494,7 @@ void ChatRoomPrivate::onIsComposingStateChanged(bool isComposing) {
 	sendIsComposingNotification();
 }
 
-void ChatRoomPrivate::onIsRemoteComposingStateChanged(const Address &remoteAddress, bool isComposing) {
+void ChatRoomPrivate::onIsRemoteComposingStateChanged(const std::shared_ptr<Address> &remoteAddress, bool isComposing) {
 	notifyIsComposingReceived(remoteAddress, isComposing);
 }
 
@@ -537,11 +541,11 @@ ChatRoom::~ChatRoom() {
 
 // -----------------------------------------------------------------------------
 
-const IdentityAddress &ChatRoom::getPeerAddress() const {
+const std::shared_ptr<Address> &ChatRoom::getPeerAddress() const {
 	return getConferenceId().getPeerAddress();
 }
 
-const IdentityAddress &ChatRoom::getLocalAddress() const {
+const std::shared_ptr<Address> &ChatRoom::getLocalAddress() const {
 	return getConferenceId().getLocalAddress();
 }
 
@@ -669,7 +673,7 @@ bool ChatRoom::isRemoteComposing() const {
 	return !d->remoteIsComposing.empty();
 }
 
-list<IdentityAddress> ChatRoom::getComposingAddresses() const {
+list<std::shared_ptr<Address>> ChatRoom::getComposingAddresses() const {
 	L_D();
 	return d->remoteIsComposing;
 }
@@ -718,7 +722,7 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage(const shared_ptr<ChatMess
 	if (hidden) {
 		fInfo = "Anonymous";
 	} else {
-		fInfo = msg->getForwardInfo().empty() ? msg->getFromAddress().asString() : msg->getForwardInfo();
+		fInfo = msg->getForwardInfo().empty() ? msg->getFromAddress()->asStringUriOnly() : msg->getForwardInfo();
 	}
 
 	chatMessage->getPrivate()->setForwardInfo(fInfo);
@@ -728,8 +732,7 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage(const shared_ptr<ChatMess
 
 shared_ptr<ChatMessage> ChatRoom::createReplyMessage(const shared_ptr<ChatMessage> &msg) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
-	chatMessage->getPrivate()->setReplyToMessageIdAndSenderAddress(msg->getImdnMessageId(),
-	                                                               msg->getFromAddress().getAddressWithoutGruu());
+	chatMessage->getPrivate()->setReplyToMessageIdAndSenderAddress(msg->getImdnMessageId(), msg->getFromAddress());
 	return chatMessage;
 }
 
@@ -838,10 +841,10 @@ bool ChatRoom::removeParticipants(const list<shared_ptr<Participant>> &participa
 	return soFarSoGood;
 }
 
-bool ChatRoom::addParticipants(const std::list<IdentityAddress> &addresses) {
-	list<IdentityAddress> sortedAddresses(addresses);
-	sortedAddresses.sort();
-	sortedAddresses.unique();
+bool ChatRoom::addParticipants(const std::list<std::shared_ptr<Address>> &addresses) {
+	list<std::shared_ptr<Address>> sortedAddresses(addresses);
+	sortedAddresses.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
+	sortedAddresses.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
 
 	bool soFarSoGood = true;
 	for (const auto &address : sortedAddresses)

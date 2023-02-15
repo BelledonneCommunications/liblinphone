@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef STREAMS_Hstreams_h
-#define STREAMS_Hstreams_h
+#ifndef STREAMS_H
+#define STREAMS_H
 
 #include <iostream>
 #include <map>
@@ -28,10 +28,11 @@
 
 #include <bctoolbox/defs.h>
 
+#include "mediastreamer2/msmire.h"
+
 #include "call-session.h"
 #include "call/audio-device/audio-device.h"
 #include "media-description-renderer.h"
-#include "mediastreamer2/msmire.h"
 #include "port-config.h"
 #include "tester_utils.h"
 
@@ -205,16 +206,6 @@ private:
 	StreamMixer *mMixer = nullptr;
 	bool mIsMain = false;
 };
-
-inline std::ostream &operator<<(std::ostream &ostr, SalStreamType type) {
-	ostr << sal_stream_type_to_string(type);
-	return ostr;
-}
-
-inline std::ostream &operator<<(std::ostream &ostr, SalMediaProto proto) {
-	ostr << sal_media_proto_to_string(proto);
-	return ostr;
-}
 
 inline std::ostream &operator<<(std::ostream &ostr, const Stream &stream) {
 	ostr << "stream#" << stream.getIndex() << " [" << stream.getType() << "] in state ["

@@ -42,8 +42,8 @@ public:
 
 	virtual ~ChatRoom();
 
-	const IdentityAddress &getPeerAddress() const override;
-	const IdentityAddress &getLocalAddress() const override;
+	const std::shared_ptr<Address> &getPeerAddress() const override;
+	const std::shared_ptr<Address> &getLocalAddress() const override;
 
 	time_t getCreationTime() const override;
 	time_t getLastUpdateTime() const override;
@@ -72,7 +72,7 @@ public:
 
 	void compose() override;
 	bool isRemoteComposing() const override;
-	std::list<IdentityAddress> getComposingAddresses() const override;
+	std::list<std::shared_ptr<Address>> getComposingAddresses() const override;
 
 	std::shared_ptr<ChatMessage> createChatMessage() override;
 	std::shared_ptr<ChatMessage> createChatMessage(const std::string &text) override;
@@ -104,7 +104,7 @@ public:
 		return conference;
 	};
 
-	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	bool removeParticipants(const std::list<std::shared_ptr<Participant>> &participants) override;
 
 	bool canHandleParticipants() const override {

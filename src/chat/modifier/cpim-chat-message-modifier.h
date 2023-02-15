@@ -38,8 +38,8 @@ public:
 	                                                 const Content &cpimContent) const;
 
 private:
-	std::string cpimAddressDisplayName(const Address &addr) const;
-	std::string cpimAddressUri(const Address &addr) const;
+	std::string cpimAddressDisplayName(const std::shared_ptr<Address> &addr) const;
+	std::string cpimAddressUri(const std::shared_ptr<Address> &addr) const;
 };
 
 LINPHONE_END_NAMESPACE

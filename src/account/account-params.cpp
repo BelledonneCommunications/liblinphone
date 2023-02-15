@@ -20,6 +20,7 @@
 
 #include "account-params.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "core/core.h"
 #include "linphone/api/c-address.h"
 #include "linphone/types.h"
 #include "nat/nat-policy.h"
@@ -50,12 +51,13 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	                                                                     LinphonePrivacyDefault)
 	              : (LinphonePrivacyMask)LinphonePrivacyDefault;
 	mIdentity = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_identity", "") : "";
-	mIdentityAddress = !mIdentity.empty() ? linphone_address_new(mIdentity.c_str()) : nullptr;
+	mIdentityAddress = Address::create(mIdentity);
 	mProxy = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_proxy", "") : "";
-	mProxyAddress = !mProxy.empty() ? linphone_address_new(mProxy.c_str()) : nullptr;
+	mProxyAddress = Address::create(mProxy);
 	string route = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_route", "") : "";
-	mRoutes = !route.empty() ? bctbx_list_append(mRoutes, linphone_address_new(route.c_str())) : nullptr;
-	mRoutesString = !route.empty() ? bctbx_list_append(mRoutesString, bctbx_strdup(route.c_str())) : nullptr;
+	if (!route.empty()) {
+		mRoutes.emplace_back(Address::create(route));
+	}
 	mRealm = lc ? linphone_config_get_default_string(lc->config, "proxy", "realm", "") : "";
 	mQualityReportingEnabled =
 	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_enabled", false) : false;
@@ -129,7 +131,7 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	    lc ? linphone_config_get_default_string(lc->config, "proxy", "audio_video_conference_factory_uri", "") : "";
 	mAudioVideoConferenceFactoryAddress = nullptr;
 	if (!audioVideoConferenceFactoryUri.empty()) {
-		mAudioVideoConferenceFactoryAddress = linphone_address_new(audioVideoConferenceFactoryUri.c_str());
+		mAudioVideoConferenceFactoryAddress = Address::create(audioVideoConferenceFactoryUri);
 	}
 
 	if (lc && lc->push_config) {
@@ -159,9 +161,8 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc) {
 	sprintf(key, "proxy_%i", index); // TODO: change to account
 
 	mIdentity = linphone_config_get_string(config, key, "reg_identity", mIdentity.c_str());
-	LinphoneAddress *identity_address = linphone_address_new(mIdentity.c_str());
+	std::shared_ptr<Address> identity_address = Address::create(mIdentity);
 	setIdentityAddress(identity_address);
-	if (identity_address) linphone_address_unref(identity_address);
 
 	setServerAddressAsString(linphone_config_get_string(config, key, "reg_proxy", getServerAddressAsString().c_str()));
 
@@ -169,16 +170,6 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc) {
 	if (routes != nullptr) {
 		setRoutesFromStringList(routes);
 		bctbx_list_free_with_data(routes, (bctbx_list_free_func)bctbx_free);
-	} else {
-		// Remove default routes if the existing account doesn't have any
-		if (mRoutes) {
-			bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
-			mRoutes = nullptr;
-		}
-		if (mRoutesString) {
-			bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
-			mRoutesString = nullptr;
-		}
 	}
 
 	mRealm = linphone_config_get_string(config, key, "realm", mRealm.c_str());
@@ -254,7 +245,7 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc) {
 	    linphone_config_get_string(config, key, "audio_video_conference_factory_uri", "");
 	mAudioVideoConferenceFactoryAddress = nullptr;
 	if (!audioVideoConferenceFactoryUri.empty()) {
-		mAudioVideoConferenceFactoryAddress = linphone_address_new(audioVideoConferenceFactoryUri.c_str());
+		mAudioVideoConferenceFactoryAddress = Address::create(audioVideoConferenceFactoryUri);
 	}
 	mRtpBundleEnabled = !!linphone_config_get_bool(config, key, "rtp_bundle", linphone_core_rtp_bundle_enabled(lc));
 	mRtpBundleAssumption = !!linphone_config_get_bool(config, key, "rtp_bundle_assumption", FALSE);
@@ -293,19 +284,27 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	mDependsOn = other.mDependsOn;
 	mIdKey = other.mIdKey;
 	mConferenceFactoryUri = other.mConferenceFactoryUri;
-	mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress
-	                                          ? linphone_address_clone(other.mAudioVideoConferenceFactoryAddress)
-	                                          : nullptr;
+	if (other.mAudioVideoConferenceFactoryAddress) {
+		mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress->clone()->toSharedPtr();
+	} else {
+		mAudioVideoConferenceFactoryAddress = nullptr;
+	}
+
 	mFileTransferServer = other.mFileTransferServer;
-	mIdentity = other.mIdentity;
 
-	mRoutes = bctbx_list_copy_with_data(other.mRoutes, (bctbx_list_copy_func)linphone_address_clone);
-	mRoutesString = bctbx_list_copy_with_data(other.mRoutesString, (bctbx_list_copy_func)bctbx_strdup);
-
+	mRoutes = other.mRoutes;
 	mPrivacy = other.mPrivacy;
-
-	mIdentityAddress = other.mIdentityAddress ? linphone_address_clone(other.mIdentityAddress) : nullptr;
-	mProxyAddress = other.mProxyAddress ? linphone_address_clone(other.mProxyAddress) : nullptr;
+	mIdentity = other.mIdentity;
+	if (other.mIdentityAddress) {
+		mIdentityAddress = other.mIdentityAddress->clone()->toSharedPtr();
+	} else {
+		mIdentityAddress = nullptr;
+	}
+	if (other.mProxyAddress) {
+		mProxyAddress = other.mProxyAddress->clone()->toSharedPtr();
+	} else {
+		mProxyAddress = nullptr;
+	}
 
 	mAvpfMode = other.mAvpfMode;
 
@@ -314,18 +313,16 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	mPushNotificationConfig = other.mPushNotificationConfig->clone();
 	mRtpBundleEnabled = other.mRtpBundleEnabled;
 	mRtpBundleAssumption = other.mRtpBundleAssumption;
-	mCustomContact = other.mCustomContact ? linphone_address_clone(other.mCustomContact) : nullptr;
+	if (other.mCustomContact) {
+		mCustomContact = other.mCustomContact->clone()->toSharedPtr();
+	} else {
+		mCustomContact = nullptr;
+	}
 	mLimeServerUrl = other.mLimeServerUrl;
 }
 
 AccountParams::~AccountParams() {
-	if (mIdentityAddress) linphone_address_unref(mIdentityAddress);
-	if (mProxyAddress) linphone_address_unref(mProxyAddress);
-	if (mRoutes) bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
-	if (mRoutesString) bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
-	if (mAudioVideoConferenceFactoryAddress) linphone_address_unref(mAudioVideoConferenceFactoryAddress);
-	if (mCustomContact) linphone_address_unref(mCustomContact);
 }
 
 AccountParams *AccountParams::clone() const {
@@ -371,15 +368,6 @@ void AccountParams::setPublishEnabled(bool enable) {
 void AccountParams::setOutboundProxyEnabled(bool enable) {
 	// If enable we remove all routes to only have the server address as route
 	// If disable since we should only have the server address route, we can remove the list
-	if (mRoutes) {
-		bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
-		mRoutes = nullptr;
-	}
-	if (mRoutesString) {
-		bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
-		mRoutesString = nullptr;
-	}
-
 	// Use only the proxy as route
 	if (enable) {
 		if (!mProxyAddress) {
@@ -387,8 +375,7 @@ void AccountParams::setOutboundProxyEnabled(bool enable) {
 			return;
 		}
 
-		mRoutes = bctbx_list_append(mRoutes, linphone_address_clone(mProxyAddress));
-		mRoutesString = bctbx_list_append(mRoutesString, bctbx_strdup(mProxy.c_str()));
+		mRoutes.emplace_back(mProxyAddress);
 	}
 }
 
@@ -426,17 +413,13 @@ void AccountParams::setRealm(const std::string &realm) {
 
 void AccountParams::setQualityReportingCollector(const std::string &qualityReportingCollector) {
 	if (!qualityReportingCollector.empty()) {
-		LinphoneAddress *addr = linphone_address_new(qualityReportingCollector.c_str());
+		std::shared_ptr<Address> addr = Address::create(qualityReportingCollector);
 
 		if (!addr) {
 			lError() << "Invalid SIP collector URI: " << qualityReportingCollector
 			         << ". Quality reporting will be DISABLED.";
 		} else {
 			mQualityReportingCollector = qualityReportingCollector;
-		}
-
-		if (addr) {
-			linphone_address_unref(addr);
 		}
 	}
 }
@@ -469,39 +452,13 @@ void AccountParams::setFileTranferServer(const std::string &fileTransferServer) 
 	mFileTransferServer = fileTransferServer;
 }
 
-LinphoneStatus AccountParams::setRoutes(const bctbx_list_t *routes) {
-	if (mRoutes != nullptr) {
-		bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
-		mRoutes = nullptr;
-	}
-	if (mRoutesString != nullptr) {
-		bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
-		mRoutesString = nullptr;
-	}
-
-	bctbx_list_t *iterator = (bctbx_list_t *)routes;
-	while (iterator != nullptr) {
-		LinphoneAddress *routeAddress = (LinphoneAddress *)bctbx_list_get_data(iterator);
-		if (routeAddress != nullptr) {
-			mRoutes = bctbx_list_append(mRoutes, linphone_address_clone(routeAddress));
-			mRoutesString = bctbx_list_append(mRoutesString, linphone_address_as_string_uri_only(routeAddress));
-		}
-		iterator = bctbx_list_next(iterator);
-	}
-
+LinphoneStatus AccountParams::setRoutes(const std::list<std::shared_ptr<Address>> &routes) {
+	mRoutes = routes;
 	return 0;
 }
 
 LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes) {
-	if (mRoutes != nullptr) {
-		bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
-		mRoutes = nullptr;
-	}
-	if (mRoutesString != nullptr) {
-		bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
-		mRoutesString = nullptr;
-	}
-
+	mRoutes.clear();
 	bctbx_list_t *iterator = (bctbx_list_t *)routes;
 	while (iterator != nullptr) {
 		char *route = (char *)bctbx_list_get_data(iterator);
@@ -516,8 +473,7 @@ LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes
 			SalAddress *addr = sal_address_new(tmp.c_str());
 			if (addr != NULL) {
 				sal_address_unref(addr);
-				mRoutes = bctbx_list_append(mRoutes, linphone_address_new(tmp.c_str()));
-				mRoutesString = bctbx_list_append(mRoutesString, bctbx_strdup(tmp.c_str()));
+				mRoutes.emplace_back(Address::create(tmp.c_str()));
 			} else {
 				return -1;
 			}
@@ -532,22 +488,14 @@ void AccountParams::setPrivacy(LinphonePrivacyMask privacy) {
 	mPrivacy = privacy;
 }
 
-LinphoneStatus AccountParams::setIdentityAddress(const LinphoneAddress *identityAddress) {
-	if (!identityAddress || linphone_address_get_username(identityAddress) == nullptr) {
-		char *as_string = identityAddress ? linphone_address_as_string(identityAddress) : ms_strdup("NULL");
-		lWarning() << "Invalid sip identity: " << as_string;
-		ms_free(as_string);
+LinphoneStatus AccountParams::setIdentityAddress(const std::shared_ptr<Address> identityAddress) {
+	if (!identityAddress || identityAddress->getUsername().empty()) {
+		lWarning() << "Invalid sip identity: " << identityAddress->toString();
 		return -1;
 	}
 
-	if (mIdentityAddress != nullptr) {
-		linphone_address_unref(mIdentityAddress);
-	}
-	mIdentityAddress = linphone_address_clone(identityAddress);
-
-	char *tmpIdentity = linphone_address_as_string(mIdentityAddress);
-	mIdentity = tmpIdentity;
-	bctbx_free(tmpIdentity);
+	mIdentityAddress = identityAddress->clone()->toSharedPtr();
+	mIdentity = mIdentityAddress->toString();
 
 	return 0;
 }
@@ -567,13 +515,13 @@ void AccountParams::setPushNotificationConfig(PushNotificationConfig *pushNotifi
 	mPushNotificationConfig->ref();
 }
 
-void AccountParams::setAudioVideoConferenceFactoryAddress(const LinphoneAddress *audioVideoConferenceFactoryAddress) {
+void AccountParams::setAudioVideoConferenceFactoryAddress(
+    const std::shared_ptr<Address> audioVideoConferenceFactoryAddress) {
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
-		linphone_address_unref(mAudioVideoConferenceFactoryAddress);
 		mAudioVideoConferenceFactoryAddress = nullptr;
 	}
 	if (audioVideoConferenceFactoryAddress != nullptr) {
-		mAudioVideoConferenceFactoryAddress = linphone_address_clone(audioVideoConferenceFactoryAddress);
+		mAudioVideoConferenceFactoryAddress = audioVideoConferenceFactoryAddress->clone()->toSharedPtr();
 	}
 }
 
@@ -585,17 +533,15 @@ void AccountParams::enableRtpBundleAssumption(bool value) {
 	mRtpBundleAssumption = value;
 }
 
-void AccountParams::setCustomContact(const LinphoneAddress *contact) {
-	if (mCustomContact) linphone_address_unref(mCustomContact);
-	mCustomContact = contact ? linphone_address_clone(contact) : nullptr;
+void AccountParams::setCustomContact(const std::shared_ptr<Address> contact) {
+	mCustomContact = contact ? contact->clone()->toSharedPtr() : nullptr;
 }
 
 void AccountParams::setCustomContact(const string &contact) {
-	LinphoneAddress *address = !contact.empty() ? linphone_address_new(contact.c_str()) : nullptr;
+	std::shared_ptr<Address> address = !contact.empty() ? Address::create(contact) : nullptr;
 	if (address == nullptr && !contact.empty()) {
 		lError() << "AccountParams: invalid custom contact '" << contact << "'";
 	}
-	if (mCustomContact) linphone_address_unref(mCustomContact);
 	mCustomContact = address;
 }
 
@@ -635,8 +581,8 @@ bool AccountParams::getPublishEnabled() const {
 }
 
 bool AccountParams::getOutboundProxyEnabled() const {
-	LinphoneAddress *address = mRoutes != nullptr ? (LinphoneAddress *)bctbx_list_get_data(mRoutes) : nullptr;
-	return address != nullptr && mProxyAddress != nullptr && linphone_address_weak_equal(mProxyAddress, address);
+	std::shared_ptr<Address> address = !mRoutes.empty() ? mRoutes.front() : nullptr;
+	return address != nullptr && mProxyAddress != nullptr && mProxyAddress->weakEqual(*address);
 }
 
 bool AccountParams::getPushNotificationAllowed() const {
@@ -677,8 +623,12 @@ const std::string &AccountParams::getInternationalPrefix() const {
 	return mInternationalPrefix;
 }
 
-const char *AccountParams::getDomain() const {
-	return mIdentityAddress ? linphone_address_get_domain(mIdentityAddress) : nullptr;
+const char *AccountParams::getDomainCstr() const {
+	return mIdentityAddress ? mIdentityAddress->getDomainCstr() : nullptr;
+}
+
+const std::string AccountParams::getDomain() const {
+	return mIdentityAddress ? mIdentityAddress->getDomain() : std::string();
 }
 
 const std::string &AccountParams::getProxy() const {
@@ -725,19 +675,23 @@ const std::string &AccountParams::getIdentity() const {
 	return mIdentity;
 }
 
-const bctbx_list_t *AccountParams::getRoutes() const {
+const std::list<std::shared_ptr<Address>> &AccountParams::getRoutes() const {
 	return mRoutes;
 }
 
-const bctbx_list_t *AccountParams::getRoutesString() const {
-	return mRoutesString;
+const std::list<std::string> AccountParams::getRoutesString() const {
+	std::list<std::string> routes;
+	for (const auto &r : mRoutes) {
+		routes.push_back(r->toString());
+	}
+	return routes;
 }
 
 LinphonePrivacyMask AccountParams::getPrivacy() const {
 	return mPrivacy;
 }
 
-LinphoneAddress *AccountParams::getIdentityAddress() const {
+const std::shared_ptr<Address> &AccountParams::getIdentityAddress() const {
 	return mIdentityAddress;
 }
 
@@ -753,7 +707,7 @@ PushNotificationConfig *AccountParams::getPushNotificationConfig() const {
 	return mPushNotificationConfig;
 }
 
-const LinphoneAddress *AccountParams::getAudioVideoConferenceFactoryAddress() const {
+const std::shared_ptr<Address> &AccountParams::getAudioVideoConferenceFactoryAddress() const {
 	return mAudioVideoConferenceFactoryAddress;
 }
 
@@ -765,7 +719,7 @@ bool AccountParams::rtpBundleAssumptionEnabled() const {
 	return mRtpBundleAssumption;
 }
 
-const LinphoneAddress *AccountParams::getCustomContact() const {
+const std::shared_ptr<Address> &AccountParams::getCustomContact() const {
 	return mCustomContact;
 }
 
@@ -779,15 +733,12 @@ const std::string &AccountParams::getLimeServerUrl() const {
 
 // -----------------------------------------------------------------------------
 
-LinphoneStatus AccountParams::setServerAddress(const LinphoneAddress *serverAddr) {
+LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> serverAddr) {
 	bool outboundProxyEnabled = getOutboundProxyEnabled();
 
-	if (mProxyAddress) linphone_address_unref(mProxyAddress);
-	mProxyAddress = linphone_address_clone(serverAddr);
+	mProxyAddress = serverAddr->clone()->toSharedPtr();
 
-	char *tmpProxy = linphone_address_as_string(serverAddr);
-	mProxy = tmpProxy;
-	bctbx_free(tmpProxy);
+	mProxy = mProxyAddress->toString();
 
 	if (outboundProxyEnabled) {
 		// Setting this to true will do the job of setting the routes
@@ -797,37 +748,32 @@ LinphoneStatus AccountParams::setServerAddress(const LinphoneAddress *serverAddr
 	return 0;
 }
 
-const LinphoneAddress *AccountParams::getServerAddress() const {
+const std::shared_ptr<Address> &AccountParams::getServerAddress() const {
 	return mProxyAddress;
 }
 
 LinphoneStatus AccountParams::setServerAddressAsString(const std::string &serverAddr) {
-	LinphoneAddress *addr = nullptr;
+	std::shared_ptr<Address> addr = nullptr;
 
 	if (!serverAddr.empty()) {
 		if (serverAddr.rfind("sip:") == string::npos && serverAddr.rfind("sips:") == string::npos) {
 			string modified("");
 			modified.append("sip:").append(serverAddr);
-			addr = linphone_address_new(modified.c_str());
+			addr = Address::create(modified);
 		}
 
-		if (addr == nullptr) addr = linphone_address_new(serverAddr.c_str());
+		if (addr == nullptr) addr = Address::create(serverAddr);
 		if (addr) {
 			bool outboundProxyEnabled = getOutboundProxyEnabled();
 
-			if (mProxyAddress) linphone_address_unref(mProxyAddress);
-			mProxyAddress = linphone_address_clone(addr);
+			mProxyAddress = addr->clone()->toSharedPtr();
 
-			char *tmpProxy = linphone_address_as_string(addr);
-			mProxy = tmpProxy;
-			bctbx_free(tmpProxy);
+			mProxy = mProxyAddress->toString();
 
 			if (outboundProxyEnabled) {
 				// Setting this to true will do the job of setting the routes
 				setOutboundProxyEnabled(true);
 			}
-
-			linphone_address_unref(addr);
 		} else {
 			lWarning() << "Could not parse " << serverAddr;
 			return -1;
@@ -841,20 +787,18 @@ const std::string &AccountParams::getServerAddressAsString() const {
 	return mProxy;
 }
 
-void AccountParams::setTransport(LinphoneTransportType transport) {
-	linphone_address_set_transport(mProxyAddress, transport);
+void AccountParams::setTransport(LinphonePrivate::Transport transport) {
+	mProxyAddress->setTransport(transport);
 
-	char *tmpProxy = linphone_address_as_string(mProxyAddress);
-	mProxy = tmpProxy;
-	bctbx_free(tmpProxy);
+	mProxy = mProxyAddress->toString();
 
 	if (getOutboundProxyEnabled()) {
 		setOutboundProxyEnabled(true);
 	}
 }
 
-LinphoneTransportType AccountParams::getTransport() const {
-	return linphone_address_get_transport(mProxyAddress);
+LinphonePrivate::Transport AccountParams::getTransport() const {
+	return mProxyAddress->getTransport();
 }
 
 void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
@@ -866,8 +810,10 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	if (!mProxy.empty()) {
 		linphone_config_set_string(config, key, "reg_proxy", mProxy.c_str());
 	}
-	if (mRoutesString != NULL) {
-		linphone_config_set_string_list(config, key, "reg_route", mRoutesString);
+	if (!mRoutes.empty()) {
+		auto routesString = L_GET_C_LIST_FROM_CPP_LIST(getRoutesString());
+		linphone_config_set_string_list(config, key, "reg_route", routesString);
+		bctbx_list_free_with_data(routesString, (bctbx_list_free_func)bctbx_free);
 	}
 	if (!mIdentity.empty()) {
 		linphone_config_set_string(config, key, "reg_identity", mIdentity.c_str());
@@ -917,7 +863,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
 
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
-		char *factory_address = linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress);
+		char *factory_address = mAudioVideoConferenceFactoryAddress->asStringUriOnlyCstr();
 		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", factory_address);
 		ms_free(factory_address);
 	}

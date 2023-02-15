@@ -33,7 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceParticipantDeviceEventPrivate : public ConferenceParticipantEventPrivate {
 public:
-	IdentityAddress deviceAddress;
+	std::shared_ptr<Address> deviceAddress;
 	string deviceName;
 };
 
@@ -42,8 +42,8 @@ public:
 ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent(Type type,
                                                                    time_t creationTime,
                                                                    const ConferenceId &conferenceId,
-                                                                   const IdentityAddress &participantAddress,
-                                                                   const IdentityAddress &deviceAddress,
+                                                                   const std::shared_ptr<Address> &participantAddress,
+                                                                   const std::shared_ptr<Address> &deviceAddress,
                                                                    const string &name)
     : ConferenceParticipantEvent(
           *new ConferenceParticipantDeviceEventPrivate, type, creationTime, conferenceId, participantAddress) {
@@ -56,7 +56,7 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent(Type type,
 	d->deviceName = name;
 }
 
-const IdentityAddress &ConferenceParticipantDeviceEvent::getDeviceAddress() const {
+const std::shared_ptr<Address> &ConferenceParticipantDeviceEvent::getDeviceAddress() const {
 	L_D();
 	return d->deviceAddress;
 }

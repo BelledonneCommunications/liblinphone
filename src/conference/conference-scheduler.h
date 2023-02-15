@@ -69,7 +69,7 @@ public:
 	void cancelConference(const std::shared_ptr<ConferenceInfo> &info);
 	void setInfo(const std::shared_ptr<ConferenceInfo> &info);
 
-	void setConferenceAddress(const ConferenceAddress &conferenceAddress);
+	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
 
 	void sendInvitations(std::shared_ptr<ChatRoomParams> chatRoomParams);
 
@@ -81,7 +81,7 @@ private:
 	std::string stateToString(State state);
 
 	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom,
-	                                                         const IdentityAddress participant,
+	                                                         const std::shared_ptr<Address> participant,
 	                                                         bool cancel);
 	void fillCancelList(const ConferenceInfo::participant_list_t &oldList,
 	                    const ConferenceInfo::participant_list_t &newList);
@@ -92,9 +92,9 @@ private:
 	std::shared_ptr<Account> mAccount = nullptr;
 
 	unsigned long mInvitationsSent = 0;
-	std::list<IdentityAddress> mInvitationsToSend;
-	std::map<IdentityAddress, int> mCancelToSend;
-	std::list<Address> mInvitationsInError;
+	std::list<std::shared_ptr<Address>> mInvitationsToSend;
+	std::map<std::shared_ptr<Address>, int> mCancelToSend;
+	std::list<std::shared_ptr<Address>> mInvitationsInError;
 };
 
 class ConferenceSchedulerCbs : public bellesip::HybridObject<LinphoneConferenceSchedulerCbs, ConferenceSchedulerCbs>,

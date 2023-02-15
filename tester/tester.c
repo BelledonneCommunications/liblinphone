@@ -18,20 +18,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "belle-sip/sipstack.h"
-#include "liblinphone_tester.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <bctoolbox/defs.h>
+#include <bctoolbox/tester.h>
+#include <bctoolbox/vfs.h>
 
+#include "belle-sip/sipstack.h"
+
+#include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "linphone/logging.h"
 #include "logging-private.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
-#include <bctoolbox/tester.h>
-#include <bctoolbox/vfs.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -1219,6 +1220,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs,
 				LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
 				LinphoneConference *remote_conference =
 				    linphone_core_search_conference(m->lc, NULL, m_uri, local_conference_address, NULL);
+				BC_ASSERT_PTR_NOT_NULL(remote_conference);
 				linphone_address_unref(m_uri);
 				int no_participants =
 				    (int)bctbx_list_size(participants) + 1 - (linphone_conference_is_in(conference) ? 1 : 2);
@@ -3159,6 +3161,7 @@ void messages_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), c
 	int count = (int)bctbx_list_size(messages);
 	counters->number_of_LinphoneAggregatedMessagesReceived += count;
 }
+
 void message_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), LinphoneChatMessage *msg) {
 	char *from = linphone_address_as_string(linphone_chat_message_get_from_address(msg));
 	stats *counters;

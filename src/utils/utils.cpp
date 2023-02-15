@@ -27,10 +27,9 @@
 #include <bctoolbox/charconv.h>
 #include <bctoolbox/port.h>
 
+#include "conference/conference-info.h"
 #include "linphone/utils/utils.h"
-
 #include "logger/logger.h"
-
 #include "private.h"
 
 #ifdef HAVE_ADVANCED_IM
@@ -341,20 +340,20 @@ std::string Utils::getSipFragAddress(const Content &content) {
 	std::string toErase = "From: ";
 	size_t contactPosition = id.find(toErase);
 	if (contactPosition != std::string::npos) id.erase(contactPosition, toErase.length());
-	IdentityAddress tmpIdentityAddress(id);
-	return tmpIdentityAddress.asString();
+	auto tmpIdentityAddress = Address::create(id);
+	return tmpIdentityAddress->toString();
 }
 
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-std::string Utils::getResourceLists(const std::list<IdentityAddress> &addresses) {
+std::string Utils::getResourceLists(const std::list<std::shared_ptr<Address>> &addresses) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 	for (const auto &addr : addresses) {
-		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asString());
+		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr->toString());
 		l.getEntry().push_back(entry);
 	}
 	rl.getList().push_back(l);
@@ -378,7 +377,7 @@ std::string Utils::getResourceLists(const std::list<IdentityAddress> &addresses)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-std::list<IdentityAddress> Utils::parseResourceLists(const Content &content) {
+std::list<std::shared_ptr<Address>> Utils::parseResourceLists(const Content &content) {
 #ifdef HAVE_ADVANCED_IM
 	if ((content.getContentType() == ContentType::ResourceLists) &&
 	    ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList)) ||
@@ -386,19 +385,19 @@ std::list<IdentityAddress> Utils::parseResourceLists(const Content &content) {
 		std::istringstream data(content.getBodyAsString());
 		std::unique_ptr<Xsd::ResourceLists::ResourceLists> rl(
 		    Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate));
-		std::list<IdentityAddress> addresses;
+		std::list<std::shared_ptr<Address>> addresses;
 		for (const auto &l : rl->getList()) {
 			for (const auto &entry : l.getEntry()) {
-				IdentityAddress addr(entry.getUri());
-				addresses.push_back(std::move(addr));
+				std::shared_ptr<Address> addr = Address::create(entry.getUri());
+				addresses.push_back(addr);
 			}
 		}
 		return addresses;
 	}
-	return std::list<IdentityAddress>();
+	return std::list<std::shared_ptr<Address>>();
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
-	return std::list<IdentityAddress>();
+	return std::list<std::shared_ptr<Address>>();
 #endif
 }
 #ifndef _MSC_VER
@@ -413,8 +412,9 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 
 	if (!sipfrag.isEmpty()) {
 		auto organizer = Utils::getSipFragAddress(sipfrag);
-		info->setOrganizer(IdentityAddress(organizer));
+		info->setOrganizer(Address::create(organizer));
 	}
+
 	if (!resourceList.isEmpty()) {
 		auto invitees = Utils::parseResourceLists(resourceList);
 		for (const auto &i : invitees) {
@@ -422,11 +422,9 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 		}
 	}
 
-	char *remoteContactAddressStr =
-	    sal_address_as_string(remote ? op->getRemoteContactAddress() : op->getContactAddress());
-	const ConferenceAddress conferenceAddress(remoteContactAddressStr);
-	ms_free(remoteContactAddressStr);
-	if (conferenceAddress.isValid()) {
+	const std::shared_ptr<Address> conferenceAddress = Address::create();
+	conferenceAddress->setImpl(remote ? op->getRemoteContactAddress() : op->getContactAddress());
+	if (conferenceAddress && conferenceAddress->isValid()) {
 		info->setUri(conferenceAddress);
 	}
 

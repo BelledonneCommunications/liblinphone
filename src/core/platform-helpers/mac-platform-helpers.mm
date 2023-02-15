@@ -30,6 +30,7 @@
 #include "c-wrapper/c-wrapper.h"
 
 #include "logger/logger.h"
+#include "core/core.h"
 #include "mac-platform-helpers.h"
 
 // =============================================================================

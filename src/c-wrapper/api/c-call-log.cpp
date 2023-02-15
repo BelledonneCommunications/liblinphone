@@ -33,7 +33,9 @@ using namespace LinphonePrivate;
 
 LinphoneCallLog *
 linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to) {
-	return CallLog::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getSharedFromThis(), dir, from, to);
+	const auto cppFrom = Address::toCpp(from)->getSharedFromThis();
+	const auto cppTo = Address::toCpp(to)->getSharedFromThis();
+	return CallLog::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getSharedFromThis(), dir, cppFrom, cppTo);
 }
 
 LinphoneCallLog *linphone_call_log_ref(LinphoneCallLog *call_log) {
@@ -62,7 +64,7 @@ int linphone_call_log_get_duration(const LinphoneCallLog *call_log) {
 }
 
 const LinphoneAddress *linphone_call_log_get_from_address(const LinphoneCallLog *call_log) {
-	return CallLog::toCpp(call_log)->getFromAddress();
+	return CallLog::toCpp(call_log)->getFromAddress()->toC();
 }
 
 float linphone_call_log_get_quality(const LinphoneCallLog *call_log) {
@@ -74,15 +76,16 @@ const char *linphone_call_log_get_ref_key(const LinphoneCallLog *call_log) {
 }
 
 const LinphoneAddress *linphone_call_log_get_local_address(const LinphoneCallLog *call_log) {
-	return CallLog::toCpp(call_log)->getLocalAddress();
+	return CallLog::toCpp(call_log)->getLocalAddress()->toC();
 }
 
 const LinphoneAddress *linphone_call_log_get_remote_address(const LinphoneCallLog *call_log) {
-	return CallLog::toCpp(call_log)->getRemoteAddress();
+	return CallLog::toCpp(call_log)->getRemoteAddress()->toC();
 }
 
 void linphone_call_log_set_remote_address(LinphoneCallLog *call_log, LinphoneAddress *address) {
-	CallLog::toCpp(call_log)->setRemoteAddress(address);
+	const auto cppAddress = Address::toCpp(address)->getSharedFromThis();
+	CallLog::toCpp(call_log)->setRemoteAddress(cppAddress);
 }
 
 time_t linphone_call_log_get_start_date(const LinphoneCallLog *call_log) {
@@ -94,7 +97,7 @@ LinphoneCallStatus linphone_call_log_get_status(const LinphoneCallLog *call_log)
 }
 
 const LinphoneAddress *linphone_call_log_get_to_address(const LinphoneCallLog *call_log) {
-	return CallLog::toCpp(call_log)->getToAddress();
+	return CallLog::toCpp(call_log)->getToAddress()->toC();
 }
 
 void linphone_call_log_set_ref_key(LinphoneCallLog *call_log, const char *refkey) {
@@ -147,8 +150,10 @@ LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *core,
                                                LinphoneCallStatus status,
                                                bool_t video_enabled,
                                                float quality) {
-	auto log =
-	    CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(core), dir, linphone_address_ref(from), linphone_address_ref(to));
+
+	const auto cppFrom = Address::toCpp(from)->getSharedFromThis();
+	const auto cppTo = Address::toCpp(to)->getSharedFromThis();
+	auto log = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(core), dir, cppFrom, cppTo);
 
 	log->setDuration(duration);
 	log->setStartTime(start_time);
@@ -183,10 +188,11 @@ void call_logs_write_to_config_file(LinphoneCore *lc) {
 		linphone_config_clean_section(cfg, logsection);
 		linphone_config_set_int(cfg, logsection, "dir", log->getDirection());
 		linphone_config_set_int(cfg, logsection, "status", log->getStatus());
-		tmp = linphone_address_as_string(log->getFromAddress());
+
+		tmp = ms_strdup(L_STRING_TO_C(log->getFromAddress()->toString()));
 		linphone_config_set_string(cfg, logsection, "from", tmp);
 		ms_free(tmp);
-		tmp = linphone_address_as_string(log->getToAddress());
+		tmp = ms_strdup(L_STRING_TO_C(log->getToAddress()->toString()));
 		linphone_config_set_string(cfg, logsection, "to", tmp);
 		ms_free(tmp);
 		if (log->getStartTime())
@@ -216,13 +222,13 @@ bctbx_list_t *linphone_core_read_call_logs_from_config_file(LinphoneCore *lc) {
 	for (i = 0;; ++i) {
 		snprintf(logsection, sizeof(logsection), "call_log_%i", i);
 		if (linphone_config_has_section(cfg, logsection)) {
-			LinphoneAddress *from = NULL, *to = NULL;
 			tmp = linphone_config_get_string(cfg, logsection, "from", NULL);
-			if (tmp) from = linphone_address_new(tmp);
+			const auto from = (tmp) ? Address::create(tmp) : nullptr;
 			tmp = linphone_config_get_string(cfg, logsection, "to", NULL);
-			if (tmp) to = linphone_address_new(tmp);
-			if (!from || !to) continue;
-
+			const auto to = (tmp) ? Address::create(tmp) : nullptr;
+			if (!from || !from->isValid() || !to || !to->isValid()) {
+				continue;
+			}
 			auto cl = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc),
 			                          static_cast<LinphoneCallDir>(linphone_config_get_int(cfg, logsection, "dir", 0)),
 			                          from, to);
@@ -357,7 +363,8 @@ bctbx_list_t *linphone_core_get_call_history_for_address(LinphoneCore *lc, const
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return NULL;
 
-	auto list = mainDb->getCallHistory(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)));
+	const auto cppAddr = Address::toCpp(const_cast<LinphoneAddress *>(addr))->getSharedFromThis();
+	auto list = mainDb->getCallHistory(cppAddr);
 
 	bctbx_list_t *results = NULL;
 	if (!list.empty()) {
@@ -382,8 +389,9 @@ bctbx_list_t *linphone_core_get_call_history_2(LinphoneCore *lc,
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return NULL;
 
-	auto list = mainDb->getCallHistory(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
-	                                   ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)));
+	const auto peerAddr = Address::toCpp(const_cast<LinphoneAddress *>(peer_addr))->getSharedFromThis();
+	const auto localAddr = Address::toCpp(const_cast<LinphoneAddress *>(local_addr))->getSharedFromThis();
+	auto list = mainDb->getCallHistory(peerAddr, localAddr);
 
 	bctbx_list_t *results = NULL;
 	if (!list.empty()) {

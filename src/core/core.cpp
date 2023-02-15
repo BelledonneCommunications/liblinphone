@@ -1043,7 +1043,6 @@ void Core::setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice)
 }
 
 std::shared_ptr<AudioDevice> Core::getInputAudioDevice() const {
-
 	// If the core in a local conference, then get the audio device of the audio control interface
 	if (getCCore()->conf_ctx) {
 		/* There is a local conference.*/
@@ -1064,7 +1063,6 @@ std::shared_ptr<AudioDevice> Core::getInputAudioDevice() const {
 }
 
 std::shared_ptr<AudioDevice> Core::getOutputAudioDevice() const {
-
 	// If the core in a local conference, then get the audio device of the audio control interface
 	if (getCCore()->conf_ctx) {
 		/* There is a local conference.*/
@@ -1322,14 +1320,12 @@ int Core::getUnreadChatMessageCount() const {
 	return d->mainDb->getUnreadChatMessageCount();
 }
 
-int Core::getUnreadChatMessageCount(const IdentityAddress &localAddress) const {
+int Core::getUnreadChatMessageCount(const std::shared_ptr<Address> &localAddress) const {
 	L_D();
 	int count = 0;
-	auto addressToCompare = localAddress.asAddress();
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
-		if (addressToCompare.weakEqual(chatRoom->getLocalAddress().asAddress()))
-			count += chatRoom->getUnreadChatMessageCount();
+		if (localAddress->weakEqual(*chatRoom->getLocalAddress())) count += chatRoom->getUnreadChatMessageCount();
 	}
 	return count;
 }
@@ -1343,7 +1339,7 @@ int Core::getUnreadChatMessageCountFromActiveLocals() const {
 		for (auto it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
 			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
 			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress().asAddress())) {
+			if (Address::toCpp(identityAddr)->weakEqual(*chatRoom->getLocalAddress())) {
 				count += chatRoom->getUnreadChatMessageCount();
 			}
 		}
@@ -1435,7 +1431,7 @@ void Core::removeLdap(std::shared_ptr<Ldap> ldap) {
 }
 // -----------------------------------------------------------------------------
 
-Address Core::interpretUrl(const std::string &url, bool chatOrCallUse) const {
+std::shared_ptr<Address> Core::interpretUrl(const std::string &url, bool chatOrCallUse) const {
 	bool applyPrefix = true;
 	if (chatOrCallUse) {
 		LinphoneAccount *account = linphone_core_get_default_account(getCCore());
@@ -1446,13 +1442,10 @@ Address Core::interpretUrl(const std::string &url, bool chatOrCallUse) const {
 	}
 
 	LinphoneAddress *cAddress = linphone_core_interpret_url_2(getCCore(), url.c_str(), applyPrefix);
-	if (!cAddress) return Address();
+	if (!cAddress) return nullptr;
 
-	char *str = linphone_address_as_string(cAddress);
+	std::shared_ptr<Address> address = Address::toCpp(cAddress)->getSharedFromThis();
 	linphone_address_unref(cAddress);
-
-	Address address(str);
-	bctbx_free(str);
 
 	return address;
 }
@@ -1483,11 +1476,17 @@ void Core::destroyTimer(belle_sip_source_t *timer) {
 }
 
 const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId &conferenceId) const {
-	Address peerAddress = conferenceId.getPeerAddress().asAddress();
-	peerAddress.removeUriParam("gr");
-	Address localAddress = conferenceId.getLocalAddress().asAddress();
-	localAddress.removeUriParam("gr");
-	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+	std::shared_ptr<Address> peerAddress = nullptr;
+	const auto &rawPeerAddress = conferenceId.getPeerAddress();
+	if (rawPeerAddress) {
+		peerAddress = Address::create(rawPeerAddress->getUriWithoutGruu());
+	}
+	std::shared_ptr<Address> localAddress = nullptr;
+	const auto &rawLocalAddress = conferenceId.getLocalAddress();
+	if (rawLocalAddress) {
+		localAddress = Address::create(rawLocalAddress->getUriWithoutGruu());
+	}
+	ConferenceId prunedConferenceId = ConferenceId(peerAddress, localAddress);
 	return prunedConferenceId;
 }
 
@@ -1538,20 +1537,24 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 
 shared_ptr<MediaConference::Conference>
 Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params,
-                                 const ConferenceAddress &localAddress,
-                                 const ConferenceAddress &remoteAddress,
-                                 const std::list<IdentityAddress> &participants) const {
+                                 const std::shared_ptr<const Address> &localAddress,
+                                 const std::shared_ptr<const Address> &remoteAddress,
+                                 const std::list<std::shared_ptr<Address>> &participants) const {
 
+	auto localAddressUri = (localAddress) ? localAddress->getUriWithoutGruu() : Address();
+	auto remoteAddressUri = (remoteAddress) ? remoteAddress->getUriWithoutGruu() : Address();
 	const auto it = std::find_if(audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&](const auto &p) {
 		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
 		const auto &audioVideoConference = p.second;
 		const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-		const auto &curLocalAddress = conferenceId.getLocalAddress();
-		if (localAddress.getAddressWithoutGruu() != curLocalAddress.getAddressWithoutGruu()) return false;
-		const auto &curRemoteAddress = conferenceId.getPeerAddress();
-		if (remoteAddress.isValid() &&
-		    remoteAddress.getAddressWithoutGruu() != curRemoteAddress.getAddressWithoutGruu())
-			return false;
+
+		auto curLocalAddress =
+		    (conferenceId.getLocalAddress()) ? conferenceId.getLocalAddress()->getUriWithoutGruu() : Address();
+		if (localAddressUri.isValid() && (localAddressUri != curLocalAddress)) return false;
+
+		auto curPeerAddress =
+		    (conferenceId.getPeerAddress()) ? conferenceId.getPeerAddress()->getUriWithoutGruu() : Address();
+		if (remoteAddressUri.isValid() && (remoteAddressUri != curPeerAddress)) return false;
 
 		// Check parameters only if pointer provided as argument is not null
 		if (params) {
@@ -1570,9 +1573,7 @@ Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params,
 			const std::list<std::shared_ptr<Participant>> &confParticipants = audioVideoConference->getParticipants();
 			participantListMatch =
 			    equal(participants.cbegin(), participants.cend(), confParticipants.cbegin(), confParticipants.cend(),
-			          [](const auto &p1, const auto &p2) {
-				          return (p2->getAddress().getAddressWithoutGruu() == p1.getAddressWithoutGruu());
-			          });
+			          [](const auto &p1, const auto &p2) { return (p1->weakEqual(*p2->getAddress())); });
 		}
 		return participantListMatch;
 	});
@@ -1586,14 +1587,14 @@ Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params,
 }
 
 shared_ptr<MediaConference::Conference>
-Core::searchAudioVideoConference(const ConferenceAddress &conferenceAddress) const {
+Core::searchAudioVideoConference(const std::shared_ptr<Address> &conferenceAddress) const {
 
-	if (!conferenceAddress.isValid()) return nullptr;
+	if (!conferenceAddress || !conferenceAddress->isValid()) return nullptr;
 	const auto it = std::find_if(audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&](const auto &p) {
 		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
 		const auto &audioVideoConference = p.second;
 		const auto curConferenceAddress = audioVideoConference->getConferenceAddress();
-		return (conferenceAddress == curConferenceAddress);
+		return (*conferenceAddress == *curConferenceAddress);
 	});
 
 	shared_ptr<MediaConference::Conference> conference = nullptr;
@@ -1605,15 +1606,15 @@ Core::searchAudioVideoConference(const ConferenceAddress &conferenceAddress) con
 }
 
 shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams,
-                                                       const Address &localAddr,
-                                                       const std::list<IdentityAddress> &participants) {
-	return createOrUpdateConferenceOnServer(confParams, localAddr, participants, ConferenceAddress());
+                                                       const std::shared_ptr<Address> &localAddr,
+                                                       const std::list<std::shared_ptr<Address>> &participants) {
+	return createOrUpdateConferenceOnServer(confParams, localAddr, participants, nullptr);
 }
 
 shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-                                                               const Address &localAddr,
-                                                               const std::list<IdentityAddress> &participants,
-                                                               const ConferenceAddress &confAddr) {
+                                                               const std::shared_ptr<Address> &localAddr,
+                                                               const std::list<std::shared_ptr<Address>> &participants,
+                                                               const std::shared_ptr<Address> &confAddr) {
 	L_D()
 	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
@@ -1623,31 +1624,29 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
 	auto params = linphone_core_create_call_params(lc, nullptr);
 
-	Address conferenceFactoryUri;
-	if (confAddr == ConferenceAddress()) {
+	std::shared_ptr<Address> conferenceFactoryUri;
+	if (confAddr) {
+		conferenceFactoryUri = confAddr;
+	} else {
 		LinphoneAddress *factoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
 		if (factoryUri == nullptr) {
 			lWarning() << "Not creating conference: no conference factory uri for local address [" << localAddr << "]";
 			return nullptr;
 		}
-		auto conferenceFactoryUriStr = linphone_address_as_string_uri_only(factoryUri);
-		linphone_address_unref(factoryUri);
-		conferenceFactoryUri = Address(conferenceFactoryUriStr);
-		ms_free(conferenceFactoryUriStr);
-	} else {
-		conferenceFactoryUri = confAddr.asAddress();
+		conferenceFactoryUri = Address::toCpp(factoryUri)->getSharedFromThis();
 	}
 
-	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
-	if (!localAddr.hasUriParam("gr")) {
-		lWarning() << "Local identity address [" << localAddr << "] doesn't have a gruu, let's try to find it";
-		IdentityAddress localAddrWithGruu = d->getIdentityAddressWithGruu(localAddr);
-		if (localAddrWithGruu.isValid()) {
+	ConferenceId conferenceId = ConferenceId(nullptr, localAddr);
+	if (!localAddr->hasUriParam("gr")) {
+		lWarning() << "Local identity address [" << localAddr->toString()
+		           << "] doesn't have a gruu, let's try to find it";
+		auto localAddrWithGruu = d->getIdentityAddressWithGruu(localAddr);
+		if (localAddrWithGruu && localAddrWithGruu->isValid()) {
 			lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";
-			conferenceId = ConferenceId(IdentityAddress(), localAddrWithGruu);
+			conferenceId = ConferenceId(nullptr, localAddrWithGruu);
 		} else {
-			lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr
-			         << "], client group chat room creation will fail!";
+			lError() << "Failed to find matching contact address with gruu for identity address ["
+			         << localAddr->toString() << "], client group chat room creation will fail!";
 		}
 	}
 
@@ -1688,13 +1687,16 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 
 	linphone_call_params_unref(params);
 
-	Address meCleanedAddress(localAddr);
-	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
+	std::shared_ptr<Address> meCleanedAddress = Address::create(localAddr->getUriWithoutGruu());
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
-	LinphoneProxyConfig *destProxy = session->getDestProxy();
+	const auto destAccount = session->getPrivate()->getDestAccount();
 	const LinphoneNatPolicy *natPolicy = nullptr;
-	if (destProxy) {
-		natPolicy = linphone_proxy_config_get_nat_policy(destProxy);
+	if (destAccount) {
+		const auto accountParams = destAccount->getAccountParams();
+		const auto &cppNatPolicy = accountParams->getNatPolicy();
+		if (cppNatPolicy) {
+			natPolicy = cppNatPolicy->toC();
+		}
 	}
 	if (!natPolicy) {
 		natPolicy = linphone_core_get_nat_policy(getCCore());
@@ -1728,20 +1730,19 @@ const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() co
 }
 
 LinphoneAddress *Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-                                                             const IdentityAddress &localAddress) {
-	Address addr(localAddress.asAddress());
-	LinphoneAccount *account = linphone_core_lookup_known_account(core->getCCore(), L_GET_C_BACK_PTR(&addr));
+                                                             const std::shared_ptr<Address> &localAddress) {
+	std::shared_ptr<Address> addr = localAddress;
+	LinphoneAccount *account = linphone_core_lookup_known_account(core->getCCore(), addr->toC());
 
 	if (!account) {
-		lWarning() << "No account found for local address: [" << localAddress.asString() << "]";
+		lWarning() << "No account found for local address: [" << localAddress->toString() << "]";
 		return nullptr;
 	} else return getAudioVideoConferenceFactoryAddress(core, account);
 }
 
 LinphoneAddress *Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
                                                              const LinphoneAccount *account) {
-	const LinphoneAddress *address =
-	    Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
+	const auto &address = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 	if (address == nullptr) {
 		string conferenceFactoryUri = getConferenceFactoryUri(core, account);
 		lWarning() << "Audio/video conference factory is null, fallback to default conference factory URI ["
@@ -1749,9 +1750,7 @@ LinphoneAddress *Core::getAudioVideoConferenceFactoryAddress(const std::shared_p
 		if (conferenceFactoryUri.empty()) return nullptr;
 		return linphone_address_new(conferenceFactoryUri.c_str());
 	}
-	char *address_uri = linphone_address_as_string_uri_only(address);
-	LinphoneAddress *factory_address = linphone_address_new(address_uri);
-	ms_free(address_uri);
+	LinphoneAddress *factory_address = address->toC();
 	return factory_address;
 }
 

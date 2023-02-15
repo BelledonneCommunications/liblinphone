@@ -72,8 +72,8 @@ public:
 	void configure(LinphoneCallDir direction,
 	               LinphoneProxyConfig *cfg,
 	               SalCallOp *op,
-	               const Address &from,
-	               const Address &to) override;
+	               const std::shared_ptr<Address> &from,
+	               const std::shared_ptr<Address> &to) override;
 	LinphoneStatus deferUpdate() override;
 	void initiateIncoming() override;
 	bool initiateOutgoing(const std::string &subject = "", const Content *content = nullptr) override;
@@ -86,8 +86,9 @@ public:
 	LinphoneStatus sendDtmfs(const std::string &dtmfs);
 	void sendVfuRequest();
 	void startIncomingNotification(bool notifyRinging = true) override;
-	int
-	startInvite(const Address *destination, const std::string &subject = "", const Content *content = nullptr) override;
+	int startInvite(const std::shared_ptr<Address> &destination,
+	                const std::string &subject = "",
+	                const Content *content = nullptr) override;
 	bool startRecording();
 	void stopRecording();
 	bool isRecording();
@@ -178,8 +179,8 @@ private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);
 
-	int getRandomRtpPort (const SalStreamDescription & stream) const;
-	const std::shared_ptr<Conference> getLocalConference() const;
+	int getRandomRtpPort(const SalStreamDescription &stream) const;
+	std::shared_ptr<Conference> getLocalConference() const;
 };
 
 /**

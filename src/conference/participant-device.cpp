@@ -49,18 +49,19 @@ ParticipantDevice::ParticipantDevice() {
 ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
                                      const std::shared_ptr<LinphonePrivate::CallSession> &session,
                                      const std::string &name)
-    : mParticipant(participant), mGruu(participant->getAddress()), mName(name), mSession(session) {
+    : mParticipant(participant), mGruu(Address::create(participant->getAddress()->getUri())), mName(name),
+      mSession(session) {
 	if (mSession && mSession->getRemoteContactAddress()) {
-		setAddress(*mSession->getRemoteContactAddress());
+		setAddress(mSession->getRemoteContactAddress());
 	}
 	updateMediaCapabilities();
 	updateStreamAvailabilities();
 }
 
 ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
-                                     const IdentityAddress &gruu,
+                                     const std::shared_ptr<Address> &gruu,
                                      const std::string &name)
-    : mParticipant(participant), mGruu(gruu), mName(name) {
+    : mParticipant(participant), mGruu(Address::create(gruu->getUri())), mName(name) {
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
@@ -71,7 +72,7 @@ ParticipantDevice::~ParticipantDevice() {
 }
 
 bool ParticipantDevice::operator==(const ParticipantDevice &device) const {
-	return (getAddress() == device.getAddress());
+	return (*getAddress() == *device.getAddress());
 }
 
 Conference *ParticipantDevice::getConference() const {
@@ -82,25 +83,21 @@ shared_ptr<Core> ParticipantDevice::getCore() const {
 	return getParticipant() ? getParticipant()->getCore() : nullptr;
 }
 
-const IdentityAddress &ParticipantDevice::getAddress() const {
+const std::shared_ptr<Address> &ParticipantDevice::getAddress() const {
 	return mGruu;
 }
 
-void ParticipantDevice::setAddress(const IdentityAddress &address) {
-	setAddress(address.asAddress());
-}
-
-void ParticipantDevice::setAddress(const Address &address) {
-	mGruu = address;
-	if (address.hasParam("+org.linphone.specs")) {
-		const auto &linphoneSpecs = address.getParamValue("+org.linphone.specs");
+void ParticipantDevice::setAddress(const std::shared_ptr<Address> &address) {
+	mGruu = Address::create(address->getUri());
+	if (address->hasParam("+org.linphone.specs")) {
+		const auto &linphoneSpecs = address->getParamValue("+org.linphone.specs");
 		setCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size() - 2));
 	}
 }
 
 std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
 	if (mParticipant.expired()) {
-		lWarning() << "The participant owning device " << getAddress().asString() << " has already been deleted";
+		lWarning() << "The participant owning device " << getAddress()->toString() << " has already been deleted";
 	}
 	shared_ptr<Participant> participant = mParticipant.lock();
 	if (!participant) {
@@ -121,7 +118,7 @@ void ParticipantDevice::setConferenceSubscribeEvent(const shared_ptr<EventSubscr
 
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel() const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
-	if (encryptionEngine) return encryptionEngine->getSecurityLevel(getAddress().asString());
+	if (encryptionEngine) return encryptionEngine->getSecurityLevel(getAddress()->toString());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }
@@ -175,10 +172,13 @@ bool ParticipantDevice::setSsrc(const LinphoneStreamType type, uint32_t newSsrc)
 	if (changed) {
 		if (conference) {
 			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
-			        << getAddress() << " in conference " << conference->getConferenceAddress() << " to " << newSsrc;
+			        << getAddress()->toString() << " in conference "
+			        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
+			                                               : std::string("sip:unknown"))
+			        << " to " << newSsrc;
 		} else {
 			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device "
-			        << getAddress() << " to " << newSsrc;
+			        << *getAddress() << " to " << newSsrc;
 		}
 	}
 
@@ -265,7 +265,8 @@ void ParticipantDevice::setState(State newState, bool notify) {
 		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
 			setTimeOfJoining(time(nullptr));
 		}
-		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
+		lInfo() << "Moving participant device " << getAddress()->toString() << " from state " << mState << " to "
+		        << newState;
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
 		const auto &conference = getConference();
@@ -518,13 +519,8 @@ bool ParticipantDevice::updateStreamAvailabilities() {
 				} else {
 					std::shared_ptr<ParticipantDevice> meDev = nullptr;
 					if (conferenceParams.getAccount()) {
-						char *devAddrStr = linphone_account_get_contact_address(conferenceParams.getAccount())
-						                       ? linphone_address_as_string(linphone_account_get_contact_address(
-						                             conferenceParams.getAccount()))
-						                       : nullptr;
-						if (devAddrStr) {
-							Address devAddr(devAddrStr);
-							ms_free(devAddrStr);
+						const auto &devAddr = conferenceParams.getAccount()->getContactAddress();
+						if (devAddr) {
 							meDev = conference->getMe()->findDevice(devAddr);
 						}
 					}
@@ -613,7 +609,7 @@ void *ParticipantDevice::createWindowId() const {
 	if (!mLabel.empty() && session) {
 		windowId = static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(mLabel);
 	} else {
-		lError() << "Unable to create a window ID for device " << getAddress()
+		lError() << "Unable to create a window ID for device " << *getAddress()
 		         << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel)
 		         << ") or no session is linked to this device (actual " << session << ")";
 	}
@@ -637,7 +633,7 @@ void ParticipantDevice::setWindowId(void *newWindowId) const {
 			static_pointer_cast<MediaSession>(session)->setNativeVideoWindowId(mWindowId, mLabel);
 		}
 	} else {
-		lError() << "Unable to set window ID for device " << getAddress() << " because either label is empty (actual "
+		lError() << "Unable to set window ID for device " << *getAddress() << " because either label is empty (actual "
 		         << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual "
 		         << session << ")";
 	}

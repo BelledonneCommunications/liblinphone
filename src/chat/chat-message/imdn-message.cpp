@@ -71,7 +71,6 @@ ImdnMessage::ImdnMessage(const std::shared_ptr<ImdnMessage> &message) : ImdnMess
 
 ImdnMessage::ImdnMessage(const Context &context) : NotificationMessage(*new ImdnMessagePrivate(context)) {
 	L_D();
-
 	for (const auto &message : d->context.deliveredMessages) {
 		// Don't send IMDN if the message we send it for has no Message-ID
 		const string &imdnMessageId = message->getImdnMessageId();

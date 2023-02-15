@@ -48,8 +48,8 @@ void linphone_participant_device_set_user_data(LinphoneParticipantDevice *partic
 }
 
 const LinphoneAddress *linphone_participant_device_get_address(const LinphoneParticipantDevice *participant_device) {
-	const LinphonePrivate::Address &addr = ParticipantDevice::toCpp(participant_device)->getAddress().asAddress();
-	return L_GET_C_BACK_PTR(&addr);
+	const auto &addr = ParticipantDevice::toCpp(participant_device)->getAddress();
+	return addr->toC();
 }
 
 void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,

@@ -438,7 +438,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_terminate_with_error_info(LinphoneC
  * @param redirect_address The #LinphoneAddress to redirect the call to @notnil
  * @return 0 if successful, -1 on error.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect_to(LinphoneCall *call, const LinphoneAddress *redirect_address);
+LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect_to(LinphoneCall *call, LinphoneAddress *redirect_address);
 
 /**
  * Decline a pending incoming call, with a reason.
@@ -575,7 +575,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_update(LinphoneCall *call, c
  * @param refer_to The #LinphoneAddress the call is to be refered to. @notnil
  * @return 0 on success, -1 on failure
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, const LinphoneAddress *refer_to);
+LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, LinphoneAddress *refer_to);
 
 /**
  * Transfers a call to destination of another running call. This is used for "attended transfer" scenarios.

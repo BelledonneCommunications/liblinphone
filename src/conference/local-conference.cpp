@@ -48,7 +48,7 @@ LINPHONE_BEGIN_NAMESPACE
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 LocalConference::LocalConference(const shared_ptr<Core> &core,
-                                 const IdentityAddress &myAddress,
+                                 const std::shared_ptr<Address> &myAddress,
                                  CallSessionListener *listener,
                                  const std::shared_ptr<ConferenceParams> params,
                                  ConferenceListener *confListener)
@@ -87,18 +87,10 @@ std::shared_ptr<Call> LocalConference::getCall() const {
 void LocalConference::subscribeReceived(const shared_ptr<EventSubscribe> &event) {
 #ifdef HAVE_ADVANCED_IM
 	if (event) {
-		const LinphoneAddress *lAddr = event->getFrom();
-		char *addrStr = linphone_address_as_string(lAddr);
-		Address participantAddress(addrStr);
-		bctbx_free(addrStr);
-
+		const auto &participantAddress = event->getFrom();
 		shared_ptr<Participant> participant = findParticipant(participantAddress);
-
 		if (participant) {
-			const LinphoneAddress *lContactAddr = event->getRemoteContact();
-			char *contactAddrStr = linphone_address_as_string(lContactAddr);
-			IdentityAddress contactAddr(contactAddrStr);
-			bctbx_free(contactAddrStr);
+			const auto &contactAddr = event->getRemoteContact();
 			shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 
 			if (device) {

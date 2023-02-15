@@ -21,12 +21,13 @@
 #ifndef _L_CONFERENCE_INTERFACE_H_
 #define _L_CONFERENCE_INTERFACE_H_
 
+#include <list>
+
 #include <bctoolbox/defs.h>
 
 #include "event-log/events.h"
 #include "linphone/enums/conference-enums.h"
 #include "linphone/utils/general.h"
-#include <list>
 
 // =============================================================================
 
@@ -34,7 +35,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Call;
 class ConferenceListenerInterface;
-class IdentityAddress;
+class Address;
 class CallSessionParams;
 class Participant;
 class ConferenceFactoryInterface;
@@ -109,7 +110,7 @@ public:
 	 Get the conference ID of this conference.
 	 @return The Address of the conference.
 	 **/
-	virtual const ConferenceAddress &getConferenceAddress() const = 0;
+	virtual const std::shared_ptr<Address> &getConferenceAddress() const = 0;
 
 	/*
 	 * Get the subject of this conference
@@ -159,11 +160,11 @@ public:
 	 <br>
 	 @param[in] participantAddress The address of the participant to add to this Conference.
 	*/
-	virtual bool addParticipant(const IdentityAddress &participantAddress) = 0;
+	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) = 0;
 
 	/*
-	 * Same as function addParticipant(const IdentityAddress &participantAddress), except that call to add is passed by
-	 * the user application.
+	 * Same as function addParticipant(const std::shared_ptr<Address> &participantAddress), except that call to add is
+	 * passed by the user application.
 	 * @param[in] call to be added tot he conference.
 	 * @return True if everything is OK, False otherwise
 	 */
@@ -174,20 +175,20 @@ public:
 	 * @param[in] addresses
 	 * @return True if everything is OK, False otherwise
 	 */
-	virtual bool addParticipants(const std::list<IdentityAddress> &addresses) = 0;
+	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) = 0;
 
 	/*
 	 * Add local participant to this conference, this fonction is only available for local focus. Behavior is the same
 	 * as
 	 */
-	virtual void join(const IdentityAddress &participantAddress) = 0;
+	virtual void join(const std::shared_ptr<Address> &participantAddress) = 0;
 
 	/*
 	 * Find a participant  from  its address.
 	 * @param[in] participantAddress The address to search in the list of participants of the chat room
 	 * @return The participant if found, NULL otherwise.
 	 */
-	virtual std::shared_ptr<Participant> findParticipant(const IdentityAddress &participantAddress) const = 0;
+	virtual std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &participantAddress) const = 0;
 
 	/*
 	 * Get the number of participants in this conference (that is without ourselves).
@@ -436,14 +437,13 @@ public:
 	 *Created. If not set the conference is instanciated with a local focus. In this case conferenceId must be set.
 	 * @param[in] Address of the conference factory (ex: sip:conference-factory@conf.linphone.org).
 	 */
-	virtual void setConferenceFactoryAddress(const Address &address) = 0;
+	virtual void setConferenceFactoryAddress(const std::shared_ptr<Address> &address) = 0;
 
 	/*Set focus address of this conference. If set, the Conference is created as an Adhoc conference from a remote
 	 *conferencing server
 	 * @param[in]  The Address of the conference focus.
 	 **/
-	// virtual void setConferenceAddress (const Address conferenceAddress) = 0;
-	virtual void setConferenceAddress(const ConferenceAddress conferenceAddress) = 0;
+	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) = 0;
 
 	/*
 	 * Set the subject of this conference. If not focus,  this operation is only available if the local participant
@@ -464,7 +464,7 @@ public:
 	 *If set this participant is added to the conference
 	 * @param[in]  participantAddress of the conference focus.
 	 */
-	virtual void setMe(const IdentityAddress &participantAddress) = 0;
+	virtual void setMe(const std::shared_ptr<Address> &participantAddress) = 0;
 
 	/*
 	 * Enable audio media type for a conference
@@ -524,7 +524,7 @@ class LINPHONE_PUBLIC ConferenceFactoryInterface {
 	 * @param participants initial list of participants
 	 */
 	std::shared_ptr<ConferenceInterface> &createConference(const std::shared_ptr<ConferenceParamsInterface> &params,
-	                                                       const std::list<IdentityAddress> &participants);
+	                                                       const std::list<std::shared_ptr<Address>> &participants);
 };
 
 std::ostream &operator<<(std::ostream &lhs, ConferenceInterface::State e);

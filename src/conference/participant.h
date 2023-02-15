@@ -26,7 +26,7 @@
 
 #include <belle-sip/object++.hh>
 
-#include "address/identity-address.h"
+#include "address/address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "conference/params/call-session-params.h"
 
@@ -83,9 +83,9 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 
 public:
 	explicit Participant(Conference *conference,
-	                     const IdentityAddress &address,
+	                     const std::shared_ptr<Address> &address,
 	                     std::shared_ptr<CallSession> callSession);
-	explicit Participant(Conference *conference, const IdentityAddress &address);
+	explicit Participant(Conference *conference, const std::shared_ptr<Address> &address);
 	Participant();
 	virtual ~Participant();
 	// non clonable object
@@ -93,15 +93,16 @@ public:
 		return nullptr;
 	}
 
-	void configure(Conference *conference, const IdentityAddress &address);
+	void configure(Conference *conference, const std::shared_ptr<Address> &address);
 
-	const IdentityAddress &getAddress() const;
+	const std::shared_ptr<Address> &getAddress() const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel() const;
 	AbstractChatRoom::SecurityLevel
 	getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const;
 
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices() const;
-	std::shared_ptr<ParticipantDevice> findDevice(const IdentityAddress &gruu, const bool logFailure = true) const;
+	std::shared_ptr<ParticipantDevice> findDevice(const std::shared_ptr<Address> &address,
+	                                              const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDevice(const std::shared_ptr<const CallSession> &session,
 	                                              const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDevice(const std::string &label, const bool logFailure = true) const;
@@ -159,20 +160,20 @@ protected:
 	inline void removeSession() {
 		session.reset();
 	}
-	inline void setAddress(const IdentityAddress &addr) {
+	inline void setAddress(const std::shared_ptr<Address> &addr) {
 		this->addr = addr;
 	}
 
 	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<LinphonePrivate::CallSession> &session,
 	                                             const std::string &name = "");
-	std::shared_ptr<ParticipantDevice> addDevice(const IdentityAddress &gruu, const std::string &name = "");
+	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<Address> &address, const std::string &name = "");
 	void clearDevices();
-	void removeDevice(const IdentityAddress &gruu);
+	void removeDevice(const std::shared_ptr<Address> &gruu);
 	void removeDevice(const std::shared_ptr<const CallSession> &session);
 
 private:
 	Conference *mConference = nullptr;
-	IdentityAddress addr;
+	std::shared_ptr<Address> addr;
 	bool isThisAdmin = false;
 	bool isThisFocus = false;
 	std::shared_ptr<CallSession> session;
@@ -186,7 +187,7 @@ private:
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Participant &participant) {
-	return os << participant.getAddress().asString();
+	return os << participant.getAddress()->toString();
 	return os;
 }
 

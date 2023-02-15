@@ -21,26 +21,31 @@
 #ifndef _L_IDENTITY_ADDRESS_PARSER_H_
 #define _L_IDENTITY_ADDRESS_PARSER_H_
 
-#include "identity-address.h"
-#include "object/singleton.h"
+#include "belr/abnf.h"
+#include "belr/belr.h"
+#include "belr/grammarbuilder.h"
+
+#include "c-wrapper/internal/c-sal.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class IdentityAddressParserPrivate;
-
-class IdentityAddressParser : public Singleton<IdentityAddressParser> {
-	friend class Singleton<IdentityAddressParser>;
+/**
+ * The AddressParser is designed to efficiently parse
+ * simple SIP uris whith only scheme, user, host, and gr parameter.
+ */
+class AddressParser {
 
 public:
-	std::shared_ptr<IdentityAddress> parseAddress(const std::string &input);
+	SalAddress *parseAddress(const std::string &input);
+	static AddressParser &get();
 
 private:
-	IdentityAddressParser();
-
-	L_DECLARE_PRIVATE(IdentityAddressParser);
-	L_DISABLE_COPY(IdentityAddressParser);
+	AddressParser();
+	std::shared_ptr<belr::Parser<void *>> mParser;
+	static std::unique_ptr<AddressParser> sInstance;
+	static constexpr const char *IdentityGrammar = "identity_grammar";
 };
 
 LINPHONE_END_NAMESPACE

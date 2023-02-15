@@ -72,12 +72,13 @@ void RemoteConferenceListEventHandler::subscribe() {
 	const bctbx_list_t *list = linphone_core_get_account_list(lc);
 
 	for (; list != NULL; list = list->next) {
-		subscribe((LinphoneAccount *)list->data);
+		const auto &account = Account::toCpp((LinphoneAccount *)list->data)->getSharedFromThis();
+		subscribe(account);
 	}
 }
 
-void RemoteConferenceListEventHandler::subscribe(LinphoneAccount *c_account) {
-	unsubscribe(c_account);
+void RemoteConferenceListEventHandler::subscribe(const shared_ptr<Account> &account) {
+	unsubscribe(account);
 
 	if (handlers.empty()) return;
 
@@ -87,24 +88,23 @@ void RemoteConferenceListEventHandler::subscribe(LinphoneAccount *c_account) {
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 
-	auto account = Account::toCpp(c_account);
 	const auto &accountParams = account->getAccountParams();
-	Address identityAddress = *L_GET_CPP_PTR_FROM_C_OBJECT(accountParams->getIdentityAddress());
+	std::shared_ptr<Address> identityAddress = accountParams->getIdentityAddress();
 
 	for (const auto &p : handlers) {
 		RemoteConferenceEventHandler *handler = p.second;
 		const ConferenceId &conferenceId = handler->getConferenceId();
-		if (identityAddress.weakEqual(conferenceId.getLocalAddress().asAddress())) {
+		if (identityAddress->weakEqual(*conferenceId.getLocalAddress())) {
 			shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId);
 			if (!cr) {
 				lError() << "Couldn't add chat room " << conferenceId
-				         << "in the chat room list subscription because chat room couldn't be found";
+				         << " in the chat room list subscription because chat room couldn't be found";
 				continue;
 			}
 
 			if (cr->hasBeenLeft()) continue;
 
-			Address addr = conferenceId.getPeerAddress().asAddress();
+			Address addr = conferenceId.getPeerAddress()->getUri();
 			const auto lastNotify = handler->getLastNotify();
 			addr.setUriParam("Last-Notify", Utils::toString(lastNotify));
 			handler->setInitialSubscriptionUnderWayFlag((lastNotify == 0));
@@ -128,19 +128,16 @@ void RemoteConferenceListEventHandler::subscribe(LinphoneAccount *c_account) {
 		return;
 	}
 
-	LinphoneAddress *rlsAddr = linphone_address_new(L_STRING_TO_C(factoryUri));
-
-	LinphoneCore *lc = getCore()->getCCore();
-	LinphoneEvent *lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
-	shared_ptr<EventSubscribe> evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
-	char *from = linphone_address_as_string(account->getContactAddress());
+	auto rlsAddr = Address::create(factoryUri);
+	auto evSub = dynamic_pointer_cast<EventSubscribe>(
+	    (new EventSubscribe(getCore(), rlsAddr, "conference", 600))->toSharedPtr());
+	std::string from = account->getContactAddress()->toString();
 	evSub->getOp()->setFrom(from);
-	bctbx_free(from);
-	linphone_address_unref(rlsAddr);
 	evSub->setInternal(true);
 	evSub->addCustomHeader("Require", "recipient-list-subscribe");
 	evSub->addCustomHeader("Accept", "multipart/related, application/conference-info+xml, application/rlmi+xml");
 	evSub->addCustomHeader("Content-Disposition", "recipient-list");
+	LinphoneCore *lc = getCore()->getCCore();
 	if (linphone_core_content_encoding_supported(lc, "deflate")) {
 		content.setContentEncoding("deflate");
 		evSub->addCustomHeader("Accept-Encoding", "deflate");
@@ -155,24 +152,19 @@ void RemoteConferenceListEventHandler::subscribe(LinphoneAccount *c_account) {
 void RemoteConferenceListEventHandler::unsubscribe() {
 	for (auto &evSub : levs) {
 		evSub->terminate();
-		evSub->unref();
 	}
 	levs.clear();
 }
 
-void RemoteConferenceListEventHandler::unsubscribe(LinphoneAccount *c_account) {
-	auto account = Account::toCpp(c_account);
+void RemoteConferenceListEventHandler::unsubscribe(const std::shared_ptr<Account> &account) {
 	if (!account || !account->getContactAddress()) return;
-	char *from = linphone_address_as_string(account->getContactAddress());
-	auto it = std::find_if(levs.begin(), levs.end(),
-	                       [from](const auto &evSub) { return (evSub->getOp()->getFrom() == from); });
-	bctbx_free(from);
+	const auto &from = account->getContactAddress();
+	auto it = std::find_if(levs.begin(), levs.end(), [from](const auto &lev) { return (*lev->getFrom() == *from); });
 
 	if (it != levs.end()) {
 		shared_ptr<EventSubscribe> evSub = *it;
 		levs.erase(it);
 		evSub->terminate();
-		evSub->unref();
 	}
 }
 
@@ -186,7 +178,7 @@ bool RemoteConferenceListEventHandler::getInitialSubscriptionUnderWayFlag(const 
 }
 
 void RemoteConferenceListEventHandler::notifyReceived(std::string from, const Content *notifyContent) {
-	const ConferenceAddress local(from);
+	const std::shared_ptr<Address> local = Address::create(from);
 
 	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
 		// Simple notify received directly from a chat-room
@@ -200,7 +192,7 @@ void RemoteConferenceListEventHandler::notifyReceived(std::string from, const Co
 			return;
 		}
 
-		ConferenceAddress entityAddress(confInfo->getEntity().c_str());
+		std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity().c_str());
 		ConferenceId id(entityAddress, local);
 		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler) return;
@@ -210,7 +202,7 @@ void RemoteConferenceListEventHandler::notifyReceived(std::string from, const Co
 	}
 
 	list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
-	map<string, IdentityAddress> addresses;
+	map<string, std::shared_ptr<Address>> addresses;
 	for (const auto &content : contents) {
 		const string &body = content.getBodyAsUtf8String();
 		const ContentType &contentType = content.getContentType();
@@ -222,10 +214,10 @@ void RemoteConferenceListEventHandler::notifyReceived(std::string from, const Co
 		const string &cid = content.getHeader("Content-Id").getValue();
 		if (cid.empty()) continue;
 
-		map<string, IdentityAddress>::const_iterator it = addresses.find(cid);
+		map<string, std::shared_ptr<Address>>::const_iterator it = addresses.find(cid);
 		if (it == addresses.cend()) continue;
 
-		IdentityAddress peer = it->second;
+		std::shared_ptr<Address> peer = it->second;
 		ConferenceId id(peer, local);
 		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler) continue;
@@ -272,13 +264,14 @@ void RemoteConferenceListEventHandler::addHandler(RemoteConferenceEventHandler *
 
 bool RemoteConferenceListEventHandler::isHandlerInSameDomainAsCore(const ConferenceId &conferenceId) const {
 	// Ensure that conference and conference factory are in the same domain
-	const ConferenceAddress &localAddress = conferenceId.getLocalAddress();
-	const ConferenceAddress &peerAddress = conferenceId.getPeerAddress();
-	IdentityAddress conferenceFactoryUri = IdentityAddress(Core::getConferenceFactoryUri(getCore(), localAddress));
+	const std::shared_ptr<Address> &localAddress = conferenceId.getLocalAddress();
+	const std::shared_ptr<Address> &peerAddress = conferenceId.getPeerAddress();
+	std::shared_ptr<Address> conferenceFactoryUri =
+	    Address::create(Core::getConferenceFactoryUri(getCore(), localAddress));
 
-	if (peerAddress.getDomain() != conferenceFactoryUri.getDomain()) {
-		lWarning() << "Peer address " << peerAddress.asString()
-		           << " is not in the same domain as the conference factory URI " << conferenceFactoryUri.asString()
+	if (peerAddress->getDomain() != conferenceFactoryUri->getDomain()) {
+		lWarning() << "Peer address " << peerAddress->toString()
+		           << " is not in the same domain as the conference factory URI " << conferenceFactoryUri->toString()
 		           << " hence not adding to the list of subscribes";
 		return false;
 	}
@@ -314,9 +307,9 @@ void RemoteConferenceListEventHandler::clearHandlers() {
 	handlers.clear();
 }
 
-map<string, IdentityAddress> RemoteConferenceListEventHandler::parseRlmi(const string &xmlBody) const {
+map<string, std::shared_ptr<Address>> RemoteConferenceListEventHandler::parseRlmi(const string &xmlBody) const {
 	istringstream data(xmlBody);
-	map<string, IdentityAddress> addresses;
+	map<string, std::shared_ptr<Address>> addresses;
 	unique_ptr<Xsd::Rlmi::List> rlmi;
 	try {
 		rlmi = Xsd::Rlmi::parseList(data, Xsd::XmlSchema::Flags::dont_validate);
@@ -330,7 +323,7 @@ map<string, IdentityAddress> RemoteConferenceListEventHandler::parseRlmi(const s
 		const string &uri = string(resource.getUri());
 		if (uri.empty()) continue;
 
-		IdentityAddress peer(uri);
+		std::shared_ptr<Address> peer = Address::create(uri);
 		for (const auto &instance : resource.getInstance()) {
 			const string &cid = string(instance.getId());
 			if (cid.empty()) continue;
@@ -355,16 +348,17 @@ void RemoteConferenceListEventHandler::onNetworkReachable(bool sipNetworkReachab
 void RemoteConferenceListEventHandler::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
                                                                   LinphoneRegistrationState state,
                                                                   BCTBX_UNUSED(const std::string &message)) {
-	if (state == LinphoneRegistrationOk) subscribe(cfg->account);
+	const auto &account = Account::toCpp(cfg->account)->getSharedFromThis();
+	if (state == LinphoneRegistrationOk) subscribe(account);
 	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config is
 		                                             // the current subscription
 		const LinphoneAddress *cfgAddress = linphone_proxy_config_get_contact(cfg);
 		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &evSub) {
-			LinphoneAddress *currentAddress = linphone_address_new(evSub->getOp()->getFrom().c_str());
-			return linphone_address_weak_equal(currentAddress, cfgAddress);
+			const auto &currentAddress = evSub->getFrom();
+			return currentAddress->weakEqual(*Address::toCpp(cfgAddress));
 		});
 
-		if (it != levs.end()) unsubscribe(cfg->account);
+		if (it != levs.end()) unsubscribe(account);
 	}
 }
 

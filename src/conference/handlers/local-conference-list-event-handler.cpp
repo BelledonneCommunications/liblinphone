@@ -92,15 +92,8 @@ void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<Ev
 	    subscriptionState != LinphoneSubscriptionTerminated)
 		return;
 
-	const LinphoneAddress *lAddr = ev->getFrom();
-	char *addrStr = linphone_address_as_string(lAddr);
-	IdentityAddress participantAddr(addrStr);
-	bctbx_free(addrStr);
-
-	const LinphoneAddress *lDeviceAddr = ev->getRemoteContact();
-	char *deviceAddrStr = linphone_address_as_string(lDeviceAddr);
-	IdentityAddress deviceAddr(deviceAddrStr);
-	bctbx_free(deviceAddrStr);
+	const auto &participantAddr = ev->getFrom();
+	const auto &deviceAddr = ev->getRemoteContact();
 
 	// Create Rlmi body
 	Xsd::Rlmi::List::ResourceSequence resources;
@@ -119,9 +112,9 @@ void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<Ev
 
 	for (const auto &l : rl->getList()) {
 		for (const auto &entry : l.getEntry()) {
-			Address addr(entry.getUri());
-			string notifyIdStr = addr.getUriParamValue("Last-Notify");
-			addr.removeUriParam("Last-Notify");
+			std::shared_ptr<Address> addr = Address::create(entry.getUri());
+			string notifyIdStr = addr->getUriParamValue("Last-Notify");
+			addr->removeUriParam("Last-Notify");
 			ConferenceId conferenceId(addr, addr);
 			LocalConferenceEventHandler *handler = findHandler(conferenceId);
 			if (!handler) continue;
@@ -162,7 +155,7 @@ void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<Ev
 			contents.push_back(std::move(content));
 
 			// Add entry into the Rlmi content of the notify body
-			Xsd::Rlmi::Resource resource(addr.asStringUriOnly());
+			Xsd::Rlmi::Resource resource(addr->asStringUriOnly());
 			Xsd::Rlmi::Resource::InstanceSequence instances;
 			Xsd::Rlmi::Instance instance(token, Xsd::Rlmi::State::Value::active);
 			instances.push_back(instance);

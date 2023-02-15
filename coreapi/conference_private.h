@@ -122,15 +122,15 @@ class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConfere
 #endif // HAVE_ADVANCED_IM
 public:
 	Conference(const std::shared_ptr<Core> &core,
-	           const IdentityAddress &myAddress,
+	           const std::shared_ptr<Address> &myAddress,
 	           CallSessionListener *listener,
 	           const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference();
 
-	virtual int inviteAddresses(const std::list<const LinphoneAddress *> &addresses,
+	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) = 0;
-	virtual bool dialOutAddresses(const std::list<const LinphoneAddress *> &addressList) = 0;
-	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) = 0;
+	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 
@@ -140,7 +140,7 @@ public:
 	int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call);
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> &session,
 	                              const bool preserveSession);
-	virtual int removeParticipant(const IdentityAddress &addr) = 0;
+	virtual int removeParticipant(const std::shared_ptr<Address> &addr) = 0;
 	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 
 	virtual bool
@@ -148,7 +148,7 @@ public:
 
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> &session) = 0;
-	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) = 0;
+	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<Address> &addr) = 0;
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> &participant,
 	                                        const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
@@ -177,7 +177,7 @@ public:
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
 
-	virtual IdentityAddress getOrganizer() const = 0;
+	virtual const std::shared_ptr<Address> getOrganizer() const = 0;
 
 	bool isConferenceEnded() const;
 	bool isConferenceStarted() const;
@@ -209,9 +209,8 @@ public:
 	                                       bool isAdmin) override;
 
 	virtual void join() override;
-	virtual void join(const IdentityAddress &participantAddress) override;
-
-	virtual void onConferenceTerminated(const IdentityAddress &addr) override;
+	virtual void join(const std::shared_ptr<Address> &participantAddress) override;
+	virtual void onConferenceTerminated(const std::shared_ptr<Address> &addr) override;
 
 	void setID(const std::string &conferenceID) {
 		mConferenceID = conferenceID;
@@ -220,12 +219,12 @@ public:
 		return mConferenceID;
 	}
 
-	void setConferenceAddress(const ConferenceAddress &conferenceAddress);
+	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
 	void setConferenceId(const ConferenceId &conferenceId);
 	virtual void notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
 
 protected:
-	std::list<IdentityAddress> invitedAddresses;
+	std::list<std::shared_ptr<Address>> invitedAddresses;
 	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo = nullptr;
 
 	// Legacy member
@@ -250,33 +249,33 @@ protected:
 class LINPHONE_PUBLIC LocalConference : public Conference {
 public:
 	LocalConference(const std::shared_ptr<Core> &core,
-	                const IdentityAddress &myAddress,
+	                const std::shared_ptr<Address> &myAddress,
 	                CallSessionListener *listener,
 	                const std::shared_ptr<ConferenceParams> params);
 	LocalConference(const std::shared_ptr<Core> &core, SalCallOp *op);
 
 	virtual ~LocalConference();
 
-	virtual int inviteAddresses(const std::list<const LinphoneAddress *> &addresses,
+	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) override;
-	virtual bool dialOutAddresses(const std::list<const LinphoneAddress *> &addressList) override;
+	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
-	virtual bool addParticipants(const std::list<IdentityAddress> &addresses) override;
+	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
-	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> &session,
 	                              const bool preserveSession) override;
-	virtual int removeParticipant(const IdentityAddress &addr) override;
+	virtual int removeParticipant(const std::shared_ptr<Address> &addr) override;
 	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
 	virtual int terminate() override;
 	virtual void finalizeCreation() override;
-	virtual void onConferenceTerminated(const IdentityAddress &addr) override;
+	virtual void onConferenceTerminated(const std::shared_ptr<Address> &addr) override;
 	virtual void setSubject(const std::string &subject) override;
-	virtual IdentityAddress getOrganizer() const override;
+	virtual const std::shared_ptr<Address> getOrganizer() const override;
 
 	virtual int enter() override;
 	virtual void leave() override;
@@ -298,7 +297,7 @@ public:
 
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> &session) override;
-	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) override;
+	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<Address> &addr) override;
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> &participant,
 	                                        const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
@@ -376,7 +375,7 @@ protected:
 private:
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
-	IdentityAddress organizer;
+	std::shared_ptr<Address> organizer;
 	static constexpr int confIdLength = 10;
 
 	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> &session);
@@ -387,7 +386,7 @@ private:
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device);
 	void chooseAnotherAdminIfNoneInConference();
 	void checkIfTerminated();
-	std::list<IdentityAddress> getAllowedAddresses() const;
+	std::list<std::shared_ptr<Address>> getAllowedAddresses() const;
 	void configure(SalCallOp *op);
 
 	void addLocalEndpoint();
@@ -406,7 +405,7 @@ private:
 class LINPHONE_PUBLIC RemoteConference : public Conference, public ConferenceListenerInterface {
 public:
 	RemoteConference(const std::shared_ptr<Core> &core,
-	                 const IdentityAddress &focusAddr,
+	                 const std::shared_ptr<Address> &focusAddr,
 	                 const ConferenceId &conferenceId,
 	                 CallSessionListener *listener,
 	                 const std::shared_ptr<ConferenceParams> params);
@@ -417,27 +416,27 @@ public:
 	                 const std::shared_ptr<ConferenceParams> params);
 	RemoteConference(const std::shared_ptr<Core> &core,
 	                 const std::shared_ptr<LinphonePrivate::CallSession> &focusSession,
-	                 const ConferenceAddress &confAddr,
+	                 const std::shared_ptr<Address> &confAddr,
 	                 const ConferenceId &conferenceId,
-	                 const std::list<IdentityAddress> &invitees,
+	                 const std::list<std::shared_ptr<Address>> &invitees,
 	                 CallSessionListener *listener,
 	                 const std::shared_ptr<LinphonePrivate::ConferenceParams> params);
 
 	virtual ~RemoteConference();
 
-	virtual int inviteAddresses(const std::list<const LinphoneAddress *> &addresses,
+	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) override;
-	virtual bool dialOutAddresses(const std::list<const LinphoneAddress *> &addressList) override;
+	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
-	virtual bool addParticipants(const std::list<IdentityAddress> &addresses) override;
+	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
-	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> &session,
 	                              const bool preserveSession) override;
-	virtual int removeParticipant(const IdentityAddress &addr) override;
+	virtual int removeParticipant(const std::shared_ptr<Address> &addr) override;
 	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 	virtual int terminate() override;
 	virtual void finalizeCreation() override;
@@ -445,7 +444,7 @@ public:
 	virtual int enter() override;
 	virtual void leave() override;
 	virtual bool isIn() const override;
-	virtual IdentityAddress getOrganizer() const override;
+	virtual const std::shared_ptr<Address> getOrganizer() const override;
 
 	virtual int startRecording(const char *path) override;
 	virtual int stopRecording() override;
@@ -463,7 +462,7 @@ public:
 
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> &session) override;
-	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) override;
+	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<Address> &addr) override;
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> &participant,
 	                                        const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
@@ -514,7 +513,7 @@ public:
 	void setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> &session);
 	virtual std::shared_ptr<Call> getCall() const override;
 
-	virtual void onConferenceTerminated(const IdentityAddress &addr) override;
+	virtual void onConferenceTerminated(const std::shared_ptr<Address> &addr) override;
 	virtual void onParticipantsCleared() override;
 
 #ifdef HAVE_ADVANCED_IM
@@ -544,13 +543,14 @@ private:
 	                                   LinphoneCallState newCallState);
 
 	bool finalized = false;
+	bool scheduleUpdate = false;
 	bool fullStateReceived = false;
 	std::string pendingSubject;
 	std::shared_ptr<Participant> focus;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
 
-	std::list<IdentityAddress> cleanAddressesList(const std::list<IdentityAddress> &addresses) const;
+	std::list<std::shared_ptr<Address>> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
 };
 
 } // end of namespace MediaConference

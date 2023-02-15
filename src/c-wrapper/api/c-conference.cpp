@@ -153,12 +153,12 @@ void linphone_conference_set_conference_address(LinphoneConference *conference, 
 	    dynamic_pointer_cast<LinphonePrivate::MediaConference::RemoteConference>(
 	        MediaConference::Conference::toCpp(conference)->getSharedFromThis());
 	if (remoteConference) {
-		MediaConference::Conference::toCpp(conference)->setConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
+		MediaConference::Conference::toCpp(conference)
+		    ->setConferenceAddress(Address::toCpp(address)->getSharedFromThis());
 	}
 }
 
 const LinphoneAddress *linphone_conference_get_conference_address(const LinphoneConference *conference) {
-	const LinphonePrivate::Address &address =
-	    MediaConference::Conference::toCpp(conference)->getConferenceAddress().asAddress();
-	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
+	const auto &address = MediaConference::Conference::toCpp(conference)->getConferenceAddress();
+	return address && address->isValid() ? address->toC() : nullptr;
 }

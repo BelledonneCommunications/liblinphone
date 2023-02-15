@@ -56,7 +56,7 @@ private:
 	// Low level API.
 	// ---------------------------------------------------------------------------
 
-	long long insertSipAddress(const Address &address);
+	long long insertSipAddress(const std::shared_ptr<Address> &address);
 	long long insertSipAddress(const std::string &sipAddress);
 	void insertContent(long long chatMessageId, const Content &content);
 	long long insertContentType(const std::string &contentType);
@@ -168,7 +168,7 @@ private:
 	long long insertConferenceEphemeralMessageEvent(const std::shared_ptr<EventLog> &eventLog);
 
 	void setChatMessageParticipantState(const std::shared_ptr<EventLog> &eventLog,
-	                                    const IdentityAddress &participantAddress,
+	                                    const std::shared_ptr<Address> &participantAddress,
 	                                    ChatMessage::State state,
 	                                    time_t stateChangeTime);
 

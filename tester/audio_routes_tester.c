@@ -18,14 +18,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "belle-sip/sipstack.h"
-#include "liblinphone_tester.h"
-
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <bctoolbox/defs.h>
 
+#include "belle-sip/sipstack.h"
+
+#include "mediastreamer2/msutils.h"
+
+#include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "mediastreamer2/msutils.h"

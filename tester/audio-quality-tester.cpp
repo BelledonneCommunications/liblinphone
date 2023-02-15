@@ -30,12 +30,11 @@
 #include "content/content.h"
 #include "content/file-content.h"
 #include "core/core.h"
-
 // TODO: Remove me later.
-#include "private.h"
-
 #include "liblinphone_tester.h"
+#include "private.h"
 #include "tester_utils.h"
+
 // =============================================================================
 
 using namespace std;

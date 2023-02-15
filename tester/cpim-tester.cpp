@@ -273,11 +273,11 @@ static void cpim_chat_message_modifier_base(bool useMultipart) {
 	linphone_core_set_im_encryption_engine(pauline->lc, pauline_imee);
 
 	char *paulineUri = linphone_address_as_string_uri_only(pauline->identity);
-	IdentityAddress paulineAddress(paulineUri);
+	std::shared_ptr<Address> paulineAddress = Address::create(paulineUri);
 	bctbx_free(paulineUri);
 
 	char *marieUri = linphone_address_as_string_uri_only(marie->identity);
-	IdentityAddress marieAddress(marieUri);
+	std::shared_ptr<Address> marieAddress = Address::create(marieUri);
 	bctbx_free(marieUri);
 
 	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(marieAddress, paulineAddress);

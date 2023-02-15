@@ -28,7 +28,7 @@
 
 #include "conference/conference-enums.h"
 
-#include "address/identity-address.h"
+#include "address/address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/encryption/encryption-engine.h"
 #include "event/event-subscribe.h"
@@ -83,7 +83,7 @@ public:
 	                           const std::shared_ptr<LinphonePrivate::CallSession> &session,
 	                           const std::string &name = "");
 	explicit ParticipantDevice(std::shared_ptr<Participant> participant,
-	                           const IdentityAddress &gruu,
+	                           const std::shared_ptr<Address> &gruu,
 	                           const std::string &name = "");
 	virtual ~ParticipantDevice();
 	// non clonable object
@@ -95,9 +95,8 @@ public:
 
 	std::shared_ptr<Core> getCore() const;
 
-	const IdentityAddress &getAddress() const;
-	void setAddress(const IdentityAddress &address);
-	void setAddress(const Address &address);
+	const std::shared_ptr<Address> &getAddress() const;
+	void setAddress(const std::shared_ptr<Address> &address);
 	inline const std::string &getLabel() const {
 		return mLabel;
 	}
@@ -155,7 +154,7 @@ public:
 	void setConferenceSubscribeEvent(const std::shared_ptr<EventSubscribe> &ev);
 
 	bool isValid() const {
-		return getAddress().isValid();
+		return getAddress() && getAddress()->isValid();
 	}
 	bool isInConference() const;
 
@@ -208,7 +207,7 @@ protected:
 
 private:
 	std::weak_ptr<Participant> mParticipant;
-	IdentityAddress mGruu;
+	std::shared_ptr<Address> mGruu;
 	std::string mName;
 	std::string mLabel;
 	std::shared_ptr<CallSession> mSession;

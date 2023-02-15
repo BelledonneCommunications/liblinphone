@@ -121,10 +121,10 @@ public:
 
 	void authenticationRejected(const char *peerDeviceId) override;
 
-	void addSecurityEventInChatrooms(const IdentityAddress &peerDeviceAddr,
+	void addSecurityEventInChatrooms(const std::shared_ptr<Address> &peerDeviceAddr,
 	                                 ConferenceSecurityEvent::SecurityEventType securityEventType) override;
 
-	std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded(const IdentityAddress &newDeviceAddr,
+	std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded(const std::shared_ptr<Address> &newDeviceAddr,
 	                                                       std::shared_ptr<Participant> participant,
 	                                                       const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                                                       ChatRoom::SecurityLevel currentSecurityLevel) override;

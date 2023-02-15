@@ -26,9 +26,6 @@
 #include "linphone/api/c-types.h"
 #include "linphone/enums/chat-message-enums.h"
 
-// TODO: Remove me later?
-#include "address/identity-address.h"
-
 #include "core/core-accessor.h"
 #include "object/object.h"
 
@@ -37,6 +34,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
+class Address;
 class Content;
 class FileContent;
 class FileTransferContent;
@@ -119,16 +117,16 @@ public:
 
 	const std::string &getImdnMessageId() const;
 
-	const IdentityAddress &getAuthenticatedFromAddress() const;
-	const ConferenceAddress &getFromAddress() const;
-	const ConferenceAddress &getToAddress() const;
-	const ConferenceAddress &getLocalAddress() const;
-	const IdentityAddress &getRecipientAddress() const;
+	const Address &getAuthenticatedFromAddress() const;
+	const std::shared_ptr<Address> &getFromAddress() const;
+	const std::shared_ptr<Address> &getToAddress() const;
+	const std::shared_ptr<Address> &getLocalAddress() const;
+	const std::shared_ptr<Address> &getRecipientAddress() const;
 	const std::string &getForwardInfo() const;
 
 	bool isReply() const;
 	const std::string &getReplyToMessageId() const;
-	const IdentityAddress &getReplyToSenderAddress() const;
+	const std::shared_ptr<Address> &getReplyToSenderAddress() const;
 	std::shared_ptr<ChatMessage> getReplyToMessage() const;
 
 	bool isEphemeral() const;

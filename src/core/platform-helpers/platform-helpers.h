@@ -42,6 +42,8 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Core;
+
 /**
  * This interface aims at abstracting some features offered by the platform, most often mobile platforms.
  * A per platform implementation is to be made to implement these features, if available on the platform.

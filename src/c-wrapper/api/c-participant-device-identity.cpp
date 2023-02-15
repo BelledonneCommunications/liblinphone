@@ -43,7 +43,8 @@ using namespace LinphonePrivate;
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new(const LinphoneAddress *address,
                                                                             const char *name) {
 #ifdef HAVE_ADVANCED_IM
-	return ParticipantDeviceIdentity::createCObject(*L_GET_CPP_PTR_FROM_C_OBJECT(address), name);
+	return ParticipantDeviceIdentity::createCObject(
+	    Address::toCpp(const_cast<LinphoneAddress *>(address))->getSharedFromThis(), L_C_TO_STRING(name));
 #else
 	return NULL;
 #endif
@@ -58,21 +59,24 @@ linphone_participant_device_identity_ref(LinphoneParticipantDeviceIdentity *devi
 	return NULL;
 #endif
 }
+
 void linphone_participant_device_identity_unref(LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
 	belle_sip_object_unref(deviceIdentity);
 #endif
 }
+
 void linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *deviceIdentity,
                                                                     const char *descriptor) {
 #ifdef HAVE_ADVANCED_IM
 	ParticipantDeviceIdentity::toCpp(deviceIdentity)->setCapabilityDescriptor(L_C_TO_STRING(descriptor));
 #endif
 }
+
 const char *linphone_participant_device_identity_get_capability_descriptor(
     const LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
-	return ParticipantDeviceIdentity::toCpp(deviceIdentity)->getCapabilityDescriptor().c_str();
+	return L_STRING_TO_C(ParticipantDeviceIdentity::toCpp(deviceIdentity)->getCapabilityDescriptor());
 #endif
 	return NULL;
 }
@@ -80,7 +84,7 @@ const char *linphone_participant_device_identity_get_capability_descriptor(
 const LinphoneAddress *
 linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
-	return ParticipantDeviceIdentity::toCpp(deviceIdentity)->getLinphoneAddress();
+	return ParticipantDeviceIdentity::toCpp(deviceIdentity)->getAddress()->toC();
 #endif
 	return NULL;
 }

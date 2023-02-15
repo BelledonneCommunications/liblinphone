@@ -33,14 +33,14 @@ public:
 	EventPublish(const std::shared_ptr<Core> &core, LinphonePrivate::SalEventOp *op, const std::string &name);
 	EventPublish(const std::shared_ptr<Core> &core,
 	             const std::shared_ptr<Account> &account,
-	             const LinphoneAddress *resource,
+	             const std::shared_ptr<Address> resource,
 	             const std::string &event,
 	             int expires);
 	EventPublish(const std::shared_ptr<Core> &core,
-	             const LinphoneAddress *resource,
+	             const std::shared_ptr<Address> resource,
 	             const std::string &event,
 	             int expires);
-	EventPublish(const std::shared_ptr<Core> &core, const LinphoneAddress *resource, const std::string &event);
+	EventPublish(const std::shared_ptr<Core> &core, const std::shared_ptr<Address> resource, const std::string &event);
 
 	std::string toString() const override;
 

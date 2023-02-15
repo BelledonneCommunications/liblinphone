@@ -79,7 +79,7 @@ public:
 		return !calls.empty();
 	}
 	bool inviteReplacesABrokenCall(SalCallOp *op);
-	bool isAlreadyInCallWithAddress(const Address &addr) const;
+	bool isAlreadyInCallWithAddress(const std::shared_ptr<Address> &addr) const;
 	void iterateCalls(time_t currentRealTime, bool oneSecondElapsed) const;
 	void notifySoundcardUsage(bool used);
 	int removeCall(const std::shared_ptr<Call> &call);
@@ -106,7 +106,7 @@ public:
 
 	// Base
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
-	                                                            const IdentityAddress &conferenceFactoryUri,
+	                                                            const std::shared_ptr<Address> &conferenceFactoryUri,
 	                                                            const ConferenceId &conferenceId,
 	                                                            const Content &content,
 	                                                            AbstractChatRoom::CapabilitiesMask capabilities,
@@ -122,36 +122,38 @@ public:
 	createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
 
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-	                                                 const IdentityAddress &localAddr,
+	                                                 const std::shared_ptr<const Address> &localAddr,
 	                                                 const std::string &subject,
-	                                                 const std::list<IdentityAddress> &participants);
+	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-	                                                 const IdentityAddress &localAddr,
-	                                                 const std::list<IdentityAddress> &participants);
+	                                                 const std::shared_ptr<const Address> &localAddr,
+	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
 	                                                 const std::string &subject,
-	                                                 const std::list<IdentityAddress> &participants);
+	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
-	                                                 const std::list<IdentityAddress> &participants);
+	                                                 const std::list<std::shared_ptr<Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-	                                                 const IdentityAddress &localAddr,
-	                                                 const IdentityAddress &participant);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant);
+	                                                 const std::shared_ptr<Address> &localAddr,
+	                                                 const std::shared_ptr<Address> &participant);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<Address> &participant);
 
 	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-	                                                 const IdentityAddress &localAddr,
-	                                                 const IdentityAddress &remoteAddr,
-	                                                 const std::list<IdentityAddress> &participants) const;
+	                                                 const std::shared_ptr<const Address> &localAddr,
+	                                                 const std::shared_ptr<const Address> &remoteAddr,
+	                                                 const std::list<std::shared_ptr<Address>> &participants) const;
 
-	IdentityAddress getDefaultLocalAddress(const IdentityAddress *peerAddress, bool withGruu) const;
-	IdentityAddress getIdentityAddressWithGruu(const IdentityAddress &identityAddress) const;
+	std::shared_ptr<const Address> getDefaultLocalAddress(const std::shared_ptr<Address> peerAddress,
+	                                                      bool withGruu) const;
+	std::shared_ptr<const Address>
+	getIdentityAddressWithGruu(const std::shared_ptr<const Address> &identityAddress) const;
 
 	void replaceChatRoom(const std::shared_ptr<AbstractChatRoom> &replacedChatRoom,
 	                     const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 
 	void updateChatRoomConferenceId(const std::shared_ptr<AbstractChatRoom> &chatRoom, ConferenceId newConferenceId);
-	std::shared_ptr<AbstractChatRoom> findExhumableOneToOneChatRoom(const IdentityAddress &localAddress,
-	                                                                const IdentityAddress &participantAddress,
+	std::shared_ptr<AbstractChatRoom> findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &localAddress,
+	                                                                const std::shared_ptr<Address> &participantAddress,
 	                                                                bool encrypted) const;
 	std::shared_ptr<AbstractChatRoom> findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const;
 
@@ -182,7 +184,6 @@ public:
 
 	/* centralized method to write down all NatPolicy used by Accounts or Core */
 	void writeNatPolicyConfigurations();
-
 	static const Utils::Version conferenceProtocolVersion;
 	static const Utils::Version groupChatProtocolVersion;
 	static const Utils::Version ephemeralProtocolVersion;

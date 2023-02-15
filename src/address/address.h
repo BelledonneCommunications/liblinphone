@@ -21,45 +21,39 @@
 #ifndef _L_ADDRESS_H_
 #define _L_ADDRESS_H_
 
-#include <bctoolbox/map.h>
-#include <bctoolbox/ownership.hh>
 #include <ostream>
 #include <unordered_map>
 
+#include "belle-sip/object++.hh"
 #include "c-wrapper/internal/c-sal.h"
+
 #include "enums.h"
-#include "object/clonable-object.h"
 
 // =============================================================================
 
-using namespace ownership;
-
 LINPHONE_BEGIN_NAMESPACE
 
-class IdentityAddress;
-class ConferenceAddress;
-
-class LINPHONE_PUBLIC Address : public ClonableObject {
-	// TODO: Remove me later.
-	friend class CallSession;
-	friend class ClientGroupChatRoom;
-	friend class ClientGroupChatRoomPrivate;
-	friend class ServerGroupChatRoom;
-	friend class ServerGroupChatRoomPrivate;
-	friend class IdentityAddress;
-
+/**
+ * Base class for SIP addresses (not just URIs).
+ * It simply wraps a SalAddress structure (actually a belle_sip_header_address_t).
+ */
+class LINPHONE_PUBLIC Address : public bellesip::HybridObject<LinphoneAddress, Address> {
 public:
-	explicit Address(const std::string &address = "");
+	explicit Address(const std::string &address);
+	Address();
+	Address(Address &&other);
 	Address(const Address &other);
-	Address(BorrowedMut<SalAddress> source);
+	Address(SalAddress *addr);
 	virtual ~Address();
+	virtual Address *clone() const override;
+	virtual std::string toString() const override;
 
-	Address *clone() const override {
-		return new Address(*this);
-	}
+	Address getUri() const;
+	Address getUriWithoutGruu() const;
 
+	virtual char *toStringCstr() const; // This one can be overriden.
+	char *asStringUriOnlyCstr() const;
 	Address &operator=(const Address &other);
-	Address &operator=(Address &&other);
 
 	bool operator==(const Address &other) const;
 	bool operator!=(const Address &other) const;
@@ -68,16 +62,25 @@ public:
 
 	bool isValid() const;
 
-	const std::string &getScheme() const;
+	std::string getScheme() const;
+	const char *getSchemeCstr() const;
+	bool setScheme(const std::string &scheme);
 
-	const std::string &getDisplayName() const;
+	std::string getDisplayName() const;
+	const char *getDisplayNameCstr() const;
 	bool setDisplayName(const std::string &displayName);
 
-	const std::string &getUsername() const;
+	const std::string getUsername() const;
+	const char *getUsernameCstr() const;
 	bool setUsername(const std::string &username);
 
-	const std::string &getDomain() const;
+	std::string getDomain() const;
+	const char *getDomainCstr() const;
 	bool setDomain(const std::string &domain);
+
+	const char *getPasswordCstr() const;
+	std::string getPassword() const;
+	bool setPassword(const std::string &password);
 
 	int getPort() const;
 	bool setPort(int port);
@@ -90,64 +93,64 @@ public:
 
 	bool isSip() const;
 
-	const std::string &getMethodParam() const;
-	bool setMethodParam(const std::string &methodParam);
+	bool setMethodParam(const std::string &value);
+	std::string getMethodParam() const;
+	const char *getMethodParamCstr() const;
 
-	const std::string &getPassword() const;
-	bool setPassword(const std::string &password);
-
-	bool clean();
-
-	std::string asString() const;
-	std::string asStringUriOnly() const;
-
-	bool weakEqual(const Address &address) const;
-
-	const std::string &getHeaderValue(const std::string &headerName) const;
+	std::string getHeaderValue(const std::string &headerName) const;
+	const char *getHeaderValueCstr(const std::string &headerName) const;
 	bool setHeader(const std::string &headerName, const std::string &headerValue);
 
 	bool hasParam(const std::string &paramName) const;
-	const std::string &getParamValue(const std::string &paramName) const;
+	const std::string getParamValue(const std::string &paramName) const;
+	const char *getParamValueCstr(const std::string &paramName) const;
 	bool setParam(const std::string &paramName, const std::string &paramValue = "");
 	bool setParams(const std::string &params);
 	bool removeParam(const std::string &paramName);
 
 	bool hasUriParam(const std::string &uriParamName) const;
-	const std::string &getUriParamValue(const std::string &uriParamName) const;
-	bctbx_map_t *getUriParams() const;
+	std::string getUriParamValue(const std::string &uriParamName) const;
+	const char *getUriParamValueCstr(const std::string &uriParamName) const;
+	inline const std::map<std::string, std::string> getUriParams() const {
+		std::map<std::string, std::string> params;
+		if (mImpl) sal_address_get_uri_params(mImpl, params);
+		return params;
+	}
 	bool setUriParam(const std::string &uriParamName, const std::string &uriParamValue = "");
 	bool setUriParams(const std::string &uriParams);
 	bool removeUriParam(const std::string &uriParamName);
 
-	inline const Borrowed<SalAddress> getInternalAddress() const {
-		return internalAddress;
+	inline std::string asString() const {
+		return toString();
 	}
-	/* Set the `internalAddress` with a clone of `value` */
-	void setInternalAddress(const Borrowed<SalAddress> value);
+	std::string toStringUriOnlyOrdered() const;
 
-	// This method is necessary when creating static variables of type address as they canot be freed before the leak
-	// detector runs
-	void removeFromLeakDetector() const;
+	std::string asStringUriOnly() const;
+
+	bool clean();
+	bool weakEqual(const Address &other) const;
+
+	inline const SalAddress *getImpl() const {
+		return mImpl;
+	}
+	void setImpl(SalAddress *value);
+	void setImpl(const SalAddress *value);
 	static void clearSipAddressesCache();
 
+protected:
+	static SalAddress *getSalAddressFromCache(const std::string &uri,
+	                                          std::function<SalAddress *(const std::string &)> alternateParserFunction);
+
 private:
-	struct AddressCache {
-		std::string scheme;
-		std::string displayName;
-		std::string username;
-		std::string domain;
-		std::string methodParam;
-		std::string password;
-
-		std::unordered_map<std::string, std::string> headers;
-		std::unordered_map<std::string, std::string> params;
-		std::unordered_map<std::string, std::string> uriParams;
+	SalAddress *mImpl = nullptr;
+	struct SalAddressDeleter {
+		void operator()(SalAddress *addr) {
+			sal_address_unref(addr);
+		}
 	};
+	static void removeFromLeakDetector(SalAddress *addr);
 
-	// Cqche is required so that getters can return const refs
-	mutable AddressCache cache;
-
-	Owned<SalAddress> internalAddress = nullptr;
+	static std::unordered_map<std::string, std::unique_ptr<SalAddress, SalAddressDeleter>> sAddressCache;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Address &address) {

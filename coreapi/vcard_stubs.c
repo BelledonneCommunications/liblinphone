@@ -70,15 +70,18 @@ LinphoneVcard *linphone_vcard_ref(BCTBX_UNUSED(LinphoneVcard *vCard)) {
 void linphone_vcard_unref(BCTBX_UNUSED(LinphoneVcard *vCard)) {
 }
 
-bctbx_list_t *linphone_vcard_context_get_vcard_list_from_file(BCTBX_UNUSED(LinphoneVcardContext *context), BCTBX_UNUSED(const char *filename)) {
+bctbx_list_t *linphone_vcard_context_get_vcard_list_from_file(BCTBX_UNUSED(LinphoneVcardContext *context),
+                                                              BCTBX_UNUSED(const char *filename)) {
 	return NULL;
 }
 
-bctbx_list_t *linphone_vcard_context_get_vcard_list_from_buffer(BCTBX_UNUSED(LinphoneVcardContext *context), BCTBX_UNUSED(const char *buffer)) {
+bctbx_list_t *linphone_vcard_context_get_vcard_list_from_buffer(BCTBX_UNUSED(LinphoneVcardContext *context),
+                                                                BCTBX_UNUSED(const char *buffer)) {
 	return NULL;
 }
 
-LinphoneVcard *linphone_vcard_context_get_vcard_from_buffer(BCTBX_UNUSED(LinphoneVcardContext *context), BCTBX_UNUSED(const char *buffer)) {
+LinphoneVcard *linphone_vcard_context_get_vcard_from_buffer(BCTBX_UNUSED(LinphoneVcardContext *context),
+                                                            BCTBX_UNUSED(const char *buffer)) {
 	return NULL;
 }
 
@@ -137,10 +140,12 @@ bctbx_list_t *linphone_vcard_get_phone_numbers(BCTBX_UNUSED(const LinphoneVcard 
 	return NULL;
 }
 
-void linphone_vcard_add_phone_number_with_label(BCTBX_UNUSED(LinphoneVcard *vCard), BCTBX_UNUSED(LinphoneFriendPhoneNumber *phoneNumber)) {
+void linphone_vcard_add_phone_number_with_label(BCTBX_UNUSED(LinphoneVcard *vCard),
+                                                BCTBX_UNUSED(LinphoneFriendPhoneNumber *phoneNumber)) {
 }
 
-void linphone_vcard_remove_phone_number_with_label(BCTBX_UNUSED(LinphoneVcard *vCard), BCTBX_UNUSED(const LinphoneFriendPhoneNumber *phoneNumber)) {
+void linphone_vcard_remove_phone_number_with_label(BCTBX_UNUSED(LinphoneVcard *vCard),
+                                                   BCTBX_UNUSED(const LinphoneFriendPhoneNumber *phoneNumber)) {
 }
 
 bctbx_list_t *linphone_vcard_get_phone_numbers_with_label(BCTBX_UNUSED(const LinphoneVcard *vCard)) {
@@ -214,11 +219,16 @@ LinphoneVcard *linphone_vcard_clone(BCTBX_UNUSED(const LinphoneVcard *vCard)) {
 	return NULL;
 }
 
-bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(BCTBX_UNUSED(const LinphoneVcard *vCard), BCTBX_UNUSED(const char *name)) {
+bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(BCTBX_UNUSED(const LinphoneVcard *vCard),
+                                                                    BCTBX_UNUSED(const char *name)) {
 	return NULL;
 }
-void linphone_vcard_add_extended_property(BCTBX_UNUSED(LinphoneVcard *vCard), BCTBX_UNUSED(const char *name), BCTBX_UNUSED(const char *value)) {
+
+void linphone_vcard_add_extended_property(BCTBX_UNUSED(LinphoneVcard *vCard),
+                                          BCTBX_UNUSED(const char *name),
+                                          BCTBX_UNUSED(const char *value)) {
 }
 
-void linphone_vcard_remove_extented_properties_by_name(BCTBX_UNUSED(LinphoneVcard *vCard), BCTBX_UNUSED(const char *name)) {
+void linphone_vcard_remove_extented_properties_by_name(BCTBX_UNUSED(LinphoneVcard *vCard),
+                                                       BCTBX_UNUSED(const char *name)) {
 }

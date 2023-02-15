@@ -60,7 +60,7 @@ public:
 	bool hasBeenLeft() const override;
 	bool isReadOnly() const override;
 
-	const ConferenceAddress &getConferenceAddress() const override;
+	const std::shared_ptr<Address> &getConferenceAddress() const override;
 
 	void deleteFromDb() override;
 
@@ -68,13 +68,13 @@ public:
 	std::list<std::shared_ptr<EventLog>> getHistoryRange(int begin, int end) const override;
 	int getHistorySize() const override;
 
-	bool addParticipant(const IdentityAddress &participantAddress) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	bool addParticipant(std::shared_ptr<Call> call) override {
 		return getConference()->addParticipant(call);
 	};
-	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 
-	void join(const IdentityAddress &participantAddress) override {
+	void join(const std::shared_ptr<Address> &participantAddress) override {
 		getConference()->join(participantAddress);
 	};
 	bool update(const ConferenceParamsInterface &newParameters) override {
@@ -83,7 +83,7 @@ public:
 
 	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
 
-	std::shared_ptr<Participant> findParticipant(const IdentityAddress &addr) const override;
+	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &addr) const override;
 
 	std::shared_ptr<Participant> getMe() const override;
 	int getParticipantCount() const override;
@@ -113,7 +113,7 @@ public:
 
 private:
 	ClientGroupChatRoom(const std::shared_ptr<Core> &core,
-	                    const IdentityAddress &focus,
+	                    const std::shared_ptr<Address> &focus,
 	                    const ConferenceId &conferenceId,
 	                    const std::string &subject,
 	                    const Content &content,
@@ -122,7 +122,7 @@ private:
 
 	ClientGroupChatRoom(const std::shared_ptr<Core> &core,
 	                    const std::string &factoryUri,
-	                    const IdentityAddress &me,
+	                    const std::shared_ptr<const Address> &me,
 	                    const std::string &subject,
 	                    CapabilitiesMask capabilities,
 	                    const std::shared_ptr<ChatRoomParams> &params);
@@ -138,18 +138,18 @@ private:
 	                    unsigned int lastNotifyId,
 	                    bool hasBeenLeft = false);
 
-	void sendInvite(std::shared_ptr<CallSession> &session, const std::list<IdentityAddress> &addressList);
+	void sendInvite(std::shared_ptr<CallSession> &session, const std::list<std::shared_ptr<Address>> &addressList);
 	void setConferenceId(const ConferenceId &conferenceId);
 	void sendEphemeralUpdate();
 
 	// TODO: Move me in ClientGroupChatRoomPrivate.
 	// ALL METHODS AFTER THIS POINT.
 
-	void onConferenceCreated(const ConferenceAddress &addr) override;
+	void onConferenceCreated(const std::shared_ptr<Address> &addr) override;
 	void onConferenceKeywordsChanged(const std::vector<std::string> &keywords) override;
-	void onConferenceTerminated(const IdentityAddress &addr) override;
+	void onConferenceTerminated(const std::shared_ptr<Address> &addr) override;
 	void onSecurityEvent(const std::shared_ptr<ConferenceSecurityEvent> &event) override;
-	void onFirstNotifyReceived(const IdentityAddress &addr) override;
+	void onFirstNotifyReceived(const std::shared_ptr<Address> &addr) override;
 	void onFullStateReceived() override;
 	void onParticipantAdded(const std::shared_ptr<ConferenceParticipantEvent> &event,
 	                        const std::shared_ptr<Participant> &participant) override;

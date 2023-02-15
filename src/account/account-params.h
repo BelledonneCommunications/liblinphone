@@ -45,6 +45,7 @@ public:
 
 	AccountParams *clone() const override;
 
+	// Setters
 	void setExpires(int expires);
 	void setQualityReportingInterval(int qualityReportingInterval);
 	void setPublishExpires(int publishExpires);
@@ -74,15 +75,16 @@ public:
 	void setAvpfMode(LinphoneAVPFMode avpfMode);
 	void setNatPolicy(const std::shared_ptr<NatPolicy> &natPolicy);
 	void setPushNotificationConfig(PushNotificationConfig *pushNotificationConfig);
-	LinphoneStatus setIdentityAddress(const LinphoneAddress *identityAddress);
-	LinphoneStatus setRoutes(const bctbx_list_t *routes);
+	LinphoneStatus setIdentityAddress(const std::shared_ptr<Address> identityAddress);
+	LinphoneStatus setRoutes(const std::list<std::shared_ptr<Address>> &routes);
 	LinphoneStatus setRoutesFromStringList(const bctbx_list_t *routes);
-	void setAudioVideoConferenceFactoryAddress(const LinphoneAddress *audioVideoConferenceFactoryAddress);
+	void setAudioVideoConferenceFactoryAddress(const std::shared_ptr<Address> audioVideoConferenceFactoryAddress);
 	void enableRtpBundle(bool value);
 	void enableRtpBundleAssumption(bool value);
-	void setCustomContact(const LinphoneAddress *contact);
+	void setCustomContact(const std::shared_ptr<Address> contact);
 	void setLimeServerUrl(const std::string &url);
 
+	// Getters
 	int getExpires() const;
 	int getQualityReportingInterval() const;
 	int getPublishExpires() const;
@@ -110,29 +112,30 @@ public:
 	const std::string &getConferenceFactoryUri() const;
 	const std::string &getFileTransferServer() const;
 	const std::string &getIdentity() const;
-	const char *getDomain() const;
-	const bctbx_list_t *getRoutes() const;
-	const bctbx_list_t *getRoutesString() const;
+	const char *getDomainCstr() const;
+	const std::string getDomain() const;
+	const std::list<std::shared_ptr<Address>> &getRoutes() const;
+	const std::list<std::string> getRoutesString() const;
 	LinphonePrivacyMask getPrivacy() const;
-	LinphoneAddress *getIdentityAddress() const;
+	const std::shared_ptr<Address> &getIdentityAddress() const;
 	LinphoneAVPFMode getAvpfMode() const;
 	std::shared_ptr<NatPolicy> getNatPolicy() const;
 	PushNotificationConfig *getPushNotificationConfig() const;
-	const LinphoneAddress *getAudioVideoConferenceFactoryAddress() const;
+	const std::shared_ptr<Address> &getAudioVideoConferenceFactoryAddress() const;
 	bool rtpBundleEnabled() const;
 	bool rtpBundleAssumptionEnabled() const;
-	const LinphoneAddress *getCustomContact() const;
+	const std::shared_ptr<Address> &getCustomContact() const;
 	const std::string &getLimeServerUrl() const;
 
 	// Other
-	LinphoneStatus setServerAddress(const LinphoneAddress *serverAddr);
-	const LinphoneAddress *getServerAddress() const;
+	LinphoneStatus setServerAddress(const std::shared_ptr<Address> serverAddr);
+	const std::shared_ptr<Address> &getServerAddress() const;
 
 	LinphoneStatus setServerAddressAsString(const std::string &serverAddr);
 	const std::string &getServerAddressAsString() const;
 
-	void setTransport(LinphoneTransportType transport);
-	LinphoneTransportType getTransport() const;
+	void setTransport(LinphonePrivate::Transport transport);
+	LinphonePrivate::Transport getTransport() const;
 
 	void writeToConfigFile(LinphoneConfig *config, int index);
 
@@ -168,16 +171,15 @@ private:
 	std::string mIdKey;
 	std::string mConferenceFactoryUri;
 	std::string mFileTransferServer;
-	std::string mIdentity;
 	std::string mLimeServerUrl;
+	std::string mIdentity;
 
-	bctbx_list_t *mRoutes = nullptr;
-	bctbx_list_t *mRoutesString = nullptr;
+	std::list<std::shared_ptr<Address>> mRoutes;
 
 	LinphonePrivacyMask mPrivacy;
 
-	LinphoneAddress *mIdentityAddress = nullptr;
-	LinphoneAddress *mProxyAddress = nullptr;
+	std::shared_ptr<Address> mIdentityAddress = nullptr;
+	std::shared_ptr<Address> mProxyAddress = nullptr;
 
 	LinphoneAVPFMode mAvpfMode;
 
@@ -185,8 +187,8 @@ private:
 
 	PushNotificationConfig *mPushNotificationConfig;
 
-	LinphoneAddress *mAudioVideoConferenceFactoryAddress = nullptr;
-	LinphoneAddress *mCustomContact = nullptr;
+	std::shared_ptr<Address> mAudioVideoConferenceFactoryAddress = nullptr;
+	std::shared_ptr<Address> mCustomContact = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

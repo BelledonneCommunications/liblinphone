@@ -37,7 +37,10 @@ ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 		enableVideo(policy->automatically_initiate);
 		setParticipantListType(
 		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
-		updateFromAccount(linphone_core_get_default_account(core));
+		const auto defaultAccount = linphone_core_get_default_account(core);
+		if (defaultAccount) {
+			updateFromAccount(Account::toCpp(defaultAccount)->getSharedFromThis());
+		}
 	}
 }
 
@@ -60,33 +63,31 @@ ConferenceParams::ConferenceParams(const ConferenceParams &params) : HybridObjec
 	m_static = params.m_static;
 }
 
-void ConferenceParams::setAccount(LinphoneAccount *a) {
+void ConferenceParams::setAccount(const shared_ptr<Account> &a) {
 	m_account = a;
 	updateFromAccount(m_account);
 }
 
-void ConferenceParams::updateFromAccount(LinphoneAccount *account) { // Update Me and default factory from account.
+void ConferenceParams::updateFromAccount(
+    const shared_ptr<Account> &account) { // Update Me and default factory from account.
 	if (account) {
-		auto account_params = linphone_account_get_params(account);
-		if (account_params) {
-			auto identity = linphone_account_params_get_identity_address(account_params);
-			setMe(identity ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(identity)) : IdentityAddress());
+		auto accountParams = account->getAccountParams();
+		if (accountParams) {
+			auto identity = accountParams->getIdentityAddress();
+			if (identity) {
+				setMe(identity);
+			} else {
+				setMe(nullptr);
+			}
 			if (m_useDefaultFactoryAddress) {
-				auto core = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_account_get_core(account));
-				const LinphoneAddress *factory_addr =
-				    Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
-				char *conferenceFactoryAddressString = factory_addr ? linphone_address_as_string(factory_addr) : NULL;
-				const Address conferenceFactoryAddress(L_C_TO_STRING(conferenceFactoryAddressString));
-				m_factoryAddress = Address(conferenceFactoryAddress);
-				if (linphone_core_get_global_state(linphone_account_get_core(account)) != LinphoneGlobalStartup) {
-					ms_message("Update conference parameters from account, factory:%s", conferenceFactoryAddressString);
-				}
-				if (conferenceFactoryAddressString) {
-					ms_free(conferenceFactoryAddressString);
+				auto core = account->getCore();
+				m_factoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
+				if (m_factoryAddress && (linphone_core_get_global_state(core) != LinphoneGlobalStartup)) {
+					lInfo() << "Update conference parameters from account, factory: " << m_factoryAddress->toString();
 				}
 			}
-		} else ms_message("Update conference parameters from account: no account parameters");
-	} else ms_message("Update conference parameters from account: no account");
+		} else lInfo() << "Update conference parameters from account: no account parameters";
+	} else lInfo() << "Update conference parameters from account: no account";
 }
 
 void ConferenceParams::setUtf8Description(const std::string &description) {
@@ -105,4 +106,7 @@ const std::string ConferenceParams::getUtf8Subject() const {
 	return Utils::localeToUtf8(m_subject);
 };
 
+void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) {
+	m_conferenceAddress = Address::create(conferenceAddress->getUri());
+};
 LINPHONE_END_NAMESPACE

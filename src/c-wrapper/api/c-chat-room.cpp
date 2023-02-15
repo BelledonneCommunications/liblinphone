@@ -29,7 +29,7 @@
 #include "linphone/api/c-chat-room.h"
 #include "linphone/wrapper_utils.h"
 
-#include "address/identity-address.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
@@ -41,6 +41,7 @@
 #include "conference/participant.h"
 #include "core/core-p.h"
 #include "event-log/event-log.h"
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 
@@ -61,21 +62,8 @@ static void _linphone_chat_room_constructor(BCTBX_UNUSED(LinphoneChatRoom *cr)) 
 }
 
 static void _linphone_chat_room_destructor(LinphoneChatRoom *cr) {
-	if (cr->composingAddresses)
-		bctbx_list_free_with_data(cr->composingAddresses, (bctbx_list_free_func)linphone_address_unref);
 	_linphone_chat_room_clear_callbacks(cr);
 }
-
-/*
-
-static list<LinphonePrivate::IdentityAddress>
-_get_identity_address_list_from_address_list(list<LinphonePrivate::Address> addressList) {
-    list<LinphonePrivate::IdentityAddress> lIdent;
-    for (const auto &addr : addressList)
-        lIdent.push_back(LinphonePrivate::IdentityAddress(addr));
-    return lIdent;
-}
-*/
 
 void linphone_chat_room_allow_multipart(LinphoneChatRoom *room) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(room)->allowMultipart(true);
@@ -111,18 +99,18 @@ LinphoneCore *linphone_chat_room_get_core(const LinphoneChatRoom *cr) {
 }
 
 const LinphoneAddress *linphone_chat_room_get_peer_address(LinphoneChatRoom *cr) {
-	const LinphonePrivate::IdentityAddress &address = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getPeerAddress();
-	if (address.isValid()) {
-		return L_GET_C_BACK_PTR(&(address.asAddress()));
+	const auto &address = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getPeerAddress();
+	if (address && address->isValid()) {
+		return address->toC();
 	} else {
 		return NULL;
 	}
 }
 
 const LinphoneAddress *linphone_chat_room_get_local_address(LinphoneChatRoom *cr) {
-	const LinphonePrivate::IdentityAddress &address = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getLocalAddress();
-	if (address.isValid()) {
-		return L_GET_C_BACK_PTR(&(address.asAddress()));
+	const auto &address = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getLocalAddress();
+	if (address && address->isValid()) {
+		return address->toC();
 	} else {
 		return NULL;
 	}
@@ -363,22 +351,18 @@ time_t linphone_chat_room_get_last_update_time(const LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getLastUpdateTime();
 }
 
-void linphone_chat_room_add_participant(LinphoneChatRoom *cr, const LinphoneAddress *addr) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipant(
-	    LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)));
+void linphone_chat_room_add_participant(LinphoneChatRoom *cr, LinphoneAddress *addr) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipant(LinphonePrivate::Address::toCpp(addr)->getSharedFromThis());
 }
 
 bool_t linphone_chat_room_add_participants(LinphoneChatRoom *cr, const bctbx_list_t *addresses) {
-	list<LinphonePrivate::Address> lAddr = L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(addresses, Address);
-	list<LinphonePrivate::IdentityAddress> lIdentAddr;
-	for (const auto &addr : lAddr)
-		lIdentAddr.push_back(LinphonePrivate::IdentityAddress(addr));
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(lIdentAddr);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(addresses));
 }
 
-LinphoneParticipant *linphone_chat_room_find_participant(const LinphoneChatRoom *cr, const LinphoneAddress *addr) {
-	std::shared_ptr<LinphonePrivate::Participant> participant = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
-	    LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)));
+LinphoneParticipant *linphone_chat_room_find_participant(const LinphoneChatRoom *cr, LinphoneAddress *addr) {
+	std::shared_ptr<LinphonePrivate::Participant> participant =
+	    L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(LinphonePrivate::Address::toCpp(addr)->getSharedFromThis());
 	if (participant) {
 		return participant->toC();
 	}
@@ -398,10 +382,9 @@ bool_t linphone_chat_room_has_capability(const LinphoneChatRoom *cr, int mask) {
 }
 
 const LinphoneAddress *linphone_chat_room_get_conference_address(const LinphoneChatRoom *cr) {
-	const LinphonePrivate::ConferenceAddress &confAddress = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getConferenceAddress();
-	if (confAddress.isValid()) {
-		const LinphonePrivate::Address &address = confAddress.asAddress();
-		return L_GET_C_BACK_PTR(&address);
+	const auto &confAddress = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getConferenceAddress();
+	if (confAddress && confAddress->isValid()) {
+		return confAddress->toC();
 	} else {
 		return NULL;
 	}
@@ -457,15 +440,9 @@ void linphone_chat_room_set_subject(LinphoneChatRoom *cr, const char *subject) {
 }
 
 const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom *cr) {
-	bctbx_list_free_with_data(cr->composingAddresses, (bctbx_list_free_func)linphone_address_unref);
-	list<LinphonePrivate::Address> composingAddresses;
-	// TODO: Improve perf or algorithm?
-	{
-		list<LinphonePrivate::IdentityAddress> addresses = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getComposingAddresses();
-		transform(addresses.cbegin(), addresses.cend(), back_inserter(composingAddresses),
-		          [](const LinphonePrivate::IdentityAddress &address) { return address.asAddress(); });
-	}
-	cr->composingAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(composingAddresses);
+	list<shared_ptr<LinphonePrivate::Address>> addresses = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getComposingAddresses();
+	cr->composingAddresses =
+	    LinphonePrivate::Utils::listToCBctbxList<LinphoneAddress, LinphonePrivate::Address>(addresses);
 	return cr->composingAddresses;
 }
 
@@ -473,16 +450,15 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void linphone_chat_room_set_conference_address(LinphoneChatRoom *cr, const LinphoneAddress *confAddr) {
+void linphone_chat_room_set_conference_address(LinphoneChatRoom *cr, LinphoneAddress *confAddr) {
 #ifdef HAVE_ADVANCED_IM
-	char *addrStr = confAddr ? linphone_address_as_string(confAddr) : nullptr;
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr =
 	    dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr) {
-		LinphonePrivate::Address idAddr = addrStr ? LinphonePrivate::Address(addrStr) : LinphonePrivate::Address("");
+		std::shared_ptr<LinphonePrivate::Address> idAddr =
+		    LinphonePrivate::Address::toCpp(confAddr)->getSharedFromThis();
 		sgcr->setConferenceAddress(idAddr);
 	}
-	if (addrStr) bctbx_free(addrStr);
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
@@ -496,16 +472,15 @@ void linphone_chat_room_set_conference_address(LinphoneChatRoom *cr, const Linph
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void linphone_chat_room_set_participant_devices(LinphoneChatRoom *cr,
-                                                const LinphoneAddress *partAddr,
+                                                LinphoneAddress *partAddr,
                                                 const bctbx_list_t *deviceIdentities) {
 #ifdef HAVE_ADVANCED_IM
-	char *addrStr = linphone_address_as_string(partAddr);
 	list<shared_ptr<LinphonePrivate::ParticipantDeviceIdentity>> lDevicesIdentities =
 	    LinphonePrivate::ParticipantDeviceIdentity::getCppListFromCList(deviceIdentities);
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr =
 	    dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
-	if (sgcr) sgcr->setParticipantDevices(LinphonePrivate::IdentityAddress(addrStr), lDevicesIdentities);
-	bctbx_free(addrStr);
+	if (sgcr)
+		sgcr->setParticipantDevices(LinphonePrivate::Address::toCpp(partAddr)->getSharedFromThis(), lDevicesIdentities);
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
@@ -521,11 +496,11 @@ void linphone_chat_room_set_participant_devices(LinphoneChatRoom *cr,
 void linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *cr,
                                                                const LinphoneAddress *participant_device) {
 #ifdef HAVE_ADVANCED_IM
-	char *addrStr = linphone_address_as_string(participant_device);
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr =
 	    dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
-	if (sgcr) sgcr->notifyParticipantDeviceRegistration(LinphonePrivate::IdentityAddress(addrStr));
-	bctbx_free(addrStr);
+	if (sgcr)
+		sgcr->notifyParticipantDeviceRegistration(
+		    LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(participant_device))->getSharedFromThis());
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
 #endif

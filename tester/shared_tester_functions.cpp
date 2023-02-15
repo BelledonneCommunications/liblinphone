@@ -705,7 +705,7 @@ void linphone_conference_info_check_participant(const LinphoneConferenceInfo *co
                                                 LinphoneAddress *address,
                                                 int sequence_number) {
 	const auto &sequence = LinphonePrivate::ConferenceInfo::toCpp(conference_info)
-	                           ->getParticipantParam(*L_GET_CPP_PTR_FROM_C_OBJECT(address), "X-SEQ");
+	                           ->getParticipantParam(Address::toCpp(address)->getSharedFromThis(), "X-SEQ");
 	BC_ASSERT_TRUE(!sequence.empty());
 	if (!sequence.empty()) {
 		const int sequenceNumber = std::atoi(sequence.c_str());

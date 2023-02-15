@@ -20,14 +20,15 @@
 
 #include <bctoolbox/defs.h>
 
-#include <linphone/utils/utils.h>
-
 #include "belle-sip/belle-sip.h"
+
+#include "ortp/b64.h"
+
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "linphone/wrapper_utils.h"
-#include "ortp/b64.h"
 #include "private.h"
+#include <linphone/utils/utils.h>
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
@@ -138,18 +139,14 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc,
 	shared_ptr<LinphonePrivate::ChatRoomParams> chatRoomParams =
 	    params ? LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	// If a participant has an invalid address, the pointer to its address is NULL.
-	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty IdentityAddress (that is
-	// invalid)
-	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(
-	    participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [](LinphoneAddress *addr) {
-		    return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
-		                : LinphonePrivate::IdentityAddress();
-	    });
+	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty Address (that is invalid)
+	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
+	    LinphonePrivate::Address::getCppListFromCList(participants);
 	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() ==
 	                                     LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat
 	                               : false;
-	LinphonePrivate::IdentityAddress identityAddress =
-	    localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr))
+	shared_ptr<const LinphonePrivate::Address> identityAddress =
+	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room =
 	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(chatRoomParams, identityAddress, participantsList);
@@ -168,18 +165,16 @@ LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc,
                                                  const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ChatRoomParams> chatRoomParams =
 	    params ? LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(
-	    participants, LinphoneAddress *, LinphonePrivate::IdentityAddress,
-	    [](LinphoneAddress *addr) { return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)); });
+	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
+	    LinphonePrivate::Address::getCppListFromCList(participants);
 	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() ==
 	                                     LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat
 	                               : false;
-	LinphonePrivate::IdentityAddress identityAddress =
-	    localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr))
+	shared_ptr<const LinphonePrivate::Address> identityAddress =
+	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
-	LinphonePrivate::IdentityAddress remoteAddress =
-	    remoteAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr))
-	               : LinphonePrivate::IdentityAddress();
+	shared_ptr<const LinphonePrivate::Address> remoteAddress =
+	    remoteAddr ? LinphonePrivate::Address::toCpp(remoteAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(
 	    chatRoomParams, identityAddress, remoteAddress, participantsList);
 	if (room) return L_GET_C_BACK_PTR(room);

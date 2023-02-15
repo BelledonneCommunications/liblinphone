@@ -27,12 +27,15 @@
 #ifndef _L_C_SAL_H_
 #define _L_C_SAL_H_
 
+#ifdef __cplusplus
+#include <map>
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "bctoolbox/crypto.h"
-#include "bctoolbox/map.h"
 #include "belle-sip/belle-sip.h"
 #include "linphone/types.h"
 #include "mediastreamer2/mediastream.h"
@@ -147,6 +150,7 @@ extern "C" {
 const char *sal_transport_to_string(SalTransport transport);
 SalTransport sal_transport_parse(const char *);
 /* Address manipulation API*/
+SalAddress *sal_address_new_empty(void);
 LINPHONE_PUBLIC SalAddress *sal_address_new(const char *uri);
 LINPHONE_PUBLIC SalAddress *sal_address_clone(const SalAddress *addr);
 SalAddress *sal_address_ref(SalAddress *addr);
@@ -171,6 +175,7 @@ void sal_address_set_port(SalAddress *uri, int port);
 void sal_address_clean(SalAddress *addr);
 char *sal_address_as_string(const SalAddress *u);
 char *sal_address_as_string_uri_only(const SalAddress *u);
+SalAddress *sal_address_new_uri_only(const SalAddress *addr);
 LINPHONE_PUBLIC void sal_address_set_param(SalAddress *u, const char *name, const char *value);
 void sal_address_set_transport(SalAddress *addr, SalTransport transport);
 void sal_address_set_transport_name(SalAddress *addr, const char *transport);
@@ -183,7 +188,9 @@ void sal_address_set_uri_param(SalAddress *addr, const char *name, const char *v
 void sal_address_set_uri_params(SalAddress *addr, const char *params);
 bool_t sal_address_has_uri_param(const SalAddress *addr, const char *name);
 const char *sal_address_get_uri_param(const SalAddress *addr, const char *name);
-bctbx_map_t *sal_address_get_uri_params(const SalAddress *addr);
+#ifdef __cplusplus
+void sal_address_get_uri_params(const SalAddress *addr, std::map<std::string, std::string> &params);
+#endif // __cplusplus
 void sal_address_remove_uri_param(const SalAddress *addr, const char *name);
 bool_t sal_address_is_ipv6(const SalAddress *addr);
 bool_t sal_address_is_sip(const SalAddress *addr);
@@ -193,6 +200,8 @@ void sal_address_set_header(SalAddress *addr, const char *header_name, const cha
 const char *sal_address_get_header(const SalAddress *addr, const char *name);
 
 int sal_address_equals(const SalAddress *addr_a, const SalAddress *addr_b);
+
+void sal_address_clean_params(const SalAddress *addr);
 
 void sal_set_log_handler(BctbxLogFunc log_handler);
 
@@ -216,6 +225,18 @@ const char *sal_media_record_to_string(SalMediaRecord record);
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+inline std::ostream &operator<<(std::ostream &ostr, SalStreamType type) {
+	ostr << sal_stream_type_to_string(type);
+	return ostr;
+}
+
+inline std::ostream &operator<<(std::ostream &ostr, SalMediaProto proto) {
+	ostr << sal_media_proto_to_string(proto);
+	return ostr;
+}
+#endif // __cplusplus
 
 #define SAL_ENDPOINT_CANDIDATE_MAX 2
 
@@ -486,6 +507,7 @@ SalCustomHeader *sal_custom_header_ref(SalCustomHeader *ch);
 LINPHONE_PUBLIC void sal_custom_header_unref(SalCustomHeader *ch);
 LINPHONE_PUBLIC SalCustomHeader *sal_custom_header_append(SalCustomHeader *ch, const char *name, const char *value);
 const char *sal_custom_header_find(const SalCustomHeader *ch, const char *name);
+bool_t sal_custom_sdp_attribute_is_present(const SalCustomSdpAttribute *csa, const char *name);
 SalCustomHeader *sal_custom_header_remove(SalCustomHeader *ch, const char *name);
 void sal_custom_header_free(SalCustomHeader *ch);
 SalCustomHeader *sal_custom_header_clone(const SalCustomHeader *ch);

@@ -46,26 +46,27 @@ void linphone_conference_info_unref(LinphoneConferenceInfo *conference_info) {
 }
 
 const LinphoneAddress *linphone_conference_info_get_organizer(const LinphoneConferenceInfo *conference_info) {
-	const LinphonePrivate::Address &address = ConferenceInfo::toCpp(conference_info)->getOrganizerAddress().asAddress();
-	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
+	const auto &address = ConferenceInfo::toCpp(conference_info)->getOrganizerAddress();
+	return address && address->isValid() ? address->toC() : nullptr;
 }
 
 void linphone_conference_info_set_organizer(LinphoneConferenceInfo *conference_info, LinphoneAddress *organizer) {
-	ConferenceInfo::toCpp(conference_info)->setOrganizer(*L_GET_CPP_PTR_FROM_C_OBJECT(organizer));
+	ConferenceInfo::toCpp(conference_info)->setOrganizer(Address::toCpp(organizer)->getSharedFromThis());
 }
 
-const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
-	return ConferenceInfo::toCpp(conference_info)->getParticipantsCList();
+bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
+	const auto &participants = ConferenceInfo::toCpp(conference_info)->getParticipants();
+	bctbx_list_t *participant_addresses = NULL;
+	for (const auto &participant : participants) {
+		const auto &address = participant.first;
+		participant_addresses = bctbx_list_append(participant_addresses, address->toC());
+	}
+	return participant_addresses;
 }
 
-void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info,
-                                               const bctbx_list_t *participants) {
-	const std::list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(
-	    participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [](LinphoneAddress *addr) {
-		    return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
-		                : LinphonePrivate::IdentityAddress();
-	    });
-
+void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info, bctbx_list_t *participants) {
+	const std::list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(participants);
 	ConferenceInfo::participant_list_t participantsMap;
 	ConferenceInfo::participant_params_t participantsParams;
 	for (const auto &p : participantsList) {
@@ -75,21 +76,21 @@ void linphone_conference_info_set_participants(LinphoneConferenceInfo *conferenc
 }
 
 void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant) {
-	ConferenceInfo::toCpp(conference_info)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(participant));
+	ConferenceInfo::toCpp(conference_info)->addParticipant(Address::toCpp(participant)->getSharedFromThis());
 }
 
 void linphone_conference_info_remove_participant(LinphoneConferenceInfo *conference_info,
                                                  LinphoneAddress *participant) {
-	ConferenceInfo::toCpp(conference_info)->removeParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(participant));
+	ConferenceInfo::toCpp(conference_info)->removeParticipant(Address::toCpp(participant)->getSharedFromThis());
 }
 
 const LinphoneAddress *linphone_conference_info_get_uri(const LinphoneConferenceInfo *conference_info) {
-	const LinphonePrivate::Address &address = ConferenceInfo::toCpp(conference_info)->getUri().asAddress();
-	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
+	const auto &address = ConferenceInfo::toCpp(conference_info)->getUri();
+	return address && address->isValid() ? address->toC() : nullptr;
 }
 
 void linphone_conference_info_set_uri(LinphoneConferenceInfo *conference_info, LinphoneAddress *uri) {
-	ConferenceInfo::toCpp(conference_info)->setUri(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+	ConferenceInfo::toCpp(conference_info)->setUri(Address::toCpp(uri)->getSharedFromThis());
 }
 
 time_t linphone_conference_info_get_date_time(const LinphoneConferenceInfo *conference_info) {

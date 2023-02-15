@@ -18,18 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
-
-#include "linphone/core.h"
-
 #ifdef VCARD_ENABLED
+#include <time.h>
+
+#include <bctoolbox/defs.h>
+#include <bctoolbox/map.h>
 
 #include "carddav.h"
 #include "liblinphone_tester.h"
+#include "linphone/core.h"
 #include "tester_utils.h"
-#include <bctoolbox/map.h>
 
-#include <time.h>
 #define CARDDAV_SERVER "http://dav.example.org/baikal/html/card.php/addressbooks/tester/default"
 #define ME_VCF "http://dav.example.org/baikal/html/card.php/addressbooks/tester/default/me.vcf"
 #define ME_VCF_2 "/baikal/html/card.php/addressbooks/tester/default/me.vcf"

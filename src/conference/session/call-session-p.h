@@ -52,8 +52,8 @@ public:
 	CallSessionParams *getCurrentParams() const {
 		return currentParams;
 	}
-	LinphoneProxyConfig *getDestProxy() const {
-		return destProxy;
+	const std::shared_ptr<Account> &getDestAccount() const {
+		return account;
 	}
 	SalCallOp *getOp() const {
 		return op;
@@ -80,7 +80,7 @@ public:
 	virtual bool failure();
 	void infoReceived(SalBodyHandler *bodyHandler);
 	void pingReply();
-	void referred(const Address &referToAddr);
+	void referred(const std::shared_ptr<Address> &referToAddr);
 	virtual void remoteRinging();
 	virtual void replaceOp(SalCallOp *newOp);
 	virtual void terminated();
@@ -114,7 +114,8 @@ public:
 	                                   const std::string &subject = "");
 	virtual void terminate();
 	virtual void updateCurrentParams() const;
-	virtual void setDestProxy(LinphoneProxyConfig *proxy); // Set destProxy and update the proxy of currentParams
+	virtual void
+	setDestAccount(const std::shared_ptr<Account> &account); // Set destProxy and update the proxy of currentParams
 
 	void setBroken();
 	void setContactOp();
@@ -134,8 +135,7 @@ protected:
 	CallSessionParams *params = nullptr;
 	mutable CallSessionParams *currentParams = nullptr;
 	CallSessionParams *remoteParams = nullptr;
-	mutable Address diversionAddress;
-	mutable Address remoteContactAddress;
+	mutable std::shared_ptr<Address> diversionAddress;
 
 	std::string subject;
 	LinphoneCallDir direction = LinphoneCallOutgoing;
@@ -146,12 +146,10 @@ protected:
 	CallSession::State lastStableState = CallSession::State::Idle;
 	std::string lastStableMessageState;
 	CallSession::State transferState = CallSession::State::Idle;
-	LinphoneProxyConfig *destProxy = nullptr;
+	std::shared_ptr<Account> account = nullptr;
 	LinphoneErrorInfo *ei = nullptr;
 	std::shared_ptr<CallLog> log = nullptr;
-	std::string referTo;
-	mutable Address referToAddress;
-	mutable Address requestAddress; // cached from the op because we have to return a const reference.
+	std::shared_ptr<Address> referToAddress;
 	// This counter is used to keep active track of reINVITEs and UPDATEs under processing at any given time.
 	// In fact Linphone can have multiple active transaction at the same time on the same dialog as the transaction
 	// queue is popped after receiving the 100 Trying and not the 200 Ok
@@ -179,10 +177,10 @@ protected:
 
 private:
 	void completeLog();
-	void createOpTo(const LinphoneAddress *to);
+	void createOpTo(const std::shared_ptr<Address> &to);
 	void executePendingActions();
 
-	LinphoneAddress *getFixedContact() const;
+	std::shared_ptr<Address> getFixedContact() const;
 
 	void repairIfBroken();
 

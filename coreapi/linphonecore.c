@@ -2726,9 +2726,10 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 		bctbx_free(resourceAddrStr);
 
 		const LinphoneAddress *from = linphone_event_get_from(lev);
-		LinphonePrivate::ConferenceId conferenceId =
-		    LinphonePrivate::ConferenceId(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		                                  ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from)));
+		const auto fromAddr = LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(from))->getSharedFromThis();
+		const auto resourceAddr =
+		    LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(resource))->getSharedFromThis();
+		LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(resourceAddr, fromAddr);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 		shared_ptr<MediaConference::Conference> audioVideoConference =
 		    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
@@ -2776,11 +2777,9 @@ _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *le
 	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
-	char *resourceAddressStr = linphone_address_as_string(resource);
-	const ConferenceAddress conferenceAddress = ConferenceAddress(resourceAddressStr);
-	bctbx_free(resourceAddressStr);
-	LinphonePrivate::ConferenceId conferenceId =
-	    LinphonePrivate::ConferenceId(ConferenceAddress(conferenceAddress), ConferenceAddress(conferenceAddress));
+	const std::shared_ptr<Address> conferenceAddress =
+	    Address::toCpp(const_cast<LinphoneAddress *>(resource))->getSharedFromThis();
+	LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(conferenceAddress, conferenceAddress);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 	shared_ptr<MediaConference::Conference> audioVideoConference =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
@@ -2824,12 +2823,9 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
 		}
 	} else {
 		/* This has to be done only when running as server */
-		const LinphoneAddress *resource = evSub->getResource();
-		char *resourceAddressStr = linphone_address_as_string(resource);
-		const ConferenceAddress conferenceAddress = ConferenceAddress(resourceAddressStr);
-		bctbx_free(resourceAddressStr);
+		const auto &conferenceAddress = evSub->getResource();
 		LinphonePrivate::ConferenceId conferenceId =
-		    LinphonePrivate::ConferenceId(ConferenceAddress(conferenceAddress), ConferenceAddress(conferenceAddress));
+		    LinphonePrivate::ConferenceId(conferenceAddress, conferenceAddress);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 		shared_ptr<MediaConference::Conference> audioVideoConference =
 		    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
@@ -4516,8 +4512,10 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		}
 		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
+	bctbx_list_free_with_data((bctbx_list_t *)proxy_routes, (bctbx_list_free_func)bctbx_free);
 	if (srv_route) {
-		ret = bctbx_list_append(ret, sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(srv_route)->getInternalAddress()));
+		const auto srv_route_addr = LinphonePrivate::Address::toCpp(srv_route)->getSharedFromThis();
+		ret = bctbx_list_append(ret, sal_address_clone(srv_route_addr->getImpl()));
 	}
 	if (ret == NULL) {
 		/*if the proxy address matches the domain part of the destination, then use the same transport
@@ -4534,10 +4532,8 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 
 static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const LinphoneAddress *dest) {
 	bctbx_list_t *ret = NULL;
-	const bctbx_list_t *account_routes =
-	    linphone_account_params_get_routes_addresses(linphone_account_get_params(account));
+	bctbx_list_t *account_routes = linphone_account_params_get_routes_addresses(linphone_account_get_params(account));
 	bctbx_list_t *account_routes_iterator = (bctbx_list_t *)account_routes;
-	const LinphoneAddress *srv_route = Account::toCpp(account)->getServiceRouteAddress();
 	while (account_routes_iterator) {
 		LinphoneAddress *local_route = (LinphoneAddress *)bctbx_list_get_data(account_routes_iterator);
 		if (local_route) {
@@ -4547,8 +4543,10 @@ static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const Lin
 		}
 		account_routes_iterator = bctbx_list_next(account_routes_iterator);
 	}
+	bctbx_list_free(account_routes);
+	const auto srv_route = Account::toCpp(account)->getServiceRouteAddress();
 	if (srv_route) {
-		ret = bctbx_list_append(ret, sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(srv_route)->getInternalAddress()));
+		ret = bctbx_list_append(ret, sal_address_clone(srv_route->getImpl()));
 	}
 	if (ret == NULL && linphone_account_params_get_server_addr(linphone_account_get_params(account))) {
 		/*if the account identity address matches the domain part of the destination, then use the same transport
@@ -4823,7 +4821,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc,
 		linphone_transfer_routes_to_op(routes, op);
 	}
 
-	op->setToAddress(L_GET_CPP_PTR_FROM_C_OBJECT(dest)->getInternalAddress());
+	op->setToAddress(Address::toCpp(dest)->getImpl());
 	op->setFrom(identity);
 	op->setSentCustomHeaders(headers);
 	op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
@@ -4831,7 +4829,10 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc,
 	if (with_contact && proxy && Account::toCpp(proxy->account)->getOp()) {
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
 		SalAddress *salAddress = nullptr;
-		if (contact) salAddress = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
+		if (contact) {
+			const auto contact_addr = LinphonePrivate::Address::toCpp(contact)->getSharedFromThis();
+			salAddress = sal_address_clone(contact_addr->getImpl());
+		}
 		op->setContactAddress(salAddress);
 		if (salAddress) sal_address_unref(salAddress);
 	}
@@ -4860,7 +4861,7 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 		linphone_transfer_routes_to_op(routes, op);
 	}
 
-	op->setToAddress(L_GET_CPP_PTR_FROM_C_OBJECT(dest)->getInternalAddress());
+	op->setToAddress(LinphonePrivate::Address::toCpp(dest)->getImpl());
 	op->setFrom(identity);
 	op->setSentCustomHeaders(headers);
 	op->setRealm(
@@ -4869,7 +4870,10 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 	if (with_contact && account && Account::toCpp(account)->getOp()) {
 		const LinphoneAddress *contact = linphone_account_get_contact_address(account);
 		SalAddress *salAddress = nullptr;
-		if (contact) salAddress = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
+		if (contact) {
+			const auto contact_addr = LinphonePrivate::Address::toCpp(contact)->getSharedFromThis();
+			salAddress = sal_address_clone(contact_addr->getImpl());
+		}
 		op->setContactAddress(salAddress);
 		if (salAddress) sal_address_unref(salAddress);
 	}
@@ -5196,8 +5200,8 @@ LinphoneCall *linphone_core_find_call_from_uri(const LinphoneCore *lc, const cha
 }
 
 LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *raddr) {
-	shared_ptr<LinphonePrivate::Call> call =
-	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByRemoteAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(raddr));
+	const auto remote_addr = LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(raddr))->getSharedFromThis();
+	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByRemoteAddress(remote_addr);
 	return call ? call->toC() : NULL;
 }
 
@@ -7162,7 +7166,6 @@ MSVideoSize linphone_core_get_preview_video_size(const LinphoneCore *lc) {
 
 void net_config_uninit(LinphoneCore *lc) {
 	net_config_t *config = &lc->net_conf;
-
 	if (config->nat_address != NULL) {
 		linphone_config_set_string(lc->config, "net", "nat_address", config->nat_address);
 		ms_free(lc->net_conf.nat_address);
@@ -9127,15 +9130,15 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 			identity = linphone_address_new(linphone_core_get_identity(
 			    lc)); // backward compatibility : use default identity even if set in conference parameters
 		} else {
-			const LinphonePrivate::IdentityAddress &identity_address =
+			const std::shared_ptr<LinphonePrivate::Address> &identity_address =
 			    LinphonePrivate::ConferenceParams::toCpp(params)->getMe();
-			if (identity_address.isValid()) {
+			if (identity_address && identity_address->isValid()) {
 				lInfo() << "Creating remote conference with identity from conference params : " << identity_address;
-				identity = linphone_address_clone(L_GET_C_BACK_PTR(&identity_address.asAddress()));
+				identity = linphone_address_clone(identity_address->toC());
 			} else {
 				identity = linphone_address_new(linphone_core_get_identity(lc));
 				lInfo() << "Creating remote conference with identity from default account "
-				        << L_GET_CPP_PTR_FROM_C_OBJECT(identity)->asString();
+				        << LinphonePrivate::Address::toCpp(identity)->toString();
 			}
 		}
 
@@ -9210,18 +9213,17 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
                                                     const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	list<LinphonePrivate::IdentityAddress> participantsList;
+	list<std::shared_ptr<LinphonePrivate::Address>> participantsList;
 	if (participants) {
-		participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(
-		    participants, LinphoneAddress *, LinphonePrivate::IdentityAddress,
-		    [](LinphoneAddress *addr) { return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)); });
+		participantsList =
+		    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(
+		        participants);
 	}
-	LinphonePrivate::ConferenceAddress identityAddress =
-	    localAddr ? LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr))
+	shared_ptr<const LinphonePrivate::Address> identityAddress =
+	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
-	LinphonePrivate::ConferenceAddress remoteAddress =
-	    remoteAddr ? LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr))
-	               : LinphonePrivate::ConferenceAddress();
+	shared_ptr<const LinphonePrivate::Address> remoteAddress =
+	    remoteAddr ? LinphonePrivate::Address::toCpp(remoteAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<LinphonePrivate::MediaConference::Conference> conf =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceParams, identityAddress, remoteAddress,
 	                                                                participantsList);
@@ -9233,9 +9235,10 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
 }
 
 LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *lc, const LinphoneAddress *conferenceAddr) {
-	LinphonePrivate::ConferenceAddress conferenceAddress =
-	    conferenceAddr ? LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(conferenceAddr))
-	                   : LinphonePrivate::ConferenceAddress();
+	const auto conferenceAddress =
+	    conferenceAddr
+	        ? LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(conferenceAddr))->getSharedFromThis()
+	        : nullptr;
 	shared_ptr<LinphonePrivate::MediaConference::Conference> conf =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceAddress);
 	LinphoneConference *c_conference = NULL;
@@ -9266,8 +9269,7 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 		LinphoneConferenceParams *params = linphone_conference_params_new(lc);
 		if (call) {
 			const LinphoneCallParams *remote_call_params = linphone_call_get_remote_params(call);
-			LinphoneProxyConfig *proxy_cfg = linphone_call_get_dest_proxy(call);
-			auto account = linphone_core_lookup_account_by_identity(lc, linphone_proxy_config_get_contact(proxy_cfg));
+			auto account = Call::toCpp(call)->getDestAccount();
 			LinphonePrivate::ConferenceParams::toCpp(params)->setAccount(account);
 			if (remote_call_params) {
 				linphone_conference_params_set_audio_enabled(params,
@@ -9483,8 +9485,8 @@ int linphone_core_get_unread_chat_message_count(const LinphoneCore *lc) {
 }
 
 int linphone_core_get_unread_chat_message_count_from_local(const LinphoneCore *lc, const LinphoneAddress *address) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount(
-	    LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address)));
+	const auto addr = LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(address))->getSharedFromThis();
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount(addr);
 }
 
 int linphone_core_get_unread_chat_message_count_from_active_locals(const LinphoneCore *lc) {
@@ -9517,7 +9519,8 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	auto confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(uri)));
+	const auto uri_addr = LinphonePrivate::Address::toCpp(uri)->getSharedFromThis();
+	auto confInfo = mainDb->getConferenceInfoFromURI(uri_addr);
 
 	if (confInfo != nullptr) {
 		// Clone the conference information so that the application can freely change it without modifying the

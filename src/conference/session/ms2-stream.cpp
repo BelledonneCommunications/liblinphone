@@ -130,7 +130,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params) {
 		// item
 		string userAgent = linphone_core_get_user_agent(getCCore());
 		rtp_session_set_source_description(mSessions.rtp_session,
-		                                   getMediaSessionPrivate().getMe()->getAddress().asString().c_str(), NULL,
+		                                   getMediaSessionPrivate().getMe()->getAddress()->toString().c_str(), NULL,
 		                                   NULL, NULL, NULL, userAgent.c_str(), NULL);
 	} catch (std::bad_weak_ptr &) {
 		lWarning() << "Unable to set source description for bundle mode";
@@ -248,13 +248,12 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext &ctx) {
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc =
 	    mSessions.rtp_session ? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
 
-	Address address = Address();
+	std::shared_ptr<Address> address = nullptr;
 	if (getMediaSessionPrivate().getOp()) {
 		const auto remoteContactAddress = getMediaSessionPrivate().getOp()->getRemoteContactAddress();
 		if (remoteContactAddress) {
-			char *c_address = sal_address_as_string(remoteContactAddress);
-			address = Address(c_address);
-			ms_free(c_address);
+			address = Address::create();
+			address->setImpl(remoteContactAddress);
 		}
 	}
 	std::shared_ptr<LinphonePrivate::ConferenceInfo> confInfo = nullptr;
@@ -262,10 +261,10 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext &ctx) {
 	// Search in the DB if this is a call toward a conference URI
 	auto &mainDb = getCore().getPrivate()->mainDb;
 	if (mainDb) {
-		confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*(getMediaSession().getRemoteAddress())));
+		confInfo = mainDb->getConferenceInfoFromURI(getMediaSession().getRemoteAddress());
 	}
 #endif // HAVE_DB_STORAGE
-	if (address.hasParam("isfocus") || confInfo)
+	if ((address && address->hasParam("isfocus")) || confInfo)
 		localDesc.cfgs[localDesc.getChosenConfigurationIndex()].conference_ssrc =
 		    mSessions.rtp_session ? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
 
@@ -774,8 +773,8 @@ void MS2Stream::configureRtpSession(RtpSession *session) {
 	rtp_session_enable_network_simulation(session, &getCCore()->net_conf.netsim_params);
 	applyJitterBufferParams(session);
 	string userAgent = linphone_core_get_user_agent(getCCore());
-	rtp_session_set_source_description(session, getMediaSessionPrivate().getMe()->getAddress().asString().c_str(), NULL,
-	                                   NULL, NULL, NULL, userAgent.c_str(), NULL);
+	rtp_session_set_source_description(session, getMediaSessionPrivate().getMe()->getAddress()->toString().c_str(),
+	                                   NULL, NULL, NULL, NULL, userAgent.c_str(), NULL);
 	rtp_session_set_symmetric_rtp(session, linphone_core_symmetric_rtp_enabled(getCCore()));
 
 	if (getType() == SalVideo) {

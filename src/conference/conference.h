@@ -71,8 +71,8 @@ public:
 	std::shared_ptr<Participant> getActiveParticipant() const;
 
 	std::shared_ptr<ParticipantDevice> findParticipantDevice(const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<ParticipantDevice> findParticipantDevice(const IdentityAddress &pAddr,
-	                                                         const IdentityAddress &dAddr) const;
+	std::shared_ptr<ParticipantDevice> findParticipantDevice(const std::shared_ptr<Address> &pAddr,
+	                                                         const std::shared_ptr<Address> &dAddr) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDeviceByLabel(const std::string &label) const;
 	std::shared_ptr<ParticipantDevice> getActiveSpeakerParticipantDevice() const;
 
@@ -85,18 +85,18 @@ public:
 	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call);
 
 	/* ConferenceInterface */
-	std::shared_ptr<Participant> findParticipant(const IdentityAddress &addr) const override;
+	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &addr) const override;
 	std::shared_ptr<Participant> getMe() const override;
-	bool isMe(const IdentityAddress &addr) const;
+	bool isMe(const std::shared_ptr<Address> &addr) const;
 	bool addParticipant(std::shared_ptr<Call> call) override;
-	bool addParticipant(const IdentityAddress &participantAddress) override;
-	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	int getParticipantCount() const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
-	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices() const override;
+	virtual const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices() const override;
 	const std::string &getSubject() const override;
 	const std::string getUtf8Subject() const override;
-	void join(const IdentityAddress &participantAddress) override;
+	void join(const std::shared_ptr<Address> &participantAddress) override;
 	void leave() override;
 	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants(const std::list<std::shared_ptr<Participant>> &participants) override;
@@ -108,8 +108,8 @@ public:
 		return *confParams;
 	}
 
-	virtual const ConferenceAddress &getConferenceAddress() const override;
-	void setConferenceAddress(const ConferenceAddress &conferenceAddress);
+	virtual const std::shared_ptr<Address> &getConferenceAddress() const override;
+	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
 
 	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject(const std::string &subject) override;
@@ -203,12 +203,12 @@ public:
 
 #ifdef HAVE_DB_STORAGE
 	void updateSubjectInConferenceInfo(const std::string &subject) const;
-	void updateParticipantsInConferenceInfo(const IdentityAddress &participantAddress) const;
+	void updateParticipantsInConferenceInfo(const std::shared_ptr<Address> &participantAddress) const;
 #endif // HAVE_DB_STORAGE
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
-	                    const IdentityAddress &myAddress,
+	                    const std::shared_ptr<Address> &myAddress,
 	                    CallSessionListener *listener,
 	                    const std::shared_ptr<ConferenceParams> params);
 
@@ -246,7 +246,8 @@ protected:
 
 	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
 	virtual std::shared_ptr<ConferenceInfo>
-	createConferenceInfo(const IdentityAddress &organizer, const std::list<IdentityAddress> invitedParticipants) const;
+	createConferenceInfo(const std::shared_ptr<Address> &organizer,
+	                     const std::list<std::shared_ptr<Address>> invitedParticipants) const;
 
 private:
 	L_DISABLE_COPY(Conference);

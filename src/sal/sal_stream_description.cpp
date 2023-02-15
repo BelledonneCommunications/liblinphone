@@ -22,8 +22,10 @@
 
 #include "bellesip_sal/sal_impl.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "linphone/misc.h"
 #include "linphone/utils/utils.h"
 #include "sal/sal_stream_description.h"
+#include "sal_media_description.h"
 #include "utils/payload-type-handler.h"
 
 LINPHONE_BEGIN_NAMESPACE

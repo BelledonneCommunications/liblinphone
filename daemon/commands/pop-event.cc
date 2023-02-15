@@ -29,6 +29,7 @@ PopEventCommand::PopEventCommand()
 	addExample(make_unique<DaemonCommandExample>("pop-event", "Status: Ok\n\n"
 	                                                          "Size: 0"));
 }
+
 void PopEventCommand::exec(Daemon *app, BCTBX_UNUSED(const string &args)) {
 	app->pullEvent();
 }

@@ -298,6 +298,8 @@ static void multiple_route(void) {
 
 	linphone_proxy_config_set_routes(marie_cfg, new_routes);
 
+	bctbx_list_free_with_data(new_routes, bctbx_free);
+
 	const bctbx_list_t *routes = linphone_proxy_config_get_routes(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(routes);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(routes), 2, int, "%d"); // 2 are good, 2 are bad

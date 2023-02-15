@@ -18,9 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
-
 #include "bctoolbox/crypto.h"
+#include <bctoolbox/defs.h>
+#include <bctoolbox/vfs.h>
+
+#include <belle-sip/object.h>
+
 #include "liblinphone_tester.h"
 #include "lime.h"
 #include "linphone/core.h"
@@ -28,8 +31,6 @@
 #include "linphone/wrapper_utils.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
-#include <bctoolbox/vfs.h>
-#include <belle-sip/object.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)

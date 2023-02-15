@@ -92,8 +92,8 @@ class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>,
 public:
 	Call(std::shared_ptr<Core> core,
 	     LinphoneCallDir direction,
-	     const Address &from,
-	     const Address &to,
+	     const std::shared_ptr<Address> &from,
+	     const std::shared_ptr<Address> &to,
 	     LinphoneProxyConfig *cfg,
 	     SalCallOp *op,
 	     const MediaSessionParams *msp);
@@ -103,8 +103,8 @@ public:
 	~Call();
 
 	void configure(LinphoneCallDir direction,
-	               const Address &from,
-	               const Address &to,
+	               const std::shared_ptr<Address> &from,
+	               const std::shared_ptr<Address> &to,
 	               LinphoneProxyConfig *cfg,
 	               SalCallOp *op,
 	               const MediaSessionParams *msp);
@@ -124,7 +124,7 @@ public:
 	LinphoneStatus pauseFromConference();
 	LinphoneStatus pause();
 	LinphoneStatus redirect(const std::string &redirectUri);
-	LinphoneStatus redirect(const Address &redirectAddress);
+	LinphoneStatus redirect(const std::shared_ptr<Address> &redirectAddress);
 	LinphoneStatus resume();
 	LinphoneStatus sendDtmf(char dtmf);
 	LinphoneStatus sendDtmfs(const std::string &dtmfs);
@@ -136,7 +136,7 @@ public:
 	LinphoneStatus takeVideoSnapshot(const std::string &file);
 	LinphoneStatus terminate(const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer(const std::shared_ptr<Call> &dest);
-	LinphoneStatus transfer(const Address &dest);
+	LinphoneStatus transfer(const std::shared_ptr<Address> &dest);
 	LinphoneStatus transfer(const std::string &dest);
 	LinphoneStatus update(const MediaSessionParams *msp = nullptr);
 	LinphoneStatus updateFromConference(const MediaSessionParams *msp = nullptr);
@@ -157,10 +157,10 @@ public:
 	const MediaSessionParams *getCurrentParams() const;
 	float getCurrentQuality() const;
 	LinphoneCallDir getDirection() const;
-	const Address &getDiversionAddress() const;
+	const std::shared_ptr<Address> getDiversionAddress() const;
 	int getDuration() const;
 	const LinphoneErrorInfo *getErrorInfo() const;
-	const Address &getLocalAddress() const;
+	const std::shared_ptr<Address> getLocalAddress() const;
 	std::shared_ptr<CallLog> getLog() const;
 	RtpTransport *getMetaRtcpTransport(int streamIndex) const;
 	RtpTransport *getMetaRtpTransport(int streamIndex) const;
@@ -173,10 +173,10 @@ public:
 	LinphoneReason getReason() const;
 	float getRecordVolume() const;
 	std::shared_ptr<Call> getReferer() const;
-	const std::string &getReferTo() const;
-	const Address &getReferToAddress() const;
-	const Address *getRemoteAddress() const;
-	const Address *getRemoteContactAddress() const;
+	const std::string getReferTo() const;
+	const std::shared_ptr<Address> &getReferToAddress() const;
+	const std::shared_ptr<Address> getRemoteAddress() const;
+	const std::shared_ptr<Address> getRemoteContactAddress() const;
 	const std::string &getRemoteContact() const;
 	const MediaSessionParams *getRemoteParams() const;
 	const std::string &getRemoteUserAgent();
@@ -188,7 +188,7 @@ public:
 	int getStreamCount() const;
 	MSFormatType getStreamType(int streamIndex) const;
 	LinphoneCallStats *getTextStats() const;
-	const Address &getToAddress() const;
+	const std::shared_ptr<Address> getToAddress() const;
 	const char *getToHeader(const std::string &name) const;
 	CallSession::State getTransferState() const;
 	std::shared_ptr<Call> getTransferTarget() const;
@@ -213,8 +213,8 @@ public:
 	bool setOutputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audioDevice);
 	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
 	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
-	// -----------------------------------------------------------------------------
 
+	// -----------------------------------------------------------------------------
 	void createPlayer() const;
 	void initiateIncoming();
 	bool initiateOutgoing(const std::string &subject = "", const Content *content = nullptr);
@@ -224,16 +224,15 @@ public:
 	void startPushIncomingNotification();
 	void startBasicIncomingNotification();
 	void pauseForTransfer();
-	int startInvite(const Address *destination,
+	int startInvite(const std::shared_ptr<Address> &destination,
 	                const std::string subject = std::string(),
 	                const Content *content = nullptr);
 	std::shared_ptr<Call> startReferredCall(const MediaSessionParams *params);
 
 	// -----------------------------------------------------------------------------
-
 	std::shared_ptr<CallSession> getActiveSession() const;
 	std::shared_ptr<AbstractChatRoom> getChatRoom();
-	LinphoneProxyConfig *getDestProxy() const;
+	const std::shared_ptr<Account> &getDestAccount() const;
 	IceSession *getIceSession() const;
 	unsigned int getAudioStartCount() const;
 	unsigned int getAudioStopCount() const;

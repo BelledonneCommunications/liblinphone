@@ -153,7 +153,6 @@ void Imdn::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaN
 }
 
 // -----------------------------------------------------------------------------
-
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -246,7 +245,10 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 
 			auto policy = linphone_core_get_im_notif_policy(cr->getCore()->getCCore());
 			time_t imdnTime = chatMessage->getTime();
-			const IdentityAddress &participantAddress = chatMessage->getFromAddress().getAddressWithoutGruu();
+			std::shared_ptr<Address> participantAddress =
+			    Address::create(chatMessage->getFromAddress()->getUriWithoutGruu());
+			std::shared_ptr<Address> localAddress = cr->getLocalAddress();
+			std::shared_ptr<Address> chatMessageFromAddress = cm->getFromAddress();
 			auto &deliveryNotification = imdn->getDeliveryNotification();
 			auto &displayNotification = imdn->getDisplayNotification();
 			if (deliveryNotification.present()) {
@@ -261,10 +263,10 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 					// When the IMDN status is failed for reason code 488 (Not acceptable here) and the chatroom is
 					// encrypted, something is wrong with our encryption session with this peer, stale the active
 					// session the next message (which can be a resend of this one) will be encrypted with a new session
-					if (cr->getLocalAddress() ==
-					        cm->getFromAddress() // check the imdn is in response to a message sent by the local user
-					    && status.getFailed().present() // that we have a fail tag
-					    && status.getReason().present() // and a reason tag
+					if (localAddress->weakEqual(*chatMessageFromAddress) // check the imdn is in response to a message
+					                                                     // sent by the local user
+					    && status.getFailed().present()                  // that we have a fail tag
+					    && status.getReason().present()                  // and a reason tag
 					    &&
 					    (cr->getCapabilities() & ChatRoom::Capabilities::Encrypted)) { // and the chatroom is encrypted
 						// Check the reason code is 488
@@ -273,11 +275,11 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 						if ((reason.getCode() == 488) && imee) {
 							// stale the encryption sessions with this device: something went wrong, we will create a
 							// new one at next encryption
-							lWarning() << "Peer " << chatMessage->getFromAddress().asString()
-							           << " could not decrypt message from " << cm->getFromAddress().asString()
+							lWarning() << "Peer " << chatMessage->getFromAddress()->toString()
+							           << " could not decrypt message from " << chatMessageFromAddress->toString()
 							           << " -> Stale the lime X3DH session";
-							imee->staleSession(cm->getFromAddress().asString(),
-							                   chatMessage->getFromAddress().asString());
+							imee->staleSession(chatMessageFromAddress->asStringUriOnly(),
+							                   chatMessage->getFromAddress()->asStringUriOnly());
 						}
 					}
 				}
@@ -285,8 +287,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 				auto &status = displayNotification.get().getStatus();
 				if (status.getDisplayed().present() && linphone_im_notif_policy_get_recv_imdn_displayed(policy)) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::Displayed, imdnTime);
-					if (cr->getLocalAddress().getAddressWithoutGruu() ==
-					    chatMessage->getFromAddress().getAddressWithoutGruu()) {
+					if (localAddress->weakEqual(*participantAddress)) {
 						auto lastMsg = cr->getLastChatMessageInHistory();
 						if (lastMsg == cm) {
 							lInfo() << "Received Display IMDN from ourselves for last message in this chat room, "
@@ -356,12 +357,11 @@ bool Imdn::aggregationEnabled() const {
 }
 
 LinphoneProxyConfig *Imdn::getRelatedProxyConfig() {
-	LinphoneAddress *addr = linphone_address_new(chatRoom->getLocalAddress().asString().c_str());
+	LinphoneAddress *addr = chatRoom->getLocalAddress()->toC();
 	if (!addr) {
 		return NULL;
 	}
 	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity_strict(chatRoom->getCore()->getCCore(), addr);
-	linphone_address_unref(addr);
 	return cfg;
 }
 

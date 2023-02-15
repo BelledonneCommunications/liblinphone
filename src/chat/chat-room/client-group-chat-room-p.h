@@ -40,8 +40,8 @@ public:
 
 	virtual ~ClientGroupChatRoomPrivate() = default;
 
-	std::list<IdentityAddress> cleanAddressesList(const std::list<IdentityAddress> &addresses) const;
-	std::shared_ptr<CallSession> createSessionTo(Address sessionTo);
+	std::list<std::shared_ptr<Address>> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
+	std::shared_ptr<CallSession> createSessionTo(std::shared_ptr<Address> sessionTo);
 	std::shared_ptr<CallSession> createSession();
 	void notifyReceived(const Content &content);
 	void multipartNotifyReceived(const Content &content);
@@ -70,9 +70,9 @@ public:
 	                               CallSession::State state,
 	                               const std::string &message) override;
 
-	void onChatRoomCreated(const Address &remoteContact);
+	void onChatRoomCreated(const std::shared_ptr<Address> &remoteContact);
 	void onExhumedConference(const ConferenceId &oldConfId, const ConferenceId &newConfId);
-	void onLocallyExhumedConference(const Address &remoteContact);
+	void onLocallyExhumedConference(const std::shared_ptr<Address> &remoteContact);
 	void onRemotelyExhumedConference(SalCallOp *op);
 	void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 

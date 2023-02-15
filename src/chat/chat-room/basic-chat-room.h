@@ -44,12 +44,12 @@ public:
 	bool hasBeenLeft() const override;
 	bool isReadOnly() const override;
 
-	const ConferenceAddress &getConferenceAddress() const override;
+	const std::shared_ptr<Address> &getConferenceAddress() const override;
 
 	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants(const std::list<std::shared_ptr<Participant>> &participants) override;
 
-	std::shared_ptr<Participant> findParticipant(const IdentityAddress &addr) const override;
+	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &addr) const override;
 
 	std::shared_ptr<Participant> getMe() const override;
 	int getParticipantCount() const override;
@@ -69,10 +69,10 @@ public:
 
 	const ConferenceId &getConferenceId() const override;
 
-	bool addParticipant(const IdentityAddress &participantAddress) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	bool addParticipant(std::shared_ptr<Call> call) override;
-	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
-	void join(const IdentityAddress &participantAddress) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
+	void join(const std::shared_ptr<Address> &participantAddress) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 
 	State getState() const override;

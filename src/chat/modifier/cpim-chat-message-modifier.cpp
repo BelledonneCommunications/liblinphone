@@ -25,6 +25,7 @@
 
 #include "address/address.h"
 #include "chat/chat-message/chat-message-p.h"
+#include "chat/chat-room/chat-room.h"
 #include "chat/cpim/cpim.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
@@ -56,10 +57,10 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
                                                             BCTBX_UNUSED(int &errorCode)) {
 	Cpim::Message cpimMessage;
 
-	cpimMessage.addMessageHeader(Cpim::FromHeader(cpimAddressUri(message->getFromAddress().asAddress()),
-	                                              cpimAddressDisplayName(message->getFromAddress().asAddress())));
-	cpimMessage.addMessageHeader(Cpim::ToHeader(cpimAddressUri(message->getToAddress().asAddress()),
-	                                            cpimAddressDisplayName(message->getToAddress().asAddress())));
+	cpimMessage.addMessageHeader(
+	    Cpim::FromHeader(cpimAddressUri(message->getFromAddress()), cpimAddressDisplayName(message->getFromAddress())));
+	cpimMessage.addMessageHeader(
+	    Cpim::ToHeader(cpimAddressUri(message->getToAddress()), cpimAddressDisplayName(message->getToAddress())));
 	cpimMessage.addMessageHeader(Cpim::DateTimeHeader(message->getTime()));
 
 	if (message->getPrivate()->getPositiveDeliveryNotificationRequired() ||
@@ -96,8 +97,8 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 			}
 			cpimMessage.addMessageHeader(
 			    Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageIdHeader, replyToMessageId));
-			const IdentityAddress &senderAddress = message->getReplyToSenderAddress();
-			string address = senderAddress.asString();
+			const std::shared_ptr<Address> &senderAddress = message->getReplyToSenderAddress();
+			string address = senderAddress->toString();
 			cpimMessage.addMessageHeader(
 			    Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageSenderHeader, address));
 		}
@@ -198,9 +199,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<Cha
 	}
 
 	auto fromHeader = static_pointer_cast<const Cpim::FromHeader>(cpimMessage->getMessageHeader("From"));
-	Address cpimFromAddress(fromHeader->getValue());
-	auto toHeader = static_pointer_cast<const Cpim::ToHeader>(cpimMessage->getMessageHeader("To"));
-	Address cpimToAddress(toHeader->getValue());
+	std::shared_ptr<Address> cpimFromAddress = Address::create(fromHeader->getValue());
 	auto dateTimeHeader = static_pointer_cast<const Cpim::DateTimeHeader>(cpimMessage->getMessageHeader("DateTime"));
 	if (dateTimeHeader) message->getPrivate()->setTime(dateTimeHeader->getTime());
 
@@ -240,7 +239,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<Cha
 		auto replyToSenderHeader = cpimMessage->getMessageHeader(linphoneReplyingToMessageSenderHeader, linphoneNsName);
 		if (replyToMessageIdHeader && replyToSenderHeader) {
 			message->getPrivate()->setReplyToMessageIdAndSenderAddress(
-			    replyToMessageIdHeader->getValue(), IdentityAddress(replyToSenderHeader->getValue()));
+			    replyToMessageIdHeader->getValue(), Address::create(replyToSenderHeader->getValue()));
 		}
 	}
 
@@ -248,7 +247,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<Cha
 
 	// Discard message if sender authentication is enabled and failed
 	if (message->getPrivate()->senderAuthenticationEnabled) {
-		if (cpimFromAddress == message->getAuthenticatedFromAddress().asAddress()) {
+		if (*cpimFromAddress == message->getAuthenticatedFromAddress()) {
 			lInfo() << "[CPIM] Sender authentication successful";
 		} else {
 			lWarning() << "[CPIM] Sender authentication failed";
@@ -259,26 +258,25 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<Cha
 
 	// Modify the initial message since there was no error
 	message->setInternalContent(newContent);
-	if (cpimFromAddress.isValid()) message->getPrivate()->forceFromAddress(cpimFromAddress);
+	if (cpimFromAddress && cpimFromAddress->isValid()) message->getPrivate()->forceFromAddress(cpimFromAddress);
 
 	return ChatMessageModifier::Result::Done;
 }
 
-string CpimChatMessageModifier::cpimAddressDisplayName(const Address &addr) const {
-	return addr.getDisplayName();
+string CpimChatMessageModifier::cpimAddressDisplayName(const std::shared_ptr<Address> &addr) const {
+	return addr->getDisplayName();
 }
 
-string CpimChatMessageModifier::cpimAddressUri(const Address &addr) const {
-	return addr.asStringUriOnly();
+string CpimChatMessageModifier::cpimAddressUri(const std::shared_ptr<Address> &addr) const {
+	return addr->asStringUriOnly();
 }
 
 Content *CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getLocalAddress().asString();
+	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
 
 	Cpim::Message cpimMessage;
-	cpimMessage.addMessageHeader(
-	    Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress().asAddress())));
+	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress())));
 	cpimMessage.addMessageHeader(Cpim::NsHeader(imdnNamespaceUrn, imdnNamespace));
 	cpimMessage.addMessageHeader(
 	    Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, message->getImdnMessageId()));

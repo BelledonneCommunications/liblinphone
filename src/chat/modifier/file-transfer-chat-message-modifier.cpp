@@ -461,8 +461,8 @@ void FileTransferChatMessageModifier::processAuthRequestedUpload(belle_sip_auth_
 	 * the requested auth info shall thus be present in linphone core
 	 * This request will thus not use the auth requested callback to get the information
 	 * - Stored auth information in linphone core are indexed by username/domain */
-	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address.getUsername().data(),
-	                                        address.getDomain().data());
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address->getUsername().data(),
+	                                        address->getDomain().data());
 
 	// For digest auth: If there is no body handler, now it is a good time to add it
 	if (belle_sip_auth_event_get_mode(event) == BELLE_SIP_AUTH_MODE_HTTP_DIGEST) {
@@ -543,7 +543,7 @@ int FileTransferChatMessageModifier::startHttpTransfer(const string &url,
 	httpRequest = belle_http_request_create(
 	    action.c_str(), uri,
 	    belle_http_header_create("User-Agent", linphone_core_get_user_agent(message->getCore()->getCCore())),
-	    belle_http_header_create("From", message->getLocalAddress().asString().c_str()), nullptr);
+	    belle_http_header_create("From", message->getLocalAddress()->toString().c_str()), nullptr);
 
 	if (!httpRequest) {
 		lWarning() << "Could not create http request for uri " << url;
@@ -881,8 +881,8 @@ void FileTransferChatMessageModifier::processAuthRequestedDownload(belle_sip_aut
 	 * the requested auth info shall thus be present in linphone core
 	 * This request will thus not use the auth requested callback to get the information
 	 * - Stored auth information in linphone core are indexed by username/domain */
-	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address.getUsername().data(),
-	                                        address.getDomain().data());
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address->getUsername().data(),
+	                                        address->getDomain().data());
 }
 
 static void _chat_message_process_io_error_download(void *data, const belle_sip_io_error_event_t *event) {

@@ -25,7 +25,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 
-#include "address/identity-address.h"
+#include "address/address.h"
 #include "call/call.h"
 #include "conference/conference-listener.h"
 #include "conference/handlers/local-conference-event-handler.h"
@@ -746,14 +746,14 @@ L_ENABLE_ATTR_ACCESS(LocalConference, shared_ptr<LocalConferenceEventHandler>, e
 
 class ConferenceEventTester : public RemoteConference {
 public:
-	ConferenceEventTester(const shared_ptr<Core> &core, const Address &confAddr);
+	ConferenceEventTester(const shared_ptr<Core> &core, const std::shared_ptr<Address> &confAddr);
 	~ConferenceEventTester();
 
 private:
-	void onConferenceCreated(const ConferenceAddress &addr) override;
+	void onConferenceCreated(const std::shared_ptr<Address> &addr) override;
 	void onConferenceKeywordsChanged(const vector<string> &keywords) override;
-	void onConferenceTerminated(const IdentityAddress &addr) override;
-	void onFirstNotifyReceived(const IdentityAddress &addr) override;
+	void onConferenceTerminated(const std::shared_ptr<Address> &addr) override;
+	void onFirstNotifyReceived(const std::shared_ptr<Address> &addr) override;
 	void onParticipantAdded(const shared_ptr<ConferenceParticipantEvent> &event,
 	                        const std::shared_ptr<Participant> &participant) override;
 	void onParticipantRemoved(const shared_ptr<ConferenceParticipantEvent> &event,
@@ -775,7 +775,7 @@ public:
 	bool oneToOne = false;
 };
 
-ConferenceEventTester::ConferenceEventTester(const shared_ptr<Core> &core, const Address &confAddr)
+ConferenceEventTester::ConferenceEventTester(const shared_ptr<Core> &core, const std::shared_ptr<Address> &confAddr)
     : RemoteConference(core, confAddr, nullptr, ConferenceParams::create(core->getCCore())) {
 	handler = new RemoteConferenceEventHandler(this, this);
 }
@@ -784,7 +784,7 @@ ConferenceEventTester::~ConferenceEventTester() {
 	delete handler;
 }
 
-void ConferenceEventTester::onConferenceCreated(BCTBX_UNUSED(const ConferenceAddress &address)) {
+void ConferenceEventTester::onConferenceCreated(BCTBX_UNUSED(const std::shared_ptr<Address> &address)) {
 }
 
 void ConferenceEventTester::onConferenceKeywordsChanged(const vector<string> &keywords) {
@@ -793,30 +793,30 @@ void ConferenceEventTester::onConferenceKeywordsChanged(const vector<string> &ke
 	}
 }
 
-void ConferenceEventTester::onConferenceTerminated(BCTBX_UNUSED(const IdentityAddress &addr)) {
+void ConferenceEventTester::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
 }
 
-void ConferenceEventTester::onFirstNotifyReceived(BCTBX_UNUSED(const IdentityAddress &addr)) {
+void ConferenceEventTester::onFirstNotifyReceived(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
 }
 
 void ConferenceEventTester::onParticipantAdded(const shared_ptr<ConferenceParticipantEvent> &event,
                                                BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	participants.insert({addr.asString(), false});
-	participantDevices.insert({addr.asString(), 0});
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	participants.insert({addr->toString(), false});
+	participantDevices.insert({addr->toString(), 0});
 }
 
 void ConferenceEventTester::onParticipantRemoved(const shared_ptr<ConferenceParticipantEvent> &event,
                                                  BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	participants.erase(addr.asString());
-	participantDevices.erase(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	participants.erase(addr->toString());
+	participantDevices.erase(addr->toString());
 }
 
 void ConferenceEventTester::onParticipantSetAdmin(const shared_ptr<ConferenceParticipantEvent> &event,
                                                   BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	auto it = participants.find(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	auto it = participants.find(addr->toString());
 	if (it != participants.end()) it->second = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
 }
 
@@ -826,22 +826,22 @@ void ConferenceEventTester::onSubjectChanged(const shared_ptr<ConferenceSubjectE
 
 void ConferenceEventTester::onParticipantDeviceAdded(const shared_ptr<ConferenceParticipantDeviceEvent> &event,
                                                      BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	auto it = participantDevices.find(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	auto it = participantDevices.find(addr->toString());
 	if (it != participantDevices.end()) it->second++;
 }
 
 void ConferenceEventTester::onParticipantDeviceRemoved(const shared_ptr<ConferenceParticipantDeviceEvent> &event,
                                                        BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	auto it = participantDevices.find(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	auto it = participantDevices.find(addr->toString());
 	if (it != participantDevices.end() && it->second > 0) it->second--;
 }
 
 class LocalConferenceTester : public LocalConference {
 public:
 	LocalConferenceTester(const std::shared_ptr<Core> &core,
-	                      const IdentityAddress &myAddress,
+	                      const std::shared_ptr<Address> &myAddress,
 	                      CallSessionListener *listener)
 	    : LocalConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {
 	}
@@ -852,7 +852,7 @@ public:
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::addParticipant;
-	bool addParticipant(const IdentityAddress &addr) override {
+	bool addParticipant(const std::shared_ptr<Address> &addr) override {
 		bool status = LocalConference::addParticipant(addr);
 		std::shared_ptr<Participant> p = findParticipant(addr);
 		p->addDevice(addr);
@@ -908,26 +908,26 @@ public:
 void ConferenceListenerInterfaceTester::onParticipantAdded(
     const shared_ptr<ConferenceParticipantEvent> &event,
     BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	participants.insert({addr.asString(), false});
-	participantDevices.insert({addr.asString(), 0});
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	participants.insert({addr->toString(), false});
+	participantDevices.insert({addr->toString(), 0});
 	lastNotify++;
 }
 
 void ConferenceListenerInterfaceTester::onParticipantRemoved(
     const shared_ptr<ConferenceParticipantEvent> &event,
     BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	participants.erase(addr.asString());
-	participantDevices.erase(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	participants.erase(addr->toString());
+	participantDevices.erase(addr->toString());
 	lastNotify++;
 }
 
 void ConferenceListenerInterfaceTester::onParticipantSetAdmin(
     const shared_ptr<ConferenceParticipantEvent> &event,
     BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	auto it = participants.find(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	auto it = participants.find(addr->toString());
 	if (it != participants.end()) it->second = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
 	lastNotify++;
 }
@@ -940,8 +940,8 @@ void ConferenceListenerInterfaceTester::onSubjectChanged(const shared_ptr<Confer
 void ConferenceListenerInterfaceTester::onParticipantDeviceAdded(
     const shared_ptr<ConferenceParticipantDeviceEvent> &event,
     BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	auto it = participantDevices.find(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	auto it = participantDevices.find(addr->toString());
 	if (it != participantDevices.end()) it->second++;
 	lastNotify++;
 }
@@ -949,13 +949,14 @@ void ConferenceListenerInterfaceTester::onParticipantDeviceAdded(
 void ConferenceListenerInterfaceTester::onParticipantDeviceRemoved(
     const shared_ptr<ConferenceParticipantDeviceEvent> &event,
     BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {
-	const IdentityAddress addr = event->getParticipantAddress();
-	auto it = participantDevices.find(addr.asString());
+	const std::shared_ptr<Address> addr = event->getParticipantAddress();
+	auto it = participantDevices.find(addr->toString());
 	if (it != participantDevices.end() && it->second > 0) it->second--;
 	lastNotify++;
 }
 
-static void setParticipantAsAdmin(shared_ptr<LocalConferenceTester> localConf, Address addr, bool isAdmin) {
+static void
+setParticipantAsAdmin(shared_ptr<LocalConferenceTester> localConf, std::shared_ptr<Address> addr, bool isAdmin) {
 	shared_ptr<Participant> p = localConf->findParticipant(addr);
 	p->setAdmin(isAdmin);
 	localConf->notifyParticipantSetAdmin(time(nullptr), false, p, isAdmin);
@@ -964,9 +965,7 @@ static void setParticipantAsAdmin(shared_ptr<LocalConferenceTester> localConf, A
 void first_notify_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -974,7 +973,7 @@ void first_notify_parsing() {
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 
 	snprintf(notify, size, first_notify, confUri);
 
@@ -1011,9 +1010,7 @@ void first_notify_parsing() {
 void first_notify_with_extensions_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1021,7 +1018,7 @@ void first_notify_with_extensions_parsing() {
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 
 	snprintf(notify, size, first_notify, confUri);
 
@@ -1058,9 +1055,7 @@ void first_notify_with_extensions_parsing() {
 void first_notify_parsing_wrong_conf() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, "sips:conf322@example.com");
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1068,7 +1063,7 @@ void first_notify_parsing_wrong_conf() {
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
 
 	Content content;
@@ -1098,9 +1093,7 @@ void first_notify_parsing_wrong_conf() {
 void participant_added_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1111,7 +1104,7 @@ void participant_added_parsing() {
 	size_t size2 = strlen(participant_added_notify) + strlen(confUri);
 	char *notify_added = new char[size2];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
 
 	Content content;
@@ -1161,9 +1154,7 @@ void participant_not_added_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	setup_mgr_for_conference(marie, NULL);
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1178,9 +1169,9 @@ void participant_not_added_parsing() {
 	size_t size4 = strlen(participant_device_not_added_notify) + strlen(confUri) + sizeof(int);
 	char *notify_device_not_added = new char[size4];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getLocalAddress()) =
-	    ConferenceAddress(linphone_core_get_identity(marie->lc));
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId())
+	    .setLocalAddress(Address::create(linphone_core_get_identity(marie->lc)));
 	snprintf(notify, size, first_notify, confUri);
 
 	Content content;
@@ -1263,9 +1254,7 @@ void participant_not_added_parsing() {
 void participant_deleted_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1275,7 +1264,7 @@ void participant_deleted_parsing() {
 	size_t size2 = strlen(participant_deleted_notify) + strlen(confUri);
 	char *notify_deleted = new char[size2];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
 
 	Content content;
@@ -1320,9 +1309,7 @@ void participant_deleted_parsing() {
 void participant_admined_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1332,7 +1319,7 @@ void participant_admined_parsing() {
 	size_t size2 = strlen(participant_admined_notify) + strlen(confUri);
 	char *notify_admined = new char[size2];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
 
 	Content content;
@@ -1376,9 +1363,7 @@ void participant_admined_parsing() {
 void participant_unadmined_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
-	char *confAddressStr = linphone_address_as_string(confAddress);
-	Address addr(confAddressStr);
-	bctbx_free(confAddressStr);
+	std::shared_ptr<Address> addr = Address::toCpp(confAddress)->getSharedFromThis();
 	linphone_address_unref(confAddress);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1388,7 +1373,7 @@ void participant_unadmined_parsing() {
 	size_t size2 = strlen(participant_unadmined_notify) + strlen(confUri);
 	char *notify_unadmined = new char[size2];
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
 
 	Content content;
@@ -1433,9 +1418,7 @@ void send_first_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	shared_ptr<LocalConference> localConf =
 	    make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc));
@@ -1443,14 +1426,10 @@ void send_first_notify() {
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 
 	localConf->addParticipant(bobAddr);
@@ -1460,19 +1439,19 @@ void send_first_notify() {
 	alice->setAdmin(true);
 
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 	Content content = localHandler->createNotifyFullState(NULL);
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 
 	tester->handler->notifyReceived(content);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "A random test subject");
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddr->toString()) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddr->toString()) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddr->toString())->second);
 
 	tester = nullptr;
 	localConf = nullptr;
@@ -1485,41 +1464,33 @@ void send_added_notify_through_address() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<LocalConferenceTester> localConf =
 	    make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 	LinphoneAddress *cFrankAddr = linphone_core_interpret_url(marie->lc, frankUri);
-	char *frankAddrStr = linphone_address_as_string(cFrankAddr);
-	Address frankAddr(frankAddrStr);
-	bctbx_free(frankAddrStr);
+	std::shared_ptr<Address> frankAddr = Address::toCpp(cFrankAddr)->getSharedFromThis();
 	linphone_address_unref(cFrankAddr);
 
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
@@ -1527,13 +1498,13 @@ void send_added_notify_through_address() {
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 3, int, "%d");
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 3, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(frankAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(frankAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
-	BC_ASSERT_TRUE(!confListener->participants.find(frankAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(frankAddr->toString())->second);
 
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
@@ -1609,7 +1580,8 @@ remove_participant_from_conference_through_call(bctbx_list_t **removed_mgrs,
 
 	if (participantCall) {
 		const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
-		std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
+		std::string participantUri =
+		    Address::toCpp(const_cast<LinphoneAddress *>(cParticipantAddress))->asStringUriOnly();
 		BC_ASSERT_TRUE(confListener->participants.find(participantUri) == confListener->participants.end());
 	}
 
@@ -1827,7 +1799,8 @@ add_participant_to_conference_through_call(bctbx_list_t **mgrs,
 	if (participantCall) {
 		const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
 
-		std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
+		std::string participantUri =
+		    Address::toCpp(const_cast<LinphoneAddress *>(cParticipantAddress))->asStringUriOnly();
 
 		BC_ASSERT_TRUE(confListener->participants.find(participantUri) != confListener->participants.end());
 
@@ -1874,9 +1847,7 @@ void send_added_notify_through_call() {
 	bctbx_list_t *mgrs = NULL;
 	mgrs = bctbx_list_append(mgrs, pauline);
 
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	stats initialPaulineStats = pauline->stat;
 	{
 		shared_ptr<MediaConference::LocalConference> localConf = std::shared_ptr<MediaConference::LocalConference>(
@@ -1947,9 +1918,7 @@ void send_removed_notify_through_call() {
 
 	bctbx_list_t *removed_mgrs = NULL;
 
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	stats initialPaulineStats = pauline->stat;
 
 	{
@@ -2036,37 +2005,31 @@ void send_removed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<LocalConferenceTester> localConf =
 	    make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
@@ -2074,10 +2037,10 @@ void send_removed_notify() {
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 1, int, "%d");
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 1, int, "%d");
-	BC_ASSERT_FALSE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_FALSE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
 	localConf = nullptr;
@@ -2089,47 +2052,41 @@ void send_admined_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<LocalConferenceTester> localConf =
 	    make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
 	localConf->notifyParticipantSetAdmin(time(nullptr), false, localConf->findParticipant(bobAddr), true);
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString())->second);
 
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
@@ -2142,46 +2099,40 @@ void send_unadmined_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<LocalConferenceTester> localConf =
 	    make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
 	localConf->notifyParticipantSetAdmin(time(nullptr), false, localConf->findParticipant(aliceAddr), false);
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(aliceAddr.asString())->second);
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(aliceAddr->toString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
 	localConf = nullptr;
@@ -2193,38 +2144,32 @@ void send_subject_changed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<LocalConferenceTester> localConf =
 	    make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	localConf->setSubject("A random test subject");
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_STRING_EQUAL(confListener->confSubject.c_str(), "A random test subject");
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
@@ -2232,11 +2177,11 @@ void send_subject_changed_notify() {
 
 	BC_ASSERT_STRING_EQUAL(confListener->confSubject.c_str(), "Another random test subject...");
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(bobAddr->toString()) != confListener->participants.end());
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString()) != confListener->participants.end());
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
 	localConf = nullptr;
@@ -2252,51 +2197,48 @@ void send_device_added_notify() {
 	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
 	linphone_core_cbs_unref(cbs);
 
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<LocalConferenceTester> localConf =
 	    make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(pauline->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(pauline->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
-	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) !=
+	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr->toString()) !=
 	               confListener->participantDevices.end());
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 0, int, "%d");
+	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr->toString()) !=
+	               confListener->participantDevices.end());
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr->toString())->second, 0, int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr->toString())->second, 0, int, "%d");
+
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 
 	localConf->notifyParticipantDeviceAdded(time(nullptr), false, alice, alice->findDevice(aliceAddr));
 
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
-	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) !=
+	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr->toString()) !=
 	               confListener->participantDevices.end());
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 1, int, "%d");
+	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr->toString()) !=
+	               confListener->participantDevices.end());
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr->toString())->second, 0, int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr->toString())->second, 1, int, "%d");
 	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
-	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
+	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr->toString())->second);
+	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr->toString())->second);
 
 	for (const auto &p : localConf->getParticipants()) {
 		for (const auto &d : p->getDevices()) {
@@ -2309,12 +2251,12 @@ void send_device_added_notify() {
 	auto op = new SalSubscribeOp(pauline->lc->sal.get());
 	SalAddress *toAddr = sal_address_new(linphone_core_get_identity(pauline->lc));
 	op->setToAddress(toAddr);
-	op->setFrom(bobAddr.asString().c_str());
-	op->overrideRemoteContact(bobAddr.asString().c_str());
+	op->setFrom(bobAddr->toString().c_str());
+	op->overrideRemoteContact(bobAddr->toString().c_str());
 	LinphoneAccount *default_account = linphone_core_get_default_account(pauline->lc);
 	op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(default_account)));
 	const LinphoneAddress *contact = linphone_account_get_contact_address(default_account);
-	SalAddress *contactAddr = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
+	SalAddress *contactAddr = sal_address_clone(Address::toCpp(const_cast<LinphoneAddress *>(contact))->getImpl());
 	op->setContactAddress(contactAddr);
 	SalCustomHeader *ch =
 	    sal_custom_header_append(NULL, "Last-Notify-Version", std::to_string(localConf->getLastNotify() + 10).c_str());
@@ -2350,23 +2292,17 @@ void send_device_added_notify() {
 void send_device_removed_notify() {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<LocalConferenceTester> localConf =
 	    make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener =
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(pauline->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(pauline->lc, aliceUri);
-	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
-	Address aliceAddr(aliceAddrStr);
-	bctbx_free(aliceAddrStr);
+	std::shared_ptr<Address> aliceAddr = Address::toCpp(cAliceAddr)->getSharedFromThis();
 	linphone_address_unref(cAliceAddr);
 
 	localConf->addParticipant(bobAddr);
@@ -2374,32 +2310,35 @@ void send_device_removed_notify() {
 	localConf->setSubject("A random test subject");
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
-	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) !=
+	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr->toString()) !=
 	               confListener->participantDevices.end());
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 0, int, "%d");
+	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr->toString()) !=
+	               confListener->participantDevices.end());
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr->toString())->second, 0, int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr->toString())->second, 0, int, "%d");
 
 	localConf->notifyParticipantDeviceAdded(time(nullptr), false, alice, alice->findDevice(aliceAddr));
 
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
-	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) !=
+	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr->toString()) !=
 	               confListener->participantDevices.end());
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 1, int, "%d");
+	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr->toString()) !=
+	               confListener->participantDevices.end());
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr->toString())->second, 0, int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr->toString())->second, 1, int, "%d");
 
 	localConf->notifyParticipantDeviceRemoved(time(nullptr), false, alice, alice->findDevice(aliceAddr));
 
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
-	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) !=
+	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr->toString()) !=
 	               confListener->participantDevices.end());
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
-	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 0, int, "%d");
+	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr->toString()) !=
+	               confListener->participantDevices.end());
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr->toString())->second, 0, int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr->toString())->second, 0, int, "%d");
 
 	localConf = nullptr;
 	alice = nullptr;
@@ -2410,9 +2349,7 @@ void one_to_one_keyword() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
+	std::shared_ptr<Address> addr = Address::toCpp(pauline->identity)->getSharedFromThis();
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
 	shared_ptr<LocalConference> localConf =
 	    make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc));
@@ -2420,9 +2357,7 @@ void one_to_one_keyword() {
 	    std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
-	char *bobAddrStr = linphone_address_as_string(cBobAddr);
-	Address bobAddr(bobAddrStr);
-	bctbx_free(bobAddrStr);
+	std::shared_ptr<Address> bobAddr = Address::toCpp(cBobAddr)->getSharedFromThis();
 	linphone_address_unref(cBobAddr);
 
 	// Create basic chat room with OneToOne capability to ensure that one to one is added to notify
@@ -2430,16 +2365,16 @@ void one_to_one_keyword() {
 
 	localConf->addParticipant(bobAddr);
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
-	localConf->setConferenceAddress(ConferenceAddress(addr));
+	localConf->setConferenceAddress(addr);
 	Content content = localHandler->createNotifyFullState(NULL);
 
-	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceId &>(tester->handler->getConferenceId()).setPeerAddress(addr);
 
 	tester->handler->notifyReceived(content);
 
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 1, int, "%d");
-	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
-	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
+	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr->toString()) != tester->participantDevices.end());
+	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr->toString())->second, 0, int, "%d");
 	BC_ASSERT_TRUE(tester->oneToOne);
 
 	tester = nullptr;

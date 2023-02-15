@@ -22,13 +22,12 @@
 
 #include "bellesip_sal/sal_impl.h"
 #include "content/content-manager.h"
+#include "linphone/utils/utils.h"
 #include "offeranswer.h"
 #include "sal/call-op.h"
 
-#include <bctoolbox/defs.h>
+#include <belle-sip/defs.h>
 #include <belle-sip/provider.h>
-
-#include "linphone/utils/utils.h"
 
 using namespace std;
 

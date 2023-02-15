@@ -231,9 +231,9 @@ string PushNotificationConfig::asString(bool withRemoteSpecificParams) const {
 }
 
 void PushNotificationConfig::readPushParamsFromString(string const &serializedConfig) {
-	Address pushParamsWrapper("sip:dummy;" + serializedConfig);
+	std::shared_ptr<Address> pushParamsWrapper = Address::create("sip:dummy;" + serializedConfig);
 	for (auto &param : mPushParams) {
-		string paramValue = pushParamsWrapper.getUriParamValue(param.first);
+		string paramValue = pushParamsWrapper->getUriParamValue(param.first);
 		if (!paramValue.empty()) param.second = paramValue;
 	}
 }

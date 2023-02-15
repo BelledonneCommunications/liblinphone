@@ -69,8 +69,9 @@ public:
 
 	void setDirection(ChatMessage::Direction dir);
 
-	void
-	setParticipantState(const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
+	void setParticipantState(const std::shared_ptr<Address> &participantAddress,
+	                         ChatMessage::State newState,
+	                         time_t stateChangeTime);
 
 	virtual void setState(ChatMessage::State newState);
 	void forceState(ChatMessage::State newState) {
@@ -88,7 +89,7 @@ public:
 	void setImdnMessageId(const std::string &imdnMessageId);
 
 	void setForwardInfo(const std::string &fInfo);
-	void setReplyToMessageIdAndSenderAddress(const std::string &id, const IdentityAddress &sender);
+	void setReplyToMessageIdAndSenderAddress(const std::string &id, const std::shared_ptr<Address> &sender);
 
 	void enableEphemeralWithTime(long time);
 
@@ -96,20 +97,20 @@ public:
 
 	void startEphemeralCountDown();
 
-	void setAuthenticatedFromAddress(const IdentityAddress &authenticatedFromAddress) {
+	void setAuthenticatedFromAddress(const Address &authenticatedFromAddress) {
 		this->authenticatedFromAddress = authenticatedFromAddress;
 	}
 
-	void forceFromAddress(const ConferenceAddress &fromAddress) {
+	void forceFromAddress(const std::shared_ptr<Address> &fromAddress) {
 		this->fromAddress = fromAddress;
 	}
 
-	void forceToAddress(const ConferenceAddress &toAddress) {
+	void forceToAddress(const std::shared_ptr<Address> &toAddress) {
 		this->toAddress = toAddress;
 	}
 
 	// Used by the ConferenceScheduler to keep track of the recipient Address in One-To-One Flexisip chat room
-	void setRecipientAddress(const IdentityAddress &recipientAddress) {
+	void setRecipientAddress(const std::shared_ptr<Address> &recipientAddress) {
 		this->recipientAddress = recipientAddress;
 	}
 
@@ -291,18 +292,18 @@ private:
 
 	std::weak_ptr<AbstractChatRoom> chatRoom;
 	ConferenceId conferenceId;
-	ConferenceAddress fromAddress;
-	IdentityAddress authenticatedFromAddress;
+	std::shared_ptr<Address> fromAddress;
+	Address authenticatedFromAddress;
 	bool senderAuthenticationEnabled = true;
 	bool unencryptedContentWarning = false;
-	ConferenceAddress toAddress;
+	std::shared_ptr<Address> toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
 	std::string forwardInfo;
 	std::string replyingToMessageId;
-	IdentityAddress replyingToMessageSender;
-	IdentityAddress recipientAddress;
+	std::shared_ptr<Address> replyingToMessageSender;
+	std::shared_ptr<Address> recipientAddress;
 
 	bool isEphemeral = false;
 	long ephemeralLifetime = 0;

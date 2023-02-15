@@ -17,14 +17,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <fstream>
 #include <iostream>
 #include <list>
 
-#include <linphone++/linphone.hh>
-
 #include "bctoolbox/logging.h"
+
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "liblinphone_tester.h"
@@ -32,6 +30,7 @@
 #include "linphone/wrapper_utils.h"
 #include "payload-type/payload-type.h"
 #include "tester_utils.h"
+#include <linphone++/linphone.hh>
 
 static void create_chat_room() {
 	// Init from C

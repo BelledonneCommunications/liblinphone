@@ -22,9 +22,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "call-session-params-p.h"
-#include "call-session-params.h"
 #include "core/core-p.h"
-
 #include "linphone/core.h"
 #include "linphone/proxy_config.h"
 

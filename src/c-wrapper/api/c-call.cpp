@@ -64,8 +64,8 @@ LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call) {
 	return Call::toCpp(call)->getOp();
 }
 
-LinphoneProxyConfig *linphone_call_get_dest_proxy(const LinphoneCall *call) {
-	return Call::toCpp(call)->getDestProxy();
+LinphoneAccount *linphone_call_get_dest_account(const LinphoneCall *call) {
+	return Call::toCpp(call)->getDestAccount()->toC();
 }
 
 IceSession *linphone_call_get_ice_session(const LinphoneCall *call) {
@@ -177,15 +177,15 @@ bool_t linphone_call_asked_to_autoanswer(LinphoneCall *call) {
 }
 
 const LinphoneAddress *linphone_call_get_remote_address(const LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(Call::toCpp(call)->getRemoteAddress());
+	return Call::toCpp(call)->getRemoteAddress()->toC();
 }
 
 const LinphoneAddress *linphone_call_get_to_address(const LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getToAddress());
+	return Call::toCpp(call)->getToAddress()->toC();
 }
 
 const LinphoneAddress *linphone_call_get_request_address(const LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getActiveSession()->getRequestAddress());
+	return Call::toCpp(call)->getActiveSession()->getRequestAddress()->toC();
 }
 
 const char *linphone_call_get_to_header(const LinphoneCall *call, const char *name) {
@@ -198,8 +198,8 @@ char *linphone_call_get_remote_address_as_string(const LinphoneCall *call) {
 }
 
 const LinphoneAddress *linphone_call_get_diversion_address(const LinphoneCall *call) {
-	const LinphonePrivate::Address &diversionAddress = Call::toCpp(call)->getDiversionAddress();
-	return diversionAddress.isValid() ? L_GET_C_BACK_PTR(&diversionAddress) : nullptr;
+	const auto &diversionAddress = Call::toCpp(call)->getDiversionAddress();
+	return diversionAddress && diversionAddress->isValid() ? diversionAddress->toC() : nullptr;
 }
 
 LinphoneCallDir linphone_call_get_dir(const LinphoneCall *call) {
@@ -215,8 +215,8 @@ const char *linphone_call_get_refer_to(const LinphoneCall *call) {
 }
 
 LinphoneAddress *linphone_call_get_refer_to_address(const LinphoneCall *call) {
-	const LinphonePrivate::Address &referToAddress = Call::toCpp(call)->getReferToAddress();
-	return referToAddress.isValid() ? L_GET_C_BACK_PTR(&referToAddress) : nullptr;
+	const auto &referToAddress = Call::toCpp(call)->getReferToAddress();
+	return referToAddress && referToAddress->isValid() ? referToAddress->toC() : nullptr;
 }
 
 bool_t linphone_call_has_transfer_pending(const LinphoneCall *call) {
@@ -387,8 +387,8 @@ LinphoneStatus linphone_call_redirect(LinphoneCall *call, const char *redirect_u
 	return Call::toCpp(call)->redirect(redirect_uri);
 }
 
-LinphoneStatus linphone_call_redirect_to(LinphoneCall *call, const LinphoneAddress *redirect_address) {
-	return Call::toCpp(call)->redirect(*L_GET_CPP_PTR_FROM_C_OBJECT(redirect_address));
+LinphoneStatus linphone_call_redirect_to(LinphoneCall *call, LinphoneAddress *redirect_address) {
+	return Call::toCpp(call)->redirect(Address::toCpp(redirect_address)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_call_decline(LinphoneCall *call, LinphoneReason reason) {
@@ -431,8 +431,8 @@ LinphoneStatus linphone_call_transfer(LinphoneCall *call, const char *referTo) {
 	return Call::toCpp(call)->transfer(referTo);
 }
 
-LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, const LinphoneAddress *referTo) {
-	return Call::toCpp(call)->transfer(*L_GET_CPP_PTR_FROM_C_OBJECT(referTo));
+LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, LinphoneAddress *referTo) {
+	return Call::toCpp(call)->transfer(Address::toCpp(referTo)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_call_transfer_to_another(LinphoneCall *call, LinphoneCall *dest) {
@@ -621,9 +621,10 @@ LinphoneCall *linphone_call_new_outgoing(LinphoneCore *lc,
                                          const LinphoneAddress *to,
                                          const LinphoneCallParams *params,
                                          LinphoneProxyConfig *cfg) {
-	LinphoneCall *lcall =
-	    Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing, *L_GET_CPP_PTR_FROM_C_OBJECT(from),
-	                        *L_GET_CPP_PTR_FROM_C_OBJECT(to), cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
+	                                          Address::toCpp(const_cast<LinphoneAddress *>(from))->getSharedFromThis(),
+	                                          Address::toCpp(const_cast<LinphoneAddress *>(to))->getSharedFromThis(),
+	                                          cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
 
 	return lcall;
 }
@@ -632,9 +633,10 @@ LinphoneCall *linphone_call_new_incoming(LinphoneCore *lc,
                                          const LinphoneAddress *from,
                                          const LinphoneAddress *to,
                                          LinphonePrivate::SalCallOp *op) {
-	LinphoneCall *lcall =
-	    Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming, *L_GET_CPP_PTR_FROM_C_OBJECT(from),
-	                        *L_GET_CPP_PTR_FROM_C_OBJECT(to), nullptr, op, nullptr);
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming,
+	                                          Address::toCpp(const_cast<LinphoneAddress *>(from))->getSharedFromThis(),
+	                                          Address::toCpp(const_cast<LinphoneAddress *>(to))->getSharedFromThis(),
+	                                          nullptr, op, nullptr);
 	Call::toCpp(lcall)->initiateIncoming();
 	return lcall;
 }

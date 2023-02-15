@@ -175,8 +175,10 @@ static uint8_t are_metrics_filled(const reporting_content_metrics_t *rm) {
 }
 
 static bool_t quality_reporting_enabled(const LinphoneCall *call) {
-	return (Call::toCpp(call)->getDestProxy() &&
-	        linphone_proxy_config_quality_reporting_enabled(Call::toCpp(call)->getDestProxy()));
+	const auto &account = Call::toCpp(call)->getDestAccount();
+	if (!account) return false;
+	const auto &accountParams = account->getAccountParams();
+	return (accountParams) ? accountParams->getQualityReportingEnabled() : false;
 }
 
 static bool_t media_report_enabled(LinphoneCall *call, int stats_type) {
@@ -315,6 +317,8 @@ static int send_report(LinphoneCall *call, reporting_session_report_t *report, c
 	const char *collector_uri;
 	char *collector_uri_allocated = NULL;
 	const SalAddress *salAddress;
+	const LinphoneAccount *dest_account = NULL;
+	const LinphoneAccountParams *dest_account_params = NULL;
 
 	/*if we are on a low bandwidth network, do not send reports to not overload it*/
 	if (linphone_call_params_low_bandwidth_enabled(linphone_call_get_current_params(call))) {
@@ -397,10 +401,12 @@ static int send_report(LinphoneCall *call, reporting_session_report_t *report, c
 		Call::toCpp(call)->getLog()->getQualityReporting()->on_report_sent(call, type, content);
 	}
 
-	collector_uri = linphone_proxy_config_get_quality_reporting_collector(linphone_call_get_dest_proxy(call));
+	dest_account = linphone_call_get_dest_account(call);
+	dest_account_params = linphone_account_get_params(dest_account);
+	collector_uri = linphone_account_params_get_quality_reporting_collector(dest_account_params);
 	if (!collector_uri) {
 		collector_uri = collector_uri_allocated =
-		    ms_strdup_printf("sip:%s", linphone_proxy_config_get_domain(linphone_call_get_dest_proxy(call)));
+		    ms_strdup_printf("sip:%s", linphone_account_params_get_domain(dest_account_params));
 	}
 	request_uri = linphone_address_new(collector_uri);
 	lev = linphone_core_create_one_shot_publish(linphone_call_get_core(call), request_uri, "vq-rtcpxr");
@@ -408,7 +414,7 @@ static int send_report(LinphoneCall *call, reporting_session_report_t *report, c
 	 * (port, transport, maddr), then it is sent directly.
 	 * Otherwise it is routed as any LinphoneEvent publish, following proxy config policy.
 	 **/
-	salAddress = L_GET_CPP_PTR_FROM_C_OBJECT(request_uri)->getInternalAddress();
+	salAddress = LinphonePrivate::Address::toCpp(request_uri)->getImpl();
 	if (sal_address_has_uri_param(salAddress, "transport") || sal_address_has_uri_param(salAddress, "maddr") ||
 	    linphone_address_get_port(request_uri) != 0) {
 		ms_message("Publishing report with custom route %s", collector_uri);
@@ -567,13 +573,15 @@ void linphone_reporting_update_media_info(LinphoneCall *call, int stats_type) {
 	             ms_strdup_printf("%s-%s-%s", dialogId.c_str(), "remote",
 	                              report->remote_metrics.user_agent ? report->remote_metrics.user_agent : ""));
 
+	char *from = ms_strdup(L_STRING_TO_C(log->getFromAddress()->toString()));
+	char *to = ms_strdup(L_STRING_TO_C(log->getToAddress()->toString()));
 	if (Call::toCpp(call)->getDirection() == LinphoneCallIncoming) {
-		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->getFromAddress()));
-		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->getToAddress()));
+		STR_REASSIGN(report->info.remote_addr.id, from);
+		STR_REASSIGN(report->info.local_addr.id, to);
 		STR_REASSIGN(report->info.orig_id, ms_strdup(report->info.remote_addr.id));
 	} else {
-		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->getToAddress()));
-		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->getFromAddress()));
+		STR_REASSIGN(report->info.remote_addr.id, to);
+		STR_REASSIGN(report->info.local_addr.id, from);
 		STR_REASSIGN(report->info.orig_id, ms_strdup(report->info.local_addr.id));
 	}
 
@@ -658,7 +666,9 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 
 	if (!media_report_enabled(call, stats_type)) return;
 
-	report_interval = linphone_proxy_config_get_quality_reporting_interval(Call::toCpp(call)->getDestProxy());
+	const auto &account = Call::toCpp(call)->getDestAccount();
+	const auto &accountParams = account ? account->getAccountParams() : nullptr;
+	report_interval = (accountParams) ? accountParams->getQualityReportingInterval() : -1;
 
 	if (_linphone_call_stats_get_updated(stats) == LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
 		metrics = &report->remote_metrics;

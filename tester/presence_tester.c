@@ -59,7 +59,6 @@ static bool_t subscribe_to_callee_presence(LinphoneCoreManager *caller_mgr, Linp
 	linphone_friend_cbs_unref(cbs);
 
 	linphone_core_add_friend(caller_mgr->lc, friend);
-
 	result = wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_LinphonePresenceActivityOnline,
 	                  initial_caller.number_of_LinphonePresenceActivityOnline + 1);
 	/*without proxy, callee cannot subscribe to caller

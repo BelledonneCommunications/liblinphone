@@ -95,7 +95,7 @@ LINPHONE_PUBLIC void *linphone_account_params_get_user_data(const LinphoneAccoun
  * @return 0 if successful, -1 otherwise.
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_address(LinphoneAccountParams *params,
-                                                                          const LinphoneAddress *server_address);
+                                                                          LinphoneAddress *server_address);
 
 /**
  * Sets the proxy address
@@ -125,7 +125,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_addr(LinphoneA
  * @return 0 if successful, -1 otherwise.
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params,
-                                                                            const LinphoneAddress *identity);
+                                                                            LinphoneAddress *identity);
 
 /**
  * Sets a list of SIP route.
@@ -324,7 +324,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_realm(LinphoneAccountParams *pa
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The list of routes. \bctbx_list{LinphoneAddress} @maybenil
  */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params);
+LINPHONE_PUBLIC bctbx_list_t *linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params);
 
 /**
  * Get the identity address of the account params.
@@ -601,7 +601,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_conference_factory_uri(Linphone
  * @param uri The uri of the audio video conference factory. @maybenil
  */
 LINPHONE_PUBLIC void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
-                                                                                        const LinphoneAddress *address);
+                                                                                        LinphoneAddress *address);
 
 /**
  * If enabled, the proxy will be used as the only route.
@@ -804,7 +804,7 @@ LINPHONE_PUBLIC const char *linphone_account_params_get_custom_param(const Linph
  * @param contact a #LinphoneAddress the optional alternative contact address. @maybenil
  */
 LINPHONE_PUBLIC void linphone_account_params_set_custom_contact(LinphoneAccountParams *params,
-                                                                const LinphoneAddress *contact);
+                                                                LinphoneAddress *contact);
 
 /**
  * Get the custom contact address previously used when registering to the SIP server.

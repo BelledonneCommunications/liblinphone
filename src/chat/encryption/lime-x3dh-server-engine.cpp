@@ -21,9 +21,9 @@
 #include "lime-x3dh-server-engine.h"
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/exception.hh"
-#include "c-wrapper/c-wrapper.h"
 #include <bctoolbox/defs.h>
 
+#include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
@@ -34,6 +34,7 @@
 #include "content/header/header-param.h"
 #include "core/core.h"
 #include "factory/factory.h"
+#include "lime-x3dh-server-engine.h"
 #include "private.h"
 
 using namespace std;
@@ -56,7 +57,7 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
                                                        BCTBX_UNUSED(int &errorCode)) {
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &toDeviceId = message->getToAddress().asString();
+	const string &toDeviceId = message->getToAddress()->asStringUriOnly();
 	const Content *internalContent;
 
 	// Check if chatroom is encrypted or not

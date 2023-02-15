@@ -39,7 +39,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 RemoteConference::RemoteConference(const shared_ptr<Core> &core,
-                                   const IdentityAddress &myAddress,
+                                   const std::shared_ptr<Address> &myAddress,
                                    CallSessionListener *listener,
                                    const std::shared_ptr<ConferenceParams> params)
     : Conference(core, myAddress, listener, params) {
@@ -69,23 +69,23 @@ bool RemoteConference::isIn() const {
 std::shared_ptr<Call> RemoteConference::getCall() const {
 	auto session = getMainSession();
 	if (session) {
-		return getCore()->getCallByRemoteAddress(*session->getRemoteAddress());
+		return getCore()->getCallByRemoteAddress(session->getRemoteAddress());
 	}
 	return nullptr;
 }
 
 // -----------------------------------------------------------------------------
 
-void RemoteConference::onConferenceCreated(const ConferenceAddress &) {
+void RemoteConference::onConferenceCreated(const std::shared_ptr<Address> &) {
 }
 
-void RemoteConference::onConferenceTerminated(const IdentityAddress &) {
+void RemoteConference::onConferenceTerminated(const std::shared_ptr<Address> &) {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler->unsubscribe();
 #endif
 }
 
-void RemoteConference::onFirstNotifyReceived(const IdentityAddress &) {
+void RemoteConference::onFirstNotifyReceived(const std::shared_ptr<Address> &) {
 }
 
 void RemoteConference::onParticipantAdded(BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event),

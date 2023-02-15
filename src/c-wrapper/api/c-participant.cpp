@@ -48,8 +48,8 @@ void linphone_participant_set_user_data(LinphoneParticipant *participant, void *
 }
 
 const LinphoneAddress *linphone_participant_get_address(const LinphoneParticipant *participant) {
-	const LinphonePrivate::Address &addr = LinphonePrivate::Participant::toCpp(participant)->getAddress().asAddress();
-	return L_GET_C_BACK_PTR(&addr);
+	const auto &addr = LinphonePrivate::Participant::toCpp(participant)->getAddress();
+	return addr->toC();
 }
 
 bool_t linphone_participant_is_admin(const LinphoneParticipant *participant) {
@@ -82,11 +82,9 @@ LinphoneParticipantDevice *linphone_participant_find_device_2(const LinphonePart
 
 LinphoneParticipantDevice *linphone_participant_find_device(const LinphoneParticipant *participant,
                                                             const LinphoneAddress *address) {
-	char *addrStr = linphone_address_as_string(address);
-	LinphonePrivate::Address deviceAddress(addrStr);
-	bctbx_free(addrStr);
 	std::shared_ptr<LinphonePrivate::ParticipantDevice> device =
-	    LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress);
+	    LinphonePrivate::Participant::toCpp(participant)
+	        ->findDevice(LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(address))->getSharedFromThis());
 	if (device) {
 		return device->toC();
 	}

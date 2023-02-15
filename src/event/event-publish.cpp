@@ -66,23 +66,24 @@ EventPublish::EventPublish(const shared_ptr<Core> &core, LinphonePrivate::SalEve
 
 EventPublish::EventPublish(const shared_ptr<Core> &core,
                            const shared_ptr<Account> &account,
-                           const LinphoneAddress *resource,
+                           const std::shared_ptr<Address> resourceAddr,
                            const string &event,
                            int expires)
     : EventPublish(core, new SalPublishOp(core->getCCore()->sal.get()), event) {
-	if (!resource && account) resource = account->getAccountParams()->getIdentityAddress();
+	auto resource = resourceAddr;
+	if ((!resource || !resource->isValid()) && account) resource = account->getAccountParams()->getIdentityAddress();
 
 	setExpires(expires);
 	if (!account) {
 		auto coreAccount =
-		    Account::toCpp(linphone_core_lookup_known_account(core->getCCore(), resource))->getSharedFromThis();
+		    Account::toCpp(linphone_core_lookup_known_account(core->getCCore(), resource->toC()))->getSharedFromThis();
 		linphone_configure_op_with_account(
-		    core->getCCore(), mOp, resource, nullptr,
+		    core->getCCore(), mOp, resource->toC(), nullptr,
 		    !!linphone_config_get_int(core->getCCore()->config, "sip", "publish_msg_with_contact", 0),
 		    coreAccount->toC());
 	} else {
 		linphone_configure_op_with_account(
-		    core->getCCore(), mOp, resource, nullptr,
+		    core->getCCore(), mOp, resource->toC(), nullptr,
 		    !!linphone_config_get_int(core->getCCore()->config, "sip", "publish_msg_with_contact", 0), account->toC());
 	}
 
@@ -91,13 +92,13 @@ EventPublish::EventPublish(const shared_ptr<Core> &core,
 }
 
 EventPublish::EventPublish(const shared_ptr<Core> &core,
-                           const LinphoneAddress *resource,
+                           const std::shared_ptr<Address> resource,
                            const string &event,
                            int expires)
     : EventPublish(core, nullptr, resource, event, expires) {
 }
 
-EventPublish::EventPublish(const shared_ptr<Core> &core, const LinphoneAddress *resource, const string &event)
+EventPublish::EventPublish(const shared_ptr<Core> &core, const std::shared_ptr<Address> resource, const string &event)
     : EventPublish(core, resource, event, -1) {
 	setOneshot(true);
 	setUnrefWhenTerminated(true);

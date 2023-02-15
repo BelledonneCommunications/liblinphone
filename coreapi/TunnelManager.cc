@@ -18,19 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bctoolbox/defs.h"
-
-#include "TunnelManager.hh"
-
-#include "account/account.h"
-#include "linphone/core.h"
-#include "linphone/core_utils.h"
-#include "ortp/rtpsession.h"
-#include "private.h"
-#include "private_functions.h"
 #ifdef __ANDROID__
 #include <android/log.h>
 #endif
+
+#include "bctoolbox/defs.h"
+
+#include "ortp/rtpsession.h"
+
+#include "TunnelManager.hh"
+#include "account/account.h"
+#include "linphone/core.h"
+#include "linphone/core_utils.h"
+#include "private.h"
+#include "private_functions.h"
 
 belledonnecomm::TunnelManager *bcTunnel(const LinphoneTunnel *tunnel);
 

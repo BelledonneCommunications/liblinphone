@@ -28,7 +28,6 @@
 #include "sal/sal_media_description.h"
 #include "sal/sal_stream_bundle.h"
 #include "sal/sal_stream_configuration.h"
-
 #include "utils/payload-type-handler.h"
 
 static PayloadType *opus_match(BCTBX_UNUSED(MSOfferAnswerContext *ctx),

@@ -94,7 +94,7 @@ public:
 	}
 
 private:
-	list<IdentityAddress> invitedAddresses;
+	list<std::shared_ptr<Address>> invitedAddresses;
 
 	L_DECLARE_PUBLIC(ClientGroupToBasicChatRoom);
 };
@@ -105,7 +105,7 @@ ClientGroupToBasicChatRoom::ClientGroupToBasicChatRoom(const shared_ptr<ChatRoom
     : ProxyChatRoom(*new ClientGroupToBasicChatRoomPrivate, chatRoom) {
 }
 
-bool ClientGroupToBasicChatRoom::addParticipant(const IdentityAddress &participantAddress) {
+bool ClientGroupToBasicChatRoom::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	L_D();
 	if (getState() == ConferenceInterface::State::Instantiated) {
 		d->invitedAddresses.clear();
@@ -113,7 +113,8 @@ bool ClientGroupToBasicChatRoom::addParticipant(const IdentityAddress &participa
 	}
 	return ProxyChatRoom::addParticipant(participantAddress);
 }
-bool ClientGroupToBasicChatRoom::addParticipants(const list<IdentityAddress> &addresses) {
+
+bool ClientGroupToBasicChatRoom::addParticipants(const list<std::shared_ptr<Address>> &addresses) {
 	L_D();
 	if ((getState() == ConferenceInterface::State::Instantiated) && (addresses.size() == 1))
 		d->invitedAddresses = addresses;

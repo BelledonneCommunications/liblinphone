@@ -151,13 +151,12 @@ bool MediaSessionPrivate::tryEnterConference() {
 	L_Q();
 
 	if (getOp() && getOp()->getContactAddress()) {
-		char *contactAddressStr = sal_address_as_string(getOp()->getContactAddress());
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
+		const auto contactAddress = q->getContactAddress();
 		const auto &confId = getConferenceId();
-		if (!confId.empty() && isInConference() && !contactAddress.hasParam("isfocus")) {
-			q->updateContactAddress(contactAddress);
-			ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
+		if (!confId.empty() && isInConference() && !contactAddress->hasParam("isfocus")) {
+			q->updateContactAddressInOp();
+			const auto updatedContactAddress = q->getContactAddress();
+			ConferenceId localConferenceId = ConferenceId(updatedContactAddress, updatedContactAddress);
 			shared_ptr<MediaConference::Conference> conference =
 			    q->getCore()->findAudioVideoConference(localConferenceId, false);
 			// If the call conference ID is not an empty string but no conference is linked to the call means that it
@@ -165,8 +164,8 @@ bool MediaSessionPrivate::tryEnterConference() {
 			if (conference) {
 				if (state == CallSession::State::Paused) {
 					// Resume call as it was added to conference
-					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address "
-					        << q->getRemoteAddress()->asString() << ") was added to conference "
+					lInfo() << "Media session (local address " << q->getLocalAddress()->toString() << " remote address "
+					        << q->getRemoteAddress()->toString() << ") was added to conference "
 					        << conference->getConferenceAddress()
 					        << " while the call was being paused. Resuming the session.";
 					q->resume();
@@ -177,8 +176,8 @@ bool MediaSessionPrivate::tryEnterConference() {
 					if (videoEnabled) {
 						newParams->enableRtpBundle(true);
 					}
-					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address "
-					        << q->getRemoteAddress()->asString() << ") was added to conference "
+					lInfo() << "Media session (local address " << q->getLocalAddress()->toString() << " remote address "
+					        << q->getRemoteAddress()->toString() << ") was added to conference "
 					        << conference->getConferenceAddress()
 					        << " while the call was establishing. Sending update to notify remote participant.";
 					q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
@@ -206,15 +205,14 @@ bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescr
 		const auto ownerIndexes = finalMd->getTransportOwnerIndexes();
 		bool isThereAnActiveOwner = false;
 		if (!ownerIndexes.empty()) {
-			for (const auto & idx : ownerIndexes) {
-				const auto & sd = finalMd->getStreamIdx(static_cast<unsigned int>(idx));
+			for (const auto &idx : ownerIndexes) {
+				const auto &sd = finalMd->getStreamIdx(static_cast<unsigned int>(idx));
 				isThereAnActiveOwner |= sd.enabled();
 			}
 			bundleOwnerRejected = !isThereAnActiveOwner;
 		}
 	}
 	return (finalMd->isEmpty() || incompatibleSecurity(finalMd) || bundleOwnerRejected);
-
 }
 
 void MediaSessionPrivate::accepted() {
@@ -292,10 +290,11 @@ void MediaSessionPrivate::accepted() {
 					nextState = CallSession::State::Paused;
 					nextStateMsg = "Call paused";
 				} else {
-					// The call always enters state PausedByRemote if all streams are rejected. This is done to support some clients who accept to stop the streams by setting the RTP port to 0
-					// If the call is part of a conference, then it shouldn't be paused if it is just trying to update the conference
-					if (!updatingConference && !localDesc->hasDir(SalStreamInactive)
-						&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
+					// The call always enters state PausedByRemote if all streams are rejected. This is done to support
+					// some clients who accept to stop the streams by setting the RTP port to 0 If the call is part of a
+					// conference, then it shouldn't be paused if it is just trying to update the conference
+					if (!updatingConference && !localDesc->hasDir(SalStreamInactive) &&
+					    (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
 						nextState = CallSession::State::PausedByRemote;
 						nextStateMsg = "Call paused by remote";
 					} else {
@@ -326,7 +325,7 @@ void MediaSessionPrivate::accepted() {
 		// to analyze what leads to this scenario
 		if (nbProcessingUpdates < 0) {
 			lFatal() << "The number of updates under processing for media session (local address "
-			         << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString()
+			         << q->getLocalAddress()->toString() << " remote address " << q->getRemoteAddress()->toString()
 			         << ") should be greater than or equal to 0. Currently it is " << nbProcessingUpdates;
 		}
 
@@ -631,9 +630,8 @@ void MediaSessionPrivate::updated(bool isUpdate) {
 	L_Q();
 
 	const std::shared_ptr<SalMediaDescription> &rmd = op->getRemoteMediaDescription();
-	char *remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-	Address remoteContactAddress(remoteContactAddressStr);
-	ms_free(remoteContactAddressStr);
+	std::shared_ptr<Address> remoteContactAddress = Address::create();
+	remoteContactAddress->setImpl(op->getRemoteContactAddress());
 
 	switch (state) {
 		case CallSession::State::PausedByRemote:
@@ -1046,10 +1044,13 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams(std::shared_ptr<SalMed
 	/* Handle AVPF, SRTP and DTLS */
 
 	getParams()->enableAvpf(hasAvpf(md));
-	if (destProxy)
-		getParams()->setAvpfRrInterval(
-		    static_cast<uint16_t>(linphone_proxy_config_get_avpf_rr_interval(destProxy) * 1000));
-	else getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(lc) * 1000));
+	const auto &account = getDestAccount();
+	uint16_t avpfRrInterval;
+	if (account) {
+		const auto accountParams = account->getAccountParams();
+		avpfRrInterval = static_cast<uint16_t>(accountParams->getAvpfRrInterval() * 1000);
+	} else avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(lc) * 1000);
+	getParams()->setAvpfRrInterval(avpfRrInterval);
 	bool_t mandatory = linphone_core_is_media_encryption_mandatory(lc);
 	bool_t acceptAllEncryptions = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp",
 	                                                        "accept_any_encryption", 0);
@@ -1124,11 +1125,11 @@ const LinphoneStreamInternalStats *MediaSessionPrivate::getStreamInternalStats(L
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionPrivate::discoverMtu(const Address &remoteAddr) {
+void MediaSessionPrivate::discoverMtu(const std::shared_ptr<Address> &remoteAddr) {
 	L_Q();
 	if (q->getCore()->getCCore()->net_conf.mtu == 0) {
 		/* Attempt to discover mtu */
-		int mtu = ms_discover_mtu(remoteAddr.getDomain().c_str());
+		int mtu = ms_discover_mtu(remoteAddr->getDomain().c_str());
 		if (mtu > 0) {
 			ms_factory_set_mtu(q->getCore()->getCCore()->factory, mtu);
 			lInfo() << "Discovered mtu is " << mtu << ", RTP payload max size is "
@@ -1140,7 +1141,7 @@ void MediaSessionPrivate::discoverMtu(const Address &remoteAddr) {
 /**
  * Fill the local ip that routes to the internet according to the destination, or guess it by other special means.
  */
-void MediaSessionPrivate::getLocalIp(const Address &remoteAddr) {
+void MediaSessionPrivate::getLocalIp(const std::shared_ptr<Address> &remoteAddr) {
 	L_Q();
 	// Next, sometime, override from config
 	const char *ip =
@@ -1151,10 +1152,12 @@ void MediaSessionPrivate::getLocalIp(const Address &remoteAddr) {
 		return;
 	}
 
+	const auto &account = getDestAccount();
+	const auto &accountOp = account ? account->getOp() : nullptr;
 	// If a known proxy was identified for this call, then we may have a chance to take the local ip address
 	// from the socket that connects to this proxy
-	if (destProxy && linphone_proxy_config_get_op(destProxy)) {
-		ip = linphone_proxy_config_get_op(destProxy)->getLocalAddress(nullptr);
+	if (accountOp) {
+		ip = accountOp->getLocalAddress(nullptr);
 		if (ip) {
 			if (needLocalIpRefresh) {
 				af = strchr(ip, ':') ? AF_INET6 : AF_INET;
@@ -1174,10 +1177,10 @@ void MediaSessionPrivate::getLocalIp(const Address &remoteAddr) {
 	// In last resort, attempt to find the local ip that routes to destination if given as an IP address,
 	// or the default route (dest is empty)
 	string dest;
-	if (!destProxy) {
+	if (!account) {
 		struct addrinfo hints;
 		struct addrinfo *res = nullptr;
-		string host(remoteAddr.getDomain());
+		string host(remoteAddr->getDomain());
 		int err;
 
 		if (host[0] == '[') host = host.substr(1, host.size() - 2);
@@ -1249,8 +1252,9 @@ void MediaSessionPrivate::runStunTestsIfNeeded() {
 void MediaSessionPrivate::selectIncomingIpVersion() {
 	L_Q();
 	if (linphone_core_ipv6_enabled(q->getCore()->getCCore())) {
-		if (destProxy && linphone_proxy_config_get_op(destProxy))
-			af = linphone_proxy_config_get_op(destProxy)->getAddressFamily();
+		const auto &account = getDestAccount();
+		const auto &accountOp = account ? account->getOp() : nullptr;
+		if (accountOp) af = accountOp->getAddressFamily();
 		else af = op->getAddressFamily();
 	} else af = AF_INET;
 }
@@ -1273,13 +1277,16 @@ void MediaSessionPrivate::selectOutgoingIpVersion() {
 	af = AF_UNSPEC;
 	if (linphone_core_get_local_ip_for(AF_INET, nullptr, ipv4) == 0) haveIpv4 = true;
 	if (linphone_core_ipv6_enabled(q->getCore()->getCCore())) {
-		const LinphoneAddress *to = log->getToAddress();
+		const auto &toAddr = log->getToAddress();
 
 		if (linphone_core_get_local_ip_for(AF_INET6, nullptr, ipv6) == 0) haveIpv6 = true;
-		if (destProxy && linphone_proxy_config_get_op(destProxy)) {
+
+		const auto &account = getDestAccount();
+		const auto &accountOp = account ? account->getOp() : nullptr;
+		if (accountOp) {
 			// We can determine from the proxy connection whether IPv6 works - this is the most reliable
-			af = linphone_proxy_config_get_op(destProxy)->getAddressFamily();
-		} else if (sal_address_is_ipv6(L_GET_CPP_PTR_FROM_C_OBJECT(to)->getInternalAddress())) {
+			af = accountOp->getAddressFamily();
+		} else if (sal_address_is_ipv6(toAddr->getImpl())) {
 			af = AF_INET6;
 		}
 
@@ -1397,8 +1404,9 @@ bool MediaSessionPrivate::generateB64CryptoKey(size_t keyLength, std::string &ke
 
 bool MediaSessionPrivate::mandatoryRtpBundleEnabled() const {
 	if (!getParams()->rtpBundleEnabled()) return false;
-	if (destProxy) {
-		return Account::toCpp(destProxy->account)->getAccountParams()->rtpBundleAssumptionEnabled();
+	const auto &account = getDestAccount();
+	if (account) {
+		return account->getAccountParams()->rtpBundleAssumptionEnabled();
 	}
 	return false;
 }
@@ -1418,9 +1426,9 @@ void MediaSessionPrivate::addStreamToBundle(const std::shared_ptr<SalMediaDescri
 		cfg.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
 		/* rtcp-mux must be enabled when bundle mode is proposed.*/
 		cfg.rtcp_mux = TRUE;
-		if (mandatoryRtpBundleEnabled() || bundleModeAccepted){
+		if (mandatoryRtpBundleEnabled() || bundleModeAccepted) {
 			// Bundle is offered inconditionally
-			if (bundle.getMidOfTransportOwner() != mid){
+			if (bundle.getMidOfTransportOwner() != mid) {
 				cfg.bundle_only = true;
 				sd.rtp_port = 0;
 			}
@@ -1487,7 +1495,7 @@ void MediaSessionPrivate::fillRtpParameters(SalStreamDescription &stream) const 
 		/* rtcp-mux must be enabled when bundle mode is proposed or we're using DTLS-SRTP.*/
 		cfg.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled() ||
 		               (getNegotiatedMediaEncryption() == LinphoneMediaEncryptionDTLS);
-		cfg.rtcp_cname = getMe()->getAddress().asString();
+		cfg.rtcp_cname = getMe()->getAddress()->toString();
 
 		if (stream.rtp_port == 0 && !cfg.isBundleOnly()) {
 			stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
@@ -1540,7 +1548,7 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 		std::list<OrtpPayloadType *> l = pth.makeCodecsList(SalVideo, 0, -1, alreadyAssignedPayloads, bundle_enabled);
 		if (!l.empty()) {
 			newStream.setLabel(label);
-			newStream.name = "Video " + dev->getAddress().asString();
+			newStream.name = "Video " + dev->getAddress()->toString();
 			const auto &content = newStream.getContent();
 			const bool isInLocalConference = getParams()->getPrivate()->getInConference();
 
@@ -1594,7 +1602,7 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 
 	if (!success) {
 		lInfo() << "Don't put video stream for device in conference with address "
-		        << (dev ? dev->getAddress().asString() : "<unknown>") << " on local offer for CallSession [" << q
+		        << (dev ? dev->getAddress()->toString() : "<unknown>") << " on local offer for CallSession [" << q
 		        << "] because no valid payload has been found or device is not valid (pointer " << dev << ")";
 		cfg.dir = SalStreamInactive;
 		newStream.disable();
@@ -1631,7 +1639,7 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 
 		cfg.replacePayloads(codecs);
-		cfg.rtcp_cname = getMe()->getAddress().asString();
+		cfg.rtcp_cname = getMe()->getAddress()->toString();
 
 		LinphoneConference *conference =
 		    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
@@ -1748,7 +1756,9 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 				                                             : getParams()->getConferenceVideoLayout();
 
 				bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-				const auto &participantDeviceAddress =
+				const auto remoteContactAddress = q->getRemoteContactAddress();
+				q->updateContactAddressInOp();
+				const auto participantDeviceAddress =
 				    (isInLocalConference) ? remoteContactAddress : q->getContactAddress();
 
 				const auto &participantDevice = isInLocalConference
@@ -1764,7 +1774,7 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 
 				for (const auto &p : cppConference->getParticipants()) {
 					for (const auto &dev : p->getDevices()) {
-						const auto &devAddress = dev->getAddress().asAddress();
+						const auto &devAddress = dev->getAddress();
 						const auto &devState = dev->getState();
 						// Do not add stream for device matching the remote contact address if the chosen layout is
 						// active speaker
@@ -1792,7 +1802,7 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 						std::vector<std::pair<std::string, std::string>> attributes;
 						const auto &foundStreamIdx = devLabel.empty()
 						                                 ? -1
-						                                 : ((participantDeviceAddress == dev->getAddress().asAddress())
+						                                 : ((*participantDeviceAddress == *(dev->getAddress()))
 						                                        ? oldMd->findIdxStreamWithContent(content, devLabel)
 						                                        : md->findIdxStreamWithLabel(devLabel));
 						SalStreamDescription &newMeStream = addStreamToMd(md, foundStreamIdx, oldMd);
@@ -1996,25 +2006,24 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 
 	/* Re-check local ip address each time we make a new offer, because it may change in case of network reconnection */
 	{
-		const LinphoneAddress *address =
-		    (direction == LinphoneCallOutgoing ? log->getToAddress() : log->getFromAddress());
-		getLocalIp(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
+		const auto &address = (direction == LinphoneCallOutgoing ? log->getToAddress() : log->getFromAddress());
+		getLocalIp(address);
 	}
 
 	md->origin_addr = mediaLocalIp;
 	md->addr = mediaLocalIp;
 
-	LinphoneAddress *addr = nullptr;
-	if (destProxy) {
-		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
+	Address addr;
+	const auto &account = getDestAccount();
+	if (account) {
+		const auto accountParams = account->getAccountParams();
+		addr = *accountParams->getIdentityAddress();
 	} else {
-		addr = linphone_address_new(linphone_core_get_identity(core));
+		addr = Address(linphone_core_get_identity(core));
 	}
-	if (linphone_address_get_username(addr)) { /* Might be null in case of identity without userinfo */
-		md->username = linphone_address_get_username(addr);
+	if (!addr.getUsername().empty()) { /* Might be null in case of identity without userinfo */
+		md->username = addr.getUsername();
 	}
-
-	linphone_address_unref(addr);
 
 	int bandwidth = getParams()->getPrivate()->getDownBandwidth();
 	if (bandwidth) md->bandwidth = bandwidth;
@@ -2297,7 +2306,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	const auto &mdForMainStream = localIsOfferer ? md : refMd;
 	const auto audioStreamIndex = mdForMainStream->findIdxBestStream(SalAudio);
 	if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex));
-	const auto videoStreamIndex = (conference || remoteContactAddress.hasParam("isfocus"))
+	const auto remoteContactAddress = q->getRemoteContactAddress();
+	const auto videoStreamIndex = (conference || (remoteContactAddress && remoteContactAddress->hasParam("isfocus")))
 	                                  ? mdForMainStream->findIdxStreamWithContent(mainStreamAttrValue)
 	                                  : mdForMainStream->findIdxBestStream(SalVideo);
 	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex));
@@ -3047,69 +3057,57 @@ bool MediaSessionPrivate::canSoundResourcesBeFreed() const {
 LinphoneStatus MediaSessionPrivate::pause() {
 	L_Q();
 	if (state == CallSession::State::Paused) {
-		lWarning() << "Media session (local address " << q->getLocalAddress().asString() << " remote address "
-		           << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state)
+		lWarning() << "Media session (local address " << q->getLocalAddress()->toString() << " remote address "
+		           << q->getRemoteAddress()->toString() << ") is in state " << Utils::toString(state)
 		           << " is already paused";
 		return 0;
 	} else if (state == CallSession::State::Pausing) {
-		lWarning() << "Media session (local address " << q->getLocalAddress().asString() << " remote address "
-		           << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state)
+		lWarning() << "Media session (local address " << q->getLocalAddress()->toString() << " remote address "
+		           << q->getRemoteAddress()->toString() << ") is in state " << Utils::toString(state)
 		           << " is already in the process of being paused";
 		return 0;
 	} else if (!canSoundResourcesBeFreed()) {
-		lWarning() << "Media session (local address " << q->getLocalAddress().asString() << " remote address "
-		           << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state)
+		lWarning() << "Media session (local address " << q->getLocalAddress()->toString() << " remote address "
+		           << q->getRemoteAddress()->toString() << ") is in state " << Utils::toString(state)
 		           << " hence it cannot be paused";
 		return -1;
 	}
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	if (isInLocalConference) {
-		char *contactAddressStr = NULL;
-		const auto account =
-		    linphone_core_lookup_known_account(q->getCore()->getCCore(), L_GET_C_BACK_PTR(&(q->getLocalAddress())));
-		if (op && op->getContactAddress()) {
-			contactAddressStr = sal_address_as_string(op->getContactAddress());
-		} else if (account && Account::toCpp(account)->getOp()) {
-			contactAddressStr = sal_address_as_string(Account::toCpp(account)->getOp()->getContactAddress());
-		} else {
-			contactAddressStr = ms_strdup(linphone_core_get_identity(q->getCore()->getCCore()));
-		}
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
-
+		const auto contactAddress = q->getContactAddress();
 		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc",
 		                               "conference_event_log_enabled", TRUE) &&
-		    contactAddress.hasParam("isfocus")) {
+		    contactAddress && contactAddress->hasParam("isfocus")) {
 			if (listener) {
 				auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
 				if (callConference) {
 					auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
 					if (conference->findParticipantDevice(q->getSharedFromThis())) {
-						lWarning() << "Unable to pause media session (local address " << q->getLocalAddress().asString()
-						           << " remote address " << q->getRemoteAddress()->asString()
+						lWarning() << "Unable to pause media session (local address "
+						           << q->getLocalAddress()->toString() << " remote address "
+						           << q->getRemoteAddress()->toString()
 						           << ") because it is part of a conference. Please use the dedicated conference API "
 						              "to execute the desired actions";
 						return -1;
 					}
 				} else {
 					lWarning()
-					    << "The contact address " << contactAddress
+					    << "The contact address " << *contactAddress
 					    << " of the call has isfocus attribute however it doesn't seems to be part of a conference.";
 				}
 			}
 		}
 
 		params->getPrivate()->setInConference(false);
-		q->updateContactAddress(contactAddress);
-		op->setContactAddress(contactAddress.getInternalAddress());
+		q->updateContactAddressInOp();
 
 		if (listener) {
 			auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
 			if (callConference) {
 				auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
 				lInfo() << "Removing participant with session " << q << " (local addres "
-				        << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString()
+				        << q->getLocalAddress()->toString() << " remote address " << q->getRemoteAddress()->toString()
 				        << ")  from conference " << conference->getConferenceAddress();
 				// Do not preserve conference after removing the participant
 				conference->removeParticipant(q->getSharedFromThis(), false);
@@ -3508,7 +3506,7 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 		if ((linphone_core_get_media_resource_mode(q->getCore()->getCCore()) == LinphoneExclusiveMediaResources) &&
 		    linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " for media session (local addres "
-			        << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString()
+			        << q->getLocalAddress()->toString() << " remote address " << q->getRemoteAddress()->toString()
 			        << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
 			q->addPendingAction([this] {
 				this->startAccept();
@@ -3520,15 +3518,10 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 
 	// It occurs if the remote participant calls the core hosting the conference and the call is added to the conference
 	// when it is in state IncomingReceived
-	if (getOp() && getOp()->getContactAddress()) {
-		char *contactAddressStr = sal_address_as_string(getOp()->getContactAddress());
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
-		const auto &confId = getConferenceId();
-		if (!confId.empty() && isInConference() && !contactAddress.hasUriParam("conf-id")) {
-			q->updateContactAddress(contactAddress);
-			op->setContactAddress(contactAddress.getInternalAddress());
-		}
+	// Do not do anything if the contact address is not yet known
+	const auto &confId = getConferenceId();
+	if (getOp() && getOp()->getContactAddress() && !confId.empty() && isInConference()) {
+		q->updateContactAddressInOp();
 	}
 
 	/* Give a chance a set card prefered sampling frequency */
@@ -3738,20 +3731,27 @@ void MediaSessionPrivate::stunAuthRequestedCb(const char *realm,
                                               const char **ha1) {
 	L_Q();
 	/* Get the username from the nat policy or the proxy config */
-	LinphoneProxyConfig *proxy = nullptr;
-	if (destProxy) proxy = destProxy;
-	else proxy = linphone_core_get_default_proxy_config(q->getCore()->getCCore());
-	if (!proxy) return;
+	std::shared_ptr<Account> stunAccount = nullptr;
+	const auto &account = getDestAccount();
+	if (account) stunAccount = account;
+	else {
+		auto defaultAccount = linphone_core_get_default_account(q->getCore()->getCCore());
+		if (defaultAccount) {
+			stunAccount = Account::toCpp(defaultAccount)->getSharedFromThis();
+		}
+	}
+	if (!stunAccount) return;
 	const char *user = nullptr;
-	LinphoneNatPolicy *proxyNatPolicy = linphone_proxy_config_get_nat_policy(proxy);
-	if (proxyNatPolicy) user = linphone_nat_policy_get_stun_server_username(proxyNatPolicy);
+	const auto &accountParams = stunAccount->getAccountParams();
+	const auto &proxyNatPolicy = accountParams->getNatPolicy();
+	if (proxyNatPolicy) user = L_STRING_TO_C(proxyNatPolicy->getStunServerUsername());
 	else if (natPolicy) user = linphone_nat_policy_get_stun_server_username(natPolicy);
 	if (!user) {
 		/* If the username has not been found in the nat_policy, take the username from the currently used proxy config
 		 */
-		const LinphoneAddress *addr = linphone_proxy_config_get_identity_address(proxy);
-		if (!addr) return;
-		user = linphone_address_get_username(addr);
+		const auto identityAddress = accountParams->getIdentityAddress();
+		if (!identityAddress) return;
+		user = L_STRING_TO_C(identityAddress->getUsername());
 	}
 	if (!user) return;
 
@@ -3838,11 +3838,11 @@ LinphoneStatus MediaSession::accept(const MediaSessionParams *msp) {
 
 	auto ret = d->accept(msp, wasRinging);
 	if (ret == 0) {
-		lInfo() << "MediaSession (local address " << getLocalAddress().asString() << " remote address "
-		        << getRemoteAddress()->asString() << ") has been accepted";
+		lInfo() << "MediaSession (local address " << getLocalAddress()->toString() << " remote address "
+		        << getRemoteAddress()->toString() << ") has been accepted";
 	} else {
-		lInfo() << "Unable to immediately accept session " << this << " (local address " << getLocalAddress().asString()
-		        << " remote address " << getRemoteAddress()->asString() << ")";
+		lInfo() << "Unable to immediately accept session " << this << " (local address "
+		        << getLocalAddress()->toString() << " remote address " << getRemoteAddress()->toString() << ")";
 	}
 	return ret;
 }
@@ -3903,17 +3903,27 @@ bool MediaSession::toneIndicationsEnabled() const {
 	return getMediaParams()->getPrivate()->toneIndicationsEnabled();
 }
 
-void MediaSession::configure(
-    LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) {
+void MediaSession::configure(LinphoneCallDir direction,
+                             LinphoneProxyConfig *cfg,
+                             SalCallOp *op,
+                             const std::shared_ptr<Address> &from,
+                             const std::shared_ptr<Address> &to) {
 	L_D();
 	bool makeLocalDescription = true;
 	bool isOfferer = true;
-	Address remote;
+	std::shared_ptr<Address> remote;
 
 	CallSession::configure(direction, cfg, op, from, to);
 
+	const auto &account = d->getDestAccount();
+	const auto &accountParams = account ? account->getAccountParams() : nullptr;
 	if (!d->natPolicy) {
-		if (d->destProxy) d->natPolicy = linphone_proxy_config_get_nat_policy(d->destProxy);
+		if (accountParams) {
+			const auto accountNatPolicy = accountParams->getNatPolicy();
+			if (accountNatPolicy) {
+				d->natPolicy = accountNatPolicy->toC();
+			}
+		}
 		if (!d->natPolicy) d->natPolicy = linphone_core_get_nat_policy(getCore()->getCCore());
 		linphone_nat_policy_ref(d->natPolicy);
 	}
@@ -3925,8 +3935,8 @@ void MediaSession::configure(
 		/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
 		 * Then the value is stored and later updated into MediaSessionParams. */
 		bool rtpBundleEnabled = false;
-		if (d->destProxy) {
-			rtpBundleEnabled = Account::toCpp(d->destProxy->account)->getAccountParams()->rtpBundleEnabled();
+		if (accountParams) {
+			rtpBundleEnabled = accountParams->rtpBundleEnabled();
 		} else {
 			lInfo() << "No account set for this call, using rtp bundle enablement from LinphoneCore.";
 			rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
@@ -3938,7 +3948,7 @@ void MediaSession::configure(
 		 * examining the remote offer, if any. If the remote offer contains IPv4 addresses, we should propose IPv4 as
 		 * well. */
 		remote = from;
-		remote.clean();
+		remote->clean();
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 		d->initializeParamsAccordingToIncomingCallParams();
@@ -4019,10 +4029,9 @@ bool MediaSession::initiateOutgoing(const string &subject, const Content *conten
 				 */
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 			} else {
-				auto toAddr = linphone_address_as_string(d->log->getToAddress());
-				lInfo() << "Unable to initiate call to " << std::string(toAddr)
+				auto toAddr = d->log->getToAddress();
+				lInfo() << "Unable to initiate call to " << toAddr->toString()
 				        << " because ICE candidates must be gathered first";
-				ms_free(toAddr);
 				d->queueIceGatheringTask([this, subject, content]() {
 					L_D();
 					if (d->state != CallSession::State::End) // Call has been terminated while gathering: avoid to
@@ -4044,25 +4053,7 @@ void MediaSession::iterate(time_t currentRealTime, bool oneSecondElapsed) {
 
 LinphoneStatus MediaSession::pauseFromConference() {
 	L_D();
-	char *contactAddressStr = nullptr;
-	if (d->destProxy) {
-		if (linphone_proxy_config_get_op(d->destProxy)) {
-			/* Give a chance to update the contact address if connectivity has changed */
-			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
-		} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) &&
-		           linphone_proxy_config_get_contact(d->getDestProxy())) {
-			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(d->getDestProxy()));
-		}
-	} else if (d->op && d->op->getContactAddress()) {
-		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
-	}
-
-	if (contactAddressStr) {
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
-		updateContactAddress(contactAddress);
-		d->op->setContactAddress(contactAddress.getInternalAddress());
-	}
+	updateContactAddressInOp();
 
 	int ret = 0;
 
@@ -4126,18 +4117,8 @@ LinphoneStatus MediaSession::resume() {
 	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference()) {
 		subject = "Conference";
 	}
-	char *contactAddressStr = nullptr;
-	if (d->destProxy && linphone_proxy_config_get_op(d->destProxy)) {
-		contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
-	} else if (d->op && d->op->getContactAddress()) {
-		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
-	}
-	if (contactAddressStr) {
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
-		updateContactAddress(contactAddress);
-		d->op->setContactAddress(contactAddress.getInternalAddress());
-	}
+
+	updateContactAddressInOp();
 
 	const auto isIceRunning = getStreamsGroup().getIceService().isRunning();
 
@@ -4178,15 +4159,15 @@ LinphoneStatus MediaSession::resume() {
 
 		const auto preparingStreams = d->getStreamsGroup().prepare();
 		if (linphone_nat_policy_ice_enabled(d->natPolicy) && preparingStreams) {
-			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress().asString()
-			        << " remote address " << getRemoteAddress()->asString() << ") resume to gather ICE candidates";
+			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress()->toString()
+			        << " remote address " << getRemoteAddress()->toString() << ") resume to gather ICE candidates";
 			d->queueIceGatheringTask(updateCompletionTask);
 			return 0;
 		} else if (isIceRunning) {
 			// ICE negotiations are ongoing hence the update cannot be send right now
 			lInfo() << "Ice negotiations are ongoing and resume once they complete, therefore defer CallSession "
-			        << this << " (local address " << getLocalAddress().asString() << " remote address "
-			        << getRemoteAddress()->asString() << ") resume until Ice negotiations are completed.";
+			        << this << " (local address " << getLocalAddress()->toString() << " remote address "
+			        << getRemoteAddress()->toString() << ") resume until Ice negotiations are completed.";
 			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
 		}
@@ -4257,9 +4238,10 @@ void MediaSession::sendVfuRequest() {
 	} else lInfo() << "vfu request using sip disabled from config [sip,vfu_with_info]";
 }
 
-// Try to search the local conference by first looking at the contact address and if it is unsuccesfull to the to address as a client may try to be calling a conference URI directly
-// Typically, the seach using the contact address will succeed when a client creates a conference.
-const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
+// Try to search the local conference by first looking at the contact address and if it is unsuccesfull to the to
+// address as a client may try to be calling a conference URI directly Typically, the seach using the contact address
+// will succeed when a client creates a conference.
+std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	L_D();
 
 	ConferenceId localConferenceId;
@@ -4274,14 +4256,17 @@ const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	}
 	if (!conference) {
 		auto contactAddress = getContactAddress();
+		if (contactAddress) {
+			updateContactAddress(*contactAddress);
+		}
 		localConferenceId = ConferenceId(contactAddress, contactAddress);
 		conference = getCore()->findAudioVideoConference(localConferenceId, false);
 	}
 	if (!conference) {
-		const Address to(d->op->getTo());
+		const auto to = Address::create(d->op->getTo());
 		// Local conference
-		if (to.hasUriParam("conf-id")) {
-			localConferenceId = ConferenceId(ConferenceAddress(to), ConferenceAddress(to));
+		if (to->hasUriParam("conf-id")) {
+			localConferenceId = ConferenceId(to, to);
 			conference = getCore()->findAudioVideoConference(localConferenceId, false);
 		}
 	}
@@ -4289,23 +4274,31 @@ const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	return conference;
 }
 
-void MediaSession::startIncomingNotification (bool notifyRinging) {
+void MediaSession::startIncomingNotification(bool notifyRinging) {
 	L_D();
 
 	std::shared_ptr<SalMediaDescription> &md = d->op->getFinalMediaDescription();
 
-	const auto conference = getLocalConference();
+	auto conference = getLocalConference();
 	bool isLocalDialOutConferenceCreationPending = false;
 
 	if (conference) {
 		// Get state here as it may be changed if the conference dials participants out
 		const auto conferenceState = conference->getState();
-		const auto dialout = (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialIn);
-		isLocalDialOutConferenceCreationPending = dialout && ((conferenceState == ConferenceInterface::State::Instantiated) || (conferenceState == ConferenceInterface::State::CreationPending));
+		const auto dialout =
+		    (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
+		isLocalDialOutConferenceCreationPending =
+		    dialout && ((conferenceState == ConferenceInterface::State::Instantiated) ||
+		                (conferenceState == ConferenceInterface::State::CreationPending));
 	}
 
-	if (md && (md->isEmpty() || d->incompatibleSecurity(md)) && !isLocalDialOutConferenceCreationPending) {
-		if (d->state != CallSession::State::PushIncomingReceived &&  d->listener) {
+	// Do not send a 488 Not Acceptable here if the call is part of a local conference where the server will call out
+	// participant This scenario occurs when a client tries to create a dial out conference but there are not common
+	// codecs between the client and the server. In such a case, the conference is not created at all since the
+	// organizer will not be able to take part to it
+	if (md && (md->isEmpty() || d->incompatibleSecurity(md)) &&
+	    ((conference && isLocalDialOutConferenceCreationPending) || !conference)) {
+		if (d->state != CallSession::State::PushIncomingReceived && d->listener) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
 			/* When call state is PushIncomingReceived, not notify early failed.
@@ -4313,6 +4306,9 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 			d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
 		}
 		d->op->decline(SalReasonNotAcceptable);
+		if (conference) {
+			conference->setState(ConferenceInterface::State::CreationFailed);
+		}
 		return;
 	}
 
@@ -4350,7 +4346,9 @@ int MediaSession::getRandomRtpPort(const SalStreamDescription &stream) const {
 	return rtp_port;
 }
 
-int MediaSession::startInvite(const Address *destination, const string &subject, const Content *content) {
+int MediaSession::startInvite(const std::shared_ptr<Address> &destination,
+                              const string &subject,
+                              const Content *content) {
 	L_D();
 
 	if (d->getOp() == nullptr) d->createOp();
@@ -4472,7 +4470,7 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			    (conferenceState != ConferenceInterface::State::CreationPending) &&
 			    (!d->getParams()->rtpBundleEnabled())) {
 				lInfo() << "Forcing RTP bundle in Media session (local address " << getLocalAddress()
-				        << " remote address " << getRemoteAddress()->asString() << ") was added to conference "
+				        << " remote address " << getRemoteAddress()->toString() << ") was added to conference "
 				        << cppConference->getConferenceAddress();
 				d->getParams()->enableRtpBundle(true);
 			}
@@ -4536,15 +4534,15 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		const auto preparingStreams = d->getStreamsGroup().prepare();
 		// reINVITE sent after full state must be sent after ICE negotiations are completed if ICE is enabled
 		if (linphone_nat_policy_ice_enabled(d->natPolicy) && preparingStreams) {
-			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress().asString()
-			        << " remote address " << getRemoteAddress()->asString() << ") update to gather ICE candidates";
+			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress()->toString()
+			        << " remote address " << getRemoteAddress()->toString() << ") update to gather ICE candidates";
 			d->queueIceGatheringTask(updateCompletionTask);
 			return 0;
 		} else if (isIceRunning) {
 			// ICE negotiations are ongoing hence the update cannot be send right now
 			lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession "
-			        << this << " (local address " << getLocalAddress().asString() << " remote address "
-			        << getRemoteAddress()->asString() << ") update until Ice negotiations are completed.";
+			        << this << " (local address " << getLocalAddress()->toString() << " remote address "
+			        << getRemoteAddress()->toString() << ") update until Ice negotiations are completed.";
 			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
 		}
@@ -5231,5 +5229,4 @@ uint32_t MediaSession::getSsrc(LinphoneStreamType type) const {
 void MediaSession::setEkt(const MSEKTParametersSet *ekt_params) const {
 	getStreamsGroup().setEkt(ekt_params);
 }
-
 LINPHONE_END_NAMESPACE

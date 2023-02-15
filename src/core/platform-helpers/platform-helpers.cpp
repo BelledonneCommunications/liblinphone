@@ -20,9 +20,9 @@
 
 #include <bctoolbox/defs.h>
 
+#include "core/core.h"
 #include "logger/logger.h"
 #include "platform-helpers.h"
-
 // TODO: Remove me.
 #include "private.h"
 

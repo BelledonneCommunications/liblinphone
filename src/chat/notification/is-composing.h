@@ -40,7 +40,7 @@ public:
 	~IsComposing();
 
 	std::string createXml(bool isComposing);
-	void parse(const Address &remoteAddr, const std::string &content);
+	void parse(const std::shared_ptr<Address> &remoteAddr, const std::string &content);
 	void startIdleTimer();
 	void startRefreshTimer();
 	void stopIdleTimer();

@@ -122,33 +122,35 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 					// If there is an active call with the same call ID as the session, then this session may belong to
 					// a conference
 					if (call) {
-						const Address to(op->getTo());
+						const std::shared_ptr<Address> to = Address::create(op->getTo());
 						// Local conference
-						if (to.hasUriParam("conf-id")) {
+						if (to->hasUriParam("conf-id")) {
 							shared_ptr<MediaConference::Conference> conference =
-							    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(
-							        ConferenceId(ConferenceAddress(to), ConferenceAddress(to)));
+							    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(to, to));
 
 							std::shared_ptr<ConferenceInfo> confInfo = nullptr;
 #ifdef HAVE_DB_STORAGE
 							auto &mainDb = q->getCore()->getPrivate()->mainDb;
 							if (mainDb) {
-								confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(to));
+								confInfo = mainDb->getConferenceInfoFromURI(to);
 							}
 #endif
 
 							// If the call is for a conference stored in the core, then accept it automatically without
 							// video
 							if (conference || confInfo) {
-								const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
-								const auto dialout = conference && (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
-								if (conference && (resourceList.isEmpty() || ((conference->getOrganizer().asAddress().weakEqual(*(q->getRemoteAddress()))) && dialout))) {
+								const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
+								const auto dialout = conference && (conference->getCurrentParams().getJoiningMode() ==
+								                                    ConferenceParams::JoiningMode::DialOut);
+								if (conference &&
+								    (resourceList.isEmpty() ||
+								     ((conference->getOrganizer()->weakEqual(*(q->getRemoteAddress()))) && dialout))) {
 									conference->addParticipant(call);
 								} else {
 									const_cast<LinphonePrivate::CallSessionParamsPrivate *>(
 									    q->getParams()->getPrivate())
 									    ->setInConference(true);
-									setConferenceId(to.getUriParamValue("conf-id"));
+									setConferenceId(to->getUriParamValue("conf-id"));
 								}
 								auto params = linphone_core_create_call_params(lc, call->toC());
 								linphone_call_params_enable_audio(params, TRUE);
@@ -171,17 +173,16 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 								linphone_call_params_unref(params);
 							}
 						} else if (op->getRemoteContactAddress()) {
-							char *remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-							Address remoteContactAddress(remoteContactAddressStr);
-							ms_free(remoteContactAddressStr);
-							if (remoteContactAddress.hasParam("isfocus")) {
+							std::shared_ptr<Address> remoteContactAddress = Address::create();
+							remoteContactAddress->setImpl(op->getRemoteContactAddress());
+							if (remoteContactAddress->hasParam("isfocus")) {
 								const auto &conferenceInfo = Utils::createConferenceInfoFromOp(op, true);
-								if (conferenceInfo->getUri().isValid()) {
+								if (conferenceInfo->getUri()->isValid()) {
 #ifdef HAVE_DB_STORAGE
 									auto &mainDb = q->getCore()->getPrivate()->mainDb;
 									if (mainDb) {
 										lInfo() << "Inserting conference information to database related to conference "
-										        << conferenceInfo->getUri();
+										        << *conferenceInfo->getUri();
 										mainDb->insertConferenceInfo(conferenceInfo);
 									}
 #endif // HAVE_DB_STORAGE
@@ -339,12 +340,12 @@ bool CallSessionPrivate::startPing() {
 		if (direction == LinphoneCallIncoming) {
 			string from = pingOp->getFrom();
 			string to = pingOp->getTo();
-			linphone_configure_op(q->getCore()->getCCore(), pingOp, log->getFromAddress(), nullptr, false);
+			linphone_configure_op(q->getCore()->getCCore(), pingOp, log->getFromAddress()->toC(), nullptr, false);
 			pingOp->setRoute(op->getNetworkOrigin());
 			pingOp->ping(from.c_str(), to.c_str());
 		} else if (direction == LinphoneCallOutgoing) {
-			char *from = linphone_address_as_string(log->getFromAddress());
-			char *to = linphone_address_as_string(log->getToAddress());
+			char *from = ms_strdup(L_STRING_TO_C(log->getFromAddress()->toString()));
+			char *to = ms_strdup(L_STRING_TO_C(log->getToAddress()->toString()));
 			pingOp->ping(from, to);
 			ms_free(from);
 			ms_free(to);
@@ -427,10 +428,10 @@ bool CallSessionPrivate::failure() {
 			    (state == CallSession::State::OutgoingEarlyMedia)) {
 				const SalAddress *redirectionTo = op->getRemoteContactAddress();
 				if (redirectionTo) {
-					char *url = sal_address_as_string(redirectionTo);
-					lWarning() << "Redirecting CallSession [" << q << "] to " << url;
-					log->setToAddress(linphone_address_new(url));
-					ms_free(url);
+					std::shared_ptr<Address> redirectAddress = Address::create();
+					redirectAddress->setImpl(redirectionTo);
+					lWarning() << "Redirecting CallSession [" << q << "] to " << redirectAddress->toString();
+					log->setToAddress(redirectAddress);
 					restartInvite();
 					return true;
 				}
@@ -506,10 +507,9 @@ void CallSessionPrivate::pingReply() {
 	}
 }
 
-void CallSessionPrivate::referred(const Address &referToAddr) {
+void CallSessionPrivate::referred(const std::shared_ptr<Address> &referToAddr) {
 	L_Q();
 	referToAddress = referToAddr;
-	referTo = referToAddr.asString();
 	referPending = true;
 	setState(CallSession::State::Referred, "Referred");
 	if (referPending && listener) listener->onCallSessionStartReferred(q->getSharedFromThis());
@@ -872,29 +872,11 @@ LinphoneStatus CallSessionPrivate::startUpdate(const CallSession::UpdateMethod m
 			else newSubject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::MediaChange);
 		}
 	}
-	char *contactAddressStr = NULL;
-	if (destProxy) {
-		if (linphone_proxy_config_get_op(destProxy)) {
-			/* Give a chance to update the contact address if connectivity has changed */
-			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
-
-		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore()) &&
-		           linphone_proxy_config_get_contact(destProxy)) {
-			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(destProxy));
-		}
-	} else {
-		op->setContactAddress(nullptr);
-	}
 
 	// Update custom headers
 	op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
 
-	if (contactAddressStr) {
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
-		q->updateContactAddress(contactAddress);
-		op->setContactAddress(contactAddress.getInternalAddress());
-	} else op->setContactAddress(nullptr);
+	q->updateContactAddressInOp();
 
 	bool noUserConsent = q->getParams()->getPrivate()->getNoUserConsent();
 	if (method != CallSession::UpdateMethod::Default) {
@@ -925,9 +907,9 @@ void CallSessionPrivate::terminate() {
 void CallSessionPrivate::updateCurrentParams() const {
 }
 
-void CallSessionPrivate::setDestProxy(LinphoneProxyConfig *proxy) {
-	destProxy = proxy;
-	currentParams->setAccount(proxy ? Account::toCpp(proxy->account)->getSharedFromThis() : nullptr);
+void CallSessionPrivate::setDestAccount(const shared_ptr<Account> &destAccount) {
+	account = destAccount;
+	params->setAccount(account);
 }
 
 // -----------------------------------------------------------------------------
@@ -963,34 +945,29 @@ void CallSessionPrivate::setBroken() {
 
 void CallSessionPrivate::setContactOp() {
 	L_Q();
-	LinphoneAddress *contact = getFixedContact();
-	if (contact) {
+	auto contactAddress = getFixedContact();
+	// Do not try to set contact address if it is not valid
+	if (contactAddress && contactAddress->isValid()) {
 		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
 		for (auto it = contactParams.begin(); it != contactParams.end(); it++)
-			linphone_address_set_param(contact, it->first.c_str(), it->second.empty() ? nullptr : it->second.c_str());
-		char *contactAddressStr = linphone_address_as_string(contact);
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
-		// Do not try to set contact address if it is not valid
-		if (contactAddress.isValid()) {
-			q->updateContactAddress(contactAddress);
-			if (isInConference()) {
-				std::shared_ptr<MediaConference::Conference> conference =
-				    q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
-				if (conference) {
-					// Try to change conference address in order to add GRUU to it
-					// Note that this operation may fail if the conference was previously created on the server
-					conference->setConferenceAddress(contactAddress);
-				}
+			contactAddress->setParam(it->first, it->second);
+		q->updateContactAddress(*contactAddress);
+		if (isInConference()) {
+			std::shared_ptr<MediaConference::Conference> conference =
+			    q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+			if (conference) {
+				// Try to change conference address in order to add GRUU to it
+				// Note that this operation may fail if the conference was previously created on the server
+				conference->setConferenceAddress(contactAddress);
 			}
-
-			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.asString();
-			op->setContactAddress(contactAddress.getInternalAddress());
-		} else {
-			lWarning() << "Unable to set contact address for session " << this << " to " << contactAddress.asString()
-			           << " as it is not valid";
 		}
-		linphone_address_unref(contact);
+
+		lInfo() << "Setting contact address for session " << this << " to " << *contactAddress;
+		op->setContactAddress(contactAddress->getImpl());
+	} else {
+		lWarning() << "Unable to set contact address for session " << this << " to "
+		           << ((contactAddress) ? contactAddress->toString() : std::string("<unknown>"))
+		           << " as it is not valid";
 	}
 }
 
@@ -1006,7 +983,8 @@ void CallSessionPrivate::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
                                                     BCTBX_UNUSED(const std::string &message)) {
 	// might be better to add callbacks on Account, but due to the lake of internal listener, it is dangerous to expose
 	// internal listeners to public object.
-	if (cfg == destProxy && cstate == LinphoneRegistrationOk) repairIfBroken();
+	const auto registeredChangedAccount = cfg ? Account::toCpp(cfg->account)->getSharedFromThis() : nullptr;
+	if (registeredChangedAccount == getDestAccount() && cstate == LinphoneRegistrationOk) repairIfBroken();
 	/*else
 	    only repair call when the right proxy is in state connected*/
 }
@@ -1022,7 +1000,7 @@ void CallSessionPrivate::completeLog() {
 	q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, log, nullptr);
 }
 
-void CallSessionPrivate::createOpTo(const LinphoneAddress *to) {
+void CallSessionPrivate::createOpTo(const std::shared_ptr<Address> &to) {
 	L_Q();
 	if (op) op->release();
 
@@ -1031,7 +1009,7 @@ void CallSessionPrivate::createOpTo(const LinphoneAddress *to) {
 	op = new SalCallOp(core->sal.get(), q->isCapabilityNegotiationEnabled());
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer()) op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());
-	linphone_configure_op(core, op, to, q->getParams()->getPrivate()->getCustomHeaders(), false);
+	linphone_configure_op(core, op, to->toC(), q->getParams()->getPrivate()->getCustomHeaders(), false);
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
 	/* else privacy might be set by proxy */
@@ -1039,42 +1017,42 @@ void CallSessionPrivate::createOpTo(const LinphoneAddress *to) {
 
 // -----------------------------------------------------------------------------
 
-LinphoneAddress *CallSessionPrivate::getFixedContact() const {
+std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 	L_Q();
-	LinphoneAddress *result = nullptr;
+	std::shared_ptr<Address> result = nullptr;
+	const auto &account = getDestAccount();
 	if (op && op->getContactAddress()) {
 		/* If already choosed, don't change it */
 		return nullptr;
 	} else if (pingOp && pingOp->getContactAddress()) {
 		/* If the ping OPTIONS request succeeded use the contact guessed from the received, rport */
 		lInfo() << "Contact has been fixed using OPTIONS";
-		char *addr = sal_address_as_string(pingOp->getContactAddress());
-		result = linphone_address_new(addr);
-		ms_free(addr);
+		result = Address::create();
+		result->setImpl(pingOp->getContactAddress());
 		return result;
-	} else if (destProxy) {
-		const LinphoneAddress *addr = NULL;
-		if (linphone_proxy_config_get_contact(destProxy)) {
-			addr = linphone_proxy_config_get_contact(destProxy);
+	} else if (account) {
+		shared_ptr<Address> addr = nullptr;
+		const auto &accountContactAddress = account->getContactAddress();
+		if (accountContactAddress) {
+			addr = accountContactAddress;
 		} else {
 			lError() << "Unable to retrieve contact address from proxy confguration for call session " << q
-			         << " (local address " << q->getLocalAddress().asString() << " remote address "
-			         << (q->getRemoteAddress() ? q->getRemoteAddress()->asString() : "Unknown") << ").";
+			         << " (local address " << q->getLocalAddress()->toString() << " remote address "
+			         << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "Unknown") << ").";
 		}
-		if (addr &&
-		    (linphone_proxy_config_get_op(destProxy) || (linphone_proxy_config_get_dependency(destProxy) != nullptr) ||
-		     linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
+		if (addr && (account->getOp() || (account->getDependency() != nullptr) ||
+		             linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
 			/* If using a proxy, use the contact address as guessed with the REGISTERs */
 			lInfo() << "Contact has been fixed using proxy";
-			result = linphone_address_clone(addr);
+			result = addr->clone()->toSharedPtr();
 			return result;
 		}
 	}
-	result = linphone_core_get_primary_contact_parsed(q->getCore()->getCCore());
+	result = Address::toCpp(linphone_core_get_primary_contact_parsed(q->getCore()->getCCore()))->toSharedPtr();
 	if (result) {
 		/* Otherwise use supplied localip */
-		linphone_address_set_domain(result, nullptr /* localip */);
-		linphone_address_set_port(result, -1 /* linphone_core_get_sip_port(core) */);
+		result->setDomain(std::string() /* localip */);
+		result->setPort(-1 /* linphone_core_get_sip_port(core) */);
 		lInfo() << "Contact has not been fixed, stack will do";
 	}
 	return result;
@@ -1122,12 +1100,12 @@ void CallSessionPrivate::repairIfBroken() {
 	// attempt to repair it
 
 	// Make sure that the proxy from which we received this call, or to which we routed this call is registered first
-	if (destProxy) {
+	const auto &account = getDestAccount();
+	if (account) {
 		// In all other cases, ie no proxy config, or a proxy config for which no registration was requested,
 		// we can start the call session repair immediately.
-		if (linphone_proxy_config_register_enabled(destProxy) &&
-		    (linphone_proxy_config_get_state(destProxy) != LinphoneRegistrationOk))
-			return;
+		const auto accountParams = account->getAccountParams();
+		if (accountParams->getRegisterEnabled() && (account->getState() != LinphoneRegistrationOk)) return;
 	}
 
 	SalErrorInfo sei;
@@ -1254,28 +1232,16 @@ LinphoneStatus CallSession::acceptUpdate(const CallSessionParams *csp) {
 	return d->acceptUpdate(csp, d->prevState, Utils::toString(d->prevState));
 }
 
-LinphoneProxyConfig *CallSession::getDestProxy() {
-	L_D();
-	return d->destProxy;
-}
-
-void CallSession::configure(
-    LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) {
+void CallSession::configure(LinphoneCallDir direction,
+                            LinphoneProxyConfig *cfg,
+                            SalCallOp *op,
+                            const std::shared_ptr<Address> &from,
+                            const std::shared_ptr<Address> &to) {
 	L_D();
 	d->direction = direction;
-	d->setDestProxy(cfg);
-	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
-	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
+	d->log = CallLog::create(getCore(), direction, from, to);
 
 	const auto &core = getCore()->getCCore();
-	if (!d->destProxy) {
-		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the
-		 * SIP messages */
-		d->setDestProxy(linphone_core_lookup_known_proxy(core, toAddr));
-	}
-
-	d->log = CallLog::create(getCore(), direction, fromAddr, toAddr);
-
 	if (op) {
 		/* We already have an op for incoming calls */
 		d->op = op;
@@ -1294,6 +1260,18 @@ void CallSession::configure(
 		d->setParams(new CallSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 	}
+
+	d->setDestAccount(cfg ? Account::toCpp(cfg->account)->getSharedFromThis() : nullptr);
+	if (!d->getDestAccount()) {
+		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the
+		 * SIP messages */
+		LinphoneAddress *toAddr = to->toC();
+		const auto cAccount = linphone_core_lookup_account_by_identity(core, toAddr);
+		if (cAccount) {
+			const auto account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
+			d->setDestAccount(account);
+		}
+	}
 }
 
 void CallSession::configure(LinphoneCallDir direction, const string &callid) {
@@ -1301,8 +1279,8 @@ void CallSession::configure(LinphoneCallDir direction, const string &callid) {
 	d->direction = direction;
 
 	// Keeping a valid address while following https://www.ietf.org/rfc/rfc3323.txt guidelines.
-	d->log = CallLog::create(getCore(), direction, linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"),
-	                         linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"));
+	const auto anonymous = Address::create("Anonymous <sip:anonymous@anonymous.invalid>");
+	d->log = CallLog::create(getCore(), direction, anonymous, anonymous);
 	d->log->setCallId(callid);
 }
 
@@ -1419,7 +1397,7 @@ bool CallSession::initiateOutgoing(BCTBX_UNUSED(const string &subject), BCTBX_UN
 	L_D();
 	bool defer = false;
 	d->setState(CallSession::State::OutgoingInit, "Starting outgoing call");
-	if (!d->destProxy) defer = d->startPing();
+	if (!d->getDestAccount()) defer = d->startPing();
 	return defer;
 }
 
@@ -1447,13 +1425,13 @@ void CallSession::iterate(time_t currentRealTime, bool oneSecondElapsed) {
 }
 
 LinphoneStatus CallSession::redirect(const string &redirectUri) {
-	Address address(getCore()->interpretUrl(redirectUri, true));
-	if (!address.isValid()) {
+	auto address = getCore()->interpretUrl(redirectUri, true);
+	if (!address || !address->isValid()) {
 		/* Bad url */
 		lError() << "Bad redirect URI: " << redirectUri;
 		return -1;
 	}
-	return redirect(address);
+	return redirect(*address);
 }
 
 LinphoneStatus CallSession::redirect(const Address &redirectAddr) {
@@ -1466,7 +1444,7 @@ LinphoneStatus CallSession::redirect(const Address &redirectAddr) {
 	memset(&sei, 0, sizeof(sei));
 	sal_error_info_set(&sei, SalReasonRedirect, "SIP", 0, nullptr, nullptr);
 	d->op->declineWithErrorInfo(
-	    &sei, redirectAddr.getInternalAddress(),
+	    &sei, redirectAddr.getImpl(),
 	    ((getParams()->getPrivate()->getEndTime() < 0) ? 0 : getParams()->getPrivate()->getEndTime()));
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonMovedPermanently, 302, "Call redirected", nullptr);
 	d->nonOpError = true;
@@ -1509,20 +1487,18 @@ void CallSession::startPushIncomingNotification() {
 	d->setState(CallSession::State::PushIncomingReceived, "Push notification received");
 }
 
-int CallSession::startInvite(const Address *destination, const string &subject, const Content *content) {
+int CallSession::startInvite(const std::shared_ptr<Address> &destination,
+                             const string &subject,
+                             const Content *content) {
 	L_D();
 	d->subject = subject;
 	/* Try to be best-effort in giving real local or routable contact address */
 	d->setContactOp();
 	string destinationStr;
-	char *realUrl = nullptr;
-	if (destination) destinationStr = destination->asString();
+	if (destination) destinationStr = destination->toString();
 	else {
-		realUrl = linphone_address_as_string(d->log->getToAddress());
-		destinationStr = realUrl;
-		ms_free(realUrl);
+		destinationStr = d->log->getToAddress()->toString();
 	}
-	char *from = linphone_address_as_string(d->log->getFromAddress());
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
 	if (content) {
@@ -1534,8 +1510,7 @@ int CallSession::startInvite(const Address *destination, const string &subject, 
 		d->op->addAdditionalLocalBody(content);
 	}
 
-	int result = d->op->call(from, destinationStr, subject);
-	ms_free(from);
+	int result = d->op->call(d->log->getFromAddress()->toString().c_str(), destinationStr, subject);
 	if (result < 0) {
 		if ((d->state != CallSession::State::Error) && (d->state != CallSession::State::Released)) {
 			// sal_call() may invoke call_failure() and call_released() SAL callbacks synchronously,
@@ -1595,19 +1570,19 @@ LinphoneStatus CallSession::transfer(const shared_ptr<CallSession> &dest) {
 	return result;
 }
 
-LinphoneStatus CallSession::transfer(const Address &address) {
+LinphoneStatus CallSession::transfer(const std::shared_ptr<Address> &address) {
 	L_D();
-	if (!address.isValid()) {
-		lError() << "Received invalid address " << address.asString() << " to transfer the call to";
+	if (!address || !address->isValid()) {
+		lError() << "Received invalid address " << address->toString() << " to transfer the call to";
 		return -1;
 	}
-	d->op->refer(address.asString().c_str());
+	d->op->refer(address->toString().c_str());
 	d->setTransferState(CallSession::State::OutgoingInit);
 	return 0;
 }
 
 LinphoneStatus CallSession::transfer(const string &dest) {
-	Address address(getCore()->interpretUrl(dest, true));
+	std::shared_ptr<Address> address(getCore()->interpretUrl(dest, true));
 	return transfer(address);
 }
 
@@ -1640,16 +1615,14 @@ LinphoneCallDir CallSession::getDirection() const {
 	return d->direction;
 }
 
-const Address &CallSession::getDiversionAddress() const {
+const std::shared_ptr<Address> CallSession::getDiversionAddress() const {
 	L_D();
+
+	std::shared_ptr<Address> diversionAddress = Address::create();
 	if (d->op && d->op->getDiversionAddress()) {
-		char *addrStr = sal_address_as_string(d->op->getDiversionAddress());
-		d->diversionAddress = Address(addrStr);
-		bctbx_free(addrStr);
-	} else {
-		d->diversionAddress = Address();
+		diversionAddress->setImpl(d->op->getDiversionAddress());
 	}
-	return d->diversionAddress;
+	return diversionAddress;
 }
 
 int CallSession::getDuration() const {
@@ -1670,13 +1643,19 @@ const LinphoneErrorInfo *CallSession::getErrorInfo() const {
 	return d->ei;
 }
 
-const Address &CallSession::getLocalAddress() const {
+const std::shared_ptr<Address> CallSession::getLocalAddress() const {
 	L_D();
-	return (d->direction == LinphoneCallIncoming)
-	           ? (d->log->getToAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getToAddress())
-	                                     : Utils::getEmptyConstRefObject<Address>())
-	           : (d->log->getFromAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getFromAddress())
-	                                       : Utils::getEmptyConstRefObject<Address>());
+	std::shared_ptr<Address> addr = nullptr;
+	if (d->direction == LinphoneCallIncoming) {
+		if (d->log->getToAddress()) {
+			addr = d->log->getToAddress();
+		}
+	} else {
+		if (d->log->getFromAddress()) {
+			addr = d->log->getFromAddress();
+		}
+	}
+	return addr;
 }
 
 shared_ptr<CallLog> CallSession::getLog() const {
@@ -1684,28 +1663,24 @@ shared_ptr<CallLog> CallSession::getLog() const {
 	return d->log;
 }
 
-Address CallSession::getContactAddress() const {
+const std::shared_ptr<Address> CallSession::getContactAddress() const {
 	L_D();
 	const auto op = d->getOp();
-	const auto destProxy = d->getDestProxy();
-	char *contactAddressStr = NULL;
-	if (op->getContactAddress()) {
-		contactAddressStr = sal_address_as_string(op->getContactAddress());
-	} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && destProxy &&
-	           linphone_proxy_config_get_contact(destProxy)) {
-		contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(destProxy));
+	const auto &account = d->getDestAccount();
+	const auto &accountContactAddress = (account) ? account->getContactAddress() : nullptr;
+	std::shared_ptr<Address> contactAddress = nullptr;
+	if (op && op->getContactAddress()) {
+		contactAddress = Address::create();
+		contactAddress->setImpl(op->getContactAddress());
+	} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && account && accountContactAddress) {
+		contactAddress = Address::create();
+		contactAddress = accountContactAddress->clone()->toSharedPtr();
 	} else {
 		lError() << "Unable to retrieve contact address from proxy confguration for call session " << this
-		         << " (local address " << getLocalAddress().asString() << " remote address "
-		         << (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
+		         << " (local address " << *getLocalAddress() << " remote address "
+		         << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ").";
 	}
-	if (contactAddressStr) {
-		Address contactAddress(contactAddressStr);
-		updateContactAddress(contactAddress);
-		ms_free(contactAddressStr);
-		return contactAddress;
-	}
-	return Address();
+	return contactAddress;
 }
 
 LinphoneReason CallSession::getReason() const {
@@ -1717,21 +1692,22 @@ shared_ptr<CallSession> CallSession::getReferer() const {
 	return d->referer;
 }
 
-const string &CallSession::getReferTo() const {
+const string CallSession::getReferTo() const {
 	L_D();
-	return d->referTo;
+	if (d->referToAddress) {
+		return d->referToAddress->toString();
+	}
+	return std::string();
 }
 
-const Address &CallSession::getReferToAddress() const {
+const std::shared_ptr<Address> &CallSession::getReferToAddress() const {
 	L_D();
 	return d->referToAddress;
 }
 
-const Address *CallSession::getRemoteAddress() const {
+const std::shared_ptr<Address> CallSession::getRemoteAddress() const {
 	L_D();
-	const LinphoneAddress *address =
-	    (d->direction == LinphoneCallIncoming) ? d->log->getFromAddress() : d->log->getToAddress();
-	return address ? L_GET_CPP_PTR_FROM_C_OBJECT(address) : nullptr;
+	return (d->direction == LinphoneCallIncoming) ? d->log->getFromAddress() : d->log->getToAddress();
 }
 
 const string &CallSession::getRemoteContact() const {
@@ -1743,18 +1719,19 @@ const string &CallSession::getRemoteContact() const {
 	return Utils::getEmptyConstRefObject<string>();
 }
 
-const Address *CallSession::getRemoteContactAddress() const {
+const std::shared_ptr<Address> CallSession::getRemoteContactAddress() const {
 	L_D();
-	if (!d->op) {
+	auto op = d->op;
+	if (!op) {
 		return nullptr;
 	}
-	if (!d->op->getRemoteContactAddress()) {
+	auto salRemoteContactAddress = op->getRemoteContactAddress();
+	if (!salRemoteContactAddress) {
 		return nullptr;
 	}
-	char *addrStr = sal_address_as_string(d->op->getRemoteContactAddress());
-	d->remoteContactAddress = Address(addrStr);
-	bctbx_free(addrStr);
-	return &d->remoteContactAddress;
+	std::shared_ptr<Address> remoteContactAddress = Address::create();
+	remoteContactAddress->setImpl(salRemoteContactAddress);
+	return remoteContactAddress;
 }
 
 const CallSessionParams *CallSession::getRemoteParams() {
@@ -1790,17 +1767,19 @@ CallSession::State CallSession::getLastStableState() const {
 	return d->lastStableState;
 }
 
-const Address &CallSession::getToAddress() const {
+const std::shared_ptr<Address> CallSession::getToAddress() const {
 	L_D();
-	return *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getToAddress());
+	return d->log->getToAddress();
 }
 
-const Address &CallSession::getRequestAddress() const {
+const std::shared_ptr<Address> CallSession::getRequestAddress() const {
 	L_D();
 	if (d->op) {
-		d->requestAddress = d->op->getRequestAddress();
-	} else d->requestAddress = Address();
-	return d->requestAddress;
+		std::shared_ptr<Address> addr = Address::create();
+		addr->setImpl(d->op->getRequestAddress());
+		return addr;
+	}
+	return nullptr;
 }
 
 CallSession::State CallSession::getTransferState() const {
@@ -1910,29 +1889,26 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 		isAdmin = me->isAdmin();
 		contactAddress.setParam("admin", Utils::toString(isAdmin));
 	} else {
-		IdentityAddress organizer = IdentityAddress();
+		std::shared_ptr<Address> organizer;
 		const auto sipfrag = d->op ? d->op->getContentInRemote(ContentType::SipFrag) : Content();
 		const auto &remoteContactSalAddress = d->op ? d->op->getRemoteContactAddress() : nullptr;
 
-		auto guessedConferenceAddress = ConferenceAddress();
+		std::shared_ptr<Address> guessedConferenceAddress = Address::create();
 
 		// If remote contact address is not yet available, try with remote address
 		if (remoteContactSalAddress) {
-			auto remoteContactAddressStr = sal_address_as_string(remoteContactSalAddress);
-			Address remoteContactAddress(remoteContactAddressStr);
-			ms_free(remoteContactAddressStr);
-			if ((!sipfrag.isEmpty()) && remoteContactAddress.hasParam("isfocus")) {
+			guessedConferenceAddress->setImpl(remoteContactSalAddress);
+			if ((!sipfrag.isEmpty()) && guessedConferenceAddress->hasParam("isfocus")) {
 				auto organizerId = Utils::getSipFragAddress(sipfrag);
-				organizer = IdentityAddress(organizerId);
+				organizer = Address::create(organizerId);
 			}
-			guessedConferenceAddress = ConferenceAddress(remoteContactAddress);
 		} else {
-			guessedConferenceAddress = ConferenceAddress(*getRemoteAddress());
+			guessedConferenceAddress = getRemoteAddress();
 		}
 
 #ifdef HAVE_DB_STORAGE
 		auto &mainDb = getCore()->getPrivate()->mainDb;
-		if (mainDb && (guessedConferenceAddress != ConferenceAddress())) {
+		if (mainDb && guessedConferenceAddress) {
 			const auto &confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
 			if (confInfo) {
 				organizer = confInfo->getOrganizerAddress();
@@ -1940,11 +1916,37 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 		}
 #endif
 
-		if (organizer != IdentityAddress()) {
-			isAdmin = (organizer == getLocalAddress());
+		if (organizer) {
+			const auto localAddress = getLocalAddress();
+			isAdmin = (organizer->weakEqual(*localAddress));
 			contactAddress.setParam("admin", Utils::toString(isAdmin));
 		}
 	}
+}
+
+void CallSession::updateContactAddressInOp() {
+	L_D();
+	Address contactAddress;
+	const auto &account = d->getDestAccount();
+	if (account) {
+		const auto &accountOp = account->getOp();
+		const auto &accountContactAddress = account->getContactAddress();
+		if (accountOp) {
+			/* Give a chance to update the contact address if connectivity has changed */
+			contactAddress.setImpl(accountOp->getContactAddress());
+
+		} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && accountContactAddress) {
+			contactAddress = *accountContactAddress;
+		}
+
+	} else if (d->op && d->op->getContactAddress()) {
+		contactAddress.setImpl(d->op->getContactAddress());
+	} else {
+		contactAddress = Address(linphone_core_get_identity(getCore()->getCCore()));
+	}
+
+	updateContactAddress(contactAddress);
+	d->op->setContactAddress(contactAddress.getImpl());
 }
 
 void CallSession::addPendingAction(std::function<LinphoneStatus()> f) {

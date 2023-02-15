@@ -36,8 +36,8 @@ class LINPHONE_PUBLIC ProxyChatRoom : public AbstractChatRoom {
 public:
 	const ConferenceId &getConferenceId() const override;
 
-	const IdentityAddress &getPeerAddress() const override;
-	const IdentityAddress &getLocalAddress() const override;
+	const std::shared_ptr<Address> &getPeerAddress() const override;
+	const std::shared_ptr<Address> &getLocalAddress() const override;
 
 	time_t getCreationTime() const override;
 	time_t getLastUpdateTime() const override;
@@ -67,7 +67,7 @@ public:
 
 	void compose() override;
 	bool isRemoteComposing() const override;
-	std::list<IdentityAddress> getComposingAddresses() const override;
+	std::list<std::shared_ptr<Address>> getComposingAddresses() const override;
 
 	std::shared_ptr<ChatMessage> createChatMessage() override;
 	std::shared_ptr<ChatMessage>
@@ -93,7 +93,7 @@ public:
 	AbstractChatRoom::EphemeralMode getEphemeralMode() const override;
 	bool ephemeralSupportedByAllParticipants() const override;
 
-	const ConferenceAddress &getConferenceAddress() const override;
+	const std::shared_ptr<Address> &getConferenceAddress() const override;
 	std::shared_ptr<Conference> getConference() const override;
 	bool canHandleParticipants() const override;
 
@@ -105,7 +105,7 @@ public:
 	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants(const std::list<std::shared_ptr<Participant>> &participants) override;
 
-	std::shared_ptr<Participant> findParticipant(const IdentityAddress &participantAddress) const override;
+	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &participantAddress) const override;
 
 	std::shared_ptr<Participant> getMe() const override;
 	int getParticipantCount() const override;
@@ -131,10 +131,10 @@ public:
 		chatListeners.push_back(listener);
 	}
 
-	bool addParticipant(const IdentityAddress &participantAddress) override;
+	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	bool addParticipant(std::shared_ptr<Call> call) override;
-	bool addParticipants(const std::list<IdentityAddress> &addresses) override;
-	void join(const IdentityAddress &participantAddress) override;
+	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
+	void join(const std::shared_ptr<Address> &participantAddress) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 
 	void setState(ConferenceInterface::State state) override;

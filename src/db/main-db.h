@@ -66,11 +66,11 @@ public:
 	typedef EnumMask<Filter> FilterMask;
 
 	struct ParticipantState {
-		ParticipantState(const IdentityAddress &address, ChatMessage::State state, time_t timestamp)
+		ParticipantState(const std::shared_ptr<Address> &address, ChatMessage::State state, time_t timestamp)
 		    : address(address), state(state), timestamp(timestamp) {
 		}
 
-		IdentityAddress address;
+		std::shared_ptr<Address> address;
 		ChatMessage::State state = ChatMessage::State::Idle;
 		time_t timestamp = 0;
 	};
@@ -116,9 +116,9 @@ public:
 	                                                                  ChatMessage::State state) const;
 	std::list<ChatMessage::State> getChatMessageParticipantStates(const std::shared_ptr<EventLog> &eventLog) const;
 	ChatMessage::State getChatMessageParticipantState(const std::shared_ptr<EventLog> &eventLog,
-	                                                  const IdentityAddress &participantAddress) const;
+	                                                  const std::shared_ptr<Address> &participantAddress) const;
 	void setChatMessageParticipantState(const std::shared_ptr<EventLog> &eventLog,
-	                                    const IdentityAddress &participantAddress,
+	                                    const std::shared_ptr<Address> &participantAddress,
 	                                    ChatMessage::State state,
 	                                    time_t stateChangeTime);
 
@@ -177,19 +177,19 @@ public:
 	void migrateBasicToClientGroupChatRoom(const std::shared_ptr<AbstractChatRoom> &basicChatRoom,
 	                                       const std::shared_ptr<AbstractChatRoom> &clientGroupChatRoom);
 
-	IdentityAddress
+	std::shared_ptr<Address>
 	findMissingOneToOneConferenceChatRoomParticipantAddress(const std::shared_ptr<AbstractChatRoom> &chatRoom,
-	                                                        const IdentityAddress &presentParticipantAddr);
-	ConferenceAddress findOneToOneConferenceChatRoomAddress(const IdentityAddress &participantA,
-	                                                        const IdentityAddress &participantB,
-	                                                        bool encrypted) const;
+	                                                        const std::shared_ptr<Address> &presentParticipantAddr);
+	std::shared_ptr<Address> findOneToOneConferenceChatRoomAddress(const std::shared_ptr<Address> &participantA,
+	                                                               const std::shared_ptr<Address> &participantB,
+	                                                               bool encrypted) const;
 	void insertOneToOneConferenceChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom, bool encrypted);
 
 	void updateChatRoomParticipantDevice(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                                     const std::shared_ptr<ParticipantDevice> &device);
 
 	void deleteChatRoomParticipant(const std::shared_ptr<AbstractChatRoom> &chatRoom,
-	                               const IdentityAddress &participant);
+	                               const std::shared_ptr<Address> &participant);
 
 	void deleteChatRoomParticipantDevice(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                                     const std::shared_ptr<ParticipantDevice> &device);
@@ -203,7 +203,7 @@ public:
 
 	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos(time_t afterThisTime = -1) const;
 	std::shared_ptr<ConferenceInfo> getConferenceInfo(long long conferenceInfoId) const;
-	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const ConferenceAddress &uri) const;
+	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri) const;
 	void insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	void deleteConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 
@@ -217,9 +217,9 @@ public:
 	std::shared_ptr<CallLog> getCallLog(const std::string &callId, int limit);
 
 	std::list<std::shared_ptr<CallLog>> getCallHistory(int limit = -1);
-	std::list<std::shared_ptr<CallLog>> getCallHistory(const ConferenceAddress &address, int limit = -1);
+	std::list<std::shared_ptr<CallLog>> getCallHistory(const std::shared_ptr<Address> &address, int limit = -1);
 	std::list<std::shared_ptr<CallLog>>
-	getCallHistory(const ConferenceAddress &peer, const ConferenceAddress &local, int limit = -1);
+	getCallHistory(const std::shared_ptr<Address> &peer, const std::shared_ptr<Address> &local, int limit = -1);
 	std::shared_ptr<CallLog> getLastOutgoingCall();
 	void deleteCallHistory();
 

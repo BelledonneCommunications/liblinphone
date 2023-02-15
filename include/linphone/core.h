@@ -2185,7 +2185,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, 
  */
 
 /**
- * @addtogroup accounts
+ * @addtogroup account
  * @{
  */
 
@@ -5794,7 +5794,7 @@ LINPHONE_PUBLIC LinphoneContent *linphone_core_create_content(LinphoneCore *core
  * @return a #LinphoneEvent holding the context of the created subcription. @notnil
  **/
 LINPHONE_PUBLIC LinphoneEvent *linphone_core_subscribe(
-    LinphoneCore *core, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body);
+    LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body);
 
 /**
  * Create an outgoing subscription, specifying the destination resource, the event name, and an optional content body.
@@ -5808,7 +5808,7 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_core_subscribe(
  * @return a #LinphoneEvent holding the context of the created subcription. @notnil
  **/
 LINPHONE_PUBLIC LinphoneEvent *
-linphone_core_create_subscribe(LinphoneCore *core, const LinphoneAddress *resource, const char *event, int expires);
+linphone_core_create_subscribe(LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires);
 
 /**
  * Create an outgoing subscription, specifying the destination resource, the event name, and an optional content body.
@@ -5823,7 +5823,7 @@ linphone_core_create_subscribe(LinphoneCore *core, const LinphoneAddress *resour
  * @return a #LinphoneEvent holding the context of the created subcription. @notnil
  **/
 LINPHONE_PUBLIC LinphoneEvent *linphone_core_create_subscribe_2(
-    LinphoneCore *core, const LinphoneAddress *resource, LinphoneProxyConfig *proxy, const char *event, int expires);
+    LinphoneCore *core, LinphoneAddress *resource, LinphoneProxyConfig *proxy, const char *event, int expires);
 
 /**
  * Create an out-of-dialog notification, specifying the destination resource, the event name.
@@ -5834,7 +5834,7 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_core_create_subscribe_2(
  * @return a #LinphoneEvent holding the context of the notification. @notnil
  **/
 LINPHONE_PUBLIC LinphoneEvent *
-linphone_core_create_notify(LinphoneCore *core, const LinphoneAddress *resource, const char *event);
+linphone_core_create_notify(LinphoneCore *core, LinphoneAddress *resource, const char *event);
 
 /**
  * Publish an event state.
@@ -5849,7 +5849,7 @@ linphone_core_create_notify(LinphoneCore *core, const LinphoneAddress *resource,
  * @return the #LinphoneEvent holding the context of the publish. @maybenil
  **/
 LINPHONE_PUBLIC LinphoneEvent *linphone_core_publish(
-    LinphoneCore *core, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body);
+    LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body);
 
 /**
  * Create a publish context for an event state.
@@ -5863,7 +5863,7 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_core_publish(
  * @return the #LinphoneEvent holding the context of the publish. @notnil
  **/
 LINPHONE_PUBLIC LinphoneEvent *
-linphone_core_create_publish(LinphoneCore *core, const LinphoneAddress *resource, const char *event, int expires);
+linphone_core_create_publish(LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires);
 
 /**
  * Create a publish context for a one-shot publish.
@@ -5876,7 +5876,7 @@ linphone_core_create_publish(LinphoneCore *core, const LinphoneAddress *resource
  * @return the #LinphoneEvent holding the context of the publish. @notnil
  **/
 LINPHONE_PUBLIC LinphoneEvent *
-linphone_core_create_one_shot_publish(LinphoneCore *core, const LinphoneAddress *resource, const char *event);
+linphone_core_create_one_shot_publish(LinphoneCore *core, LinphoneAddress *resource, const char *event);
 
 /**
  * @}
