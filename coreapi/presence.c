@@ -1582,23 +1582,29 @@ static int process_pidf_xml_presence_person_notes(xmlparsing_context_t *xml_ctx,
 static int process_pidf_xml_presence_persons(xmlparsing_context_t *xml_ctx, LinphonePresenceModel *model) {
 	char xpath_str[MAX_XPATH_LENGTH];
 	xmlXPathObjectPtr person_object;
-	LinphonePresencePerson *person;
-	char *person_id_str;
-	char *person_timestamp_str;
-	time_t timestamp;
-	int i;
+	time_t timestamp = time(NULL);
 	int err = 0;
 
 	person_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, person_prefix);
 	if ((person_object != NULL) && (person_object->nodesetval != NULL)) {
-		for (i = 1; i <= person_object->nodesetval->nodeNr; i++) {
+		for (int i = 1; i <= person_object->nodesetval->nodeNr; i++) {
 			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/@id", person_prefix, i);
-			person_id_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
+			char *person_id_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
 			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/pidf:timestamp", person_prefix, i);
-			person_timestamp_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
-			if (person_timestamp_str == NULL) timestamp = time(NULL);
-			else timestamp = parse_timestamp(person_timestamp_str);
-			person = presence_person_new(person_id_str, timestamp);
+			char *person_timestamp_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
+
+			if (person_timestamp_str == NULL) {
+				unsigned int servicesCount = linphone_presence_model_get_nb_services(model);
+				if (servicesCount > 0) {
+					LinphonePresenceService *service = linphone_presence_model_get_nth_service(model, 0);
+					if (service) {
+						timestamp = service->timestamp;
+					}
+				}
+			} else {
+				timestamp = parse_timestamp(person_timestamp_str);
+			}
+			LinphonePresencePerson *person = presence_person_new(person_id_str, timestamp);
 
 			if (person != NULL) {
 				err = process_pidf_xml_presence_person_activities(xml_ctx, person, (unsigned int)i);
@@ -1607,14 +1613,14 @@ static int process_pidf_xml_presence_persons(xmlparsing_context_t *xml_ctx, Linp
 				}
 				if (err == 0) {
 					presence_model_add_person(model, person);
-					linphone_presence_person_unref(person);
-				} else {
-					linphone_presence_person_unref(person);
-					break;
 				}
+				linphone_presence_person_unref(person);
 			}
+
 			if (person_id_str != NULL) linphone_free_xml_text_content(person_id_str);
 			if (person_timestamp_str != NULL) linphone_free_xml_text_content(person_timestamp_str);
+
+			if (err != 0) break;
 		}
 	}
 	if (person_object != NULL) xmlXPathFreeObject(person_object);
