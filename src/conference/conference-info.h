@@ -45,6 +45,7 @@ class CListCache{
 public:
 	CListCache() = default;
 	CListCache(const CListCache& other) : mList(nullptr){
+		(void)other;
 	}
 	template<typename _container, typename _functor>
 	const bctbx_list_t * construct(const _container & container, _functor fun) const{
