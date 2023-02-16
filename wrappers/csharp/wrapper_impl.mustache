@@ -473,12 +473,12 @@ namespace Linphone
 			set
 			{
 				{{var_public}} = value;
-#if (_WIN32 || WINDOWS_UWP)
 				{{var_private}} = {{cb_name}};
+#if (_WIN32 || WINDOWS_UWP)
 				IntPtr cb = Marshal.GetFunctionPointerForDelegate({{var_private}});
 				{{c_name_setter}}(nativePtr, cb);
 #else
-				{{c_name_setter}}(nativePtr, {{cb_name}});
+				{{c_name_setter}}(nativePtr, {{var_private}});
 #endif
 			}
 		}
