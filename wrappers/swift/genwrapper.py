@@ -598,29 +598,7 @@ if __name__ == '__main__':
 
     parser.classBl += 'LinphoneCoreVTable'
     parser.methodBl = ['ref', 'unref', 'new', 'destroy']
-    parser.enum_relocations = {
-        'LinphoneAccountCreatorActivationCodeStatus' : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorDomainStatus'         : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorEmailStatus'          : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorLanguageStatus'       : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorPasswordStatus'       : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorPhoneNumberStatus'    : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorStatus'               : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorTransportStatus'      : 'LinphoneAccountCreator',
-        'LinphoneAccountCreatorUsernameStatus'       : 'LinphoneAccountCreator',
-        'LinphoneCallDir'                            : 'LinphoneCall',
-        'LinphoneCallState'                          : 'LinphoneCall',
-        'LinphoneCallStatus'                         : 'LinphoneCall',
-        'LinphoneConferenceState'                    : 'LinphoneConference',
-        'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
-        'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
-        'LinphoneChatMessageState'                   : 'LinphoneChatMessage',
-        'LinphoneCoreLogCollectionUploadState'       : 'LinphoneCore',
-        'LinphoneFriendListStatus'                   : 'LinphoneFriendList',
-        'LinphoneFriendListSyncStatus'               : 'LinphoneFriendList',
-        'LinphonePlayerState'                        : 'LinphonePlayer',
-        'LinphoneTunnelMode'                         : 'LinphoneTunnel'
-    }
+
     parser.parse_all()
     translator = SwiftTranslator()
     renderer = pystache.Renderer()

@@ -77,7 +77,7 @@ const ConferenceInfo::participant_list_t & ConferenceInfo::getParticipants () co
 
 const bctbx_list_t *ConferenceInfo::getParticipantsCList() const{
 	return mParticipantsList.construct(mParticipants, []( const pair<IdentityAddress, participant_params_t> &p) -> LinphoneAddress* {
-		return L_GET_C_BACK_PTR(&p.first.asAddress());
+		return linphone_address_new(p.first.asString().c_str());
 	});
 }
 

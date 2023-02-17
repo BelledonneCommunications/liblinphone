@@ -28,8 +28,7 @@
 #include <list>
 
 #include <linphone++/linphone.hh>
-#include "c-wrapper/c-wrapper.h"
-#include "c-wrapper/internal/c-tools.h"
+
 
 static void create_chat_room(){
 // Init from C
@@ -46,13 +45,6 @@ static void create_chat_room(){
 	participants.push_back(linphone::Object::cPtrToSharedPtr<linphone::Address>(pauline->identity));
 	params->setBackend(linphone::ChatRoomBackend::Basic);
 
-	/* check a few accessors */
-	auto defaultAccount = core->getDefaultAccount();
-	BC_ASSERT_PTR_NOT_NULL(defaultAccount);
-	auto contactAddress = defaultAccount->getContactAddress();
-	BC_ASSERT_PTR_NOT_NULL(contactAddress);
-	auto newAddress = contactAddress->clone();
-	BC_ASSERT_PTR_NOT_NULL(newAddress);
 
 // Creation, store the result inside a variable to test variable scope.
 	auto chatRoom = core->createChatRoom(params, localAddress, participants);
@@ -89,8 +81,33 @@ static void create_chat_room(){
 	linphone_core_manager_destroy(pauline);
 }
 
+static void various_api_checks(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+
+	auto core = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
+
+	/* check a few accessors */
+	auto defaultAccount = core->getDefaultAccount();
+	BC_ASSERT_PTR_NOT_NULL(defaultAccount);
+	auto contactAddress = defaultAccount->getContactAddress();
+	BC_ASSERT_PTR_NOT_NULL(contactAddress);
+	auto newAddress = contactAddress->clone();
+	BC_ASSERT_PTR_NOT_NULL(newAddress);
+
+	std::list<std::shared_ptr<linphone::Address>> participants;
+	auto address = linphone::Factory::get()->createAddress("sip:toto@sip.linphone.org");
+	participants.push_back(address);
+	auto conferenceInfo = linphone::Factory::get()->createConferenceInfo();
+	conferenceInfo->setParticipants(participants);
+	auto testList = conferenceInfo->getParticipants();
+	bctbx_message("Number of participants: %i", (int)testList.size());
+
+	linphone_core_manager_destroy(marie);
+}
+
 test_t wrapper_cpp_tests[] = {
-	TEST_NO_TAG("Create chat room", create_chat_room)
+	TEST_NO_TAG("Create chat room", create_chat_room),
+	TEST_NO_TAG("Various API checks", various_api_checks)
 };
 
 test_suite_t wrapper_cpp_test_suite = {

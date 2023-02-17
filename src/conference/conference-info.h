@@ -50,7 +50,7 @@ public:
 	template<typename _container, typename _functor>
 	const bctbx_list_t * construct(const _container & container, _functor fun) const{
 		if (mList) {
-			bctbx_list_free(mList);
+			bctbx_list_free_with_data(mList, belle_sip_object_unref);
 			mList = nullptr;
 		}
 		for (const auto & obj : container){
@@ -59,7 +59,7 @@ public:
 		return mList;
 	}
 	~CListCache(){
-		if (mList) bctbx_list_free(mList);
+		if (mList) bctbx_list_free_with_data(mList, belle_sip_object_unref);
 	}
 private:
 	mutable bctbx_list_t *mList = nullptr;
