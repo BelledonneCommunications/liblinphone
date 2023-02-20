@@ -356,11 +356,16 @@ class SwiftTranslator(JavaTranslator):
 		self.keyWordEscapes = {'protocol' : 'proto'}
 
 	def translate_enum_name(self, name, recursive=False, topAncestor=None):
+		
 		if name.prev is None or not recursive or name.prev is topAncestor:
-			return name.to_camel_case()
+			enumName = name.to_camel_case()
 		else:
 			params = {'recursive': recursive, 'topAncestor': topAncestor}
-			return name.prev.translate(self, **params) + self.nsSep + name.to_camel_case()
+			enumName = name.prev.translate(self, **params) + self.nsSep + name.to_camel_case()
+		# Type is a reserved keyword within classes.
+		if enumName == 'Type':
+			enumName = 'Kind'
+		return enumName
 
 	def translate_interface_name(self, name, **params):
 		name = self.translate_class_name(name, **params)
