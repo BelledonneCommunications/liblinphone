@@ -489,7 +489,7 @@ if __name__ == '__main__':
 		'linphone_core_set_native_video_window_id'
 	]
 	parser.classBl += 'LinphoneCoreVTable'
-	parser.enum_relocations = {} # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)
+	parser.enable_enum_relocations = False # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)
 	parser.parse_all()
 	translator = CsharpTranslator()
 	renderer = pystache.Renderer()

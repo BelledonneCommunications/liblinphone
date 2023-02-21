@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
 
+## [5.3.0] Unreleased
 
+### Changed
+- Enum relocations dictionnary is now automatically computed, causing an API change in C++, Swift & Java wrappers!
 
 ## [5.2.0] 2022-11-14
 

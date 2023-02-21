@@ -513,35 +513,9 @@ class CParser:
 		self.forcedRefcountableClasses = ['LinphoneFactory']
 		
 		self.enum_relocations = {
-			'LinphoneAccountCreatorActivationCodeStatus' : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorDomainStatus'         : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorEmailStatus'          : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorLanguageStatus'       : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorPasswordStatus'       : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorPhoneNumberStatus'    : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorStatus'               : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorTransportStatus'      : 'LinphoneAccountCreator',
-			'LinphoneAccountCreatorUsernameStatus'       : 'LinphoneAccountCreator',
-			'LinphoneCallDir'                            : 'LinphoneCall',
-			'LinphoneCallState'                          : 'LinphoneCall',
-			'LinphoneCallStatus'                         : 'LinphoneCall',
-			'LinphoneConferenceState'                    : 'LinphoneConference',
-			'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
-			'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
-			'LinphoneChatMessageState'                   : 'LinphoneChatMessage',
-			'LinphoneCoreLogCollectionUploadState'       : 'LinphoneCore',
-			'LinphoneEventLogType'                       : 'LinphoneEventLog',
 			'LinphoneSecurityEventType'                  : 'LinphoneEventLog',
-			'LinphoneFriendListStatus'                   : 'LinphoneFriendList',
-			'LinphoneFriendListSyncStatus'               : 'LinphoneFriendList',
-			'LinphonePlayerState'                        : 'LinphonePlayer',
-			'LinphonePresenceActivityType'               : 'LinphonePresenceActivity',
-			'LinphoneTunnelMode'                         : 'LinphoneTunnel',
-			'LinphoneAudioDeviceType'                    : 'LinphoneAudioDevice',
-			'LinphoneAudioDeviceCapabilities'            : 'LinphoneAudioDevice',
-			'LinphoneConferenceSchedulerState'           : 'LinphoneConferenceScheduler',
-			'LinphoneConferenceInfoState'                : 'LinphoneConferenceInfo'
 		}
+		self.enable_enum_relocations = True
 
 		self.cProject = cProject
 
@@ -743,8 +717,15 @@ class CParser:
 		self.enumsIndex[cenum.publicName] = enum
 		self.enumeratorsIndex.update(enumeratorsIndex)
 
-		if cenum.publicName in self.enum_relocations:
-			self._pending_enums.append(enum)
+		if self.enable_enum_relocations:
+			enum_cname = enum.name.to_c()
+			for class_ in self.cProject.classes:
+				class_cname = class_.name
+				if enum_cname.startswith(class_cname):
+					print('Considering ' + enum_cname + ' as a child of ' + class_cname)
+					self.enum_relocations[enum_cname] = class_cname
+					self._pending_enums.append(enum)
+					break
 		return enum
 	
 	def parse_class(self, cclass):

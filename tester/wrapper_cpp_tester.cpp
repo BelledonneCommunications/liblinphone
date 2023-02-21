@@ -43,10 +43,9 @@ static void create_chat_room(){
 	std::list<std::shared_ptr<linphone::Address> > participants;
 	std::shared_ptr<const linphone::Address> localAddress;
 	participants.push_back(linphone::Object::cPtrToSharedPtr<linphone::Address>(pauline->identity));
-	params->setBackend(linphone::ChatRoomBackend::Basic);
+	params->setBackend(linphone::ChatRoom::Backend::Basic);
 
-
-// Creation, store the result inside a variable to test variable scope.
+	// Creation, store the result inside a variable to test variable scope.
 	auto chatRoom = core->createChatRoom(params, localAddress, participants);
 	
 	auto cChatRoom = (LinphoneChatRoom*)linphone::Object::sharedPtrToCPtr(chatRoom);
