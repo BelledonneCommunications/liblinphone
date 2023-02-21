@@ -1597,7 +1597,7 @@ static void bodyless_config_read(LinphoneCore *lc) {
 			continue;
 		}
 
-		ms_message("Found bodyless friendlist %s", name);
+		ms_message("Found bodyless friend list %s", name);
 		bctbx_free(name);
 		LinphoneFriendList *friendList = linphone_core_create_friend_list(lc);
 		linphone_friend_list_set_subscription_bodyless(friendList, TRUE);// Must be set first to avoid writting database.
@@ -1608,6 +1608,9 @@ static void bodyless_config_read(LinphoneCore *lc) {
 				? linphone_address_get_display_name(addr)
 				: linphone_address_get_username(addr)
 		);
+		if (!linphone_friend_list_subscriptions_enabled(friendList)) {
+			ms_warning("Newly created bodyless friend list [%p](%s) subscriptions are disabled...", friendList, linphone_friend_list_get_display_name(friendList));
+		}
 		linphone_address_unref(addr);
 		linphone_core_add_friend_list(lc, friendList);
 		linphone_friend_list_unref(friendList);
