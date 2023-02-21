@@ -1139,9 +1139,9 @@ bool_t linphone_core_should_subscribe_friends_only_when_registered(const Linphon
 }
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc) {
-
 	if (lc->initial_subscribes_sent) return;
 	linphone_core_update_friends_subscriptions(lc);
+	ms_message("Initial friend lists subscribes has been sent");
 }
 
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc) {
@@ -1869,7 +1869,7 @@ void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendL
 	if (lc && lc->friends_db) {
 		char *buf;
 		if (list->storage_id == 0) {
-			ms_error("Friends list doesn't have a storage_id !");
+			ms_error("Friend list doesn't have a storage_id !");
 			return;
 		}
 

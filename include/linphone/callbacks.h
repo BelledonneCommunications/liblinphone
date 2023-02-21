@@ -458,7 +458,7 @@ typedef void (*LinphoneCoreCbsLogCollectionUploadProgressIndicationCb)(LinphoneC
 typedef LinphoneCoreCbsLogCollectionUploadProgressIndicationCb LinphoneCoreLogCollectionUploadProgressIndicationCb;
 
 /**
- * Callback prototype for reporting when a friend list has been added to the core friends list.
+ * Callback prototype for reporting when a friend list has been added to the core friend lists.
  * @param core #LinphoneCore object @notnil
  * @param friend_list #LinphoneFriendList object @notnil
  */
@@ -470,7 +470,7 @@ typedef void (*LinphoneCoreCbsFriendListCreatedCb)(LinphoneCore *core, LinphoneF
 typedef LinphoneCoreCbsFriendListCreatedCb LinphoneCoreFriendListCreatedCb;
 
 /**
- * Callback prototype for reporting when a friend list has been removed from the core friends list.
+ * Callback prototype for reporting when a friend list has been removed from the core friend lists.
  * @param core #LinphoneCore object @notnil
  * @param friend_list #LinphoneFriendList object @notnil
  */

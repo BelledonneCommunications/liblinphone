@@ -1271,9 +1271,15 @@ static void _linphone_friend_list_send_list_subscription_without_body(LinphoneFr
 
 static void linphone_friend_list_send_list_subscription(LinphoneFriendList *list) {
 	const LinphoneAddress *address = _linphone_friend_list_get_rls_address(list);
-	if (!address) return;
+	if (!address) {
+		ms_warning("Friend list's [%p] has no RLS address, can't send subscription", list);
+		return;
+	}
 
-	if (!linphone_friend_list_has_subscribe_inactive(list)) return;
+	if (!linphone_friend_list_has_subscribe_inactive(list)) {
+		ms_warning("Friend list's [%p] subscribe is inactive, can't send subscription", list);
+		return;
+	}
 
 	if (list->bodyless_subscription) _linphone_friend_list_send_list_subscription_without_body(list, address);
 	else _linphone_friend_list_send_list_subscription_with_body(list, address);
@@ -1285,6 +1291,7 @@ void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
 	bool_t only_when_registered = FALSE;
 	bool_t should_send_list_subscribe = FALSE;
 
+	ms_message("Updating friend list [%p](%s) subscriptions", list, linphone_friend_list_get_display_name(list));
 	if (list->lc) {
 		if (address) cfg = linphone_core_lookup_known_proxy(list->lc, address);
 		only_when_registered = linphone_core_should_subscribe_friends_only_when_registered(list->lc);
@@ -1303,17 +1310,18 @@ void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
 					linphone_event_terminate(list->event);
 					linphone_event_unref(list->event);
 					list->event = NULL;
-					ms_message("Friends list [%p] subscription terminated because proxy config lost connection", list);
+					ms_message("Friend list [%p] subscription terminated because proxy config lost connection", list);
 				} else {
-					ms_message("Friends list [%p] subscription update skipped since dependant proxy config is not yet "
+					ms_message("Friend list [%p] subscription update skipped since dependant proxy config is not yet "
 					           "registered",
 					           list);
 				}
 			}
 		} else {
-			ms_message("Friends list [%p] subscription update skipped since subscriptions not enabled yet", list);
+			ms_message("Friend list [%p] subscription update skipped since subscriptions not enabled yet", list);
 		}
 	} else if (list->enable_subscriptions) {
+		ms_message("Updating friend list's [%p] friends subscribes", list);
 		const bctbx_list_t *elem;
 		for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
 			LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
@@ -1323,8 +1331,7 @@ void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
 }
 
 void linphone_friend_list_invalidate_subscriptions(LinphoneFriendList *list) {
-	const bctbx_list_t *elem;
-
+	ms_message("Invalidating friend list's [%p] subscriptions", list);
 	// Terminate subscription event
 	if (list->event) {
 		linphone_event_terminate(list->event);
@@ -1332,6 +1339,7 @@ void linphone_friend_list_invalidate_subscriptions(LinphoneFriendList *list) {
 		list->event = NULL;
 	}
 
+	const bctbx_list_t *elem;
 	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
 		linphone_friend_invalidate_subscription(lf);

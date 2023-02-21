@@ -1154,8 +1154,8 @@ static void long_term_presence_with_e164_phone_without_sip_base(bool_t backgroun
 
 		LinphoneFriendList *pauline_default_friend_list = linphone_core_get_default_friend_list(pauline->lc);
 		linphone_friend_list_set_rls_uri(pauline_default_friend_list, "sip:rls@sip.example.org");
-		linphone_friend_list_enable_subscriptions(pauline_default_friend_list, TRUE);
-		linphone_core_refresh_registers(pauline->lc);
+		BC_ASSERT_TRUE(linphone_friend_list_subscriptions_enabled(pauline_default_friend_list));
+		linphone_friend_list_update_subscriptions(pauline_default_friend_list);
 
 		BC_ASSERT_TRUE(wait_for(pauline->lc, NULL, &pauline->stat.number_of_LinphonePresenceActivityAway, 1));
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphonePresenceActivityAway, 1, int, "%d");
@@ -1329,9 +1329,11 @@ static void long_term_presence_with_crossed_references(void) {
 		linphone_friend_add_phone_number(friend2, e164_pauline);
 		linphone_core_add_friend(marie->lc, friend2);
 		linphone_friend_unref(friend2);
-		linphone_friend_list_set_rls_uri(linphone_core_get_default_friend_list(marie->lc), "sip:rls@sip.example.org");
-		linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(marie->lc), TRUE);
-		linphone_core_refresh_registers(marie->lc);
+
+		LinphoneFriendList *marie_default_friend_list = linphone_core_get_default_friend_list(marie->lc);
+		linphone_friend_list_set_rls_uri(marie_default_friend_list, "sip:rls@sip.example.org");
+		BC_ASSERT_TRUE(linphone_friend_list_subscriptions_enabled(marie_default_friend_list));
+		linphone_friend_list_update_subscriptions(marie_default_friend_list);
 
 		// Pauline is already registered so I must be notified very rapidely
 		BC_ASSERT_TRUE(
