@@ -47,6 +47,10 @@ list<Content> ContentManager::multipartToContentList (const Content &content) {
 		SalBodyHandler *part = (SalBodyHandler *)parts->data;
 		LinphoneContent *cContent = linphone_content_from_sal_body_handler(part, false);
 		Content *cppContent = L_GET_CPP_PTR_FROM_C_OBJECT(cContent);
+		// WARNING: DO NOT CHERRY-PICK IN THE MASTER BRANCH
+		// Use global content disposition if not already in the part
+		if (!cppContent->getContentDisposition().isValid() && content.getContentDisposition().isValid())
+			cppContent->setContentDisposition(content.getContentDisposition());
 		contents.push_back(*cppContent);
 		linphone_content_unref(cContent);
 	}
