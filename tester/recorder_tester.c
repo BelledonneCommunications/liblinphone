@@ -60,7 +60,7 @@
 #endif /*!_WIN32*/
 
 
-static void record_file(const char *filename, UNUSED(bool_t supported_format), UNUSED(const char *audio_mime), const char *video_mime, LinphoneRecorderFileFormat format) {
+static void record_file(const char *filename, BCTBX_UNUSED(bool_t supported_format), BCTBX_UNUSED(const char *audio_mime), const char *video_mime, LinphoneRecorderFileFormat format) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_create("marie_rc");
 	LinphoneRecorder *recorder;
 	int res = 0;

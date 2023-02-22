@@ -38,12 +38,12 @@ protected:
 	NotificationMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir)
 		: ChatMessagePrivate(cr, dir) {}
 
-	void setState (UNUSED(ChatMessage::State state)) override {};
+	void setState (BCTBX_UNUSED(ChatMessage::State state)) override {};
 
 private:
-	void setDisplayNotificationRequired (UNUSED(bool value)) override {}
-	void setNegativeDeliveryNotificationRequired (UNUSED(bool value)) override {}
-	void setPositiveDeliveryNotificationRequired (UNUSED(bool value)) override {}
+	void setDisplayNotificationRequired (BCTBX_UNUSED(bool value)) override {}
+	void setNegativeDeliveryNotificationRequired (BCTBX_UNUSED(bool value)) override {}
+	void setPositiveDeliveryNotificationRequired (BCTBX_UNUSED(bool value)) override {}
 
 	L_DECLARE_PUBLIC(NotificationMessage);
 };

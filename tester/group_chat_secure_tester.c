@@ -3937,7 +3937,7 @@ static void group_chat_lime_x3dh_update_keys(void) {
 	group_chat_lime_x3dh_update_keys_curve(448);
 }
 
-static void chat_room_message_participant_state_changed(LinphoneChatRoom *cr, UNUSED(LinphoneChatMessage *msg), UNUSED(const LinphoneParticipantImdnState *state)) {
+static void chat_room_message_participant_state_changed(LinphoneChatRoom *cr, BCTBX_UNUSED(LinphoneChatMessage *msg), BCTBX_UNUSED(const LinphoneParticipantImdnState *state)) {
 	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_current_callbacks(cr);
 	LinphoneCoreManager *chloe = (LinphoneCoreManager *)linphone_chat_room_cbs_get_user_data(cbs);
 	chloe->stat.number_of_participant_state_changed += 1;

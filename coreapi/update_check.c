@@ -91,17 +91,17 @@ static void update_check_process_response_event(void *ctx, const belle_http_resp
 	}
 }
 
-static void update_check_process_io_error(void *ctx, UNUSED(const belle_sip_io_error_event_t *event)) {
+static void update_check_process_io_error(void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
 	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
 
-static void update_check_process_timeout(void *ctx, UNUSED(const belle_sip_timeout_event_t *event)) {
+static void update_check_process_timeout(void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
 	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
 	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
 
-static void update_check_process_auth_requested(void *ctx, UNUSED(belle_sip_auth_event_t *event)) {
+static void update_check_process_auth_requested(void *ctx, BCTBX_UNUSED(belle_sip_auth_event_t *event)) {
 	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
 	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 }

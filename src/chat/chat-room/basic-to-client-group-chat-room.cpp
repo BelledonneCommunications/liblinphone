@@ -48,11 +48,11 @@ public:
 		q->getCore()->getPrivate()->insertChatRoom(chatRoom);
 	}
 
-	void onChatRoomInsertInDatabaseRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
+	void onChatRoomInsertInDatabaseRequested (BCTBX_UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
 		// Do not insert the client group chat room in database, the migration will do it
 	}
 
-	void onChatRoomDeleteRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
+	void onChatRoomDeleteRequested (BCTBX_UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) override {
 		L_Q();
 		q->getCore()->deleteChatRoom(q->getSharedFromThis());
 		q->setState(ConferenceInterface::State::Deleted);

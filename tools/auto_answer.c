@@ -31,14 +31,14 @@ static bool_t running=TRUE;
 static bool_t print_stats=FALSE;
 static bool_t dump_stats=FALSE;
 
-static void stop(UNUSED(int signum)){
+static void stop(BCTBX_UNUSED(int signum)){
 	running=FALSE;
 }
 #ifndef _WIN32
-static void stats(UNUSED(int signum)){
+static void stats(BCTBX_UNUSED(int signum)){
 	print_stats=TRUE;
 }
-static void dump_call_logs(UNUSED(int signum)){
+static void dump_call_logs(BCTBX_UNUSED(int signum)){
 	dump_stats=TRUE;
 }
 
@@ -46,7 +46,7 @@ static void dump_call_logs(UNUSED(int signum)){
 /*
  * Call state notification callback
  */
-static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *msg)){
+static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *msg)){
 	LinphoneCallParams * call_params;
 	switch(cstate){
 		case LinphoneCallIncomingReceived:

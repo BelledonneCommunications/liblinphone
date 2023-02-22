@@ -198,7 +198,7 @@ string MacPlatformHelpers::toUTF8String(CFStringRef str) {
 
 // -----------------------------------------------------------------------------
 
-PlatformHelpers *createMacPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, UNUSED(void *systemContext)) {
+PlatformHelpers *createMacPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, BCTBX_UNUSED(void *systemContext)) {
 	return new MacPlatformHelpers(core);
 }
 

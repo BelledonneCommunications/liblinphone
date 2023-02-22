@@ -49,7 +49,7 @@ RemoteConference::RemoteConference (
 	this->confParams->enableLocalParticipant(false);
 
 	// FIXME: Not very nice to have an empty deleter
-	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](UNUSED(ConferenceListenerInterface *p)){}));
+	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](BCTBX_UNUSED(ConferenceListenerInterface *p)){}));
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 #endif
@@ -85,23 +85,23 @@ void RemoteConference::onConferenceTerminated (const IdentityAddress &) {
 
 void RemoteConference::onFirstNotifyReceived (const IdentityAddress &) {}
 
-void RemoteConference::onParticipantAdded (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
+void RemoteConference::onParticipantAdded (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
-void RemoteConference::onParticipantRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
+void RemoteConference::onParticipantRemoved (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
-void RemoteConference::onParticipantSetAdmin (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
+void RemoteConference::onParticipantSetAdmin (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
-void RemoteConference::onSubjectChanged (UNUSED(const std::shared_ptr<ConferenceSubjectEvent> &event)) {}
+void RemoteConference::onSubjectChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceSubjectEvent> &event)) {}
 
-void RemoteConference::onParticipantDeviceAdded (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
+void RemoteConference::onParticipantDeviceAdded (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
 
-void RemoteConference::onParticipantDeviceRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
+void RemoteConference::onParticipantDeviceRemoved (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
 
-void RemoteConference::onEphemeralModeChanged (UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
+void RemoteConference::onEphemeralModeChanged (BCTBX_UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
 
-void RemoteConference::onEphemeralMessageEnabled (UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
+void RemoteConference::onEphemeralMessageEnabled (BCTBX_UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
 
-void RemoteConference::onEphemeralLifetimeChanged (UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
+void RemoteConference::onEphemeralLifetimeChanged (BCTBX_UNUSED(const shared_ptr<ConferenceEphemeralMessageEvent> &event)) {}
 
 void RemoteConference::onFullStateReceived() {
 	time_t creationTime = time(nullptr);

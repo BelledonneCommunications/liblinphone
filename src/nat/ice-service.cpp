@@ -769,7 +769,7 @@ void IceService::finishPrepare(){
 	gatheringFinished();
 }
 
-void IceService::render(const OfferAnswerContext & ctx, UNUSED(CallSession::State state)){
+void IceService::render(const OfferAnswerContext & ctx, BCTBX_UNUSED(CallSession::State state)){
 	if (!mIceSession) return;
 	
 	updateFromRemoteMediaDescription(ctx.localMediaDescription, ctx.remoteMediaDescription, !ctx.localIsOfferer);
@@ -784,7 +784,7 @@ void IceService::render(const OfferAnswerContext & ctx, UNUSED(CallSession::Stat
 
 }
 
-void IceService::sessionConfirmed(UNUSED(const OfferAnswerContext &ctx)){
+void IceService::sessionConfirmed(BCTBX_UNUSED(const OfferAnswerContext &ctx)){
 }
 
 void IceService::stop(){

@@ -515,7 +515,7 @@ LinphoneContent *linphone_content_copy (const LinphoneContent *ref) {
 	return reinterpret_cast<LinphoneContent *>(belle_sip_object_clone(BELLE_SIP_OBJECT(ref)));
 }
 
-LinphoneContent *linphone_core_create_content (UNUSED(LinphoneCore *lc)) {
+LinphoneContent *linphone_core_create_content (BCTBX_UNUSED(LinphoneCore *lc)) {
 	return linphone_content_new();
 }
 

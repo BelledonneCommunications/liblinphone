@@ -1810,7 +1810,7 @@ static void group_chat_room_with_client_restart (void) {
 	}
 }
 
-static void chat_room_participant_added_sip_error (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_participant_added_sip_error (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	if (bctbx_list_size(linphone_chat_room_get_participants(cr)) == 2) {
 		LinphoneCoreManager *initiator = (LinphoneCoreManager*)linphone_chat_room_get_user_data(cr);
 		ms_message("Turning off network for core %s", linphone_core_get_identity(initiator->lc));
@@ -3618,7 +3618,7 @@ static void conference_scheduler_state_changed(LinphoneConferenceScheduler *sche
 	}
 }
 
-static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, UNUSED(const bctbx_list_t *failed_addresses)) {
+static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, BCTBX_UNUSED(const bctbx_list_t *failed_addresses)) {
 	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 }

@@ -28,7 +28,7 @@ void SalReferOp::processError () {
 	mState = State::Terminated;
 }
 
-void SalReferOp::processIoErrorCb (void *userCtx, UNUSED(const belle_sip_io_error_event_t *event)) {
+void SalReferOp::processIoErrorCb (void *userCtx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	auto op = static_cast<SalReferOp *>(userCtx);
 	sal_error_info_set(&op->mErrorInfo, SalReasonIOError, "SIP", 503, "IO Error", nullptr);
 	op->processError();
@@ -40,7 +40,7 @@ void SalReferOp::processResponseEventCb (void *userCtx, const belle_sip_response
 	// The response is not notified to the app, to be done when necessary
 }
 
-void SalReferOp::processTimeoutCb (void *userCtx, UNUSED(const belle_sip_timeout_event_t *event)) {
+void SalReferOp::processTimeoutCb (void *userCtx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
 	auto op = static_cast<SalReferOp *>(userCtx);
 	sal_error_info_set(&op->mErrorInfo, SalReasonRequestTimeout, "SIP", 408, "Request timeout", nullptr);
 	op->processError();

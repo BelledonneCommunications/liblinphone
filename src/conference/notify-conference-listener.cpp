@@ -31,20 +31,20 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-void NotifyConferenceListener::onParticipantAdded (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), const std::shared_ptr<Participant> &participant) {
+void NotifyConferenceListener::onParticipantAdded (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), const std::shared_ptr<Participant> &participant) {
 	_linphone_conference_notify_participant_added(conf->toC(), participant->toC());
 }
 
-void NotifyConferenceListener::onParticipantRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), const std::shared_ptr<Participant> &participant) {
+void NotifyConferenceListener::onParticipantRemoved (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), const std::shared_ptr<Participant> &participant) {
 	_linphone_conference_notify_participant_removed(conf->toC(), participant->toC());
 
 }
 
-void NotifyConferenceListener::onParticipantSetAdmin (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), const std::shared_ptr<Participant> &participant) {
+void NotifyConferenceListener::onParticipantSetAdmin (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), const std::shared_ptr<Participant> &participant) {
 	_linphone_conference_notify_participant_admin_status_changed(conf->toC(), participant->toC());
 }
 
-void NotifyConferenceListener::onAvailableMediaChanged (UNUSED(const std::shared_ptr<ConferenceAvailableMediaEvent> &event)) {
+void NotifyConferenceListener::onAvailableMediaChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceAvailableMediaEvent> &event)) {
 	_linphone_conference_notify_available_media_changed(conf->toC());
 }
 
@@ -60,23 +60,23 @@ void NotifyConferenceListener::onParticipantDeviceIsMuted (const std::shared_ptr
 	_linphone_conference_notify_participant_device_is_muted(conf->toC(), device->toC(), isMuted);
 }
 
-void NotifyConferenceListener::onParticipantDeviceStateChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void NotifyConferenceListener::onParticipantDeviceStateChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_state_changed(conf->toC(), device->toC(), (LinphoneParticipantDeviceState)device->getState());
 }
 
-void NotifyConferenceListener::onParticipantDeviceMediaAvailabilityChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void NotifyConferenceListener::onParticipantDeviceMediaAvailabilityChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_media_availability_changed(conf->toC(), device->toC());
 }
 
-void NotifyConferenceListener::onParticipantDeviceMediaCapabilityChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void NotifyConferenceListener::onParticipantDeviceMediaCapabilityChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_media_capability_changed(conf->toC(), device->toC());
 }
 
-void NotifyConferenceListener::onParticipantDeviceAdded (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void NotifyConferenceListener::onParticipantDeviceAdded (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_added(conf->toC(), device->toC());
 }
 
-void NotifyConferenceListener::onParticipantDeviceRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void NotifyConferenceListener::onParticipantDeviceRemoved (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_removed(conf->toC(), device->toC());
 }
 

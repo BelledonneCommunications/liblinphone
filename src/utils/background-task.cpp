@@ -38,7 +38,7 @@ void BackgroundTask::sHandleTimeout (void *context) {
 	static_cast<BackgroundTask *>(context)->handleTimeout();
 }
 
-int BackgroundTask::sHandleSalTimeout (void *data, UNUSED(unsigned int events)) {
+int BackgroundTask::sHandleSalTimeout (void *data, BCTBX_UNUSED(unsigned int events)) {
 	static_cast<BackgroundTask *>(data)->handleSalTimeout();
 	return BELLE_SIP_STOP;
 }

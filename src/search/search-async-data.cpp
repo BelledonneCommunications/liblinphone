@@ -33,7 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 SearchAsyncData::CbData::~CbData(){
 }
 
-void SearchAsyncData::CbData::resultsCb(UNUSED(LinphoneContactSearch* id), bctbx_list_t* searchResults, void* data, bool_t haveMoreResults ){
+void SearchAsyncData::CbData::resultsCb(BCTBX_UNUSED(LinphoneContactSearch* id), bctbx_list_t* searchResults, void* data, bool_t haveMoreResults ){
 	SearchAsyncData::CbData * cbData = (SearchAsyncData::CbData*)data;
 	std::list<std::shared_ptr<SearchResult>> results = SearchResult::getCppListFromCList(searchResults);
 	for (auto searchResult : results) {

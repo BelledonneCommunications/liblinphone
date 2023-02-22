@@ -352,7 +352,7 @@ void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSessi
 	}
 }
 
-void ConferenceScheduler::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, UNUSED(const string &message)) {
+void ConferenceScheduler::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, BCTBX_UNUSED(const string &message)) {
 	switch(state) {
 		case CallSession::State::Error:
 			setState(State::Error);

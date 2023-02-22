@@ -44,7 +44,7 @@ void linphone_ringtoneplayer_destroy(LinphoneRingtonePlayer* rp) {
 	linphone_ringtoneplayer_ios_destroy(rp);
 }
 
-int linphone_ringtoneplayer_start_with_cb(UNUSED(MSFactory* f), LinphoneRingtonePlayer* rp, UNUSED(MSSndCard* card), const char* ringtone, int loop_pause_ms, LinphoneRingtonePlayerFunc end_of_ringtone, void * user_data) {
+int linphone_ringtoneplayer_start_with_cb(BCTBX_UNUSED(MSFactory* f), LinphoneRingtonePlayer* rp, BCTBX_UNUSED(MSSndCard* card), const char* ringtone, int loop_pause_ms, LinphoneRingtonePlayerFunc end_of_ringtone, void * user_data) {
 	if (linphone_ringtoneplayer_is_started(rp)) {
 		ms_message("the local ringtone is already started");
 		return 2;
@@ -59,7 +59,7 @@ bool_t linphone_ringtoneplayer_is_started(LinphoneRingtonePlayer* rp) {
 	return linphone_ringtoneplayer_ios_is_started(rp);
 }
 
-RingStream* linphone_ringtoneplayer_get_stream(UNUSED(LinphoneRingtonePlayer* rp)) {
+RingStream* linphone_ringtoneplayer_get_stream(BCTBX_UNUSED(LinphoneRingtonePlayer* rp)) {
 	return NULL;
 }
 
@@ -88,7 +88,7 @@ void linphone_ringtoneplayer_destroy(LinphoneRingtonePlayer* rp) {
 	ms_free(rp);
 }
 
-static void notify_end_of_ringtone(void *ud, UNUSED(MSFilter *f), unsigned int event, UNUSED(void *arg)){
+static void notify_end_of_ringtone(void *ud, BCTBX_UNUSED(MSFilter *f), unsigned int event, BCTBX_UNUSED(void *arg)){
 	LinphoneRingtonePlayer *rp=(LinphoneRingtonePlayer*)ud;
 	if (event==MS_PLAYER_EOF && rp->end_of_ringtone){
 		rp->end_of_ringtone(rp, rp->end_of_ringtone_ud, 0);

@@ -190,12 +190,12 @@ int groupchat_benchmark_tester_set_log_file(const char *filename) {
 	return 0;
 }
 
-int silent_arg_func(UNUSED(const char *arg)) {
+int silent_arg_func(BCTBX_UNUSED(const char *arg)) {
 	linphone_core_set_log_level(ORTP_FATAL);
 	return 0;
 }
 
-int verbose_arg_func(UNUSED(const char *arg)) {
+int verbose_arg_func(BCTBX_UNUSED(const char *arg)) {
 	linphone_core_set_log_level(ORTP_MESSAGE);
 	return 0;
 }

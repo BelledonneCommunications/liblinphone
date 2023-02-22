@@ -35,12 +35,12 @@ class LINPHONE_PUBLIC ConferenceListener {
 public:
 	virtual ~ConferenceListener () = default;
 
-	virtual void onConferenceCreated (UNUSED(const ConferenceAddress &addr)) {}
-	virtual void onConferenceKeywordsChanged (UNUSED(const std::vector<std::string> &keywords)) {}
-	virtual void onConferenceTerminated (UNUSED(const IdentityAddress &addr)) {}
-	virtual void onSecurityEvent (UNUSED(const std::shared_ptr<ConferenceSecurityEvent> &event)) {}
+	virtual void onConferenceCreated (BCTBX_UNUSED(const ConferenceAddress &addr)) {}
+	virtual void onConferenceKeywordsChanged (BCTBX_UNUSED(const std::vector<std::string> &keywords)) {}
+	virtual void onConferenceTerminated (BCTBX_UNUSED(const IdentityAddress &addr)) {}
+	virtual void onSecurityEvent (BCTBX_UNUSED(const std::shared_ptr<ConferenceSecurityEvent> &event)) {}
 
-	virtual void onFirstNotifyReceived (UNUSED(const IdentityAddress &addr)) {}
+	virtual void onFirstNotifyReceived (BCTBX_UNUSED(const IdentityAddress &addr)) {}
 	virtual void onParticipantsCleared () {}
 };
 

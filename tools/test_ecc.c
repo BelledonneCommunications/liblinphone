@@ -27,7 +27,7 @@
 #endif
 static int done = 0;
 
-static void calibration_finished(UNUSED(LinphoneCore *lc), LinphoneEcCalibratorStatus status, int delay, UNUSED(void *data)) {
+static void calibration_finished(BCTBX_UNUSED(LinphoneCore *lc), LinphoneEcCalibratorStatus status, int delay, BCTBX_UNUSED(void *data)) {
 	ms_message("echo calibration finished %s.", status == LinphoneEcCalibratorDone ? "successfully" : "with faillure");
 	if (status == LinphoneEcCalibratorDone)
 		ms_message("Measured delay is %i", delay);

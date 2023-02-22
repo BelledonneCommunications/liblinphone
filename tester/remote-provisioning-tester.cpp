@@ -290,7 +290,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	// Registering the callbacks
 	LinphoneFriendListStats *stats = (LinphoneFriendListStats *)ms_new0(LinphoneFriendListStats, 1);
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_friend_list_created(cbs, [](LinphoneCore *lc, UNUSED(LinphoneFriendList *list)) {
+	linphone_core_cbs_set_friend_list_created(cbs, [](LinphoneCore *lc, BCTBX_UNUSED(LinphoneFriendList *list)) {
 		LinphoneFriendListStats *stats =
 			(LinphoneFriendListStats *)linphone_core_cbs_get_user_data(linphone_core_get_current_callbacks(lc));
 		stats->new_list_count++;

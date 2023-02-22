@@ -89,7 +89,7 @@ void MS2AudioStream::audioStreamIsMutedCb (void *userData, uint32_t ssrc, bool_t
 	zis->getMediaSession().notifyMutedDevice(ssrc, muted);
 }
 
-void MS2AudioStream::configure(UNUSED(const OfferAnswerContext &params)) {
+void MS2AudioStream::configure(BCTBX_UNUSED(const OfferAnswerContext &params)) {
 
 }
 

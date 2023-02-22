@@ -31,7 +31,7 @@
 static bool_t running = TRUE;
 static const char *passwd = NULL;
 
-static void stop(UNUSED(int signum)){
+static void stop(BCTBX_UNUSED(int signum)){
 	running=FALSE;
 }
 
@@ -47,7 +47,7 @@ static void helper(const char *progname) {
 	exit(0);
 }
 
-static void on_msg_state_changed(UNUSED(LinphoneChatMessage *msg), LinphoneChatMessageState state){
+static void on_msg_state_changed(BCTBX_UNUSED(LinphoneChatMessage *msg), LinphoneChatMessageState state){
 	switch(state){
 		case LinphoneChatMessageStateInProgress:
 			printf("Sending message...\n");
@@ -70,7 +70,7 @@ static void on_msg_state_changed(UNUSED(LinphoneChatMessage *msg), LinphoneChatM
 	}
 }
 
-static void auth_info_requested(UNUSED(LinphoneCore *lc), UNUSED(const char *realm), UNUSED(const char *username), UNUSED(const char *domain)){
+static void auth_info_requested(BCTBX_UNUSED(LinphoneCore *lc), BCTBX_UNUSED(const char *realm), BCTBX_UNUSED(const char *username), BCTBX_UNUSED(const char *domain)){
 	running = FALSE;
 	if (passwd){
 		fprintf(stderr, "Server rejected the supplied username or password\n");

@@ -406,7 +406,7 @@ void SalPublishOp::fillCallbacks () {
 	mCallbacks = &opPublishCallbacks;
 }
 
-void SalPublishOp::publishRefresherListenerCb (UNUSED(belle_sip_refresher_t *refresher), void *userCtx, unsigned int statusCode, const char *reasonPhrase, UNUSED(int willRetry)) {
+void SalPublishOp::publishRefresherListenerCb (BCTBX_UNUSED(belle_sip_refresher_t *refresher), void *userCtx, unsigned int statusCode, const char *reasonPhrase, BCTBX_UNUSED(int willRetry)) {
 	auto op = static_cast<SalPublishOp *>(userCtx);
 	auto lastTransaction = belle_sip_refresher_get_transaction(op->mRefresher);
 	auto response = belle_sip_transaction_get_response(BELLE_SIP_TRANSACTION(lastTransaction));

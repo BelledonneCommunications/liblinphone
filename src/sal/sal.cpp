@@ -42,7 +42,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-void Sal::processDialogTerminatedCb (UNUSED(void *sal), const belle_sip_dialog_terminated_event_t *event) {
+void Sal::processDialogTerminatedCb (BCTBX_UNUSED(void *sal), const belle_sip_dialog_terminated_event_t *event) {
 	auto dialog = belle_sip_dialog_terminated_event_get_dialog(event);
 	auto op = static_cast<SalOp *>(belle_sip_dialog_get_application_data(dialog));
 	if (op && op->mCallbacks && op->mCallbacks->process_dialog_terminated)
@@ -51,7 +51,7 @@ void Sal::processDialogTerminatedCb (UNUSED(void *sal), const belle_sip_dialog_t
 		lError() << "Sal::processDialogTerminatedCb(): no op found for this dialog [" << dialog << "], ignoring";
 }
 
-void Sal::processIoErrorCb (UNUSED(void *userCtx), const belle_sip_io_error_event_t *event) {
+void Sal::processIoErrorCb (BCTBX_UNUSED(void *userCtx), const belle_sip_io_error_event_t *event) {
 	if (BELLE_SIP_OBJECT_IS_INSTANCE_OF(belle_sip_io_error_event_get_source(event), belle_sip_client_transaction_t)) {
 		auto client_transaction = BELLE_SIP_CLIENT_TRANSACTION(belle_sip_io_error_event_get_source(event));
 		auto op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(client_transaction)));
@@ -288,7 +288,7 @@ void Sal::processRequestEventCb (void *userCtx, const belle_sip_request_event_t 
 		lError() << "Sal::processRequestEventCb(): not implemented yet";
 }
 
-void Sal::processResponseEventCb (UNUSED(void *userCtx), const belle_sip_response_event_t *event) {
+void Sal::processResponseEventCb (BCTBX_UNUSED(void *userCtx), const belle_sip_response_event_t *event) {
 	auto response = belle_sip_response_event_get_response(event);
 	int responseCode = belle_sip_response_get_status_code(response);
 
@@ -375,7 +375,7 @@ void Sal::processResponseEventCb (UNUSED(void *userCtx), const belle_sip_respons
 	}
 }
 
-void Sal::processTimeoutCb (UNUSED(void *userCtx), const belle_sip_timeout_event_t *event) {
+void Sal::processTimeoutCb (BCTBX_UNUSED(void *userCtx), const belle_sip_timeout_event_t *event) {
 	auto clientTransaction = belle_sip_timeout_event_get_client_transaction(event);
 	auto op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(clientTransaction)));
 	if (op && op->mCallbacks && op->mCallbacks->process_timeout)
@@ -384,7 +384,7 @@ void Sal::processTimeoutCb (UNUSED(void *userCtx), const belle_sip_timeout_event
 		lError() << "Unhandled event timeout [" << event << "]";
 }
 
-void Sal::processTransactionTerminatedCb (UNUSED(void *userCtx), const belle_sip_transaction_terminated_event_t *event) {
+void Sal::processTransactionTerminatedCb (BCTBX_UNUSED(void *userCtx), const belle_sip_transaction_terminated_event_t *event) {
 	auto clientTransaction = belle_sip_transaction_terminated_event_get_client_transaction(event);
 	auto serverTransaction = belle_sip_transaction_terminated_event_get_server_transaction(event);
 	auto transaction = clientTransaction ? BELLE_SIP_TRANSACTION(clientTransaction) : BELLE_SIP_TRANSACTION(serverTransaction);

@@ -103,7 +103,7 @@ LsdPlayer *linphone_sound_daemon_get_player(LinphoneSoundDaemon *obj){
 	return NULL;
 }
 
-void linphone_sound_daemon_release_player(UNUSED(LinphoneSoundDaemon *obj), LsdPlayer * player){
+void linphone_sound_daemon_release_player(BCTBX_UNUSED(LinphoneSoundDaemon *obj), LsdPlayer * player){
 	int state;
 	ms_filter_call_method(player->player,MS_PLAYER_GET_STATE,&state);
 	if (state!=MSPlayerClosed){
@@ -162,7 +162,7 @@ void *lsd_player_get_user_pointer(const LsdPlayer *p){
 	return p->user_data;
 }
 
-static void lsd_player_on_eop(void * userdata, UNUSED(MSFilter *f), UNUSED(unsigned int id), UNUSED(void *arg)){
+static void lsd_player_on_eop(void * userdata, BCTBX_UNUSED(MSFilter *f), BCTBX_UNUSED(unsigned int id), BCTBX_UNUSED(void *arg)){
 	LsdPlayer *p=(LsdPlayer *)userdata;
 	if (p->eop_cb!=NULL)
 		p->eop_cb(p);

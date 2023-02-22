@@ -65,7 +65,7 @@ static bool_t wait_for_chat_room_participants(bctbx_list_t* lcs,LinphoneChatRoom
 	else return TRUE;
 }
 
-static void chat_room_is_composing_received (LinphoneChatRoom *cr, UNUSED(const LinphoneAddress *remoteAddr), bool_t isComposing) {
+static void chat_room_is_composing_received (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneAddress *remoteAddr), bool_t isComposing) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	if (isComposing)
@@ -74,35 +74,35 @@ static void chat_room_is_composing_received (LinphoneChatRoom *cr, UNUSED(const 
 		manager->stat.number_of_LinphoneIsComposingIdleReceived++;
 }
 
-static void undecryptable_message_received (LinphoneChatRoom *room, UNUSED(LinphoneChatMessage *msg)) {
+static void undecryptable_message_received (LinphoneChatRoom *room, BCTBX_UNUSED(LinphoneChatMessage *msg)) {
 	get_stats(linphone_chat_room_get_core(room))->number_of_LinphoneMessageUndecryptable++;
 }
 
-static void chat_room_participant_added (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_participant_added (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participants_added++;
 }
 
-static void chat_room_participant_admin_status_changed (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_participant_admin_status_changed (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_admin_statuses_changed++;
 }
 
-static void chat_room_participant_removed (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_participant_removed (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participants_removed++;
 }
 
-static void chat_room_participant_device_added (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_participant_device_added (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_added++;
 }
 
-static void chat_room_participant_device_removed (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_participant_device_removed (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_removed++;
@@ -174,13 +174,13 @@ static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventL
 	}
 }
 
-static void chat_room_subject_changed (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_subject_changed (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_subject_changed++;
 }
 
-static void chat_room_conference_joined (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_conference_joined (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_LinphoneChatRoomConferenceJoined++;
@@ -204,13 +204,13 @@ static void chat_room_message_ephemeral (LinphoneChatRoom *cr, const LinphoneEve
 	}
 }
 
-static void chat_room_message_ephemeral_started (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_message_ephemeral_started (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_LinphoneChatRoomEphemeralTimerStarted++;
 }
 
-static void chat_room_message_ephemeral_deleted (LinphoneChatRoom *cr, UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_message_ephemeral_deleted (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_LinphoneChatRoomEphemeralDeleted++;
@@ -233,7 +233,7 @@ void setup_chat_room_callbacks(LinphoneChatRoomCbs *cbs) {
 	linphone_chat_room_cbs_set_ephemeral_message_deleted(cbs, chat_room_message_ephemeral_deleted);
 }
 
-void core_chat_room_state_changed (UNUSED(LinphoneCore *core), LinphoneChatRoom *cr, LinphoneChatRoomState state) {
+void core_chat_room_state_changed (BCTBX_UNUSED(LinphoneCore *core), LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 	if (state == LinphoneChatRoomStateInstantiated) {
 		LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
 		setup_chat_room_callbacks(cbs);
@@ -242,7 +242,7 @@ void core_chat_room_state_changed (UNUSED(LinphoneCore *core), LinphoneChatRoom 
 	}
 }
 
-void core_chat_room_subject_changed (LinphoneCore *core, UNUSED(LinphoneChatRoom *cr)) {
+void core_chat_room_subject_changed (LinphoneCore *core, BCTBX_UNUSED(LinphoneChatRoom *cr)) {
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_core_chat_room_subject_changed++;
 }
@@ -495,7 +495,7 @@ void start_core_for_conference(bctbx_list_t *coreManagerList) {
 	bctbx_list_for_each(coreManagerList, (void (*)(void *))_start_core);
 }
 
-static LinphoneChatRoom * check_has_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, UNUSED(stats *initialStats), const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
+static LinphoneChatRoom * check_has_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, BCTBX_UNUSED(stats *initialStats), const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
     char *deviceIdentity = linphone_core_get_device_identity(lcm->lc);
     LinphoneAddress *localAddr = linphone_address_new(deviceIdentity);
     bctbx_free(deviceIdentity);
@@ -1165,7 +1165,7 @@ static void group_chat_room_add_participant (void) {
 	linphone_core_manager_destroy(chloe);
 }
 
-static int im_encryption_engine_process_incoming_message_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatRoom *room), LinphoneChatMessage *msg) {
+static int im_encryption_engine_process_incoming_message_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatRoom *room), LinphoneChatMessage *msg) {
 	if (linphone_chat_message_get_content_type(msg)) {
 		if (strcmp(linphone_chat_message_get_content_type(msg), "cipher/b64") == 0) {
 			size_t b64Size = 0;
@@ -1188,7 +1188,7 @@ static int im_encryption_engine_process_incoming_message_cb(UNUSED(LinphoneImEnc
 	return 500;
 }
 
-static int im_encryption_engine_process_outgoing_message_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatRoom *room), LinphoneChatMessage *msg) {
+static int im_encryption_engine_process_outgoing_message_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatRoom *room), LinphoneChatMessage *msg) {
 	if (strcmp(linphone_chat_message_get_content_type(msg),"message/cpim") == 0) {
 		size_t b64Size = 0;
 		unsigned char *output;
@@ -5135,7 +5135,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void linphone_tester_chat_room_exhumed(LinphoneCore *core, UNUSED(LinphoneChatRoom *room)) {
+static void linphone_tester_chat_room_exhumed(LinphoneCore *core, BCTBX_UNUSED(LinphoneChatRoom *room)) {
 	stats* counters;
 	counters = get_stats(core);
 	counters->number_of_LinphoneChatRoomExhumed++;

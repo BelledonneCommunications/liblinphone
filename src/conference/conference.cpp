@@ -83,7 +83,7 @@ void Conference::clearParticipants () {
 
 // -----------------------------------------------------------------------------
 
-bool Conference::addParticipant (UNUSED(std::shared_ptr<Call> call)) {
+bool Conference::addParticipant (BCTBX_UNUSED(std::shared_ptr<Call> call)) {
 	lError() << "Conference class does not handle addParticipant() generically";
 	return false;
 }
@@ -221,13 +221,13 @@ const string &Conference::getUsername () const {
 	return mUsername;
 }
 
-void Conference::join (UNUSED(const IdentityAddress &participantAddress)) {}
+void Conference::join (BCTBX_UNUSED(const IdentityAddress &participantAddress)) {}
 
 void Conference::join () {}
 
 void Conference::leave () {}
 
-void Conference::setLocalParticipantStreamCapability(UNUSED(const LinphoneMediaDirection &direction), UNUSED(const LinphoneStreamType type)) {}
+void Conference::setLocalParticipantStreamCapability(BCTBX_UNUSED(const LinphoneMediaDirection &direction), BCTBX_UNUSED(const LinphoneStreamType type)) {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
 	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams&>(newParameters);
@@ -258,7 +258,7 @@ bool Conference::removeParticipants (const list<shared_ptr<Participant>> &partic
 	return soFarSoGood;
 }
 
-void Conference::setParticipantAdminStatus (UNUSED(const shared_ptr<Participant> &participant), UNUSED(bool isAdmin)) {
+void Conference::setParticipantAdminStatus (BCTBX_UNUSED(const shared_ptr<Participant> &participant), BCTBX_UNUSED(bool isAdmin)) {
 	lError() << "Conference class does not handle setParticipantAdminStatus() generically";
 }
 

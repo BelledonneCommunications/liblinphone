@@ -85,7 +85,7 @@ void MS2AudioMixer::connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool 
 	ms_audio_conference_mute_member(mConference, endpoint, muted);
 }
 
-void MS2AudioMixer::disconnectEndpoint(UNUSED(Stream *as), MSAudioEndpoint *endpoint){
+void MS2AudioMixer::disconnectEndpoint(BCTBX_UNUSED(Stream *as), MSAudioEndpoint *endpoint){
 	ms_audio_endpoint_set_user_data(endpoint, nullptr);
 	ms_audio_conference_remove_member(mConference, endpoint);
 }
@@ -169,7 +169,7 @@ bool MS2AudioMixer::micEnabled()const{
 	return mLocalMicEnabled;
 }
 
-void MS2AudioMixer::enableSpeaker(UNUSED(bool value)){
+void MS2AudioMixer::enableSpeaker(BCTBX_UNUSED(bool value)){
 }
 
 bool MS2AudioMixer::speakerEnabled()const{
@@ -228,20 +228,20 @@ float MS2AudioMixer::getMicGain(){
 	return 0.0;
 }
 
-void MS2AudioMixer::setMicGain(UNUSED(float value)){
+void MS2AudioMixer::setMicGain(BCTBX_UNUSED(float value)){
 }
 
 float MS2AudioMixer::getSpeakerGain(){
 	return 0.0;
 }
 
-void MS2AudioMixer::setSpeakerGain(UNUSED(float value)){
+void MS2AudioMixer::setSpeakerGain(BCTBX_UNUSED(float value)){
 }
 
-void MS2AudioMixer::sendDtmf(UNUSED(int dtmf)){
+void MS2AudioMixer::sendDtmf(BCTBX_UNUSED(int dtmf)){
 }
 
-void MS2AudioMixer::enableEchoCancellation(UNUSED(bool value)){
+void MS2AudioMixer::enableEchoCancellation(BCTBX_UNUSED(bool value)){
 }
 
 bool MS2AudioMixer::echoCancellationEnabled()const{

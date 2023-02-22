@@ -24,7 +24,7 @@
 
 #include "xml2lpc.h"
 
-void cb_function(UNUSED(void *ctx), xml2lpc_log_level level, const char *msg, va_list list) {
+void cb_function(BCTBX_UNUSED(void *ctx), xml2lpc_log_level level, const char *msg, va_list list) {
 	const char *header = "";
 	switch(level) {
 		case XML2LPC_DEBUG:
@@ -45,7 +45,7 @@ void cb_function(UNUSED(void *ctx), xml2lpc_log_level level, const char *msg, va
 	fprintf(stdout, "\n");
 }
 
-void show_usage(UNUSED(int argc), char *argv[]) {
+void show_usage(BCTBX_UNUSED(int argc), char *argv[]) {
 	fprintf(stderr, "usage %s convert <xml_file> <lpc_file>\n"
 			"      %s validate <xml_file> <xsd_file>\n",
 			argv[0], argv[0]);

@@ -47,7 +47,7 @@ void sip_setup_register_all(MSFactory *factory){
 	}
 }
 
-const bctbx_list_t * linphone_core_get_sip_setups(UNUSED(LinphoneCore *lc)){
+const bctbx_list_t * linphone_core_get_sip_setups(BCTBX_UNUSED(LinphoneCore *lc)){
 	return registered_sip_setups;
 }
 

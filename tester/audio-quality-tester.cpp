@@ -66,7 +66,7 @@ public:
 };
 
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
-static void completion_cb(UNUSED(void *user_data), int percentage){
+static void completion_cb(BCTBX_UNUSED(void *user_data), int percentage){
 	fprintf(stdout,"%i %% completed\r",percentage);
 	fflush(stdout);
 }

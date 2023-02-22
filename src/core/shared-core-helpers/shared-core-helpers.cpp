@@ -47,11 +47,11 @@ bool GenericSharedCoreHelpers::canCoreStart() {
 
 void GenericSharedCoreHelpers::registerSharedCoreMsgCallback() {}
 
-std::shared_ptr<PushNotificationMessage> GenericSharedCoreHelpers::getPushNotificationMessage(UNUSED(const string &callId)) {
+std::shared_ptr<PushNotificationMessage> GenericSharedCoreHelpers::getPushNotificationMessage(BCTBX_UNUSED(const string &callId)) {
 	return nullptr;
 }
 
-std::shared_ptr<ChatRoom> GenericSharedCoreHelpers::getPushNotificationChatRoom(UNUSED(const string &chatRoomAddr)) {
+std::shared_ptr<ChatRoom> GenericSharedCoreHelpers::getPushNotificationChatRoom(BCTBX_UNUSED(const string &chatRoomAddr)) {
 	return nullptr;
 }
 
@@ -69,7 +69,7 @@ void *GenericSharedCoreHelpers::getPathContext() {
     return NULL;
 }
 
-void GenericSharedCoreHelpers::setChatRoomInvite(UNUSED(std::shared_ptr<ChatRoom> cr)) {}
+void GenericSharedCoreHelpers::setChatRoomInvite(BCTBX_UNUSED(std::shared_ptr<ChatRoom> cr)) {}
 
 SharedCoreState GenericSharedCoreHelpers::getSharedCoreState() {
 	return SharedCoreState::noCoreStarted;

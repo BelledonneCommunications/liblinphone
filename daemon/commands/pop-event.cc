@@ -30,6 +30,6 @@ PopEventCommand::PopEventCommand() :
 						"Status: Ok\n\n"
 						"Size: 0"));
 }
-void PopEventCommand::exec(Daemon *app, UNUSED(const string& args)) {
+void PopEventCommand::exec(Daemon *app, BCTBX_UNUSED(const string& args)) {
 	app->pullEvent();
 }

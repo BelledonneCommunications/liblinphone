@@ -209,11 +209,11 @@ void linphone_logging_service_remove_callbacks(LinphoneLoggingService *log_servi
 	linphone_logging_service_cbs_unref(cbs);
 }
 
-LinphoneLoggingServiceCbs *linphone_logging_service_get_current_callbacks(UNUSED(const LinphoneLoggingService *log_service)) {
+LinphoneLoggingServiceCbs *linphone_logging_service_get_current_callbacks(BCTBX_UNUSED(const LinphoneLoggingService *log_service)) {
 	return currentCbs;
 }
 
-void linphone_logging_service_set_current_callbacks(UNUSED(LinphoneLoggingService *log_service), LinphoneLoggingServiceCbs *cbs) {
+void linphone_logging_service_set_current_callbacks(BCTBX_UNUSED(LinphoneLoggingService *log_service), LinphoneLoggingServiceCbs *cbs) {
 	currentCbs = cbs;
 }
 
@@ -261,11 +261,11 @@ void linphone_logging_service_set_log_level_mask(LinphoneLoggingService *log_ser
 	}
 }
 
-unsigned int linphone_logging_service_get_log_level_mask(UNUSED(const LinphoneLoggingService *log_service)) {
+unsigned int linphone_logging_service_get_log_level_mask(BCTBX_UNUSED(const LinphoneLoggingService *log_service)) {
 	return _bctbx_log_mask_to_linphone_log_mask(bctbx_get_log_level_mask(BCTBX_LOG_DOMAIN));
 }
 
-void linphone_logging_service_set_log_file(UNUSED(const LinphoneLoggingService *service), const char *dir, const char *filename, size_t max_size) {
+void linphone_logging_service_set_log_file(BCTBX_UNUSED(const LinphoneLoggingService *service), const char *dir, const char *filename, size_t max_size) {
 	bctbx_log_handler_t *log_handler = bctbx_create_file_log_handler((uint64_t)max_size, dir, filename);
 	bctbx_add_log_handler(log_handler);
 }
@@ -302,7 +302,7 @@ void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const c
 	bctbx_log(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelFatal), "%s", msg);
 }
 
-void linphone_logging_service_enable_stack_trace_dumps(UNUSED(LinphoneLoggingService *log_service), bool_t enable){
+void linphone_logging_service_enable_stack_trace_dumps(BCTBX_UNUSED(LinphoneLoggingService *log_service), bool_t enable){
 	bctbx_set_stack_trace_hooks(enable);
 }
 

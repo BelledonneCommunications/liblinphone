@@ -1191,7 +1191,7 @@ void Account::onAudioVideoConferenceFactoryAddressChanged (const LinphoneAddress
 	}
 }
 
-void Account::onNatPolicyChanged (UNUSED(LinphoneNatPolicy *policy)) {
+void Account::onNatPolicyChanged (BCTBX_UNUSED(LinphoneNatPolicy *policy)) {
 }
 
 LinphoneProxyConfig *Account::getConfig () const {

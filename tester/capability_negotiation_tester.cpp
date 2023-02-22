@@ -2780,7 +2780,7 @@ void call_with_optional_encryption_on_both_sides_base(const LinphoneMediaEncrypt
 	call_with_encryption_test_base(marie_enc_params, TRUE, FALSE, pauline_enc_params, TRUE, FALSE, enable_video);
 }
 
-void call_with_toggling_encryption_base(UNUSED(const LinphoneMediaEncryption encryption)) {
+void call_with_toggling_encryption_base(BCTBX_UNUSED(const LinphoneMediaEncryption encryption)) {
 #if 0
 	std::list<LinphoneMediaEncryption> enc_list {encryption};
 

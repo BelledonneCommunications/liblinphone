@@ -250,27 +250,27 @@ static void audio_bypass_snd_read_uninit(MSFilter *f) {
 	ms_free(d);
 }
 
-static int audio_bypass_snd_read_set_sample_rate(UNUSED(MSFilter *f), UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtpsend
+static int audio_bypass_snd_read_set_sample_rate(BCTBX_UNUSED(MSFilter *f), BCTBX_UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtpsend
 	return 0;
 }
 
-static int audio_bypass_snd_read_set_nchannels(UNUSED(MSFilter *f), UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtpsend
+static int audio_bypass_snd_read_set_nchannels(BCTBX_UNUSED(MSFilter *f), BCTBX_UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtpsend
 	return 0;
 }
 
-static int audio_bypass_snd_read_get_sample_rate(UNUSED(MSFilter *f), void *arg) {
+static int audio_bypass_snd_read_get_sample_rate(BCTBX_UNUSED(MSFilter *f), void *arg) {
 	int *sample_rate = (int *)arg;
 	*sample_rate = 44100;
 	return 0;
 }
 
-static int audio_bypass_snd_read_get_nchannels(UNUSED(MSFilter *f), void *arg) {
+static int audio_bypass_snd_read_get_nchannels(BCTBX_UNUSED(MSFilter *f), void *arg) {
 	int *nchannels = (int *)arg;
 	*nchannels = 1;
 	return 0;
 }
 
-static int audio_bypass_snd_read_get_fmt(UNUSED(MSFilter *f), void *arg) {
+static int audio_bypass_snd_read_get_fmt(BCTBX_UNUSED(MSFilter *f), void *arg) {
 	MSPinFormat *pinFmt = (MSPinFormat *)arg;
 	pinFmt->fmt = ms_factory_get_audio_format(f->factory, "L16", 44100, 1, NULL);
 	return 0;
@@ -302,11 +302,11 @@ MSFilterDesc audio_bypass_snd_read_desc = {
 	0
 };
 
-static void audio_bypass_snd_write_init(UNUSED(MSFilter *f)) {
+static void audio_bypass_snd_write_init(BCTBX_UNUSED(MSFilter *f)) {
 
 }
 
-static void audio_bypass_snd_write_preprocess(UNUSED(MSFilter *f)) {
+static void audio_bypass_snd_write_preprocess(BCTBX_UNUSED(MSFilter *f)) {
 
 }
 
@@ -314,29 +314,29 @@ static void audio_bypass_snd_write_process(MSFilter *f) {
 	ms_queue_flush(f->inputs[0]);
 }
 
-static void audio_bypass_snd_write_postprocess(UNUSED(MSFilter *f)) {
+static void audio_bypass_snd_write_postprocess(BCTBX_UNUSED(MSFilter *f)) {
 
 }
 
-static void audio_bypass_snd_write_uninit(UNUSED(MSFilter *f)) {
+static void audio_bypass_snd_write_uninit(BCTBX_UNUSED(MSFilter *f)) {
 
 }
 
-static int audio_bypass_snd_write_set_sample_rate(UNUSED(MSFilter *f), UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtprecv
+static int audio_bypass_snd_write_set_sample_rate(BCTBX_UNUSED(MSFilter *f), BCTBX_UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtprecv
 	return 0;
 }
 
-static int audio_bypass_snd_write_set_nchannels(UNUSED(MSFilter *f), UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtprecv
+static int audio_bypass_snd_write_set_nchannels(BCTBX_UNUSED(MSFilter *f), BCTBX_UNUSED(void *arg)) { // This is to prevent ms2 to put a resampler between this filter and the rtprecv
 	return 0;
 }
 
-static int audio_bypass_snd_write_get_sample_rate(UNUSED(MSFilter *f), void *arg) {
+static int audio_bypass_snd_write_get_sample_rate(BCTBX_UNUSED(MSFilter *f), void *arg) {
 	int *sample_rate = (int*)arg;
 	*sample_rate = 44100;
 	return 0;
 }
 
-static int audio_bypass_snd_write_get_nchannels(UNUSED(MSFilter *obj), void *arg) {
+static int audio_bypass_snd_write_get_nchannels(BCTBX_UNUSED(MSFilter *obj), void *arg) {
 	int *nchannels = (int*)arg;
 	*nchannels = 1;
 	return 0;

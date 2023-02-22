@@ -443,7 +443,7 @@ LpConfig * linphone_config_new_from_buffer(const char *buffer){
 	return conf;
 }
 
-static int _linphone_config_init_from_files(LinphoneConfig *lpconfig, const char *config_filename, UNUSED(const char *factory_config_filename)) {
+static int _linphone_config_init_from_files(LinphoneConfig *lpconfig, const char *config_filename, BCTBX_UNUSED(const char *factory_config_filename)) {
 	lpconfig->g_bctbx_vfs = bctbx_vfs_get_default();
 
 	if (config_filename != NULL && config_filename[0] != '\0'){
@@ -578,7 +578,7 @@ const char* linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *
 	return error_msg;
 }
 
-static void xml2lpc_callback(UNUSED(void *ctx), xml2lpc_log_level level, const char *fmt, va_list list) {
+static void xml2lpc_callback(BCTBX_UNUSED(void *ctx), xml2lpc_log_level level, const char *fmt, va_list list) {
 	BctbxLogLevel bctbx_level;
 	switch(level) {
 		case XML2LPC_DEBUG: bctbx_level = BCTBX_LOG_DEBUG; break;

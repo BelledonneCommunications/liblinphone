@@ -841,7 +841,7 @@ void MagicSearch::addResultsToResultsList (std::list<std::shared_ptr<SearchResul
 	}
 }
 
-void MagicSearch::addResultsToResultsList (std::list<std::shared_ptr<SearchResult>> &results, std::list<std::shared_ptr<SearchResult>> &srL, UNUSED(const std::string filter), UNUSED(const std::string& withDomain)) const {
+void MagicSearch::addResultsToResultsList (std::list<std::shared_ptr<SearchResult>> &results, std::list<std::shared_ptr<SearchResult>> &srL, BCTBX_UNUSED(const std::string filter), BCTBX_UNUSED(const std::string& withDomain)) const {
 	auto itResult = results.begin();
 	while(itResult != results.end()){// Merge addresses that are already in srL
 		const LinphoneAddress * addr = (*itResult)->getAddress();

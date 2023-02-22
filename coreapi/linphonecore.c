@@ -939,14 +939,14 @@ static void clean_log_collection_upload_context(LinphoneCore *lc) {
 	}
 }
 
-static void process_io_error_upload_log_collection(void *data, UNUSED(const belle_sip_io_error_event_t *event)) {
+static void process_io_error_upload_log_collection(void *data, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneCore *core = (LinphoneCore *)data;
 	ms_error("I/O Error during log collection upload to %s", linphone_core_get_log_collection_upload_server_url(core));
 	linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered, "I/O Error");
 	clean_log_collection_upload_context(core);
 }
 
-static void process_auth_requested_upload_log_collection(void *data, UNUSED(belle_sip_auth_event_t *event)) {
+static void process_auth_requested_upload_log_collection(void *data, BCTBX_UNUSED(belle_sip_auth_event_t *event)) {
 	LinphoneCore *core = (LinphoneCore *)data;
 	ms_error("Error during log collection upload: auth requested to connect %s", linphone_core_get_log_collection_upload_server_url(core));
 	linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered, "Auth requested");
@@ -962,7 +962,7 @@ static void process_auth_requested_upload_log_collection(void *data, UNUSED(bell
  * @param[in] buffer The ouput buffer where to copy the data to be uploaded
  * @param[in,out] size The size in byte of the data requested, as output it will contain the effective copied size
  */
-static int log_collection_upload_on_send_body(UNUSED(belle_sip_user_body_handler_t *bh), UNUSED(belle_sip_message_t *msg), void *data, size_t offset, uint8_t *buffer, size_t *size) {
+static int log_collection_upload_on_send_body(BCTBX_UNUSED(belle_sip_user_body_handler_t *bh), BCTBX_UNUSED(belle_sip_message_t *msg), void *data, size_t offset, uint8_t *buffer, size_t *size) {
 	LinphoneCore *core = (LinphoneCore *)data;
 
 	/* If we've not reach the end of file yet, fill the buffer with more data */
@@ -1001,7 +1001,7 @@ static int log_collection_upload_on_send_body(UNUSED(belle_sip_user_body_handler
  * Callback called during upload of a log collection to server.
  * It is just forwarding the call and some parameters to the vtable defined callback.
  */
-static void log_collection_upload_on_progress(UNUSED(belle_sip_body_handler_t *bh), UNUSED(belle_sip_message_t *msg), void *data, size_t offset, size_t total) {
+static void log_collection_upload_on_progress(BCTBX_UNUSED(belle_sip_body_handler_t *bh), BCTBX_UNUSED(belle_sip_message_t *msg), void *data, size_t offset, size_t total) {
 	LinphoneCore *core = (LinphoneCore *)data;
 	linphone_core_notify_log_collection_upload_progress_indication(core, offset, total);
 }
@@ -2688,7 +2688,7 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-static void linphone_core_internal_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, UNUSED(const char *subscribe_event), const LinphoneContent *body) {
+static void linphone_core_internal_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, BCTBX_UNUSED(const char *subscribe_event), const LinphoneContent *body) {
 	if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
 		_linphone_core_conference_subscribe_received(lc, lev, body);
 	}
@@ -2926,7 +2926,7 @@ bool_t linphone_core_vibration_on_incoming_call_enabled(LinphoneCore *core) {
 }
 
 static void linphone_core_init(LinphoneCore *lc, LinphoneCoreCbs *cbs, LpConfig *config, void *userdata,
-							   UNUSED(void *system_context), bool_t automatically_start) {
+							   BCTBX_UNUSED(void *system_context), bool_t automatically_start) {
 	LinphoneFactory *lfactory = linphone_factory_get();
 	LinphoneCoreCbs *internal_cbs = _linphone_core_cbs_new();
 	const char *msplugins_dir;
@@ -3418,7 +3418,7 @@ void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val){
 }
 
 //Deprecated
-bool_t linphone_core_lime_available(UNUSED(const LinphoneCore *lc)){
+bool_t linphone_core_lime_available(BCTBX_UNUSED(const LinphoneCore *lc)){
 	return lime_is_available();
 }
 
@@ -4295,7 +4295,7 @@ const char * linphone_core_get_route(LinphoneCore *lc){
 	return route;
 }
 
-LinphoneCall * linphone_core_start_refered_call(UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
+LinphoneCall * linphone_core_start_refered_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	shared_ptr<LinphonePrivate::Call> referredCall = Call::toCpp(call)->startReferredCall(params
 		? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 	return referredCall->toC();
@@ -4787,7 +4787,7 @@ LinphoneCall * linphone_core_invite_address_with_params_2(LinphoneCore *lc, cons
 	return call;
 }
 
-LinphoneStatus linphone_core_transfer_call(UNUSED(LinphoneCore *lc), LinphoneCall *call, const char *url) {
+LinphoneStatus linphone_core_transfer_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const char *url) {
 	if (call == NULL) {
 		ms_warning("No established call to refer.");
 		return -1;
@@ -4795,7 +4795,7 @@ LinphoneStatus linphone_core_transfer_call(UNUSED(LinphoneCore *lc), LinphoneCal
 	return linphone_call_transfer(call, url);
 }
 
-LinphoneStatus linphone_core_transfer_call_to_another(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCall *dest) {
+LinphoneStatus linphone_core_transfer_call_to_another(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCall *dest) {
 	return linphone_call_transfer_to_another(call, dest);
 }
 
@@ -4809,23 +4809,23 @@ bool_t linphone_core_is_incoming_invite_pending(LinphoneCore*lc) {
 	return FALSE;
 }
 
-LinphoneStatus linphone_core_accept_early_media_with_params(UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
+LinphoneStatus linphone_core_accept_early_media_with_params(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	return linphone_call_accept_early_media_with_params(call, params);
 }
 
-LinphoneStatus linphone_core_accept_early_media(UNUSED(LinphoneCore *lc), LinphoneCall *call) {
+LinphoneStatus linphone_core_accept_early_media(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_accept_early_media(call);
 }
 
-LinphoneStatus linphone_core_update_call(UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
+LinphoneStatus linphone_core_update_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	return linphone_call_update(call, params);
 }
 
-LinphoneStatus linphone_core_defer_call_update(UNUSED(LinphoneCore *lc), LinphoneCall *call) {
+LinphoneStatus linphone_core_defer_call_update(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_defer_update(call);
 }
 
-LinphoneStatus linphone_core_accept_call_update(UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
+LinphoneStatus linphone_core_accept_call_update(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	return linphone_call_accept_update(call, params);
 }
 
@@ -4856,7 +4856,7 @@ LinphoneStatus linphone_core_accept_call_with_params(LinphoneCore *lc, LinphoneC
 	return _linphone_core_accept_call_with_params(lc, call, params);
 }
 
-LinphoneStatus linphone_core_redirect_call(UNUSED(LinphoneCore *lc), LinphoneCall *call, const char *redirect_uri) {
+LinphoneStatus linphone_core_redirect_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const char *redirect_uri) {
 	return linphone_call_redirect(call, redirect_uri);
 }
 
@@ -4875,7 +4875,7 @@ LinphoneStatus linphone_core_terminate_all_calls(LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->terminateAllCalls();
 }
 
-LinphoneStatus linphone_core_decline_call(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneReason reason) {
+LinphoneStatus linphone_core_decline_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneReason reason) {
 	return linphone_call_decline(call, reason);
 }
 
@@ -4902,7 +4902,7 @@ LinphoneCall *linphone_core_get_current_call(const LinphoneCore *lc) {
 	return call ? call->toC() : NULL;
 }
 
-LinphoneStatus linphone_core_pause_call(UNUSED(LinphoneCore *lc), LinphoneCall *call) {
+LinphoneStatus linphone_core_pause_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_pause(call);
 }
 
@@ -4943,7 +4943,7 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 	return err;
 }
 
-LinphoneStatus linphone_core_resume_call(UNUSED(LinphoneCore *lc), LinphoneCall *call) {
+LinphoneStatus linphone_core_resume_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	return linphone_call_resume(call);
 }
 
@@ -5742,7 +5742,7 @@ void linphone_core_set_ssl_config(LinphoneCore *lc, void *ssl_config) {
 	}
 }
 
-static void notify_end_of_ringtone(UNUSED(LinphoneRingtonePlayer* rp), void* user_data, UNUSED(int status)) {
+static void notify_end_of_ringtone(BCTBX_UNUSED(LinphoneRingtonePlayer* rp), void* user_data, BCTBX_UNUSED(int status)) {
 	LinphoneCore *lc=(LinphoneCore*)user_data;
 	lc->preview_finished=1;
 }
@@ -5872,11 +5872,11 @@ bool_t linphone_core_upnp_available(){
 	return FALSE;
 }
 
-LinphoneUpnpState linphone_core_get_upnp_state(UNUSED(const LinphoneCore *lc)){
+LinphoneUpnpState linphone_core_get_upnp_state(BCTBX_UNUSED(const LinphoneCore *lc)){
 	return LinphoneUpnpStateNotAvailable;
 }
 
-const char * linphone_core_get_upnp_external_ipaddress(UNUSED(const LinphoneCore *lc)){
+const char * linphone_core_get_upnp_external_ipaddress(BCTBX_UNUSED(const LinphoneCore *lc)){
 	return NULL;
 }
 
@@ -6015,7 +6015,7 @@ void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *pat
 	}
 }
 
-const char * linphone_core_get_call_logs_database_path(UNUSED(LinphoneCore *lc)) {
+const char * linphone_core_get_call_logs_database_path(BCTBX_UNUSED(LinphoneCore *lc)) {
 	lError() << "Do not use `linphone_core_get_call_logs_database_path`. Not necessary.";
 	return "";
 }
@@ -6130,7 +6130,7 @@ void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height)
 #endif // _MSC_VER
 
 #ifdef VIDEO_ENABLED
-static void video_stream_callback (void *userdata, UNUSED(const MSFilter *f), const unsigned int id, const void *arg) {
+static void video_stream_callback (void *userdata, BCTBX_UNUSED(const MSFilter *f), const unsigned int id, const void *arg) {
 	switch (id) {
 		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
 			LinphoneCore *lc = (LinphoneCore *)userdata;
@@ -6142,7 +6142,7 @@ static void video_stream_callback (void *userdata, UNUSED(const MSFilter *f), co
 	}
 }
 
-static void video_filter_callback(void *userdata, UNUSED(MSFilter *f), unsigned int id, void *arg) {
+static void video_filter_callback(void *userdata, BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
 	switch(id) {
 		case  MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
 			LinphoneCore *lc = (LinphoneCore *)userdata;
@@ -6257,7 +6257,7 @@ static void relaunch_video_preview(LinphoneCore *lc){
 	 * This code will need to be revisited when linphone_core_iterate() will no longer be required*/
 }
 
-bool_t linphone_core_video_supported(UNUSED(LinphoneCore *lc)){
+bool_t linphone_core_video_supported(BCTBX_UNUSED(LinphoneCore *lc)){
 #ifdef VIDEO_ENABLED
 	return TRUE;
 #else
@@ -6543,7 +6543,7 @@ LinphoneStatus linphone_core_set_static_picture(LinphoneCore *lc, const char *pa
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-const char *linphone_core_get_static_picture(UNUSED(LinphoneCore *lc)) {
+const char *linphone_core_get_static_picture(BCTBX_UNUSED(LinphoneCore *lc)) {
 	const char *path=NULL;
 #ifdef VIDEO_ENABLED
 	path=ms_static_image_get_default_image();
@@ -6832,7 +6832,7 @@ static MSVideoSizeDef supported_resolutions[] = {
 	{ { 0, 0 }, NULL }
 };
 
-const MSVideoSizeDef *linphone_core_get_supported_video_sizes(UNUSED(LinphoneCore *lc)){
+const MSVideoSizeDef *linphone_core_get_supported_video_sizes(BCTBX_UNUSED(LinphoneCore *lc)){
 	return supported_resolutions;
 }
 
@@ -7474,15 +7474,15 @@ LpConfig * linphone_core_get_config(const LinphoneCore *lc){
 	return lc->config;
 }
 
-LpConfig * linphone_core_create_lp_config(UNUSED(LinphoneCore *lc), const char *filename) {
+LpConfig * linphone_core_create_lp_config(BCTBX_UNUSED(LinphoneCore *lc), const char *filename) {
 	return linphone_config_new(filename);
 }
 
-LinphoneConfig * linphone_core_create_config(UNUSED(LinphoneCore *lc), const char *filename) {
+LinphoneConfig * linphone_core_create_config(BCTBX_UNUSED(LinphoneCore *lc), const char *filename) {
 	return linphone_config_new(filename);
 }
 
-LinphoneAddress * linphone_core_create_address(UNUSED(LinphoneCore *lc), const char *address) {
+LinphoneAddress * linphone_core_create_address(BCTBX_UNUSED(LinphoneCore *lc), const char *address) {
 	return linphone_address_new(address);
 }
 
@@ -7825,11 +7825,11 @@ void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachab
 	notify_network_reachable_change(lc);
 }
 
-bool_t linphone_core_is_network_reachable(UNUSED(LinphoneCore* lc)) {
+bool_t linphone_core_is_network_reachable(BCTBX_UNUSED(LinphoneCore* lc)) {
 	return lc->sip_network_state.global_state;
 }
 
-ortp_socket_t linphone_core_get_sip_socket(UNUSED(LinphoneCore *lc)){
+ortp_socket_t linphone_core_get_sip_socket(BCTBX_UNUSED(LinphoneCore *lc)){
 	ms_warning("linphone_core_get_sip_socket is deprecated");
 	return -1;
 }
@@ -8819,7 +8819,7 @@ LinphoneRingtonePlayer *linphone_core_get_ringtoneplayer(LinphoneCore *lc) {
 	return lc->ringtoneplayer;
 }
 
-static int _linphone_core_delayed_conference_destruction_cb(void *user_data, UNUSED(unsigned int event)) {
+static int _linphone_core_delayed_conference_destruction_cb(void *user_data, BCTBX_UNUSED(unsigned int event)) {
 	LinphoneConference *conf = (LinphoneConference *)user_data;
 	linphone_conference_unref(conf);
 	return 0;
@@ -9266,7 +9266,7 @@ void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneCon
 #endif
 }
 
-bool_t linphone_core_ldap_available(UNUSED(LinphoneCore *core)) {
+bool_t linphone_core_ldap_available(BCTBX_UNUSED(LinphoneCore *core)) {
 #ifdef LDAP_ENABLED
 	return TRUE;
 #else

@@ -172,7 +172,7 @@ protected:
 	/**
 	 * Notifies that zrtp primary stream is now secured.
 	 */
-	virtual void zrtpStarted(UNUSED(Stream *mainZrtpStream)){};
+	virtual void zrtpStarted(BCTBX_UNUSED(Stream *mainZrtpStream)){};
 	const std::string & getPublicIp() const;
 	PortConfig mPortConfig;
 	LinphoneStreamInternalStats mInternalStats;

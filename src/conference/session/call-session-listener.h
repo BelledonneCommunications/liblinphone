@@ -37,52 +37,52 @@ class LINPHONE_PUBLIC CallSessionListener {
 public:
 	virtual ~CallSessionListener() = default;
 
-	virtual void onAckBeingSent (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(LinphoneHeaders *headers)) {}
-	virtual void onAckReceived (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(LinphoneHeaders *headers)) {}
-	virtual void onBackgroundTaskToBeStarted (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onBackgroundTaskToBeStopped (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onCallSessionAccepting (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual bool onCallSessionAccepted (UNUSED(const std::shared_ptr<CallSession> &session)) { return false; }
-	virtual void onCallSessionEarlyFailed (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(LinphoneErrorInfo *ei)) {}
-	virtual void onCallSessionSetReleased (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onCallSessionSetTerminated (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onCallSessionStartReferred (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onCallSessionStateChanged (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(CallSession::State state), UNUSED(const std::string &message)) {}
-	virtual void onCallSessionTransferStateChanged (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(CallSession::State state)) {}
-	virtual void onCheckForAcceptation (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onDtmfReceived (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(char dtmf)) {}
-	virtual void onIncomingCallSessionNotified (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onIncomingCallSessionStarted (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onIncomingCallSessionTimeoutCheck (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(int elapsed), UNUSED(bool oneSecondElapsed)) {}
-	virtual void onPushCallSessionTimeoutCheck (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(int elapsed)) {}
-	virtual void onInfoReceived (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(const LinphoneInfoMessage *im)) {}
-	virtual void onLossOfMediaDetected (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onTmmbrReceived (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(int streamIndex), UNUSED(int tmmbr)) {}
-	virtual void onSnapshotTaken(UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(const char *file_path)) {}
-	virtual void onStartRingtone(UNUSED(const std::shared_ptr<CallSession> &session)){}
-	virtual void onRemoteRecording(UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(bool recording)){}
+	virtual void onAckBeingSent (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(LinphoneHeaders *headers)) {}
+	virtual void onAckReceived (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(LinphoneHeaders *headers)) {}
+	virtual void onBackgroundTaskToBeStarted (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onBackgroundTaskToBeStopped (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onCallSessionAccepting (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual bool onCallSessionAccepted (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) { return false; }
+	virtual void onCallSessionEarlyFailed (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(LinphoneErrorInfo *ei)) {}
+	virtual void onCallSessionSetReleased (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onCallSessionSetTerminated (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onCallSessionStartReferred (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onCallSessionStateChanged (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(CallSession::State state), BCTBX_UNUSED(const std::string &message)) {}
+	virtual void onCallSessionTransferStateChanged (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(CallSession::State state)) {}
+	virtual void onCheckForAcceptation (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onDtmfReceived (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(char dtmf)) {}
+	virtual void onIncomingCallSessionNotified (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onIncomingCallSessionStarted (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onIncomingCallSessionTimeoutCheck (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(int elapsed), BCTBX_UNUSED(bool oneSecondElapsed)) {}
+	virtual void onPushCallSessionTimeoutCheck (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(int elapsed)) {}
+	virtual void onInfoReceived (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(const LinphoneInfoMessage *im)) {}
+	virtual void onLossOfMediaDetected (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onTmmbrReceived (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(int streamIndex), BCTBX_UNUSED(int tmmbr)) {}
+	virtual void onSnapshotTaken(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(const char *file_path)) {}
+	virtual void onStartRingtone(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)){}
+	virtual void onRemoteRecording(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(bool recording)){}
 
-	virtual void onEncryptionChanged (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(bool activated), UNUSED(const std::string &authToken)) {}
+	virtual void onEncryptionChanged (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(bool activated), BCTBX_UNUSED(const std::string &authToken)) {}
 	virtual void onGoClearAckSent() {}
 
-	virtual void onCallSessionStateChangedForReporting (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onRtcpUpdateForReporting (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(SalStreamType type)) {}
-	virtual void onStatsUpdated (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(const LinphoneCallStats *stats)) {}
-	virtual void onUpdateMediaInfoForReporting (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(int statsType)) {}
+	virtual void onCallSessionStateChangedForReporting (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onRtcpUpdateForReporting (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(SalStreamType type)) {}
+	virtual void onStatsUpdated (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(const LinphoneCallStats *stats)) {}
+	virtual void onUpdateMediaInfoForReporting (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(int statsType)) {}
 
-	virtual void onResetCurrentSession (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onSetCurrentSession (UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onResetCurrentSession (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onSetCurrentSession (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
 
-	virtual void onFirstVideoFrameDecoded (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onResetFirstVideoFrameDecoded (UNUSED(const std::shared_ptr<CallSession> &session)) {}
-	virtual void onCameraNotWorking (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(const char *camera_name)) {}
+	virtual void onFirstVideoFrameDecoded (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onResetFirstVideoFrameDecoded (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
+	virtual void onCameraNotWorking (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(const char *camera_name)) {}
 
-	virtual bool areSoundResourcesAvailable (UNUSED(const std::shared_ptr<CallSession> &session)) { return true; }
-	virtual bool isPlayingRingbackTone (UNUSED(const std::shared_ptr<CallSession> &session)) { return false; }
+	virtual bool areSoundResourcesAvailable (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) { return true; }
+	virtual bool isPlayingRingbackTone (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) { return false; }
 
-	virtual LinphoneConference * getCallSessionConference (UNUSED(const std::shared_ptr<CallSession> &session)) const { return nullptr; }
+	virtual LinphoneConference * getCallSessionConference (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) const { return nullptr; }
 
-	virtual void onRealTimeTextCharacterReceived (UNUSED(const std::shared_ptr<CallSession> &session), UNUSED(RealtimeTextReceivedCharacter *data)) {}
+	virtual void onRealTimeTextCharacterReceived (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(RealtimeTextReceivedCharacter *data)) {}
 
 	virtual void confirmGoClear() const {};
 };

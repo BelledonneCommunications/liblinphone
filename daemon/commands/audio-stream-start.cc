@@ -33,7 +33,7 @@ AudioStreamStartCommand::AudioStreamStartCommand() :
 						"Id: 1"));
 }
 
-static PayloadType *getPayloadType(UNUSED(LinphoneCore *lc), const MSList *codecs, int number){
+static PayloadType *getPayloadType(BCTBX_UNUSED(LinphoneCore *lc), const MSList *codecs, int number){
 	const MSList *elem;
 	for (elem = codecs; elem != NULL; elem = elem->next) {
 		PayloadType *pt = (PayloadType*)elem->data;

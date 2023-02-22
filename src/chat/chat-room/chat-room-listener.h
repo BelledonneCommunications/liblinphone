@@ -33,9 +33,9 @@ class ChatRoomListener {
 public:
 	virtual ~ChatRoomListener () = default;
 
-	virtual void onChatRoomInsertRequested (UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
-	virtual void onChatRoomInsertInDatabaseRequested (UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
-	virtual void onChatRoomDeleteRequested (UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
+	virtual void onChatRoomInsertRequested (BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
+	virtual void onChatRoomInsertInDatabaseRequested (BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
+	virtual void onChatRoomDeleteRequested (BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &chatRoom)) {}
 };
 
 LINPHONE_END_NAMESPACE

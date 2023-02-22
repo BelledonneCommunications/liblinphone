@@ -51,7 +51,7 @@ void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool 
 	}
 }
 
-void MS2VideoMixer::disconnectEndpoint(UNUSED(Stream *vs), MSVideoEndpoint *endpoint){
+void MS2VideoMixer::disconnectEndpoint(BCTBX_UNUSED(Stream *vs), MSVideoEndpoint *endpoint){
 	ms_video_endpoint_set_user_data(endpoint, nullptr);
 	// Try to remove endpoint from both MSConference
 	ms_video_conference_remove_member(mConferenceMix, endpoint);
@@ -234,7 +234,7 @@ MSWebCam *MS2VideoMixer::getVideoDevice()const{
 	return mCore.getCCore()->video_conf.device;
 }
 
-void MS2VideoMixer::onSnapshotTaken(UNUSED(const std::string &filepath)){
+void MS2VideoMixer::onSnapshotTaken(BCTBX_UNUSED(const std::string &filepath)){
 	// TODO
 }
 

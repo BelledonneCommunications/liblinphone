@@ -43,7 +43,7 @@ NotificationMessage::NotificationMessage (NotificationMessagePrivate &p) : ChatM
 	d->contentEncoding = "deflate";
 }
 
-void NotificationMessage::setToBeStored (UNUSED(bool value)) {
+void NotificationMessage::setToBeStored (BCTBX_UNUSED(bool value)) {
 }
 
 LINPHONE_END_NAMESPACE

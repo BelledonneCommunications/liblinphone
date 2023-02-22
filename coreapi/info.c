@@ -86,7 +86,7 @@ LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *orig)
 	return (LinphoneInfoMessage *)belle_sip_object_clone((const belle_sip_object_t *)orig);
 }
 
-LinphoneInfoMessage *linphone_core_create_info_message(UNUSED(LinphoneCore *lc)){
+LinphoneInfoMessage *linphone_core_create_info_message(BCTBX_UNUSED(LinphoneCore *lc)){
 	return belle_sip_object_new(LinphoneInfoMessage);
 }
 

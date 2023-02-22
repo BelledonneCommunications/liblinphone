@@ -57,7 +57,7 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 	mutable bctbx_list_t *composingAddresses;
 )
 
-static void _linphone_chat_room_constructor (UNUSED(LinphoneChatRoom *cr)) {}
+static void _linphone_chat_room_constructor (BCTBX_UNUSED(LinphoneChatRoom *cr)) {}
 
 static void _linphone_chat_room_destructor (LinphoneChatRoom *cr) {
 	if (cr->composingAddresses)
@@ -161,8 +161,8 @@ LinphoneChatMessage *linphone_chat_room_create_message_2 (
 	const char *external_body_url,
 	LinphoneChatMessageState state,
 	time_t time,
-	UNUSED(bool_t is_read),
-	UNUSED(bool_t is_incoming)
+	BCTBX_UNUSED(bool_t is_read),
+	BCTBX_UNUSED(bool_t is_incoming)
 ) {
 	LinphoneChatMessage *msg = linphone_chat_room_create_message(cr, message);
 
@@ -201,16 +201,16 @@ LinphoneChatMessage *linphone_chat_room_create_voice_recording_message (Linphone
 	return chat_message;
 }
 
-void linphone_chat_room_send_chat_message_2 (UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
+void linphone_chat_room_send_chat_message_2 (BCTBX_UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
 	linphone_chat_message_ref(msg);
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
 }
 
-void linphone_chat_room_send_chat_message (UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
+void linphone_chat_room_send_chat_message (BCTBX_UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
 }
 
-void linphone_chat_room_receive_chat_message (UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
+void linphone_chat_room_receive_chat_message (BCTBX_UNUSED(LinphoneChatRoom *cr), LinphoneChatMessage *msg) {
 	L_GET_PRIVATE_FROM_C_OBJECT(msg)->receive();
 }
 

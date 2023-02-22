@@ -1737,7 +1737,7 @@ void linphone_core_add_subscriber(LinphoneCore *lc, const char *subscriber, SalO
 	}
 }
 
-void linphone_core_reject_subscriber(UNUSED(LinphoneCore *lc), LinphoneFriend *lf){
+void linphone_core_reject_subscriber(BCTBX_UNUSED(LinphoneCore *lc), LinphoneFriend *lf){
 	linphone_friend_set_inc_subscribe_policy(lf,LinphoneSPDeny);
 }
 
@@ -2222,30 +2222,30 @@ void linphone_subscription_closed(LinphoneCore *lc, SalOp *op){
 	}
 }
 
-LinphonePresenceActivity * linphone_core_create_presence_activity(UNUSED(LinphoneCore *lc), LinphonePresenceActivityType acttype, const char *description) {
+LinphonePresenceActivity * linphone_core_create_presence_activity(BCTBX_UNUSED(LinphoneCore *lc), LinphonePresenceActivityType acttype, const char *description) {
 	return linphone_presence_activity_new(acttype, description);
 }
 
-LinphonePresenceModel * linphone_core_create_presence_model(UNUSED(LinphoneCore *lc)) {
+LinphonePresenceModel * linphone_core_create_presence_model(BCTBX_UNUSED(LinphoneCore *lc)) {
 	return linphone_presence_model_new();
 }
 
-LinphonePresenceModel * linphone_core_create_presence_model_with_activity(UNUSED(LinphoneCore *lc), LinphonePresenceActivityType acttype, const char *description) {
+LinphonePresenceModel * linphone_core_create_presence_model_with_activity(BCTBX_UNUSED(LinphoneCore *lc), LinphonePresenceActivityType acttype, const char *description) {
 	return linphone_presence_model_new_with_activity(acttype, description);
 }
 
-LinphonePresenceModel * linphone_core_create_presence_model_with_activity_and_note(UNUSED(LinphoneCore *lc), LinphonePresenceActivityType acttype, const char *description, const char *note, const char *lang) {
+LinphonePresenceModel * linphone_core_create_presence_model_with_activity_and_note(BCTBX_UNUSED(LinphoneCore *lc), LinphonePresenceActivityType acttype, const char *description, const char *note, const char *lang) {
 	return linphone_presence_model_new_with_activity_and_note(acttype, description, note, lang);
 }
 
-LinphonePresenceNote * linphone_core_create_presence_note(UNUSED(LinphoneCore *lc), const char *content, const char *lang) {
+LinphonePresenceNote * linphone_core_create_presence_note(BCTBX_UNUSED(LinphoneCore *lc), const char *content, const char *lang) {
 	return linphone_presence_note_new(content, lang);
 }
 
-LinphonePresencePerson * linphone_core_create_presence_person(UNUSED(LinphoneCore *lc), const char *id) {
+LinphonePresencePerson * linphone_core_create_presence_person(BCTBX_UNUSED(LinphoneCore *lc), const char *id) {
 	return linphone_presence_person_new(id);
 }
 
-LinphonePresenceService * linphone_core_create_presence_service(UNUSED(LinphoneCore *lc), const char *id, LinphonePresenceBasicStatus basic_status, const char *contact) {
+LinphonePresenceService * linphone_core_create_presence_service(BCTBX_UNUSED(LinphoneCore *lc), const char *id, LinphonePresenceBasicStatus basic_status, const char *contact) {
 	return linphone_presence_service_new(id, basic_status, contact);
 }

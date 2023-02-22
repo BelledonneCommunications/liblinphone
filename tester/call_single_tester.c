@@ -172,7 +172,7 @@ void liblinphone_tester_check_rtcp_2(LinphoneCoreManager* caller, LinphoneCoreMa
 
 static const char *info_content = "<somexml>blabla</somexml>";
 
-static void call_check_log_duration_cb(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *message)) {
+static void call_check_log_duration_cb(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *message)) {
 	if (cstate == LinphoneCallStateEnd || cstate == LinphoneCallStateReleased) {
 		LinphoneCallLog *call_log = linphone_call_get_call_log(call);
 		BC_ASSERT_PTR_NOT_NULL(call_log);
@@ -2156,7 +2156,7 @@ static void on_ack_processing(LinphoneCall *call, LinphoneHeaders *ack, bool_t i
 	}
 }
 
-static void call_created(UNUSED(LinphoneCore *lc), LinphoneCall *call){
+static void call_created(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call){
 	LinphoneCallCbs *cbs = linphone_factory_create_call_cbs(linphone_factory_get());
 	linphone_call_cbs_set_ack_processing(cbs, on_ack_processing);
 	linphone_call_add_callbacks(call, cbs);
@@ -2345,7 +2345,7 @@ static void call_with_custom_reserved_headers(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_custom_sdp_attributes_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *message)) {
+static void call_with_custom_sdp_attributes_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *message)) {
 	if (cstate == LinphoneCallUpdatedByRemote) {
 		LinphoneCallParams *params;
 		const LinphoneCallParams *remote_params = linphone_call_get_remote_params(call);
@@ -2416,7 +2416,7 @@ static void call_with_custom_sdp_attributes(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_custom_header_or_sdp_cb(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *message)) {
+static void call_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *message)) {
 	const char *value;
 	if (cstate == LinphoneCallOutgoingInit){
 		LinphoneCallParams *params = linphone_call_params_copy(linphone_call_get_params(call));
@@ -2531,7 +2531,7 @@ static void call_caller_with_custom_header_or_sdp_attributes(void) {
 	linphone_core_manager_destroy(caller_mgr);
 }
 
-static void call_callee_with_custom_header_or_sdp_cb(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *message)) {
+static void call_callee_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *message)) {
 
 	const char *value;
 	if (cstate == LinphoneCallOutgoingInit) {
@@ -4338,7 +4338,7 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-static void call_state_changed_callback_to_start_record(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState state, UNUSED(const char *message)) {
+static void call_state_changed_callback_to_start_record(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState state, BCTBX_UNUSED(const char *message)) {
 	if (state == /*LinphoneCallStreamsRunning*/ LinphoneCallConnected){
 		ms_message("call_recording(): start early recording into %s",linphone_call_params_get_record_file(linphone_call_get_params(call)));
 		linphone_call_start_recording(call);
@@ -4864,7 +4864,7 @@ static void call_with_generic_cn(void) {
 	bc_free(recorded_file);
 }
 
-static void call_state_changed_2(LinphoneCore *lc, UNUSED(LinphoneCall *call), LinphoneCallState cstate, UNUSED(const char *msg)) {
+static void call_state_changed_2(LinphoneCore *lc, BCTBX_UNUSED(LinphoneCall *call), LinphoneCallState cstate, BCTBX_UNUSED(const char *msg)) {
 	LinphoneSipTransports sip_tr;
 	if (cstate==LinphoneCallReleased) {
 		/*to make sure transport is changed*/
@@ -4876,7 +4876,7 @@ static void call_state_changed_2(LinphoneCore *lc, UNUSED(LinphoneCall *call), L
 	}
 }
 
-static void call_state_changed_3(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *msg)) {
+static void call_state_changed_3(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *msg)) {
 /*just to check multi listener in such situation*/
 	LinphoneCallLog *clog = linphone_call_get_call_log(call);
 	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
@@ -5303,12 +5303,12 @@ static void rtptm_on_schedule(RtpTransportModifier *rtptm) {
 
 // This callback is called when the transport modifier is being destroyed
 // It is a good place to free the resources allocated for the transport modifier
-static void rtptm_destroy(UNUSED(RtpTransportModifier *rtptm)) {
+static void rtptm_destroy(BCTBX_UNUSED(RtpTransportModifier *rtptm)) {
 	// Do nothing, we'll free it later because we need to access the RtpTransportModifierData structure after the call is ended
 }
 
 // This is the callback called when the state of the call change
-static void call_state_changed_4(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *msg)) {
+static void call_state_changed_4(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *msg)) {
 	int i = 0;
 
 	// To add a custom RTP transport modifier, we have to do it before the call is running, but after the RTP session is created.
@@ -5905,7 +5905,7 @@ static void v6_call_over_nat_64(void){
 	}else ms_warning("Test skipped, no ipv6 nat64 available");
 }
 
-static void my_call_state_changed_cb(LinphoneCore *lc, UNUSED(LinphoneCall* call), LinphoneCallState state, UNUSED(const char *text)) {
+static void my_call_state_changed_cb(LinphoneCore *lc, BCTBX_UNUSED(LinphoneCall* call), LinphoneCallState state, BCTBX_UNUSED(const char *text)) {
 	if (state == LinphoneCallError){
 		linphone_core_set_network_reachable(lc, FALSE);
 	}
@@ -6367,7 +6367,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_state_changed_accept_early_media(UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *msg)) {
+static void call_state_changed_accept_early_media(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *msg)) {
 	if (cstate == LinphoneCallIncomingReceived) {
 		/* send a 183 to initiate the early media */
 		linphone_call_accept_early_media(call);

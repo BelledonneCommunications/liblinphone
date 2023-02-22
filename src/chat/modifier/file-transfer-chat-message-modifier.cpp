@@ -65,7 +65,7 @@ FileTransferChatMessageModifier::~FileTransferChatMessageModifier () {
 		releaseHttpRequest();
 }
 
-ChatMessageModifier::Result FileTransferChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, UNUSED(int &errorCode)) {
+ChatMessageModifier::Result FileTransferChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, BCTBX_UNUSED(int &errorCode)) {
 	chatMessage = message;
 
 	currentFileContentToTransfer = nullptr;
@@ -103,8 +103,8 @@ static void _chat_message_file_transfer_on_progress (
 }
 
 void FileTransferChatMessageModifier::fileTransferOnProgress (
-	UNUSED(belle_sip_body_handler_t *bh),
-	UNUSED(belle_sip_message_t *m),
+	BCTBX_UNUSED(belle_sip_body_handler_t *bh),
+	BCTBX_UNUSED(belle_sip_message_t *m),
 	size_t offset,
 	size_t total
 ) {
@@ -149,8 +149,8 @@ static int _chat_message_on_send_body (
 }
 
 int FileTransferChatMessageModifier::onSendBody (
-	UNUSED(belle_sip_user_body_handler_t *bh),
-	UNUSED(belle_sip_message_t *m),
+	BCTBX_UNUSED(belle_sip_user_body_handler_t *bh),
+	BCTBX_UNUSED(belle_sip_message_t *m),
 	size_t offset,
 	uint8_t *buffer,
 	size_t *size
@@ -228,7 +228,7 @@ static void _chat_message_on_send_end (belle_sip_user_body_handler_t *bh, void *
 	d->onSendEnd(bh);
 }
 
-void FileTransferChatMessageModifier::onSendEnd (UNUSED(belle_sip_user_body_handler_t *bh)) {
+void FileTransferChatMessageModifier::onSendEnd (BCTBX_UNUSED(belle_sip_user_body_handler_t *bh)) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message)
 		return;
@@ -441,7 +441,7 @@ static void _chat_message_process_io_error_upload (void *data, const belle_sip_i
 	d->processIoErrorUpload(event);
 }
 
-void FileTransferChatMessageModifier::processIoErrorUpload (UNUSED(const belle_sip_io_error_event_t *event)) {
+void FileTransferChatMessageModifier::processIoErrorUpload (BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	lError() << "I/O Error during file upload of message [" << message << "]";
 	if (!message)
@@ -578,7 +578,7 @@ void FileTransferChatMessageModifier::fileUploadEndBackgroundTask () {
 
 // ----------------------------------------------------------
 
-ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, UNUSED(int &errorCode)) {
+ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, BCTBX_UNUSED(int &errorCode)) {
 	chatMessage = message;
 
 	Content internalContent = message->getInternalContent();
@@ -609,7 +609,7 @@ static void _chat_message_on_recv_body (belle_sip_user_body_handler_t *bh, belle
 	d->onRecvBody(bh, m, offset, buffer, size);
 }
 
-void FileTransferChatMessageModifier::onRecvBody (UNUSED(belle_sip_user_body_handler_t *bh), UNUSED(belle_sip_message_t *m), size_t offset, uint8_t *buffer, size_t size) {
+void FileTransferChatMessageModifier::onRecvBody (BCTBX_UNUSED(belle_sip_user_body_handler_t *bh), BCTBX_UNUSED(belle_sip_message_t *m), size_t offset, uint8_t *buffer, size_t size) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!httpRequest || belle_http_request_is_cancelled(httpRequest)) {
 		lWarning() << "Cancelled request for message [" << message << "], ignoring " << __FUNCTION__;
@@ -693,7 +693,7 @@ static void renameFileAfterAutoDownload(shared_ptr<Core> core, FileContent *file
 	}
 }
 
-void FileTransferChatMessageModifier::onRecvEnd (UNUSED(belle_sip_user_body_handler_t *bh)) {
+void FileTransferChatMessageModifier::onRecvEnd (BCTBX_UNUSED(belle_sip_user_body_handler_t *bh)) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message)
 		return;
@@ -877,7 +877,7 @@ static void _chat_message_process_io_error_download (void *data, const belle_sip
 	d->processIoErrorDownload(event);
 }
 
-void FileTransferChatMessageModifier::processIoErrorDownload (UNUSED(const belle_sip_io_error_event_t *event)) {
+void FileTransferChatMessageModifier::processIoErrorDownload (BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	lError() << "I/O Error during file download message [" << message << "]";
 	onDownloadFailed();

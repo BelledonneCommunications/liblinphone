@@ -46,7 +46,7 @@ EchoCalibrationCommand::EchoCalibrationCommand() :
 						"Status: Ok"));
 }
 
-void EchoCalibrationCommand::exec(Daemon *app, UNUSED(const string& args)) {
+void EchoCalibrationCommand::exec(Daemon *app, BCTBX_UNUSED(const string& args)) {
 	LinphoneCore *lc = app->getCore();
 	//LinphoneCoreCbs * cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	LinphoneCoreCbs *cbs=linphone_core_get_current_callbacks(lc);

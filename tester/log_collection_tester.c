@@ -168,7 +168,7 @@ static time_t get_current_time(void) {
 	return mktime(lt);
 }
 
-static time_t check_file(UNUSED(LinphoneCoreManager* mgr))  {
+static time_t check_file(BCTBX_UNUSED(LinphoneCoreManager* mgr))  {
 	time_t cur_time = get_current_time();
 	char*    filepath = linphone_core_compress_log_collection();
 	time_t  log_time = -1;

@@ -253,7 +253,7 @@ void liblinphone_android_log_handler(int prio, const char *fmt, va_list args) {
 	}
 }
 
-static void liblinphone_android_ortp_log_handler(UNUSED(const char *domain), OrtpLogLevel lev, const char *fmt, va_list args) {
+static void liblinphone_android_ortp_log_handler(BCTBX_UNUSED(const char *domain), OrtpLogLevel lev, const char *fmt, va_list args) {
 	int prio;
 	switch(lev){
 		case ORTP_DEBUG:	prio = ANDROID_LOG_DEBUG;	break;
@@ -266,7 +266,7 @@ static void liblinphone_android_ortp_log_handler(UNUSED(const char *domain), Ort
 	liblinphone_android_log_handler(prio, fmt, args);
 }
 
-static void liblinphone_android_bctbx_log_handler(UNUSED(const char *domain), BctbxLogLevel lev, const char *fmt, va_list args) {
+static void liblinphone_android_bctbx_log_handler(BCTBX_UNUSED(const char *domain), BctbxLogLevel lev, const char *fmt, va_list args) {
 	int prio;
 	switch(lev){
 		case BCTBX_LOG_DEBUG:	prio = ANDROID_LOG_DEBUG;	break;
@@ -296,11 +296,11 @@ void bcunit_android_trace_handler(int level, const char *fmt, va_list args) {
 	(*env)->DeleteLocalRef(env,cls);
 }
 
-JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_setApplicationContext(JNIEnv *env, UNUSED(jclass obj), jobject context) {
+JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_setApplicationContext(JNIEnv *env, BCTBX_UNUSED(jclass obj), jobject context) {
     system_context = (jobject)(*env)->NewGlobalRef(env, context);
 }
 
-JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_removeApplicationContext(JNIEnv *env, UNUSED(jclass obj)) {
+JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_removeApplicationContext(JNIEnv *env, BCTBX_UNUSED(jclass obj)) {
     if (system_context) {
         (*env)->DeleteGlobalRef(env, system_context);
         system_context = 0;
@@ -364,11 +364,11 @@ JNIEXPORT jstring JNICALL Java_org_linphone_tester_Tester_run2(JNIEnv *env, jobj
 	return failedAsserts;
 }
 
-JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_keepAccounts(UNUSED(JNIEnv *env), UNUSED(jclass c), jboolean keep) {
+JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_keepAccounts(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jclass c), jboolean keep) {
 	liblinphone_tester_keep_accounts((int)keep);
 }
 
-JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_clearAccounts(UNUSED(JNIEnv *env), UNUSED(jclass c)) {
+JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_clearAccounts(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jclass c)) {
 	liblinphone_tester_clear_accounts();
 }
 #endif /* __ANDROID__ */
@@ -393,12 +393,12 @@ static void log_handler(int lev, const char *fmt, va_list args) {
 	bctbx_logv(BCTBX_LOG_DOMAIN, lev, fmt, args);
 }
 
-int silent_arg_func(UNUSED(const char *arg)) {
+int silent_arg_func(BCTBX_UNUSED(const char *arg)) {
 	linphone_core_set_log_level(ORTP_FATAL);
 	return 0;
 }
 
-int verbose_arg_func(UNUSED(const char *arg)) {
+int verbose_arg_func(BCTBX_UNUSED(const char *arg)) {
 	linphone_core_set_log_level(ORTP_MESSAGE);
 	return 0;
 }

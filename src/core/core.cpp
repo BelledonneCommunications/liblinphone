@@ -473,7 +473,7 @@ ToneManager & CorePrivate::getToneManager() {
 	return *toneManager.get();
 }
 
-int CorePrivate::ephemeralMessageTimerExpired (void *data, UNUSED(unsigned int revents)) {
+int CorePrivate::ephemeralMessageTimerExpired (void *data, BCTBX_UNUSED(unsigned int revents)) {
 	CorePrivate *d = static_cast<CorePrivate *>(data);
 	d->stopEphemeralMessageTimer();
 

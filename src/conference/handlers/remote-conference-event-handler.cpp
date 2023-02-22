@@ -736,7 +736,7 @@ void RemoteConferenceEventHandler::unsubscribePrivate () {
 	}
 }
 
-void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, UNUSED(bool mediaNetworkReachable)) {
+void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable) {
 		subscribe();
 	} else {
@@ -744,7 +744,7 @@ void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable,
 	}
 }
 
-void RemoteConferenceEventHandler::onRegistrationStateChanged (UNUSED(LinphoneProxyConfig *cfg), LinphoneRegistrationState state, UNUSED(const std::string &message)) {
+void RemoteConferenceEventHandler::onRegistrationStateChanged (BCTBX_UNUSED(LinphoneProxyConfig *cfg), LinphoneRegistrationState state, BCTBX_UNUSED(const std::string &message)) {
 	if (state == LinphoneRegistrationOk)
 		subscribe();
 }

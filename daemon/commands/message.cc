@@ -62,7 +62,7 @@ void MessageCommand::exec(Daemon *app, const std::string &args){
 	app->sendResponse(Response(ostr.str(), Response::Ok));
 }
 
-void MessageCommand::sMsgStateChanged(LinphoneChatMessage *msg, UNUSED(LinphoneChatMessageState state)){
+void MessageCommand::sMsgStateChanged(LinphoneChatMessage *msg, BCTBX_UNUSED(LinphoneChatMessageState state)){
 	Daemon *app = (Daemon*) linphone_chat_message_get_user_data(msg);
 	app->queueEvent(new OutgoingMessageEvent(msg));
 }

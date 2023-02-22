@@ -514,7 +514,7 @@ bool ChatRoomPrivate::isSubscriptionUnderWay() const {
 	return false;
 }
 
-void ChatRoomPrivate::addPendingMessage(UNUSED(const std::shared_ptr<ChatMessage> &chatMessage)) {
+void ChatRoomPrivate::addPendingMessage(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &chatMessage)) {
 	lInfo() << __func__ << ": not implemented";
 }
 
@@ -801,7 +801,7 @@ const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 	return d->params;
 }
 
-void ChatRoom::enableEphemeral (UNUSED(bool ephem), UNUSED(bool updateDb)) {
+void ChatRoom::enableEphemeral (BCTBX_UNUSED(bool ephem), BCTBX_UNUSED(bool updateDb)) {
 	lDebug() << "Ephemeral message is only supported in conference based chat room!";
 }
 
@@ -809,7 +809,7 @@ bool ChatRoom::ephemeralEnabled() const {
 	return false;
 }
 
-void ChatRoom::setEphemeralLifetime (UNUSED(long lifetime), UNUSED(bool updateDb)) {
+void ChatRoom::setEphemeralLifetime (BCTBX_UNUSED(long lifetime), BCTBX_UNUSED(bool updateDb)) {
 	lError() << "Ephemeral message is only supported in conference based chat room!";
 }
 
@@ -817,7 +817,7 @@ long ChatRoom::getEphemeralLifetime () const {
 	return 0;
 }
 
-void ChatRoom::setEphemeralMode(UNUSED(AbstractChatRoom::EphemeralMode mode), UNUSED(bool updateDb)) {
+void ChatRoom::setEphemeralMode(BCTBX_UNUSED(AbstractChatRoom::EphemeralMode mode), BCTBX_UNUSED(bool updateDb)) {
 	lError() << "Ephemeral message is only supported in conference based chat room!";
 }
 

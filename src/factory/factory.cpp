@@ -203,7 +203,7 @@ LinphoneCore* Factory::createCore (
 }
 
 LinphoneCore* Factory::createSharedCore (
-		UNUSED(const std::string& config_filename),
+		BCTBX_UNUSED(const std::string& config_filename),
 		const std::string& factory_config_path,
 		void *system_context,
 		const std::string& app_group_id,

@@ -225,7 +225,7 @@ void Variant::clear () {
 	d->setType(Invalid);
 }
 
-void Variant::swap (UNUSED(const Variant &other)) {
+void Variant::swap (BCTBX_UNUSED(const Variant &other)) {
 	// TODO.
 }
 

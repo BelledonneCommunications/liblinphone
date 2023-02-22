@@ -168,17 +168,17 @@ public:
 	void startAudioForEchoTestOrCalibration () override;
 	void stopAudioForEchoTestOrCalibration () override;
 	
-	void start (UNUSED(std::shared_ptr<LinphonePrivate::Core> core)) override {};
+	void start (BCTBX_UNUSED(std::shared_ptr<LinphonePrivate::Core> core)) override {};
 	void stop (void) override {};
 
-	void didRegisterForRemotePush(UNUSED(void *token)) override {};
-	void didRegisterForRemotePushWithStringifiedToken(UNUSED(const char *tokenStr)) override {};
-	void enableAutoIterate (UNUSED(bool autoIterateEnabled)) override {};
+	void didRegisterForRemotePush(BCTBX_UNUSED(void *token)) override {};
+	void didRegisterForRemotePushWithStringifiedToken(BCTBX_UNUSED(const char *tokenStr)) override {};
+	void enableAutoIterate (BCTBX_UNUSED(bool autoIterateEnabled)) override {};
 
 	void onRecordingStarted () const override {};
 	void onRecordingPaused () const override {};
 	void stopRinging () const override {};
-	void setDeviceRotation (UNUSED(int orientation)) const override {};
+	void setDeviceRotation (BCTBX_UNUSED(int orientation)) const override {};
 
 protected:
 	bool checkIpAddressChanged();

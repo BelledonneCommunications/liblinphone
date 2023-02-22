@@ -33,7 +33,7 @@ class LINPHONE_PUBLIC ChatMessageListener {
 public:
 	virtual ~ChatMessageListener () = default;
 
-	virtual void onChatMessageStateChanged (UNUSED(const std::shared_ptr<ChatMessage> &message), UNUSED(ChatMessage::State state)) {}
+	virtual void onChatMessageStateChanged (BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message), BCTBX_UNUSED(ChatMessage::State state)) {}
 };
 
 LINPHONE_END_NAMESPACE

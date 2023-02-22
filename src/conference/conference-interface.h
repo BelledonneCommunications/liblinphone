@@ -254,7 +254,7 @@ public:
 	 * Notify Conference state changes.
 	 ** @param[in] newState the new state of this conference.
 	 */
-	virtual void onStateChanged (UNUSED(ConferenceInterface::State newState)) {}
+	virtual void onStateChanged (BCTBX_UNUSED(ConferenceInterface::State newState)) {}
 	
 	/*
 	 * This fonction is called each time a full state notification is receied from the focus.
@@ -266,106 +266,106 @@ public:
 	 * @param[in] event informations related to the added participant. @notnil
 	 * @param[in] participant participant added to conference or chat room. @notnil
 	 */
-	virtual void onParticipantAdded (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
+	virtual void onParticipantAdded (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
 	/*
 	 * This fonction is called each time a new participant is removed by the focus after full state notification.
 	 * @param[in] event informations related to the removed participant. @notnil
 	 * @param[in] participant participant removed from conference or chat room. @notnil
 	 */
-	virtual void onParticipantRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
+	virtual void onParticipantRemoved (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
 	/*
 	* This fonction is called each time a participant device changes its available media
 	* @param[in] event informations related to the device's participant.
 	* @param[in] device participant device that changed its media capabilities
 	*/
-	virtual void onParticipantDeviceMediaCapabilityChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {};
+	virtual void onParticipantDeviceMediaCapabilityChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {};
 
 	/*
 	* This fonction is called each time a participant device changes its available media
 	* @param[in] event informations related to the device's participant.
 	* @param[in] device participant device that changed its media availabilities
 	*/
-	virtual void onParticipantDeviceMediaAvailabilityChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {};
+	virtual void onParticipantDeviceMediaAvailabilityChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {};
 
 	/*
 	* This fonction is called each time a participant device state changes
 	* @param[in] event informations related to the device's participant whose state changed. @notnil
 	* @param[in] device participant device whose state changed. @notnil
 	*/
-	virtual void onParticipantDeviceStateChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {};
+	virtual void onParticipantDeviceStateChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {};
 
 	/*
 	* This fonction is called each time a participant device changes the ephemeral mode
 	* @param[in] event informations related to the device's participant.
 	*/
-	virtual void onEphemeralModeChanged (UNUSED(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event)) {};
+	virtual void onEphemeralModeChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event)) {};
 
 	/*
 	* This fonction is called each time a participant device enables or disables ephemeral messages when they are managed by admins
 	* @param[in] event informations related to the device's participant.
 	*/
-	virtual void onEphemeralMessageEnabled (UNUSED(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event)) {};
+	virtual void onEphemeralMessageEnabled (BCTBX_UNUSED(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event)) {};
 
 	/*
 	* This fonction is called each time a participant device changes the ephemeral lifetime when ephemeral messages are managed by admins
 	* @param[in] event informations related to the device's participant.
 	*/
-	virtual void onEphemeralLifetimeChanged (UNUSED(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event)) {};
+	virtual void onEphemeralLifetimeChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event)) {};
 
 	/*
 	 * This fonction is called each time a new admin is set by the focus after full state notification.
 	 * @param[in] event informations related to the new admin participant. @notnil
 	 * @param[in] participant participant whose admin status changed. @notnil
 	 */
-	virtual void onParticipantSetAdmin (UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), UNUSED(const std::shared_ptr<Participant> &participant)) {}
+	virtual void onParticipantSetAdmin (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event), BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {}
 
 	/*
 	 * This fonction is called each time a new subject is set by the focus after full state notification.
 	 * @param[in] event informations related to the new subject. @notnil
 	 */
-	virtual void onSubjectChanged (UNUSED(const std::shared_ptr<ConferenceSubjectEvent> &event)) {}
+	virtual void onSubjectChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceSubjectEvent> &event)) {}
 
 	/*
 	 * This function is called each time a participant device starts or stops speaking.
 	 * @param[in] device the participant device.
 	 * @param[in] isSpeaking true if participant device is currently speaking, false otherwise.
 	 */
-	virtual void onParticipantDeviceIsSpeakingChanged (UNUSED(const std::shared_ptr<ParticipantDevice> &device), UNUSED(bool isSpeaking)) {}
+	virtual void onParticipantDeviceIsSpeakingChanged (BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device), BCTBX_UNUSED(bool isSpeaking)) {}
 
 	/*
 	 * This function is called each time a participant device mutes or unmutes itself.
 	 * @param[in] device the participant device.
 	 * @param[in] isMuted true if participant device is currently muted, false otherwise.
 	 */
-	virtual void onParticipantDeviceIsMuted (UNUSED(const std::shared_ptr<ParticipantDevice> &device), UNUSED(bool isMuted)) {}
+	virtual void onParticipantDeviceIsMuted (BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device), BCTBX_UNUSED(bool isMuted)) {}
 
 	/*
 	 * This fonction is called each time list of available media is modified by the focus after full state notification.
 	 * @param[in] event informations related to the available media. @notnil
 	 */
-	virtual void onAvailableMediaChanged (UNUSED(const std::shared_ptr<ConferenceAvailableMediaEvent> &event)) {}
+	virtual void onAvailableMediaChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceAvailableMediaEvent> &event)) {}
 	
 	/*
 	* This fonction is called each time a new participant device is added by the focus after full state notification.
 	* @param[in] event informations related to the added participant's device. @notnil
 	* @param[in] device participant device added to the conference or chat room. @notnil
 	*/
-	virtual void onParticipantDeviceAdded (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
+	virtual void onParticipantDeviceAdded (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
 	
 	/*
 	* This fonction is called each time a new participant device is removed by the focus after full state notification.
 	* @param[in] event informations related to the removed device's participant. @notnil
 	* @param[in] device participant device removed from the conference or chat room. @notnil
 	*/
-	virtual void onParticipantDeviceRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
+	virtual void onParticipantDeviceRemoved (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
 
 	/*
 	 * This fonction is called each time a participant device is being currently displayed as active speaker.
 	 * @param[in] device participant device currently being displayed as active speaker. @notnil
 	 */
-	virtual void onActiveSpeakerParticipantDevice(UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
+	virtual void onActiveSpeakerParticipantDevice(BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)) {}
 };
 
 class LINPHONE_PUBLIC ConferenceParamsInterface {

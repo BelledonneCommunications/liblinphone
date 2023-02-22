@@ -48,7 +48,7 @@ static LinphoneAccountCreator* init(LinphoneCore *lc, const char * url) {
 	return linphone_account_creator_new(lc, url);
 }
 
-static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, UNUSED(const char* resp)) {
+static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, BCTBX_UNUSED(const char* resp)) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
 
 	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(
@@ -1236,7 +1236,7 @@ static void server_update_account_password_for_non_existent_account(void) {
 	linphone_account_creator_cbs_unref(cbs);
 }
 
-static void login_linphone_account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, UNUSED(const char* resp)) {
+static void login_linphone_account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, BCTBX_UNUSED(const char* resp)) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
 	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(
 		(intptr_t)linphone_account_creator_service_get_user_data(linphone_account_creator_get_service(creator))

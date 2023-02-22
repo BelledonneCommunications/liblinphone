@@ -1140,7 +1140,7 @@ void ServerGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shar
 	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
 }
 
-void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) {
+void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (BCTBX_UNUSED(const shared_ptr<AbstractChatRoom> & chatRoom)) {
 	L_Q();
 	q->deleteFromDb();
 }
@@ -1219,7 +1219,7 @@ bool ServerGroupChatRoomPrivate::dispatchMessagesAfterFullState(const shared_ptr
 }
 
 
-void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, UNUSED(const string &message)) {
+void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, BCTBX_UNUSED(const string &message)) {
 	L_Q();
 	auto device = q->findCachedParticipantDevice(session);
 	if (!device) {
@@ -1311,7 +1311,7 @@ void ServerGroupChatRoomPrivate::moveDeviceToPresent(const std::shared_ptr<Parti
 	}
 }
 
-void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSession> &session, UNUSED(LinphoneHeaders *headers)){
+void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSession> &session, BCTBX_UNUSED(LinphoneHeaders *headers)){
 	if (!dispatchMessagesAfterFullState(session)){
 		moveDeviceToPresent(session);
 	}
@@ -1452,9 +1452,9 @@ shared_ptr<ParticipantDevice> ServerGroupChatRoom::findCachedParticipantDevice (
 	return nullptr;
 }
 
-void ServerGroupChatRoom::allowCpim (UNUSED(bool value)) {}
+void ServerGroupChatRoom::allowCpim (BCTBX_UNUSED(bool value)) {}
 
-void ServerGroupChatRoom::allowMultipart (UNUSED(bool value)) {}
+void ServerGroupChatRoom::allowMultipart (BCTBX_UNUSED(bool value)) {}
 
 
 bool ServerGroupChatRoom::canHandleCpim () const {

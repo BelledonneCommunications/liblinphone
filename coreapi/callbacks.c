@@ -437,7 +437,7 @@ static void call_ack_being_sent(SalOp *op, SalCustomHeader *ack) {
 	L_GET_PRIVATE(sessionRef)->ackBeingSent(reinterpret_cast<LinphoneHeaders *>(ack));
 }
 
-static void call_terminated(SalOp *op, UNUSED(const char *from)) {
+static void call_terminated(SalOp *op, BCTBX_UNUSED(const char *from)) {
 	LinphonePrivate::CallSession *session = static_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
 	if (!session)
 		return;
@@ -600,11 +600,11 @@ static void message_received(SalOp *op, const SalMessage *msg){
 	if (!call) op->release();
 }
 
-static void parse_presence_requested(UNUSED(SalOp *op), const char *content_type, const char *content_subtype, const char *body, SalPresenceModel **result) {
+static void parse_presence_requested(BCTBX_UNUSED(SalOp *op), const char *content_type, const char *content_subtype, const char *body, SalPresenceModel **result) {
 	linphone_notify_parse_presence(content_type, content_subtype, body, result);
 }
 
-static void convert_presence_to_xml_requested(UNUSED(SalOp *op), SalPresenceModel *presence, const char *contact, char **content) {
+static void convert_presence_to_xml_requested(BCTBX_UNUSED(SalOp *op), SalPresenceModel *presence, const char *contact, char **content) {
 	/*for backward compatibility because still used by notify. No loguer used for publish*/
 
 	if(linphone_presence_model_get_presentity((LinphonePresenceModel*)presence) == NULL) {
@@ -615,19 +615,19 @@ static void convert_presence_to_xml_requested(UNUSED(SalOp *op), SalPresenceMode
 	*content = linphone_presence_model_to_xml((LinphonePresenceModel*)presence);
 }
 
-static void notify_presence(SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model, UNUSED(const char *msg)){
+static void notify_presence(SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model, BCTBX_UNUSED(const char *msg)){
 	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 	linphone_notify_recv(lc,op,ss,model);
 }
 
-static void subscribe_presence_received(SalPresenceOp *op, UNUSED(const char *from)){
+static void subscribe_presence_received(SalPresenceOp *op, BCTBX_UNUSED(const char *from)){
 	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 	if (!check_core_state(lc, op))
 		return;
 	linphone_subscription_new(lc,op,from);
 }
 
-static void subscribe_presence_closed(SalPresenceOp *op, UNUSED(const char *from)){
+static void subscribe_presence_closed(SalPresenceOp *op, BCTBX_UNUSED(const char *from)){
 	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 	linphone_subscription_closed(lc,op);
 }

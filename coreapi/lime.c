@@ -959,44 +959,44 @@ void lime_im_encryption_engine_generate_file_transfer_key_cb(LinphoneImEncryptio
 #else /* HAVE_LIME */
 
 bool_t lime_is_available() { return FALSE; }
-int lime_decryptMultipartMessage(UNUSED(void *cachedb), UNUSED(uint8_t *message), UNUSED(const char *selfURI), UNUSED(const char *peerURI), UNUSED(uint8_t **output), UNUSED(char **content_type), UNUSED(uint64_t validityTimeSpan)) { return LIME_NOT_ENABLED;}
-int lime_createMultipartMessage(UNUSED(void *cachedb), UNUSED(const char *contentType), UNUSED(uint8_t *message), UNUSED(const char *selfURI), UNUSED(const char *peerURI), UNUSED(uint8_t **output)) { return LIME_NOT_ENABLED;}
-void lime_freeKeys(UNUSED(limeURIKeys_t *associatedKeys)){
+int lime_decryptMultipartMessage(BCTBX_UNUSED(void *cachedb), BCTBX_UNUSED(uint8_t *message), BCTBX_UNUSED(const char *selfURI), BCTBX_UNUSED(const char *peerURI), BCTBX_UNUSED(uint8_t **output), BCTBX_UNUSED(char **content_type), BCTBX_UNUSED(uint64_t validityTimeSpan)) { return LIME_NOT_ENABLED;}
+int lime_createMultipartMessage(BCTBX_UNUSED(void *cachedb), BCTBX_UNUSED(const char *contentType), BCTBX_UNUSED(uint8_t *message), BCTBX_UNUSED(const char *selfURI), BCTBX_UNUSED(const char *peerURI), BCTBX_UNUSED(uint8_t **output)) { return LIME_NOT_ENABLED;}
+void lime_freeKeys(BCTBX_UNUSED(limeURIKeys_t *associatedKeys)){
 }
-int lime_getCachedSndKeysByURI(UNUSED(void *cachedb), UNUSED(limeURIKeys_t *associatedKeys)){
+int lime_getCachedSndKeysByURI(BCTBX_UNUSED(void *cachedb), BCTBX_UNUSED(limeURIKeys_t *associatedKeys)){
 	return LIME_NOT_ENABLED;
 }
-int lime_encryptMessage(UNUSED(limeKey_t *key), UNUSED(const uint8_t *plainMessage), UNUSED(uint32_t messageLength), UNUSED(uint8_t selfZID[12]), UNUSED(uint8_t *encryptedMessage)) {
+int lime_encryptMessage(BCTBX_UNUSED(limeKey_t *key), BCTBX_UNUSED(const uint8_t *plainMessage), BCTBX_UNUSED(uint32_t messageLength), BCTBX_UNUSED(uint8_t selfZID[12]), BCTBX_UNUSED(uint8_t *encryptedMessage)) {
 	return LIME_NOT_ENABLED;
 }
-int lime_setCachedKey(UNUSED(void * cacheDb), UNUSED(limeKey_t *associatedKey), UNUSED(uint8_t role), UNUSED(uint64_t validityTimeSpan)) {
+int lime_setCachedKey(BCTBX_UNUSED(void * cacheDb), BCTBX_UNUSED(limeKey_t *associatedKey), BCTBX_UNUSED(uint8_t role), BCTBX_UNUSED(uint64_t validityTimeSpan)) {
 	return LIME_NOT_ENABLED;
 }
-int lime_getCachedRcvKeyByZid(UNUSED(void * cacheDb), UNUSED(limeKey_t *associatedKey), UNUSED(const char *selfURI), UNUSED(const char *peerURI)) {
+int lime_getCachedRcvKeyByZid(BCTBX_UNUSED(void * cacheDb), BCTBX_UNUSED(limeKey_t *associatedKey), BCTBX_UNUSED(const char *selfURI), BCTBX_UNUSED(const char *peerURI)) {
 	return LIME_NOT_ENABLED;
 }
-int lime_decryptMessage(UNUSED(limeKey_t *key), UNUSED(uint8_t *encryptedMessage), UNUSED(uint32_t messageLength), UNUSED(uint8_t selfZID[12]), UNUSED(uint8_t *plainMessage)) {
+int lime_decryptMessage(BCTBX_UNUSED(limeKey_t *key), BCTBX_UNUSED(uint8_t *encryptedMessage), BCTBX_UNUSED(uint32_t messageLength), BCTBX_UNUSED(uint8_t selfZID[12]), BCTBX_UNUSED(uint8_t *plainMessage)) {
 	return LIME_NOT_ENABLED;
 }
-bool_t linphone_chat_room_lime_available(UNUSED(LinphoneChatRoom *cr)) {
+bool_t linphone_chat_room_lime_available(BCTBX_UNUSED(LinphoneChatRoom *cr)) {
 	return FALSE;
 }
-int lime_im_encryption_engine_process_incoming_message_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatRoom *room), UNUSED(LinphoneChatMessage *msg)) {
+int lime_im_encryption_engine_process_incoming_message_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatRoom *room), BCTBX_UNUSED(LinphoneChatMessage *msg)) {
 	return 500;
 }
-int lime_im_encryption_engine_process_outgoing_message_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatRoom *room), UNUSED(LinphoneChatMessage *msg)) {
+int lime_im_encryption_engine_process_outgoing_message_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatRoom *room), BCTBX_UNUSED(LinphoneChatMessage *msg)) {
 	return 500;
 }
-int lime_im_encryption_engine_process_downloading_file_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatMessage *msg), UNUSED(size_t offset), UNUSED(const uint8_t *buffer), UNUSED(size_t size), UNUSED(uint8_t *decrypted_buffer)) {
+int lime_im_encryption_engine_process_downloading_file_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatMessage *msg), BCTBX_UNUSED(size_t offset), BCTBX_UNUSED(const uint8_t *buffer), BCTBX_UNUSED(size_t size), BCTBX_UNUSED(uint8_t *decrypted_buffer)) {
 	return 500;
 }
-int lime_im_encryption_engine_process_uploading_file_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatMessage *msg), UNUSED(size_t offset), UNUSED(const uint8_t *buffer), UNUSED(size_t *size), UNUSED(uint8_t *encrypted_buffer)) {
+int lime_im_encryption_engine_process_uploading_file_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatMessage *msg), BCTBX_UNUSED(size_t offset), BCTBX_UNUSED(const uint8_t *buffer), BCTBX_UNUSED(size_t *size), BCTBX_UNUSED(uint8_t *encrypted_buffer)) {
 	return 500;
 }
-bool_t lime_im_encryption_engine_is_file_encryption_enabled_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatRoom *room)) {
+bool_t lime_im_encryption_engine_is_file_encryption_enabled_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatRoom *room)) {
 	return FALSE;
 }
-void lime_im_encryption_engine_generate_file_transfer_key_cb(UNUSED(LinphoneImEncryptionEngine *engine), UNUSED(LinphoneChatRoom *room), UNUSED(LinphoneChatMessage *msg)) {
+void lime_im_encryption_engine_generate_file_transfer_key_cb(BCTBX_UNUSED(LinphoneImEncryptionEngine *engine), BCTBX_UNUSED(LinphoneChatRoom *room), BCTBX_UNUSED(LinphoneChatMessage *msg)) {
 
 }
 

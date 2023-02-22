@@ -98,13 +98,13 @@ void *GenericPlatformHelpers::getPathContext () {
 	return nullptr;
 }
 
-void GenericPlatformHelpers::setVideoPreviewWindow (UNUSED(void *windowId)) {}
+void GenericPlatformHelpers::setVideoPreviewWindow (BCTBX_UNUSED(void *windowId)) {}
 
-void GenericPlatformHelpers::setVideoWindow (UNUSED(void *widowId)) {}
+void GenericPlatformHelpers::setVideoWindow (BCTBX_UNUSED(void *widowId)) {}
 
-void GenericPlatformHelpers::setParticipantDeviceVideoWindow(UNUSED(const LinphoneParticipantDevice *participantDevice), UNUSED(void* windowId)) {}
+void GenericPlatformHelpers::setParticipantDeviceVideoWindow(BCTBX_UNUSED(const LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void* windowId)) {}
 
-void GenericPlatformHelpers::resizeVideoPreview (UNUSED(int width), UNUSED(int height)) {}
+void GenericPlatformHelpers::resizeVideoPreview (BCTBX_UNUSED(int width), BCTBX_UNUSED(int height)) {}
 
 bool GenericPlatformHelpers::isNetworkReachable () {
 	return mNetworkReachable;
@@ -116,11 +116,11 @@ bool GenericPlatformHelpers::isActiveNetworkWifiOnlyCompliant () const {
 	return false;
 }
 
-void GenericPlatformHelpers::onWifiOnlyEnabled (UNUSED(bool enabled)) {}
+void GenericPlatformHelpers::onWifiOnlyEnabled (BCTBX_UNUSED(bool enabled)) {}
 
 void GenericPlatformHelpers::setDnsServers () {}
 
-void GenericPlatformHelpers::setHttpProxy (UNUSED(const string &host), UNUSED(int port)) {}
+void GenericPlatformHelpers::setHttpProxy (BCTBX_UNUSED(const string &host), BCTBX_UNUSED(int port)) {}
 
 PlatformHelpers::NetworkType GenericPlatformHelpers::getNetworkType()const{
 	return NetworkType::Unknown;
@@ -197,7 +197,7 @@ bool GenericPlatformHelpers::checkIpAddressChanged(){
 	return ipChanged;
 }
 
-int GenericPlatformHelpers::monitorTimerExpired (void *data, UNUSED(unsigned int revents)) {
+int GenericPlatformHelpers::monitorTimerExpired (void *data, BCTBX_UNUSED(unsigned int revents)) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
 	LinphoneCore *core = helper->getCore()->getCCore();
 	

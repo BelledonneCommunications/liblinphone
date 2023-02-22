@@ -119,7 +119,7 @@ static void ecc_deinit_filters(EcCalibrator *ecc){
 	if (ecc->play_card) ms_snd_card_unref(ecc->play_card);
 }
 
-static void on_tone_sent(void *data, UNUSED(MSFilter *f), unsigned int event_id, void *arg){
+static void on_tone_sent(void *data, BCTBX_UNUSED(MSFilter *f), unsigned int event_id, void *arg){
 	if( event_id == MS_DTMF_GEN_EVENT){
 		MSDtmfGenEvent *ev=(MSDtmfGenEvent*)arg;
 		EcCalibrator *ecc=(EcCalibrator*)data;
@@ -150,7 +150,7 @@ static bool_t is_valid_tone(EcCalibrator *ecc, MSToneDetectorEvent *ev){
 	return TRUE;
 }
 
-static void on_tone_received(void *data, UNUSED(MSFilter *f), UNUSED(unsigned int event_id), void *arg){
+static void on_tone_received(void *data, BCTBX_UNUSED(MSFilter *f), BCTBX_UNUSED(unsigned int event_id), void *arg){
 	MSToneDetectorEvent *ev=(MSToneDetectorEvent*)arg;
 	EcCalibrator *ecc=(EcCalibrator*)data;
 	if (is_valid_tone(ecc,ev)){
@@ -333,7 +333,7 @@ int linphone_core_start_echo_calibration(LinphoneCore *lc, LinphoneEcCalibration
 	return 0;
 }
 
-static void _ec_calibration_result_cb(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms, UNUSED(void *user_data)) {
+static void _ec_calibration_result_cb(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms, BCTBX_UNUSED(void *user_data)) {
 	linphone_core_notify_ec_calibration_result(lc, status, delay_ms);
 	if (status != LinphoneEcCalibratorInProgress) {
 		getPlatformHelpers(lc)->stopAudioForEchoTestOrCalibration();

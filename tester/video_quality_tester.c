@@ -180,7 +180,7 @@ static void on_tmmbr_received(LinphoneCall *call, int stream_index, int tmmbr) {
 	}
 }
 
-static void call_created(UNUSED(LinphoneCore *lc), LinphoneCall *call) {
+static void call_created(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call) {
 	LinphoneCallCbs *cbs = linphone_factory_create_call_cbs(linphone_factory_get());
 	linphone_call_cbs_set_tmmbr_received(cbs, on_tmmbr_received);
 	linphone_call_add_callbacks(call, cbs);

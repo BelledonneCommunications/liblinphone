@@ -248,8 +248,8 @@ static void build_message () {
 }
 
 static int fake_im_encryption_engine_process_incoming_message_cb (
-	UNUSED(LinphoneImEncryptionEngine *engine),
-	UNUSED(LinphoneChatRoom *room),
+	BCTBX_UNUSED(LinphoneImEncryptionEngine *engine),
+	BCTBX_UNUSED(LinphoneChatRoom *room),
 	LinphoneChatMessage *msg
 ) {
 	// Encryption is the first receiving step, so this message should be CPIM.
@@ -259,8 +259,8 @@ static int fake_im_encryption_engine_process_incoming_message_cb (
 }
 
 static int fake_im_encryption_engine_process_outgoing_message_cb (
-	UNUSED(LinphoneImEncryptionEngine *engine),
-	UNUSED(LinphoneChatRoom *room),
+	BCTBX_UNUSED(LinphoneImEncryptionEngine *engine),
+	BCTBX_UNUSED(LinphoneChatRoom *room),
 	LinphoneChatMessage *msg
 ) {
 	// Encryption is the last sending step, so this message should be CPIM.

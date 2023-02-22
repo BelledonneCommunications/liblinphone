@@ -137,7 +137,7 @@ void Imdn::onLinphoneCoreStop() {
 	sentImdnMessages.clear();
 }
 
-void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, UNUSED(const std::string &message)){
+void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, BCTBX_UNUSED(const std::string &message)){
 	if (state == LinphoneRegistrationOk && cfg == getRelatedProxyConfig()){
 		// When we are registered to the proxy, then send pending notification if any.
 		sentImdnMessages.clear();
@@ -145,7 +145,7 @@ void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistra
 	}
 }
 
-void Imdn::onNetworkReachable (bool sipNetworkReachable, UNUSED(bool mediaNetworkReachable)) {
+void Imdn::onNetworkReachable (bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable && getRelatedProxyConfig() == nullptr) {
 		// When the SIP network gets up and this chatroom isn't related to any proxy configuration, retry notification
 		sentImdnMessages.clear();
@@ -339,7 +339,7 @@ bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 
 // -----------------------------------------------------------------------------
 
-int Imdn::timerExpired (void *data, UNUSED(unsigned int revents)) {
+int Imdn::timerExpired (void *data, BCTBX_UNUSED(unsigned int revents)) {
 	Imdn *d = static_cast<Imdn *>(data);
 	d->stopTimer();
 	d->send();

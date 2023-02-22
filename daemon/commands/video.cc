@@ -188,7 +188,7 @@ VideoSourceGet::VideoSourceGet():
 										"V4L2: /dev/video2"));
 }
 
-void VideoSourceGet::exec(Daemon* app, UNUSED(const string& args))
+void VideoSourceGet::exec(Daemon* app, BCTBX_UNUSED(const string& args))
 {
 	app->sendResponse(Response(linphone_core_get_video_device(app->getCore()), Response::Ok));
 }
@@ -208,7 +208,7 @@ VideoSourceList::VideoSourceList():
 										"No video source found."));
 }
 
-void VideoSourceList::exec(Daemon* app, UNUSED(const string& args))
+void VideoSourceList::exec(Daemon* app, BCTBX_UNUSED(const string& args))
 {
 	ostringstream ost;
 	for (const bctbx_list_t *node = linphone_core_get_video_devices_list(app->getCore()); node != NULL; node = bctbx_list_next(node))
@@ -261,7 +261,7 @@ VideoSourceReload::VideoSourceReload():
 										"V4L2: /dev/video2"));
 }
 
-void VideoSourceReload::exec(Daemon* app, UNUSED(const string& args))
+void VideoSourceReload::exec(Daemon* app, BCTBX_UNUSED(const string& args))
 {
 	ostringstream ost;
 	linphone_core_reload_video_devices(app->getCore());
@@ -287,7 +287,7 @@ VideoDisplayGet::VideoDisplayGet():
 										"MSOGL"));
 }
 
-void VideoDisplayGet::exec(Daemon* app, UNUSED(const string& args))
+void VideoDisplayGet::exec(Daemon* app, BCTBX_UNUSED(const string& args))
 {
 	const char *display_filter = linphone_core_get_video_display_filter(app->getCore());
 	if( display_filter == NULL){

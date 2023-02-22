@@ -52,7 +52,7 @@ private:
 	static void subscribeProcessIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
 	static void subscribeResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
 	static void subscribeProcessTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event);
-	static void subscribeProcessTransactionTerminatedCb (UNUSED(void *userCtx), UNUSED(const belle_sip_transaction_terminated_event_t *event)) {}
+	static void subscribeProcessTransactionTerminatedCb (BCTBX_UNUSED(void *userCtx), BCTBX_UNUSED(const belle_sip_transaction_terminated_event_t *event)) {}
 	static void subscribeProcessRequestEventCb (void *userCtx, const belle_sip_request_event_t *event);
 	static void subscribeProcessDialogTerminatedCb (void *userCtx, const belle_sip_dialog_terminated_event_t *event);
 	static void releaseCb (SalOp *op);

@@ -106,32 +106,32 @@ const ConferenceAddress &BasicChatRoom::getConferenceAddress () const {
 }
 
 bool BasicChatRoom::addParticipant (
-	UNUSED(std::shared_ptr<Call> call)
+	BCTBX_UNUSED(std::shared_ptr<Call> call)
 ) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
 bool BasicChatRoom::addParticipant (
-	UNUSED(const IdentityAddress &participantAddress)
+	BCTBX_UNUSED(const IdentityAddress &participantAddress)
 ) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
 bool BasicChatRoom::addParticipants (
-	UNUSED(const list<IdentityAddress> &addresses)
+	BCTBX_UNUSED(const list<IdentityAddress> &addresses)
 ) {
 	lError() << "addParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::removeParticipant (UNUSED(const shared_ptr<Participant> &participantAddress)) {
+bool BasicChatRoom::removeParticipant (BCTBX_UNUSED(const shared_ptr<Participant> &participantAddress)) {
 	lError() << "removeParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::removeParticipants (UNUSED(const list<shared_ptr<Participant>> &participantAddress)) {
+bool BasicChatRoom::removeParticipants (BCTBX_UNUSED(const list<shared_ptr<Participant>> &participantAddress)) {
 	lError() << "removeParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
@@ -184,7 +184,7 @@ void BasicChatRoom::join () {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 
-void BasicChatRoom::join (UNUSED(const IdentityAddress &participantAddress)) {
+void BasicChatRoom::join (BCTBX_UNUSED(const IdentityAddress &participantAddress)) {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 

@@ -37,7 +37,7 @@ public:
 	}
 	int unregister() { return refreshRegister(0); }
 
-	void authenticate (UNUSED(const SalAuthInfo *info)) override {
+	void authenticate (BCTBX_UNUSED(const SalAuthInfo *info)) override {
 		mRoot->removePendingAuth(this);
 		refreshRegister(-1);
 	}

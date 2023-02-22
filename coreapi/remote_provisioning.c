@@ -26,12 +26,12 @@
 
 #define XML2LPC_CALLBACK_BUFFER_SIZE 1024
 
-static void belle_request_process_io_error(void *ctx, UNUSED(const belle_sip_io_error_event_t *event)) {
+static void belle_request_process_io_error(void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneCore *lc = (LinphoneCore *)ctx;
 	linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http io error");
 }
 
-static void belle_request_process_timeout(void *ctx, UNUSED(const belle_sip_timeout_event_t *event)) {
+static void belle_request_process_timeout(void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
 	LinphoneCore *lc = (LinphoneCore *)ctx;
 	linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http timeout");
 }

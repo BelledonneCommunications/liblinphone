@@ -80,7 +80,7 @@ static void simple_account_creation(void) {
 	ms_free(local_rc);
 }
 
-void registration_state_changed_on_account(LinphoneAccount *account, LinphoneRegistrationState state, UNUSED(const char *message)) {
+void registration_state_changed_on_account(LinphoneAccount *account, LinphoneRegistrationState state, BCTBX_UNUSED(const char *message)) {
 	LinphoneCore *lc = linphone_account_get_core(account);
 	stats* counters;
 	ms_message("New registration state %s for user id [%s] at account [%s]\n"

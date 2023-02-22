@@ -353,7 +353,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	return removeParticipant(p);
 }
 
-int Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::CallSession> & session, UNUSED(const bool preserveSession)) {
+int Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::CallSession> & session, BCTBX_UNUSED(const bool preserveSession)) {
 	const Address & pAddress = *session->getRemoteAddress();
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(pAddress);
 	removeParticipantDevice(session);
@@ -453,7 +453,7 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 	LinphonePrivate::Conference::notifyStateChanged(state);
 }
 
-void Conference::onConferenceTerminated (UNUSED(const IdentityAddress &addr)) {
+void Conference::onConferenceTerminated (BCTBX_UNUSED(const IdentityAddress &addr)) {
 
 	// Keep a reference to the conference to be able to set the state to Deleted
 	shared_ptr<Conference> ref = getSharedFromThis();
@@ -464,11 +464,11 @@ void Conference::onConferenceTerminated (UNUSED(const IdentityAddress &addr)) {
 	setState(ConferenceInterface::State::Deleted);
 }
 
-void Conference::setParticipantAdminStatus (UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), UNUSED(bool isAdmin)) {
+void Conference::setParticipantAdminStatus (BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), BCTBX_UNUSED(bool isAdmin)) {
 
 }
 
-void Conference::join (UNUSED(const IdentityAddress &participantAddress)) {
+void Conference::join (BCTBX_UNUSED(const IdentityAddress &participantAddress)) {
 	
 }
 
@@ -1182,7 +1182,7 @@ int LocalConference::participantDeviceAlerting(const std::shared_ptr<LinphonePri
 	return -1;
 }
 
-int LocalConference::participantDeviceAlerting(UNUSED(const std::shared_ptr<LinphonePrivate::Participant> & participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
+int LocalConference::participantDeviceAlerting(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> & participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	lInfo() << "Device " << device->getAddress() << " changed state to alerting";
 	device->updateMediaCapabilities();
 	device->updateStreamAvailabilities();
@@ -1204,7 +1204,7 @@ int LocalConference::participantDeviceJoined(const std::shared_ptr<LinphonePriva
 	return -1;
 }
 
-int LocalConference::participantDeviceJoined(UNUSED(const std::shared_ptr<LinphonePrivate::Participant> & participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
+int LocalConference::participantDeviceJoined(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> & participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
 	if ((device->updateMediaCapabilities() || (device->getState() != ParticipantDevice::State::Present)) && (getState() == ConferenceInterface::State::Created)) {
 		lInfo() << "Device " << device->getAddress() << " joined conference " << getConferenceAddress();
@@ -1230,7 +1230,7 @@ int LocalConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivate
 	return -1;
 }
 
-int LocalConference::participantDeviceLeft(UNUSED(const std::shared_ptr<LinphonePrivate::Participant> & participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
+int LocalConference::participantDeviceLeft(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> & participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
 	if ((device->updateMediaCapabilities() || (device->getState() != ParticipantDevice::State::OnHold)) && (getState() == ConferenceInterface::State::Created)) {
 		lInfo() << "Device " << device->getAddress() << " left conference " << getConferenceAddress();
@@ -2165,7 +2165,7 @@ std::shared_ptr<Call> LocalConference::getCall() const {
 	return nullptr;
 }
 
-void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *message)) {
+void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *message)) {
 	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
 	LocalConference *conf = (LocalConference *)linphone_core_v_table_get_user_data(vtable);
 	auto cppCall = Call::toCpp(call)->getSharedFromThis();
@@ -2304,7 +2304,7 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 	}
 }
 
-void LocalConference::transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, UNUSED(LinphoneCallState new_call_state)) {
+void LocalConference::transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, BCTBX_UNUSED(LinphoneCallState new_call_state)) {
 	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
 	LocalConference *conf = (LocalConference *)linphone_core_v_table_get_user_data(vtable);
 	auto cppCall = Call::toCpp(transfered)->getSharedFromThis();
@@ -2483,7 +2483,7 @@ void RemoteConference::finalizeCreation() {
 			return;
 		} else {
 			finalized = true;
-			addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](UNUSED(ConferenceListenerInterface * p)){}));
+			addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](BCTBX_UNUSED(ConferenceListenerInterface * p)){}));
 		#ifdef HAVE_ADVANCED_IM
 			bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
 			if (eventLogEnabled) {
@@ -2580,62 +2580,62 @@ void RemoteConference::notifyStateChanged (LinphonePrivate::ConferenceInterface:
 	Conference::notifyStateChanged (state);
 }
 
-int RemoteConference::inviteAddresses (UNUSED(const list<const LinphoneAddress *> &addresses), UNUSED(const LinphoneCallParams *params)) {
+int RemoteConference::inviteAddresses (BCTBX_UNUSED(const list<const LinphoneAddress *> &addresses), BCTBX_UNUSED(const LinphoneCallParams *params)) {
 	lError() << "RemoteConference::inviteAddresses() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceLeft(UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
+int RemoteConference::participantDeviceLeft(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
 	lError() << "RemoteConference::participantDeviceLeft() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceLeft(UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), UNUSED(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device)) {
+int RemoteConference::participantDeviceLeft(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device)) {
 	lError() << "RemoteConference::participantDeviceLeft() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceAlerting(UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
+int RemoteConference::participantDeviceAlerting(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
 	lError() << "RemoteConference::participantDeviceAlerting() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceAlerting(UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
+int RemoteConference::participantDeviceAlerting(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	device->setState(ParticipantDevice::State::Alerting);
 	return 0;
 }
 
-int RemoteConference::participantDeviceJoined(UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
+int RemoteConference::participantDeviceJoined(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
 	lError() << "RemoteConference::participantDeviceJoined() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceJoined(UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), UNUSED(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device)) {
+int RemoteConference::participantDeviceJoined(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device)) {
 	lError() << "RemoteConference::participantDeviceJoined() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceMediaCapabilityChanged(UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
+int RemoteConference::participantDeviceMediaCapabilityChanged(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session)) {
 	lError() << "RemoteConference::participantDeviceMediaCapabilityChanged() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceMediaCapabilityChanged(UNUSED(const IdentityAddress &addr)) {
+int RemoteConference::participantDeviceMediaCapabilityChanged(BCTBX_UNUSED(const IdentityAddress &addr)) {
 	lError() << "RemoteConference::participantDeviceMediaCapabilityChanged() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceMediaCapabilityChanged(UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), UNUSED(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device)) {
+int RemoteConference::participantDeviceMediaCapabilityChanged(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::Participant> &participant), BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device)) {
 	lError() << "RemoteConference::participantDeviceMediaCapabilityChanged() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceSsrcChanged(UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session), UNUSED(const LinphoneStreamType type), UNUSED(uint32_t ssrc)) {
+int RemoteConference::participantDeviceSsrcChanged(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session), BCTBX_UNUSED(const LinphoneStreamType type), BCTBX_UNUSED(uint32_t ssrc)) {
 	lError() << "RemoteConference::participantDeviceSsrcChanged() not implemented";
 	return -1;
 }
 
-int RemoteConference::participantDeviceSsrcChanged(UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session), UNUSED(uint32_t audioSsrc), UNUSED(uint32_t videoSsrc)) {
+int RemoteConference::participantDeviceSsrcChanged(BCTBX_UNUSED(const std::shared_ptr<LinphonePrivate::CallSession> & session), BCTBX_UNUSED(uint32_t audioSsrc), BCTBX_UNUSED(uint32_t videoSsrc)) {
 	lError() << "RemoteConference::participantDeviceSsrcChanged() not implemented";
 	return -1;
 }
@@ -2818,7 +2818,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	return false;
 }
 
-bool RemoteConference::finalizeParticipantAddition (UNUSED(std::shared_ptr<LinphonePrivate::Call> call)) {
+bool RemoteConference::finalizeParticipantAddition (BCTBX_UNUSED(std::shared_ptr<LinphonePrivate::Call> call)) {
 	lError() << "RemoteConference::finalizeParticipantAddition() not implemented";
 	return false;
 }
@@ -2894,7 +2894,7 @@ bool RemoteConference::addParticipants (const list<IdentityAddress> &addresses) 
 	return true;
 }
 
-int RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, UNUSED(const bool preserveSession)) {
+int RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, BCTBX_UNUSED(const bool preserveSession)) {
 	const Address &remoteAddress = *session->getRemoteAddress();
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(remoteAddress);
 	if (getMe()->isAdmin()) {
@@ -3295,7 +3295,7 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 	}
 }
 
-void RemoteConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, UNUSED(const char *message)) {
+void RemoteConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, BCTBX_UNUSED(const char *message)) {
 	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
 	RemoteConference *conf = (RemoteConference *)linphone_core_v_table_get_user_data(vtable);
 	if (Call::toCpp(call)->getActiveSession() == conf->getMainSession())
@@ -3533,7 +3533,7 @@ void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipan
 	}
 }
 
-void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, UNUSED(const std::shared_ptr<Participant> &participant)) {
+void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const IdentityAddress &pAddr = event->getParticipantAddress();
 
 	if (isMe(pAddr)) {
@@ -3556,14 +3556,14 @@ void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticip
 	}
 }
 
-void RemoteConference::onParticipantDeviceAdded (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void RemoteConference::onParticipantDeviceAdded (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	if (isMe(device->getAddress())) {
 		notifyLocalMutedDevices(session->getPrivate()->getMicrophoneMuted());
 	}
 }
 
-void RemoteConference::onParticipantDeviceRemoved (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void RemoteConference::onParticipantDeviceRemoved (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
@@ -3583,7 +3583,7 @@ void RemoteConference::onParticipantDeviceRemoved (UNUSED(const std::shared_ptr<
 	}
 }
 
-void RemoteConference::onParticipantDeviceStateChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void RemoteConference::onParticipantDeviceStateChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
@@ -3611,7 +3611,7 @@ void RemoteConference::onParticipantDeviceStateChanged (UNUSED(const std::shared
 	}
 }
 
-void RemoteConference::onParticipantDeviceMediaAvailabilityChanged (UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
+void RemoteConference::onParticipantDeviceMediaAvailabilityChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event), const std::shared_ptr<ParticipantDevice> &device) {
 	if ((!isMe(device->getAddress())) && (getState() == ConferenceInterface::State::Created) && isIn()) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE because device " << device->getAddress() << " has changed its stream availability";
@@ -3669,7 +3669,7 @@ void RemoteConference::onFullStateReceived() {
 	fullStateReceived = true;
 }
 
-void RemoteConference::onAvailableMediaChanged (UNUSED(const std::shared_ptr<ConferenceAvailableMediaEvent> &event)) {
+void RemoteConference::onAvailableMediaChanged (BCTBX_UNUSED(const std::shared_ptr<ConferenceAvailableMediaEvent> &event)) {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const bool videoEnabled = (session) ? session->getCurrentParams()->videoEnabled() : false;
 	if (!confParams->videoEnabled() && videoEnabled && isIn()) {

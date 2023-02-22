@@ -119,7 +119,7 @@ void AuthStack::processAuthRequested(){
 	mAuthBeingRequested = false;
 }
 
-int AuthStack::onTimeout(void *data, UNUSED(unsigned int events)){
+int AuthStack::onTimeout(void *data, BCTBX_UNUSED(unsigned int events)){
 	AuthStack *zis = static_cast<AuthStack*>(data);
 	zis->processAuthRequested();
 	return BELLE_SIP_STOP;

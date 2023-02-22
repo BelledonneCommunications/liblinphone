@@ -66,7 +66,7 @@ static void shared_main_core_prevent_executor_core_start(void) {
 #endif
 }
 
-void *thread_shared_main_core_stops_executor_core(UNUSED(void * arguments)) {
+void *thread_shared_main_core_stops_executor_core(BCTBX_UNUSED(void * arguments)) {
 #if TARGET_OS_IPHONE
 	LinphoneCoreManager *executor_mgr = (LinphoneCoreManager *)arguments;
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("", TEST_GROUP_ID, TRUE, executor_mgr);
@@ -157,7 +157,7 @@ void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, Linph
 	}
 }
 
-void *thread_shared_core_get_message_from_call_id(UNUSED(void * arguments)) {
+void *thread_shared_core_get_message_from_call_id(BCTBX_UNUSED(void * arguments)) {
 #if TARGET_OS_IPHONE
 	struct get_msg_args *args = (struct get_msg_args *)arguments;
 	LinphoneCoreManager *receiver_mgr =
@@ -361,7 +361,7 @@ void shared_core_get_new_chat_room_from_addr(LinphoneCoreManager *sender, Linpho
 	}
 }
 
-void *thread_shared_core_get_new_chat_room_from_addr(UNUSED(void *arguments)) {
+void *thread_shared_core_get_new_chat_room_from_addr(BCTBX_UNUSED(void *arguments)) {
 #if TARGET_OS_IPHONE
 	struct get_msg_args *args = (struct get_msg_args *)arguments;
 	LinphoneCoreManager *receiver_mgr =

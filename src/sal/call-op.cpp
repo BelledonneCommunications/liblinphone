@@ -275,7 +275,7 @@ void SalCallOp::setReleased () {
 	}
 }
 
-void SalCallOp::processIoErrorCb (void *userCtx, UNUSED(const belle_sip_io_error_event_t *event)) {
+void SalCallOp::processIoErrorCb (void *userCtx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	auto op = static_cast<SalCallOp *>(userCtx);
 	if (op->mState == State::Terminated)
 		return;
@@ -480,7 +480,7 @@ void SalCallOp::setError (belle_sip_response_t *response, bool fatal) {
 	mRoot->mCallbacks.call_failure(this);
 }
 
-int SalCallOp::vfuRetryCb (void *userCtx, UNUSED(unsigned int events)) {
+int SalCallOp::vfuRetryCb (void *userCtx, BCTBX_UNUSED(unsigned int events)) {
 	auto op = static_cast<SalCallOp *>(userCtx);
 	op->sendVfuRequest();
 	op->unref();
@@ -692,7 +692,7 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 	op->unref();
 }
 
-void SalCallOp::processTimeoutCb (void *userCtx, UNUSED(const belle_sip_timeout_event_t *events)) {
+void SalCallOp::processTimeoutCb (void *userCtx, BCTBX_UNUSED(const belle_sip_timeout_event_t *events)) {
 	auto op = static_cast<SalCallOp *>(userCtx);
 	if (op->mState == State::Terminated)
 		return;

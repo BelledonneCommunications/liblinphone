@@ -203,7 +203,7 @@ CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other)
 
 // -----------------------------------------------------------------------------
 
-void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, UNUSED(LinphoneCallDir dir)) {
+void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, BCTBX_UNUSED(LinphoneCallDir dir)) {
 	L_D();
 	const auto & cCore = core->getCCore();
 	d->inConference = false;

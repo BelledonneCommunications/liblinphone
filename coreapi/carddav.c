@@ -456,7 +456,7 @@ static void process_response_from_carddav_request(void *data, const belle_http_r
 	linphone_carddav_query_free(query);
 }
 
-static void process_io_error_from_carddav_request(void *data, UNUSED(const belle_sip_io_error_event_t *event)) {
+static void process_io_error_from_carddav_request(void *data, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 	LinphoneCardDavQuery *query = (LinphoneCardDavQuery *)data;
 	ms_error("[carddav] I/O error during CardDAV request sending");
 	if (is_query_client_to_server_sync(query)) {

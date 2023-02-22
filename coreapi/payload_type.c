@@ -117,7 +117,7 @@ int linphone_payload_type_enable(LinphonePayloadType *pt, bool_t enabled) {
 	return _linphone_core_enable_payload_type(pt->lc, pt->pt, enabled);
 }
 
-bool_t linphone_core_payload_type_enabled(UNUSED(const LinphoneCore *lc), const OrtpPayloadType *pt){
+bool_t linphone_core_payload_type_enabled(BCTBX_UNUSED(const LinphoneCore *lc), const OrtpPayloadType *pt){
 	return payload_type_enabled(pt);
 }
 
@@ -234,7 +234,7 @@ int linphone_payload_type_get_channels(const LinphonePayloadType *pt) {
 	return pt->pt->channels;
 }
 
-int linphone_core_get_payload_type_number(UNUSED(LinphoneCore *lc), const OrtpPayloadType *pt) {
+int linphone_core_get_payload_type_number(BCTBX_UNUSED(LinphoneCore *lc), const OrtpPayloadType *pt) {
 	return payload_type_get_number(pt);
 }
 
@@ -242,7 +242,7 @@ int linphone_payload_type_get_number(const LinphonePayloadType *pt) {
 	return payload_type_get_number(pt->pt);
 }
 
-void linphone_core_set_payload_type_number(UNUSED(LinphoneCore *lc), OrtpPayloadType *pt, int number) {
+void linphone_core_set_payload_type_number(BCTBX_UNUSED(LinphoneCore *lc), OrtpPayloadType *pt, int number) {
 	payload_type_set_number(pt, number);
 }
 
@@ -275,7 +275,7 @@ int linphone_payload_type_get_clock_rate(const LinphonePayloadType *pt) {
 	return pt->pt->clock_rate;
 }
 
-bool_t linphone_core_payload_type_is_vbr(UNUSED(const LinphoneCore *lc), const OrtpPayloadType *pt) {
+bool_t linphone_core_payload_type_is_vbr(BCTBX_UNUSED(const LinphoneCore *lc), const OrtpPayloadType *pt) {
 	return payload_type_is_vbr(pt);
 }
 

@@ -52,7 +52,7 @@ const string imdnMessageIdHeader = "Message-ID";
 const string imdnForwardInfoHeader = "Forward-Info";
 const string imdnDispositionNotificationHeader = "Disposition-Notification";
 
-ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, UNUSED(int &errorCode)) {
+ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, BCTBX_UNUSED(int &errorCode)) {
 	Cpim::Message cpimMessage;
 
 	cpimMessage.addMessageHeader(

@@ -557,7 +557,7 @@ void AndroidPlatformHelpers::stopRinging () const {
 	}
 }
 
-void AndroidPlatformHelpers::setDeviceRotation (UNUSED(int orientation)) const {
+void AndroidPlatformHelpers::setDeviceRotation (BCTBX_UNUSED(int orientation)) const {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
 		env->CallVoidMethod(mJavaHelper, mRotateVideoPreviewId);
@@ -660,23 +660,23 @@ PlatformHelpers *createAndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::
 	return new AndroidPlatformHelpers(core, systemContext);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativePreviewWindowId(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr, jobject id) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativePreviewWindowId(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	androidPlatformHelper->_setPreviewVideoWindow(id);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr, jobject id) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	androidPlatformHelper->_setVideoWindow(id);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setParticipantDeviceNativeVideoWindowId(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr, jlong participantDevicePtr, jobject id) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setParticipantDeviceNativeVideoWindowId(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr, jlong participantDevicePtr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	LinphoneParticipantDevice *participantDevice = static_cast<LinphoneParticipantDevice *>((void *)participantDevicePtr);
 	androidPlatformHelper->_setParticipantDeviceVideoWindow(participantDevice, id);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(UNUSED(JNIEnv* env), UNUSED(jobject thiz), jlong ptr, jboolean reachable) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(BCTBX_UNUSED(JNIEnv* env), BCTBX_UNUSED(jobject thiz), jlong ptr, jboolean reachable) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	const std::function<void ()> fun = [androidPlatformHelper, reachable]() {
 		androidPlatformHelper->setNetworkReachable(reachable);
@@ -684,7 +684,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	androidPlatformHelper->getCore()->doLater(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, UNUSED(jobject thiz), jlong ptr, jstring host, jint port) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, BCTBX_UNUSED(jobject thiz), jlong ptr, jstring host, jint port) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	const char *hostC = GetStringUTFChars(env, host);
 	char * httpProxyHost = ms_strdup(hostC);
@@ -697,23 +697,23 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	androidPlatformHelper->getCore()->doLater(fun);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_useSystemHttpProxy(UNUSED(JNIEnv* env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_useSystemHttpProxy(BCTBX_UNUSED(JNIEnv* env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	LpConfig *config = linphone_core_get_config(androidPlatformHelper->getCore()->getCCore());
 	return !!linphone_config_get_int(config, "sip", "use_system_http_proxy", 0);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_isInBackground(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_isInBackground(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	return androidPlatformHelper->getCore()->isInBackground();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_enableKeepAlive(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr, jboolean enable) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_enableKeepAlive(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr, jboolean enable) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	linphone_core_enable_keep_alive(androidPlatformHelper->getCore()->getCCore(), enable ? TRUE : FALSE);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_updatePushNotificationInformation(JNIEnv *env, UNUSED(jobject thiz), jlong ptr, jstring jparam, jstring jprid) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_updatePushNotificationInformation(JNIEnv *env, BCTBX_UNUSED(jobject thiz), jlong ptr, jstring jparam, jstring jprid) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	const char *paramC = GetStringUTFChars(env, jparam);
 	const char *pridC = GetStringUTFChars(env, jprid);
@@ -729,7 +729,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	ReleaseStringUTFChars(env, jparam, paramC);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_stopCore(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_stopCore(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	
 	const std::function<void ()> fun = [core]() {
@@ -738,7 +738,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_leaveConference(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_leaveConference(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	
 	const std::function<void ()> fun = [core]() {
@@ -747,7 +747,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_pauseAllCalls(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_pauseAllCalls(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	
 	const std::function<void ()> fun = [core]() {
@@ -756,7 +756,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_reloadSoundDevices(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_reloadSoundDevices(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	
 	const std::function<void ()> fun = [core]() {
@@ -765,7 +765,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterBackground(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterBackground(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	
 	const std::function<void ()> fun = [core]() {
@@ -774,7 +774,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterForeground(UNUSED(JNIEnv *env), UNUSED(jobject thiz), jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterForeground(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	
 	const std::function<void ()> fun = [core]() {
@@ -783,7 +783,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_processPushNotification(JNIEnv *env, UNUSED(jobject thiz), jlong ptr, jstring callId, jstring payload, jboolean isCoreStarting) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_processPushNotification(JNIEnv *env, BCTBX_UNUSED(jobject thiz), jlong ptr, jstring callId, jstring payload, jboolean isCoreStarting) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	const char* c_callId = GetStringUTFChars(env, callId);
 	const char* c_payload = GetStringUTFChars(env, payload);

@@ -668,7 +668,7 @@ string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const Identit
 		return getConferenceFactoryUri(core, account);
 }
 
-string Core::getConferenceFactoryUri(UNUSED(const shared_ptr<Core> &core), const LinphoneAccount *account) {
+string Core::getConferenceFactoryUri(BCTBX_UNUSED(const shared_ptr<Core> &core), const LinphoneAccount *account) {
 	const LinphoneAccountParams *params = linphone_account_get_params(account);
 	if(params){
 		const char *uri = linphone_account_params_get_conference_factory_uri(params);

@@ -1152,7 +1152,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
-	UNUSED(EventLog::Type type),
+	BCTBX_UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 	long long eventId = getConferenceEventIdFromRow(row);
@@ -1248,7 +1248,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 	const ConferenceId &conferenceId,
-	UNUSED(EventLog::Type type),
+	BCTBX_UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 	return make_shared<ConferenceSecurityEvent>(
@@ -1274,7 +1274,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralMessageEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceAvailableMediaEvent (
 	const ConferenceId &conferenceId,
-	UNUSED(EventLog::Type type),
+	BCTBX_UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 
@@ -1294,7 +1294,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceAvailableMediaEvent (
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
 	const ConferenceId &conferenceId,
-	UNUSED(EventLog::Type type),
+	BCTBX_UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(

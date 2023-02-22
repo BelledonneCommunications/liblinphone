@@ -183,7 +183,7 @@ static bool_t call_player_check_state(LinphonePlayer *player, bool_t check_playe
 	return TRUE;
 }
 
-static void on_eof(void *user_data, UNUSED(MSFilter *f), unsigned int event_id, UNUSED(void *arg)){
+static void on_eof(void *user_data, BCTBX_UNUSED(MSFilter *f), unsigned int event_id, BCTBX_UNUSED(void *arg)){
 	LinphonePlayer *player=(LinphonePlayer *)user_data;
 	switch (event_id){
 		case MS_PLAYER_EOF:
@@ -254,7 +254,7 @@ static void call_player_close(LinphonePlayer *player){
 
 }
 
-static void on_call_destroy(void *obj, UNUSED(belle_sip_object_t *call_being_destroyed)){
+static void on_call_destroy(void *obj, BCTBX_UNUSED(belle_sip_object_t *call_being_destroyed)){
 	linphone_player_unref(reinterpret_cast<LinphonePlayer *>(obj));
 }
 

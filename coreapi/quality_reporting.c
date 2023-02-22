@@ -458,7 +458,7 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 	}
 }
 
-static void qos_analyzer_on_action_suggested(void *user_data, UNUSED(int datac), const char** datav){
+static void qos_analyzer_on_action_suggested(void *user_data, BCTBX_UNUSED(int datac), const char** datav){
 	reporting_session_report_t *report = (reporting_session_report_t*)user_data;
 	LinphoneCall *call = report->call;
 	char * appendbuf;

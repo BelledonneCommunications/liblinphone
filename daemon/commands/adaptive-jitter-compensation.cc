@@ -60,7 +60,7 @@ AdaptiveBufferCompensationResponse::AdaptiveBufferCompensationResponse(LinphoneC
 	setBody(ost.str());
 }
 
-void AdaptiveBufferCompensationResponse::outputAdaptiveBufferCompensation(UNUSED(LinphoneCore *core), ostringstream &ost, const string& header, bool_t value) {
+void AdaptiveBufferCompensationResponse::outputAdaptiveBufferCompensation(BCTBX_UNUSED(LinphoneCore *core), ostringstream &ost, const string& header, bool_t value) {
 	ost << header << ": ";
 	if (value) {
 		ost << "enabled\n";

@@ -29,7 +29,7 @@
 // =============================================================================
 
 #define L_DB_TRANSACTION_C(CONTEXT) \
-	LinphonePrivate::DbTransactionInfo().set(__func__, CONTEXT) * [&](UNUSED(SmartTransaction &tr))
+	LinphonePrivate::DbTransactionInfo().set(__func__, CONTEXT) * [&](BCTBX_UNUSED(SmartTransaction &tr))
 
 #define L_DB_TRANSACTION L_DB_TRANSACTION_C(this)
 

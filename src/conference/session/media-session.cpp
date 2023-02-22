@@ -817,7 +817,7 @@ void MediaSessionPrivate::extRendererCb (void *userData, const MSPicture *local,
 #endif
 
 
-int MediaSessionPrivate::sendDtmf (void *data, UNUSED(unsigned int revents)) {
+int MediaSessionPrivate::sendDtmf (void *data, BCTBX_UNUSED(unsigned int revents)) {
 	MediaSession *session = static_cast<MediaSession *>(data);
 	return session->getPrivate()->sendDtmf();
 }
@@ -2495,12 +2495,12 @@ bool MediaSessionPrivate::isUpdateSentWhenIceCompleted() const {
 /*
  * IceServiceListener implementation
  */
-void MediaSessionPrivate::onGatheringFinished(UNUSED(IceService &service)){
+void MediaSessionPrivate::onGatheringFinished(BCTBX_UNUSED(IceService &service)){
 	lInfo() << "Finished gathering candidates";
 	runIceGatheringTasks();
 }
 
-void MediaSessionPrivate::onIceCompleted(UNUSED(IceService &service)){
+void MediaSessionPrivate::onIceCompleted(BCTBX_UNUSED(IceService &service)){
 	L_Q();
 
 	/* The ICE session has succeeded, so perform a call update */
@@ -2524,7 +2524,7 @@ void MediaSessionPrivate::onIceCompleted(UNUSED(IceService &service)){
 	runIceCompletionTasks();
 }
 
-void MediaSessionPrivate::onLosingPairsCompleted(UNUSED(IceService &service)){
+void MediaSessionPrivate::onLosingPairsCompleted(BCTBX_UNUSED(IceService &service)){
 	if (state == CallSession::State::UpdatedByRemote) {
 		if (incomingIceReinvitePending){
 			lInfo() << "Finished adding losing pairs, ICE re-INVITE can be answered.";
@@ -2534,7 +2534,7 @@ void MediaSessionPrivate::onLosingPairsCompleted(UNUSED(IceService &service)){
 	}
 }
 
-void MediaSessionPrivate::onIceRestartNeeded(UNUSED(IceService &service)){
+void MediaSessionPrivate::onIceRestartNeeded(BCTBX_UNUSED(IceService &service)){
 	L_Q();
 	getStreamsGroup().getIceService().restartSession(IR_Controlling);
 	MediaSessionParams newParams(*getParams());
@@ -3237,7 +3237,7 @@ LinphoneStatus MediaSessionPrivate::startAccept(){
 	return 0;
 }
 
-LinphoneStatus MediaSessionPrivate::accept (const MediaSessionParams *msp, UNUSED(bool wasRinging)) {
+LinphoneStatus MediaSessionPrivate::accept (const MediaSessionParams *msp, BCTBX_UNUSED(bool wasRinging)) {
 	L_Q();
 	if (msp) {
 		setParams(new MediaSessionParams(*msp));
@@ -3392,7 +3392,7 @@ bool_t MediaSessionPrivate::startPendingRefer (void *userData) {
 	return TRUE;
 }
 
-void MediaSessionPrivate::stunAuthRequestedCb (const char *realm, UNUSED(const char *nonce), const char **username, const char **password, const char **ha1) {
+void MediaSessionPrivate::stunAuthRequestedCb (const char *realm, BCTBX_UNUSED(const char *nonce), const char **username, const char **password, const char **ha1) {
 	L_Q();
 	/* Get the username from the nat policy or the proxy config */
 	LinphoneProxyConfig *proxy = nullptr;
@@ -4209,7 +4209,7 @@ bool MediaSession::echoLimiterEnabled () const {
 	return false;
 }
 
-void MediaSession::enableEchoLimiter (UNUSED(bool value)) {
+void MediaSession::enableEchoLimiter (BCTBX_UNUSED(bool value)) {
 	lWarning() << "MediaSession::enableEchoLimiter() unimplemented.";
 }
 

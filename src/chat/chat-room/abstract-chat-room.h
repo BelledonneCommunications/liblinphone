@@ -154,7 +154,7 @@ public:
 
 	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
 
-	virtual bool update(UNUSED(const ConferenceParamsInterface &newParameters)) override { return false; };
+	virtual bool update(BCTBX_UNUSED(const ConferenceParamsInterface &newParameters)) override { return false; };
 
 	virtual bool canHandleParticipants () const = 0;
 	virtual std::shared_ptr<Conference> getConference () const = 0;

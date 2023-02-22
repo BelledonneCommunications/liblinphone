@@ -69,7 +69,7 @@ static void account_delete_on_api(LinphoneCore *core, string username, string pa
 	linphone_auth_info_unref(authInfo);
 }
 
-static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, UNUSED(const char*resp)) {
+static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, BCTBX_UNUSED(const char*resp)) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
 
 	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(

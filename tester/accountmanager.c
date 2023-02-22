@@ -116,7 +116,7 @@ Account *account_manager_get_account(AccountManager *m, const LinphoneAddress *i
 	return NULL;
 }
 
-static void account_created_on_server_cb(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState state, UNUSED(const char *info)){
+static void account_created_on_server_cb(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState state, BCTBX_UNUSED(const char *info)){
 	Account *account=(Account*)linphone_core_get_user_data(lc);
 	switch(state){
 		case LinphoneRegistrationOk: {
@@ -208,7 +208,7 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	linphone_core_unref(lc);
 }
 
-static void account_created_in_db_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, UNUSED(const char *resp)){
+static void account_created_in_db_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, BCTBX_UNUSED(const char *resp)){
 	AccountCreatorState *state = linphone_account_creator_get_user_data(creator);
 	switch(status){
 		case LinphoneAccountCreatorStatusAccountCreated:

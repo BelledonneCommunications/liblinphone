@@ -44,11 +44,11 @@ MS2RTTStream::MS2RTTStream(StreamsGroup &sg, const OfferAnswerContext &params) :
 	initializeSessions(&mStream->ms);
 }
 
-void MS2RTTStream::configure(UNUSED(const OfferAnswerContext &params)) {
+void MS2RTTStream::configure(BCTBX_UNUSED(const OfferAnswerContext &params)) {
 
 }
 
-void MS2RTTStream::realTimeTextCharacterReceived (UNUSED(MSFilter *f), unsigned int id, void *arg) {
+void MS2RTTStream::realTimeTextCharacterReceived (BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
 	if (id == MS_RTT_4103_RECEIVED_CHAR) {
@@ -130,7 +130,7 @@ MediaStream *MS2RTTStream::getMediaStream()const{
 	return &mStream->ms;
 }
 
-void MS2RTTStream::handleEvent(UNUSED(const OrtpEvent *ev)){
+void MS2RTTStream::handleEvent(BCTBX_UNUSED(const OrtpEvent *ev)){
 }
 
 void MS2RTTStream::initZrtp() {

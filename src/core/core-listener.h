@@ -35,10 +35,10 @@ class LINPHONE_PUBLIC CoreListener {
 public:
 	virtual ~CoreListener () = default;
 
-	virtual void onGlobalStateChanged (UNUSED(LinphoneGlobalState state)) {}
-	virtual void onNetworkReachable (UNUSED(bool sipNetworkReachable), UNUSED(bool mediaNetworkReachable)) {}
-	virtual void onRegistrationStateChanged (UNUSED(LinphoneProxyConfig *cfg), UNUSED(LinphoneRegistrationState state), UNUSED(const std::string &message)) {}
-	virtual void onCallStateChanged (UNUSED(LinphoneCall *call), UNUSED(LinphoneCallState state), UNUSED(const std::string &message)) {}
+	virtual void onGlobalStateChanged (BCTBX_UNUSED(LinphoneGlobalState state)) {}
+	virtual void onNetworkReachable (BCTBX_UNUSED(bool sipNetworkReachable), BCTBX_UNUSED(bool mediaNetworkReachable)) {}
+	virtual void onRegistrationStateChanged (BCTBX_UNUSED(LinphoneProxyConfig *cfg), BCTBX_UNUSED(LinphoneRegistrationState state), BCTBX_UNUSED(const std::string &message)) {}
+	virtual void onCallStateChanged (BCTBX_UNUSED(LinphoneCall *call), BCTBX_UNUSED(LinphoneCallState state), BCTBX_UNUSED(const std::string &message)) {}
 	virtual void onEnteringBackground () {}
 	virtual void onEnteringForeground () {}
 };

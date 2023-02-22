@@ -24,7 +24,7 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
-static void authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, UNUSED(LinphoneAuthMethod method)) {
+static void authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, BCTBX_UNUSED(LinphoneAuthMethod method)) {
 	linphone_auth_info_set_passwd(auth_info, test_password);
 	linphone_core_add_auth_info(lc, auth_info); /*add authentication info to LinphoneCore*/
 	const char * algo = linphone_auth_info_get_algorithm(auth_info);
