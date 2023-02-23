@@ -4236,8 +4236,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 		}
 		for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-			if (list->dirty_friends_to_update
-			&& list->type == LinphoneFriendListTypeCardDAV) {
+			if (list->dirty_friends_to_update && list->type == LinphoneFriendListTypeCardDAV) {
 				linphone_friend_list_update_dirty_friends(list);
 			}
 		}

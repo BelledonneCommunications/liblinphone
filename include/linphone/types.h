@@ -347,6 +347,7 @@ typedef struct _LinphoneFriendList LinphoneFriendList;
  * @ingroup buddy_list
  */
 typedef enum _LinphoneFriendListType {
+	LinphoneFriendListTypeDefault = -1,
 	LinphoneFriendListTypeCardDAV = 0,
 	LinphoneFriendListTypeVCard4 = 1
 } LinphoneFriendListType;

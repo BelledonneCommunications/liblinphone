@@ -65,14 +65,15 @@ LINPHONE_PUBLIC void linphone_friend_list_set_user_data(LinphoneFriendList *frie
 /**
  * Assign a friend list type to the friend list
  * @param friend_list #LinphoneFriendList object. @notnil
- * @param type LinphoneFriendListType to assing
-**/
-LINPHONE_PUBLIC void linphone_friend_list_set_type (LinphoneFriendList *friend_list, LinphoneFriendListType type);
+ * @param type #LinphoneFriendListType to assign
+ **/
+LINPHONE_PUBLIC void linphone_friend_list_set_type(LinphoneFriendList *friend_list, LinphoneFriendListType type);
 
 /**
- * Get the type of a friend list
+ * Get the #LinphoneFriendListType of a friend list
  * @param friend_list #LinphoneFriendList object. @notnil
-**/
+ * @return the #LinphoneFriendListType of the list
+ **/
 LINPHONE_PUBLIC LinphoneFriendListType linphone_friend_list_get_type (LinphoneFriendList *list);
 
 /**
