@@ -302,7 +302,7 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 	d->rtpBundle = linphone_core_rtp_bundle_enabled(cCore);
 	enableRecordAware(linphone_core_is_record_aware_enabled(cCore));
 
-	d->micEnabled = linphone_core_mic_enabled(cCore);
+	d->micEnabled = true; /* always enabled by default. This switch is unrelated to the Core's mic enablement.*/
 	setInputAudioDevice(core->getDefaultInputAudioDevice());
 	setOutputAudioDevice(core->getDefaultOutputAudioDevice());
 }

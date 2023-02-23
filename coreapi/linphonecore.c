@@ -6007,6 +6007,9 @@ void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	const bctbx_list_t *list;
 	const bctbx_list_t *elem;
 
+	ms_message("linphone_core_enable_mic(): new state is [%s], current state is [%s]",
+				enable ? "enabled" : "disabled",
+				lc->sound_conf.mic_enabled ? "enabled" : "disabled");
 	lc->sound_conf.mic_enabled = enable; /* this is a global switch read everywhere the microphone is used. */
 	/* apply to conference and calls */
 	if (linphone_core_is_in_conference(lc)) {
@@ -6015,6 +6018,8 @@ void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	list = linphone_core_get_calls(lc);
 	for (elem = list; elem != NULL; elem = elem->next) {
 		call = (LinphoneCall *)elem->data;
+		/* re-apply the same setting; we don't modify the call's switch. However the setter will
+		 * take action on the stream in order to take into account the core's new switch state.*/
 		linphone_call_set_microphone_muted(call, linphone_call_get_microphone_muted(call));
 	}
 }

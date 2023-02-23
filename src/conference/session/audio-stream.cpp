@@ -743,7 +743,7 @@ void MS2AudioStream::configureFlowControl(AudioStream *as, LinphoneCore *lc) {
 
 void MS2AudioStream::enableMicOnAudioStream(AudioStream *as, LinphoneCore *lc, bool enabled) {
 	enabled = enabled && linphone_core_mic_enabled(lc);
-	if (!enabled) bctbx_message("AudioStream[%p]: mic is muted.", as);
+	bctbx_message("AudioStream[%p]: mic is [%s].", as, enabled ? "enabled" : "disabled");
 	audio_stream_enable_mic(as, enabled);
 }
 
