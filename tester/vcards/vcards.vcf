@@ -3,6 +3,9 @@ VERSION:4.0
 KIND:individual
 FN:Sylvain Berfini
 N:Berfini;Sylvain;Pascal;;
+X-PHONETIC-FIRST-NAME:
+X-PHONETIC-MIDDLE-NAME:
+X-PHONETIC-LAST-NAME:
 GENDER:M
 IMPP;PREF=1;TYPE=work:sip:sylvain@sip.linphone.org
 END:VCARD

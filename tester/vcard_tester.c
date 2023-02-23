@@ -554,6 +554,7 @@ static void carddav_sync(void) {
 	LinphoneCardDavContext *c = NULL;
 
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_unref(lfl);
 	c = linphone_carddav_context_new(lfl);
@@ -586,6 +587,7 @@ static void carddav_sync_2(void) {
 	LinphoneCardDavContext *c = NULL;
 
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_unref(lfl);
 	c = linphone_carddav_context_new(lfl);
@@ -632,6 +634,7 @@ static void carddav_sync_3(void) {
 
 	linphone_vcard_unref(lvc);
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_unref(lfl);
 	c = linphone_carddav_context_new(lfl);
@@ -675,6 +678,7 @@ static void carddav_sync_4(void) {
 
 	linphone_vcard_unref(lvc);
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_unref(lfl);
 	c = linphone_carddav_context_new(lfl);
@@ -753,6 +757,7 @@ static void carddav_integration(void) {
 
 	linphone_vcard_unref(lvc);
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 	cbs = linphone_friend_list_get_callbacks(lfl);
 	linphone_friend_list_cbs_set_user_data(cbs, stats);
 	linphone_friend_list_cbs_set_contact_created(cbs, carddav_contact_created);
@@ -858,6 +863,7 @@ static void carddav_clean(
 	linphone_friend_list_cbs_set_sync_status_changed(cbs, carddav_sync_status_changed);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 
 	linphone_friend_list_synchronize_friends_from_server(lfl);
 	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
@@ -907,6 +913,7 @@ static void carddav_multiple_sync(void) {
 	linphone_friend_list_cbs_set_sync_status_changed(cbs, carddav_sync_status_changed);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 
 	linphone_friend_list_synchronize_friends_from_server(lfl);
 	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
@@ -950,6 +957,7 @@ static void carddav_server_to_client_and_client_to_sever_sync(void) {
 	linphone_friend_list_cbs_set_sync_status_changed(cbs, carddav_sync_status_changed);
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_set_uri(lfl, CARDDAV_SERVER);
+	linphone_friend_list_set_type(lfl, LinphoneFriendListTypeCardDAV);
 
 	linphone_friend_list_add_friend(lfl, lf1);
 	linphone_friend_unref(lf1);

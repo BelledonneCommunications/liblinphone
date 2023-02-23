@@ -96,9 +96,8 @@ static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc,
 	for (elem = lc->auth_info; elem != NULL; elem = elem->next) {
 		LinphoneAuthInfo *pinfo = (LinphoneAuthInfo *)elem->data;
 
-		if (username && linphone_auth_info_get_username(pinfo) &&
-		    strcmp(username, linphone_auth_info_get_username(pinfo)) == 0) {
-
+		if (!username || (username && linphone_auth_info_get_username(pinfo) &&
+		                  strcmp(username, linphone_auth_info_get_username(pinfo)) == 0)) {
 			if (!check_algorithm_compatibility(pinfo, algorithm)) {
 				continue;
 			}

@@ -511,7 +511,8 @@ static LinphoneFriendList *linphone_friend_list_new(void) {
 	list->friends_map = bctbx_mmap_cchar_new();
 	list->friends_map_uri = bctbx_mmap_cchar_new();
 	list->bodyless_subscription = FALSE;
-	list->type = LinphoneFriendListTypeCardDAV;
+	list->type = LinphoneFriendListTypeDefault;
+	list->revision = 0;
 	return list;
 }
 
@@ -932,7 +933,7 @@ static int linphone_sql_request_generic(sqlite3 *db, const char *stmt) {
 
 void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *list) {
 	if (!list || !list->lc) {
-		ms_error("FATAL ?");
+		ms_error("Either list or list's Core pointer is null, this is not expected!");
 		return;
 	}
 
@@ -1006,12 +1007,13 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 
 		belle_request_listener.process_io_error = [](void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
-			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, NULL)
+			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, "IO error")
 		};
 
 		belle_request_listener.process_timeout = [](void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
-			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, NULL)
+			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure,
+			                "Timeout reached")
 		};
 
 		/**
@@ -1038,7 +1040,8 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 		belle_http_provider_send_request(list->lc->http_provider, request, list->lc->base_contacts_list_http_listener);
 	} else if (list->type == LinphoneFriendListTypeCardDAV) {
 		if (!list->uri) {
-			ms_error("FATAL");
+			ms_error("Can't synchronize CardDAV list [%p](%s) without an URI", list,
+			         linphone_friend_list_get_display_name(list));
 			return;
 		}
 
@@ -1055,6 +1058,8 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 			}
 			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncStarted, NULL)
 			linphone_carddav_synchronize(cdc);
+		} else {
+			ms_error("Failed to create a CardDAV context for friend list [%p] with URI [%s]", list, list->uri);
 		}
 	}
 }

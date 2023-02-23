@@ -481,7 +481,6 @@ struct _LinphoneCardDavContext {
 	LinphoneCardDavContactUpdatedCb contact_updated_cb;
 	LinphoneCardDavContactRemovedCb contact_removed_cb;
 	LinphoneCardDavSynchronizationDoneCb sync_done_cb;
-	LinphoneAuthInfo *auth_info;
 };
 
 struct _LinphoneCardDavQuery {

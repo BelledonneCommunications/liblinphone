@@ -739,7 +739,7 @@ typedef void (*LinphoneFriendListCbsContactUpdatedCb)(LinphoneFriendList *friend
  * Callback used to notify the status of the synchronization has changed
  * @param friend_list The #LinphoneFriendList object for which the status has changed @notnil
  * @param status The new #LinphoneFriendListSyncStatus
- * @param message An additional information on the status update @notnil
+ * @param message An additional information on the status update @maybenil
  **/
 typedef void (*LinphoneFriendListCbsSyncStateChangedCb)(LinphoneFriendList *friend_list,
                                                         LinphoneFriendListSyncStatus status,
