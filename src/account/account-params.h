@@ -32,6 +32,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 class PushNotificationConfig;
+class NatPolicy;
 
 class AccountParams : public bellesip::HybridObject<LinphoneAccountParams, AccountParams>, public CustomParams {
 	friend class Account;
@@ -72,7 +73,7 @@ public:
 	void setFileTranferServer (const std::string &fileTransferServer);
 	void setPrivacy (LinphonePrivacyMask privacy);
 	void setAvpfMode (LinphoneAVPFMode avpfMode);
-	void setNatPolicy (LinphoneNatPolicy *natPolicy);
+	void setNatPolicy (const std::shared_ptr<NatPolicy> &natPolicy);
 	void setPushNotificationConfig (PushNotificationConfig *pushNotificationConfig);
 	LinphoneStatus setIdentityAddress (const LinphoneAddress* identityAddress);
 	LinphoneStatus setRoutes (const bctbx_list_t *routes);
@@ -117,7 +118,7 @@ public:
 	LinphonePrivacyMask getPrivacy () const;
 	LinphoneAddress* getIdentityAddress () const;
 	LinphoneAVPFMode getAvpfMode () const;
-	LinphoneNatPolicy* getNatPolicy () const;
+	std::shared_ptr<NatPolicy> getNatPolicy () const;
 	PushNotificationConfig* getPushNotificationConfig () const;
 	const LinphoneAddress* getAudioVideoConferenceFactoryAddress () const;
 	bool rtpBundleEnabled()const;
@@ -182,7 +183,7 @@ private:
 
 	LinphoneAVPFMode mAvpfMode;
 
-	LinphoneNatPolicy *mNatPolicy = nullptr;
+	std::shared_ptr<NatPolicy> mNatPolicy = nullptr;
 
 	PushNotificationConfig *mPushNotificationConfig;
 

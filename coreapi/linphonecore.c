@@ -5870,7 +5870,7 @@ void linphone_core_send_dtmf(LinphoneCore *lc, char dtmf) {
 void linphone_core_set_stun_server(LinphoneCore *lc, const char *server) {
 	if (lc->nat_policy != NULL) {
 		linphone_nat_policy_set_stun_server(lc->nat_policy, server);
-		NatPolicy::toCpp(lc->nat_policy)->saveToConfig();
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->writeNatPolicyConfigurations();
 	} else {
 		linphone_config_set_string(lc->config, "net", "stun_server", server);
 	}
@@ -6001,7 +6001,7 @@ void linphone_core_set_nat_policy(LinphoneCore *lc, LinphoneNatPolicy *policy) {
 		/*start an immediate (but asynchronous) resolution.*/
 		linphone_nat_policy_resolve_stun_server(policy);
 		linphone_config_set_string(lc->config, "net", "nat_policy_ref", NatPolicy::toCpp(policy)->getRef().c_str());
-		NatPolicy::toCpp(policy)->saveToConfig();
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->writeNatPolicyConfigurations();
 	}
 
 	lc->sal->enableNatHelper(!!linphone_config_get_int(lc->config, "net", "enable_nat_helper", 1));
