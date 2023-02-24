@@ -2690,6 +2690,25 @@ LinphoneCoreManager *linphone_core_manager_create_shared(const char *rc_file,
 	return manager;
 }
 
+static void check_orphan_nat_policy_section(LinphoneCoreManager *mgr) {
+	bctbx_list_t *l = linphone_config_get_sections_names_list(linphone_core_get_config(mgr->lc));
+	bctbx_list_t *elem;
+	int nat_policy_count = 0;
+	int proxy_count = 0;
+
+	for (elem = l; elem != NULL; elem = elem->next) {
+		const char *name = (const char *)elem->data;
+		if (strstr(name, "nat_policy_") == name) {
+			nat_policy_count++;
+		} else if (strstr(name, "proxy_") == name) {
+			proxy_count++;
+		}
+	}
+	/* There can't be more nat_policy_ section than proxy_? section + 1 */
+	BC_ASSERT_LOWER(nat_policy_count, proxy_count + 1, int, "%i");
+	bctbx_list_free(l);
+}
+
 void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 	if (mgr->lc) {
 		const char *record_file = linphone_core_get_record_file(mgr->lc);
@@ -2702,7 +2721,7 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 		}
 
 		linphone_core_stop(mgr->lc);
-
+		check_orphan_nat_policy_section(mgr);
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;
 	}

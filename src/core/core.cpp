@@ -190,6 +190,30 @@ void CorePrivate::unregisterListener(CoreListener *listener) {
 	listeners.remove(listener);
 }
 
+void CorePrivate::writeNatPolicyConfigurations() {
+	int index = 0;
+	LinphoneCore *lc = getCCore();
+
+	if (!linphone_core_ready(lc)) return;
+
+	LinphoneConfig *config = linphone_core_get_config(lc);
+
+	if (lc->nat_policy) {
+		NatPolicy::toCpp(lc->nat_policy)->saveToConfig(config, index);
+		++index;
+	}
+	const bctbx_list_t *elem;
+	for (elem = linphone_core_get_account_list(lc); elem != nullptr; elem = elem->next) {
+		LinphoneAccount *account = (LinphoneAccount *)elem->data;
+		auto natPolicy = Account::toCpp(account)->getAccountParams()->getNatPolicy();
+		if (natPolicy) {
+			natPolicy->saveToConfig(config, index);
+			++index;
+		}
+	}
+	NatPolicy::clearConfigFromIndex(config, index);
+}
+
 void Core::onStopAsyncBackgroundTaskStarted() {
 	L_D();
 	d->stopAsyncEndEnabled = false;

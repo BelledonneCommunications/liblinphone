@@ -111,11 +111,11 @@ public:
 	void clear();
 	void release();
 	bool stunServerActivated() const;
-	void saveToConfig();
 	void resolveStunServer();
+	void saveToConfig(LinphoneConfig *config, int index) const;
+	static void clearConfigFromIndex(LinphoneConfig *config, int index);
 
 private:
-	void saveToConfig(LinphoneConfig *config, int index) const;
 	void initFromSection(const LinphoneConfig *config, const char *section);
 	static void sStunServerResolved(void *data, belle_sip_resolver_results_t *results);
 	void stunServerResolved(belle_sip_resolver_results_t *results);

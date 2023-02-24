@@ -180,6 +180,9 @@ public:
 	/* called by linphone_core_set_video_device() to update the video device in the running call or conference.*/
 	void updateVideoDevice();
 
+	/* centralized method to write down all NatPolicy used by Accounts or Core */
+	void writeNatPolicyConfigurations();
+
 	static const Utils::Version conferenceProtocolVersion;
 	static const Utils::Version groupChatProtocolVersion;
 	static const Utils::Version ephemeralProtocolVersion;

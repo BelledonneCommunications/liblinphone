@@ -44,6 +44,7 @@
 
 #include "mediastreamer2/mediastream.h"
 
+#include "core/core-p.h"
 #include "core/core.h"
 #include "enum.h"
 #include "private.h"
@@ -81,6 +82,7 @@ void linphone_proxy_config_write_all_to_config_file(LinphoneCore *lc) {
 	/*to ensure removed configs are erased:*/
 	linphone_proxy_config_write_to_config_file(lc->config, NULL, i);
 	linphone_config_set_int(lc->config, "sip", "default_proxy", linphone_core_get_default_proxy_config_index(lc));
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->writeNatPolicyConfigurations();
 }
 
 static void linphone_proxy_config_init(LinphoneCore *lc, LinphoneProxyConfig *cfg) {

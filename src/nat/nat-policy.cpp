@@ -121,25 +121,22 @@ void NatPolicy::saveToConfig(LinphoneConfig *config, int index) const {
 	bctbx_list_free(l);
 }
 
-void NatPolicy::saveToConfig() {
-	LinphoneConfig *config = linphone_core_get_config(getCore()->getCCore());
-	char *section;
-	int index;
-	bool_t finished = FALSE;
-
-	for (index = 0; finished != TRUE; index++) {
-		section = belle_sip_strdup_printf("nat_policy_%i", index);
-		if (linphone_config_has_section(config, section)) {
-			const char *config_ref = linphone_config_get_string(config, section, "ref", NULL);
-			if ((config_ref != NULL) && (strcmp(config_ref, mRef.c_str()) == 0)) {
-				saveToConfig(config, index);
-				finished = TRUE;
-			}
-		} else {
-			saveToConfig(config, index);
-			finished = TRUE;
-		}
-		belle_sip_free(section);
+void NatPolicy::clearConfigFromIndex(LinphoneConfig *config, int index) {
+	int purged = 0;
+	while (true) {
+		std::ostringstream ostr;
+		ostr << "nat_policy_" << index;
+		if (linphone_config_has_section(config, ostr.str().c_str())) {
+			linphone_config_clean_section(config, ostr.str().c_str());
+			++purged;
+		} else break;
+		++index;
+	}
+	/* Warn about suspicious number of orphan NatPolicy sections.
+	 * A bug occured December 2022 caused a massive leak of nat_policy_X sections in configuration file.
+	 */
+	if (purged > 5) {
+		lWarning() << "Purged [" << purged << "] unused NatPolicy sections from config file.";
 	}
 }
 

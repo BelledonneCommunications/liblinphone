@@ -6007,9 +6007,8 @@ void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	const bctbx_list_t *list;
 	const bctbx_list_t *elem;
 
-	ms_message("linphone_core_enable_mic(): new state is [%s], current state is [%s]",
-				enable ? "enabled" : "disabled",
-				lc->sound_conf.mic_enabled ? "enabled" : "disabled");
+	ms_message("linphone_core_enable_mic(): new state is [%s], current state is [%s]", enable ? "enabled" : "disabled",
+	           lc->sound_conf.mic_enabled ? "enabled" : "disabled");
 	lc->sound_conf.mic_enabled = enable; /* this is a global switch read everywhere the microphone is used. */
 	/* apply to conference and calls */
 	if (linphone_core_is_in_conference(lc)) {
@@ -6056,7 +6055,7 @@ void linphone_core_send_dtmf(LinphoneCore *lc, char dtmf) {
 void linphone_core_set_stun_server(LinphoneCore *lc, const char *server) {
 	if (lc->nat_policy != NULL) {
 		linphone_nat_policy_set_stun_server(lc->nat_policy, server);
-		NatPolicy::toCpp(lc->nat_policy)->saveToConfig();
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->writeNatPolicyConfigurations();
 	} else {
 		linphone_config_set_string(lc->config, "net", "stun_server", server);
 	}
@@ -6175,7 +6174,7 @@ void linphone_core_set_nat_policy(LinphoneCore *lc, LinphoneNatPolicy *policy) {
 		/*start an immediate (but asynchronous) resolution.*/
 		linphone_nat_policy_resolve_stun_server(policy);
 		linphone_config_set_string(lc->config, "net", "nat_policy_ref", NatPolicy::toCpp(policy)->getRef().c_str());
-		NatPolicy::toCpp(policy)->saveToConfig();
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->writeNatPolicyConfigurations();
 	}
 
 	lc->sal->enableNatHelper(!!linphone_config_get_int(lc->config, "net", "enable_nat_helper", 1));

@@ -108,8 +108,7 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 			                       natPolicyRef);
 		}
 		if (policy) {
-			setNatPolicy(policy->toC());
-			policy->unref();
+			setNatPolicy(policy->toSharedPtr());
 		} else {
 			lError() << "Cannot create default nat policy with ref [" << natPolicyRef << "] for account [" << this
 			         << "]";
@@ -234,18 +233,19 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc) {
 
 	const char *nat_policy_ref = linphone_config_get_string(config, key, "nat_policy_ref", NULL);
 	if (nat_policy_ref != NULL) {
-		if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
 		/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
 		 * This is not consistent and error-prone.
 		 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
 		 */
+		LinphoneNatPolicy *natPolicy;
 		if (linphone_config_has_section(config, nat_policy_ref)) {
 			/* Odd method - to be deprecated, inconsistent */
-			mNatPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
+			natPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
 		} else {
 			/* Usual method */
-			mNatPolicy = linphone_core_create_nat_policy_from_ref(lc, nat_policy_ref);
+			natPolicy = linphone_core_create_nat_policy_from_ref(lc, nat_policy_ref);
 		}
+		mNatPolicy = NatPolicy::toCpp(natPolicy)->toSharedPtr();
 	}
 
 	mConferenceFactoryUri =
@@ -323,7 +323,6 @@ AccountParams::~AccountParams() {
 	if (mProxyAddress) linphone_address_unref(mProxyAddress);
 	if (mRoutes) bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
 	if (mRoutesString) bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
-	if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 	if (mAudioVideoConferenceFactoryAddress) linphone_address_unref(mAudioVideoConferenceFactoryAddress);
 	if (mCustomContact) linphone_address_unref(mCustomContact);
@@ -557,11 +556,7 @@ void AccountParams::setAvpfMode(LinphoneAVPFMode avpfMode) {
 	mAvpfMode = avpfMode;
 }
 
-void AccountParams::setNatPolicy(LinphoneNatPolicy *natPolicy) {
-	if (natPolicy != nullptr) {
-		linphone_nat_policy_ref(natPolicy); /* Prevent object destruction if the same policy is used */
-	}
-	if (mNatPolicy != nullptr) linphone_nat_policy_unref(mNatPolicy);
+void AccountParams::setNatPolicy(const shared_ptr<NatPolicy> &natPolicy) {
 	mNatPolicy = natPolicy;
 }
 
@@ -750,7 +745,7 @@ LinphoneAVPFMode AccountParams::getAvpfMode() const {
 	return mAvpfMode;
 }
 
-LinphoneNatPolicy *AccountParams::getNatPolicy() const {
+shared_ptr<NatPolicy> AccountParams::getNatPolicy() const {
 	return mNatPolicy;
 }
 
@@ -916,8 +911,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "publish_expires", mPublishExpires);
 
 	if (mNatPolicy != NULL) {
-		linphone_config_set_string(config, key, "nat_policy_ref", NatPolicy::toCpp(mNatPolicy)->getRef().c_str());
-		NatPolicy::toCpp(mNatPolicy)->saveToConfig();
+		linphone_config_set_string(config, key, "nat_policy_ref", mNatPolicy->getRef().c_str());
 	}
 
 	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());

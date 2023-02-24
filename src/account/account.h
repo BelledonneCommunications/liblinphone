@@ -141,7 +141,7 @@ private:
 	void onInternationalPrefixChanged();
 	void onConferenceFactoryUriChanged(const std::string &conferenceFactoryUri);
 	void onAudioVideoConferenceFactoryAddressChanged(const LinphoneAddress *audioVideoConferenceFactoryAddress);
-	void onNatPolicyChanged(LinphoneNatPolicy *policy);
+	void onNatPolicyChanged(const std::shared_ptr<NatPolicy> &policy);
 	void onLimeServerUrlChanged(const std::string &limeServerUrl);
 	bool customContactChanged();
 	std::list<SalAddress *> getOtherContacts();

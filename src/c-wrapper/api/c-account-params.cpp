@@ -20,11 +20,13 @@
 
 #include "linphone/api/c-account-params.h"
 #include "account/account-params.h"
+
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
+#include "nat/nat-policy.h"
 #include "push-notification/push-notification-config.h"
 
 // =============================================================================
@@ -295,11 +297,12 @@ void linphone_account_params_set_idkey(LinphoneAccountParams *params, const char
 }
 
 LinphoneNatPolicy *linphone_account_params_get_nat_policy(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getNatPolicy();
+	auto pol = AccountParams::toCpp(params)->getNatPolicy();
+	return pol ? pol->toC() : nullptr;
 }
 
 void linphone_account_params_set_nat_policy(LinphoneAccountParams *params, LinphoneNatPolicy *policy) {
-	AccountParams::toCpp(params)->setNatPolicy(policy);
+	AccountParams::toCpp(params)->setNatPolicy(policy ? NatPolicy::toCpp(policy)->getSharedFromThis() : nullptr);
 }
 
 void linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *params, const char *uri) {
