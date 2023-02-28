@@ -475,6 +475,9 @@ end:
 
 #else /* HAVE_XML2 */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /* stubs */
 static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList *list,
                                                               const LinphoneContent *body,
@@ -486,6 +489,8 @@ static char *create_resource_list_xml(const LinphoneFriendList *list) {
 	ms_warning("create_resource_list_xml() is stubbed.");
 	return NULL;
 }
+
+#pragma GCC diagnostic pop
 
 #endif
 

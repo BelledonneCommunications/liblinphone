@@ -112,10 +112,9 @@ struct _LpConfig {
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneConfig);
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneConfig);
 
-#ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif // _MSC_VER
+
 char *lp_realpath(const char *file, char *name) {
 #if defined(_WIN32) || defined(__QNX__) || defined(__ANDROID__)
 	return ms_strdup(file);
@@ -126,9 +125,6 @@ char *lp_realpath(const char *file, char *name) {
 	return msoutput;
 #endif
 }
-#ifndef _MSC_VER
-#pragma GCC diagnostic pop
-#endif // _MSC_VER
 
 LpItem *lp_item_new(const char *key, const char *value) {
 	LpItem *item = lp_new0(LpItem, 1);

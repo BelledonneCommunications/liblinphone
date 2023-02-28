@@ -1960,6 +1960,10 @@ bctbx_list_t *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 }
 
 #else
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list) {
 	ms_warning("linphone_core_store_friends_list_in_db(): stubbed");
 }
@@ -1977,6 +1981,13 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendList *list) {
 	ms_warning("linphone_core_store_friend_in_db(): stubbed");
 }
+
+int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
+	ms_warning("linphone_core_friends_storage_resync_friends_lists(): stubbed");
+	return -1;
+}
+
+#pragma GCC diagnostic pop
 
 #endif /* HAVE_SQLITE */
 

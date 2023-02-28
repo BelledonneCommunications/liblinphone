@@ -1251,6 +1251,8 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent(const char
 	xmlFreeDoc(xmlMessageBody);
 #else
 	lWarning() << "parseFileTransferXmlIntoContent(): stubbed.";
+	(void)xml;
+	(void)fileTransferContent;
 #endif
 }
 

@@ -687,5 +687,7 @@ const LinphoneVideoSourceDescriptor *linphone_call_get_video_source(const Linpho
 void linphone_call_confirm_go_clear(const LinphoneCall *call) {
 #ifdef HAVE_GOCLEAR
 	Call::toCpp(call)->confirmGoClear();
-#endif // HAVE_GOCLEAR
+#else // HAVE_GOCLEAR
+	(void)call;
+#endif
 }

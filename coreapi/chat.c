@@ -20,10 +20,6 @@
 
 #include <bctoolbox/defs.h>
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <libxml/xmlwriter.h>
-
 #include <linphone/utils/utils.h>
 
 #include "belle-sip/belle-sip.h"

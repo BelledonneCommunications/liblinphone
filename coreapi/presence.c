@@ -2111,6 +2111,9 @@ end:
 
 #else
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) {
 	ms_warning("linphone_presence_model_to_xml(): stubbed.");
 	return NULL;
@@ -2123,6 +2126,8 @@ void linphone_notify_parse_presence(const char *content_type,
 	if (result) *result = NULL;
 	ms_warning("linphone_notify_parse_presence(): stubbed.");
 }
+
+#pragma GCC diagnostic pop
 
 #endif
 
