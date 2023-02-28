@@ -783,24 +783,50 @@ bool Core::limeX3dhAvailable() const {
 // -----------------------------------------------------------------------------
 // Specs.
 // -----------------------------------------------------------------------------
-void Core::setSpecsList(const std::list<std::string> &specsList) {
+void Core::setSpecs(const std::map<std::string, std::string> &specsMap) {
 	L_D();
-	d->specs = specsList;
-	d->specs.sort();
-	d->specs.unique();
+	d->specs = specsMap;
 	const string &tmpSpecs = getSpecs();
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 	linphone_config_set_string(lpconfig, "sip", "linphone_specs", tmpSpecs.c_str());
 	getCCore()->sal->setContactLinphoneSpecs(tmpSpecs);
 }
 
-void Core::addSpec(const std::string &spec) {
-	L_D();
-	d->specs.push_back(spec);
-	setSpecsList(d->specs);
+void Core::setSpecs(const std::list<std::string> &specsList) {
+	std::map<std::string, std::string> specsMap;
+	for (const auto &spec : specsList) {
+		const auto specNameVersion = getSpecNameVersion(spec);
+		specsMap[specNameVersion.first] = specNameVersion.second;
+	}
+	setSpecs(specsMap);
 }
 
-void Core::removeSpec(const std::string &pSpec) {
+std::pair<std::string, std::string> Core::getSpecNameVersion(const std::string &spec) const {
+	std::string specName;
+	std::string specVersion;
+	const auto slashPos = spec.find("/");
+	if (slashPos == std::string::npos) {
+		specName = spec;
+	} else {
+		specName = spec.substr(0, slashPos);
+		specVersion = spec.substr(slashPos + 1, std::string::npos);
+	}
+	return std::make_pair(specName, specVersion);
+}
+
+void Core::addSpec(const std::string &specName, const std::string &specVersion) {
+	L_D();
+	d->specs[specName] = specVersion;
+	setSpecs(d->specs);
+}
+
+void Core::addSpec(const std::string &spec) {
+	const auto specNameVersion = getSpecNameVersion(spec);
+	addSpec(specNameVersion.first, specNameVersion.second);
+>>>>>>> 1d56ba0bd (Store linphone specs in a map to avoid duplication whenever updating their version)
+}
+
+void Core::removeSpec(const std::string &spec) {
 	L_D();
 	d->specs.remove_if([&pSpec](const std::string &spec) {
 		if (spec.compare(pSpec) == 0) return true;
@@ -818,6 +844,14 @@ void Core::removeSpec(const std::string &pSpec) {
 const std::list<std::string> &Core::getSpecsList() const {
 	L_D();
 	return d->specs;
+=======
+	const auto specNameVersion = getSpecNameVersion(spec);
+	const auto specIt = d->specs.find(specNameVersion.first);
+	if (specIt != d->specs.end()) {
+		d->specs.erase(specIt);
+		setSpecs(d->specs);
+	}
+>>>>>>> 1d56ba0bd (Store linphone specs in a map to avoid duplication whenever updating their version)
 }
 
 // Used to set specs for linphone_config
@@ -825,18 +859,40 @@ void Core::setSpecs(const std::string &pSpecs) {
 	L_D();
 	if (pSpecs.empty()) {
 		d->specs.clear();
-		setSpecsList(d->specs);
+		setSpecs(d->specs);
 	} else {
 		// Assume a list of coma-separated values
-		setSpecsList(Utils::toList(bctoolbox::Utils::split(pSpecs, ",")));
+		setSpecs(Utils::toList(bctoolbox::Utils::split(pSpecs, ",")));
 	}
 }
 
 // Initial use of the public API of this function has been deprecated, but will still be kept as utility function for
 // setSpecsList()
 std::string Core::getSpecs() const {
+	const std::list<std::string> specsList = getSpecsList();
+	return Utils::join(Utils::toVector(specsList), ",");
+}
+
+const std::map<std::string, std::string> &Core::getSpecsMap() const {
 	L_D();
-	return Utils::join(Utils::toVector(d->specs), ",");
+	return d->specs;
+}
+
+const std::list<std::string> Core::getSpecsList() const {
+	const std::map<std::string, std::string> &specsMap = getSpecsMap();
+
+	std::list<std::string> specsList;
+	for (const auto &spec : specsMap) {
+		std::string specNameVersion;
+		specNameVersion += spec.first;
+		if (!spec.second.empty()) {
+			specNameVersion += "/";
+			specNameVersion += spec.second;
+		}
+		specsList.push_back(specNameVersion);
+	}
+
+	return specsList;
 }
 
 const std::string Core::conferenceVersionAsString() {

@@ -200,7 +200,7 @@ private:
 
 	std::unique_ptr<EncryptionEngine> imee;
 
-	std::list<std::string> specs;
+	std::map<std::string, std::string> specs;
 
 	std::unique_ptr<ToneManager> toneManager;
 

@@ -108,7 +108,7 @@ void linphone_core_set_linphone_specs(LinphoneCore *lc, const char *specs) {
 }
 
 void linphone_core_set_linphone_specs_list(LinphoneCore *lc, const bctbx_list_t *specs) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecsList(L_GET_CPP_LIST_FROM_C_LIST(specs, const char *, string));
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(L_GET_CPP_LIST_FROM_C_LIST(specs, const char *, string));
 }
 
 void linphone_core_add_linphone_spec(LinphoneCore *lc, const char *spec) {

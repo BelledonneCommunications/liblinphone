@@ -253,12 +253,15 @@ public:
 	// Specs.
 	// ---------------------------------------------------------------------------
 
-	void setSpecsList(const std::list<std::string> &specsList);
 	void addSpec(const std::string &spec);
+	void addSpec(const std::string &specName, const std::string &specVersion);
 	void removeSpec(const std::string &spec);
-	const std::list<std::string> &getSpecsList() const;
 	void setSpecs(const std::string &specs);
+	void setSpecs(const std::map<std::string, std::string> &specsMap);
+	void setSpecs(const std::list<std::string> &specsList);
 	std::string getSpecs() const;
+	const std::map<std::string, std::string> &getSpecsMap() const;
+	const std::list<std::string> getSpecsList() const;
 
 	// ---------------------------------------------------------------------------
 	// Friends.
@@ -351,6 +354,8 @@ private:
 
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
+
+	std::pair<std::string, std::string> getSpecNameVersion(const std::string &spec) const;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);
