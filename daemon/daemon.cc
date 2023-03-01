@@ -632,7 +632,7 @@ void Daemon::execCommand(const string &command) {
 	string args = argsbuf.str();
 	if (!args.empty() && (args[0] == ' ')) args.erase(0, 1);
 	list<DaemonCommand *>::iterator it =
-	    find_if(mCommands.begin(), mCommands.end(), bind2nd(mem_fun(&DaemonCommand::matches), name));
+	    find_if(mCommands.begin(), mCommands.end(), [&name](const DaemonCommand *dc) { return dc->matches(name); });
 	if (it != mCommands.end()) {
 		ms_mutex_lock(&mMutex);
 		(*it)->exec(this, args);

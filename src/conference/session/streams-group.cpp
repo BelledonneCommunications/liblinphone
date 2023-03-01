@@ -449,11 +449,11 @@ float StreamsGroup::computeOverallQuality(_functor func) {
 }
 
 float StreamsGroup::getAverageQuality() {
-	return computeOverallQuality(mem_fun(&Stream::getAverageQuality));
+	return computeOverallQuality(mem_fn(&Stream::getAverageQuality));
 }
 
 float StreamsGroup::getCurrentQuality() {
-	return computeOverallQuality(mem_fun(&Stream::getCurrentQuality));
+	return computeOverallQuality(mem_fn(&Stream::getCurrentQuality));
 }
 
 int StreamsGroup::getAvpfRrInterval() const {
@@ -482,11 +482,11 @@ bool StreamsGroup::avpfEnabled() const {
 }
 
 void StreamsGroup::refreshSockets() {
-	forEach<Stream>(mem_fun(&Stream::refreshSockets));
+	forEach<Stream>(mem_fn(&Stream::refreshSockets));
 }
 
 void StreamsGroup::computeAndReportBandwidth() {
-	forEach<Stream>(mem_fun(&Stream::updateBandwidthReports));
+	forEach<Stream>(mem_fn(&Stream::updateBandwidthReports));
 
 	if (!bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_MESSAGE)) return;
 
@@ -547,7 +547,7 @@ void StreamsGroup::finish() {
 	for (auto &ss : mSharedServices)
 		ss.second->checkDestroy();
 	mSharedServices.clear();
-	forEach<Stream>(mem_fun(&Stream::finish));
+	forEach<Stream>(mem_fn(&Stream::finish));
 	mFinished = true;
 }
 

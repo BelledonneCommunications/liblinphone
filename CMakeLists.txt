@@ -94,7 +94,7 @@ cmake_dependent_option(ENABLE_QRCODE "Enable QRCode support" YES "ENABLE_VIDEO" 
 # * DISABLE_BC_PACKAGE_SEARCH: skip find_package() for every BC package (bctoolbox, ortp, etc.)
 # * DISABLE_SOCI_PACKAGE_SEARCH: skip find_package() for Soci.
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS NO)
 
 if(NOT CMAKE_BUILD_TYPE)
