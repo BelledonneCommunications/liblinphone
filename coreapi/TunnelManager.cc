@@ -198,21 +198,18 @@ void TunnelManager::setKey(bctbx_signing_key_t *key) {
 	mKey = key;
 }
 
-int TunnelManager::tlsCallbackClientCertificate(void *data,
-                                                bctbx_ssl_context_t *ctx,
-                                                BCTBX_UNUSED(const bctbx_list_t *names)) {
-	TunnelManager *zis = static_cast<TunnelManager *>(data);
+int TunnelManager::tlsUpdateClientCertificate() {
 	int error;
 
-	if (!zis->getCertificate() || !zis->getKey()) {
-		const LinphoneAuthInfo *authInfo = _linphone_core_find_indexed_tls_auth_info(
-		    zis->getLinphoneCore(), zis->getUsername().c_str(), zis->getDomain().c_str());
+	if (!getCertificate() || !getKey()) {
+		const LinphoneAuthInfo *authInfo =
+		    _linphone_core_find_indexed_tls_auth_info(getLinphoneCore(), getUsername().c_str(), getDomain().c_str());
 		if (authInfo == NULL) {
-			ms_error("TunnelManager: Cannot find auth info for user '%s'", zis->getUsername().c_str());
+			ms_error("TunnelManager: Cannot find auth info for user '%s'", getUsername().c_str());
 			return -1;
 		}
 
-		if (!zis->getCertificate()) {
+		if (!getCertificate()) {
 			bctbx_x509_certificate_t *cert = bctbx_x509_certificate_new();
 			if (linphone_auth_info_get_tls_cert(authInfo)) {
 				const char *cert_buffer = linphone_auth_info_get_tls_cert(authInfo);
@@ -220,8 +217,7 @@ int TunnelManager::tlsCallbackClientCertificate(void *data,
 					char tmp[128];
 					bctbx_strerror(error, tmp, sizeof(tmp));
 
-					ms_error("TunnelManager: Cannot parse certificate for user '%s' : %s", zis->getUsername().c_str(),
-					         tmp);
+					ms_error("TunnelManager: Cannot parse certificate for user '%s' : %s", getUsername().c_str(), tmp);
 					bctbx_x509_certificate_free(cert);
 					return -1;
 				}
@@ -231,21 +227,20 @@ int TunnelManager::tlsCallbackClientCertificate(void *data,
 					char tmp[128];
 					bctbx_strerror(error, tmp, sizeof(tmp));
 
-					ms_error("TunnelManager: Cannot parse certificate file for user '%s' : %s",
-					         zis->getUsername().c_str(), tmp);
+					ms_error("TunnelManager: Cannot parse certificate file for user '%s' : %s", getUsername().c_str(),
+					         tmp);
 					bctbx_x509_certificate_free(cert);
 					return -1;
 				}
 			} else {
-				ms_error("TunnelManager: Cannot find TLS cert in auth info for user '%s'", zis->getUsername().c_str());
+				ms_error("TunnelManager: Cannot find TLS cert in auth info for user '%s'", getUsername().c_str());
 				bctbx_x509_certificate_free(cert);
 				return -1;
 			}
-
-			zis->setCertificate(cert);
+			setCertificate(cert);
 		}
 
-		if (!zis->getKey()) {
+		if (!getKey()) {
 			bctbx_signing_key_t *key = bctbx_signing_key_new();
 			if (linphone_auth_info_get_tls_key(authInfo)) {
 				const char *key_buffer = linphone_auth_info_get_tls_key(authInfo);
@@ -255,7 +250,7 @@ int TunnelManager::tlsCallbackClientCertificate(void *data,
 					char tmp[128];
 					bctbx_strerror(error, tmp, sizeof(tmp));
 
-					ms_error("TunnelManager: Cannot parse TLS key for user '%s' : %s", zis->getUsername().c_str(), tmp);
+					ms_error("TunnelManager: Cannot parse TLS key for user '%s' : %s", getUsername().c_str(), tmp);
 					bctbx_signing_key_free(key);
 					return -1;
 				}
@@ -265,28 +260,18 @@ int TunnelManager::tlsCallbackClientCertificate(void *data,
 					char tmp[128];
 					bctbx_strerror(error, tmp, sizeof(tmp));
 
-					ms_error("TunnelManager: Cannot parse TLS key file for user '%s' : %s", zis->getUsername().c_str(),
-					         tmp);
+					ms_error("TunnelManager: Cannot parse TLS key file for user '%s' : %s", getUsername().c_str(), tmp);
 					bctbx_signing_key_free(key);
 					return -1;
 				}
 			} else {
-				ms_error("TunnelManager: Cannot find TLS key in auth info for user '%s'", zis->getUsername().c_str());
+				ms_error("TunnelManager: Cannot find TLS key in auth info for user '%s'", getUsername().c_str());
 				bctbx_signing_key_free(key);
 				return -1;
 			}
 
-			zis->setKey(key);
+			setKey(key);
 		}
-	}
-
-	int err;
-	char tmp[512] = {0};
-
-	if ((err = bctbx_ssl_set_hs_own_cert(ctx, zis->getCertificate(), zis->getKey()))) {
-		bctbx_strerror(err, tmp, sizeof(tmp) - 1);
-		ms_error("TunnelManager: Cannot set retrieved TLS certificate [%s]", tmp);
-		return -1;
 	}
 
 	return 0;
@@ -302,16 +287,20 @@ void TunnelManager::startClient() {
 		}
 
 		mCore->sal->setTunnel(mTunnelClient);
+		if (!mUsername.empty()) {
+			tlsUpdateClientCertificate();
+		}
+
 		if (!mUseDualClient) {
 			static_cast<TunnelClient *>(mTunnelClient)->setStateCallback(tunnelCallback, this);
-			if (!mUsername.empty())
-				static_cast<TunnelClient *>(mTunnelClient)
-				    ->setClientCertificateCallback(tlsCallbackClientCertificate, this);
+			if (getCertificate() != NULL && getKey() != NULL) {
+				static_cast<TunnelClient *>(mTunnelClient)->setClientCertificate(getCertificate(), getKey());
+			}
 		} else {
 			static_cast<DualTunnelClient *>(mTunnelClient)->setStateCallback(tunnelCallback2, this);
-			if (!mUsername.empty())
-				static_cast<DualTunnelClient *>(mTunnelClient)
-				    ->setClientCertificateCallback(tlsCallbackClientCertificate, this);
+			if (getCertificate() != NULL && getKey() != NULL) {
+				static_cast<DualTunnelClient *>(mTunnelClient)->setClientCertificate(getCertificate(), getKey());
+			}
 		}
 	}
 

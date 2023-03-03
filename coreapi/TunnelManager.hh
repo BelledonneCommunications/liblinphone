@@ -222,7 +222,6 @@ private:
 	static void sUdpMirrorClientCallback(bool result, void *data);
 	static void networkReachableCb(LinphoneCore *lc, bool_t reachable);
 	static void globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
-	static int tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, const bctbx_list_t *names);
 
 private:
 	enum State {
@@ -250,6 +249,7 @@ private:
 	void setCertificate(bctbx_x509_certificate_t *certificate);
 	bctbx_signing_key_t *getKey() const;
 	void setKey(bctbx_signing_key_t *key);
+	int tlsUpdateClientCertificate();
 
 private:
 	LinphoneCore *mCore;
