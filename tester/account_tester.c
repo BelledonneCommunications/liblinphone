@@ -186,8 +186,51 @@ static void no_unregister_when_changing_transport(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void account_dependency_to_self(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dependent_proxy_rc");
+	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
+	LinphoneProxyConfig *marie_dependent_cfg =
+	    (LinphoneProxyConfig *)linphone_core_get_proxy_config_list(marie->lc)->next->data;
+	LinphoneAddress *marie_secondary_address = NULL;
+
+	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
+	BC_ASSERT_PTR_NOT_NULL(marie_dependent_cfg);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2));
+	BC_ASSERT_PTR_EQUAL(marie_cfg, linphone_proxy_config_get_dependency(marie_dependent_cfg));
+
+	marie_secondary_address = linphone_address_clone(linphone_proxy_config_get_identity_address(marie_dependent_cfg));
+
+	/* Clear all proxy config, wait for unregistration*/
+	linphone_core_clear_proxy_config(marie->lc);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared, 2));
+
+	LinphoneAccountParams *marie_dependent_params = linphone_account_params_new(marie->lc);
+	linphone_account_params_set_identity_address(marie_dependent_params, marie_secondary_address);
+	linphone_account_params_set_server_addr(marie_dependent_params, "sip:external.example.org:5068;transport=tcp");
+
+	bctbx_list_t *list = NULL;
+	const char *route = "sip:external.example.org:5068;transport=tcp";
+	list = bctbx_list_append(list, linphone_address_new(route));
+	linphone_account_params_set_routes_addresses(marie_dependent_params, list);
+	bctbx_list_free_with_data(list, (bctbx_list_free_func)linphone_address_unref);
+
+	linphone_account_params_set_register_enabled(marie_dependent_params, TRUE);
+	linphone_address_unref(marie_secondary_address);
+	LinphoneAccount *new_account = linphone_account_new(marie->lc, marie_dependent_params);
+	linphone_account_set_dependency(new_account, new_account);
+	linphone_core_add_account(marie->lc, new_account);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 3));
+
+	linphone_account_params_unref(marie_dependent_params);
+	linphone_account_unref(new_account);
+
+	linphone_core_manager_destroy(marie);
+}
+
 test_t account_tests[] = {
     TEST_NO_TAG("Simple account creation", simple_account_creation),
+    TEST_NO_TAG("Account dependency to self", account_dependency_to_self),
     TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
     TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport)};
 

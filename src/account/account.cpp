@@ -428,7 +428,7 @@ void Account::setDependency(std::shared_ptr<Account> dependency) {
 		return;
 	}
 
-	if (dependency) {
+	if (dependency && (dependency != getSharedFromThis())) {
 		mDependency = dependency;
 		mParams->mDependsOn = dependency->mParams->mIdKey;
 	} else {
