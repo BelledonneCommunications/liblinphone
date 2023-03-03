@@ -510,21 +510,19 @@ static void auth_failure(SalOp *op, SalAuthInfo *info) {
 		ai = (LinphoneAuthInfo *)_linphone_core_find_auth_info(lc, info->realm, info->username, info->domain,
 		                                                       info->algorithm, TRUE);
 		if (ai) {
-			LinphoneAuthMethod method = info->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
-			LinphoneAuthInfo *auth_info =
-			    linphone_core_create_auth_info(lc, info->username, NULL, NULL, NULL, info->realm, info->domain);
+			/* only HttpDigest Mode requests App for credentials, TLS client cert does not support callback so the
+			 * authentication credential MUST be provided by the application before the connection without prompt from
+			 * the library */
 			ms_message("%s/%s/%s/%s authentication fails.", info->realm, info->username, info->domain,
 			           info->mode == SalAuthModeHttpDigest ? "HttpDigest" : "Tls");
-			if (method == LinphoneAuthHttpDigest) {
+			if (info->mode == SalAuthModeHttpDigest) {
+				LinphoneAuthInfo *auth_info =
+				    linphone_core_create_auth_info(lc, info->username, NULL, NULL, NULL, info->realm, info->domain);
 				/*ask again for password if auth info was already supplied but apparently not working*/
 				L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(
 				    AuthInfo::toCpp(ai)->getSharedFromThis());
-			} else {
-				linphone_core_notify_authentication_requested(lc, auth_info, method);
-				// Deprecated
-				linphone_core_notify_auth_info_requested(lc, info->realm, info->username, info->domain);
+				linphone_auth_info_unref(auth_info);
 			}
-			linphone_auth_info_unref(auth_info);
 		}
 	}
 }
@@ -754,23 +752,20 @@ static bool_t auth_requested(Sal *sal, SalAuthInfo *sai) {
 	if (fill_auth_info(lc, sai)) {
 		return TRUE;
 	} else {
-		LinphoneAuthMethod method = sai->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
-		LinphoneAuthInfo *ai =
-		    linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
-		linphone_auth_info_set_algorithm(ai, sai->algorithm);
-
-		if (method == LinphoneAuthHttpDigest) {
+		/* only HttpDigest Mode requests App for credentials, TLS client cert does not support callback so the
+		 * authentication credential MUST be provided by the application before the connection without prompt from the
+		 * library */
+		if (sai->mode == SalAuthModeHttpDigest) {
+			LinphoneAuthInfo *ai =
+			    linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
+			linphone_auth_info_set_algorithm(ai, sai->algorithm);
 			/* Request app for new authentication information, but later. */
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
-		} else {
-			linphone_core_notify_authentication_requested(lc, ai, method);
-			// Deprecated callback
-			linphone_core_notify_auth_info_requested(lc, sai->realm, sai->username, sai->domain);
-		}
-		linphone_auth_info_unref(ai);
+			linphone_auth_info_unref(ai);
 
-		if (fill_auth_info(lc, sai)) {
-			return TRUE;
+			if (fill_auth_info(lc, sai)) {
+				return TRUE;
+			}
 		}
 		return FALSE;
 	}
