@@ -23,6 +23,7 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -42,6 +43,8 @@ class SalMediaDescription;
 class OfferAnswerEngine {
 
 public:
+	using optional_sal_stream_configuration = std::optional<SalStreamConfiguration>;
+
 	/**
 	 * Returns a media description to run the streams with, based on a local offer
 	 * and the returned response (remote).
@@ -96,7 +99,7 @@ private:
 	                                                   bool one_matching_codec,
 	                                                   const std::string &bundle_owner_mid,
 	                                                   const bool allowCapabilityNegotiation);
-	static std::pair<SalStreamConfiguration, bool>
+	static OfferAnswerEngine::optional_sal_stream_configuration
 	initiateIncomingConfiguration(MSFactory *factory,
 	                              const SalStreamDescription &local_cap,
 	                              const SalStreamDescription &remote_offer,
@@ -111,7 +114,7 @@ private:
 	                                                   const SalStreamDescription &remote_answer,
 	                                                   const bool allowCapabilityNegotiation);
 
-	static std::pair<SalStreamConfiguration, bool>
+	static OfferAnswerEngine::optional_sal_stream_configuration
 	initiateOutgoingConfiguration(MSFactory *factory,
 	                              const SalStreamDescription &local_offer,
 	                              const SalStreamDescription &remote_answer,

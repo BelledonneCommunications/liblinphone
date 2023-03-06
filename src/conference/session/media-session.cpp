@@ -3330,26 +3330,28 @@ void MediaSessionPrivate::updateCurrentParams() const {
 			if (salStream.enabled() && (salStream.getDirection() != SalStreamInactive) && salStream.hasSrtp()) {
 				const auto &streamCryptos = salStream.getCryptos();
 				const auto &stream = getStreamsGroup().getStream(idx);
-				for (const auto &crypto : streamCryptos) {
-					const auto &algo = crypto.algo;
-					if (isEncryptionMandatory()) {
-						srtpEncryptionMatch &= !ms_crypto_suite_is_unencrypted(algo) && stream->isEncrypted();
-					} else {
-						srtpEncryptionMatch &=
-						    ((ms_crypto_suite_is_unencrypted(algo)) ? !stream->isEncrypted() : stream->isEncrypted());
-					}
-
-					// To have a valid SRTP suite in the current call params, all streams must be encrypted and use the
-					// same suite
-					// TODO: get the stream status and SRTP encryption from mediastreamer so we can get the suite even
-					// when using ZRTP or DTLS as key exchange
-					if (srtpSuiteSet) {
-						if (srtpSuite != MSCryptoSuite2LinphoneSrtpSuite(algo)) {
-							srtpSuite = LinphoneSrtpSuiteInvalid;
+				if (stream) {
+					for (const auto &crypto : streamCryptos) {
+						const auto &algo = crypto.algo;
+						if (isEncryptionMandatory()) {
+							srtpEncryptionMatch &= !ms_crypto_suite_is_unencrypted(algo) && stream->isEncrypted();
+						} else {
+							srtpEncryptionMatch &= ((ms_crypto_suite_is_unencrypted(algo)) ? !stream->isEncrypted()
+							                                                               : stream->isEncrypted());
 						}
-					} else {
-						srtpSuiteSet = true;
-						srtpSuite = MSCryptoSuite2LinphoneSrtpSuite(algo);
+
+						// To have a valid SRTP suite in the current call params, all streams must be encrypted and use
+						// the same suite
+						// TODO: get the stream status and SRTP encryption from mediastreamer so we can get the suite
+						// even when using ZRTP or DTLS as key exchange
+						if (srtpSuiteSet && (srtpSuite != LinphoneSrtpSuiteInvalid)) {
+							if (srtpSuite != MSCryptoSuite2LinphoneSrtpSuite(algo)) {
+								srtpSuite = LinphoneSrtpSuiteInvalid;
+							}
+						} else {
+							srtpSuiteSet = true;
+							srtpSuite = MSCryptoSuite2LinphoneSrtpSuite(algo);
+						}
 					}
 				}
 			} else { // No Srtp on this stream -> srtpSuite is set to invalid
