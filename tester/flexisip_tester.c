@@ -1430,63 +1430,18 @@ static void redis_publish_subscribe(void) {
 	linphone_core_manager_destroy(marie2);
 }
 
-static void
-tls_authentication_requested_good(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
-	if (method == LinphoneAuthTls) {
-
-		char *cert = bc_tester_res("certificates/client/cert2.pem");
-		char *key = bc_tester_res("certificates/client/key2.pem");
-
-		linphone_auth_info_set_tls_cert_path(auth_info, cert);
-		linphone_auth_info_set_tls_key_path(auth_info, key);
-		linphone_core_add_auth_info(lc, auth_info);
-		bc_free(cert);
-		bc_free(key);
-	}
-}
-
-static void tls_authentication_requested_bad(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
-	if (method == LinphoneAuthTls) {
-
-		char *cert = bc_tester_res("certificates/client/cert2-signed-by-other-ca.pem");
-		char *key = bc_tester_res("certificates/client/key2-signed-by-other-ca.pem");
-
-		linphone_auth_info_set_tls_cert_path(auth_info, cert);
-		linphone_auth_info_set_tls_key_path(auth_info, key);
-		linphone_core_add_auth_info(lc, auth_info);
-		bc_free(cert);
-		bc_free(key);
-	}
-}
-
-static void
-tls_authentication_provide_altname_cert(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
-	if (method == LinphoneAuthTls) {
-
-		char *cert = bc_tester_res("certificates/client/cert3.pem");
-		char *key = bc_tester_res("certificates/client/key3.pem");
-
-		linphone_auth_info_set_tls_cert_path(auth_info, cert);
-		linphone_auth_info_set_tls_key_path(auth_info, key);
-		linphone_core_add_auth_info(lc, auth_info);
-		bc_free(cert);
-		bc_free(key);
-	}
-}
-
-static void tls_client_auth_try_register(const char *identity,
-                                         LinphoneCoreAuthenticationRequestedCb cb,
-                                         bool_t good_cert,
-                                         bool_t must_work) {
+static void tls_client_auth_try_register(
+    const char *identity, const char *cert, const char *key, bool_t good_cert, bool_t must_work) {
 	LinphoneCoreManager *lcm;
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	LinphoneProxyConfig *cfg;
 
 	lcm = linphone_core_manager_new("empty_rc");
 
-	linphone_core_cbs_set_authentication_requested(cbs, cb);
-	linphone_core_add_callbacks(lcm->lc, cbs);
-	linphone_core_cbs_unref(cbs);
+	/* The authInfo used to be set by a callback, this is not available anymore for TLS
+	 * it must be set explicitely before the connection begins */
+	linphone_core_set_tls_cert_path(lcm->lc, cert);
+	linphone_core_set_tls_key_path(lcm->lc, key);
+
 	cfg = linphone_core_create_proxy_config(lcm->lc);
 
 	linphone_proxy_config_set_server_addr(cfg, "sip:sip2.linphone.org:5063;transport=tls");
@@ -1495,20 +1450,20 @@ static void tls_client_auth_try_register(const char *identity,
 	linphone_proxy_config_set_identity_address(cfg, addr);
 	if (addr) linphone_address_unref(addr);
 	linphone_core_add_proxy_config(lcm->lc, cfg);
+
 	if (must_work) {
 		BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
 		BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationFailed, 0, int, "%d");
-		BC_ASSERT_EQUAL(lcm->stat.number_of_auth_info_requested, 1, int, "%d");
 	} else {
 		BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationFailed, 1));
 		BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationOk, 0, int, "%d");
-		/*we should expect at least 2 "auth_requested": one for the TLS certificate, another one because the server
-		 rejects the REGISTER with 401, with eventually MD5 + SHA256 challenge*/
+		/*we should expect at least 1 "auth_requested": none for the TLS certificate(is does not call the callback
+		 anymore), but one because the server rejects the REGISTER with 401, with eventually MD5 + SHA256 challenge*/
 		/*If the certificate isn't recognized at all, the connection will not happen and no SIP response will be
 		 * received from server.*/
-		if (good_cert) BC_ASSERT_GREATER(lcm->stat.number_of_auth_info_requested, 2, int, "%d");
+		if (good_cert) BC_ASSERT_GREATER(lcm->stat.number_of_auth_info_requested, 1, int, "%d");
 
-		else BC_ASSERT_EQUAL(lcm->stat.number_of_auth_info_requested, 1, int, "%d");
+		else BC_ASSERT_EQUAL(lcm->stat.number_of_auth_info_requested, 0, int, "%d");
 	}
 
 	linphone_proxy_config_unref(cfg);
@@ -1517,19 +1472,25 @@ static void tls_client_auth_try_register(const char *identity,
 
 void tls_client_auth_bad_certificate_cn(void) {
 	if (transport_supported(LinphoneTransportTls)) {
+		char *cert = bc_tester_res("certificates/client/cert2.pem");
+		char *key = bc_tester_res("certificates/client/key2.pem");
 		/*first register to the proxy with galadrielle's identity, and authenticate by supplying galadrielle's
 		 * certificate. It must work.*/
-		tls_client_auth_try_register("sip:galadrielle@sip.example.org", tls_authentication_requested_good, TRUE, TRUE);
+		tls_client_auth_try_register("sip:galadrielle@sip.example.org", cert, key, TRUE, TRUE);
 		/*now do the same thing, but trying to register as "Arwen". It must fail.*/
-		tls_client_auth_try_register("sip:arwen@sip.example.org", tls_authentication_requested_good, TRUE, FALSE);
+		tls_client_auth_try_register("sip:arwen@sip.example.org", cert, key, TRUE, FALSE);
+		bc_free(cert);
+		bc_free(key);
 	}
 }
 
 void tls_client_auth_bad_certificate(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		/*first register to the proxy with galadrielle's identity, and authenticate by supplying galadrielle's
-		 * certificate. It must work.*/
-		tls_client_auth_try_register("sip:galadrielle@sip.example.org", tls_authentication_requested_bad, FALSE, FALSE);
+		char *cert = bc_tester_res("certificates/client/cert2-signed-by-other-ca.pem");
+		char *key = bc_tester_res("certificates/client/key2-signed-by-other-ca.pem");
+		tls_client_auth_try_register("sip:galadrielle@sip.example.org", cert, key, FALSE, FALSE);
+		bc_free(cert);
+		bc_free(key);
 	}
 }
 
@@ -1540,8 +1501,12 @@ void tls_client_auth_bad_certificate(void) {
  */
 static void tls_client_rejected_due_to_unmatched_subject(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		tls_client_auth_try_register("sip:gandalf@sip.example.org", tls_authentication_provide_altname_cert, TRUE,
-		                             FALSE);
+		char *cert = bc_tester_res("certificates/client/cert3.pem");
+		char *key = bc_tester_res("certificates/client/key3.pem");
+		tls_client_auth_try_register("sip:gandalf@sip.example.org", cert, key, TRUE, FALSE);
+
+		bc_free(cert);
+		bc_free(key);
 	}
 }
 
@@ -2135,15 +2100,19 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	if (!transport_supported(LinphoneTransportTls)) return;
 
 	// 1. Register Gandalf.
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	LinphoneCoreManager *gandalf = linphone_core_manager_new("empty_rc");
+
+	/* The authInfo used to be set by a callback, this is not available anymore for TLS
+	 * it must be set explicitely before the connection begins */
+	char *cert = bc_tester_res("certificates/client/cert3.pem");
+	char *key = bc_tester_res("certificates/client/key3.pem");
+	linphone_core_set_tls_cert_path(gandalf->lc, cert);
+	linphone_core_set_tls_key_path(gandalf->lc, key);
+	bc_free(cert);
+	bc_free(key);
 
 	// Do not use Authentication module.
 	linphone_core_set_user_agent(gandalf->lc, "JweAuth Linphone", NULL);
-
-	linphone_core_cbs_set_authentication_requested(cbs, tls_authentication_provide_altname_cert);
-	linphone_core_add_callbacks(gandalf->lc, cbs);
-	linphone_core_cbs_unref(cbs);
 
 	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(gandalf->lc);
 
@@ -2157,7 +2126,6 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 
 	BC_ASSERT_TRUE(wait_for(gandalf->lc, NULL, &gandalf->stat.number_of_LinphoneRegistrationOk, 1));
 	BC_ASSERT_EQUAL(gandalf->stat.number_of_LinphoneRegistrationFailed, 0, int, "%d");
-	BC_ASSERT_EQUAL(gandalf->stat.number_of_auth_info_requested, 1, int, "%d");
 
 	// 2. Invite Pauline.
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");

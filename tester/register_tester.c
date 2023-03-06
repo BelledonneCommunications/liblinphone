@@ -1412,72 +1412,6 @@ static void tls_auth_info_client_cert_api_path(void) {
 	}
 }
 
-static void authentication_requested_2(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
-	char *cert = bc_tester_res("certificates/client/cert.pem");
-	char *key = bc_tester_res("certificates/client/key.pem");
-	BC_ASSERT_EQUAL(method, LinphoneAuthTls, int, "%i");
-	linphone_auth_info_set_tls_cert_path(auth_info, cert);
-	linphone_auth_info_set_tls_key_path(auth_info, key);
-	linphone_core_add_auth_info(lc, auth_info);
-	bc_free(cert);
-	bc_free(key);
-}
-
-static void tls_auth_info_client_cert_cb(void) {
-	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager *lcm;
-		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-		stats *counters;
-
-		lcm = linphone_core_manager_new("empty_rc");
-
-		linphone_core_cbs_set_authentication_requested(cbs, authentication_requested_2);
-		linphone_core_add_callbacks(lcm->lc, cbs);
-		linphone_core_cbs_unref(cbs);
-
-		counters = get_stats(lcm->lc);
-		counters->number_of_auth_info_requested = 0;
-		register_with_refresh(lcm, FALSE, auth_domain, "sip2.linphone.org:5063;transport=tls");
-		BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 1, int, "%d");
-		linphone_core_manager_destroy(lcm);
-	}
-}
-
-static void authentication_requested_3(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
-	char *cert_path = bc_tester_res("certificates/client/cert.pem");
-	char *key_path = bc_tester_res("certificates/client/key.pem");
-	char *cert = read_file(cert_path);
-	char *key = read_file(key_path);
-	BC_ASSERT_EQUAL(method, LinphoneAuthTls, int, "%i");
-	linphone_auth_info_set_tls_cert(auth_info, cert);
-	linphone_auth_info_set_tls_key(auth_info, key);
-	linphone_core_add_auth_info(lc, auth_info);
-	ms_free(cert);
-	ms_free(key);
-	bc_free(cert_path);
-	bc_free(key_path);
-}
-
-static void tls_auth_info_client_cert_cb_2(void) {
-	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager *lcm;
-		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-		stats *counters;
-
-		lcm = linphone_core_manager_new("empty_rc");
-
-		linphone_core_cbs_set_authentication_requested(cbs, authentication_requested_3);
-		linphone_core_add_callbacks(lcm->lc, cbs);
-		linphone_core_cbs_unref(cbs);
-
-		counters = get_stats(lcm->lc);
-		counters->number_of_auth_info_requested = 0;
-		register_with_refresh(lcm, FALSE, auth_domain, "sip2.linphone.org:5063;transport=tls");
-		BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 1, int, "%d");
-		linphone_core_manager_destroy(lcm);
-	}
-}
-
 static void register_get_gruu(void) {
 	LinphoneCoreManager *marie = ms_new0(LinphoneCoreManager, 1);
 	linphone_core_manager_init(marie, "marie_rc", NULL);
@@ -1768,8 +1702,6 @@ test_t register_tests[] = {
     TEST_NO_TAG("Global TLS client certificate authentication using API 2", tls_auth_global_client_cert_api_path),
     TEST_NO_TAG("AuthInfo TLS client certificate authentication using API", tls_auth_info_client_cert_api),
     TEST_NO_TAG("AuthInfo TLS client certificate authentication using API 2", tls_auth_info_client_cert_api_path),
-    TEST_NO_TAG("AuthInfo TLS client certificate authentication in callback", tls_auth_info_client_cert_cb),
-    TEST_NO_TAG("AuthInfo TLS client certificate authentication in callback 2", tls_auth_info_client_cert_cb_2),
     TEST_NO_TAG("Register get GRUU", register_get_gruu),
     TEST_NO_TAG("Register get GRUU for multi device", multi_devices_register_with_gruu),
     TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address),
