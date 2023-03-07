@@ -345,7 +345,7 @@ bctbx_list_t *linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard) {
 
 	for (auto &phoneNumber : vCard->belCard->getPhoneNumbers()) {
 		const char *value = phoneNumber->getValue().c_str();
-		result = bctbx_list_append(result, (char *)value);
+		result = bctbx_list_append(result, bctbx_strdup(value));
 	}
 	return result;
 }
@@ -554,7 +554,7 @@ bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(const Linpho
 	for (auto &property : vCard->belCard->getExtendedProperties()) {
 		if (strcmp(property->getName().c_str(), name) == 0) {
 			const char *value = property->getValue().c_str();
-			result = bctbx_list_append(result, (char *)value);
+			result = bctbx_list_append(result, bctbx_strdup(value));
 		}
 	}
 

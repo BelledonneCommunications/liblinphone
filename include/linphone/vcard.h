@@ -166,7 +166,7 @@ LINPHONE_PUBLIC void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, co
 /**
  * Returns the list of phone numbers in the vCard (all the TEL attributes) or NULL
  * @param vCard the #LinphoneVcard @notnil
- * @return The phone numbers as string. \bctbx_list{const char *} @maybenil @tobefreed
+ * @return The phone numbers as string. \bctbx_list{char *} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
 
@@ -288,7 +288,7 @@ LINPHONE_PUBLIC const char *linphone_vcard_get_url(const LinphoneVcard *vCard);
  * Get the vCard extended properties values per property name
  * @param vCard the #LinphoneVcard @notnil
  * @param name the name to filter the extended properties on. @notnil
- * @return The extended properties values as string. \bctbx_list{const char *} @maybenil @tobefreed
+ * @return The extended properties values as string. \bctbx_list{char *} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(const LinphoneVcard *vCard,
                                                                                     const char *name);

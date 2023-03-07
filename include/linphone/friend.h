@@ -90,7 +90,7 @@ LINPHONE_PUBLIC void linphone_friend_add_phone_number_with_label(LinphoneFriend 
 /**
  * Returns a list of phone numbers for this friend
  * @param linphone_friend #LinphoneFriend object @notnil
- * @return A list of phone numbers as string. \bctbx_list{const char *} @maybenil @tobefreed
+ * @return A list of phone numbers as string. \bctbx_list{char *} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_friend_get_phone_numbers(const LinphoneFriend *linphone_friend);
 
