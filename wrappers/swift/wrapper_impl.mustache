@@ -428,7 +428,12 @@ public class {{className}} : LinphoneObject
 				listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp!.pointee.next)
 			}
 			{{#isNotConst}}
-			bctbx_list_free(cList)
+				{{#isAllocated}}
+				bctbx_list_free_with_data(cList, bctbx_free)
+				{{/isAllocated}}
+				{{^isAllocated}}
+				bctbx_list_free(cList)
+				{{/isAllocated}}
 			{{/isNotConst}}
 			return swiftList
 			{{/is_string_list}}
@@ -442,7 +447,12 @@ public class {{className}} : LinphoneObject
 				listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp?.pointee.next)
 			}
 			{{#isNotConst}}
-			bctbx_list_free_with_data(cList, belle_sip_object_unref)
+				{{#isAllocated}}
+				bctbx_list_free_with_data(cList, belle_sip_object_unref)
+				{{/isAllocated}}
+				{{^isAllocated}}
+				bctbx_list_free(cList)
+				{{/isAllocated}}
 			{{/isNotConst}}
 			return swiftList
 			{{/is_class_list}}
@@ -618,7 +628,12 @@ public class {{className}} : LinphoneObject
 			listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp!.pointee.next)
 		}
 		{{#isNotConst}}
-		bctbx_list_free(cList)
+		{{#isAllocated}}
+			bctbx_list_free_with_data(cList, bctbx_free)
+		{{/isAllocated}}
+		{{^isAllocated}}
+			bctbx_list_free(cList)
+		{{/isAllocated}}
 		{{/isNotConst}}
 		return swiftList
 		{{/is_string_list}}
@@ -632,7 +647,12 @@ public class {{className}} : LinphoneObject
 			listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp?.pointee.next)
 		}
 		{{#isNotConst}}
-		bctbx_list_free(cList)
+		{{#isAllocated}}
+			bctbx_list_free_with_data(cList, belle_sip_object_unref)
+		{{/isAllocated}}
+		{{^isAllocated}}
+			bctbx_list_free(cList)
+		{{/isAllocated}}
 		{{/isNotConst}}
 		return swiftList
 		{{/is_class_list}}
