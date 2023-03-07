@@ -154,6 +154,7 @@ public:
 	void confirmGoClear();
 
 	uint32_t getSsrc(LinphoneStreamType type) const;
+	bool dtmfSendingAllowed() const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

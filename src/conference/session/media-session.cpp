@@ -2871,6 +2871,8 @@ int MediaSessionPrivate::restartInvite () {
 }
 
 void MediaSessionPrivate::setTerminated () {
+
+
 	freeResources();
 	CallSessionPrivate::setTerminated();
 }
@@ -2907,11 +2909,6 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const CallSession::UpdateMethod
 }
 
 void MediaSessionPrivate::terminate () {
-	L_Q();
-	if (q->isRecording()) {
-		lInfo() << "Media session is being terminated, stop recording";
-		q->stopRecording();
-	}
 	stopStreams();
 	localIsTerminator = true;
 	CallSessionPrivate::terminate();
@@ -3858,8 +3855,24 @@ LinphoneStatus MediaSession::resume () {
 	return 0;
 }
 
+bool MediaSession::dtmfSendingAllowed() const{
+	L_D();
+	switch (d->state){
+		case CallSession::State::End:
+		case CallSession::State::Released:
+		case CallSession::State::Error:
+			lWarning() << "Sending DTMF is not possible in state" << Utils::toString(d->state);
+			return false;
+		break;
+		default:
+		break;
+	}
+	return true;
+}
+
 LinphoneStatus MediaSession::sendDtmf (char dtmf) {
 	L_D();
+	if (!dtmfSendingAllowed()) return -1;
 	d->dtmfSequence = dtmf;
 	d->sendDtmf();
 	return 0;
@@ -3867,6 +3880,7 @@ LinphoneStatus MediaSession::sendDtmf (char dtmf) {
 
 LinphoneStatus MediaSession::sendDtmfs (const std::string &dtmfs) {
 	L_D();
+	if (!dtmfSendingAllowed()) return -1;
 	if (d->dtmfTimer) {
 		lWarning() << "MediaSession::sendDtmfs(): a DTMF sequence is already in place, canceling DTMF sequence";
 		return -2;
