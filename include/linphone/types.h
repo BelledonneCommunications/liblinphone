@@ -1215,12 +1215,13 @@ typedef enum _LinphoneSubscriptionState {
  * @ingroup misc
  **/
 typedef enum _LinphoneToneID {
-	LinphoneToneUndefined = 0,   /**< Not a tone */
-	LinphoneToneBusy = 1,        /**< Busy tone */
-	LinphoneToneCallWaiting = 2, /**< Call waiting tone */
-	LinphoneToneCallOnHold = 3,  /**< Call on hold tone */
-	LinphoneToneCallLost = 4,    /**< Tone played when call is abruptly disconnected (media lost)*/
-	LinphoneToneCallEnd = 5      /**< When the call end for any reason but lost */
+	LinphoneToneUndefined = 0,	/**< Not a tone */
+	LinphoneToneBusy = 1,		/**< Busy tone */
+	LinphoneToneCallWaiting = 2,	/**< Call waiting tone */
+	LinphoneToneCallOnHold = 3,	/**< Call on hold tone */
+	LinphoneToneCallLost = 4,	/**< Tone played when call is abruptly disconnected (media lost)*/
+	LinphoneToneCallEnd = 5,	/**< When the call end for any reason but lost */
+	LinphoneToneCallNotAnswered = 6	/**< When the call is not answered */
 } LinphoneToneID;
 
 /**

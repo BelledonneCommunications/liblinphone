@@ -5181,16 +5181,6 @@ LINPHONE_PUBLIC void linphone_core_enable_sdp_200_ack(LinphoneCore *core, bool_t
 LINPHONE_PUBLIC bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *core);
 
 /**
- * Assign an audio file to be played locally upon call failure, for a given reason.
- * @param core the core @notnil
- * @param reason the #LinphoneReason representing the failure error code.
- * @param audiofile a wav file to be played when such call failure happensd or NULL to disable it. @maybenil
- * @ingroup misc
- **/
-LINPHONE_PUBLIC void
-linphone_core_set_call_error_tone(LinphoneCore *core, LinphoneReason reason, const char *audiofile);
-
-/**
  * Assign an audio file to be played as a specific tone id.
  * This function typically allows to customize telephony tones per country.
  * @param core the core @notnil

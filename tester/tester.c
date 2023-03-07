@@ -4336,9 +4336,7 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 	         wait_for_until(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallStreamsRunning,
 	                        initial_callee.number_of_LinphoneCallStreamsRunning + 1, 2000);
 
-	BC_ASSERT_EQUAL(callee_stats->number_of_startErrorTone,
-	                callee_mgr->stat.number_of_LinphoneCallEnd + callee_mgr->stat.number_of_LinphoneCallError, int,
-	                "%d");
+	BC_ASSERT_GREATER(callee_stats->number_of_startNamedTone, callee_mgr->stat.number_of_LinphoneCallEnd + callee_mgr->stat.number_of_LinphoneCallError, int, "%d");
 
 	/* The ringtone, if it has started, must have stopped. */
 	BC_ASSERT_EQUAL(callee_stats->number_of_startRingtone - initial_callee_stats.number_of_startRingtone,

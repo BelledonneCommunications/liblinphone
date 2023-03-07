@@ -539,7 +539,7 @@ void _linphone_magic_search_notify_ldap_have_more_results(LinphoneMagicSearch *m
 const LinphoneParticipantImdnState *
 _linphone_participant_imdn_state_from_cpp_obj(const LinphonePrivate::ParticipantImdnState &state);
 
-LinphoneToneDescription *linphone_tone_description_new(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
+LinphoneToneDescription * linphone_tone_description_new(LinphoneToneID id, const char *audiofile);
 void linphone_tone_description_destroy(LinphoneToneDescription *obj);
 
 void linphone_task_list_init(LinphoneTaskList *t);

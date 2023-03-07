@@ -66,7 +66,6 @@ typedef enum _LinphoneProxyConfigAddressComparisonResult {
 typedef struct _LinphoneCoreToneManagerStats {
 	int number_of_startRingbackTone;
 	int number_of_startRingtone;
-	int number_of_startErrorTone;
 	int number_of_startNamedTone;
 	int number_of_stopRingbackTone;
 	int number_of_stopRingtone;

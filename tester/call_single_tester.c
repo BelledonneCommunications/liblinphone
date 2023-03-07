@@ -1290,8 +1290,9 @@ static void terminate_call_with_error(void) {
 	LinphoneCoreManager *callee_mgr = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *caller_mgr =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	const LinphoneCoreToneManagerStats *caller_tone_mgr_stats = linphone_core_get_tone_manager_stats(caller_mgr->lc);
 
-	LinphoneCall *out_call = linphone_core_invite_address(caller_mgr->lc, callee_mgr->identity);
+	LinphoneCall* out_call = linphone_core_invite_address(caller_mgr->lc,callee_mgr->identity);
 
 	linphone_call_ref(out_call);
 	ei = linphone_error_info_new();
@@ -1318,9 +1319,10 @@ static void terminate_call_with_error(void) {
 		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(ei), "Call refused for security reason");
 		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_protocol(ei), "SIP");
 	}
-	linphone_call_terminate_with_error_info(out_call, ei);
-	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallEnd, 1));
-	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallReleased, 1));
+	linphone_call_terminate_with_error_info(out_call,ei);
+	BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEnd,1));
+	BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallReleased,1));
+	BC_ASSERT_EQUAL(caller_tone_mgr_stats->number_of_startNamedTone, caller_mgr->stat.number_of_LinphoneCallEnd, int, "%d");
 
 	rei = linphone_call_get_error_info(call_callee);
 	BC_ASSERT_PTR_NOT_NULL(rei);
@@ -1495,8 +1497,8 @@ static void cancel_other_device_after_decline(void) {
 		BC_ASSERT_EQUAL(linphone_call_decline(call_callee, LinphoneReasonDeclined), 0, int, "%d");
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallEnd, 1));
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_stopRingbackTone, 1, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_startErrorTone, 1, int, "%d");
-		BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallReleased, 1));
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_startNamedTone, 1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallReleased, 1));
 
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallEnd, 1));
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_stopRingtone, 1, int, "%d");
@@ -1973,15 +1975,13 @@ static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia, bool_t
 		BC_ASSERT_EQUAL(marieToneManagerStats->number_of_stopRingtone, 1, int, "%d");
 
 		if (request_timeout || use_timeout)
-			BC_ASSERT_EQUAL(marieToneManagerStats->number_of_startErrorTone, 0, int, "%d");
+			BC_ASSERT_EQUAL(marieToneManagerStats->number_of_startNamedTone, 0, int, "%d");
 
 		BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_stopRingbackTone, 1, int, "%d");
-		BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_startErrorTone, 1, int, "%d");
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd, 1, int, "%d");
-		BC_ASSERT_EQUAL((use_timeout || request_timeout) ? pauline->stat.number_of_LinphoneCallError
-		                                                 : pauline->stat.number_of_LinphoneCallEnd,
-		                1, int, "%d");
-		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, (int *)&paulineToneManagerStats->number_of_stopTone, 1));
+		BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_startNamedTone, 1, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd,1, int, "%d");
+		BC_ASSERT_EQUAL((use_timeout || request_timeout) ? pauline->stat.number_of_LinphoneCallError : pauline->stat.number_of_LinphoneCallEnd,1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc, (int*)&paulineToneManagerStats->number_of_stopTone, 1));
 		BC_ASSERT_EQUAL(linphone_call_get_reason(in_call), reason, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(in_call)),
 		                (use_timeout || request_timeout) ? LinphoneCallMissed : LinphoneCallDeclined, int, "%d");

@@ -298,8 +298,7 @@ struct autoreplier_config {
 	const char *message; /* the path of the file to be played */
 };
 
-struct _LinphoneToneDescription {
-	LinphoneReason reason; /*the call error code*/
+struct _LinphoneToneDescription{
 	LinphoneToneID toneid; /*A tone type to play when this error arrives. This is played using tone generator*/
 	char *audiofile;       /*An override audio file to play instead, when this error arrives*/
 	/*Note that some tones are not affected to any error, in which case it is affected LinphoneReasonNone*/

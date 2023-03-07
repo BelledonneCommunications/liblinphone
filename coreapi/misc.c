@@ -624,12 +624,10 @@ LinphoneStatus linphone_core_migrate_to_multi_transport(LinphoneCore *lc) {
 	return 0;
 }
 
-LinphoneToneDescription *
-linphone_tone_description_new(LinphoneReason reason, LinphoneToneID id, const char *audiofile) {
-	LinphoneToneDescription *obj = ms_new0(LinphoneToneDescription, 1);
-	obj->reason = reason;
-	obj->toneid = id;
-	obj->audiofile = audiofile ? ms_strdup(audiofile) : NULL;
+LinphoneToneDescription * linphone_tone_description_new(LinphoneToneID id, const char *audiofile){
+	LinphoneToneDescription *obj=ms_new0(LinphoneToneDescription,1);
+	obj->toneid=id;
+	obj->audiofile=audiofile ? ms_strdup(audiofile) : NULL;
 	return obj;
 }
 
@@ -638,12 +636,8 @@ void linphone_tone_description_destroy(LinphoneToneDescription *obj) {
 	ms_free(obj);
 }
 
-void linphone_core_set_call_error_tone(LinphoneCore *lc, LinphoneReason reason, const char *audiofile) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().setTone(reason, LinphoneToneUndefined, audiofile);
-}
-
-void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *audiofile) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().setTone(LinphoneReasonNone, id, audiofile);
+void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *audiofile){
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().setTone(id, audiofile);
 }
 
 const MSCryptoSuite *linphone_core_generate_srtp_crypto_suites_array_from_string(LinphoneCore *lc, const char *config) {

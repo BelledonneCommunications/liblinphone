@@ -37,19 +37,14 @@ LINPHONE_BEGIN_NAMESPACE
 
 ToneManager::ToneManager(Core &core) : mCore(core) {
 	lInfo() << "[ToneManager] create ToneManager()";
-	mStats = {0, 0, 0, 0, 0, 0, 0};
+	mStats = {0, 0, 0, 0, 0, 0};
 
 	/* Assign default tones */
-	setTone(LinphoneReasonBusy, LinphoneToneBusy, NULL);
-	setTone(LinphoneReasonGone, LinphoneToneCallEnd, NULL);
-	setTone(LinphoneReasonNoResponse, LinphoneToneCallEnd, NULL);
-	setTone(LinphoneReasonDeclined, LinphoneToneCallEnd, NULL);
-	setTone(LinphoneReasonNone, LinphoneToneCallEnd, NULL);
-	setTone(LinphoneReasonTransferred, LinphoneToneCallEnd, NULL);
-	setTone(LinphoneReasonIOError, LinphoneToneCallLost, NULL);
-	setTone(LinphoneReasonNotAnswered, LinphoneToneCallLost, NULL);
-	setTone(LinphoneReasonServerTimeout, LinphoneToneCallLost, NULL);
-	setTone(LinphoneReasonUnknown, LinphoneToneCallLost, NULL);
+	setTone(LinphoneToneBusy, NULL);
+	setTone(LinphoneToneCallEnd, NULL);
+	setTone(LinphoneToneCallLost, NULL);
+	setTone(LinphoneToneCallNotAnswered, NULL);
+	setTone(LinphoneToneCallLost, NULL);
 }
 
 ToneManager::~ToneManager() {
@@ -144,26 +139,10 @@ void ToneManager::stopRingtone() {
 	}
 }
 
-void ToneManager::startErrorTone(LinphoneReason reason) {
-	lInfo() << "[ToneManager] " << __func__;
-	mStats.number_of_startErrorTone++;
-	LinphoneToneDescription *tone = getToneFromReason(reason);
-
-	if (tone) {
-		if (tone->audiofile) {
-			playFile(tone->audiofile);
-		} else if (tone->toneid != LinphoneToneUndefined) {
-			MSDtmfGenCustomTone dtmfTone = generateToneFromId(tone->toneid);
-			playTone(dtmfTone);
-		}
-	}
-}
-
 void ToneManager::startNamedTone(LinphoneToneID toneId) {
 	lInfo() << "[ToneManager] " << __func__;
 	mStats.number_of_startNamedTone++;
-	LinphoneToneDescription *tone = getToneFromId(toneId);
-
+	LinphoneToneDescription *tone = getTone(toneId);
 	if (tone && tone->audiofile) {
 		playFile(tone->audiofile);
 	} else {
@@ -402,16 +381,7 @@ void ToneManager::freeAudioResources() {
 // setup tones
 // ---------------------------------------------------
 
-LinphoneToneDescription *ToneManager::getToneFromReason(LinphoneReason reason) {
-	const bctbx_list_t *elem;
-	for (elem = getCore().getCCore()->tones; elem != NULL; elem = elem->next) {
-		LinphoneToneDescription *tone = (LinphoneToneDescription *)elem->data;
-		if (tone->reason == reason) return tone;
-	}
-	return NULL;
-}
-
-LinphoneToneDescription *ToneManager::getToneFromId(LinphoneToneID id) {
+LinphoneToneDescription *ToneManager::getTone(LinphoneToneID id) {
 	const bctbx_list_t *elem;
 	for (elem = getCore().getCCore()->tones; elem != NULL; elem = elem->next) {
 		LinphoneToneDescription *tone = (LinphoneToneDescription *)elem->data;
@@ -420,15 +390,14 @@ LinphoneToneDescription *ToneManager::getToneFromId(LinphoneToneID id) {
 	return NULL;
 }
 
-void ToneManager::setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile) {
+void ToneManager::setTone(LinphoneToneID id, const char *audiofile) {
 	LinphoneCore *lc = getCore().getCCore();
-	LinphoneToneDescription *tone = getToneFromReason(reason);
-
+	LinphoneToneDescription *tone = getTone(id);
 	if (tone) {
 		lc->tones = bctbx_list_remove(lc->tones, tone);
 		linphone_tone_description_destroy(tone);
 	}
-	tone = linphone_tone_description_new(reason, id, audiofile);
+	tone = linphone_tone_description_new(id, audiofile);
 	lc->tones = bctbx_list_append(lc->tones, tone);
 }
 
@@ -437,7 +406,7 @@ const LinphoneCoreToneManagerStats *ToneManager::getStats() const {
 }
 
 void ToneManager::resetStats() {
-	mStats = {0, 0, 0, 0, 0, 0, 0};
+	mStats = {0, 0, 0, 0, 0, 0};
 }
 
 MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
@@ -458,11 +427,17 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 			def.interval = 2000;
 			break;
 		case LinphoneToneBusy:
-			def.duration = 500;
-			def.frequencies[0] = 440;
-			def.interval = 500;
-			def.repeat_count = 3;
-			break;
+			def.duration=500;
+			def.frequencies[0]=440;
+			def.interval=500;
+			def.repeat_count=3;
+		break;
+		case LinphoneToneCallNotAnswered:
+			def.duration=250;
+			def.frequencies[0]=440;
+			def.interval=250;
+			def.repeat_count=3;
+		break;
 		case LinphoneToneCallLost:
 			def.duration = 250;
 			// def.frequencies[0]=480;  // Second frequency that is hide
@@ -566,7 +541,29 @@ void ToneManager::notifyOutgoingCallRinging(const std::shared_ptr<CallSession> &
 
 void ToneManager::notifyToneIndication(LinphoneReason reason) {
 	if (!linphone_core_tone_indications_enabled(getCore().getCCore())) return;
-	startErrorTone(reason);
+
+	lInfo() << "[ToneManager] " << __func__ << " reason " << std::string(linphone_reason_to_string(reason));
+
+	switch (reason) {
+		case LinphoneReasonUnknown:
+		case LinphoneReasonNone:
+			startNamedTone(LinphoneToneCallEnd);
+			break;
+		case LinphoneReasonNotAnswered:
+			startNamedTone(LinphoneToneCallNotAnswered);
+			break;
+		case LinphoneReasonBusy:
+			startNamedTone(LinphoneToneBusy);
+			break;
+		case LinphoneReasonTransferred:
+		case LinphoneReasonIOError:
+		case LinphoneReasonServerTimeout:
+			startNamedTone(LinphoneToneCallLost);
+			break;
+		default:
+			startNamedTone(LinphoneToneUndefined);
+			break;
+	}
 }
 
 bool ToneManager::inCallOrConference() const {
