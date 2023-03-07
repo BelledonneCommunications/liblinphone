@@ -172,6 +172,7 @@ public:
 	 * @param[in] ekt_params	All data needed to set the EKT
 	 */
 	void setEkt(const MSEKTParametersSet *ekt_params) const;
+	bool dtmfSendingAllowed() const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

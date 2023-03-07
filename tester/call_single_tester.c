@@ -4729,10 +4729,17 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		linphone_call_params_set_record_file(marieParams, filepath);
 		BC_ASSERT_TRUE(call_succeeded = call_with_params(marie, pauline, marieParams, paulineParams));
 		BC_ASSERT_PTR_NOT_NULL(callInst = linphone_core_get_current_call(marie->lc));
+		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 		if ((call_succeeded == TRUE) && (callInst != NULL)) {
 			if (!early_record) {
 				ms_message("call_recording(): start recording into %s", filepath);
 				linphone_call_start_recording(callInst);
+			}
+			if (strcmp(format, "mkv") == 0) {
+				VideoStream *pauline_vstream =
+				    (VideoStream *)linphone_call_get_stream(pauline_call, LinphoneStreamTypeVideo);
+				/* make sure that Pauline receives a RTCP FIR (Full Intra Request) requested by Marie's recorder.*/
+				BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline_vstream->ms_video_stat.counter_rcvd_fir, 1));
 			}
 			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 5000);
 			linphone_call_stop_recording(callInst);
