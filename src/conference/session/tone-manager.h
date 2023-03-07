@@ -71,9 +71,8 @@ class ToneManager {
 	void resetStats();
 
 	// Tone configuration.
-	LinphoneToneDescription *getToneFromReason(LinphoneReason reason);
-	LinphoneToneDescription *getToneFromId(LinphoneToneID id);
-	void setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
+	LinphoneToneDescription *getTone(LinphoneToneID id);
+	void setTone(LinphoneToneID id, const char *audiofile);
 
     private:
         using AudioResourceType = enum {

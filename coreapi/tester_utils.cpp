@@ -230,7 +230,7 @@ void linphone_core_reset_tone_manager_stats(LinphoneCore *lc) {
 }
 
 const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id){
-	LinphoneToneDescription *tone = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().getToneFromId(id);
+	LinphoneToneDescription *tone = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().getTone(id);
 	return tone ? tone->audiofile : NULL;
 }
 
