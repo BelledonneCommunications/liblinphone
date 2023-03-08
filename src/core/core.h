@@ -110,7 +110,9 @@ class LINPHONE_PUBLIC Core : public Object {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
 
-	~Core();
+	static const std::string limeSpec;
+
+	virtual ~Core();
 
 	// Return a new Core instance. Entry point of Linphone.
 	static std::shared_ptr<Core> create(LinphoneCore *cCore);
@@ -255,6 +257,7 @@ public:
 
 	void addSpec(const std::string &spec);
 	void addSpec(const std::string &specName, const std::string &specVersion);
+	bool hasSpec(const std::string &spec) const;
 	void removeSpec(const std::string &spec);
 	void setSpecs(const std::string &specs);
 	void setSpecs(const std::map<std::string, std::string> &specsMap);

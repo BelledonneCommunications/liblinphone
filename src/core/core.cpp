@@ -88,6 +88,8 @@ const Utils::Version CorePrivate::conferenceProtocolVersion(1, 0);
 const Utils::Version CorePrivate::groupChatProtocolVersion(1, 2);
 const Utils::Version CorePrivate::ephemeralProtocolVersion(1, 1);
 
+const std::string Core::limeSpec("lime");
+
 void CorePrivate::init() {
 	L_Q();
 
@@ -694,7 +696,7 @@ void Core::enableLimeX3dh(bool enable) {
 			}
 			d->imee.reset();
 		}
-		removeSpec("lime");
+		removeSpec(Core::limeSpec);
 		return;
 	}
 	if (limeX3dhEnabled()) return;
@@ -723,7 +725,9 @@ void Core::enableLimeX3dh(bool enable) {
 			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, prov, getSharedFromThis());
 			setEncryptionEngine(engine);
 			d->registerListener(engine);
-			addSpec("lime");
+			if (!hasSpec(Core::limeSpec)) {
+				addSpec(Core::limeSpec);
+			}
 #else
 			lWarning() << "Lime X3DH support is not available";
 #endif
@@ -823,35 +827,23 @@ void Core::addSpec(const std::string &specName, const std::string &specVersion) 
 void Core::addSpec(const std::string &spec) {
 	const auto specNameVersion = getSpecNameVersion(spec);
 	addSpec(specNameVersion.first, specNameVersion.second);
->>>>>>> 1d56ba0bd (Store linphone specs in a map to avoid duplication whenever updating their version)
+}
+
+bool Core::hasSpec(const std::string &spec) const {
+	L_D();
+	const auto specNameVersion = getSpecNameVersion(spec);
+	const auto specIt = d->specs.find(specNameVersion.first);
+	return (specIt != d->specs.end());
 }
 
 void Core::removeSpec(const std::string &spec) {
 	L_D();
-	d->specs.remove_if([&pSpec](const std::string &spec) {
-		if (spec.compare(pSpec) == 0) return true;
-		/* Check also ignoring the version number after the slash */
-		istringstream istr(spec);
-		string specWithoutVersion;
-		if (std::getline(istr, specWithoutVersion, '/')) {
-			if (specWithoutVersion == pSpec) return true;
-		}
-		return false;
-	});
-	setSpecsList(d->specs);
-}
-
-const std::list<std::string> &Core::getSpecsList() const {
-	L_D();
-	return d->specs;
-=======
 	const auto specNameVersion = getSpecNameVersion(spec);
 	const auto specIt = d->specs.find(specNameVersion.first);
 	if (specIt != d->specs.end()) {
 		d->specs.erase(specIt);
 		setSpecs(d->specs);
 	}
->>>>>>> 1d56ba0bd (Store linphone specs in a map to avoid duplication whenever updating their version)
 }
 
 // Used to set specs for linphone_config
