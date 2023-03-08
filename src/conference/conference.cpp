@@ -727,8 +727,12 @@ Conference::createConferenceInfo(const std::shared_ptr<Address> &organizer,
 	return info;
 }
 
-#ifdef HAVE_DB_STORAGE
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void Conference::updateSubjectInConferenceInfo(const std::string &subject) const {
+#ifdef HAVE_DB_STORAGE
 	if ((getState() == ConferenceInterface::State::CreationPending) ||
 	    (getState() == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
@@ -746,9 +750,18 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 			}
 		}
 	}
+#endif // HAVE_DB_STORAGE
 }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
 void Conference::updateParticipantsInConferenceInfo(const std::shared_ptr<Address> &participantAddress) const {
+#ifdef HAVE_DB_STORAGE
 	if ((getState() == ConferenceInterface::State::CreationPending) ||
 	    (getState() == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
@@ -771,7 +784,10 @@ void Conference::updateParticipantsInConferenceInfo(const std::shared_ptr<Addres
 			}
 		}
 	}
-}
 #endif // HAVE_DB_STORAGE
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 LINPHONE_END_NAMESPACE

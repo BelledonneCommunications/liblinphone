@@ -1,6 +1,6 @@
 ############################################################################
-# FindCpuFeatures.cmake
-# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
+# FindTunnel.cmake
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,34 +20,24 @@
 #
 ############################################################################
 #
-# - Find the Android cpufeatures include file and library
+# - Find the tunnel include files and library
 #
-#  CPUFEATURES_FOUND - system has libcpufeatures
-#  CPUFEATURES_INCLUDE_DIRS - The libcpufeatures include directory
-#  CPUFEATURES_LIBRARIES - The libraries needed to use libcpufeatures
+#  TUNNEL_FOUND - system has lib tunnel
+#  TUNNEL_INCLUDE_DIRS - the tunnel include directory
+#  TUNNEL_LIBRARIES - The library needed to use tunnel
 
-if(TARGET cpufeatures)
+if(TARGET tunnel)
 
-	set(CPUFEATURES_LIBRARIES cpufeatures)
-	get_target_property(CPUFEATURES_INCLUDE_DIRS cpufeatures INTERFACE_INCLUDE_DIRECTORIES)
+	set(TUNNEL_LIBRARIES tunnel)
+	get_target_property(TUNNEL_INCLUDE_DIRS tunnel INTERFACE_INCLUDE_DIRECTORIES)
 
-else()
-	
-	find_library(CPUFEATURES_LIBRARIES
-		NAMES cpufeatures
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(Tunnel
+		DEFAULT_MSG
+		TUNNEL_INCLUDE_DIRS TUNNEL_LIBRARIES
 	)
-	find_path(CPUFEATURES_INCLUDE_DIRS
-		NAMES cpu-features.h
-		PATH_SUFFIXES include
-	)
+
+	mark_as_advanced(TUNNEL_INCLUDE_DIRS TUNNEL_LIBRARIES)
 
 endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CpuFeatures
-	DEFAULT_MSG
-	CPUFEATURES_INCLUDE_DIRS
-	CPUFEATURES_LIBRARIES
-)
-
-mark_as_advanced(CPUFEATURES_INCLUDE_DIRS CPUFEATURES_LIBRARIES)

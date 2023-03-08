@@ -1,6 +1,6 @@
 ############################################################################
-# FindCpuFeatures.cmake
-# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
+# FindOrtp.cmake
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,34 +20,24 @@
 #
 ############################################################################
 #
-# - Find the Android cpufeatures include file and library
+# - Find the ortp include files and library
 #
-#  CPUFEATURES_FOUND - system has libcpufeatures
-#  CPUFEATURES_INCLUDE_DIRS - The libcpufeatures include directory
-#  CPUFEATURES_LIBRARIES - The libraries needed to use libcpufeatures
+#  ORTP_FOUND - system has lib ortp
+#  ORTP_INCLUDE_DIRS - the ortp include directory
+#  ORTP_LIBRARIES - The library needed to use ortp
 
-if(TARGET cpufeatures)
+if(TARGET ortp)
 
-	set(CPUFEATURES_LIBRARIES cpufeatures)
-	get_target_property(CPUFEATURES_INCLUDE_DIRS cpufeatures INTERFACE_INCLUDE_DIRECTORIES)
+	set(ORTP_LIBRARIES ortp)
+	get_target_property(ORTP_INCLUDE_DIRS ortp INTERFACE_INCLUDE_DIRECTORIES)
 
-else()
-	
-	find_library(CPUFEATURES_LIBRARIES
-		NAMES cpufeatures
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(Ortp
+		DEFAULT_MSG
+		ORTP_INCLUDE_DIRS ORTP_LIBRARIES
 	)
-	find_path(CPUFEATURES_INCLUDE_DIRS
-		NAMES cpu-features.h
-		PATH_SUFFIXES include
-	)
+
+	mark_as_advanced(ORTP_INCLUDE_DIRS ORTP_LIBRARIES)
 
 endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CpuFeatures
-	DEFAULT_MSG
-	CPUFEATURES_INCLUDE_DIRS
-	CPUFEATURES_LIBRARIES
-)
-
-mark_as_advanced(CPUFEATURES_INCLUDE_DIRS CPUFEATURES_LIBRARIES)

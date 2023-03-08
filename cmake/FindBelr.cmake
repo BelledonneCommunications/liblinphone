@@ -1,6 +1,6 @@
 ############################################################################
-# FindCpuFeatures.cmake
-# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
+# FindBelr.cmake
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,34 +20,24 @@
 #
 ############################################################################
 #
-# - Find the Android cpufeatures include file and library
+# - Find the belr include files and library
 #
-#  CPUFEATURES_FOUND - system has libcpufeatures
-#  CPUFEATURES_INCLUDE_DIRS - The libcpufeatures include directory
-#  CPUFEATURES_LIBRARIES - The libraries needed to use libcpufeatures
+#  BELR_FOUND - system has lib belr
+#  BELR_INCLUDE_DIRS - the belr include directory
+#  BELR_LIBRARIES - The library needed to use belr
 
-if(TARGET cpufeatures)
+if(TARGET belr)
 
-	set(CPUFEATURES_LIBRARIES cpufeatures)
-	get_target_property(CPUFEATURES_INCLUDE_DIRS cpufeatures INTERFACE_INCLUDE_DIRECTORIES)
+	set(BELR_LIBRARIES belr)
+	get_target_property(BELR_INCLUDE_DIRS belr INTERFACE_INCLUDE_DIRECTORIES)
 
-else()
-	
-	find_library(CPUFEATURES_LIBRARIES
-		NAMES cpufeatures
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(Belr
+		DEFAULT_MSG
+		BELR_INCLUDE_DIRS BELR_LIBRARIES
 	)
-	find_path(CPUFEATURES_INCLUDE_DIRS
-		NAMES cpu-features.h
-		PATH_SUFFIXES include
-	)
+
+	mark_as_advanced(BELR_INCLUDE_DIRS BELR_LIBRARIES)
 
 endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CpuFeatures
-	DEFAULT_MSG
-	CPUFEATURES_INCLUDE_DIRS
-	CPUFEATURES_LIBRARIES
-)
-
-mark_as_advanced(CPUFEATURES_INCLUDE_DIRS CPUFEATURES_LIBRARIES)

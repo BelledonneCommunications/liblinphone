@@ -1,6 +1,6 @@
 ############################################################################
-# FindCpuFeatures.cmake
-# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
+# FindIntegratedXercesC.txt
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,34 +20,23 @@
 #
 ############################################################################
 #
-# - Find the Android cpufeatures include file and library
+# - Find the xercesc include file and library
 #
-#  CPUFEATURES_FOUND - system has libcpufeatures
-#  CPUFEATURES_INCLUDE_DIRS - The libcpufeatures include directory
-#  CPUFEATURES_LIBRARIES - The libraries needed to use libcpufeatures
+#  XercesC_FOUND - system has xercesc
+#  XercesC_INCLUDE_DIRS - the xercesc include directory
+#  XercesC_LIBRARIES - The libraries needed to use xercesc
 
-if(TARGET cpufeatures)
+if(TARGET xerces-c)
 
-	set(CPUFEATURES_LIBRARIES cpufeatures)
-	get_target_property(CPUFEATURES_INCLUDE_DIRS cpufeatures INTERFACE_INCLUDE_DIRECTORIES)
+  set(XercesC_LIBRARIES xerces-c)
+	get_target_property(XercesC_INCLUDE_DIRS xerces-c INTERFACE_INCLUDE_DIRECTORIES)
 
-else()
-	
-	find_library(CPUFEATURES_LIBRARIES
-		NAMES cpufeatures
-	)
-	find_path(CPUFEATURES_INCLUDE_DIRS
-		NAMES cpu-features.h
-		PATH_SUFFIXES include
-	)
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(IntegratedXercesC
+  	DEFAULT_MSG
+  	XercesC_INCLUDE_DIRS XercesC_LIBRARIES
+  )
+
+  mark_as_advanced(XercesC_INCLUDE_DIRS XercesC_LIBRARIES)
 
 endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CpuFeatures
-	DEFAULT_MSG
-	CPUFEATURES_INCLUDE_DIRS
-	CPUFEATURES_LIBRARIES
-)
-
-mark_as_advanced(CPUFEATURES_INCLUDE_DIRS CPUFEATURES_LIBRARIES)

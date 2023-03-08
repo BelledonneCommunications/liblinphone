@@ -39,7 +39,7 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/linpho
 )
 add_custom_target(linphone-cxx-wrapper ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/linphone.hh" "${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc")
 
-add_library(linphone++ SHARED
+add_library(linphone++
 	object.cc
 	tools.cc
 	${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc
@@ -70,10 +70,10 @@ target_include_directories(linphone++
 	PUBLIC
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 		$<INSTALL_INTERFACE:include>
 	PRIVATE
 		${PROJECT_BINARY_DIR}/include
-		${PROJECT_SOURCE_DIR}/include
 )
 set_target_properties(linphone++ PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 
@@ -96,11 +96,6 @@ write_basic_package_version_file(
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY AnyNewerVersion
 )
-if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-	export(EXPORT LinphoneCxxTargets
-		FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxTargets.cmake"
-	)
-endif()
 configure_file(LinphoneCxxConfig.cmake.in LinphoneCxxConfig.cmake @ONLY)
 
 install(EXPORT LinphoneCxxTargets

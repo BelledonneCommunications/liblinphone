@@ -1,6 +1,6 @@
 ############################################################################
-# FindCpuFeatures.cmake
-# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
+# FindBelcard.cmake
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,34 +20,24 @@
 #
 ############################################################################
 #
-# - Find the Android cpufeatures include file and library
+# - Find the belcard include files and library
 #
-#  CPUFEATURES_FOUND - system has libcpufeatures
-#  CPUFEATURES_INCLUDE_DIRS - The libcpufeatures include directory
-#  CPUFEATURES_LIBRARIES - The libraries needed to use libcpufeatures
+#  BELCARD_FOUND - system has lib belcard
+#  BELCARD_INCLUDE_DIRS - the belcard include directory
+#  BELCARD_LIBRARIES - The library needed to use belcard
 
-if(TARGET cpufeatures)
+if(TARGET belcard)
 
-	set(CPUFEATURES_LIBRARIES cpufeatures)
-	get_target_property(CPUFEATURES_INCLUDE_DIRS cpufeatures INTERFACE_INCLUDE_DIRECTORIES)
+	set(BELCARD_LIBRARIES belcard)
+	get_target_property(BELCARD_INCLUDE_DIRS belcard INTERFACE_INCLUDE_DIRECTORIES)
 
-else()
-	
-	find_library(CPUFEATURES_LIBRARIES
-		NAMES cpufeatures
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(Belcard
+		DEFAULT_MSG
+		BELCARD_INCLUDE_DIRS BELCARD_LIBRARIES
 	)
-	find_path(CPUFEATURES_INCLUDE_DIRS
-		NAMES cpu-features.h
-		PATH_SUFFIXES include
-	)
+
+	mark_as_advanced(BELCARD_INCLUDE_DIRS BELCARD_LIBRARIES)
 
 endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CpuFeatures
-	DEFAULT_MSG
-	CPUFEATURES_INCLUDE_DIRS
-	CPUFEATURES_LIBRARIES
-)
-
-mark_as_advanced(CPUFEATURES_INCLUDE_DIRS CPUFEATURES_LIBRARIES)

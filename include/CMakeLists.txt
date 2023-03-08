@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -168,8 +168,8 @@ set(LINPHONE_HEADER_FILES ${ROOT_HEADER_FILES} ${C_API_HEADER_FILES} ${ENUMS_HEA
 set(LINPHONE_HEADER_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}" PARENT_SCOPE)
 
 # ------------------------------------------------------------------------------
-if (APPLE AND ENABLE_SHARED)
-#Must put these variables in parent scope in order to use set_source_files_properties in the right place for Apple
+if(APPLE)
+	# Must put these variables in parent scope in order to use set_source_files_properties in the right place for Apple
 	set(LINPHONE_ROOT_HEADER_FILES ${ROOT_HEADER_FILES} PARENT_SCOPE)
 	set(LINPHONE_C_API_HEADER_FILES ${C_API_HEADER_FILES} PARENT_SCOPE)
 	set(LINPHONE_ENUMS_HEADER_FILES ${ENUMS_HEADER_FILES} PARENT_SCOPE)

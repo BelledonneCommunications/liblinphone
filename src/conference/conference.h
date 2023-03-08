@@ -202,10 +202,8 @@ public:
 
 	void clearParticipants();
 
-#ifdef HAVE_DB_STORAGE
 	void updateSubjectInConferenceInfo(const std::string &subject) const;
 	void updateParticipantsInConferenceInfo(const std::shared_ptr<Address> &participantAddress) const;
-#endif // HAVE_DB_STORAGE
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,

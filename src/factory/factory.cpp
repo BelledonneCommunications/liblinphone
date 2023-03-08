@@ -22,12 +22,21 @@
 
 #ifdef QRCODE_ENABLED
 #define ZX_USE_UTF8
+#ifdef ZXING_USE_BUILD_INTERFACE
+#include <BarcodeFormat.h>
+#include <BitMatrix.h>
+#include <BitMatrixIO.h>
+#include <CharacterSet.h>
+#include <MultiFormatWriter.h>
+#include <TextUtfEncoding.h>
+#else
 #include <ZXing/BarcodeFormat.h>
 #include <ZXing/BitMatrix.h>
 #include <ZXing/BitMatrixIO.h>
 #include <ZXing/CharacterSet.h>
 #include <ZXing/MultiFormatWriter.h>
 #include <ZXing/TextUtfEncoding.h>
+#endif
 #ifdef JPEG_ENABLED
 #include <mediastreamer2/msvideo.h>
 #include <turbojpeg.h>

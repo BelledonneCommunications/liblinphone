@@ -1,6 +1,6 @@
 ############################################################################
-# FindTurboJpeg.txt
-# Copyright (C) 2016  Belledonne Communications, Grenoble France
+# FindTurboJpeg.cmake
+# Copyright (C) 2016-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -26,30 +26,40 @@
 #  TURBOJPEG_INCLUDE_DIRS - the turbojpeg include directory
 #  TURBOJPEG_LIBRARIES - The libraries needed to use turbojpeg
 
-find_path(TURBOJPEG_INCLUDE_DIRS
-	NAMES turbojpeg.h
-	PATH_SUFFIXES include
-)
-if(TURBOJPEG_INCLUDE_DIRS)
+if(TARGET turbojpeg)
+
+	set(TURBOJPEG_LIBRARIES turbojpeg)
+	get_target_property(TURBOJPEG_INCLUDE_DIRS turbojpeg INTERFACE_INCLUDE_DIRECTORIES)
 	set(HAVE_TURBOJPEG_H 1)
-endif()
 
-find_library(TURBOJPEG_LIBRARIES
-	NAMES turbojpeg turbojpeg-static
-	PATH_SUFFIXES bin lib
-)
+else()
 
-if(TURBOJPEG_INCLUDE_DIRS AND TURBOJPEG_LIBRARIES AND NOT MSVC)
-	include(CheckCSourceCompiles)
-	include(CMakePushCheckState)
+	find_path(TURBOJPEG_INCLUDE_DIRS
+		NAMES turbojpeg.h
+		PATH_SUFFIXES include
+	)
+	if(TURBOJPEG_INCLUDE_DIRS)
+		set(HAVE_TURBOJPEG_H 1)
+	endif()
 
-	cmake_push_check_state(RESET)
-	list(APPEND CMAKE_REQUIRED_INCLUDES ${TURBOJPEG_INCLUDE_DIRS})
-	list(APPEND CMAKE_REQUIRED_LIBRARIES ${TURBOJPEG_LIBRARIES})
-	set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror")
-	if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Wno-error=unused-command-line-argument")
-  endif()
+	find_library(TURBOJPEG_LIBRARIES
+		NAMES turbojpeg turbojpeg-static
+		PATH_SUFFIXES bin lib
+	)
+
+	if(TURBOJPEG_INCLUDE_DIRS AND TURBOJPEG_LIBRARIES AND NOT MSVC)
+		include(CheckCSourceCompiles)
+		include(CMakePushCheckState)
+
+		cmake_push_check_state(RESET)
+		list(APPEND CMAKE_REQUIRED_INCLUDES ${TURBOJPEG_INCLUDE_DIRS})
+		list(APPEND CMAKE_REQUIRED_LIBRARIES ${TURBOJPEG_LIBRARIES})
+		set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror")
+		if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Wno-error=unused-command-line-argument")
+	  endif()
+	endif()
+
 endif()
 
 include(FindPackageHandleStandardArgs)

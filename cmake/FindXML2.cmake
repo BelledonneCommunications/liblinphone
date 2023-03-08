@@ -1,6 +1,6 @@
 ############################################################################
-# FindXML2.txt
-# Copyright (C) 2015  Belledonne Communications, Grenoble France
+# FindXML2.cmake
+# Copyright (C) 2015-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -26,27 +26,37 @@
 #  XML2_INCLUDE_DIRS - the libxml2 include directory
 #  XML2_LIBRARIES - The libraries needed to use libxml2
 
-if(APPLE AND NOT IOS)
-	set(XML2_HINTS "/usr")
-endif()
-if(XML2_HINTS)
-	set(XML2_LIBRARIES_HINTS "${XML2_HINTS}/lib")
-endif()
+if(TARGET xml2)
 
-find_path(XML2_INCLUDE_DIRS
-	NAMES libxml/xmlreader.h
-	HINTS "${XML2_HINTS}"
-	PATH_SUFFIXES include/libxml2
-)
-
-if(XML2_INCLUDE_DIRS)
+	set(XML2_LIBRARIES xml2)
+	get_target_property(XML2_INCLUDE_DIRS xml2 INTERFACE_INCLUDE_DIRECTORIES)
 	set(HAVE_LIBXML_XMLREADER_H 1)
-endif()
 
-find_library(XML2_LIBRARIES
-	NAMES xml2
-	HINTS "${XML2_LIBRARIES_HINTS}"
-)
+else()
+
+	if(APPLE AND NOT IOS)
+		set(XML2_HINTS "/usr")
+	endif()
+	if(XML2_HINTS)
+		set(XML2_LIBRARIES_HINTS "${XML2_HINTS}/lib")
+	endif()
+
+	find_path(XML2_INCLUDE_DIRS
+		NAMES libxml/xmlreader.h
+		HINTS "${XML2_HINTS}"
+		PATH_SUFFIXES include/libxml2
+	)
+
+	if(XML2_INCLUDE_DIRS)
+		set(HAVE_LIBXML_XMLREADER_H 1)
+	endif()
+
+	find_library(XML2_LIBRARIES
+		NAMES xml2
+		HINTS "${XML2_LIBRARIES_HINTS}"
+	)
+
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(XML2

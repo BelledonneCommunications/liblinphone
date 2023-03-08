@@ -1,6 +1,6 @@
 ############################################################################
 # FindSqlite3.cmake
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# Copyright (C) 2014-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -26,27 +26,37 @@
 #  SQLITE3_INCLUDE_DIRS - the sqlite3 include directory
 #  SQLITE3_LIBRARIES - The libraries needed to use sqlite3
 
-if(APPLE AND NOT IOS)
-	set(SQLITE3_HINTS "/usr")
-endif()
-if(SQLITE3_HINTS)
-	set(SQLITE3_LIBRARIES_HINTS "${SQLITE3_HINTS}/lib")
-endif()
+if(TARGET sqlite3)
 
-find_path(SQLITE3_INCLUDE_DIRS
-	NAMES sqlite3.h
-	HINTS "${SQLITE3_HINTS}"
-	PATH_SUFFIXES include
-)
-
-if(SQLITE3_INCLUDE_DIRS)
+	set(SQLITE3_LIBRARIES sqlite3)
+	get_target_property(SQLITE3_INCLUDE_DIRS sqlite3 INTERFACE_INCLUDE_DIRECTORIES)
 	set(HAVE_SQLITE3_H 1)
-endif()
 
-find_library(SQLITE3_LIBRARIES
-	NAMES sqlite3
-	HINTS "${SQLITE3_LIBRARIES_HINTS}"
-)
+else()
+
+	if(APPLE AND NOT IOS)
+		set(SQLITE3_HINTS "/usr")
+	endif()
+	if(SQLITE3_HINTS)
+		set(SQLITE3_LIBRARIES_HINTS "${SQLITE3_HINTS}/lib")
+	endif()
+
+	find_path(SQLITE3_INCLUDE_DIRS
+		NAMES sqlite3.h
+		HINTS "${SQLITE3_HINTS}"
+		PATH_SUFFIXES include
+	)
+
+	if(SQLITE3_INCLUDE_DIRS)
+		set(HAVE_SQLITE3_H 1)
+	endif()
+
+	find_library(SQLITE3_LIBRARIES
+		NAMES sqlite3
+		HINTS "${SQLITE3_LIBRARIES_HINTS}"
+	)
+
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Sqlite3

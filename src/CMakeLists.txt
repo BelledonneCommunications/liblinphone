@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -65,7 +65,7 @@ if (LIME_FOUND)
 	list(APPEND PUBLIC_LINK_LIBS ${LIME_TARGETNAME})
 endif ()
 if(ENABLE_LIME OR ENABLE_LIME_X3DH)
-	list(APPEND LINK_LIBS bzrtp)
+	list(APPEND LINK_LIBS ${BZRTP_LIBRARIES})
 endif()
 if(ZLIB_FOUND)
 	list(APPEND INTERFACE_LIBS z)
@@ -674,63 +674,59 @@ if ((CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.
 	)
 endif()
 
-if(ENABLE_STATIC)
-	add_library(linphone-static STATIC ${LINPHONE_HEADER_FILES}
-		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
-		$<TARGET_OBJECTS:linphone-coreapi-static>
-	)
-
-	if (APPLE)
-		set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
-	else()
-		set_target_properties(linphone-static PROPERTIES OUTPUT_NAME liblinphone)
-	endif()
-	set_target_properties(linphone-static PROPERTIES PREFIX "")
-
-	target_include_directories(linphone-static PUBLIC
-		$<INSTALL_INTERFACE:include/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
-		PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS}
-	)
-	target_link_libraries(linphone-static
-		PUBLIC ${PUBLIC_LINK_LIBS}
-		PRIVATE ${LINK_LIBS}
-	)
-	if (ENABLE_FLEXIAPI)
-		target_link_libraries(linphone-static PUBLIC jsoncpp_static)
-	endif()
-
-
-	if(APPLE)
-		target_link_libraries(linphone-static PUBLIC ${APPLE_LIBS})
-	endif()
-	install(TARGETS linphone-static EXPORT ${EXPORT_TARGETS_NAME}Targets
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	)
-endif()
-
-if(ENABLE_SHARED)
+if(BUILD_SHARED_LIBS)
 	set(SWIFT_MODULE_FILES
 		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/module.modulemap"
 		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/swift-umbrella.h"
 	)
 	set(LINPHONE_RESOURCES ${GRAMMAR_FILES} ${SOUND_FILES} ${RING_FILES} ${ROOTCA_FILE})
-	
 	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
-	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
-		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
-		$<TARGET_OBJECTS:linphone-coreapi>
-	)
+endif()
 
+add_library(linphone ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
+	${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
+	$<TARGET_OBJECTS:linphone-coreapi>
+)
+if(APPLE)
+	set_target_properties(linphone PROPERTIES OUTPUT_NAME linphone)
+else()
+	set_target_properties(linphone PROPERTIES OUTPUT_NAME liblinphone)
+endif()
+set_target_properties(linphone PROPERTIES PREFIX "")
+set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)
+if(NOT ANDROID)
+	# Do not version shared library on Android
+	set_target_properties(linphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
+endif()
+target_include_directories(linphone PUBLIC
+	$<INSTALL_INTERFACE:include/>
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
+	PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS}
+)
+target_link_libraries(linphone
+	PUBLIC ${PUBLIC_LINK_LIBS}
+	PRIVATE ${LINK_LIBS}
+)
+if(ENABLE_FLEXIAPI)
+	target_link_libraries(linphone PUBLIC ${JSONCPP_LIBRARIES})
+endif()
+
+if(APPLE)
+	target_link_libraries(linphone PUBLIC ${APPLE_LIBS})
+endif()
+
+if(ICONV_FOUND)
 	if(APPLE)
-		set_target_properties(linphone PROPERTIES OUTPUT_NAME linphone)
+		# Prevent conflict between the system iconv.h header and the one from macports.
+		target_compile_options(linphone PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
 	else()
-		set_target_properties(linphone PROPERTIES OUTPUT_NAME liblinphone)
+		target_include_directories(linphone PRIVATE ${ICONV_INCLUDE_DIRS})
 	endif()
-	set_target_properties(linphone PROPERTIES PREFIX "")
+endif()
+
+if(BUILD_SHARED_LIBS)
 	if(MSVC)
 		set_target_properties(linphone PROPERTIES PDB_NAME liblinphone)
 	endif()
@@ -755,37 +751,7 @@ if(ENABLE_SHARED)
 			PUBLIC_HEADER "${one_header_file}"
 		)
 	endif()
-	set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)
-	if(NOT ANDROID)
-		# Do not version shared library on Android
-		set_target_properties(linphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
-	endif()
 
-	target_include_directories(linphone PUBLIC
-		$<INSTALL_INTERFACE:include/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
-		PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS}
-	)
-	target_link_libraries(linphone
-		PUBLIC ${PUBLIC_LINK_LIBS}
-		PRIVATE ${LINK_LIBS}
-	)
-	if (ENABLE_FLEXIAPI)
-		if(APPLE)
-			# jsoncpp does not build into framework,
-			# so we need static link on osx/ios
-			target_link_libraries(linphone PUBLIC jsoncpp_static)
-		else()
-			target_link_libraries(linphone PUBLIC jsoncpp_lib)
-		endif()
-	endif()
-
-
-	if(APPLE)
-		target_link_libraries(linphone PUBLIC ${APPLE_LIBS})
-	endif()
 	if(WIN32)
 		# Export Xerces and Soci symbols.
 		if(ENABLE_DB_STORAGE)
@@ -806,33 +772,15 @@ if(ENABLE_SHARED)
 		)
 		endif()
 	endif()
-	install(TARGETS linphone EXPORT ${EXPORT_TARGETS_NAME}Targets
-		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		FRAMEWORK DESTINATION Frameworks
-		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	)
 endif()
 
-if(ICONV_FOUND)
-	if(APPLE)
-		# Prevent conflict between the system iconv.h header and the one from macports.
-		if(ENABLE_STATIC)
-			target_compile_options(linphone-static PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
-		endif()
-		if(ENABLE_SHARED)
-			target_compile_options(linphone PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
-		endif()
-	else()
-		if(ENABLE_STATIC)
-			target_include_directories(linphone-static PRIVATE ${ICONV_INCLUDE_DIRS})
-		endif()
-		if(ENABLE_SHARED)
-			target_include_directories(linphone PRIVATE ${ICONV_INCLUDE_DIRS})
-		endif()
-	endif()
-endif()
+install(TARGETS linphone EXPORT ${EXPORT_TARGETS_NAME}Targets
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	FRAMEWORK DESTINATION Frameworks
+	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)
 
 if(ROOTCA_FILE)
 	install(FILES ${ROOTCA_FILE}

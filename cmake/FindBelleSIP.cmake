@@ -1,6 +1,6 @@
 ############################################################################
-# FindCpuFeatures.cmake
-# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
+# FindBelleSIP.cmake
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,34 +20,26 @@
 #
 ############################################################################
 #
-# - Find the Android cpufeatures include file and library
+# - Find the bellesip include files and library
 #
-#  CPUFEATURES_FOUND - system has libcpufeatures
-#  CPUFEATURES_INCLUDE_DIRS - The libcpufeatures include directory
-#  CPUFEATURES_LIBRARIES - The libraries needed to use libcpufeatures
+#  BELLESIP_FOUND - system has lib bellesip
+#  BELLESIP_INCLUDE_DIRS - the bellesip include directory
+#  BELLESIP_LIBRARIES - The library needed to use bellesip
+#  BELLESIP_TARGETNAME - The target name for the bellesip library
 
-if(TARGET cpufeatures)
+if(TARGET bellesip)
 
-	set(CPUFEATURES_LIBRARIES cpufeatures)
-	get_target_property(CPUFEATURES_INCLUDE_DIRS cpufeatures INTERFACE_INCLUDE_DIRECTORIES)
+	set(BELLESIP_LIBRARIES bellesip)
+	set(BELLESIP_TARGETNAME bellesip)
+	get_target_property(BELLESIP_INCLUDE_DIRS bellesip INTERFACE_INCLUDE_DIRECTORIES)
 
-else()
-	
-	find_library(CPUFEATURES_LIBRARIES
-		NAMES cpufeatures
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(BelleSIP
+		DEFAULT_MSG
+		BELLESIP_INCLUDE_DIRS BELLESIP_LIBRARIES
 	)
-	find_path(CPUFEATURES_INCLUDE_DIRS
-		NAMES cpu-features.h
-		PATH_SUFFIXES include
-	)
+
+	mark_as_advanced(BELLESIP_INCLUDE_DIRS BELLESIP_LIBRARIES)
 
 endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CpuFeatures
-	DEFAULT_MSG
-	CPUFEATURES_INCLUDE_DIRS
-	CPUFEATURES_LIBRARIES
-)
-
-mark_as_advanced(CPUFEATURES_INCLUDE_DIRS CPUFEATURES_LIBRARIES)

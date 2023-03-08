@@ -439,7 +439,7 @@ if(ANDROID OR IOS)
 		set_target_properties(linphonetester PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER com.belledonne-communications.linphonetester
-			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+			MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
 			RESOURCE "${LINPHONETESTER_RESOURCES}"
 			PUBLIC_HEADER "${HEADER_FILES}"
 		)
@@ -495,6 +495,9 @@ if(NOT ANDROID)
 		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
 		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
 		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
+		if(APPLE)
+			target_link_libraries(liblinphone_tester "-framework AppKit")
+		endif()
 		if(MSVC)
 				if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 						install(FILES $<TARGET_PDB_FILE:liblinphone_tester>
@@ -510,7 +513,7 @@ if(NOT ANDROID)
 			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
 		if(APPLE)
-			configure_file("${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/Info.plist")
+			configure_file("${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/Info.plist")
 		endif()
 
 		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})

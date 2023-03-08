@@ -1,6 +1,6 @@
 ############################################################################
 # LinphoneConfig.cmake
-# Copyright (C) 2015  Belledonne Communications, Grenoble France
+# Copyright (C) 2015-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -36,20 +36,13 @@ include("${CMAKE_CURRENT_LIST_DIR}/LinphoneTargets.cmake")
 set(LINPHONE_TARGETNAME linphone)
 
 
-if(@ENABLE_SHARED@)
+if(@BUILD_SHARED_LIBS@)
 	set(LINPHONE_LIBRARIES ${LINPHONE_TARGETNAME})
 else()
-	set(LINPHONE_TARGETNAME linphone-static)
-	if(TARGET ${LINPHONE_TARGETNAME})
-		if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-			set(LINPHONE_LIBRARIES ${LINPHONE_TARGETNAME})
-		else()
-			get_target_property(LINPHONE_LIBRARIES ${LINPHONE_TARGETNAME} LOCATION)
-		endif()
-		get_target_property(LINPHONE_LINK_LIBRARIES ${LINPHONE_TARGETNAME} INTERFACE_LINK_LIBRARIES)
-		if(LINPHONE_LINK_LIBRARIES)
-			list(APPEND LINPHONE_LIBRARIES ${LINPHONE_LINK_LIBRARIES})
-		endif()
+	get_target_property(LINPHONE_LIBRARIES ${LINPHONE_TARGETNAME} LOCATION)
+	get_target_property(LINPHONE_LINK_LIBRARIES ${LINPHONE_TARGETNAME} INTERFACE_LINK_LIBRARIES)
+	if(LINPHONE_LINK_LIBRARIES)
+		list(APPEND LINPHONE_LIBRARIES ${LINPHONE_LINK_LIBRARIES})
 	endif()
 endif()
 get_target_property(LINPHONE_INCLUDE_DIRS ${LINPHONE_TARGETNAME} INTERFACE_INCLUDE_DIRECTORIES)

@@ -129,6 +129,9 @@ target_include_directories(linphone-daemon PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${L
 target_link_libraries(linphone-daemon ${LINPHONE_LIBS_FOR_TOOLS} mediastreamer ortp bctoolbox bellesip ${XSD_LIBRARIES})
 set_target_properties(linphone-daemon PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 set_target_properties(linphone-daemon PROPERTIES LINKER_LANGUAGE CXX)
+if(APPLE)
+	target_link_libraries(linphone-daemon "-framework AppKit")
+endif()
 
 add_executable(linphone-daemon-pipetest ${DAEMON_PIPETEST_SOURCE_FILES})
 target_link_libraries(linphone-daemon-pipetest ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer)

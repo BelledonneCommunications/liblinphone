@@ -1,6 +1,6 @@
 ############################################################################
 # FindSupport.cmake
-# Copyright (C) 2017  Belledonne Communications, Grenoble France
+# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -25,9 +25,17 @@
 #  SUPPORT_FOUND - system has libsupport
 #  SUPPORT_LIBRARIES - The libraries needed to use libsupport
 
-find_library(SUPPORT_LIBRARIES
-	NAMES support
-)
+if(TARGET support)
+
+	set(SUPPORT_LIBRARIES support)
+
+else()
+
+	find_library(SUPPORT_LIBRARIES
+		NAMES support
+	)
+
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Support

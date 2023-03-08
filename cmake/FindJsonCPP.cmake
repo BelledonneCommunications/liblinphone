@@ -1,6 +1,6 @@
 ############################################################################
-# FindCpuFeatures.cmake
-# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
+# FindJsonCPP.cmake
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,34 +20,29 @@
 #
 ############################################################################
 #
-# - Find the Android cpufeatures include file and library
+# - Find the jsoncpp include files and library
 #
-#  CPUFEATURES_FOUND - system has libcpufeatures
-#  CPUFEATURES_INCLUDE_DIRS - The libcpufeatures include directory
-#  CPUFEATURES_LIBRARIES - The libraries needed to use libcpufeatures
+#  JSONCPP_FOUND - system has lib jsoncpp
+#  JSONCPP_INCLUDE_DIRS - the jsoncpp include directory
+#  JSONCPP_LIBRARIES - The library needed to use jsoncpp
 
-if(TARGET cpufeatures)
+if(TARGET jsoncpp_lib OR TARGET jsoncpp_static)
 
-	set(CPUFEATURES_LIBRARIES cpufeatures)
-	get_target_property(CPUFEATURES_INCLUDE_DIRS cpufeatures INTERFACE_INCLUDE_DIRECTORIES)
+	if(TARGET jsoncpp_lib)
+		set(JSONCPP_LIBRARIES jsoncpp_lib)
+		get_target_property(JSONCPP_INCLUDE_DIRS jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
+	else()
+		set(JSONCPP_LIBRARIES jsoncpp_static)
+		get_target_property(JSONCPP_INCLUDE_DIRS jsoncpp_static INTERFACE_INCLUDE_DIRECTORIES)
+	endif()
 
-else()
-	
-	find_library(CPUFEATURES_LIBRARIES
-		NAMES cpufeatures
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(JsonCPP
+		DEFAULT_MSG
+		JSONCPP_INCLUDE_DIRS JSONCPP_LIBRARIES
 	)
-	find_path(CPUFEATURES_INCLUDE_DIRS
-		NAMES cpu-features.h
-		PATH_SUFFIXES include
-	)
+
+	mark_as_advanced(JSONCPP_INCLUDE_DIRS JSONCPP_LIBRARIES)
 
 endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CpuFeatures
-	DEFAULT_MSG
-	CPUFEATURES_INCLUDE_DIRS
-	CPUFEATURES_LIBRARIES
-)
-
-mark_as_advanced(CPUFEATURES_INCLUDE_DIRS CPUFEATURES_LIBRARIES)

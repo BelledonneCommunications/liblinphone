@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright (c) 2021 Belledonne Communications SARL.
+# Copyright (c) 2021-2023 Belledonne Communications SARL.
 #
 # This file is part of liblinphone.
 #
@@ -24,47 +24,55 @@
 #  OPENLDAP_INCLUDE_DIRS - the OpenLDAP include directory
 #  OPENLDAP_LIBRARIES - The libraries needed to use OpenLDAP
 
+if(TARGET ldap)
 
-#Note : There are double find* because of priority given to the HINTS first. The second call will keep the result if there is one.
-#INCLUDES
-find_path(OPENLDAP_INCLUDE_DIRS
-	NAMES ldap.h
-	PATH_SUFFIXES include/openldap
-	HINTS "${CMAKE_INSTALL_PREFIX}"
-	NO_DEFAULT_PATH
-)
-find_path(OPENLDAP_INCLUDE_DIRS
-	NAMES ldap.h
-	PATH_SUFFIXES include/openldap
-	HINTS "${CMAKE_INSTALL_PREFIX}"
-)
+	set(OPENLDAP_LIBRARIES ldap)
+	get_target_property(OPENLDAP_INCLUDE_DIRS ldap INTERFACE_INCLUDE_DIRECTORIES)
 
-#LDAP
-find_library(LDAP_LIB
-	NAMES ldap libldap
-	HINTS "${CMAKE_INSTALL_PREFIX}"
-	PATH_SUFFIXES lib
-	NO_DEFAULT_PATH
-)
-find_library(LDAP_LIB
-	NAMES ldap libldap
-	HINTS "${CMAKE_INSTALL_PREFIX}"
-	PATH_SUFFIXES lib
-)
+else()
 
-#LBER
-find_library(LBER_LIB
-	NAMES lber liblber
-	HINTS "${CMAKE_INSTALL_PREFIX}"
-	PATH_SUFFIXES lib
-	NO_DEFAULT_PATH
-)
-find_library(LBER_LIB
-	NAMES lber liblber
-	HINTS "${CMAKE_INSTALL_PREFIX}"
-	PATH_SUFFIXES lib
-)
-set(OPENLDAP_LIBRARIES ${LDAP_LIB} ${LBER_LIB})
+	#Note : There are double find* because of priority given to the HINTS first. The second call will keep the result if there is one.
+	#INCLUDES
+	find_path(OPENLDAP_INCLUDE_DIRS
+		NAMES ldap.h
+		PATH_SUFFIXES include/openldap
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		NO_DEFAULT_PATH
+	)
+	find_path(OPENLDAP_INCLUDE_DIRS
+		NAMES ldap.h
+		PATH_SUFFIXES include/openldap
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+	)
+
+	#LDAP
+	find_library(LDAP_LIB
+		NAMES ldap libldap
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		PATH_SUFFIXES lib
+		NO_DEFAULT_PATH
+	)
+	find_library(LDAP_LIB
+		NAMES ldap libldap
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		PATH_SUFFIXES lib
+	)
+
+	#LBER
+	find_library(LBER_LIB
+		NAMES lber liblber
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		PATH_SUFFIXES lib
+		NO_DEFAULT_PATH
+	)
+	find_library(LBER_LIB
+		NAMES lber liblber
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		PATH_SUFFIXES lib
+	)
+	set(OPENLDAP_LIBRARIES ${LDAP_LIB} ${LBER_LIB})
+
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(OpenLDAP

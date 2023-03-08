@@ -1,6 +1,5 @@
-
 #[[
-Copyright (c) 2010-2022 Belledonne Communications SARL.
+Copyright (c) 2010-2023 Belledonne Communications SARL.
 
 This file is part of Liblinphone 
 (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -83,6 +82,7 @@ set(LINPHONE_SOURCE_FILES_CXX
 if(ENABLE_JAVA_WRAPPER)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX ${LINPHONE_JNI_SOURCES})
 	set_source_files_properties(${LINPHONE_JNI_SOURCES} PROPERTIES GENERATED TRUE)
+	set_source_files_properties(${LINPHONE_JNI_SOURCES} PROPERTIES INCLUDE_DIRECTORIES "${CPUFEATURES_INCLUDE_DIRS}")
 endif()
 
 set(LINPHONE_SOURCE_FILES_OBJC)
@@ -131,33 +131,26 @@ bc_apply_compile_flags(LINPHONE_SOURCE_FILES_CXX STRICT_OPTIONS_CPP STRICT_OPTIO
 bc_apply_compile_flags(LINPHONE_SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 
 
-if (ENABLE_STATIC)
-	add_library(linphone-coreapi-static OBJECT
-		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
-	)
-	target_include_directories(linphone-coreapi-static PRIVATE ${LINPHONE_INCLUDE_DIRS})
-	add_dependencies(linphone-coreapi-static liblinphone-git-version)
-	if (ENABLE_JAVA_WRAPPER)
-		add_dependencies(linphone-coreapi-static linphonej)
-	endif()
-endif ()
+add_library(linphone-coreapi OBJECT
+	${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
+)
+target_include_directories(linphone-coreapi PRIVATE
+	${LINPHONE_INCLUDE_DIRS}
+	$<TARGET_PROPERTY:${BELLESIP_TARGETNAME},INTERFACE_INCLUDE_DIRECTORIES>
+	$<TARGET_PROPERTY:belr,INTERFACE_INCLUDE_DIRECTORIES>
+	$<TARGET_PROPERTY:mediastreamer,INTERFACE_INCLUDE_DIRECTORIES>
+	$<TARGET_PROPERTY:ortp,INTERFACE_INCLUDE_DIRECTORIES>
+)
+if(BELCARD_FOUND)
+	target_include_directories(linphone-coreapi PRIVATE $<TARGET_PROPERTY:belcard,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+add_dependencies(linphone-coreapi liblinphone-git-version)
+if(ENABLE_JAVA_WRAPPER)
+      add_dependencies(linphone-coreapi linphonej)
+endif()
 
-if (ENABLE_SHARED)
-	add_library(linphone-coreapi OBJECT
-		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
-	)
+if(BUILD_SHARED_LIBS)
 	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
-	target_include_directories(linphone-coreapi PRIVATE
-		${LINPHONE_INCLUDE_DIRS}
-		$<TARGET_PROPERTY:${BELLESIP_TARGETNAME},INTERFACE_INCLUDE_DIRECTORIES>
-		$<TARGET_PROPERTY:belr,INTERFACE_INCLUDE_DIRECTORIES>
-		$<TARGET_PROPERTY:mediastreamer,INTERFACE_INCLUDE_DIRECTORIES>
-		$<TARGET_PROPERTY:ortp,INTERFACE_INCLUDE_DIRECTORIES>
-	)
-	add_dependencies(linphone-coreapi liblinphone-git-version)
-	if (ENABLE_JAVA_WRAPPER)
-        add_dependencies(linphone-coreapi linphonej)
-	endif()
 endif ()
 
 

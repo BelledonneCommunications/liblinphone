@@ -1,6 +1,6 @@
 ############################################################################
-# FindZxing.txt
-# Copyright (C) 2018  Belledonne Communications, Grenoble France
+# FindZxing.cmake
+# Copyright (C) 2018-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -26,24 +26,34 @@
 #  ZXING_INCLUDE_DIRS - the zxing include directory
 #  ZXING_LIBRARIES - The libraries needed to use zxing
 
-find_path(ZXING_INCLUDE_DIRS
-	NAMES
-		ZXing/BarcodeFormat.h
-		ZXing/BitHacks.h
-		ZXing/ByteArray.h
-		ZXing/CharacterSet.h
-		ZXing/Flags.h
-		ZXing/GTIN.h
-		ZXing/TextUtfEncoding.h
-		ZXing/ZXAlgorithms.h
-		ZXing/ZXConfig.h
-	PATH_SUFFIXES include
-)
+if(TARGET ZXing)
 
-find_library(ZXING_LIBRARIES
-	NAMES ZXing libZXing
-	PATH_SUFFIXES Frameworks bin lib lib64
-)
+	set(ZXING_LIBRARIES ZXing)
+	get_target_property(ZXING_INCLUDE_DIRS ZXing INTERFACE_INCLUDE_DIRECTORIES)
+	set(ZXING_USE_BUILD_INTERFACE ON)
+
+else()
+
+	find_path(ZXING_INCLUDE_DIRS
+		NAMES
+			ZXing/BarcodeFormat.h
+			ZXing/BitHacks.h
+			ZXing/ByteArray.h
+			ZXing/CharacterSet.h
+			ZXing/Flags.h
+			ZXing/GTIN.h
+			ZXing/TextUtfEncoding.h
+			ZXing/ZXAlgorithms.h
+			ZXing/ZXConfig.h
+		PATH_SUFFIXES include
+	)
+
+	find_library(ZXING_LIBRARIES
+		NAMES ZXing libZXing
+		PATH_SUFFIXES Frameworks bin lib lib64
+	)
+
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ZXing
