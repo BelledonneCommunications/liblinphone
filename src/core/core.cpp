@@ -88,6 +88,8 @@ const Utils::Version CorePrivate::conferenceProtocolVersion(1, 0);
 const Utils::Version CorePrivate::groupChatProtocolVersion(1, 2);
 const Utils::Version CorePrivate::ephemeralProtocolVersion(1, 1);
 
+const std::string Core::limeSpec("lime");
+
 void CorePrivate::init () {
 	L_Q();
 
@@ -689,7 +691,7 @@ void Core::enableLimeX3dh (bool enable) {
 			}
 			d->imee.reset();
 		}
-		removeSpec("lime");
+		removeSpec(Core::limeSpec);
 		return;
 	}
 	if (limeX3dhEnabled())
@@ -717,7 +719,9 @@ void Core::enableLimeX3dh (bool enable) {
 			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, prov, getSharedFromThis());
 			setEncryptionEngine(engine);
 			d->registerListener(engine);
-			addSpec("lime");
+			if (!hasSpec(Core::limeSpec)) {
+				addSpec(Core::limeSpec);
+			}
 #else
 			lWarning() << "Lime X3DH support is not available";
 #endif
@@ -817,6 +821,13 @@ void Core::addSpec (const std::string &specName, const std::string &specVersion)
 void Core::addSpec (const std::string &spec) {
 	const auto specNameVersion = getSpecNameVersion(spec);
 	addSpec(specNameVersion.first, specNameVersion.second);
+}
+
+bool Core::hasSpec(const std::string &spec) const {
+	L_D();
+	const auto specNameVersion = getSpecNameVersion(spec);
+	const auto specIt = d->specs.find(specNameVersion.first);
+	return (specIt != d->specs.end());
 }
 
 void Core::removeSpec(const std::string &spec) {
