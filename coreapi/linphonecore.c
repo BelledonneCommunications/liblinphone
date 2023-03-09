@@ -988,11 +988,16 @@ static void process_io_error_upload_log_collection(void *data, BCTBX_UNUSED(cons
 
 static void process_auth_requested_upload_log_collection(void *data, BCTBX_UNUSED(belle_sip_auth_event_t *event)) {
 	LinphoneCore *core = (LinphoneCore *)data;
-	ms_error("Error during log collection upload: auth requested to connect %s",
-	         linphone_core_get_log_collection_upload_server_url(core));
-	linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered,
-	                                                         "Auth requested");
-	clean_log_collection_upload_context(core);
+
+	/* get default identity from core to try to provide credentials */
+	LinphoneAddress *address = linphone_address_new(linphone_core_get_identity(core));
+	/* Notes: When connecting to the trace server, the user is already registered on the flexisip server
+	 * the requested auth info shall thus be present in linphone core
+	 * This request will thus not use the auth requested callback to get the information
+	 * - Stored auth information in linphone core are indexed by username/domain */
+	linphone_core_fill_belle_sip_auth_event(core, event, linphone_address_get_username(address),
+	                                        linphone_address_get_domain(address));
+	linphone_address_unref(address);
 }
 
 /**
