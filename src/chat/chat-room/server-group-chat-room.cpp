@@ -248,13 +248,13 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 
 	IdentityAddress gruu(contactAddr);
 	shared_ptr<ParticipantDevice> device;
-	shared_ptr<CallSession> session;
+	shared_ptr<CallSession> deviceSession;
 	if (joiningPendingAfterCreation) {
 		// Check if the participant is already there, this INVITE may come from an unknown device of an already present participant
 		participant = addParticipant(IdentityAddress(op->getFrom()));
 		participant->setAdmin(true);
 		device = participant->addDevice(gruu);
-		session = device->getSession();
+		deviceSession = device->getSession();
 		mInitiatorDevice = device;
 
 		/*Since the initiator of the chatroom has not yet subscribed at this stage, this won't generate NOTIFY, the events will be queued. */
@@ -286,20 +286,27 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			}
 			participant->setAdmin(true);
 		}
-		session = device->getSession();
+		deviceSession = device->getSession();
 	}
 
-	if (!session || (session->getPrivate()->getOp() != op)) {
+	shared_ptr<CallSession> newDeviceSession = deviceSession;
+	auto rejectSession = false;
+	if (!deviceSession || (deviceSession->getPrivate()->getOp() != op)) {
 		CallSessionParams params;
 		//params.addCustomContactParameter("isfocus");
-		session = participant->createSession(*q->getConference().get(), &params, false, this);
-		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress().asAddress(), Address(op->getTo()));
-		session->startIncomingNotification(false);
+		newDeviceSession = participant->createSession(*q->getConference().get(), &params, false, this);
+		newDeviceSession->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress().asAddress(), Address(op->getTo()));
+		newDeviceSession->startIncomingNotification(false);
 		Address addr = q->getConference()->getConferenceAddress().asAddress();
 		addr.setParam("isfocus");
 		//to force is focus to be added
-		session->getPrivate()->getOp()->setContactAddress(addr.getInternalAddress());
-		device->setSession(session);
+		newDeviceSession->getPrivate()->getOp()->setContactAddress(addr.getInternalAddress());
+		// Reject a session if there is already an active outgoing session
+		rejectSession = deviceSession && (deviceSession->getDirection() == LinphoneCallOutgoing);
+
+		if (!rejectSession) {
+			device->setSession(newDeviceSession);
+		}
 	}
 
 	// Changes are only allowed from admin participants
@@ -311,16 +318,22 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			}
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
 			 * that will later populate the chatroom*/
-		}else{
+		} else if (rejectSession) {
+			op->decline(SalReasonDeclined, "");
+		} else {
 			/* after creation, only changes to the subject and ephemeral settings are allowed*/
 			handleSubjectChange(op);
-			handleEphemeralSettingsChange(session);
-			acceptSession(session);
- 		}
- 	} else {
-		/*it is a non-admin participant that reconnected to the chatroom*/
- 		acceptSession(session);
- 	}
+			handleEphemeralSettingsChange(newDeviceSession);
+			acceptSession(newDeviceSession);
+		}
+	} else {
+		if (rejectSession) {
+			op->decline(SalReasonDeclined, "");
+		} else {
+			/*it is a non-admin participant that reconnected to the chatroom*/
+			acceptSession(newDeviceSession);
+		}
+	}
 }
 
 /* This is called only when a participant attempts to create a one to one chatroom that already exists.
@@ -1218,8 +1231,9 @@ bool ServerGroupChatRoomPrivate::dispatchMessagesAfterFullState(const shared_ptr
 	return ((groupchat == protocols.end()) || (groupchat->second < Utils::Version(1, 2)));
 }
 
-
-void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, BCTBX_UNUSED(const string &message)) {
+void ServerGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
+                                                           CallSession::State newState,
+                                                           const string &message) {
 	L_Q();
 	auto device = q->findCachedParticipantDevice(session);
 	if (!device) {
@@ -1290,6 +1304,8 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 		default:
 		break;
 	}
+	linphone_chat_room_notify_session_state_changed(getCChatRoom(), static_cast<LinphoneCallState>(newState),
+	                                                message.c_str());
 }
 
 void ServerGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {

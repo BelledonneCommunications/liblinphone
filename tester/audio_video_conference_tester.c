@@ -3398,7 +3398,12 @@ static void video_conference_by_merging_calls(void){
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,4,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,2,5000));
 
-		//make sure that the two calls from Marie's standpoint are in conference
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 3, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 6, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &focus_mgr->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
+
+		// make sure that the two calls from Marie's standpoint are in conference
 		focus_calls = linphone_core_get_calls(focus_mgr->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(focus_calls), 3, int, "%i");
 		for (it = focus_calls; it != NULL; it = it->next){

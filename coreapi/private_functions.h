@@ -382,8 +382,13 @@ void _linphone_account_notify_registration_state_changed(LinphoneAccount* accoun
 /*chat*/
 LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, LinphonePrivate::SalCallOp *op);
 void linphone_chat_room_set_call(LinphoneChatRoom *cr, LinphoneCall *call);
-LinphoneChatRoomCbs * _linphone_chat_room_cbs_new (void);
-void _linphone_chat_room_notify_is_composing_received(LinphoneChatRoom *cr, const LinphoneAddress *remoteAddr, bool_t isComposing);
+LinphoneChatRoomCbs *_linphone_chat_room_cbs_new(void);
+void linphone_chat_room_notify_session_state_changed(LinphoneChatRoom *cr,
+                                                     LinphoneCallState cstate,
+                                                     const char *message);
+void _linphone_chat_room_notify_is_composing_received(LinphoneChatRoom *cr,
+                                                      const LinphoneAddress *remoteAddr,
+                                                      bool_t isComposing);
 void _linphone_chat_room_notify_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void _linphone_chat_room_notify_messages_received(LinphoneChatRoom *cr, const bctbx_list_t* chat_messages);
 void _linphone_chat_room_notify_new_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
@@ -637,7 +642,13 @@ void linphone_core_notify_text_message_received(LinphoneCore *lc, LinphoneChatRo
 void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages);
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
-void linphone_core_notify_message_received_unable_decrypt(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+void linphone_core_notify_message_received_unable_decrypt(LinphoneCore *lc,
+                                                          LinphoneChatRoom *room,
+                                                          LinphoneChatMessage *message);
+void linphone_core_notify_chat_room_session_state_changed(LinphoneCore *lc,
+                                                          LinphoneChatRoom *cr,
+                                                          LinphoneCallState cstate,
+                                                          const char *message);
 void linphone_core_notify_chat_room_read(LinphoneCore *lc, LinphoneChatRoom *room);
 void linphone_core_notify_file_transfer_recv(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, const char* buff, size_t size);
 void linphone_core_notify_file_transfer_send(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, char* buff, size_t* size);

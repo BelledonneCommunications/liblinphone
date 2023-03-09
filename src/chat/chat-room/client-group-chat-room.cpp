@@ -258,13 +258,12 @@ void ClientGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<Call
 		participant->removeSession();
 }
 
-void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
-	const shared_ptr<CallSession> &session,
-	CallSession::State newState,
-	BCTBX_UNUSED(const string &message)
-) {
+void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
+                                                           CallSession::State newState,
+                                                           const string &message) {
 	L_Q();
-
+	const auto ref = q->getSharedFromThis();
+	const auto proxyChatRoomRef = proxyChatRoom ? proxyChatRoom->getSharedFromThis() : nullptr;
 	if (newState == CallSession::State::Connected) {
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
 			auto migration = needToMigrate();
@@ -344,6 +343,10 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 				q->setState(ConferenceInterface::State::Created);
 			}
 		}
+	}
+	if (getCChatRoom()) {
+		linphone_chat_room_notify_session_state_changed(getCChatRoom(), static_cast<LinphoneCallState>(newState),
+		                                                message.c_str());
 	}
 }
 

@@ -416,10 +416,10 @@ bool ParticipantDevice::updateMediaCapabilities() {
 		auto videoDir = LinphoneMediaDirectionInactive;
 		auto textDir = LinphoneMediaDirectionInactive;
 		if (isMe) {
+			const auto &cCore = getCore()->getCCore();
 			audioEnabled = true;
-			videoEnabled = linphone_core_video_enabled(getCore()->getCCore());
+			videoEnabled = linphone_core_video_enabled(cCore);
 			textEnabled = true;
-			const auto & cCore = getCore()->getCCore();
 			audioDir = LinphoneMediaDirectionSendRecv;
 
 			const auto captureEnabled = linphone_core_video_capture_enabled(cCore);
