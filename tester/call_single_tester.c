@@ -4708,6 +4708,7 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 			disable_all_video_codecs_except_one(pauline->lc, video_codec);
 		} else {
 			ms_warning("call_recording(): the H264 payload has not been found. Only sound will be recorded");
+			enableVideo = FALSE;
 		}
 	}
 #endif
@@ -4735,11 +4736,14 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 				ms_message("call_recording(): start recording into %s", filepath);
 				linphone_call_start_recording(callInst);
 			}
-			if (strcmp(format, "mkv") == 0) {
+			if (strcmp(format, "mkv") == 0 && enableVideo) {
 				VideoStream *pauline_vstream =
 				    (VideoStream *)linphone_call_get_stream(pauline_call, LinphoneStreamTypeVideo);
 				/* make sure that Pauline receives a RTCP FIR (Full Intra Request) requested by Marie's recorder.*/
-				BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline_vstream->ms_video_stat.counter_rcvd_fir, 1));
+				if (BC_ASSERT_PTR_NOT_NULL(pauline_vstream)) {
+					BC_ASSERT_TRUE(
+					    wait_for(marie->lc, pauline->lc, &pauline_vstream->ms_video_stat.counter_rcvd_fir, 1));
+				}
 			}
 			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 5000);
 			linphone_call_stop_recording(callInst);

@@ -3523,12 +3523,14 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 			break;
 		case LinphoneSubscriptionActive:
 			counters->number_of_LinphoneSubscriptionActive++;
-			if (linphone_event_get_subscription_dir(lev) == LinphoneSubscriptionIncoming) {
-				mgr->lev = lev;
-				if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
-					// TODO : Get LocalConfEventHandler and call handler->subscribeReceived(lev)
-				} else {
-					linphone_event_notify(lev, content);
+			if (mgr->subscribe_policy == AcceptSubscription) {
+				if (linphone_event_get_subscription_dir(lev) == LinphoneSubscriptionIncoming) {
+					mgr->lev = lev;
+					if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
+						// TODO : Get LocalConfEventHandler and call handler->subscribeReceived(lev)
+					} else {
+						linphone_event_notify(lev, content);
+					}
 				}
 			}
 			break;
@@ -3583,8 +3585,16 @@ void linphone_subscribe_received(LinphoneCore *lc,
                                  BCTBX_UNUSED(const char *eventname),
                                  BCTBX_UNUSED(const LinphoneContent *content)) {
 	LinphoneCoreManager *mgr = get_manager(lc);
-	if (!mgr->decline_subscribe) linphone_event_accept_subscription(lev);
-	else linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+	switch (mgr->subscribe_policy) {
+		case AcceptSubscription:
+			linphone_event_accept_subscription(lev);
+			break;
+		case DenySubscription:
+			linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+			break;
+		case DoNothingWithSubscription:
+			break;
+	}
 }
 
 void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state) {

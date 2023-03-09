@@ -49,7 +49,7 @@ static void subscribe_test_declined(void) {
 	linphone_content_set_subtype(content, "somexml");
 	linphone_content_set_buffer(content, (const uint8_t *)subscribe_content, strlen(subscribe_content));
 
-	pauline->decline_subscribe = TRUE;
+	pauline->subscribe_policy = DenySubscription;
 
 	lev = linphone_core_subscribe(marie->lc, pauline->identity, "dodo", 600, content);
 	linphone_event_ref(lev);
@@ -615,6 +615,52 @@ static void out_of_dialog_notify(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void subscribe_notify_with_missing_200ok(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneContent *content;
+	LinphoneEvent *lev;
+	int expires = 10;
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	pauline->subscribe_policy = DoNothingWithSubscription;
+
+	lev = linphone_core_create_subscribe(marie->lc, pauline->identity, "dodo", expires);
+	linphone_event_send_subscribe(lev, NULL);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 10000));
+
+	if (BC_ASSERT_PTR_NOT_NULL(pauline->lev)) {
+		sal_set_send_error(linphone_core_get_sal(pauline->lc), 1); /*to trash the message without generating error*/
+		linphone_event_accept_subscription(pauline->lev);
+		sal_set_send_error(linphone_core_get_sal(pauline->lc), 0); /*normal behavior*/
+	}
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
+
+	content = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(content, "application");
+	linphone_content_set_subtype(content, "somexml");
+	linphone_content_set_buffer(content, (const uint8_t *)notify_content, strlen(notify_content));
+	linphone_event_notify(pauline->lev, content);
+
+	/*make sure marie receives the notify and transitions the subscribption to active state */
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyReceived, 1, 5000));
+
+	linphone_event_terminate(pauline->lev);
+	linphone_event_unref(lev);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
+
+	linphone_content_unref(content);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+}
+
 test_t event_tests[] = {
     TEST_ONE_TAG("Subscribe declined", subscribe_test_declined, "presence"),
     TEST_ONE_TAG("Subscribe terminated by subscriber", subscribe_test_terminated_by_subscriber, "presence"),
@@ -630,12 +676,11 @@ test_t event_tests[] = {
                   subscribe_test_destroy_core_before_event_terminate,
                   "presence",
                   "LeaksMemory"),
+    TEST_ONE_TAG("Subscribe with missing 200 ok", subscribe_notify_with_missing_200ok, "LeaksMemory"),
     TEST_ONE_TAG("Publish", publish_test, "presence"),
     TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
     TEST_ONE_TAG("Publish without automatic refresh", publish_no_auto_test, "presence"),
-    TEST_ONE_TAG("Out of dialog notify", out_of_dialog_notify, "presence")
-
-};
+    TEST_ONE_TAG("Out of dialog notify", out_of_dialog_notify, "presence")};
 
 test_suite_t event_test_suite = {"Event",
                                  NULL,

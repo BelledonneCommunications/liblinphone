@@ -5722,9 +5722,12 @@ const char **linphone_core_get_video_devices(const LinphoneCore *lc) {
 
 bctbx_list_t *linphone_core_get_sound_devices_list(const LinphoneCore *lc) {
 	bctbx_list_t *cards_list = NULL;
+
 	const char **cards = lc->sound_conf.cards;
-	for (const char *c = *cards; c; c = *++cards) {
-		cards_list = bctbx_list_append(cards_list, (char *)c);
+	if (cards) {
+		for (const char *c = *cards; c; c = *++cards) {
+			cards_list = bctbx_list_append(cards_list, bctbx_strdup(c));
+		}
 	}
 	return cards_list;
 }
@@ -5733,9 +5736,10 @@ bctbx_list_t *linphone_core_get_video_devices_list(const LinphoneCore *lc) {
 	bctbx_list_t *cards_list = NULL;
 	const char **cards = lc->video_conf.cams;
 
-	if (cards)
+	if (cards) {
 		for (const char *c = *cards; c; c = *++cards)
-			cards_list = bctbx_list_append(cards_list, (char *)c);
+			cards_list = bctbx_list_append(cards_list, bctbx_strdup(c));
+	}
 
 	return cards_list;
 }

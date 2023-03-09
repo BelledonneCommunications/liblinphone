@@ -470,13 +470,18 @@ typedef struct _stats {
 	int number_of_LinphoneMagicSearchLdapHaveMoreResults;
 } stats;
 
+typedef enum _LinphoneCoreManagerSubscribePolicy {
+	AcceptSubscription,
+	DenySubscription,
+	DoNothingWithSubscription
+} LinphoneCoreManagerSubscribePolicy;
+
 typedef struct _LinphoneCoreManager {
 	LinphoneCoreCbs *cbs;
 	LinphoneCore *lc;
 	stats stat;
 	LinphoneAddress *identity;
 	LinphoneEvent *lev;
-	bool_t decline_subscribe;
 	int number_of_bcunit_error_at_creation;
 	char *phone_alias;
 	char *rc_path;
@@ -485,8 +490,9 @@ typedef struct _LinphoneCoreManager {
 	char *lime_database_path;
 	char *zrtp_secrets_database_path;
 	char *app_group_id;
-	bool_t main_core;
 	void *user_info;
+	bool_t main_core;
+	LinphoneCoreManagerSubscribePolicy subscribe_policy;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {

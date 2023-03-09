@@ -5168,7 +5168,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_file_transfer_server(LinphoneCore 
  * @return The supported formats, typically 'wav' and 'mkv'. \bctbx_list{char *} @notnil @tobefreed
  * @ingroup media_parameters
  **/
-LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_supported_file_formats_list(LinphoneCore *core);
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_supported_file_formats_list(const LinphoneCore *core);
 
 /**
  * Returns whether a specific file format is supported.
