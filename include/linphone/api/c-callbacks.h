@@ -266,6 +266,16 @@ typedef void (*LinphoneChatMessageCbsEphemeralMessageTimerStartedCb)(LinphoneCha
 typedef void (*LinphoneChatMessageCbsEphemeralMessageDeletedCb)(LinphoneChatMessage *message);
 
 /**
+ * Chat room session state changed callback
+ * @param chat_room #LinphoneChatRoom that has been marked as read. @notnil
+ * @param state the new #LinphoneCallState of the call
+ * @param message a non NULL informational message about the state. @notnil
+ */
+typedef void (*LinphoneChatRoomCbsSessionStateChangedCb)(LinphoneChatRoom *chat_room,
+                                                         LinphoneCallState state,
+                                                         const char *message);
+
+/**
  * Is composing notification callback prototype.
  * @param chat_room #LinphoneChatRoom involved in the conversation @notnil
  * @param remote_address The #LinphoneAddress that has sent the is-composing notification @notnil

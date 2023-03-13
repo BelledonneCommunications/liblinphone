@@ -253,6 +253,14 @@ void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room,
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_chat_room_session_state_changed(LinphoneCore *lc,
+                                                          LinphoneChatRoom *cr,
+                                                          LinphoneCallState cstate,
+                                                          const char *message) {
+	NOTIFY_IF_EXIST(chat_room_session_state_changed, lc, cr, cstate, message);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_chat_room_read(LinphoneCore *lc, LinphoneChatRoom *room) {
 	NOTIFY_IF_EXIST(chat_room_read, lc, room);
 	cleanup_dead_vtable_refs(lc);

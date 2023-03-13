@@ -1255,7 +1255,7 @@ bool ServerGroupChatRoomPrivate::dispatchMessagesAfterFullState(const shared_ptr
 
 void ServerGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
                                                            CallSession::State newState,
-                                                           BCTBX_UNUSED(const string &message)) {
+                                                           const string &message) {
 	L_Q();
 	auto device = q->findCachedParticipantDevice(session);
 	if (!device) {
@@ -1330,6 +1330,8 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 		default:
 			break;
 	}
+	linphone_chat_room_notify_session_state_changed(getCChatRoom(), static_cast<LinphoneCallState>(newState),
+	                                                message.c_str());
 }
 
 void ServerGroupChatRoomPrivate::onCallSessionSetReleased(const shared_ptr<CallSession> &session) {

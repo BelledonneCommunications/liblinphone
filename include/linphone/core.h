@@ -285,6 +285,7 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsEcCalibrationAudioUninitCb ec_calibration_audio_uninit;
 	LinphoneCoreCbsMessageSentCb message_sent;
 	LinphoneCoreCbsChatRoomReadCb chat_room_read;
+	LinphoneCoreCbsChatRoomSessionStateChangedCb chat_room_session_state_changed;
 	LinphoneCoreCbsChatRoomSubjectChangedCb chat_room_subject_changed;
 	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
 	LinphoneCoreCbsFirstCallStartedCb first_call_started;
@@ -605,6 +606,23 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_message_sent(LinphoneCoreCbs *cbs, Li
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageSentCb linphone_core_cbs_get_message_sent(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsChatRoomSessionStateChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void
+linphone_core_cbs_set_chat_room_session_state_changed(LinphoneCoreCbs *cbs,
+                                                      LinphoneCoreCbsChatRoomSessionStateChangedCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsChatRoomSessionStateChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsChatRoomSessionStateChangedCb
+linphone_core_cbs_get_chat_room_session_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsChatRoomReadCb callback.

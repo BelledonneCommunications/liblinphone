@@ -4107,7 +4107,8 @@ static void one_to_one_group_chat_room_deletion_by_server_client_base(bool encry
 				                       : false;
 			}));
 
-			wait_for_list(coresList, NULL, 1, 300);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomSessionReleased, 1,
+			                             liblinphone_tester_sip_timeout));
 
 			linphone_core_delete_chat_room(pauline.getLc(), paulineCr);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateDeleted,

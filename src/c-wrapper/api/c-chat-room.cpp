@@ -559,6 +559,12 @@ void _linphone_chat_room_notify_is_composing_received(LinphoneChatRoom *cr,
 	NOTIFY_IF_EXIST(IsComposingReceived, is_composing_received, cr, remoteAddr, isComposing);
 }
 
+void linphone_chat_room_notify_session_state_changed(LinphoneChatRoom *cr,
+                                                     LinphoneCallState cstate,
+                                                     const char *message) {
+	NOTIFY_IF_EXIST(SessionStateChanged, session_state_changed, cr, cstate, message);
+}
+
 void _linphone_chat_room_notify_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	NOTIFY_IF_EXIST(MessageReceived, message_received, cr, msg);
 }

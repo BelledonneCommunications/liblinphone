@@ -27,6 +27,7 @@
 struct _LinphoneChatRoomCbs {
 	belle_sip_object_t base;
 	void *userData;
+	LinphoneChatRoomCbsSessionStateChangedCb sessionStateChangedCb;
 	LinphoneChatRoomCbsIsComposingReceivedCb isComposingReceivedCb;
 	LinphoneChatRoomCbsMessageReceivedCb messageReceivedCb;
 	LinphoneChatRoomCbsMessagesReceivedCb messagesReceivedCb;
@@ -92,6 +93,16 @@ void *linphone_chat_room_cbs_get_user_data(const LinphoneChatRoomCbs *cbs) {
 
 void linphone_chat_room_cbs_set_user_data(LinphoneChatRoomCbs *cbs, void *ud) {
 	cbs->userData = ud;
+}
+
+void linphone_chat_room_cbs_set_session_state_changed(LinphoneChatRoomCbs *cbs,
+                                                      LinphoneChatRoomCbsSessionStateChangedCb cb) {
+	cbs->sessionStateChangedCb = cb;
+}
+
+LinphoneChatRoomCbsSessionStateChangedCb
+linphone_chat_room_cbs_get_session_state_changed(const LinphoneChatRoomCbs *cbs) {
+	return cbs->sessionStateChangedCb;
 }
 
 LinphoneChatRoomCbsIsComposingReceivedCb

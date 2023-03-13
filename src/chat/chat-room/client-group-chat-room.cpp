@@ -262,9 +262,9 @@ void ClientGroupChatRoomPrivate::onCallSessionSetReleased(const shared_ptr<CallS
 
 void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
                                                            CallSession::State newState,
-                                                           BCTBX_UNUSED(const string &message)) {
+                                                           const string &message) {
 	L_Q();
-
+	const auto ref = q->getSharedFromThis();
 	if (newState == CallSession::State::Connected) {
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
 			auto migration = needToMigrate();
@@ -347,6 +347,8 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 			}
 		}
 	}
+	linphone_chat_room_notify_session_state_changed(getCChatRoom(), static_cast<LinphoneCallState>(newState),
+	                                                message.c_str());
 }
 
 void ClientGroupChatRoomPrivate::addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {

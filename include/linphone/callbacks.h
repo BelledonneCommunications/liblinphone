@@ -272,6 +272,18 @@ typedef void (*LinphoneCoreCbsMessageSentCb)(LinphoneCore *core,
 typedef LinphoneCoreCbsMessageReceivedCb LinphoneCoreMessageReceivedCb;
 
 /**
+ * Chat room session state changed callback
+ * @param core #LinphoneCore object @notnil
+ * @param chat_room #LinphoneChatRoom that has been marked as read. @notnil
+ * @param state the new #LinphoneCallState of the call
+ * @param message a non NULL informational message about the state. @notnil
+ */
+typedef void (*LinphoneCoreCbsChatRoomSessionStateChangedCb)(LinphoneCore *core,
+                                                             LinphoneChatRoom *chat_room,
+                                                             LinphoneCallState state,
+                                                             const char *message);
+
+/**
  * Chat room marked as read callback
  * @param core #LinphoneCore object @notnil
  * @param chat_room #LinphoneChatRoom that has been marked as read. @notnil

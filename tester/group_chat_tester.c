@@ -64,6 +64,80 @@ static bool_t wait_for_chat_room_participants(bctbx_list_t *lcs, LinphoneChatRoo
 	else return TRUE;
 }
 
+void chat_room_session_state_changed(LinphoneChatRoom *cr, LinphoneCallState cstate, BCTBX_UNUSED(const char *msg)) {
+	LinphoneCore *lc = linphone_chat_room_get_core(cr);
+	stats *counters = get_stats(lc);
+
+	switch (cstate) {
+		case LinphoneCallIncomingReceived:
+			counters->number_of_LinphoneChatRoomSessionIncomingReceived++;
+			break;
+		case LinphoneCallPushIncomingReceived:
+			counters->number_of_LinphoneChatRoomSessionPushIncomingReceived++;
+			break;
+		case LinphoneCallOutgoingInit:
+			counters->number_of_LinphoneChatRoomSessionOutgoingInit++;
+			break;
+		case LinphoneCallOutgoingProgress:
+			counters->number_of_LinphoneChatRoomSessionOutgoingProgress++;
+			break;
+		case LinphoneCallOutgoingRinging:
+			counters->number_of_LinphoneChatRoomSessionOutgoingRinging++;
+			break;
+		case LinphoneCallOutgoingEarlyMedia:
+			counters->number_of_LinphoneChatRoomSessionOutgoingEarlyMedia++;
+			break;
+		case LinphoneCallConnected:
+			counters->number_of_LinphoneChatRoomSessionConnected++;
+			break;
+		case LinphoneCallStreamsRunning:
+			counters->number_of_LinphoneChatRoomSessionStreamsRunning++;
+			break;
+		case LinphoneCallPausing:
+			counters->number_of_LinphoneChatRoomSessionPausing++;
+			break;
+		case LinphoneCallPaused:
+			counters->number_of_LinphoneChatRoomSessionPaused++;
+			break;
+		case LinphoneCallResuming:
+			counters->number_of_LinphoneChatRoomSessionResuming++;
+			break;
+		case LinphoneCallRefered:
+			counters->number_of_LinphoneChatRoomSessionRefered++;
+			break;
+		case LinphoneCallError:
+			counters->number_of_LinphoneChatRoomSessionError++;
+			break;
+		case LinphoneCallEnd:
+			counters->number_of_LinphoneChatRoomSessionEnd++;
+			break;
+		case LinphoneCallPausedByRemote:
+			counters->number_of_LinphoneChatRoomSessionPausedByRemote++;
+			break;
+		case LinphoneCallUpdatedByRemote:
+			counters->number_of_LinphoneChatRoomSessionUpdatedByRemote++;
+			break;
+		case LinphoneCallIncomingEarlyMedia:
+			counters->number_of_LinphoneChatRoomSessionIncomingEarlyMedia++;
+			break;
+		case LinphoneCallUpdating:
+			counters->number_of_LinphoneChatRoomSessionUpdating++;
+			break;
+		case LinphoneCallReleased:
+			counters->number_of_LinphoneChatRoomSessionReleased++;
+			break;
+		case LinphoneCallEarlyUpdating:
+			counters->number_of_LinphoneChatRoomSessionEarlyUpdating++;
+			break;
+		case LinphoneCallEarlyUpdatedByRemote:
+			counters->number_of_LinphoneChatRoomSessionEarlyUpdatedByRemote++;
+			break;
+		default:
+			BC_FAIL("unexpected event");
+			break;
+	}
+}
+
 static void chat_room_is_composing_received(LinphoneChatRoom *cr,
                                             BCTBX_UNUSED(const LinphoneAddress *remoteAddr),
                                             bool_t isComposing) {
@@ -218,6 +292,7 @@ static void chat_room_message_ephemeral_deleted(LinphoneChatRoom *cr, BCTBX_UNUS
 }
 
 void setup_chat_room_callbacks(LinphoneChatRoomCbs *cbs) {
+	linphone_chat_room_cbs_set_session_state_changed(cbs, chat_room_session_state_changed);
 	linphone_chat_room_cbs_set_is_composing_received(cbs, chat_room_is_composing_received);
 	linphone_chat_room_cbs_set_participant_added(cbs, chat_room_participant_added);
 	linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, chat_room_participant_admin_status_changed);

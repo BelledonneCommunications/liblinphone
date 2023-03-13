@@ -262,6 +262,29 @@ typedef struct _stats {
 	int number_of_LinphoneCallEarlyUpdatedByRemote;
 	int number_of_LinphoneCallEarlyUpdating;
 
+	int number_of_LinphoneChatRoomSessionCreated;
+	int number_of_LinphoneChatRoomSessionIncomingReceived;
+	int number_of_LinphoneChatRoomSessionPushIncomingReceived;
+	int number_of_LinphoneChatRoomSessionOutgoingInit;
+	int number_of_LinphoneChatRoomSessionOutgoingProgress;
+	int number_of_LinphoneChatRoomSessionOutgoingRinging;
+	int number_of_LinphoneChatRoomSessionOutgoingEarlyMedia;
+	int number_of_LinphoneChatRoomSessionConnected;
+	int number_of_LinphoneChatRoomSessionStreamsRunning;
+	int number_of_LinphoneChatRoomSessionPausing;
+	int number_of_LinphoneChatRoomSessionPaused;
+	int number_of_LinphoneChatRoomSessionResuming;
+	int number_of_LinphoneChatRoomSessionRefered;
+	int number_of_LinphoneChatRoomSessionError;
+	int number_of_LinphoneChatRoomSessionEnd;
+	int number_of_LinphoneChatRoomSessionPausedByRemote;
+	int number_of_LinphoneChatRoomSessionUpdatedByRemote;
+	int number_of_LinphoneChatRoomSessionIncomingEarlyMedia;
+	int number_of_LinphoneChatRoomSessionUpdating;
+	int number_of_LinphoneChatRoomSessionReleased;
+	int number_of_LinphoneChatRoomSessionEarlyUpdatedByRemote;
+	int number_of_LinphoneChatRoomSessionEarlyUpdating;
+
 	int number_of_LinphoneConferenceStateInstantiated;
 	int number_of_LinphoneConferenceStateCreationPending;
 	int number_of_LinphoneConferenceStateCreated;

@@ -332,6 +332,16 @@ void linphone_core_cbs_set_call_id_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbs
 	cbs->vtable->call_id_updated = cb;
 }
 
+LinphoneCoreCbsChatRoomSessionStateChangedCb
+linphone_core_cbs_get_chat_room_session_state_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_session_state_changed;
+}
+
+void linphone_core_cbs_set_chat_room_session_state_changed(LinphoneCoreCbs *cbs,
+                                                           LinphoneCoreCbsChatRoomSessionStateChangedCb cb) {
+	cbs->vtable->chat_room_session_state_changed = cb;
+}
+
 LinphoneCoreCbsChatRoomReadCb linphone_core_cbs_get_chat_room_read(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->chat_room_read;
 }
