@@ -3724,7 +3724,7 @@ static void video_conference_by_merging_calls(void) {
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 3, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 4, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 6, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &focus_mgr->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
 
 		// make sure that the two calls from Marie's standpoint are in conference

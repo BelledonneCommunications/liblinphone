@@ -254,14 +254,14 @@ void ServerGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 
 	std::shared_ptr<Address> gruu(contactAddr);
 	shared_ptr<ParticipantDevice> device;
-	shared_ptr<CallSession> session;
+	shared_ptr<CallSession> deviceSession;
 	if (joiningPendingAfterCreation) {
 		// Check if the participant is already there, this INVITE may come from an unknown device of an already present
 		// participant
 		participant = addParticipant(Address::create(op->getFrom()));
 		participant->setAdmin(true);
 		device = participant->addDevice(gruu);
-		session = device->getSession();
+		deviceSession = device->getSession();
 		mInitiatorDevice = device;
 
 		/*Since the initiator of the chatroom has not yet subscribed at this stage, this won't generate NOTIFY, the
@@ -298,20 +298,27 @@ void ServerGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 			}
 			participant->setAdmin(true);
 		}
-		session = device->getSession();
+		deviceSession = device->getSession();
 	}
 
-	if (!session || (session->getPrivate()->getOp() != op)) {
+	shared_ptr<CallSession> newDeviceSession = deviceSession;
+	auto rejectSession = false;
+	if (!deviceSession || (deviceSession->getPrivate()->getOp() != op)) {
 		CallSessionParams params;
 		// params.addCustomContactParameter("isfocus");
-		session = participant->createSession(*q->getConference().get(), &params, false, this);
-		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address::create(op->getTo()));
-		session->startIncomingNotification(false);
+		newDeviceSession = participant->createSession(*q->getConference().get(), &params, false, this);
+		newDeviceSession->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address::create(op->getTo()));
+		newDeviceSession->startIncomingNotification(false);
 		std::shared_ptr<Address> addr = q->getConferenceAddress()->clone()->toSharedPtr();
 		addr->setParam("isfocus");
 		// to force is focus to be added
-		session->getPrivate()->getOp()->setContactAddress(addr->getImpl());
-		device->setSession(session);
+		newDeviceSession->getPrivate()->getOp()->setContactAddress(addr->getImpl());
+		// Reject a session if there is already an active outgoing session
+		rejectSession = deviceSession && (deviceSession->getDirection() == LinphoneCallOutgoing);
+
+		if (!rejectSession) {
+			device->setSession(newDeviceSession);
+		}
 	}
 
 	// Changes are only allowed from admin participants
@@ -323,15 +330,21 @@ void ServerGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 			}
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
 			 * that will later populate the chatroom*/
+		} else if (rejectSession) {
+			op->decline(SalReasonDeclined, "");
 		} else {
 			/* after creation, only changes to the subject and ephemeral settings are allowed*/
 			handleSubjectChange(op);
-			handleEphemeralSettingsChange(session);
-			acceptSession(session);
+			handleEphemeralSettingsChange(newDeviceSession);
+			acceptSession(newDeviceSession);
 		}
 	} else {
-		/*it is a non-admin participant that reconnected to the chatroom*/
-		acceptSession(session);
+		if (rejectSession) {
+			op->decline(SalReasonDeclined, "");
+		} else {
+			/*it is a non-admin participant that reconnected to the chatroom*/
+			acceptSession(newDeviceSession);
+		}
 	}
 }
 

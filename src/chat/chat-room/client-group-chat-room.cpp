@@ -265,6 +265,7 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
                                                            const string &message) {
 	L_Q();
 	const auto ref = q->getSharedFromThis();
+	const auto proxyChatRoomRef = proxyChatRoom ? proxyChatRoom->getSharedFromThis() : nullptr;
 	if (newState == CallSession::State::Connected) {
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
 			auto migration = needToMigrate();
@@ -347,8 +348,11 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 			}
 		}
 	}
-	linphone_chat_room_notify_session_state_changed(getCChatRoom(), static_cast<LinphoneCallState>(newState),
-	                                                message.c_str());
+	lInfo() << __func__ << " DEBUG DEBUG ref " << ref;
+	if (getCChatRoom()) {
+		linphone_chat_room_notify_session_state_changed(getCChatRoom(), static_cast<LinphoneCallState>(newState),
+		                                                message.c_str());
+	}
 }
 
 void ClientGroupChatRoomPrivate::addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {
