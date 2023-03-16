@@ -2893,8 +2893,6 @@ int MediaSessionPrivate::restartInvite () {
 }
 
 void MediaSessionPrivate::setTerminated () {
-
-
 	freeResources();
 	CallSessionPrivate::setTerminated();
 }

@@ -9028,9 +9028,14 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 		if (call) {
 			const LinphoneCallParams * remote_call_params = linphone_call_get_remote_params(call);
 			LinphoneProxyConfig * proxy_cfg = linphone_call_get_dest_proxy(call);
-			auto account = linphone_core_lookup_account_by_identity(lc, linphone_proxy_config_get_contact(proxy_cfg));
-			LinphonePrivate::ConferenceParams::toCpp(params)->setAccount(account);
-			if (remote_call_params) {
+			if (proxy_cfg){
+				auto contact = linphone_proxy_config_get_contact(proxy_cfg);
+				if (contact){
+					auto account = linphone_core_lookup_account_by_identity(lc, contact);
+					LinphonePrivate::ConferenceParams::toCpp(params)->setAccount(account);
+				}
+			}
+			if (remote_call_params){
 				linphone_conference_params_set_audio_enabled(params, linphone_call_params_audio_enabled(remote_call_params));
 				linphone_conference_params_set_video_enabled(params, linphone_call_params_video_enabled(remote_call_params));
 				linphone_conference_params_set_chat_enabled(params, linphone_call_params_realtime_text_enabled(remote_call_params));

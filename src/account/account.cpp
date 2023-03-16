@@ -377,7 +377,12 @@ void Account::setState (LinphoneRegistrationState state, const std::string& mess
 
 		if (state == LinphoneRegistrationOk) {
 			const auto salAddr = ownership::borrowed(mOp->getContactAddress());
-			if (salAddr) L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress)->setInternalAddress(salAddr);
+			if (salAddr) {
+				if (!mContactAddress){
+					mContactAddress = linphone_address_new(nullptr);
+				}
+				L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress)->setInternalAddress(salAddr);
+			}
 			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
 		} else if (state == LinphoneRegistrationFailed) {
 			// Clear that flag so next LinphoneRegistrationOk will trigger the friend lists subscribe
@@ -657,9 +662,6 @@ void Account::registerAccount () {
 		LinphoneAddress *contactAddress = guessContactForRegister();
 		if (contactAddress) {
 			mOp->setContactAddress(L_GET_CPP_PTR_FROM_C_OBJECT(contactAddress)->getInternalAddress());
-			if (!mContactAddress) {
-				mContactAddress = linphone_address_clone(contactAddress);
-			}
 			linphone_address_unref(contactAddress);
 		}
 		mOp->setUserPointer(this->toC());
