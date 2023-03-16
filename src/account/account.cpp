@@ -351,8 +351,13 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 		        << linphone_registration_state_to_string(state) << "] on core [" << mCore << "]";
 
 		if (state == LinphoneRegistrationOk) {
+
 			const auto salAddr = mOp->getContactAddress();
-			if (salAddr) mContactAddress->setImpl(salAddr);
+			if (salAddr) {
+				if (!mContactAddress) {
+					mContactAddress = (new Address(salAddr))->asSharedPtr();
+				} else mContactAddress->setImpl(salAddr);
+			}
 			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
 		}
 
@@ -625,9 +630,6 @@ void Account::registerAccount() {
 		std::shared_ptr<Address> contactAddress = guessContactForRegister();
 		if (contactAddress) {
 			mOp->setContactAddress(contactAddress->getImpl());
-			if (!mContactAddress) {
-				mContactAddress = contactAddress->clone()->toSharedPtr();
-			}
 		}
 		mOp->setUserPointer(this->toC());
 

@@ -1525,6 +1525,18 @@ static void update_contact_private_ip_address(void) {
 	linphone_auth_info_unref(ai);
 	linphone_core_add_proxy_config(lcm->lc, cfg);
 
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, lcm->lc, &counters->number_of_LinphoneRegistrationProgress, 1, 5000));
+	const LinphoneAddress *ct = linphone_proxy_config_get_contact(cfg);
+	if (!BC_ASSERT_PTR_NULL(ct)) {
+		char *tmp = linphone_address_as_string(ct);
+		ms_error("Contact address shall be NULL, but is %s", tmp);
+		bctbx_free(tmp);
+	}
+
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, lcm->lc, &counters->number_of_LinphoneRegistrationOk, 1, 5000));
+	BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact(cfg));
+
+	/* the second REGISTER is to ensure that the contact address guessed from Via is set to the proxy */
 	BC_ASSERT_TRUE(wait_for_until(lcm->lc, lcm->lc, &counters->number_of_LinphoneRegistrationOk, 2, 5000));
 
 	const LinphoneAddress *contactUpdated = linphone_proxy_config_get_contact(cfg);
@@ -1573,11 +1585,10 @@ static void unreliable_channels_cleanup(void) {
 }
 
 static void registration_with_custom_contact(void) {
-#if REACTIVATE_ME_ASAP
+#if REENABLE_ME_WHEN_FLEXISIP_2_3_IS_DEPLOYED
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
-
 	LinphoneAccount *account = linphone_core_get_default_account(pauline->lc);
 	const LinphoneAccountParams *params = linphone_account_get_params(account);
 

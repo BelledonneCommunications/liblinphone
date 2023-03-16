@@ -352,7 +352,7 @@ void RemoteConferenceListEventHandler::onRegistrationStateChanged(LinphoneProxyC
 	if (state == LinphoneRegistrationOk) subscribe(account);
 	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config is
 		                                             // the current subscription
-		const LinphoneAddress *cfgAddress = linphone_proxy_config_get_contact(cfg);
+		const LinphoneAddress *cfgAddress = linphone_proxy_config_get_identity_address(cfg);
 		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &evSub) {
 			const auto &currentAddress = evSub->getFrom();
 			return currentAddress->weakEqual(*Address::toCpp(cfgAddress));

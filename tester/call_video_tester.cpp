@@ -985,6 +985,7 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 	LinphoneCall *caller_call, *callee_call;
 	LinphoneCallParams *params;
 	VideoStream *vstream;
+	char *record_file = bc_tester_file("avrecord.mkv");
 
 	policy.automatically_initiate = FALSE;
 	policy.automatically_accept = FALSE;
@@ -1016,10 +1017,15 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 	caller_call = linphone_core_invite_address(caller->lc, callee->identity);
 	if (BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &callee->stat.number_of_LinphoneCallIncomingReceived, 1))) {
 		callee_call = linphone_core_get_current_call(callee->lc);
+		params = linphone_core_create_call_params(callee->lc, callee_call);
+		linphone_call_params_set_record_file(params, record_file);
 
-		linphone_core_accept_call(callee->lc, linphone_core_get_current_call(callee->lc));
+		linphone_core_accept_call_with_params(callee->lc, callee_call, params);
+		linphone_call_params_unref(params);
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &callee->stat.number_of_LinphoneCallStreamsRunning, 1));
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &caller->stat.number_of_LinphoneCallStreamsRunning, 1));
+		linphone_call_start_recording(callee_call);
+		wait_for_until(caller->lc, callee->lc, NULL, 0, 3000);
 
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(callee_call)));
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(caller_call)));
@@ -1042,6 +1048,7 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &callee->stat.number_of_IframeDecoded, 1));
 		BC_ASSERT_TRUE(wait_for(callee->lc, caller->lc, &caller->stat.number_of_IframeDecoded, 1));
+		wait_for_until(caller->lc, callee->lc, NULL, 0, 3000);
 
 		vstream = (VideoStream *)linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
 		BC_ASSERT_TRUE(media_stream_avpf_enabled((MediaStream *)vstream));
@@ -1050,6 +1057,15 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 	}
 
 	end_call(caller, callee);
+	BC_ASSERT_EQUAL(bctbx_file_exist(record_file), 0, int, "%d");
+	/* make sure the recorded file has a video track */
+	MSMediaPlayer *mp = ms_media_player_new(linphone_core_get_ms_factory(caller->lc), NULL, NULL, NULL);
+	BC_ASSERT_TRUE(ms_media_player_open(mp, record_file));
+	BC_ASSERT_TRUE(ms_media_player_has_video_track(mp));
+	ms_media_player_close(mp);
+	ms_media_player_free(mp);
+
+	bc_free(record_file);
 	linphone_core_manager_destroy(callee);
 	linphone_core_manager_destroy(caller);
 }
@@ -2662,7 +2678,8 @@ static void call_with_video_mkv_file_player(void) {
 
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_IframeDecoded, 1));
 		/*wait for some seconds so that we can have an fps measurement */
-		wait_for_until(pauline->lc, marie->lc, NULL, 0, 2000);
+
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 6000);
 		BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(
 		                      linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc))),
 		                  15.0f, float, "%f");
