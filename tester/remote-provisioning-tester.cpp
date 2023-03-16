@@ -112,8 +112,6 @@ static void remote_provisioning_default_values(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_core_get_push_notification_config(LinphoneCore *core);
-
 static void remote_provisioning_file(void) {
 	LinphoneCoreManager *marie;
 	const LpConfig *conf;
@@ -419,11 +417,13 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 static void remote_provisioning_check_push_params(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_remote_rc");
 
-	linphone_push_notification_config_set_voip_token(linphone_core_get_push_notification_config(marie->lc),
-	                                                 "token:voip");
-	linphone_push_notification_config_set_bundle_identifier(linphone_core_get_push_notification_config(marie->lc),
-	                                                        "linphone-tester");
-	linphone_push_notification_config_set_param(linphone_core_get_push_notification_config(marie->lc), "param");
+	LinphonePushNotificationConfig *marie_push_cfg =
+	    linphone_push_notification_config_clone(linphone_core_get_push_notification_config(marie->lc));
+	linphone_push_notification_config_set_voip_token(marie_push_cfg, "token:voip");
+	linphone_push_notification_config_set_bundle_identifier(marie_push_cfg, "linphone-tester");
+	linphone_push_notification_config_set_param(marie_push_cfg, "param");
+	linphone_core_set_push_notification_config(marie->lc, marie_push_cfg);
+	linphone_push_notification_config_unref(marie_push_cfg);
 
 	linphone_core_manager_start(marie, FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1));

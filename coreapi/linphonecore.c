@@ -2957,8 +2957,19 @@ bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 	return TRUE;
 }
 
-LinphonePushNotificationConfig *linphone_core_get_push_notification_config(LinphoneCore *core) {
+const LinphonePushNotificationConfig *linphone_core_get_push_notification_config(const LinphoneCore *core) {
 	return core->push_config;
+}
+
+void linphone_core_set_push_notification_config(LinphoneCore *core, LinphonePushNotificationConfig *config) {
+	if (core->push_config) {
+		linphone_push_notification_config_unref(core->push_config);
+		core->push_config = NULL;
+	}
+
+	if (config) {
+		core->push_config = linphone_push_notification_config_ref(config);
+	}
 }
 
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {

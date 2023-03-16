@@ -26,7 +26,13 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 PushNotificationConfig::PushNotificationConfig() {
+#ifdef __ANDROID__
+	mPushParams[PushConfigProviderKey] = "fcm";
+#elif TARGET_OS_IPHONE
+	mPushParams[PushConfigProviderKey] = "apns";
+#else
 	mPushParams[PushConfigProviderKey] = "";
+#endif
 	mPushParams[PushConfigParamKey] = "";
 	mPushParams[PushConfigPridKey] = "";
 	mPushParams[PushConfigTimeoutKey] = "0";
@@ -164,7 +170,6 @@ void PushNotificationConfig::setTeamId(const string &teamId) {
 }
 
 void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remotePushAllowed) {
-
 	if (mPushParams[PushConfigProviderKey].empty()) {
 #ifdef __ANDROID__
 		mPushParams[PushConfigProviderKey] = "fcm";

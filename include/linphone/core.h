@@ -6867,10 +6867,18 @@ LINPHONE_PUBLIC void linphone_core_set_chat_messages_aggregation_enabled(Linphon
 
 /**
  * Writes the config file to disk.
- * @param config The #LinphoneCore object @notnil
+ * @param core The #LinphoneCore object @notnil
  * @return 0 if successful, -1 otherwise
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_config_sync(LinphoneCore *core);
+
+/**
+ * Gets the push notification configuration object if it exists.
+ * @param core The #LinphoneCore object @notnil
+ * @return the #LinphonePushNotificationConfig if it exists, NULL otherwise. @maybenil
+ **/
+LINPHONE_PUBLIC const LinphonePushNotificationConfig *
+linphone_core_get_push_notification_config(const LinphoneCore *core);
 
 /**
  * @}
