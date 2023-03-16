@@ -622,7 +622,6 @@ bool AccountParams::isPushNotificationAvailable () const {
 	bool paramAvailable = !param.empty() || !bundle.empty();
 	bool pridAvailable = !prid.empty() || !((mPushNotificationAllowed && basicToken.empty()) || (mRemotePushNotificationAllowed && remoteToken.empty()));
 	return paramAvailable && pridAvailable;
-
 }
 
 bool AccountParams::isCpimMessagesAllowedInBasicChatRooms () const {
