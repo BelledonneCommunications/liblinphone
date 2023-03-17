@@ -193,6 +193,7 @@ PayloadType::PayloadType(shared_ptr<Core> core, OrtpPayloadType *ortpPt) : CoreA
 }
 
 PayloadType::~PayloadType() {
+	lDebug() << "Destroying PayloadType [" << this << "]";
 	if (mOwnOrtpPayloadType) {
 		payload_type_destroy(mPt);
 		mPt = NULL;
@@ -289,8 +290,12 @@ int PayloadType::getNormalBitrate() const {
 	return 0;
 }
 
-string PayloadType::getMimeType() const {
+const char *PayloadType::getMimeTypeCstr() const {
 	return mPt->mime_type;
+}
+
+string PayloadType::getMimeType() const {
+	return L_C_TO_STRING(getMimeTypeCstr());
 }
 
 int PayloadType::getChannels() const {
@@ -299,6 +304,14 @@ int PayloadType::getChannels() const {
 
 int PayloadType::getNumber() const {
 	return (int)(intptr_t)mPt->user_data;
+}
+
+const char *PayloadType::getRecvFmtpCstr() const {
+	return mPt->recv_fmtp;
+}
+
+const char *PayloadType::getSendFmtpCstr() const {
+	return mPt->send_fmtp;
 }
 
 string PayloadType::getRecvFmtp() const {
@@ -315,14 +328,6 @@ int PayloadType::getClockRate() const {
 
 OrtpPayloadType *PayloadType::getOrtpPt() const {
 	return mPt;
-}
-
-const char *PayloadType::getRecvFmtpCstr() const {
-	return mPt->recv_fmtp;
-}
-
-const char *PayloadType::getSendFmtpCstr() const {
-	return mPt->send_fmtp;
 }
 
 bool PayloadType::isEnabled() const {

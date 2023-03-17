@@ -30,6 +30,7 @@
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "linphone/wrapper_utils.h"
+#include "payload-type/payload-type.h"
 #include "tester_utils.h"
 
 static void create_chat_room() {
@@ -106,8 +107,30 @@ static void various_api_checks(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void displaying_payload_type(void) {
+	// Init from C
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+
+	// Get C++ and start working from it.
+	auto core = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
+
+	auto payloads = core->getAudioPayloadTypes();
+	for (auto it : payloads) {
+		lInfo() << "Get mime type : " << it->getMimeType();
+		lInfo() << "Encoder description : " << it->getEncoderDescription();
+	}
+
+	payloads.clear();
+
+	core = nullptr; // C++ Core deletion
+
+	// C clean
+	linphone_core_manager_destroy(marie);
+}
+
 test_t wrapper_cpp_tests[] = {TEST_NO_TAG("Create chat room", create_chat_room),
-                              TEST_NO_TAG("Various API checks", various_api_checks)};
+                              TEST_NO_TAG("Various API checks", various_api_checks),
+                              TEST_NO_TAG("Displaying PayloadType", displaying_payload_type)};
 
 test_suite_t wrapper_cpp_test_suite = {"Wrapper Cpp",
                                        NULL,

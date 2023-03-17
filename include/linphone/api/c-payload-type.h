@@ -86,6 +86,7 @@ LINPHONE_PUBLIC char *linphone_payload_type_get_description(const LinphonePayloa
  * Get a description of the encoder used to provide a payload type.
  * @param payload_type the #LinphonePayloadType object @notnil
  * @return The description of the encoder. Can be NULL if the payload type is not supported by Mediastreamer2. @maybenil
+ * @tobefreed
  */
 LINPHONE_PUBLIC const char *linphone_payload_type_get_encoder_description(const LinphonePayloadType *payload_type);
 

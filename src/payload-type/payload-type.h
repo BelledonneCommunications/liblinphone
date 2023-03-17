@@ -65,6 +65,7 @@ public:
 	int getClockRate() const;
 	OrtpPayloadType *getOrtpPt() const;
 
+	const char *getMimeTypeCstr() const;
 	const char *getRecvFmtpCstr() const;
 	const char *getSendFmtpCstr() const;
 

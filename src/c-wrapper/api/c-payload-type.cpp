@@ -70,7 +70,7 @@ void linphone_payload_type_set_normal_bitrate(LinphonePayloadType *payload_type,
 }
 
 const char *linphone_payload_type_get_mime_type(const LinphonePayloadType *payload_type) {
-	return L_STRING_TO_C(LinphonePrivate::PayloadType::toCpp(payload_type)->getMimeType());
+	return LinphonePrivate::PayloadType::toCpp(payload_type)->getMimeTypeCstr();
 }
 
 int linphone_payload_type_get_channels(const LinphonePayloadType *payload_type) {

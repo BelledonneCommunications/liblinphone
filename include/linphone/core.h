@@ -2022,7 +2022,7 @@ LINPHONE_PUBLIC void linphone_core_set_dns_servers(LinphoneCore *core, const bct
  * @param core The core. @notnil
  * @return A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref.
- * @bctbx_list{LinphonePayloadType} @maybenil
+ * @bctbx_list{LinphonePayloadType} @maybenil @tobefreed
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_payload_types(LinphoneCore *core);
