@@ -36,7 +36,7 @@ namespace Linphone
 	{
 		public const string VERSION = "{{version}}";
 #if __IOS__
-		public const string LIB_NAME = "linphone.framework/linphone";
+		public const string LIB_NAME = "__Internal"; // With this, it automatically finds the frameworks
 #elif (_WIN32 || WINDOWS_UWP)
 		public const string LIB_NAME = "liblinphone"; // With this, it automatically finds liblinphone.dll
 #else
