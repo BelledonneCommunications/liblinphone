@@ -756,7 +756,13 @@ if(ENABLE_SHARED)
 		PRIVATE ${LINK_LIBS}
 	)
 	if (ENABLE_FLEXIAPI)
-		target_link_libraries(linphone PUBLIC jsoncpp_lib)
+		if(APPLE)
+			# jsoncpp does not build into framework,
+			# so we need static link on osx/ios
+			target_link_libraries(linphone PUBLIC jsoncpp_static)
+		else()
+			target_link_libraries(linphone PUBLIC jsoncpp_lib)
+		endif()
 	endif()
 
 
