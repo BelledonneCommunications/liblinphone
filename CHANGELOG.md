@@ -12,6 +12,8 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ### Changed
 - Enum relocations dictionnary is now automatically computed, causing an API change in C++, Swift & Java wrappers!
+- TLS Client certificate request authentication callback removed (due to mbedtls update).
+  Application using TLS client certificate must provide it before any TLS connexion needing it.
 
 ## [5.2.0] 2022-11-14
 
