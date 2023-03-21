@@ -198,7 +198,7 @@ static void quality_reporting_not_sent_if_call_not_started(void) {
 	wait_for_until(marie->lc, NULL, NULL, 0, 1000);
 
 	// Since the callee was busy, there should be no publish to do
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishProgress, 0, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOutgoingProgress, 0, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk, 0, int, "%d");
 
 end:
@@ -215,7 +215,7 @@ static void quality_reporting_not_sent_if_low_bandwidth(void) {
 	if (create_call_for_quality_reporting_tests(marie, pauline, NULL, NULL, marie_params, NULL)) {
 		end_call(marie, pauline);
 
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishProgress, 0, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOutgoingProgress, 0, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk, 0, int, "%d");
 	}
 	linphone_call_params_unref(marie_params);
@@ -246,7 +246,7 @@ static void quality_reporting_invalid_report(void) {
 
 		end_call(marie, pauline);
 
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishProgress, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1));
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishError, 1, 3000));
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishError, 1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk, 0, int, "%d");
@@ -280,8 +280,8 @@ static void quality_reporting_at_call_termination(void) {
 		BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 
 		// PUBLISH submission to the collector should be ok
-		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphonePublishProgress, 1));
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishProgress, 1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1));
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOutgoingProgress, 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphonePublishOk, 1));
 	}
 
@@ -308,7 +308,7 @@ static void quality_reporting_interval_report(void) {
 
 		// PUBLISH submission to the collector should be ok
 		BC_ASSERT_TRUE(
-		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishProgress, 1, 60000));
+		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1, 60000));
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 1, 60000));
 		end_call(marie, pauline);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 2));
@@ -340,7 +340,7 @@ static void quality_reporting_session_report_if_video_stopped(void) {
 	                                            pauline_params)) {
 		linphone_reporting_set_on_report_send(call_marie, on_report_send_with_rtcp_xr_local);
 
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishProgress, 0, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOutgoingProgress, 0, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk, 0, int, "%d");
 
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000));
@@ -356,14 +356,15 @@ static void quality_reporting_session_report_if_video_stopped(void) {
 		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 
 		BC_ASSERT_TRUE(
-		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishProgress, 1, 10000));
+		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1, 10000));
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 1, 10000));
 
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
 
 		end_call(marie, pauline);
 
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishProgress, 2, 5000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 2, 5000));
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 2, 5000));
 	}
 	linphone_call_params_unref(marie_params);
@@ -374,7 +375,7 @@ static void quality_reporting_session_report_if_video_stopped(void) {
 #endif
 
 static void publish_report_with_route_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state) {
-	if (state == LinphonePublishProgress) {
+	if (state == LinphonePublishOutgoingProgress) {
 		char *uri = linphone_address_as_string(linphone_event_get_resource(ev));
 		BC_ASSERT_STRING_EQUAL(
 		    uri, linphone_proxy_config_get_quality_reporting_collector(linphone_core_get_default_proxy_config(lc)));
@@ -403,8 +404,8 @@ static void quality_reporting_sent_using_custom_route(void) {
 		end_call(marie, pauline);
 
 		// PUBLISH submission to the collector should be ERROR since route is not valid
-		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphonePublishProgress, 1));
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishProgress, 1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1));
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOutgoingProgress, 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphonePublishError, 1, 10000));
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk, 0, int, "%d");
 	}
@@ -451,7 +452,8 @@ static void quality_reporting_interval_report_video_and_rtt_base(bool_t enable_v
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 
 		// PUBLISH submission to the collector should be ok
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishProgress, 1, 5000));
+		BC_ASSERT_TRUE(
+		    wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 1, 10000));
 
 		pauline_chat_room = linphone_call_get_chat_room(call_pauline);
@@ -476,7 +478,7 @@ static void quality_reporting_interval_report_video_and_rtt_base(bool_t enable_v
 		end_call(marie, pauline);
 		/* Wait that all publish complete */
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk,
-		                              marie->stat.number_of_LinphonePublishProgress, 60000));
+		                              marie->stat.number_of_LinphonePublishOutgoingProgress, 60000));
 
 		if (rtt_message) linphone_chat_message_unref(rtt_message);
 	}

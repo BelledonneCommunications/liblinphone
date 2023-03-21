@@ -52,6 +52,8 @@ public:
 	virtual LinphoneStatus send(const LinphoneContent *body) = 0;
 	virtual LinphoneStatus update(const LinphoneContent *body) = 0;
 	virtual LinphoneStatus refresh() = 0;
+	virtual LinphoneStatus accept() = 0;
+	virtual LinphoneStatus deny(LinphoneReason reason) = 0;
 
 	LinphoneReason getReason() const;
 
@@ -83,7 +85,6 @@ public:
 	int getExpires() const;
 	void setExpires(int expires);
 
-	bool getUnrefWhenTerminated() const;
 	void setUnrefWhenTerminated(bool unrefWhenTerminated);
 
 	virtual void unpublish() = 0;

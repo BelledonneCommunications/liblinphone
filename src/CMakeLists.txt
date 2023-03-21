@@ -323,6 +323,7 @@ if(ENABLE_ADVANCED_IM)
 		xml/imdn.h
 		xml/is-composing.h
 		xml/linphone-imdn.h
+		xml/publish-linphone-extension.h
 		xml/resource-lists.h
 		xml/rlmi.h
 		xml/xml.h
@@ -575,6 +576,7 @@ if(ENABLE_ADVANCED_IM)
 		xml/imdn.cpp
 		xml/is-composing.cpp
 		xml/linphone-imdn.cpp
+		xml/publish-linphone-extension.cpp
 		xml/resource-lists.cpp
 		xml/rlmi.cpp
 		xml/xml.cpp
@@ -655,6 +657,7 @@ if ((CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.
 		OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
 	set_property(SOURCE
 		xml/conference-info.cpp
+		xml/publish-linphone-extension.cpp
 		xml/resource-lists.cpp
 		xml/rlmi.cpp
 		APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-error=deprecated-copy"

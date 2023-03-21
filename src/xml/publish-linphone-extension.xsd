@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="linphone:xml:ns:publish-linphone-extension"
+	xmlns:tns="linphone:xml:ns:publish-linphone-extension"
+	xmlns="linphone:xml:ns:publish-linphone-extension"
+	elementFormDefault="qualified"
+	attributeFormDefault="unqualified">
+	<!--
+	    This imports the xml:language definition
+	-->
+	<xs:import namespace="http://www.w3.org/XML/1998/namespace"
+	schemaLocation="http://www.w3.org/2001/03/xml.xsd"/>
+    <!--
+        publish extension
+    -->
+    <xs:element name="crypto" type="tns:crypto-type"/>
+
+    <xs:complexType name="crypto-type">
+        <xs:sequence>
+            <xs:element name="sspi" type="xs:integer"/>
+            <xs:element name="cspi" type="xs:string"/>
+            <xs:element name="ciphers" type="tns:ciphers-type" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="entity" type="xs:anyURI" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="ciphers-type">
+        <xs:sequence>
+            <xs:element name="encryptedekt" type="tns:encryptedekt-type" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="encryptedekt-type">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="dest" type="xs:anyURI"  use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+</xs:schema>

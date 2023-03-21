@@ -291,7 +291,8 @@ class CoreManagerStats:
         self.number_of_LinphoneSubscriptionError = 0
         self.number_of_LinphoneSubscriptionExpiring = 0
 
-        self.number_of_LinphonePublishProgress = 0
+        self.number_of_LinphonePublishOutgoingProgress = 0
+        self.number_of_LinphonePublishIncomingReceived = 0
         self.number_of_LinphonePublishOk = 0
         self.number_of_LinphonePublishExpiring = 0
         self.number_of_LinphonePublishError = 0

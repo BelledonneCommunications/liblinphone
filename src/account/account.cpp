@@ -682,7 +682,7 @@ void Account::unregister() {
 void Account::unpublish() {
 	if (mPresencePublishEvent &&
 	    (mPresencePublishEvent->getState() == LinphonePublishOk ||
-	     (mPresencePublishEvent->getState() == LinphonePublishProgress && mParams->mPublishExpires != 0))) {
+	     (mPresencePublishEvent->getState() == LinphonePublishOutgoingProgress && mParams->mPublishExpires != 0))) {
 		mPresencePublishEvent->unpublish();
 	}
 	if (!mSipEtag.empty()) {
@@ -962,7 +962,7 @@ int Account::sendPublish() {
 
 		if (mPresencePublishEvent != nullptr) {
 			LinphonePublishState state = mPresencePublishEvent->getState();
-			if (state != LinphonePublishOk && state != LinphonePublishProgress) {
+			if (state != LinphonePublishOk && state != LinphonePublishOutgoingProgress) {
 				lInfo() << "Presence publish state is [" << linphone_publish_state_to_string(state)
 				        << "], destroying it and creating a new one instead";
 				mPresencePublishEvent->unref();

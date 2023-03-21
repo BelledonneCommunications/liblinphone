@@ -394,6 +394,14 @@ void linphone_core_notify_publish_state_changed(LinphoneCore *lc, LinphoneEvent 
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_publish_received(LinphoneCore *lc,
+                                           LinphoneEvent *lev,
+                                           const char *publish_event,
+                                           const LinphoneContent *body) {
+	NOTIFY_IF_EXIST_INTERNAL(publish_received, linphone_event_is_internal(lev), lc, lev, publish_event, body);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_log_collection_upload_state_changed(LinphoneCore *lc,
                                                               LinphoneCoreLogCollectionUploadState state,
                                                               const char *info) {

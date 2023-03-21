@@ -32,16 +32,17 @@ public:
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               LinphoneSubscriptionDir dir,
 	               const std::string &name,
-	               LinphonePrivate::SalEventOp *op);
+	               LinphonePrivate::SalSubscribeOp *op);
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               LinphoneSubscriptionDir dir,
 	               const std::string &name,
 	               int expires);
 	EventSubscribe(const std::shared_ptr<Core> &core,
-	               SalEventOp *op,
+	               SalSubscribeOp *op,
 	               LinphoneSubscriptionDir dir,
 	               const std::string &name,
-	               bool_t is_out_of_dialog);
+	               bool isOutOfDialog);
+	EventSubscribe(const std::shared_ptr<Core> &core, const LinphoneAddress *resource, const std::string &event);
 	EventSubscribe(const std::shared_ptr<Core> &core,
 	               const std::shared_ptr<Address> resource,
 	               const std::string &event);
@@ -60,8 +61,8 @@ public:
 	LinphoneStatus send(const LinphoneContent *body) override;
 	LinphoneStatus update(const LinphoneContent *body) override;
 	LinphoneStatus refresh() override;
-	LinphoneStatus accept();
-	LinphoneStatus deny(LinphoneReason reason);
+	LinphoneStatus accept() override;
+	LinphoneStatus deny(LinphoneReason reason) override;
 
 	LinphoneStatus notify(const LinphoneContent *body);
 	void notifyNotifyResponse();

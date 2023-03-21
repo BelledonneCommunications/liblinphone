@@ -114,6 +114,8 @@ class LINPHONE_PUBLIC Core : public Object {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
 
+	enum class ETagStatus { Error, None, AddOrUpdateETag };
+
 	static const std::string limeSpec;
 
 	virtual ~Core();
@@ -358,6 +360,13 @@ public:
 	const std::list<std::string> &getPluginList() const;
 	bool isPluginLoaded(const std::string name) const;
 
+	// ---------------------------------------------------------------------------
+	// Publish.
+	// ---------------------------------------------------------------------------
+
+	void addOrUpdatePublishByEtag(SalPublishOp *op, std::shared_ptr<LinphonePrivate::EventPublish>);
+	Core::ETagStatus eTagHandler(SalPublishOp *op, const SalBodyHandler *body);
+
 private:
 	Core();
 
@@ -377,6 +386,8 @@ private:
 	void uninitPlugins();
 	int loadPlugins(const std::string &dir);
 	bool_t dlopenPlugin(const std::string &plugin_path, const std::string plugin_name);
+
+	std::map<std::string, std::shared_ptr<LinphonePrivate::EventPublish>> mPublishByEtag;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);

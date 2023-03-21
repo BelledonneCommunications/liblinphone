@@ -835,7 +835,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 	bool_t out_of_dialog = (lev == NULL);
 	if (out_of_dialog) {
 		/*out of dialog notify */
-		lev = linphone_event_new_with_out_of_dialog_op(lc, op, LinphoneSubscriptionOutgoing, eventname);
+		lev = linphone_event_new_subscribe_with_out_of_dialog_op(lc, op, LinphoneSubscriptionOutgoing, eventname);
 		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
 	}
 	linphone_event_ref(lev);
@@ -866,7 +866,7 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 	if (!check_core_state(lc, op)) return;
 
 	if (lev == NULL) {
-		lev = linphone_event_new_with_op(lc, op, LinphoneSubscriptionIncoming, eventname);
+		lev = linphone_event_new_subscribe_with_op(lc, op, LinphoneSubscriptionIncoming, eventname);
 		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
 		if (strcmp(linphone_event_get_name(lev), "conference") == 0) linphone_event_set_internal(lev, TRUE);
 		linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
@@ -888,6 +888,41 @@ static void incoming_subscribe_closed(SalOp *op) {
 	if (lev) linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
 }
 
+static void publish_received(SalPublishOp *op, const char *eventname, const SalBodyHandler *body_handler) {
+	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
+	LinphoneCore *lc = (LinphoneCore *)op->getSal()->getUserPointer();
+
+	if (!check_core_state(lc, op)) return;
+
+	Core::ETagStatus ret = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->eTagHandler(op, body_handler);
+	if (ret == Core::ETagStatus::Error) return;
+
+	if (lev == NULL) {
+		lev = linphone_event_new_publish_with_op(lc, op, eventname);
+		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
+	}
+
+	if (ret == Core::ETagStatus::AddOrUpdateETag)
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addOrUpdatePublishByEtag(
+		    op, dynamic_pointer_cast<EventPublish>(Event::toCpp(lev)->getSharedFromThis()));
+
+	linphone_event_set_publish_state(lev, LinphonePublishIncomingReceived);
+	LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
+	Address to(op->getTo());
+	LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(lc, to.toC());
+	if (proxy && linphone_proxy_config_get_realm(proxy)) {
+		op->setRealm(linphone_proxy_config_get_realm(proxy));
+	}
+	linphone_core_notify_publish_received(lc, lev, eventname, ct);
+	if (ct) linphone_content_unref(ct);
+}
+
+static void incoming_publish_closed(SalOp *op) {
+	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
+
+	if (lev) linphone_event_set_publish_state(lev, LinphonePublishCleared);
+}
+
 static void on_publish_response(SalOp *op) {
 	LinphoneEvent *lev = (LinphoneEvent *)op->getUserPointer();
 	const SalErrorInfo *ei = op->getErrorInfo();
@@ -898,8 +933,9 @@ static void on_publish_response(SalOp *op) {
 			linphone_event_set_publish_state(lev, LinphonePublishOk);
 		else linphone_event_set_publish_state(lev, LinphonePublishCleared);
 	} else {
+		lWarning() << "on_publish_response() - Reason : " << sal_reason_to_string(ei->reason);
 		if (linphone_event_get_publish_state(lev) == LinphonePublishOk) {
-			linphone_event_set_publish_state(lev, LinphonePublishProgress);
+			linphone_event_set_publish_state(lev, LinphonePublishOutgoingProgress);
 		} else {
 			linphone_event_set_publish_state(lev, LinphonePublishError);
 		}
@@ -1131,7 +1167,9 @@ Sal::Callbacks linphone_sal_callbacks = {
     ping_reply,
     auth_requested,
     info_received,
+    publish_received,
     on_publish_response,
+    incoming_publish_closed,
     on_expire,
     on_notify_response,
     refer_received,

@@ -35,6 +35,7 @@ class LINPHONE_PUBLIC RemoteConferenceEventHandlerBase {
 public:
 	virtual ~RemoteConferenceEventHandlerBase() = default;
 
+	// virtual void publish() = 0;
 	virtual void subscribe() = 0;
 	virtual void unsubscribe() = 0;
 	virtual void invalidateSubscription() = 0;

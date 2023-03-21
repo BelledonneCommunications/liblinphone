@@ -545,29 +545,35 @@ static void publish_test_with_args(bool_t refresh, int expires) {
 
 	content = linphone_core_create_content(marie->lc);
 	linphone_content_set_type(content, "application");
-	linphone_content_set_subtype(content, "somexml");
+	linphone_content_set_subtype(content, "xml");
 	linphone_content_set_buffer(content, (const uint8_t *)subscribe_content, strlen(subscribe_content));
 
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "refresh_generic_publish", refresh);
 
 	lev = linphone_core_create_publish(marie->lc, pauline->identity, "dodo", expires);
+
 	linphone_event_add_custom_header(lev, "CustomHeader", "someValue");
 	linphone_event_send_publish(lev, content);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishIncomingReceived, 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOk, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOk, 1, 3000));
 
 	if (!refresh) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishExpiring, 1, 5000));
 		linphone_event_update_publish(lev, content);
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishProgress, 1, 1000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOk, 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOutgoingProgress, 2, 1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishIncomingReceived, 2, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOk, 2, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOk, 2, 3000));
 	} else {
 	}
 
 	linphone_event_terminate(lev);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishCleared, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishCleared, 1, 3000));
 
 	linphone_event_unref(lev);
 
@@ -580,12 +586,49 @@ static void publish_test(void) {
 	publish_test_with_args(TRUE, 5);
 }
 
+static void publish_without_expires(void) {
+	publish_test_with_args(TRUE, -1);
+}
+
 static void publish_no_auto_test(void) {
 	publish_test_with_args(FALSE, 5);
 }
 
-static void publish_without_expires(void) {
-	publish_test_with_args(TRUE, -1);
+static void publish_expired(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneContent *content;
+	LinphoneEvent *lev;
+	int expires = 4;
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	content = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(content, "application");
+	linphone_content_set_subtype(content, "xml");
+	linphone_content_set_buffer(content, (const uint8_t *)subscribe_content, strlen(subscribe_content));
+
+	lev = linphone_core_create_publish(marie->lc, pauline->identity, "dodo", expires);
+	linphone_event_add_custom_header(lev, "My-Header", "Marie loses connection");
+	linphone_event_send_publish(lev, content);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishIncomingReceived, 1, 3000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOk, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOk, 1, 3000));
+
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	lcs = bctbx_list_remove(lcs, marie->lc);
+	linphone_event_unref(lev);
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_uninit(marie);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishCleared, 1, 5000));
+
+	linphone_content_unref(content);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
 }
 
 static void out_of_dialog_notify(void) {
@@ -680,6 +723,7 @@ test_t event_tests[] = {
     TEST_ONE_TAG("Publish", publish_test, "presence"),
     TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
     TEST_ONE_TAG("Publish without automatic refresh", publish_no_auto_test, "presence"),
+    TEST_ONE_TAG("Publish expired", publish_expired, "presence"),
     TEST_ONE_TAG("Out of dialog notify", out_of_dialog_notify, "presence")};
 
 test_suite_t event_test_suite = {"Event",

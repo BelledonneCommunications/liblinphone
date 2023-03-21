@@ -41,6 +41,8 @@ SalReason _sal_reason_from_sip_code(int code) {
 			return SalReasonRequestTimeout;
 		case 410:
 			return SalReasonGone;
+		case 412:
+			return SalReasonConditionalRequestFailed;
 		case 415:
 			return SalReasonUnsupportedContent;
 		case 422:

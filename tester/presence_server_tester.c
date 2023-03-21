@@ -1521,7 +1521,7 @@ static void simple_publish_with_expire(int expires) {
 	linphone_proxy_config_enable_publish(proxy, TRUE);
 	linphone_proxy_config_done(proxy);
 
-	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, 1));
 
 	presence = linphone_presence_model_new();
@@ -1529,13 +1529,14 @@ static void simple_publish_with_expire(int expires) {
 	linphone_core_set_presence_model(marie->lc, presence);
 	linphone_presence_model_unref(presence);
 
-	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 2));
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, 2));
 
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_done(proxy);
 	/*make sure no publish is sent*/
-	BC_ASSERT_FALSE(wait_for_until(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 3, 2000));
+	BC_ASSERT_FALSE(
+	    wait_for_until(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 3, 2000));
 
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_enable_publish(proxy, FALSE);
@@ -1543,20 +1544,20 @@ static void simple_publish_with_expire(int expires) {
 
 	/*fixme PUBLISH state machine is too simple, clear state should only be propagated at API level  when 200ok is
 	 * received*/
-	/*BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,3));*/
+	/*BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishOutgoingProgress,3));*/
 	wait_for_until(marie->lc, marie->lc, NULL, 0, 2000);
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishCleared, 1));
 
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_enable_publish(proxy, TRUE);
 	linphone_proxy_config_done(proxy);
-	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 3));
+	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 3));
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, 3));
 
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_publish_expires(proxy, linphone_proxy_config_get_publish_expires(proxy) + 1);
 	linphone_proxy_config_done(proxy);
-	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 4));
+	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 4));
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, 4));
 
 	linphone_core_manager_stop(marie);
@@ -1694,7 +1695,7 @@ static void publish_with_dual_identity(void) {
 		linphone_proxy_config_done(proxy);
 	}
 
-	BC_ASSERT_TRUE(wait_for(pauline->lc, pauline->lc, &pauline->stat.number_of_LinphonePublishProgress, 4));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, pauline->lc, &pauline->stat.number_of_LinphonePublishOutgoingProgress, 4));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, pauline->lc, &pauline->stat.number_of_LinphonePublishOk, 4));
 
 	linphone_core_manager_stop(pauline);
@@ -1723,17 +1724,18 @@ static void publish_with_network_state_changes(void) {
 	linphone_proxy_config_enable_publish(proxy, TRUE);
 	linphone_proxy_config_done(proxy);
 
-	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, 1));
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphoneRegistrationNone, 1));
-	BC_ASSERT_FALSE(wait_for_until(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 2, 1000));
+	BC_ASSERT_FALSE(
+	    wait_for_until(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 2, 1000));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk, 1, int, "%i");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishError, 0, int, "%i");
 
 	linphone_core_set_network_reachable(marie->lc, TRUE);
-	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishProgress, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOutgoingProgress, 2));
 	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphonePublishOk, 2));
 
 	linphone_core_manager_stop(marie);
@@ -2272,9 +2274,9 @@ static void notify_friend_capabilities_after_publish(void) {
 	linphone_proxy_config_enable_publish(proxy2, TRUE);
 	linphone_proxy_config_done(proxy2);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishProgress, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOutgoingProgress, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOk, 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishProgress, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishOutgoingProgress, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishOk, 1, 5000));
 
 	presence = linphone_presence_model_new_with_activity(LinphonePresenceActivityVacation, NULL);
@@ -2287,9 +2289,9 @@ static void notify_friend_capabilities_after_publish(void) {
 	linphone_core_set_presence_model(pauline2->lc, presence2);
 	linphone_presence_model_unref(presence2);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishProgress, 2, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOutgoingProgress, 2, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOk, 2, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishProgress, 2, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishOutgoingProgress, 2, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishOk, 2, 5000));
 
 	LinphoneFriendList *mFriendList = linphone_core_get_default_friend_list(marie->lc);

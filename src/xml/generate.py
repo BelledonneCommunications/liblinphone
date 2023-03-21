@@ -101,6 +101,7 @@ def generate(name):
 		"--namespace-map", "urn:ietf:params:xml:ns:imdn=LinphonePrivate::Xsd::Imdn",
 		"--namespace-map", "urn:ietf:params:xml:ns:im-iscomposing=LinphonePrivate::Xsd::IsComposing",
 		"--namespace-map", "http://www.linphone.org/xsds/imdn.xsd=LinphonePrivate::Xsd::LinphoneImdn",
+		"--namespace-map", "linphone:xml:ns:publish-linphone-extension=LinphonePrivate::Xsd::PublishLinphoneExtension",
 		"--namespace-map", "urn:ietf:params:xml:ns:resource-lists=LinphonePrivate::Xsd::ResourceLists",
 		"--namespace-map", "urn:ietf:params:xml:ns:rlmi=LinphonePrivate::Xsd::Rlmi",
 		source_file
@@ -123,6 +124,7 @@ def main(argv = None):
 	generate("imdn")
 	generate("is-composing")
 	generate("linphone-imdn")
+	generate("publish-linphone-extension")
 	generate("resource-lists")
 	generate("rlmi")
 

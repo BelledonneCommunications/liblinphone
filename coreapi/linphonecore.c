@@ -515,6 +515,14 @@ void linphone_core_cbs_set_publish_state_changed(LinphoneCoreCbs *cbs, LinphoneC
 	cbs->vtable->publish_state_changed = cb;
 }
 
+LinphoneCoreCbsPublishReceivedCb linphone_core_cbs_get_publish_received(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->publish_received;
+}
+
+void linphone_core_cbs_set_publish_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsPublishReceivedCb cb) {
+	cbs->vtable->publish_received = cb;
+}
+
 LinphoneCoreCbsConfiguringStatusCb linphone_core_cbs_get_configuring_status(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->configuring_status;
 }

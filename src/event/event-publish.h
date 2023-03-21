@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC EventPublish : public Event {
 public:
 	EventPublish(const std::shared_ptr<Core> &core);
-	EventPublish(const std::shared_ptr<Core> &core, LinphonePrivate::SalEventOp *op, const std::string &name);
+	EventPublish(const std::shared_ptr<Core> &core, LinphonePrivate::SalPublishOp *op, const std::string &name);
 	EventPublish(const std::shared_ptr<Core> &core,
 	             const std::shared_ptr<Account> &account,
 	             const std::shared_ptr<Address> resource,
@@ -41,12 +41,15 @@ public:
 	             const std::string &event,
 	             int expires);
 	EventPublish(const std::shared_ptr<Core> &core, const std::shared_ptr<Address> resource, const std::string &event);
+	virtual ~EventPublish();
 
 	std::string toString() const override;
 
 	LinphoneStatus send(const LinphoneContent *body) override;
 	LinphoneStatus update(const LinphoneContent *body) override;
 	LinphoneStatus refresh() override;
+	LinphoneStatus accept() override;
+	LinphoneStatus deny(LinphoneReason reason) override;
 	void pause();
 
 	void setOneshot(bool oneshot);
@@ -60,7 +63,12 @@ public:
 
 	LinphoneStatus sendPublish(const LinphoneContent *body, bool notifyErr);
 
+	void startTimeoutHandling();
+	void stopTimeoutHandling();
+
 private:
+	belle_sip_source_t *mTimer = nullptr;
+
 	LinphonePublishState mPublishState = LinphonePublishNone;
 
 	bool mOneshot = false;

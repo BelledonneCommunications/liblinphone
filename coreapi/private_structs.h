@@ -37,6 +37,7 @@ typedef struct _sqlite3 sqlite3;
 #endif
 
 #include "carddav.h"
+#include "event/event-publish.h"
 #include "linphone/core_utils.h"
 #include "linphone/sipsetup.h"
 #include "sal/event-op.h"

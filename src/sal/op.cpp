@@ -838,6 +838,8 @@ string SalOp::toString(const Type type) {
 			return "SalOpMessage";
 		case Type::Presence:
 			return "SalOpPresence";
+		case Type::Publish:
+			return "SalOpPublish";
 		default:
 			return "SalOpUnknown";
 	}

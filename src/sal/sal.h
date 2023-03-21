@@ -37,6 +37,7 @@ class SalOp;
 class SalCallOp;
 class SalMessageOp;
 class SalSubscribeOp;
+class SalPublishOp;
 class SalPresenceOp;
 class SalReferOp;
 
@@ -82,7 +83,9 @@ public:
 	using OnSubscribePresenceClosedCb = void (*)(SalPresenceOp *op, const char *from);
 	using OnPingReplyCb = void (*)(SalOp *op);
 	using OnInfoReceivedCb = void (*)(SalOp *op, SalBodyHandler *body);
+	using OnPublishReceivedCb = void (*)(SalPublishOp *op, const char *event, const SalBodyHandler *body);
 	using OnPublishResponseCb = void (*)(SalOp *op);
+	using OnIncomingPublishClosedCb = void (*)(SalOp *op);
 	using OnNotifyResponseCb = void (*)(SalOp *op);
 	using OnExpireCb = void (*)(SalOp *op);
 
@@ -122,7 +125,9 @@ public:
 		OnPingReplyCb ping_reply;
 		OnAuthRequestedCb auth_requested;
 		OnInfoReceivedCb info_received;
+		OnPublishReceivedCb publish_received;
 		OnPublishResponseCb on_publish_response;
+		OnIncomingPublishClosedCb incoming_publish_closed;
 		OnExpireCb on_expire;
 		OnNotifyResponseCb on_notify_response;
 		OnReferCb refer_received; // For out of dialog refer
@@ -244,6 +249,9 @@ public:
 	}
 	void enableTestFeatures(bool value) {
 		mEnableTestFeatures = value;
+	}
+	bool isEnabledTestFeatures() {
+		return mEnableTestFeatures;
 	}
 	void useNoInitialRoute(bool value) {
 		mNoInitialRoute = value;
@@ -462,6 +470,9 @@ private:
 	mutable std::string mHttpProxyHost;
 	mutable std::string mSupported;
 	mutable std::string mUserAgent;
+
+	// Publish
+	std::map<std::string, SalOp *> mOpByCallId;
 
 	friend class SalOp;
 	friend class SalCallOp;

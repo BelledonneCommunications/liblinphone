@@ -34,7 +34,7 @@ LINPHONE_BEGIN_NAMESPACE
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
                                LinphoneSubscriptionDir dir,
                                const string &name,
-                               LinphonePrivate::SalEventOp *op)
+                               LinphonePrivate::SalSubscribeOp *op)
     : Event(core) {
 	mDir = dir;
 	mOp = op;
@@ -51,12 +51,12 @@ EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,
-                               SalEventOp *op,
+                               SalSubscribeOp *op,
                                LinphoneSubscriptionDir dir,
                                const string &name,
-                               bool_t is_out_of_dialog)
+                               bool isOutOfDialog)
     : EventSubscribe(core, dir, name, op) {
-	mIsOutOfDialogOp = is_out_of_dialog;
+	mIsOutOfDialogOp = isOutOfDialog;
 }
 
 EventSubscribe::EventSubscribe(const shared_ptr<Core> &core,

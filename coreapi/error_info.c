@@ -111,6 +111,8 @@ const char *linphone_reason_to_string(LinphoneReason err) {
 			return "Server timeout";
 		case LinphoneReasonTransferred:
 			return "Call transferred";
+		case LinphoneReasonConditionalRequestFailed:
+			return "Conditional request failed";
 		case LinphoneReasonUnknown:
 			return "Unknown error";
 	}
@@ -129,6 +131,7 @@ static const error_code_reason_map_t error_code_reason_map[] = {{200, LinphoneRe
                                                                 {403, LinphoneReasonForbidden},
                                                                 {404, LinphoneReasonNotFound},
                                                                 {410, LinphoneReasonGone},
+                                                                {412, LinphoneReasonConditionalRequestFailed},
                                                                 {415, LinphoneReasonUnsupportedContent},
                                                                 {480, LinphoneReasonTemporarilyUnavailable},
                                                                 {481, LinphoneReasonNoMatch},

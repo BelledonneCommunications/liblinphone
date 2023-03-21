@@ -160,9 +160,6 @@ void Event::setExpires(int expires) {
 	mExpires = expires;
 }
 
-bool Event::getUnrefWhenTerminated() const {
-	return mUnrefWhenTerminated;
-}
 void Event::setUnrefWhenTerminated(bool unrefWhenTerminated) {
 	mUnrefWhenTerminated = unrefWhenTerminated;
 }

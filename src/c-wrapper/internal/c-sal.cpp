@@ -207,6 +207,8 @@ const char *sal_reason_to_string(const SalReason reason) {
 			return "SalReasonNotFound";
 		case SalReasonDoNotDisturb:
 			return "SalReasonDoNotDisturb";
+		case SalReasonConditionalRequestFailed:
+			return "SalReasonConditionalRequestFailed";
 		case SalReasonUnsupportedContent:
 			return "SalReasonUnsupportedContent";
 		case SalReasonBadEvent:

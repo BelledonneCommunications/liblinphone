@@ -15480,6 +15480,15 @@ static void create_scheduled_conference_with_active_call(void) {
 	create_conference_with_active_call_base(FALSE);
 }
 
+static void send_valid_publish(void) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getIdentity());
+		ClientConference pauline("pauline_rc", focus.getIdentity());
+		BC_ASSERT_TRUE(false);
+	}
+}
+
 } // namespace LinphoneTest
 
 static test_t local_conference_chat_tests[] = {
@@ -15688,6 +15697,8 @@ static test_t local_conference_inpromptu_conference_tests[] = {
     TEST_NO_TAG("2 overlapping dialout conferences from different organizers",
                 LinphoneTest::two_overlapping_dialout_conferences_from_different_organizers)};
 
+static test_t local_conference_publish_tests[] = {TEST_NO_TAG("Send valid PUBLISH", LinphoneTest::send_valid_publish)};
+
 test_suite_t local_conference_test_suite_chat = {"Local conference tester (Chat)",
                                                  NULL,
                                                  NULL,
@@ -15762,6 +15773,15 @@ test_suite_t local_conference_test_suite_inpromptu_conference = {
     liblinphone_tester_after_each,
     sizeof(local_conference_inpromptu_conference_tests) / sizeof(local_conference_inpromptu_conference_tests[0]),
     local_conference_inpromptu_conference_tests};
+
+test_suite_t local_conference_test_suite_publish = {"Local conference tester (Publish)",
+                                                    NULL,
+                                                    NULL,
+                                                    liblinphone_tester_before_each,
+                                                    liblinphone_tester_after_each,
+                                                    sizeof(local_conference_publish_tests) /
+                                                        sizeof(local_conference_publish_tests[0]),
+                                                    local_conference_publish_tests};
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

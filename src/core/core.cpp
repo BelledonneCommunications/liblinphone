@@ -102,6 +102,8 @@
 #define LINPHONE_PLUGINS_EXT ".so"
 #endif
 
+#define ETAG_SIZE 8
+
 // =============================================================================
 
 using namespace std;
@@ -379,6 +381,8 @@ void CorePrivate::uninit() {
 	listeners.clear();
 	pushReceivedBackgroundTask.stop();
 	mLdapServers.clear();
+
+	q->mPublishByEtag.clear();
 
 #ifdef HAVE_ADVANCED_IM
 	remoteListEventHandler.reset();
@@ -2018,6 +2022,57 @@ const std::list<std::string> &Core::getPluginList() const {
 
 bool Core::isPluginLoaded(const std::string name) const {
 	return (std::find(plugins.cbegin(), plugins.cend(), name) != plugins.cend());
+}
+
+void Core::addOrUpdatePublishByEtag(SalPublishOp *op, shared_ptr<LinphonePrivate::EventPublish> event) {
+	char generatedETag_char[ETAG_SIZE] = {0};
+	do {
+		belle_sip_random_token(generatedETag_char, sizeof(generatedETag_char));
+	} while (mPublishByEtag.find(generatedETag_char) != mPublishByEtag.end());
+	mPublishByEtag.erase(op->getETag());
+	mPublishByEtag.insert_or_assign(generatedETag_char, event);
+	op->setETag(generatedETag_char);
+}
+
+Core::ETagStatus Core::eTagHandler(SalPublishOp *op, const SalBodyHandler *body) {
+	string eTag(op->getETag());
+
+	if (!eTag.empty()) {
+		auto it = mPublishByEtag.find(eTag);
+		if (it == mPublishByEtag.end()) {
+			lWarning() << "Unknown eTag [" << eTag << "]";
+			op->replyMessage(SalReasonConditionalRequestFailed);
+			op->release();
+			return Core::ETagStatus::Error;
+		}
+	}
+
+	if (body) {
+		if (eTag.empty()) {
+			return Core::ETagStatus::AddOrUpdateETag;
+		} else {
+			auto it = mPublishByEtag.find(eTag);
+			if (it != mPublishByEtag.end()) {
+				return Core::ETagStatus::AddOrUpdateETag;
+			}
+		}
+	} else {
+		auto it = mPublishByEtag.find(eTag);
+		if (op->getExpires() == 0) {
+			if (it != mPublishByEtag.end()) mPublishByEtag.erase(it);
+			// else already expired
+		} else {
+			if (it != mPublishByEtag.end()) {
+				return Core::ETagStatus::AddOrUpdateETag;
+			} else {
+				lWarning() << "Unknown eTag [" << eTag << "]";
+				op->replyMessage(SalReasonUnknown);
+				op->release();
+				return Core::ETagStatus::Error;
+			}
+		}
+	}
+	return Core::ETagStatus::None;
 }
 
 LINPHONE_END_NAMESPACE

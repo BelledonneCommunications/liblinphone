@@ -45,7 +45,7 @@ LinphoneStatus EventPublish::sendPublish(const LinphoneContent *body, bool notif
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
 	err = publishOp->publish(mName, mExpires, body_handler);
 	if (err == 0) {
-		setState(LinphonePublishProgress);
+		setState(LinphonePublishOutgoingProgress);
 	} else if (notifyErr) {
 		setState(LinphonePublishError);
 	}
@@ -57,9 +57,10 @@ LinphoneStatus EventPublish::sendPublish(const LinphoneContent *body, bool notif
 EventPublish::EventPublish(const shared_ptr<Core> &core) : Event(core) {
 }
 
-EventPublish::EventPublish(const shared_ptr<Core> &core, LinphonePrivate::SalEventOp *op, const string &name)
+EventPublish::EventPublish(const shared_ptr<Core> &core, LinphonePrivate::SalPublishOp *op, const string &name)
     : Event(core) {
 	mOp = op;
+	mExpires = op->getExpires();
 	mName = name;
 	mOp->setUserPointer(this->toC());
 }
@@ -104,6 +105,10 @@ EventPublish::EventPublish(const shared_ptr<Core> &core, const std::shared_ptr<A
 	setUnrefWhenTerminated(true);
 }
 
+EventPublish::~EventPublish() {
+	stopTimeoutHandling();
+}
+
 string EventPublish::toString() const {
 	std::ostringstream ss;
 	ss << "Publish of " << mName;
@@ -120,6 +125,33 @@ LinphoneStatus EventPublish::update(const LinphoneContent *body) {
 
 LinphoneStatus EventPublish::refresh() {
 	return mOp->refresh();
+}
+
+LinphoneStatus EventPublish::accept() {
+	int err;
+	if (mPublishState != LinphonePublishIncomingReceived) {
+		ms_error("EventPublish::accept(): cannot accept publish if subscription wasn't just received.");
+		return -1;
+	}
+	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
+	err = publishOp->accept();
+	if (err == 0) {
+		setState(LinphonePublishOk);
+		startTimeoutHandling();
+	}
+	return err;
+}
+
+LinphoneStatus EventPublish::deny(LinphoneReason reason) {
+	int err;
+	if (mPublishState != LinphonePublishIncomingReceived) {
+		ms_error("EventPublish::deny(): cannot deny publish if publish wasn't just received.");
+		return -1;
+	}
+	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
+	err = publishOp->decline(linphone_reason_to_sal(reason));
+	setState(LinphonePublishCleared);
+	return err;
 }
 
 void EventPublish::pause() {
@@ -155,7 +187,8 @@ void EventPublish::setState(LinphonePublishState state) {
 				release();
 				break;
 			case LinphonePublishTerminating:
-			case LinphonePublishProgress:
+			case LinphonePublishOutgoingProgress:
+			case LinphonePublishIncomingReceived:
 			case LinphonePublishExpiring:
 				/*nothing special to do*/
 				break;
@@ -189,6 +222,26 @@ void EventPublish::terminate() {
 	}
 
 	setState(LinphonePublishTerminating);
+}
+
+void EventPublish::startTimeoutHandling() {
+	stopTimeoutHandling();
+	if (mExpires > 0)
+		mTimer = getCore()->createTimer(
+		    [this]() {
+			    lInfo() << "Publish event [" << this << "] has expired";
+			    terminate();
+			    return true;
+		    },
+		    static_cast<unsigned int>(mExpires) * 1000, "Publish timer");
+}
+
+void EventPublish::stopTimeoutHandling() {
+	if (mTimer) {
+		lInfo() << "stopTimeoutHandling()";
+		getCore()->destroyTimer(mTimer);
+		mTimer = nullptr;
+	}
 }
 
 LINPHONE_END_NAMESPACE

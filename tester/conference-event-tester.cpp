@@ -2262,7 +2262,8 @@ void send_device_added_notify() {
 	    sal_custom_header_append(NULL, "Last-Notify-Version", std::to_string(localConf->getLastNotify() + 10).c_str());
 	op->setRecvCustomHeaders(ch);
 
-	LinphoneEvent *lev = linphone_event_new_with_op(pauline->lc, op, LinphoneSubscriptionIncoming, "conference");
+	LinphoneEvent *lev =
+	    linphone_event_new_subscribe_with_op(pauline->lc, op, LinphoneSubscriptionIncoming, "conference");
 	linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
 
 	localConf->subscribeReceived(dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis()));

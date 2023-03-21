@@ -24,6 +24,7 @@
 #include "call/audio-device/audio-device.h"
 #include "conference/conference-info.h"
 #include "conference/conference.h"
+#include "event/event-publish.h"
 #include "event/event-subscribe.h"
 #include "linphone/conference.h"
 #include "linphone/core.h"
@@ -291,6 +292,9 @@ public:
 	virtual AudioControlInterface *getAudioControlInterface() const override;
 	virtual VideoControlInterface *getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
+
+	void publishReceived(std::shared_ptr<EventPublish> event);
+	void publishStateChanged(std::shared_ptr<EventPublish> event, LinphonePublishState state);
 
 	void subscribeReceived(std::shared_ptr<EventSubscribe> event);
 	void subscriptionStateChanged(std::shared_ptr<EventSubscribe> event, LinphoneSubscriptionState state);

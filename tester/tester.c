@@ -2484,9 +2484,10 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_transfer_state_changed(mgr->cbs, linphone_transfer_state_changed);
 	linphone_core_cbs_set_info_received(mgr->cbs, info_message_received);
 	linphone_core_cbs_set_subscription_state_changed(mgr->cbs, linphone_subscription_state_change);
+	linphone_core_cbs_set_publish_state_changed(mgr->cbs, linphone_publish_state_changed);
 	linphone_core_cbs_set_notify_received(mgr->cbs, linphone_notify_received);
 	linphone_core_cbs_set_subscribe_received(mgr->cbs, linphone_subscribe_received);
-	linphone_core_cbs_set_publish_state_changed(mgr->cbs, linphone_publish_state_changed);
+	linphone_core_cbs_set_publish_received(mgr->cbs, linphone_publish_received);
 	linphone_core_cbs_set_configuring_status(mgr->cbs, linphone_configuration_status);
 	linphone_core_cbs_set_call_encryption_changed(mgr->cbs, linphone_call_encryption_changed);
 	linphone_core_cbs_set_call_send_master_key_changed(mgr->cbs, linphone_call_send_master_key_changed);
@@ -3561,6 +3562,52 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 	linphone_content_unref(content);
 }
 
+void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state) {
+	stats *counters = get_stats(lc);
+	LinphoneCoreManager *mgr = get_manager(lc);
+	const LinphoneAddress *from_addr = linphone_event_get_from(ev);
+	char *from = linphone_address_as_string(from_addr);
+	const LinphoneAddress *to_addr = linphone_event_get_to(ev);
+	char *to = linphone_address_as_string(to_addr);
+	ms_message("Publish state [%s] from [%s]", linphone_publish_state_to_string(state), from);
+	ms_free(from);
+	ms_free(to);
+
+	switch (state) {
+		case LinphonePublishOutgoingProgress:
+			counters->number_of_LinphonePublishOutgoingProgress++;
+			break;
+		case LinphonePublishIncomingReceived:
+			counters->number_of_LinphonePublishIncomingReceived++;
+			break;
+		case LinphonePublishOk:
+			/*make sure custom header access API is working*/
+			BC_ASSERT_PTR_NOT_NULL(linphone_event_get_custom_header(ev, "From"));
+			counters->number_of_LinphonePublishOk++;
+			break;
+		case LinphonePublishError:
+			counters->number_of_LinphonePublishError++;
+			if (ev == mgr->lev) {
+				mgr->lev = NULL;
+			}
+			break;
+		case LinphonePublishExpiring:
+			counters->number_of_LinphonePublishExpiring++;
+			if (ev == mgr->lev) {
+				mgr->lev = NULL;
+			}
+			break;
+		case LinphonePublishCleared:
+			counters->number_of_LinphonePublishCleared++;
+			if (ev == mgr->lev) {
+				mgr->lev = NULL;
+			}
+			break;
+		default:
+			break;
+	}
+}
+
 void linphone_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *content) {
 	LinphoneCoreManager *mgr;
 	mgr = get_manager(lc);
@@ -3602,31 +3649,19 @@ void linphone_subscribe_received(LinphoneCore *lc,
 	}
 }
 
-void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state) {
-	stats *counters = get_stats(lc);
-	const LinphoneAddress *from_addr = linphone_event_get_from(ev);
-	char *from = linphone_address_as_string(from_addr);
-	ms_message("Publish state [%s] from [%s]", linphone_publish_state_to_string(state), from);
-	ms_free(from);
-	switch (state) {
-		case LinphonePublishProgress:
-			counters->number_of_LinphonePublishProgress++;
+void linphone_publish_received(LinphoneCore *lc,
+                               LinphoneEvent *lev,
+                               BCTBX_UNUSED(const char *eventname),
+                               BCTBX_UNUSED(const LinphoneContent *content)) {
+	LinphoneCoreManager *mgr = get_manager(lc);
+	switch (mgr->publish_policy) {
+		case AcceptPublish:
+			linphone_event_accept_publish(lev);
 			break;
-		case LinphonePublishOk:
-			/*make sure custom header access API is working*/
-			BC_ASSERT_PTR_NOT_NULL(linphone_event_get_custom_header(ev, "From"));
-			counters->number_of_LinphonePublishOk++;
+		case DenyPublish:
+			linphone_event_deny_publish(lev, LinphoneReasonDeclined);
 			break;
-		case LinphonePublishError:
-			counters->number_of_LinphonePublishError++;
-			break;
-		case LinphonePublishExpiring:
-			counters->number_of_LinphonePublishExpiring++;
-			break;
-		case LinphonePublishCleared:
-			counters->number_of_LinphonePublishCleared++;
-			break;
-		default:
+		case DoNothingWithPublish:
 			break;
 	}
 }
@@ -4336,7 +4371,9 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 	         wait_for_until(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallStreamsRunning,
 	                        initial_callee.number_of_LinphoneCallStreamsRunning + 1, 2000);
 
-	BC_ASSERT_GREATER(callee_stats->number_of_startNamedTone, callee_mgr->stat.number_of_LinphoneCallEnd + callee_mgr->stat.number_of_LinphoneCallError, int, "%d");
+	BC_ASSERT_GREATER(callee_stats->number_of_startNamedTone,
+	                  callee_mgr->stat.number_of_LinphoneCallEnd + callee_mgr->stat.number_of_LinphoneCallError, int,
+	                  "%d");
 
 	/* The ringtone, if it has started, must have stopped. */
 	BC_ASSERT_EQUAL(callee_stats->number_of_startRingtone - initial_callee_stats.number_of_startRingtone,

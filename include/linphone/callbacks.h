@@ -704,6 +704,23 @@ typedef void (*LinphoneCoreCbsPublishStateChangedCb)(LinphoneCore *core,
 typedef LinphoneCoreCbsPublishStateChangedCb LinphoneCorePublishStateChangedCb;
 
 /**
+ * Callback prototype for notifying the application about publish received from the network.
+ * @param core #LinphoneCore object @notnil
+ * @param linphone_event the #LinphoneEvent received @notnil
+ * @param publish_event The event as string @notnil
+ * @param body the #LinphoneContent of the event @notnil
+ */
+typedef void (*LinphoneCoreCbsPublishReceivedCb)(LinphoneCore *core,
+                                                 LinphoneEvent *linphone_event,
+                                                 const char *publish_event,
+                                                 const LinphoneContent *body);
+
+/**
+ * Old name of #LinphoneCoreCbsPublishReceivedCb.
+ */
+typedef LinphoneCoreCbsPublishReceivedCb LinphoneCorePublishReceivedCb;
+
+/**
  * Callback prototype for notifying the application about a received conference info.
  * @param core #LinphoneCore object @notnil
  * @param conference_info the #LinphoneConferenceInfo received @notnil

@@ -50,10 +50,10 @@ LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_local_d
 LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_remote_desc(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_result_desc(const LinphoneCall *call);
 extern "C" {
-LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc,
-                                                          LinphonePrivate::SalEventOp *op,
-                                                          LinphoneSubscriptionDir dir,
-                                                          const char *name);
+LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_subscribe_with_op(LinphoneCore *lc,
+                                                                    LinphonePrivate::SalSubscribeOp *op,
+                                                                    LinphoneSubscriptionDir dir,
+                                                                    const char *name);
 }
 #endif
 

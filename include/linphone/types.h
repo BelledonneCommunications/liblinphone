@@ -1079,14 +1079,15 @@ typedef unsigned int LinphonePrivacyMask;
  * @ingroup event_api
  **/
 typedef enum _LinphonePublishState {
-	LinphonePublishNone = 0,     /**< Initial state, do not use */
-	LinphonePublishProgress = 1, /**< An outgoing publish was created and submitted */
-	LinphonePublishOk = 2,       /**< Publish is accepted */
-	LinphonePublishError = 3,    /**< Publish encoutered an error, linphone_event_get_reason() gives reason code */
+	LinphonePublishNone = 0,             /**< Initial state, do not use */
+	LinphonePublishIncomingReceived = 1, /**< An incoming publish is received */
+	LinphonePublishOk = 2,               /**< Publish is accepted */
+	LinphonePublishError = 3, /**< Publish encoutered an error, linphone_event_get_reason() gives reason code */
 	LinphonePublishExpiring =
 	    4, /**< Publish is about to expire, only sent if [sip]->refresh_generic_publish property is set to 0 */
-	LinphonePublishCleared = 5,    /**< Event has been un published */
-	LinphonePublishTerminating = 6 /**< Publish is about to terminate */
+	LinphonePublishCleared = 5,         /**< Event has been un published */
+	LinphonePublishTerminating = 6,     /**< Publish is about to terminate */
+	LinphonePublishOutgoingProgress = 7 /**< An outgoing publish was created and submitted */
 } LinphonePublishState;
 
 /**
@@ -1122,7 +1123,8 @@ typedef enum _LinphoneReason {
 	                                               with a duration below the minimum timer */
 	LinphoneReasonServerTimeout = 21,           /**< Server timeout */
 	LinphoneReasonUnknown = 22,                 /**< Unknown reason */
-	LinphoneReasonTransferred = 23              /**< The call has been transferred */
+	LinphoneReasonTransferred = 23,             /**< The call has been transferred */
+	LinphoneReasonConditionalRequestFailed = 24 /**< Conditional Request Failed */
 } LinphoneReason;
 
 #define LinphoneReasonBadCredentials LinphoneReasonForbidden
@@ -1215,13 +1217,13 @@ typedef enum _LinphoneSubscriptionState {
  * @ingroup misc
  **/
 typedef enum _LinphoneToneID {
-	LinphoneToneUndefined = 0,	/**< Not a tone */
-	LinphoneToneBusy = 1,		/**< Busy tone */
-	LinphoneToneCallWaiting = 2,	/**< Call waiting tone */
-	LinphoneToneCallOnHold = 3,	/**< Call on hold tone */
-	LinphoneToneCallLost = 4,	/**< Tone played when call is abruptly disconnected (media lost)*/
-	LinphoneToneCallEnd = 5,	/**< When the call end for any reason but lost */
-	LinphoneToneCallNotAnswered = 6	/**< When the call is not answered */
+	LinphoneToneUndefined = 0,      /**< Not a tone */
+	LinphoneToneBusy = 1,           /**< Busy tone */
+	LinphoneToneCallWaiting = 2,    /**< Call waiting tone */
+	LinphoneToneCallOnHold = 3,     /**< Call on hold tone */
+	LinphoneToneCallLost = 4,       /**< Tone played when call is abruptly disconnected (media lost)*/
+	LinphoneToneCallEnd = 5,        /**< When the call end for any reason but lost */
+	LinphoneToneCallNotAnswered = 6 /**< When the call is not answered */
 } LinphoneToneID;
 
 /**

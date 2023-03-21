@@ -384,6 +384,8 @@ SalReason linphone_reason_to_sal(LinphoneReason reason) {
 			return SalReasonDoNotDisturb;
 		case LinphoneReasonUnauthorized:
 			return SalReasonUnauthorized;
+		case LinphoneReasonConditionalRequestFailed:
+			return SalReasonConditionalRequestFailed;
 		case LinphoneReasonUnsupportedContent:
 			return SalReasonUnsupportedContent;
 		case LinphoneReasonBadEvent:
@@ -461,6 +463,9 @@ LinphoneReason linphone_reason_from_sal(SalReason r) {
 			break;
 		case SalReasonUnauthorized:
 			ret = LinphoneReasonUnauthorized;
+			break;
+		case SalReasonConditionalRequestFailed:
+			ret = LinphoneReasonConditionalRequestFailed;
 			break;
 		case SalReasonUnsupportedContent:
 			ret = LinphoneReasonUnsupportedContent;
@@ -624,10 +629,10 @@ LinphoneStatus linphone_core_migrate_to_multi_transport(LinphoneCore *lc) {
 	return 0;
 }
 
-LinphoneToneDescription * linphone_tone_description_new(LinphoneToneID id, const char *audiofile){
-	LinphoneToneDescription *obj=ms_new0(LinphoneToneDescription,1);
-	obj->toneid=id;
-	obj->audiofile=audiofile ? ms_strdup(audiofile) : NULL;
+LinphoneToneDescription *linphone_tone_description_new(LinphoneToneID id, const char *audiofile) {
+	LinphoneToneDescription *obj = ms_new0(LinphoneToneDescription, 1);
+	obj->toneid = id;
+	obj->audiofile = audiofile ? ms_strdup(audiofile) : NULL;
 	return obj;
 }
 
@@ -636,7 +641,7 @@ void linphone_tone_description_destroy(LinphoneToneDescription *obj) {
 	ms_free(obj);
 }
 
-void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *audiofile){
+void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *audiofile) {
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().setTone(id, audiofile);
 }
 

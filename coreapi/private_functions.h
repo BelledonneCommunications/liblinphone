@@ -655,10 +655,10 @@ SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type);
 LinphoneEventCbs *linphone_event_cbs_new(void);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
-LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc,
-                                                          LinphonePrivate::SalEventOp *op,
-                                                          LinphoneSubscriptionDir dir,
-                                                          const char *name);
+LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_subscribe_with_op(LinphoneCore *lc,
+                                                                    LinphonePrivate::SalSubscribeOp *op,
+                                                                    LinphoneSubscriptionDir dir,
+                                                                    const char *name);
 LinphoneEvent *_linphone_core_create_publish(
     LinphoneCore *lc, LinphoneAccount *account, LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
@@ -667,10 +667,12 @@ void linphone_event_set_manual_refresher_mode(LinphoneEvent *lev, bool_t manual)
 /**
  * Useful for out of dialog notify
  * */
-LinphoneEvent *linphone_event_new_with_out_of_dialog_op(LinphoneCore *lc,
-                                                        LinphonePrivate::SalEventOp *op,
-                                                        LinphoneSubscriptionDir dir,
-                                                        const char *name);
+LinphoneEvent *linphone_event_new_subscribe_with_out_of_dialog_op(LinphoneCore *lc,
+                                                                  LinphonePrivate::SalSubscribeOp *op,
+                                                                  LinphoneSubscriptionDir dir,
+                                                                  const char *name);
+LinphoneEvent *
+linphone_event_new_publish_with_op(LinphoneCore *lc, LinphonePrivate::SalPublishOp *op, const char *name);
 void linphone_event_set_internal(LinphoneEvent *lev, bool_t internal);
 bool_t linphone_event_is_internal(LinphoneEvent *lev);
 LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);
@@ -877,6 +879,10 @@ void linphone_core_notify_subscription_state_changed(LinphoneCore *lc,
                                                      LinphoneEvent *lev,
                                                      LinphoneSubscriptionState state);
 void linphone_core_notify_publish_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphonePublishState state);
+void linphone_core_notify_publish_received(LinphoneCore *lc,
+                                           LinphoneEvent *lev,
+                                           const char *publish_event,
+                                           const LinphoneContent *body);
 void linphone_core_notify_log_collection_upload_state_changed(LinphoneCore *lc,
                                                               LinphoneCoreLogCollectionUploadState state,
                                                               const char *info);

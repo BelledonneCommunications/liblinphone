@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,10 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "sal/event-op.h"
+
+#include "bctoolbox/defs.h"
 
 #include "c-wrapper/internal/c-tools.h"
-#include "sal/event-op.h"
 
 using namespace std;
 
@@ -380,6 +381,83 @@ SalPublishOp::SalPublishOp(Sal *sal) : SalEventOp(sal) {
 	mType = Type::Publish;
 }
 
+SalPublishOp::~SalPublishOp() {
+	if (mRoot) {
+		auto it = mRoot->mOpByCallId.find(mCallId);
+		if (it != mRoot->mOpByCallId.end()) mRoot->mOpByCallId.erase(mCallId);
+	}
+}
+
+void SalPublishOp::publishProcessRequestEventCb(void *userCtx, const belle_sip_request_event_t *event) {
+	auto op = static_cast<SalPublishOp *>(userCtx);
+	auto serverTransaction =
+	    belle_sip_provider_create_server_transaction(op->mRoot->mProvider, belle_sip_request_event_get_request(event));
+
+	belle_sip_object_ref(serverTransaction);
+
+	if (op->mPendingServerTransaction) belle_sip_object_unref(op->mPendingServerTransaction);
+	op->mPendingServerTransaction = serverTransaction;
+
+	auto request = belle_sip_request_event_get_request(event);
+
+	/* 2. The ESC examines the Event header field of the PUBLISH request. */
+
+	belle_sip_header_t *header = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Event");
+	if (!header) {
+		lWarning() << "No event header in incoming PUBLISH";
+		auto response = op->createResponseFromRequest(request, 489);
+		belle_sip_server_transaction_send_response(serverTransaction, response);
+		if (!op->mDialog) op->release();
+		return;
+	}
+
+	if (strcasecmp(belle_sip_header_get_unparsed_value(header), "Conference") != 0 &&
+	    !op->mRoot->isEnabledTestFeatures()) {
+		lWarning() << "Unsuported  event : " << belle_sip_header_get_unparsed_value(header);
+		auto response = op->createResponseFromRequest(request, 489);
+		belle_sip_server_transaction_send_response(serverTransaction, response);
+		if (!op->mDialog) op->release();
+		return;
+	}
+
+	/* 3. The ESC examines the SIP-If-Match header field of the PUBLISH request. */
+
+	belle_sip_header_t *sipIfMatch = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "SIP-If-Match");
+
+	if (sipIfMatch) op->mETag = belle_sip_header_get_unparsed_value(sipIfMatch);
+
+	/* 4. The ESC processes the Expires header field value from the PUBLISH request. */
+
+	belle_sip_header_expires_t *headerExpires =
+	    belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
+	op->mExpires =
+	    headerExpires ? belle_sip_header_expires_get_expires(headerExpires)
+	                  : 0; /* REVISIT: may not be the best solution -> https://www.rfc-editor.org/rfc/rfc3903#page-12 */
+
+	/* 5. The ESC processes the published event state contained in the body of the PUBLISH request. */
+
+	if (!sipIfMatch && belle_sip_message_get_body_size(BELLE_SIP_MESSAGE(request)) <= 0) {
+		lWarning() << "Publish without eTag must contain a body";
+		auto response = op->createResponseFromRequest(request, 400);
+		belle_sip_server_transaction_send_response(serverTransaction, response);
+		if (!op->mDialog) op->release();
+		return;
+	}
+
+	// At that point, we are safe
+
+	auto eventHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_event_t);
+	const char *eventName = belle_sip_header_event_get_package_name(eventHeader);
+	auto contentTypeHeader =
+	    belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_content_type_t);
+	auto bodyHandler = BELLE_SIP_BODY_HANDLER(op->getBodyHandler(BELLE_SIP_MESSAGE(request)));
+	const char *type = nullptr;
+	if (contentTypeHeader) type = belle_sip_header_content_type_get_type(contentTypeHeader);
+	op->mRoot->mCallbacks.publish_received(op, eventName,
+	                                       type ? reinterpret_cast<SalBodyHandler *>(bodyHandler) : nullptr);
+	if (op->mExpires == 0) op->mRoot->mCallbacks.incoming_publish_closed(op);
+}
+
 void SalPublishOp::publishResponseEventCb(void *userCtx, const belle_sip_response_event_t *event) {
 	auto op = static_cast<SalPublishOp *>(userCtx);
 	op->setErrorInfoFromResponse(belle_sip_response_event_get_response(event));
@@ -389,6 +467,8 @@ void SalPublishOp::publishResponseEventCb(void *userCtx, const belle_sip_respons
 void SalPublishOp::fillCallbacks() {
 	static belle_sip_listener_callbacks_t opPublishCallbacks{};
 	if (!opPublishCallbacks.process_response_event) opPublishCallbacks.process_response_event = publishResponseEventCb;
+	if (!opPublishCallbacks.process_request_event)
+		opPublishCallbacks.process_request_event = publishProcessRequestEventCb;
 
 	mCallbacks = &opPublishCallbacks;
 }
@@ -446,6 +526,31 @@ int SalPublishOp::publish(const string &eventName, int expires, const SalBodyHan
 	}
 }
 
+int SalPublishOp::accept() {
+	if (mPendingServerTransaction) {
+		auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
+
+		auto expiresHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
+		int expires = expiresHeader ? belle_sip_header_expires_get_expires(expiresHeader) : 0;
+		auto response = createResponseFromRequest(request, 200);
+		if (expires > 0) {
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response),
+			                             belle_sip_header_create("SIP-ETag", mETag.c_str()));
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(expiresHeader));
+		}
+
+		belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
+	}
+	return 0;
+}
+
+int SalPublishOp::decline(SalReason reason) {
+	auto response = belle_sip_response_create_from_request(
+	    belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction)), toSipCode(reason));
+	belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
+	return 0;
+}
+
 int SalPublishOp::unpublish() {
 	if (!mRefresher) return -1;
 
@@ -455,6 +560,18 @@ int SalPublishOp::unpublish() {
 	belle_sip_message_set_body(BELLE_SIP_MESSAGE(lastRequest), nullptr, 0);
 	belle_sip_refresher_refresh(mRefresher, 0);
 	return 0;
+}
+
+const string &SalPublishOp::getETag() const {
+	return mETag;
+}
+
+void SalPublishOp::setETag(const string &eTag) {
+	mETag = eTag;
+}
+
+int SalPublishOp::getExpires() const {
+	return mExpires;
 }
 
 LINPHONE_END_NAMESPACE

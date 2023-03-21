@@ -146,12 +146,16 @@ void Sal::processRequestEventCb(void *userCtx, const belle_sip_request_event_t *
 			auto response = belle_sip_response_create_from_request(request, 481);
 			belle_sip_provider_send_response(sal->mProvider, response);
 			return;
-		} else if (sal->mEnableTestFeatures && (method == "PUBLISH")) { // Out of dialog PUBLISH
-			auto response = belle_sip_response_create_from_request(request, 200);
-			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response),
-			                             belle_sip_header_create("SIP-Etag", "4441929FFFZQOA"));
-			belle_sip_provider_send_response(sal->mProvider, response);
-			return;
+		} else if ((method == "PUBLISH")) { // Out of dialog PUBLISH
+			auto callId = belle_sip_header_call_id_get_call_id(BELLE_SIP_HEADER_CALL_ID(
+			    belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_call_id_t)));
+			auto it = sal->mOpByCallId.find(callId);
+			if (it == sal->mOpByCallId.end()) {
+				op = new SalPublishOp(sal);
+				sal->mOpByCallId.insert_or_assign(callId, op);
+				op->fillCallbacks();
+			} else op = dynamic_cast<SalPublishOp *>(it->second);
+
 		} else {
 			lError() << "Sal::processRequestEventCb(): not implemented yet for method [" << method << "]";
 			auto response = belle_sip_response_create_from_request(request, 405);
@@ -466,7 +470,10 @@ void Sal::setCallbacks(const Callbacks *cbs) {
 	if (!mCallbacks.ping_reply) mCallbacks.ping_reply = (OnPingReplyCb)unimplementedStub;
 	if (!mCallbacks.auth_requested) mCallbacks.auth_requested = (OnAuthRequestedCb)unimplementedStub;
 	if (!mCallbacks.info_received) mCallbacks.info_received = (OnInfoReceivedCb)unimplementedStub;
+	if (!mCallbacks.publish_received) mCallbacks.publish_received = (OnPublishReceivedCb)unimplementedStub;
 	if (!mCallbacks.on_publish_response) mCallbacks.on_publish_response = (OnPublishResponseCb)unimplementedStub;
+	if (!mCallbacks.incoming_publish_closed)
+		mCallbacks.incoming_publish_closed = (OnIncomingPublishClosedCb)unimplementedStub;
 	if (!mCallbacks.on_expire) mCallbacks.on_expire = (OnExpireCb)unimplementedStub;
 	if (!mCallbacks.process_redirect) mCallbacks.process_redirect = (OnRedirectCb)unimplementedStub;
 }
@@ -882,6 +889,8 @@ int toSipCode(SalReason reason) {
 			return 600;
 		case SalReasonForbidden:
 			return 403;
+		case SalReasonConditionalRequestFailed:
+			return 412;
 		case SalReasonUnsupportedContent:
 			return 415;
 		case SalReasonNotFound:

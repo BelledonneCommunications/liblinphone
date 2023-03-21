@@ -128,8 +128,10 @@ LINPHONE_PUBLIC const char *linphone_publish_state_to_string(LinphonePublishStat
 	switch (state) {
 		case LinphonePublishNone:
 			return "LinphonePublishNone";
-		case LinphonePublishProgress:
-			return "LinphonePublishProgress";
+		case LinphonePublishOutgoingProgress:
+			return "LinphonePublishOutgoingProgress";
+		case LinphonePublishIncomingReceived:
+			return "LinphonePublishIncomingReceived";
 		case LinphonePublishOk:
 			return "LinphonePublishOk";
 		case LinphonePublishError:
@@ -324,6 +326,24 @@ LinphoneStatus linphone_event_refresh_publish(LinphoneEvent *linphone_event) {
 	return event_publish->refresh();
 }
 
+LinphoneStatus linphone_event_accept_publish(LinphoneEvent *linphone_event) {
+	auto event_publish = dynamic_cast<EventPublish *>(Event::toCpp(linphone_event));
+	if (!event_publish) {
+		log_bad_cast("linphone_event_accept_publish");
+		return -1;
+	}
+	return event_publish->accept();
+}
+
+LinphoneStatus linphone_event_deny_publish(LinphoneEvent *linphone_event, LinphoneReason reason) {
+	auto event_publish = dynamic_cast<EventPublish *>(Event::toCpp(linphone_event));
+	if (!event_publish) {
+		log_bad_cast("linphone_event_deny_publish");
+		return -1;
+	}
+	return event_publish->deny(reason);
+}
+
 void linphone_event_pause_publish(LinphoneEvent *linphone_event) {
 	auto event_publish = dynamic_cast<EventPublish *>(Event::toCpp(linphone_event));
 	if (!event_publish) {
@@ -454,16 +474,22 @@ void *linphone_event_get_user_data(const LinphoneEvent *linphone_event) {
 // Constructor and destructor functions.
 // =============================================================================
 
-LinphoneEvent *
-linphone_event_new_with_op(LinphoneCore *lc, SalEventOp *op, LinphoneSubscriptionDir dir, const char *name) {
+LinphoneEvent *linphone_event_new_subscribe_with_op(LinphoneCore *lc,
+                                                    SalSubscribeOp *op,
+                                                    LinphoneSubscriptionDir dir,
+                                                    const char *name) {
 	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name), false))->toC();
 }
 
-LinphoneEvent *linphone_event_new_with_out_of_dialog_op(LinphoneCore *lc,
-                                                        SalEventOp *op,
-                                                        LinphoneSubscriptionDir dir,
-                                                        const char *name) {
+LinphoneEvent *linphone_event_new_subscribe_with_out_of_dialog_op(LinphoneCore *lc,
+                                                                  SalSubscribeOp *op,
+                                                                  LinphoneSubscriptionDir dir,
+                                                                  const char *name) {
 	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name), true))->toC();
+}
+
+LinphoneEvent *linphone_event_new_publish_with_op(LinphoneCore *lc, SalPublishOp *op, const char *name) {
+	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, L_C_TO_STRING(name)))->toC();
 }
 
 #endif /* LINPHONE_EVENT_H_ */

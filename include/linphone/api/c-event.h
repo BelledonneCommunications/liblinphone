@@ -106,6 +106,20 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_update_publish(LinphoneEvent *linp
 LINPHONE_PUBLIC LinphoneStatus linphone_event_refresh_publish(LinphoneEvent *linphone_event);
 
 /**
+ * Accept an incoming publish.
+ * @param linphone_event #LinphoneEvent object. @notnil
+ * @return 0 if successful, error code otherwise
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_event_accept_publish(LinphoneEvent *linphone_event);
+
+/**
+ * Deny an incoming publish with given reason.
+ * @param linphone_event #LinphoneEvent object. @notnil
+ * @return 0 if successful, error code otherwise
+ **/
+LINPHONE_PUBLIC LinphoneStatus linphone_event_deny_publish(LinphoneEvent *linphone_event, LinphoneReason reason);
+
+/**
  * Prevent an event from refreshing its publish.
  * This is useful to let registrations to expire naturally (or) when the application wants to keep control on when
  * refreshes are sent.

@@ -389,7 +389,8 @@ typedef struct _stats {
 	int number_of_LinphoneSubscriptionError;
 	int number_of_LinphoneSubscriptionExpiring;
 
-	int number_of_LinphonePublishProgress;
+	int number_of_LinphonePublishOutgoingProgress;
+	int number_of_LinphonePublishIncomingReceived;
 	int number_of_LinphonePublishOk;
 	int number_of_LinphonePublishExpiring;
 	int number_of_LinphonePublishError;
@@ -502,6 +503,12 @@ typedef enum _LinphoneCoreManagerSubscribePolicy {
 	DoNothingWithSubscription
 } LinphoneCoreManagerSubscribePolicy;
 
+typedef enum _LinphoneCoreManagerPublishPolicy {
+	AcceptPublish,
+	DenyPublish,
+	DoNothingWithPublish
+} LinphoneCoreManagerPublishPolicy;
+
 typedef struct _LinphoneCoreManager {
 	LinphoneCoreCbs *cbs;
 	LinphoneCore *lc;
@@ -519,6 +526,7 @@ typedef struct _LinphoneCoreManager {
 	void *user_info;
 	bool_t main_core;
 	LinphoneCoreManagerSubscribePolicy subscribe_policy;
+	LinphoneCoreManagerPublishPolicy publish_policy;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {
@@ -654,6 +662,10 @@ void linphone_subscribe_received(LinphoneCore *lc,
                                  LinphoneEvent *lev,
                                  const char *eventname,
                                  const LinphoneContent *content);
+void linphone_publish_received(LinphoneCore *lc,
+                               LinphoneEvent *lev,
+                               const char *eventname,
+                               const LinphoneContent *content);
 void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message);
 void linphone_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call);
 void linphone_call_encryption_changed(LinphoneCore *lc,

@@ -28,6 +28,7 @@
 
 #include "address/address.h"
 #include "core/core-accessor.h"
+#include "event/event-publish.h"
 #include "event/event-subscribe.h"
 
 #include "conference/conference-id.h"
@@ -58,6 +59,8 @@ class LINPHONE_PUBLIC LocalConferenceEventHandler : public std::enable_shared_fr
 public:
 	static Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus(LinphoneMediaDirection direction);
 	LocalConferenceEventHandler(Conference *conference, ConferenceListener *listener = nullptr);
+
+	void publishStateChanged(const std::shared_ptr<EventPublish> &ev, LinphonePublishState state);
 
 	LinphoneStatus subscribeReceived(const std::shared_ptr<EventSubscribe> &ev);
 	void subscriptionStateChanged(const std::shared_ptr<EventSubscribe> &ev, LinphoneSubscriptionState state);

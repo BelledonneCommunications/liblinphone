@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -72,19 +72,33 @@ private:
 class SalPublishOp : public SalEventOp {
 public:
 	SalPublishOp(Sal *sal);
+	virtual ~SalPublishOp();
 
 	int publish(const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
+	int accept();
+	int decline(SalReason reason);
 	int unpublish();
+
+	const std::string &getETag() const;
+	void setETag(const std::string &eTag);
+
+	int getExpires() const;
 
 private:
 	void fillCallbacks() override;
 
+	static void publishProcessRequestEventCb(void *userCtx, const belle_sip_request_event_t *event);
 	static void publishResponseEventCb(void *userCtx, const belle_sip_response_event_t *event);
+	static void publishProcessDialogTerminatedCb(void *userCtx, const belle_sip_dialog_terminated_event_t *event);
+	static void releaseCb(SalOp *op);
 	static void publishRefresherListenerCb(belle_sip_refresher_t *refresher,
 	                                       void *userCtx,
 	                                       unsigned int statusCode,
 	                                       const char *reasonPhrase,
 	                                       int willRetry);
+
+	std::string mETag;
+	int mExpires;
 };
 
 LINPHONE_END_NAMESPACE
