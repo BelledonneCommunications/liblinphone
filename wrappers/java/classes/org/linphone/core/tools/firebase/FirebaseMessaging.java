@@ -37,7 +37,9 @@ import org.linphone.core.tools.service.AndroidDispatcher;
 
 import java.lang.StringBuilder;
 import java.util.List;
+import java.util.Map;
 
+import org.json.JSONObject;
 
 /**
  * Firebase cloud messaging service implementation used to received push notification.
@@ -75,8 +77,9 @@ public class FirebaseMessaging extends FirebaseMessagingService {
             if (CoreManager.instance() != null) {
                 Core core = CoreManager.instance().getCore();
                 if (core != null) {
-                    String callId = remoteMessage.getData().getOrDefault("call-id", "");
-                    String payload = remoteMessage.getData().toString();
+                    Map<String, String> data = remoteMessage.getData();
+                    String callId = data.getOrDefault("call-id", "");                    
+                    String payload = new JSONObject(data).toString();
                     Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
                     CoreManager.instance().processPushNotification(callId, payload, false);
                 } else {
@@ -93,9 +96,10 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         SharedPreferences sharedPref = context.getSharedPreferences("push_notification_storage", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
 
-        String callId = remoteMessage.getData().getOrDefault("call-id", "");
+        Map<String, String> data = remoteMessage.getData();
+        String callId = data.getOrDefault("call-id", "");
         editor.putString("call-id", callId);
-        String payload = remoteMessage.getData().toString();
+        String payload = new JSONObject(data).toString();
         editor.putString("payload", payload);
         editor.apply();
         android.util.Log.i("FirebaseMessaging", "[Push Notification] Push information stored for Call-ID [" + callId + "]");
@@ -135,7 +139,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         builder.append("], Sent Time [");
         builder.append(remoteMessage.getSentTime());
         builder.append("], Data [");
-        builder.append(remoteMessage.getData());
+        builder.append(new JSONObject(remoteMessage.getData()).toString());
         builder.append("]");
         return builder.toString();
     }
