@@ -27,18 +27,20 @@
  * #LinphoneChatMessageState is used to notify if messages have been successfully delivered or not.
  * @ingroup chatroom
  */
-typedef enum _LinphoneChatMessageState{
-	LinphoneChatMessageStateIdle = 0, /**< Initial state */
-	LinphoneChatMessageStateInProgress = 1, /**< Delivery in progress */
-	LinphoneChatMessageStateDelivered = 2, /**< Message successfully delivered and acknowledged by the server */
+typedef enum _LinphoneChatMessageState {
+	LinphoneChatMessageStateIdle = 0,		  /**< Initial state */
+	LinphoneChatMessageStateInProgress = 1,	  /**< Delivery in progress */
+	LinphoneChatMessageStateDelivered = 2,	  /**< Message successfully delivered and acknowledged by the server */
 	LinphoneChatMessageStateNotDelivered = 3, /**< Message was not delivered */
-	LinphoneChatMessageStateFileTransferError = 4, /**< Message was received and acknowledged but cannot get file from server */
+	LinphoneChatMessageStateFileTransferError =
+		4, /**< Message was received and acknowledged but cannot get file from server */
 	LinphoneChatMessageStateFileTransferDone = 5, /**< File transfer has been completed successfully */
-	LinphoneChatMessageStateDeliveredToUser = 6, /**< Message successfully delivered an acknowledged by the remote user */
+	LinphoneChatMessageStateDeliveredToUser =
+		6,								   /**< Message successfully delivered an acknowledged by the remote user */
 	LinphoneChatMessageStateDisplayed = 7, /**< Message successfully displayed to the remote user */
-	LinphoneChatMessageStateFileTransferInProgress = 8, /** <File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */
+	LinphoneChatMessageStateFileTransferInProgress =
+		8, /**< File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */
 } LinphoneChatMessageState;
-
 
 /**
  * #LinphoneChatMessageDirection is used to indicate if a message is outgoing or incoming.

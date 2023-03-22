@@ -313,7 +313,7 @@ typedef void (*LinphoneCoreCbsDtmfReceivedCb)(LinphoneCore* core, LinphoneCall *
  */
 typedef LinphoneCoreCbsDtmfReceivedCb LinphoneCoreDtmfReceivedCb;
 
-/** 
+/**
  * Callback prototype for when a refer is received
  * @param core the #LinphoneCore @notnil
  * @param refer_to the address of the refer @notnil
@@ -325,11 +325,11 @@ typedef void (*LinphoneCoreCbsReferReceivedCb)(LinphoneCore *core, const char *r
  */
 typedef LinphoneCoreCbsReferReceivedCb LinphoneCoreReferReceivedCb;
 
-/** 
+/**
  * Callback prototype when using the buddy plugin
  * @param core the #LinphoneCore @notnil
  * @param linphone_friend the #LinphoneFriend that has been updated @notnil
- */ 
+ */
 typedef void (*LinphoneCoreCbsBuddyInfoUpdatedCb)(LinphoneCore *core, LinphoneFriend *linphone_friend);
 
 /**
