@@ -78,15 +78,15 @@ FileTransferContent::FileTransferContent(const FileTransferContent &other) : Con
 FileTransferContent::FileTransferContent(FileTransferContent &&other) : Content(*new FileTransferContentPrivate) {
 	L_D();
 	Content::copy(other);
-	d->fileName = move(other.getPrivate()->fileName);
-	d->fileUrl = move(other.getPrivate()->fileUrl);
-	d->filePath = move(other.getPrivate()->filePath);
-	d->fileContent = move(other.getPrivate()->fileContent);
-	d->fileSize = move(other.getPrivate()->fileSize);
-	d->fileKey = move(other.getPrivate()->fileKey);
-	d->fileAuthTag = move(other.getPrivate()->fileAuthTag);
-	d->fileContentType = move(other.getPrivate()->fileContentType);
-	d->fileDuration = move(other.getPrivate()->fileDuration);
+	d->fileName = std::move(other.getPrivate()->fileName);
+	d->fileUrl = std::move(other.getPrivate()->fileUrl);
+	d->filePath = std::move(other.getPrivate()->filePath);
+	d->fileContent = std::move(other.getPrivate()->fileContent);
+	d->fileSize = std::move(other.getPrivate()->fileSize);
+	d->fileKey = std::move(other.getPrivate()->fileKey);
+	d->fileAuthTag = std::move(other.getPrivate()->fileAuthTag);
+	d->fileContentType = std::move(other.getPrivate()->fileContentType);
+	d->fileDuration = std::move(other.getPrivate()->fileDuration);
 }
 
 FileTransferContent &FileTransferContent::operator=(const FileTransferContent &other) {
@@ -109,16 +109,16 @@ FileTransferContent &FileTransferContent::operator=(const FileTransferContent &o
 
 FileTransferContent &FileTransferContent::operator=(FileTransferContent &&other) {
 	L_D();
-	Content::operator=(move(other));
-	d->fileName = move(other.getPrivate()->fileName);
-	d->fileUrl = move(other.getPrivate()->fileUrl);
-	d->filePath = move(other.getPrivate()->filePath);
-	d->fileContent = move(other.getPrivate()->fileContent);
-	d->fileSize = move(other.getPrivate()->fileSize);
-	d->fileKey = move(other.getPrivate()->fileKey);
-	d->fileAuthTag = move(other.getPrivate()->fileAuthTag);
-	d->fileContentType = move(other.getPrivate()->fileContentType);
-	d->fileDuration = move(other.getPrivate()->fileDuration);
+	Content::operator=(std::move(other));
+	d->fileName = std::move(other.getPrivate()->fileName);
+	d->fileUrl = std::move(other.getPrivate()->fileUrl);
+	d->filePath = std::move(other.getPrivate()->filePath);
+	d->fileContent = std::move(other.getPrivate()->fileContent);
+	d->fileSize = std::move(other.getPrivate()->fileSize);
+	d->fileKey = std::move(other.getPrivate()->fileKey);
+	d->fileAuthTag = std::move(other.getPrivate()->fileAuthTag);
+	d->fileContentType = std::move(other.getPrivate()->fileContentType);
+	d->fileDuration = std::move(other.getPrivate()->fileDuration);
 
 	return *this;
 }

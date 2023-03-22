@@ -60,10 +60,10 @@ FileContent::FileContent(const FileContent &other) : Content(*new FileContentPri
 FileContent::FileContent(FileContent &&other) : Content(*new FileContentPrivate) {
 	L_D();
 	Content::copy(other);
-	d->fileName = move(other.getPrivate()->fileName);
-	d->filePath = move(other.getPrivate()->filePath);
-	d->fileSize = move(other.getPrivate()->fileSize);
-	d->fileDuration = move(other.getPrivate()->fileDuration);
+	d->fileName = std::move(other.getPrivate()->fileName);
+	d->filePath = std::move(other.getPrivate()->filePath);
+	d->fileSize = std::move(other.getPrivate()->fileSize);
+	d->fileDuration = std::move(other.getPrivate()->fileDuration);
 }
 
 FileContent &FileContent::operator=(const FileContent &other) {
@@ -78,11 +78,11 @@ FileContent &FileContent::operator=(const FileContent &other) {
 
 FileContent &FileContent::operator=(FileContent &&other) {
 	L_D();
-	Content::operator=(move(other));
-	d->fileName = move(other.getPrivate()->fileName);
-	d->filePath = move(other.getPrivate()->filePath);
-	d->fileSize = move(other.getPrivate()->fileSize);
-	d->fileDuration = move(other.getPrivate()->fileDuration);
+	Content::operator=(std::move(other));
+	d->fileName = std::move(other.getPrivate()->fileName);
+	d->filePath = std::move(other.getPrivate()->filePath);
+	d->fileSize = std::move(other.getPrivate()->fileSize);
+	d->fileDuration = std::move(other.getPrivate()->fileDuration);
 	return *this;
 }
 

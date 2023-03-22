@@ -75,7 +75,7 @@ void AppDataContainer::setAppData(const string &name, const string &appData) {
 
 void AppDataContainer::setAppData(const string &name, string &&appData) {
 	L_D();
-	(*d->appData)[name] = move(appData);
+	(*d->appData)[name] = std::move(appData);
 }
 
 LINPHONE_END_NAMESPACE

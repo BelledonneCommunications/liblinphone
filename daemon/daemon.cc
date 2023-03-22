@@ -285,7 +285,7 @@ DaemonCommand::DaemonCommand(const string &name, const string &proto, const stri
 }
 
 void DaemonCommand::addExample(std::unique_ptr<const DaemonCommandExample> &&example) {
-	mExamples.emplace_back(move(example));
+	mExamples.emplace_back(std::move(example));
 }
 
 const string DaemonCommand::getHelp() const {

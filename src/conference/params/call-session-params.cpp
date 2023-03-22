@@ -304,7 +304,7 @@ std::string CallSessionParams::getCustomContactParameter(const std::string &para
 
 void CallSessionParams::addCustomContent(const Content &content) {
 	L_D();
-	d->customContents.push_back(move(content));
+	d->customContents.push_back(std::move(content));
 }
 
 const list<Content> &CallSessionParams::getCustomContents() const {

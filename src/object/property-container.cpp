@@ -71,7 +71,7 @@ void PropertyContainer::setProperty(const string &name, const Variant &value) {
 
 void PropertyContainer::setProperty(const string &name, Variant &&value) {
 	if (!mPrivate) mPrivate = new PropertyContainerPrivate();
-	mPrivate->properties[name] = move(value);
+	mPrivate->properties[name] = std::move(value);
 }
 
 int PropertyContainer::remove(const std::string &name) const {

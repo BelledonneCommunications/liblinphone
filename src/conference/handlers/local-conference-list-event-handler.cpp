@@ -159,7 +159,7 @@ void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<Ev
 			belle_sip_random_token(token, sizeof(token));
 			content.addHeader("Content-Id", token);
 			content.addHeader("Content-Length", Utils::toString(content.getSize()));
-			contents.push_back(move(content));
+			contents.push_back(std::move(content));
 
 			// Add entry into the Rlmi content of the notify body
 			Xsd::Rlmi::Resource resource(addr.asStringUriOnly());

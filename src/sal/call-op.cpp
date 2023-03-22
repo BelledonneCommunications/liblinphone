@@ -60,7 +60,7 @@ int SalCallOp::setLocalMediaDescription(std::shared_ptr<SalMediaDescription> des
 		if (error != BELLE_SIP_OK) return -1;
 
 		mLocalBody.setContentType(ContentType::Sdp);
-		mLocalBody.setBody(move(buffer));
+		mLocalBody.setBody(std::move(buffer));
 	} else {
 		mLocalBody = Content();
 	}
@@ -81,7 +81,7 @@ int SalCallOp::setLocalMediaDescription(std::shared_ptr<SalMediaDescription> des
 
 int SalCallOp::setLocalBody(const Content &body) {
 	Content bodyCopy = body;
-	return setLocalBody(move(bodyCopy));
+	return setLocalBody(std::move(bodyCopy));
 }
 
 int SalCallOp::setLocalBody(Content &&body) {
@@ -100,12 +100,12 @@ int SalCallOp::setLocalBody(Content &&body) {
 		mLocalMedia = desc;
 	}
 
-	mLocalBody = move(body);
+	mLocalBody = std::move(body);
 	return 0;
 }
 
 void SalCallOp::addAdditionalLocalBody(const Content &content) {
-	mAdditionalLocalBodies.push_back(move(content));
+	mAdditionalLocalBodies.push_back(std::move(content));
 }
 
 const list<Content> &SalCallOp::getAdditionalRemoteBodies() const {
@@ -179,7 +179,7 @@ int SalCallOp::setSdp(belle_sip_message_t *msg, belle_sdp_session_description_t 
 
 	Content body;
 	body.setContentType(ContentType::Sdp);
-	body.setBody(move(buffer));
+	body.setBody(std::move(buffer));
 	setCustomBody(msg, body);
 	return 0;
 }
@@ -439,7 +439,7 @@ void SalCallOp::handleBodyFromResponse(belle_sip_response_t *response) {
 			if (content.getContentType() == ContentType::Sdp) {
 				sdpBody = content;
 			} else {
-				mAdditionalRemoteBodies.push_back(move(content));
+				mAdditionalRemoteBodies.push_back(std::move(content));
 			}
 		}
 	}
@@ -451,14 +451,14 @@ void SalCallOp::handleBodyFromResponse(belle_sip_response_t *response) {
 			if (sdp) {
 
 				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
-				mRemoteBody = move(sdpBody);
+				mRemoteBody = std::move(sdpBody);
 				belle_sip_object_unref(sdp);
 			} // If no SDP in response, what can we do?
 		}
 		// Process sdp in any case to reset result media description
 		if (mLocalMedia) sdpProcess();
 	} else {
-		mRemoteBody = move(sdpBody);
+		mRemoteBody = std::move(sdpBody);
 	}
 }
 
@@ -755,7 +755,7 @@ SalReason SalCallOp::processBodyForInvite(belle_sip_request_t *invite) {
 			if (content.getContentType() == ContentType::Sdp) {
 				sdpBody = content;
 			} else {
-				mAdditionalRemoteBodies.push_back(move(content));
+				mAdditionalRemoteBodies.push_back(std::move(content));
 			}
 		}
 	}
@@ -781,7 +781,7 @@ SalReason SalCallOp::processBodyForInvite(belle_sip_request_t *invite) {
 			sal_error_info_reset(&sei);
 		}
 	}
-	mRemoteBody = move(sdpBody);
+	mRemoteBody = std::move(sdpBody);
 	return reason;
 }
 
@@ -797,7 +797,7 @@ SalReason SalCallOp::processBodyForAck(belle_sip_request_t *ack) {
 			if (content.getContentType() == ContentType::Sdp) {
 				sdpBody = content;
 			} else {
-				mAdditionalRemoteBodies.push_back(move(content));
+				mAdditionalRemoteBodies.push_back(std::move(content));
 			}
 		}
 	}
@@ -814,7 +814,7 @@ SalReason SalCallOp::processBodyForAck(belle_sip_request_t *ack) {
 			}
 		}
 	}
-	mRemoteBody = move(sdpBody);
+	mRemoteBody = std::move(sdpBody);
 	return reason;
 }
 

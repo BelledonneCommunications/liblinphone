@@ -453,7 +453,7 @@ int logfile_arg_func(const char *arg) {
 	return 0;
 }
 
-void liblinphone_tester_add_suites() {
+void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&setup_test_suite);
 	bc_tester_add_suite(&register_test_suite);
 #ifdef HAVE_ADVANCED_IM

@@ -48,14 +48,14 @@ Content::Content(const Content &other) : ClonableObject(*new ContentPrivate), Ap
 	copy(other);
 }
 
-Content::Content(Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(move(other)) {
+Content::Content(Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(std::move(other)) {
 	L_D();
 	ContentPrivate *dOther = other.getPrivate();
-	d->body = move(dOther->body);
-	d->contentType = move(dOther->contentType);
-	d->contentDisposition = move(dOther->contentDisposition);
-	d->contentEncoding = move(dOther->contentEncoding);
-	d->headers = move(dOther->headers);
+	d->body = std::move(dOther->body);
+	d->contentType = std::move(dOther->contentType);
+	d->contentDisposition = std::move(dOther->contentDisposition);
+	d->contentEncoding = std::move(dOther->contentEncoding);
+	d->headers = std::move(dOther->headers);
 }
 
 Content::Content(ContentPrivate &p) : ClonableObject(p) {
@@ -80,13 +80,13 @@ Content &Content::operator=(const Content &other) {
 
 Content &Content::operator=(Content &&other) {
 	L_D();
-	AppDataContainer::operator=(move(other));
+	AppDataContainer::operator=(std::move(other));
 	ContentPrivate *dOther = other.getPrivate();
-	d->body = move(dOther->body);
-	d->contentType = move(dOther->contentType);
-	d->contentDisposition = move(dOther->contentDisposition);
-	d->contentEncoding = move(dOther->contentEncoding);
-	d->headers = move(dOther->headers);
+	d->body = std::move(dOther->body);
+	d->contentType = std::move(dOther->contentType);
+	d->contentDisposition = std::move(dOther->contentDisposition);
+	d->contentEncoding = std::move(dOther->contentEncoding);
+	d->headers = std::move(dOther->headers);
 	return *this;
 }
 
@@ -163,7 +163,7 @@ void Content::setBody(const vector<char> &body) {
 
 void Content::setBody(vector<char> &&body) {
 	L_D();
-	d->body = move(body);
+	d->body = std::move(body);
 }
 
 void Content::setBodyFromLocale(const string &body) {

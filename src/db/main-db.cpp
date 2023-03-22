@@ -4506,8 +4506,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 						continue;
 					}
 					shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
-					    core, conferenceId, me, capabilities, params, Utils::utf8ToLocale(subject), move(participants),
-					    lastNotifyId, hasBeenLeft));
+					    core, conferenceId, me, capabilities, params, Utils::utf8ToLocale(subject),
+					    std::move(participants), lastNotifyId, hasBeenLeft));
 					chatRoom = clientGroupChatRoom;
 					conference = clientGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);
@@ -4537,7 +4537,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				} else {
 					auto serverGroupChatRoom =
 					    std::make_shared<ServerGroupChatRoom>(core, conferenceId.getPeerAddress(), capabilities, params,
-					                                          subject, move(participants), lastNotifyId);
+					                                          subject, std::move(participants), lastNotifyId);
 					chatRoom = serverGroupChatRoom;
 					conference = serverGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);

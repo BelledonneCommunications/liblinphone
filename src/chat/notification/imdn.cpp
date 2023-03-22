@@ -223,7 +223,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 		if (!imdn) continue;
 
 		messagesIds.push_back(imdn->getMessageId());
-		imdns.push_back(move(imdn));
+		imdns.push_back(std::move(imdn));
 	}
 
 	// It seems to be more efficient to only make one database request to get all chat messages from their IMDN message
