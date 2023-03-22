@@ -213,16 +213,16 @@ typedef void (*LinphoneCoreCbFunc)(LinphoneCore *core, void *user_data);
  * @donotwrap
  **/
 typedef struct _LinphoneCoreVTable {
-	LinphoneCoreGlobalStateChangedCb global_state_changed;             /**<Notifies global state changes*/
-	LinphoneCoreRegistrationStateChangedCb registration_state_changed; /**<Notifies registration state changes*/
-	LinphoneCoreCallStateChangedCb call_state_changed;                 /**<Notifies call state changes*/
+	LinphoneCoreGlobalStateChangedCb global_state_changed;             /**< Notifies global state changes*/
+	LinphoneCoreRegistrationStateChangedCb registration_state_changed; /**< Notifies registration state changes*/
+	LinphoneCoreCallStateChangedCb call_state_changed;                 /**< Notifies call state changes*/
 	LinphoneCoreNotifyPresenceReceivedCb notify_presence_received;     /**< Notify received presence events*/
 	LinphoneCoreNotifyPresenceReceivedForUriOrTelCb
 	    notify_presence_received_for_uri_or_tel; /**< Notify received presence events*/
 	LinphoneCoreNewSubscriptionRequestedCb
 	    new_subscription_requested; /**< Notify about pending presence subscription request */
 	LINPHONE_DEPRECATED LinphoneCoreAuthInfoRequestedCb
-	    auth_info_requested; /** @brief Ask the application some authentication information.
+	    auth_info_requested; /**< @brief Ask the application some authentication information.
 	                             @deprecated 21/09/2016 Use authentication_requested instead. */
 	LinphoneCoreAuthenticationRequestedCb
 	    authentication_requested;                      /**< Ask the application some authentication information */
@@ -236,26 +236,26 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreIsComposingReceivedCb is_composing_received;   /**< An is-composing notification has been received */
 	LinphoneCoreDtmfReceivedCb dtmf_received;                  /**< A dtmf has been received received */
 	LinphoneCoreReferReceivedCb refer_received;                /**< An out of call refer was received */
-	LinphoneCoreCbsCallGoClearAckSentCb call_goclear_ack_sent; /**<Notifies on sending of GoClear Ack */
+	LinphoneCoreCbsCallGoClearAckSentCb call_goclear_ack_sent; /**< Notifies on sending of GoClear Ack */
 	LinphoneCoreCallEncryptionChangedCb
-	    call_encryption_changed; /**<Notifies on change in the encryption of call streams */
+	    call_encryption_changed; /**< Notifies on change in the encryption of call streams */
 	LinphoneCoreCbsCallSendMasterKeyChangedCb
-	    call_send_master_key_changed; /**<Notifies on change of the send master key of call streams */
+	    call_send_master_key_changed; /**< Notifies on change of the send master key of call streams */
 	LinphoneCoreCbsCallReceiveMasterKeyChangedCb
-	    call_receive_master_key_changed; /**<Notifies on change of the send master key of call streams */
-	LinphoneCoreTransferStateChangedCb transfer_state_changed; /**<Notifies when a transfer is in progress */
+	    call_receive_master_key_changed; /**< Notifies on change of the send master key of call streams */
+	LinphoneCoreTransferStateChangedCb transfer_state_changed; /**< Notifies when a transfer is in progress */
 	LinphoneCoreBuddyInfoUpdatedCb buddy_info_updated;         /**< a LinphoneFriend's BuddyInfo has changed*/
-	LinphoneCoreCallStatsUpdatedCb call_stats_updated;         /**<Notifies on refreshing of call's statistics. */
-	LinphoneCoreInfoReceivedCb info_received; /**<Notifies an incoming informational message received.*/
-	LinphoneCoreSubscriptionStateChangedCb subscription_state_changed; /**<Notifies subscription state change */
+	LinphoneCoreCallStatsUpdatedCb call_stats_updated;         /**< Notifies on refreshing of call's statistics. */
+	LinphoneCoreInfoReceivedCb info_received; /**< Notifies an incoming informational message received.*/
+	LinphoneCoreSubscriptionStateChangedCb subscription_state_changed; /**< Notifies subscription state change */
 	LinphoneCoreCbsNotifySentCb notify_sent; /**< Notifies a an event notification, see linphone_core_subscribe() */
 	LinphoneCoreNotifyReceivedCb
 	    notify_received; /**< Notifies a an event notification, see linphone_core_subscribe() */
 	LinphoneCoreSubscribeReceivedCb
 	    subscribe_received; /**< Notifies a subscribe has been received, see linphone_core_subscribe() */
 	LinphoneCorePublishStateChangedCb
-	    publish_state_changed; /**Notifies publish state change (only from #LinphoneEvent api)*/
-	LinphoneCoreConfiguringStatusCb configuring_status; /** Notifies configuring status changes */
+	    publish_state_changed; /**< Notifies publish state change (only from #LinphoneEvent api)*/
+	LinphoneCoreConfiguringStatusCb configuring_status; /**< Notifies configuring status changes */
 	LINPHONE_DEPRECATED LinphoneCoreTextMessageReceivedCb
 	    text_received; /**< @brief A text message has been received.
 	                        @deprecated 19/11/2015 Use #message_received instead.*/
@@ -4487,7 +4487,8 @@ LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const c
  * @{
  */
 
-/** Create a conference. Local or remote conference is determinated from the 'conference_type' variable in the 'misc'
+/**
+ * Create a conference. Local or remote conference is determinated from the 'conference_type' variable in the 'misc'
  * section of the configuration, or by the factory address parameter. See
  * linphone_conference_params_set_conference_factory_address() for more details.
  * @param core The #LinphoneCore instance where the conference will be created inside. @notnil
@@ -5076,7 +5077,8 @@ LINPHONE_PUBLIC const char *linphone_core_get_echo_canceller_filter_name(const L
  */
 LINPHONE_PUBLIC void linphone_core_set_echo_canceller_filter_name(LinphoneCore *core, const char *filtername);
 
-/** Contact Providers
+/**
+ * Contact Providers
  */
 
 typedef void (*ContactSearchCallback)(LinphoneContactSearch *id,

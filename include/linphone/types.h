@@ -747,11 +747,11 @@ typedef enum _LinphoneCoreLogCollectionUploadState {
  * @ingroup call_control
  */
 typedef enum _LinphoneMediaDirection {
-	LinphoneMediaDirectionInvalid = -1,
-	LinphoneMediaDirectionInactive = 0, /** No active media not supported yet*/
-	LinphoneMediaDirectionSendOnly = 1, /** Send only mode*/
-	LinphoneMediaDirectionRecvOnly = 2, /** recv only mode*/
-	LinphoneMediaDirectionSendRecv = 3, /** send receive*/
+	LinphoneMediaDirectionInvalid = -1, /**< Default value, shouldn't be used */
+	LinphoneMediaDirectionInactive = 0, /**< No active media not supported yet*/
+	LinphoneMediaDirectionSendOnly = 1, /**< Media is only being sent, it won't be received*/
+	LinphoneMediaDirectionRecvOnly = 2, /**< Media will only be received, nothing will be sent*/
+	LinphoneMediaDirectionSendRecv = 3, /**< Media will be sent and received*/
 } LinphoneMediaDirection;
 
 /**
@@ -846,7 +846,7 @@ typedef enum _LinphoneOnlineStatus {
 	LinphoneStatusBusy = 2,         /**< Busy */
 	LinphoneStatusBeRightBack = 3,  /**< Be right back */
 	LinphoneStatusAway = 4,         /**< Away */
-	LinphoneStatusOnThePhone = 5,   /** On the phone */
+	LinphoneStatusOnThePhone = 5,   /**< On the phone */
 	LinphoneStatusOutToLunch = 6,   /**< Out to lunch */
 	LinphoneStatusDoNotDisturb = 7, /**< Do not disturb */
 	LinphoneStatusMoved = 8, /**< Moved in this sate, call can be redirected if an alternate contact address has been
@@ -1217,10 +1217,10 @@ typedef enum _LinphoneSubscriptionState {
 typedef enum _LinphoneToneID {
 	LinphoneToneUndefined = 0,   /**< Not a tone */
 	LinphoneToneBusy = 1,        /**< Busy tone */
-	LinphoneToneCallWaiting = 2, /** Call waiting tone */
-	LinphoneToneCallOnHold = 3,  /** Call on hold tone */
-	LinphoneToneCallLost = 4,    /** Tone played when call is abruptly disconnected (media lost)*/
-	LinphoneToneCallEnd = 5      /** When the call end for any reason but lost */
+	LinphoneToneCallWaiting = 2, /**< Call waiting tone */
+	LinphoneToneCallOnHold = 3,  /**< Call on hold tone */
+	LinphoneToneCallLost = 4,    /**< Tone played when call is abruptly disconnected (media lost)*/
+	LinphoneToneCallEnd = 5      /**< When the call end for any reason but lost */
 } LinphoneToneID;
 
 /**

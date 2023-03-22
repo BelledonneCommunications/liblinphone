@@ -60,18 +60,18 @@ typedef enum _LinphoneCallState {
  * @ingroup audio
  */
 typedef enum _LinphoneAudioDeviceType {
-	LinphoneAudioDeviceTypeUnknown = 0,       /** Unknown */
-	LinphoneAudioDeviceTypeMicrophone = 1,    /** Microphone */
-	LinphoneAudioDeviceTypeEarpiece = 2,      /** Earpiece */
-	LinphoneAudioDeviceTypeSpeaker = 3,       /** Speaker */
-	LinphoneAudioDeviceTypeBluetooth = 4,     /** Bluetooth */
-	LinphoneAudioDeviceTypeBluetoothA2DP = 5, /** Bluetooth A2DP */
-	LinphoneAudioDeviceTypeTelephony = 6,     /** Telephony */
-	LinphoneAudioDeviceTypeAuxLine = 7,       /** AuxLine */
-	LinphoneAudioDeviceTypeGenericUsb = 8,    /** GenericUsb */
-	LinphoneAudioDeviceTypeHeadset = 9,       /** Headset */
-	LinphoneAudioDeviceTypeHeadphones = 10,   /** Headphones */
-	LinphoneAudioDeviceTypeHearingAid = 11,   /** Hearing Aid */
+	LinphoneAudioDeviceTypeUnknown = 0,       /**< Unknown */
+	LinphoneAudioDeviceTypeMicrophone = 1,    /**< Microphone */
+	LinphoneAudioDeviceTypeEarpiece = 2,      /**< Earpiece */
+	LinphoneAudioDeviceTypeSpeaker = 3,       /**< Speaker */
+	LinphoneAudioDeviceTypeBluetooth = 4,     /**< Bluetooth */
+	LinphoneAudioDeviceTypeBluetoothA2DP = 5, /**< Bluetooth A2DP */
+	LinphoneAudioDeviceTypeTelephony = 6,     /**< Telephony */
+	LinphoneAudioDeviceTypeAuxLine = 7,       /**< AuxLine */
+	LinphoneAudioDeviceTypeGenericUsb = 8,    /**< GenericUsb */
+	LinphoneAudioDeviceTypeHeadset = 9,       /**< Headset */
+	LinphoneAudioDeviceTypeHeadphones = 10,   /**< Headphones */
+	LinphoneAudioDeviceTypeHearingAid = 11,   /**< Hearing Aid */
 } LinphoneAudioDeviceType;
 
 /**
@@ -79,9 +79,9 @@ typedef enum _LinphoneAudioDeviceType {
  * @ingroup audio
  */
 typedef enum _LinphoneAudioDeviceCapabilities {
-	LinphoneAudioDeviceCapabilityRecord = 1 << 0, /** Can record audio */
-	LinphoneAudioDeviceCapabilityPlay = 1 << 1,   /** Can play audio */
-	LinphoneAudioDeviceCapabilityAll = 3,         /** Can play and record audio */
+	LinphoneAudioDeviceCapabilityRecord = 1 << 0, /**< Can record audio */
+	LinphoneAudioDeviceCapabilityPlay = 1 << 1,   /**< Can play audio */
+	LinphoneAudioDeviceCapabilityAll = 3,         /**< Can play and record audio */
 } LinphoneAudioDeviceCapabilities;
 
 // =============================================================================

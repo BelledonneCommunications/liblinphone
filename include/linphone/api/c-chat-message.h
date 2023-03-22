@@ -144,7 +144,8 @@ LINPHONE_PUBLIC void linphone_chat_message_set_content_type(LinphoneChatMessage 
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_utf8_text(const LinphoneChatMessage *message);
 
-/** Set a chat message text to be sent by linphone_chat_room_send_message(). Introduced in 01/07/2020
+/**
+ * Set a chat message text to be sent by linphone_chat_room_send_message(). Introduced in 01/07/2020
  * @param message #LinphoneChatMessage @notnil
  * @param text The text in UTF8 to set. @maybenil
  * @return 0 if succeed.
@@ -549,7 +550,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_set_file_transfer
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessageCbs *
 linphone_chat_message_get_callbacks(const LinphoneChatMessage *message);
 
-/** Set a chat message text to be sent by linphone_chat_room_send_message()
+/**
+ * Set a chat message text to be sent by linphone_chat_room_send_message()
  * @param message #LinphoneChatMessage @notnil
  * @param text The text is in System Locale. @maybenil
  * @return 0 if succeed.
