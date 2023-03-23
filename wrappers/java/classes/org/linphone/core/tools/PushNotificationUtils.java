@@ -38,6 +38,7 @@ public class PushNotificationUtils {
 
         if (!isFirebaseCloudMessaging23Available()) {
             Log.w("[Push Utils] Firebase Cloud Messaging 23+ isn't available. Ensure you have a dependency on com.google.firebase:firebase-messaging (23.0.6 or newer) in your app's build.gradle file or that you use a BoM at least 'com.google.firebase:firebase-bom:30.2.0'.");
+            return;
         }
 
         if (!isGoogleApiAvailable()) {
