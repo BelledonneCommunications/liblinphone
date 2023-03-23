@@ -135,7 +135,7 @@ static LinphoneEvent * linphone_event_new_base(LinphoneCore *lc, LinphoneSubscri
 	lev->op=op;
 	lev->name=ms_strdup(name);
 	if (strcmp(lev->name, "conference") == 0)
-		lev->internal = TRUE;
+		linphone_event_set_internal(lev, TRUE);
 	lev->op->setUserPointer(lev);
 	return lev;
 }
@@ -396,6 +396,10 @@ static int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneConten
 		linphone_event_set_publish_state(lev,LinphonePublishError);
 	}
 	return err;
+}
+
+void linphone_event_set_manual_refresher_mode(LinphoneEvent *lev, bool_t manual) {
+	lev->op->setManualRefresherMode(manual);
 }
 
 LinphoneEvent *linphone_core_publish(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body){

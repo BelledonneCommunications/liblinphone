@@ -68,6 +68,8 @@ Account::~Account () {
 	if (mServiceRouteAddress) linphone_address_unref(mServiceRouteAddress);
 	if (mContactAddress) linphone_address_unref(mContactAddress);
 	if (mContactAddressWithoutParams) linphone_address_unref(mContactAddressWithoutParams);
+	if (mPresenceModel)
+		linphone_presence_model_unref(mPresenceModel);
 
 	releaseOps();
 }
@@ -962,7 +964,10 @@ void Account::update () {
 		}
 	}
 	if (mSendPublish && (mState == LinphoneRegistrationOk || mState == LinphoneRegistrationCleared)){
-		sendPublish(mCore->presence_model);
+		if (mPresenceModel == nullptr) {
+			setPresenceModel(mCore->presence_model);
+		}
+		sendPublish();
 		mSendPublish = false;
 	}
 }
@@ -993,60 +998,111 @@ LinphoneEvent *Account::createPublish (const char *event, int expires) {
 	return _linphone_core_create_publish(mCore, this->toC(), NULL, event, expires);
 }
 
-int Account::sendPublish (LinphonePresenceModel *presence) {
-	int err=0;
-	LinphoneAddress *presentity_address = NULL;
-	char* contact = NULL;
+void Account::setPresenceModel(LinphonePresenceModel *presence) {
+	if (mPresenceModel) {
+		linphone_presence_model_unref(mPresenceModel);
+		mPresenceModel = nullptr;
+	}
+	if (presence)
+		mPresenceModel = linphone_presence_model_ref(presence);
+}
 
+int Account::sendPublish() {
+	if (mPresenceModel == nullptr) {
+		lError() << "No presence model has been set for this account, can't send the PUBLISH";
+		return -1;
+	}
+
+	int err = 0;
 	if (mState == LinphoneRegistrationOk || mState == LinphoneRegistrationCleared){
-		LinphoneContent *content;
-		char *presence_body;
-		if (mPresencePublishEvent == NULL){
-			mPresencePublishEvent = createPublish("presence", mParams->getPublishExpires());
-		}
-		mPresencePublishEvent->internal = TRUE;
+		int publishExpires = mParams->getPublishExpires();
 
-		if (linphone_presence_model_get_presentity(presence) == NULL) {
-			lInfo() << "No presentity set for model [" << presence << "], using identity from account [" << this->toC() << "]";
-			linphone_presence_model_set_presentity(presence, mParams->getIdentityAddress());
-		}
-
-		if (!linphone_address_equal(linphone_presence_model_get_presentity(presence), mParams->getIdentityAddress())) {
-			lInfo() << "Presentity for model [" << presence << "] differ account [" << this->toC() << "], using account";
-			presentity_address = linphone_address_clone(linphone_presence_model_get_presentity(presence)); /*saved, just in case*/
-			if (linphone_presence_model_get_contact(presence)) {
-				contact = bctbx_strdup(linphone_presence_model_get_contact(presence));
+		if (mPresencePublishEvent != nullptr) {
+			LinphonePublishState state = linphone_event_get_publish_state(mPresencePublishEvent);
+			if (state != LinphonePublishOk && state != LinphonePublishProgress) {
+				lInfo() << "Presence publish state is [" << linphone_publish_state_to_string(state)
+						<< "], destroying it and creating a new one instead";
+				linphone_event_unref(mPresencePublishEvent);
+				mPresencePublishEvent = nullptr;
 			}
-			linphone_presence_model_set_presentity(presence, mParams->getIdentityAddress());
-			linphone_presence_model_set_contact(presence,NULL); /*it will be automatically computed*/
-
 		}
-		if (!(presence_body = linphone_presence_model_to_xml(presence))) {
-			lError() << "Cannot publish presence model [" << presence << "] for account [" << this->toC() << "] because of xml serialization error";
+
+		if (mPresencePublishEvent == nullptr) {
+			mPresencePublishEvent = createPublish("presence", publishExpires);
+		}
+
+		linphone_event_set_internal(mPresencePublishEvent, TRUE);
+		if (publishExpires != 1) {
+			// Force manual refresh mode so we can go through this method again 
+			// when PUBLISH is about to expire, so we can update the presence model timestamp
+			linphone_event_set_manual_refresher_mode(mPresencePublishEvent, TRUE);
+		}
+		linphone_event_set_user_data(mPresencePublishEvent, mParams->getIdentityAddress());
+
+		LinphoneConfig *config = linphone_core_get_config(mCore);
+		if (linphone_config_get_bool(config, "sip", "update_presence_model_timestamp_before_publish_expires_refresh",
+									 FALSE)) {
+			unsigned int nbServices = linphone_presence_model_get_nb_services(mPresenceModel);
+			if (nbServices > 0) {
+				LinphonePresenceService *latest_service =
+					linphone_presence_model_get_nth_service(mPresenceModel, nbServices - 1);
+				linphone_presence_service_set_timestamp(latest_service, ms_time(NULL));
+			}
+		}
+
+		if (linphone_presence_model_get_presentity(mPresenceModel) == NULL) {
+			lInfo() << "No presentity set for model [" << mPresenceModel << "], using identity from account ["
+					<< this->toC() << "]";
+			linphone_presence_model_set_presentity(mPresenceModel, mParams->getIdentityAddress());
+		}
+
+		LinphoneAddress *presentity_address = NULL;
+		char *contact = NULL;
+		if (!linphone_address_equal(linphone_presence_model_get_presentity(mPresenceModel),
+									mParams->getIdentityAddress())) {
+			lInfo() << "Presentity for model [" << mPresenceModel << "] differ account [" << this->toC()
+					<< "], using account";
+			presentity_address =
+				linphone_address_clone(linphone_presence_model_get_presentity(mPresenceModel)); /*saved, just in case*/
+			if (linphone_presence_model_get_contact(mPresenceModel)) {
+				contact = bctbx_strdup(linphone_presence_model_get_contact(mPresenceModel));
+			}
+			linphone_presence_model_set_presentity(mPresenceModel, mParams->getIdentityAddress());
+			linphone_presence_model_set_contact(mPresenceModel, NULL); /*it will be automatically computed*/
+		}
+
+		char *presence_body;
+		if (!(presence_body = linphone_presence_model_to_xml(mPresenceModel))) {
+			lError() << "Cannot publish presence model [" << mPresenceModel << "] for account [" << this->toC()
+					 << "] because of xml serialization error";
 			return -1;
 		}
 
-		content = linphone_content_new();
-		linphone_content_set_buffer(content, (const uint8_t *)presence_body,strlen(presence_body));
-		linphone_content_set_type(content, "application");
-		linphone_content_set_subtype(content,"pidf+xml");
 		if (!mSipEtag.empty()) {
 			linphone_event_add_custom_header(mPresencePublishEvent, "SIP-If-Match", mSipEtag.c_str());
 			mSipEtag = "";
 		}
+
+		LinphoneContent *content = linphone_content_new();
+		linphone_content_set_buffer(content, (const uint8_t *)presence_body, strlen(presence_body));
+		linphone_content_set_type(content, "application");
+		linphone_content_set_subtype(content, "pidf+xml");
+
 		err = linphone_event_send_publish(mPresencePublishEvent, content);
 		linphone_content_unref(content);
 		ms_free(presence_body);
+
 		if (presentity_address) {
-			linphone_presence_model_set_presentity(presence,presentity_address);
+			linphone_presence_model_set_presentity(mPresenceModel, presentity_address);
 			linphone_address_unref(presentity_address);
 		}
 		if (contact) {
-			linphone_presence_model_set_contact(presence,contact);
+			linphone_presence_model_set_contact(mPresenceModel, contact);
 			bctbx_free(contact);
 		}
+	} else
+		mSendPublish = true; /*otherwise do not send publish if registration is in progress, this will be done later*/
 
-	}else mSendPublish = true; /*otherwise do not send publish if registration is in progress, this will be done later*/
 	return err;
 }
 

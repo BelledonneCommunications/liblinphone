@@ -155,6 +155,7 @@ void linphone_core_stop_tone_manager(LinphoneCore *lc);
 const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
 const LinphoneAuthInfo *_linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain);
 const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, const char *algorithm, bool_t ignore_realm);
+LinphoneAccount * linphone_core_find_account_by_identity_address(const LinphoneCore *core, const LinphoneAddress *identity_address);
 void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event);
 void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc, belle_sip_auth_event *event, const char *username, const char *domain);
 
@@ -205,6 +206,7 @@ void linphone_friend_remove_incoming_subscription(LinphoneFriend *lf, LinphonePr
 const char * linphone_friend_phone_number_to_sip_uri(LinphoneFriend *lf, const char *phone_number);
 const char * linphone_friend_sip_uri_to_phone_number(LinphoneFriend *lf, const char *uri);
 void linphone_friend_clear_presence_models(LinphoneFriend *lf);
+void linphone_presence_service_set_timestamp(LinphonePresenceService *service, time_t timestamp);
 LinphoneFriend *linphone_friend_list_find_friend_by_inc_subscribe(const LinphoneFriendList *list, LinphonePrivate::SalOp *op);
 LinphoneFriend *linphone_friend_list_find_friend_by_out_subscribe(const LinphoneFriendList *list, LinphonePrivate::SalOp *op);
 LinphoneFriend *linphone_core_find_friend_by_out_subscribe(const LinphoneCore *lc, LinphonePrivate::SalOp *op);
@@ -516,6 +518,7 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, Linp
 LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
+void linphone_event_set_manual_refresher_mode(LinphoneEvent *lev, bool_t manual);
 /**
  * Useful for out of dialog notify
  * */

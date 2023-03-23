@@ -334,7 +334,8 @@ static void subscribe_with_late_publish(void) {
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphonePresenceActivityBusy,3,5000));/*re- schedule marie to clean up things*/
 
-	/*simulate a rapid presence change to make sure only first and last are transmited*/
+	/*simulate a rapid presence change to make sure only first and last are transmited */
+	/* this tests if SIP-If-Match header based mechanism works */
 	presence = linphone_presence_model_new_with_activity(LinphonePresenceActivityAway,NULL);
 	linphone_core_set_presence_model(marie->lc, presence);
 	linphone_presence_model_unref(presence);
@@ -1484,6 +1485,110 @@ static void publish_with_expires(void) {
 	simple_publish_with_expire(2);
 }
 
+static void publish_with_expire_timestamp_refresh_base(bool_t refresh_timestamps,
+													   bool_t each_friend_subscribes_to_the_other) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+		linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	LinphoneConfig *marie_config = linphone_core_get_config(marie->lc);
+	linphone_config_set_bool(marie_config, "sip", "update_presence_model_timestamp_before_publish_expires_refresh",
+							 refresh_timestamps);
+
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+	const LinphoneAccountParams *marie_account_params = linphone_account_get_params(marie_account);
+	LinphoneAccountParams *new_params = linphone_account_params_clone(marie_account_params);
+	linphone_account_params_set_publish_expires(new_params, 10);
+	linphone_account_set_params(marie_account, new_params);
+	linphone_account_params_unref(new_params);
+
+	const char *rls_uri = "sip:rls@sip.example.org";
+
+	// This is currently necessary for the refresh timestamp case!!!
+	if (each_friend_subscribes_to_the_other) {
+		// Marie adds Pauline as Friend
+		LinphoneFriendList *marie_lfl = linphone_core_create_friend_list(marie->lc);
+		linphone_friend_list_set_rls_uri(marie_lfl, rls_uri);
+		linphone_core_add_friend_list(marie->lc, marie_lfl);
+
+		char *pauline_identity = linphone_address_as_string(pauline->identity);
+		LinphoneFriend *marie_pauline_friend = linphone_core_create_friend_with_address(marie->lc, pauline_identity);
+
+		linphone_friend_list_add_friend(marie_lfl, marie_pauline_friend);
+		linphone_friend_list_update_subscriptions(marie_lfl);
+		linphone_friend_list_unref(marie_lfl);
+
+		linphone_friend_unref(marie_pauline_friend);
+	}
+
+	// Pauline adds Marie as Friend
+	LinphoneFriendList *pauline_lfl = linphone_core_create_friend_list(pauline->lc);
+	linphone_friend_list_set_rls_uri(pauline_lfl, rls_uri);
+	linphone_core_add_friend_list(pauline->lc, pauline_lfl);
+
+	char *marie_identity = linphone_address_as_string(marie->identity);
+	LinphoneFriend *pauline_marie_friend = linphone_core_create_friend_with_address(pauline->lc, marie_identity);
+
+	ms_free(marie_identity);
+	BC_ASSERT_PTR_NOT_NULL(pauline_marie_friend);
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(pauline_marie_friend),
+					LinphoneConsolidatedPresenceOffline, int, "%d");
+
+	linphone_friend_list_add_friend(pauline_lfl, pauline_marie_friend);
+	linphone_friend_list_update_subscriptions(pauline_lfl);
+	linphone_friend_list_unref(pauline_lfl);
+
+	LinphoneCoreCbs *callbacks = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_publish_state_changed(callbacks, linphone_publish_state_changed);
+	_linphone_core_add_callbacks(marie->lc, callbacks, TRUE);
+	linphone_core_cbs_unref(callbacks);
+
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOnline);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceOnline, 2));
+
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(pauline_marie_friend), LinphoneConsolidatedPresenceOnline,
+					int, "%d");
+	const LinphonePresenceModel *model = linphone_friend_get_presence_model(pauline_marie_friend);
+	time_t first_timestamp = linphone_presence_model_get_timestamp(model);
+
+	// Wait for PUBLISH refresh
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 3));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceOnline, 3));
+	model = linphone_friend_get_presence_model(pauline_marie_friend);
+	time_t next_timestamp = linphone_presence_model_get_timestamp(model);
+	if (refresh_timestamps) {
+		BC_ASSERT_FALSE(first_timestamp == next_timestamp);
+	} else {
+		BC_ASSERT_TRUE(first_timestamp == next_timestamp);
+	}
+
+	// Wait for PUBLISH refresh
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 4));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceOnline, 4));
+	model = linphone_friend_get_presence_model(pauline_marie_friend);
+	next_timestamp = linphone_presence_model_get_timestamp(model);
+	if (refresh_timestamps) {
+		BC_ASSERT_FALSE(first_timestamp == next_timestamp);
+	} else {
+		BC_ASSERT_TRUE(first_timestamp == next_timestamp);
+	}
+
+	linphone_friend_unref(pauline_marie_friend);
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_stop(pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void publish_without_expire_timestamp_refresh(void) {
+	publish_with_expire_timestamp_refresh_base(FALSE, TRUE);
+}
+
+static void publish_with_expire_timestamp_refresh(void) {
+	publish_with_expire_timestamp_refresh_base(TRUE, TRUE);
+}
+
 static void publish_with_dual_identity(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new("multi_account_rc");
 	const bctbx_list_t* proxies;
@@ -2313,6 +2418,10 @@ test_t presence_server_tests[] = {
 	TEST_NO_TAG("Simple Publish", simple_publish),
 	TEST_NO_TAG("Publish with 2 identities", publish_with_dual_identity),
 	TEST_NO_TAG("Simple Publish with expires", publish_with_expires),
+	TEST_ONE_TAG("Publish presence refresher without updated timestamps", publish_without_expire_timestamp_refresh,
+				 "presence"),
+	TEST_ONE_TAG("Publish presence refresher with updated timestamps", publish_with_expire_timestamp_refresh,
+				 "presence"),
 	TEST_ONE_TAG("Publish with network state changes", publish_with_network_state_changes, "presence"),
 	TEST_NO_TAG("Simple", simple),
 	TEST_NO_TAG("Fast activity change", fast_activity_change),
@@ -2320,32 +2429,40 @@ test_t presence_server_tests[] = {
 	TEST_NO_TAG("Disabled presence", subscribe_presence_disabled),
 	TEST_NO_TAG("Presence list", test_presence_list),
 	TEST_NO_TAG("Presence list without compression", test_presence_list_without_compression),
-	TEST_NO_TAG("Presence list, subscription expiration for unknown contact",test_presence_list_subscription_expire_for_unknown),
+	TEST_NO_TAG("Presence list, subscription expiration for unknown contact",
+				test_presence_list_subscription_expire_for_unknown),
 	TEST_NO_TAG("Presence list, silent subscription expiration", presence_list_subscribe_dialog_expire),
-	TEST_NO_TAG("Presence list, io error",presence_list_subscribe_io_error),
-	TEST_NO_TAG("Presence list, network changes",presence_list_subscribe_network_changes),
-	TEST_ONE_TAG("Long term presence existing friend",long_term_presence_existing_friend, "longterm"),
-	TEST_ONE_TAG("Long term presence inexistent friend",long_term_presence_inexistent_friend, "longterm"),
-	TEST_ONE_TAG("Long term presence phone alias",long_term_presence_phone_alias, "longterm"),
-	TEST_ONE_TAG("Long term presence phone alias 2",long_term_presence_phone_alias2, "longterm"),
-	TEST_ONE_TAG("Long term presence list",long_term_presence_list, "longterm"),
-	TEST_ONE_TAG("Long term presence with +164 phone, without sip",long_term_presence_with_e164_phone_without_sip, "longterm"),
-	TEST_ONE_TAG("Long term presence with +164 phone, without sip and background/foreground changes", long_term_presence_with_e164_phone_without_sip_background_foreground, "longterm"),
-	TEST_ONE_TAG("Long term presence with phone, without sip",long_term_presence_with_phone_without_sip, "longterm"),
-	TEST_ONE_TAG("Long term presence with cross references", long_term_presence_with_crossed_references,"longterm"),
-	TEST_ONE_TAG("Long term presence with large number of subs", long_term_presence_large_number_of_subs,"longterm"),
-	TEST_NO_TAG("Subscriber no longer reachable using server",subscriber_no_longer_reachable),
+	TEST_NO_TAG("Presence list, io error", presence_list_subscribe_io_error),
+	TEST_NO_TAG("Presence list, network changes", presence_list_subscribe_network_changes),
+	TEST_ONE_TAG("Long term presence existing friend", long_term_presence_existing_friend, "longterm"),
+	TEST_ONE_TAG("Long term presence inexistent friend", long_term_presence_inexistent_friend, "longterm"),
+	TEST_ONE_TAG("Long term presence phone alias", long_term_presence_phone_alias, "longterm"),
+	TEST_ONE_TAG("Long term presence phone alias 2", long_term_presence_phone_alias2, "longterm"),
+	TEST_ONE_TAG("Long term presence list", long_term_presence_list, "longterm"),
+	TEST_ONE_TAG("Long term presence with +164 phone, without sip", long_term_presence_with_e164_phone_without_sip,
+				 "longterm"),
+	TEST_ONE_TAG("Long term presence with +164 phone, without sip and background/foreground changes",
+				 long_term_presence_with_e164_phone_without_sip_background_foreground, "longterm"),
+	TEST_ONE_TAG("Long term presence with phone, without sip", long_term_presence_with_phone_without_sip, "longterm"),
+	TEST_ONE_TAG("Long term presence with cross references", long_term_presence_with_crossed_references, "longterm"),
+	TEST_ONE_TAG("Long term presence with large number of subs", long_term_presence_large_number_of_subs, "longterm"),
+	TEST_NO_TAG("Subscriber no longer reachable using server", subscriber_no_longer_reachable),
 	TEST_NO_TAG("Subscribe with late publish", subscribe_with_late_publish),
 	TEST_NO_TAG("Multiple publish aggregation", multiple_publish_aggregation),
-	TEST_NO_TAG("Extended notify only when both side subscribed to each other", extended_notify_only_both_side_subscribed),
+	TEST_NO_TAG("Extended notify only when both side subscribed to each other",
+				extended_notify_only_both_side_subscribed),
 	TEST_ONE_TAG("Simple bodyless list subscription", simple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
-	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
+	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc,
+				 "bodyless"),
 #ifdef HAVE_ADVANCED_IM
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities, "capabilities"),
-	TEST_ONE_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish, "capabilities"),
-	TEST_ONE_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias, "capabilities"),
-	TEST_ONE_TAG("Notify search result capabilities with alias", notify_search_result_capabilities_with_alias, "capabilities"),
+	TEST_ONE_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish,
+				 "capabilities"),
+	TEST_ONE_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias,
+				 "capabilities"),
+	TEST_ONE_TAG("Notify search result capabilities with alias", notify_search_result_capabilities_with_alias,
+				 "capabilities"),
 #endif
 };
 
