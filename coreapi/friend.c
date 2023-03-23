@@ -1125,13 +1125,25 @@ void linphone_core_remove_friend(BCTBX_UNUSED(LinphoneCore *lc), LinphoneFriend 
 
 void linphone_core_update_friends_subscriptions(LinphoneCore *lc) {
 	bctbx_list_t *lists = lc->friends_lists;
+	bool_t at_least_one_subscription_skipped = FALSE;
 	while (lists) {
 		LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(lists);
-		linphone_friend_list_update_subscriptions(list);
+		bool_t result = linphone_friend_list_check_update_subscriptions(list);
+		if (result == FALSE) {
+			at_least_one_subscription_skipped = TRUE;
+		}
 		lists = bctbx_list_next(lists);
 	}
-	// done here to avoid double initial subscribtion if triggered by proxy or from the app.
-	lc->initial_subscribes_sent = TRUE;
+
+	if (lc->initial_subscribes_sent == FALSE) {
+		if (at_least_one_subscription_skipped == FALSE) {
+			// done here to avoid double initial subscribtion if triggered by proxy or from the app.
+			lc->initial_subscribes_sent = TRUE;
+			ms_message("Initial friend lists subscribes has been sent");
+		} else {
+			ms_warning("At least one list didn't sent it's subscribe, don't consider initial subscribes as sent");
+		}
+	}
 }
 
 bool_t linphone_core_should_subscribe_friends_only_when_registered(const LinphoneCore *lc) {
@@ -1141,7 +1153,6 @@ bool_t linphone_core_should_subscribe_friends_only_when_registered(const Linphon
 void linphone_core_send_initial_subscribes(LinphoneCore *lc) {
 	if (lc->initial_subscribes_sent) return;
 	linphone_core_update_friends_subscriptions(lc);
-	ms_message("Initial friend lists subscribes has been sent");
 }
 
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc) {
