@@ -76,6 +76,7 @@ public:
 	const LinphoneAddress *getResource() const;
 
 	LinphonePrivate::SalEventOp *getOp() const;
+	void setManualRefresherMode(bool manual);
 
 	int getExpires() const;
 	void setExpires(int expires);

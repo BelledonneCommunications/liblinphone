@@ -948,6 +948,18 @@ static void on_expire(SalOp *op) {
 	} else if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
 		linphone_event_set_state(lev, LinphoneSubscriptionExpiring);
 	}
+
+	void *user_data = linphone_event_get_user_data(lev);
+	const char *event_name = linphone_event_get_name(lev);
+	if (user_data && event_name && linphone_event_is_internal(lev) && strcmp(event_name, "presence") == 0) {
+		LinphoneCore *lc = (LinphoneCore *)op->getSal()->getUserPointer();
+		LinphoneAddress *identity_address = (LinphoneAddress *)user_data;
+		LinphoneAccount *account = linphone_core_find_account_by_identity_address(lc, identity_address);
+		if (account) {
+			lInfo() << "Presence publish about to expire, manually refreshing it for account [" << account << "]";
+			LinphonePrivate::Account::toCpp(account)->sendPublish();
+		}
+	}
 }
 
 static void on_notify_response(SalOp *op) {

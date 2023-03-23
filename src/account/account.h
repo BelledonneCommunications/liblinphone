@@ -97,7 +97,8 @@ public:
 	bool check();
 	bool isAvpfEnabled() const;
 	int getUnreadChatMessageCount() const;
-	int sendPublish(LinphonePresenceModel *presence);
+	void setPresenceModel(LinphonePresenceModel *presence);
+	int sendPublish();
 	void apply(LinphoneCore *lc);
 	void notifyPublishStateChanged(LinphonePublishState state);
 	void pauseRegister();
@@ -173,6 +174,7 @@ private:
 	SalCustomHeader *mSentHeaders = nullptr;
 
 	std::shared_ptr<EventPublish> mPresencePublishEvent = nullptr;
+	LinphonePresenceModel *mPresenceModel = nullptr;
 
 	std::shared_ptr<Account> mDependency = nullptr;
 

@@ -758,6 +758,12 @@ linphone_presence_service_new(const char *id, LinphonePresenceBasicStatus basic_
 	return service;
 }
 
+void linphone_presence_service_set_timestamp(LinphonePresenceService *service, time_t timestamp) {
+	if (service) {
+		service->timestamp = timestamp;
+	}
+}
+
 char *linphone_presence_service_get_id(const LinphonePresenceService *service) {
 	if (service == NULL) return NULL;
 	return ms_strdup(service->id);

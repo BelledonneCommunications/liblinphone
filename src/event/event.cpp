@@ -174,4 +174,8 @@ void Event::setUnrefWhenTerminated(bool unrefWhenTerminated) {
 	mUnrefWhenTerminated = unrefWhenTerminated;
 }
 
+void Event::setManualRefresherMode(bool manual) {
+	mOp->setManualRefresherMode(manual);
+}
+
 LINPHONE_END_NAMESPACE

@@ -350,7 +350,8 @@ static void subscribe_with_late_publish(void) {
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphonePresenceActivityBusy, 3,
 	                              5000)); /*re- schedule marie to clean up things*/
 
-	/*simulate a rapid presence change to make sure only first and last are transmited*/
+	/*simulate a rapid presence change to make sure only first and last are transmited */
+	/* this tests if SIP-If-Match header based mechanism works */
 	presence = linphone_presence_model_new_with_activity(LinphonePresenceActivityAway, NULL);
 	linphone_core_set_presence_model(marie->lc, presence);
 	linphone_presence_model_unref(presence);
@@ -1573,6 +1574,110 @@ static void publish_with_expires(void) {
 	simple_publish_with_expire(2);
 }
 
+static void publish_with_expire_timestamp_refresh_base(bool_t refresh_timestamps,
+                                                       bool_t each_friend_subscribes_to_the_other) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	LinphoneConfig *marie_config = linphone_core_get_config(marie->lc);
+	linphone_config_set_bool(marie_config, "sip", "update_presence_model_timestamp_before_publish_expires_refresh",
+	                         refresh_timestamps);
+
+	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+	const LinphoneAccountParams *marie_account_params = linphone_account_get_params(marie_account);
+	LinphoneAccountParams *new_params = linphone_account_params_clone(marie_account_params);
+	linphone_account_params_set_publish_expires(new_params, 10);
+	linphone_account_set_params(marie_account, new_params);
+	linphone_account_params_unref(new_params);
+
+	const char *rls_uri = "sip:rls@sip.example.org";
+
+	// This is currently necessary for the refresh timestamp case!!!
+	if (each_friend_subscribes_to_the_other) {
+		// Marie adds Pauline as Friend
+		LinphoneFriendList *marie_lfl = linphone_core_create_friend_list(marie->lc);
+		linphone_friend_list_set_rls_uri(marie_lfl, rls_uri);
+		linphone_core_add_friend_list(marie->lc, marie_lfl);
+
+		char *pauline_identity = linphone_address_as_string(pauline->identity);
+		LinphoneFriend *marie_pauline_friend = linphone_core_create_friend_with_address(marie->lc, pauline_identity);
+
+		linphone_friend_list_add_friend(marie_lfl, marie_pauline_friend);
+		linphone_friend_list_update_subscriptions(marie_lfl);
+		linphone_friend_list_unref(marie_lfl);
+
+		linphone_friend_unref(marie_pauline_friend);
+	}
+
+	// Pauline adds Marie as Friend
+	LinphoneFriendList *pauline_lfl = linphone_core_create_friend_list(pauline->lc);
+	linphone_friend_list_set_rls_uri(pauline_lfl, rls_uri);
+	linphone_core_add_friend_list(pauline->lc, pauline_lfl);
+
+	char *marie_identity = linphone_address_as_string(marie->identity);
+	LinphoneFriend *pauline_marie_friend = linphone_core_create_friend_with_address(pauline->lc, marie_identity);
+
+	ms_free(marie_identity);
+	BC_ASSERT_PTR_NOT_NULL(pauline_marie_friend);
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(pauline_marie_friend),
+	                LinphoneConsolidatedPresenceOffline, int, "%d");
+
+	linphone_friend_list_add_friend(pauline_lfl, pauline_marie_friend);
+	linphone_friend_list_update_subscriptions(pauline_lfl);
+	linphone_friend_list_unref(pauline_lfl);
+
+	LinphoneCoreCbs *callbacks = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_publish_state_changed(callbacks, linphone_publish_state_changed);
+	_linphone_core_add_callbacks(marie->lc, callbacks, TRUE);
+	linphone_core_cbs_unref(callbacks);
+
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceOnline);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceOnline, 2));
+
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(pauline_marie_friend), LinphoneConsolidatedPresenceOnline,
+	                int, "%d");
+	const LinphonePresenceModel *model = linphone_friend_get_presence_model(pauline_marie_friend);
+	time_t first_timestamp = linphone_presence_model_get_timestamp(model);
+
+	// Wait for PUBLISH refresh
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 3));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceOnline, 3));
+	model = linphone_friend_get_presence_model(pauline_marie_friend);
+	time_t next_timestamp = linphone_presence_model_get_timestamp(model);
+	if (refresh_timestamps) {
+		BC_ASSERT_FALSE(first_timestamp == next_timestamp);
+	} else {
+		BC_ASSERT_TRUE(first_timestamp == next_timestamp);
+	}
+
+	// Wait for PUBLISH refresh
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 4));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConsolidatedPresenceOnline, 4));
+	model = linphone_friend_get_presence_model(pauline_marie_friend);
+	next_timestamp = linphone_presence_model_get_timestamp(model);
+	if (refresh_timestamps) {
+		BC_ASSERT_FALSE(first_timestamp == next_timestamp);
+	} else {
+		BC_ASSERT_TRUE(first_timestamp == next_timestamp);
+	}
+
+	linphone_friend_unref(pauline_marie_friend);
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_stop(pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void publish_without_expire_timestamp_refresh(void) {
+	publish_with_expire_timestamp_refresh_base(FALSE, TRUE);
+}
+
+static void publish_with_expire_timestamp_refresh(void) {
+	publish_with_expire_timestamp_refresh_base(TRUE, TRUE);
+}
+
 static void publish_with_dual_identity(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("multi_account_rc");
 	const bctbx_list_t *proxies;
@@ -2429,6 +2534,10 @@ test_t presence_server_tests[] = {
     TEST_NO_TAG("Simple Publish", simple_publish),
     TEST_NO_TAG("Publish with 2 identities", publish_with_dual_identity),
     TEST_NO_TAG("Simple Publish with expires", publish_with_expires),
+    TEST_ONE_TAG(
+        "Publish presence refresher without updated timestamps", publish_without_expire_timestamp_refresh, "presence"),
+    TEST_ONE_TAG(
+        "Publish presence refresher with updated timestamps", publish_with_expire_timestamp_refresh, "presence"),
     TEST_ONE_TAG("Publish with network state changes", publish_with_network_state_changes, "presence"),
     TEST_NO_TAG("Simple", simple),
     TEST_NO_TAG("Fast activity change", fast_activity_change),

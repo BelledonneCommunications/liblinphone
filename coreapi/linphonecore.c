@@ -5201,7 +5201,8 @@ int linphone_core_send_publish(LinphoneCore *lc, LinphonePresenceModel *presence
 	for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneAccount *acc = (LinphoneAccount *)elem->data;
 		if (linphone_account_params_get_publish_enabled(linphone_account_get_params(acc))) {
-			Account::toCpp(acc)->sendPublish(presence);
+			Account::toCpp(acc)->setPresenceModel(presence);
+			Account::toCpp(acc)->sendPublish();
 		}
 	}
 	return 0;
@@ -9597,4 +9598,24 @@ bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core) 
 void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_bool(core->config, "misc", "empty_chat_room_deletion", enable);
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->enableEmptyChatroomsDeletion(enable);
+}
+
+LinphoneAccount *linphone_core_find_account_by_identity_address(const LinphoneCore *core,
+                                                                const LinphoneAddress *identity_address) {
+	LinphoneAccount *found = NULL;
+	if (identity_address == NULL) return found;
+
+	bctbx_list_t *account_it;
+	for (account_it = (bctbx_list_t *)linphone_core_get_account_list(core); account_it != NULL;
+	     account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)(account_it->data);
+		const LinphoneAccountParams *params = linphone_account_get_params(account);
+		const LinphoneAddress *address = linphone_account_params_get_identity_address(params);
+		if (linphone_address_weak_equal(address, identity_address)) {
+			found = account;
+			break;
+		}
+	}
+
+	return found;
 }
