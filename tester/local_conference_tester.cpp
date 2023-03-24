@@ -4335,6 +4335,9 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 			enable_stun_in_core(mgr, enable_stun, enable_ice);
 			linphone_core_manager_wait_for_stun_resolution(mgr);
 
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
+			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE);
+
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
 
@@ -5798,12 +5801,20 @@ static void create_simple_zrtp_conference (void) {
 	create_conference_base (ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionZRTP, TRUE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE);
 }
 
+static void create_simple_dtls_conference (void) {
+	create_conference_base (ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionDTLS, TRUE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE);
+}
+
 static void create_simple_srtp_conference (void) {
 	create_conference_base (ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE);
 }
 
 static void create_simple_ice_srtp_conference (void) {
 	create_conference_base (ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE);
+}
+
+static void create_simple_ice_dtls_conference (void) {
+	create_conference_base (ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionDTLS, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv, FALSE);
 }
 
 static void create_simple_stun_ice_srtp_conference (void) {
@@ -12546,6 +12557,7 @@ static test_t local_conference_scheduled_conference_basic_tests[] = {
 static test_t local_conference_scheduled_conference_advanced_tests[] = {
 	TEST_NO_TAG("Create simple SRTP conference", LinphoneTest::create_simple_srtp_conference),
 	TEST_NO_TAG("Create simple ZRTP conference", LinphoneTest::create_simple_zrtp_conference),
+	TEST_NO_TAG("Create simple DTLS conference", LinphoneTest::create_simple_dtls_conference),
 	TEST_NO_TAG("Create conference with server restart (participant first)", LinphoneTest::create_conference_with_server_restart_participant_first),
 	TEST_NO_TAG("Create conference with server restart (organizer first)", LinphoneTest::create_conference_with_server_restart_organizer_first),
 	TEST_NO_TAG("Create simple conference with update deferred", LinphoneTest::create_simple_conference_with_update_deferred),
@@ -12581,6 +12593,7 @@ static test_t local_conference_scheduled_ice_conference_tests[] = {
 	TEST_ONE_TAG("Create simple ICE conference", LinphoneTest::create_simple_ice_conference, "LeaksMemory"), /* because of network up and down */
 	TEST_NO_TAG("Create simple STUN+ICE conference", LinphoneTest::create_simple_stun_ice_conference),
 	TEST_NO_TAG("Create simple ICE SRTP conference", LinphoneTest::create_simple_ice_srtp_conference),
+	TEST_NO_TAG("Create simple ICE DTLS conference", LinphoneTest::create_simple_ice_dtls_conference),
 	TEST_NO_TAG("Create simple STUN+ICE SRTP conference", LinphoneTest::create_simple_stun_ice_srtp_conference),
 	TEST_NO_TAG("Create simple ICE conference with audio only participant", LinphoneTest::create_simple_ice_conference_with_audio_only_participant),
 	TEST_NO_TAG("Create simple STUN+ICE conference with audio only participant", LinphoneTest::create_simple_stun_ice_conference_with_audio_only_participant),

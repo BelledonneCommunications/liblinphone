@@ -2513,7 +2513,7 @@ bool MediaSessionPrivate::isUpdateSentWhenIceCompleted() const {
 
 	const auto core = q->getCore()->getCCore();
 	// In case of DTLS, the update is not sent after ICE completed due to interopability issues with webRTC
-	return (getNegotiatedMediaEncryption() == LinphoneMediaEncryptionDTLS) ? linphone_config_get_bool(linphone_core_get_config(core), "sip", "update_call_when_ice_completed_with_dtls", false) : !!linphone_config_get_int(linphone_core_get_config(core), "sip", "update_call_when_ice_completed", true);
+	return (getNegotiatedMediaEncryption() == LinphoneMediaEncryptionDTLS) ? !!linphone_config_get_bool(linphone_core_get_config(core), "sip", "update_call_when_ice_completed_with_dtls", FALSE) : !!linphone_config_get_int(linphone_core_get_config(core), "sip", "update_call_when_ice_completed", TRUE);
 }
 
 /*

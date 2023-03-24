@@ -84,6 +84,8 @@ public:
 	void setRemoteParams (MediaSessionParams *msp);
 
 	IceService &getIceService() const { return streamsGroup->getIceService(); }
+	bool isUpdateSentWhenIceCompleted() const;
+
 	std::shared_ptr<SalMediaDescription> getLocalDesc () const { return localDesc; }
 	std::shared_ptr<SalMediaDescription> getRemoteDesc() const { return streamsGroup->getCurrentOfferAnswerContext().remoteMediaDescription; }
 
@@ -162,8 +164,6 @@ private:
 	virtual void onIceCompleted(IceService &service) override;
 	virtual void onLosingPairsCompleted(IceService &service) override;
 	virtual void onIceRestartNeeded(IceService & service) override;
-
-	bool isUpdateSentWhenIceCompleted() const;
 
 #ifdef TEST_EXT_RENDERER
 	static void extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote);
