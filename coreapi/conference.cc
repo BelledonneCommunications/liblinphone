@@ -4050,9 +4050,7 @@ void RemoteConference::onFullStateReceived() {
 	if (session) {
 		notifyLocalMutedDevices(session->getPrivate()->getMicrophoneMuted());
 	}
-	if (session &&
-	    (!session->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()),
-	                                                               "sip", "update_call_when_ice_completed", TRUE))) {
+	if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
 		requestStreams();
 	} else {
 		lInfo() << "Delaying re-INVITE in order to get streams after joining conference " << *getConferenceAddress()
