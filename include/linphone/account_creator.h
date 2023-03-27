@@ -218,32 +218,55 @@ linphone_account_creator_set_username(LinphoneAccountCreator *creator, const cha
 LINPHONE_PUBLIC const char *linphone_account_creator_get_username(const LinphoneAccountCreator *creator);
 
 /**
- * Set the pn_provider.
+ * Set the provider to be used by the backend to send the push notification to the device asking for an auth token.
  * @param creator #LinphoneAccountCreator object @notnil
- * @param pn_provider The pn_provider to set @notnil
+ * @param pn_provider The pn_provider to set @maybenil
  **/
 LINPHONE_PUBLIC void linphone_account_creator_set_pn_provider(LinphoneAccountCreator *creator, const char *pn_provider);
 
 /**
- * Set the pn_param.
+ * Get the provider to be used by the backend to send the push notification to the device asking for an auth token.
  * @param creator #LinphoneAccountCreator object @notnil
- * @param pn_param The pn_param to set @notnil
+ * @return The pn_provider set, if any @maybenil
+ **/
+LINPHONE_PUBLIC const char *linphone_account_creator_get_pn_provider(const LinphoneAccountCreator *creator);
+
+/**
+ * Set the param to be used by the backend to send the push notification to the device asking for an auth token.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pn_param The pn_param to set @maybenil
  **/
 LINPHONE_PUBLIC void linphone_account_creator_set_pn_param(LinphoneAccountCreator *creator, const char *pn_param);
 
 /**
- * Set the pn_prid.
+ * Get the param to be used by the backend to send the push notification to the device asking for an auth token.
  * @param creator #LinphoneAccountCreator object @notnil
- * @param pn_prid The pn_prid to set @notnil
+ * @return The pn_param set, if any @maybenil
+ **/
+LINPHONE_PUBLIC const char *linphone_account_creator_get_pn_param(const LinphoneAccountCreator *creator);
+
+/**
+ * Set the prid to be used by the backend to send the push notification to the device asking for an auth token.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pn_prid The pn_prid to set @maybenil
  **/
 LINPHONE_PUBLIC void linphone_account_creator_set_pn_prid(LinphoneAccountCreator *creator, const char *pn_prid);
 
 /**
- * Set the token.
+ * Get the prid to be used by the backend to send the push notification to the device asking for an auth token.
  * @param creator #LinphoneAccountCreator object @notnil
- * @param token The pn_prid to set @notnil
+ * @return The pn_prid set, if any @maybenil
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param token The token to set @maybenil
  **/
 LINPHONE_PUBLIC void linphone_account_creator_set_token(LinphoneAccountCreator *creator, const char *token);
+
+/**
+ * Get the authentication token set (if any) to be used to authenticate next queries, if required.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The token set, if any @maybenil
+ **/
+LINPHONE_PUBLIC const char *linphone_account_creator_get_token(const LinphoneAccountCreator *creator);
 
 /**
  * Set the phone number normalized.

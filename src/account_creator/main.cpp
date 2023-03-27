@@ -132,16 +132,32 @@ void linphone_account_creator_set_pn_provider(LinphoneAccountCreator *creator, c
 	set_string(&creator->pn_provider, pn_provider, FALSE);
 }
 
+const char *linphone_account_creator_get_pn_provider(const LinphoneAccountCreator *creator) {
+	return creator->pn_provider;
+}
+
 void linphone_account_creator_set_pn_param(LinphoneAccountCreator *creator, const char *pn_param) {
 	set_string(&creator->pn_param, pn_param, FALSE);
+}
+
+const char *linphone_account_creator_get_pn_param(const LinphoneAccountCreator *creator) {
+	return creator->pn_param;
 }
 
 void linphone_account_creator_set_pn_prid(LinphoneAccountCreator *creator, const char *pn_prid) {
 	set_string(&creator->pn_prid, pn_prid, FALSE);
 }
 
+const char *linphone_account_creator_get_pn_prid(const LinphoneAccountCreator *creator) {
+	return creator->pn_prid;
+}
+
 void linphone_account_creator_set_token(LinphoneAccountCreator *creator, const char *token) {
 	set_string(&creator->token, token, FALSE);
+}
+
+const char *linphone_account_creator_get_token(const LinphoneAccountCreator *creator) {
+	return creator->token;
 }
 
 LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_number(LinphoneAccountCreator *creator,

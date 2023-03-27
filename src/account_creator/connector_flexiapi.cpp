@@ -193,7 +193,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_fle
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_flexiapi(LinphoneAccountCreator *creator) {
-	if (!creator->username && !creator->phone_number) {
+	if (!creator->username) {
 		if (creator->cbs->is_account_exist_response_cb != NULL) {
 			creator->cbs->is_account_exist_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
 			                                           "Missing required parameters");
