@@ -3454,10 +3454,10 @@ static void sort_ortp_pt_list(bctbx_list_t **ortp_pt_list, const bctbx_list_t *l
 		bctbx_list_t *elem = bctbx_list_find(*ortp_pt_list, ortp_pt);
 		if (elem) {
 			*ortp_pt_list = bctbx_list_unlink(*ortp_pt_list, elem);
-			new_list = bctbx_list_append_link(new_list, elem);
+			new_list = bctbx_list_concat(new_list, elem);
 		}
 	}
-	*ortp_pt_list = bctbx_list_prepend_link(*ortp_pt_list, new_list);
+	*ortp_pt_list = bctbx_list_concat(new_list, *ortp_pt_list);
 }
 
 bctbx_list_t *linphone_core_get_audio_payload_types(LinphoneCore *lc) {
