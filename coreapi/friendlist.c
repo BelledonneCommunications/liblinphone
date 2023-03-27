@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -271,7 +271,7 @@ static void linphone_friend_presence_received(LinphoneFriendList *list, Linphone
 		linphone_friend_set_presence_model_for_uri_or_tel(lf, uri, presence);
 		linphone_core_notify_notify_presence_received_for_uri_or_tel(list->lc, lf, uri, presence);
 	}
-	
+
 	linphone_friend_notify_presence_received(lf);
 
 	// Deprecated
@@ -915,8 +915,8 @@ static void carddav_updated(LinphoneCardDavContext *cdc, LinphoneFriend *lf_new,
 	}
 }
 
-static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
-	char* errmsg = NULL;
+static int linphone_sql_request_generic(sqlite3 *db, const char *stmt) {
+	char *errmsg = NULL;
 	int ret;
 	ret = sqlite3_exec(db, stmt, NULL, NULL, &errmsg);
 	if (ret != SQLITE_OK) {
@@ -961,12 +961,17 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 				/**
 				 * We directly remove from the SQLite database the friends, then the friends_lists
 				 * - Because we doesn't have a foreign key between the two tables
-				 * - Because removing friends can only be done using linphone_friend_list_remove_friend and requires a loop
-				 * - Because the primary key is id (autoincrement) we can have several friends_lists that have the same display_name
-				 * - Because doing the following lines using the current C API would require to load the full friends_lists table in memory and do the where manually, then delete one by one each linked friends
+				 * - Because removing friends can only be done using linphone_friend_list_remove_friend and requires a
+				 * loop
+				 * - Because the primary key is id (autoincrement) we can have several friends_lists that have the same
+				 * display_name
+				 * - Because doing the following lines using the current C API would require to load the full
+				 * friends_lists table in memory and do the where manually, then delete one by one each linked friends
 				 */
 
-				buf = sqlite3_mprintf("delete from friends where friend_list_id in (select id from friends_lists where display_name = %Q)", url);
+				buf = sqlite3_mprintf("delete from friends where friend_list_id in (select id from friends_lists where "
+									  "display_name = %Q)",
+									  url);
 				linphone_sql_request_generic(list->lc->friends_db, buf);
 				sqlite3_free(buf);
 
@@ -1017,7 +1022,7 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 		list->lc->base_contacts_list_http_listener =
 			belle_http_request_listener_create_from_callbacks(&belle_request_listener, list);
 
-		belle_http_request_t* request = belle_http_request_create(
+		belle_http_request_t *request = belle_http_request_create(
 			"GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(list->lc)), NULL);
 
 		LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(list->lc);
@@ -1027,8 +1032,7 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 			ms_free(addr);
 		}
 
-		belle_http_provider_send_request(list->lc->http_provider, request,
-										 list->lc->base_contacts_list_http_listener);
+		belle_http_provider_send_request(list->lc->http_provider, request, list->lc->base_contacts_list_http_listener);
 	} else if (list->type == LinphoneFriendListTypeCardDAV) {
 		if (!list->uri) {
 			ms_error("Can't synchronize CardDAV list [%p](%s) without an URI", list,
@@ -1276,7 +1280,7 @@ static void linphone_friend_list_send_list_subscription(LinphoneFriendList *list
 		_linphone_friend_list_send_list_subscription_with_body(list, address);
 }
 
-bool_t linphone_friend_list_check_update_subscriptions(LinphoneFriendList *list) {
+void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
 	LinphoneProxyConfig *cfg = NULL;
 	const LinphoneAddress *address = _linphone_friend_list_get_rls_address(list);
 	bool_t only_when_registered = FALSE;
@@ -1303,17 +1307,14 @@ bool_t linphone_friend_list_check_update_subscriptions(LinphoneFriendList *list)
 					linphone_event_unref(list->event);
 					list->event = NULL;
 					ms_message("Friend list [%p] subscription terminated because proxy config lost connection", list);
-					return FALSE;
 				} else {
 					ms_message("Friend list [%p] subscription update skipped since dependant proxy config is not yet "
 							   "registered",
 							   list);
-					return FALSE;
 				}
 			}
 		} else {
 			ms_message("Friend list [%p] subscription update skipped since subscriptions not enabled yet", list);
-			return FALSE;
 		}
 	} else if (list->enable_subscriptions) {
 		ms_message("Updating friend list's [%p] friends subscribes", list);
@@ -1323,12 +1324,6 @@ bool_t linphone_friend_list_check_update_subscriptions(LinphoneFriendList *list)
 			linphone_friend_update_subscribes(lf, only_when_registered);
 		}
 	}
-
-	return TRUE;
-}
-
-void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
-	linphone_friend_list_check_update_subscriptions(list);
 }
 
 void linphone_friend_list_invalidate_subscriptions(LinphoneFriendList *list) {
