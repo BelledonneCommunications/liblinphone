@@ -385,11 +385,9 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 			const auto salAddr = ownership::borrowed(mOp->getContactAddress());
 			if (salAddr) L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress)->setInternalAddress(salAddr);
 			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
-		} else if (state == LinphoneRegistrationFailed) {
-			// Clear that flag so next LinphoneRegistrationOk will trigger the friend lists subscribe
-			mCore->initial_subscribes_sent = FALSE;
 		}
 
+		LinphoneRegistrationState previousState = mState;
 		mState = state;
 		if (!mDependency) {
 			updateDependentAccount(state, message);
@@ -402,8 +400,9 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 			linphone_core_notify_registration_state_changed(mCore, mConfig, state, message.c_str());
 		}
 
-		if (linphone_core_should_subscribe_friends_only_when_registered(mCore) && state == LinphoneRegistrationOk) {
-			linphone_core_send_initial_subscribes(mCore);
+		if (linphone_core_should_subscribe_friends_only_when_registered(mCore) && state == LinphoneRegistrationOk &&
+		    previousState != state) {
+			linphone_core_update_friends_subscriptions(mCore);
 		}
 	} else {
 		/*state already reported*/
