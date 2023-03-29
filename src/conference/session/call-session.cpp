@@ -912,6 +912,8 @@ void CallSessionPrivate::terminate () {
 void CallSessionPrivate::updateCurrentParams () const {}
 
 void CallSessionPrivate::setDestProxy (LinphoneProxyConfig *proxy){
+	if (proxy) linphone_proxy_config_ref(proxy);
+	if (destProxy) linphone_proxy_config_unref(destProxy);
 	destProxy = proxy;
 	currentParams->setAccount(proxy ? Account::toCpp(proxy->account)->getSharedFromThis() : nullptr);
 }
@@ -1197,6 +1199,9 @@ CallSession::~CallSession () {
 		linphone_error_info_unref(d->ei);
 	if (d->op)
 		d->op->release();
+	if (d->destProxy){
+		linphone_proxy_config_unref(d->destProxy);
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -1251,7 +1256,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	const auto & core = getCore()->getCCore();
 	if (!d->destProxy) {
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
-		d->setDestProxy( linphone_core_lookup_known_proxy(core, toAddr) );
+		d->setDestProxy( linphone_core_lookup_known_proxy_2(core, toAddr, direction == LinphoneCallIncoming ? FALSE : TRUE) );
 	}
 
 	d->log = CallLog::create(getCore(), direction, fromAddr, toAddr);
