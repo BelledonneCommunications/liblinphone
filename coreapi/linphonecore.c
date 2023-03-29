@@ -2191,7 +2191,6 @@ static void codecs_config_read(LinphoneCore *lc) {
 	bctbx_list_t *text_codecs = NULL;
 
 	lc->codecs_conf.dyn_pt = 96;
-	lc->codecs_conf.telephone_event_pt = linphone_config_get_int(lc->config, "misc", "telephone_event_pt", 101);
 
 	/*in rtp io mode, we don't transcode audio, thus we can support a format for which we have no encoder nor decoder.*/
 	lc->codecs_conf.dont_check_audio_codec_support = linphone_config_get_int(lc->config, "sound", "rtp_io", FALSE);
@@ -4563,34 +4562,15 @@ static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const Lin
 	}
 	return ret;
 }
+
 /*
  * Returns a proxy config matching the given identity address
  * Prefers registered, then first registering matching, otherwise first matching
  * returns NULL if none is found
  */
 LinphoneProxyConfig *linphone_core_lookup_proxy_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri) {
-	LinphoneProxyConfig *found_cfg = NULL;
-	LinphoneProxyConfig *found_reg_cfg = NULL;
-	LinphoneProxyConfig *found_noreg_cfg = NULL;
-	const bctbx_list_t *elem;
-
-	for (elem = linphone_core_get_proxy_config_list(lc); elem != NULL; elem = elem->next) {
-		LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)elem->data;
-		if (linphone_address_weak_equal(uri, linphone_proxy_config_get_identity_address(cfg))) {
-			if (linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
-				found_cfg = cfg;
-				break;
-			} else if (!found_reg_cfg && linphone_proxy_config_register_enabled(cfg)) {
-				found_reg_cfg = cfg;
-			} else if (!found_noreg_cfg) {
-				found_noreg_cfg = cfg;
-			}
-		}
-	}
-	if (!found_cfg && found_reg_cfg) found_cfg = found_reg_cfg;
-	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-
-	return found_cfg;
+	LinphoneAccount *account = linphone_core_lookup_account_by_identity_strict(lc, uri);
+	return account ? Account::toCpp(account)->getConfig() : nullptr;
 }
 
 /*
@@ -4647,56 +4627,22 @@ LinphoneAccount *linphone_core_lookup_account_by_identity(LinphoneCore *lc, cons
 }
 
 LinphoneProxyConfig *linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri) {
-	const bctbx_list_t *elem;
-	LinphoneProxyConfig *found_cfg = NULL;
-	LinphoneProxyConfig *found_reg_cfg = NULL;
-	LinphoneProxyConfig *found_noreg_cfg = NULL;
-	LinphoneProxyConfig *default_cfg = lc->default_proxy;
+	LinphoneAccount *account = linphone_core_lookup_known_account(lc, uri);
+	return account ? Account::toCpp(account)->getConfig() : nullptr;
+}
 
-	if (!uri) {
-		ms_error("Cannot look for proxy for NULL uri, returning default");
-		return default_cfg;
-	}
-	if (linphone_address_get_domain(uri) == NULL) {
-		ms_message("Cannot look for proxy for uri [%p] that has no domain set, returning default", uri);
-		return default_cfg;
-	}
-	/*return default proxy if it is matching the destination uri*/
-	if (default_cfg) {
-		const char *domain = linphone_proxy_config_get_domain(default_cfg);
-		if (domain && !strcmp(domain, linphone_address_get_domain(uri))) {
-			found_cfg = default_cfg;
-			goto end;
-		}
-	}
-
-	/*otherwise return first registered, then first registering matching, otherwise first matching */
-	for (elem = linphone_core_get_proxy_config_list(lc); elem != NULL; elem = elem->next) {
-		LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)elem->data;
-		const char *domain = linphone_proxy_config_get_domain(cfg);
-		if (domain != NULL && strcmp(domain, linphone_address_get_domain(uri)) == 0) {
-			if (linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
-				found_cfg = cfg;
-				break;
-			} else if (!found_reg_cfg && linphone_proxy_config_register_enabled(cfg)) {
-				found_reg_cfg = cfg;
-			} else if (!found_noreg_cfg) {
-				found_noreg_cfg = cfg;
-			}
-		}
-	}
-end:
-	if (!found_cfg && found_reg_cfg) found_cfg = found_reg_cfg;
-	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-
-	if (found_cfg && found_cfg != default_cfg) {
-		ms_debug("Overriding default proxy setting for this call/message/subscribe operation.");
-	} else if (!found_cfg)
-		found_cfg = default_cfg; /*when no matching proxy config is found, use the default proxy config*/
-	return found_cfg;
+LinphoneProxyConfig *
+linphone_core_lookup_known_proxy_2(LinphoneCore *lc, const LinphoneAddress *uri, bool_t fallback_to_default) {
+	LinphoneAccount *account = linphone_core_lookup_known_account_2(lc, uri, fallback_to_default);
+	return account ? Account::toCpp(account)->getConfig() : nullptr;
 }
 
 LinphoneAccount *linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri) {
+	return linphone_core_lookup_known_account_2(lc, uri, TRUE);
+}
+
+LinphoneAccount *
+linphone_core_lookup_known_account_2(LinphoneCore *lc, const LinphoneAddress *uri, bool_t fallback_to_default) {
 	const bctbx_list_t *elem;
 	LinphoneAccount *found_acc = NULL;
 	LinphoneAccount *found_reg_acc = NULL;
@@ -4742,7 +4688,9 @@ end:
 
 	if (found_acc && found_acc != default_acc) {
 		ms_debug("Overriding default account setting for this call/message/subscribe operation.");
-	} else if (!found_acc) found_acc = default_acc; /*when no matching account is found, use the default account*/
+	} else if (fallback_to_default && !found_acc) {
+		found_acc = default_acc; /*when no matching account is found, use the default account*/
+	}
 	return found_acc;
 }
 

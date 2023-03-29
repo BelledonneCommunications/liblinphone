@@ -22,6 +22,8 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
+#include "ortp/telephonyevents.h"
+
 void send_dtmf_base(LinphoneCoreManager **pmarie,
                     LinphoneCoreManager **ppauline,
                     bool_t use_rfc2833,
@@ -101,8 +103,11 @@ void send_dtmf_cleanup(LinphoneCoreManager *marie, LinphoneCoreManager *pauline)
 
 		/*just to sleep*/
 		linphone_core_terminate_all_calls(pauline->lc);
+
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
 	}
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -112,6 +117,43 @@ static void send_dtmf_rfc2833(void) {
 	LinphoneCoreManager *marie, *pauline;
 	send_dtmf_base(&marie, &pauline, TRUE, FALSE, '1', NULL, FALSE);
 	send_dtmf_cleanup(marie, pauline);
+}
+
+static void send_dtmfs_sequence_rfc2833_with_hardcoded_payload_type(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCall *marie_call = NULL;
+	int dtmf_count_prev;
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "telephone_event_pt", 104);
+
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, TRUE);
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, TRUE);
+
+	if (BC_ASSERT_TRUE(call(pauline, marie))) {
+		MediaStream *as;
+		char *expected;
+		char dtmf = '2';
+		marie_call = linphone_core_get_current_call(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+		dtmf_count_prev = pauline->stat.dtmf_count;
+		linphone_call_send_dtmf(marie_call, dtmf);
+
+		/*wait for the DTMF to be received from pauline*/
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + 1, 10000));
+		expected = ms_strdup_printf("%c", dtmf);
+		BC_ASSERT_PTR_NOT_NULL(pauline->stat.dtmf_list_received);
+		if (pauline->stat.dtmf_list_received) {
+			BC_ASSERT_STRING_EQUAL(pauline->stat.dtmf_list_received, expected);
+		}
+		ms_free(expected);
+		as = linphone_call_get_stream(marie_call, 0);
+		BC_ASSERT_EQUAL(rtp_session_telephone_events_supported(as->sessions.rtp_session), 104, int, "%i");
+		end_call(marie, pauline);
+	}
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 static void send_dtmf_sip_info(void) {
@@ -180,11 +222,13 @@ static void send_dtmf_rfc2833_opus(void) {
 	send_dtmf_cleanup(marie, pauline);
 }
 
-test_t dtmf_tests[9] = {
+test_t dtmf_tests[10] = {
     TEST_NO_TAG("Send DTMF using RFC2833", send_dtmf_rfc2833),
     TEST_NO_TAG("Send DTMF using SIP INFO", send_dtmf_sip_info),
     TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__char__rfc2833_and_sip_info_enabled),
     TEST_NO_TAG("Send DTMF sequence using RFC2833", send_dtmfs_sequence_rfc2833),
+    TEST_NO_TAG("Send DTMF sequence using RFC2833 with hardcoded payload type",
+                send_dtmfs_sequence_rfc2833_with_hardcoded_payload_type),
     TEST_NO_TAG("Send DTMF sequence using SIP INFO", send_dtmfs_sequence_sip_info),
     TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled),
     TEST_NO_TAG("DTMF sequence not sent if invalid call", send_dtmfs_sequence_not_ready),

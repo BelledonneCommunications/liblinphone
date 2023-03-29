@@ -347,14 +347,23 @@ void linphone_core_send_initial_subscribes(LinphoneCore *lc);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 void linphone_account_update(LinphoneAccount *account);
+
 LinphoneProxyConfig *linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
+LinphoneProxyConfig *
+linphone_core_lookup_known_proxy_2(LinphoneCore *lc, const LinphoneAddress *uri, bool_t fallback_to_default);
+
 LinphoneProxyConfig *linphone_core_lookup_proxy_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneProxyConfig *linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC LinphoneAccount *linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri);
+
+LinphoneAccount *
+linphone_core_lookup_known_account_2(LinphoneCore *lc, const LinphoneAddress *uri, bool_t fallback_to_default);
+
 LinphoneAccount *linphone_core_lookup_account_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneAccount *linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
+
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);
 LINPHONE_PUBLIC void linphone_core_get_local_ip(LinphoneCore *lc, int af, const char *dest, char *result);
 

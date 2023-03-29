@@ -159,17 +159,23 @@ std::list<OrtpPayloadType *> PayloadTypeHandler::createSpecialPayloadTypes(const
 std::list<OrtpPayloadType *>
 PayloadTypeHandler::createTelephoneEventPayloadTypes(const std::list<OrtpPayloadType *> &codecs) {
 	std::list<OrtpPayloadType *> result;
+	int prefered_telephone_event_number =
+	    linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "misc", "telephone_event_pt", 101);
 	for (const auto &pt : codecs) {
 		if (hasTelephoneEventPayloadType(result, pt->clock_rate)) continue;
 
 		OrtpPayloadType *tev = payload_type_clone(&payload_type_telephone_event);
 		tev->clock_rate = pt->clock_rate;
 		// Let it choose the number dynamically as for normal codecs.
-		payload_type_set_number(tev, -1);
+
 		// But for first telephone-event, prefer the number that was configured in the core.
-		if (!result.empty() &&
-		    isPayloadTypeNumberAvailable(codecs, getCore()->getCCore()->codecs_conf.telephone_event_pt, nullptr))
-			payload_type_set_number(tev, getCore()->getCCore()->codecs_conf.telephone_event_pt);
+
+		if (result.empty() && isPayloadTypeNumberAvailable(codecs, prefered_telephone_event_number, nullptr)) {
+			payload_type_set_number(tev, prefered_telephone_event_number);
+		} else {
+			// for others let the number be choosen dynamically.
+			payload_type_set_number(tev, -1);
+		}
 		result.push_back(tev);
 	}
 	return result;

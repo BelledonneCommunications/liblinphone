@@ -577,6 +577,8 @@ static void direct_call_over_ipv6(void) {
 	if (liblinphone_tester_ipv6_available()) {
 		LinphoneSipTransports pauline_transports;
 		LinphoneAddress *pauline_dest = linphone_address_new("sip:[::1];transport=tcp");
+		LinphoneCall *pauline_call;
+		LinphoneCall *marie_call;
 		marie = linphone_core_manager_new("marie_rc");
 		pauline =
 		    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -584,19 +586,39 @@ static void direct_call_over_ipv6(void) {
 		linphone_core_enable_ipv6(marie->lc, TRUE);
 		linphone_core_enable_ipv6(pauline->lc, TRUE);
 		linphone_core_set_default_proxy_config(marie->lc, NULL);
-		linphone_core_set_default_proxy_config(pauline->lc, NULL);
+		/* We do not unset the default account for pauline (the callee): it shall be able to handle the call
+		 * even if it does not come from the server */
 
 		linphone_core_get_sip_transports_used(pauline->lc, &pauline_transports);
 		linphone_address_set_port(pauline_dest, pauline_transports.tcp_port);
-		linphone_core_invite_address(marie->lc, pauline_dest);
+		marie_call = linphone_core_invite_address(marie->lc, pauline_dest);
 
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
-		linphone_call_accept(linphone_core_get_current_call(pauline->lc));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+		pauline_call = linphone_core_get_current_call(pauline->lc);
+		if (BC_ASSERT_PTR_NOT_NULL(pauline_call)) {
+			const LinphoneCallParams *remote_params = linphone_call_get_remote_params(pauline_call);
+			const char *contact_value = linphone_call_params_get_custom_header(remote_params, "Contact");
+			BC_ASSERT_PTR_NOT_NULL(contact_value);
+			/* assert that the Contact header in the INVITE is not the one coming from the registratation from the
+			 * server */
+			BC_ASSERT_TRUE(strstr(contact_value, "gr=") == NULL);
+			linphone_call_accept(pauline_call);
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 
-		liblinphone_tester_check_rtcp(marie, pauline);
+			remote_params = linphone_call_get_remote_params(marie_call);
+			contact_value = linphone_call_params_get_custom_header(remote_params, "Contact");
+			BC_ASSERT_PTR_NOT_NULL(contact_value);
+			/* assert that the Contact header in the 200 OK is not the one coming from the registration with the server
+			 */
+			BC_ASSERT_TRUE(strstr(contact_value, "gr=") == NULL);
+
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+			BC_ASSERT_PTR_NULL(linphone_call_params_get_account(linphone_call_get_current_params(marie_call)));
+			BC_ASSERT_PTR_NULL(linphone_call_params_get_account(linphone_call_get_current_params(pauline_call)));
+
+			liblinphone_tester_check_rtcp(marie, pauline);
+		}
 		end_call(marie, pauline);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline);

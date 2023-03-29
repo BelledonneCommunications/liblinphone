@@ -832,7 +832,7 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev) {
 
 void MS2AudioStream::enableMic(bool value) {
 	mMicMuted = !value;
-	if (mStream){
+	if (mStream) {
 		enableMicOnAudioStream(mStream, getCCore(), value);
 	}
 }

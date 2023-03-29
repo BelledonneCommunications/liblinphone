@@ -355,8 +355,9 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 			const auto salAddr = mOp->getContactAddress();
 			if (salAddr) {
 				if (!mContactAddress) {
-					mContactAddress = (new Address(salAddr))->asSharedPtr();
-				} else mContactAddress->setImpl(salAddr);
+					mContactAddress = (new Address())->toSharedPtr();
+				}
+				mContactAddress->setImpl(salAddr);
 			}
 			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
 		}

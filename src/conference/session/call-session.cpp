@@ -1266,7 +1266,9 @@ void CallSession::configure(LinphoneCallDir direction,
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the
 		 * SIP messages */
 		LinphoneAddress *toAddr = to->toC();
-		const auto cAccount = linphone_core_lookup_account_by_identity(core, toAddr);
+		const auto cAccount = (direction == LinphoneCallIncoming)
+		                          ? linphone_core_lookup_account_by_identity_strict(core, toAddr)
+		                          : linphone_core_lookup_account_by_identity(core, toAddr);
 		if (cAccount) {
 			const auto account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
 			d->setDestAccount(account);

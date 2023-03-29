@@ -147,7 +147,7 @@ extern test_suite_t audio_quality_test_suite;
 extern test_suite_t complex_sip_call_test_suite;
 #endif
 
-extern test_t dtmf_tests[9];
+extern test_t dtmf_tests[10];
 
 extern int manager_count;
 
