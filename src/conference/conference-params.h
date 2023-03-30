@@ -46,7 +46,6 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 	friend class MediaConference::RemoteConference;
 
 public:
-	ConferenceParams(const ConferenceParams &params);
 	ConferenceParams(const LinphoneCore *core = NULL);
 
 	ConferenceParams *clone() const override {

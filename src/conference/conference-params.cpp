@@ -44,25 +44,6 @@ ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 	}
 }
 
-ConferenceParams::ConferenceParams(const ConferenceParams &params) : HybridObject(params), ConferenceParamsInterface() {
-	m_enableVideo = params.m_enableVideo;
-	m_enableAudio = params.m_enableAudio;
-	m_enableChat = params.m_enableChat;
-	m_localParticipantEnabled = params.m_localParticipantEnabled;
-	m_allowOneParticipantConference = params.m_allowOneParticipantConference;
-	m_participantListType = params.m_participantListType;
-	m_joinMode = params.m_joinMode;
-	m_conferenceAddress = params.m_conferenceAddress;
-	m_factoryAddress = params.m_factoryAddress;
-	m_subject = params.m_subject;
-	m_description = params.m_description;
-	m_me = params.m_me;
-	m_startTime = params.m_startTime;
-	m_endTime = params.m_endTime;
-	m_account = params.m_account;
-	m_static = params.m_static;
-}
-
 void ConferenceParams::setAccount(const shared_ptr<Account> &a) {
 	m_account = a;
 	updateFromAccount(m_account);
