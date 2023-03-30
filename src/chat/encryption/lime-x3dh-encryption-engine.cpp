@@ -979,12 +979,11 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
 	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
-	lInfo() << "[LIME] Trying to create lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl << "]";
-
 	try {
 		if (!limeManager->is_user(localDeviceId)) {
 			lime::limeCallback callback = setLimeUserCreationCallback(lc, localDeviceId);
 			// create user if not exist
+			lInfo() << "[LIME] Trying to create user for device [" << localDeviceId << "] with server URL [" << accountLimeServerUrl << "]";
 			limeManager->create_user(localDeviceId, accountLimeServerUrl, curve, callback);
 			lastLimeUpdate = ms_time(NULL);
 		} else {
@@ -992,13 +991,14 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 			// update keys if necessary
 			int limeUpdateThreshold = linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
 			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
+				lInfo() << "[LIME] Trying to update keys for device [" << localDeviceId << "] with server URL [" << accountLimeServerUrl << "]";
 				update();
 				lastLimeUpdate = ms_time(NULL);
 			}
 		}
 		linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
-		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
+		lError()<< "[LIME] user for id [" << localDeviceId << "] cannot be created" << e.what();
 	}
 }
 
