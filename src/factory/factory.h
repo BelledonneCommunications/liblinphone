@@ -105,6 +105,10 @@ public:
 	                                 const std::string &realm,
 	                                 const std::string &domain,
 	                                 const std::string &algorithm) const;
+	std::string computeHa1ForAlgorithm(const std::string &userId,
+	                                   const std::string &password,
+	                                   const std::string &realm,
+	                                   const std::string &algorithm) const;
 	LinphoneCallCbs *createCallCbs() const;
 	LinphoneConferenceCbs *createConferenceCbs() const;
 	LinphoneParticipantDeviceCbs *createParticipantDeviceCbs() const;

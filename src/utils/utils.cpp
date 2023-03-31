@@ -59,9 +59,7 @@ bool Utils::iequals(const string &a, const string &b) {
 
 #ifndef __ANDROID__
 #define TO_STRING_IMPL(TYPE)                                                                                           \
-	string Utils::toString(TYPE val) {                                                                                 \
-		return to_string(val);                                                                                         \
-	}
+	string Utils::toString(TYPE val) { return to_string(val); }
 #else
 #define TO_STRING_IMPL(TYPE)                                                                                           \
 	string Utils::toString(TYPE val) {                                                                                 \
@@ -92,9 +90,7 @@ string Utils::toString(const void *val) {
 // -----------------------------------------------------------------------------
 
 #define STRING_TO_NUMBER_IMPL(TYPE, SUFFIX)                                                                            \
-	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx, int base) {                                                \
-		return sto##SUFFIX(str.c_str(), idx, base);                                                                    \
-	}                                                                                                                  \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx, int base) { return sto##SUFFIX(str.c_str(), idx, base); }  \
 	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx, int base) {                                                  \
 		char *p;                                                                                                       \
 		TYPE v = strto##SUFFIX(str, &p, base);                                                                         \
@@ -103,9 +99,7 @@ string Utils::toString(const void *val) {
 	}
 
 #define STRING_TO_NUMBER_IMPL_BASE_LESS(TYPE, SUFFIX)                                                                  \
-	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx) {                                                          \
-		return sto##SUFFIX(str.c_str(), idx);                                                                          \
-	}                                                                                                                  \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx) { return sto##SUFFIX(str.c_str(), idx); }                  \
 	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx) {                                                            \
 		char *p;                                                                                                       \
 		TYPE v = strto##SUFFIX(str, &p);                                                                               \
@@ -447,6 +441,25 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 	info->setUtf8Subject(op->getSubject());
 
 	return info;
+}
+
+std::string Utils::computeHa1ForAlgorithm(const std::string &userId,
+                                          const std::string &password,
+                                          const std::string &realm,
+                                          const std::string &algorithm) {
+	if (algorithm.empty() || algorithm == "MD5") {
+		static char ha1[33];
+		if (sal_auth_compute_ha1(userId.c_str(), realm.c_str(), password.c_str(), ha1) == 0) {
+			return ha1;
+		}
+	} else if (algorithm == "SHA-256") {
+		static char ha1[65];
+		if (sal_auth_compute_ha1_for_algorithm(userId.c_str(), realm.c_str(), password.c_str(), ha1, 65,
+		                                       algorithm.c_str()) == 0) {
+			return ha1;
+		}
+	}
+	return "";
 }
 
 LINPHONE_END_NAMESPACE

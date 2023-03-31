@@ -31,6 +31,7 @@
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
+#include "linphone/utils/utils.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -329,10 +330,10 @@ static LinphoneXmlRpcRequest *_create_account_with_phone_custom(LinphoneAccountC
 	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "create_phone_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
 	linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
-	linphone_xml_rpc_request_add_string_arg(
-	    request, creator->password ? ha1_for_passwd(creator->username ? creator->username : creator->phone_number,
-	                                                _get_domain(creator), creator->password, creator->algorithm)
-	                               : "");
+	std::string ha1 = Utils::computeHa1ForAlgorithm(
+	    L_C_TO_STRING(creator->username ? creator->username : creator->phone_number), L_C_TO_STRING(creator->password),
+	    L_C_TO_STRING(_get_domain(creator)), L_C_TO_STRING(creator->algorithm));
+	linphone_xml_rpc_request_add_string_arg(request, creator->password ? ha1.c_str() : "");
 	linphone_xml_rpc_request_add_string_arg(request, linphone_core_get_user_agent(creator->core));
 	linphone_xml_rpc_request_add_string_arg(request, _get_domain(creator));
 	linphone_xml_rpc_request_add_string_arg(request, creator->language);
@@ -351,9 +352,10 @@ static LinphoneXmlRpcRequest *_create_account_with_email_custom(LinphoneAccountC
 	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "create_email_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username);
 	linphone_xml_rpc_request_add_string_arg(request, creator->email);
-	linphone_xml_rpc_request_add_string_arg(
-	    request, ha1_for_passwd(creator->username ? creator->username : creator->phone_number, _get_domain(creator),
-	                            creator->password, creator->algorithm));
+	std::string ha1 = Utils::computeHa1ForAlgorithm(
+	    L_C_TO_STRING(creator->username ? creator->username : creator->phone_number), L_C_TO_STRING(creator->password),
+	    L_C_TO_STRING(_get_domain(creator)), L_C_TO_STRING(creator->algorithm));
+	linphone_xml_rpc_request_add_string_arg(request, ha1.c_str());
 	linphone_xml_rpc_request_add_string_arg(request, linphone_core_get_user_agent(creator->core));
 	linphone_xml_rpc_request_add_string_arg(request, _get_domain(creator));
 	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
@@ -715,9 +717,10 @@ linphone_account_creator_get_confirmation_key_linphone_xmlrpc(LinphoneAccountCre
 
 	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_confirmation_key");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username);
-	linphone_xml_rpc_request_add_string_arg(
-	    request, ha1_for_passwd(creator->username, linphone_proxy_config_get_domain(creator->proxy_cfg),
-	                            creator->password, creator->algorithm));
+	std::string ha1 = Utils::computeHa1ForAlgorithm(L_C_TO_STRING(creator->username), L_C_TO_STRING(creator->password),
+	                                                L_C_TO_STRING(linphone_proxy_config_get_domain(creator->proxy_cfg)),
+	                                                L_C_TO_STRING(creator->algorithm));
+	linphone_xml_rpc_request_add_string_arg(request, ha1.c_str());
 	linphone_xml_rpc_request_add_string_arg(request, linphone_proxy_config_get_domain(creator->proxy_cfg));
 	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 	linphone_xml_rpc_request_set_user_data(request, creator);
@@ -1002,10 +1005,10 @@ linphone_account_creator_activate_phone_number_link_linphone_xmlrpc(LinphoneAcco
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
-		linphone_xml_rpc_request_add_string_arg(request, creator->ha1
-		                                                     ? creator->ha1
-		                                                     : ha1_for_passwd(creator->username, _get_domain(creator),
-		                                                                      creator->password, creator->algorithm));
+		std::string ha1 =
+		    Utils::computeHa1ForAlgorithm(L_C_TO_STRING(creator->username), L_C_TO_STRING(creator->password),
+		                                  L_C_TO_STRING(_get_domain(creator)), L_C_TO_STRING(creator->algorithm));
+		linphone_xml_rpc_request_add_string_arg(request, creator->ha1 ? creator->ha1 : ha1.c_str());
 		linphone_xml_rpc_request_add_string_arg(request, _get_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
@@ -1127,10 +1130,14 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_x
 	fill_domain_and_algorithm_if_needed(creator);
 	if (xmlrpc_session) {
 		const char *username = creator->username ? creator->username : creator->phone_number;
-		char *ha1 = bctbx_strdup(
-		    creator->ha1 ? creator->ha1
-		                 : ha1_for_passwd(username, _get_domain(creator), creator->password, creator->algorithm));
-		char *new_ha1 = bctbx_strdup(ha1_for_passwd(username, _get_domain(creator), new_pwd, creator->algorithm));
+		std::string generated_ha1 =
+		    Utils::computeHa1ForAlgorithm(L_C_TO_STRING(username), L_C_TO_STRING(creator->password),
+		                                  L_C_TO_STRING(_get_domain(creator)), L_C_TO_STRING(creator->algorithm));
+		char *ha1 = bctbx_strdup(creator->ha1 ? creator->ha1 : generated_ha1.c_str());
+		std::string new_generated_ha1 =
+		    Utils::computeHa1ForAlgorithm(L_C_TO_STRING(username), L_C_TO_STRING(new_pwd),
+		                                  L_C_TO_STRING(_get_domain(creator)), L_C_TO_STRING(creator->algorithm));
+		char *new_ha1 = bctbx_strdup(new_generated_ha1.c_str());
 
 		ms_debug("Account creator: update_password (username=%s, domain=%s, algo=%s)", creator->username,
 		         _get_domain(creator), creator->algorithm);

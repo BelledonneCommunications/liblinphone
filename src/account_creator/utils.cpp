@@ -37,20 +37,6 @@ const char *_get_domain(LinphoneAccountCreator *creator) {
 	return NULL;
 }
 
-const char *ha1_for_passwd(const char *username, const char *realm, const char *passwd, const char *algo) {
-	if (algo == NULL || strcmp(algo, "MD5") == 0) {
-		static char ha1[33];
-		sal_auth_compute_ha1(username, realm, passwd, ha1);
-		return ha1;
-	} else if (strcmp(algo, "SHA-256") == 0) {
-		static char ha1[65];
-		sal_auth_compute_ha1_for_algorithm(username, realm, passwd, ha1, 65, algo);
-		return ha1;
-	} else {
-		return NULL;
-	}
-}
-
 unsigned int validate_uri(const char *username, const char *domain, const char *display_name) {
 	LinphoneAddress *addr;
 	unsigned int status = 0;

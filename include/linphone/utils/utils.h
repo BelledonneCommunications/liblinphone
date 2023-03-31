@@ -263,6 +263,10 @@ std::string getSipFragAddress(const Content &content);
 std::string getResourceLists(const std::list<std::shared_ptr<Address>> &addresses);
 std::list<std::shared_ptr<Address>> parseResourceLists(const Content &content);
 std::shared_ptr<ConferenceInfo> createConferenceInfoFromOp(SalCallOp *op, bool remote);
+std::string computeHa1ForAlgorithm(const std::string &userId,
+                                   const std::string &password,
+                                   const std::string &realm,
+                                   const std::string &algorithm);
 } // namespace Utils
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version);

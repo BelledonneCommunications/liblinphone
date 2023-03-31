@@ -246,6 +246,18 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const Linp
                                                                       const char *algorithm);
 
 /**
+ * Computes the hashed version of the password given the user ID and the realm, using given algorithm.
+ * @param factory The #LinphoneFactory singleton. @notnil
+ * @param userid the username or user ID to use. @notnil
+ * @param password the password to hash. @notnil
+ * @param realm the real to use. @notnil
+ * @param algorithm the algorithm to use (MD5 or SHA-256). @notnil
+ * @return the generated hash if it succeeded, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_factory_compute_ha1_for_algorithm(
+    const LinphoneFactory *factory, const char *userid, const char *password, const char *realm, const char *algorithm);
+
+/**
  * Create a #LinphoneCallCbs object that holds callbacks for events happening on a call.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneCallCbs object @notnil
