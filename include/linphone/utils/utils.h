@@ -231,6 +231,8 @@ namespace Utils {
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses);
 	std::list<IdentityAddress> parseResourceLists (const Content &content);
 	std::shared_ptr<ConferenceInfo> createConferenceInfoFromOp (SalCallOp *op, bool remote);
+
+	std::string computeHa1ForAlgorithm(const std::string& userId, const std::string& password, const std::string& realm, const std::string& algorithm);
 }
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream & ostr, const Utils::Version &version);

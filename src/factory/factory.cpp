@@ -50,6 +50,7 @@
 #include "conference/conference-info.h"
 #include "logger/logger.h"
 #include "sqlite3_bctbx_vfs.h"
+#include "linphone/utils/utils.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -281,6 +282,10 @@ LinphoneAuthInfo* Factory::createAuthInfo (const std::string& username, const st
 
 LinphoneAuthInfo* Factory::createAuthInfo(const std::string& username, const std::string& userid, const std::string& passwd, const std::string& ha1, const std::string& realm, const std::string& domain, const std::string& algorithm) const {
 	return linphone_auth_info_new_for_algorithm(username.c_str(), userid.c_str(), passwd.c_str(), ha1.c_str(), realm.c_str(), domain.c_str(), algorithm.c_str());
+}
+
+std::string Factory::computeHa1ForAlgorithm(const std::string& userId, const std::string& password, const std::string& realm, const std::string& algorithm) const {
+	return Utils::computeHa1ForAlgorithm(userId, password, realm, algorithm);
 }
 
 LinphoneCallCbs* Factory::createCallCbs() const {

@@ -455,4 +455,19 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op
 	return info;
 }
 
+std::string Utils::computeHa1ForAlgorithm(const std::string& userId, const std::string& password, const std::string& realm, const std::string& algorithm) {
+	if(algorithm.empty() || algorithm == "MD5") {
+		static char ha1[33];
+		if (sal_auth_compute_ha1(userId.c_str(), realm.c_str(), password.c_str(), ha1) == 0) {
+			return ha1;
+		}
+	} else if (algorithm == "SHA-256") {
+		static char ha1[65];
+		if (sal_auth_compute_ha1_for_algorithm(userId.c_str(), realm.c_str(), password.c_str(), ha1, 65, algorithm.c_str()) == 0) {
+			return ha1;
+		}
+	}
+	return "";
+}
+
 LINPHONE_END_NAMESPACE
