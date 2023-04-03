@@ -152,7 +152,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
 		curve = lime::CurveId::c25519;
 	}
 	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine " << this << " - default server is ["
-	        << core->getX3dhServerUrl() << "] and curve " << curveConfig;
+	        << core->getX3dhServerUrl() << "] and curve " << curveConfig << " DB path: " << dbAccess;
 	_dbAccess = dbAccess;
 	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(
 	    BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs

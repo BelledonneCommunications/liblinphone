@@ -162,16 +162,18 @@ static void linphone_version_update_test(void) {
 static void core_init_test(void) {
 	LinphoneCore *lc;
 	FILE *in;
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL,
-	                                    system_context);
-	const char *uri = linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", NULL);
-	BC_ASSERT_STRING_EQUAL(uri, "null");
-	in = fopen(uri, "rb");
-	if (!BC_ASSERT_PTR_NULL(in)) // "null" file should not exists
-		fclose(in);
-	/* until we have good certificates on our test server... */
-	linphone_core_verify_server_certificates(lc, FALSE);
+	lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+		linphone_core_start(lc);
+		const char *uri = linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", NULL);
+		BC_ASSERT_STRING_EQUAL(uri, "null");
+		in = fopen(uri, "rb");
+		if (!BC_ASSERT_PTR_NULL(in)) // "null" file should not exists
+			fclose(in);
+		/* until we have good certificates on our test server... */
+		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
 		linphone_core_unref(lc);
 	}
@@ -180,11 +182,14 @@ static void core_init_test(void) {
 static void core_init_test_2(void) {
 	LinphoneCore *lc;
 	char *rc_path = bc_tester_res("rcfiles/chloe_rc");
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, rc_path, NULL, system_context);
+	lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, rc_path, system_context);
 
-	/* until we have good certificates on our test server... */
-	linphone_core_verify_server_certificates(lc, FALSE);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+		linphone_core_start(lc);
+
+		/* until we have good certificates on our test server... */
+		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
 
 		LinphoneConfig *config = linphone_core_get_config(lc);
@@ -210,6 +215,7 @@ static void core_init_test_3(void) {
 	LinphoneCore *lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, NULL, system_context);
 
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
 		linphone_core_start(lc);
 
 		LinphoneConfig *config = linphone_core_get_config(lc);
@@ -234,6 +240,7 @@ static void core_init_test_4(void) {
 	LinphoneCore *lc = linphone_factory_create_core_3(linphone_factory_get(), rc_path, NULL, system_context);
 
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
 		linphone_core_start(lc);
 
 		LinphoneConfig *config = linphone_core_get_config(lc);
@@ -257,12 +264,14 @@ static void core_init_test_4(void) {
 
 static void core_init_stop_test(void) {
 	LinphoneCore *lc;
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL,
-	                                    system_context);
+	lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 
-	/* until we have good certificates on our test server... */
-	linphone_core_verify_server_certificates(lc, FALSE);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+		linphone_core_start(lc);
+		/* until we have good certificates on our test server... */
+		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
 		linphone_core_stop(lc);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOff, int, "%i");
@@ -275,12 +284,14 @@ static void core_init_stop_test(void) {
 
 static void core_init_unref_test(void) {
 	LinphoneCore *lc;
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL,
-	                                    system_context);
+	lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 
-	/* until we have good certificates on our test server... */
-	linphone_core_verify_server_certificates(lc, FALSE);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+		linphone_core_start(lc);
+		/* until we have good certificates on our test server... */
+		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
 		linphone_core_unref(lc);
 	}
@@ -288,28 +299,26 @@ static void core_init_unref_test(void) {
 
 static void core_init_stop_start_test(void) {
 	LinphoneCore *lc;
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL,
-	                                    system_context);
+	lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 
-	/* until we have good certificates on our test server... */
-	linphone_core_verify_server_certificates(lc, FALSE);
-	const char *uuid = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
-	BC_ASSERT_STRING_NOT_EQUAL(uuid, "");
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+		linphone_core_start(lc);
+		/* until we have good certificates on our test server... */
+		linphone_core_verify_server_certificates(lc, FALSE);
+		const char *uuid = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+		BC_ASSERT_STRING_NOT_EQUAL(uuid, "");
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
 		linphone_core_stop(lc);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOff, int, "%i");
-	}
-
-	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		linphone_core_start(lc);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
-	}
-	const char *uuid2 = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
-	BC_ASSERT_STRING_NOT_EQUAL(uuid2, "");
-	BC_ASSERT_STRING_EQUAL(uuid, uuid2);
 
-	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		const char *uuid2 = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+		BC_ASSERT_STRING_NOT_EQUAL(uuid2, "");
+		BC_ASSERT_STRING_EQUAL(uuid, uuid2);
+
 		linphone_core_unref(lc);
 	}
 }
@@ -319,6 +328,7 @@ static void core_set_user_agent(void) {
 
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		linphone_core_set_user_agent(lc, "part1", "part2");
+		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
 		linphone_core_start(lc);
 		BC_ASSERT_EQUAL(strcmp(linphone_core_get_user_agent(lc), "part1/part2"), 0, int, "%d");
 
@@ -355,9 +365,11 @@ static void linphone_address_test(void) {
 static void core_sip_transport_test(void) {
 	LinphoneCore *lc;
 	LCSipTransports tr;
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL,
-	                                    system_context);
+	lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
+	linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+	linphone_core_start(lc);
 	linphone_core_get_sip_transports(lc, &tr);
 	BC_ASSERT_EQUAL(tr.udp_port, -2, int, "%d"); /*default config in empty_rc*/
 	BC_ASSERT_EQUAL(tr.tcp_port, -2, int, "%d"); /*default config in empty_rc*/
@@ -388,9 +400,11 @@ static void linphone_interpret_url_test(void) {
 	LinphoneAddress *address;
 	LinphoneProxyConfig *proxy_config;
 	char *tmp;
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL,
-	                                    system_context);
+	lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
+	linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+	linphone_core_start(lc);
 
 	proxy_config = linphone_core_create_proxy_config(lc);
 	LinphoneAddress *addr = linphone_address_new("sip:moi@sip.linphone.org");
@@ -716,9 +730,11 @@ void linphone_proxy_config_is_server_config_changed_test(void) {
 
 static void chat_room_test(void) {
 	LinphoneCore *lc;
-	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL,
-	                                    system_context);
+	lc =
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
+	linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
+	linphone_core_start(lc);
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room_from_uri(lc, "sip:toto@titi.com"));
 	linphone_core_unref(lc);
 }
@@ -852,6 +868,7 @@ static void custom_tones_setup_before_start(void) {
 	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
 
+	linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
 	BC_ASSERT_TRUE(linphone_core_get_global_state(lc) == LinphoneGlobalReady);
 
 	linphone_core_set_tone(lc, LinphoneToneCallOnHold, "callonhold.wav");
