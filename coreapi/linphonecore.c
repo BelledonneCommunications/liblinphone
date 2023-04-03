@@ -7704,6 +7704,10 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 		lc->plugin_list = NULL;
 	}
 
+	if (lc->supported_encryptions) {
+		bctbx_list_free(lc->supported_encryptions);
+		lc->supported_encryptions = NULL;
+	}
 	if (lc->conference_version) {
 		ms_free(lc->conference_version);
 		lc->conference_version = NULL;
@@ -7827,11 +7831,6 @@ void _linphone_core_uninit(LinphoneCore *lc) {
 	if (lc->state != LinphoneGlobalOff) {
 		_linphone_core_stop(lc);
 	}
-
-	if (lc->supported_encryptions) {
-		bctbx_list_free(lc->supported_encryptions);
-	}
-	lc->supported_encryptions = NULL;
 
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;

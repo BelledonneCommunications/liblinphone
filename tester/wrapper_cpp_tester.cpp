@@ -32,6 +32,22 @@
 #include "tester_utils.h"
 #include <linphone++/linphone.hh>
 
+//--------------------------------------------------------------------------------------------
+//					Class handlers
+//--------------------------------------------------------------------------------------------
+class AutoAcceptHandler : public linphone::CoreListener {
+public:
+	virtual void onCallStateChanged(const std::shared_ptr<linphone::Core> &,
+	                                const std::shared_ptr<linphone::Call> &call,
+	                                linphone::Call::State state,
+	                                const std::string &message) override {
+		lDebug() << "[AutoAcceptHandler] Call state changed : (" << (int)state << ") " << message;
+		if (state == linphone::Call::State::IncomingReceived) call->accept();
+	}
+};
+
+//--------------------------------------------------------------------------------------------
+
 static void create_chat_room() {
 	// Init from C
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -82,6 +98,64 @@ static void create_chat_room() {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void create_conference() {
+	std::shared_ptr<AutoAcceptHandler> handler = std::make_shared<AutoAcceptHandler>();
+	// Init from C
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	// Get C++ and start working from it.
+	auto marieCore = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
+	auto paulineCore = linphone::Object::cPtrToSharedPtr<linphone::Core>(pauline->lc, TRUE);
+
+	paulineCore->addListener(handler);
+
+	auto confParams = marieCore->createConferenceParams(nullptr);
+	BC_ASSERT_PTR_NOT_NULL(confParams);
+	confParams->enableVideo(false);
+	confParams->enableLocalParticipant(true);
+	confParams->enableChat(false);
+
+	auto conference = marieCore->createConferenceWithParams(confParams);
+	BC_ASSERT_PTR_NOT_NULL(conference);
+
+	std::list<std::shared_ptr<linphone::Address>> participants;
+
+	participants.push_back(
+	    marieCore->createAddress(linphone::Object::cPtrToSharedPtr<linphone::Address>(pauline->identity)->asString()));
+
+	auto callParams = marieCore->createCallParams(nullptr);
+	callParams->enableVideo(false);
+	callParams->setAudioDirection(linphone::MediaDirection::SendRecv);
+
+	conference->inviteParticipants(participants, callParams);
+
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
+
+	if (marieCore->getCurrentCall()) marieCore->getCurrentCall()->terminate();
+	if (paulineCore->getCurrentCall()) paulineCore->getCurrentCall()->terminate();
+	conference->terminate();
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 500);
+
+	callParams = nullptr;
+	participants.clear();
+	conference = nullptr;
+	confParams = nullptr;
+
+	marieCore->stop();
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 100);
+	marieCore->start();
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 100);
+
+	paulineCore = nullptr; // C++ Core deletion
+	marieCore = nullptr;
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 500);
+
+	// C clean
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void various_api_checks(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
@@ -128,6 +202,7 @@ static void displaying_payload_type(void) {
 }
 
 test_t wrapper_cpp_tests[] = {TEST_NO_TAG("Create chat room", create_chat_room),
+                              TEST_NO_TAG("Create conference", create_conference),
                               TEST_NO_TAG("Various API checks", various_api_checks),
                               TEST_NO_TAG("Displaying PayloadType", displaying_payload_type)};
 
