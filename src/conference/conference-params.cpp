@@ -90,4 +90,9 @@ const std::string ConferenceParams::getUtf8Subject() const {
 void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) {
 	m_conferenceAddress = Address::create(conferenceAddress->getUri());
 };
+
+void ConferenceParams::setSubject(const std::string &subject) {
+	m_subject = subject;
+};
+
 LINPHONE_END_NAMESPACE

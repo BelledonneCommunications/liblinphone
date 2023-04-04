@@ -107,6 +107,11 @@ public:
 	bool setParam(const std::string &paramName, const std::string &paramValue = "");
 	bool setParams(const std::string &params);
 	bool removeParam(const std::string &paramName);
+	inline const std::map<std::string, std::string> getParams() const {
+		std::map<std::string, std::string> params;
+		if (mImpl) sal_address_get_params(mImpl, params);
+		return params;
+	}
 
 	bool hasUriParam(const std::string &uriParamName) const;
 	std::string getUriParamValue(const std::string &uriParamName) const;
@@ -124,6 +129,7 @@ public:
 		return toString();
 	}
 	std::string toStringUriOnlyOrdered() const;
+	std::string toStringOrdered() const;
 
 	std::string asStringUriOnly() const;
 

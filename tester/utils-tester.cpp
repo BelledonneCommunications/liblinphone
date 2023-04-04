@@ -18,11 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/utils/utils.h"
-
 #include "bctoolbox/utils.hh"
 
+#include "address/address.h"
 #include "liblinphone_tester.h"
+#include "linphone/utils/utils.h"
 #include "tester_utils.h"
 
 // =============================================================================
@@ -92,6 +92,52 @@ static void version_comparisons(void) {
 	BC_ASSERT_TRUE(Version("1.0.0") < Version("1.0.1-pre.1"));
 }
 
+static void address_comparisons(void) {
+	Address a1("sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
+	BC_ASSERT_TRUE(a1.isValid());
+	Address a2("sip:toto@sip.example.org;b=dede;a=dada;d=dodo;c=didi");
+	BC_ASSERT_TRUE(a2.isValid());
+	Address a3("sip:toto@sip.example.org;d=dodo;c=didi;b=dede");
+	BC_ASSERT_TRUE(a3.isValid());
+	Address a4("sip:hihi@sip.example.org;d=dodo;c=didi;b=dede");
+	BC_ASSERT_TRUE(a4.isValid());
+	BC_ASSERT_TRUE(a3 == a2);
+	BC_ASSERT_TRUE(a1 == a2);
+	BC_ASSERT_FALSE(a1 == a4);
+	BC_ASSERT_TRUE(a1.toStringUriOnlyOrdered() == a2.toStringUriOnlyOrdered());
+	BC_ASSERT_FALSE(a1.toStringUriOnlyOrdered() == a3.toStringUriOnlyOrdered());
+	BC_ASSERT_FALSE(a3.toStringUriOnlyOrdered() == a4.toStringUriOnlyOrdered());
+	BC_ASSERT_TRUE(a3.weakEqual(a2));
+	BC_ASSERT_TRUE(a3.weakEqual(a1));
+	BC_ASSERT_FALSE(a3.weakEqual(a4));
+}
+
+static void conferenceId_comparisons(void) {
+	std::shared_ptr<Address> a1 = Address::create("sip:toto@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
+	std::shared_ptr<Address> a2 = Address::create("sip:toto@sip.example.org;b=dede;a=dada;d=dodo;c=didi");
+	std::shared_ptr<Address> a3 = Address::create("sip:toto@sip.example.org;d=dodo;c=didi;b=dede");
+	std::shared_ptr<Address> a4 = Address::create("sip:hihi@sip.example.org;d=dodo;c=didi;b=dede");
+
+	std::shared_ptr<Address> b1 = Address::create("sip:popo@sip.example.org;a=dada;b=dede;c=didi;d=dodo");
+	std::shared_ptr<Address> b2 = Address::create("sip:popo@sip.example.org;b=dede;a=dada;d=dodo;c=didi");
+	std::shared_ptr<Address> b3 = Address::create("sip:popo@sip.example.org;d=dodo;c=didi;b=dede");
+	std::shared_ptr<Address> b4 = Address::create("sip:popo@sip.example.org;d=tutu;c=didi;b=dede");
+
+	ConferenceId c1(a1, b1);
+	ConferenceId c2(a2, b2);
+	ConferenceId c3(a1, b3);
+	ConferenceId c4(a3, b2);
+	ConferenceId c5(a3, b3);
+	ConferenceId c6(a4, b3);
+	ConferenceId c7(a3, b4);
+	BC_ASSERT_TRUE(c1 == c2);
+	BC_ASSERT_TRUE(c3 == c2);
+	BC_ASSERT_TRUE(c1 == c4);
+	BC_ASSERT_TRUE(c1 == c5);
+	BC_ASSERT_FALSE(c6 == c5);
+	BC_ASSERT_FALSE(c7 == c5);
+}
+
 static void parse_capabilities(void) {
 	auto caps = Utils::parseCapabilityDescriptor("groupchat,lime,ephemeral");
 	BC_ASSERT_TRUE(caps.find("groupchat") != caps.end());
@@ -104,9 +150,16 @@ static void parse_capabilities(void) {
 	BC_ASSERT_TRUE(caps["ephemeral"] == Version(1, 0));
 }
 
-test_t utils_tests[] = {TEST_NO_TAG("split", split), TEST_NO_TAG("trim", trim),
-                        TEST_NO_TAG("Version comparisons", version_comparisons),
-                        TEST_NO_TAG("Parse capabilities", parse_capabilities)};
+// clang-format off
+test_t utils_tests[] = {
+    TEST_NO_TAG("split", split),
+    TEST_NO_TAG("trim", trim),
+    TEST_NO_TAG("Version comparisons", version_comparisons),
+    TEST_NO_TAG("Address comparisons", address_comparisons),
+    TEST_NO_TAG("Conference ID comparisons", conferenceId_comparisons),
+    TEST_NO_TAG("Parse capabilities", parse_capabilities)
+};
+// clang-format on
 
 test_suite_t utils_test_suite = {"Utils",
                                  NULL,

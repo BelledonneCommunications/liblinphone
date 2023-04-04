@@ -110,7 +110,7 @@ bool Address::operator!=(const Address &other) const {
 }
 
 bool Address::operator<(const Address &other) const {
-	return asString() < other.asString();
+	return toStringOrdered() < other.toStringOrdered();
 }
 
 // -----------------------------------------------------------------------------
@@ -318,6 +318,22 @@ string Address::toStringUriOnlyOrdered() const {
 		}
 	}
 	return res.str();
+}
+
+string Address::toStringOrdered() const {
+	auto res = toStringUriOnlyOrdered();
+	const auto uriParams = getUriParams();
+	for (const auto &param : uriParams) {
+		const auto &name = param.first;
+		res += ";";
+		res += name;
+		const auto &value = param.second;
+		if (!value.empty()) {
+			res += "=";
+			res += value;
+		}
+	}
+	return res;
 }
 
 char *Address::asStringUriOnlyCstr() const {

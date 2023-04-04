@@ -237,6 +237,16 @@ const char *sal_address_get_param(const SalAddress *addr, const char *name) {
 	return belle_sip_parameters_get_parameter(parameters, name);
 }
 
+void sal_address_get_params(const SalAddress *addr, std::map<std::string, std::string> &params) {
+	belle_sip_parameters_t *parameters = BELLE_SIP_PARAMETERS(addr);
+	const belle_sip_list_t *param_names = belle_sip_parameters_get_parameter_names(parameters);
+	for (belle_sip_list_t *it = (belle_sip_list_t *)param_names; it != NULL; it = it->next) {
+		const char *name = (const char *)it->data;
+		const char *value = belle_sip_parameters_get_parameter(parameters, name);
+		params[name] = value ? value : "";
+	}
+}
+
 void sal_address_set_params(SalAddress *addr, const char *params) {
 	belle_sip_parameters_t *parameters = BELLE_SIP_PARAMETERS(addr);
 	belle_sip_parameters_set(parameters, params);

@@ -910,6 +910,7 @@ void CallSessionPrivate::updateCurrentParams() const {
 void CallSessionPrivate::setDestAccount(const shared_ptr<Account> &destAccount) {
 	account = destAccount;
 	params->setAccount(account);
+	currentParams->setAccount(account);
 }
 
 // -----------------------------------------------------------------------------

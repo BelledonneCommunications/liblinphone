@@ -118,9 +118,7 @@ public:
 	const std::string getUtf8Description() const;
 
 	virtual void setUtf8Subject(const std::string &subject) override;
-	virtual void setSubject(const std::string &subject) override {
-		m_subject = subject;
-	};
+	virtual void setSubject(const std::string &subject) override;
 	const std::string getUtf8Subject() const;
 	const std::string &getSubject() const {
 		return m_subject;

@@ -190,6 +190,7 @@ bool_t sal_address_has_uri_param(const SalAddress *addr, const char *name);
 const char *sal_address_get_uri_param(const SalAddress *addr, const char *name);
 #ifdef __cplusplus
 void sal_address_get_uri_params(const SalAddress *addr, std::map<std::string, std::string> &params);
+void sal_address_get_params(const SalAddress *addr, std::map<std::string, std::string> &params);
 #endif // __cplusplus
 void sal_address_remove_uri_param(const SalAddress *addr, const char *name);
 bool_t sal_address_is_ipv6(const SalAddress *addr);

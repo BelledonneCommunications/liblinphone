@@ -57,7 +57,6 @@ private:
 	// ---------------------------------------------------------------------------
 
 	long long insertSipAddress(const std::shared_ptr<Address> &address);
-	long long insertSipAddress(const std::string &sipAddress);
 	void insertContent(long long chatMessageId, const Content &content);
 	long long insertContentType(const std::string &contentType);
 	long long insertOrUpdateImportedBasicChatRoom(long long peerSipAddressId,
@@ -83,6 +82,7 @@ private:
 	                                       const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 
 	long long selectSipAddressId(const std::string &sipAddress) const;
+	long long selectSipAddressId(const std::shared_ptr<Address> &address) const;
 	long long selectChatRoomId(long long peerSipAddressId, long long localSipAddressId) const;
 	long long selectChatRoomId(const ConferenceId &conferenceId) const;
 	ConferenceId selectConferenceId(const long long chatRoomId) const;

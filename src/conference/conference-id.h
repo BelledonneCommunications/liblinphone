@@ -76,8 +76,10 @@ namespace std {
 template <>
 struct hash<LinphonePrivate::ConferenceId> {
 	std::size_t operator()(const LinphonePrivate::ConferenceId &conferenceId) const {
-		const auto peerAddress = conferenceId.getPeerAddress() ? conferenceId.getPeerAddress()->asString() : "sip:";
-		const auto localAddress = conferenceId.getLocalAddress() ? conferenceId.getLocalAddress()->asString() : "sip:";
+		const auto peerAddress =
+		    conferenceId.getPeerAddress() ? conferenceId.getPeerAddress()->toStringOrdered() : "sip:";
+		const auto localAddress =
+		    conferenceId.getLocalAddress() ? conferenceId.getLocalAddress()->toStringOrdered() : "sip:";
 		return hash<string>()(peerAddress) ^ (hash<string>()(localAddress) << 1);
 	}
 };
