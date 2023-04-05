@@ -290,7 +290,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 			} else {
 				participant = Participant::create(conf,address);
 				conf->participants.push_back(participant);
+		#ifdef HAVE_DB_STORAGE
 				conf->updateParticipantsInConferenceInfo(address);
+		#endif // HAVE_DB_STORAGE
 				lInfo() << "Participant " << *participant << " is successfully added - conference " << conf->getConferenceAddress().asString() << " has " << conf->getParticipantCount() << " participants";
 
 				if (!isFullState || (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !conf->isMe(address))) {

@@ -140,8 +140,8 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
 LINPHONE_BEGIN_NAMESPACE
 
 void OfferAnswerEngine::verifyBundles(const std::shared_ptr<SalMediaDescription> & local, const std::shared_ptr<SalMediaDescription> & remote, std::shared_ptr<SalMediaDescription> & result){
-	// Reject streams belong to a bundle if the offerer tagged m section has been rejected (RFC8843 - Section 7.3.3)
-	// It is not possible to do it while doing the offer-answer because the offerer-tagged stream may not be the first of teh bundle presented in the SDP
+	// Reject streams belonging to a bundle if the offerer tagged m section has been rejected (RFC8843 - Section 7.3.3)
+	// It is not possible to do it while doing the offer-answer because the offerer-tagged stream may not be the first of the bundle presented in the SDP
 	// We also must ensure that the result media description is coherent with the local capabilities and the received offer
 	for(size_t i=0;i<result->streams.size();++i){
 		if (local->streams.size() > i) {
@@ -795,7 +795,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
 
 	/* Handle RTP bundle negociation */
-	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty() && remoteCfg.mid_rtp_ext_header_id != 0) {
+	if (!localCfg.mid.empty() && !remoteCfg.mid.empty() && !bundle_owner_mid.empty() && (localCfg.mid_rtp_ext_header_id != 0) && (remoteCfg.mid_rtp_ext_header_id != 0)) {
 		resultCfg.mid = remoteCfg.mid;
 		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
 
@@ -1078,7 +1078,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		if (!mid.empty()) {
 			if (!result->bundles.empty()){
 				bundle = result->bundles.front();
-				// Delete first element
+				// Delete first element in order to update the bundle
 				result->bundles.erase(result->bundles.begin());
 			}
 			bundle.addStream(cfg, mid);
