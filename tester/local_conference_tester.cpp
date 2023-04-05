@@ -4000,8 +4000,8 @@ static void one_to_one_group_chat_room_deletion_by_server_client_base(bool encry
 	{ // to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getIdentity().asAddress(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference marie("marie_rc", focus.getIdentity(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getIdentity(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -4023,9 +4023,8 @@ static void one_to_one_group_chat_room_deletion_by_server_client_base(bool encry
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 		}
 
-		Address paulineAddr(pauline.getIdentity().asAddress());
-		bctbx_list_t *participantsAddresses =
-		    bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
+		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
 
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues";

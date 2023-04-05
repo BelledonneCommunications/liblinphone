@@ -81,6 +81,16 @@ typedef struct _LinphoneStreamInternalStats {
 	unsigned int number_of_dtls_starts;
 } LinphoneStreamInternalStats;
 
+/**
+ * Chat room session state changed callback
+ * @param chat_room #LinphoneChatRoom that has been marked as read. @notnil
+ * @param state the new #LinphoneCallState of the call
+ * @param message a non NULL informational message about the state. @notnil
+ */
+typedef void (*LinphoneChatRoomCbsSessionStateChangedCb)(LinphoneChatRoom *chat_room,
+                                                         LinphoneCallState state,
+                                                         const char *message);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -178,7 +188,6 @@ LINPHONE_PUBLIC bool_t linphone_call_check_rtp_sessions(LinphoneCall *call);
 LINPHONE_PUBLIC void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, bool_t enable);
 LINPHONE_PUBLIC int _linphone_chat_room_get_transient_message_count(const LinphoneChatRoom *cr);
 LINPHONE_PUBLIC LinphoneChatMessage *_linphone_chat_room_get_first_transient_message(const LinphoneChatRoom *cr);
-
 LINPHONE_PUBLIC MSList *linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
 LINPHONE_PUBLIC MSList *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_friend_invalidate_subscription(LinphoneFriend *lf);
@@ -261,6 +270,22 @@ linphone_account_creator_cbs_get_get_confirmation_key(const LinphoneAccountCreat
  **/
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_confirmation_key(LinphoneAccountCreatorCbs *cbs,
                                                                        LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Set the #LinphoneChatRoomCbsSessionStateChangedCb callback.
+ * @param cbs A #LinphoneChatRoomCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_session_state_changed(LinphoneChatRoomCbs *cbs,
+                                                                      LinphoneChatRoomCbsSessionStateChangedCb cb);
+
+/**
+ * Get the #LinphoneChatRoomCbsSessionStateChangedCb callback.
+ * @param cbs A #LinphoneChatRoomCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsSessionStateChangedCb
+linphone_chat_room_cbs_get_session_state_changed(const LinphoneChatRoomCbs *cbs);
 
 /**
  * Set the force LIME X3DH decryption failure flag

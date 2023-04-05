@@ -348,7 +348,6 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 			}
 		}
 	}
-	lInfo() << __func__ << " DEBUG DEBUG ref " << ref;
 	if (getCChatRoom()) {
 		linphone_chat_room_notify_session_state_changed(getCChatRoom(), static_cast<LinphoneCallState>(newState),
 		                                                message.c_str());

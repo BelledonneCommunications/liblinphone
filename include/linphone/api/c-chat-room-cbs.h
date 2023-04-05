@@ -63,22 +63,6 @@ LINPHONE_PUBLIC void *linphone_chat_room_cbs_get_user_data(const LinphoneChatRoo
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_user_data(LinphoneChatRoomCbs *cbs, void *user_data);
 
 /**
- * Set the #LinphoneChatRoomCbsSessionStateChangedCb callback.
- * @param cbs A #LinphoneChatRoomCbs. @notnil
- * @param cb The callback.
- */
-LINPHONE_PUBLIC void linphone_chat_room_cbs_set_session_state_changed(LinphoneChatRoomCbs *cbs,
-                                                                      LinphoneChatRoomCbsSessionStateChangedCb cb);
-
-/**
- * Get the #LinphoneChatRoomCbsSessionStateChangedCb callback.
- * @param cbs A #LinphoneChatRoomCbs. @notnil
- * @return The callback.
- */
-LINPHONE_PUBLIC LinphoneChatRoomCbsSessionStateChangedCb
-linphone_chat_room_cbs_get_session_state_changed(const LinphoneChatRoomCbs *cbs);
-
-/**
  * Get the is-composing received callback.
  * @param cbs #LinphoneChatRoomCbs object. @notnil
  * @return The current is-composing received callback.
