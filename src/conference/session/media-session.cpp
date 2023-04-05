@@ -687,22 +687,18 @@ bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDes
 void MediaSessionPrivate::updating(bool isUpdate) {
 	L_Q();
 	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+	// Fix local parameter before creating new local media description in order to have it consistent with the offer.
+	// Note that in some case such as if we are the offerer or transition from the state UpdateByRemote to PausedByRemote, there may be further changes
+	// The goal of calling this method at such early stage is to given an initial set of consistent parameters that can be used as such to generate the local media description to give to the offer answer module and negotiate the final answer.
+	fixCallParams(rmd, true);
 	if (state != CallSession::State::Paused) {
 		/* Refresh the local description, but in paused state, we don't change anything. */
-		if (!rmd && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
-		                                    "sdp_200_ack_follow_video_policy", 0)) {
+		const bool makeOffer = (rmd == nullptr);
+		if (makeOffer && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "sdp_200_ack_follow_video_policy", 0)) {
 			lInfo() << "Applying default policy for offering SDP on CallSession [" << q << "]";
 			setParams(new MediaSessionParams());
 			// Yes we init parameters as if we were in the case of an outgoing call, because it is a resume with no SDP.
 			params->initDefault(q->getCore(), LinphoneCallOutgoing);
-		}
-
-		bool enableCapabilityNegotiations = false;
-		bool useNegotiatedMediaProtocol = true;
-		// Add capability negotiation attribute during update if they are supported
-		if (state == CallSession::State::StreamsRunning) {
-			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
-			useNegotiatedMediaProtocol = false;
 		}
 
 		// Reenable all streams if we are the offerer
@@ -714,7 +710,6 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		// Without the workaround, a deadlock is created - client1 has inactive streams and client2 has audio/video/text
 		// capabilities disabled in its local call parameters because the stream was rejected earlier on. Therefore it
 		// would be impossible to resume the streams if we are asked to make an offer.
-		const bool makeOffer = (rmd == nullptr);
 		if (makeOffer ||
 		    ((state == CallSession::State::PausedByRemote) && (prevState == CallSession::State::UpdatedByRemote))) {
 			for (const auto &stream : localDesc->streams) {
@@ -734,10 +729,16 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			}
 		}
 
+		bool enableCapabilityNegotiations = false;
+		bool useNegotiatedMediaProtocol = true;
+		// Add capability negotiation attribute during update if they are supported
+		if (state == CallSession::State::StreamsRunning) {
+			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
+			useNegotiatedMediaProtocol = false;
+		}
+
 		makeLocalMediaDescription(makeOffer, enableCapabilityNegotiations, useNegotiatedMediaProtocol);
 	}
-	// Fix local parameter after creating new local media description
-	fixCallParams(rmd, true);
 	if (rmd) {
 		SalErrorInfo sei;
 		memset(&sei, 0, sizeof(sei));
@@ -1997,8 +1998,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	md->times.push_back(std::make_pair<time_t, time_t>(getParams()->getPrivate()->getStartTime(),
 	                                                   getParams()->getPrivate()->getEndTime()));
 
-	md->accept_bundles = getParams()->rtpBundleEnabled() ||
-	                     linphone_config_get_bool(linphone_core_get_config(core), "rtp", "accept_bundle", TRUE);
+	md->accept_bundles = getParams()->rtpBundleEnabled();
 
 	if (getParams()->recordAwareEnabled() || linphone_core_is_record_aware_enabled(core)) {
 		md->record = getParams()->getRecordingState();

@@ -1093,7 +1093,9 @@ void LocalConferenceEventHandler::onParticipantAdded(const std::shared_ptr<Confe
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAllExcept(makeContent(createNotifyParticipantAdded(participant->getAddress())), participant);
+		#ifdef HAVE_DB_STORAGE
 		conf->updateParticipantsInConferenceInfo(participant->getAddress());
+		#endif // HAVE_DB_STORAGE
 
 		if (conf) {
 			shared_ptr<Core> core = conf->getCore();

@@ -144,8 +144,8 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc) {
 LINPHONE_BEGIN_NAMESPACE
 
 void OfferAnswerEngine::verifyBundles(const std::shared_ptr<SalMediaDescription> & local, const std::shared_ptr<SalMediaDescription> & remote, std::shared_ptr<SalMediaDescription> & result){
-	// Reject streams belong to a bundle if the offerer tagged m section has been rejected (RFC8843 - Section 7.3.3)
-	// It is not possible to do it while doing the offer-answer because the offerer-tagged stream may not be the first of teh bundle presented in the SDP
+	// Reject streams belonging to a bundle if the offerer tagged m section has been rejected (RFC8843 - Section 7.3.3)
+	// It is not possible to do it while doing the offer-answer because the offerer-tagged stream may not be the first of the bundle presented in the SDP
 	// We also must ensure that the result media description is coherent with the local capabilities and the received offer
 	for(size_t i=0;i<result->streams.size();++i){
 		if (local->streams.size() > i) {
@@ -844,11 +844,11 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 	}
 	/* Handle RTP bundle negociation */
 	bool bundle_enabled = false;
-	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty() && remoteCfg.mid_rtp_ext_header_id != 0) {
+	if (!localCfg.mid.empty() && !remoteCfg.mid.empty() && !bundle_owner_mid.empty() && (localCfg.mid_rtp_ext_header_id != 0) && (remoteCfg.mid_rtp_ext_header_id != 0)) {
 		resultCfg.mid = remoteCfg.mid;
 		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
 
-		if (remoteCfg.mid.compare(bundle_owner_mid) != 0) {
+		if (remoteCfg.mid.compare(bundle_owner_mid) != 0){
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
 			resultCfg.bundle_only = true;
@@ -856,6 +856,8 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 		bundle_enabled = true;
 		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
 	}
+
+
 	const auto &availableEncs = local_cap.getSupportedEncryptions();
 	resultCfg.payloads = OfferAnswerEngine::matchPayloads(factory, localCfg.payloads, remoteCfg.payloads, false,
 	                                                      one_matching_codec, bundle_enabled);
@@ -915,6 +917,7 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 	resultCfg.frame_marking_extension_id = (localCfg.frame_marking_extension_id == 0)
 	                                           ? remoteCfg.frame_marking_extension_id
 	                                           : localCfg.frame_marking_extension_id;
+
 	resultCfg.conference_ssrc = localCfg.conference_ssrc;
 
 	if (resultCfg.hasSrtp() == true) {
@@ -1190,7 +1193,7 @@ OfferAnswerEngine::initiateIncoming(MSFactory *factory,
 		if (!mid.empty()) {
 			if (!result->bundles.empty()) {
 				bundle = result->bundles.front();
-				// Delete first element
+				// Delete first element in order to update the bundle
 				result->bundles.erase(result->bundles.begin());
 			}
 			bundle.addStream(cfg, mid);
