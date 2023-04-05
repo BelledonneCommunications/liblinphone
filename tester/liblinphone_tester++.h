@@ -38,13 +38,13 @@ public:
 
 	// Accessors
 
-	LinphoneCore &getCCore() {
+	LinphoneCore &getCCore() const {
 		return *mMgr->lc;
 	}
-	LinphonePrivate::Core &getCore() {
+	LinphonePrivate::Core &getCore() const {
 		return *L_GET_CPP_PTR_FROM_C_OBJECT(mMgr->lc);
 	}
-	stats &getStats() {
+	stats &getStats() const {
 		return mMgr->stat;
 	}
 

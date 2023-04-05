@@ -55,7 +55,6 @@ private:
 	// ---------------------------------------------------------------------------
 	// Low level API.
 	// ---------------------------------------------------------------------------
-
 	long long insertSipAddress(const std::shared_ptr<Address> &address);
 	void insertContent(long long chatMessageId, const Content &content);
 	long long insertContentType(const std::string &contentType);
@@ -64,6 +63,7 @@ private:
 	                                              const tm &creationTime);
 	long long insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
 	long long insertChatRoomParticipant(long long chatRoomId, long long participantSipAddressId, bool isAdmin);
+	void insertChatRoomParticipantDevice(long long participantId, const std::shared_ptr<ParticipantDevice> &device);
 	void insertChatRoomParticipantDevice(long long participantId,
 	                                     long long participantDeviceSipAddressId,
 	                                     const std::string &deviceName);

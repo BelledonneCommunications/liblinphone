@@ -456,15 +456,14 @@ long long MainDbPrivate::insertChatRoom(const shared_ptr<AbstractChatRoom> &chat
 			shared_ptr<Participant> me = chatRoom->getMe();
 			long long meId = insertChatRoomParticipant(chatRoomId, insertSipAddress(me->getAddress()), me->isAdmin());
 			for (const auto &device : me->getDevices())
-				insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress()), device->getName());
+				insertChatRoomParticipantDevice(meId, device);
 		}
 
 		for (const auto &participant : chatRoom->getParticipants()) {
 			long long participantId = insertChatRoomParticipant(chatRoomId, insertSipAddress(participant->getAddress()),
 			                                                    participant->isAdmin());
 			for (const auto &device : participant->getDevices())
-				insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress()),
-				                                device->getName());
+				insertChatRoomParticipantDevice(participantId, device);
 		}
 
 		return chatRoomId;
@@ -516,6 +515,32 @@ void MainDbPrivate::insertChatRoomParticipantDevice(long long participantId,
 		            "participant_device_sip_address_id, name)"
 		            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName)",
 		    soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName);
+	}
+#endif
+}
+
+void MainDbPrivate::insertChatRoomParticipantDevice(long long participantId,
+                                                    const shared_ptr<ParticipantDevice> &device) {
+#ifdef HAVE_DB_STORAGE
+	L_Q();
+	if (q->isInitialized()) {
+		soci::session *session = dbSession.getBackendSession();
+		const long long &participantDeviceSipAddressId = insertSipAddress(device->getAddress());
+
+		long long count;
+		*session << "SELECT COUNT(*) FROM chat_room_participant_device"
+		            " WHERE chat_room_participant_id = :participantId"
+		            " AND participant_device_sip_address_id = :participantDeviceSipAddressId",
+		    soci::into(count), soci::use(participantId), soci::use(participantDeviceSipAddressId);
+		if (count) return;
+
+		unsigned int state = static_cast<unsigned int>(device->getState());
+		const std::string deviceName = device->getName();
+		*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, "
+		            "participant_device_sip_address_id, name, state)"
+		            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName, "
+		            ":participantDeviceState)",
+		    soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName), soci::use(state);
 	}
 #endif
 }
@@ -4746,14 +4771,13 @@ void MainDb::migrateBasicToClientGroupChatRoom(const shared_ptr<AbstractChatRoom
 		shared_ptr<Participant> me = clientGroupChatRoom->getMe();
 		long long meId = d->insertChatRoomParticipant(dbChatRoomId, d->insertSipAddress(me->getAddress()), true);
 		for (const auto &device : me->getDevices())
-			d->insertChatRoomParticipantDevice(meId, d->insertSipAddress(device->getAddress()), device->getName());
+			d->insertChatRoomParticipantDevice(meId, device);
 
 		for (const auto &participant : clientGroupChatRoom->getParticipants()) {
 			long long participantId =
 			    d->insertChatRoomParticipant(dbChatRoomId, d->insertSipAddress(participant->getAddress()), true);
 			for (const auto &device : participant->getDevices())
-				d->insertChatRoomParticipantDevice(participantId, d->insertSipAddress(device->getAddress()),
-				                                   device->getName());
+				d->insertChatRoomParticipantDevice(participantId, device);
 		}
 
 		tr.commit();
@@ -4889,13 +4913,13 @@ void MainDb::updateChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 			const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress());
 			const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
-			const long long &participantSipDeviceAddressId = d->selectSipAddressId(device->getAddress());
+			const long long &participantDeviceSipAddressId = d->selectSipAddressId(device->getAddress());
 			unsigned int state = static_cast<unsigned int>(device->getState());
 			*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name"
 			                                     " WHERE chat_room_participant_id = :participantId AND "
-			                                     "participant_device_sip_address_id = :participantSipDeviceAddressId",
+			                                     "participant_device_sip_address_id = :participantDeviceSipAddressId",
 			    soci::use(state), soci::use(device->getName()), soci::use(participantId),
-			    soci::use(participantSipDeviceAddressId);
+			    soci::use(participantDeviceSipAddressId);
 
 			tr.commit();
 		};

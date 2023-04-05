@@ -469,8 +469,10 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
 	static_pointer_cast<RemoteConference>(getConference())->confParams->enableChat(true);
 
 	getMe()->setAdmin(me->isAdmin());
-	for (const auto &device : me->getDevices())
-		getMe()->addDevice(device->getAddress(), device->getName());
+	for (const auto &device : me->getDevices()) {
+		shared_ptr<ParticipantDevice> d = getMe()->addDevice(device->getAddress(), device->getName());
+		d->setState(device->getState(), false);
+	}
 
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",
 	                                                 "conference_event_package_force_full_state", FALSE);
@@ -1116,6 +1118,7 @@ void ClientGroupChatRoom::onParticipantDeviceStateChanged(
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
+	getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(getSharedFromThis(), device);
 	_linphone_chat_room_notify_participant_device_state_changed(cr, L_GET_C_BACK_PTR(event),
 	                                                            (LinphoneParticipantDeviceState)device->getState());
 }
