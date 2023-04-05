@@ -383,6 +383,9 @@ LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDe
 
 LINPHONE_PUBLIC bool_t linphone_tunnel_is_tunnel_rtp_transport(const LinphoneTunnel *tunnel, const RtpTransport *tp);
 
+LINPHONE_PUBLIC void linphone_config_simulate_crash_during_sync(LinphoneConfig *lpconfig, bool_t value);
+LINPHONE_PUBLIC void linphone_config_simulate_read_failure(bool_t value);
+
 #ifdef __cplusplus
 }
 #endif

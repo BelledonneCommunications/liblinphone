@@ -78,6 +78,7 @@ set(SOUND_FILES
 	sounds/sintel_trailer_opus_h264.mkv
 	sounds/sintel_trailer_opus_vp8.mkv
 	sounds/sintel_trailer_pcmu_h264.mkv
+	sounds/recording.mkv
 	sounds/vrroom.wav
 )
 

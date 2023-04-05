@@ -104,10 +104,13 @@ struct _LpConfig {
 	char *tmpfilename;
 	char *factory_filename;
 	bctbx_list_t *sections;
+	bctbx_vfs_t *g_bctbx_vfs;
 	bool_t modified;
 	bool_t readonly;
-	bctbx_vfs_t *g_bctbx_vfs;
+	bool_t abort_sync;
 };
+
+static bool_t simulate_read_failure;
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneConfig);
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneConfig);
@@ -400,15 +403,18 @@ static LpSection *linphone_config_parse_line(LpConfig *lpconfig, char *line, LpS
 	return cur;
 }
 
-void linphone_config_parse(LpConfig *lpconfig, bctbx_vfs_file_t *pFile) {
+int linphone_config_parse(LpConfig *lpconfig, bctbx_vfs_file_t *pFile) {
 	char tmp[MAX_LEN] = {'\0'};
 	LpSection *current_section = NULL;
 	int size = 0;
-	if (pFile == NULL) return;
+	int total_size = 0;
+	if (pFile == NULL) return -1;
 	while ((size = bctbx_file_get_nxtline(pFile, tmp, MAX_LEN)) > 0) {
 		// tmp[size] = '\0';
 		current_section = linphone_config_parse_line(lpconfig, tmp, current_section);
+		total_size += size;
 	}
+	return total_size;
 }
 
 LpConfig *linphone_config_new(const char *filename) {
@@ -440,13 +446,14 @@ LpConfig *linphone_config_new_from_buffer(const char *buffer) {
 	return conf;
 }
 
-static int _linphone_config_init_from_files(LinphoneConfig *lpconfig,
-                                            const char *config_filename,
-                                            BCTBX_UNUSED(const char *factory_config_filename)) {
+static int _linphone_config_init_from_files(LinphoneConfig *lpconfig, const char *config_filename) {
+	bool_t file_exists = FALSE;
+	bool_t tmp_file_exists = FALSE;
 	lpconfig->g_bctbx_vfs = bctbx_vfs_get_default();
 
 	if (config_filename != NULL && config_filename[0] != '\0') {
 		if (bctbx_file_exist(config_filename) == 0) {
+			file_exists = TRUE;
 			lpconfig->filename = lp_realpath(config_filename, NULL);
 			if (lpconfig->filename == NULL) {
 				ms_error("Could not find the real path of %s: %s", config_filename, strerror(errno));
@@ -457,6 +464,12 @@ static int _linphone_config_init_from_files(LinphoneConfig *lpconfig,
 		}
 		lpconfig->tmpfilename = ortp_strdup_printf("%s.tmp", lpconfig->filename);
 		ms_message("Using (r/w) config information from %s", lpconfig->filename);
+		tmp_file_exists = (bctbx_file_exist(lpconfig->tmpfilename) == 0);
+
+		if (file_exists && tmp_file_exists) {
+			ms_warning("Found temporary file %s: a crash probably occured during the last write of the config file.",
+			           lpconfig->tmpfilename);
+		}
 
 #if !defined(_WIN32)
 		{
@@ -473,21 +486,31 @@ static int _linphone_config_init_from_files(LinphoneConfig *lpconfig,
 #endif /*_WIN32*/
 
 		/*open with r+ to check if we can write on it later*/
-		lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->filename, "r+");
-#ifdef RENAME_REQUIRES_NONEXISTENT_NEW_PATH
-		if (lpconfig->pFile == NULL) {
-			lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->tmpfilename, "r+");
-			if (lpconfig->pFile != NULL) {
-				ms_warning("Could not open %s but %s works, app may have crashed during last sync.", lpconfig->filename,
-				           lpconfig->tmpfilename);
+		if (!simulate_read_failure) {
+			if (file_exists) lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->filename, "r+");
+			if (lpconfig->pFile == NULL && tmp_file_exists) {
+				lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->tmpfilename, "r");
+				if (lpconfig->pFile != NULL) {
+					ms_warning("Could not open %s but %s works, app may have crashed during last sync.",
+					           lpconfig->filename, lpconfig->tmpfilename);
+				}
 			}
+		} else {
+			ms_warning("Simulating a read failure.");
 		}
-#endif
 		if (lpconfig->pFile != NULL) {
-			linphone_config_parse(lpconfig, lpconfig->pFile);
+			int parsed_size = linphone_config_parse(lpconfig, lpconfig->pFile);
 			bctbx_file_close(lpconfig->pFile);
 			lpconfig->pFile = NULL;
 			lpconfig->modified = FALSE;
+			if (parsed_size <= 0) {
+				ms_error("No parsed content from configuration file, parsed_size=[%i]", parsed_size);
+			}
+		} else if (file_exists || tmp_file_exists) {
+			ms_error("File [%s] exists but cannot be opened ! ", lpconfig->filename);
+			/* This is a major failure: throw an error as it is dangerous to go further.
+			 * We take the risk that later linphone_config_sync() writes an empty file. */
+			goto fail;
 		}
 	}
 	_linphone_config_apply_factory_config(lpconfig);
@@ -501,10 +524,10 @@ LpConfig *linphone_config_new_with_factory(const char *config_filename, const ch
 	LpConfig *lpconfig = belle_sip_object_new(LinphoneConfig);
 	if (factory_config_filename && strcmp(factory_config_filename, "") != 0)
 		lpconfig->factory_filename = bctbx_strdup(factory_config_filename);
-	if (_linphone_config_init_from_files(lpconfig, config_filename, factory_config_filename) == 0) {
+	if (_linphone_config_init_from_files(lpconfig, config_filename) == 0) {
 		return lpconfig;
 	} else {
-		ms_free(lpconfig);
+		belle_sip_object_unref(lpconfig);
 		return NULL;
 	}
 }
@@ -984,6 +1007,14 @@ void lp_section_write(LpSection *sec, LpConfig *lpconfig) {
 	if (bctbx_file_fprintf(lpconfig->pFile, 0, "\n") < 0) ms_error("lp_section_write : write error");
 }
 
+void linphone_config_simulate_read_failure(bool_t value) {
+	simulate_read_failure = value;
+}
+
+void linphone_config_simulate_crash_during_sync(LinphoneConfig *lpconfig, bool_t value) {
+	lpconfig->abort_sync = value;
+}
+
 LinphoneStatus linphone_config_sync(LpConfig *lpconfig) {
 	bctbx_vfs_file_t *pFile = NULL;
 	if (lpconfig->filename == NULL) return -1;
@@ -1001,8 +1032,16 @@ LinphoneStatus linphone_config_sync(LpConfig *lpconfig) {
 		return -1;
 	}
 
+	if (lpconfig->abort_sync) {
+		ms_warning("linphone_config_sync(): simulating crash during file writing, leaving an empty file.");
+		bctbx_file_close(pFile);
+		return -1;
+	}
+
 	bctbx_list_for_each2(lpconfig->sections, (void (*)(void *, void *))lp_section_write, (void *)lpconfig);
+	bctbx_file_sync(pFile);
 	bctbx_file_close(pFile);
+	lpconfig->pFile = NULL;
 
 #ifdef RENAME_REQUIRES_NONEXISTENT_NEW_PATH
 	/* On windows, rename() does not accept that the newpath is an existing file, while it is accepted on Unix.

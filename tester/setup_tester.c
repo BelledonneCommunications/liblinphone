@@ -451,6 +451,75 @@ static void linphone_interpret_url_test(void) {
 	linphone_core_unref(lc);
 }
 
+static void linphone_config_safety_test(void) {
+	char *res = bc_tester_res("rcfiles/marie_rc");
+	char *file = bc_tester_file("rw_marie_rc");
+	char *tmpfile = bctbx_strdup_printf("%s.tmp", file);
+
+	BC_ASSERT_EQUAL(liblinphone_tester_copy_file(res, file), 0, int, "%d");
+
+	LinphoneConfig *cfg = linphone_config_new(file);
+	BC_ASSERT_PTR_NOT_NULL(cfg);
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "proxy_0", "realm", NULL), "sip.example.org");
+	/* add new key */
+	linphone_config_set_string(cfg, "misc", "somekey", "somevalue");
+	linphone_config_sync(cfg);
+	linphone_config_destroy(cfg);
+
+	/* reload and check everything was written */
+	cfg = linphone_config_new(file);
+	BC_ASSERT_PTR_NOT_NULL(cfg);
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "proxy_0", "realm", NULL), "sip.example.org");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "misc", "somekey", NULL), "somevalue");
+	/* now modify something and simulate a crash during write */
+	ms_message("Simulating a crash during writing.");
+	linphone_config_set_string(cfg, "misc", "somekey", "someothervalue");
+	linphone_config_simulate_crash_during_sync(cfg, TRUE);
+	linphone_config_sync(cfg);
+	linphone_config_destroy(cfg);
+
+	/* we should have a .tmp file but the normal file shall be there, untouched. */
+	BC_ASSERT_TRUE(bctbx_file_exist(tmpfile) == 0);
+	BC_ASSERT_TRUE(bctbx_file_exist(file) == 0);
+	cfg = linphone_config_new(file);
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "proxy_0", "realm", NULL), "sip.example.org");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "misc", "somekey", NULL), "somevalue");
+	linphone_config_set_string(cfg, "misc", "somekey", "someothervalue");
+	linphone_config_sync(cfg);
+	/* the tmp file should have gone */
+	BC_ASSERT_TRUE(bctbx_file_exist(tmpfile) == -1);
+	linphone_config_destroy(cfg);
+
+	ms_message("Simulating a crash just before renaming.");
+	/* simulate a crash after writing the tmp file, but before renaming to real file:
+	 in that case we have only the .tmp suffixed file. */
+	BC_ASSERT_TRUE(rename(file, tmpfile) == 0);
+	BC_ASSERT_TRUE(bctbx_file_exist(tmpfile) == 0);
+	BC_ASSERT_TRUE(bctbx_file_exist(file) == -1);
+	cfg = linphone_config_new(file);
+	/* the .tmp file should have been loaded */
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "proxy_0", "realm", NULL), "sip.example.org");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "misc", "somekey", NULL), "someothervalue");
+	linphone_config_set_string(cfg, "misc", "somekey", "somevalue");
+	linphone_config_sync(cfg);
+	/* the tmp file should have gone */
+	BC_ASSERT_TRUE(bctbx_file_exist(tmpfile) == -1);
+	linphone_config_destroy(cfg);
+
+	cfg = linphone_config_new(file);
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "proxy_0", "realm", NULL), "sip.example.org");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(cfg, "misc", "somekey", NULL), "somevalue");
+	linphone_config_destroy(cfg);
+
+	linphone_config_simulate_read_failure(TRUE);
+	cfg = linphone_config_new(file);
+	BC_ASSERT_PTR_NULL(cfg); /* this should fail */
+	linphone_config_simulate_read_failure(FALSE);
+	unlink(file);
+	bc_free(res);
+	bc_free(file);
+}
+
 static void linphone_lpconfig_from_buffer(void) {
 	const char *buffer = "[buffer]\ntest=ok";
 	const char *buffer_linebreaks = "[buffer_linebreaks]\n\n\n\r\n\n\r\ntest=ok";
@@ -3309,6 +3378,7 @@ test_t setup_tests[] = {
     TEST_NO_TAG("Linphone core set user agent", core_set_user_agent),
     TEST_NO_TAG("Linphone random transport port", core_sip_transport_test),
     TEST_NO_TAG("Linphone interpret url", linphone_interpret_url_test),
+    TEST_NO_TAG("LPConfig safety test", linphone_config_safety_test),
     TEST_NO_TAG("LPConfig from buffer", linphone_lpconfig_from_buffer),
     TEST_NO_TAG("LPConfig zero_len value from buffer", linphone_lpconfig_from_buffer_zerolen_value),
     TEST_NO_TAG("LPConfig zero_len value from file", linphone_lpconfig_from_file_zerolen_value),
