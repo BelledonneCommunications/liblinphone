@@ -1115,6 +1115,7 @@ void ClientGroupChatRoom::onParticipantDeviceStateChanged (const std::shared_ptr
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
+	getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(getSharedFromThis(), device);
 	_linphone_chat_room_notify_participant_device_state_changed(cr, L_GET_C_BACK_PTR(event), (LinphoneParticipantDeviceState)device->getState());
 }
 

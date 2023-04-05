@@ -1656,11 +1656,11 @@ static void group_chat_room_bulk_notify_to_participant (void) {
 	}
 }
 
-static void group_chat_room_with_client_restart (void) {
+static void group_chat_room_with_client_restart_base (bool encrypted) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
-		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress());
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(michelle);
@@ -1675,9 +1675,16 @@ static void group_chat_room_with_client_restart (void) {
 		stats initialMarieStats = marie.getStats();
 		stats initialMichelleStats = michelle.getStats();
 
+		if (encrypted) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_X3dhUserCreationSuccess, initialMichelleStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle.getLc()));
+		}
+
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues (characters: $ £ çà)";
-		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, 1, FALSE,LinphoneChatRoomEphemeralModeDeviceManaged);
+		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, 1, encrypted,LinphoneChatRoomEphemeralModeDeviceManaged);
 		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 		// Check that the chat room is correctly created on Michelle's side and that the participants are added
@@ -1708,8 +1715,12 @@ static void group_chat_room_with_client_restart (void) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelleCr), 1, int, "%d");
 
-		ClientConference michelle2("michelle_rc", focus.getIdentity().asAddress());
+		ClientConference michelle2("michelle_rc", focus.getIdentity().asAddress(), encrypted);
 		stats initialMichelle2Stats = michelle2.getStats();
+		if (encrypted) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_X3dhUserCreationSuccess, initialMichelle2Stats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
+		}
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		focus.registerAsParticipantDevice(michelle2);
 		// Notify chat room that a participant has registered
@@ -1760,6 +1771,23 @@ static void group_chat_room_with_client_restart (void) {
 		if (michelle2Cr) {
 			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelle2Cr), 1, int, "%d");
 			BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(michelle2Cr), newSubject);
+			bctbx_list_t *participants = linphone_chat_room_get_participants(michelle2Cr);
+			participants = bctbx_list_append(participants, linphone_participant_ref(linphone_chat_room_get_me(michelle2Cr)));
+			for (bctbx_list_t *itp = participants; itp; itp = bctbx_list_next(itp)) {
+				LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(itp);
+				bctbx_list_t *devices = linphone_participant_get_devices (p);
+				for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
+					LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+
+					BC_ASSERT_EQUAL((int)linphone_participant_device_get_state(d), (int)LinphoneParticipantDeviceStatePresent, int, "%0d");
+				}
+				if (devices) {
+					bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+				}
+			}
+			if (participants) {
+				bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
+			}
 		}
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 1, int, "%d");
@@ -1768,13 +1796,38 @@ static void group_chat_room_with_client_restart (void) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelleCr), 1, int, "%d");
 		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(michelleCr), newSubject);
 
-		LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(michelleCr, "message blabla");
+		LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(michelle2Cr, "back with you");
 		linphone_chat_message_send(msg);
 		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,michelle,michelle2}).wait([msg] {
 			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
 		}));
 		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,michelle,michelle2}).wait([marieCr] {
 			return linphone_chat_room_get_unread_messages_count(marieCr) == 1;
+		}));
+		linphone_chat_message_unref(msg);
+		msg = NULL;
+
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "welcome back");
+		linphone_chat_message_send(msg);
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,michelle,michelle2}).wait([msg] {
+			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+		}));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,michelle,michelle2}).wait([michelleCr] {
+			return linphone_chat_room_get_unread_messages_count(michelleCr) == 1;
+		}));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,michelle,michelle2}).wait([michelle2Cr] {
+			return linphone_chat_room_get_unread_messages_count(michelle2Cr) == 1;
+		}));
+		linphone_chat_message_unref(msg);
+		msg = NULL;
+
+		msg = linphone_chat_room_create_message_from_utf8(michelleCr, "message blabla");
+		linphone_chat_message_send(msg);
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,michelle,michelle2}).wait([msg] {
+			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+		}));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,michelle,michelle2}).wait([marieCr] {
+			return linphone_chat_room_get_unread_messages_count(marieCr) == 2;
 		}));
 		linphone_chat_message_unref(msg);
 
@@ -1811,6 +1864,14 @@ static void group_chat_room_with_client_restart (void) {
 		linphone_address_unref(michelleDeviceAddr);
 		bctbx_list_free(coresList);
 	}
+}
+
+static void group_chat_room_with_client_restart (void) {
+	group_chat_room_with_client_restart_base(false);
+}
+
+static void secure_group_chat_room_with_client_restart (void) {
+	group_chat_room_with_client_restart_base(true);
 }
 
 static void group_chat_room_with_client_removed_added(void) {
@@ -2049,8 +2110,7 @@ static void group_chat_room_with_client_removed_added(void) {
 	}
 }
 
-static void chat_room_participant_added_sip_error(LinphoneChatRoom *cr,
-                                                  BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
+static void chat_room_participant_added_sip_error (LinphoneChatRoom *cr, BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	if (bctbx_list_size(linphone_chat_room_get_participants(cr)) == 2) {
 		LinphoneCoreManager *initiator = (LinphoneCoreManager*)linphone_chat_room_get_user_data(cr);
 		ms_message("Turning off network for core %s", linphone_core_get_identity(initiator->lc));
@@ -12895,6 +12955,7 @@ static test_t local_conference_ephemeral_chat_tests[] = {
 };
 
 static test_t local_conference_secure_chat_tests[] = {
+	TEST_ONE_TAG("Secure Group chat with client restart", LinphoneTest::secure_group_chat_room_with_client_restart,"LeaksMemory"), /* beacause of coreMgr restart*/
 	TEST_ONE_TAG("Secure group chat with INVITE session error", LinphoneTest::secure_group_chat_room_with_invite_error,"LeaksMemory"), /* because of network up and down */
 	TEST_ONE_TAG("Secure group chat with SUBSCRIBE session error", LinphoneTest::secure_group_chat_room_with_subscribe_error,"LeaksMemory"), /* because of network up and down */
 	TEST_ONE_TAG("Secure group chat with chat room deleted before server restart", LinphoneTest::secure_group_chat_room_with_chat_room_deleted_before_server_restart,"LeaksMemory"), /* because of network up and down */

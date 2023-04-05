@@ -68,6 +68,7 @@ private:
 	);
 	long long insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
 	long long insertChatRoomParticipant (long long chatRoomId, long long participantSipAddressId, bool isAdmin);
+	void insertChatRoomParticipantDevice (long long participantId, const std::shared_ptr<ParticipantDevice> &device);
 	void insertChatRoomParticipantDevice (long long participantId, long long participantDeviceSipAddressId, const std::string &deviceName);
 	void insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime);
 	long long insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo, const std::shared_ptr<ConferenceInfo> &oldConferenceInfo);
