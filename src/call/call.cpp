@@ -233,6 +233,7 @@ shared_ptr<Call> Call::startReferredCall(const MediaSessionParams *params) {
 		msp.initDefault(getCore(), LinphoneCallOutgoing);
 		msp.enableAudio(getCurrentParams()->audioEnabled());
 		msp.enableVideo(getCurrentParams()->videoEnabled());
+		msp.setAccount(getCurrentParams()->getAccount());
 	}
 
 	if (getState() != CallSession::State::Paused) {

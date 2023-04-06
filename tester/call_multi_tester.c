@@ -248,10 +248,11 @@ static void incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_
 	incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallOutgoingEarlyMedia);
 }
 
-static void simple_call_transfer(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+static void _simple_call_transfer(bool_t transferee_is_default_account) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dual_proxy_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new(get_laure_rc());
+
 	LinphoneCall *pauline_called_by_marie;
 	LinphoneCall *marie_calling_pauline;
 	LinphoneCall *marie_calling_laure;
@@ -261,6 +262,9 @@ static void simple_call_transfer(void) {
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 
+	char *marie_identity = linphone_address_as_string(marie->identity);
+
+	// Marie calls Pauline
 	BC_ASSERT_TRUE(call(marie, pauline));
 	marie_calling_pauline = linphone_core_get_current_call(marie->lc);
 	pauline_called_by_marie = linphone_core_get_current_call(pauline->lc);
@@ -271,6 +275,17 @@ static void simple_call_transfer(void) {
 	reset_counters(&pauline->stat);
 	reset_counters(&laure->stat);
 
+	if (!transferee_is_default_account) {
+		// Set Marie's second account (marie2) as default
+		const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
+		BC_ASSERT_EQUAL(bctbx_list_size(accounts), 2, size_t, "%zu");
+		bctbx_list_t *it = (bctbx_list_t *)accounts;
+		it = bctbx_list_next(it);
+		LinphoneAccount *secondAccount = (LinphoneAccount *)it->data;
+		linphone_core_set_default_account(marie->lc, secondAccount);
+	}
+
+	// Pauline transfers call from Marie to Laure
 	linphone_call_transfer(pauline_called_by_marie, laure_identity);
 	bctbx_free(laure_identity);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallRefered, 1, 2000));
@@ -287,8 +302,11 @@ static void simple_call_transfer(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneTransferCallOutgoingProgress, 1, 2000));
-	if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc))) goto end;
-	linphone_call_accept(linphone_core_get_current_call(laure->lc));
+
+	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(laure_call)) goto end;
+	linphone_call_accept(laure_call);
+
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallConnected, 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1, 2000));
@@ -300,6 +318,8 @@ static void simple_call_transfer(void) {
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneTransferCallConnected, 1, 2000));
 
+	BC_ASSERT_STRING_EQUAL(linphone_call_get_remote_address_as_string(laure_call), marie_identity);
+
 	// terminate marie to pauline call
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 1, 2000));
@@ -308,10 +328,19 @@ static void simple_call_transfer(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, 1, 2000));
 
 end:
+	bctbx_free(marie_identity);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
 	bctbx_list_free(lcs);
+}
+
+static void simple_call_transfer(void) {
+	_simple_call_transfer(TRUE);
+}
+
+static void simple_call_transfer_from_non_default_account(void) {
+	_simple_call_transfer(FALSE);
 }
 
 static void unattended_call_transfer(void) {
@@ -1373,6 +1402,7 @@ test_t multi_call_tests[] = {
     // negotiations ending while accepting call back to back",
     // call_with_ice_negotiations_ending_while_accepting_call_back_to_back, "ICE"),
     TEST_NO_TAG("Simple call transfer", simple_call_transfer),
+    TEST_NO_TAG("Simple call transfer from non default account", simple_call_transfer_from_non_default_account),
     TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
     TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
     TEST_NO_TAG("Call transfer existing outgoing call", call_transfer_existing_call_outgoing_call),
