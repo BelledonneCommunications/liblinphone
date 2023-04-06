@@ -1737,7 +1737,7 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 				break;
 			case LinphoneCallPaused:
 				// Conference resumes call that previously paused in order to add the participant
-				call->resume();
+				getCore()->doLater([call] { call->resume(); });
 				break;
 			case LinphoneCallStreamsRunning:
 			case LinphoneCallResuming: {
@@ -1746,10 +1746,12 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 					enter();
 				}
 				if (contactAddress && contactAddress->isValid() && !contactAddress->hasParam("isfocus")) {
-					const MediaSessionParams *params = session->getMediaParams();
-					MediaSessionParams *currentParams = params->clone();
-					call->update(currentParams);
-					delete currentParams;
+					getCore()->doLater([call, session] {
+						const MediaSessionParams *params = session->getMediaParams();
+						MediaSessionParams *currentParams = params->clone();
+						call->update(currentParams);
+						delete currentParams;
+					});
 				}
 			} break;
 			default:
