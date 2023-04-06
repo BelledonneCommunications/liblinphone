@@ -41,6 +41,32 @@ void lime_delete_DRSessions(const char *limedb) {
 	}
 #endif
 }
+
+void lime_setback_usersUpdateTs(const char *limedb, int days) {
+#ifdef HAVE_SOCI
+	try {
+		soci::session sql("sqlite3", limedb); // open the DB
+		// Set back in time the users updateTs by the given number of days
+		sql << "UPDATE Lime_LocalUsers SET updateTs = date (updateTs, '-" << days << " day');";
+	} catch (std::exception &e) { // swallow any error on DB
+		lWarning() << "Cannot setback in time the lime users update ts on base " << limedb << ". Error is " << e.what();
+	}
+#endif
+}
+uint64_t lime_get_userUpdateTs(const char *limedb) {
+	uint64_t ret = 0;
+#ifdef HAVE_SOCI
+	try {
+		soci::session sql("sqlite3", limedb); // open the DB
+		// get the users updateTs in unixepoch form - we may have more than one, just return the first one
+		sql << "SELECT strftime('%s', updateTs) as t FROM Lime_LocalUsers LIMIT 1;", soci::into(ret);
+	} catch (std::exception &e) { // swallow any error on DB
+		lWarning() << "Cannot fetch the lime users update ts on base " << limedb << ". Error is " << e.what();
+	}
+#endif
+	return ret;
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER

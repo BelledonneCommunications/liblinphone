@@ -134,7 +134,6 @@ public:
 	AbstractChatRoom::SecurityLevel getSecurityLevel(const std::list<std::string> &deviceIds) const override;
 	EncryptionEngine::EngineType getEngineType() override;
 	std::list<EncryptionParameter> getEncryptionParameters() override;
-	void update() override;
 	void cleanDb() override;
 
 	// CoreListener overrides
@@ -152,8 +151,8 @@ public:
 	void setTestForceDecryptionFailureFlag(bool flag) override;
 
 private:
+	void update(const std::string localDeviceId);
 	std::shared_ptr<LimeManager> limeManager;
-	std::time_t lastLimeUpdate;
 	std::string _dbAccess;
 	lime::CurveId curve;
 	bool forceFailure = false;

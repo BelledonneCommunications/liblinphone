@@ -977,6 +977,8 @@ void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs);
 void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 
 void lime_delete_DRSessions(const char *limedb);
+void lime_setback_usersUpdateTs(const char *limedb, int days);
+uint64_t lime_get_userUpdateTs(const char *limedb);
 
 void liblinphone_tester_simulate_mire_defunct(
     MSFilter *filter,

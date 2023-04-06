@@ -156,8 +156,11 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
 	_dbAccess = dbAccess;
 	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(
 	    BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
-	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccessWithParam, prov, core));
-	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
+	try {
+		limeManager = std::make_unique<LimeManager>(dbAccessWithParam, prov, core);
+	} catch (const BctbxException &e) {
+		lInfo() << "[LIME] exception at Encryption engine instanciation" << e.what();
+	}
 }
 
 LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine() {
@@ -507,12 +510,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	return ChatMessageModifier::Result::Done;
 }
 
-void LimeX3dhEncryptionEngine::update() {
+void LimeX3dhEncryptionEngine::update(const std::string localDeviceId) {
 	lime::limeCallback callback = setLimeCallback("Keys update");
-
-	LinphoneConfig *lpconfig = linphone_core_get_config(getCore()->getCCore());
-	limeManager->update(callback);
-	linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
+	limeManager->update(localDeviceId, callback);
 }
 
 bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer(const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -920,11 +920,11 @@ void LimeX3dhEncryptionEngine::staleSession(const std::string localDeviceId, con
 }
 
 lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback(string operation) {
-	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, BCTBX_UNUSED(string anythingToSay)) {
+	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
 		if (returnCode == lime::CallbackReturn::success) {
-			lInfo() << "[LIME] operation successful: " << operation;
+			lInfo() << "[LIME] operation successful: " << operation << " : " << anythingToSay;
 		} else {
-			lInfo() << "[LIME] operation failed: " << operation;
+			lInfo() << "[LIME] operation failed: " << operation << " : " << anythingToSay;
 		}
 	});
 	return callback;
@@ -974,30 +974,20 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged(LinphoneProxyConfig *c
 	string localDeviceId = identityAddress->asStringUriOnly();
 
 	LinphoneCore *lc = linphone_proxy_config_get_core(cfg);
-	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
-	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
+	lInfo() << "[LIME] Load lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl
+	        << "]";
 
 	try {
 		if (!limeManager->is_user(localDeviceId)) {
+			lInfo() << "[LIME] Try to create lime user for device " << localDeviceId << " with server URL ["
+			        << accountLimeServerUrl << "]";
 			lime::limeCallback callback = setLimeUserCreationCallback(lc, localDeviceId);
 			// create user if not exist
-			lInfo() << "[LIME] Trying to create user for device [" << localDeviceId << "] with server URL ["
-			        << accountLimeServerUrl << "]";
 			limeManager->create_user(localDeviceId, accountLimeServerUrl, curve, callback);
-			lastLimeUpdate = ms_time(NULL);
 		} else {
 			limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
-			// update keys if necessary
-			int limeUpdateThreshold =
-			    linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
-			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
-				lInfo() << "[LIME] Trying to update keys for device [" << localDeviceId << "] with server URL ["
-				        << accountLimeServerUrl << "]";
-				update();
-				lastLimeUpdate = ms_time(NULL);
-			}
+			update(localDeviceId);
 		}
-		linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
 		lError() << "[LIME] user for id [" << localDeviceId << "] cannot be created" << e.what();
 	}
@@ -1024,8 +1014,6 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(const std::shared_ptr<Account>
 	string localDeviceId = contactAddress->asStringUriOnly();
 
 	LinphoneCore *lc = account->getCore();
-	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
-	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
 	lInfo() << "[LIME] Trying to update lime user for device " << localDeviceId << " with server URL ["
 	        << accountLimeServerUrl << "]";
@@ -1042,19 +1030,11 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(const std::shared_ptr<Account>
 				lime::limeCallback callback = setLimeUserCreationCallback(lc, localDeviceId);
 				// create user if not exist
 				limeManager->create_user(localDeviceId, accountLimeServerUrl, curve, callback);
-				lastLimeUpdate = ms_time(NULL);
 			} else {
 				limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
-				// update keys if necessary
-				int limeUpdateThreshold =
-				    linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
-				if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
-					update();
-					lastLimeUpdate = ms_time(NULL);
-				}
+				update(localDeviceId);
 			}
 		}
-		linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
 		lError() << "[LIME] user for id [" << localDeviceId << "] cannot be created" << e.what();
 	}
