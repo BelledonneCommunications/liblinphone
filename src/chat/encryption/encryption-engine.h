@@ -117,8 +117,6 @@ class EncryptionEngine : public CoreAccessor {
 
 	virtual void cleanDb() {
 	}
-	virtual void update() {
-	}
 	virtual EngineType getEngineType() {
 		return EngineType::Undefined;
 	}
