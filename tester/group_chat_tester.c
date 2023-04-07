@@ -354,11 +354,11 @@ void configure_core_for_conference(LinphoneCore *core,
 	}
 }
 
-void _configure_core_for_conference(LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr) {
+void _configure_core_for_conference(LinphoneCoreManager *lcm, const LinphoneAddress *factoryAddr) {
 	configure_core_for_conference(lcm->lc, NULL, factoryAddr, FALSE);
 }
 
-void _configure_core_for_audio_video_conference(LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr) {
+void _configure_core_for_audio_video_conference(LinphoneCoreManager *lcm, const LinphoneAddress *factoryAddr) {
 	if (factoryAddr) {
 		LinphoneAccount *account = linphone_core_get_default_account(lcm->lc);
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
@@ -7930,7 +7930,7 @@ static void participant_removed_then_added(void) {
 	    check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(laureCr)) goto end;
 
-	// Pauline restart to make use of liste subscription :::this part (core restart) is leaking  memory
+	// Pauline restart to make use of list subscription ::this part (core restart) is leaking  memory
 	coresList = bctbx_list_remove(coresList, pauline1->lc);
 	linphone_core_manager_reinit(pauline1);
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline1);

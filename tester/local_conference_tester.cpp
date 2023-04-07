@@ -114,8 +114,8 @@ public:
 		start(check_for_proxies);
 	}
 
-	void configureCoreForConference(const std::shared_ptr<Address> &factoryUri) {
-		_configure_core_for_conference(mMgr.get(), factoryUri->toC());
+	void configureCoreForConference(const Address &factoryUri) {
+		_configure_core_for_conference(mMgr.get(), factoryUri.toC());
 	}
 	void setupMgrForConference(const char *conferenceVersion = nullptr) {
 		setup_mgr_for_conference(mMgr.get(), conferenceVersion);
@@ -157,11 +157,11 @@ class Focus;
 /*Core manager acting as a client*/
 class ClientConference : public ConfCoreManager {
 public:
-	ClientConference(std::string rc, std::shared_ptr<Address> factoryUri, bool encrypted = false)
+	ClientConference(std::string rc, Address factoryUri, bool encrypted = false)
 	    : ConfCoreManager(rc,
 	                      [this, factoryUri, encrypted] {
 		                      configureCoreForConference(factoryUri);
-		                      _configure_core_for_audio_video_conference(mMgr.get(), factoryUri->toC());
+		                      _configure_core_for_audio_video_conference(mMgr.get(), factoryUri.toC());
 		                      setupMgrForConference();
 		                      LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		                      linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
@@ -337,7 +337,7 @@ private:
 		//		linphone_core_cbs_set_refer_received(cbs, linphone_conference_server_refer_received);
 		auto config = getDefaultProxyConfig();
 		linphone_proxy_config_edit(config);
-		linphone_proxy_config_set_conference_factory_uri(config, getIdentity()->toString().c_str());
+		linphone_proxy_config_set_conference_factory_uri(config, getIdentity().toString().c_str());
 		linphone_proxy_config_done(config);
 	}
 
@@ -468,10 +468,10 @@ static void group_chat_room_creation_server(void) {
 		coresList = bctbx_list_append(coresList, pauline.getLc());
 		coresList = bctbx_list_append(coresList, laure.getLc());
 
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		std::shared_ptr<Address> laureAddr = laure.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laureAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		Address laureAddr = laure.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laureAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -509,7 +509,7 @@ static void group_chat_room_creation_server(void) {
 		linphone_core_set_network_reachable(laure.getLc(), FALSE);
 		BC_ASSERT_FALSE(linphone_core_is_network_reachable(laure.getLc()));
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(std::chrono::seconds(1), [] { return false; });
-		LinphoneParticipant *laureParticipant = linphone_chat_room_find_participant(marieCr, laureAddr->toC());
+		LinphoneParticipant *laureParticipant = linphone_chat_room_find_participant(marieCr, laureAddr.toC());
 		BC_ASSERT_PTR_NOT_NULL(laureParticipant);
 		linphone_chat_room_remove_participant(marieCr, laureParticipant);
 
@@ -570,8 +570,8 @@ static void group_chat_room_server_deletion(void) {
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -643,8 +643,8 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler(void) {
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -753,8 +753,8 @@ static void group_chat_room_server_admin_managed_messages_base(bool_t encrypted)
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats chloe_stat = focus.getStats();
 		stats marie_stat = marie.getStats();
@@ -853,8 +853,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats chloe_stat = focus.getStats();
 		stats marie_stat = marie.getStats();
@@ -1010,8 +1010,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats chloe_stat = focus.getStats();
 		stats marie_stat = marie.getStats();
@@ -1219,8 +1219,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats marie_stat = marie.getStats();
 		stats pauline_stat = pauline.getStats();
@@ -1342,8 +1342,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats chloe_stat = focus.getStats();
 		stats marie_stat = marie.getStats();
@@ -1529,10 +1529,10 @@ static void group_chat_room_bulk_notify_to_participant(void) {
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
 		coresList = bctbx_list_append(coresList, michelle.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
-		std::shared_ptr<Address> michelleAddr = michelle.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		Address michelleAddr = michelle.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -1598,8 +1598,8 @@ static void group_chat_room_bulk_notify_to_participant(void) {
 		initialMichelleStats = michelle.getStats();
 		stats initialLaureStats = laure.getStats();
 
-		std::shared_ptr<Address> laureAddr = laure.getIdentity();
-		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(laureAddr->toC()));
+		Address laureAddr = laure.getIdentity();
+		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(laureAddr.toC()));
 		linphone_chat_room_add_participants(marieCr, participantsAddresses);
 
 		LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure.getCMgr(), &initialLaureStats,
@@ -1790,8 +1790,8 @@ static void group_chat_room_with_client_restart(void) {
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, michelle.getLc());
 		bctbx_list_t *participantsAddresses = NULL;
-		std::shared_ptr<Address> michelleAddr = michelle.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr->toC()));
+		Address michelleAddr = michelle.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialMichelleStats = michelle.getStats();
@@ -1948,6 +1948,246 @@ static void group_chat_room_with_client_restart(void) {
 	}
 }
 
+static void group_chat_room_with_client_removed_added(void) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getIdentity());
+		ClientConference michelle("michelle_rc", focus.getIdentity());
+		ClientConference pauline("pauline_rc", focus.getIdentity());
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(michelle);
+		focus.registerAsParticipantDevice(pauline);
+
+		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, michelle.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+		bctbx_list_t *participantsAddresses = NULL;
+		Address michelleAddr = michelle.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
+		Address paulineAddr = pauline.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(paulineAddr.toC()));
+
+		stats initialMarieStats = marie.getStats();
+		stats initialMichelleStats = michelle.getStats();
+		stats initialPaulineStats = pauline.getStats();
+
+		// Marie creates a new group chat room
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
+		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(
+		    coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, 2, FALSE,
+		    LinphoneChatRoomEphemeralModeDeviceManaged);
+		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+		// Check that the chat room is correctly created on Michelle's side and that the participants are added
+		LinphoneChatRoom *michelleCr = check_creation_chat_room_client_side(
+		    coresList, michelle.getCMgr(), &initialMichelleStats, confAddr, initialSubject, 2, FALSE);
+
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(
+		    coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle}).wait([&focus] {
+			for (auto chatRoom : focus.getCore().getChatRooms()) {
+				for (auto participant : chatRoom->getParticipants()) {
+					for (auto device : participant->getDevices())
+						if (device->getState() != ParticipantDevice::State::Present) {
+							return false;
+						}
+				}
+			}
+			return true;
+		}));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneConferenceStateCreated,
+		                             initialMichelleStats.number_of_LinphoneConferenceStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		// Marie now changes the subject
+		const char *newSubject = "Let's go drink a beer";
+		linphone_chat_room_set_subject(marieCr, newSubject);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_subject_changed,
+		                             initialMarieStats.number_of_subject_changed + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_subject_changed,
+		                             initialMichelleStats.number_of_subject_changed + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed,
+		                             initialPaulineStats.number_of_subject_changed + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), newSubject);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(michelleCr), newSubject);
+
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelleCr), 2, int, "%d");
+
+		initialMarieStats = marie.getStats();
+		initialMichelleStats = michelle.getStats();
+		initialPaulineStats = pauline.getStats();
+
+		ClientConference michelle2("michelle_rc", focus.getIdentity());
+		stats initialMichelle2Stats = michelle2.getStats();
+		coresList = bctbx_list_append(coresList, michelle2.getLc());
+		focus.registerAsParticipantDevice(michelle2);
+		// Notify chat room that a participant has registered
+
+		bctbx_list_t *devices = NULL;
+		const LinphoneAddress *deviceAddr = linphone_proxy_config_get_contact(michelle.getDefaultProxyConfig());
+		LinphoneParticipantDeviceIdentity *identity =
+		    linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
+		linphone_participant_device_identity_set_capability_descriptor(
+		    identity, linphone_core_get_linphone_specs(michelle.getLc()));
+		devices = bctbx_list_append(devices, identity);
+
+		deviceAddr = linphone_proxy_config_get_contact(michelle2.getDefaultProxyConfig());
+		identity = linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
+		linphone_participant_device_identity_set_capability_descriptor(
+		    identity, linphone_core_get_linphone_specs(michelle2.getLc()));
+		devices = bctbx_list_append(devices, identity);
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), michelle.getCMgr()->identity,
+			                                           devices);
+		}
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func)belle_sip_object_unref);
+
+		LinphoneChatRoom *michelle2Cr = check_creation_chat_room_client_side(
+		    coresList, michelle2.getCMgr(), &initialMichelle2Stats, confAddr, newSubject, 2, FALSE);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated,
+		                             initialMichelle2Stats.number_of_LinphoneConferenceStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(L_GET_C_BACK_PTR(chatRoom)), 3, int, "%d");
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_added,
+		                             initialMarieStats.number_of_participant_devices_added + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
+		                             initialPaulineStats.number_of_participant_devices_added + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_added,
+		                             initialMichelleStats.number_of_participant_devices_added + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		LinphoneAddress *michelle2Contact =
+		    linphone_address_clone(linphone_proxy_config_get_contact(michelle2.getDefaultProxyConfig()));
+		ms_message("%s is restarting its core", linphone_address_as_string(michelle2Contact));
+		linphone_address_unref(michelle2Contact);
+		coresList = bctbx_list_remove(coresList, michelle2.getLc());
+		// Restart flexisip
+		michelle2.reStart();
+		michelle2.setupMgrForConference();
+		coresList = bctbx_list_append(coresList, michelle2.getLc());
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated, 1,
+		                             liblinphone_tester_sip_timeout));
+		LinphoneAddress *michelleDeviceAddr =
+		    linphone_address_clone(linphone_proxy_config_get_contact(michelle2.getDefaultProxyConfig()));
+		michelle2Cr = michelle2.searchChatRoom(michelleDeviceAddr, confAddr);
+		BC_ASSERT_PTR_NOT_NULL(michelle2Cr);
+
+		if (michelle2Cr) {
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelle2Cr), 2, int, "%d");
+			BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(michelle2Cr), newSubject);
+		}
+
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), newSubject);
+
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelleCr), 2, int, "%d");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(michelleCr), newSubject);
+
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject);
+
+		linphone_core_delete_chat_room(michelle2.getLc(), michelle2Cr);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateDeleted,
+		                             initialMichelle2Stats.number_of_LinphoneConferenceStateDeleted + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participants_removed,
+		                             initialMarieStats.number_of_participant_devices_removed + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed,
+		                             initialPaulineStats.number_of_participant_devices_removed + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		initialMarieStats = marie.getStats();
+		initialMichelleStats = michelle.getStats();
+		initialPaulineStats = pauline.getStats();
+
+		ms_message("%s - DEBUG DEBUG add ", __func__);
+		Address michelle2Addr = michelle2.getIdentity();
+		linphone_chat_room_add_participant(marieCr, linphone_address_ref(michelle2Addr.toC()));
+
+		michelle2Cr = check_creation_chat_room_client_side(coresList, michelle2.getCMgr(), &initialMichelle2Stats,
+		                                                   confAddr, newSubject, 2, FALSE);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated,
+		                             initialMichelle2Stats.number_of_LinphoneConferenceStateCreated + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_added,
+		                             initialMarieStats.number_of_participant_devices_added + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
+		                             initialPaulineStats.number_of_participant_devices_added + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "message blabla");
+		linphone_chat_message_send(msg);
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).wait([msg] {
+			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+		}));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).wait([michelleCr] {
+			return linphone_chat_room_get_unread_messages_count(michelleCr) == 1;
+		}));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).wait([michelle2Cr] {
+			return linphone_chat_room_get_unread_messages_count(michelle2Cr) == 1;
+		}));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).wait([paulineCr] {
+			return linphone_chat_room_get_unread_messages_count(paulineCr) == 1;
+		}));
+		linphone_chat_message_unref(msg);
+
+		CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).waitUntil(std::chrono::seconds(3), [] {
+			return false;
+		});
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			for (auto participant : chatRoom->getParticipants()) {
+				//  force deletion by removing devices
+				std::shared_ptr<Address> participantAddress = participant->getAddress();
+				ms_message("%s - DEBUG DEBUG participant %s", __func__,
+				           linphone_address_as_string(participantAddress->toC()));
+				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+			}
+		}
+
+		ms_message("%s - DEBUG DEBUG end ", __func__);
+		// wait until chatroom is deleted server side
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).wait([&focus] {
+			return focus.getCore().getChatRooms().size() == 0;
+		}));
+
+		// wait bit more to detect side effect if any
+		CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).waitUntil(chrono::seconds(2), [] {
+			return false;
+		});
+
+		// to avoid creation attempt of a new chatroom
+		auto config = focus.getDefaultProxyConfig();
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
+
+		linphone_address_unref(michelleDeviceAddr);
+		bctbx_list_free(coresList);
+	}
+}
+
 static void chat_room_participant_added_sip_error(LinphoneChatRoom *cr,
                                                   BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
 	if (bctbx_list_size(linphone_chat_room_get_participants(cr)) == 2) {
@@ -2070,14 +2310,14 @@ static void group_chat_room_with_sip_errors_base(bool invite_error, bool subscri
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(berthe.getLc()));
 
 		bctbx_list_t *participantsAddresses = NULL;
-		std::shared_ptr<Address> michelleAddr = michelle.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr->toC()));
-		std::shared_ptr<Address> michelle2Addr = michelle2.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelle2Addr->toC()));
-		std::shared_ptr<Address> bertheAddr = berthe.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(bertheAddr->toC()));
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(paulineAddr->toC()));
+		Address michelleAddr = michelle.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
+		Address michelle2Addr = michelle2.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelle2Addr.toC()));
+		Address bertheAddr = berthe.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(bertheAddr.toC()));
+		Address paulineAddr = pauline.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(paulineAddr.toC()));
 
 		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
@@ -2190,8 +2430,8 @@ static void group_chat_room_with_sip_errors_base(bool invite_error, bool subscri
 		}
 
 		focus.registerAsParticipantDevice(laure);
-		std::shared_ptr<Address> laureAddr = laure.getIdentity();
-		linphone_chat_room_add_participant(marieCr, linphone_address_ref(laureAddr->toC()));
+		Address laureAddr = laure.getIdentity();
+		linphone_chat_room_add_participant(marieCr, linphone_address_ref(laureAddr.toC()));
 		LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(
 		    coresList, laure.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 4, FALSE);
 
@@ -2645,10 +2885,10 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(michelle2.getLc()));
 
 		bctbx_list_t *participantsAddresses = NULL;
-		std::shared_ptr<Address> michelleAddr = michelle.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr->toC()));
-		std::shared_ptr<Address> michelle2Addr = michelle2.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelle2Addr->toC()));
+		Address michelleAddr = michelle.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
+		Address michelle2Addr = michelle2.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelle2Addr.toC()));
 
 		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 
@@ -2923,12 +3163,12 @@ static void group_chat_room_add_participant_with_invalid_address(void) {
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
 		coresList = bctbx_list_append(coresList, michelle.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
-		std::shared_ptr<Address> invalidAddr = Address::create();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(invalidAddr->toC()));
-		std::shared_ptr<Address> michelleAddr = michelle.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		Address invalidAddr = Address();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(invalidAddr.toC()));
+		Address michelleAddr = michelle.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -2989,7 +3229,7 @@ static void group_chat_room_add_participant_with_invalid_address(void) {
 		initialPaulineStats = pauline.getStats();
 		initialMichelleStats = michelle.getStats();
 
-		linphone_chat_room_add_participant(marieCr, linphone_address_ref(invalidAddr->toC()));
+		linphone_chat_room_add_participant(marieCr, linphone_address_ref(invalidAddr.toC()));
 
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participants_added,
 		                              initialMarieStats.number_of_participants_added + 1, 5000));
@@ -3040,7 +3280,7 @@ static void group_chat_room_add_participant_with_invalid_address(void) {
 		linphone_proxy_config_set_conference_factory_uri(config, NULL);
 		linphone_proxy_config_done(config);
 
-		linphone_address_unref(invalidAddr->toC());
+		linphone_address_unref(invalidAddr.toC());
 		bctbx_list_free(coresList);
 	}
 }
@@ -3054,8 +3294,8 @@ static void group_chat_room_with_only_participant_with_invalid_address(void) {
 
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
-		std::shared_ptr<Address> invalidAddr = Address::create();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(invalidAddr->toC()));
+		Address invalidAddr = Address();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(invalidAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 
@@ -3103,8 +3343,8 @@ static void one_to_one_chatroom_exhumed_while_offline(void) {
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -3170,7 +3410,7 @@ static void one_to_one_chatroom_exhumed_while_offline(void) {
 		initialPaulineStats = pauline.getStats();
 
 		paulineAddr = pauline.getIdentity();
-		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses,
 		                                       initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
@@ -3314,10 +3554,10 @@ static void multidomain_group_chat_room(void) {
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
 		coresList = bctbx_list_append(coresList, michelle.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
-		std::shared_ptr<Address> michelleAddr = michelle.getIdentity();
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		Address michelleAddr = michelle.getIdentity();
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
 
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
@@ -3372,7 +3612,7 @@ static void multidomain_group_chat_room(void) {
 		focusAuth1DotExampleDotOrg.registerAsParticipantDevice(michelle);
 
 		// change conference factory uri
-		std::shared_ptr<Address> focusAuth1DotExampleDotOrgFactoryAddress = focusAuth1DotExampleDotOrg.getIdentity();
+		Address focusAuth1DotExampleDotOrgFactoryAddress = focusAuth1DotExampleDotOrg.getIdentity();
 		marie.configureCoreForConference(focusAuth1DotExampleDotOrgFactoryAddress);
 		pauline.configureCoreForConference(focusAuth1DotExampleDotOrgFactoryAddress);
 		michelle.configureCoreForConference(focusAuth1DotExampleDotOrgFactoryAddress);
@@ -3381,8 +3621,8 @@ static void multidomain_group_chat_room(void) {
 		initialMarieStats = marie.getStats();
 		initialPaulineStats = pauline.getStats();
 		initialMichelleStats = michelle.getStats();
-		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr->toC()));
+		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(michelleAddr.toC()));
 
 		LinphoneChatRoom *marieCrfocusAuth1DotExampleDotOrg =
 		    create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses,
@@ -3442,7 +3682,7 @@ static void multidomain_group_chat_room(void) {
 
 		ClientConference laure("laure_tcp_rc", focusExampleDotOrg.getIdentity());
 		coresList = bctbx_list_append(coresList, laure.getLc());
-		std::shared_ptr<Address> laureAddr = laure.getIdentity();
+		Address laureAddr = laure.getIdentity();
 		focusExampleDotOrg.registerAsParticipantDevice(laure);
 
 		initialMarieStats = marie.getStats();
@@ -3450,7 +3690,7 @@ static void multidomain_group_chat_room(void) {
 		initialMichelleStats = michelle.getStats();
 		stats initialLaureStats = laure.getStats();
 
-		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(laureAddr->toC()));
+		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(laureAddr.toC()));
 		linphone_chat_room_add_participants(marieCr, participantsAddresses);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateCreationPending,
@@ -3490,7 +3730,7 @@ static void multidomain_group_chat_room(void) {
 		focusAuth1DotExampleDotOrg.registerAsParticipantDevice(laure);
 		laure.configureCoreForConference(focusAuth1DotExampleDotOrgFactoryAddress);
 
-		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(laureAddr->toC()));
+		participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(laureAddr.toC()));
 		linphone_chat_room_add_participants(marieCrfocusAuth1DotExampleDotOrg, participantsAddresses);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateCreationPending,
 		                             initialLaureStats.number_of_LinphoneConferenceStateCreationPending + 2,
@@ -3544,8 +3784,8 @@ static void group_chat_room_server_ephemeral_mode_changed(void) {
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		stats chloe_stat = focus.getStats();
 		stats marie_stat = marie.getStats();
@@ -3749,10 +3989,10 @@ static void group_chat_room_lime_server_message(bool encrypted) {
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));
 		}
 
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		std::shared_ptr<Address> laureAddr = laure.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laureAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		Address laureAddr = laure.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laureAddr.toC()));
 
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues";
@@ -3866,10 +4106,10 @@ static void group_chat_room_lime_session_corrupted(void) {
 		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));
 
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		std::shared_ptr<Address> laureAddr = laure.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laureAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		Address laureAddr = laure.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laureAddr.toC()));
 
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues";
@@ -4023,8 +4263,8 @@ static void one_to_one_group_chat_room_deletion_by_server_client_base(bool encry
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 		}
 
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr->toC()));
+		Address paulineAddr = pauline.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues";
@@ -4967,7 +5207,7 @@ static void call_to_inexisting_conference_address(void) {
 
 		focus.registerAsParticipantDevice(marie);
 
-		LinphoneAddress *confAddr = linphone_address_new(L_STRING_TO_C(focus.getIdentity()->toString()));
+		LinphoneAddress *confAddr = linphone_address_new(L_STRING_TO_C(focus.getIdentity().toString()));
 		linphone_address_set_uri_param(confAddr, "conf-id", "xxxxx");
 
 		stats marie_stat = marie.getStats();
@@ -5638,8 +5878,8 @@ static void create_conference_base(time_t start_time,
 			BC_ASSERT_PTR_NOT_NULL(pauline_call);
 			const LinphoneCallParams *call_cparams = linphone_call_get_current_params(pauline_call);
 
-			std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-			LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr->toC());
+			Address paulineAddr = pauline.getIdentity();
+			LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr.toC());
 			BC_ASSERT_PTR_NOT_NULL(focus_call);
 
 			LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
@@ -8118,8 +8358,8 @@ static void create_conference_dial_out_base(bool_t send_ics,
 				LinphoneCall *pauline_call = linphone_core_get_call_by_remote_address2(pauline.getLc(), confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pauline_call);
 
-				std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-				LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr->toC());
+				Address paulineAddr = pauline.getIdentity();
+				LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr.toC());
 				BC_ASSERT_PTR_NOT_NULL(focus_call);
 
 				LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
@@ -8816,8 +9056,8 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base(Linp
 		LinphoneCall *pauline_call = linphone_core_get_call_by_remote_address2(pauline.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(pauline_call);
 
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr->toC());
+		Address paulineAddr = pauline.getIdentity();
+		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr.toC());
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
 
 		LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
@@ -9555,8 +9795,8 @@ create_conference_with_late_participant_addition_base(time_t start_time,
 		LinphoneCall *pauline_call = linphone_core_get_call_by_remote_address2(pauline.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(pauline_call);
 
-		std::shared_ptr<Address> paulineAddr = pauline.getIdentity();
-		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr->toC());
+		Address paulineAddr = pauline.getIdentity();
+		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr.toC());
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
 
 		LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
@@ -13460,8 +13700,8 @@ static void create_simple_conference_with_update_deferred(void) {
 			const LinphoneCallParams *call_cparams = linphone_call_get_current_params(pauline_call);
 			BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_cparams));
 		}
-		std::shared_ptr<Address> paulineIdentity = pauline.getIdentity();
-		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineIdentity->toC());
+		Address paulineIdentity = pauline.getIdentity();
+		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineIdentity.toC());
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
 		if (focus_call) {
 			const LinphoneCallParams *call_lparams = linphone_call_get_params(focus_call);
@@ -15251,6 +15491,9 @@ static test_t local_conference_chat_tests[] = {
                  LinphoneTest::group_chat_room_creation_server,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
     TEST_NO_TAG("Group chat Server chat room deletion", LinphoneTest::group_chat_room_server_deletion),
+    TEST_ONE_TAG("Group chat with client removed added",
+                 LinphoneTest::group_chat_room_with_client_removed_added,
+                 "LeaksMemory"), /* beacause of coreMgr restart*/
     TEST_ONE_TAG("Group chat with client restart",
                  LinphoneTest::group_chat_room_with_client_restart,
                  "LeaksMemory"), /* beacause of coreMgr restart*/

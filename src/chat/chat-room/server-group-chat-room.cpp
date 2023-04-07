@@ -307,14 +307,17 @@ void ServerGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 		CallSessionParams params;
 		// params.addCustomContactParameter("isfocus");
 		newDeviceSession = participant->createSession(*q->getConference().get(), &params, false, this);
-		newDeviceSession->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address::create(op->getTo()));
+		newDeviceSession->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(),
+		                            Address::create(op->getTo()));
 		newDeviceSession->startIncomingNotification(false);
 		std::shared_ptr<Address> addr = q->getConferenceAddress()->clone()->toSharedPtr();
 		addr->setParam("isfocus");
 		// to force is focus to be added
 		newDeviceSession->getPrivate()->getOp()->setContactAddress(addr->getImpl());
-		// Reject a session if there is already an active outgoing session
-		rejectSession = deviceSession && (deviceSession->getDirection() == LinphoneCallOutgoing);
+		// Reject a session if there is already an active outgoing session and the participant device is trying to leave
+		// the conference
+		rejectSession = deviceSession && (deviceSession->getDirection() == LinphoneCallOutgoing) &&
+		                ParticipantDevice::isLeavingState(device->getState());
 
 		if (!rejectSession) {
 			device->setSession(newDeviceSession);
@@ -544,6 +547,12 @@ void ServerGroupChatRoomPrivate::unSubscribeRegistrationForParticipant(const std
 		return;
 	}
 	registrationSubscriptions.erase(p);
+
+	auto c = std::find_if(q->cachedParticipants.begin(), q->cachedParticipants.end(),
+	                      [&identAddress](const auto &p) { return (identAddress->weakEqual(*p->getAddress())); });
+	if (c != q->cachedParticipants.end()) {
+		q->cachedParticipants.erase(c);
+	}
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	LinphoneAddress *laddr = identAddress->toC();

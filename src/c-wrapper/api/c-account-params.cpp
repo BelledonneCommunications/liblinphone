@@ -318,7 +318,7 @@ const char *linphone_account_params_get_conference_factory_uri(const LinphoneAcc
 }
 
 void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
-                                                                        LinphoneAddress *address) {
+                                                                        const LinphoneAddress *address) {
 	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(Address::toCpp(address)->getSharedFromThis());
 }
 

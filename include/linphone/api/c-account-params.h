@@ -601,7 +601,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_conference_factory_uri(Linphone
  * @param uri The uri of the audio video conference factory. @maybenil
  */
 LINPHONE_PUBLIC void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
-                                                                                        LinphoneAddress *address);
+                                                                                        const LinphoneAddress *address);
 
 /**
  * If enabled, the proxy will be used as the only route.

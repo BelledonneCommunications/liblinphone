@@ -846,8 +846,8 @@ void configure_core_for_conference(LinphoneCore *core,
                                    const char *username,
                                    const LinphoneAddress *factoryAddr,
                                    bool_t server);
-void _configure_core_for_conference(LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
-void _configure_core_for_audio_video_conference(LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
+void _configure_core_for_conference(LinphoneCoreManager *lcm, const LinphoneAddress *factoryAddr);
+void _configure_core_for_audio_video_conference(LinphoneCoreManager *lcm, const LinphoneAddress *factoryAddr);
 void _start_core(LinphoneCoreManager *lcm);
 extern const char *sFactoryUri;
 

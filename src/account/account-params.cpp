@@ -516,7 +516,7 @@ void AccountParams::setPushNotificationConfig(PushNotificationConfig *pushNotifi
 }
 
 void AccountParams::setAudioVideoConferenceFactoryAddress(
-    const std::shared_ptr<Address> audioVideoConferenceFactoryAddress) {
+    const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress) {
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
 		mAudioVideoConferenceFactoryAddress = nullptr;
 	}

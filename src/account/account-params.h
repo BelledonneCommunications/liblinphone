@@ -78,7 +78,7 @@ public:
 	LinphoneStatus setIdentityAddress(const std::shared_ptr<Address> identityAddress);
 	LinphoneStatus setRoutes(const std::list<std::shared_ptr<Address>> &routes);
 	LinphoneStatus setRoutesFromStringList(const bctbx_list_t *routes);
-	void setAudioVideoConferenceFactoryAddress(const std::shared_ptr<Address> audioVideoConferenceFactoryAddress);
+	void setAudioVideoConferenceFactoryAddress(const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress);
 	void enableRtpBundle(bool value);
 	void enableRtpBundleAssumption(bool value);
 	void setCustomContact(const std::shared_ptr<Address> contact);
