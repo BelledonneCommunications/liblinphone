@@ -301,8 +301,10 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		addr.setParam("isfocus");
 		//to force is focus to be added
 		newDeviceSession->getPrivate()->getOp()->setContactAddress(addr.getInternalAddress());
-		// Reject a session if there is already an active outgoing session
-		rejectSession = deviceSession && (deviceSession->getDirection() == LinphoneCallOutgoing);
+		// Reject a session if there is already an active outgoing session and the participant device is trying to leave
+		// the conference
+		rejectSession = deviceSession && (deviceSession->getDirection() == LinphoneCallOutgoing) &&
+		                ParticipantDevice::isLeavingState(device->getState());
 
 		if (!rejectSession) {
 			device->setSession(newDeviceSession);
@@ -521,6 +523,12 @@ void ServerGroupChatRoomPrivate::unSubscribeRegistrationForParticipant(const Ide
 		return;
 	}
 	registrationSubscriptions.erase(p);
+
+	auto c = std::find_if(q->cachedParticipants.begin(), q->cachedParticipants.end(),
+	                      [&identAddress](const auto &p) { return (identAddress.asAddress().weakEqual(p->getAddress().asAddress())); });
+	if (c != q->cachedParticipants.end()) {
+		q->cachedParticipants.erase(c);
+	}
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	LinphoneAddress *laddr = linphone_address_new(identAddress.asString().c_str());
