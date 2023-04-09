@@ -281,7 +281,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				// Replaces SIPFRAG since version 4.4.0
 				CpimChatMessageModifier ccmm;
 				Content *cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
-				contents.push_back(move(cpimContent));
+				contents.push_back(std::move(cpimContent));
 
 				// ---------------------------------------------- SIPFRAG
 
@@ -289,7 +289,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				Content *sipfrag = new Content();
 				sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
 				sipfrag->setContentType(ContentType::SipFrag);
-				contents.push_back(move(sipfrag));
+				contents.push_back(std::move(sipfrag));
 
 				// ---------------------------------------------- HEADERS
 
@@ -301,7 +301,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 					cipherHeader->addHeader("Content-Id", recipient.deviceId);
 					Header contentDescription("Content-Description", "Cipher key");
 					cipherHeader->addHeader(contentDescription);
-					contents.push_back(move(cipherHeader));
+					contents.push_back(std::move(cipherHeader));
 				}
 
 				// ---------------------------------------------- MESSAGE
@@ -312,7 +312,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				cipherMessage->setBodyFromLocale(cipherMessageB64);
 				cipherMessage->setContentType(ContentType::OctetStream);
 				cipherMessage->addHeader("Content-Description", "Encrypted message");
-				contents.push_back(move(cipherMessage));
+				contents.push_back(std::move(cipherMessage));
 
 				Content finalContent = ContentManager::contentListToMultipart(contents, true);
 

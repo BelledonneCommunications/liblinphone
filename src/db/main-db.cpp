@@ -4386,7 +4386,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						capabilities,
 						params,
 						Utils::utf8ToLocale(subject),
-						move(participants),
+						std::move(participants),
 						lastNotifyId,
 						hasBeenLeft
 					));
@@ -4422,7 +4422,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						capabilities,
 						params,
 						subject,
-						move(participants),
+						std::move(participants),
 						lastNotifyId
 					);
 					chatRoom = serverGroupChatRoom;

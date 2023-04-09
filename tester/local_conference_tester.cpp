@@ -4144,7 +4144,6 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 			bool call_ok = true;
 
 			if (mgr == focus) {
-				int counter = 0;
 				for (auto m : members) {
 					LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(m->lc, confAddr);
 					call_ok &= (pcall != nullptr);
@@ -4155,8 +4154,6 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 					} else {
 						calls.push_back(nullptr);
 					}
-					// Increment counter
-					counter++;
 				}
 			} else {
 				LinphoneCall * call = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
@@ -4168,7 +4165,6 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 				}
 			}
 
-			int counter = 0;
 			call_ok &= (calls.size() > 0);
 			LinphoneConference * conference = linphone_core_search_conference_2(mgr->lc, confAddr);
 			for (auto call : calls) {
@@ -4180,8 +4176,6 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 						(call_result_desc->nbActiveStreamsOfType(SalText) == nb_text_streams) &&
 						(linphone_call_get_state(call) == LinphoneCallStateStreamsRunning));
 				}
-				// Increment counter
-				counter++;
 			}
 
 			if (calls.front()) {
@@ -6366,7 +6360,6 @@ static void create_conference_with_codec_mismatch_base (bool_t organizer_codec_m
 			}
 		}
 
-		int idx = 1;
 		for (auto mgr : members) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1, 10000));
 			int no_streams_running = 3;
@@ -6394,7 +6387,6 @@ static void create_conference_with_codec_mismatch_base (bool_t organizer_codec_m
 				BC_ASSERT_EQUAL(ccall_enc,encryption, int, "%d");
 			}
 
-			idx++;
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived, focus_stat.number_of_LinphoneCallIncomingReceived + 3, 10000));

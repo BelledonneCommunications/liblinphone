@@ -456,7 +456,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	static_pointer_cast<RemoteConference>(getConference())->focus = Participant::create(getConference().get(),peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->setFocus(true);
-	getConference()->participants = move(newParticipants);
+	getConference()->participants = std::move(newParticipants);
 
 	setConferenceId(conferenceId);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setConferenceAddress(peerAddress);
