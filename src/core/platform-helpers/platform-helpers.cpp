@@ -163,6 +163,10 @@ void GenericPlatformHelpers::startAudioForEchoTestOrCalibration () { }
 
 void GenericPlatformHelpers::stopAudioForEchoTestOrCalibration () { }
 
+void GenericPlatformHelpers::routeAudioToSpeaker () { }
+
+void GenericPlatformHelpers::restorePreviousAudioRoute () { }
+
 bool GenericPlatformHelpers::checkIpAddressChanged(){
 	LinphoneCore *core = getCore()->getCCore();
 	bool ipv6Enabled = linphone_core_ipv6_enabled(core);

@@ -86,7 +86,6 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
     public void startAudioForEchoTestOrCalibration() {
         requestCallAudioFocus(true);
-        routeAudioToSpeaker();
 
         mVolumeBeforeEchoTest = mAudioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
         int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
@@ -104,7 +103,6 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             Log.e("[Audio Helper] Couldn't restore volume: ", se);
         }
 
-        routeAudioToEarpiece();
         releaseCallAudioFocus();
     }
 
@@ -318,7 +316,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         mAudioManager.setMode(AudioManager.MODE_NORMAL);
     }
 
-    private void routeAudioToEarpiece() {
+    public  void restorePreviousAudioRoute() {
         if (!CoreManager.isReady()) {
             Log.e("[Audio Helper] CoreManager has been destroyed already!");
             return;
@@ -335,7 +333,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         }
     }
 
-    private void routeAudioToSpeaker() {
+    public  void routeAudioToSpeaker() {
         if (!CoreManager.isReady()) {
             Log.e("[Audio Helper] CoreManager has been destroyed already!");
             return;

@@ -457,6 +457,16 @@ public class CoreManager {
         mAudioHelper.stopAudioForEchoTestOrCalibration();
     }
 
+	public void routeAudioToSpeaker () {
+        if (mAudioHelper == null) return;
+        mAudioHelper.routeAudioToSpeaker();
+    }
+
+	public void restorePreviousAudioRoute() {
+        if (mAudioHelper == null) return;
+        mAudioHelper.restorePreviousAudioRoute();
+    }
+
     public void onAudioFocusLost() {
         if (mCore != null) {
             boolean pauseCallsWhenAudioFocusIsLost = mCore.getConfig().getBool("audio", "android_pause_calls_when_audio_focus_lost", true);
