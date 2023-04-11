@@ -50,6 +50,10 @@ endif()
 
 list(APPEND INTERFACE_LIBS ${LINK_LIBS} xsd)
 
+if(HAVE_DLOPEN)
+	list(APPEND LINK_LIBS dl)
+endif()
+
 if (ENABLE_ADVANCED_IM)
 	list(APPEND LINK_LIBS ${XercesC_TARGET})
 	if (APPLE AND NOT IOS)

@@ -298,7 +298,7 @@ struct autoreplier_config {
 	const char *message; /* the path of the file to be played */
 };
 
-struct _LinphoneToneDescription{
+struct _LinphoneToneDescription {
 	LinphoneToneID toneid; /*A tone type to play when this error arrives. This is played using tone generator*/
 	char *audiofile;       /*An override audio file to play instead, when this error arrives*/
 	/*Note that some tones are not affected to any error, in which case it is affected LinphoneReasonNone*/
@@ -668,6 +668,7 @@ class Core;
 	struct _EchoTester *ect;                                                                                           \
 	LinphoneTaskList hooks;                                                                                            \
 	LinphoneConference *conf_ctx;                                                                                      \
+	bctbx_list_t *plugin_list;                                                                                         \
 	char *zrtp_secrets_cache;                                                                                          \
 	char *user_certificates_path;                                                                                      \
 	LinphoneVideoPolicy video_policy;                                                                                  \

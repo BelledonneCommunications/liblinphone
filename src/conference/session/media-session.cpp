@@ -688,13 +688,16 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 	L_Q();
 	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 	// Fix local parameter before creating new local media description in order to have it consistent with the offer.
-	// Note that in some case such as if we are the offerer or transition from the state UpdateByRemote to PausedByRemote, there may be further changes
-	// The goal of calling this method at such early stage is to given an initial set of consistent parameters that can be used as such to generate the local media description to give to the offer answer module and negotiate the final answer.
+	// Note that in some case such as if we are the offerer or transition from the state UpdateByRemote to
+	// PausedByRemote, there may be further changes The goal of calling this method at such early stage is to given an
+	// initial set of consistent parameters that can be used as such to generate the local media description to give to
+	// the offer answer module and negotiate the final answer.
 	fixCallParams(rmd, true);
 	if (state != CallSession::State::Paused) {
 		/* Refresh the local description, but in paused state, we don't change anything. */
 		const bool makeOffer = (rmd == nullptr);
-		if (makeOffer && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "sdp_200_ack_follow_video_policy", 0)) {
+		if (makeOffer && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
+		                                         "sdp_200_ack_follow_video_policy", 0)) {
 			lInfo() << "Applying default policy for offering SDP on CallSession [" << q << "]";
 			setParams(new MediaSessionParams());
 			// Yes we init parameters as if we were in the case of an outgoing call, because it is a resume with no SDP.
@@ -2789,6 +2792,7 @@ void MediaSessionPrivate::onGatheringFinished(BCTBX_UNUSED(IceService &service))
 
 void MediaSessionPrivate::onIceCompleted(BCTBX_UNUSED(IceService &service)) {
 	L_Q();
+	lInfo() << __func__ << " DEBUG DEBUG core " << linphone_core_get_identity(q->getCore()->getCCore());
 
 	/* The ICE session has succeeded, so perform a call update */
 	if (!getStreamsGroup().getIceService().hasCompletedCheckList()) return;

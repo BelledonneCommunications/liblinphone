@@ -102,6 +102,10 @@ string MacPlatformHelpers::getSoundResource (const string &filename) const {
 	return getResourcePath(Framework, filename);
 }
 
+string MacPlatformHelpers::getPluginsDir () const {
+	return getBundleResourceDirPath(Framework, "Libraries/");
+}
+
 // -----------------------------------------------------------------------------
 
 string MacPlatformHelpers::getResourceDirPath (const string &framework, const string &resource) {
@@ -119,7 +123,33 @@ string MacPlatformHelpers::getResourceDirPath (const string &framework, const st
 		CFRelease(resourceUrlDirectory);
 		CFRelease(resourceUrl);
 	}
+	CFRelease(cfResource);
+	CFRelease(cfFramework);
+	return path;
+}
 
+//Returns the absolute path of the given resource relative to the linphone Framework location
+string MacPlatformHelpers::getBundleResourceDirPath (const string &framework, const string &resource) {
+	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
+	CFStringRef cfFramework = CFStringCreateWithCString(NULL, framework.c_str(), encodingMethod);
+	CFStringRef cfResource = CFStringCreateWithCString(NULL, resource.c_str(), encodingMethod);
+	CFBundleRef bundle = CFBundleGetBundleWithIdentifier(cfFramework);
+	string path("");
+
+	if (bundle) {
+		CFRetain(bundle);
+		CFURLRef bundleUrl = CFBundleCopyBundleURL(bundle);
+
+		if (bundleUrl) {
+			CFURLRef resourceUrl = CFURLCreateCopyAppendingPathComponent(NULL, bundleUrl, cfResource, true);
+			CFStringRef cfSystemPath = CFURLCopyFileSystemPath(resourceUrl, kCFURLPOSIXPathStyle);
+			path = CFStringGetCStringPtr(cfSystemPath, encodingMethod);
+			CFRelease(cfSystemPath);
+			CFRelease(bundleUrl);
+			CFRelease(resourceUrl);
+		}
+		CFRelease(bundle);
+	}
 	CFRelease(cfResource);
 	CFRelease(cfFramework);
 	return path;

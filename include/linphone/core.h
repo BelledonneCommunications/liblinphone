@@ -8446,6 +8446,20 @@ LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore 
  */
 LINPHONE_PUBLIC bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core);
 
+/**
+ * Return the list of loaded plugins
+ * @param core A #LinphoneCore object @notnil
+ * @return the list of loaded plugins \bctbx_list{char *} @maybenil
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core);
+
+/**
+ * Tells whether a plugin is loaded or not.
+ * @param core A #LinphoneCore object @notnil
+ * @param name name of the plugin @notnil
+ * @return A boolean value telling whether the plugin has been loaded
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name);
 #ifdef __cplusplus
 }
 #endif

@@ -355,6 +355,9 @@ public:
 
 	bool isCurrentlyAggregatingChatMessages();
 
+	const std::list<std::string> &getPluginList() const;
+	bool isPluginLoaded(const std::string name) const;
+
 private:
 	Core();
 
@@ -363,6 +366,17 @@ private:
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
 
 	std::pair<std::string, std::string> getSpecNameVersion(const std::string &spec) const;
+
+	std::list<std::string> plugins;
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+	std::list<HINSTANCE> loadedPlugins;
+#elif defined(HAVE_DLOPEN)
+	std::list<void *> loadedPlugins;
+#endif
+	void initPlugins();
+	void uninitPlugins();
+	int loadPlugins(const std::string &dir);
+	bool_t dlopenPlugin(const std::string &plugin_path, const std::string plugin_name);
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);

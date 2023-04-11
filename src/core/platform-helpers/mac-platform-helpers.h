@@ -41,6 +41,7 @@ public:
 	string getImageResource(const string &filename) const override;
 	string getRingResource(const string &filename) const override;
 	string getSoundResource(const string &filename) const override;
+	string getPluginsDir() const override;
 	void setHttpProxy(const string &host, int port) override;
 
 protected:
@@ -49,6 +50,7 @@ protected:
 	string toUTF8String(CFStringRef str);
 
 private:
+	static string getBundleResourceDirPath(const string &framework, const string &resource);
 	static string getResourceDirPath(const string &framework, const string &resource);
 	static string getResourcePath(const string &framework, const string &resource);
 };

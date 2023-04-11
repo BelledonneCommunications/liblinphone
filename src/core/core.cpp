@@ -26,6 +26,14 @@
 #include "TargetConditionals.h"
 #endif
 
+#ifdef HAVE_DLOPEN
+#include <dlfcn.h>
+#endif
+
+#ifndef _WIN32
+#include <dirent.h>
+#endif // _WIN32
+
 #include <algorithm>
 #include <iterator>
 
@@ -78,6 +86,22 @@
 #define LINPHONE_CALL_HISTORY_DB "call-history.db"
 #define LINPHONE_ZRTP_SECRETS_DB "zrtp-secrets.db"
 
+#ifndef LINPHONE_PACKAGE_PLUGINS_DIR
+#if defined(_WIN32) || defined(_WIN32_WCE)
+#ifdef LINPHONE_WINDOWS_DESKTOP
+#define LINPHONE_PACKAGE_PLUGINS_DIR "lib\\liblinphone\\plugins\\"
+#else
+#define LINPHONE_PACKAGE_PLUGINS_DIR "."
+#endif
+#else
+#define LINPHONE_PACKAGE_PLUGINS_DIR "."
+#endif
+#endif
+
+#ifndef LINPHONE_PLUGINS_EXT
+#define LINPHONE_PLUGINS_EXT ".so"
+#endif
+
 // =============================================================================
 
 using namespace std;
@@ -90,8 +114,12 @@ const Utils::Version CorePrivate::ephemeralProtocolVersion(1, 1);
 
 const std::string Core::limeSpec("lime");
 
+typedef void (*init_func_t)(LinphoneCore *core);
+
 void CorePrivate::init() {
 	L_Q();
+
+	q->initPlugins();
 
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
 	getToneManager(); // Forces instanciation of the ToneManager.
@@ -362,6 +390,8 @@ void CorePrivate::uninit() {
 	// clear encrypted files plain cache directory
 	std::string cacheDir(Factory::get()->getCacheDir(nullptr) + "/evfs/");
 	bctbx_rmdir(cacheDir.c_str(), TRUE);
+
+	q->uninitPlugins();
 
 	/* The toneManager is kept until destructor, we may need it because of calls ended during linphone_core_destroy().
 	 */
@@ -1750,6 +1780,244 @@ LinphoneAddress *Core::getAudioVideoConferenceFactoryAddress(const std::shared_p
 	}
 	LinphoneAddress *factory_address = address->toC();
 	return factory_address;
+}
+
+void Core::initPlugins() {
+	std::string pluginDir;
+#ifdef __APPLE__
+	pluginDir = getPlatformHelpers(getCCore())->getPluginsDir();
+#else
+#ifdef LINPHONE_PACKAGE_PLUGINS_DIR
+	pluginDir = LINPHONE_PACKAGE_PLUGINS_DIR;
+#else
+	pluginDir = "";
+#endif
+#endif
+	if (!pluginDir.empty()) {
+		lInfo() << "Loading linphone core plugins from " << pluginDir;
+		loadPlugins(pluginDir);
+	}
+}
+
+int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
+#ifdef __IOS__
+	lInfo() << "Loading of plugins is not supported in iOS systems";
+	return -1;
+#endif // __IOS__
+
+	int num = 0;
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+	WIN32_FIND_DATA FileData;
+	HANDLE hSearch;
+	std::string szDirPath;
+	BOOL fFinished = FALSE;
+	// Start searching for .dll files in the current directory.
+	szDirPath += dir;
+	szDirPath.append("\\lib*.dll");
+#ifdef UNICODE
+	std::wstring wszDirPath(szDirPath.begin(), szDirPath.end());
+	hSearch = FindFirstFileExW(wszDirPath.c_str(), FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
+#else
+	hSearch = FindFirstFileExA(szDirPath.c_str(), FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
+#endif
+	if (hSearch == INVALID_HANDLE_VALUE) {
+		lInfo() << "no plugin (*.dll) found in [" << szDirPath << "] [" << (int)GetLastError() << "].";
+		return 0;
+	}
+
+	while (!fFinished) {
+		/* load library */
+#ifdef MS2_WINDOWS_DESKTOP
+		UINT em = 0;
+#endif
+		HINSTANCE os_handle;
+		std::string szPluginFile(dir);
+		szPluginFile.append("\\");
+#ifdef UNICODE
+		wchar_t wszPluginFile[2048];
+		char filename[512];
+		wcstombs(filename, FileData.cFileName, sizeof(filename));
+		szPluginFile += std::string(filename);
+		std::wstring wszPluginFile(szPluginFile.begin(), szPluginFile.end());
+		mbstowcs(wszPluginFile, szPluginFile, sizeof(wszPluginFile));
+#else
+		szPluginFile += std::string(FileData.cFileName);
+#endif
+#if defined(MS2_WINDOWS_DESKTOP) && !defined(MS2_WINDOWS_UWP)
+
+#ifdef UNICODE
+		os_handle = LoadLibraryExW(wszPluginFile.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+#else
+		os_handle = LoadLibraryExA(szPluginFile.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+#endif
+		if (os_handle == NULL) {
+			lError() << "Fail to load plugin " << szPluginFile << " with altered search path: error "
+			         << (int)GetLastError();
+#ifdef UNICODE
+			os_handle = LoadLibraryExW(wszPluginFile.c_str(), NULL, 0);
+#else
+			os_handle = LoadLibraryExA(szPluginFile.c_str(), NULL, 0);
+#endif
+		}
+#else
+		os_handle = LoadPackagedLibrary(wszPluginFile, 0);
+#endif
+		if (os_handle == NULL) lError() << "Fail to load plugin " << szPluginFile << ": error " << (int)GetLastError();
+		else {
+			init_func_t initroutine;
+			std::string szPluginName;
+#ifdef UNICODE
+			szPluginName = std::string(filename);
+#else
+			szPluginName = std::string(FileData.cFileName);
+#endif
+			/*on mingw, dll names might be libsomething-3.dll. We must skip the -X.dll stuff*/
+			auto minus = szPluginName.find('-');
+			if (minus != std::string::npos) szPluginName = szPluginName.substr(0, minus);
+			else szPluginName = szPluginName.substr(0, szPluginName.size() - 4); /*remove .dll*/
+			std::string szMethodName(szPluginName);
+			szMethodName.append("_init");
+			initroutine = (init_func_t)GetProcAddress(os_handle, szMethodName.c_str());
+			if (initroutine != NULL) {
+				LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+				initroutine(lc);
+				lInfo() << "Plugin loaded (" << szPluginFile << ")";
+				// Add this new loaded plugin to the list (useful for FreeLibrary at the end)
+				loadedPlugins.push_back(os_handle);
+				plugins.push_back(szPluginName);
+				num++;
+			} else {
+				lWarning() << "Could not locate init routine of plugin " << szPluginFile << ". Should be "
+				           << szMethodName;
+			}
+		}
+		if (!FindNextFile(hSearch, &FileData)) {
+			if (GetLastError() == ERROR_NO_MORE_FILES) {
+				fFinished = TRUE;
+			} else {
+				lError() << "couldn't find next plugin dll.";
+				fFinished = TRUE;
+			}
+		}
+	}
+	/* Close the search handle. */
+	FindClose(hSearch);
+
+#elif defined(HAVE_DLOPEN)
+	DIR *ds;
+	std::list<std::string> loaded_plugins;
+	struct dirent *de;
+	char *ext;
+	ds = opendir(dir.c_str());
+	if (ds == NULL) {
+		lInfo() << "Cannot open directory " << dir << ": " << strerror(errno);
+		return -1;
+	}
+	while ((de = readdir(ds)) != NULL) {
+		if (
+#ifndef __QNX__
+		    (de->d_type == DT_REG || de->d_type == DT_UNKNOWN || de->d_type == DT_LNK) &&
+#endif
+		    (strstr(de->d_name, "lib") == de->d_name) && ((ext = strstr(de->d_name, LINPHONE_PLUGINS_EXT)) != NULL)) {
+			std::string plugin_file_name(de->d_name);
+			if (std::find(loaded_plugins.cbegin(), loaded_plugins.cend(), plugin_file_name) != loaded_plugins.cend())
+				continue;
+			if (dlopenPlugin(dir, de->d_name)) {
+				loaded_plugins.push_back(plugin_file_name);
+				num++;
+			}
+		}
+	}
+	closedir(ds);
+#else
+	lWarning() << "no loadable plugin support: plugins cannot be loaded.";
+	num = -1;
+#endif
+	return num;
+}
+
+bool_t Core::dlopenPlugin(BCTBX_UNUSED(const std::string &plugin_path),
+                          BCTBX_UNUSED(const std::string plugin_file_name)) {
+	bool_t plugin_loaded = FALSE;
+#if defined(HAVE_DLOPEN)
+	void *handle = NULL;
+	void *initroutine = NULL;
+	std::string initroutine_name = plugin_file_name;
+	std::string plugin_name;
+	std::string fullpath;
+
+	if (!plugin_path.empty()) {
+		fullpath += plugin_path;
+		fullpath.append("/");
+	}
+	fullpath += plugin_file_name;
+	lInfo() << "Loading plugin " << fullpath << " ...";
+
+	if ((handle = dlopen(fullpath.c_str(), RTLD_NOW)) == NULL) {
+		lWarning() << "Fail to load plugin " << fullpath << ": " << dlerror();
+		if (handle) {
+			dlclose(handle);
+		}
+	} else {
+		plugin_name = plugin_file_name;
+		auto ext = plugin_name.find(LINPHONE_PLUGINS_EXT);
+		if (ext != std::string::npos) plugin_name = plugin_name.substr(0, ext);
+		if (!plugin_name.empty()) {
+			initroutine_name = plugin_name + std::string("_init");
+			initroutine = dlsym(handle, initroutine_name.c_str());
+		}
+	}
+
+#ifdef __APPLE__
+	if (initroutine == NULL) {
+		/* on macosx: library name are libxxxx.1.2.3.dylib */
+		/* -> MUST remove the .1.2.3 */
+		plugin_name = plugin_file_name;
+		auto dot = plugin_name.find('.');
+		if (dot != std::string::npos) plugin_name = plugin_name.substr(0, dot);
+		if (!plugin_name.empty()) {
+			initroutine_name = plugin_name + std::string("_init");
+			initroutine = dlsym(handle, initroutine_name.c_str());
+		}
+	}
+#endif
+
+	if (initroutine != NULL) {
+		init_func_t func = (init_func_t)initroutine;
+		LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+		func(lc);
+		lInfo() << "Plugin " << plugin_name << " loaded (file " << fullpath << ")";
+		plugins.push_back(plugin_name);
+		loadedPlugins.push_back(handle);
+		plugin_loaded = TRUE;
+	} else {
+		lInfo() << "Could not locate init routine " << initroutine_name << " of plugin " << plugin_file_name;
+		if (handle) {
+			dlclose(handle);
+		}
+	}
+#endif
+	return plugin_loaded;
+}
+
+void Core::uninitPlugins() {
+	for (auto &handle : loadedPlugins) {
+#if defined(_WIN32)
+		FreeLibrary(handle);
+#elif defined(HAVE_DLOPEN)
+		dlclose(handle);
+#endif
+	}
+	loadedPlugins.clear();
+	plugins.clear();
+}
+
+const std::list<std::string> &Core::getPluginList() const {
+	return plugins;
+}
+
+bool Core::isPluginLoaded(const std::string name) const {
+	return (std::find(plugins.cbegin(), plugins.cend(), name) != plugins.cend());
 }
 
 LINPHONE_END_NAMESPACE

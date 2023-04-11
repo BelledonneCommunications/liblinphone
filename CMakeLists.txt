@@ -80,6 +80,7 @@ option(ENABLE_ASSETS "Package sound assets." YES)
 option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive making (CMake >= 3.11)" OFF)
 option(ENABLE_SQLITE "Build with sqlite support" YES)
 option(ENABLE_XML2 "Build with libxml2 support - for presence feature mainly" YES)
+option(ENABLE_EXAMPLE_PLUGIN "Enable build of the example plugin" NO)
 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
@@ -115,11 +116,14 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(CheckSymbolExists)
+include(CheckLibraryExists)
 include(CMakePushCheckState)
 include(GNUInstallDirs)
 include(CheckCXXCompilerFlag)
 
 check_symbol_exists(getifaddrs "sys/types.h;ifaddrs.h" HAVE_GETIFADDRS)
+
+check_library_exists("dl" "dlopen" "" HAVE_DLOPEN)
 
 if(NOT CMAKE_INSTALL_RPATH AND CMAKE_INSTALL_PREFIX)
 	set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_FULL_LIBDIR})
@@ -413,7 +417,6 @@ endif()
 if(NOT ENABLE_RELATIVE_PREFIX)
 	set(LINPHONE_DATA_DIR "${CMAKE_INSTALL_PREFIX}")
 endif()
-set(LINPHONE_PLUGINS_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
 
 if(WIN32)
 	set(LINPHONE_CONFIG_DIR "Linphone")
@@ -425,6 +428,30 @@ set(PACKAGE_GRAMMAR_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/belr/gram
 set(PACKAGE_SOUND_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/sounds/linphone")
 set(PACKAGE_RING_DIR "${PACKAGE_SOUND_DIR}/rings")
 set(PACKAGE_FREEDESKTOP_DIR "${PACKAGE_DATA_DIR}/applications")
+
+#Setup framework structure and variables for liblinphone plugins
+set(LINPHONE_FRAMEWORK_VERSION "A")
+
+if(APPLE AND NOT IOS)
+	set(LINPHONE_PLUGINS_LOCATION "Frameworks/linphone.framework/Versions/${LINPHONE_FRAMEWORK_VERSION}/Libraries")
+	install(DIRECTORY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LINPHONE_PLUGINS_LOCATION}")
+
+	if (NOT EXISTS "${CMAKE_INSTALL_PREFIX}/Frameworks/linphone.framework/Libraries")
+		install(CODE "execute_process(COMMAND sh -c \"ln -sf Versions/Current/Libraries ${CMAKE_INSTALL_PREFIX}/Frameworks/linphone.framework/Libraries\")")
+	endif()
+else()
+	set(LINPHONE_PLUGINS_LOCATION "${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
+endif()
+
+if(ENABLE_RELATIVE_PREFIX)
+	if(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" OR CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+		set(LINPHONE_PACKAGE_PLUGINS_DIR ".")
+	else()
+		set(LINPHONE_PACKAGE_PLUGINS_DIR "./${LINPHONE_PLUGINS_LOCATION}")
+	endif()
+else()
+	set(LINPHONE_PACKAGE_PLUGINS_DIR "${CMAKE_INSTALL_PREFIX}/${LINPHONE_PLUGINS_LOCATION}")
+endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/config.h PROPERTIES GENERATED ON)
@@ -440,6 +467,10 @@ endif()
 
 if(ENABLE_CXX_WRAPPER)
 	add_definitions(-DCXX_WRAPPER_ENABLED)
+endif()
+
+if(ENABLE_EXAMPLE_PLUGIN)
+	add_definitions(-DHAVE_EXAMPLE_PLUGIN)
 endif()
 
 if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
@@ -513,3 +544,11 @@ install(FILES
 if (ENABLE_PACKAGE_SOURCE)
 	add_subdirectory(build)
 endif()
+
+if(ENABLE_EXAMPLE_PLUGIN)
+	if(ENABLE_XML2)
+		list(APPEND EP_exampleplugin_DEPENDENCIES "EP_xml2")
+	endif()
+	add_subdirectory(plugins/example)
+endif()
+

@@ -175,6 +175,25 @@ static void core_init_test(void) {
 		/* until we have good certificates on our test server... */
 		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		const char *example_plugin_name = "libexampleplugin";
+		const bctbx_list_t *plugins = linphone_core_get_loaded_plugins(lc);
+#ifdef HAVE_EXAMPLE_PLUGIN
+#ifdef __IOS__
+		BC_ASSERT_EQUAL(bctbx_list_size(plugins), 0, size_t, "%zu");
+		BC_ASSERT_PTR_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, example_plugin_name));
+		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, example_plugin_name));
+#else
+		BC_ASSERT_GREATER_STRICT(bctbx_list_size(plugins), 0, size_t, "%zu");
+		BC_ASSERT_PTR_NOT_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, example_plugin_name));
+		BC_ASSERT_TRUE(linphone_core_is_plugin_loaded(lc, example_plugin_name));
+#endif // __IOS__
+#else
+		BC_ASSERT_PTR_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, example_plugin_name));
+		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, example_plugin_name));
+#endif // HAVE_EXAMPLE_PLUGIN
 		linphone_core_unref(lc);
 	}
 }

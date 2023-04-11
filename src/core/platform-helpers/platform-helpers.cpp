@@ -71,6 +71,10 @@ string GenericPlatformHelpers::getDataPath() const {
 	return "";
 }
 
+string GenericPlatformHelpers::getPluginsDir() const {
+	return "";
+}
+
 string GenericPlatformHelpers::getDataResource(const string &filename) const {
 	return getFilePath(linphone_factory_get_data_resources_dir(linphone_factory_get()), filename);
 }

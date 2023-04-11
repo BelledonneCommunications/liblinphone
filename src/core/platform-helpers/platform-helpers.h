@@ -61,6 +61,7 @@ public:
 
 	virtual std::string getConfigPath() const = 0;
 	virtual std::string getDataPath() const = 0;
+	virtual std::string getPluginsDir() const = 0;
 	virtual std::string getDataResource(const std::string &filename) const = 0;
 	virtual std::string getImageResource(const std::string &filename) const = 0;
 	virtual std::string getRingResource(const std::string &filename) const = 0;
@@ -139,6 +140,7 @@ public:
 
 	std::string getConfigPath() const override;
 	std::string getDataPath() const override;
+	std::string getPluginsDir() const override;
 	std::string getDataResource(const std::string &filename) const override;
 	std::string getImageResource(const std::string &filename) const override;
 	std::string getRingResource(const std::string &filename) const override;

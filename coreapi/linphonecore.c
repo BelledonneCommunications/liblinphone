@@ -7699,6 +7699,11 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	bctbx_list_for_each(lc->call_logs, (void (*)(void *))linphone_call_log_unref);
 	lc->call_logs = bctbx_list_free(lc->call_logs);
 
+	if (lc->plugin_list) {
+		bctbx_list_free_with_data(lc->plugin_list, (bctbx_list_free_func)bctbx_free);
+		lc->plugin_list = NULL;
+	}
+
 	if (lc->conference_version) {
 		ms_free(lc->conference_version);
 		lc->conference_version = NULL;
@@ -9535,4 +9540,20 @@ LinphoneAccount *linphone_core_find_account_by_identity_address(const LinphoneCo
 	}
 
 	return found;
+}
+
+const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core) {
+	if (core->plugin_list) {
+		bctbx_list_free_with_data(core->plugin_list, (bctbx_list_free_func)bctbx_free);
+	}
+	core->plugin_list = NULL;
+	const auto &plugins = L_GET_CPP_PTR_FROM_C_OBJECT(core)->getPluginList();
+	for (const auto &p : plugins) {
+		core->plugin_list = bctbx_list_append(core->plugin_list, ms_strdup(L_STRING_TO_C(p)));
+	}
+	return core->plugin_list;
+}
+
+bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(core)->isPluginLoaded(L_C_TO_STRING(name));
 }

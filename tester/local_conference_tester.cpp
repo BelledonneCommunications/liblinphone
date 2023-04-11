@@ -2119,7 +2119,6 @@ static void group_chat_room_with_client_removed_added(void) {
 		initialMichelleStats = michelle.getStats();
 		initialPaulineStats = pauline.getStats();
 
-		ms_message("%s - DEBUG DEBUG add ", __func__);
 		Address michelle2Addr = michelle2.getIdentity();
 		linphone_chat_room_add_participant(marieCr, linphone_address_ref(michelle2Addr.toC()));
 
@@ -2160,13 +2159,10 @@ static void group_chat_room_with_client_removed_added(void) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				ms_message("%s - DEBUG DEBUG participant %s", __func__,
-				           linphone_address_as_string(participantAddress->toC()));
 				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
 			}
 		}
 
-		ms_message("%s - DEBUG DEBUG end ", __func__);
 		// wait until chatroom is deleted server side
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2}).wait([&focus] {
 			return focus.getCore().getChatRooms().size() == 0;
