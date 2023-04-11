@@ -95,8 +95,12 @@ public:
 	virtual void onLinphoneCoreStop() = 0;
 
 	virtual std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() = 0;
+
 	virtual void startAudioForEchoTestOrCalibration() = 0;
 	virtual void stopAudioForEchoTestOrCalibration() = 0;
+	virtual void routeAudioToSpeaker() = 0;
+	virtual void restorePreviousAudioRoute() = 0;
+
 	virtual void start(std::shared_ptr<LinphonePrivate::Core> core) = 0;
 	virtual void stop(void) = 0;
 
@@ -165,8 +169,11 @@ public:
 	void onLinphoneCoreStop() override;
 
 	std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() override;
+
 	void startAudioForEchoTestOrCalibration() override;
 	void stopAudioForEchoTestOrCalibration() override;
+	void routeAudioToSpeaker() override;
+	void restorePreviousAudioRoute() override;
 
 	void start(BCTBX_UNUSED(std::shared_ptr<LinphonePrivate::Core> core)) override{};
 	void stop(void) override{};

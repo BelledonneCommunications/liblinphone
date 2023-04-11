@@ -75,6 +75,8 @@ public:
 
 	void startAudioForEchoTestOrCalibration() override;
 	void stopAudioForEchoTestOrCalibration() override;
+	void routeAudioToSpeaker() override;
+	void restorePreviousAudioRoute() override;
 
 	void enableAutoIterate(bool autoIterateEnabled) override;
 
@@ -133,6 +135,8 @@ private:
 	jmethodID mCoreManagerOnLinphoneCoreStopId = nullptr;
 	jmethodID mStartAudioForEchoTestOrCalibrationId = nullptr;
 	jmethodID mStopAudioForEchoTestOrCalibrationId = nullptr;
+	jmethodID mRouteAudioToSpeakerId = nullptr;
+	jmethodID mRestorePreviousAudioRouteId = nullptr;
 	jmethodID mStartAutoIterateId = nullptr;
 	jmethodID mStopAutoIterateId = nullptr;
 	jmethodID mSetAudioManagerCommunicationMode = nullptr;
@@ -187,6 +191,8 @@ void AndroidPlatformHelpers::createCoreManager(std::shared_ptr<LinphonePrivate::
 
 	mStartAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "startAudioForEchoTestOrCalibration", "()V");
 	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
+	mRouteAudioToSpeakerId = getMethodId(env, klass, "routeAudioToSpeaker", "()V");
+	mRestorePreviousAudioRouteId = getMethodId(env, klass, "restorePreviousAudioRoute", "()V");
 	mStartAutoIterateId = getMethodId(env, klass, "startAutoIterate", "()V");
 	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
 	mSetAudioManagerCommunicationMode = getMethodId(env, klass, "setAudioManagerInCommunicationMode", "()V");
@@ -515,6 +521,24 @@ void AndroidPlatformHelpers::stopAudioForEchoTestOrCalibration() {
 	if (env) {
 		if (mJavaCoreManager) {
 			env->CallVoidMethod(mJavaCoreManager, mStopAudioForEchoTestOrCalibrationId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::routeAudioToSpeaker() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mRouteAudioToSpeakerId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::restorePreviousAudioRoute() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mRestorePreviousAudioRouteId);
 		}
 	}
 }
