@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,9 +35,9 @@ void lime_delete_DRSessions(const char *limedb) {
 	try {
 		soci::session sql("sqlite3", limedb); // open the DB
 		// Delete all sessions from the DR_sessions table
-		sql<<"DELETE FROM DR_sessions;";
+		sql << "DELETE FROM DR_sessions;";
 	} catch (std::exception &e) { // swallow any error on DB
-		lWarning()<<"Cannot delete DRSessions in base "<<limedb<<". Error is "<<e.what();
+		lWarning() << "Cannot delete DRSessions in base " << limedb << ". Error is " << e.what();
 	}
 #endif
 }
