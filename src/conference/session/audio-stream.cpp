@@ -211,6 +211,9 @@ void MS2AudioStream::configureAudioStream() {
 		int delay = linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_delay", 0);
 		int framesize = linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_framesize", 0);
 		audio_stream_set_echo_canceller_params(mStream, len, delay, framesize);
+		// If a positive delay has been measured by the echo canceller calibration, then we cannot rely on the hardware
+		// echo canceller (if any), so we force the use of a software one.
+		audio_stream_force_software_echo_canceller(mStream, delay > 0);
 		if (mStream->ec) {
 			char *statestr = static_cast<char *>(ms_malloc0(ecStateMaxLen));
 			if (linphone_config_relative_file_exists(linphone_core_get_config(getCCore()), ecStateStore) &&

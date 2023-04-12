@@ -3325,14 +3325,35 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_play_local(LinphoneCore *core, cons
 
 /**
  * Enables or disable echo cancellation. Value is saved and used for subsequent calls.
- * This actually controls software echo cancellation. If hardware echo cancellation is available,
- * it will be always used and activated for calls, regardless of the value passed to this function.
- * When hardware echo cancellation is available, the software one is of course not activated.
+ * This actually controls software echo cancellation only.
+ * When 'enable' is set to FALSE, software echo cancellation is disabled, but hardware one, if available, remains
+ * activated. When set to TRUE, software echo cancellation is activated in either of these two conditions:
+ * - hardware echo cancellation is not available
+ * - an echo calibration procedure was run successfully, which implicitly cause the software echo canceller to be
+ *preferred over hardware one.
  * @param core #LinphoneCore object @notnil
  * @param enable A boolean value telling whether echo cancellation is to be enabled or disabled.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_enable_echo_cancellation(LinphoneCore *core, bool_t enable);
+
+/**
+ * Clears all state resulting from a previous echo canceller calibration procedure, which restores default policy and
+ * settings for echo cancellation.
+ * @see linphone_core_enable_echo_cancellation() and linphone_core_start_echo_canceller_calibration()
+ * @param core #LinphoneCore object @notnil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_reset_echo_cancellation_calibration(LinphoneCore *core);
+
+/**
+ * Gets the currently stored calibration delay for the software echo cancellation.
+ * @param core #LinphoneCore object @notnil
+ * @return the current calibration value, -1 if it failed, 0 if not done or not needed, a positive value if a software
+ * echo canceller is required after running linphone_core_start_echo_canceller_calibration().
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC int linphone_core_get_echo_cancellation_calibration(const LinphoneCore *core);
 
 /**
  * Returns TRUE if echo cancellation is enabled.

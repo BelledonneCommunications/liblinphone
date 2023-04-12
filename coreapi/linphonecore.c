@@ -5985,6 +5985,16 @@ void linphone_core_enable_echo_cancellation(LinphoneCore *lc, bool_t val) {
 	if (linphone_core_ready(lc)) linphone_config_set_int(lc->config, "sound", "echocancellation", val);
 }
 
+void linphone_core_reset_echo_cancellation_calibration(LinphoneCore *core) {
+	if (linphone_core_ready(core)) {
+		linphone_config_set_int(core->config, "sound", "ec_delay", 0);
+	}
+}
+
+int linphone_core_get_echo_cancellation_calibration(const LinphoneCore *core) {
+	return linphone_config_get_int(core->config, "sound", "ec_delay", 0);
+}
+
 bool_t linphone_core_echo_cancellation_enabled(const LinphoneCore *lc) {
 	return lc->sound_conf.ec;
 }
