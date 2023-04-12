@@ -321,24 +321,6 @@ public class CoreManager {
                     mAudioHelper.requestCallAudioFocus(false);
                 }
             }
-
-            @Override
-            public void onEcCalibrationResult(Core core, EcCalibratorStatus status, int delayMs) {
-                if (status == EcCalibratorStatus.Done) {
-                    if (core.hasBuiltinEchoCanceller()) {
-                        Log.w("[Core Manager] Device says it has a built-in echo canceller but it doesn't seem to work, computed delay is [", delayMs, "], adding device info with DEVICE_HAS_BUILTIN_AEC_CRAPPY flag");
-                    } else {
-                        Log.i("[Core Manager] Computed delay is [", delayMs, "], adding device info");
-                    }
-                    core.getMediastreamerFactory().setDeviceInfo(android.os.Build.MANUFACTURER, android.os.Build.MODEL, android.os.Build.DEVICE, org.linphone.mediastream.Factory.DEVICE_HAS_BUILTIN_AEC_CRAPPY, delayMs, 0);
-                    Log.i("[Core Manager] Reloading sound devices");
-                    core.reloadSoundDevices();
-                } else if (status == EcCalibratorStatus.DoneNoEcho) {
-                    Log.i("[Core Manager] No echo detected, it seems built-in echo canceller works properly");
-                } else if (status == EcCalibratorStatus.Failed) {
-                    Log.e("[Core Manager] Echo canceller calibration failed!");
-                }
-            }
         };
         
         mCore.addListener(mListener);
