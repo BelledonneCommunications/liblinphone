@@ -56,16 +56,13 @@ void AbstractDbPrivate::safeInit () {
 #endif
 }
 
-AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
-
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-bool AbstractDb::connect (Backend backend, const string &nameParams) {
-#ifdef HAVE_DB_STORAGE
-	L_D();
 
+void AbstractDb::registerBackend(Backend backend){
+#ifdef HAVE_DB_STORAGE
 	#if (__APPLE__ || defined(__ANDROID__))
 		if (backend == Sqlite3) {
 			static bool registered = false;
@@ -74,8 +71,20 @@ bool AbstractDb::connect (Backend backend, const string &nameParams) {
 				register_factory_sqlite3();
 				sqlite3_config(SQLITE_CONFIG_LOG, sqlite3Log, nullptr);
 			}
+		}else{
+			lWarning() << "AbstractDb::registerBackend() not implemented.";
 		}
 	#endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
+#endif
+}
+
+AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
+
+
+bool AbstractDb::connect (Backend backend, const string &nameParams) {
+#ifdef HAVE_DB_STORAGE
+	L_D();
+	registerBackend(backend);
 
 	d->backend = backend;
 	d->dbSession = DbSession(

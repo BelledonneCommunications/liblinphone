@@ -728,9 +728,11 @@ belle_sip_header_contact_t *SalOp::createContact (bool forceSipInstance) {
 		"gr"
 		);
 
-	// Don't touch contact in case of gruu, unless instructed with forceSipInstance parameter.
+	// Automatic contact must be disabled if provided with a GRUU contact.
+	if (!hasGruuContact) belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
+
+	/* Add +sip.instance */
 	if (forceSipInstance || hasGruuContact) {
-		if (!hasGruuContact) belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
 		if (!mRoot->mUuid.empty()
 			&& !belle_sip_parameters_has_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+sip.instance")
 		) {
