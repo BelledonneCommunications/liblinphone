@@ -55,6 +55,8 @@ public:
 	virtual bool import(Backend backend, const std::string &parameters);
 
 	bool isInitialized() const;
+	/* This function is to initialize soci backends when used with static linking. */
+	static void registerBackend(Backend backend);
 
 protected:
 	explicit AbstractDb(AbstractDbPrivate &p);

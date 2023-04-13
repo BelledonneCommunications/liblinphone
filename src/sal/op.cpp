@@ -661,9 +661,11 @@ belle_sip_header_contact_t *SalOp::createContact(bool forceSipInstance) {
 	bool hasGruuContact = belle_sip_parameters_has_parameter(
 	    BELLE_SIP_PARAMETERS(belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(contactHeader))), "gr");
 
-	// Don't touch contact in case of gruu, unless instructed with forceSipInstance parameter.
+	// Automatic contact must be disabled if provided with a GRUU contact.
+	if (!hasGruuContact) belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
+
+	/* Add +sip.instance */
 	if (forceSipInstance || hasGruuContact) {
-		if (!hasGruuContact) belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
 		if (!mRoot->mUuid.empty() &&
 		    !belle_sip_parameters_has_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+sip.instance")) {
 			stringstream ss;
