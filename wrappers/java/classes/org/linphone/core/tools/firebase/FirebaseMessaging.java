@@ -32,6 +32,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.service.CoreManager;
 import org.linphone.core.tools.service.AndroidDispatcher;
 
@@ -78,7 +79,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 Core core = CoreManager.instance().getCore();
                 if (core != null) {
                     Map<String, String> data = remoteMessage.getData();
-                    String callId = data.getOrDefault("call-id", "");                    
+                    String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");                    
                     String payload = new JSONObject(data).toString();
                     Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
                     CoreManager.instance().processPushNotification(callId, payload, false);
@@ -97,7 +98,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         SharedPreferences.Editor editor = sharedPref.edit();
 
         Map<String, String> data = remoteMessage.getData();
-        String callId = data.getOrDefault("call-id", "");
+        String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");      
         editor.putString("call-id", callId);
         String payload = new JSONObject(data).toString();
         editor.putString("payload", payload);
