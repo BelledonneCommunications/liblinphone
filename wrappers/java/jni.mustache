@@ -310,6 +310,7 @@ JNIEXPORT jobject JNICALL get{{className}}(JNIEnv *env, {{classCName}} *cptr, bo
 		void *up = belle_sip_object_data_get((belle_sip_object_t *)cptr, key);
 		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 		if (!ljb) {
+			bctbx_message("get{{className}}(): First attempt at getting LinphoneJavaBindings object, creating it");
 			ljb = new LinphoneJavaBindings(env);
 			linphone_factory_set_user_data(linphone_factory_get(), ljb);
 		}
@@ -376,6 +377,11 @@ static inline void handle_possible_java_exception(JNIEnv *env, jobject listener,
 		env->ExceptionClear();
 
 		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+		if (!ljb) {
+			bctbx_error("Failed to get LinphoneJavaBindings from factory user data!");
+			return;
+		}
+
 		jstring toString = (jstring) env->CallObjectMethod(exception, ljb->throwable_to_string);
 		const char * toStringChar = GetStringUTFChars(env, toString);
 		bctbx_error("Listener %s [%p] raised an exception: %s", listener_name, listener, toStringChar);
@@ -417,6 +423,11 @@ static {{return}} {{callbackName}}({{params}}) {
 
 	{{#needLjb}}
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+	if (!ljb) {
+		bctbx_error("{{callbackName}}(): failed to get LinphoneJavaBindings from factory user data!");
+		return;
+	}
+
 	{{/needLjb}}
 	{{#jobjects}}
 	jobject j_{{objectName}} = get{{className}}(env, (Linphone{{className}} *){{objectName}}, TRUE, {{isObjectConst}});
@@ -558,6 +569,10 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 		{{#hasListReturn}}
 		{{#isRealObjectArray}}
 		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+		if (!ljb) {
+			bctbx_error("{{name}}(): failed to get LinphoneJavaBindings from factory user data!");
+		}
+
 		jobjectArray jni_list_result = env->NewObjectArray(0, ljb->{{objectCPrefix}}_class, NULL);{{/isRealObjectArray}}
 		{{#isStringObjectArray}}jobjectArray jni_list_result = env->NewObjectArray(0, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
 		{{#isEnumObjectArray}}jintArray jni_list_result = env->NewIntArray(0);{{/isEnumObjectArray}}
@@ -598,6 +613,9 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	size_t count = bctbx_list_size(list);
 	{{#isRealObjectArray}}
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+	if (!ljb) {
+		bctbx_error("{{name}}(): failed to get LinphoneJavaBindings from factory user data!");
+	}
 	jobjectArray jni_list_result = env->NewObjectArray((int)count, ljb->{{objectCPrefix}}_class, nullptr);{{/isRealObjectArray}}
 	{{#isStringObjectArray}}jobjectArray jni_list_result = env->NewObjectArray((int)count, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
 	{{#isEnumObjectArray}}jintArray jni_list_result = env->NewIntArray((int)count);

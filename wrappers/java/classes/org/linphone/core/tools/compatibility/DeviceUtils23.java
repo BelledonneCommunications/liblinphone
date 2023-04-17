@@ -26,6 +26,8 @@ import android.media.Ringtone;
 import android.os.PowerManager;
 import android.os.Vibrator;
 
+import java.util.Map;
+
 import org.linphone.core.tools.Log;
 
 public class DeviceUtils23 {
@@ -45,5 +47,15 @@ public class DeviceUtils23 {
 		ringtone.setAudioAttributes(audioAttrs);
 		ringtone.play();
 		Log.i("[Audio Helper] Ringtone ringing started");
+	}
+	public static String getStringOrDefaultFromMap(Map<String, String> map, String key, String defaultValue) {
+		//return map.getOrDefault(key, defaultValue);
+		if (map.containsKey(key)) {
+			String result = map.get(key);
+			if (result != null) {
+				return result;
+			}
+		}
+		return defaultValue;
 	}
 }

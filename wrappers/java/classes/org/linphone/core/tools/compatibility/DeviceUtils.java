@@ -36,6 +36,8 @@ import org.linphone.core.tools.Log;
 
 import org.linphone.mediastream.Version;
 
+import java.util.Map;
+
 public class DeviceUtils {
 	public static boolean isAppUserRestricted(Context context) {
 		if (Version.sdkAboveOrEqual(Version.API28_PIE_90)) {
@@ -159,5 +161,13 @@ public class DeviceUtils {
 		}
 		
 		return false;
+	}
+
+	public static String getStringOrDefaultFromMap(Map<String, String> map, String key, String defaultValue) {
+		// map.getOrDefault(key, defaultValue) isn't available on Android 23 and lower...
+		if (Version.sdkAboveOrEqual(Version.API24_NOUGAT_70)) {
+			return DeviceUtils24.getStringOrDefaultFromMap(map, key, defaultValue);
+		}
+		return DeviceUtils23.getStringOrDefaultFromMap(map, key, defaultValue);
 	}
 }
