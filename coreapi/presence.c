@@ -361,6 +361,17 @@ time_t linphone_presence_model_get_timestamp(const LinphonePresenceModel *model)
 	return timestamp;
 }
 
+time_t linphone_presence_model_get_latest_activity_timestamp(const LinphonePresenceModel *model) {
+	time_t timestamp = (time_t)-1;
+
+	if (model == NULL)
+		return timestamp;
+
+	bctbx_list_for_each2(model->persons, (MSIterate2Func)presence_person_find_newer_timestamp, &timestamp);
+
+	return timestamp;
+}
+
 static void presence_model_find_contact(LinphonePresenceService *service, char **contact) {
 	if ((service->contact != NULL) && (*contact == NULL)) *contact = service->contact;
 }
@@ -1588,7 +1599,7 @@ static int process_pidf_xml_presence_person_notes(xmlparsing_context_t *xml_ctx,
 static int process_pidf_xml_presence_persons(xmlparsing_context_t *xml_ctx, LinphonePresenceModel *model) {
 	char xpath_str[MAX_XPATH_LENGTH];
 	xmlXPathObjectPtr person_object;
-	time_t timestamp = time(NULL);
+	time_t timestamp = (time_t)-1;
 	int err = 0;
 
 	person_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, person_prefix);
@@ -1598,16 +1609,7 @@ static int process_pidf_xml_presence_persons(xmlparsing_context_t *xml_ctx, Linp
 			char *person_id_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
 			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/pidf:timestamp", person_prefix, i);
 			char *person_timestamp_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
-
-			if (person_timestamp_str == NULL) {
-				unsigned int servicesCount = linphone_presence_model_get_nb_services(model);
-				if (servicesCount > 0) {
-					LinphonePresenceService *service = linphone_presence_model_get_nth_service(model, 0);
-					if (service) {
-						timestamp = service->timestamp;
-					}
-				}
-			} else {
+			if (person_timestamp_str) {
 				timestamp = parse_timestamp(person_timestamp_str);
 			}
 			LinphonePresencePerson *person = presence_person_new(person_id_str, timestamp);

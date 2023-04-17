@@ -90,6 +90,13 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_model_set_basic_status(Linphone
 LINPHONE_PUBLIC time_t linphone_presence_model_get_timestamp(const LinphonePresenceModel *model);
 
 /**
+ *  Gets the latest activity timestamp of a presence model.
+ * @param model The #LinphonePresenceModel object to get the timestamp from. @notnil
+ * @return The activity timestamp of the #LinphonePresenceModel object or -1 if there is no activity (such as when status is Online).
+ */
+LINPHONE_PUBLIC time_t linphone_presence_model_get_latest_activity_timestamp(const LinphonePresenceModel *model);
+
+/**
  * Gets the contact of a presence model.
  * @param model The #LinphonePresenceModel object to get the contact from. @notnil
  * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found. @maybenil
