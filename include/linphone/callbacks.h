@@ -737,6 +737,15 @@ typedef void (*LinphoneCoreCbsConferenceInfoReceivedCb)(LinphoneCore *core,
 typedef void (*LinphoneCoreCbsPushNotificationReceivedCb)(LinphoneCore *core, const char *payload);
 
 /**
+ * Callback to notify that there are errors from the video rendering.
+ * Check #LinphoneCallCbsVideoDisplayErrorOccurredCb for more details.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @param error_code The error code. It depends of the display filter (available for OpenGL)
+ **/
+typedef void (*LinphoneCoreCbsPreviewDisplayErrorOccurredCb)(LinphoneCore *core, int error_code);
+
+/**
  * @}
  **/
 

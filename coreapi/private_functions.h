@@ -60,6 +60,7 @@ void linphone_call_notify_tmmbr_received(LinphoneCall *call, int stream_index, i
 void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path);
 void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
 void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name);
+void linphone_call_notify_video_display_error_occurred(LinphoneCall *call, int error_code);
 void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice);
 void linphone_call_notify_remote_recording(LinphoneCall *call, bool_t recording);
 
@@ -448,6 +449,9 @@ void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceSchedu
                                                         LinphoneConferenceSchedulerState state);
 void linphone_conference_scheduler_notify_invitations_sent(LinphoneConferenceScheduler *conference_scheduler,
                                                            const bctbx_list_t *failed_invites);
+
+void _linphone_participant_device_notify_video_display_error_occurred(LinphoneParticipantDevice *participant_device,
+                                                                      int error_code);
 
 LINPHONE_PUBLIC void linphone_participant_device_set_state(LinphoneParticipantDevice *participant_device,
                                                            LinphoneParticipantDeviceState state);
@@ -910,6 +914,7 @@ void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCali
 void linphone_core_notify_ec_calibration_audio_init(LinphoneCore *lc);
 void linphone_core_notify_ec_calibration_audio_uninit(LinphoneCore *lc);
 void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *chat_room);
+void linphone_core_notify_preview_display_error_occurred(LinphoneCore *lc, int error_code);
 
 void set_playback_gain_db(AudioStream *st, float gain);
 

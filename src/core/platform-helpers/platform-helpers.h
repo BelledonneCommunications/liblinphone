@@ -78,7 +78,7 @@ public:
 	virtual void setVideoPreviewWindow(void *windowId) = 0;
 	virtual std::string getDownloadPath() = 0;
 	virtual void setVideoWindow(void *windowId) = 0;
-	virtual void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice,
+	virtual void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice,
 	                                             void *windowId) = 0;
 	virtual void resizeVideoPreview(int width, int height) = 0;
 
@@ -156,7 +156,7 @@ public:
 	std::shared_ptr<SignalInformation> getSignalInformation() override;
 	void setVideoPreviewWindow(void *windowId) override;
 	void setVideoWindow(void *windowId) override;
-	void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void *windowId) override;
+	void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void *windowId) override;
 	void resizeVideoPreview(int width, int height) override;
 
 	bool isNetworkReachable() override;

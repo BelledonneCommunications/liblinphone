@@ -51,7 +51,8 @@ class ParticipantDeviceCbs;
 
 class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>,
                           public UserDataAccessor,
-                          public CallbacksHolder<ParticipantDeviceCbs> {
+                          public CallbacksHolder<ParticipantDeviceCbs>
+                           {
 public:
 	enum class State {
 		Joining = LinphoneParticipantDeviceStateJoining,
@@ -185,7 +186,7 @@ public:
 	void enableAdminModeSupport(bool support);
 
 	void *createWindowId() const;
-	void setWindowId(void *newWindowId) const;
+	void setWindowId(void *newWindowId);
 	void *getWindowId() const;
 
 	bool setStreamCapability(const LinphoneMediaDirection &direction, const LinphoneStreamType type);
@@ -199,6 +200,8 @@ public:
 
 	void setIsMuted(bool isMuted);
 	bool getIsMuted() const;
+
+	void videoDisplayErrorOccurred(int error_code);
 
 	static bool isLeavingState(const ParticipantDevice::State &state);
 
@@ -258,6 +261,8 @@ public:
 	void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
 	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged() const;
 	void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
+	LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb getVideoDisplayErrorOccurred() const;
+	void setVideoDisplayErrorOccurred(LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb);
 
 private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
@@ -265,6 +270,7 @@ private:
 	LinphoneParticipantDeviceCbsStateChangedCb mStateChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb mStreamCapabilityChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb mStreamAvailabilityChangedCb = nullptr;
+	LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb mVideoDisplayErrorOccurredCb = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

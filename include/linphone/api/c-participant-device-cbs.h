@@ -150,6 +150,25 @@ LINPHONE_PUBLIC void linphone_participant_device_cbs_set_stream_availability_cha
     LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
 
 /**
+ * Get the callback that will be used to notify that there are errors from the video rendering of the participant device.
+ * Check #LinphoneCallCbsVideoDisplayErrorOccurredCb for more details.
+ *
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object. @notnil
+ * @return The failing video rendering callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb linphone_participant_device_cbs_get_video_display_error_occurred(const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the callback that will be used to notify that there are errors from the video rendering of the participant device.
+ * Check #LinphoneCallCbsVideoDisplayErrorOccurredCb for more details.
+ *
+ * @param[in] cbs The #LinphoneCallCbs object. @notnil
+ * @param[in] cb The failing video rendering callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_video_display_error_occurred(LinphoneParticipantDeviceCbs *cbs,
+                                                              LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb);
+
+/**
  * @}
  */
 

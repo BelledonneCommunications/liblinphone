@@ -158,6 +158,14 @@ void linphone_call_cbs_set_camera_not_working(LinphoneCallCbs *cbs, LinphoneCall
 	CallCbs::toCpp(cbs)->cameraNotWorkingCb = cb;
 }
 
+LinphoneCallCbsVideoDisplayErrorOccurredCb linphone_call_cbs_get_video_display_error_occurred(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->videoDisplayErrorOccurredCb;
+}
+
+void linphone_call_cbs_set_video_display_error_occurred(LinphoneCallCbs *cbs, LinphoneCallCbsVideoDisplayErrorOccurredCb cb) {
+	CallCbs::toCpp(cbs)->videoDisplayErrorOccurredCb = cb;
+}
+
 LinphoneCallCbsAudioDeviceChangedCb linphone_call_cbs_get_audio_device_changed(LinphoneCallCbs *cbs) {
 	return CallCbs::toCpp(cbs)->audioDeviceChangedCb;
 }

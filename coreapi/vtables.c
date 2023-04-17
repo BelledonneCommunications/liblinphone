@@ -492,6 +492,11 @@ void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_preview_display_error_occurred(LinphoneCore *lc, int error_code) {
+	NOTIFY_IF_EXIST(preview_display_error_occurred, lc, error_code);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_conference_info_received(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info) {
 	NOTIFY_IF_EXIST(conference_info_received, lc, conference_info);
 	cleanup_dead_vtable_refs(lc);

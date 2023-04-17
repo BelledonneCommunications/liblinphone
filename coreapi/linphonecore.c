@@ -272,6 +272,14 @@ LinphoneCoreCbsPushNotificationReceivedCb linphone_core_cbs_get_push_notificatio
 	return cbs->vtable->push_notification_received;
 }
 
+LinphoneCoreCbsPreviewDisplayErrorOccurredCb linphone_core_cbs_get_preview_display_error_occurred(const LinphoneCoreCbs *cbs) {
+	return cbs->vtable->preview_display_error_occurred;
+}
+
+void linphone_core_cbs_set_preview_display_error_occurred(LinphoneCoreCbs *cbs, LinphoneCoreCbsPreviewDisplayErrorOccurredCb cb) {
+	cbs->vtable->preview_display_error_occurred = cb;
+}
+
 LinphoneCoreCbsCallStateChangedCb linphone_core_cbs_get_call_state_changed(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->call_state_changed;
 }
@@ -6303,6 +6311,16 @@ video_stream_callback(void *userdata, BCTBX_UNUSED(const MSFilter *f), const uns
 		}
 	}
 }
+static void video_stream_preview_display_callback(void *userdata, const unsigned int id, const void *arg) {
+	switch (id) {
+		case MS_VIDEO_DISPLAY_ERROR_OCCURRED: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			int error_code = *(const int *)arg;
+			linphone_core_notify_preview_display_error_occurred(lc, error_code);
+			break;
+		}
+	}
+}
 static void video_filter_callback(void *userdata, BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
 	switch (id) {
 		case MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
@@ -6397,6 +6415,7 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val) {
 				ms_filter_add_notify_callback(lc->previewstream->qrcode, video_filter_callback, lc, FALSE);
 			}
 			video_stream_set_event_callback(lc->previewstream, video_stream_callback, lc);
+			video_stream_set_display_callback(lc->previewstream, video_stream_preview_display_callback, lc);
 		}
 	} else {
 		if (lc->previewstream != NULL) {

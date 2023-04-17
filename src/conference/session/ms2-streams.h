@@ -349,6 +349,8 @@ private:
 	void snapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 	void videoStreamEventCb(const MSFilter *f, const unsigned int eventId, const void *args);
 	static void sVideoStreamEventCb(void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
+	void videoStreamDisplayCb(const unsigned int eventId, const void *args);
+	static void sVideoStreamDisplayCb(void *userData, const unsigned int eventId, const void *args);
 	void cameraNotWorkingCb(const char *cameraName);
 	static void sCameraNotWorkingCb(void *userData, const MSWebCam *oldWebcam);
 	void csrcChangedCb(uint32_t new_csrc);

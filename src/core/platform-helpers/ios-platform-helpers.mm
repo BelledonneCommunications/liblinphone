@@ -72,7 +72,7 @@ public:
 	void setVideoPreviewWindow (BCTBX_UNUSED(void *windowId)) override {}
 	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
 	void setVideoWindow (BCTBX_UNUSED(void *windowId)) override {}
-	void setParticipantDeviceVideoWindow(BCTBX_UNUSED(const LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void* windowId)) override {};
+	void setParticipantDeviceVideoWindow(BCTBX_UNUSED(LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void* windowId)) override {};
 	void resizeVideoPreview (BCTBX_UNUSED(int width), BCTBX_UNUSED(int height)) override {}
 
 	void onWifiOnlyEnabled (bool enabled) override;

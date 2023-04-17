@@ -71,6 +71,7 @@ public:
 	LinphoneCallCbsSnapshotTakenCb snapshotTakenCb;
 	LinphoneCallCbsNextVideoFrameDecodedCb nextVideoFrameDecodedCb;
 	LinphoneCallCbsCameraNotWorkingCb cameraNotWorkingCb;
+	LinphoneCallCbsVideoDisplayErrorOccurredCb videoDisplayErrorOccurredCb;
 	LinphoneCallCbsAudioDeviceChangedCb audioDeviceChangedCb;
 	LinphoneCallCbsRemoteRecordingCb remoteRecordingCb;
 };
@@ -298,6 +299,7 @@ public:
 	void onFirstVideoFrameDecoded(const std::shared_ptr<CallSession> &session) override;
 	void onResetFirstVideoFrameDecoded(const std::shared_ptr<CallSession> &session) override;
 	void onCameraNotWorking(const std::shared_ptr<CallSession> &session, const char *camera_name) override;
+	void onVideoDisplayErrorOccurred(const std::shared_ptr<CallSession> &session, int error_code) override;
 	bool areSoundResourcesAvailable(const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone(const std::shared_ptr<CallSession> &session) override;
 	LinphoneConference *getCallSessionConference(const std::shared_ptr<CallSession> &session) const override;

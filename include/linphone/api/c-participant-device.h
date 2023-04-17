@@ -211,7 +211,7 @@ linphone_participant_device_get_current_callbacks(const LinphoneParticipantDevic
  * @param window_id the window ID of the device @maybenil
  */
 LINPHONE_PUBLIC void
-linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device,
+linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device,
                                                        void *window_id);
 
 /**

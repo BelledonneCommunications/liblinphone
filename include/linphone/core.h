@@ -300,6 +300,7 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsConferenceInfoReceivedCb conference_info_received;
 	LinphoneCoreCbsPushNotificationReceivedCb push_notification_received;
 	LinphoneCoreCbsOnAlertCb on_alert;
+	LinphoneCoreCbsPreviewDisplayErrorOccurredCb preview_display_error_occurred;
 
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
@@ -444,6 +445,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_push_notification_received(LinphoneCo
  */
 LINPHONE_PUBLIC LinphoneCoreCbsPushNotificationReceivedCb
 linphone_core_cbs_get_push_notification_received(LinphoneCoreCbs *cbs);
+
+/**
+ * @brief Get the rendering not working callback for preview.
+ * @param cbs LinphoneCoreCbs object @notnil
+ * @return The callback to use
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsPreviewDisplayErrorOccurredCb linphone_core_cbs_get_preview_display_error_occurred(const LinphoneCoreCbs *cbs);
+
+/**
+ * @brief Set the rendering not working callback for preview.
+ * @param cbs LinphoneCoreCbs object @notnil
+ * @param cb The callback to use
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_preview_display_error_occurred(LinphoneCoreCbs *cbs, LinphoneCoreCbsPreviewDisplayErrorOccurredCb cb);
 
 /**
  * Set the #LinphoneCoreCbsCallStateChangedCb callback.

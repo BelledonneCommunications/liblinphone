@@ -102,7 +102,7 @@ void GenericPlatformHelpers::setVideoWindow(BCTBX_UNUSED(void *widowId)) {
 }
 
 void GenericPlatformHelpers::setParticipantDeviceVideoWindow(
-    BCTBX_UNUSED(const LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void *windowId)) {
+    BCTBX_UNUSED(LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void *windowId)) {
 }
 
 void GenericPlatformHelpers::resizeVideoPreview(BCTBX_UNUSED(int width), BCTBX_UNUSED(int height)) {

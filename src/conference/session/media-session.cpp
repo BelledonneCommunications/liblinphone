@@ -5150,22 +5150,26 @@ void MediaSession::onGoClearAckSent() {
 	if (d->listener) d->listener->onGoClearAckSent();
 }
 
-void *MediaSession::getParticipantWindowId(const std::string label) {
+std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::string &label){
 	L_D();
 
-	LinphoneConference *conference = nullptr;
 	if (d->listener) {
-		conference = d->listener->getCallSessionConference(getSharedFromThis());
+		LinphoneConference *conference = d->listener->getCallSessionConference(getSharedFromThis());
 		if (conference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto &device = cppConference->findParticipantDeviceByLabel(label);
-			if (device) {
-				return device->getWindowId();
-			}
+			return cppConference->findParticipantDeviceByLabel(label);
 		}
 	}
 
 	return nullptr;
+}
+
+void *MediaSession::getParticipantWindowId(const std::string label) {
+	auto participantDevice = getParticipantDevice(label);
+	if(participantDevice)
+		return participantDevice->getWindowId();
+	else
+		return nullptr;
 }
 
 #ifndef _MSC_VER

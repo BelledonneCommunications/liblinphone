@@ -180,6 +180,16 @@ typedef void (*LinphoneCallCbsNextVideoFrameDecodedCb)(LinphoneCall *call);
 typedef void (*LinphoneCallCbsCameraNotWorkingCb)(LinphoneCall *call, const char *camera_name);
 
 /**
+ * Callback to notify that there are errors from the video rendering. The error code depends of the implementation.
+ * - If using OpenGL then the errors comes from eglGetError() : https://registry.khronos.org/EGL/sdk/docs/man/html/eglGetError.xhtml
+ *   On `EGL_CONTEXT_LOST`, it is recommanded to restart the Window ID with **_create_native_**_video_window_id() and **_set_native_**_video_window_id() functions.
+ *
+ * @param call LinphoneCall @notnil
+ * @param error_code error code from render. It depends of the renderer.
+ */
+typedef void (*LinphoneCallCbsVideoDisplayErrorOccurredCb)(LinphoneCall *call, int error_code);
+
+/**
  * Callback to notify that the audio device has been changed.
  *
  * @param call LinphoneCall for which the audio device has changed @notnil
@@ -749,6 +759,17 @@ typedef void (*LinphoneParticipantDeviceCbsStreamCapabilityChangedCb)(LinphonePa
 typedef void (*LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb)(LinphoneParticipantDevice *participant_device,
                                                                         bool_t available,
                                                                         const LinphoneStreamType stream_type);
+
+/**
+ * Callback to notify that there are errors from the video rendering of the participant device.
+ * Check #LinphoneCallCbsVideoDisplayErrorOccurredCb for more details.
+ *
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] error_code the error code coming from the display render.
+ */
+typedef void (*LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb)(LinphoneParticipantDevice *participant_device,
+                                                                        int error_code);
+
 
 /**
  * Callback for notifying when a registration state has changed for the conference scheduler.
