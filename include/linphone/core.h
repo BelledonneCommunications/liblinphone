@@ -7373,32 +7373,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCall *linphone_core_get_call_by_remo
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_send_dtmf(LinphoneCore *core, char dtmf);
 
 /**
- * Tells to #LinphoneCore to use Linphone Instant Messaging encryption
- * @param core #LinphoneCore object @notnil
- * @param enable The new lime state
- * @ingroup network_parameters
- * @deprecated 04/02/2019 Use linphone_core_enable_lime_x3dh instead.
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_enable_lime(LinphoneCore *core, LinphoneLimeState enable);
-
-/**
- * Returns the lime state
- * @param core #LinphoneCore object @notnil
- * @return The current lime state
- * @ingroup network_parameters
- * @deprecated 04/02/2019 Use linphone_core_lime_x3dh_enabled instead.
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *core);
-
-/**
- * Tells if lime is available
- * @param core #LinphoneCore object @notnil
- * @ingroup network_parameters
- * @deprecated 04/02/2019 Use linphone_core_lime_x3dh_available instead.
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_lime_available(const LinphoneCore *core);
-
-/**
  * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
  * instead of const char *.
  * @param core the #LinphoneCore @notnil

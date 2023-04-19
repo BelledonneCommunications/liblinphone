@@ -26,7 +26,6 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 	contact_providers_priv.h
 	core_private.h
 	enum.h
-	lime.h
 	lpc2xml.h
 	private.h
 	quality_reporting.h
@@ -53,7 +52,6 @@ set(LINPHONE_SOURCE_FILES_C
 	friendlist.c
 	im_notif_policy.c
 	info.c
-	lime.c
 	im_encryption_engine.c
 	linphonecall.c
 	linphonecore.c

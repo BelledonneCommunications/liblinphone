@@ -511,7 +511,6 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&video_conference_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
-	bc_tester_add_suite(&lime_message_test_suite);
 	bc_tester_add_suite(&rtt_message_test_suite);
 	bc_tester_add_suite(&session_timers_test_suite);
 	bc_tester_add_suite(&presence_test_suite);

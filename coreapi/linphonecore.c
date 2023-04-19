@@ -32,7 +32,6 @@
 #include "linphone/sipsetup.h"
 
 #include "conference_private.h"
-#include "lime.h"
 #include "logger/logger.h"
 #include "logging-private.h"
 #include "private.h"
@@ -3577,64 +3576,6 @@ void linphone_core_set_guess_hostname(LinphoneCore *lc, bool_t val) {
 
 bool_t linphone_core_get_guess_hostname(LinphoneCore *lc) {
 	return lc->sip_conf.guess_hostname;
-}
-
-// Deprecated
-void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val) {
-	LinphoneImEncryptionEngine *imee = linphone_im_encryption_engine_new();
-	LinphoneImEncryptionEngineCbs *cbs = linphone_im_encryption_engine_get_callbacks(imee);
-
-	if (lime_is_available()) {
-		if (linphone_core_ready(lc)) {
-			linphone_config_set_int(lc->config, "sip", "lime", val);
-		}
-
-		linphone_im_encryption_engine_cbs_set_process_incoming_message(
-		    cbs, lime_im_encryption_engine_process_incoming_message_cb);
-		linphone_im_encryption_engine_cbs_set_process_downloading_file(
-		    cbs, lime_im_encryption_engine_process_downloading_file_cb);
-
-		if (val != LinphoneLimeDisabled) {
-			linphone_im_encryption_engine_cbs_set_process_outgoing_message(
-			    cbs, lime_im_encryption_engine_process_outgoing_message_cb);
-			linphone_im_encryption_engine_cbs_set_process_uploading_file(
-			    cbs, lime_im_encryption_engine_process_uploading_file_cb);
-			linphone_im_encryption_engine_cbs_set_is_encryption_enabled_for_file_transfer(
-			    cbs, lime_im_encryption_engine_is_file_encryption_enabled_cb);
-			linphone_im_encryption_engine_cbs_set_generate_file_transfer_key(
-			    cbs, lime_im_encryption_engine_generate_file_transfer_key_cb);
-		} else {
-			linphone_im_encryption_engine_cbs_set_process_outgoing_message(cbs, NULL);
-			linphone_im_encryption_engine_cbs_set_process_uploading_file(cbs, NULL);
-			linphone_im_encryption_engine_cbs_set_is_encryption_enabled_for_file_transfer(cbs, NULL);
-			linphone_im_encryption_engine_cbs_set_generate_file_transfer_key(cbs, NULL);
-		}
-
-		linphone_core_set_im_encryption_engine(lc, imee);
-	}
-	linphone_im_encryption_engine_unref(imee);
-}
-
-// Deprecated
-bool_t linphone_core_lime_available(BCTBX_UNUSED(const LinphoneCore *lc)) {
-	return lime_is_available();
-}
-
-// Deprecated
-LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *lc) {
-	return linphone_core_lime_available(lc) ? static_cast<LinphoneLimeState>(linphone_config_get_int(
-	                                              lc->config, "sip", "lime", LinphoneLimeDisabled))
-	                                        : LinphoneLimeDisabled;
-}
-
-// Deprecated
-LinphoneLimeState linphone_core_lime_for_file_sharing_enabled(const LinphoneCore *lc) {
-	LinphoneLimeState s = linphone_core_lime_enabled(lc);
-	if (s != LinphoneLimeDisabled) {
-		s = static_cast<LinphoneLimeState>(
-		    linphone_config_get_int(lc->config, "sip", "lime_for_file_sharing", LinphoneLimeMandatory));
-	}
-	return s;
 }
 
 LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc) {

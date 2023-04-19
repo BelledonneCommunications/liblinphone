@@ -108,14 +108,6 @@ void CorePrivate::init() {
 		}
 	}
 
-	int tmp = linphone_config_get_int(lc->config, "sip", "lime", LinphoneLimeDisabled);
-	LinphoneLimeState limeState = static_cast<LinphoneLimeState>(tmp);
-	if (limeState != LinphoneLimeDisabled && q->limeX3dhEnabled()) {
-		bctbx_fatal("You can't have both LIME and LIME X3DH enabled at the same time !\nConflicting settings are [sip] "
-		            "lime and [lime] lime_server_url");
-	}
-	linphone_core_enable_lime(lc, limeState);
-
 	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		AbstractDb::Backend backend;
 		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", nullptr));

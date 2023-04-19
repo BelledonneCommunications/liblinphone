@@ -74,7 +74,6 @@ extern test_suite_t ephemeral_group_chat_test_suite;
 extern test_suite_t ephemeral_group_chat_basic_test_suite;
 extern test_suite_t log_collection_test_suite;
 extern test_suite_t message_test_suite;
-extern test_suite_t lime_message_test_suite;
 extern test_suite_t rtt_message_test_suite;
 extern test_suite_t session_timers_test_suite;
 extern test_suite_t multi_call_test_suite;

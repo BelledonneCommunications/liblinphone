@@ -373,12 +373,6 @@ LINPHONE_PUBLIC LinphoneCore *linphone_chat_room_get_core(const LinphoneChatRoom
 LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(LinphoneChatRoom *chat_room);
 
 /**
- * Returns wether lime is available for given peer or not. *
- * @return TRUE if zrtp secrets have already been shared and ready to use, FALSE otherwise. @notnil
- */
-LINPHONE_PUBLIC bool_t linphone_chat_room_lime_available(LinphoneChatRoom *chat_room);
-
-/**
  * Gets the current call associated to this chatroom if any
  * To commit a message, use linphone_chat_room_send_message()
  * @param chat_room the #LinphoneChatRomm object @notnil

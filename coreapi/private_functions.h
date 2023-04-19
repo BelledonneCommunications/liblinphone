@@ -539,7 +539,7 @@ void _linphone_magic_search_notify_ldap_have_more_results(LinphoneMagicSearch *m
 const LinphoneParticipantImdnState *
 _linphone_participant_imdn_state_from_cpp_obj(const LinphonePrivate::ParticipantImdnState &state);
 
-LinphoneToneDescription * linphone_tone_description_new(LinphoneToneID id, const char *audiofile);
+LinphoneToneDescription *linphone_tone_description_new(LinphoneToneID id, const char *audiofile);
 void linphone_tone_description_destroy(LinphoneToneDescription *obj);
 
 void linphone_task_list_init(LinphoneTaskList *t);
@@ -923,8 +923,6 @@ void v_table_reference_destroy(VTableReference *ref);
 LINPHONE_PUBLIC void _linphone_core_add_callbacks(LinphoneCore *lc, LinphoneCoreCbs *vtable, bool_t internal);
 
 MSWebCam *get_nowebcam_device(MSFactory *f);
-
-LinphoneLimeState linphone_core_lime_for_file_sharing_enabled(const LinphoneCore *lc);
 
 LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *core, int index);
 int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
