@@ -444,7 +444,11 @@ int silent_arg_func(BCTBX_UNUSED(const char *arg)) {
 }
 
 int verbose_arg_func(BCTBX_UNUSED(const char *arg)) {
+#ifdef DEBUG_LOGS
+	linphone_core_set_log_level(ORTP_DEBUG);
+#else
 	linphone_core_set_log_level(ORTP_MESSAGE);
+#endif
 	return 0;
 }
 

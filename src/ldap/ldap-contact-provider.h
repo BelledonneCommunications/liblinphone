@@ -88,29 +88,18 @@ public:
 	void initializeLdap();
 
 	//	CONFIGURATION
+	
 	/**
-	 * @brief getMinChars it's a convertor from configuration 'min_chars' to integer
-	 * @return The minimum characters for one search.
+	 * @brief configValueToInt get the first value of key and convert it to integer.
+	 * @return the first value
 	 */
-	int getMinChars() const;
-
+	int configValueToInt(const std::string &key) const;
+	
 	/**
-	 * @brief getTimeout it's a convertor from configuration 'timeout' to integer
-	 * @return The timeout in seconds
+	 * @brief configValueToString get the first value of key.
+	 * @return the first string
 	 */
-	int getTimeout() const;
-
-	/**
-	 * @brief getDelay it's a convertor from configuration 'delay' to integer. Default is 500.
-	 * @return The timeout in ms
-	 */
-	int getDelay() const;
-
-	/**
-	 * @brief getFilter Get filter key from Configuration
-	 * @return The filter as astring
-	 */
-	std::string getFilter() const;
+	std::string configValueToStr(const std::string &key) const;
 
 	/**
 	 * @brief getCurrentAction Get the current action of Iteration.
@@ -191,6 +180,9 @@ public:
 	static void ldapServerResolved(void *data, belle_sip_resolver_results_t *results);
 
 private:
+
+	void cleanLdap();
+	
 	/**
 	 * @brief handleSearchResult Parse the LDAPMessage to get contacts and fill Search entries.
 	 * @param message LDAPMessage to parse
@@ -211,30 +203,32 @@ private:
 	 * @brief computeLastRequestTime Compute the last request time on LDAP servers, from a list of request.
 	 */
 	void computeLastRequestTime(const std::list<SearchRequest> &requestHistory);
+	
+	/**
+	 * @brief fallbackToNextServerUrl Increment server Url and change action
+	 */
+	void fallbackToNextServerUrl();
 
 	std::shared_ptr<Core> mCore;
 	std::shared_ptr<Ldap> mLdapServer; // The LDAP server coming from core if set. Useful to know what server is using.
-	std::map<std::string, std::string> mConfig;
-	std::vector<std::string> mAttributes;     // Request optimization to limit attributes
-	std::vector<std::string> mNameAttributes; // Optimization to avoid split each times
-	std::vector<std::string> mSipAttributes;  // Optimization to avoid split each times
+	std::map<std::string, std::vector<std::string>> mConfig;
 	LDAP *mLd;
 	std::list<std::shared_ptr<LdapContactSearch>> mRequests;
 
 	int mAwaitingMessageId;                    // Waiting Message for ldap_abandon_ext on bind
-	bool_t mConnected;                         // If we are connected to server (bind)
+	bool mConnected;                         // If we are connected to server (bind)
 	int mCurrentAction;                        // Iteration action
 	belle_sip_source_t *mIteration;            // Iteration loop
 	belle_sip_resolver_context_t *mSalContext; // Sal Context for DNS
-	belle_generic_uri_t *mServerUri;           // Used to optimized query on SAL
-	std::string mServerUrl;                    // URL to use for connection. It can be different from configuration
+	std::vector<std::string> mServerUrl;       // URL to use for connection. It can be different from configuration
+	size_t mServerUrlIndex = 0;
+	size_t mConfigServerIndex = 0;
 
 	// TLS connection
 	int mTlsConnectionId = -1; // Used for getting async results from a start_tls
 	time_t mTlsConnectionTimeout;
 
-	uint64_t
-	    mLastRequestTime; // Store bctbx_get_cur_time_ms and use it as reference to make a delay between LDAP requests.
+	uint64_t mLastRequestTime; // Store bctbx_get_cur_time_ms and use it as reference to make a delay between LDAP requests.
 };
 
 LINPHONE_END_NAMESPACE

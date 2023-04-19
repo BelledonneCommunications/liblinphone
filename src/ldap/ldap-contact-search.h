@@ -51,8 +51,8 @@ public:
 
 	int mMsgId;
 	std::string mFilter;
-	bool_t complete;
-	bool_t mHaveMoreResults = FALSE;
+	bool complete;
+	bool mHaveMoreResults = false;
 	std::list<std::shared_ptr<SearchResult>> mFoundEntries;
 	unsigned int mFoundCount;
 

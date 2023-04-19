@@ -32,7 +32,7 @@ LdapContactSearch::LdapContactSearch(const int &msgId) {
 	mMsgId = msgId;
 	mFoundCount = 0;
 	complete = 0;
-	mHaveMoreResults = FALSE;
+	mHaveMoreResults = false;
 }
 
 LdapContactSearch::LdapContactSearch(LdapContactProvider *parent,
@@ -58,7 +58,7 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider *parent,
 	std::replace(predicate.begin(), predicate.end(), ' ', '*');
 	// Apply predicate into requested filter
 	char temp[FILTER_MAX_SIZE];
-	snprintf(temp, FILTER_MAX_SIZE - 1, parent->getFilter().c_str(), predicate.c_str());
+	snprintf(temp, FILTER_MAX_SIZE - 1, parent->configValueToStr("filter").c_str(), predicate.c_str());
 	temp[FILTER_MAX_SIZE - 1] = '\0';
 
 	// Replace all '**' by '*' in filter.

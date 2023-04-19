@@ -27,6 +27,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 // =============================================================================
 
@@ -48,10 +49,11 @@ public:
 	void setServer(const std::string &server);
 	void setBindDn(const std::string &bindDn);
 	void setBaseObject(const std::string &baseObject);
-	void setTimeout(const int &timeout);
-	void setMaxResults(const int &maxResults);
-	void setMinChars(const int &minChars);
-	void setDelay(const int &ms);
+	void setTimeout(const int timeout);
+	void setTimeoutTlsMs(const int timeout);
+	void setMaxResults(const int maxResults);
+	void setMinChars(const int minChars);
+	void setDelay(const int ms);
 	void setPassword(const std::string &password);
 	void setFilter(const std::string &filter);
 	void setNameAttribute(const std::string &nameAttribute);
@@ -65,11 +67,13 @@ public:
 	void setServerCertificatesVerificationMode(LinphoneLdapCertVerificationMode mode);
 
 	// Getters
+	std::string &getCustomValue(const std::string &key);
 	const std::string &getCustomValue(const std::string &key) const;
 	const std::string &getServer() const;
 	const std::string &getBindDn() const;
 	const std::string &getBaseObject() const;
 	int getTimeout() const;
+	int getTimeoutTlsMs() const;
 	int getMaxResults() const;
 	int getMinChars() const;
 	int getDelay() const;
@@ -85,7 +89,7 @@ public:
 	LinphoneLdapAuthMethod getAuthMethod() const;
 	LinphoneLdapCertVerificationMode getServerCertificatesVerificationMode() const;
 
-	const std::map<std::string, std::string> &getConfig() const;
+	std::map<std::string, std::vector<std::string>> getConfig() const;
 
 	// Others
 	int check() const;
@@ -96,8 +100,7 @@ public:
 
 private:
 	std::map<std::string, std::string> mConfig;
-	std::string
-	    mDummyTxt; // For passing persistent data to wrapper (getCustomValue() can return "" without being in config)
+	std::string mDummyTxt; // For passing persistent data to wrapper (getCustomValue() can return "" without being in config)
 };
 
 LINPHONE_END_NAMESPACE

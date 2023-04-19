@@ -1476,7 +1476,7 @@ void linphone_friend_add_addresses_and_numbers_into_maps(LinphoneFriend *lf, Lin
 		}
 		iterator = bctbx_list_next(iterator);
 	}
-	bctbx_list_free(phone_numbers);
+	if(phone_numbers) bctbx_list_free_with_data(phone_numbers, bctbx_free);
 
 	addresses = linphone_friend_get_addresses(lf);
 	iterator = (bctbx_list_t *)addresses;

@@ -324,7 +324,10 @@ MagicSearch::processResults(std::shared_ptr<list<std::shared_ptr<SearchResult>>>
 
 std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 	L_D();
-	list<std::shared_ptr<SearchResult>> returnList = *getSearchCache();
+	list<std::shared_ptr<SearchResult>> returnList;
+	auto cache = getSearchCache();
+	if(cache)
+		returnList = *cache;
 	LinphoneProxyConfig *proxy = nullptr;
 	if (getLimitedSearch() && returnList.size() > getSearchLimit()) {
 		auto limitIterator = returnList.begin();
@@ -496,7 +499,7 @@ void MagicSearch::getAddressFromLDAPServerStartAsync(const string &filter,
 		data->mProvider = providers[i];
 		data->mResult = asyncData->createResult();
 		if (data->mProvider && data->mProvider->getCurrentAction() != LdapContactProvider::ACTION_ERROR) {
-			data->mTimeout = (int64_t)data->mProvider->getTimeout();
+			data->mTimeout = (int64_t)data->mProvider->configValueToInt("timeout");
 			data->mParent = this;
 			data->mFilter = filter;
 			data->mWithDomain = withDomain;
@@ -770,7 +773,7 @@ MagicSearch::searchInFriend(const LinphoneFriend *lFriend, const string &filter,
 		}
 		phoneNumbers = phoneNumbers->next;
 	}
-	if (begin) bctbx_list_free(begin);
+	if (begin) bctbx_list_free_with_data(begin, bctbx_free);
 
 	return friendResult;
 }

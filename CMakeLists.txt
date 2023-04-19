@@ -342,7 +342,7 @@ if(LINPHONE_CPPFLAGS)
 endif()
 
 if(ENABLE_DEBUG_LOGS)
-	add_definitions("-DDEBUG_LOGS")
+	add_definitions("-DDEBUG_LOGS -DBCTBX_DEBUG_MODE")
 endif()
 
 # Enable stdint.h limit macros on C++ files. (Windows only.)

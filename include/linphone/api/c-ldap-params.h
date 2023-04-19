@@ -145,7 +145,7 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_base_object(const LinphoneL
 /*************************************************************************************/
 
 /**
- * @brief Timeout in seconds
+ * @brief Timeout for requests in seconds. It limits the time for searchs and the value is passed to Ldap with `LDAP_OPT_NETWORK_TIMEOUT`.
  * Default value : 5.
  *
  * @param params The #LinphoneLdapParams object. @notnil
@@ -154,12 +154,29 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_base_object(const LinphoneL
 LINPHONE_PUBLIC void linphone_ldap_params_set_timeout(LinphoneLdapParams *params, int timeout);
 
 /**
- * @brief Get the timeout in seconds
+ * @brief Get the timeout for requests in seconds
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The timeout in seconds.
  **/
 LINPHONE_PUBLIC int linphone_ldap_params_get_timeout(const LinphoneLdapParams *params);
+
+/**
+ * @brief Timeout for TLS connection in milliseconds.
+ * Default value : 1000.
+ *
+ * @param params The #LinphoneLdapParams object. @notnil
+ * @param timeout The timeout in milliseconds.
+ **/
+LINPHONE_PUBLIC void linphone_ldap_params_set_timeout_tls_ms(LinphoneLdapParams *params, int timeout);
+
+/**
+ * @brief Get the timeout for TLS connection in milliseconds.
+ *
+ * @param params The #LinphoneLdapParams object. @notnil
+ * @return The timeout in milliseconds.
+ **/
+LINPHONE_PUBLIC int linphone_ldap_params_get_timeout_tls_ms(const LinphoneLdapParams *params);
 /*************************************************************************************/
 
 /**

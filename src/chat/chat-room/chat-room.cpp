@@ -176,7 +176,7 @@ void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<
 		} else {
 			lastMessageCharacters.push_back(character);
 			string completeText = Utils::unicodeToUtf8(lastMessageCharacters);
-			bctbx_debug("Received RTT character: [%llu], pending text is [%s]", character, completeText.c_str());
+			lDebug() << "Received RTT character: [" << character << "], pending text is [" << completeText << "]";
 		}
 	}
 }

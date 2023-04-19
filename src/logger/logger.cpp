@@ -51,10 +51,10 @@ Logger::~Logger() {
 	L_D();
 
 	const string str = d->os.str();
-
+	
 	switch (d->level) {
 		case Debug:
-#if DEBUG_LOGS
+#ifdef DEBUG_LOGS
 			bctbx_debug("%s", str.c_str());
 #endif // if DEBUG_LOGS
 			break;

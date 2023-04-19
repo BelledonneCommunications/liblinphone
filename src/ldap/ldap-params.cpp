@@ -37,17 +37,20 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 LdapParams::LdapParams() {
-	mConfig = LdapConfigKeys::loadConfig();
+	auto config  = LdapConfigKeys::loadConfig();
+	for(auto it = config.begin() ; it != config.end() ; ++it){
+		mConfig[it->first] = LdapConfigKeys::join(it->first, it->second);
+	}
 }
 
 LdapParams::LdapParams(LinphoneConfig *lConfig, const std::string &sectionKey) : LdapParams() {
-	std::map<std::string, std::string> config;
 	bctbx_list_t *keys = linphone_config_get_keys_names_list(lConfig, sectionKey.c_str());
 	for (auto itKeys = keys; itKeys; itKeys = itKeys->next) {
 		std::string key = static_cast<char *>(itKeys->data);
 		mConfig[key] = linphone_config_get_string(lConfig, sectionKey.c_str(), key.c_str(), "");
 	}
 	if (keys) bctbx_list_free(keys);
+	mConfig = LdapConfigKeys::loadConfig(mConfig);
 }
 
 LdapParams::LdapParams(const LdapParams &other) : HybridObject(other) {
@@ -67,157 +70,176 @@ void LdapParams::setCustomValue(const std::string &key, const std::string &value
 }
 
 void LdapParams::setServer(const std::string &server) {
-	mConfig["server"] = server;
+	setCustomValue("server", server);
 }
 
 void LdapParams::setBindDn(const std::string &bindDn) {
-	mConfig["bind_dn"] = bindDn;
+	setCustomValue("bind_dn", bindDn);
 }
 void LdapParams::setBaseObject(const std::string &baseObject) {
-	mConfig["base_object"] = baseObject;
+	setCustomValue("base_object", baseObject);
 }
 
-void LdapParams::setTimeout(const int &timeout) {
-	mConfig["timeout"] = Utils::toString(timeout >= 0 ? timeout : 0);
+void LdapParams::setTimeout(const int timeout) {
+	setCustomValue("timeout", Utils::toString(timeout >= 0 ? timeout : 0));
 }
 
-void LdapParams::setMaxResults(const int &maxResults) {
-	mConfig["max_results"] = Utils::toString(maxResults >= 1 ? maxResults : 1);
+void LdapParams::setTimeoutTlsMs(const int timeout) {
+	setCustomValue("timeout_tls_ms", Utils::toString(timeout >= 0 ? timeout : 0));
 }
 
-void LdapParams::setMinChars(const int &minChars) {
-	mConfig["min_chars"] = Utils::toString(minChars >= 0 ? minChars : 0);
+void LdapParams::setMaxResults(const int maxResults) {
+	setCustomValue("max_results", Utils::toString(maxResults >= 1 ? maxResults : 1));
 }
 
-void LdapParams::setDelay(const int &ms) {
-	mConfig["delay"] = Utils::toString(ms >= 0 ? ms : 0);
+void LdapParams::setMinChars(const int minChars) {
+	setCustomValue("min_chars", Utils::toString(minChars >= 0 ? minChars : 0));
+}
+
+void LdapParams::setDelay(const int ms) {
+	setCustomValue("delay", Utils::toString(ms >= 0 ? ms : 0));
 }
 
 void LdapParams::setPassword(const std::string &password) {
-	mConfig["password"] = password;
+	setCustomValue("password", password);
 }
 
 void LdapParams::setFilter(const std::string &filter) {
-	mConfig["filter"] = filter;
+	setCustomValue("filter", filter);
 }
 
 void LdapParams::setNameAttribute(const std::string &nameAttribute) {
-	mConfig["name_attribute"] = nameAttribute;
+	setCustomValue("name_attribute", nameAttribute);
 }
 
 void LdapParams::setSipAttribute(const std::string &sipAttribute) {
-	mConfig["sip_attribute"] = sipAttribute;
+	setCustomValue("sip_attribute", sipAttribute);
 }
 
 void LdapParams::setSipDomain(const std::string &sipDomain) {
-	mConfig["sip_domain"] = sipDomain;
+	setCustomValue("sip_domain", sipDomain);
 }
 
 void LdapParams::setEnabled(bool enable) {
-	mConfig["enable"] = (enable ? "1" : "0");
+	setCustomValue("enable", (enable ? "1" : "0"));
 }
 
 void LdapParams::enableSal(bool enable) {
-	mConfig["use_sal"] = (enable ? "1" : "0");
+	setCustomValue("use_sal", (enable ? "1" : "0"));
 }
 
 void LdapParams::enableTls(bool enable) {
-	mConfig["use_tls"] = (enable ? "1" : "0");
+	setCustomValue("use_tls", (enable ? "1" : "0"));
 }
 
 void LdapParams::setDebugLevel(LinphoneLdapDebugLevel level) {
-	mConfig["debug"] = Utils::toString((int)level);
+	setCustomValue("debug", Utils::toString((int)level));
 }
 
 void LdapParams::setAuthMethod(LinphoneLdapAuthMethod authMethod) {
-	mConfig["auth_method"] = Utils::toString((int)authMethod);
+	setCustomValue("auth_method", Utils::toString((int)authMethod));
 }
 
 void LdapParams::setServerCertificatesVerificationMode(LinphoneLdapCertVerificationMode mode) {
-	mConfig["verify_server_certificates"] = Utils::toString((int)mode);
+	setCustomValue("verify_server_certificates", Utils::toString((int)mode));
 }
 
 // Getters
-const std::string &LdapParams::getCustomValue(const std::string &key) const {
+std::string &LdapParams::getCustomValue(const std::string &key) {
 	auto itValue = mConfig.find(key);
 	if (itValue == mConfig.end()) return mDummyTxt;
 	else return itValue->second;
 }
 
+const std::string &LdapParams::getCustomValue(const std::string &key) const{
+	auto itValue = mConfig.find(key);
+	if (itValue == mConfig.end()) return mDummyTxt;
+	else return itValue->second;
+}
+
+
 const std::string &LdapParams::getServer() const {
-	return mConfig.at("server");
+	return getCustomValue("server");
 }
 
 const std::string &LdapParams::getBindDn() const {
-	return mConfig.at("bind_dn");
+	return getCustomValue("bind_dn");
 }
 
 const std::string &LdapParams::getBaseObject() const {
-	return mConfig.at("base_object");
+	return getCustomValue("base_object");
 }
 
 int LdapParams::getTimeout() const {
-	return atoi(mConfig.at("timeout").c_str());
+	return atoi(getCustomValue("timeout").c_str());
+}
+
+int LdapParams::getTimeoutTlsMs() const {
+	return atoi(getCustomValue("timeout_tls_ms").c_str());
 }
 
 int LdapParams::getMaxResults() const {
-	return atoi(mConfig.at("max_results").c_str());
+	return atoi(getCustomValue("max_results").c_str());
 }
 
 int LdapParams::getMinChars() const {
-	return atoi(mConfig.at("min_chars").c_str());
+	return atoi(getCustomValue("min_chars").c_str());
 }
 
 int LdapParams::getDelay() const {
-	return atoi(mConfig.at("delay").c_str());
+	return atoi(getCustomValue("delay").c_str());
 }
 
 const std::string &LdapParams::getPassword() const {
-	return mConfig.at("password");
+	return getCustomValue("password");
 }
 
 const std::string &LdapParams::getFilter() const {
-	return mConfig.at("filter");
+	return getCustomValue("filter");
 }
 
 const std::string &LdapParams::getNameAttribute() const {
-	return mConfig.at("name_attribute");
+	return getCustomValue("name_attribute");
 }
 
 const std::string &LdapParams::getSipAttribute() const {
-	return mConfig.at("sip_attribute");
+	return getCustomValue("sip_attribute");
 }
 
 const std::string &LdapParams::getSipDomain() const {
-	return mConfig.at("sip_domain");
+	return getCustomValue("sip_domain");
 }
 
 bool LdapParams::getEnabled() const {
-	return mConfig.at("enable") == "1";
+	return getCustomValue("enable") == "1";
 }
 
 bool LdapParams::salEnabled() const {
-	return mConfig.at("use_sal") == "1";
+	return getCustomValue("use_sal") == "1";
 }
 
 bool LdapParams::tlsEnabled() const {
-	return mConfig.at("use_tls") == "1";
+	return getCustomValue("use_tls") == "1";
 }
 
 LinphoneLdapDebugLevel LdapParams::getDebugLevel() const {
-	return static_cast<LinphoneLdapDebugLevel>(atoi(mConfig.at("debug").c_str()));
+	return static_cast<LinphoneLdapDebugLevel>(atoi(getCustomValue("debug").c_str()));
 }
 
 LinphoneLdapAuthMethod LdapParams::getAuthMethod() const {
-	return static_cast<LinphoneLdapAuthMethod>(atoi(mConfig.at("auth_method").c_str()));
+	return static_cast<LinphoneLdapAuthMethod>(atoi(getCustomValue("auth_method").c_str()));
 }
 
 LinphoneLdapCertVerificationMode LdapParams::getServerCertificatesVerificationMode() const {
-	return static_cast<LinphoneLdapCertVerificationMode>(atoi(mConfig.at("verify_server_certificates").c_str()));
+	return static_cast<LinphoneLdapCertVerificationMode>(atoi(getCustomValue("verify_server_certificates").c_str()));
 }
 
-const std::map<std::string, std::string> &LdapParams::getConfig() const {
-	return mConfig;
+std::map<std::string, std::vector<std::string>> LdapParams::getConfig() const {
+	std::map<std::string, std::vector<std::string>> result;
+	for(auto it = mConfig.begin() ; it != mConfig.end() ; ++it){
+		result[it->first] = LdapConfigKeys::split(it->first, it->second);
+	}
+	return result;
 }
 
 int LdapParams::check() const {
@@ -231,21 +253,23 @@ int LdapParams::check() const {
 
 int LdapParams::checkServer() const {
 	int checkResult = LinphoneLdapCheckOk;
-	auto server = getServer();
-	if (server == "") checkResult |= LinphoneLdapCheckServerEmpty;
+	auto servers = LdapConfigKeys::split("server", getServer());
+	if (servers.size() == 0) checkResult |= LinphoneLdapCheckServerEmpty;
 	else {
-		SalAddress *addr = sal_address_new(server.c_str());
-		if (!addr) checkResult |= LinphoneLdapCheckServerNotUrl;
-		else {
-			std::string scheme = sal_address_get_scheme(addr);
-			if (scheme == "") checkResult |= LinphoneLdapCheckServerNoScheme;
+		for(size_t i = 0 ; i < servers.size() ; ++i){
+			SalAddress *addr = sal_address_new(servers[i].c_str());
+			if (!addr) checkResult |= LinphoneLdapCheckServerNotUrl;
 			else {
-				scheme = Utils::stringToLower(scheme);
-				if (scheme == "ldaps") {
-					checkResult |= LinphoneLdapCheckServerLdaps;
-				} else if (scheme != "ldap") checkResult |= LinphoneLdapCheckServerNotLdap;
+				std::string scheme = sal_address_get_scheme(addr);
+				if (scheme == "") checkResult |= LinphoneLdapCheckServerNoScheme;
+				else {
+					scheme = Utils::stringToLower(scheme);
+					if (scheme == "ldaps") {
+						checkResult |= LinphoneLdapCheckServerLdaps;
+					} else if (scheme != "ldap") checkResult |= LinphoneLdapCheckServerNotLdap;
+				}
+				sal_address_unref(addr);
 			}
-			sal_address_unref(addr);
 		}
 	}
 	return checkResult;

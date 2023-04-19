@@ -26,69 +26,105 @@
 LINPHONE_BEGIN_NAMESPACE
 
 static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys = {
-    {"timeout", LdapConfigKeys("5")},
-    {"max_results", LdapConfigKeys("5")},
-    {"min_chars", LdapConfigKeys("0")},
-    {"delay", LdapConfigKeys("500")},
-    {"auth_method", LdapConfigKeys(Utils::toString((int)LinphoneLdapAuthMethodSimple))},
-    {"password", LdapConfigKeys("")},
-    {"bind_dn", LdapConfigKeys("")},
-    {"base_object", LdapConfigKeys("dc=example,dc=com", TRUE)},
-    {"server", LdapConfigKeys("ldap:///", TRUE)},
-    {"filter", LdapConfigKeys("(sn=*%s*)")},
-    {"name_attribute", LdapConfigKeys("sn")},
-    {"sip_attribute", LdapConfigKeys("mobile,telephoneNumber,homePhone,sn")},
-    {"sip_domain", LdapConfigKeys("")},
-    {"enable", LdapConfigKeys("0")},
-    {"use_sal", LdapConfigKeys("0")},
-    {"use_tls", LdapConfigKeys("1")},
-    {"debug", LdapConfigKeys(Utils::toString((int)LinphoneLdapDebugLevelOff))},
-    {"verify_server_certificates",
-     LdapConfigKeys(
-         Utils::toString((int)LinphoneLdapCertVerificationDefault))} // -1:auto from core, 0:deactivate, 1:activate
+    {"timeout", LdapConfigKeys("5", '\0', false)},
+    {"timeout_tls_ms", LdapConfigKeys("1000", '\0', false)},
+    {"max_results", LdapConfigKeys("5", '\0', false)},
+    {"min_chars", LdapConfigKeys("0", '\0', false)},
+    {"delay", LdapConfigKeys("500", '\0', false)},
+    {"auth_method", LdapConfigKeys(Utils::toString((int)LinphoneLdapAuthMethodSimple), '\0', false)},
+    {"password", LdapConfigKeys("", '\0', false)},
+    {"bind_dn", LdapConfigKeys("", '\0', false)},
+    {"base_object", LdapConfigKeys("dc=example,dc=com", '\0', true)},
+    {"server", LdapConfigKeys("ldap:///", ',', true)},
+    {"filter", LdapConfigKeys("(sn=*%s*)", '\0', false)},
+    {"name_attribute", LdapConfigKeys("sn", ',', false)},
+    {"sip_attribute", LdapConfigKeys("mobile,telephoneNumber,homePhone,sn", ',', false)},
+    {"sip_domain", LdapConfigKeys("", '\0', false)},
+    {"enable", LdapConfigKeys("0", '\0', false)},
+    {"use_sal", LdapConfigKeys("0", '\0', false)},
+    {"use_tls", LdapConfigKeys("1", '\0', false)},
+    {"debug", LdapConfigKeys(Utils::toString((int)LinphoneLdapDebugLevelOff), '\0', false)},
+    {"verify_server_certificates",LdapConfigKeys(Utils::toString((int)LinphoneLdapCertVerificationDefault), '\0', false)} // -1:auto from core, 0:deactivate, 1:activate
 };
 
-LdapConfigKeys::LdapConfigKeys(const std::string &pValue, const bool_t &pRequired)
-    : value(pValue), required(pRequired) {
+LdapConfigKeys::LdapConfigKeys(const std::string &value, const char separator, const bool required)
+    : mValue(value), mSeparator(separator), mRequired(required) {
 }
 
-std::vector<std::string> LdapConfigKeys::split(const std::string &pValue) {
+LdapConfigKeys LdapConfigKeys::getConfigKeys(const std::string &key){
+	return gLdapConfigKeys.count(key)>0 ? gLdapConfigKeys.at(key) : LdapConfigKeys();
+}
+
+std::vector<std::string> LdapConfigKeys::split(const std::string& key, const std::string &values) {
+	auto configKeys = getConfigKeys(key);
+	char separator = configKeys.mSeparator;
+	if(separator == '\0')
+		return std::vector<std::string>{values};
 	std::vector<std::string> tokens;
-	std::istringstream iss(pValue);
+	std::istringstream iss(values);
 	std::string s;
-	while (std::getline(iss, s, ',')) {
+	while (std::getline(iss, s, separator)) {
 		tokens.push_back(s);
 	}
 	return tokens;
 }
 
-bool_t LdapConfigKeys::validConfig(const std::map<std::string, std::string> &config) {
-	bool_t valid = TRUE;
+std::string LdapConfigKeys::join(const std::string& key, const std::vector<std::string> &values) {
+	auto configKeys = getConfigKeys(key);
+	char separator = configKeys.mSeparator;
+	if(separator == '\0')
+		return values[0];
+	std::string value = values[0];
+	for(size_t i = 1 ; i < values.size() ; ++i)
+		value.append(separator + values[i]);
+	return value;
+}
+
+bool LdapConfigKeys::validConfig(const std::map<std::string, std::vector<std::string>> &config) {
+	bool valid = true;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it)
-		if (it->second.required && config.count(it->first) <= 0) {
+		if (it->second.mRequired && config.count(it->first) <= 0) {
 			ms_error("[LDAP] : Missing LDAP config value for '%s'", it->first.c_str());
-			valid = FALSE;
+			valid = false;
 		}
 	return valid;
 }
 
-std::map<std::string, std::string> LdapConfigKeys::loadConfig(const std::map<std::string, std::string> &config,
-                                                              std::vector<std::string> *pNameAttributes,
-                                                              std::vector<std::string> *pSipAttributes,
-                                                              std::vector<std::string> *pAttributes) {
-	std::map<std::string, std::string> finalConfig;
+bool LdapConfigKeys::validConfig(const std::map<std::string, std::string> &config) {
+	bool valid = true;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it)
-		finalConfig[it->first] = (config.count(it->first) > 0 ? config.at(it->first) : it->second.value);
-	if (pNameAttributes) *pNameAttributes = LdapConfigKeys::split(finalConfig["name_attribute"]);
-	if (pSipAttributes) *pSipAttributes = LdapConfigKeys::split(finalConfig["sip_attribute"]);
-	// Get first array and then keep only unique
-	if (pAttributes) {
-		*pAttributes = *pNameAttributes;
-		for (auto it = pSipAttributes->begin(); it != pSipAttributes->end(); ++it)
-			if (std::find(pAttributes->begin(), pAttributes->end(), *it) == pAttributes->end())
-				pAttributes->push_back(*it);
+		if (it->second.mRequired && config.count(it->first) <= 0) {
+			ms_error("[LDAP] : Missing LDAP config value for '%s'", it->first.c_str());
+			valid = false;
+		}
+	return valid;
+}
+
+std::unordered_set<std::string> LdapConfigKeys::getUniqueAttributes(const std::map<std::string, std::vector<std::string>> &splittedConfig, const std::vector<std::string> &keys){
+	std::unordered_set<std::string> result;
+	for(auto it = keys.begin() ; it != keys.end() ; ++it){
+		if(splittedConfig.count(*it) > 0){
+			const std::vector<std::string> &values = splittedConfig.at(*it);
+			for(size_t i = 0 ; i < values.size() ; ++i)
+				result.insert(values[i]);
+		}
+	}
+	return result;
+}
+
+std::map<std::string, std::vector<std::string>> LdapConfigKeys::loadConfig(const std::map<std::string, std::vector<std::string>> &config) {
+	std::map<std::string, std::vector<std::string>> finalConfig;
+	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
+		finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : LdapConfigKeys::split(it->first,it->second.mValue);
 	}
 	return finalConfig;
 }
 
+std::map<std::string, std::string> LdapConfigKeys::loadConfig(const std::map<std::string, std::string> &config) {
+	std::map<std::string, std::string> finalConfig;
+	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
+		finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : it->second.mValue;
+	}
+	return finalConfig;
+}
 LINPHONE_END_NAMESPACE

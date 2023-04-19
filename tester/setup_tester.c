@@ -80,7 +80,7 @@ _create_call_log(LinphoneCore *lc, LinphoneAddress *addrFrom, LinphoneAddress *a
 }
 
 static LinphoneLdap *
-_create_default_ldap_server(LinphoneCoreManager *manager, BCTBX_UNUSED(const char *password), const char *bind_dn) {
+_create_default_ldap_server(LinphoneCoreManager *manager, BCTBX_UNUSED(const char *password), const char *bind_dn, const bool_t test_fallback) {
 	LinphoneLdap *ldap = NULL;
 	if (linphone_core_ldap_available(manager->lc)) {
 		// 1) Create LDAP params and set values
@@ -90,10 +90,14 @@ _create_default_ldap_server(LinphoneCoreManager *manager, BCTBX_UNUSED(const cha
 		linphone_ldap_params_set_bind_dn(params, bind_dn);
 		// Defaults
 		linphone_ldap_params_set_timeout(params, 10);
+		linphone_ldap_params_set_timeout_tls_ms(params, 999);
 		linphone_ldap_params_set_max_results(params, 50);
 		linphone_ldap_params_set_auth_method(params, LinphoneLdapAuthMethodSimple);
 		linphone_ldap_params_set_base_object(params, "dc=bc,dc=com");
-		linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");
+		if(test_fallback)
+			linphone_ldap_params_set_server(params, "ldap:///,ldap://unknwown.example.org://sipv4-nat64.example.org,ldap://srv-ldap.example.org/");
+		else
+			linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");
 		linphone_ldap_params_set_filter(params, "(sn=*%s*)");
 		linphone_ldap_params_set_name_attribute(params, "sn");
 		linphone_ldap_params_set_sip_attribute(params, "mobile,telephoneNumber,homePhone,sn");
@@ -1557,7 +1561,7 @@ static void search_friend_with_presence(void) {
 	LinphonePresenceModel *chloePresence = linphone_core_create_presence_model(manager->lc);
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(manager->lc);
 
-	LinphoneLdap *ldap = _create_default_ldap_server(manager, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com");
+	LinphoneLdap *ldap = _create_default_ldap_server(manager, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com", FALSE);
 
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
@@ -2269,12 +2273,13 @@ static void search_friend_get_capabilities(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-static void search_friend_chat_room_remote(void) {
+
+static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallback) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneLdap *ldap = _create_default_ldap_server(marie, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com");
+	LinphoneLdap *ldap = _create_default_ldap_server(marie, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com", check_ldap_fallback);
 
 	LinphoneChatRoom *room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	BC_ASSERT_PTR_NOT_NULL(room);
@@ -2320,6 +2325,14 @@ static void search_friend_chat_room_remote(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void search_friend_chat_room_remote(void) {
+	search_friend_chat_room_remote_with_fallback(FALSE);
+}
+
+static void search_friend_chat_room_remote_ldap_fallback(void) {
+	search_friend_chat_room_remote_with_fallback(TRUE);
 }
 
 static void search_friend_non_default_list(void) {
@@ -2497,7 +2510,7 @@ static void check_results(LinphoneCoreManager *manager, bctbx_list_t *resultList
 	bctbx_list_t *currentResult = resultList;
 	for (int count = 0; count < 12; ++count) {
 		if (linphone_core_ldap_available(manager->lc) || (sources[count] != LinphoneMagicSearchSourceLdapServers)) {
-			if ((sources[count] & sourceFlags) != LinphoneMagicSearchSourceNone) {
+			if (currentResult && (sources[count] & sourceFlags) != LinphoneMagicSearchSourceNone) {
 				_check_friend_result_list(manager->lc, resultList, ++resultIndex, sortredAddresses[count],
 				                          NULL); // Friend must be expected at this place
 				BC_ASSERT_NOT_EQUAL(
@@ -2586,7 +2599,7 @@ static void prepare_friends(LinphoneCoreManager *manager, LinphoneLdap **ldap) {
 	linphone_chat_room_unref(chat_room);
 
 	// 4) LDAP
-	*ldap = _create_default_ldap_server(manager, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com");
+	*ldap = _create_default_ldap_server(manager, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com", FALSE);
 	if (*ldap) {
 		LinphoneLdapParams *params = linphone_ldap_params_clone(linphone_ldap_get_params(*ldap));
 		linphone_ldap_params_set_debug_level(params, LinphoneLdapDebugLevelOff);
@@ -2745,6 +2758,7 @@ static void ldap_search(void) {
 		linphone_ldap_params_unref(params);
 	}
 
+
 	// Test star characters (not wild)
 	linphone_magic_search_get_contacts_list_async(magicSearch, "*", "", LinphoneMagicSearchSourceLdapServers,
 	                                              LinphoneMagicSearchAggregationNone);
@@ -2777,6 +2791,7 @@ static void ldap_search(void) {
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	
 
 	linphone_magic_search_get_contacts_list_async(magicSearch, "ine**", "", LinphoneMagicSearchSourceLdapServers,
 	                                              LinphoneMagicSearchAggregationNone);
@@ -2785,6 +2800,8 @@ static void ldap_search(void) {
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	
+	
 
 	// Test space character
 	linphone_magic_search_get_contacts_list_async(magicSearch, "la dy", "", LinphoneMagicSearchSourceLdapServers,
@@ -2862,7 +2879,7 @@ static void ldap_params_edition_with_check(void) {
 		const char *password = "secret";
 		const char *bind_dn = "cn=Marie Laroueverte,ou=people,dc=bc,dc=com";
 
-		LinphoneLdap *ldap = _create_default_ldap_server(manager, password, bind_dn);
+		LinphoneLdap *ldap = _create_default_ldap_server(manager, password, bind_dn, FALSE);
 		LinphoneLdapParams *params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
 		BC_ASSERT_TRUE(linphone_ldap_params_check(params) == LinphoneLdapCheckOk);
 
@@ -2910,6 +2927,7 @@ static void ldap_params_edition_with_check(void) {
 			const LinphoneLdapParams *const_params = linphone_ldap_get_params(ldap);
 
 			BC_ASSERT_EQUAL(linphone_ldap_params_get_timeout(const_params), 10, int, "%d");
+			BC_ASSERT_EQUAL(linphone_ldap_params_get_timeout_tls_ms(const_params), 999, int, "%d");
 			BC_ASSERT_EQUAL(linphone_ldap_params_get_max_results(const_params), 50, int, "%d");
 			BC_ASSERT_EQUAL(linphone_ldap_params_get_auth_method(const_params), LinphoneLdapAuthMethodSimple, int,
 			                "%d");
@@ -3453,6 +3471,7 @@ test_t setup_tests[] = {
     TEST_ONE_TAG("Search friend in large friends database", search_friend_large_database, "MagicSearch"),
     TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
     TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
+    TEST_ONE_TAG("Search friend result chat room remote ldap fallback", search_friend_chat_room_remote_ldap_fallback, "MagicSearch"),
     TEST_ONE_TAG("Search friend in non default friend list", search_friend_non_default_list, "MagicSearch"),
     TEST_ONE_TAG("Async search friend in sources", async_search_friend_in_sources, "MagicSearch"),
     TEST_ONE_TAG("Ldap search", ldap_search, "MagicSearch"),

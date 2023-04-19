@@ -64,7 +64,7 @@ void linphone_ldap_params_set_server(LinphoneLdapParams *params, const char *ser
 }
 
 const char *linphone_ldap_params_get_server(const LinphoneLdapParams *params) {
-	return LdapParams::toCpp(params)->getServer().c_str();
+	return L_STRING_TO_C(LdapParams::toCpp(params)->getServer());
 }
 
 /*************************************************************************************/
@@ -83,7 +83,7 @@ void linphone_ldap_params_set_base_object(LinphoneLdapParams *params, const char
 }
 
 const char *linphone_ldap_params_get_base_object(const LinphoneLdapParams *params) {
-	return LdapParams::toCpp(params)->getBaseObject().c_str();
+	return L_STRING_TO_C(LdapParams::toCpp(params)->getBaseObject());
 }
 
 /*************************************************************************************/
@@ -94,6 +94,14 @@ void linphone_ldap_params_set_timeout(LinphoneLdapParams *params, int timeout) {
 
 int linphone_ldap_params_get_timeout(const LinphoneLdapParams *params) {
 	return LdapParams::toCpp(params)->getTimeout();
+}
+
+void linphone_ldap_params_set_timeout_tls_ms(LinphoneLdapParams *params, int timeout) {
+	LdapParams::toCpp(params)->setTimeoutTlsMs(timeout);
+}
+
+int linphone_ldap_params_get_timeout_tls_ms(const LinphoneLdapParams *params) {
+	return LdapParams::toCpp(params)->getTimeoutTlsMs();
 }
 /*************************************************************************************/
 

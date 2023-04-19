@@ -25,13 +25,14 @@
 
 #include <map>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 LINPHONE_BEGIN_NAMESPACE
 
 class LdapConfigKeys {
 public:
-	LdapConfigKeys(const std::string &pValue, const bool_t &pRequired = FALSE);
+	LdapConfigKeys(const std::string &pValue = "", const char pSeparator = '\0', const bool pRequired = false);
 
 	/**
 	 *  Manage Configurations.
@@ -48,6 +49,8 @@ public:
 	 *performed against the entry specified as the search base DN. No entries above it will be considered.
 	 *   - "timeout" : "5".
 	 * Timeout in seconds
+	 *   - "timeout_tls_ms" : "1000".
+	 * Timeout in milliseconds
 	 *   - "min_chars" : "0"
 	 * The minimum characters needed for doing a search.
 	 *   - "max_results" : "5".
@@ -84,19 +87,40 @@ public:
 	 * Specify whether the tls server certificate must be verified when connecting to a LDAP server.
 	 **/
 
-	std::string value;
+	std::string mValue;
+	
+	/**
+	 *	Specify the separator character if splittable. Use null character ('\0') to disable the feature.
+	 **/
+	char mSeparator;
 
 	/**
 	 *	Specify if this value is required for the configuration.
 	 **/
-	bool_t required;
+	bool mRequired;
 
 	/**
-	 * Split a string into an array of token using ',' separator
+	 * Get the default LdapConfigKeys from key.
+	 * @param key the key configuration.
+	 * @return The associated LdapConfigKeys
+	**/
+	static LdapConfigKeys getConfigKeys(const std::string &key);
+
+	/**
+	 * Split a string into an array of token using ',' separator if it is not defined by config key.
+	 * @param key the key configuration that is used to retrieve separator from keys list.
 	 * @param value The string to split
 	 * @return An array of string
 	 **/
-	static std::vector<std::string> split(const std::string &value);
+	static std::vector<std::string> split(const std::string &key, const std::string &value);
+	
+	/**
+	 * Join an array of string into a string using ',' separator by default or the separator coming from config key.
+	 * @param key the key configuration that is used to retrieve separator from keys list.
+	 * @param value The string to join
+	 * @return the joined string.
+	 **/
+	static std::string join(const std::string &key, const std::vector<std::string> &pValues);
 
 	/**
 	 * Load a full configuration from an existant. The return value is the config with default value and a parsing is
@@ -104,21 +128,26 @@ public:
 	 * @param config The configuration <name,value>
 	 * @return If the configuration is valid. @notnil
 	 **/
-	static bool_t validConfig(const std::map<std::string, std::string> &config);
+	static bool validConfig(const std::map<std::string, std::vector<std::string>> &config);
+	static bool validConfig(const std::map<std::string, std::string> &config);
+	
+	/**
+	 * Parse Ldap configuration coming from loadConfig to retrieve all keys and return all unique attributes.
+	 * @param splittedConfig The configuration <name,<value>>
+	 * @param keys Keys to check
+	 * @return The unique attributes
+	 **/
+	std::unordered_set<std::string> getUniqueAttributes(const std::map<std::string, std::vector<std::string>> &splittedConfig, const std::vector<std::string> &keys);
+	
 	/**
 	 * Load a full configuration from an existant. The return value is the config with default value and a parsing is
 	 *done to give attributes arrays.
 	 * @param config The configuration <name,value>
-	 * @param nameAttributes All values attributes from 'name_attribute' key
-	 * @param sipAttributes All values attributes from 'sip_attribute' key
-	 * @param attributes All unique attributes from keys'name_attribute' and 'sip_attribute' both
-	 * @return The configuration map keys. @notnil
+	 * @return The configuration map keys.
 	 **/
-	static std::map<std::string, std::string>
-	loadConfig(const std::map<std::string, std::string> &config = std::map<std::string, std::string>(),
-	           std::vector<std::string> *nameAttributes = nullptr,
-	           std::vector<std::string> *sipAttributes = nullptr,
-	           std::vector<std::string> *attributes = nullptr);
+	static std::map<std::string, std::vector<std::string> > loadConfig(const std::map<std::string, std::vector<std::string>> &config = std::map<std::string, std::vector<std::string>>());
+	static std::map<std::string, std::string> loadConfig(const std::map<std::string, std::string> &config);
+	
 };
 LINPHONE_END_NAMESPACE
 

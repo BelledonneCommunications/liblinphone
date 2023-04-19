@@ -683,11 +683,12 @@ _linphone_friend_list_add_friend(LinphoneFriendList *list, LinphoneFriend *lf, b
 	}
 
 	addr = linphone_friend_get_address(lf);
-	if (addr == NULL && linphone_friend_get_vcard(lf) == NULL && linphone_friend_get_phone_numbers(lf) == NULL) {
+	bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers(lf);	//linphone_friend_get_phone_numbers make a copy of phones. We have to delete them later
+	if (addr == NULL && linphone_friend_get_vcard(lf) == NULL && phone_numbers== NULL) {
 		ms_error("linphone_friend_list_add_friend(): invalid friend, no vCard, SIP URI or phone number");
 		return status;
 	}
-
+	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, bctbx_free);
 	bool_t present = FALSE;
 	if (lf->refkey) {
 		present = linphone_friend_list_find_friend_by_ref_key(list, lf->refkey) != NULL;
@@ -813,7 +814,7 @@ _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf
 		}
 		iterator = bctbx_list_next(iterator);
 	}
-	if (phone_numbers) bctbx_list_free(phone_numbers);
+	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, bctbx_free);
 
 	addresses = linphone_friend_get_addresses(lf);
 	iterator = (bctbx_list_t *)addresses;
