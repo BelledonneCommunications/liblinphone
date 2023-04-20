@@ -51,6 +51,7 @@ typedef struct _AlertCallbackData {
 } AlertCallbackData;
 
 static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy *policy, const char *name) {
+	disable_all_video_codecs_except_one(lc, "VP8");
 
 	linphone_core_set_video_device(lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_enable_video_capture(lc, TRUE);

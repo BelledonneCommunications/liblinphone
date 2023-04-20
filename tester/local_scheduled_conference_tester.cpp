@@ -1724,6 +1724,8 @@ static void change_active_speaker(void) {
 				linphone_video_activation_policy_unref(pol);
 			}
 
+			disable_all_video_codecs_except_one(mgr->lc, "VP8");
+
 			linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
 			linphone_core_enable_video_capture(mgr->lc, TRUE);
 			linphone_core_enable_video_display(mgr->lc, TRUE);

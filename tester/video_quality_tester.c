@@ -126,6 +126,9 @@ static void video_call_with_thin_congestion(void) {
 	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = {0};
 
+	disable_all_video_codecs_except_one(marie->lc, "VP8");
+	disable_all_video_codecs_except_one(pauline->lc, "VP8");
+
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -201,6 +204,9 @@ static void video_call_with_high_bandwidth_available(void) {
 	OrtpNetworkSimulatorParams simparams = {0};
 	LinphoneCoreCbs *core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 
+	disable_all_video_codecs_except_one(marie->lc, "VP8");
+	disable_all_video_codecs_except_one(pauline->lc, "VP8");
+
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -243,6 +249,9 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int f
 	OrtpNetworkSimulatorParams simparams = {0};
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
+		disable_all_video_codecs_except_one(marie->lc, "VP8");
+		disable_all_video_codecs_except_one(pauline->lc, "VP8");
+
 		linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 		linphone_core_enable_video_capture(marie->lc, TRUE);
 		linphone_core_enable_video_display(marie->lc, TRUE);
@@ -669,6 +678,9 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 	linphone_core_enable_retransmission_on_nack(marie->lc, TRUE);
 	linphone_core_enable_retransmission_on_nack(pauline->lc, TRUE);
 
+	disable_all_video_codecs_except_one(marie->lc, "VP8");
+	disable_all_video_codecs_except_one(pauline->lc, "VP8");
+
 	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -826,6 +838,8 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore *c = (LinphoneCore *)bctbx_list_get_data(it);
 		linphone_core_set_video_activation_policy(c, pol);
+
+		disable_all_video_codecs_except_one(c, "VP8");
 
 		linphone_core_set_video_device(c, liblinphone_tester_mire_id);
 		linphone_core_enable_video_capture(c, TRUE);

@@ -2714,6 +2714,7 @@ static void linphone_core_register_default_codecs(LinphoneCore *lc) {
 
 #ifdef VIDEO_ENABLED
 	/*default enabled video codecs, in order of preference*/
+	linphone_core_register_payload_type(lc, &payload_type_av1, NULL, TRUE);
 	linphone_core_register_payload_type(lc, &payload_type_vp8, NULL, TRUE);
 	linphone_core_register_payload_type(lc, &payload_type_h264, "profile-level-id=42801F", TRUE);
 	linphone_core_register_payload_type(lc, &payload_type_h265, NULL, TRUE);

@@ -110,6 +110,9 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 		disable_all_audio_codecs(pauline->lc);
 	}
 
+	disable_all_video_codecs_except_one(marie->lc, "VP8");
+	disable_all_video_codecs_except_one(pauline->lc, "VP8");
+
 	enable_video_stream(marie->lc, pol);
 	enable_video_stream(pauline->lc, pol);
 

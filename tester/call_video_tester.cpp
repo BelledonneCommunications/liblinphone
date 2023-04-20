@@ -1001,6 +1001,9 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
 	}
 
+	disable_all_video_codecs_except_one(callee->lc, "VP8");
+	disable_all_video_codecs_except_one(caller->lc, "VP8");
+
 	linphone_core_enable_video_display(callee->lc, TRUE);
 	linphone_core_enable_video_capture(callee->lc, TRUE);
 	LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(callee->lc);
@@ -2638,6 +2641,9 @@ static void call_with_video_mkv_file_player(void) {
 		ms_warning("Test skipped, no opus or VP8 support.");
 		goto end;
 	}
+
+	disable_all_video_codecs_except_one(marie->lc, "VP8");
+	disable_all_video_codecs_except_one(pauline->lc, "VP8");
 
 	linphone_core_set_video_device(
 	    marie->lc,
