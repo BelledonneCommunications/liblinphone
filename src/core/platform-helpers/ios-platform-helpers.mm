@@ -502,7 +502,6 @@ void IosPlatformHelpers::kickOffConnectivity() {
 			static useconds_t sleep_us = 10000;
 			static int timeout_s = 5;
 			bool timeout_reached = FALSE;
-			int loop = 0;
 			CFWriteStreamRef writeStream;
 			CFStreamCreatePairWithSocketToHost(NULL, (CFStringRef) @"192.168.0.200" /*"linphone.org"*/, 15000, nil,
 							   &writeStream);
@@ -528,7 +527,6 @@ void IosPlatformHelpers::kickOffConnectivity() {
 					timeout_reached = false;
 					break;
 				}
-				loop++;
 			}
 
 			if (status == kCFStreamStatusOpen) {
