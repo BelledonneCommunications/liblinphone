@@ -325,7 +325,17 @@ JNIEXPORT jobject JNICALL get{{className}}(JNIEnv *env, {{classCName}} *cptr, bo
 				{{#refCountable}}{{cPrefix}}_ref(cptr);{{/refCountable}}
 			}
 		} else {
-			jobj = env->NewLocalRef((jobject)up);
+			try {
+				jobj = env->NewLocalRef((jobject)up);
+				if (env->ExceptionCheck()) {
+					env->ExceptionDescribe();
+					env->ExceptionClear();
+					jobj = nullptr;
+				}
+			} catch (...) {
+				bctbx_warning("get{{className}}(): Exception trying to get local ref from pointer [%p], creating new object instead", up);
+			}
+
 			if (jobj == nullptr) {
 				// Delete weak ref ?
 				env->DeleteWeakGlobalRef((jobject)up);
