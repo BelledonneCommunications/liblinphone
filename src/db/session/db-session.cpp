@@ -291,6 +291,9 @@ unsigned int DbSession::getUnsignedInt(const soci::row &row, const std::size_t c
 time_t DbSession::getTime(const soci::row &row, int col) const {
 	L_D();
 
+	if (row.get_indicator(size_t(col)) == soci::i_null) {
+		return 0;
+	}
 	tm t = row.get<tm>((size_t)col);
 	switch (d->backend) {
 		case DbSessionPrivate::Backend::Mysql:
@@ -304,6 +307,13 @@ time_t DbSession::getTime(const soci::row &row, int col) const {
 
 	L_ASSERT(false);
 	return 0;
+}
+
+pair<tm, soci::indicator> DbSession::getTimeWithSociIndicator(time_t t) {
+	auto dateTime = Utils::getTimeTAsTm(t);
+	auto indicator = (t == 0) ? soci::i_null : soci::i_ok;
+	pair<tm, soci::indicator> dataInDb(dateTime, indicator);
+	return dataInDb;
 }
 
 LINPHONE_END_NAMESPACE

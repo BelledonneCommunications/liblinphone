@@ -1819,12 +1819,13 @@ static void group_chat_room_with_client_restart_base(bool encrypted) {
 		    coresList, michelle.getCMgr(), &initialMichelleStats, confAddr, initialSubject, 1, FALSE);
 
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, michelle}).wait([&focus] {
-			for (auto chatRoom : focus.getCore().getChatRooms()) {
-				for (auto participant : chatRoom->getParticipants()) {
-					for (auto device : participant->getDevices())
+			for (const auto &chatRoom : focus.getCore().getChatRooms()) {
+				for (const auto &participant : chatRoom->getParticipants()) {
+					for (const auto &device : participant->getDevices()) {
 						if (device->getState() != ParticipantDevice::State::Present) {
 							return false;
 						}
+					}
 				}
 			}
 			return true;
@@ -1850,13 +1851,13 @@ static void group_chat_room_with_client_restart_base(bool encrypted) {
 
 		ClientConference michelle2("michelle_rc", focus.getIdentity(), encrypted);
 		stats initialMichelle2Stats = michelle2.getStats();
+		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		if (encrypted) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_X3dhUserCreationSuccess,
 			                             initialMichelle2Stats.number_of_X3dhUserCreationSuccess + 1,
 			                             x3dhServer_creationTimeout));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
 		}
-		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		focus.registerAsParticipantDevice(michelle2);
 
 		bctbx_list_t *devices = NULL;
@@ -1881,6 +1882,7 @@ static void group_chat_room_with_client_restart_base(bool encrypted) {
 
 		LinphoneChatRoom *michelle2Cr = check_creation_chat_room_client_side(
 		    coresList, michelle2.getCMgr(), &initialMichelle2Stats, confAddr, newSubject, 1, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(michelle2Cr);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated,
 		                             initialMichelle2Stats.number_of_LinphoneConferenceStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
@@ -1962,7 +1964,7 @@ static void group_chat_room_with_client_restart_base(bool encrypted) {
 		ms_message("%s is restarting its core", linphone_address_as_string(michelle2Contact));
 		linphone_address_unref(michelle2Contact);
 		coresList = bctbx_list_remove(coresList, michelle2.getLc());
-		// Restart flexisip
+		// Restart michelle
 		michelle2.reStart();
 		michelle2.setupMgrForConference();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());

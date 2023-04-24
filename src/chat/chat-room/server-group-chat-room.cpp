@@ -334,6 +334,8 @@ void ServerGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
 			 * that will later populate the chatroom*/
 		} else if (rejectSession) {
+			lInfo() << "Reject session because admin device " << *device->getAddress()
+			        << " has already an established session";
 			op->decline(SalReasonDeclined, "");
 		} else {
 			/* after creation, only changes to the subject and ephemeral settings are allowed*/
@@ -343,6 +345,8 @@ void ServerGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 		}
 	} else {
 		if (rejectSession) {
+			lInfo() << "Reject session because device " << *device->getAddress()
+			        << " has already an established session";
 			op->decline(SalReasonDeclined, "");
 		} else {
 			/*it is a non-admin participant that reconnected to the chatroom*/

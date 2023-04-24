@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <memory>
+#include <utility>
 
 #include "linphone/utils/enum-mask.h"
 
