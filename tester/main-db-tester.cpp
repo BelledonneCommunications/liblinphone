@@ -44,12 +44,20 @@ public:
 	MainDbProvider (const char *db_file) {
 		mCoreManager = linphone_core_manager_create("empty_rc");
 		char *roDbPath = bc_tester_res(db_file);
-		char *rwDbPath = bc_tester_file("linphone.db");
+		char *rwDbPath = bc_tester_file(core_db);
 		BC_ASSERT_FALSE(liblinphone_tester_copy_file(roDbPath, rwDbPath));
 		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "storage", "uri", rwDbPath);
 		bc_free(roDbPath);
 		bc_free(rwDbPath);
 		linphone_core_manager_start(mCoreManager, false);
+	}
+
+	void reStart(bool check_for_proxies = TRUE) {
+		linphone_core_manager_reinit(mCoreManager);
+		char *rwDbPath = bc_tester_file(core_db);
+		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "storage", "uri", rwDbPath);
+		bc_free(rwDbPath);
+		linphone_core_manager_start(mCoreManager, check_for_proxies);
 	}
 
 	~MainDbProvider () {
@@ -62,6 +70,7 @@ public:
 
 private:
 	LinphoneCoreManager *mCoreManager;
+	const char *core_db = "linphone.db";
 };
 
 // -----------------------------------------------------------------------------
@@ -189,6 +198,61 @@ static void get_conference_notified_events (void) {
 	}
 }
 
+static void set_get_conference_info() {
+	MainDbProvider provider;
+	MainDb &mainDb = provider.getMainDb();
+	ConferenceAddress confAddr(ConferenceAddress("sip:test-1@sip.linphone.org;conf-id=abaaa"));
+	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
+	info->setOrganizer(IdentityAddress("sip:test-47@sip.linphone.org"));
+	info->addParticipant(IdentityAddress("sip:test-11@sip.linphone.org"));
+	info->addParticipant(IdentityAddress("sip:test-44@sip.linphone.org"));
+	info->setUri(confAddr);
+	info->setDateTime(1682770620);
+	info->setDuration(0);
+	mainDb.insertConferenceInfo(info);
+
+	ConferenceAddress confAddr2(ConferenceAddress("sip:test-1@sip.linphone.org;conf-id=abbbb"));
+	std::shared_ptr<ConferenceInfo> info2 = ConferenceInfo::create();
+	info2->setOrganizer(IdentityAddress("sip:test-47@sip.linphone.org"));
+	info2->addParticipant(IdentityAddress("sip:test-11@sip.linphone.org"));
+	info2->addParticipant(IdentityAddress("sip:test-44@sip.linphone.org"));
+	info2->setUri(confAddr2);
+	info2->setDateTime(0);
+	info2->setDuration(0);
+	mainDb.insertConferenceInfo(info2);
+
+	provider.reStart();
+	MainDb& mainDb2 = provider.getMainDb();
+
+	std::shared_ptr<ConferenceInfo> retrievedInfo = mainDb2.getConferenceInfoFromURI (confAddr);
+	BC_ASSERT_PTR_NOT_NULL(retrievedInfo);
+	if (retrievedInfo) {
+		BC_ASSERT_EQUAL(1682770620, (long long)retrievedInfo->getDateTime(), long long, "%lld");
+		BC_ASSERT_EQUAL((long long)info->getDateTime(), (long long)retrievedInfo->getDateTime(), long long, "%lld");
+	}
+
+	std::shared_ptr<ConferenceInfo> retrievedInfo2 = mainDb2.getConferenceInfoFromURI (confAddr2);
+	BC_ASSERT_PTR_NOT_NULL(retrievedInfo2);
+	if (retrievedInfo2) {
+		BC_ASSERT_EQUAL((long long)info2->getDateTime(), (long long)retrievedInfo2->getDateTime(), long long, "%lld");
+		BC_ASSERT_EQUAL(0, (long long)retrievedInfo2->getDateTime(), long long, "%lld");
+	}
+
+	ConferenceAddress confAddr3(ConferenceAddress("sip:test-1@sip.linphone.org;conf-id=abcd"));
+	std::shared_ptr<ConferenceInfo> retrievedInfo3 = mainDb2.getConferenceInfoFromURI (confAddr3);
+	BC_ASSERT_PTR_NOT_NULL(retrievedInfo3);
+	if (retrievedInfo3) {
+		BC_ASSERT_EQUAL(1682770620, (long long)retrievedInfo3->getDateTime(), long long, "%lld");
+	}
+
+	ConferenceAddress confAddr4(ConferenceAddress("sip:test-1@sip.linphone.org;conf-id=efgh"));
+	std::shared_ptr<ConferenceInfo> retrievedInfo4 = mainDb2.getConferenceInfoFromURI (confAddr4);
+	BC_ASSERT_PTR_NOT_NULL(retrievedInfo4);
+	if (retrievedInfo4) {
+		BC_ASSERT_EQUAL(0, (long long)retrievedInfo4->getDateTime(), long long, "%lld");
+	}
+}
+
 static void get_chat_rooms() {
 	MainDbProvider provider;
 	MainDb &mainDb = provider.getMainDb();
@@ -289,6 +353,7 @@ test_t main_db_tests[] = {
 	TEST_NO_TAG("Get history", get_history),
 	TEST_NO_TAG("Get conference events", get_conference_notified_events),
 	TEST_NO_TAG("Get chat rooms", get_chat_rooms),
+	TEST_NO_TAG("Set/get conference info", set_get_conference_info),
 	TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)
 };
 

@@ -406,15 +406,16 @@ long long MainDbPrivate::insertContentType (const string &contentType) {
 long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
 	long long peerSipAddressId,
 	long long localSipAddressId,
-	const tm &creationTime
+	const time_t& time
 ) {
 #ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 
+	auto creationTime = dbSession.getTimeWithSociIndicator(time);
 	long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
 	if (chatRoomId >= 0) {
 		*session << "UPDATE chat_room SET last_update_time = :lastUpdateTime WHERE id = :chatRoomId",
-			soci::use(creationTime), soci::use(chatRoomId);
+			soci::use(creationTime.first, creationTime.second), soci::use(chatRoomId);
 		return chatRoomId;
 	}
 
@@ -426,7 +427,7 @@ long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
 	*session << "INSERT INTO chat_room ("
 		"  peer_sip_address_id, local_sip_address_id, creation_time, last_update_time, capabilities"
 		") VALUES (:peerSipAddressId, :localSipAddressId, :creationTime, :lastUpdateTime, :capabilities)",
-		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime), soci::use(creationTime),
+		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime.first, creationTime.second), soci::use(creationTime.first, creationTime.second),
 		soci::use(capabilities);
 
 	return dbSession.getLastInsertId();
@@ -457,8 +458,8 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 
 			lInfo() << "Insert new chat room in database: " << conferenceId << ".";
 
-			const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
-			const tm &lastUpdateTime = Utils::getTimeTAsTm(chatRoom->getLastUpdateTime());
+			auto creationTime = dbSession.getTimeWithSociIndicator(chatRoom->getCreationTime());
+			auto lastUpdateTime = dbSession.getTimeWithSociIndicator(chatRoom->getLastUpdateTime());
 
 			// Remove capabilities like `Proxy`.
 			const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
@@ -473,8 +474,8 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			"  :peerSipAddressId, :localSipAddressId, :creationTime,"
 			"  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, :ephemeralEnabled, :ephemeralLifeTime"
 			")",
-			soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
-			soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags),
+			soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime.first, creationTime.second),
+			soci::use(lastUpdateTime.first, lastUpdateTime.second), soci::use(capabilities), soci::use(subject), soci::use(flags),
 			soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime);
 
 			chatRoomId = dbSession.getLastInsertId();
@@ -586,11 +587,11 @@ void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long 
 #ifdef HAVE_DB_STORAGE
 	L_Q();
 	if (q->isInitialized()) {
-		const tm &stateChangeTm = Utils::getTimeTAsTm(stateChangeTime);
+		auto stateChangeTm = dbSession.getTimeWithSociIndicator(stateChangeTime);
 		*dbSession.getBackendSession() <<
 			"INSERT INTO chat_message_participant (event_id, participant_sip_address_id, state, state_change_time)"
 			" VALUES (:chatMessageId, :sipAddressId, :state, :stateChangeTm)",
-			soci::use(chatMessageId), soci::use(sipAddressId), soci::use(state), soci::use(stateChangeTm);
+			soci::use(chatMessageId), soci::use(sipAddressId), soci::use(state), soci::use(stateChangeTm.first, stateChangeTm.second);
 	}
 #endif
 }
@@ -609,7 +610,7 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 	}
 	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizerAddress().asString());
 	const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
-	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
+	auto startTime = dbSession.getTimeWithSociIndicator(conferenceInfo->getDateTime());
 	const unsigned int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getUtf8Subject();
 	const string &description = conferenceInfo->getUtf8Description();
@@ -634,7 +635,7 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 			"  ics_sequence = :sequence,"
 			"  ics_uid = :uid"
 			" WHERE id = :conferenceInfoId",
-			soci::use(organizerSipAddressId), soci::use(startTime), soci::use(duration),
+			soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
 			soci::use(subject), soci::use(description), soci::use(state),
 			soci::use(sequence), soci::use(uid), soci::use(conferenceInfoId);
 	} else {
@@ -645,7 +646,7 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 		") VALUES ("
 		"  :organizerSipAddressId, :uriSipAddressid, :startTime, :duration, :subject, :description, :state, :sequence, :uid"
 		")",
-		soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime),
+		soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime.first, startTime.second),
 		soci::use(duration),  soci::use(subject), soci::use(description), soci::use(state),
 		soci::use(sequence), soci::use(uid);
 
@@ -749,7 +750,7 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 	}
 
 	int duration = callLog->getDuration();
-	const tm &connectedTime = Utils::getTimeTAsTm(callLog->getConnectedTime());
+	auto connectedTime = dbSession.getTimeWithSociIndicator(callLog->getConnectedTime());
 	int status = callLog->getStatus();
 	int videoEnabled = callLog->isVideoEnabled() ? 1 : 0;
 	double quality = static_cast<double>(callLog->getQuality());
@@ -764,7 +765,7 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 		const long long fromSipAddressId = insertSipAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getFromAddress()));
 		const long long toSipAddressId = insertSipAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress()));
 		int direction = static_cast<int>(callLog->getDirection());
-		const tm &startTime = Utils::getTimeTAsTm(callLog->getStartTime());
+		auto startTime = dbSession.getTimeWithSociIndicator(callLog->getStartTime());
 
 		*dbSession.getBackendSession() << "INSERT INTO conference_call ("
 		"  from_sip_address_id, to_sip_address_id, direction, duration, start_time, connected_time, status, video_enabled,"
@@ -773,8 +774,8 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 		"  :fromSipAddressId, :toSipAddressId, :direction, :duration, :startTime, :connectedTime, :status, :videoEnabled,"
 		"  :quality, :callId, :refKey, :conferenceInfoId"
 		")",
-		soci::use(fromSipAddressId), soci::use(toSipAddressId), soci::use(direction), soci::use(duration), soci::use(startTime),
-		soci::use(connectedTime), soci::use(status), soci::use(videoEnabled), soci::use(quality), soci::use(callId),
+		soci::use(fromSipAddressId), soci::use(toSipAddressId), soci::use(direction), soci::use(duration), soci::use(startTime.first, startTime.second),
+		soci::use(connectedTime.first, connectedTime.second), soci::use(status), soci::use(videoEnabled), soci::use(quality), soci::use(callId),
 		soci::use(refKey), soci::use(conferenceInfoId, confInfoInd);
 
 		conferenceCallId = dbSession.getLastInsertId();
@@ -785,7 +786,7 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 		"  duration = :duration, connected_time = :connectedTime, status = :status, video_enabled = :videoEnabled,"
 		"  quality = :quality, call_id = :callId, refkey = :refKey, conference_info_id = :conferenceInfoId"
 		" WHERE id = :conferenceCallId",
-		soci::use(duration), soci::use(connectedTime), soci::use(status), soci::use(videoEnabled), soci::use(quality),
+		soci::use(duration), soci::use(connectedTime.first, connectedTime.second), soci::use(status), soci::use(videoEnabled), soci::use(quality),
 		soci::use(callId), soci::use(refKey), soci::use(conferenceInfoId, confInfoInd),
 		soci::use(conferenceCallId);
 	}
@@ -1335,9 +1336,9 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
 long long MainDbPrivate::insertEvent (const shared_ptr<EventLog> &eventLog) {
 #ifdef HAVE_DB_STORAGE
 	const int &type = int(eventLog->getType());
-	const tm &creationTime = Utils::getTimeTAsTm(eventLog->getCreationTime());
+	auto creationTime = dbSession.getTimeWithSociIndicator(eventLog->getCreationTime());
 	*dbSession.getBackendSession() << "INSERT INTO event (type, creation_time) VALUES (:type, :creationTime)",
-		soci::use(type), soci::use(creationTime);
+		soci::use(type), soci::use(creationTime.first, creationTime.second);
 
 	return dbSession.getLastInsertId();
 #else
@@ -1434,7 +1435,7 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 	const long long &fromSipAddressId = insertSipAddress(chatMessage->getFromAddress().asString());
 	const long long &toSipAddressId = insertSipAddress(chatMessage->getToAddress().asString());
 	const string &forwardInfo = chatMessage->getForwardInfo();
-	const tm &messageTime = Utils::getTimeTAsTm(chatMessage->getTime());
+	auto messageTime = dbSession.getTimeWithSociIndicator(chatMessage->getTime());
 	const int &state = int(chatMessage->getState());
 	const int &direction = int(chatMessage->getDirection());
 	const string &imdnMessageId = chatMessage->getImdnMessageId();
@@ -1463,7 +1464,7 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 		"  :deliveryNotificationRequired, :displayNotificationRequired,"
 		"  :markedAsRead, :forwardInfo, :callId, :replyMessageId, :replyToSipAddressId"
 		")", soci::use(eventId), soci::use(fromSipAddressId), soci::use(toSipAddressId),
-		soci::use(messageTime), soci::use(state), soci::use(direction),
+		soci::use(messageTime.first, messageTime.second), soci::use(state), soci::use(direction),
 		soci::use(imdnMessageId), soci::use(isSecured),
 		soci::use(deliveryNotificationRequired), soci::use(displayNotificationRequired),
 		soci::use(markedAsRead), soci::use(forwardInfo), soci::use(callId),
@@ -1471,12 +1472,12 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 
 	if (isEphemeral) {
 		long ephemeralLifetime = chatMessage->getEphemeralLifetime();
-		const tm &expireTime = Utils::getTimeTAsTm(chatMessage->getEphemeralExpireTime());
+		auto expireTime = dbSession.getTimeWithSociIndicator(chatMessage->getEphemeralExpireTime());
 		*dbSession.getBackendSession() << "INSERT INTO chat_message_ephemeral_event ("
 			"  event_id, ephemeral_lifetime,  expired_time"
 			") VALUES ("
 		"  :eventId, :ephemeralLifetime, :expireTime"
-		")", soci::use(eventId), soci::use(ephemeralLifetime),  soci::use(expireTime);
+		")", soci::use(eventId), soci::use(ephemeralLifetime),  soci::use(expireTime.first);
 	}
 
 	for (const Content *content : chatMessage->getContents())
@@ -1810,12 +1811,11 @@ void MainDbPrivate::setChatMessageParticipantState (
 
 
 	int stateInt = int(state);
-	const tm &stateChangeTm = Utils::getTimeTAsTm(stateChangeTime);
-
+	auto stateChangeTm = dbSession.getTimeWithSociIndicator(stateChangeTime);
 	*dbSession.getBackendSession() << "UPDATE chat_message_participant SET state = :state,"
 		" state_change_time = :stateChangeTm"
 		" WHERE event_id = :eventId AND participant_sip_address_id = :participantSipAddressId",
-		soci::use(stateInt), soci::use(stateChangeTm), soci::use(eventId), soci::use(participantSipAddressId);
+		soci::use(stateInt), soci::use(stateChangeTm.first, stateChangeTm.second), soci::use(eventId), soci::use(participantSipAddressId);
 #endif
 }
 
@@ -1879,7 +1879,6 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	conferenceInfo = ConferenceInfo::create();
 	ConferenceAddress uri(row.get<string>(2));
 	conferenceInfo->setUri(uri);
-
 	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
 	conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 4, 0));
 	conferenceInfo->setUtf8Subject(row.get<string>(5));
@@ -2462,7 +2461,8 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 				continue;
 			}
 
-			const tm &creationTime = Utils::getTimeTAsTm(message.get<int>(LegacyMessageColDate, 0));
+			auto time = message.get<int>(LegacyMessageColDate, 0);
+			auto creationTime = dbSession.getTimeWithSociIndicator(time);
 
 			bool isNull;
 			getValueFromRow<string>(message, LegacyMessageColUrl, isNull);
@@ -2516,7 +2516,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 			soci::session *session = dbSession.getBackendSession();
 			const int &eventType = int(EventLog::Type::ConferenceChatMessage);
 			*session << "INSERT INTO event (type, creation_time) VALUES (:type, :creationTime)",
-				soci::use(eventType), soci::use(creationTime);
+				soci::use(eventType), soci::use(creationTime.first, creationTime.second);
 
 			const long long &eventId = dbSession.getLastInsertId();
 			const long long &localSipAddressId = insertSipAddress(
@@ -2528,7 +2528,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 			const long long &chatRoomId = insertOrUpdateImportedBasicChatRoom(
 				remoteSipAddressId,
 				localSipAddressId,
-				creationTime
+				time
 			);
 			const int &isSecured = message.get<int>(LegacyMessageColIsSecured, 0);
 			const int deliveryNotificationRequired = 0;
@@ -2548,7 +2548,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 				"  :deliveryNotificationRequired, :displayNotificationRequired,"
 				"  1"
 				")", soci::use(eventId), soci::use(localSipAddressId), soci::use(remoteSipAddressId),
-				soci::use(creationTime), soci::use(state), soci::use(direction), soci::use(isSecured),
+				soci::use(creationTime.first, creationTime.second), soci::use(state), soci::use(direction), soci::use(isSecured),
 				soci::use(deliveryNotificationRequired), soci::use(displayNotificationRequired);
 
 			if (content)
@@ -3610,8 +3610,8 @@ void MainDb::updateEphemeralMessageInfos (const long long &eventId, const time_t
 
 	L_DB_TRANSACTION {
 		L_D();
-		const tm &expireTime = Utils::getTimeTAsTm(eTime);
-		*d->dbSession.getBackendSession() << query, soci::use(expireTime), soci::use(eventId);
+		auto expireTime = d->dbSession.getTimeWithSociIndicator(eTime);
+		*d->dbSession.getBackendSession() << query, soci::use(expireTime.first), soci::use(eventId);
 		tr.commit();
 	};
 #endif
@@ -3678,7 +3678,8 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 	return L_DB_TRANSACTION {
 		L_D();
 		list<shared_ptr<ChatMessage>> chatMessages;
-		soci::rowset<soci::row> rows = getBackend() == MainDb::Backend::Sqlite3 ? (d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)),  soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB)) : (d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)));
+		auto epoch = d->dbSession.getTimeWithSociIndicator(0);
+		soci::rowset<soci::row> rows = getBackend() == MainDb::Backend::Sqlite3 ? (d->dbSession.getBackendSession()->prepare << query, soci::use(epoch.first), soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB)) : (d->dbSession.getBackendSession()->prepare << query, soci::use(epoch.first));
 		for (const auto &row : rows) {
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size()-1);
 			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);
@@ -4590,10 +4591,10 @@ void MainDb::updateChatRoomLastUpdatedTime (const ConferenceId &conferenceId, ti
 	L_DB_TRANSACTION {
 		L_D();
 		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-		const tm &lastUpdateTimeTm = Utils::getTimeTAsTm(lastUpdatedTime);
+		auto lastUpdateTimeTm = d->dbSession.getTimeWithSociIndicator(lastUpdatedTime);
 
 		*d->dbSession.getBackendSession() << "UPDATE chat_room SET last_update_time = :lastUpdateTime"
-			" WHERE id = :chatRoomId", soci::use(lastUpdateTimeTm),
+			" WHERE id = :chatRoomId", soci::use(lastUpdateTimeTm.first, lastUpdateTimeTm.second),
 			soci::use(dbChatRoomId);
 
 		tr.commit();
@@ -4808,7 +4809,6 @@ void MainDb::updateChatRoomParticipantDevice (
 	if (isInitialized()) {
 		L_DB_TRANSACTION {
 			L_D();
-
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 			const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
 			const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
@@ -4875,8 +4875,8 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (time_t af
 
 		// We cannot create an empty rowset so each "if" will make one
 		if (afterThisTime > -1) {
-			const tm &startTime = Utils::getTimeTAsTm(afterThisTime);
-			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(startTime));
+			auto startTime = d->dbSession.getTimeWithSociIndicator(afterThisTime);
+			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(startTime.first, startTime.second));
 
 			for (const auto &row : rows) {
 				auto confInfo = d->selectConferenceInfo(row);
@@ -4914,9 +4914,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo (long long conferenceI
 		shared_ptr<ConferenceInfo> confInfo = nullptr;
 
 		soci::session *session = d->dbSession.getBackendSession();
-
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(conferenceInfoId));
-
 		const auto &row = rows.begin();
 		if (row != rows.end()) {
 			confInfo = d->selectConferenceInfo(*row);
@@ -4942,13 +4940,9 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI (const Conferen
 
 		return L_DB_TRANSACTION {
 			L_D();
-
 			shared_ptr<ConferenceInfo> confInfo = nullptr;
-
 			soci::session *session = d->dbSession.getBackendSession();
-
 			soci::rowset<soci::row> rows = (session->prepare << query);
-
 			const auto &row = rows.begin();
 			if (row != rows.end()) {
 				confInfo = d->selectConferenceInfo(*row);
