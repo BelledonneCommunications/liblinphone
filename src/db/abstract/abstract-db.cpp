@@ -22,12 +22,15 @@
 #include <TargetConditionals.h>
 #endif // ifdef __APPLE__
 
+// MUST BE INCLUDED BEFORE CHECKING HAVE_DB_STORAGE ifdef
+#include "abstract-db-p.h"
+#include "logger/logger.h"
+
+#ifdef HAVE_DB_STORAGE
 #if (__APPLE__ || defined(__ANDROID__))
 #include <sqlite3.h>
 #endif // if (__APPLE__ || defined(__ANDROID__))
-
-#include "abstract-db-p.h"
-#include "logger/logger.h"
+#endif // ifdef HAVE_DB_STORAGE
 
 // =============================================================================
 
