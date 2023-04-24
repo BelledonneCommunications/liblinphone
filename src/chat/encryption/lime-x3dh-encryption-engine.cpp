@@ -171,6 +171,71 @@ lime::CurveId LimeX3dhEncryptionEngine::getCurveId() const {
 	return curve;
 }
 
+void LimeX3dhEncryptionEngine::rawEncrypt(
+    const std::string &localDeviceId,
+    const std::list<std::string> &recipientDevices,
+    std::shared_ptr<const std::vector<uint8_t>> plainMessage,
+    std::shared_ptr<const std::vector<uint8_t>> associatedData,
+    const std::function<void(const bool status, std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts)>
+        &callback) const {
+
+	// build the recipient list
+	auto recipients = make_shared<vector<lime::RecipientData>>();
+	for (const auto &recipient : recipientDevices) {
+		recipients->emplace_back(recipient);
+	}
+
+	// encrypt
+	try {
+		// this buffer will not be used as we stick to DRMessage encryption policy
+		shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
+		limeManager->encrypt(
+		    localDeviceId, associatedData, recipients, plainMessage, cipherMessage,
+		    [localDeviceId, recipients, callback](lime::CallbackReturn returnCode, string errorMessage) {
+			    std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts{};
+			    if (returnCode == lime::CallbackReturn::success) {
+				    for (const auto &recipient : *recipients) {
+					    if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
+						    cipherTexts[recipient.deviceId] = recipient.DRmessage;
+					    } else {
+						    lError() << "[LIME] No cipher key generated for " << recipient.deviceId;
+						    cipherTexts[recipient.deviceId] = std::vector<uint8_t>{};
+					    }
+				    }
+			    } else {
+				    lError() << "Raw encrypt from " << localDeviceId << " failed: " << errorMessage;
+			    }
+			    callback(true, cipherTexts);
+		    },
+		    lime::EncryptionPolicy::DRMessage);
+	} catch (const exception &e) {
+		lError() << e.what() << " while raw encrypting message";
+		callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
+	}
+}
+
+bool LimeX3dhEncryptionEngine::rawDecrypt(const std::string &localDeviceId,
+                                          const std::string &senderDeviceId,
+                                          const std::vector<uint8_t> &associatedData,
+                                          const std::vector<uint8_t> &cipherText,
+                                          BCTBX_UNUSED(std::vector<uint8_t> &plainText)) const {
+	auto peerDeviceStatus = lime::PeerDeviceStatus::fail;
+
+	try {
+		peerDeviceStatus = limeManager->decrypt(localDeviceId, associatedData, senderDeviceId, cipherText, plainText);
+	} catch (const exception &e) {
+		lError() << e.what() << " while decrypting message";
+		peerDeviceStatus = lime::PeerDeviceStatus::fail;
+	}
+
+	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) {
+		lError() << "Failed to decrypt message from " << senderDeviceId;
+		return false;
+	}
+
+	return true;
+}
+
 ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(const shared_ptr<ChatMessage> &message,
                                                                              int &errorCode) {
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method

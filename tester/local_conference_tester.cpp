@@ -4114,6 +4114,8 @@ static void group_chat_room_lime_server_message(bool encrypted) {
 		coresList = bctbx_list_append(coresList, laure.getLc());
 
 		if (encrypted) {
+			auto rawEncryptionSuccess = 0;
+
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess,
 			                             marie_stat.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_X3dhUserCreationSuccess,
@@ -4125,6 +4127,45 @@ static void group_chat_room_lime_server_message(bool encrypted) {
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));
+
+			// Test the raw encryption/decryption
+			auto marieEncryptionEngine = L_GET_CPP_PTR_FROM_C_OBJECT(marie.getCMgr()->lc)->getEncryptionEngine();
+			char *deviceId = linphone_address_as_string_uri_only(
+			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie.getLc())));
+			std::string marieAddressString{deviceId};
+			bctbx_free(deviceId);
+			auto paulineEncryptionEngine = L_GET_CPP_PTR_FROM_C_OBJECT(pauline.getCMgr()->lc)->getEncryptionEngine();
+			deviceId = linphone_address_as_string_uri_only(
+			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline.getLc())));
+			std::string paulineAddressString{deviceId};
+			bctbx_free(deviceId);
+
+			std::string messageString = "This is my message to you Rudy";
+			std::string ADString = "These are my AD to you Rudy";
+			auto message = std::make_shared<std::vector<uint8_t>>(messageString.cbegin(), messageString.cend());
+			auto AD = std::make_shared<std::vector<uint8_t>>(ADString.cbegin(), ADString.cend());
+			std::vector<uint8_t> cipherText{};
+
+			marieEncryptionEngine->rawEncrypt(
+			    marieAddressString, std::list<std::string>{paulineAddressString}, message, AD,
+			    [&rawEncryptionSuccess, &cipherText, paulineAddressString](
+			        const bool status, std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts) {
+				    auto search = cipherTexts.find(paulineAddressString);
+				    if (status && search != cipherTexts.end()) {
+					    rawEncryptionSuccess++;
+					    cipherText = cipherTexts[paulineAddressString];
+				    }
+			    });
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &rawEncryptionSuccess, 1, x3dhServer_creationTimeout));
+			if (rawEncryptionSuccess == 1) {
+				// try to decrypt only if encryption was a success
+				std::vector<uint8_t> plainText{};
+				BC_ASSERT_TRUE(paulineEncryptionEngine->rawDecrypt(paulineAddressString, marieAddressString, *AD,
+				                                                   cipherText, plainText));
+				std::string plainTextString{plainText.cbegin(), plainText.cend()};
+				BC_ASSERT_TRUE(plainTextString == messageString);
+			}
 		}
 
 		Address paulineAddr = pauline.getIdentity();

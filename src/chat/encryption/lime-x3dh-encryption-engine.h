@@ -150,6 +150,20 @@ public:
 
 	void setTestForceDecryptionFailureFlag(bool flag) override;
 
+	void rawEncrypt(
+	    const std::string &localDeviceId,
+	    const std::list<std::string> &recipientDevices,
+	    std::shared_ptr<const std::vector<uint8_t>> plainMessage,
+	    std::shared_ptr<const std::vector<uint8_t>> associatedData,
+	    const std::function<void(const bool status, std::unordered_map<std::string, std::vector<uint8_t>> cipherTexts)>
+	        &callback) const override;
+
+	bool rawDecrypt(const std::string &localDeviceId,
+	                const std::string &senderDeviceId,
+	                const std::vector<uint8_t> &associatedData,
+	                const std::vector<uint8_t> &cipherText,
+	                std::vector<uint8_t> &plainText) const override;
+
 private:
 	void update(const std::string localDeviceId);
 	std::shared_ptr<LimeManager> limeManager;
