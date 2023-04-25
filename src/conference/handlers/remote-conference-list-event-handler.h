@@ -50,7 +50,7 @@ public:
 	void unsubscribe () override;
 	void unsubscribe (LinphoneAccount * c_account);
 	void invalidateSubscription () override;
-	void notifyReceived (std::string from, const Content *notifyContent);
+	void notifyReceived (LinphoneEvent *notifyLev, const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
 	void removeHandler (RemoteConferenceEventHandler *handler);
 	void clearHandlers ();

@@ -143,6 +143,8 @@ public:
 	) const = 0;
 	virtual std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::list<std::string> &messageIds) const = 0;
 
+	virtual void sendPendingMessages() {};
+
 	virtual void markAsRead () = 0;
 	virtual void enableEphemeral (bool ephem, bool updateDb) = 0;
 	virtual bool ephemeralEnabled () const = 0;
@@ -163,6 +165,8 @@ public:
 	virtual std::shared_ptr<Call> getCall () const = 0;
 
 	virtual void setUtf8Subject (const std::string &subject) override;
+
+	virtual bool isMe (const IdentityAddress &address) const = 0;
 
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);

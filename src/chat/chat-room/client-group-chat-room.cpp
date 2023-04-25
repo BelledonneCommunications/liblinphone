@@ -103,14 +103,24 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	return createSessionTo(sessionTo);
 }
 
-void ClientGroupChatRoomPrivate::notifyReceived (const Content &content) {
+void ClientGroupChatRoomPrivate::notifyReceived (LinphoneEvent *notifyLev, const Content &content) {
 	L_Q();
-	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->notifyReceived(content);
+	auto handler = static_pointer_cast<RemoteConference>(q->getConference())->eventHandler;
+	auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
+	handler->notifyReceived(notifyLev, content);
+	if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
+		q->sendPendingMessages();
+	}
 }
 
-void ClientGroupChatRoomPrivate::multipartNotifyReceived (const Content &content) {
+void ClientGroupChatRoomPrivate::multipartNotifyReceived (LinphoneEvent *notifyLev, const Content &content) {
 	L_Q();
-	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->multipartNotifyReceived(content);
+	auto handler = static_pointer_cast<RemoteConference>(q->getConference())->eventHandler;
+	auto initialSubscription = handler->getInitialSubscriptionUnderWayFlag();
+	handler->multipartNotifyReceived(notifyLev, content);
+	if (initialSubscription && !handler->getInitialSubscriptionUnderWayFlag()) {
+		q->sendPendingMessages();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -671,7 +681,7 @@ bool ClientGroupChatRoom::addParticipants (
 
 	list<IdentityAddress> addressesList = d->cleanAddressesList(addresses);
 	if (addressesList.empty()) {
-		lError() << "No participants given.";
+		lError() << "No new participants were given.";
 		return false;
 	}
 	if (getCapabilities() & ClientGroupChatRoom::Capabilities::OneToOne &&
@@ -1057,7 +1067,10 @@ void ClientGroupChatRoom::onFullStateReceived () {
 	else {
 		d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
 	}
+}
 
+void ClientGroupChatRoom::sendPendingMessages() {
+	L_D();
 	// Now that chat room has been inserted in database, we can send any pending message
 	for (const auto &message: d->pendingCreationMessages) {
 		lInfo() << "Found message [" << message << "] waiting for chat room to be created, sending it now";
@@ -1167,7 +1180,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 
 	const IdentityAddress &addr = event->getParticipantAddress();
 	shared_ptr<Participant> participant;
-	if (getConference()->isMe(addr))
+	if (isMe(addr))
 		participant = getMe();
 	else
 		participant = findParticipant(addr);

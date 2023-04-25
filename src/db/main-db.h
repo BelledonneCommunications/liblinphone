@@ -117,7 +117,7 @@ public:
 		const std::shared_ptr<EventLog> &eventLog,
 		ChatMessage::State state
 	) const;
-	std::list<ChatMessage::State> getChatMessageParticipantStates (const std::shared_ptr<EventLog> &eventLog) const;
+	std::list<ParticipantState> getChatMessageParticipantStates (const std::shared_ptr<EventLog> &eventLog) const;
 	ChatMessage::State getChatMessageParticipantState (
 		const std::shared_ptr<EventLog> &eventLog,
 		const IdentityAddress &participantAddress

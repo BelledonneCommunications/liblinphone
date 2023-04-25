@@ -41,8 +41,8 @@ public:
 	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
 	std::shared_ptr<CallSession> createSessionTo (Address sessionTo);
 	std::shared_ptr<CallSession> createSession ();
-	void notifyReceived (const Content &content);
-	void multipartNotifyReceived (const Content &content);
+	void notifyReceived (LinphoneEvent *notifyLev, const Content &content);
+	void multipartNotifyReceived (LinphoneEvent *notifyLev, const Content &content);
 
 	void confirmJoining (SalCallOp *op);
 	void setCallSessionListener (CallSessionListener *listener);

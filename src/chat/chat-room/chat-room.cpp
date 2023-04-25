@@ -865,6 +865,10 @@ bool ChatRoom::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return soFarSoGood;
 }
 
+bool ChatRoom::isMe (const IdentityAddress &address) const {
+	return getConference()->isMe(address);
+};
+
 uint32_t ChatRoom::getChar () {
 	L_D();
 	uint32_t character = 0;

@@ -143,6 +143,7 @@ public:
 
 
 	std::list<ParticipantImdnState> getParticipantsByImdnState (State state) const;
+	std::list<ParticipantImdnState> getParticipantsState () const;
 
 	const std::list<Content *> &getContents () const;
 	void addContent (Content *content);

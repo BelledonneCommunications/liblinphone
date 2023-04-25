@@ -2642,9 +2642,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 			const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
 			if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
 				bctbx_free(resourceAddrStr);
-				char *from = linphone_address_as_string(linphone_event_get_from(lev));
-				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(from, L_GET_CPP_PTR_FROM_C_OBJECT(body));
-				bctbx_free(from);
+				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(lev, body ? L_GET_CPP_PTR_FROM_C_OBJECT(body) : nullptr);
 				return;
 			}
 		}
@@ -2658,6 +2656,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
 
+		Content content = body ? *L_GET_CPP_PTR_FROM_C_OBJECT(body) : Content();
 		if (chatRoom) {
 			shared_ptr<ClientGroupChatRoom> cgcr;
 			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
@@ -2666,17 +2665,17 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 			else
 				cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 
-			if (linphone_content_is_multipart(body)) {
-				L_GET_PRIVATE(cgcr)->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+			if (body && linphone_content_is_multipart(body)) {
+				L_GET_PRIVATE(cgcr)->multipartNotifyReceived(lev, content);
 			} else {
-				L_GET_PRIVATE(cgcr)->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+				L_GET_PRIVATE(cgcr)->notifyReceived(lev, content);
 			}
 		} else if (audioVideoConference) {
 			shared_ptr<MediaConference::RemoteConference> conference = static_pointer_cast<MediaConference::RemoteConference>(audioVideoConference);
-			if (linphone_content_is_multipart(body)) {
-				conference->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+			if (body && linphone_content_is_multipart(body)) {
+				conference->multipartNotifyReceived(lev, content);
 			} else {
-				conference->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+				conference->notifyReceived(lev, content);
 			}
 		}
 #else
@@ -2739,8 +2738,15 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 		/* Liblinphone in a client application. */
 		RemoteConferenceEventHandler * handler = static_cast<RemoteConferenceEventHandler*>(
 			belle_sip_object_data_get(BELLE_SIP_OBJECT(lev), "event-handler-private"));
-		if (handler && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
-			handler->invalidateSubscription();
+		if (handler) {
+			switch (state) {
+				case LinphoneSubscriptionError:
+				case LinphoneSubscriptionTerminated:
+					handler->invalidateSubscription();
+					break;
+				default:
+					break;
+			}
 		}
 	}else{
 		/* This has to be done only when running as server */

@@ -69,6 +69,7 @@ public:
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
 	void onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
+	void onGlobalStateChanged (LinphoneGlobalState state) override;
 	bool aggregationEnabled () const;
 	void onLinphoneCoreStop();
 

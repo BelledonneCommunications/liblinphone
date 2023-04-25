@@ -255,7 +255,6 @@ bool CorePrivate::isShutdownDone() {
 		}
 	}
 
-
 	// Sometimes (bad network for example), backgrounds for chat message (imdn, delivery ...) take too much time.
 	// In this case, forece linphonecore to off. Using "stop core async end" background task to do this.
 	if (stopAsyncEndEnabled) {
@@ -301,6 +300,7 @@ void CorePrivate::shutdown() {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const auto &chatRoomPrivate = chatRoom->getPrivate();
+		chatRoom->sendPendingMessages();
 		for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
 			if (chatMessage->getState() == ChatMessage::State::FileTransferInProgress) {
 				// Abort auto download file transfers

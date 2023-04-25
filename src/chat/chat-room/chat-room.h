@@ -106,6 +106,7 @@ public:
 
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool isMe (const IdentityAddress &address) const override;
 
 	bool canHandleParticipants () const override {
 		return (getConference() != nullptr);

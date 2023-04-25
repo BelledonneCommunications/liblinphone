@@ -4650,7 +4650,7 @@ static void aggregated_imdn_for_group_chat_room_base (bool_t read_while_offline)
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(chloe->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(chloe2->lc));
-	
+
 // Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);

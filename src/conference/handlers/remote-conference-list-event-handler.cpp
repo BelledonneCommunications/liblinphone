@@ -106,7 +106,7 @@ void RemoteConferenceListEventHandler::subscribe (LinphoneAccount * c_account) {
 			Address addr = conferenceId.getPeerAddress().asAddress();
 			const auto lastNotify = handler->getLastNotify();
 			addr.setUriParam("Last-Notify", Utils::toString(lastNotify));
-			handler->setInitialSubscriptionUnderWayFlag((lastNotify == 0));
+			handler->setInitialSubscriptionUnderWayFlag(handler->alreadySubscribed());
 			Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 			l.getEntry().push_back(entry);
 		}
@@ -186,62 +186,81 @@ bool RemoteConferenceListEventHandler::getInitialSubscriptionUnderWayFlag(const 
 
 }
 
-void RemoteConferenceListEventHandler::notifyReceived (std::string from, const Content *notifyContent) {
+void RemoteConferenceListEventHandler::notifyReceived (LinphoneEvent *notifyLev, const Content *notifyContent) {
+	char *from = linphone_address_as_string(linphone_event_get_from(notifyLev));
+	auto it = std::find_if(levs.begin(), levs.end(), [from] (const auto & lev) {
+		return (lev->op->getFrom() == from);
+	});
 	const ConferenceAddress local(from);
+	bctbx_free(from);
 
-	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
-		// Simple notify received directly from a chat-room
-		const string &xmlBody = notifyContent->getBodyAsUtf8String();
-		istringstream data(xmlBody);
-		unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo;
-		try {
-			confInfo = Xsd::ConferenceInfo::parseConferenceInfo(
-				data,
-				Xsd::XmlSchema::Flags::dont_validate
-			);
-		} catch (const exception &) {
-			lError() << "Error while parsing conference-info in conferences notify";
+	const auto levFound = (it != levs.end());
+
+	if (notifyContent) {
+		if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
+			// Simple notify received directly from a chat-room
+			const string &xmlBody = notifyContent->getBodyAsUtf8String();
+			istringstream data(xmlBody);
+			unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo;
+			try {
+				confInfo = Xsd::ConferenceInfo::parseConferenceInfo(
+					data,
+					Xsd::XmlSchema::Flags::dont_validate
+				);
+			} catch (const exception &) {
+				lError() << "Error while parsing conference-info in conferences notify";
+				return;
+			}
+
+			ConferenceAddress entityAddress(confInfo->getEntity().c_str());
+			ConferenceId id(entityAddress, local);
+			RemoteConferenceEventHandler *handler = findHandler(id);
+			if (!handler)
+				return;
+
+			handler->notifyReceived(*notifyContent);
+			if (handler->getInitialSubscriptionUnderWayFlag()) {
+				handler->setInitialSubscriptionUnderWayFlag(!levFound);
+			}
 			return;
 		}
 
-		ConferenceAddress entityAddress(confInfo->getEntity().c_str());
-		ConferenceId id(entityAddress, local);
-		RemoteConferenceEventHandler *handler = findHandler(id);
-		if (!handler)
-			return;
+		list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
+		map<string, IdentityAddress> addresses;
+		for (const auto &content : contents) {
+			const string &body = content.getBodyAsUtf8String();
+			const ContentType &contentType = content.getContentType();
+			if (contentType == ContentType::Rlmi) {
+				addresses = parseRlmi(body);
+				continue;
+			}
 
-		handler->notifyReceived(*notifyContent);
-		return;
+			const string &cid = content.getHeader("Content-Id").getValue();
+			if (cid.empty())
+				continue;
+
+			map<string, IdentityAddress>::const_iterator it = addresses.find(cid);
+			if (it == addresses.cend())
+				continue;
+
+			IdentityAddress peer = it->second;
+			ConferenceId id(peer, local);
+			RemoteConferenceEventHandler *handler = findHandler(id);
+			if (!handler)
+				continue;
+
+			if (contentType == ContentType::Multipart)
+				handler->multipartNotifyReceived(content);
+			else if (contentType == ContentType::ConferenceInfo)
+				handler->notifyReceived(content);
+		}
 	}
 
-	list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
-	map<string, IdentityAddress> addresses;
-	for (const auto &content : contents) {
-		const string &body = content.getBodyAsUtf8String();
-		const ContentType &contentType = content.getContentType();
-		if (contentType == ContentType::Rlmi) {
-			addresses = parseRlmi(body);
-			continue;
+	for (const auto &p : handlers) {
+		RemoteConferenceEventHandler *handler = p.second;
+		if (handler->getInitialSubscriptionUnderWayFlag()) {
+			handler->setInitialSubscriptionUnderWayFlag(!levFound);
 		}
-
-		const string &cid = content.getHeader("Content-Id").getValue();
-		if (cid.empty())
-			continue;
-
-		map<string, IdentityAddress>::const_iterator it = addresses.find(cid);
-		if (it == addresses.cend())
-			continue;
-
-		IdentityAddress peer = it->second;
-		ConferenceId id(peer, local);
-		RemoteConferenceEventHandler *handler = findHandler(id);
-		if (!handler)
-			continue;
-
-		if (contentType == ContentType::Multipart)
-			handler->multipartNotifyReceived(content);
-		else if (contentType == ContentType::ConferenceInfo)
-			handler->notifyReceived(content);
 	}
 }
 

@@ -449,4 +449,10 @@ std::shared_ptr<Call> ProxyChatRoom::getCall () const {
 	return d->chatRoom->getCall();
 }
 
+bool ProxyChatRoom::isMe (const IdentityAddress &address) const {
+	L_D();
+	return d->chatRoom->isMe(address);
+};
+
+
 LINPHONE_END_NAMESPACE

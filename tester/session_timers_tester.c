@@ -460,7 +460,7 @@ static void session_timer_interval_ok_refresher_uac_uac(void)
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
 	linphone_core_manager_start(marie, TRUE);
 
-	pauline = linphone_core_manager_new("pauline_rc");
+	pauline = linphone_core_manager_create("pauline_rc");
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 6);
 	linphone_core_manager_start(pauline, TRUE);
@@ -555,7 +555,7 @@ static void session_timer_interval_smaller(void)
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
 	linphone_core_manager_start(marie, TRUE);
 
-	pauline = linphone_core_manager_new("pauline_rc");
+	pauline = linphone_core_manager_create("pauline_rc");
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 6);
 	linphone_core_set_session_expires_min_value(pauline->lc, 3);
@@ -640,7 +640,7 @@ static void session_timer_interval_larger(void)
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
 	linphone_core_manager_start(marie, TRUE);
 
-	pauline = linphone_core_manager_new("pauline_rc");
+	pauline = linphone_core_manager_create("pauline_rc");
 	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
 	linphone_core_set_session_expires_value(pauline->lc, 4);
 	linphone_core_set_session_expires_min_value(pauline->lc, 2);
@@ -849,7 +849,7 @@ static void session_timer_interval_ok_no_se(void)
 	LinphoneCoreManager* pauline;
 	LinphoneCall *pauline_call;
 
-	marie = linphone_core_manager_new("marie_session_timers_rc");
+	marie = linphone_core_manager_create("marie_session_timers_rc");
 	linphone_core_set_session_expires_enabled(marie->lc, TRUE);
 	linphone_core_set_session_expires_min_value(marie->lc, 6);
 	linphone_core_set_session_expires_value(marie->lc, 0); // We clear the SE header for Marie

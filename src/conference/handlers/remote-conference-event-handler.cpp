@@ -713,7 +713,7 @@ void RemoteConferenceEventHandler::subscribe () {
 
 	lev = linphone_core_create_subscribe_2(conf->getCore()->getCCore(), peerAddr, cfg, "conference", 600);
 	lev->op->setFrom(localAddress);
-	setInitialSubscriptionUnderWayFlag((getLastNotify() == 0));
+	setInitialSubscriptionUnderWayFlag(true);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
 	linphone_address_unref(lAddr);
@@ -784,12 +784,28 @@ void RemoteConferenceEventHandler::unsubscribe () {
 	subscriptionWanted = false;
 }
 
+void RemoteConferenceEventHandler::updateInitialSubcriptionUnderWay (LinphoneEvent *notifyLev) {
+	if (getInitialSubscriptionUnderWayFlag()) {;
+		setInitialSubscriptionUnderWayFlag((lev != notifyLev));
+	}
+}
+
+void RemoteConferenceEventHandler::notifyReceived (LinphoneEvent *notifyLev, const Content &content) {
+	updateInitialSubcriptionUnderWay(notifyLev);
+	notifyReceived(content);
+}
+
 void RemoteConferenceEventHandler::notifyReceived (const Content &content) {
 	lInfo() << "NOTIFY received for conference: " << getConferenceId() << " - Content type " << content.getContentType().getType() << " subtype " << content.getContentType().getSubType();
 	const ContentType &contentType = content.getContentType();
 	if (contentType == ContentType::ConferenceInfo) {
 		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
 	}
+}
+
+void RemoteConferenceEventHandler::multipartNotifyReceived (LinphoneEvent *notifyLev, const Content &content) {
+	updateInitialSubcriptionUnderWay(notifyLev);
+	multipartNotifyReceived (content);
 }
 
 void RemoteConferenceEventHandler::multipartNotifyReceived (const Content &content) {

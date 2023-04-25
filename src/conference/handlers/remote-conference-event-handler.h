@@ -52,10 +52,13 @@ public:
 	void subscribe (const ConferenceId &conferenceId);
 	bool alreadySubscribed() const;
 	void notifyReceived (const Content &content);
+	void notifyReceived (LinphoneEvent *notifyLev, const Content &content);
 	void multipartNotifyReceived (const Content &content);
+	void multipartNotifyReceived (LinphoneEvent *notifyLev, const Content &content);
 	void unsubscribe () override;
 
 	void invalidateSubscription () override;
+	void subscriptionActive();
 
 	const ConferenceId &getConferenceId() const;
 	unsigned int getLastNotify () const;
@@ -86,6 +89,7 @@ protected:
 
 private:
 	void unsubscribePrivate ();
+	void updateInitialSubcriptionUnderWay (LinphoneEvent *notifyLev);
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

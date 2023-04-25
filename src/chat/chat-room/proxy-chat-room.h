@@ -135,6 +135,8 @@ public:
 	bool addParticipant (const IdentityAddress &participantAddress) override;
 	bool addParticipant (std::shared_ptr<Call> call) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+	bool isMe (const IdentityAddress &address) const override;
+
 	void join (const IdentityAddress &participantAddress) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 

@@ -937,7 +937,7 @@ void LocalConferenceEventHandler::notifyParticipant (const Content &notify, cons
 }
 
 void LocalConferenceEventHandler::notifyParticipantDevice (const Content &notify, const shared_ptr<ParticipantDevice> &device) {
-	if (!device->isSubscribedToConferenceEventPackage() || notify.isEmpty())
+	if (!device->isSubscribedToConferenceEventPackage())
 		return;
 
 	LinphoneEvent *ev = device->getConferenceSubscribeEvent();
@@ -945,7 +945,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const Content &notify
 	linphone_event_cbs_set_user_data(cbs, this);
 	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
 
-	LinphoneContent *cContent = L_GET_C_BACK_PTR(&notify);
+	LinphoneContent *cContent = notify.isEmpty() ? nullptr : L_GET_C_BACK_PTR(&notify);
 	linphone_event_notify(ev, cContent);
 	linphone_core_notify_notify_sent(conf->getCore()->getCCore(),ev, cContent);
 }
@@ -1020,6 +1020,8 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 				conf->getConferenceAddress() <<
 				"] should not be higher than last notify sent by server [" << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
 			notifyFullState(createNotifyFullState(lev), device);
+		} else {
+			notifyParticipantDevice(Content(), device);
 		}
 	}
 
@@ -1068,9 +1070,12 @@ Content LocalConferenceEventHandler::getNotifyForId (int notifyId, LinphoneEvent
 Content LocalConferenceEventHandler::makeContent(const std::string & xml){
 	Content content;
 	content.setContentType(ContentType::ConferenceInfo);
-	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
+	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate")) {
 		content.setContentEncoding("deflate");
-	content.setBodyFromUtf8(xml);
+	}
+	if (!xml.empty()) {
+		content.setBodyFromUtf8(xml);
+	}
 	return content;
 }
 

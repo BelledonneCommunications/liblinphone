@@ -167,12 +167,12 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 		return;
 	}
 
-	list<ChatMessage::State> states = mainDb->getChatMessageParticipantStates(eventLog);
+	const auto states = q->getParticipantsState();
 	size_t nbDisplayedStates = 0;
 	size_t nbDeliveredToUserStates = 0;
 	size_t nbNotDeliveredStates = 0;
 	for (const auto &state : states) {
-		switch (state) {
+		switch (state.getState()) {
 			case ChatMessage::State::Displayed:
 				nbDisplayedStates++;
 				break;
@@ -290,13 +290,10 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 			allParticipantsAreInDisplayedState = true;
 		} else {
 			if (direction == ChatMessage::Direction::Incoming) {
-				unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-				shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
-
-				list<ChatMessage::State> states = mainDb->getChatMessageParticipantStates(eventLog);
+				const auto states = q->getParticipantsState();
 				size_t nbDisplayedStates = 0;
 				for (const auto &state : states) {
-					switch (state) {
+					switch (state.getState()) {
 						case ChatMessage::State::Displayed:
 							nbDisplayedStates++;
 							break;
@@ -998,12 +995,16 @@ void ChatMessagePrivate::send () {
 	shared_ptr<AbstractChatRoom> chatRoom(q->getChatRoom());
 	if (!chatRoom) return;
 
+	shared_ptr<Core> core = q->getCore();
+
 	const auto & chatRoomState = chatRoom->getState();
 	const auto & chatRoomParams = chatRoom->getCurrentParams();
 	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-	if ((getContentType() == ContentType::Imdn) && chatRoomParams->isEncrypted() && (dChatRoom->isSubscriptionUnderWay() || (chatRoomState == ConferenceInterface::State::Instantiated) || (chatRoomState == ConferenceInterface::State::CreationPending))) {
+	// If the core is shutting down, the IMDN should be sent anyway even though we are potentially send it to an incomplete list of devices
+	if ((linphone_core_get_global_state(core->getCCore()) != LinphoneGlobalShutdown) && (getContentType() == ContentType::Imdn) && chatRoomParams->isEncrypted() && (dChatRoom->isSubscriptionUnderWay() || (chatRoomState == ConferenceInterface::State::Instantiated) || (chatRoomState == ConferenceInterface::State::CreationPending))) {
 		lInfo() << "IMDN message is being sent while the subscription is underway or the conference is not yet full created";
 		dChatRoom->addPendingMessage(q->getSharedFromThis());
+		return;
 	}
 
 	markAsRead();
@@ -1024,7 +1025,7 @@ void ChatMessagePrivate::send () {
 		if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
 			if ((currentSendStep & ChatMessagePrivate::Step::Sending) != ChatMessagePrivate::Step::Sending) {
 				LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
-				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+				unique_ptr<MainDb> &mainDb = core->getPrivate()->mainDb;
 				shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
 				_linphone_chat_room_notify_chat_message_sending(cr, L_GET_C_BACK_PTR(eventLog));
 				currentSendStep |= ChatMessagePrivate::Step::Sending;
@@ -1050,7 +1051,6 @@ void ChatMessagePrivate::send () {
 		currentSendStep |= ChatMessagePrivate::Step::FileUpload;
 	}
 
-	shared_ptr<Core> core = q->getCore();
 	if (linphone_config_get_int(core->getCCore()->config, "sip", "chat_use_call_dialogs", 0) != 0) {
 		lcall = linphone_core_get_call_by_remote_address(core->getCCore(), toAddress.asString().c_str());
 		if (lcall) {
@@ -1528,6 +1528,27 @@ void ChatMessage::setToBeStored (bool value) {
 
 // -----------------------------------------------------------------------------
 
+list<ParticipantImdnState> ChatMessage::getParticipantsState () const {
+	list<ParticipantImdnState> result;
+	if (!(getChatRoom()->getCapabilities() & AbstractChatRoom::Capabilities::Conference) || !isValid())
+		return result;
+
+	unique_ptr<MainDb> &mainDb = getChatRoom()->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, getStorageId());
+	list<MainDb::ParticipantState> dbResults = mainDb->getChatMessageParticipantStates(eventLog);
+	auto sender = getChatRoom()->findParticipant(getFromAddress());
+	auto meIsSender = getChatRoom()->isMe(getFromAddress());
+	for (const auto &dbResult : dbResults) {
+		auto participant = getChatRoom()->findParticipant(dbResult.address);
+		// Do not add myself to the result list if I am the sender.
+		if (participant && ((participant != sender) || !meIsSender)) {
+			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
+		}
+	}
+
+	return result;
+}
+
 list<ParticipantImdnState> ChatMessage::getParticipantsByImdnState (ChatMessage::State state) const {
 	list<ParticipantImdnState> result;
 	if (!(getChatRoom()->getCapabilities() & AbstractChatRoom::Capabilities::Conference) || !isValid())
@@ -1536,9 +1557,10 @@ list<ParticipantImdnState> ChatMessage::getParticipantsByImdnState (ChatMessage:
 	unique_ptr<MainDb> &mainDb = getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, getStorageId());
 	list<MainDb::ParticipantState> dbResults = mainDb->getChatMessageParticipantsByImdnState(eventLog, state);
+	auto sender = getChatRoom()->findParticipant(getFromAddress());
 	for (const auto &dbResult : dbResults) {
-		auto sender = getChatRoom()->findParticipant(getFromAddress());
 		auto participant = getChatRoom()->findParticipant(dbResult.address);
+lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_identity(getChatRoom()->getCore()->getCCore())) << " address " << dbResult.address << " sender " << (sender ? sender->getAddress().asString() : std::string("<unknown>"));
 		if (participant && (participant != sender))
 			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
 	}

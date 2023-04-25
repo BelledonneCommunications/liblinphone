@@ -1352,7 +1352,7 @@ void linphone_friend_list_notify_presence(LinphoneFriendList *list, LinphonePres
 
 void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, BCTBX_UNUSED(LinphoneEvent *lev),
 												   const LinphoneContent *body) {
-	if (!linphone_content_is_multipart(body))
+	if (!body || !linphone_content_is_multipart(body))
 		return;
 
 	LinphoneContent *first_part;

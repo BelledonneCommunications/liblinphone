@@ -3362,10 +3362,10 @@ AudioStream *RemoteConference::getAudioStream(){
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void RemoteConference::multipartNotifyReceived (const Content &content) {
+void RemoteConference::multipartNotifyReceived (LinphoneEvent *notifyLev, const Content &content) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
-		eventHandler->multipartNotifyReceived(content);
+		eventHandler->multipartNotifyReceived(notifyLev, content);
 		return;
 	}
 #endif // HAVE_ADVANCED_IM
@@ -3379,10 +3379,10 @@ void RemoteConference::multipartNotifyReceived (const Content &content) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void RemoteConference::notifyReceived (const Content &content) {
+void RemoteConference::notifyReceived (LinphoneEvent *notifyLev, const Content &content) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
-		eventHandler->notifyReceived(content);
+		eventHandler->notifyReceived(notifyLev, content);
 		return;
 	}
 #endif // HAVE_ADVANCED_IM

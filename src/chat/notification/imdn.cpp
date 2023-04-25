@@ -153,7 +153,13 @@ void Imdn::onNetworkReachable (bool sipNetworkReachable, BCTBX_UNUSED(bool media
 	}
 }
 
-
+void Imdn::onGlobalStateChanged (LinphoneGlobalState state) {
+	if (state == LinphoneGlobalShutdown) {
+		// Stop timer and send IMDN even though it may not be sent to all devices in the chat room if we are not up to date
+		stopTimer();
+		send();
+	}
+}
 
 // -----------------------------------------------------------------------------
 

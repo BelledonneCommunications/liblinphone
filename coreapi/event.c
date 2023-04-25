@@ -332,7 +332,7 @@ LinphoneStatus linphone_event_deny_subscription(LinphoneEvent *lev, LinphoneReas
 }
 
 LinphoneStatus linphone_event_notify(LinphoneEvent *lev, const LinphoneContent *body){
-	SalBodyHandler *body_handler;
+	SalBodyHandler *body_handler = NULL;
 	if (lev->subscription_state!=LinphoneSubscriptionActive && lev->subscription_state!=LinphoneSubscriptionIncomingReceived){
 		ms_error("linphone_event_notify(): cannot notify if subscription is not active.");
 		return -1;
@@ -341,7 +341,9 @@ LinphoneStatus linphone_event_notify(LinphoneEvent *lev, const LinphoneContent *
 		ms_error("linphone_event_notify(): cannot notify if not an incoming subscription.");
 		return -1;
 	}
-	body_handler = sal_body_handler_from_content(body, false);
+	if (body) {
+		body_handler = sal_body_handler_from_content(body, false);
+	}
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
 	return subscribeOp->notify(body_handler);
 }

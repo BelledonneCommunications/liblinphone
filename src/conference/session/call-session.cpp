@@ -986,10 +986,11 @@ void CallSessionPrivate::setContactOp () {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::onNetworkReachable (bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
-	if (sipNetworkReachable)
+	if (sipNetworkReachable) {
 		repairIfBroken();
-	else
+	} else {
 		setBroken();
+	}
 }
 
 void CallSessionPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, BCTBX_UNUSED(const std::string &message)) {
