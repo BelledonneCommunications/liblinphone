@@ -187,38 +187,41 @@ typedef enum _LinphoneAccountCreatorTransportStatus {
 **/
 typedef enum _LinphoneAccountCreatorStatus {
 	/** Request status **/
-	LinphoneAccountCreatorStatusRequestOk = 0, /**< Request passed */
-	LinphoneAccountCreatorStatusRequestFailed = 1, /**< Request failed */
+	LinphoneAccountCreatorStatusRequestOk = 0,		  /**< Request passed */
+	LinphoneAccountCreatorStatusRequestFailed = 1,	  /**< Request failed */
 	LinphoneAccountCreatorStatusMissingArguments = 2, /**< Request failed due to missing argument(s) */
 	LinphoneAccountCreatorStatusMissingCallbacks = 3, /**< Request failed due to missing callback(s) */
 
 	/** Account status **/
 	/* Creation */
-	LinphoneAccountCreatorStatusAccountCreated = 4, /**< Account created */
+	LinphoneAccountCreatorStatusAccountCreated = 4,	   /**< Account created */
 	LinphoneAccountCreatorStatusAccountNotCreated = 5, /**< Account not created */
 	/* Existence */
-	LinphoneAccountCreatorStatusAccountExist = 6, /**< Account exist */
+	LinphoneAccountCreatorStatusAccountExist = 6,		   /**< Account exist */
 	LinphoneAccountCreatorStatusAccountExistWithAlias = 7, /**< Account exist with alias */
-	LinphoneAccountCreatorStatusAccountNotExist = 8, /**< Account not exist */
-	LinphoneAccountCreatorStatusAliasIsAccount = 9, /**< Account was created with Alias */
-	LinphoneAccountCreatorStatusAliasExist = 10, /**< Alias exist */
-	LinphoneAccountCreatorStatusAliasNotExist = 11, /**< Alias not exist */
+	LinphoneAccountCreatorStatusAccountNotExist = 8,	   /**< Account not exist */
+	LinphoneAccountCreatorStatusAliasIsAccount = 9,		   /**< Account was created with Alias */
+	LinphoneAccountCreatorStatusAliasExist = 10,		   /**< Alias exist */
+	LinphoneAccountCreatorStatusAliasNotExist = 11,		   /**< Alias not exist */
 	/* Activation */
-	LinphoneAccountCreatorStatusAccountActivated = 12, /**< Account activated */
+	LinphoneAccountCreatorStatusAccountActivated = 12,		  /**< Account activated */
 	LinphoneAccountCreatorStatusAccountAlreadyActivated = 13, /**< Account already activated */
-	LinphoneAccountCreatorStatusAccountNotActivated = 14, /**< Account not activated */
+	LinphoneAccountCreatorStatusAccountNotActivated = 14,	  /**< Account not activated */
 	/* Linking */
-	LinphoneAccountCreatorStatusAccountLinked = 15, /**< Account linked */
+	LinphoneAccountCreatorStatusAccountLinked = 15,	   /**< Account linked */
 	LinphoneAccountCreatorStatusAccountNotLinked = 16, /**< Account not linked */
 
 	/** Server **/
-	LinphoneAccountCreatorStatusServerError = 17, /**< Error server */
+	LinphoneAccountCreatorStatusServerError = 17,		  /**< Error server */
 
-	LinphoneAccountCreatorStatusPhoneNumberInvalid = 18, /**< Error cannot send SMS */
+	LinphoneAccountCreatorStatusPhoneNumberInvalid = 18,  /**< Error cannot send SMS */
 	LinphoneAccountCreatorStatusWrongActivationCode = 19, /**< Error key doesn't match */
 	LinphoneAccountCreatorStatusPhoneNumberOverused = 20, /**< Error too many SMS sent */
-	LinphoneAccountCreatorStatusAlgoNotSupported = 21, /**< Error algo isn't MD5 or SHA-256 */
-	LinphoneAccountCreatorStatusUnexpectedError = 22, /**< Generic error */
+	LinphoneAccountCreatorStatusAlgoNotSupported = 21,	  /**< Error algo isn't MD5 or SHA-256 */
+	LinphoneAccountCreatorStatusUnexpectedError = 22,	  /**< Generic error */
+	LinphoneAccountCreatorStatusNotImplementedError = 23, /**< This API isn't implemented in the current backend */
+	LinphoneAccountCreatorStatusRequestNotAuthorized =
+		24, /**< Request has been denied, probably due to invalid auth token */
 } LinphoneAccountCreatorStatus;
 
 // -----------------------------------------------------------------------------

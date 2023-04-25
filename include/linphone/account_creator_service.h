@@ -311,11 +311,11 @@ LINPHONE_PUBLIC void linphone_account_creator_service_set_login_linphone_account
 LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_send_token_cb(const LinphoneAccountCreatorService *service);
 
 /**
- * Assign a user pointer to a #LinphoneAccountCreatorService object.
+ * Request an auth token for account creator backend to be sent by push.
  * @param service #LinphoneAccountCreatorService object.
  * @param cb The send token request to be used.
  * @donotwrap
-**/
+ **/
 LINPHONE_PUBLIC void linphone_account_creator_service_set_send_token_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb);
 
 /**
