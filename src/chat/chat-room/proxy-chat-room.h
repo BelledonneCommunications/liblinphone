@@ -114,9 +114,9 @@ public:
 
 	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	const std::string & getSubject () const override;
-	const std::string & getUtf8Subject () const override;
-	void setSubject (const std::string &subject) override;
+	const std::string &getSubject() const override;
+	const std::string &getUtf8Subject() const override;
+	void setSubject(const std::string &subject) override;
 
 	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
@@ -135,6 +135,8 @@ public:
 	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	bool addParticipant(std::shared_ptr<Call> call) override;
 	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
+	bool isMe(const std::shared_ptr<Address> &address) const override;
+
 	void join(const std::shared_ptr<Address> &participantAddress) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 

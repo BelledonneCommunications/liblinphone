@@ -978,8 +978,11 @@ void CallSessionPrivate::setContactOp() {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
-	if (sipNetworkReachable) repairIfBroken();
-	else setBroken();
+	if (sipNetworkReachable) {
+		repairIfBroken();
+	} else {
+		setBroken();
+	}
 }
 
 void CallSessionPrivate::onRegistrationStateChanged(LinphoneProxyConfig *cfg,

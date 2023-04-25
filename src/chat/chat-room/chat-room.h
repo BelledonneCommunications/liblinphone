@@ -106,6 +106,7 @@ public:
 
 	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	bool removeParticipants(const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool isMe(const std::shared_ptr<Address> &address) const override;
 
 	bool canHandleParticipants() const override {
 		return (getConference() != nullptr);
@@ -114,8 +115,8 @@ public:
 	uint32_t getChar() override;
 	std::shared_ptr<Call> getCall() const override;
 
-	const std::string & getSubject () const override;
-	const std::string & getUtf8Subject () const override;
+	const std::string &getSubject() const override;
+	const std::string &getUtf8Subject() const override;
 
 protected:
 	explicit ChatRoom(ChatRoomPrivate &p,

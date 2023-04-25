@@ -2748,32 +2748,27 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 #ifdef HAVE_ADVANCED_IM
-		const LinphoneAddress *resource = linphone_event_get_resource(lev);
-		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
+		const auto ev = Event::toCpp(lev)->getSharedFromThis();
+		const auto resourceAddr = ev->getResource();
+		const char *resourceAddrStr = L_STRING_TO_C(resourceAddr->asStringUriOnly());
 		const bctbx_list_t *elem;
 		for (elem = linphone_core_get_proxy_config_list(lc); elem != NULL; elem = elem->next) {
 			LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)elem->data;
 			const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
 			if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
-				bctbx_free(resourceAddrStr);
-				char *from = linphone_address_as_string(linphone_event_get_from(lev));
 				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(
-				    from, L_GET_CPP_PTR_FROM_C_OBJECT(body));
-				bctbx_free(from);
+				    ev, body ? L_GET_CPP_PTR_FROM_C_OBJECT(body) : nullptr);
 				return;
 			}
 		}
-		bctbx_free(resourceAddrStr);
 
-		const LinphoneAddress *from = linphone_event_get_from(lev);
-		const auto fromAddr = LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(from))->getSharedFromThis();
-		const auto resourceAddr =
-		    LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(resource))->getSharedFromThis();
+		const auto fromAddr = ev->getFrom();
 		LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(resourceAddr, fromAddr);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 		shared_ptr<MediaConference::Conference> audioVideoConference =
 		    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
 
+		Content content = body ? *L_GET_CPP_PTR_FROM_C_OBJECT(body) : Content();
 		if (chatRoom) {
 			shared_ptr<ClientGroupChatRoom> cgcr;
 			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
@@ -2781,18 +2776,18 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 				    static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
 			else cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 
-			if (linphone_content_is_multipart(body)) {
-				L_GET_PRIVATE(cgcr)->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+			if (body && linphone_content_is_multipart(body)) {
+				L_GET_PRIVATE(cgcr)->multipartNotifyReceived(ev, content);
 			} else {
-				L_GET_PRIVATE(cgcr)->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+				L_GET_PRIVATE(cgcr)->notifyReceived(ev, content);
 			}
 		} else if (audioVideoConference) {
 			shared_ptr<MediaConference::RemoteConference> conference =
 			    static_pointer_cast<MediaConference::RemoteConference>(audioVideoConference);
-			if (linphone_content_is_multipart(body)) {
-				conference->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+			if (body && linphone_content_is_multipart(body)) {
+				conference->multipartNotifyReceived(ev, content);
 			} else {
-				conference->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
+				conference->notifyReceived(ev, content);
 			}
 		}
 #else
@@ -2858,8 +2853,15 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
 	if (!linphone_core_conference_server_enabled(lc)) {
 		/* Liblinphone in a client application. */
 		auto handler = evSub->getProperty("event-handler-private").getValue<RemoteConferenceEventHandler *>();
-		if (handler && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
-			handler->invalidateSubscription();
+		if (handler) {
+			switch (state) {
+				case LinphoneSubscriptionError:
+				case LinphoneSubscriptionTerminated:
+					handler->invalidateSubscription();
+					break;
+				default:
+					break;
+			}
 		}
 	} else {
 		/* This has to be done only when running as server */

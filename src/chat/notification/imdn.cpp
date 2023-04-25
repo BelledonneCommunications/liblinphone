@@ -152,6 +152,15 @@ void Imdn::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaN
 	}
 }
 
+void Imdn::onGlobalStateChanged(LinphoneGlobalState state) {
+	if (state == LinphoneGlobalShutdown) {
+		// Stop timer and send IMDN even though it may not be sent to all devices in the chat room if we are not up to
+		// date
+		stopTimer();
+		send();
+	}
+}
+
 // -----------------------------------------------------------------------------
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
@@ -228,7 +237,6 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 	// It seems to be more efficient to only make one database request to get all chat messages from their IMDN message
 	// ID
 	list<shared_ptr<ChatMessage>> chatMessages = cr->findChatMessages(messagesIds);
-
 	for (const auto &imdn : imdns) {
 		shared_ptr<ChatMessage> cm = nullptr;
 		for (const auto &chatMessage : chatMessages) {

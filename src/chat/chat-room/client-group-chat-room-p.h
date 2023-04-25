@@ -43,8 +43,8 @@ public:
 	std::list<std::shared_ptr<Address>> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
 	std::shared_ptr<CallSession> createSessionTo(std::shared_ptr<Address> sessionTo);
 	std::shared_ptr<CallSession> createSession();
-	void notifyReceived(const Content &content);
-	void multipartNotifyReceived(const Content &content);
+	void multipartNotifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content);
+	void notifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content);
 
 	void confirmJoining(SalCallOp *op);
 	void setCallSessionListener(CallSessionListener *listener);

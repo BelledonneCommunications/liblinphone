@@ -151,7 +151,7 @@ public:
 	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
 	std::shared_ptr<ParticipantDevice> getParticipantDevice(const std::string &label);
-	void *getParticipantWindowId(const std::string label);
+	void *getParticipantWindowId(const std::string &label);
 
 	StreamsGroup &getStreamsGroup() const;
 	bool pausedByApp() const;

@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-//#include <iomanip>
-//#include <math.h>
+// #include <iomanip>
+// #include <math.h>
 #include <algorithm>
 
 #include "account/account.h"
@@ -1192,7 +1192,7 @@ void MediaSessionPrivate::getLocalIp(const std::shared_ptr<Address> &remoteAddr)
 	// In last resort, attempt to find the local ip that routes to destination if given as an IP address,
 	// or the default route (dest is empty)
 	string dest;
-	if (!account) {
+	if (!account && remoteAddr) {
 		struct addrinfo hints;
 		struct addrinfo *res = nullptr;
 		string host(remoteAddr->getDomain());
@@ -2803,8 +2803,6 @@ void MediaSessionPrivate::onGatheringFinished(BCTBX_UNUSED(IceService &service))
 
 void MediaSessionPrivate::onIceCompleted(BCTBX_UNUSED(IceService &service)) {
 	L_Q();
-	lInfo() << __func__ << " DEBUG DEBUG core " << linphone_core_get_identity(q->getCore()->getCCore());
-
 	/* The ICE session has succeeded, so perform a call update */
 	if (!getStreamsGroup().getIceService().hasCompletedCheckList()) return;
 	if (getStreamsGroup().getIceService().isControlling() && isUpdateSentWhenIceCompleted()) {
@@ -5179,7 +5177,7 @@ std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std:
 	return nullptr;
 }
 
-void *MediaSession::getParticipantWindowId(const std::string label) {
+void *MediaSession::getParticipantWindowId(const std::string &label) {
 	auto participantDevice = getParticipantDevice(label);
 	if (participantDevice) return participantDevice->getWindowId();
 	else return nullptr;

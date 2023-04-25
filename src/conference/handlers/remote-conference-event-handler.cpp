@@ -22,6 +22,8 @@
 
 #include <sstream>
 
+#include <xsd/cxx/xml/string.hxx>
+
 #include <bctoolbox/defs.h>
 
 #include "linphone/utils/algorithm.h"
@@ -35,8 +37,6 @@
 #include "core/core-p.h"
 #include "event/event-subscribe.h"
 #include "logger/logger.h"
-
-#include <xsd/cxx/xml/string.hxx>
 
 // TODO: Remove me later.
 #include "private.h"
@@ -280,9 +280,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			} else {
 				participant = Participant::create(conf, address);
 				conf->participants.push_back(participant);
-		#ifdef HAVE_DB_STORAGE
+#ifdef HAVE_DB_STORAGE
 				conf->updateParticipantsInConferenceInfo(address);
-		#endif // HAVE_DB_STORAGE
+#endif // HAVE_DB_STORAGE
 				lInfo() << "Participant " << *participant << " is successfully added - conference "
 				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
 
@@ -360,14 +360,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							const auto &disconnectionInfo = endpoint.getDisconnectionInfo().get();
 							if (disconnectionInfo.getWhen().present()) {
 								auto disconnectionTime = disconnectionInfo.getWhen().get();
-								tm timeStruct;
-								timeStruct.tm_year = (disconnectionTime.year() - 1900),
-								timeStruct.tm_mon = (disconnectionTime.month() - 1),
-								timeStruct.tm_mday = disconnectionTime.day(),
-								timeStruct.tm_hour = disconnectionTime.hours(),
-								timeStruct.tm_min = disconnectionTime.minutes(),
-								timeStruct.tm_sec = static_cast<int>(disconnectionTime.seconds());
-								device->setTimeOfDisconnection(Utils::getTmAsTimeT(timeStruct));
+								device->setTimeOfDisconnection(dateTimeToTimeT(disconnectionTime));
 							}
 
 							if (disconnectionInfo.getReason().present()) {
@@ -488,13 +481,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						const auto &joiningInfo = endpoint.getJoiningInfo().get();
 						if (joiningInfo.getWhen().present()) {
 							auto joiningTime = joiningInfo.getWhen().get();
-							tm timeStruct = {0};
-							timeStruct.tm_year = (joiningTime.year() - 1900),
-							timeStruct.tm_mon = (joiningTime.month() - 1), timeStruct.tm_mday = joiningTime.day(),
-							timeStruct.tm_hour = joiningTime.hours(), timeStruct.tm_min = joiningTime.minutes(),
-							timeStruct.tm_sec = static_cast<int>(joiningTime.seconds());
-
-							device->setTimeOfJoining(Utils::getTmAsTimeT(timeStruct));
+							device->setTimeOfJoining(dateTimeToTimeT(joiningTime));
 						}
 					}
 
@@ -675,13 +662,13 @@ void RemoteConferenceEventHandler::subscribe() {
 	ev = dynamic_pointer_cast<EventSubscribe>(
 	    (new EventSubscribe(conf->getCore(), peerAddress, cfg, "conference", 600))->toSharedPtr());
 	ev->getOp()->setFrom(localAddress);
-	setInitialSubscriptionUnderWayFlag((getLastNotify() == 0));
+	setInitialSubscriptionUnderWayFlag(true);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	ev->addCustomHeader("Last-Notify-Version", lastNotifyStr.c_str());
 	linphone_address_unref(lAddr);
 	ev->setInternal(true);
 	ev->setProperty("event-handler-private", this);
-	lInfo() << localAddress << " is subscribing to chat room or conference: " << peerAddress
+	lInfo() << localAddress << " is subscribing to chat room or conference: " << *peerAddress
 	        << " with last notify: " << lastNotifyStr;
 	ev->send(nullptr);
 }
@@ -748,6 +735,18 @@ void RemoteConferenceEventHandler::unsubscribe() {
 	subscriptionWanted = false;
 }
 
+void RemoteConferenceEventHandler::updateInitialSubcriptionUnderWay(std::shared_ptr<Event> notifyLev) {
+	if (getInitialSubscriptionUnderWayFlag()) {
+		;
+		setInitialSubscriptionUnderWayFlag((ev != notifyLev));
+	}
+}
+
+void RemoteConferenceEventHandler::notifyReceived(std::shared_ptr<Event> notifyLev, const Content &content) {
+	updateInitialSubcriptionUnderWay(notifyLev);
+	notifyReceived(content);
+}
+
 void RemoteConferenceEventHandler::notifyReceived(const Content &content) {
 	lInfo() << "NOTIFY received for conference: " << getConferenceId() << " - Content type "
 	        << content.getContentType().getType() << " subtype " << content.getContentType().getSubType();
@@ -755,6 +754,11 @@ void RemoteConferenceEventHandler::notifyReceived(const Content &content) {
 	if (contentType == ContentType::ConferenceInfo) {
 		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
 	}
+}
+
+void RemoteConferenceEventHandler::multipartNotifyReceived(std::shared_ptr<Event> notifyLev, const Content &content) {
+	updateInitialSubcriptionUnderWay(notifyLev);
+	multipartNotifyReceived(content);
 }
 
 void RemoteConferenceEventHandler::multipartNotifyReceived(const Content &content) {
@@ -771,5 +775,17 @@ const ConferenceId &RemoteConferenceEventHandler::getConferenceId() const {
 unsigned int RemoteConferenceEventHandler::getLastNotify() const {
 	return conf->getLastNotify();
 };
+
+time_t RemoteConferenceEventHandler::dateTimeToTimeT(const Xsd::XmlSchema::DateTime &xsdTime) const {
+	tm timeStruct;
+	timeStruct.tm_year = (xsdTime.year() - 1900), timeStruct.tm_mon = (xsdTime.month() - 1),
+	timeStruct.tm_mday = xsdTime.day(), timeStruct.tm_hour = xsdTime.hours(), timeStruct.tm_min = xsdTime.minutes(),
+	timeStruct.tm_sec = static_cast<int>(xsdTime.seconds());
+	if (xsdTime.zone_present()) {
+		timeStruct.tm_hour += xsdTime.zone_hours();
+		timeStruct.tm_min += xsdTime.zone_minutes();
+	}
+	return Utils::getTmAsTimeT(timeStruct);
+}
 
 LINPHONE_END_NAMESPACE

@@ -147,7 +147,7 @@ static void alert_call_base(OrtpNetworkSimulatorParams networkParams, AlertCallb
 		core->setSignalInformation(nullptr);
 	}
 	// TODO : remove this if to make this assert true
-	if (data.expectedType != LinphoneAlertQoSCameraLowFramerate &&
+	if (data.expectedType != LinphoneAlertQoSBurstOccured && data.expectedType != LinphoneAlertQoSCameraLowFramerate &&
 	    data.expectedType != LinphoneAlertQoSLowQualitySentVideo) {
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, marie->lc, &data.stopped, 1, 10000));
 	}

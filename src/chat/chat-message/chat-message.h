@@ -149,11 +149,12 @@ public:
 	bool getToBeStored() const;
 	virtual void setToBeStored(bool value);
 
-	std::list<ParticipantImdnState> getParticipantsByImdnState(State state) const;
-
 	const std::list<Content *> &getContents() const;
 	void addContent(Content *content);
 	void removeContent(Content *content);
+
+	std::list<ParticipantImdnState> getParticipantsByImdnState(State state) const;
+	std::list<ParticipantImdnState> getParticipantsState() const;
 
 	const Content &getInternalContent() const;
 	void setInternalContent(const Content &content);

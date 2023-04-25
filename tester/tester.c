@@ -2565,6 +2565,7 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	}
 
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
+	int old_registration_ok = mgr->stat.number_of_LinphoneRegistrationOk;
 	if (check_for_proxies) { /**/
 		proxy_count = (int)bctbx_list_size(linphone_core_get_proxy_config_list(mgr->lc));
 	} else {
@@ -2575,13 +2576,16 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 
 	if (proxy_count) {
 #define REGISTER_TIMEOUT 20 /* seconds */
-		int success = wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk, proxy_count,
+		int success = wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk,
+		                             mgr->stat.number_of_LinphoneRegistrationOk + proxy_count,
 		                             (REGISTER_TIMEOUT * 1000 * proxy_count));
 		if (!success) {
 			ms_error("Did not register after %d seconds for %d proxies", REGISTER_TIMEOUT, proxy_count);
 		}
 	}
-	BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk, proxy_count, int, "%d");
+	ms_error("core %s Old registration ok %d number of proxies %d", linphone_core_get_identity(mgr->lc),
+	         old_registration_ok, proxy_count);
+	BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk, old_registration_ok + proxy_count, int, "%d");
 	enable_codec(mgr->lc, "PCMU", 8000);
 
 	proxy = linphone_core_get_default_proxy_config(mgr->lc);
@@ -3169,7 +3173,7 @@ void message_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), Li
 	stats *counters;
 	const char *text = linphone_chat_message_get_text(msg);
 	const char *external_body_url = linphone_chat_message_get_external_body_url(msg);
-	ms_message("Message from [%s]  is [%s] , external URL [%s]", from ? from : "", text ? text : "",
+	ms_message("Message from [%s] is [%s] , external URL [%s]", from ? from : "", text ? text : "",
 	           external_body_url ? external_body_url : "");
 	ms_free(from);
 	counters = get_stats(lc);
@@ -3640,8 +3644,7 @@ void linphone_notify_received(LinphoneCore *lc,
                               const LinphoneContent *content) {
 	LinphoneCoreManager *mgr;
 	const char *ua = linphone_event_get_custom_header(lev, "User-Agent");
-	if (!BC_ASSERT_PTR_NOT_NULL(content)) return;
-	if (!linphone_content_is_multipart(content) &&
+	if (content && !linphone_content_is_multipart(content) &&
 	    (!ua || !strstr(ua, "flexisip"))) { /*disable check for full presence server support*/
 		/*hack to disable content checking for list notify */
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), notify_content);

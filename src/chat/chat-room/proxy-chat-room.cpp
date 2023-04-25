@@ -370,12 +370,12 @@ void ProxyChatRoom::setParticipantAdminStatus(const shared_ptr<Participant> &par
 
 // -----------------------------------------------------------------------------
 
-const string & ProxyChatRoom::getUtf8Subject () const {
+const string &ProxyChatRoom::getUtf8Subject() const {
 	L_D();
 	return d->chatRoom->getUtf8Subject();
 }
 
-const string & ProxyChatRoom::getSubject () const {
+const string &ProxyChatRoom::getSubject() const {
 	L_D();
 	return d->chatRoom->getSubject();
 }
@@ -439,5 +439,10 @@ std::shared_ptr<Call> ProxyChatRoom::getCall() const {
 	L_D();
 	return d->chatRoom->getCall();
 }
+
+bool ProxyChatRoom::isMe(const std::shared_ptr<Address> &address) const {
+	L_D();
+	return d->chatRoom->isMe(address);
+};
 
 LINPHONE_END_NAMESPACE

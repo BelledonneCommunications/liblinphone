@@ -107,7 +107,7 @@ void RemoteConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 			Address addr = conferenceId.getPeerAddress()->getUri();
 			const auto lastNotify = handler->getLastNotify();
 			addr.setUriParam("Last-Notify", Utils::toString(lastNotify));
-			handler->setInitialSubscriptionUnderWayFlag((lastNotify == 0));
+			handler->setInitialSubscriptionUnderWayFlag(handler->alreadySubscribed());
 			Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 			l.getEntry().push_back(entry);
 		}
@@ -177,53 +177,69 @@ bool RemoteConferenceListEventHandler::getInitialSubscriptionUnderWayFlag(const 
 	return (handler) ? handler->getInitialSubscriptionUnderWayFlag() : false;
 }
 
-void RemoteConferenceListEventHandler::notifyReceived(std::string from, const Content *notifyContent) {
-	const std::shared_ptr<Address> local = Address::create(from);
+void RemoteConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> notifyLev, const Content *notifyContent) {
+	const auto &from = notifyLev->getFrom();
+	auto it = std::find_if(levs.begin(), levs.end(),
+	                       [&from](const auto &lev) { return (*Address::create(lev->getOp()->getFrom()) == *from); });
 
-	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
-		// Simple notify received directly from a chat-room
-		const string &xmlBody = notifyContent->getBodyAsUtf8String();
-		istringstream data(xmlBody);
-		unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo;
-		try {
-			confInfo = Xsd::ConferenceInfo::parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
-		} catch (const exception &) {
-			lError() << "Error while parsing conference-info in conferences notify";
+	const auto levFound = (it != levs.end());
+
+	if (notifyContent) {
+		if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
+			// Simple notify received directly from a chat-room
+			const string &xmlBody = notifyContent->getBodyAsUtf8String();
+			istringstream data(xmlBody);
+			unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo;
+			try {
+				confInfo = Xsd::ConferenceInfo::parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
+			} catch (const exception &) {
+				lError() << "Error while parsing conference-info in conferences notify";
+				return;
+			}
+
+			std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity().c_str());
+			ConferenceId id(entityAddress, from);
+			RemoteConferenceEventHandler *handler = findHandler(id);
+			if (!handler) return;
+
+			handler->notifyReceived(*notifyContent);
+			if (handler->getInitialSubscriptionUnderWayFlag()) {
+				handler->setInitialSubscriptionUnderWayFlag(!levFound);
+			}
 			return;
 		}
 
-		std::shared_ptr<Address> entityAddress = Address::create(confInfo->getEntity().c_str());
-		ConferenceId id(entityAddress, local);
-		RemoteConferenceEventHandler *handler = findHandler(id);
-		if (!handler) return;
+		list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
+		map<string, std::shared_ptr<Address>> addresses;
+		for (const auto &content : contents) {
+			const string &body = content.getBodyAsUtf8String();
+			const ContentType &contentType = content.getContentType();
+			if (contentType == ContentType::Rlmi) {
+				addresses = parseRlmi(body);
+				continue;
+			}
 
-		handler->notifyReceived(*notifyContent);
-		return;
-	}
+			const string &cid = content.getHeader("Content-Id").getValue();
+			if (cid.empty()) continue;
 
-	list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
-	map<string, std::shared_ptr<Address>> addresses;
-	for (const auto &content : contents) {
-		const string &body = content.getBodyAsUtf8String();
-		const ContentType &contentType = content.getContentType();
-		if (contentType == ContentType::Rlmi) {
-			addresses = parseRlmi(body);
-			continue;
+			map<string, std::shared_ptr<Address>>::const_iterator it = addresses.find(cid);
+			if (it == addresses.cend()) continue;
+
+			std::shared_ptr<Address> peer = it->second;
+			ConferenceId id(peer, from);
+			RemoteConferenceEventHandler *handler = findHandler(id);
+			if (!handler) continue;
+
+			if (contentType == ContentType::Multipart) handler->multipartNotifyReceived(content);
+			else if (contentType == ContentType::ConferenceInfo) handler->notifyReceived(content);
+
+			for (const auto &p : handlers) {
+				RemoteConferenceEventHandler *handler = p.second;
+				if (handler->getInitialSubscriptionUnderWayFlag()) {
+					handler->setInitialSubscriptionUnderWayFlag(!levFound);
+				}
+			}
 		}
-
-		const string &cid = content.getHeader("Content-Id").getValue();
-		if (cid.empty()) continue;
-
-		map<string, std::shared_ptr<Address>>::const_iterator it = addresses.find(cid);
-		if (it == addresses.cend()) continue;
-
-		std::shared_ptr<Address> peer = it->second;
-		ConferenceId id(peer, local);
-		RemoteConferenceEventHandler *handler = findHandler(id);
-		if (!handler) continue;
-
-		if (contentType == ContentType::Multipart) handler->multipartNotifyReceived(content);
-		else if (contentType == ContentType::ConferenceInfo) handler->notifyReceived(content);
 	}
 }
 
@@ -350,8 +366,8 @@ void RemoteConferenceListEventHandler::onRegistrationStateChanged(LinphoneProxyC
                                                                   BCTBX_UNUSED(const std::string &message)) {
 	const auto &account = Account::toCpp(cfg->account)->getSharedFromThis();
 	if (state == LinphoneRegistrationOk) subscribe(account);
-	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config is
-		                                             // the current subscription
+	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config
+		                                             // is the current subscription
 		const LinphoneAddress *cfgAddress = linphone_proxy_config_get_identity_address(cfg);
 		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &evSub) {
 			const auto &currentAddress = evSub->getFrom();

@@ -949,7 +949,7 @@ void LocalConferenceEventHandler::notifyParticipant(const Content &notify, const
 
 void LocalConferenceEventHandler::notifyParticipantDevice(const Content &notify,
                                                           const shared_ptr<ParticipantDevice> &device) {
-	if (!device->isSubscribedToConferenceEventPackage() || notify.isEmpty()) return;
+	if (!device->isSubscribedToConferenceEventPackage()) return;
 
 	shared_ptr<EventSubscribe> ev = device->getConferenceSubscribeEvent();
 	shared_ptr<EventCbs> cbs = EventCbs::create();
@@ -957,7 +957,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice(const Content &notify,
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
 
-	LinphoneContent *cContent = L_GET_C_BACK_PTR(&notify);
+	LinphoneContent *cContent = notify.isEmpty() ? nullptr : L_GET_C_BACK_PTR(&notify);
 	ev->notify(cContent);
 	linphone_core_notify_notify_sent(conf->getCore()->getCCore(), ev->toC(), cContent);
 }
@@ -1038,6 +1038,8 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 			           << conf->getConferenceAddress() << "] should not be higher than last notify sent by server ["
 			           << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
 			notifyFullState(createNotifyFullState(ev), device);
+		} else {
+			notifyParticipantDevice(Content(), device);
 		}
 	}
 
@@ -1079,9 +1081,12 @@ Content LocalConferenceEventHandler::getNotifyForId(int notifyId, const shared_p
 Content LocalConferenceEventHandler::makeContent(const std::string &xml) {
 	Content content;
 	content.setContentType(ContentType::ConferenceInfo);
-	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
+	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate")) {
 		content.setContentEncoding("deflate");
-	content.setBodyFromUtf8(xml);
+	}
+	if (!xml.empty()) {
+		content.setBodyFromUtf8(xml);
+	}
 	return content;
 }
 
@@ -1093,9 +1098,9 @@ void LocalConferenceEventHandler::onParticipantAdded(const std::shared_ptr<Confe
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAllExcept(makeContent(createNotifyParticipantAdded(participant->getAddress())), participant);
-		#ifdef HAVE_DB_STORAGE
+#ifdef HAVE_DB_STORAGE
 		conf->updateParticipantsInConferenceInfo(participant->getAddress());
-		#endif // HAVE_DB_STORAGE
+#endif // HAVE_DB_STORAGE
 
 		if (conf) {
 			shared_ptr<Core> core = conf->getCore();

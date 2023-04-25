@@ -116,7 +116,7 @@ public:
 
 	std::list<ParticipantState> getChatMessageParticipantsByImdnState(const std::shared_ptr<EventLog> &eventLog,
 	                                                                  ChatMessage::State state) const;
-	std::list<ChatMessage::State> getChatMessageParticipantStates(const std::shared_ptr<EventLog> &eventLog) const;
+	std::list<ParticipantState> getChatMessageParticipantStates(const std::shared_ptr<EventLog> &eventLog) const;
 	ChatMessage::State getChatMessageParticipantState(const std::shared_ptr<EventLog> &eventLog,
 	                                                  const std::shared_ptr<Address> &participantAddress) const;
 	void setChatMessageParticipantState(const std::shared_ptr<EventLog> &eventLog,

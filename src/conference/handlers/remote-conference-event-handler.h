@@ -54,10 +54,13 @@ public:
 	void subscribe(const ConferenceId &conferenceId);
 	bool alreadySubscribed() const;
 	void notifyReceived(const Content &content);
+	void notifyReceived(std::shared_ptr<Event> notifyLev, const Content &content);
 	void multipartNotifyReceived(const Content &content);
+	void multipartNotifyReceived(std::shared_ptr<Event> notifyLev, const Content &content);
 	void unsubscribe() override;
 
 	void invalidateSubscription() override;
+	void subscriptionActive();
 
 	const ConferenceId &getConferenceId() const;
 	unsigned int getLastNotify() const;
@@ -90,6 +93,8 @@ protected:
 
 private:
 	void unsubscribePrivate();
+	void updateInitialSubcriptionUnderWay(std::shared_ptr<Event> notifyLev);
+	time_t dateTimeToTimeT(const Xsd::XmlSchema::DateTime &xsdTime) const;
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

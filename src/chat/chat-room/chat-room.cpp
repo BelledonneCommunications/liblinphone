@@ -852,6 +852,10 @@ bool ChatRoom::addParticipants(const std::list<std::shared_ptr<Address>> &addres
 	return soFarSoGood;
 }
 
+bool ChatRoom::isMe(const std::shared_ptr<Address> &address) const {
+	return getConference()->isMe(address);
+};
+
 uint32_t ChatRoom::getChar() {
 	L_D();
 	uint32_t character = 0;
@@ -874,11 +878,11 @@ std::shared_ptr<Call> ChatRoom::getCall() const {
 	return getCore()->getCallByCallId(d->callId);
 }
 
-const string & ChatRoom::getSubject () const {
+const string &ChatRoom::getSubject() const {
 	return getConference()->getSubject();
 }
 
-const string & ChatRoom::getUtf8Subject () const {
+const string &ChatRoom::getUtf8Subject() const {
 	return getConference()->getUtf8Subject();
 }
 

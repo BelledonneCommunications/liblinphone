@@ -92,7 +92,7 @@ public:
 
 	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	void setSubject (const std::string &subject) override;
+	void setSubject(const std::string &subject) override;
 
 	void join() override;
 	void leave() override;
@@ -140,6 +140,7 @@ private:
 	void sendInvite(std::shared_ptr<CallSession> &session, const std::list<std::shared_ptr<Address>> &addressList);
 	void setConferenceId(const ConferenceId &conferenceId);
 	void sendEphemeralUpdate();
+	void sendPendingMessages() override;
 
 	// TODO: Move me in ClientGroupChatRoomPrivate.
 	// ALL METHODS AFTER THIS POINT.

@@ -24,6 +24,7 @@
 #include "abstract-chat-room.h"
 #include "chat/chat-room/chat-room-listener.h"
 #include "conference/session/call-session-listener.h"
+#include "db/main-db.h"
 #include "object/object-p.h"
 
 // =============================================================================

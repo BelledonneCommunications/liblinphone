@@ -111,7 +111,7 @@ public:
 	}
 
 	virtual bool isSubscriptionUnderWay() const override {
-		return clientGroupChatRoom->getPrivate()->isSubscriptionUnderWay();
+		return clientGroupChatRoom ? clientGroupChatRoom->getPrivate()->isSubscriptionUnderWay() : false;
 	}
 
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override {

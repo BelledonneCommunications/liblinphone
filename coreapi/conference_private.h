@@ -461,8 +461,8 @@ public:
 	virtual VideoControlInterface *getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
-	void multipartNotifyReceived(const Content &content);
-	void notifyReceived(const Content &content);
+	void multipartNotifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content);
+	void notifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content);
 
 	virtual int
 	participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> &session) override;

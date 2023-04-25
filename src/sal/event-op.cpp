@@ -367,7 +367,9 @@ int SalSubscribeOp::notify(const SalBodyHandler *bodyHandler) {
 	    mDialog
 	        ? BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE, 600))
 	        : BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(BELLE_SIP_SUBSCRIPTION_STATE_TERMINATED, 0)));
-	belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(request), BELLE_SIP_BODY_HANDLER(bodyHandler));
+	if (bodyHandler) {
+		belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(request), BELLE_SIP_BODY_HANDLER(bodyHandler));
+	}
 	/* It is preferable to send NOTIFY with a Contact header, because it may arrive before the initial 200 OK of the
 	 * SUBSCRIBE. Thanks to the Contact, we are able to establish the dialog.
 	 */

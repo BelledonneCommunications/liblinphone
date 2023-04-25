@@ -324,6 +324,7 @@ void CorePrivate::shutdown() {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const auto &chatRoomPrivate = chatRoom->getPrivate();
+		chatRoom->sendPendingMessages();
 		for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
 			if (chatMessage->getState() == ChatMessage::State::FileTransferInProgress) {
 				// Abort auto download file transfers

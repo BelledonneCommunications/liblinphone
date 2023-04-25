@@ -375,7 +375,7 @@ LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(LinphoneChatRoom *chat_room
 /**
  * Gets the current call associated to this chatroom if any
  * To commit a message, use linphone_chat_message_send()
- * @param chat_room the #LinphoneChatRomm object @notnil
+ * @param chat_room the #LinphoneChatRoom object @notnil
  * @return #LinphoneCall or NULL. @maybenil
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_chat_room_get_call(const LinphoneChatRoom *chat_room);

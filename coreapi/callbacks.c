@@ -841,8 +841,8 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 	linphone_event_ref(lev);
 	{
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
+		linphone_core_notify_notify_received(lc, lev, eventname, ct);
 		if (ct) {
-			linphone_core_notify_notify_received(lc, lev, eventname, ct);
 			linphone_content_unref(ct);
 		}
 	}

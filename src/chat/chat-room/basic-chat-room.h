@@ -58,9 +58,9 @@ public:
 
 	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	const std::string & getSubject () const override;
-	const std::string & getUtf8Subject () const override;
-	void setSubject (const std::string &subject) override;
+	const std::string &getSubject() const override;
+	const std::string &getUtf8Subject() const override;
+	void setSubject(const std::string &subject) override;
 
 	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
