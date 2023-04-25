@@ -218,6 +218,9 @@ typedef enum _LinphoneAccountCreatorStatus {
 	LinphoneAccountCreatorStatusPhoneNumberOverused = 20, /**< Error too many SMS sent */
 	LinphoneAccountCreatorStatusAlgoNotSupported = 21,    /**< Error algo isn't MD5 or SHA-256 */
 	LinphoneAccountCreatorStatusUnexpectedError = 22,     /**< Generic error */
+	LinphoneAccountCreatorStatusNotImplementedError = 23, /**< This API isn't implemented in the current backend */
+	LinphoneAccountCreatorStatusRequestNotAuthorized =
+	    24, /**< Request has been denied, probably due to invalid auth token */
 } LinphoneAccountCreatorStatus;
 
 // -----------------------------------------------------------------------------

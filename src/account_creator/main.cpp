@@ -507,55 +507,101 @@ LinphoneAccountCreatorService *linphone_account_creator_get_service(const Linpho
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist(LinphoneAccountCreator *creator) {
-	return creator->service->is_account_exist_request_cb(creator);
+	if (creator->service->is_account_exist_request_cb) {
+		return creator->service->is_account_exist_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator) {
-	return creator->service->create_account_request_cb(creator);
+	if (creator->service->create_account_request_cb) {
+		return creator->service->create_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAccountCreator *creator) {
-	return creator->service->delete_account_request_cb(creator);
+	if (creator->service->delete_account_request_cb) {
+		return creator->service->delete_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key(LinphoneAccountCreator *creator) {
-	return creator->service->confirmation_key_request_cb(creator);
+	if (creator->service->confirmation_key_request_cb) {
+		return creator->service->confirmation_key_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated(LinphoneAccountCreator *creator) {
-	return creator->service->is_account_activated_request_cb(creator);
+	if (creator->service->is_account_activated_request_cb) {
+		return creator->service->is_account_activated_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_account(LinphoneAccountCreator *creator) {
-	return creator->service->activate_account_request_cb(creator);
+	if (creator->service->activate_account_request_cb) {
+		return creator->service->activate_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_link_account(LinphoneAccountCreator *creator) {
-	return creator->service->link_account_request_cb(creator);
+	if (creator->service->link_account_request_cb) {
+		return creator->service->link_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_alias(LinphoneAccountCreator *creator) {
-	return creator->service->activate_alias_request_cb(creator);
+	if (creator->service->activate_alias_request_cb) {
+		return creator->service->activate_alias_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_alias_used(LinphoneAccountCreator *creator) {
-	return creator->service->is_alias_used_request_cb(creator);
+	if (creator->service->is_alias_used_request_cb) {
+		return creator->service->is_alias_used_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked(LinphoneAccountCreator *creator) {
-	return creator->service->is_account_linked_request_cb(creator);
+	if (creator->service->is_account_linked_request_cb) {
+		return creator->service->is_account_linked_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_recover_account(LinphoneAccountCreator *creator) {
-	return creator->service->recover_account_request_cb(creator);
+	if (creator->service->recover_account_request_cb) {
+		return creator->service->recover_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_update_account(LinphoneAccountCreator *creator) {
-	return creator->service->update_account_request_cb(creator);
+	if (creator->service->update_account_request_cb) {
+		return creator->service->update_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator) {
-	return creator->service->login_linphone_account_request_cb(creator);
+	if (creator->service->login_linphone_account_request_cb) {
+		return creator->service->login_linphone_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_request_auth_token(LinphoneAccountCreator *creator) {
+	if (creator->service->send_token_request_cb) {
+		return creator->service->send_token_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
 /************************** End Account Creator data **************************/

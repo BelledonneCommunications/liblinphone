@@ -35,6 +35,7 @@ char *_get_identity(const LinphoneAccountCreator *creator);
 unsigned int validate_uri(const char *username, const char *domain, const char *display_name);
 void reset_field(char **field);
 void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator);
+char *generate_random_password(void);
 
 /**
  * @addtogroup account_creator
@@ -164,6 +165,14 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_acc
  **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus
 linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator);
+
+/**
+ * Request an auth token to be send by the backend by push notification.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus
+linphone_account_creator_request_auth_token(LinphoneAccountCreator *creator);
 
 /**
  * Acquire a reference to the LinphoneAccountCreator.

@@ -2951,14 +2951,17 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 		                                                          linphone_account_creator_is_account_linked_flexiapi);
 		linphone_account_creator_service_set_update_account_cb(service,
 		                                                       linphone_account_creator_update_password_flexiapi);
+		linphone_account_creator_service_set_is_alias_used_cb(service,
+		                                                      linphone_account_creator_is_phone_number_used_flexiapi);
 
 		// FlexiAPI specific endpoints
-		linphone_account_creator_service_set_login_linphone_account_cb(service,
-		                                                               linphone_account_creator_send_token_flexiapi);
-		linphone_account_creator_service_set_create_account_with_token_cb(
+		linphone_account_creator_service_set_send_token_cb(service, linphone_account_creator_send_token_flexiapi);
+		linphone_account_creator_service_set_create_account_cb(
 		    service, linphone_account_creator_create_account_with_token_flexiapi);
-		linphone_account_creator_service_set_create_account_cb(service,
-		                                                       linphone_account_creator_admin_create_account_flexiapi);
+		linphone_account_creator_service_set_recover_account_cb(
+		    service, linphone_account_creator_recover_phone_account_flexiapi);
+		linphone_account_creator_service_set_login_linphone_account_cb(
+		    service, linphone_account_creator_login_linphone_account_flexiapi);
 	}
 #endif
 
