@@ -37,39 +37,17 @@ void AbstractChatRoom::setUtf8Subject(const string &subject) {
 	setSubject(Utils::utf8ToLocale(subject));
 }
 
-const string AbstractChatRoom::getUtf8Subject() const {
-	return Utils::localeToUtf8(getSubject());
-}
-
-std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::Capabilities e) {
-	switch (e) {
-		case AbstractChatRoom::Capabilities::None:
-			lhs << "None";
-			break;
-		case AbstractChatRoom::Capabilities::Basic:
-			lhs << "Basic";
-			break;
-		case AbstractChatRoom::Capabilities::RealTimeText:
-			lhs << "RealTimeText";
-			break;
-		case AbstractChatRoom::Capabilities::Conference:
-			lhs << "Conference";
-			break;
-		case AbstractChatRoom::Capabilities::Proxy:
-			lhs << "Proxy";
-			break;
-		case AbstractChatRoom::Capabilities::Migratable:
-			lhs << "Migratable";
-			break;
-		case AbstractChatRoom::Capabilities::OneToOne:
-			lhs << "OneToOne";
-			break;
-		case AbstractChatRoom::Capabilities::Encrypted:
-			lhs << "Encrypted";
-			break;
-		case AbstractChatRoom::Capabilities::Ephemeral:
-			lhs << "Ephemeral";
-			break;
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
+	switch(e) {
+		case AbstractChatRoom::Capabilities::None: lhs << "None"; break;
+		case AbstractChatRoom::Capabilities::Basic: lhs << "Basic"; break;
+		case AbstractChatRoom::Capabilities::RealTimeText: lhs << "RealTimeText"; break;
+		case AbstractChatRoom::Capabilities::Conference: lhs << "Conference"; break;
+		case AbstractChatRoom::Capabilities::Proxy: lhs << "Proxy"; break;
+		case AbstractChatRoom::Capabilities::Migratable: lhs << "Migratable"; break;
+		case AbstractChatRoom::Capabilities::OneToOne: lhs << "OneToOne"; break;
+		case AbstractChatRoom::Capabilities::Encrypted: lhs << "Encrypted"; break;
+		case AbstractChatRoom::Capabilities::Ephemeral: lhs << "Ephemeral"; break;
 	}
 	return lhs;
 }

@@ -102,21 +102,21 @@ const char *linphone_core_get_linphone_specs(const LinphoneCore *lc) {
 	return linphone_config_get_string(linphone_core_get_config(lc), "sip", "linphone_specs", NULL);
 }
 
-// Deprecated
-void linphone_core_set_linphone_specs(LinphoneCore *lc, const char *specs) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(Utils::cStringToCppString(specs));
+//Deprecated
+void linphone_core_set_linphone_specs (LinphoneCore *lc, const char *specs) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(L_C_TO_STRING(specs));
 }
 
 void linphone_core_set_linphone_specs_list(LinphoneCore *lc, const bctbx_list_t *specs) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(L_GET_CPP_LIST_FROM_C_LIST(specs, const char *, string));
 }
 
-void linphone_core_add_linphone_spec(LinphoneCore *lc, const char *spec) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addSpec(Utils::cStringToCppString(spec));
+void linphone_core_add_linphone_spec (LinphoneCore *lc, const char *spec) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addSpec(L_C_TO_STRING(spec));
 }
 
-void linphone_core_remove_linphone_spec(LinphoneCore *lc, const char *spec) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->removeSpec(Utils::cStringToCppString(spec));
+void linphone_core_remove_linphone_spec (LinphoneCore *lc, const char *spec) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->removeSpec(L_C_TO_STRING(spec));
 }
 
 const bctbx_list_t *linphone_core_get_linphone_specs_list(LinphoneCore *lc) {
@@ -154,9 +154,8 @@ void linphone_core_push_notification_received_2(LinphoneCore *lc,
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived(call_id, payload, is_core_starting);
 }
 
-LinphonePushNotificationMessage *linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id) {
-	std::shared_ptr<PushNotificationMessage> cppMsg =
-	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(Utils::cStringToCppString(call_id));
+LinphonePushNotificationMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id) {
+	std::shared_ptr<PushNotificationMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(L_C_TO_STRING(call_id));
 	if (!cppMsg) return NULL;
 
 	LinphonePushNotificationMessage *msg = (LinphonePushNotificationMessage *)cppMsg->toC();
@@ -168,11 +167,9 @@ LinphonePushNotificationMessage *linphone_core_get_new_message_from_callid(Linph
 }
 
 /* Uses the chat_room_addr instead of the call_id like linphone_core_get_new_message_from_callid to get the chatroom.
-Using the call_id to get the chat room require to add a new param to chat room objects where the conference address is
-already here */
-LinphoneChatRoom *linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc, const char *chat_room_addr) {
-	std::shared_ptr<ChatRoom> cppChatRoom =
-	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoom(Utils::cStringToCppString(chat_room_addr));
+Using the call_id to get the chat room require to add a new param to chat room objects where the conference address is already here */
+LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc , const char *chat_room_addr) {
+	std::shared_ptr<ChatRoom> cppChatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoom(L_C_TO_STRING(chat_room_addr));
 	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(cppChatRoom);
 
 	return chatRoom;

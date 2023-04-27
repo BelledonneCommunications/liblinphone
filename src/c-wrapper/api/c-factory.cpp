@@ -139,13 +139,19 @@ LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *fac
 	                                               algorithm ? algorithm : "");
 }
 
-const char *linphone_factory_compute_ha1_for_algorithm(const LinphoneFactory *factory,
-                                                       const char *userid,
-                                                       const char *password,
-                                                       const char *realm,
-                                                       const char *algorithm) {
-	return L_STRING_TO_C(Factory::toCpp(factory)->computeHa1ForAlgorithm(
-	    userid ? userid : "", password ? password : "", realm ? realm : "", algorithm ? algorithm : ""));
+char * linphone_factory_compute_ha1_for_algorithm(const LinphoneFactory *factory, const char *userid, const char *password, const char *realm, const char *algorithm) {
+	auto ha1 = Factory::toCpp(factory)->computeHa1ForAlgorithm(
+		userid ? userid : "",
+		password ? password : "",
+		realm ? realm : "",
+		algorithm ? algorithm : ""
+	);
+	if (ha1.empty()) {
+		return NULL;
+	} else {
+		char *ret = ms_strdup(ha1.c_str());
+		return ret;
+	}
 }
 
 LinphoneCallCbs *linphone_factory_create_call_cbs(const LinphoneFactory *factory) {

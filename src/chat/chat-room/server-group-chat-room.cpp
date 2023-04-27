@@ -1608,15 +1608,9 @@ const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants() cons
 	return getConference()->getParticipants();
 }
 
-const string &ServerGroupChatRoom::getSubject() const {
-	return getConference()->getSubject();
-}
+void ServerGroupChatRoom::join () {}
 
-void ServerGroupChatRoom::join() {
-}
-
-void ServerGroupChatRoom::leave() {
-}
+void ServerGroupChatRoom::leave() {}
 
 void ServerGroupChatRoom::onFirstNotifyReceived(const std::shared_ptr<Address> &addr) {
 	L_D();

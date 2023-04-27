@@ -771,11 +771,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus(const shared_ptr<Participant
 	referOp->unref();
 }
 
-const string &ClientGroupChatRoom::getSubject() const {
-	return getConference()->getSubject();
-}
-
-void ClientGroupChatRoom::setSubject(const string &subject) {
+void ClientGroupChatRoom::setSubject (const string &subject) {
 	L_D();
 
 	if (getState() != ConferenceInterface::State::Created) {

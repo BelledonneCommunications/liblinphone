@@ -75,24 +75,22 @@ void ConferenceParams::setUtf8Description(const std::string &description) {
 	m_description = Utils::utf8ToLocale(description);
 };
 
-const std::string ConferenceParams::getUtf8Description() const {
-	return Utils::localeToUtf8(m_description);
+const std::string &ConferenceParams::getUtf8Description() const {
+	m_utf8Description = Utils::localeToUtf8(m_description);
+	return m_utf8Description;
 };
 
 void ConferenceParams::setUtf8Subject(const std::string &subject) {
 	m_subject = Utils::utf8ToLocale(subject);
 };
 
-const std::string ConferenceParams::getUtf8Subject() const {
-	return Utils::localeToUtf8(m_subject);
+const std::string &ConferenceParams::getUtf8Subject() const {
+	m_utf8Subject = Utils::localeToUtf8(m_subject);
+	return m_utf8Subject;
 };
 
 void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) {
 	m_conferenceAddress = Address::create(conferenceAddress->getUri());
-};
-
-void ConferenceParams::setSubject(const std::string &subject) {
-	m_subject = subject;
 };
 
 LINPHONE_END_NAMESPACE

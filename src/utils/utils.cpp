@@ -27,11 +27,11 @@
 #include <bctoolbox/charconv.h>
 #include <bctoolbox/port.h>
 
+#include "c-wrapper/internal/c-tools.h"
 #include "conference/conference-info.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "private.h"
-
 #ifdef HAVE_ADVANCED_IM
 #include "xml/resource-lists.h"
 #endif
@@ -59,7 +59,9 @@ bool Utils::iequals(const string &a, const string &b) {
 
 #ifndef __ANDROID__
 #define TO_STRING_IMPL(TYPE)                                                                                           \
-	string Utils::toString(TYPE val) { return to_string(val); }
+	string Utils::toString(TYPE val) {                                                                                 \
+		return to_string(val);                                                                                         \
+	}
 #else
 #define TO_STRING_IMPL(TYPE)                                                                                           \
 	string Utils::toString(TYPE val) {                                                                                 \
@@ -90,7 +92,9 @@ string Utils::toString(const void *val) {
 // -----------------------------------------------------------------------------
 
 #define STRING_TO_NUMBER_IMPL(TYPE, SUFFIX)                                                                            \
-	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx, int base) { return sto##SUFFIX(str.c_str(), idx, base); }  \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx, int base) {                                                \
+		return sto##SUFFIX(str.c_str(), idx, base);                                                                    \
+	}                                                                                                                  \
 	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx, int base) {                                                  \
 		char *p;                                                                                                       \
 		TYPE v = strto##SUFFIX(str, &p, base);                                                                         \
@@ -99,7 +103,9 @@ string Utils::toString(const void *val) {
 	}
 
 #define STRING_TO_NUMBER_IMPL_BASE_LESS(TYPE, SUFFIX)                                                                  \
-	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx) { return sto##SUFFIX(str.c_str(), idx); }                  \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx) {                                                          \
+		return sto##SUFFIX(str.c_str(), idx);                                                                          \
+	}                                                                                                                  \
 	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx) {                                                            \
 		char *p;                                                                                                       \
 		TYPE v = strto##SUFFIX(str, &p);                                                                               \
@@ -270,7 +276,7 @@ time_t Utils::getStringToTime(const std::string &format, const std::string &s) {
 string Utils::localeToUtf8(const string &str) {
 	if (str.empty()) return std::string();
 	char *cStr = bctbx_locale_to_utf8(str.c_str());
-	string utf8Str = cStringToCppString(cStr);
+	string utf8Str = L_C_TO_STRING(cStr);
 	bctbx_free(cStr);
 	return utf8Str;
 }
@@ -278,21 +284,21 @@ string Utils::localeToUtf8(const string &str) {
 string Utils::utf8ToLocale(const string &str) {
 	if (str.empty()) return std::string();
 	char *cStr = bctbx_utf8_to_locale(str.c_str());
-	string localeStr = cStringToCppString(cStr);
+	string localeStr = L_C_TO_STRING(cStr);
 	bctbx_free(cStr);
 	return localeStr;
 }
 
 string Utils::convertAnyToUtf8(const string &str, const string &encoding) {
 	char *cStr = bctbx_convert_any_to_utf8(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
-	string convertedStr = cStringToCppString(cStr);
+	string convertedStr = L_C_TO_STRING(cStr);
 	bctbx_free(cStr);
 	return convertedStr;
 }
 
 string Utils::convertUtf8ToAny(const string &str, const string &encoding) {
 	char *cStr = bctbx_convert_utf8_to_any(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
-	string convertedStr = cStringToCppString(cStr);
+	string convertedStr = L_C_TO_STRING(cStr);
 	bctbx_free(cStr);
 	return convertedStr;
 }
@@ -300,7 +306,7 @@ string Utils::convertUtf8ToAny(const string &str, const string &encoding) {
 string Utils::convert(const string &str, const string &fromEncoding, const string &toEncoding) {
 	char *cStr = bctbx_convert_string(str.c_str(), fromEncoding.empty() ? NULL : fromEncoding.c_str(),
 	                                  toEncoding.empty() ? NULL : toEncoding.c_str());
-	string convertedStr = cStringToCppString(cStr);
+	string convertedStr = L_C_TO_STRING(cStr);
 	bctbx_free(cStr);
 	return convertedStr;
 }
@@ -448,12 +454,12 @@ std::string Utils::computeHa1ForAlgorithm(const std::string &userId,
                                           const std::string &realm,
                                           const std::string &algorithm) {
 	if (algorithm.empty() || algorithm == "MD5") {
-		static char ha1[33];
+		char ha1[33];
 		if (sal_auth_compute_ha1(userId.c_str(), realm.c_str(), password.c_str(), ha1) == 0) {
 			return ha1;
 		}
 	} else if (algorithm == "SHA-256") {
-		static char ha1[65];
+		char ha1[65];
 		if (sal_auth_compute_ha1_for_algorithm(userId.c_str(), realm.c_str(), password.c_str(), ha1, 65,
 		                                       algorithm.c_str()) == 0) {
 			return ha1;

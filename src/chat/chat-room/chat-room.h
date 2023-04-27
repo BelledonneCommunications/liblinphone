@@ -114,6 +114,9 @@ public:
 	uint32_t getChar() override;
 	std::shared_ptr<Call> getCall() const override;
 
+	const std::string & getSubject () const override;
+	const std::string & getUtf8Subject () const override;
+
 protected:
 	explicit ChatRoom(ChatRoomPrivate &p,
 	                  const std::shared_ptr<Core> &core,

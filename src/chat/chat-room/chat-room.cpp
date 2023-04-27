@@ -873,4 +873,13 @@ std::shared_ptr<Call> ChatRoom::getCall() const {
 	L_D();
 	return getCore()->getCallByCallId(d->callId);
 }
+
+const string & ChatRoom::getSubject () const {
+	return getConference()->getSubject();
+}
+
+const string & ChatRoom::getUtf8Subject () const {
+	return getConference()->getUtf8Subject();
+}
+
 LINPHONE_END_NAMESPACE

@@ -23,11 +23,11 @@
 
 #include <string>
 
+#include "belle-sip/object++.hh"
+
 #include "address/address.h"
 #include "conference/conference-interface.h"
 #include "linphone/core.h"
-
-#include "belle-sip/object++.hh"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -115,11 +115,13 @@ public:
 	const std::string &getDescription() const {
 		return m_description;
 	};
-	const std::string getUtf8Description() const;
+	const std::string &getUtf8Description() const;
 
 	virtual void setUtf8Subject(const std::string &subject) override;
-	virtual void setSubject(const std::string &subject) override;
-	const std::string getUtf8Subject() const;
+	virtual void setSubject(const std::string &subject) override {
+		m_subject = subject;
+	};
+	const std::string &getUtf8Subject() const;
 	const std::string &getSubject() const {
 		return m_subject;
 	};
@@ -178,7 +180,9 @@ private:
 	std::shared_ptr<Address> m_factoryAddress = nullptr;
 	bool m_useDefaultFactoryAddress = true;
 	std::string m_subject = "";
+	mutable std::string m_utf8Subject = "";
 	std::string m_description = "";
+	mutable std::string m_utf8Description = "";
 	std::shared_ptr<Address> m_me = nullptr;
 	time_t m_startTime = (time_t)-1;
 	time_t m_endTime = (time_t)-1;

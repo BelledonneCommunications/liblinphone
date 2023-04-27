@@ -165,7 +165,13 @@ void BasicChatRoom::setParticipantAdminStatus(const shared_ptr<Participant> &, b
 	lError() << "setParticipantAdminStatus() is not allowed on a BasicChatRoom";
 }
 
-const string &BasicChatRoom::getSubject() const {
+const string & BasicChatRoom::getUtf8Subject () const {
+	L_D();
+	d->utf8Subject = Utils::localeToUtf8(getSubject());
+	return d->utf8Subject;
+}
+
+const string & BasicChatRoom::getSubject () const {
 	L_D();
 	return d->subject;
 }
