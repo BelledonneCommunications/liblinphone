@@ -19,6 +19,7 @@
  */
 
 #include "ios-app-delegate.h"
+#include "push-notification/push-notification-config.h"
 #include "call/call.h"
 #import <AVFoundation/AVFoundation.h>
 
@@ -130,11 +131,14 @@
 		ms_warning("Received remote push token but the core is currently destroyed, Shutdown or Off. Push configuration updates skipped");
 		return;
 	}
-		
+	
+	auto corePushConfig = LinphonePrivate::PushNotificationConfig::toCpp(core->getCCore()->push_config);
 	if (tokenStr) {
-		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, tokenStr);
+		corePushConfig->setRemoteToken(tokenStr);
+		corePushConfig->generatePushParams(!corePushConfig->getVoipToken().empty(), true);
 	} else {
-		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, nullptr);
+		corePushConfig->setRemoteToken("");
+		corePushConfig->generatePushParams(!corePushConfig->getVoipToken().empty(), false);
 	}
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
@@ -172,7 +176,9 @@
 	ms_message("[PushKit] credentials updated with voip token: %s", [credentials.token.description UTF8String]);
 	NSData *pushToken = credentials.token;
 
-	linphone_push_notification_config_set_voip_token(core->getCCore()->push_config, [self stringFromToken:pushToken forType:@"voip"].UTF8String);
+	auto corePushConfig = LinphonePrivate::PushNotificationConfig::toCpp(core->getCCore()->push_config);
+	corePushConfig->setVoipToken([self stringFromToken:pushToken forType:@"voip"].UTF8String);
+	corePushConfig->generatePushParams(true, !corePushConfig->getRemoteToken().empty());
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
