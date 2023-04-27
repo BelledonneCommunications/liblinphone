@@ -92,6 +92,14 @@ LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCr
 	return linphone_account_creator_create_proxy_config(creator);
 }
 
+LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator) {
+	LinphoneProxyConfig *cfg = linphone_account_creator_create_proxy_config(creator);
+	if (cfg != nullptr) {
+		return linphone_proxy_config_get_account(cfg);
+	}
+	return nullptr;
+}
+
 LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator, const char *username) {
 	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_min_length", -1);
 	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_max_length", -1);
