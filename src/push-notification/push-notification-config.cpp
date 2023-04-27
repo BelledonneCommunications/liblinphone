@@ -184,7 +184,7 @@ void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remot
 #endif
 	}
 	
-	if (mPushParams[PushConfigParamKey].empty()) {
+	if (mPushParams[PushConfigParamKey].empty() || (mTokensHaveChanged && (!mVoipToken.empty() || !mRemoteToken.empty()) )) {
 		string services;
 		if (voipPushAllowed) {
 			services += "voip";
