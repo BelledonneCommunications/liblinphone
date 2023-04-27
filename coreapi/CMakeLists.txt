@@ -150,8 +150,8 @@ if(ENABLE_JAVA_WRAPPER)
 endif()
 
 if(BUILD_SHARED_LIBS)
-	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
-endif ()
+	set_target_properties(linphone-coreapi PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+endif()
 
 
 add_subdirectory(help)
