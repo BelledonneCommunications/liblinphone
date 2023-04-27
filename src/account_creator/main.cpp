@@ -95,6 +95,14 @@ LinphoneProxyConfig *linphone_account_creator_configure(const LinphoneAccountCre
 	return linphone_account_creator_create_proxy_config(creator);
 }
 
+LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator) {
+	LinphoneProxyConfig *cfg = linphone_account_creator_create_proxy_config(creator);
+	if (cfg != nullptr) {
+		return linphone_proxy_config_get_account(cfg);
+	}
+	return nullptr;
+}
+
 LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator,
                                                                            const char *username) {
 	int min_length =

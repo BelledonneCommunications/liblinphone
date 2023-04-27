@@ -346,6 +346,7 @@ bool_t linphone_core_media_description_contains_video_stream(const LinphonePriva
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
+LinphoneAccount *linphone_proxy_config_get_account(LinphoneProxyConfig *cfg);
 void linphone_account_update(LinphoneAccount *account);
 
 LinphoneProxyConfig *linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);

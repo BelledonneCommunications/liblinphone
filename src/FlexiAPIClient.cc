@@ -121,7 +121,7 @@ FlexiAPIClient *FlexiAPIClient::accountActivateEmail(string sip, string code) {
 FlexiAPIClient *FlexiAPIClient::accountActivatePhone(string sip, string code) {
 	JsonParams params;
 	params.push("code", code);
-	prepareAndSendRequest(string("accounts/").append(urlEncode(sip)).append("/activate/email"), "POST", params);
+	prepareAndSendRequest(string("accounts/").append(urlEncode(sip)).append("/activate/phone"), "POST", params);
 	return this;
 }
 
@@ -139,11 +139,11 @@ FlexiAPIClient *FlexiAPIClient::accountApiKeyFromAuthTokenGenerate(string authTo
  * Public unsecure endpoint
  */
 FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, string email) {
-	return accountCreate(username, password, "", "", email, "");
+	return accountCreate(username, password, "", "", email, "", "");
 }
 
 FlexiAPIClient *FlexiAPIClient::accountCreate(
-    string username, string password, string algorithm, string domain, string email, string phone) {
+    string username, string password, string algorithm, string domain, string email, string phone, string token) {
 	JsonParams params;
 
 	if (!username.empty()) {
@@ -152,6 +152,7 @@ FlexiAPIClient *FlexiAPIClient::accountCreate(
 
 	params.push("password", password);
 	params.push("algorithm", (!algorithm.empty()) ? algorithm : "MD5");
+	params.push("account_creation_token", token);
 
 	if (!email.empty()) {
 		params.push("email", email);
@@ -172,9 +173,10 @@ FlexiAPIClient *FlexiAPIClient::accountInfoByPhone(string phone) {
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::accountRecoverByPhone(string phone) {
+FlexiAPIClient *FlexiAPIClient::accountRecoverByPhone(string phone, string token) {
 	JsonParams params;
 	params.push("phone", phone);
+	params.push("account_creation_token", token);
 	prepareAndSendRequest(string("accounts/recover-by-phone"), "POST", params);
 	return this;
 }
@@ -449,12 +451,20 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", mApiKey));
 	}
 
+	// Set the same User-Agent header as for the SAL
+	belle_sip_header_user_agent_t *userAgentHeader = belle_sip_header_user_agent_new();
+	belle_sip_object_ref(userAgentHeader);
+	belle_sip_header_user_agent_set_products(userAgentHeader, nullptr);
+	belle_sip_header_user_agent_add_product(userAgentHeader, linphone_core_get_user_agent(mCore));
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), BELLE_SIP_HEADER(userAgentHeader));
+
 	internalCallbacks.process_response = processResponse;
 	internalCallbacks.process_auth_requested = processAuthRequested;
 	listener = belle_http_request_listener_create_from_callbacks(&internalCallbacks, &mRequestCallbacks);
 
 	belle_http_provider_send_request(mCore->http_provider, req, listener);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
+	belle_sip_object_unref(userAgentHeader);
 }
 
 void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_t *event) noexcept {

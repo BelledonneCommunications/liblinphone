@@ -124,8 +124,8 @@ static void server_account_linked(void) {
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator),
-	                                               (void *)LinphoneAccountCreatorStatusAccountLinked);
-	linphone_account_creator_set_username(creator, "pauline");
+	                                               (void *)LinphoneAccountCreatorStatusAccountNotLinked);
+	linphone_account_creator_set_username(creator, linphone_address_get_username(marie->identity));
 	linphone_account_creator_cbs_set_is_account_linked(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(linphone_account_creator_is_account_linked(creator), LinphoneAccountCreatorStatusRequestOk,
@@ -149,8 +149,8 @@ static void server_account_activated(void) {
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator),
-	                                               (void *)LinphoneAccountCreatorStatusAccountActivated);
-	linphone_account_creator_set_username(creator, "pauline");
+	                                               (void *)LinphoneAccountCreatorStatusAccountNotExist);
+	linphone_account_creator_set_username(creator, linphone_address_get_username(marie->identity));
 	linphone_account_creator_cbs_set_is_account_activated(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(linphone_account_creator_is_account_activated_flexiapi(creator),
@@ -177,7 +177,7 @@ static void server_account_delete(void) {
 	                                               (void *)LinphoneAccountCreatorStatusRequestOk);
 
 	// The following parameters are useless for the FlexiAPI endpoint
-	linphone_account_creator_set_username(creator, "pauline");
+	linphone_account_creator_set_username(creator, linphone_address_get_username(marie->identity));
 	linphone_account_creator_set_email(creator, "user_2@linphone.org");
 	linphone_account_creator_set_password(creator, "password");
 	linphone_account_creator_set_phone_number(creator, "000555455", "1");
@@ -206,7 +206,7 @@ static void server_account_activate_email(void) {
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator),
 	                                               (void *)LinphoneAccountCreatorStatusMissingArguments);
 
-	linphone_account_creator_set_username(creator, "pauline");
+	linphone_account_creator_set_username(creator, linphone_address_get_username(marie->identity));
 	// Too short code
 	linphone_account_creator_set_activation_code(creator, "123456789");
 	linphone_account_creator_cbs_set_activate_account(cbs, account_creator_cb);
@@ -292,9 +292,9 @@ static void server_account_created_with_email(void) {
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator),
-	                                               (void *)LinphoneAccountCreatorStatusAccountCreated);
+	                                               (void *)LinphoneAccountCreatorStatusAccountNotCreated);
 
-	string username = string("username_").append(sal_get_random_token_lowercase(6));
+	string username = linphone_address_get_username(marie->identity);
 	string password = "password";
 
 	linphone_account_creator_set_username(creator, username.c_str());
@@ -348,6 +348,10 @@ static void server_account_created_with_phone(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 2, TIMEOUT_REQUEST);
 
 	// Start a recovery
+	BC_ASSERT_EQUAL(linphone_account_creator_recover_phone_account_flexiapi(creator),
+	                LinphoneAccountCreatorStatusMissingArguments, LinphoneAccountCreatorStatus, "%i");
+
+	linphone_account_creator_set_token(creator, "anything");
 	BC_ASSERT_EQUAL(linphone_account_creator_recover_phone_account_flexiapi(creator),
 	                LinphoneAccountCreatorStatusRequestOk, LinphoneAccountCreatorStatus, "%i");
 

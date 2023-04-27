@@ -88,11 +88,11 @@ public:
 
 	// Public unsecure endpoints
 	FlexiAPIClient *accountInfoByPhone(string phone);
-	FlexiAPIClient *accountRecoverByPhone(string phone);
+	FlexiAPIClient *accountRecoverByPhone(string phone, string token);
 	FlexiAPIClient *accountRecoverUsingRecoverKey(string sip, string recoverKey);
 	FlexiAPIClient *accountCreate(string username, string password, string email);
-	FlexiAPIClient *
-	accountCreate(string username, string password, string algorithm, string domain, string email, string phone);
+	FlexiAPIClient *accountCreate(
+	    string username, string password, string algorithm, string domain, string email, string phone, string token);
 
 	// Authenticated endpoints
 	FlexiAPIClient *me();

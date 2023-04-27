@@ -645,6 +645,10 @@ void linphone_proxy_config_set_idkey(LinphoneProxyConfig *cfg, const char *idkey
 	linphone_account_params_set_idkey(cfg->edit, idkey);
 }
 
+LinphoneAccount *linphone_proxy_config_get_account(LinphoneProxyConfig *cfg) {
+	return cfg->account;
+}
+
 LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cfg) {
 	if (cfg->edit) {
 		// Use done here to be sure this will use updated parameters
