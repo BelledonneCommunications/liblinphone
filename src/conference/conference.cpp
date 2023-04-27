@@ -209,11 +209,11 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices () c
 	return devices;
 }
 
-const string & Conference::getSubject () const {
+const string &Conference::getSubject () const {
 	return confParams->getSubject();
 }
 
-const string Conference::getUtf8Subject () const {
+const string &Conference::getUtf8Subject () const {
 	return confParams->getUtf8Subject();
 }
 

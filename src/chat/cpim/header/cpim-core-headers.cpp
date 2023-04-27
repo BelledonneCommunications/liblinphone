@@ -273,14 +273,14 @@ void Cpim::RequireHeader::addHeaderName (const string &headerName) {
 string Cpim::RequireHeader::getValue () const {
 	L_D();
 
-	string requires;
+	string requireHeaderList;
 	for (const string &header : d->headerNames) {
 		if (header != d->headerNames.front())
-			requires += ",";
-		requires += header;
+			requireHeaderList += ",";
+		requireHeaderList += header;
 	}
 
-	return requires;
+	return requireHeaderList;
 }
 
 string Cpim::RequireHeader::asString () const {

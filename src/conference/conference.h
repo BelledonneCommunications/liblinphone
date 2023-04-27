@@ -97,7 +97,7 @@ public:
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
 	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
 	const std::string &getSubject () const override;
-	const std::string getUtf8Subject () const override;
+	const std::string &getUtf8Subject () const override;
 	void join (const IdentityAddress &participantAddress) override;
 	void leave () override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;

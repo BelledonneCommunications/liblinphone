@@ -35,6 +35,7 @@ public:
 
 private:
 	std::string subject;
+	mutable std::string utf8Subject;
 	std::shared_ptr<Participant> me;
 	std::list<std::shared_ptr<Participant>> participants;
 	bool cpimAllowed = false;

@@ -766,10 +766,6 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	referOp->unref();
 }
 
-const string & ClientGroupChatRoom::getSubject () const {
-	return getConference()->getSubject();
-}
-
 void ClientGroupChatRoom::setSubject (const string &subject) {
 	L_D();
 

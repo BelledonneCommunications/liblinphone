@@ -107,12 +107,6 @@ namespace Utils {
 	LINPHONE_PUBLIC std::string unicodeToUtf8 (uint32_t ic);
 	LINPHONE_PUBLIC std::string unicodeToUtf8 (const std::vector<uint32_t>& chars);
 
-	LINPHONE_PUBLIC inline std::string cStringToCppString (const char *str) {
-		return str ? str : "";
-	}
-
-
-
 	template<typename S, typename T>
 	inline std::string join (const std::vector<T>& elems, const S& delim) {
 		std::stringstream ss;

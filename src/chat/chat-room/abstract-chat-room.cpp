@@ -38,10 +38,6 @@ void AbstractChatRoom::setUtf8Subject (const string &subject) {
 	setSubject(Utils::utf8ToLocale(subject));
 }
 
-const string AbstractChatRoom::getUtf8Subject () const {
-	return Utils::localeToUtf8(getSubject());
-}
-
 std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
 	switch(e) {
 		case AbstractChatRoom::Capabilities::None: lhs << "None"; break;

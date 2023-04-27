@@ -84,11 +84,11 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		void setUtf8Description (const std::string &description);
 		void setDescription (const std::string &description) { m_description = description; };
 		const std::string &getDescription() const { return m_description; };
-		const std::string getUtf8Description() const;
+		const std::string &getUtf8Description() const;
 
 		virtual void setUtf8Subject (const std::string &subject) override;
 		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
-		const std::string getUtf8Subject() const;
+		const std::string &getUtf8Subject() const;
 		const std::string &getSubject() const { return m_subject; };
 
 		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
@@ -123,7 +123,9 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		Address m_factoryAddress = Address();
 		bool m_useDefaultFactoryAddress = true;
 		std::string m_subject = "";
+		mutable std::string m_utf8Subject = "";
 		std::string m_description = "";
+		mutable std::string m_utf8Description = "";
 		IdentityAddress m_me = IdentityAddress();
 		time_t m_startTime = (time_t)-1;
 		time_t m_endTime = (time_t)-1;

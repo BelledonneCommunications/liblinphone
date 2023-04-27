@@ -186,7 +186,7 @@ void linphone_content_set_encoding (LinphoneContent *content, const char *encodi
 }
 
 const char *linphone_content_get_disposition(const LinphoneContent *content) {
-	LinphonePrivate::ContentDisposition contentDisposition =
+	const LinphonePrivate::ContentDisposition &contentDisposition =
 		L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentDisposition();
 	return L_STRING_TO_C(contentDisposition.asString());
 }

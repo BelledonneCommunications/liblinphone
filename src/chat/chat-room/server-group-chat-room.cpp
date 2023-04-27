@@ -1553,10 +1553,6 @@ const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants () con
 	return getConference()->getParticipants();
 }
 
-const string & ServerGroupChatRoom::getSubject () const {
-	return getConference()->getSubject();
-}
-
 void ServerGroupChatRoom::join () {}
 
 void ServerGroupChatRoom::leave () {}
