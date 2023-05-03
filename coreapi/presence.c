@@ -364,8 +364,7 @@ time_t linphone_presence_model_get_timestamp(const LinphonePresenceModel *model)
 time_t linphone_presence_model_get_latest_activity_timestamp(const LinphonePresenceModel *model) {
 	time_t timestamp = (time_t)-1;
 
-	if (model == NULL)
-		return timestamp;
+	if (model == NULL) return timestamp;
 
 	bctbx_list_for_each2(model->persons, (MSIterate2Func)presence_person_find_newer_timestamp, &timestamp);
 
@@ -1459,9 +1458,10 @@ static int process_pidf_xml_presence_services(xmlparsing_context_t *xml_ctx, Lin
 						version = linphone_get_xml_text_content(xml_ctx, "./oma-pres:version");
 						services = bctbx_list_append(services, ms_strdup(service_id));
 
-						if (service)
+						if (service) {
 							linphone_presence_service_add_capability(service, ms_strdup(service_id),
 							                                         ms_strdup(version));
+						}
 
 						linphone_free_xml_text_content(service_id);
 						linphone_free_xml_text_content(version);

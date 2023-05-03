@@ -271,6 +271,7 @@ static void linphone_friend_presence_received(LinphoneFriendList *list,
 			bctbx_pair_t *pair = (bctbx_pair_t *)bctbx_pair_cchar_new(presence_address, linphone_friend_ref(lf));
 			bctbx_map_cchar_insert_and_delete(list->friends_map_uri, pair);
 		}
+		ms_free(presence_address);
 		linphone_friend_set_presence_model_for_uri_or_tel(lf, phone_number, presence);
 		linphone_core_notify_notify_presence_received_for_uri_or_tel(list->lc, lf, phone_number, presence);
 	} else {
@@ -683,8 +684,9 @@ _linphone_friend_list_add_friend(LinphoneFriendList *list, LinphoneFriend *lf, b
 	}
 
 	addr = linphone_friend_get_address(lf);
-	bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers(lf);	//linphone_friend_get_phone_numbers make a copy of phones. We have to delete them later
-	if (addr == NULL && linphone_friend_get_vcard(lf) == NULL && phone_numbers== NULL) {
+	bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers(
+	    lf); // linphone_friend_get_phone_numbers make a copy of phones. We have to delete them later
+	if (addr == NULL && linphone_friend_get_vcard(lf) == NULL && phone_numbers == NULL) {
 		ms_error("linphone_friend_list_add_friend(): invalid friend, no vCard, SIP URI or phone number");
 		return status;
 	}

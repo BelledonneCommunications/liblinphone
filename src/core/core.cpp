@@ -1842,15 +1842,14 @@ int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
 		char filename[512];
 		wcstombs(filename, FileData.cFileName, sizeof(filename));
 		szPluginFile += std::string(filename);
-		std::wstring wszPluginFile(szPluginFile.begin(), szPluginFile.end());
-		mbstowcs(wszPluginFile, szPluginFile, sizeof(wszPluginFile));
+		mbstowcs(wszPluginFile, szPluginFile.c_str(), sizeof(wszPluginFile));
 #else
 		szPluginFile += std::string(FileData.cFileName);
 #endif
 #if defined(MS2_WINDOWS_DESKTOP) && !defined(MS2_WINDOWS_UWP)
 
 #ifdef UNICODE
-		os_handle = LoadLibraryExW(wszPluginFile.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+		os_handle = LoadLibraryExW(wszPluginFile, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 #else
 		os_handle = LoadLibraryExA(szPluginFile.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 #endif
@@ -1858,7 +1857,7 @@ int Core::loadPlugins(BCTBX_UNUSED(const std::string &dir)) {
 			lError() << "Fail to load plugin " << szPluginFile << " with altered search path: error "
 			         << (int)GetLastError();
 #ifdef UNICODE
-			os_handle = LoadLibraryExW(wszPluginFile.c_str(), NULL, 0);
+			os_handle = LoadLibraryExW(wszPluginFile, NULL, 0);
 #else
 			os_handle = LoadLibraryExA(szPluginFile.c_str(), NULL, 0);
 #endif
