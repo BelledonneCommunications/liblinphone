@@ -1718,11 +1718,12 @@ static void group_chat_room_with_client_restart_base (bool encrypted) {
 
 		ClientConference michelle2("michelle_rc", focus.getIdentity().asAddress(), encrypted);
 		stats initialMichelle2Stats = michelle2.getStats();
+		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		if (encrypted) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_X3dhUserCreationSuccess, initialMichelle2Stats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
 		}
-		coresList = bctbx_list_append(coresList, michelle2.getLc());
+
 		focus.registerAsParticipantDevice(michelle2);
 		// Notify chat room that a participant has registered
 
