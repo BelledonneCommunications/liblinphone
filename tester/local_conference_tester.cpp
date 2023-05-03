@@ -1858,6 +1858,7 @@ static void group_chat_room_with_client_restart_base(bool encrypted) {
 			                             x3dhServer_creationTimeout));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
 		}
+
 		focus.registerAsParticipantDevice(michelle2);
 
 		bctbx_list_t *devices = NULL;
