@@ -1607,7 +1607,7 @@ static int process_pidf_xml_presence_persons(xmlparsing_context_t *xml_ctx, Linp
 		for (int i = 1; i <= person_object->nodesetval->nodeNr; i++) {
 			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/@id", person_prefix, i);
 			char *person_id_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
-			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/pidf:timestamp", person_prefix, i);
+			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/dm:timestamp", person_prefix, i);
 			char *person_timestamp_str = linphone_get_xml_text_content(xml_ctx, xpath_str);
 			if (person_timestamp_str) {
 				timestamp = parse_timestamp(person_timestamp_str);
