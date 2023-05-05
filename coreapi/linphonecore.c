@@ -2997,7 +2997,10 @@ bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
 		if (!linphone_account_params_is_push_notification_available(linphone_account_get_params(account))) return FALSE;
 	}
-	return TRUE;
+
+	// Check that at least prid is available to consider push notifications as available
+	const char *prid = linphone_push_notification_config_get_prid(core->push_config);
+	return (prid != NULL && strcmp(prid, "") != 0);
 }
 
 const LinphonePushNotificationConfig *linphone_core_get_push_notification_config(const LinphoneCore *core) {
