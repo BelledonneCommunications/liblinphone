@@ -400,6 +400,21 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const std
 	return nullptr;
 }
 
+shared_ptr<ParticipantDevice> Conference::findParticipantDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const {
+	for (const auto &participant : participants) {
+		auto device = participant->findDeviceBySsrc(ssrc, type);
+		if (device) {
+			return device;
+		}
+	}
+
+	lDebug() << "Unable to find participant device in conference "
+	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
+	         << " with ssrc " << ssrc;
+
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::shared_ptr<Address> &pAddr,
                                                                 const std::shared_ptr<Address> &dAddr) const {
 	for (const auto &participant : participants) {

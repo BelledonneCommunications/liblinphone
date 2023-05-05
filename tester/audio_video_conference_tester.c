@@ -889,7 +889,7 @@ static void simple_conference_notify_speaking_device(void) {
 	/* Simulate speaker changed */
 	char *filepath = bc_tester_res("sounds/vrroom.wav");
 	linphone_core_set_play_file(pauline->lc, filepath);
-	// linphone_core_set_play_file(marie->lc, filepath);
+	linphone_core_set_play_file(marie->lc, filepath);
 	// linphone_core_set_play_file(laure->lc, filepath);
 
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
@@ -958,8 +958,8 @@ static void simple_conference_notify_speaking_device(void) {
 	bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
 
 	// Need time to be notified
-	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStartSpeaking, 1, 50000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStopSpeaking, 1, 50000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStartSpeaking, 2, 20000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStopSpeaking, 2, 20000));
 
 	// No need to wait as much this time as pauline should also be notified at the same time
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneParticipantDeviceStartSpeaking, 1, 10000));

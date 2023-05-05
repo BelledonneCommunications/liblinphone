@@ -63,35 +63,42 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	initializeSessions((MediaStream *)mStream);
 }
 
-void MS2AudioStream::audioStreamIsSpeakingCb(void *userData, uint32_t speakerSsrc, bool_t isSpeaking) {
-	MS2AudioStream *zis = static_cast<MS2AudioStream *>(userData);
-	zis->getMediaSession().notifySpeakingDevice(speakerSsrc, isSpeaking);
-#ifdef VIDEO_ENABLED
-	// If we are in a conference and have a video stream without ssrc then use this callback for active speaker
-	CallSessionListener *listener = zis->getMediaSessionPrivate().getCallSessionListener();
-	if (listener) {
-		const auto conference =
-		    (listener) ? listener->getCallSessionConference(zis->getMediaSession().getSharedFromThis()) : nullptr;
-		if (!conference) {
-			return;
-		}
-		const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-		    MediaConference::Conference::toCpp(conference)->getSharedFromThis());
-		if (cppConference) {
-			MS2VideoStream *vs = zis->getGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
-			VideoStream *videostream = vs ? vs->getVideoStream() : nullptr;
-			/* FIXME: no SSRC means no video stream is received. Bug or intended ? */
-			if (videostream && media_stream_get_recv_ssrc(&videostream->ms) == 0) {
-				cppConference->notifyActiveSpeakerCsrc(0);
-			}
-		}
-	}
-#endif
+void MS2AudioStream::audioStreamIsSpeakingCb(uint32_t speakerSsrc, bool_t isSpeaking) {
+	getMediaSession().notifySpeakingDevice(speakerSsrc, isSpeaking);
 }
 
-void MS2AudioStream::audioStreamIsMutedCb(void *userData, uint32_t ssrc, bool_t muted) {
-	MS2AudioStream *zis = static_cast<MS2AudioStream *>(userData);
-	zis->getMediaSession().notifyMutedDevice(ssrc, muted);
+void MS2AudioStream::sAudioStreamIsSpeakingCb(void *userData, uint32_t speakerSsrc, bool_t isSpeaking) {
+	MS2AudioStream *as = static_cast<MS2AudioStream *>(userData);
+	as->audioStreamIsSpeakingCb(speakerSsrc, isSpeaking);
+}
+
+void MS2AudioStream::audioStreamIsMutedCb(uint32_t ssrc, bool_t muted) {
+	getMediaSession().notifyMutedDevice(ssrc, muted);
+}
+
+void MS2AudioStream::sAudioStreamIsMutedCb(void *userData, uint32_t ssrc, bool_t muted) {
+	MS2AudioStream *as = static_cast<MS2AudioStream *>(userData);
+	as->audioStreamIsMutedCb(ssrc, muted);
+}
+
+void MS2AudioStream::audioStreamActiveSpeakerCb(uint32_t ssrc) {
+	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+
+	if (listener) {
+		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
+
+		if (conference) {
+			const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
+			    MediaConference::Conference::toCpp(conference)->getSharedFromThis());
+
+			if (cppConference) cppConference->notifyLouderSpeaker(ssrc);
+		}
+	}
+}
+
+void MS2AudioStream::sAudioStreamActiveSpeakerCb(void *userData, uint32_t ssrc) {
+	MS2AudioStream *as = static_cast<MS2AudioStream *>(userData);
+	as->audioStreamActiveSpeakerCb(ssrc);
 }
 
 void MS2AudioStream::configure(BCTBX_UNUSED(const OfferAnswerContext &params)) {
@@ -541,8 +548,17 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			audio_stream_set_client_to_mixer_extension_id(mStream, streamCfg.getClientToMixerExtensionId());
 		}
 
-		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::audioStreamIsSpeakingCb, this);
-		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::audioStreamIsMutedCb, this);
+		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::sAudioStreamIsSpeakingCb, this);
+		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
+
+		if (getMediaSessionPrivate().getCallSessionListener()) {
+			LinphoneConference *conference =
+			    getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
+			        getMediaSession().getSharedFromThis());
+			if (conference) {
+				audio_stream_set_active_speaker_callback(mStream, &MS2AudioStream::sAudioStreamActiveSpeakerCb, this);
+			}
+		}
 
 		audio_stream_set_audio_route_changed_callback(mStream, &MS2AudioStream::audioRouteChangeCb, &getCore());
 
@@ -588,8 +604,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) ||
 		    (params.getRemoteStreamDescription().getChosenConfiguration().hasZrtpHash() == 1)) {
 			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP
-			// Hello Packet sending) until the ACK has been received to ensure the caller got our 200 Ok (with lime-Ik
-			// in it) before starting its ZRTP engine
+			// Hello Packet sending) until the ACK has been received to ensure the caller got our 200 Ok (with
+			// lime-Ik in it) before starting its ZRTP engine
 			if (!params.localIsOfferer && params.remoteMediaDescription->hasLimeIk()) {
 				mStartZrtpLater = true;
 			} else {
@@ -643,8 +659,8 @@ void MS2AudioStream::stop() {
 	}
 	audio_stream_stop(mStream);
 
-	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later
-	 * use, keeping the sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
+	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for
+	 * later use, keeping the sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 
@@ -970,8 +986,8 @@ void MS2AudioStream::setSoundCardType(MSSndCard *soundcard) {
 }
 
 int MS2AudioStream::restartStream(RestartReason reason) {
-	// Schedule a restart in order to avoid multiple reinitialisation when changing at the same time both devices. Also,
-	// it allows to avoid to restart the stream if it has been already restart.
+	// Schedule a restart in order to avoid multiple reinitialisation when changing at the same time both devices.
+	// Also, it allows to avoid to restart the stream if it has been already restart.
 	const char *const reasonToText = (reason == RestartReason::OutputChanged ? "output" : "input");
 	if (getState() == Running) {
 		if (!mRestartStreamRequired) {

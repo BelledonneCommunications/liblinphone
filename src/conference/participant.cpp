@@ -139,6 +139,13 @@ shared_ptr<ParticipantDevice> Participant::findDeviceByCallId(const std::string 
 	return nullptr;
 }
 
+shared_ptr<ParticipantDevice> Participant::findDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const {
+	for (const auto &device : devices) {
+		if (device->getSsrc(type) == ssrc) return device;
+	}
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Participant::findDevice(const std::shared_ptr<Address> &gruu,
                                                       const bool logFailure) const {
 	const auto &it = std::find_if(devices.cbegin(), devices.cend(), [&gruu](const auto &device) {

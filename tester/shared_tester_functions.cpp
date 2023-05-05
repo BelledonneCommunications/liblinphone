@@ -538,10 +538,20 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 		bctbx_list_free_with_data(devices, (bctbx_list_free_func)linphone_participant_device_unref);
 	}
 
-	// mgr2 does not see any active speaker as it has no video
+	// mgr2 which is in audio only should also see mgr3 in active speaker
 	LinphoneConference *confMgr2 = linphone_call_get_conference(linphone_core_get_current_call(mgr2->lc));
 	device = linphone_conference_get_active_speaker_participant_device(confMgr2);
-	BC_ASSERT_PTR_NULL(device);
+	if (BC_ASSERT_PTR_NOT_NULL(device)) {
+		const LinphoneAddress *addrMgr2 = linphone_participant_device_get_address(device);
+
+		LinphoneParticipant *participant = linphone_conference_get_me(confMgr3);
+		bctbx_list_t *devices = linphone_participant_get_devices(participant);
+		const LinphoneAddress *addrMgr3 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+
+		BC_ASSERT_TRUE(linphone_address_equal(addrMgr2, addrMgr3));
+
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+	}
 
 	// mgr2 speaks until mgr1's video change
 	linphone_core_enable_mic(mgr2->lc, TRUE);

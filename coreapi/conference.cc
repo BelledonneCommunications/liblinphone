@@ -4085,37 +4085,34 @@ void RemoteConference::onParticipantsCleared() {
 	clearParticipants();
 }
 
-void RemoteConference::notifyActiveSpeakerCsrc(uint32_t new_csrc) {
-	bool found = false;
+void RemoteConference::notifyDisplayedSpeaker(uint32_t csrc) {
+	displayedSpeaker = csrc;
 
-	if (new_csrc != 0) {
-		for (const auto &device : getParticipantDevices()) {
-			if (new_csrc == device->getSsrc(LinphoneStreamTypeVideo)) {
-				notifyActiveSpeakerParticipantDevice(device);
-				found = true;
-				break;
-			}
-		}
+	if (csrc != 0) {
+		auto device = findParticipantDeviceBySsrc(csrc, LinphoneStreamTypeVideo);
 
-		if (!found)
-			lError() << "Conference [" << this << "]: Active speaker changed with csrc: " << new_csrc
+		if (device) {
+			notifyActiveSpeakerParticipantDevice(device);
+			lastNotifiedSsrc = csrc;
+		} else {
+			lError() << "Conference [" << this << "]: Active speaker changed with csrc: " << csrc
 			         << " but it does not correspond to any participant device";
-	} else {
-		const auto &meDevices = getMe()->getDevices();
-		shared_ptr<ParticipantDevice> firstNotMe = nullptr;
-
-		for (const auto &device : getParticipantDevices()) {
-			if (std::find(meDevices.begin(), meDevices.end(), device) == meDevices.end()) {
-				if (firstNotMe == nullptr) firstNotMe = device;
-				if (device->getIsSpeaking()) {
-					notifyActiveSpeakerParticipantDevice(device);
-					found = true;
-					break;
-				}
-			}
 		}
+	} else {
+		if (louderSpeaker != lastNotifiedSsrc) notifyLouderSpeaker(louderSpeaker);
+	}
+}
 
-		if (!found && firstNotMe != nullptr) notifyActiveSpeakerParticipantDevice(firstNotMe);
+void RemoteConference::notifyLouderSpeaker(uint32_t ssrc) {
+	louderSpeaker = ssrc;
+
+	if (displayedSpeaker > 0) return;
+
+	auto device = findParticipantDeviceBySsrc(ssrc, LinphoneStreamTypeAudio);
+
+	if (device && !device->getStreamAvailability(LinphoneStreamTypeVideo)) {
+		notifyActiveSpeakerParticipantDevice(device);
+		lastNotifiedSsrc = ssrc;
 	}
 }
 

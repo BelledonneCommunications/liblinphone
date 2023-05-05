@@ -160,45 +160,16 @@ void MS2VideoStream::cameraNotWorkingCb(const char *cameraName) {
 
 void MS2VideoStream::csrcChangedCb(uint32_t new_csrc) {
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-	const auto conference =
-	    (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
-	if (!conference) {
-		lWarning() << "Conference no longer existing.";
-		return;
-	}
-	const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-	    MediaConference::Conference::toCpp(conference)->getSharedFromThis());
-	if (cppConference) cppConference->notifyActiveSpeakerCsrc(new_csrc);
-	bool found = false;
 
-	if (new_csrc != 0) {
-		for (const auto &device : cppConference->getParticipantDevices()) {
-			if (new_csrc == device->getSsrc(LinphoneStreamTypeVideo)) {
-				cppConference->notifyActiveSpeakerParticipantDevice(device);
-				found = true;
-				break;
-			}
+	if (listener) {
+		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
+
+		if (conference) {
+			const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
+			    MediaConference::Conference::toCpp(conference)->getSharedFromThis());
+
+			if (cppConference) cppConference->notifyDisplayedSpeaker(new_csrc);
 		}
-
-		if (!found)
-			lError() << "Conference [" << conference << "]: Active speaker changed with csrc: " << new_csrc
-			         << " but it does not correspond to any participant device";
-	} else {
-		const auto &meDevices = cppConference->getMe()->getDevices();
-		shared_ptr<ParticipantDevice> firstNotMe = nullptr;
-
-		for (const auto &device : cppConference->getParticipantDevices()) {
-			if (std::find(meDevices.begin(), meDevices.end(), device) == meDevices.end()) {
-				if (firstNotMe == nullptr) firstNotMe = device;
-				if (device->getIsSpeaking()) {
-					cppConference->notifyActiveSpeakerParticipantDevice(device);
-					found = true;
-					break;
-				}
-			}
-		}
-
-		if (!found && firstNotMe != nullptr) cppConference->notifyActiveSpeakerParticipantDevice(firstNotMe);
 	}
 }
 
