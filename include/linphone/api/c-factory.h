@@ -300,6 +300,15 @@ LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_factory_create_chat_message_cbs
  */
 LINPHONE_PUBLIC LinphoneMagicSearchCbs *linphone_factory_create_magic_search_cbs(const LinphoneFactory *factory);
 
+LINPHONE_PUBLIC LinphoneDictionary *linphone_factory_create_dictionary(const LinphoneFactory *factory);
+
+/**
+ * Create an empty #LinphoneEktInfo object.
+ * @param factory #LinphoneFactory singletion object @notnil
+ * @return A new #LinphoneEktInfo object @notnil
+ */
+LINPHONE_PUBLIC LinphoneEktInfo *linphone_factory_create_ekt_info(const LinphoneFactory *factory);
+
 /**
  * Create an empty #LinphoneVcard.
  * @param factory #LinphoneFactory singletion object @notnil

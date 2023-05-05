@@ -32,6 +32,7 @@
 #include "call/audio-device/audio-device.h"
 #include "call/call-log.h"
 #include "conference/conference-id.h"
+#include "conference/encryption/ekt-info.h"
 #include "event-log/event-log.h"
 #include "linphone/types.h"
 #include "object/object.h"
@@ -383,6 +384,14 @@ public:
 
 	void setVideoCodecPriorityPolicy(LinphoneCodecPriorityPolicy policy);
 	LinphoneCodecPriorityPolicy getVideoCodecPriorityPolicy() const;
+
+	// ---------------------------------------------------------------------------
+	// XML Parsing/Composing.
+	// ---------------------------------------------------------------------------
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<EktInfo> createEktInfoFromXml(const std::string &xmlBody) const;
+	std::string createXmlFromEktInfo(const std::shared_ptr<const EktInfo> &ei) const;
+#endif // HAVE_ADVANCED_IM
 
 private:
 	Core();

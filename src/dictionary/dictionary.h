@@ -21,10 +21,11 @@
 #ifndef _L_DICTIONARY_H_
 #define _L_DICTIONARY_H_
 
+#include <belle-sip/object++.hh>
+
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-types.h"
 #include "object/property-container.h"
-#include <belle-sip/object++.hh>
 
 // =============================================================================
 
@@ -48,6 +49,9 @@ public:
 
 	long long getLongLong(const std::string &name) const;
 	void setProperty(const std::string &name, const long long value);
+
+	LinphoneBuffer *getLinphoneBuffer(const std::string &name) const;
+	void setProperty(const std::string &name, LinphoneBuffer *value);
 };
 
 LINPHONE_END_NAMESPACE

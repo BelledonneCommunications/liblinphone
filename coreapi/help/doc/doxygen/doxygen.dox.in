@@ -164,6 +164,11 @@
 **/
 
 /**
+ * @defgroup ekt_info_api Ekt
+ * @brief Managing EktInfo
+ */
+
+/**
  * @defgroup event_api Event api
  * @brief Managing generic subscriptions and publishes.
  *

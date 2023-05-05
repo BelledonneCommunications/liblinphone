@@ -43,7 +43,6 @@ public:
 	             const std::string &event,
 	             int expires);
 	EventPublish(const std::shared_ptr<Core> &core, const std::shared_ptr<Address> resource, const std::string &event);
-	virtual ~EventPublish();
 
 	std::string toString() const override;
 
@@ -67,6 +66,9 @@ public:
 
 	void startTimeoutHandling();
 	void stopTimeoutHandling();
+
+protected:
+	virtual ~EventPublish();
 
 private:
 	belle_sip_source_t *mTimer = nullptr;

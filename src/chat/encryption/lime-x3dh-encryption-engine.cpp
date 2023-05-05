@@ -201,14 +201,15 @@ void LimeX3dhEncryptionEngine::rawEncrypt(
 					    if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
 						    cipherTexts[recipient.deviceId] = recipient.DRmessage;
 					    } else {
-						    lError() << "[LIME] No cipher key generated for " << recipient.deviceId;
+						    lError() << "[LIME] No cipher message generated for " << recipient.deviceId;
 						    cipherTexts[recipient.deviceId] = std::vector<uint8_t>{};
 					    }
 				    }
+				    callback(true, cipherTexts);
 			    } else {
 				    lError() << "Raw encrypt from " << localDeviceId << " failed: " << errorMessage;
+				    callback(false, std::unordered_map<std::string, std::vector<uint8_t>>{});
 			    }
-			    callback(true, cipherTexts);
 		    },
 		    lime::EncryptionPolicy::DRMessage);
 	} catch (const exception &e) {

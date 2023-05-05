@@ -37,8 +37,9 @@
 #include <algorithm>
 #include <iterator>
 
+#include "bctoolbox/crypto.hh"
+#include "bctoolbox/defs.h"
 #include "bctoolbox/utils.hh"
-#include <bctoolbox/defs.h>
 
 #include <mediastreamer2/mscommon.h>
 
@@ -78,6 +79,10 @@
 
 #include "sal/sal_media_description.h"
 
+#ifdef HAVE_ADVANCED_IM
+#include "xml/ekt-linphone-extension.h"
+#endif // HAVE_ADVANCED_IM
+
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 #include "private.h"
@@ -109,6 +114,9 @@
 // =============================================================================
 
 using namespace std;
+#ifdef HAVE_ADVANCED_IM
+using namespace LinphonePrivate::Xsd::PublishLinphoneExtension;
+#endif // HAVE_ADVANCED_IM
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -2241,5 +2249,76 @@ LinphoneCodecPriorityPolicy Core::getVideoCodecPriorityPolicy() const {
 	L_D();
 	return d->videoCodecPriorityPolicy;
 }
+
+#ifdef HAVE_ADVANCED_IM
+shared_ptr<EktInfo> Core::createEktInfoFromXml(const std::string &xmlBody) const {
+	istringstream data(xmlBody);
+	unique_ptr<CryptoType> crypto;
+	auto ei = (new EktInfo())->toSharedPtr();
+
+	try {
+		crypto = parseCrypto(data, Xsd::XmlSchema::Flags::dont_validate);
+	} catch (const exception &) {
+		lError() << "Core::createEktInfoFromXml : Error while parsing crypto XML";
+		return ei;
+	}
+
+	auto &sSpi = crypto->getSspi();
+	if (sSpi) {
+		ei->setSSpi(static_cast<uint16_t>(sSpi));
+	} else {
+		lError() << "Core::createEktInfoFromXml : Missing sSPI";
+		return ei;
+	}
+
+	auto &cSpi = crypto->getCspi();
+	if (cSpi.present()) {
+		ei->setCSpi(bctoolbox::decodeBase64(cSpi.get()));
+	}
+
+	auto &ciphers = crypto->getCiphers();
+	if (ciphers.present()) {
+		for (auto &cipher : ciphers->getEncryptedekt())
+			ei->addCipher(cipher.getTo(), bctoolbox::decodeBase64(cipher));
+	}
+
+	auto &from = crypto->getFrom();
+	if (from) ei->setFrom(*interpretUrl(from.get(), false));
+
+	return ei;
+}
+
+string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei) const {
+	LinphoneAccount *account = linphone_core_get_default_account(getCCore());
+	auto addr = Account::toCpp(account)->getContactAddress();
+
+	CryptoType crypto = CryptoType(ei->getSSpi(), addr->asStringUriOnly());
+
+	if (ei->getFrom()) crypto.setFrom(ei->getFrom()->asStringUriOnly());
+
+	if (!ei->getCSpi().empty()) crypto.setCspi(bctoolbox::encodeBase64(ei->getCSpi()));
+
+	auto dict = ei->getCiphers();
+	map<string, Variant> cipherMap;
+	if (dict != nullptr) cipherMap = dict->getProperties();
+	if (!cipherMap.empty()) {
+		CiphersType ciphers;
+		crypto.setCiphers(ciphers);
+		for (const auto &cipher : cipherMap) {
+			vector<uint8_t> cipherVec(ei->getCiphers()->getLinphoneBuffer(cipher.first)->content,
+			                          ei->getCiphers()->getLinphoneBuffer(cipher.first)->content +
+			                              ei->getCiphers()->getLinphoneBuffer(cipher.first)->size);
+			EncryptedektType ekt = EncryptedektType(bctoolbox::encodeBase64(cipherVec), cipher.first);
+			crypto.getCiphers()->getEncryptedekt().push_back(ekt);
+		}
+	}
+
+	stringstream xmlBody;
+	Xsd::XmlSchema::NamespaceInfomap map;
+	map[""].name = "linphone:xml:ns:ekt-linphone-extension";
+	serializeCrypto(xmlBody, crypto, map);
+	return xmlBody.str();
+}
+#endif // HAVE_ADVANCED_IM
 
 LINPHONE_END_NAMESPACE

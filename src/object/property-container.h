@@ -43,8 +43,6 @@ public:
 	void setProperty(const std::string &name, const Variant &value);
 	void setProperty(const std::string &name, Variant &&value);
 
-	const std::map<std::string, Variant> &getProperties() const;
-
 	int remove(const std::string &name) const;
 
 	void clear();
@@ -52,8 +50,11 @@ public:
 	bool hasKey(const std::string &name) const;
 	std::ostream &toStream(std::ostream &stream) const;
 
+	const std::map<std::string, Variant> &getProperties() const;
+	void setProperties(const std::map<std::string, Variant> &properties);
+
 private:
-	PropertyContainerPrivate *mPrivate;
+	mutable std::map<std::string, Variant> mProperties;
 };
 LINPHONE_END_NAMESPACE
 

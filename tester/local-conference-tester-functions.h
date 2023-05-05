@@ -88,7 +88,7 @@ public:
 		start(true);
 	}
 
-	virtual void reStart(bool check_for_proxies = true) {
+	void reStart(bool check_for_proxies = true) {
 		linphone_core_manager_reinit(mMgr.get());
 		mPreStart();
 		start(check_for_proxies);
@@ -160,10 +160,6 @@ public:
 		                      }
 	                      }),
 	      mFocus(nullptr) {
-	}
-
-	void reStart(bool check_for_proxies = true) override {
-		ConfCoreManager::reStart(check_for_proxies);
 	}
 
 	void deleteChatRoomSync(AbstractChatRoom &chatroom) {
@@ -509,6 +505,21 @@ void update_sequence_number(bctbx_list_t **participants_info,
                             const std::list<LinphoneAddress *> new_participants,
                             int exp_sequence,
                             int exp_new_participant_sequence);
+
+void create_conference_dial_out_base(bool_t send_ics,
+                                     LinphoneConferenceLayout layout,
+                                     LinphoneVideoActivationPolicy *pol,
+                                     bool_t enable_stun,
+                                     bool_t enable_ice,
+                                     LinphoneConferenceParticipantListType participant_list_type,
+                                     bool_t accept,
+                                     bool_t participant_codec_mismatch,
+                                     LinphoneConferenceSecurityLevel security_level);
+
+void create_conference_with_audio_only_participants_base(LinphoneConferenceSecurityLevel security_level);
+
+void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneReason reason,
+                                                                     LinphoneConferenceSecurityLevel securityLevel);
 } // namespace LinphoneTest
 
 #endif // LOCAL_CONFERENCE_TESTER_FUNCTIONS_H_

@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PUBLISH_LINPHONE_EXTENSION_H
-#define PUBLISH_LINPHONE_EXTENSION_H
+#ifndef EKT_LINPHONE_EXTENSION_H
+#define EKT_LINPHONE_EXTENSION_H
 
 #ifndef XSD_CXX11
 #define XSD_CXX11
@@ -304,6 +304,27 @@ namespace LinphonePrivate
       class CryptoType: public ::LinphonePrivate::Xsd::XmlSchema::Type
       {
         public:
+        // from
+        //
+        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri FromType;
+        typedef ::xsd::cxx::tree::optional< FromType > FromOptional;
+        typedef ::xsd::cxx::tree::traits< FromType, char > FromTraits;
+
+        const FromOptional&
+        getFrom () const;
+
+        FromOptional&
+        getFrom ();
+
+        void
+        setFrom (const FromType& x);
+
+        void
+        setFrom (const FromOptional& x);
+
+        void
+        setFrom (::std::unique_ptr< FromType > p);
+
         // sspi
         //
         typedef ::LinphonePrivate::Xsd::XmlSchema::Integer SspiType;
@@ -321,22 +342,23 @@ namespace LinphonePrivate
         // cspi
         //
         typedef ::LinphonePrivate::Xsd::XmlSchema::String CspiType;
+        typedef ::xsd::cxx::tree::optional< CspiType > CspiOptional;
         typedef ::xsd::cxx::tree::traits< CspiType, char > CspiTraits;
 
-        const CspiType&
+        const CspiOptional&
         getCspi () const;
 
-        CspiType&
+        CspiOptional&
         getCspi ();
 
         void
         setCspi (const CspiType& x);
 
         void
-        setCspi (::std::unique_ptr< CspiType > p);
+        setCspi (const CspiOptional& x);
 
-        ::std::unique_ptr< CspiType >
-        setDetachCspi ();
+        void
+        setCspi (::std::unique_ptr< CspiType > p);
 
         // ciphers
         //
@@ -382,7 +404,6 @@ namespace LinphonePrivate
         // Constructors.
         //
         CryptoType (const SspiType&,
-                    const CspiType&,
                     const EntityType&);
 
         CryptoType (const ::xercesc::DOMElement& e,
@@ -411,8 +432,9 @@ namespace LinphonePrivate
                ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
         protected:
+        FromOptional from_;
         ::xsd::cxx::tree::one< SspiType > sspi_;
-        ::xsd::cxx::tree::one< CspiType > cspi_;
+        CspiOptional cspi_;
         CiphersOptional ciphers_;
         ::xsd::cxx::tree::one< EntityType > entity_;
       };
@@ -473,38 +495,38 @@ namespace LinphonePrivate
       class EncryptedektType: public ::LinphonePrivate::Xsd::XmlSchema::String
       {
         public:
-        // dest
+        // to
         //
-        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri DestType;
-        typedef ::xsd::cxx::tree::traits< DestType, char > DestTraits;
+        typedef ::LinphonePrivate::Xsd::XmlSchema::Uri ToType;
+        typedef ::xsd::cxx::tree::traits< ToType, char > ToTraits;
 
-        const DestType&
-        getDest () const;
+        const ToType&
+        getTo () const;
 
-        DestType&
-        getDest ();
-
-        void
-        setDest (const DestType& x);
+        ToType&
+        getTo ();
 
         void
-        setDest (::std::unique_ptr< DestType > p);
+        setTo (const ToType& x);
 
-        ::std::unique_ptr< DestType >
-        setDetachDest ();
+        void
+        setTo (::std::unique_ptr< ToType > p);
+
+        ::std::unique_ptr< ToType >
+        setDetachTo ();
 
         // Constructors.
         //
-        EncryptedektType (const DestType&);
+        EncryptedektType (const ToType&);
 
         EncryptedektType (const char*,
-                          const DestType&);
+                          const ToType&);
 
         EncryptedektType (const ::std::string&,
-                          const DestType&);
+                          const ToType&);
 
         EncryptedektType (const ::LinphonePrivate::Xsd::XmlSchema::String&,
-                          const DestType&);
+                          const ToType&);
 
         EncryptedektType (const ::xercesc::DOMElement& e,
                           ::LinphonePrivate::Xsd::XmlSchema::Flags f = 0,
@@ -532,7 +554,7 @@ namespace LinphonePrivate
                ::LinphonePrivate::Xsd::XmlSchema::Flags);
 
         protected:
-        ::xsd::cxx::tree::one< DestType > dest_;
+        ::xsd::cxx::tree::one< ToType > to_;
       };
     }
   }
@@ -776,4 +798,4 @@ namespace LinphonePrivate
 //
 // End epilogue.
 
-#endif // PUBLISH_LINPHONE_EXTENSION_H
+#endif // EKT_LINPHONE_EXTENSION_H

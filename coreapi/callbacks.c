@@ -867,6 +867,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 	{
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 		linphone_core_notify_notify_received(lc, lev, eventname, ct);
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, Event::toCpp(lev), linphone_event_cbs_get_notify_received, ct);
 		if (ct) {
 			linphone_content_unref(ct);
 		}
@@ -925,13 +926,15 @@ static void publish_received(SalPublishOp *op, const char *eventname, const SalB
 	if (lev == NULL) {
 		lev = linphone_event_new_publish_with_op(lc, op, eventname);
 		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
+		linphone_event_set_publish_state(lev, LinphonePublishIncomingReceived);
+	} else {
+		linphone_event_set_publish_state(lev, LinphonePublishRefreshing);
 	}
 
 	if (ret == Core::ETagStatus::AddOrUpdateETag)
 		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addOrUpdatePublishByEtag(
 		    op, dynamic_pointer_cast<EventPublish>(Event::toCpp(lev)->getSharedFromThis()));
 
-	linphone_event_set_publish_state(lev, LinphonePublishIncomingReceived);
 	LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 	Address to(op->getTo());
 	LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(lc, to.toC());
@@ -939,6 +942,7 @@ static void publish_received(SalPublishOp *op, const char *eventname, const SalB
 		op->setRealm(linphone_proxy_config_get_realm(proxy));
 	}
 	linphone_core_notify_publish_received(lc, lev, eventname, ct);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, Event::toCpp(lev), linphone_event_cbs_get_publish_received, ct);
 	if (ct) linphone_content_unref(ct);
 }
 
@@ -954,9 +958,14 @@ static void on_publish_response(SalOp *op) {
 
 	if (lev == NULL) return;
 	if (ei->reason == SalReasonNone) {
-		if (linphone_event_get_publish_state(lev) != LinphonePublishTerminating)
+		if (linphone_event_get_publish_state(lev) != LinphonePublishTerminating) {
+			SalPublishOp *publishOp = static_cast<SalPublishOp *>(op);
+			int expires = publishOp->getExpires();
+			auto ev =
+			    dynamic_pointer_cast<EventPublish>(Event::toCpp(const_cast<LinphoneEvent *>(lev))->getSharedFromThis());
+			ev->setExpires(expires);
 			linphone_event_set_publish_state(lev, LinphonePublishOk);
-		else linphone_event_set_publish_state(lev, LinphonePublishCleared);
+		} else linphone_event_set_publish_state(lev, LinphonePublishCleared);
 	} else {
 		lWarning() << "on_publish_response() - Reason : " << sal_reason_to_string(ei->reason);
 		if (linphone_event_get_publish_state(lev) == LinphonePublishOk) {

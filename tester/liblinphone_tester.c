@@ -589,6 +589,9 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&player_test_suite, 81);
 	liblinphone_tester_add_suite_with_default_time(&recorder_test_suite, 33);
 	liblinphone_tester_add_suite_with_default_time(&multipart_test_suite, 20);
+#ifdef HAVE_EKT_SERVER_PLUGIN
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_end_to_end_encryption, 500);
+#endif // HAVE_EKT_SERVER_PLUGIN
 	liblinphone_tester_add_suite_with_default_time(&clonable_object_test_suite, 0);
 #ifdef HAVE_DB_STORAGE
 	liblinphone_tester_add_suite_with_default_time(&main_db_test_suite, 25);

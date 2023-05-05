@@ -39,7 +39,7 @@ ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
 		const auto defaultAccount = linphone_core_get_default_account(core);
 		if (defaultAccount) {
-			updateFromAccount(Account::toCpp(defaultAccount)->getSharedFromThis());
+			setAccount(Account::toCpp(defaultAccount)->getSharedFromThis());
 		}
 	}
 }

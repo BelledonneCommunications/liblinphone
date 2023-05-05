@@ -48,6 +48,7 @@
 #include "linphone/api/c-dial-plan.h"
 #include "linphone/api/c-dictionary.h"
 #include "linphone/api/c-digest-authentication-policy.h"
+#include "linphone/api/c-ekt-info.h"
 #include "linphone/api/c-event-cbs.h"
 #include "linphone/api/c-event-log.h"
 #include "linphone/api/c-event.h"

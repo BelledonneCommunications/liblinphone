@@ -1,0 +1,85 @@
+/*
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
+ *
+ * This file is part of Liblinphone
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef LINPHONE_EKT_INFO_H_
+#define LINPHONE_EKT_INFO_H_
+
+#include "linphone/api/c-ekt-info.h"
+
+#include "address/address.h"
+#include "conference/encryption/ekt-info.h"
+#include "linphone/api/c-address.h"
+#include "linphone/buffer.h"
+
+using namespace LinphonePrivate;
+
+LinphoneEktInfo *linphone_ekt_info_ref(LinphoneEktInfo *linphone_ekt_info) {
+	EktInfo::toCpp(linphone_ekt_info)->ref();
+	return linphone_ekt_info;
+}
+
+void linphone_ekt_info_unref(LinphoneEktInfo *linphone_ekt_info) {
+	EktInfo::toCpp(linphone_ekt_info)->unref();
+}
+
+const LinphoneAddress *linphone_ekt_info_get_from(const LinphoneEktInfo *linphone_ekt_info) {
+	const auto &address = EktInfo::toCpp(linphone_ekt_info)->getFrom();
+	return address && address->isValid() ? address->toC() : nullptr;
+}
+
+void linphone_ekt_info_set_from(LinphoneEktInfo *linphone_ekt_info, const LinphoneAddress *from) {
+	if (from) EktInfo::toCpp(linphone_ekt_info)->setFrom(*Address::toCpp(from));
+}
+
+uint16_t linphone_ekt_info_get_sspi(const LinphoneEktInfo *linphone_ekt_info) {
+	return EktInfo::toCpp(linphone_ekt_info)->getSSpi();
+}
+
+void linphone_ekt_info_set_sspi(LinphoneEktInfo *linphone_ekt_info, uint16_t sspi) {
+	EktInfo::toCpp(linphone_ekt_info)->setSSpi(sspi);
+}
+
+LinphoneBuffer *linphone_ekt_info_get_cspi(const LinphoneEktInfo *linphone_ekt_info) {
+	auto cspi = EktInfo::toCpp(linphone_ekt_info)->getCSpi();
+	return linphone_buffer_new_from_data(cspi.data(), cspi.size());
+}
+
+void linphone_ekt_info_set_cspi(LinphoneEktInfo *linphone_ekt_info, const LinphoneBuffer *cspi) {
+	EktInfo::toCpp(linphone_ekt_info)
+	    ->setCSpi(std::vector<uint8_t>(linphone_buffer_get_content(cspi),
+	                                   linphone_buffer_get_content(cspi) + linphone_buffer_get_size(cspi)));
+}
+
+LinphoneDictionary *linphone_ekt_info_get_ciphers(const LinphoneEktInfo *linphone_ekt_info) {
+	return bellesip::toC(EktInfo::toCpp(linphone_ekt_info)->getCiphers());
+}
+
+void linphone_ekt_info_set_ciphers(LinphoneEktInfo *linphone_ekt_info, LinphoneDictionary *ciphers) {
+	EktInfo::toCpp(linphone_ekt_info)->setCiphers(Dictionary::toCpp(ciphers)->getSharedFromThis());
+}
+
+void linphone_ekt_info_add_cipher(LinphoneEktInfo *linphone_ekt_info, const char *to, const LinphoneBuffer *cipher) {
+	EktInfo::toCpp(linphone_ekt_info)
+	    ->addCipher(std::string(to),
+	                std::vector<uint8_t>(linphone_buffer_get_content(cipher),
+	                                     linphone_buffer_get_content(cipher) + linphone_buffer_get_size(cipher)));
+}
+
+#endif // LINPHONE_EKT_INFO_H_

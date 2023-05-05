@@ -129,6 +129,10 @@ set(C_API_HEADER_FILES
 	c-vcard.h
 )
 
+if(ENABLE_ADVANCED_IM)
+	list(APPEND C_API_HEADER_FILES c-ekt-info.h)
+endif()
+
 set(ENUMS_HEADER_FILES
 	c-enums.h
 	call-enums.h

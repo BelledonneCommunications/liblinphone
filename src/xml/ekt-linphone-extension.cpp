@@ -39,7 +39,7 @@
 
 #include <xsd/cxx/pre.hxx>
 
-#include "publish-linphone-extension.h"
+#include "ekt-linphone-extension.h"
 
 namespace LinphonePrivate
 {
@@ -49,6 +49,36 @@ namespace LinphonePrivate
     {
       // CryptoType
       // 
+
+      const CryptoType::FromOptional& CryptoType::
+      getFrom () const
+      {
+        return this->from_;
+      }
+
+      CryptoType::FromOptional& CryptoType::
+      getFrom ()
+      {
+        return this->from_;
+      }
+
+      void CryptoType::
+      setFrom (const FromType& x)
+      {
+        this->from_.set (x);
+      }
+
+      void CryptoType::
+      setFrom (const FromOptional& x)
+      {
+        this->from_ = x;
+      }
+
+      void CryptoType::
+      setFrom (::std::unique_ptr< FromType > x)
+      {
+        this->from_.set (std::move (x));
+      }
 
       const CryptoType::SspiType& CryptoType::
       getSspi () const
@@ -68,16 +98,16 @@ namespace LinphonePrivate
         this->sspi_.set (x);
       }
 
-      const CryptoType::CspiType& CryptoType::
+      const CryptoType::CspiOptional& CryptoType::
       getCspi () const
       {
-        return this->cspi_.get ();
+        return this->cspi_;
       }
 
-      CryptoType::CspiType& CryptoType::
+      CryptoType::CspiOptional& CryptoType::
       getCspi ()
       {
-        return this->cspi_.get ();
+        return this->cspi_;
       }
 
       void CryptoType::
@@ -87,15 +117,15 @@ namespace LinphonePrivate
       }
 
       void CryptoType::
+      setCspi (const CspiOptional& x)
+      {
+        this->cspi_ = x;
+      }
+
+      void CryptoType::
       setCspi (::std::unique_ptr< CspiType > x)
       {
         this->cspi_.set (std::move (x));
-      }
-
-      ::std::unique_ptr< CryptoType::CspiType > CryptoType::
-      setDetachCspi ()
-      {
-        return this->cspi_.detach ();
       }
 
       const CryptoType::CiphersOptional& CryptoType::
@@ -184,34 +214,34 @@ namespace LinphonePrivate
       // EncryptedektType
       // 
 
-      const EncryptedektType::DestType& EncryptedektType::
-      getDest () const
+      const EncryptedektType::ToType& EncryptedektType::
+      getTo () const
       {
-        return this->dest_.get ();
+        return this->to_.get ();
       }
 
-      EncryptedektType::DestType& EncryptedektType::
-      getDest ()
+      EncryptedektType::ToType& EncryptedektType::
+      getTo ()
       {
-        return this->dest_.get ();
-      }
-
-      void EncryptedektType::
-      setDest (const DestType& x)
-      {
-        this->dest_.set (x);
+        return this->to_.get ();
       }
 
       void EncryptedektType::
-      setDest (::std::unique_ptr< DestType > x)
+      setTo (const ToType& x)
       {
-        this->dest_.set (std::move (x));
+        this->to_.set (x);
       }
 
-      ::std::unique_ptr< EncryptedektType::DestType > EncryptedektType::
-      setDetachDest ()
+      void EncryptedektType::
+      setTo (::std::unique_ptr< ToType > x)
       {
-        return this->dest_.detach ();
+        this->to_.set (std::move (x));
+      }
+
+      ::std::unique_ptr< EncryptedektType::ToType > EncryptedektType::
+      setDetachTo ()
+      {
+        return this->to_.detach ();
       }
     }
   }
@@ -241,11 +271,11 @@ namespace LinphonePrivate
 
       CryptoType::
       CryptoType (const SspiType& sspi,
-                  const CspiType& cspi,
                   const EntityType& entity)
       : ::LinphonePrivate::Xsd::XmlSchema::Type (),
+        from_ (this),
         sspi_ (sspi, this),
-        cspi_ (cspi, this),
+        cspi_ (this),
         ciphers_ (this),
         entity_ (entity, this)
       {
@@ -256,6 +286,7 @@ namespace LinphonePrivate
                   ::LinphonePrivate::Xsd::XmlSchema::Flags f,
                   ::LinphonePrivate::Xsd::XmlSchema::Container* c)
       : ::LinphonePrivate::Xsd::XmlSchema::Type (x, f, c),
+        from_ (x.from_, f, this),
         sspi_ (x.sspi_, f, this),
         cspi_ (x.cspi_, f, this),
         ciphers_ (x.ciphers_, f, this),
@@ -268,6 +299,7 @@ namespace LinphonePrivate
                   ::LinphonePrivate::Xsd::XmlSchema::Flags f,
                   ::LinphonePrivate::Xsd::XmlSchema::Container* c)
       : ::LinphonePrivate::Xsd::XmlSchema::Type (e, f | ::LinphonePrivate::Xsd::XmlSchema::Flags::base, c),
+        from_ (this),
         sspi_ (this),
         cspi_ (this),
         ciphers_ (this),
@@ -290,9 +322,23 @@ namespace LinphonePrivate
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
 
+          // from
+          //
+          if (n.name () == "from" && n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
+          {
+            ::std::unique_ptr< FromType > r (
+              FromTraits::create (i, f, this));
+
+            if (!this->from_)
+            {
+              this->from_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // sspi
           //
-          if (n.name () == "sspi" && n.namespace_ () == "linphone:xml:ns:publish-linphone-extension")
+          if (n.name () == "sspi" && n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
           {
             if (!sspi_.present ())
             {
@@ -303,12 +349,12 @@ namespace LinphonePrivate
 
           // cspi
           //
-          if (n.name () == "cspi" && n.namespace_ () == "linphone:xml:ns:publish-linphone-extension")
+          if (n.name () == "cspi" && n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
           {
             ::std::unique_ptr< CspiType > r (
               CspiTraits::create (i, f, this));
 
-            if (!cspi_.present ())
+            if (!this->cspi_)
             {
               this->cspi_.set (::std::move (r));
               continue;
@@ -317,7 +363,7 @@ namespace LinphonePrivate
 
           // ciphers
           //
-          if (n.name () == "ciphers" && n.namespace_ () == "linphone:xml:ns:publish-linphone-extension")
+          if (n.name () == "ciphers" && n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
           {
             ::std::unique_ptr< CiphersType > r (
               CiphersTraits::create (i, f, this));
@@ -336,14 +382,7 @@ namespace LinphonePrivate
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "sspi",
-            "linphone:xml:ns:publish-linphone-extension");
-        }
-
-        if (!cspi_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "cspi",
-            "linphone:xml:ns:publish-linphone-extension");
+            "linphone:xml:ns:ekt-linphone-extension");
         }
 
         while (p.more_attributes ())
@@ -380,6 +419,7 @@ namespace LinphonePrivate
         if (this != &x)
         {
           static_cast< ::LinphonePrivate::Xsd::XmlSchema::Type& > (*this) = x;
+          this->from_ = x.from_;
           this->sspi_ = x.sspi_;
           this->cspi_ = x.cspi_;
           this->ciphers_ = x.ciphers_;
@@ -439,7 +479,7 @@ namespace LinphonePrivate
 
           // encryptedekt
           //
-          if (n.name () == "encryptedekt" && n.namespace_ () == "linphone:xml:ns:publish-linphone-extension")
+          if (n.name () == "encryptedekt" && n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
           {
             ::std::unique_ptr< EncryptedektType > r (
               EncryptedektTraits::create (i, f, this));
@@ -480,33 +520,33 @@ namespace LinphonePrivate
       //
 
       EncryptedektType::
-      EncryptedektType (const DestType& dest)
+      EncryptedektType (const ToType& to)
       : ::LinphonePrivate::Xsd::XmlSchema::String (),
-        dest_ (dest, this)
+        to_ (to, this)
       {
       }
 
       EncryptedektType::
       EncryptedektType (const char* _xsd_String_base,
-                        const DestType& dest)
+                        const ToType& to)
       : ::LinphonePrivate::Xsd::XmlSchema::String (_xsd_String_base),
-        dest_ (dest, this)
+        to_ (to, this)
       {
       }
 
       EncryptedektType::
       EncryptedektType (const ::std::string& _xsd_String_base,
-                        const DestType& dest)
+                        const ToType& to)
       : ::LinphonePrivate::Xsd::XmlSchema::String (_xsd_String_base),
-        dest_ (dest, this)
+        to_ (to, this)
       {
       }
 
       EncryptedektType::
       EncryptedektType (const ::LinphonePrivate::Xsd::XmlSchema::String& _xsd_String_base,
-                        const DestType& dest)
+                        const ToType& to)
       : ::LinphonePrivate::Xsd::XmlSchema::String (_xsd_String_base),
-        dest_ (dest, this)
+        to_ (to, this)
       {
       }
 
@@ -515,7 +555,7 @@ namespace LinphonePrivate
                         ::LinphonePrivate::Xsd::XmlSchema::Flags f,
                         ::LinphonePrivate::Xsd::XmlSchema::Container* c)
       : ::LinphonePrivate::Xsd::XmlSchema::String (x, f, c),
-        dest_ (x.dest_, f, this)
+        to_ (x.to_, f, this)
       {
       }
 
@@ -524,7 +564,7 @@ namespace LinphonePrivate
                         ::LinphonePrivate::Xsd::XmlSchema::Flags f,
                         ::LinphonePrivate::Xsd::XmlSchema::Container* c)
       : ::LinphonePrivate::Xsd::XmlSchema::String (e, f | ::LinphonePrivate::Xsd::XmlSchema::Flags::base, c),
-        dest_ (this)
+        to_ (this)
       {
         if ((f & ::LinphonePrivate::Xsd::XmlSchema::Flags::base) == 0)
         {
@@ -543,17 +583,17 @@ namespace LinphonePrivate
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
 
-          if (n.name () == "dest" && n.namespace_ ().empty ())
+          if (n.name () == "to" && n.namespace_ ().empty ())
           {
-            this->dest_.set (DestTraits::create (i, f, this));
+            this->to_.set (ToTraits::create (i, f, this));
             continue;
           }
         }
 
-        if (!dest_.present ())
+        if (!to_.present ())
         {
           throw ::xsd::cxx::tree::expected_attribute< char > (
-            "dest",
+            "to",
             "");
         }
       }
@@ -571,7 +611,7 @@ namespace LinphonePrivate
         if (this != &x)
         {
           static_cast< ::LinphonePrivate::Xsd::XmlSchema::String& > (*this) = x;
-          this->dest_ = x.dest_;
+          this->to_ = x.to_;
         }
 
         return *this;
@@ -605,8 +645,17 @@ namespace LinphonePrivate
       ::std::ostream&
       operator<< (::std::ostream& o, const CryptoType& i)
       {
+        if (i.getFrom ())
+        {
+          o << ::std::endl << "from: " << *i.getFrom ();
+        }
+
         o << ::std::endl << "sspi: " << i.getSspi ();
-        o << ::std::endl << "cspi: " << i.getCspi ();
+        if (i.getCspi ())
+        {
+          o << ::std::endl << "cspi: " << *i.getCspi ();
+        }
+
         if (i.getCiphers ())
         {
           o << ::std::endl << "ciphers: " << *i.getCiphers ();
@@ -634,7 +683,7 @@ namespace LinphonePrivate
       {
         o << static_cast< const ::LinphonePrivate::Xsd::XmlSchema::String& > (i);
 
-        o << ::std::endl << "dest: " << i.getDest ();
+        o << ::std::endl << "to: " << i.getTo ();
         return o;
       }
     }
@@ -864,7 +913,7 @@ namespace LinphonePrivate
           ::xsd::cxx::xml::dom::name< char > (e));
 
         if (n.name () == "crypto" &&
-            n.namespace_ () == "linphone:xml:ns:publish-linphone-extension")
+            n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
         {
           ::std::unique_ptr< ::LinphonePrivate::Xsd::PublishLinphoneExtension::CryptoType > r (
             ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::PublishLinphoneExtension::CryptoType, char >::create (
@@ -876,7 +925,7 @@ namespace LinphonePrivate
           n.name (),
           n.namespace_ (),
           "crypto",
-          "linphone:xml:ns:publish-linphone-extension");
+          "linphone:xml:ns:ekt-linphone-extension");
       }
 
       ::std::unique_ptr< ::LinphonePrivate::Xsd::PublishLinphoneExtension::CryptoType >
@@ -902,7 +951,7 @@ namespace LinphonePrivate
                            0);
 
         if (n.name () == "crypto" &&
-            n.namespace_ () == "linphone:xml:ns:publish-linphone-extension")
+            n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
         {
           ::std::unique_ptr< ::LinphonePrivate::Xsd::PublishLinphoneExtension::CryptoType > r (
             ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::PublishLinphoneExtension::CryptoType, char >::create (
@@ -914,7 +963,7 @@ namespace LinphonePrivate
           n.name (),
           n.namespace_ (),
           "crypto",
-          "linphone:xml:ns:publish-linphone-extension");
+          "linphone:xml:ns:ekt-linphone-extension");
       }
     }
   }
@@ -1058,7 +1107,7 @@ namespace LinphonePrivate
           ::xsd::cxx::xml::dom::name< char > (e));
 
         if (n.name () == "crypto" &&
-            n.namespace_ () == "linphone:xml:ns:publish-linphone-extension")
+            n.namespace_ () == "linphone:xml:ns:ekt-linphone-extension")
         {
           e << s;
         }
@@ -1068,7 +1117,7 @@ namespace LinphonePrivate
             n.name (),
             n.namespace_ (),
             "crypto",
-            "linphone:xml:ns:publish-linphone-extension");
+            "linphone:xml:ns:ekt-linphone-extension");
         }
       }
 
@@ -1080,7 +1129,7 @@ namespace LinphonePrivate
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::xsd::cxx::xml::dom::serialize< char > (
             "crypto",
-            "linphone:xml:ns:publish-linphone-extension",
+            "linphone:xml:ns:ekt-linphone-extension",
             m, f));
 
         ::LinphonePrivate::Xsd::PublishLinphoneExtension::serializeCrypto (*d, s, f);
@@ -1092,13 +1141,26 @@ namespace LinphonePrivate
       {
         e << static_cast< const ::LinphonePrivate::Xsd::XmlSchema::Type& > (i);
 
+        // from
+        //
+        if (i.getFrom ())
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "from",
+              "linphone:xml:ns:ekt-linphone-extension",
+              e));
+
+          s << *i.getFrom ();
+        }
+
         // sspi
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "sspi",
-              "linphone:xml:ns:publish-linphone-extension",
+              "linphone:xml:ns:ekt-linphone-extension",
               e));
 
           s << i.getSspi ();
@@ -1106,14 +1168,15 @@ namespace LinphonePrivate
 
         // cspi
         //
+        if (i.getCspi ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "cspi",
-              "linphone:xml:ns:publish-linphone-extension",
+              "linphone:xml:ns:ekt-linphone-extension",
               e));
 
-          s << i.getCspi ();
+          s << *i.getCspi ();
         }
 
         // ciphers
@@ -1123,7 +1186,7 @@ namespace LinphonePrivate
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "ciphers",
-              "linphone:xml:ns:publish-linphone-extension",
+              "linphone:xml:ns:ekt-linphone-extension",
               e));
 
           s << *i.getCiphers ();
@@ -1155,7 +1218,7 @@ namespace LinphonePrivate
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "encryptedekt",
-              "linphone:xml:ns:publish-linphone-extension",
+              "linphone:xml:ns:ekt-linphone-extension",
               e));
 
           s << *b;
@@ -1167,15 +1230,15 @@ namespace LinphonePrivate
       {
         e << static_cast< const ::LinphonePrivate::Xsd::XmlSchema::String& > (i);
 
-        // dest
+        // to
         //
         {
           ::xercesc::DOMAttr& a (
             ::xsd::cxx::xml::dom::create_attribute (
-              "dest",
+              "to",
               e));
 
-          a << i.getDest ();
+          a << i.getTo ();
         }
       }
     }

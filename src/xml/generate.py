@@ -98,10 +98,10 @@ def generate(name):
 		"--namespace-map", "http://www.w3.org/2001/XMLSchema=LinphonePrivate::Xsd::XmlSchema",
 		"--namespace-map", "urn:ietf:params:xml:ns:conference-info=LinphonePrivate::Xsd::ConferenceInfo",
 		"--namespace-map", "linphone:xml:ns:conference-info-linphone-extension=LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension",
+		"--namespace-map", "linphone:xml:ns:ekt-linphone-extension=LinphonePrivate::Xsd::PublishLinphoneExtension",
 		"--namespace-map", "urn:ietf:params:xml:ns:imdn=LinphonePrivate::Xsd::Imdn",
 		"--namespace-map", "urn:ietf:params:xml:ns:im-iscomposing=LinphonePrivate::Xsd::IsComposing",
 		"--namespace-map", "http://www.linphone.org/xsds/imdn.xsd=LinphonePrivate::Xsd::LinphoneImdn",
-		"--namespace-map", "linphone:xml:ns:publish-linphone-extension=LinphonePrivate::Xsd::PublishLinphoneExtension",
 		"--namespace-map", "urn:ietf:params:xml:ns:resource-lists=LinphonePrivate::Xsd::ResourceLists",
 		"--namespace-map", "urn:ietf:params:xml:ns:rlmi=LinphonePrivate::Xsd::Rlmi",
 		source_file
@@ -121,10 +121,10 @@ def main(argv = None):
 	generate("xml")
 	generate("conference-info")
 	generate("conference-info-linphone-extension")
+	generate("ekt-linphone-extension")
 	generate("imdn")
 	generate("is-composing")
 	generate("linphone-imdn")
-	generate("publish-linphone-extension")
 	generate("resource-lists")
 	generate("rlmi")
 

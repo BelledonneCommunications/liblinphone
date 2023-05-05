@@ -179,8 +179,12 @@ LinphoneMagicSearchCbs *linphone_factory_create_magic_search_cbs(const LinphoneF
 	return Factory::toCpp(factory)->createMagicSearchCbs();
 }
 
-LinphoneDictionary *linphone_factory_create_dictionary(LinphoneFactory *factory) {
+LinphoneDictionary *linphone_factory_create_dictionary(const LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createDictionary();
+}
+
+LinphoneEktInfo *linphone_factory_create_ekt_info(const LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->createEktInfo();
 }
 
 LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory) {

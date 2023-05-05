@@ -118,6 +118,8 @@ public:
 
 	LinphoneDictionary *createDictionary() const;
 
+	LinphoneEktInfo *createEktInfo() const;
+
 	LinphoneDigestAuthenticationPolicy *createDigestAuthenticationPolicy() const;
 
 	LinphoneVcard *createVcard() const;

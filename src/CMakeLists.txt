@@ -303,6 +303,8 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.h
 		chat/chat-room/server-group-chat-room-p.h
 		chat/chat-room/server-group-chat-room.h
+		conference/encryption/client-ekt-manager.h
+		conference/encryption/ekt-info.h
 		conference/handlers/local-audio-video-conference-event-handler.h
 		conference/handlers/local-conference-event-handler.h
 		conference/handlers/local-conference-list-event-handler.h
@@ -311,10 +313,10 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/remote-conference-list-event-handler.h
 		xml/conference-info.h
 		xml/conference-info-linphone-extension.h
+		xml/ekt-linphone-extension.h
 		xml/imdn.h
 		xml/is-composing.h
 		xml/linphone-imdn.h
-		xml/publish-linphone-extension.h
 		xml/resource-lists.h
 		xml/rlmi.h
 		xml/xml.h
@@ -602,12 +604,15 @@ endif()
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		c-wrapper/api/c-ekt-info.cpp
 		chat/chat-room/basic-to-client-group-chat-room.cpp
 		chat/chat-room/client-group-chat-room.cpp
 		chat/chat-room/client-group-to-basic-chat-room.cpp
 		chat/chat-room/proxy-chat-room.cpp
 		chat/chat-room/server-group-chat-room.cpp
 		chat/modifier/cpim-chat-message-modifier.cpp
+		conference/encryption/client-ekt-manager.cpp
+		conference/encryption/ekt-info.cpp
 		conference/handlers/local-conference-event-handler.cpp
 		conference/handlers/local-audio-video-conference-event-handler.cpp
 		conference/handlers/local-conference-list-event-handler.cpp
@@ -615,10 +620,10 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/remote-conference-list-event-handler.cpp
 		xml/conference-info.cpp
 		xml/conference-info-linphone-extension.cpp
+		xml/ekt-linphone-extension.cpp
 		xml/imdn.cpp
 		xml/is-composing.cpp
 		xml/linphone-imdn.cpp
-		xml/publish-linphone-extension.cpp
 		xml/resource-lists.cpp
 		xml/rlmi.cpp
 		xml/xml.cpp
@@ -637,6 +642,7 @@ endif()
 if (ENABLE_DB_STORAGE)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES db/session/db-session.cpp)
 endif()
+
 
 set(LINPHONE_OBJC_SOURCE_FILES)
 if (APPLE)
@@ -698,7 +704,7 @@ if ((CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.
 		OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
 	set_property(SOURCE
 		xml/conference-info.cpp
-		xml/publish-linphone-extension.cpp
+		xml/ekt-linphone-extension.cpp
 		xml/resource-lists.cpp
 		xml/rlmi.cpp
 		APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-error=deprecated-copy"

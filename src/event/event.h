@@ -35,6 +35,11 @@ LINPHONE_BEGIN_NAMESPACE
 class EventCbs : public bellesip::HybridObject<LinphoneEventCbs, EventCbs>, public Callbacks {
 public:
 	LinphoneEventCbsNotifyResponseCb notifyResponseCb;
+	LinphoneEventCbsNotifyReceivedCb notifyReceivedCb;
+	LinphoneEventCbsSubscribeReceivedCb subscribeReceivedCb;
+	LinphoneEventCbsSubscribeStateChangedCb subscribeStateChangedCb;
+	LinphoneEventCbsPublishReceivedCb publishReceivedCb;
+	LinphoneEventCbsPublishStateChangedCb publishStateChangedCb;
 };
 
 class Core;

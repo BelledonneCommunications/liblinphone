@@ -3662,7 +3662,9 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 			if (mgr->subscribe_policy == AcceptSubscription) {
 				if (linphone_event_get_subscription_dir(lev) == LinphoneSubscriptionIncoming) {
 					mgr->lev = lev;
-					if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
+					if (strcmp(linphone_event_get_name(lev), "conference") == 0 ||
+					    strcmp(linphone_event_get_name(lev), "ekt") == 0 ||
+					    strcmp(linphone_event_get_name(lev), "doingnothing") == 0) {
 						// TODO : Get LocalConfEventHandler and call handler->subscribeReceived(lev)
 					} else {
 						linphone_event_notify(lev, content);
@@ -3710,6 +3712,9 @@ void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, Linphon
 		case LinphonePublishIncomingReceived:
 			counters->number_of_LinphonePublishIncomingReceived++;
 			break;
+		case LinphonePublishRefreshing:
+			counters->number_of_LinphonePublishRefreshing++;
+			break;
 		case LinphonePublishOk:
 			/*make sure custom header access API is working*/
 			BC_ASSERT_PTR_NOT_NULL(linphone_event_get_custom_header(ev, "From"));
@@ -3733,6 +3738,9 @@ void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, Linphon
 				mgr->lev = NULL;
 			}
 			break;
+		case LinphonePublishTerminating:
+			counters->number_of_LinphonePublishTerminating++;
+			break;
 		default:
 			break;
 	}
@@ -3741,7 +3749,8 @@ void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, Linphon
 void linphone_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *content) {
 	LinphoneCoreManager *mgr;
 	mgr = get_manager(lc);
-	mgr->stat.number_of_NotifySent++;
+	if (strcmp(linphone_event_get_name(lev), "ekt") == 0) mgr->stat.number_of_NotifyEktSent++;
+	else mgr->stat.number_of_NotifySent++;
 
 	linphone_event_set_user_data(lev, (void *)linphone_content_copy(content));
 }
@@ -3760,40 +3769,45 @@ void linphone_notify_received(LinphoneCore *lc,
 			BC_ASSERT_STRING_EQUAL(text, notify_content);
 		}
 	}
-	mgr->stat.number_of_NotifyReceived++;
+	if (strcmp(linphone_event_get_name(lev), "ekt") == 0) mgr->stat.number_of_NotifyEktReceived++;
+	else mgr->stat.number_of_NotifyReceived++;
 }
 
 void linphone_subscribe_received(LinphoneCore *lc,
                                  LinphoneEvent *lev,
-                                 BCTBX_UNUSED(const char *eventname),
+                                 const char *eventname,
                                  BCTBX_UNUSED(const LinphoneContent *content)) {
-	LinphoneCoreManager *mgr = get_manager(lc);
-	switch (mgr->subscribe_policy) {
-		case AcceptSubscription:
-			linphone_event_accept_subscription(lev);
-			break;
-		case DenySubscription:
-			linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
-			break;
-		case DoNothingWithSubscription:
-			break;
+	if (strcmp(eventname, "ekt") != 0) {
+		LinphoneCoreManager *mgr = get_manager(lc);
+		switch (mgr->subscribe_policy) {
+			case AcceptSubscription:
+				linphone_event_accept_subscription(lev);
+				break;
+			case DenySubscription:
+				linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+				break;
+			case DoNothingWithSubscription:
+				break;
+		}
 	}
 }
 
 void linphone_publish_received(LinphoneCore *lc,
                                LinphoneEvent *lev,
-                               BCTBX_UNUSED(const char *eventname),
+                               const char *eventname,
                                BCTBX_UNUSED(const LinphoneContent *content)) {
-	LinphoneCoreManager *mgr = get_manager(lc);
-	switch (mgr->publish_policy) {
-		case AcceptPublish:
-			linphone_event_accept_publish(lev);
-			break;
-		case DenyPublish:
-			linphone_event_deny_publish(lev, LinphoneReasonDeclined);
-			break;
-		case DoNothingWithPublish:
-			break;
+	if (strcmp(eventname, "ekt") != 0) {
+		LinphoneCoreManager *mgr = get_manager(lc);
+		switch (mgr->publish_policy) {
+			case AcceptPublish:
+				linphone_event_accept_publish(lev);
+				break;
+			case DenyPublish:
+				linphone_event_deny_publish(lev, LinphoneReasonDeclined);
+				break;
+			case DoNothingWithPublish:
+				break;
+		}
 	}
 }
 
@@ -4870,7 +4884,8 @@ static void linphone_notify_received_internal(LinphoneCore *lc,
 			mgr->stat.number_of_NotifyFullStateReceived++;
 		}
 	}
-	mgr->stat.number_of_NotifyReceived++;
+	if (strcmp(linphone_event_get_name(lev), "ekt") == 0) mgr->stat.number_of_NotifyEktReceived++;
+	else mgr->stat.number_of_NotifyReceived++;
 }
 
 LinphoneConferenceServer *linphone_conference_server_new(const char *rc_file, bool_t do_registration) {

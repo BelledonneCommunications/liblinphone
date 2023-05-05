@@ -19,7 +19,7 @@
  */
 
 #include "liblinphone_tester.h"
-#include "local_conference_tester_functions.h"
+#include "local-conference-tester-functions.h"
 #include "shared_tester_functions.h"
 
 namespace LinphoneTest {
@@ -85,13 +85,6 @@ static void create_simple_point_to_point_encrypted_ice_conference(void) {
 	    ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE,
 	    LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE,
 	    LinphoneConferenceSecurityLevelPointToPoint, {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
-}
-
-static void create_simple_end_to_end_encrypted_ice_conference(void) {
-	create_conference_base(ms_time(NULL), -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE,
-	                       LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE,
-	                       FALSE, FALSE, LinphoneMediaDirectionRecvOnly, FALSE, LinphoneConferenceSecurityLevelEndToEnd,
-	                       {LinphoneParticipantRoleSpeaker, LinphoneParticipantRoleListener});
 }
 
 static void create_simple_ice_conference_merging_calls(void) {
@@ -503,9 +496,6 @@ static test_t local_conference_scheduled_ice_conference_tests[] = {
                  "ICE"),
     TEST_ONE_TAG("Create simple point-to-point encrypted ICE conference",
                  LinphoneTest::create_simple_point_to_point_encrypted_ice_conference,
-                 "ICE"),
-    TEST_ONE_TAG("Create simple end-to-end encrypted ICE conference",
-                 LinphoneTest::create_simple_end_to_end_encrypted_ice_conference,
                  "ICE"),
     TEST_ONE_TAG("Create simple ICE conference by merging calls",
                  LinphoneTest::create_simple_ice_conference_merging_calls,

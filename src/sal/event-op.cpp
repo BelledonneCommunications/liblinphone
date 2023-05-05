@@ -443,13 +443,12 @@ void SalPublishOp::publishProcessRequestEventCb(void *userCtx, const belle_sip_r
 	belle_sip_header_expires_t *headerExpires =
 	    belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
 	op->mExpires =
-	    headerExpires ? belle_sip_header_expires_get_expires(headerExpires)
-	                  : 0; /* REVISIT: may not be the best solution -> https://www.rfc-editor.org/rfc/rfc3903#page-12 */
+	    headerExpires ? belle_sip_header_expires_get_expires(headerExpires) : 600; // Expires default value : 600
 
 	/* 5. The ESC processes the published event state contained in the body of the PUBLISH request. */
 
 	if (!sipIfMatch && belle_sip_message_get_body_size(BELLE_SIP_MESSAGE(request)) <= 0) {
-		lWarning() << "Publish without eTag must contain a body";
+		lError() << "Publish without eTag must contain a body";
 		auto response = op->createResponseFromRequest(request, 400);
 		belle_sip_server_transaction_send_response(serverTransaction, response);
 		if (!op->mDialog) op->release();
@@ -465,15 +464,34 @@ void SalPublishOp::publishProcessRequestEventCb(void *userCtx, const belle_sip_r
 	auto bodyHandler = BELLE_SIP_BODY_HANDLER(op->getBodyHandler(BELLE_SIP_MESSAGE(request)));
 	const char *type = nullptr;
 	if (contentTypeHeader) type = belle_sip_header_content_type_get_type(contentTypeHeader);
-	op->mRoot->mCallbacks.publish_received(op, eventName,
-	                                       type ? reinterpret_cast<SalBodyHandler *>(bodyHandler) : nullptr);
-	if (op->mExpires == 0) op->mRoot->mCallbacks.incoming_publish_closed(op);
+	if (op->mExpires == 0) {
+		op->mRoot->mCallbacks.incoming_publish_closed(op);
+	} else {
+		op->mRoot->mCallbacks.publish_received(op, eventName,
+		                                       type ? reinterpret_cast<SalBodyHandler *>(bodyHandler) : nullptr);
+	}
 }
 
 void SalPublishOp::publishResponseEventCb(void *userCtx, const belle_sip_response_event_t *event) {
 	auto op = static_cast<SalPublishOp *>(userCtx);
+	auto response = belle_sip_response_event_get_response(event);
+	auto transaction = belle_sip_response_event_get_client_transaction(event);
+	if (!transaction) return;
 	op->setErrorInfoFromResponse(belle_sip_response_event_get_response(event));
-	if (op->mErrorInfo.protocol_code >= 200) op->mRoot->mCallbacks.on_publish_response(op);
+	if (op->mErrorInfo.protocol_code >= 200) {
+		belle_sip_header_expires_t *headerExpires =
+		    belle_sip_message_get_header_by_type(response, belle_sip_header_expires_t);
+		if (headerExpires) {
+			if (belle_sip_header_expires_get_expires(headerExpires) > 0) {
+				op->mRefresher = belle_sip_client_transaction_create_refresher(transaction);
+				belle_sip_refresher_set_listener(op->mRefresher, publishRefresherListenerCb, op);
+				belle_sip_refresher_set_realm(op->mRefresher, L_STRING_TO_C(op->mRealm));
+				belle_sip_refresher_enable_manual_mode(op->mRefresher, op->mManualRefresher);
+			}
+			op->mExpires = belle_sip_header_expires_get_expires(headerExpires);
+		}
+		op->mRoot->mCallbacks.on_publish_response(op);
+	}
 }
 
 void SalPublishOp::fillCallbacks() {
@@ -508,6 +526,11 @@ void SalPublishOp::publishRefresherListenerCb(BCTBX_UNUSED(belle_sip_refresher_t
 		sal_error_info_set(&op->mErrorInfo, SalReasonUnknown, "SIP", static_cast<int>(statusCode), reasonPhrase,
 		                   nullptr);
 		op->assignRecvHeaders(BELLE_SIP_MESSAGE(response));
+		belle_sip_header_expires_t *headerExpires =
+		    belle_sip_message_get_header_by_type(response, belle_sip_header_expires_t);
+		if (headerExpires) {
+			op->mExpires = belle_sip_header_expires_get_expires(headerExpires);
+		}
 		op->mRoot->mCallbacks.on_publish_response(op);
 	}
 }
@@ -525,15 +548,15 @@ int SalPublishOp::publish(const string &eventName, int expires, const SalBodyHan
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(createContact()));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_sip_header_create("Event", eventName.c_str()));
 		belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(request), BELLE_SIP_BODY_HANDLER(bodyHandler));
-		if (expires != -1) return sendRequestAndCreateRefresher(request, expires, publishRefresherListenerCb);
-		else return sendRequest(request);
+		return sendRequestAndCreateRefresher(request, expires, publishRefresherListenerCb);
 	} else {
 		// Update status
 		auto lastTransaction = belle_sip_refresher_get_transaction(mRefresher);
 		auto lastRequest = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(lastTransaction));
 		// update body
-		if (expires == 0) belle_sip_message_set_body(BELLE_SIP_MESSAGE(lastRequest), nullptr, 0);
-		else belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(lastRequest), BELLE_SIP_BODY_HANDLER(bodyHandler));
+		if (expires == 0) {
+			belle_sip_message_set_body(BELLE_SIP_MESSAGE(lastRequest), nullptr, 0);
+		} else belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(lastRequest), BELLE_SIP_BODY_HANDLER(bodyHandler));
 		return belle_sip_refresher_refresh(mRefresher, (expires == -1) ? BELLE_SIP_REFRESHER_REUSE_EXPIRES : expires);
 	}
 }
@@ -543,12 +566,14 @@ int SalPublishOp::accept() {
 		auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
 
 		auto expiresHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
-		int expires = expiresHeader ? belle_sip_header_expires_get_expires(expiresHeader) : 0;
+		int expires = expiresHeader ? belle_sip_header_expires_get_expires(expiresHeader) : 600;
 		auto response = createResponseFromRequest(request, 200);
 		if (expires > 0) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response),
 			                             belle_sip_header_create("SIP-ETag", mETag.c_str()));
-			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(expiresHeader));
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response),
+			                             expiresHeader ? BELLE_SIP_HEADER(expiresHeader)
+			                                           : BELLE_SIP_HEADER(belle_sip_header_expires_create(expires)));
 		}
 
 		belle_sip_server_transaction_send_response(mPendingServerTransaction, response);

@@ -62,6 +62,7 @@ extern test_suite_t call_flexfec_suite;
 extern test_suite_t call_video_advanced_scenarios_test_suite;
 #endif // if VIDEO_ENABLED
 
+extern test_suite_t local_conference_test_suite_end_to_end_encryption;
 extern test_suite_t clonable_object_test_suite;
 extern test_suite_t conference_event_test_suite;
 extern test_suite_t conference_test_suite;
@@ -371,6 +372,8 @@ typedef struct _stats {
 	int number_of_NotifyPresenceReceived;
 	int number_of_NotifyPresenceReceivedForUriOrTel;
 	int number_of_NotifyFriendPresenceReceived;
+	int number_of_NotifyEktSent;
+	int number_of_NotifyEktReceived;
 	int number_of_LinphonePresenceActivityOffline;
 	int number_of_LinphonePresenceActivityOnline;
 	int number_of_LinphonePresenceActivityAppointment;
@@ -423,10 +426,12 @@ typedef struct _stats {
 
 	int number_of_LinphonePublishOutgoingProgress;
 	int number_of_LinphonePublishIncomingReceived;
+	int number_of_LinphonePublishRefreshing;
 	int number_of_LinphonePublishOk;
 	int number_of_LinphonePublishExpiring;
 	int number_of_LinphonePublishError;
 	int number_of_LinphonePublishCleared;
+	int number_of_LinphonePublishTerminating;
 
 	int number_of_LinphoneConfiguringSkipped;
 	int number_of_LinphoneConfiguringFailed;

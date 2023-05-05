@@ -1120,7 +1120,8 @@ int Account::sendPublish() {
 
 		if (mPresencePublishEvent != nullptr) {
 			LinphonePublishState state = mPresencePublishEvent->getState();
-			if (state != LinphonePublishOk && state != LinphonePublishOutgoingProgress) {
+			if (state != LinphonePublishOk && state != LinphonePublishOutgoingProgress &&
+			    state != LinphonePublishRefreshing) {
 				lInfo() << "Presence publish state is [" << linphone_publish_state_to_string(state)
 				        << "], destroying it and creating a new one instead";
 				mPresencePublishEvent->unref();

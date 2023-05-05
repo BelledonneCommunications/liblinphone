@@ -144,6 +144,8 @@ LINPHONE_PUBLIC const char *linphone_publish_state_to_string(LinphonePublishStat
 			return "LinphonePublishOutgoingProgress";
 		case LinphonePublishIncomingReceived:
 			return "LinphonePublishIncomingReceived";
+		case LinphonePublishRefreshing:
+			return "LinphonePublishRefreshing";
 		case LinphonePublishOk:
 			return "LinphonePublishOk";
 		case LinphonePublishError:
@@ -497,11 +499,11 @@ LinphoneCore *linphone_event_get_core(const LinphoneEvent *linphone_event) {
 }
 
 void linphone_event_add_callbacks(LinphoneEvent *linphone_event, LinphoneEventCbs *cbs) {
-	Event::toCpp(linphone_event)->addCallbacks(shared_ptr<EventCbs>(EventCbs::toCpp(cbs)));
+	Event::toCpp(linphone_event)->addCallbacks(EventCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 void linphone_event_remove_callbacks(LinphoneEvent *linphone_event, LinphoneEventCbs *cbs) {
-	Event::toCpp(linphone_event)->removeCallbacks(shared_ptr<EventCbs>(EventCbs::toCpp(cbs)));
+	Event::toCpp(linphone_event)->removeCallbacks(EventCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *linphone_event) {

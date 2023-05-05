@@ -30,14 +30,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class PropertyContainerPrivate {
-public:
-	map<string, Variant> properties;
-};
-
-// -----------------------------------------------------------------------------
-
-PropertyContainer::PropertyContainer() : mPrivate(nullptr) {
+PropertyContainer::PropertyContainer() {
+	mProperties = {};
 }
 
 /*
@@ -45,11 +39,11 @@ PropertyContainer::PropertyContainer() : mPrivate(nullptr) {
  * PropertyContainer is an Entity component, not a simple structure.
  * An Entity is UNIQUE.
  */
-PropertyContainer::PropertyContainer(const PropertyContainer &) : mPrivate(nullptr) {
+PropertyContainer::PropertyContainer(const PropertyContainer &) {
+	mProperties = {};
 }
 
 PropertyContainer::~PropertyContainer() {
-	delete mPrivate;
 }
 
 PropertyContainer &PropertyContainer::operator=(const PropertyContainer &) {
@@ -57,57 +51,50 @@ PropertyContainer &PropertyContainer::operator=(const PropertyContainer &) {
 }
 
 const Variant &PropertyContainer::getProperty(const string &name) const {
-	if (!mPrivate) return bctoolbox::Utils::getEmptyConstRefObject<Variant>();
-	auto &properties = mPrivate->properties;
+	if (mProperties.empty()) return bctoolbox::Utils::getEmptyConstRefObject<Variant>();
+	auto &properties = mProperties;
 	auto it = properties.find(name);
 	return it == properties.cend() ? bctoolbox::Utils::getEmptyConstRefObject<Variant>() : it->second;
 }
 
 void PropertyContainer::setProperty(const string &name, const Variant &value) {
-	if (!mPrivate) mPrivate = new PropertyContainerPrivate();
-	mPrivate->properties[name] = value;
+	mProperties[name] = value;
 }
 
 void PropertyContainer::setProperty(const string &name, Variant &&value) {
-	if (!mPrivate) mPrivate = new PropertyContainerPrivate();
-	mPrivate->properties[name] = std::move(value);
-}
-
-const std::map<std::string, Variant> &PropertyContainer::getProperties() const {
-	if (!mPrivate) return bctoolbox::Utils::getEmptyConstRefObject<std::map<std::string, Variant>>();
-	return mPrivate->properties;
+	mProperties[name] = std::move(value);
 }
 
 int PropertyContainer::remove(const std::string &name) const {
-	if (mPrivate) {
-		auto it = mPrivate->properties.find(name);
-		if (it == mPrivate->properties.end()) return -1;
-		mPrivate->properties.erase(it);
-		return 0;
-	}
-	return -2;
+	auto it = mProperties.find(name);
+	if (it == mProperties.end()) return -1;
+	mProperties.erase(it);
+	return 0;
 }
 
 void PropertyContainer::clear() {
-	if (mPrivate) {
-		mPrivate->properties.clear();
-	}
+	mProperties.clear();
 }
 
 bool PropertyContainer::hasKey(const std::string &name) const {
-	if (mPrivate) {
-		return mPrivate->properties.find(name) != mPrivate->properties.end();
-	}
-	return false;
+	return mProperties.find(name) != mProperties.end();
 }
 
 std::ostream &PropertyContainer::toStream(std::ostream &stream) const {
-	for (const auto &p : mPrivate->properties) {
+	for (const auto &p : mProperties) {
 		stream << p.first << " : ";
 		p.second.toStream(stream);
 		stream << std::endl;
 	}
 	return stream;
+}
+
+const std::map<std::string, Variant> &PropertyContainer::getProperties() const {
+	return mProperties;
+}
+
+void PropertyContainer::setProperties(const std::map<std::string, Variant> &properties) {
+	mProperties = properties;
 }
 
 LINPHONE_END_NAMESPACE

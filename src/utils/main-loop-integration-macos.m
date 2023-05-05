@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,93 +22,96 @@
  * Instantiate a Main Loop for Mac.
  * Change your 'int main(int argc, char **argv)' by 'int apple_main(int argc, char **argv)'.
  * Do not forget to use extern "C" if needed.
- * 
+ *
  * It is currently used by : daemon and liblinphone_tester
- *  
+ *
  */
 
 #include "TargetConditionals.h"
 #ifdef __APPLE__
-#import <Carbon/Carbon.h>
 #import <AppKit/AppKit.h>
-
+#import <Carbon/Carbon.h>
+#import <pthread.h>
 
 extern int apple_main(int argc, char **argv);
 
-@interface MyApplicationDelegate: NSObject
-{
-    NSWindow *window;
+@interface MyApplicationDelegate : NSObject {
+	NSWindow *window;
 @public
 	int argc;
-    char **argv;
-    id activity;
+	char **argv;
+	id activity;
+	pthread_t thread;
 }
 
-
--(void)applicationWillFinishLaunching: (NSNotification*) aNotification;
--(void)applicationDidFinishLaunching: (NSNotification*) aNotification;
--(BOOL)applicationShouldTerminateAfterLastWindowClosed: (NSApplication *)theApplication;
+- (void)applicationWillFinishLaunching:(NSNotification *)aNotification;
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification;
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication;
 @end
-
 
 @implementation MyApplicationDelegate
 
-
-
--(void) runLoop {
-	exit(apple_main(argc,argv));
+- (void)runLoop {
+	exit(apple_main(argc, argv));
 }
 
--(void)applicationWillFinishLaunching: (NSNotification*) aNotification
-{
-    if( [[NSProcessInfo processInfo] respondsToSelector:@selector(beginActivityWithOptions:reason:)] ){
-        //NSActivityOptions options = NSActivityAutomaticTerminationDisabled & NSActivityIdleSystemSleepDisabled;
-        // NSLog(@"Disabling App nap for tester");
-        self->activity = [[[NSProcessInfo processInfo] beginActivityWithOptions:0x00FFFFFF reason:@"No app nap for this tester"] retain];
-    }
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0), ^{
-        [self runLoop];
-    });
+- (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+	if ([[NSProcessInfo processInfo] respondsToSelector:@selector(beginActivityWithOptions:reason:)]) {
+		// NSActivityOptions options = NSActivityAutomaticTerminationDisabled & NSActivityIdleSystemSleepDisabled;
+		//  NSLog(@"Disabling App nap for tester");
+		self->activity = [[[NSProcessInfo processInfo] beginActivityWithOptions:0x00FFFFFF
+		                                                                 reason:@"No app nap for this tester"] retain];
+	}
 }
 
--(void)applicationDidFinishLaunching: (NSNotification*) aNotification
-{
+static void *launch_tests(MyApplicationDelegate *obj) {
+	[obj runLoop];
+	return NULL;
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+	// dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+	//   [self runLoop];
+	// });
+	pthread_attr_t attrs;
+	pthread_attr_init(&attrs);
+	pthread_attr_setstacksize(&attrs, 8192000);
+	pthread_create(&thread, &attrs, (void *(*)(void *))launch_tests, self);
+	pthread_attr_destroy(&attrs);
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
 	NSLog(@"applicationWillTerminate");
-	if( self->activity ){
+	if (self->activity) {
 		[[NSProcessInfo processInfo] endActivity:self->activity];
 		[self->activity release];
 		self->activity = nil;
 	}
+	pthread_join(thread, NULL);
 }
 
--(BOOL)applicationShouldTerminateAfterLastWindowClosed: (NSApplication *)theApplication
-{
-    return NO;
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication {
+	return NO;
 }
 
--(void)dealloc
-{
-    [window release];
-    [super dealloc];
+- (void)dealloc {
+	[window release];
+	[super dealloc];
 }
 @end
 
-int main(int argc, char **argv)
-{
-    static const ProcessSerialNumber thePSN = { 0, kCurrentProcess };
-    TransformProcessType(&thePSN, kProcessTransformToForegroundApplication);
-    SetFrontProcess(&thePSN);
-    NSAutoreleasePool *aPool = [[NSAutoreleasePool alloc] init];
-    [NSApplication sharedApplication];
-    MyApplicationDelegate *aMyApplicationDelegate = [[MyApplicationDelegate alloc] init];
-    aMyApplicationDelegate->argc = argc;
-    aMyApplicationDelegate->argv = argv;
-    [NSApp setDelegate:(id) aMyApplicationDelegate];
-    [aPool release];
-    [NSApp run];
-    return 0;
+int main(int argc, char **argv) {
+	static const ProcessSerialNumber thePSN = {0, kCurrentProcess};
+	TransformProcessType(&thePSN, kProcessTransformToForegroundApplication);
+	SetFrontProcess(&thePSN);
+	NSAutoreleasePool *aPool = [[NSAutoreleasePool alloc] init];
+	[NSApplication sharedApplication];
+	MyApplicationDelegate *aMyApplicationDelegate = [[MyApplicationDelegate alloc] init];
+	aMyApplicationDelegate->argc = argc;
+	aMyApplicationDelegate->argv = argv;
+	[NSApp setDelegate:(id)aMyApplicationDelegate];
+	[NSApp run];
+	[aPool release];
+	return 0;
 }
 #endif

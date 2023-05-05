@@ -200,6 +200,7 @@ void EventSubscribe::setState(LinphoneSubscriptionState state) {
 		mSubscriptionState = state;
 		ref();
 		linphone_core_notify_subscription_state_changed(getCore()->getCCore(), this->toC(), state);
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, this, linphone_event_cbs_get_subscribe_state_changed, state);
 		if (state == LinphoneSubscriptionTerminated || state == LinphoneSubscriptionError) {
 			release();
 		}

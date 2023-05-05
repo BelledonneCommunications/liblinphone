@@ -293,6 +293,7 @@ class CoreManagerStats:
 
         self.number_of_LinphonePublishOutgoingProgress = 0
         self.number_of_LinphonePublishIncomingReceived = 0
+        self.number_of_LinphonePublishRefreshing = 0
         self.number_of_LinphonePublishOk = 0
         self.number_of_LinphonePublishExpiring = 0
         self.number_of_LinphonePublishError = 0

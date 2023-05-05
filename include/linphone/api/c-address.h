@@ -322,6 +322,13 @@ LINPHONE_PUBLIC void linphone_address_set_uri_params(LinphoneAddress *address, c
  */
 LINPHONE_PUBLIC void linphone_address_remove_uri_param(LinphoneAddress *address, const char *uri_param_name);
 
+/**
+ * Compare two addresses
+ * @param address a #LinphoneAddress object. @notnil
+ * @param other an other #LinphoneAddress object. @notnil
+ */
+LINPHONE_PUBLIC bool_t linphone_address_lesser(const LinphoneAddress *address, const LinphoneAddress *other);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

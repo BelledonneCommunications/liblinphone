@@ -53,6 +53,56 @@ static void set_generic_property() {
 	BC_ASSERT_EQUAL(properties.getProperty("generic").getValue<void *>(), reinterpret_cast<void *>(0x42), void *, "%p");
 }
 
+static void to_stream_property(void) {
+	PropertyContainer properties;
+	properties.setProperty(std::string("Hello"), std::string("world!"));
+	properties.setProperty(std::string("universe"), 42);
+	properties.setProperty(std::string("pi"), 3.14159265f);
+
+	{
+		std::stringstream actual, expected;
+		properties.toStream(actual);
+		expected << "Hello : world!" << std::endl << "pi : 3.14159" << std::endl << "universe : 42" << std::endl;
+		auto actual_str = actual.str();
+		auto expected_str = expected.str();
+		BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
+	}
+}
+
+static void get_properties_with_string() {
+	PropertyContainer properties;
+	properties.setProperty(std::string("Hello"), std::string("world!"));
+	auto keyValue = properties.getProperties();
+
+	std::stringstream actual, expected;
+	expected << "key : Hello - value : world! ; ";
+	for (auto [key, value] : keyValue) {
+		actual << "key : " << key << " - value : " << value.getValue<string>() << " ; ";
+	}
+	auto actual_str = actual.str();
+	auto expected_str = expected.str();
+	BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
+}
+
+static void get_properties_with_buffer() {
+	PropertyContainer properties;
+	LinphoneBuffer *buffer = linphone_buffer_new_from_string("LinphoneBufferTest");
+	BC_ASSERT_PTR_NOT_NULL(buffer);
+	properties.setProperty(std::string("Buffer"), buffer);
+	const auto &keyValue = properties.getProperties();
+
+	std::stringstream actual, expected;
+	expected << "key : Buffer - value : LinphoneBufferTest ; ";
+	for (auto [key, value] : keyValue) {
+		actual << "key : " << key << " - value : " << linphone_buffer_get_content(value.getValue<LinphoneBuffer *>())
+		       << " ; ";
+	}
+	auto actual_str = actual.str();
+	auto expected_str = expected.str();
+	BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
+	linphone_buffer_unref(buffer);
+}
+
 static void set_int_dictionary() {
 	auto dictionary = Dictionary::create();
 	dictionary->setProperty("integer", 42);
@@ -69,29 +119,61 @@ static void set_string_dictionary() {
 		BC_ASSERT_STRING_EQUAL(textToCheck.c_str(), text.c_str());
 	}
 }
-static void to_stream_property(void) {
-	PropertyContainer properties;
-	properties.setProperty(std::string("Hello"), std::string("world!"));
-	properties.setProperty(std::string("universe"), 42);
-	properties.setProperty(std::string("pi"), 3.14159265f);
 
-	{
-		std::stringstream actual, expected;
-		properties.toStream(actual);
-		expected << "Hello : world!" << std::endl << "pi : 3.14159" << std::endl << "universe : 42" << std::endl;
-		auto actual_str = actual.str();
-		auto expected_str = expected.str();
-		BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
-	}
+static void set_buffer_dictionary() {
+	auto dictionary = Dictionary::create();
+	LinphoneBuffer *buffer = linphone_buffer_new_from_string("LinphoneBufferTest");
+	BC_ASSERT_PTR_NOT_NULL(buffer);
+	dictionary->setProperty("buffer", buffer);
+	BC_ASSERT_PTR_NOT_NULL(dictionary->getLinphoneBuffer("buffer"));
+	linphone_buffer_unref(buffer);
 }
+
+static void get_properties_on_empty_dictionary() {
+	auto dictionary = Dictionary::create();
+	auto keyValue = dictionary->getProperties();
+
+	std::stringstream actual, expected;
+	expected << "";
+	for (auto [key, value] : keyValue) {
+		actual << "key : " << key << " - value : " << value.getValue<int>() << " ; ";
+	}
+	auto actual_str = actual.str();
+	auto expected_str = expected.str();
+	BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
+}
+
+static void dictionary_get_properties_with_buffer() {
+	auto dictionary = Dictionary::create();
+	LinphoneBuffer *buffer = linphone_buffer_new_from_string("LinphoneBufferTest");
+	BC_ASSERT_PTR_NOT_NULL(buffer);
+	dictionary->setProperty(std::string("Buffer in dictionary"), buffer);
+	auto keyValue = dictionary->getProperties();
+
+	std::stringstream actual, expected;
+	expected << "key : Buffer in dictionary - value : LinphoneBufferTest ; ";
+	for (auto [key, value] : keyValue) {
+		actual << "key : " << key << " - value : " << linphone_buffer_get_content(value.getValue<LinphoneBuffer *>())
+		       << " ; ";
+	}
+	auto actual_str = actual.str();
+	auto expected_str = expected.str();
+	BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
+	linphone_buffer_unref(buffer);
+}
+
 test_t property_container_tests[] = {
     TEST_NO_TAG("Set int property", set_int_property),
     TEST_NO_TAG("Set string property", set_string_property),
     TEST_NO_TAG("Set generic property", set_generic_property),
+    TEST_NO_TAG("To stream property", to_stream_property),
+    TEST_NO_TAG("Get properties with string", get_properties_with_string),
+    TEST_NO_TAG("Get properties with buffer", get_properties_with_buffer),
     TEST_NO_TAG("Set int dictionary", set_int_dictionary),
     TEST_NO_TAG("Set string dictionary", set_string_dictionary),
-    TEST_NO_TAG("To stream property", to_stream_property),
-
+    TEST_NO_TAG("Set buffer dictionary", set_buffer_dictionary),
+    TEST_NO_TAG("Get properties on empty dictionary", get_properties_on_empty_dictionary),
+    TEST_NO_TAG("Dictionary get properties with buffer", dictionary_get_properties_with_buffer),
 };
 
 test_suite_t property_container_test_suite = {"PropertyContainer",

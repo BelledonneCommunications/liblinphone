@@ -54,3 +54,43 @@ LinphoneEventCbsNotifyResponseCb linphone_event_cbs_get_notify_response(const Li
 void linphone_event_cbs_set_notify_response(LinphoneEventCbs *cbs, LinphoneEventCbsNotifyResponseCb cb) {
 	EventCbs::toCpp(cbs)->notifyResponseCb = cb;
 }
+
+LinphoneEventCbsNotifyReceivedCb linphone_event_cbs_get_notify_received(const LinphoneEventCbs *cbs) {
+	return EventCbs::toCpp(cbs)->notifyReceivedCb;
+}
+
+void linphone_event_cbs_set_notify_received(LinphoneEventCbs *cbs, LinphoneEventCbsNotifyReceivedCb cb) {
+	EventCbs::toCpp(cbs)->notifyReceivedCb = cb;
+}
+
+LinphoneEventCbsSubscribeReceivedCb linphone_event_cbs_get_subscribe_received(const LinphoneEventCbs *cbs) {
+	return EventCbs::toCpp(cbs)->subscribeReceivedCb;
+}
+
+void linphone_event_cbs_set_subscribe_received(LinphoneEventCbs *cbs, LinphoneEventCbsSubscribeReceivedCb cb) {
+	EventCbs::toCpp(cbs)->subscribeReceivedCb = cb;
+}
+
+LinphoneEventCbsSubscribeStateChangedCb linphone_event_cbs_get_subscribe_state_changed(const LinphoneEventCbs *cbs) {
+	return EventCbs::toCpp(cbs)->subscribeStateChangedCb;
+}
+
+void linphone_event_cbs_set_subscribe_state_changed(LinphoneEventCbs *cbs, LinphoneEventCbsSubscribeStateChangedCb cb) {
+	EventCbs::toCpp(cbs)->subscribeStateChangedCb = cb;
+}
+
+LinphoneEventCbsPublishReceivedCb linphone_event_cbs_get_publish_received(const LinphoneEventCbs *cbs) {
+	return EventCbs::toCpp(cbs)->publishReceivedCb;
+}
+
+void linphone_event_cbs_set_publish_received(LinphoneEventCbs *cbs, LinphoneEventCbsPublishReceivedCb cb) {
+	EventCbs::toCpp(cbs)->publishReceivedCb = cb;
+}
+
+LinphoneEventCbsPublishStateChangedCb linphone_event_cbs_get_publish_state_changed(const LinphoneEventCbs *cbs) {
+	return EventCbs::toCpp(cbs)->publishStateChangedCb;
+}
+
+void linphone_event_cbs_set_publish_state_changed(LinphoneEventCbs *cbs, LinphoneEventCbsPublishStateChangedCb cb) {
+	EventCbs::toCpp(cbs)->publishStateChangedCb = cb;
+}

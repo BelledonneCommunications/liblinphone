@@ -22,6 +22,9 @@
 #define _REMOTE_CONFERENCE_H_
 
 #include "conference.h"
+#ifdef HAVE_ADVANCED_IM
+#include "conference/encryption/client-ekt-manager.h"
+#endif // HAVE_ADVANCED_IM
 #include "linphone/utils/general.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -167,6 +170,10 @@ public:
 	virtual std::pair<bool, LinphoneMediaDirection> getMainStreamVideoDirection(
 	    const std::shared_ptr<CallSession> &session, bool localIsOfferer, bool useLocalParams) const override;
 
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<LinphonePrivate::ClientEktManager> getClientEktManager() const;
+#endif // HAVE_ADVANCED_IM
+
 protected:
 	virtual bool sessionParamsAllowThumbnails() const override;
 	virtual void
@@ -204,8 +211,10 @@ private:
 	uint32_t louderSpeaker = 0;
 	uint32_t lastNotifiedSsrc = 0;
 
+#ifdef HAVE_ADVANCED_IM
 	// end-to-end encryption
-	std::vector<uint8_t> mEktKey;
+	std::shared_ptr<LinphonePrivate::ClientEktManager> mClientEktManager = nullptr;
+#endif // HAVE_ADVANCED_IM
 };
 
 } // end of namespace MediaConference

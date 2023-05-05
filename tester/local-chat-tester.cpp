@@ -21,7 +21,7 @@
 #include "conference/participant.h"
 #include "core/core-p.h"
 #include "liblinphone_tester.h"
-#include "local_conference_tester_functions.h"
+#include "local-conference-tester-functions.h"
 
 namespace LinphoneTest {
 

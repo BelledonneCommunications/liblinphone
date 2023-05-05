@@ -2817,7 +2817,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 			ms_message("Notify presence for list %p", list);
 			linphone_friend_list_notify_presence_received(list, lev, body);
 		}
-	} else if (strcmp(notified_event, "conference") == 0) {
+	} else if (strcmp(notified_event, "conference") == 0 || strcmp(notified_event, "ekt") == 0) {
 #ifdef HAVE_ADVANCED_IM
 		const auto ev = Event::getSharedFromThis(lev);
 		const auto resourceAddr = ev->getResource();
@@ -9979,4 +9979,25 @@ void linphone_core_set_conference_max_thumbnails(LinphoneCore *core, int max) {
 
 int linphone_core_get_conference_max_thumbnails(const LinphoneCore *core) {
 	return linphone_config_get_int(core->config, "video", "conference_max_miniatures", 10);
+}
+
+const LinphoneEktInfo *linphone_core_create_ekt_info_from_xml(const LinphoneCore *core, const char *xml_body) {
+#ifdef HAVE_ADVANCED_IM
+	auto ei = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createEktInfoFromXml(xml_body);
+	if (ei) {
+		ei->ref();
+		return ei->toC();
+	}
+#endif // HAVE_ADVANCED_IM
+	return NULL;
+}
+
+char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const LinphoneEktInfo *ekt_info) {
+#ifdef HAVE_ADVANCED_IM
+	auto ei = EktInfo::toCpp(ekt_info)->getSharedFromThis();
+	string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createXmlFromEktInfo(ei);
+	return bctbx_strdup(xmlBody.c_str());
+#else  // HAVE_ADVANCED_IM
+	return NULL;
+#endif // HAVE_ADVANCED_IM
 }

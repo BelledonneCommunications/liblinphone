@@ -189,6 +189,11 @@ void linphone_address_remove_uri_param(LinphoneAddress *address, const char *uri
 	Address::toCpp(address)->removeUriParam(L_C_TO_STRING(uri_param_name));
 }
 
+bool_t linphone_address_lesser(const LinphoneAddress *address, const LinphoneAddress *other) {
+	auto othercpp = Address::toCpp(other);
+	return Address::toCpp(address)->operator<(*othercpp);
+}
+
 void linphone_address_destroy(LinphoneAddress *address) {
 	belle_sip_object_unref(address);
 }

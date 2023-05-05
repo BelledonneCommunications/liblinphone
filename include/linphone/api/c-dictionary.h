@@ -62,7 +62,7 @@ LINPHONE_PUBLIC void linphone_dictionary_set_float(LinphoneDictionary *dict, con
  * Gets the float value of a key.
  * @param dict The #LinphoneDictionary object. @notnil
  * @param key The key. @maybenil
- * @return The username. @maybenil
+ * @return The value.
  */
 LINPHONE_PUBLIC float linphone_dictionary_get_float(const LinphoneDictionary *dict, const char *key);
 
@@ -78,7 +78,7 @@ LINPHONE_PUBLIC void linphone_dictionary_set_int(LinphoneDictionary *dict, const
  * Gets the int value of a key.
  * @param dict The #LinphoneDictionary object. @notnil
  * @param key The key. @maybenil
- * @return The username. @maybenil
+ * @return The value.
  */
 LINPHONE_PUBLIC int linphone_dictionary_get_int(const LinphoneDictionary *dict, const char *key);
 
@@ -86,7 +86,7 @@ LINPHONE_PUBLIC int linphone_dictionary_get_int(const LinphoneDictionary *dict, 
  * Sets a char* value to a key.
  * @param dict The #LinphoneDictionary object. @notnil
  * @param key The key. @maybenil
- * @param value The char* value.
+ * @param value The value. @maybenil
  **/
 LINPHONE_PUBLIC void linphone_dictionary_set_string(LinphoneDictionary *dict, const char *key, const char *value);
 
@@ -94,7 +94,7 @@ LINPHONE_PUBLIC void linphone_dictionary_set_string(LinphoneDictionary *dict, co
  * Gets the char* value of a key.
  * @param dict The #LinphoneDictionary object. @notnil
  * @param key The key. @maybenil
- * @return The username. @maybenil
+ * @return The value. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_dictionary_get_string(const LinphoneDictionary *dict, const char *key);
 
@@ -110,9 +110,27 @@ LINPHONE_PUBLIC void linphone_dictionary_set_int64(LinphoneDictionary *dict, con
  * Gets the int64 value of a key.
  * @param dict The #LinphoneDictionary object. @notnil
  * @param key The key. @maybenil
- * @return The username. @maybenil
+ * @return The value.
  */
 LINPHONE_PUBLIC int64_t linphone_dictionary_get_int64(const LinphoneDictionary *dict, const char *key);
+
+/**
+ * Sets a LinphoneBuffer value to a key.
+ * @param dict The #LinphoneDictionary object. @notnil
+ * @param key The key. @maybenil
+ * @param value The LinphoneBuffer value. @maybenil
+ **/
+LINPHONE_PUBLIC void
+linphone_dictionary_set_linphone_buffer(LinphoneDictionary *dict, const char *key, LinphoneBuffer *value);
+
+/**
+ * Gets the LinphoneBuffer value of a key.
+ * @param dict The #LinphoneDictionary object. @notnil
+ * @param key The key. @maybenil
+ * @return The value. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneBuffer *linphone_dictionary_get_linphone_buffer(const LinphoneDictionary *dict,
+                                                                        const char *key);
 
 /**
  * Removes the pair of the key.

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-	targetNamespace="linphone:xml:ns:publish-linphone-extension"
-	xmlns:tns="linphone:xml:ns:publish-linphone-extension"
-	xmlns="linphone:xml:ns:publish-linphone-extension"
+	targetNamespace="linphone:xml:ns:ekt-linphone-extension"
+	xmlns:tns="linphone:xml:ns:ekt-linphone-extension"
+	xmlns="linphone:xml:ns:ekt-linphone-extension"
 	elementFormDefault="qualified"
 	attributeFormDefault="unqualified">
 	<!--
@@ -11,14 +11,15 @@
 	<xs:import namespace="http://www.w3.org/XML/1998/namespace"
 	schemaLocation="http://www.w3.org/2001/03/xml.xsd"/>
     <!--
-        publish extension
+        ekt extension
     -->
     <xs:element name="crypto" type="tns:crypto-type"/>
 
     <xs:complexType name="crypto-type">
         <xs:sequence>
+            <xs:element name="from" type="xs:anyURI" minOccurs="0" maxOccurs="1"/>
             <xs:element name="sspi" type="xs:integer"/>
-            <xs:element name="cspi" type="xs:string"/>
+            <xs:element name="cspi" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="ciphers" type="tns:ciphers-type" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="entity" type="xs:anyURI" use="required"/>
@@ -33,7 +34,7 @@
     <xs:complexType name="encryptedekt-type">
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute name="dest" type="xs:anyURI"  use="required"/>
+                <xs:attribute name="to" type="xs:anyURI"  use="required"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>

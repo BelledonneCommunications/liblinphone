@@ -136,6 +136,7 @@ void RemoteConference::initWithInvitees(const std::shared_ptr<Address> confAddr,
 	setConferenceAddress(confAddr);
 	finalizeCreation();
 }
+
 void RemoteConference::finalizeCreation() {
 
 	if (getState() == ConferenceInterface::State::CreationPending) {
@@ -1143,9 +1144,16 @@ void RemoteConference::multipartNotifyReceived(const std::shared_ptr<Event> &not
 #endif // _MSC_VER
 void RemoteConference::notifyReceived(const std::shared_ptr<Event> &notifyLev, const Content &content) {
 #ifdef HAVE_ADVANCED_IM
-	if (eventHandler) {
-		eventHandler->notifyReceived(notifyLev, content);
-		return;
+	if (notifyLev->getName() == "ekt") {
+		if (mClientEktManager) {
+			mClientEktManager->notifyReceived(content);
+			return;
+		}
+	} else {
+		if (eventHandler) {
+			eventHandler->notifyReceived(notifyLev, content);
+			return;
+		}
 	}
 #endif // HAVE_ADVANCED_IM
 	lInfo() << "Unable to handle NOTIFY because conference event package (RFC 4575) is disabled or the SDK was not "
@@ -1514,6 +1522,17 @@ void RemoteConference::onFullStateReceived() {
 	updateAndSaveConferenceInformations();
 	updateMinatureRequestedFlag();
 
+#ifdef HAVE_ADVANCED_IM
+	if ((confParams->getSecurityLevel() == ConferenceParamsInterface::SecurityLevel::EndToEnd) &&
+	    (mClientEktManager == nullptr)) {
+		shared_ptr<RemoteConference> rc = dynamic_pointer_cast<RemoteConference>(this->getSharedFromThis());
+		mClientEktManager = make_shared<ClientEktManager>(MSEKTCipherType::MS_EKT_CIPHERTYPE_AESKW256,
+		                                                  MSCryptoSuite::MS_AEAD_AES_256_GCM);
+		mClientEktManager->init(rc);
+		mClientEktManager->subscribe();
+	}
+#endif // HAVE_ADVANCED_IM
+
 	auto requestStreams = [this]() -> LinphoneStatus {
 		lInfo() << "Sending re-INVITE in order to get streams after joining conference " << *getConferenceAddress();
 		setState(ConferenceInterface::State::Created);
@@ -1676,6 +1695,12 @@ std::pair<bool, LinphoneMediaDirection> RemoteConference::getMainStreamVideoDire
 	}
 	return std::make_pair(enableVideoStream, videoDir);
 }
+
+#ifdef HAVE_ADVANCED_IM
+shared_ptr<ClientEktManager> RemoteConference::getClientEktManager() const {
+	return mClientEktManager;
+}
+#endif // HAVE_ADVANCED_IM
 
 } // end of namespace MediaConference
 

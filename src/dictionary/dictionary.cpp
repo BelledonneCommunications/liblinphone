@@ -65,4 +65,12 @@ void Dictionary::setProperty(const string &name, const long long value) {
 	PropertyContainer::setProperty(name, Variant(value));
 }
 
+LinphoneBuffer *Dictionary::getLinphoneBuffer(const std::string &name) const {
+	return PropertyContainer::getProperty(name).getValue<LinphoneBuffer *>();
+}
+
+void Dictionary::setProperty(const std::string &name, LinphoneBuffer *value) {
+	PropertyContainer::setProperty(name, Variant(value));
+}
+
 LINPHONE_END_NAMESPACE

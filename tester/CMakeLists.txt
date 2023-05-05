@@ -277,17 +277,17 @@ set(SOURCE_FILES_C
 	stun_tester.c
 	tunnel_tester.c
 	video_quality_tester.c
-	local_chat_tester_functions.cpp
-	local_conference_tester_functions.cpp
-	local_scheduled_conference_tester.cpp
-	local_transfered_conference_tester.cpp
-	local_ice_conference_tester.cpp
-	local_inpromptu_conference_tester.cpp
-	local_conference_edition_tester.cpp
-	local_chat_tester.cpp
-	local_chat_imdn_tester.cpp
-	local_secure_chat_tester.cpp
-	local_ephemeral_chat_tester.cpp
+	local-chat-tester-functions.cpp
+	local-conference-tester-functions.cpp
+	local-scheduled-conference-tester.cpp
+	local-transfered-conference-tester.cpp
+	local-ice-conference-tester.cpp
+	local-inpromptu-conference-tester.cpp
+	local-conference-edition-tester.cpp
+	local-chat-tester.cpp
+	local-chat-imdn-tester.cpp
+	local-secure-chat-tester.cpp
+	local-ephemeral-chat-tester.cpp
 	video_tester.c
 )
 
@@ -347,10 +347,14 @@ if(ENABLE_CXX_WRAPPER)
 	list(APPEND SOURCE_FILES_CXX wrapper_cpp_tester.cpp)
 endif()
 
+if(ENABLE_EKT_SERVER_PLUGIN)
+	list(APPEND SOURCE_FILES_CXX local-encrypted-conference-tester.cpp)
+endif()
+
 set(HEADER_FILES
 	audio_quality_tester.h
 	shared_tester_functions.h
-	local_conference_tester_functions.h
+	local-conference-tester-functions.h
 	capability_negotiation_tester.h
 	liblinphone_tester.h
 	tools/private-access.h

@@ -46,7 +46,11 @@ LinphoneStatus EventPublish::sendPublish(const std::shared_ptr<const Content> &b
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
 	err = publishOp->publish(mName, mExpires, body_handler);
 	if (err == 0) {
-		setState(LinphonePublishOutgoingProgress);
+		if (mPublishState == LinphonePublishOk) {
+			setState(LinphonePublishRefreshing);
+		} else {
+			setState(LinphonePublishOutgoingProgress);
+		}
 	} else if (notifyErr) {
 		setState(LinphonePublishError);
 	}
@@ -130,7 +134,7 @@ LinphoneStatus EventPublish::refresh() {
 
 LinphoneStatus EventPublish::accept() {
 	int err;
-	if (mPublishState != LinphonePublishIncomingReceived) {
+	if (mPublishState != LinphonePublishIncomingReceived && mPublishState != LinphonePublishRefreshing) {
 		ms_error("EventPublish::accept(): cannot accept publish if subscription wasn't just received.");
 		return -1;
 	}
@@ -145,7 +149,7 @@ LinphoneStatus EventPublish::accept() {
 
 LinphoneStatus EventPublish::deny(LinphoneReason reason) {
 	int err;
-	if (mPublishState != LinphonePublishIncomingReceived) {
+	if (mPublishState != LinphonePublishIncomingReceived && mPublishState != LinphonePublishRefreshing) {
 		ms_error("EventPublish::deny(): cannot deny publish if publish wasn't just received.");
 		return -1;
 	}
@@ -175,6 +179,7 @@ void EventPublish::setState(LinphonePublishState state) {
 
 		ref();
 		linphone_core_notify_publish_state_changed(getCore()->getCCore(), this->toC(), state);
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, this, linphone_event_cbs_get_publish_state_changed, state);
 		switch (state) {
 			case LinphonePublishNone: /*this state is probably trigered by a network state change to DOWN, we should
 			                             release the op*/
@@ -187,9 +192,10 @@ void EventPublish::setState(LinphonePublishState state) {
 			case LinphonePublishError:
 				release();
 				break;
-			case LinphonePublishTerminating:
 			case LinphonePublishOutgoingProgress:
 			case LinphonePublishIncomingReceived:
+			case LinphonePublishRefreshing:
+			case LinphonePublishTerminating:
 			case LinphonePublishExpiring:
 				/*nothing special to do*/
 				break;

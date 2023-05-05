@@ -75,6 +75,14 @@ int64_t linphone_dictionary_get_int64(const LinphoneDictionary *dict, const char
 	return Dictionary::toCpp(dict)->getLongLong(L_C_TO_STRING(key));
 }
 
+void linphone_dictionary_set_linphone_buffer(LinphoneDictionary *dict, const char *key, LinphoneBuffer *value) {
+	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
+}
+
+LinphoneBuffer *linphone_dictionary_get_linphone_buffer(const LinphoneDictionary *dict, const char *key) {
+	return Dictionary::toCpp(dict)->getLinphoneBuffer(L_C_TO_STRING(key));
+}
+
 LinphoneStatus linphone_dictionary_remove(LinphoneDictionary *dict, const char *key) {
 	return Dictionary::toCpp(dict)->remove(L_C_TO_STRING(key));
 }

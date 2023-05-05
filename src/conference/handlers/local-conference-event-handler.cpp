@@ -804,7 +804,7 @@ string LocalConferenceEventHandler::createNotifySubjectChanged() {
 
 void LocalConferenceEventHandler::notifyResponseCb(const LinphoneEvent *lev) {
 	auto ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(const_cast<LinphoneEvent *>(lev))->getSharedFromThis());
-	auto cbs = EventCbs::create();
+	auto cbs = ev->getCurrentCallbacks();
 	LocalConferenceEventHandler *handler = static_cast<LocalConferenceEventHandler *>(cbs->getUserData());
 	cbs->setUserData(nullptr);
 	cbs->notifyResponseCb = nullptr;

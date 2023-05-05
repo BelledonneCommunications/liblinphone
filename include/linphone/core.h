@@ -8762,6 +8762,25 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_call_logs_database_path(LinphoneCore *core);
 
+/**
+ * Gets a #LinphoneEktInfo from an XML body.
+ * @param core the #LinphoneCore
+ * @param xml_body the string containing the XML body @notnil
+ * @return The #LinphoneEktInfo @maybenil
+ * @ingroup ekt_info_api
+ */
+LINPHONE_PUBLIC const LinphoneEktInfo *linphone_core_create_ekt_info_from_xml(const LinphoneCore *core,
+                                                                              const char *xml_body);
+
+/**
+ * Gets an XML body
+ * @param core the #LinphoneCore
+ * @param ekt_info the #LinphoneEktInfo @notnil
+ * @return The XML body @maybenil @tobefreed
+ * @ingroup ekt_info_api
+ */
+LINPHONE_PUBLIC char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const LinphoneEktInfo *ekt_info);
+
 #ifdef __cplusplus
 }
 #endif

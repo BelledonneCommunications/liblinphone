@@ -20,7 +20,7 @@
 
 #include "conference/conference-info.h"
 #include "liblinphone_tester.h"
-#include "local_conference_tester_functions.h"
+#include "local-conference-tester-functions.h"
 #include "shared_tester_functions.h"
 
 namespace LinphoneTest {

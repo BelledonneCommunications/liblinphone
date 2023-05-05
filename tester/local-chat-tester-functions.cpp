@@ -20,7 +20,7 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "conference/participant.h"
-#include "local_conference_tester_functions.h"
+#include "local-conference-tester-functions.h"
 #include "shared_tester_functions.h"
 
 #ifdef _MSC_VER

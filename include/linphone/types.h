@@ -1099,9 +1099,10 @@ typedef enum _LinphonePublishState {
 	LinphonePublishError = 3, /**< Publish encoutered an error, linphone_event_get_reason() gives reason code */
 	LinphonePublishExpiring =
 	    4, /**< Publish is about to expire, only sent if [sip]->refresh_generic_publish property is set to 0 */
-	LinphonePublishCleared = 5,         /**< Event has been un published */
-	LinphonePublishTerminating = 6,     /**< Publish is about to terminate */
-	LinphonePublishOutgoingProgress = 7 /**< An outgoing publish was created and submitted */
+	LinphonePublishCleared = 5,          /**< Event has been un published */
+	LinphonePublishTerminating = 6,      /**< Publish is about to terminate */
+	LinphonePublishOutgoingProgress = 7, /**< An outgoing publish was created and submitted */
+	LinphonePublishRefreshing = 8        /**< Publish is about to refresh */
 } LinphonePublishState;
 
 /**

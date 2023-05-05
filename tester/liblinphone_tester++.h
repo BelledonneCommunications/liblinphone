@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "bctoolbox/tester.h"
 #include <bctoolbox/ownership.hh>
 
 #include "address/address.h"
@@ -16,6 +17,7 @@
 #include "logger/logger.h"
 
 #include "liblinphone_tester.h"
+#include "shared_tester_functions.h"
 
 namespace {
 

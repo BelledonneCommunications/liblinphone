@@ -323,6 +323,11 @@ LinphoneMagicSearchCbs *Factory::createMagicSearchCbs() const {
 LinphoneDictionary *Factory::createDictionary() const {
 	return Dictionary::createCObject();
 }
+
+LinphoneEktInfo *Factory::createEktInfo() const {
+	return EktInfo::createCObject();
+}
+
 LinphoneAlertCbs *Factory::createAlertCbs() const {
 	return AlertCbs::createCObject();
 }

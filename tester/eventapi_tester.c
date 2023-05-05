@@ -75,7 +75,10 @@ static void subscribe_test_declined(void) {
 
 typedef enum RefreshTestType { NoRefresh = 0, AutoRefresh = 1, ManualRefresh = 2 } RefreshTestType;
 
-static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTestType refresh_type) {
+static void subscribe_test_with_args(bool_t terminated_by_subscriber,
+                                     RefreshTestType refresh_type,
+                                     bool_t without_notify,
+                                     bool_t ua_restarts) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneContent *content;
@@ -94,7 +97,11 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	linphone_content_set_subtype(content, "somexml");
 	linphone_content_set_buffer(content, (const uint8_t *)subscribe_content, strlen(subscribe_content));
 
-	lev = linphone_core_subscribe(marie->lc, pauline->identity, "dodo", expires, content);
+	if (without_notify) {
+		lev = linphone_core_subscribe(marie->lc, pauline->identity, "doingnothing", expires, content);
+	} else {
+		lev = linphone_core_subscribe(marie->lc, pauline->identity, "dodo", expires, content);
+	}
 	linphone_event_ref(lev);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 3000));
@@ -107,8 +114,10 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	BC_ASSERT_STRING_EQUAL(belle_sip_header_via_get_transport_lowercase(via),
 	                       linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)));
 
-	/*make sure marie receives first notification before terminating*/
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyReceived, 1, 5000));
+	if (without_notify == FALSE) {
+		/*make sure marie receives first notification before terminating*/
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyReceived, 1, 5000));
+	}
 
 	if (refresh_type == AutoRefresh) {
 		wait_for_list(lcs, NULL, 0, 6000);
@@ -120,6 +129,11 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionExpiring, 1, 4000));
 		linphone_event_update_subscribe(lev, NULL);
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 2, 5000));
+	}
+
+	if (ua_restarts) {
+		linphone_core_set_network_reachable(pauline->lc, FALSE);
+		linphone_core_set_network_reachable(pauline->lc, TRUE);
 	}
 
 	if (terminated_by_subscriber) {
@@ -280,18 +294,23 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 }
 
 static void subscribe_test_terminated_by_subscriber(void) {
-	subscribe_test_with_args(TRUE, NoRefresh);
+	subscribe_test_with_args(TRUE, NoRefresh, FALSE, FALSE);
 }
 
 static void subscribe_test_terminated_by_notifier(void) {
-	subscribe_test_with_args(FALSE, NoRefresh);
+	subscribe_test_with_args(FALSE, NoRefresh, FALSE, FALSE);
+}
+
+static void subscribe_test_terminated_by_notifier_without_notify_restarts(void) {
+	// FIXME : If the server doesn't have the realm parameter, the NOTIFY isn't authenticated and the test doesn't pass.
+	subscribe_test_with_args(FALSE, NoRefresh, TRUE, TRUE);
 }
 
 /* Caution: this test does not really check that the subscribe are refreshed, because the core is not managing the
  * expiration of unrefreshed subscribe dialogs. So it is just checking that it is not crashing.
  */
 static void subscribe_test_refreshed(void) {
-	subscribe_test_with_args(TRUE, AutoRefresh);
+	subscribe_test_with_args(TRUE, AutoRefresh, FALSE, FALSE);
 }
 
 static void subscribe_test_with_custom_header(void) {
@@ -299,7 +318,7 @@ static void subscribe_test_with_custom_header(void) {
 }
 
 static void subscribe_test_manually_refreshed(void) {
-	subscribe_test_with_args(TRUE, ManualRefresh);
+	subscribe_test_with_args(TRUE, ManualRefresh, FALSE, FALSE);
 }
 
 /* This test has LeaksMemory attribute due to the brutal disconnection of pauline, followed by core destruction.
@@ -568,7 +587,7 @@ static void publish_test_with_args(bool_t refresh, int expires) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishExpiring, 1, 5000));
 		linphone_event_update_publish(lev, content);
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOutgoingProgress, 2, 1000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishIncomingReceived, 2, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishRefreshing, 1, 3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePublishOk, 2, 3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOk, 2, 3000));
 	} else {
@@ -719,6 +738,9 @@ test_t event_tests[] = {
     TEST_ONE_TAG("Subscribe with io error", subscribe_with_io_error, "presence"),
     TEST_ONE_TAG("Subscribe manually refreshed", subscribe_test_manually_refreshed, "presence"),
     TEST_ONE_TAG("Subscribe terminated by notifier", subscribe_test_terminated_by_notifier, "presence"),
+    TEST_ONE_TAG("Subscribe terminated by notifier without notify and Pauline restarts",
+                 subscribe_test_terminated_by_notifier_without_notify_restarts,
+                 "presence"),
     TEST_ONE_TAG("Subscribe not timely responded", subscribe_not_timely_responded, "presence"),
     TEST_TWO_TAGS("Subscribe terminated after Core stopped",
                   subscribe_test_destroy_core_before_event_terminate,
