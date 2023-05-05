@@ -99,6 +99,7 @@ public:
 	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session, const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDevice (const std::string &label, const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDeviceByCallId (const std::string &callId, const bool logFailure = true) const;
+	std::shared_ptr<ParticipantDevice> findDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const;
 
 	inline void setAdmin (bool isAdmin) { this->isThisAdmin = isAdmin; }
 	bool isAdmin () const;

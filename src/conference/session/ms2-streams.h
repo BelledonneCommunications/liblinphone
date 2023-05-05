@@ -207,11 +207,13 @@ public:
 	static void postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted);
 	static void enableMicOnAudioStream(AudioStream *as, LinphoneCore *lc, bool enabled);
 
-	static void audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_t isSpeaking);
-	static void audioStreamIsMutedCb (void *userData, uint32_t ssrc, bool_t muted);
-	MSSndCard *getCurrentPlaybackCard()const{ return mCurrentPlaybackCard; }
-	MSSndCard *getCurrentCaptureCard()const{ return mCurrentCaptureCard; }
-	
+	MSSndCard *getCurrentPlaybackCard() const {
+		return mCurrentPlaybackCard;
+	}
+	MSSndCard *getCurrentCaptureCard() const {
+		return mCurrentCaptureCard;
+	}
+
 protected:
 	VideoStream *getPeerVideoStream();
 private:
@@ -234,6 +236,14 @@ private:
 	void setSoundCardType(MSSndCard *soundcard);
 	int restartStream(RestartReason reason);	// reason is used for debug feedback. Return 0 if restart is scheduled, -1 if not or not needed.
 	MS2AudioMixer *getAudioMixer();
+
+	void audioStreamIsSpeakingCb(uint32_t speakerSsrc, bool_t isSpeaking);
+	static void sAudioStreamIsSpeakingCb(void *userData, uint32_t speakerSsrc, bool_t isSpeaking);
+	void audioStreamIsMutedCb(uint32_t ssrc, bool_t muted);
+	static void sAudioStreamIsMutedCb(void *userData, uint32_t ssrc, bool_t muted);
+	void audioStreamActiveSpeakerCb(uint32_t ssrc);
+	static void sAudioStreamActiveSpeakerCb(void *userData, uint32_t ssrc);
+
 	AudioStream *mStream = nullptr;
 	struct _MSAudioEndpoint *mConferenceEndpoint = nullptr;
 	MSSndCard *mCurrentCaptureCard = nullptr;

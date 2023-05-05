@@ -418,7 +418,8 @@ public:
 #endif // HAVE_ADVANCED_IM
 
 	/* Report the csrc included in the video stream, so that we can notify who is presented on the screen.*/
-	void notifyActiveSpeakerCsrc(uint32_t csrc);
+	void notifyDisplayedSpeaker(uint32_t csrc);
+	void notifyLouderSpeaker(uint32_t ssrc);
 
 protected:
 
@@ -445,6 +446,10 @@ private:
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
 
 	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
+
+	uint32_t displayedSpeaker = 0;
+	uint32_t louderSpeaker = 0;
+	uint32_t lastNotifiedSsrc = 0;
 };
 
 }// end of namespace MediaConference
