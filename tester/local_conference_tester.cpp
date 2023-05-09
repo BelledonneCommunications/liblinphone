@@ -15654,9 +15654,7 @@ static test_t local_conference_chat_tests[] = {
                 LinphoneTest::group_chat_room_add_participant_with_invalid_address),
     TEST_NO_TAG("Group chat Only participant with invalid address",
                 LinphoneTest::group_chat_room_with_only_participant_with_invalid_address),
-    TEST_ONE_TAG("Group chat room bulk notify to participant",
-                 LinphoneTest::group_chat_room_bulk_notify_to_participant,
-                 "LeaksMemory"), /* because of network up and down*/
+    TEST_NO_TAG("Group chat room bulk notify to participant", LinphoneTest::group_chat_room_bulk_notify_to_participant),
     TEST_ONE_TAG("One to one chatroom exhumed while participant is offline",
                  LinphoneTest::one_to_one_chatroom_exhumed_while_offline,
                  "LeaksMemory"), /* because of network up and down*/
@@ -15716,15 +15714,12 @@ static test_t local_conference_scheduled_conference_basic_tests[] = {
 
     TEST_NO_TAG("Call to inexisting conference address", LinphoneTest::call_to_inexisting_conference_address),
     TEST_NO_TAG("Create simple conference", LinphoneTest::create_simple_conference),
-    TEST_ONE_TAG("Create conference with uninvited participant",
-                 LinphoneTest::create_conference_with_uninvited_participant,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Create simple conference with server restart",
-                 LinphoneTest::create_simple_conference_with_server_restart,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Create simple conference with client restart",
-                 LinphoneTest::create_simple_conference_with_client_restart,
-                 "LeaksMemory"), /* because of coreMgr restart*/
+    TEST_NO_TAG("Create conference with uninvited participant",
+                LinphoneTest::create_conference_with_uninvited_participant),
+    TEST_NO_TAG("Create simple conference with server restart",
+                LinphoneTest::create_simple_conference_with_server_restart),
+    TEST_NO_TAG("Create simple conference with client restart",
+                LinphoneTest::create_simple_conference_with_client_restart),
     TEST_NO_TAG("Create simple conference with audio only participant",
                 LinphoneTest::create_simple_conference_with_audio_only_participant),
     TEST_NO_TAG("Create conference with late participant addition",
@@ -15789,9 +15784,7 @@ static test_t local_conference_conference_edition_tests[] = {
                 LinphoneTest::create_conference_with_server_restart_conference_cancelled)};
 
 static test_t local_conference_scheduled_ice_conference_tests[] = {
-    TEST_ONE_TAG("Create simple ICE conference",
-                 LinphoneTest::create_simple_ice_conference,
-                 "LeaksMemory"), /* because of network up and down */
+    TEST_NO_TAG("Create simple ICE conference", LinphoneTest::create_simple_ice_conference),
     TEST_NO_TAG("Create simple STUN+ICE conference", LinphoneTest::create_simple_stun_ice_conference),
     TEST_NO_TAG("Create simple ICE SRTP conference", LinphoneTest::create_simple_ice_srtp_conference),
     TEST_NO_TAG("Create simple ICE DTLS conference", LinphoneTest::create_simple_ice_dtls_conference),
@@ -15827,9 +15820,7 @@ static test_t local_conference_inpromptu_conference_tests[] = {
                 LinphoneTest::create_simple_conference_dial_out_organizer_codec_mismatch),
     TEST_NO_TAG("Simple dial out conference with no payloads",
                 LinphoneTest::simple_dial_out_conference_with_no_payloads),
-    TEST_ONE_TAG("Create simple conference by merging calls",
-                 LinphoneTest::create_simple_conference_merging_calls,
-                 "LeaksMemory"), /* because of aborted calls*/
+    TEST_NO_TAG("Create simple conference by merging calls", LinphoneTest::create_simple_conference_merging_calls),
     TEST_ONE_TAG("Create simple conference by merging calls with video toggling",
                  LinphoneTest::create_simple_conference_merging_calls_with_video_toggling,
                  "LeaksMemory"), /* because of aborted calls*/

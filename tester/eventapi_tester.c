@@ -369,7 +369,6 @@ static void subscribe_loosing_dialog(void) {
 }
 
 /* This test has LeaksMemory attribute due to the brutal disconnection of pauline, followed by core destruction.
- * TODO: fix it.
  */
 static void subscribe_loosing_dialog_2(void) {
 #ifdef WIN32
@@ -396,6 +395,7 @@ static void subscribe_loosing_dialog_2(void) {
 	linphone_event_add_custom_header(lev, "My-Header", "pouet");
 	linphone_event_add_custom_header(lev, "My-Header2", "pimpon");
 	linphone_event_send_subscribe(lev, content);
+	linphone_content_unref(content);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 3000));
@@ -410,22 +410,24 @@ static void subscribe_loosing_dialog_2(void) {
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	lcs = bctbx_list_remove(lcs, marie->lc);
 	linphone_event_unref(lev);
-	linphone_core_manager_stop(marie);
-	linphone_core_manager_uninit(marie);
-	marie = linphone_core_manager_new("marie_rc");
+	linphone_core_manager_reinit(marie);
+	linphone_core_manager_start(marie, TRUE);
 	lcs = bctbx_list_append(lcs, marie->lc);
-
-	BC_ASSERT_TRUE(wait_for_list(lcs, NULL, 0, 2000));
-	// now try a terminate the dialog
+	// now try to notify through the "broken" dialog
 	if (pauline->lev) {
-		linphone_event_terminate(pauline->lev);
+		LinphoneContent *ct = linphone_core_create_content(pauline->lc);
+		linphone_content_set_type(ct, "application");
+		linphone_content_set_subtype(ct, "somexml2");
+		linphone_content_set_buffer(ct, (const uint8_t *)notify_content, strlen(notify_content));
+		linphone_event_notify(pauline->lev, ct);
+		linphone_content_unref(ct);
+
+		/* the notify should fail, causing termination of the LinphoneEvent at notifier side */
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
-		/*let expire the incoming subscribe received by pauline */
-		BC_ASSERT_TRUE(wait_for_list(lcs, NULL, 0, 3000));
 	} else {
 		BC_FAIL("Unexpect null event for pauline");
 	}
-	linphone_content_unref(content);
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	bctbx_list_free(lcs);
@@ -688,17 +690,17 @@ static void subscribe_notify_with_missing_200ok(void) {
 	linphone_content_set_subtype(content, "somexml");
 	linphone_content_set_buffer(content, (const uint8_t *)notify_content, strlen(notify_content));
 	linphone_event_notify(pauline->lev, content);
+	linphone_content_unref(content);
 
 	/*make sure marie receives the notify and transitions the subscribption to active state */
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyReceived, 1, 5000));
 
 	linphone_event_terminate(pauline->lev);
-	linphone_event_unref(lev);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
+	linphone_event_unref(lev);
 
-	linphone_content_unref(content);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	bctbx_list_free(lcs);
@@ -719,7 +721,7 @@ test_t event_tests[] = {
                   subscribe_test_destroy_core_before_event_terminate,
                   "presence",
                   "LeaksMemory"),
-    TEST_ONE_TAG("Subscribe with missing 200 ok", subscribe_notify_with_missing_200ok, "LeaksMemory"),
+    TEST_NO_TAG("Subscribe with missing 200 ok", subscribe_notify_with_missing_200ok),
     TEST_ONE_TAG("Publish", publish_test, "presence"),
     TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
     TEST_ONE_TAG("Publish without automatic refresh", publish_no_auto_test, "presence"),

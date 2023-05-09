@@ -2257,8 +2257,7 @@ void use_jwe_auth_with_malformed_token(void) {
 }
 
 test_t flexisip_tests[] = {
-    TEST_ONE_TAG("Subscribe forking", subscribe_forking, "LeaksMemory"),
-    TEST_NO_TAG("Message forking", message_forking),
+    TEST_NO_TAG("Subscribe forking", subscribe_forking), TEST_NO_TAG("Message forking", message_forking),
     TEST_NO_TAG("Message forking with unreachable recipients", message_forking_with_unreachable_recipients),
     TEST_NO_TAG("Message forking with all recipients unreachable", message_forking_with_all_recipients_unreachable),
     TEST_NO_TAG("Message forking with unreachable recipients with gruu",

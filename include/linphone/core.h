@@ -451,14 +451,17 @@ linphone_core_cbs_get_push_notification_received(LinphoneCoreCbs *cbs);
  * @param cbs LinphoneCoreCbs object @notnil
  * @return The callback to use
  */
-LINPHONE_PUBLIC LinphoneCoreCbsPreviewDisplayErrorOccurredCb linphone_core_cbs_get_preview_display_error_occurred(const LinphoneCoreCbs *cbs);
+LINPHONE_PUBLIC LinphoneCoreCbsPreviewDisplayErrorOccurredCb
+linphone_core_cbs_get_preview_display_error_occurred(const LinphoneCoreCbs *cbs);
 
 /**
  * @brief Set the rendering not working callback for preview.
  * @param cbs LinphoneCoreCbs object @notnil
  * @param cb The callback to use
  */
-LINPHONE_PUBLIC void linphone_core_cbs_set_preview_display_error_occurred(LinphoneCoreCbs *cbs, LinphoneCoreCbsPreviewDisplayErrorOccurredCb cb);
+LINPHONE_PUBLIC void
+linphone_core_cbs_set_preview_display_error_occurred(LinphoneCoreCbs *cbs,
+                                                     LinphoneCoreCbsPreviewDisplayErrorOccurredCb cb);
 
 /**
  * Set the #LinphoneCoreCbsCallStateChangedCb callback.

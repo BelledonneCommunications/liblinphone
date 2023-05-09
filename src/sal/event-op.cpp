@@ -124,6 +124,7 @@ void SalSubscribeOp::subscribeProcessRequestEventCb(void *userCtx, const belle_s
 	auto op = static_cast<SalSubscribeOp *>(userCtx);
 	auto serverTransaction =
 	    belle_sip_provider_create_server_transaction(op->mRoot->mProvider, belle_sip_request_event_get_request(event));
+	auto dialog = belle_sip_request_event_get_dialog(event);
 
 	belle_sip_object_ref(serverTransaction);
 	if (op->mPendingServerTransaction) belle_sip_object_unref(op->mPendingServerTransaction);
@@ -146,17 +147,23 @@ void SalSubscribeOp::subscribeProcessRequestEventCb(void *userCtx, const belle_s
 	const char *eventName = belle_sip_header_event_get_package_name(eventHeader);
 	auto bodyHandler = BELLE_SIP_BODY_HANDLER(op->getBodyHandler(BELLE_SIP_MESSAGE(request)));
 	const string method = belle_sip_request_get_method(request);
+
+	if (!op->mDialog && dialog && method == "NOTIFY") {
+		/* case where the dialog is created by the initial NOTIFY because the 200 Ok of the SUBSCRIBE did not arrive.*/
+		op->setOrUpdateDialog(dialog);
+	}
+
 	if (!op->mDialog) {
 		if (method == "SUBSCRIBE") {
-			auto dialog =
+			auto newDialog =
 			    belle_sip_provider_create_dialog(op->mRoot->mProvider, BELLE_SIP_TRANSACTION(serverTransaction));
-			if (!dialog) {
+			if (!newDialog) {
 				auto response = op->createResponseFromRequest(request, 481);
 				belle_sip_server_transaction_send_response(serverTransaction, response);
 				op->release();
 				return;
 			}
-			op->setOrUpdateDialog(dialog);
+			op->setOrUpdateDialog(newDialog);
 			lInfo() << "new incoming subscription from [" << op->getFrom() << "] to [" << op->getTo() << "]";
 		} else {
 			// This is a NOTIFY
@@ -208,7 +215,7 @@ void SalSubscribeOp::subscribeProcessDialogTerminatedCb(void *userCtx,
 	if (!op->mDialog) return;
 	if (op->mState == SalOp::State::Terminated) {
 		lInfo() << "Op [" << op << "] is terminated, nothing to do with this dialog terminated";
-	} else if (belle_sip_dialog_terminated_event_is_expired(event)) {
+	} else {
 		auto dialog = belle_sip_dialog_terminated_event_get_dialog(event);
 		if (belle_sip_dialog_is_server(dialog)) {
 			op->mRoot->mCallbacks.incoming_subscribe_closed(op);
@@ -361,7 +368,10 @@ int SalSubscribeOp::notify(const SalBodyHandler *bodyHandler) {
 	        ? BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE, 600))
 	        : BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(BELLE_SIP_SUBSCRIPTION_STATE_TERMINATED, 0)));
 	belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(request), BELLE_SIP_BODY_HANDLER(bodyHandler));
-	return sendRequest(request);
+	/* It is preferable to send NOTIFY with a Contact header, because it may arrive before the initial 200 OK of the
+	 * SUBSCRIBE. Thanks to the Contact, we are able to establish the dialog.
+	 */
+	return sendRequestWithContact(request, true);
 }
 
 int SalSubscribeOp::closeNotify() {

@@ -12071,9 +12071,7 @@ test_t audio_video_conference_basic_tests[] = {
                 conference_without_event_pkg_hang_up_call_on_hold),
     TEST_NO_TAG("Conference with conference event package pauses and terminate call",
                 conference_with_event_pkg_hang_up_call_on_hold),
-    TEST_ONE_TAG("Register again during conference",
-                 register_again_during_conference,
-                 "LeaksMemory"), /* due to re-registration of cores */
+    TEST_NO_TAG("Register again during conference", register_again_during_conference),
     TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
     TEST_NO_TAG("Back to back conferences with same core", back_to_back_conferences_same_core),
     TEST_NO_TAG("Try to create second conference with local participant",
