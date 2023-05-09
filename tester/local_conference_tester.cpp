@@ -12997,9 +12997,9 @@ static test_t local_conference_secure_chat_tests[] = {
 static test_t local_conference_scheduled_conference_basic_tests[] = {
 	TEST_NO_TAG("Call to inexisting conference address", LinphoneTest::call_to_inexisting_conference_address),
 	TEST_NO_TAG("Create simple conference", LinphoneTest::create_simple_conference),
-	TEST_ONE_TAG("Create conference with uninvited participant", LinphoneTest::create_conference_with_uninvited_participant, "LeaksMemory"), /* because of network up and down */
-	TEST_ONE_TAG("Create simple conference with server restart", LinphoneTest::create_simple_conference_with_server_restart, "LeaksMemory"), /* because of network up and down */
-	TEST_ONE_TAG("Create simple conference with client restart", LinphoneTest::create_simple_conference_with_client_restart, "LeaksMemory"), /* because of coreMgr restart*/
+	TEST_NO_TAG("Create conference with uninvited participant", LinphoneTest::create_conference_with_uninvited_participant),
+	TEST_NO_TAG("Create simple conference with server restart", LinphoneTest::create_simple_conference_with_server_restart),
+	TEST_NO_TAG("Create simple conference with client restart", LinphoneTest::create_simple_conference_with_client_restart), /* because of coreMgr restart*/
 	TEST_NO_TAG("Create simple conference with audio only participant", LinphoneTest::create_simple_conference_with_audio_only_participant),
 	TEST_NO_TAG("Create conference with late participant addition", LinphoneTest::create_conference_with_late_participant_addition),
 	TEST_NO_TAG("Organizer schedules 2 conferences", LinphoneTest::organizer_schedule_two_conferences),
@@ -13045,7 +13045,7 @@ static test_t local_conference_conference_edition_tests[] = {
 };
 
 static test_t local_conference_scheduled_ice_conference_tests[] = {
-	TEST_ONE_TAG("Create simple ICE conference", LinphoneTest::create_simple_ice_conference, "LeaksMemory"), /* because of network up and down */
+	TEST_NO_TAG("Create simple ICE conference", LinphoneTest::create_simple_ice_conference),
 	TEST_NO_TAG("Create simple STUN+ICE conference", LinphoneTest::create_simple_stun_ice_conference),
 	TEST_NO_TAG("Create simple ICE SRTP conference", LinphoneTest::create_simple_ice_srtp_conference),
 	TEST_NO_TAG("Create simple ICE DTLS conference", LinphoneTest::create_simple_ice_dtls_conference),
@@ -13067,7 +13067,7 @@ static test_t local_conference_inpromptu_conference_tests[] = {
 	TEST_NO_TAG("Create simple dial out conference with participant codec mismatch", LinphoneTest::create_simple_conference_dial_out_participant_codec_mismatch),
 	TEST_NO_TAG("Create simple dial out conference with organizer codec mismatch", LinphoneTest::create_simple_conference_dial_out_organizer_codec_mismatch),
 	TEST_NO_TAG("Simple dial out conference with no payloads", LinphoneTest::simple_dial_out_conference_with_no_payloads),
-	TEST_ONE_TAG("Create simple conference by merging calls", LinphoneTest::create_simple_conference_merging_calls, "LeaksMemory"), /* because of aborted calls*/
+	TEST_NO_TAG("Create simple conference by merging calls", LinphoneTest::create_simple_conference_merging_calls),
 	TEST_ONE_TAG("Create simple conference by merging calls with video toggling", LinphoneTest::create_simple_conference_merging_calls_with_video_toggling, "LeaksMemory"), /* because of aborted calls*/
 	TEST_ONE_TAG("Create simple ICE conference by merging calls", LinphoneTest::create_simple_ice_conference_merging_calls, "LeaksMemory"), /* because of aborted calls*/
 	TEST_NO_TAG("Create dial out conference with active call", LinphoneTest::create_dial_out_conference_with_active_call),
