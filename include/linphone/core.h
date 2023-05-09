@@ -1556,8 +1556,8 @@ LINPHONE_PUBLIC LinphoneCall *linphone_core_invite(LinphoneCore *core, const cha
 
 /**
  * Initiates an outgoing call given a destination #LinphoneAddress
- * The #LinphoneAddress can be constructed directly using linphone_address_new(), or
- * created by linphone_core_interpret_url().
+ * The #LinphoneAddress can be constructed directly using linphone_factory_create_address(), or
+ * created by linphone_core_interpret_url_2().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
  * @param core #LinphoneCore object @notnil
@@ -1582,8 +1582,8 @@ linphone_core_invite_with_params(LinphoneCore *core, const char *url, const Linp
 
 /**
  * Initiates an outgoing call given a destination #LinphoneAddress
- * The #LinphoneAddress can be constructed directly using linphone_address_new(), or
- * created by linphone_core_interpret_url().
+ * The #LinphoneAddress can be constructed directly using linphone_factory_create_address(), or
+ * created by linphone_core_interpret_url_2().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
  * If the proxy is not specified in parameters, the caller proxy will be automatically selected by finding what is the
@@ -1600,8 +1600,8 @@ LINPHONE_PUBLIC LinphoneCall *linphone_core_invite_address_with_params(LinphoneC
 
 /**
  * Initiates an outgoing call given a destination #LinphoneAddress
- * The #LinphoneAddress can be constructed directly using linphone_address_new(), or
- * created by linphone_core_interpret_url().
+ * The #LinphoneAddress can be constructed directly using linphone_factory_create_address(), or
+ * created by linphone_core_interpret_url_2().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
  * If the proxy is not specified in parameters, the caller proxy will be automatically selected by finding what is the

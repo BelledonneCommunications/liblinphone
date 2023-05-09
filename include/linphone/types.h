@@ -476,8 +476,7 @@ typedef enum _LinphoneRegistrationState {
  *
  * Once the #LinphoneCore is in state #LinphoneGlobalReady, use linphone_core_start().
  * It will then go to state #LinphoneGlobalOn and from that you can start using it for calls and chat messages.
- * It is recommended to add a #LinphoneCoreCbs listener using linphone_core_add_listener() to it to monitor different
- * events.
+ * It is recommended to add a #LinphoneCoreCbs listener using linphone_core_add_callbacks() to monitor different events.
  *
  * To be able to receive events from the network, you must schedule a call linphone_core_iterate() often, like every
  * 20ms. On Android & iOS linphone_core_is_auto_iterate_enabled() is enabled by default so you don't have to worry about
@@ -505,9 +504,9 @@ typedef struct _LinphoneFactory LinphoneFactory;
 /**
  * @brief That class holds all the callbacks which are called by #LinphoneCore.
  *
- * Once created, add your #LinphoneCoreCbs using linphone_core_add_listener().
+ * Once created, add your #LinphoneCoreCbs using linphone_core_add_callbacks().
  * Keep a reference on it as long as you need it.
- * You can use linphone_core_remove_listener() to remove it but that isn't mandatory.
+ * You can use linphone_core_remove_callbacks() to remove it but that isn't mandatory.
  *
  * The same applies to all listeners in our API.
  * @ingroup initializing

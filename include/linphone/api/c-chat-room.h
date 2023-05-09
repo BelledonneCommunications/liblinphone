@@ -80,7 +80,7 @@ LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_message_from_utf8
 
 /**
  * Creates a message attached to the given chat room with a particular content.
- * Use linphone_chat_room_send_message() to initiate the transfer
+ * Use linphone_chat_message_send() to initiate the transfer
  * @param chat_room the #LinphoneChatRoom object. @notnil
  * @param initial_content #LinphoneContent initial content. @notnil
  * @return a new #LinphoneChatMessage @notnil
@@ -374,7 +374,7 @@ LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(LinphoneChatRoom *chat_room
 
 /**
  * Gets the current call associated to this chatroom if any
- * To commit a message, use linphone_chat_room_send_message()
+ * To commit a message, use linphone_chat_message_send()
  * @param chat_room the #LinphoneChatRomm object @notnil
  * @return #LinphoneCall or NULL. @maybenil
  */
