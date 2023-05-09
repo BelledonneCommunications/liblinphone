@@ -56,7 +56,7 @@ if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 		string(REGEX REPLACE "\\.[^.]*$" "" STRIPPED_LINPHONE_VERSION ${LINPHONE_VERSION})
 		# Replace @LINPHONESDK_STATE@ and @STRIPPED_LINPHONE_VERSION@ in site main page
 		configure_file(
-			"${CMAKE_CURRENT_BINARY_DIR}/docfx_project/index.md" 
+			"${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/index.md"
 			"${CMAKE_CURRENT_BINARY_DIR}/docfx_project/index.md"
 		)
 		# Replace @LINPHONESDK_STATE@ and @STRIPPED_LINPHONE_VERSION@ version.txt.in, this
@@ -67,7 +67,7 @@ if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 		)
 
 		add_custom_command(OUTPUT "docfx_project/_site/index.html"
-			DEPENDS LinphoneWrapper.cs
+			DEPENDS LinphoneWrapper.cs "${CMAKE_CURRENT_BINARY_DIR}/docfx_project/index.md"
 			COMMAND ${CMAKE_COMMAND} -E copy
 					"${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs"
 					"${CMAKE_CURRENT_BINARY_DIR}/docfx_project/src/LinphoneWrapper.cs"

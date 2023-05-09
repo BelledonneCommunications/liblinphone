@@ -106,7 +106,17 @@ namespace linphone {
 			{{/isNotListener}}
 
 			{{#islistenable}}
+			/**
+			 * @brief Add an application listener to the {{className}} instance.
+			 *
+			 * @param listener the application listener
+			 */
 			LINPHONECXX_PUBLIC void addListener(const std::shared_ptr<{{{listenerClassName}}}> &listener);
+			/**
+			 * @brief Remove a previously added listener from the {{className}} instance.
+			 *
+			 * @param listener the application listener
+			 */
 			LINPHONECXX_PUBLIC void removeListener(const std::shared_ptr<{{{listenerClassName}}}> &listener);
 			{{/islistenable}}
 	
