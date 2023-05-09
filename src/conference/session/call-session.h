@@ -156,7 +156,7 @@ public:
 	virtual const CallSessionParams *getParams() const;
 	LinphoneReason getReason() const;
 	std::shared_ptr<CallSession> getReferer() const;
-	const std::string getReferTo() const;
+	const std::string &getReferTo() const;
 	const std::shared_ptr<Address> &getReferToAddress() const;
 	const std::shared_ptr<Address> getRemoteAddress() const;
 	const std::string &getRemoteContact() const;

@@ -370,8 +370,12 @@ void ConferenceScheduler::onCallSessionSetTerminated(const shared_ptr<CallSessio
 
 				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(content);
 			}
+			LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(getCore()->getCCore());
+			bool_t initiate_video = !!linphone_video_activation_policy_get_automatically_initiate(pol);
 			linphone_call_params_enable_video(
-			    new_params, static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled());
+				new_params,
+				static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled() && initiate_video);
+			linphone_video_activation_policy_unref(pol);
 
 			linphone_core_invite_address_with_params_2(getCore()->getCCore(), remoteAddress->toC(), new_params,
 			                                           L_STRING_TO_C(mConferenceInfo->getSubject()), NULL);

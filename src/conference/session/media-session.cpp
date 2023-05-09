@@ -1585,7 +1585,7 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 							dir = SalStreamInactive;
 						}
 					} else {
-						dir = SalStreamRecvOnly;
+						dir = (label.empty()) ? SalStreamInactive : SalStreamRecvOnly;
 					}
 				}
 			}
@@ -4245,7 +4245,7 @@ void MediaSession::sendVfuRequest() {
 // Try to search the local conference by first looking at the contact address and if it is unsuccesfull to the to
 // address as a client may try to be calling a conference URI directly Typically, the seach using the contact address
 // will succeed when a client creates a conference.
-std::shared_ptr<Conference> MediaSession::getLocalConference() const {
+const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 	L_D();
 
 	ConferenceId localConferenceId;
@@ -5150,9 +5150,8 @@ void MediaSession::onGoClearAckSent() {
 	if (d->listener) d->listener->onGoClearAckSent();
 }
 
-std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::string &label){
+std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::string &label) {
 	L_D();
-
 	if (d->listener) {
 		LinphoneConference *conference = d->listener->getCallSessionConference(getSharedFromThis());
 		if (conference) {
@@ -5160,16 +5159,13 @@ std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std:
 			return cppConference->findParticipantDeviceByLabel(label);
 		}
 	}
-
 	return nullptr;
 }
 
 void *MediaSession::getParticipantWindowId(const std::string label) {
 	auto participantDevice = getParticipantDevice(label);
-	if(participantDevice)
-		return participantDevice->getWindowId();
-	else
-		return nullptr;
+	if (participantDevice) return participantDevice->getWindowId();
+	else return nullptr;
 }
 
 #ifndef _MSC_VER
@@ -5237,4 +5233,5 @@ uint32_t MediaSession::getSsrc(LinphoneStreamType type) const {
 void MediaSession::setEkt(const MSEKTParametersSet *ekt_params) const {
 	getStreamsGroup().setEkt(ekt_params);
 }
+
 LINPHONE_END_NAMESPACE

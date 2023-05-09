@@ -1136,7 +1136,7 @@ shared_ptr<Call> Call::getReferer() const {
 	return nullptr;
 }
 
-const string Call::getReferTo() const {
+const string &Call::getReferTo() const {
 	return getActiveSession()->getReferTo();
 }
 

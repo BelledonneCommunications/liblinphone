@@ -334,10 +334,22 @@ void check_local_desc_stream(LinphoneCall *call) {
 	}
 }
 
-void _linphone_call_check_nb_streams(const LinphoneCall *call,
-                                     const int nb_audio_streams,
-                                     const int nb_video_streams,
-                                     const int nb_text_streams) {
+void _linphone_call_check_max_nb_streams(const LinphoneCall *call,
+                                         const size_t nb_audio_streams,
+                                         const size_t nb_video_streams,
+                                         const size_t nb_text_streams) {
+	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
+	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
+	if (call_result_desc) {
+		BC_ASSERT_LOWER(call_result_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, size_t,
+		                "%zu");
+		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalAudio), nb_audio_streams, size_t, "%zu");
+		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalVideo), nb_video_streams, size_t, "%zu");
+		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalText), nb_text_streams, size_t, "%zu");
+	}
+}
+
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
 	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
 	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
 	if (call_result_desc) {

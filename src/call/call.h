@@ -174,7 +174,7 @@ public:
 	LinphoneReason getReason() const;
 	float getRecordVolume() const;
 	std::shared_ptr<Call> getReferer() const;
-	const std::string getReferTo() const;
+	const std::string &getReferTo() const;
 	const std::shared_ptr<Address> &getReferToAddress() const;
 	const std::shared_ptr<Address> getRemoteAddress() const;
 	const std::shared_ptr<Address> getRemoteContactAddress() const;

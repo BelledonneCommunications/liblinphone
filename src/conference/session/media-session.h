@@ -181,7 +181,7 @@ private:
 	L_DISABLE_COPY(MediaSession);
 
 	int getRandomRtpPort(const SalStreamDescription &stream) const;
-	std::shared_ptr<Conference> getLocalConference() const;
+	const std::shared_ptr<Conference> getLocalConference() const;
 };
 
 /**

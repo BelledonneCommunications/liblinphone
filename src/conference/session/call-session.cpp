@@ -1695,12 +1695,13 @@ shared_ptr<CallSession> CallSession::getReferer() const {
 	return d->referer;
 }
 
-const string CallSession::getReferTo() const {
+const string &CallSession::getReferTo() const {
 	L_D();
 	if (d->referToAddress) {
-		return d->referToAddress->toString();
+		d->referTo = d->referToAddress->toString();
+		return d->referTo;
 	}
-	return std::string();
+	return Utils::getEmptyConstRefObject<string>();
 }
 
 const std::shared_ptr<Address> &CallSession::getReferToAddress() const {
