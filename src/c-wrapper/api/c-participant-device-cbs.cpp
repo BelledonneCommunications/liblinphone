@@ -85,3 +85,11 @@ void linphone_participant_device_cbs_set_stream_capability_changed (LinphonePart
 LinphoneParticipantDeviceCbsStreamCapabilityChangedCb linphone_participant_device_cbs_get_stream_capability_changed (const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getStreamCapabilityChanged();
 }
+
+LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb linphone_participant_device_cbs_get_video_display_error_occurred(const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getVideoDisplayErrorOccurred();
+}
+
+void linphone_participant_device_cbs_set_video_display_error_occurred(LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setVideoDisplayErrorOccurred(cb);
+}

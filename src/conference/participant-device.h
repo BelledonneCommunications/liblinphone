@@ -48,7 +48,11 @@ class Core;
 class Participant;
 class ParticipantDeviceCbs;
 
-class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>, public UserDataAccessor, public CallbacksHolder<ParticipantDeviceCbs> {
+
+class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>,
+                          public UserDataAccessor,
+                          public CallbacksHolder<ParticipantDeviceCbs>
+                           {
 public:
 	enum class State {
 		Joining = LinphoneParticipantDeviceStateJoining,
@@ -142,9 +146,10 @@ public:
 	bool adminModeSupported() const;
 	void enableAdminModeSupport(bool support);
 
-	void * createWindowId() const;
-	void setWindowId(void * newWindowId) const;
-	void * getWindowId() const;
+
+	void *createWindowId() const;
+	void setWindowId(void *newWindowId);
+	void *getWindowId() const;
 
 	bool setStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type);
 	LinphoneMediaDirection getStreamCapability(const LinphoneStreamType type) const;
@@ -158,7 +163,10 @@ public:
 	void setIsMuted(bool isMuted);
 	bool getIsMuted() const;
 
-	static bool isLeavingState(const ParticipantDevice::State & state);
+
+	void videoDisplayErrorOccurred(int error_code);
+
+	static bool isLeavingState(const ParticipantDevice::State &state);
 
 protected:
 	Conference *getConference () const;
@@ -200,24 +208,29 @@ private:
 
 std::ostream &operator<< (std::ostream &stream, ParticipantDevice::State state);
 
-class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDeviceCbs, ParticipantDeviceCbs>, public Callbacks {
-	public:
-		LinphoneParticipantDeviceCbsIsSpeakingChangedCb getIsSpeakingChanged()const;
-		void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
-		LinphoneParticipantDeviceCbsIsMutedCb getIsMuted()const;
-		void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
-		LinphoneParticipantDeviceCbsStateChangedCb getStateChanged()const;
-		void setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb);
-		LinphoneParticipantDeviceCbsStreamCapabilityChangedCb getStreamCapabilityChanged()const;
-		void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
-		LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged()const;
-		void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
-	private:
+class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDeviceCbs, ParticipantDeviceCbs>,
+                             public Callbacks {
+public:
+	LinphoneParticipantDeviceCbsIsSpeakingChangedCb getIsSpeakingChanged() const;
+	void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
+	LinphoneParticipantDeviceCbsIsMutedCb getIsMuted() const;
+	void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
+	LinphoneParticipantDeviceCbsStateChangedCb getStateChanged() const;
+	void setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb);
+	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb getStreamCapabilityChanged() const;
+	void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
+	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged() const;
+	void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
+	LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb getVideoDisplayErrorOccurred() const;
+	void setVideoDisplayErrorOccurred(LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb);
+
+private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsIsMutedCb mIsMutedCb = nullptr;
 	LinphoneParticipantDeviceCbsStateChangedCb mStateChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb mStreamCapabilityChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb mStreamAvailabilityChangedCb = nullptr;
+	LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb mVideoDisplayErrorOccurredCb = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

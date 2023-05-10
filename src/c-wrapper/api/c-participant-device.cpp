@@ -143,7 +143,7 @@ void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *par
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_muted, is_muted);
 }
 
-void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device, void* window_id){
+void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void *window_id) {
 #ifdef __ANDROID__
 	shared_ptr<const LinphonePrivate::ParticipantDevice> device = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSharedFromThis();
 	shared_ptr<LinphonePrivate::Core> core = device->getCore();
@@ -174,4 +174,9 @@ void _linphone_participant_device_notify_stream_capability_changed(LinphoneParti
 
 void _linphone_participant_device_notify_stream_availability_changed(LinphoneParticipantDevice *participant_device, bool_t available, const LinphoneStreamType stream_type) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_stream_availability_changed, available, stream_type);
+}
+
+void _linphone_participant_device_notify_video_display_error_occurred(LinphoneParticipantDevice *participant_device, int error_code) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device),
+	                                  linphone_participant_device_cbs_get_video_display_error_occurred, error_code);
 }

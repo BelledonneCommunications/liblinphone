@@ -78,6 +78,8 @@ public:
 	virtual void onFirstVideoFrameDecoded (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
 	virtual void onResetFirstVideoFrameDecoded (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {}
 	virtual void onCameraNotWorking (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(const char *camera_name)) {}
+	virtual void onVideoDisplayErrorOccurred(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+	                                BCTBX_UNUSED(int error_code)) {}
 
 	virtual bool areSoundResourcesAvailable (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) { return true; }
 	virtual bool isPlayingRingbackTone (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) { return false; }

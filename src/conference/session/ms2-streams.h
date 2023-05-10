@@ -333,6 +333,8 @@ private:
 	static void sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
 	void cameraNotWorkingCb (const char *cameraName);
 	static void sCameraNotWorkingCb (void *userData, const MSWebCam *oldWebcam);
+	void videoStreamDisplayCb(const unsigned int eventId, const void *args);
+	static void sVideoStreamDisplayCb(void *userData, const unsigned int eventId, const void *args);
 	void csrcChangedCb(uint32_t new_csrc);
 	static void sCsrcChangedCb (void *userData, uint32_t new_csrc);
 	MS2VideoMixer *getVideoMixer();

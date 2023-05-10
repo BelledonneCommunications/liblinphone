@@ -143,7 +143,29 @@ void MS2VideoStream::videoStreamEventCb (BCTBX_UNUSED(const MSFilter *f), const 
 	}
 }
 
-void MS2VideoStream::sCameraNotWorkingCb (void *userData, const MSWebCam *oldWebcam) {
+void MS2VideoStream::sVideoStreamDisplayCb(void *userData,
+                                         const unsigned int eventId,
+                                         const void *args) {
+	MS2VideoStream *zis = static_cast<MS2VideoStream *>(userData);
+	zis->videoStreamDisplayCb(eventId, args);
+}
+
+void MS2VideoStream::videoStreamDisplayCb(const unsigned int eventId, const void *args) {
+	CallSessionListener *callListener = getMediaSessionPrivate().getCallSessionListener();
+	auto participantDevice = getMediaSession().getParticipantDevice(getLabel());
+
+	switch(eventId){
+		case MS_VIDEO_DISPLAY_ERROR_OCCURRED :
+		if (callListener)
+			callListener->onVideoDisplayErrorOccurred(getMediaSession().getSharedFromThis(), *((int*)args));
+		if(participantDevice)
+			participantDevice->videoDisplayErrorOccurred(*((int*)args));
+		break;
+		default:{}
+	}
+}
+
+void MS2VideoStream::sCameraNotWorkingCb(void *userData, const MSWebCam *oldWebcam) {
 	MS2VideoStream *msp = static_cast<MS2VideoStream *>(userData);
 	msp->cameraNotWorkingCb(oldWebcam->name);
 }
@@ -347,6 +369,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (displayFilter)
 		video_stream_set_display_filter_name(mStream, displayFilter);
 	video_stream_set_event_callback(mStream, sVideoStreamEventCb, this);
+	video_stream_set_display_callback(mStream, sVideoStreamDisplayCb, this);
 	video_stream_set_camera_not_working_callback(mStream, sCameraNotWorkingCb, this);
 	if (isMain()){
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(rtp_profile_get_payload(videoProfile, usedPt));

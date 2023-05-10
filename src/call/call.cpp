@@ -709,7 +709,11 @@ void Call::onCameraNotWorking (BCTBX_UNUSED(const std::shared_ptr<CallSession> &
 	linphone_call_notify_camera_not_working(this->toC(), camera_name);
 }
 
-bool Call::areSoundResourcesAvailable (BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
+void Call::onVideoDisplayErrorOccurred(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), int error_code) {
+	linphone_call_notify_video_display_error_occurred(this->toC(), error_code);
+}
+
+bool Call::areSoundResourcesAvailable(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
 	LinphoneCore *lc = getCore()->getCCore();
 	shared_ptr<Call> currentCall = getCore()->getCurrentCall();
 	// If core is in a conference, then check if the call is in the same conference

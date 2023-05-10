@@ -545,8 +545,13 @@ void ParticipantDevice::enableAdminModeSupport(bool support) {
 	mSupportAdminMode = support;
 }
 
-void * ParticipantDevice::createWindowId() const {
-	void * windowId = nullptr;
+
+void ParticipantDevice::videoDisplayErrorOccurred(int error_code) {
+	_linphone_participant_device_notify_video_display_error_occurred(toC(), error_code);
+}
+
+void *ParticipantDevice::createWindowId() const {
+	void *windowId = nullptr;
 #ifdef VIDEO_ENABLED
 	const auto & conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
@@ -563,7 +568,7 @@ void * ParticipantDevice::createWindowId() const {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void ParticipantDevice::setWindowId(void * newWindowId) const {
+void ParticipantDevice::setWindowId(void *newWindowId) {
 #ifdef VIDEO_ENABLED
 	mWindowId = newWindowId;
 	const auto & conference = getConference();
@@ -572,7 +577,8 @@ void ParticipantDevice::setWindowId(void * newWindowId) const {
 		if (conference->isMe(getAddress())) {
 			linphone_core_set_native_preview_window_id(getCore()->getCCore(), mWindowId);
 		} else {
-			static_pointer_cast<MediaSession>(session)->setNativeVideoWindowId(mWindowId, mLabel);
+			auto s = static_pointer_cast<MediaSession>(session);
+			s->setNativeVideoWindowId(mWindowId, mLabel);
 		}
 	} else {
 		lError() << "Unable to set window ID for device " << getAddress() << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual " << session << ")";
@@ -657,4 +663,13 @@ LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb ParticipantDeviceCbs::ge
 void ParticipantDeviceCbs::setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
 	mStreamAvailabilityChangedCb = cb;
 }
+
+LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb ParticipantDeviceCbs::getVideoDisplayErrorOccurred() const{
+	return mVideoDisplayErrorOccurredCb;
+}
+
+void ParticipantDeviceCbs::setVideoDisplayErrorOccurred(LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb){
+	mVideoDisplayErrorOccurredCb = cb;
+}
+
 LINPHONE_END_NAMESPACE
