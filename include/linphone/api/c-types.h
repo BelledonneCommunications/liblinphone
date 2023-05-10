@@ -610,6 +610,125 @@ typedef struct _LinphoneDigestAuthenticationPolicy LinphoneDigestAuthenticationP
  * @ingroup buddy_list
  */
 typedef struct _LinphoneFriendPhoneNumber LinphoneFriendPhoneNumber;
+// -----------------------------------------------------------------------------
+// Dictionary
+// -----------------------------------------------------------------------------
+
+/**
+ *  Object that represents key-value pair container.
+ * @ingroup dictionary
+ */
+typedef struct _LinphoneDictionary LinphoneDictionary;
+// -----------------------------------------------------------------------------
+// Alert
+// -----------------------------------------------------------------------------
+
+/**
+ * @brief Object that represents an alert
+ * @ingroup alert
+ */
+typedef struct _LinphoneAlert LinphoneAlert;
+/**
+ * @brief Object that represents a callback attached to an alert
+ * @ingroup alert
+ */
+typedef struct _LinphoneAlertCbs LinphoneAlertCbs;
+/**
+ * @brief All kinds of alerts
+ * @ingroup alert
+ */
+typedef enum _LinphoneAlertTypes {
+
+	/** Camera is not working. No other information
+	 * @note Use the key "camera_misfunction_interval" in the section "alerts::camera" to set the interval
+	 * at which the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSCameraMisfunction,
+	/** Camera is capturing low framerate. Information supplied : float framerate;
+	 *  @note Use the key "low_framerate_interval" in the section "alerts::camera" to set or get the interval at which
+	 * the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSCameraLowFramerate,
+	/** Video decoding has stopped for a given period (10 s by default). No other information.
+	 *  @note Use the key "video_stalled_interval" in the section "alerts::camera" to set or get the interval at which
+	 * the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSVideoStalled,
+	/** A received media stream suffers from high loss or late rate. Information provided is:
+	  - float loss_rate
+	  - float late_rate
+	  - string media_type {audio, video, text}
+	 *  @note Use the key "loss_rate_interval" in the section "alerts::network" to set or get the interval at which
+	the problem is checked in a #LinphoneConfig.
+	*/
+	LinphoneAlertQoSHighLossLateRate,
+	/** A report of high loss rate is received from remote party. Information provided: float loss_rate.
+	 *  @note Use the key "remote_loss_rate_interval" in the section "alerts::network" to set or get the interval at
+	 * which the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSHighRemoteLossRate,
+	/** Packet Burst phenomenon
+	 *  @note Use the key "burst_occured_interval" in the section "alerts::network" to set or get the interval at which
+	 * the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSBurstOccured,
+	/** Loss rate is significant but retransmissions fail to arrive on time
+	 *  @note Use the key "nack_check_interval" in the section "alerts::network" to set or get the interval at which the
+	 * problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSRetransmissionFailures,
+	/** Low bandwidth detected. Information provided: float bandwidth; in kbit/s.
+	 *  @note Use the key "download_bandwidth_interval" in the section "alerts::video" to set or get the interval at
+	 * which the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSLowDownloadBandwidthEstimation,
+	/** Low quality (bitrate) video received. Information provided: float bitrate in kbit/s, int width, int height
+	 *  @note Use the key "low_quality_recieved_interval" in the section "alerts::video" to set or get the interval at
+	 * which the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSLowQualityReceivedVideo,
+	/** Low quality video is being sent. Information provided: float bitrate in kbit/s, int width, int height
+	 *  @note Use the key "quality_sent_interval" in the section "alerts::camera" to set or get the interval at which
+	 * the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSLowQualitySentVideo,
+	/** The operating system reports a low radio signal (wifi or mobile)
+	 *  @note Use the key "low_signal_interval" in the section "alerts::network" to set or get the interval at which the
+	 * problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSLowSignal,
+	/** The operating system reports a loss of radio signal (wifi or mobile)
+	 *  @note Use the key "lost_signal_interval" in the section "alerts::network" to set or get the interval at which
+	 * the problem is checked in a #LinphoneConfig.
+	 */
+	LinphoneAlertQoSLostSignal
+
+} LinphoneAlertType;
+// -----------------------------------------------------------------------------
+// SignalInformation
+// -----------------------------------------------------------------------------
+/**
+ * @brief Object to get signal (wifi/4G etc...) informations.
+ * @ingroup signalInformation
+ */
+typedef struct _LinphoneSignalInformation LinphoneSignalInformation;
+/**
+ * All signal types that a device can use.
+ * @ingroup signalInformation
+ */
+typedef enum _LinphoneSignalType {
+	LinphoneSignalTypeWifi = 0,
+	LinphoneSignalTypeMobile = 1,
+	LinphoneSignalTypeOther = 2
+} LinphoneSignalType;
+/**
+ * All signal units that a device can use.
+ * @ingroup signalInformation
+ */
+typedef enum _LinphoneSignalStrengthUnit {
+	LinphoneSignalStrengthUnitRssi = 0,
+	LinphoneSignalStrengthUnitDbm = 1,
+} LinphoneSignalStrengthUnit;
 
 #ifdef __cplusplus
 }

@@ -317,6 +317,7 @@ set(SOURCE_FILES_CXX
 	vfs-encryption-tester.cpp
 	potential_configuration_tester.cpp
 	conference-info-tester.cpp
+	alerts_tester.cpp
 )
 
 if(ENABLE_FLEXIAPI)

@@ -43,6 +43,7 @@
 #include <bctoolbox/defs.h>
 
 #include "address/address.h"
+#include "alert/alert.h"
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
 #include "content/file-content.h"
@@ -51,6 +52,7 @@
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "payload-type/payload-type.h"
+#include "signal-information/signal-information.h"
 
 #ifdef HAVE_SQLITE
 #include "sqlite3_bctbx_vfs.h"
@@ -310,7 +312,12 @@ LinphoneMagicSearchCbs *Factory::createMagicSearchCbs() const {
 LinphoneDictionary *Factory::createDictionary() const {
 	return Dictionary::createCObject();
 }
-
+LinphoneAlertCbs *Factory::createAlertCbs() const {
+	return AlertCbs::createCObject();
+}
+LinphoneSignalInformation *Factory::createSignalInformation() const {
+	return SignalInformation::createCObject();
+}
 LinphoneVcard *Factory::createVcard() const {
 	return _linphone_vcard_new();
 }

@@ -46,11 +46,11 @@ public:
 	void clear();
 
 	bool hasKey(const std::string &name) const;
+	std::ostream &toStream(std::ostream &stream) const;
 
 private:
 	PropertyContainerPrivate *mPrivate;
 };
-
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_PROPERTY_CONTAINER_H_

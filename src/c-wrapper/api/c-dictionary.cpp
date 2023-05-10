@@ -22,6 +22,8 @@
 #include "c-wrapper/c-wrapper.h"
 #include "dictionary/dictionary.h"
 
+// =============================================================================
+
 using namespace LinphonePrivate;
 
 LinphoneDictionary *linphone_dictionary_clone(const LinphoneDictionary *src) {
@@ -45,7 +47,7 @@ void linphone_dictionary_set_float(LinphoneDictionary *dict, const char *key, fl
 	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
 }
 
-float linphone_dictionary_get_float(LinphoneDictionary *dict, const char *key) {
+float linphone_dictionary_get_float(const LinphoneDictionary *dict, const char *key) {
 	return Dictionary::toCpp(dict)->getFloat(L_C_TO_STRING(key));
 }
 
@@ -53,7 +55,7 @@ void linphone_dictionary_set_int(LinphoneDictionary *dict, const char *key, int 
 	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
 }
 
-int linphone_dictionary_get_int(LinphoneDictionary *dict, const char *key) {
+int linphone_dictionary_get_int(const LinphoneDictionary *dict, const char *key) {
 	return Dictionary::toCpp(dict)->getInt(L_C_TO_STRING(key));
 }
 
@@ -61,7 +63,7 @@ void linphone_dictionary_set_string(LinphoneDictionary *dict, const char *key, c
 	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), value);
 }
 
-const char *linphone_dictionary_get_string(LinphoneDictionary *dict, const char *key) {
+const char *linphone_dictionary_get_string(const LinphoneDictionary *dict, const char *key) {
 	return Dictionary::toCpp(dict)->getString(L_C_TO_STRING(key)).c_str();
 }
 
@@ -69,7 +71,7 @@ void linphone_dictionary_set_int64(LinphoneDictionary *dict, const char *key, in
 	Dictionary::toCpp(dict)->setProperty(L_C_TO_STRING(key), static_cast<long long>(value));
 }
 
-int64_t linphone_dictionary_get_int64(LinphoneDictionary *dict, const char *key) {
+int64_t linphone_dictionary_get_int64(const LinphoneDictionary *dict, const char *key) {
 	return Dictionary::toCpp(dict)->getLongLong(L_C_TO_STRING(key));
 }
 

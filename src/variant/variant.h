@@ -78,6 +78,13 @@ public:
 	bool isValid() {
 		return mImplBase != nullptr;
 	}
+	std::ostream &toStream(std::ostream &stream) const {
+		if (mImplBase == nullptr) {
+			stream << "[undefined]";
+			return stream;
+		}
+		return mImplBase->toStream(stream);
+	}
 
 private:
 	std::unique_ptr<VariantImplBase> mImplBase;

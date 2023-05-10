@@ -54,6 +54,7 @@ extern test_suite_t push_incoming_call_test_suite;
 extern test_suite_t call_video_test_suite;
 extern test_suite_t call_video_msogl_test_suite;
 extern test_suite_t call_video_quality_test_suite;
+extern test_suite_t alerts_test_suite;
 #endif // if VIDEO_ENABLED
 
 extern test_suite_t clonable_object_test_suite;
@@ -993,7 +994,8 @@ uint64_t lime_get_userUpdateTs(const char *limedb);
 
 void liblinphone_tester_simulate_mire_defunct(
     MSFilter *filter,
-    bool_t defunct); // if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
+    bool_t defunct,
+    float fps); // if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
 bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *name);
 bctbx_list_t *liblinphone_tester_remove_v6_addr(bctbx_list_t *l);
 

@@ -139,7 +139,12 @@ string GenericPlatformHelpers::getWifiSSID() {
 void GenericPlatformHelpers::setWifiSSID(const string &ssid) {
 	mCurrentSSID = ssid;
 }
-
+void GenericPlatformHelpers::setSignalInformation(std::shared_ptr<SignalInformation> &signalInformation) {
+	getCore()->setSignalInformation(signalInformation);
+}
+std::shared_ptr<SignalInformation> GenericPlatformHelpers::getSignalInformation() {
+	return getCore()->getSignalInformation();
+}
 void GenericPlatformHelpers::setNetworkReachable(bool reachable) {
 	mNetworkReachable = reachable;
 	linphone_core_set_network_reachable_internal(getCore()->getCCore(), reachable);

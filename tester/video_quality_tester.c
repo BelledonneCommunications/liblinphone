@@ -546,6 +546,20 @@ static void generic_nack_received(const OrtpEventData *evd, stats *st) {
 	}
 }
 
+static void on_nack_alert(LinphoneCore *core, LinphoneAlert *alert) {
+
+	BC_ASSERT_PTR_NOT_NULL(alert);
+	int *count = (int *)linphone_core_cbs_get_user_data(linphone_core_get_current_callbacks(core));
+	LinphoneAlertType type = linphone_alert_get_type(alert);
+
+	if (type == LinphoneAlertQoSRetransmissionFailures) {
+		(*count)++;
+		const LinphoneDictionary *props = linphone_alert_get_informations(alert);
+		float indicator = linphone_dictionary_get_float(props, "nack indicator");
+		BC_ASSERT_TRUE(indicator > 0.0f);
+	}
+}
+
 /*
  * This test simulates a video call with a high loss rate (50%). Without NACK and retransmission on NACK, it can't pass
  * because no I-frames can have a chance to pass. So, if the test passes, it means that retransmissions on NACK could
@@ -559,11 +573,13 @@ static void call_with_retransmissions_on_nack(void) {
 	OrtpNetworkSimulatorParams params = {0};
 	LinphoneVideoPolicy pol = {0};
 	bool_t call_ok;
-
+	int nack_alert_count = 0;
 	params.enabled = TRUE;
 	params.loss_rate = 50;
 	params.consecutive_loss_probability = 0.2f;
 	params.mode = OrtpNetworkSimulatorOutbound;
+	params.latency = 500;
+
 	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
 	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
 
@@ -580,6 +596,14 @@ static void call_with_retransmissions_on_nack(void) {
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	linphone_core_enable_alerts(pauline->lc, TRUE);
+	linphone_config_set_float(linphone_core_get_config(pauline->lc), "alerts", "alerts::nack_threshold", 1.0f);
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_on_alert(cbs, on_nack_alert);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_set_user_data(cbs, &nack_alert_count);
+	linphone_core_cbs_unref(cbs);
 
 	pol.automatically_accept = TRUE;
 	pol.automatically_initiate = TRUE;
@@ -614,6 +638,7 @@ static void call_with_retransmissions_on_nack(void) {
 	}
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_rtcp_generic_nack, 5, 8000));
+
 	end_call(pauline, marie);
 
 end:

@@ -56,7 +56,9 @@ void BandwithControllerService::destroy() {
  * MS2Stream implementation
  */
 
-MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Stream(sg, params) {
+MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params)
+    : Stream(sg, params), mVideoMonitor(sg.getCore().getSharedFromThis()),
+      mNetworkMonitor(sg.getCore().getSharedFromThis()), mBandwidthMonitor(sg.getCore().getSharedFromThis()) {
 	memset(&mSessions, 0, sizeof(mSessions));
 	mStats = _linphone_call_stats_new();
 	_linphone_call_stats_set_type(mStats, (LinphoneStreamType)getType());
@@ -1351,7 +1353,7 @@ void MS2Stream::handleEvents() {
 		}
 	}
 	OrtpEvent *ev;
-
+	bool burstOccured = false;
 	while ((ev = ortp_ev_queue_get(mOrtpEvQueue)) != nullptr) {
 		OrtpEventType evt = ortp_event_get_type(ev);
 		OrtpEventData *evd = ortp_event_get_data(ev);
@@ -1401,6 +1403,9 @@ void MS2Stream::handleEvents() {
 			case ORTP_EVENT_ZRTP_PEER_ACK_GOCLEAR:
 				goClearAckSent();
 				break;
+			case ORTP_EVENT_BURST_OCCURED:
+				burstOccured = true;
+				break;
 		}
 		if (isIceEvent) {
 			/* ICE events are deferred to the IceService asynchronously because some ICE events can indirectly
@@ -1427,6 +1432,10 @@ void MS2Stream::handleEvents() {
 		/* Let subclass handle the event.*/
 		handleEvent(ev);
 		ortp_event_destroy(ev);
+	}
+	if (ms->type == MSAudio) {
+		LinphoneCallStats *stats = this->getStats();
+		mNetworkMonitor.check(stats, burstOccured);
 	}
 }
 

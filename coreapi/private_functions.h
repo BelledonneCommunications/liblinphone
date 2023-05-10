@@ -458,6 +458,9 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_is_static(const LinphoneConfer
 void _linphone_account_notify_registration_state_changed(LinphoneAccount *account,
                                                          LinphoneRegistrationState state,
                                                          const char *message);
+/*alerts*/
+void linphone_core_notify_alert(LinphoneCore *lc, LinphoneAlert *alert);
+LINPHONE_PUBLIC void linphone_alert_notify_on_terminated(LinphoneAlert *alert);
 
 /*chat*/
 LinphoneChatRoom *_linphone_server_group_chat_room_new(LinphoneCore *core, LinphonePrivate::SalCallOp *op);

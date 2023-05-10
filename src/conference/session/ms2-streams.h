@@ -21,6 +21,7 @@
 #ifndef ms2_streams_h
 #define ms2_streams_h
 
+#include "alert/alert.h"
 #include "call/video-source/video-source-descriptor.h"
 #include "streams.h"
 
@@ -105,6 +106,9 @@ protected:
 	};
 	void getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info);
 	void encryptionChanged();
+	VideoQualityAlertMonitor mVideoMonitor;
+	NetworkQualityAlertMonitor mNetworkMonitor;
+	VideoBandwidthAlertMonitor mBandwidthMonitor;
 	std::string mDtlsFingerPrint;
 	RtpProfile *mRtpProfile = nullptr;
 	RtpProfile *mRtpIoProfile = nullptr;

@@ -26,7 +26,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/**
+ * @addtogroup dictionary
+ * @{
+ */
 /**
  * Instantiates a new dictionary with values from source.
  * @param src The #LinphoneDictionary object to be cloned. @notnil
@@ -61,7 +64,7 @@ LINPHONE_PUBLIC void linphone_dictionary_set_float(LinphoneDictionary *dict, con
  * @param key The key. @maybenil
  * @return The username. @maybenil
  */
-LINPHONE_PUBLIC float linphone_dictionary_get_float(LinphoneDictionary *dict, const char *key);
+LINPHONE_PUBLIC float linphone_dictionary_get_float(const LinphoneDictionary *dict, const char *key);
 
 /**
  * Sets a int value to a key.
@@ -77,7 +80,7 @@ LINPHONE_PUBLIC void linphone_dictionary_set_int(LinphoneDictionary *dict, const
  * @param key The key. @maybenil
  * @return The username. @maybenil
  */
-LINPHONE_PUBLIC int linphone_dictionary_get_int(LinphoneDictionary *dict, const char *key);
+LINPHONE_PUBLIC int linphone_dictionary_get_int(const LinphoneDictionary *dict, const char *key);
 
 /**
  * Sets a char* value to a key.
@@ -93,7 +96,7 @@ LINPHONE_PUBLIC void linphone_dictionary_set_string(LinphoneDictionary *dict, co
  * @param key The key. @maybenil
  * @return The username. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_dictionary_get_string(LinphoneDictionary *dict, const char *key);
+LINPHONE_PUBLIC const char *linphone_dictionary_get_string(const LinphoneDictionary *dict, const char *key);
 
 /**
  * Sets a int64 value to a key.
@@ -109,13 +112,13 @@ LINPHONE_PUBLIC void linphone_dictionary_set_int64(LinphoneDictionary *dict, con
  * @param key The key. @maybenil
  * @return The username. @maybenil
  */
-LINPHONE_PUBLIC int64_t linphone_dictionary_get_int64(LinphoneDictionary *dict, const char *key);
+LINPHONE_PUBLIC int64_t linphone_dictionary_get_int64(const LinphoneDictionary *dict, const char *key);
 
 /**
  * Removes the pair of the key.
  * @param dict The #LinphoneDictionary object. @notnil
  * @param key The key. @maybenil
- * @return
+ * @return The #LinphoneStatus of the operation.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_dictionary_remove(LinphoneDictionary *dict, const char *key);
 
@@ -129,10 +132,12 @@ LINPHONE_PUBLIC void linphone_dictionary_clear(LinphoneDictionary *dict);
  * Search if the key is present in the dictionary.
  * @param dict The #LinphoneDictionary object. @notnil
  * @param key The key. @maybenil
- * @return
+ * @return The #LinphoneStatus of the operation.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_dictionary_has_key(const LinphoneDictionary *dict, const char *key);
-
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif

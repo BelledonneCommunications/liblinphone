@@ -565,3 +565,8 @@ void linphone_core_remove_callbacks(LinphoneCore *lc, const LinphoneCoreCbs *cbs
 		}
 	}
 }
+
+void linphone_core_notify_alert(LinphoneCore *lc, LinphoneAlert *alert) {
+	NOTIFY_IF_EXIST(on_alert, lc, alert);
+	cleanup_dead_vtable_refs(lc);
+}

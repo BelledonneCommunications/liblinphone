@@ -677,7 +677,18 @@ LINPHONE_PUBLIC LinphoneTunnelConfig *linphone_factory_create_tunnel_config(Linp
  * @return a #LinphoneAccountCbs @notnil
  */
 LINPHONE_PUBLIC LinphoneAccountCbs *linphone_factory_create_account_cbs(LinphoneFactory *factory);
-
+/**
+ * Creates an object #LinphoneAlertCbs
+ * @param factory the #LinphoneFactory @notnil
+ * @return a #LinphoneAlertCbs @notnil
+ */
+LINPHONE_PUBLIC LinphoneAlertCbs *linphone_factory_create_alert_cbs(LinphoneFactory *factory);
+/**
+ * Creates an object #LinphoneSignalInformation
+ * @param factory the #LinphoneFactory @notnil
+ * @return a #LinphoneSignalInformation @notnil
+ */
+LINPHONE_PUBLIC LinphoneSignalInformation *linphone_factory_create_signal_information(LinphoneFactory *factory);
 /**
  * Creates an object #LinphoneLoggingServiceCbs
  * @param factory the #LinphoneFactory @notnil

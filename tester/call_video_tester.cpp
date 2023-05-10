@@ -2510,7 +2510,7 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 
 		caller_stream = (VideoStream *)linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
 		// Set the FPS to 0 and keep away further set in order to simulate a defunct camera
-		liblinphone_tester_simulate_mire_defunct(caller_stream->source, TRUE);
+		liblinphone_tester_simulate_mire_defunct(caller_stream->source, TRUE, 0);
 		BC_ASSERT_TRUE(
 		    wait_for_until(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallCameraNotWorking, 1, 10000));
 		camera = video_stream_get_camera(caller_stream);
@@ -3215,10 +3215,10 @@ static test_t call_video_tests[] = {
     TEST_NO_TAG("Video call with flexfec", video_call_with_flexfec),
 
     TEST_NO_TAG("Video call with flexfec", video_call_with_flexfec),
-    TEST_NO_TAG("Video call with flexfec & ice", video_call_with_flexfec_and_ice),
-    TEST_NO_TAG("Video call with flexfec & srtp", video_call_with_flexfec_and_srtp),
-    TEST_NO_TAG("Video call with flexfec & dtls", video_call_with_flexfec_and_dtls),
-    TEST_NO_TAG("Video call with flexfec & zrtp", video_call_with_flexfec_and_zrtp),
+    TEST_NO_TAG("Video call with flexfec and ice", video_call_with_flexfec_and_ice),
+    TEST_NO_TAG("Video call with flexfec and srtp", video_call_with_flexfec_and_srtp),
+    TEST_NO_TAG("Video call with flexfec and dtls", video_call_with_flexfec_and_dtls),
+    TEST_NO_TAG("Video call with flexfec and zrtp", video_call_with_flexfec_and_zrtp),
 
 };
 

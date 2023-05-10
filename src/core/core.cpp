@@ -1462,6 +1462,16 @@ void Core::removeLdap(std::shared_ptr<Ldap> ldap) {
 	}
 }
 // -----------------------------------------------------------------------------
+// Signal Infomrations
+// -----------------------------------------------------------------------------
+void Core::setSignalInformation(std::shared_ptr<SignalInformation> signalInformation) {
+	mSignalInformation = signalInformation;
+}
+std::shared_ptr<SignalInformation> Core::getSignalInformation() {
+	return mSignalInformation;
+}
+
+// -----------------------------------------------------------------------------
 
 std::shared_ptr<Address> Core::interpretUrl(const std::string &url, bool chatOrCallUse) const {
 	bool applyPrefix = true;

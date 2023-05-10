@@ -215,6 +215,15 @@
  * @brief Managing call logs.
 **/
 
+/**
+ * @defgroup alert Alert
+ * @brief Managing Alerts.
+**/
+
+/**
+ * @defgroup dictionary Dictionary
+ * @brief Managing Dictionary.
+**/
 
 /**
  * @defgroup linphone_address Linphone address

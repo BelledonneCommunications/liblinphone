@@ -96,5 +96,12 @@ bool PropertyContainer::hasKey(const std::string &name) const {
 	}
 	return false;
 }
-
+std::ostream &PropertyContainer::toStream(std::ostream &stream) const {
+	for (const auto &p : mPrivate->properties) {
+		stream << p.first << " : ";
+		p.second.toStream(stream);
+		stream << std::endl;
+	}
+	return stream;
+}
 LINPHONE_END_NAMESPACE

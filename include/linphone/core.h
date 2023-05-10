@@ -299,6 +299,8 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsAccountRegistrationStateChangedCb account_registration_state_changed;
 	LinphoneCoreCbsConferenceInfoReceivedCb conference_info_received;
 	LinphoneCoreCbsPushNotificationReceivedCb push_notification_received;
+	LinphoneCoreCbsOnAlertCb on_alert;
+
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -4749,6 +4751,28 @@ LINPHONE_PUBLIC void linphone_core_set_conference_participant_list_type(Linphone
 LINPHONE_PUBLIC LinphoneConferenceParticipantListType
 linphone_core_get_conference_participant_list_type(const LinphoneCore *lc);
 
+/**
+ * @}
+ */
+
+/**
+ * @addtogroup alert
+ * @{
+ */
+/**
+ * Set the on alert callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param alert_cb The #LinphoneCoreCbsOnAlertCb callback to call. @notnil
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_on_alert(LinphoneCoreCbs *cbs, LinphoneCoreCbsOnAlertCb alert_cb);
+/**
+ * Get the on alert callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The #LinphoneCoreCbsOnAlertCb callback called.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsOnAlertCb linphone_core_cbs_get_on_alert(LinphoneCoreCbs *cbs);
+LINPHONE_PUBLIC void linphone_core_enable_alerts(LinphoneCore *core, bool_t enable);
+LINPHONE_PUBLIC bool_t linphone_core_alerts_enabled(const LinphoneCore *core);
 /**
  * @}
  */

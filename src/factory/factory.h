@@ -176,7 +176,8 @@ public:
 	LinphoneTunnelConfig *createTunnelConfig() const;
 
 	LinphoneAccountCbs *createAccountCbs() const;
-
+	LinphoneAlertCbs *createAlertCbs() const;
+	LinphoneSignalInformation *createSignalInformation() const;
 	LinphoneLoggingServiceCbs *createLoggingServiceCbs() const;
 
 	LinphonePlayerCbs *createPlayerCbs() const;

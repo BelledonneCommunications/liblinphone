@@ -27,6 +27,7 @@
 #include "core/paths/paths.h"
 #include "logger/logger.h"
 #include "platform-helpers.h"
+#include "signal-information/signal-information.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -823,6 +824,25 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 		ms_free(push_payload);
 	};
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_org_linphone_core_tools_AndroidPlatformHelper_setSignalInfo(BCTBX_UNUSED(JNIEnv *env),
+                                                                 BCTBX_UNUSED(jobject thiz),
+                                                                 jlong ptr,
+                                                                 jint jtype,
+                                                                 jint junit,
+                                                                 jint jvalue,
+                                                                 jstring details) {
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
+
+	LinphoneSignalType type = (LinphoneSignalType)jtype;
+	LinphoneSignalStrengthUnit unit = (LinphoneSignalStrengthUnit)junit;
+	const char *c_details = GetStringUTFChars(env, details);
+	float value = (float)jvalue;
+	auto info = (new SignalInformation(type, unit, value, c_details))->toSharedPtr();
+	androidPlatformHelper->setSignalInformation(info);
+	ReleaseStringUTFChars(env, details, c_details);
 }
 
 LINPHONE_END_NAMESPACE

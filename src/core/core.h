@@ -68,6 +68,7 @@ class PushNotificationMessage;
 class SalMediaDescription;
 class ConferenceScheduler;
 class SalOp;
+class SignalInformation;
 
 namespace MediaConference {
 class LocalConference;
@@ -356,6 +357,11 @@ public:
 	                                 const std::shared_ptr<Address> &confAddr);
 
 	bool isCurrentlyAggregatingChatMessages();
+	// ---------------------------------------------------------------------------
+	// Signal informations
+	// ---------------------------------------------------------------------------
+	void setSignalInformation(std::shared_ptr<SignalInformation> signalInformation);
+	std::shared_ptr<SignalInformation> getSignalInformation();
 
 	const std::list<std::string> &getPluginList() const;
 	bool isPluginLoaded(const std::string name) const;
@@ -372,6 +378,7 @@ private:
 
 	bool deleteEmptyChatrooms = true;
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
+	std::shared_ptr<SignalInformation> mSignalInformation = nullptr;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
 
 	std::pair<std::string, std::string> getSpecNameVersion(const std::string &spec) const;

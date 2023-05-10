@@ -506,6 +506,7 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&call_video_test_suite);
 	bc_tester_add_suite(&call_video_msogl_test_suite); // Conditionals are defined in suite
 	bc_tester_add_suite(&call_video_quality_test_suite);
+	bc_tester_add_suite(&alerts_test_suite);
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
@@ -600,10 +601,9 @@ int liblinphone_tester_set_log_file(const char *filename) {
 }
 
 // if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
-void liblinphone_tester_simulate_mire_defunct(MSFilter *filter, bool_t defunct) {
+void liblinphone_tester_simulate_mire_defunct(MSFilter *filter, bool_t defunct, float fps) {
 	if (BC_ASSERT_PTR_NOT_NULL(filter) && BC_ASSERT_PTR_NOT_NULL(filter->data)) {
 		if (defunct) {
-			float fps = 0;
 			ms_filter_call_method(filter, MS_FILTER_SET_FPS, &fps);
 		}
 		((MireData *)filter->data)->keep_fps = defunct;

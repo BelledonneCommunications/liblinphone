@@ -30,8 +30,8 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC VariantImplBase {
 public:
 	virtual VariantImplBase *clone() = 0;
-	virtual ~VariantImplBase() {
-	}
+	virtual ~VariantImplBase(){};
+	virtual std::ostream &toStream(std::ostream &stream) const = 0;
 };
 
 template <typename T>
@@ -57,6 +57,10 @@ public:
 
 	void setValue(const T &value) {
 		mValue = value;
+	}
+	std::ostream &toStream(std::ostream &stream) const override {
+		stream << mValue;
+		return stream;
 	}
 
 private:

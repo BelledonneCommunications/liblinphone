@@ -382,6 +382,12 @@ LinphoneAccountCbs *linphone_factory_create_account_cbs(LinphoneFactory *factory
 	return Factory::toCpp(factory)->createAccountCbs();
 }
 
+LinphoneAlertCbs *linphone_factory_create_alert_cbs(LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->createAlertCbs();
+}
+LinphoneSignalInformation *linphone_factory_create_signal_information(LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->createSignalInformation();
+}
 LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createLoggingServiceCbs();
 }

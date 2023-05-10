@@ -27,6 +27,8 @@
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-address.h"
+#include "linphone/api/c-alert-cbs.h"
+#include "linphone/api/c-alert.h"
 #include "linphone/api/c-audio-device.h"
 #include "linphone/api/c-auth-info.h"
 #include "linphone/api/c-call-cbs.h"
@@ -64,6 +66,7 @@
 #include "linphone/api/c-recorder-params.h"
 #include "linphone/api/c-recorder.h"
 #include "linphone/api/c-search-result.h"
+#include "linphone/api/c-signal-information.h"
 #include "linphone/api/c-types.h"
 #include "linphone/api/c-video-source-descriptor.h"
 

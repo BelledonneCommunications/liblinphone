@@ -72,6 +72,8 @@ public:
 	virtual NetworkType getNetworkType() const = 0;
 	virtual std::string getWifiSSID() = 0;
 	virtual void setWifiSSID(const std::string &ssid) = 0;
+	virtual void setSignalInformation(std::shared_ptr<SignalInformation> &signalInformation) = 0;
+	virtual std::shared_ptr<SignalInformation> getSignalInformation() = 0;
 
 	virtual void setVideoPreviewWindow(void *windowId) = 0;
 	virtual std::string getDownloadPath() = 0;
@@ -150,7 +152,8 @@ public:
 	NetworkType getNetworkType() const override;
 	std::string getWifiSSID() override;
 	void setWifiSSID(const std::string &ssid) override;
-
+	void setSignalInformation(std::shared_ptr<SignalInformation> &signalInformation) override;
+	std::shared_ptr<SignalInformation> getSignalInformation() override;
 	void setVideoPreviewWindow(void *windowId) override;
 	void setVideoWindow(void *windowId) override;
 	void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void *windowId) override;

@@ -132,7 +132,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	account/account.h
 	account/account-params.h
 	address/address.h
-	address/address-parser.h
+	address/address-parser.cpp
+	alert/alert.h
 	auth-info/auth-info.h
 	auth-info/auth-stack.h
 	c-wrapper/c-wrapper.h
@@ -293,6 +294,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	search/magic-search.h
 	search/search-request.h
 	search/search-result.h
+	signal-information/signal-information.h
 	utils/background-task.h
 	utils/custom-params.h
 	utils/general-internal.h
@@ -354,6 +356,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	account_creator/connector_xmlrpc.cpp
 	address/address.cpp
 	address/address-parser.cpp
+	alert/alert.cpp
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
 	c-wrapper/c-wrapper.cpp
@@ -362,6 +365,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-account-cbs.cpp
 	c-wrapper/api/c-account-params.cpp
 	c-wrapper/api/c-address.cpp
+	c-wrapper/api/c-alert-cbs.cpp
+	c-wrapper/api/c-alert.cpp
 	c-wrapper/api/c-audio-device.cpp
 	c-wrapper/api/c-auth-info.cpp
 	c-wrapper/api/c-call-cbs.cpp
@@ -403,6 +408,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-recorder.cpp
 	c-wrapper/api/c-recorder-params.cpp
 	c-wrapper/api/c-search-result.cpp
+	c-wrapper/api/c-signal-information.cpp
 	c-wrapper/api/c-video-source-descriptor.cpp
 	c-wrapper/api/c-nat-policy.cpp
 	c-wrapper/internal/c-sal.cpp
@@ -526,6 +532,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	search/search-async-data.cpp
 	search/search-request.cpp
 	search/search-result.cpp
+	signal-information/signal-information.cpp
 	utils/background-task.cpp
 	utils/custom-params.cpp
 	utils/fs.cpp

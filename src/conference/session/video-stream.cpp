@@ -596,13 +596,21 @@ void MS2VideoStream::stop() {
 void MS2VideoStream::handleEvent(const OrtpEvent *ev) {
 	OrtpEventType evt = ortp_event_get_type(ev);
 	OrtpEventData *evd = ortp_event_get_data(const_cast<OrtpEvent *>(ev));
-
 	if (evt == ORTP_EVENT_NEW_VIDEO_BANDWIDTH_ESTIMATION_AVAILABLE) {
-		lInfo() << "Video bandwidth estimation is " << (int)(evd->info.video_bandwidth_available / 1000.) << " kbit/s";
 		if (isMain())
 			linphone_call_stats_set_estimated_download_bandwidth(mStats,
 			                                                     (float)(evd->info.video_bandwidth_available * 1e-3));
+	} else if (evt == ORTP_EVENT_JITTER_UPDATE_FOR_NACK) {
+		mNetworkMonitor.mNackSent = true;
 	}
+
+	VideoStats sendStats, recvStats;
+	getSendStats(&sendStats);
+	getRecvStats(&recvStats);
+	float fps = video_stream_get_sent_framerate(mStream);
+	mVideoMonitor.check(&sendStats, &recvStats, fps);
+	mBandwidthMonitor.check(this->getStats());
+	mNetworkMonitor.checkNackQuality(mStream->ms.sessions.rtp_session);
 }
 
 void MS2VideoStream::zrtpStarted(BCTBX_UNUSED(Stream *mainZrtpStream)) {

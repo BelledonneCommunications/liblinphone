@@ -97,6 +97,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
                 if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                     // This callback can be called very often when on WIFI (for example on signal strenght change), so don't log it each time and no need to update network reachability
                     Log.d("[Platform Helper] [Network Manager 26] onCapabilitiesChanged " + networkCapabilities.toString());
+                    mHelper.requestWifiSignalStrengthUpdate();
                 } else {
                     Log.i("[Platform Helper] [Network Manager 26] onCapabilitiesChanged " + networkCapabilities.toString());
                     mHelper.updateNetworkReachability();

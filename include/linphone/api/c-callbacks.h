@@ -45,10 +45,28 @@ extern "C" {
 typedef void (*LinphoneAccountCbsRegistrationStateChangedCb)(LinphoneAccount *account,
                                                              LinphoneRegistrationState state,
                                                              const char *message);
-
 /**
  * @}
  **/
+
+/**
+ * @addtogroup alert
+ * @{
+ **/
+/**
+ * Callback for notifying about an alert (e.g on Qos)
+ * @param core #LinphoneCore object @notnil
+ * @param alert #LinphoneAlert to notify @notnil
+ */
+typedef void (*LinphoneCoreCbsOnAlertCb)(LinphoneCore *core, LinphoneAlert *alert);
+/**
+ * Callback to know if an alert stops
+ * @param alert the alert that stops @notnil
+ */
+typedef void (*LinphoneAlertCbsOnTerminatedCb)(LinphoneAlert *alert);
+/**
+ * @}
+ */
 
 /**
  * @addtogroup call_control

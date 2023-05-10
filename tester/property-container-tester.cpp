@@ -69,11 +69,30 @@ static void set_string_dictionary() {
 		BC_ASSERT_STRING_EQUAL(textToCheck.c_str(), text.c_str());
 	}
 }
+static void to_stream_property(void) {
+	PropertyContainer properties;
+	properties.setProperty(std::string("Hello"), std::string("world!"));
+	properties.setProperty(std::string("universe"), 42);
+	properties.setProperty(std::string("pi"), 3.14159265f);
 
+	{
+		std::stringstream actual, expected;
+		properties.toStream(actual);
+		expected << "pi : 3.14159" << std::endl << "universe : 42" << std::endl << "Hello : world!" << std::endl;
+		auto actual_str = actual.str();
+		auto expected_str = expected.str();
+		BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());
+	}
+}
 test_t property_container_tests[] = {
-    TEST_NO_TAG("Set int property", set_int_property), TEST_NO_TAG("Set string property", set_string_property),
-    TEST_NO_TAG("Set generic property", set_generic_property), TEST_NO_TAG("Set int dictionary", set_int_dictionary),
-    TEST_NO_TAG("Set string dictionary", set_string_dictionary)};
+    TEST_NO_TAG("Set int property", set_int_property),
+    TEST_NO_TAG("Set string property", set_string_property),
+    TEST_NO_TAG("Set generic property", set_generic_property),
+    TEST_NO_TAG("Set int dictionary", set_int_dictionary),
+    TEST_NO_TAG("Set string dictionary", set_string_dictionary),
+    TEST_NO_TAG("To stream property", to_stream_property),
+
+};
 
 test_suite_t property_container_test_suite = {"PropertyContainer",
                                               NULL,

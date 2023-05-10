@@ -42,6 +42,8 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.WindowManager;
 
+import org.linphone.core.SignalType;
+import org.linphone.core.SignalStrengthUnit;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.network.NetworkManager;
 import org.linphone.core.tools.network.NetworkManagerAbove21;
@@ -49,11 +51,13 @@ import org.linphone.core.tools.network.NetworkManagerAbove23;
 import org.linphone.core.tools.network.NetworkManagerAbove24;
 import org.linphone.core.tools.network.NetworkManagerAbove26;
 import org.linphone.core.tools.network.NetworkManagerInterface;
+import org.linphone.core.tools.network.NetworkSignalMonitor;
 import org.linphone.core.tools.receiver.DozeReceiver;
 import org.linphone.core.tools.receiver.InteractivityReceiver;
 import org.linphone.core.tools.service.CoreManager;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.video.capture.CaptureTextureView;
+import org.linphone.mediastream.Version;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -86,6 +90,7 @@ public class AndroidPlatformHelper {
     private boolean mMonitoringEnabled;
     private InteractivityReceiver mInteractivityReceiver;
     private String[] mDnsServers;
+    private NetworkSignalMonitor mNetworkSignalMonitor;
 
     private static int mTempCountWifi = 0;
     private static int mTempCountMCast = 0;
@@ -106,6 +111,8 @@ public class AndroidPlatformHelper {
     private native void enableKeepAlive(long nativePtr, boolean enable);
 
     private native boolean useSystemHttpProxy(long nativePtr);
+
+    private native void setSignalInfo(long nativePtr, int type, int unit, int value, String details);
 
     public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
         mNativePtr = nativePtr;
@@ -148,6 +155,12 @@ public class AndroidPlatformHelper {
         // Update DNS servers lists
         NetworkManagerInterface nm = createNetworkManager();
         nm.updateDnsServers();
+
+        if (Version.sdkAboveOrEqual(Version.API29_ANDROID_10)) {
+            mNetworkSignalMonitor = new NetworkSignalMonitor(mContext, this);
+        } else {
+            Log.w("[Platform Helper] Device is running Android < 10, can't use network signal strength monitoring");
+        }
     }
 
     public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
@@ -175,9 +188,23 @@ public class AndroidPlatformHelper {
             mMcastLock.release();
         }
 
+        if (mNetworkSignalMonitor != null) {
+            mNetworkSignalMonitor.destroy();
+        }
+
         mNativePtr = 0;
         mMainHandler.removeCallbacksAndMessages(null);
         stopNetworkMonitoring();
+    }
+
+    public synchronized void requestWifiSignalStrengthUpdate() {
+        if (mNetworkSignalMonitor != null) {
+            mNetworkSignalMonitor.updateWifiConnectionSignalStrength();
+        }
+    }
+
+    public synchronized void setSignalInfo(SignalType type, SignalStrengthUnit unit, int value, String details) {
+        setSignalInfo(mNativePtr, type.toInt(), unit.toInt(), value, details);
     }
 
     public synchronized void onWifiOnlyEnabled(boolean enabled) {
@@ -693,6 +720,16 @@ public class AndroidPlatformHelper {
         }
     }
 
+    public synchronized NetworkInfo getActiveNetworkInfo() {
+        if (mNetworkManager == null) {
+            Log.w("[Platform Helper] Network Manager is null, won't be able to detect active network type");
+            return null;
+        }
+
+        NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo();
+        return networkInfo;
+    }
+
     public synchronized boolean isActiveNetworkWifiOnlyCompliant() {
         if (mNetworkManager == null) {
             Log.w("[Platform Helper] Network Manager is null, assuming network isn't WiFi only compliant");
@@ -770,6 +807,13 @@ public class AndroidPlatformHelper {
         if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
             Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disabling network reachability first");
             setNetworkReachable(mNativePtr, false);
+
+            // When switching from WiFi to Mobile, update Cell signal strength if possible
+            if (mLastNetworkType == ConnectivityManager.TYPE_WIFI) {
+                if (mNetworkSignalMonitor != null) {
+                    mNetworkSignalMonitor.updateCellConnectionSignalStrength();
+                }
+            }
         }
 
         mLastNetworkType = currentNetworkType;

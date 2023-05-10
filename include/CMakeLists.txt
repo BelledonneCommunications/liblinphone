@@ -74,6 +74,8 @@ set(C_API_HEADER_FILES
 	c-account-params.h
 	c-address.h
 	c-audio-device.h
+	c-alert-cbs.h
+	c-alert.h
 	c-auth-info.h
 	c-api.h
 	c-call-cbs.h
@@ -113,6 +115,7 @@ set(C_API_HEADER_FILES
 	c-recorder.h
 	c-recorder-params.h
 	c-search-result.h
+	c-signal-information.h
 	c-digest-authentication-policy.h
 	c-types.h
 	c-video-source-descriptor.h

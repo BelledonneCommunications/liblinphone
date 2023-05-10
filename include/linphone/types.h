@@ -618,8 +618,6 @@ typedef unsigned int LinphoneContactSearchID;
  */
 LINPHONE_DEPRECATED typedef LinphoneContactSearchID ContactSearchID;
 
-typedef struct _LinphoneDictionary LinphoneDictionary;
-
 /**
  * @brief Enum describing the result of the echo canceller calibration process.
  * @ingroup media_parameters
@@ -1412,5 +1410,4 @@ typedef enum _LinphoneMagicSearchAggregation {
 	LinphoneMagicSearchAggregationFriend =
 	    1 /**< Aggregation is done by friend, you will have at most a SearchResult per Friend */
 } LinphoneMagicSearchAggregation;
-
 #endif /* LINPHONE_TYPES_H_ */
