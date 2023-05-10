@@ -627,9 +627,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		});
 	}
 
-	if (targetState == CallSession::State::StreamsRunning) {
-		setupMediaLossCheck();
-	}
+	setupMediaLossCheck();
 
 	return;
 }

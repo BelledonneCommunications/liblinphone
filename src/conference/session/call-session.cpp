@@ -1420,9 +1420,12 @@ void CallSession::iterate(time_t currentRealTime, bool oneSecondElapsed) {
 		if (d->listener) d->listener->onPushCallSessionTimeoutCheck(getSharedFromThis(), elapsed);
 	}
 
-	if ((getCore()->getCCore()->sip_conf.in_call_timeout > 0) && (d->log->getConnectedTime() != 0) &&
-	    ((currentRealTime - d->log->getConnectedTime()) > getCore()->getCCore()->sip_conf.in_call_timeout)) {
-		lInfo() << "In call timeout (" << getCore()->getCCore()->sip_conf.in_call_timeout << ")";
+	const auto callTimeout = getCore()->getCCore()->sip_conf.in_call_timeout;
+	const auto &connectedTime = d->log->getConnectedTime();
+	if ((callTimeout > 0) && (connectedTime != 0) && ((currentRealTime - connectedTime) > callTimeout)) {
+		lInfo() << "Terminating call session " << this << " (local address " << getLocalAddress()->toString()
+		        << " remote address " << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown")
+		        << ") because the call timeout (" << callTimeout << "s) has been reached";
 		terminate();
 	}
 }

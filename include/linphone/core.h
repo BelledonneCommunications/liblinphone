@@ -2881,6 +2881,7 @@ LINPHONE_PUBLIC int linphone_core_get_push_incoming_call_timeout(const LinphoneC
 /**
  * Set the in call timeout in seconds.
  * After this timeout period, the call is automatically hangup.
+ * A value of 0 disables this feature.
  * @param core #LinphoneCore object @notnil
  * @param seconds The new timeout in seconds
  * @ingroup call_control
