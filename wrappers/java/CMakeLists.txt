@@ -39,6 +39,8 @@ add_custom_command(OUTPUT "${jni_sources}"
 	java_interface_stub.mustache
 	java_interface.mustache
 	jni.mustache
+	overview.mustache
+	proguard.mustache
 	linphone-doc
 	COMMENT "Generating java wrapper"
 )

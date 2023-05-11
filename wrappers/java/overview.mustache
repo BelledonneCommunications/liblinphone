@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+	<HEAD>
+	<TITLE>Quick tour of liblinphone's features</TITLE>
+	</HEAD>
+	<BODY>
+		<h1>Welcome to liblinphone's Java API reference documentation.</h1>
+		<a href="http://www.linphone.org">Liblinphone</a> is a high-level open source library that integrates all the SIP voice/video and instant messaging features into a single easy-to-use API.
+		<br/>
+		This is the VoIP SDK engine on which Linphone applications are based.
+		<br/>
+		<br/>
+		Liblinphone combines our media processing and streaming toolkit (Mediastreamer2) with our user-agent library for SIP signaling (belle-sip).
+		<br/>
+		Liblinphone is distributed under <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPLv3</a>. Please understand the licencing details before using it!<br/>
+		<br/>
+		For any use of this library beyond the rights granted to you by the GPLv3 license, please <a href="https://www.linphone.org/contact">contact Belledonne Communications</a>.<br/>
+		<br/>
+		<h1>Other languages</h1>
+		Liblinphone has support for a variety of languages, each one has its own reference documentation:<br/>
+		<ul>
+		<li>C (<a href="https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/c">https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/c</a>)</li>
+		<li>C++ (<a href="https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/c++">https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/c++</a>)</li>
+		<li>Swift (<a href="https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/swift">https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/swift</a>)</li>
+		<li>Java (<a href="https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/java">https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/java</a>)</li>
+		<li>C# (<a href="https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/cs/">https://download.linphone.org/{{directory}}/docs/liblinphone/{{version}}/cs/</a>)</li>
+		<li>Python (coming soon)</li>
+		</ul>
+		<br/>
+		Tutorials are available on our <a href="https://gitlab.linphone.org/BC/public/tutorials">gitlab repository</a>.
+		<br/>
+		See also <a href="http://www.linphone.org">http://www.linphone.org</a>
+		<br/>
+		<h1>Quick tour of liblinphone's features</h1>
+		<h2>Introduction</h2>
+		Liblinphone's has a consistent object-oriented design.
+		<br/>
+		All objects are sharing a common base class, with ref-counting.
+		<br/>
+		Root objects must be constructed by the <a href="org/linphone/core/Factory.html">Factory</a> class.
+		<br/>
+		No 'new' operator invocation is permitted.
+		<br/>
+		Liblinphone is using SIP as signaling protocol, which actually comprises a huge set of RFCs to cover various aspects of communications.
+		<br/>
+		Some terminology of the API is directly inherited from SIP specifications, that's why having some knowledge of the protocol is recommended for a better understanding of this documentation.
+		<br/>
+		<h2>Initializing the engine</h2>
+		A typical liblinphone application has to first instanciate a <a href="org/linphone/core/Core.html">Core</a> object using the <a href="org/linphone/core/Factory.html">Factory</a>.
+		<br/>
+		The core object represents the liblinphone engine, from which call, conferences, instant messages can be sent or received.
+		<br/>
+		For events to be reported and engine to schedule its tasks, the application must call <a href="org/linphone/core/Core.html#iterate--">Core.iterate()</a> at regular interval, typically from a 20ms timer.
+		<br/>
+		On Android, it is done automatically by the Java wrapper using a <a href="https://developer.android.com/reference/java/util/Timer">Timer</a> and a <a href="https://developer.android.com/reference/java/util/TimerTask">TimerTask</a>, but you can disable that behavior using <a href="org/linphone/core/Core.html#setAutoIterateEnabled-boolean-">Core.setAutoIterateEnabled()</a>.
+		<br/>
+		<br/>
+		In most case, a SIP account has to be provisionned so that SIP registration can take place onto a SIP server.
+		<br/>
+		This task is designated to the <a href="org/linphone/core/Account.html">Account</a> class. 
+		An <a href="org/linphone/core/Account.html">Account</a> can be created using <a href="org/linphone/core/Core.html#createAccount-org.linphone.core.AccountParams-">Core.createAccount()</a>, based on parameters created with <a href="org/linphone/core/Core.html#createAccountParams--">Core.createAccountParams()</a>.
+		<br/>
+		Then, account can be added to the core for usage using <a href="org/linphone/core/Core.html#addAccount-org.linphone.core.Account-">Core.addAccount()</a>.
+		<br/>
+		<br/>
+		Application usually need to get informed of events occuring in the lifetime of the engine, which is done through listeners that the applications can override.
+		<br/>
+		An important listener interface is the <a href="org/linphone/core/CoreListener.html">CoreListener</a>, that application should override and and create, and then insert into their <a href="org/linphone/core/Core.html">Core</a> object with <a href="org/linphone/core/Core.html#addListener-org.linphone.core.CoreListener-">Core.addListener()</a>.
+		<br/>
+		<h2>Making calls</h2>
+		Applications can place outgoing calls using <a href="org/linphone/core/Core.html#invite-java.lang.String-">Core.invite()</a> or <a href="org/linphone/core/Core.html#inviteAddressWithParams-org.linphone.core.Address-org.linphone.core.CallParams-">Core.inviteAddressWithParams()</a>.
+		<br/>
+		The <a href="org/linphone/core/CallParams.html">CallParams</a> class represents parameters for the calls, such as enabling video, requiring a specific MediaEncryption.
+		<br/>
+		The <a href="org/linphone/core/CallListener.html">CallListener</a> interface provides application way to get inform of the progress of the call, represented by the <a href="org/linphone/core/Call.State.html">Call.State</a> enum.
+		<br/>
+		<br/>
+		Incoming calls are notified through the <a href="org/linphone/core/CoreListener.html">CoreListener</a> interface, and can later be accepted using <a href="org/linphone/core/Call.html#accept--">Call.accept()</a>.
+		<br/>
+		Calls can be terminated or aborted at any time using <a href="org/linphone/core/Call.html#terminate--">Call.terminate()</a>.
+		<br/>
+		<h2>Instant messaging</h2>
+		The <a href="org/linphone/core/ChatRoom.html">ChatRoom</a> class represents a text conversation.
+		<br/>
+		The <a href="org/linphone/core/Core.html">Core</a> object provides persistancy for all conversations, ie it stores all received and sent messages.
+		<br/>
+		The list of conversation can be retrieved using <a href="org/linphone/core/Core.html#getChatRooms--">Core.getChatRooms()</a>.
+		<br/>
+		<br/>
+		To create a new conversation, use <a href="org/linphone/core/Core.html#createChatRoom-org.linphone.core.ChatRoomParams-org.linphone.core.Address-org.linphone.core.Address:A-">Core.createChatRoom()</a>.
+		<br/>
+		<a href="org/linphone/core/ChatRoomParams.html">ChatRoomParams</a> provide a way to specify which kind of chatroom is to be created: for group, for one-ton-one conversation, with end-to end encryption for example.
+		<br/>
+		To send a message, first create the <a href="org/linphone/core/ChatMessage.html">ChatMessage</a> with <a href="org/linphone/core/ChatRoom.html#createMessageFromUtf8-java.lang.String-">ChatRoom.createMessageFromUtf8()</a>, then send it with <a href="org/linphone/core/ChatMessage.html#send--">ChatMessage.send()</a>.
+		<br/>
+		A <a href="org/linphone/core/ChatMessage.html">ChatMessage</a> reports its progress through the <a href="org/linphone/core/ChatMessageListener.html">ChatMessageListener</a> interface.
+		<br/>
+		ChatRooms are automatically created by the <a href="org/linphone/core/Core.html">Core</a> when receiving a message that starts a new conversation, and notified through the <a href="org/linphone/core/CoreListener.html">CoreListener</a> interface.
+		<br/>
+		<h2>Presence</h2>
+		Applications can submit presence information through <a href="org/linphone/core/Core.html#setPresenceModel-org.linphone.core.PresenceModel-">Core.setPresenceModel()</a>.
+		<br/>
+		The <a href="org/linphone/core/PresenceModel.html">PresenceModel</a> class represents the presence information, which is submitted to a presence server.
+		<br/>
+		Symmetrically, applications can subscribe to the presence server to get notified of the presence status of a contact list.
+		<br/>
+		This is to be done thanks to the <a href="org/linphone/core/FriendList.html">FriendList</a> and <a href="org/linphone/core/Friend.html">Friend</a> classes.
+	</BODY>
+</HTML>

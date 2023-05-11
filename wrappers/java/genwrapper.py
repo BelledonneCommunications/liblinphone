@@ -806,7 +806,7 @@ class Proguard:
         }
         self.listeners.append(obj)
 
-class PackageInfo:
+class Overview:
     def __init__(self, directory, version):
         self.directory = directory
         self.version = version
@@ -814,9 +814,10 @@ class PackageInfo:
 ##########################################################################
 
 class GenWrapper:
-    def __init__(self, srcdir, javadir, package, xmldir, exceptions, upload_dir, version):
+    def __init__(self, srcdir, javadir, javadocdir, package, xmldir, exceptions, upload_dir, version):
         self.srcdir = srcdir
         self.javadir = javadir
+        self.javadocdir = javadocdir
         self.package = package
         self.exceptions = exceptions
 
@@ -899,7 +900,7 @@ class GenWrapper:
         self.renderer = pystache.Renderer()
         self.jni = Jni(package)
         self.proguard = Proguard(package)
-        self.packageInfo = PackageInfo(upload_dir, version)
+        self.overview = Overview(upload_dir, version)
 
         self.enums = {}
         self.interfaces = {}
@@ -926,7 +927,7 @@ class GenWrapper:
 
         self.render(self.jni, self.srcdir + '/linphone_jni.cc')
         self.render(self.proguard, self.srcdir + '/proguard.txt')
-        self.render(self.packageInfo, self.javadir + '/package-info.java')
+        self.render(self.overview, self.javadocdir + '/overview.html')
 
     def render(self, item, path):
         tmppath = path + '.tmp'
@@ -989,6 +990,7 @@ if __name__ == '__main__':
 
     srcdir = args.outputdir + '/src'
     javadir = args.outputdir + '/java'
+    javadocdir = javadir + '/src/main/javadoc/'
     package_dirs = args.package.split('.')
     for directory in package_dirs:
         javadir += '/' + directory
@@ -1007,5 +1009,14 @@ if __name__ == '__main__':
             logging.critical("Cannot create '{0}' dircetory: {1}".format(javadir, e.strerror))
             sys.exit(1)
 
-    genwrapper = GenWrapper(srcdir, javadir, args.package, args.xmldir, args.exceptions, args.directory, args.version)
+    try:
+        os.makedirs(javadocdir)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logging.critical("Cannot create '{0}' dircetory: {1}".format(
+                javadocdir, e.strerror))
+            sys.exit(1)
+
+    genwrapper = GenWrapper(srcdir, javadir, javadocdir, args.package,
+                            args.xmldir, args.exceptions, args.directory, args.version)
     genwrapper.render_all()
