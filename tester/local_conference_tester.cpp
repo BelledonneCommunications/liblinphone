@@ -4974,9 +4974,8 @@ static size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, 
 	bool_t call_video_enabled = linphone_call_params_video_enabled(call_params);
 	LinphoneMediaDirection call_video_dir = linphone_call_params_get_video_direction(call_params);
 	LinphoneConferenceLayout call_video_layout = linphone_call_params_get_conference_video_layout(call_params);
-
 	if (enable_video && call_video_enabled &&
-		((call_video_dir == LinphoneMediaDirectionRecvOnly) || (call_video_dir == LinphoneMediaDirectionSendRecv))) {
+		(call_video_dir != LinphoneMediaDirectionInactive)) {
 		bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
 		for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
 			LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
@@ -4989,23 +4988,9 @@ static size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, 
 
 		if (((call_video_layout == LinphoneConferenceLayoutActiveSpeaker) &&
 			 (call_video_dir == LinphoneMediaDirectionRecvOnly)) ||
-			(call_video_dir == LinphoneMediaDirectionSendRecv)) {
+			(call_video_dir == LinphoneMediaDirectionSendRecv) || (call_video_dir == LinphoneMediaDirectionSendOnly)) {
 			nb_video_streams += 1;
 		}
-
-		/*
-				if  (call_video_layout == LinphoneConferenceLayoutActiveSpeaker) {
-					if (call_video_dir == LinphoneMediaDirectionSendRecv) {
-						nb_video_streams += 1;
-					}
-				} else if (call_video_layout == LinphoneConferenceLayoutGrid) {
-					if (call_video_dir == LinphoneMediaDirectionSendRecv) {
-						nb_video_streams += 1;
-					} else {
-						nb_video_streams -= 1;
-					}
-				}
-		*/
 	} else {
 		nb_video_streams = 0;
 	}
