@@ -382,7 +382,9 @@ void CallSessionPrivate::setConferenceId(const std::string id) {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::abort(const string &errorMsg) {
+	L_Q();
 	op->terminate();
+	lWarning() << "Session [" << q << "] is being aborted with message " << errorMsg;
 	setState(CallSession::State::Error, errorMsg);
 }
 
@@ -580,6 +582,7 @@ void CallSessionPrivate::terminated() {
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			if (!op->getReasonErrorInfo()->protocol || strcmp(op->getReasonErrorInfo()->protocol, "") == 0) {
+				lWarning() << "Session [" << q << "] has not been answered by the remote party";
 				linphone_error_info_set(ei, nullptr, LinphoneReasonNotAnswered, 0, "Incoming call cancelled", nullptr);
 				nonOpError = true;
 			}
