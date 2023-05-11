@@ -370,7 +370,9 @@ void CallSessionPrivate::setConferenceId (const std::string id) {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::abort (const string &errorMsg) {
+	L_Q();
 	op->terminate();
+	lWarning() << "Session [" << q << "] is being aborted with message " << errorMsg;
 	setState(CallSession::State::Error, errorMsg);
 }
 
@@ -568,6 +570,7 @@ void CallSessionPrivate::terminated () {
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			if (!op->getReasonErrorInfo()->protocol || strcmp(op->getReasonErrorInfo()->protocol, "") == 0) {
+				lWarning() << "Session [" << q << "] has not been answered by the remote party";
 				linphone_error_info_set(ei, nullptr, LinphoneReasonNotAnswered, 0, "Incoming call cancelled", nullptr);
 				nonOpError = true;
 			}
@@ -894,7 +897,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 void CallSessionPrivate::terminate () {
 	if ((state == CallSession::State::IncomingReceived || state == CallSession::State::IncomingEarlyMedia)){
 		LinphoneReason reason = linphone_error_info_get_reason(ei);
-		if( reason == LinphoneReasonNone) {
+		if(reason == LinphoneReasonNone) {
 			linphone_error_info_set_reason(ei, LinphoneReasonDeclined);
 			nonOpError = true;
 		}else if( reason != LinphoneReasonNotAnswered) {

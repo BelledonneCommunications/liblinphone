@@ -15826,6 +15826,8 @@ static test_t local_conference_inpromptu_conference_tests[] = {
 	TEST_NO_TAG("Create simple dial out conference with many late participant additions", LinphoneTest::create_simple_conference_dial_out_with_many_late_participant_additions),
 	TEST_NO_TAG("Create simple dial out conference with participant codec mismatch", LinphoneTest::create_simple_conference_dial_out_participant_codec_mismatch),
 	TEST_NO_TAG("Create simple dial out conference with organizer codec mismatch", LinphoneTest::create_simple_conference_dial_out_organizer_codec_mismatch),
+	TEST_NO_TAG("Create simple dial out conference with video not initiated", LinphoneTest::create_simple_conference_dial_out_with_video_not_initiated),
+	TEST_NO_TAG("Create simple dial out conference with video not accepted", LinphoneTest::create_simple_conference_dial_out_with_video_not_accepted),
 	TEST_NO_TAG("Simple dial out conference with no payloads", LinphoneTest::simple_dial_out_conference_with_no_payloads),
 	TEST_NO_TAG("Create simple conference by merging calls", LinphoneTest::create_simple_conference_merging_calls),
 	TEST_ONE_TAG("Create simple conference by merging calls with video toggling", LinphoneTest::create_simple_conference_merging_calls_with_video_toggling, "LeaksMemory"), /* because of aborted calls*/

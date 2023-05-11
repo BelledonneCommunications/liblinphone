@@ -210,7 +210,15 @@ bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescr
 			bundleOwnerRejected = !isThereAnActiveOwner;
 		}
 	}
-	return (finalMd->isEmpty() || incompatibleSecurity(finalMd) || bundleOwnerRejected);
+	auto securityCheckFailure = incompatibleSecurity(finalMd);
+	auto reject = (finalMd->isEmpty() || securityCheckFailure || bundleOwnerRejected);
+	if (reject) {
+		lWarning() << "Session [" << q << "] may be rejected: ";
+		lWarning() << "- negotiated SDP is" << (finalMd->isEmpty() ? std::string() : std::string(" not")) << " empty";
+		lWarning() << "- negotiated security is" << (securityCheckFailure ? std::string(" not") : std::string()) << " compatible with core settings";
+		lWarning() << "- bundle owner has been " << (bundleOwnerRejected ? std::string("rejected") : std::string("accepted"));
+	}
+	return reject;
 }
 
 void MediaSessionPrivate::accepted() {
@@ -756,7 +764,8 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		expectMediaInAck = false;
 		std::shared_ptr<SalMediaDescription> &md = op->getFinalMediaDescription();
 		if (rejectMediaSession(rmd, md)) {
-			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
+			lWarning() << "Session [" << q << "] is going to be rejected because of an incompatible negotiated SDP";
+			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, "Incompatible SDP", nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
 			return;
@@ -4361,7 +4370,11 @@ void MediaSession::startIncomingNotification(bool notifyRinging) {
 						(conferenceState == ConferenceInterface::State::CreationPending));
 	}
 
-	if (md && (md->isEmpty() || d->incompatibleSecurity(md)) && !isLocalDialOutConferenceCreationPending) {
+	auto securityCheckFailure = d->incompatibleSecurity(md);
+	if (md && (md->isEmpty() || securityCheckFailure) && !isLocalDialOutConferenceCreationPending) {
+		lWarning() << "Session [" << this << "] will be declined: ";
+		lWarning() << "- negotiated SDP is" << (md->isEmpty() ? std::string() : std::string(" not")) << " empty";
+		lWarning() << "- negotiated security is" << (securityCheckFailure ? std::string(" not") : std::string()) << " compatible with core settings";
 		if (d->state != CallSession::State::PushIncomingReceived && d->listener) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
@@ -4484,6 +4497,7 @@ bool MediaSession::isRecording() {
 void MediaSession::terminateBecauseOfLostMedia() {
 	L_D();
 	d->nonOpError = true;
+	lWarning() << "Session [" << this << "] is going to be terminated because the media has been lost";
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonIOError, 503, "Media lost", nullptr);
 	terminate();
 }
@@ -5235,7 +5249,7 @@ void MediaSession::onGoClearAckSent() {
 		d->listener->onGoClearAckSent();
 }
 
-std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::string &label){
+std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::string &label) {
 	L_D();
 	if (d->listener) {
 		LinphoneConference *conference = d->listener->getCallSessionConference(getSharedFromThis());
@@ -5244,19 +5258,6 @@ std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std:
 			return cppConference->findParticipantDeviceByLabel(label);
 		}
 	}
-}
-
-void *MediaSession::getParticipantWindowId(const std::string label) {
-	L_D();
-
-	LinphoneConference *conference = nullptr;
-			const auto &device = cppConference->findParticipantDeviceByLabel(label);
-			if (device) {
-				return device->getWindowId();
-			}
-		}
-	}
-
 	return nullptr;
 }
 
