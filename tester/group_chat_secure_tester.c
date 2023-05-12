@@ -1409,6 +1409,10 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 
 	// Pauline will react to Marie's message with love emoji
 	LinphoneChatMessageReaction *paulineReaction = linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
+
+	const LinphoneAddress *paulineReactionAddr = linphone_chat_message_reaction_get_from_address(paulineReaction);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineReactionAddr, pauline->identity));
+
 	linphone_chat_message_reaction_send(paulineReaction);
 
 	expected_reactions = bctbx_list_append(expected_reactions, "❤️");
@@ -1433,6 +1437,10 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 
 	// Now Laure will react
 	LinphoneChatMessageReaction *laureReaction = linphone_chat_message_create_reaction(laureReceivedMessage, "😂");
+
+	const LinphoneAddress *laureReactionAddr = linphone_chat_message_reaction_get_from_address(laureReaction);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(laureReactionAddr, laure->identity));
+
 	linphone_chat_message_reaction_send(laureReaction);
 
 	// When sent, reactionReceived callback will be triggered
@@ -1454,6 +1462,10 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 
 	// Marie will react to her own message, for fun
 	LinphoneChatMessageReaction *marieReaction = linphone_chat_message_create_reaction(marieSentMessage, "😢");
+
+	const LinphoneAddress *marieReactionAddr = linphone_chat_message_reaction_get_from_address(marieReaction);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marieReactionAddr, marie->identity));
+
 	linphone_chat_message_reaction_send(marieReaction);
 
 	// When sent, reactionReceived callback will be triggered

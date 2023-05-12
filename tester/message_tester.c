@@ -360,6 +360,9 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 					linphone_chat_message_unref(rmsg);
 				} else if (reaction_message) {
 					LinphoneChatMessageReaction *reactionMsg = linphone_chat_message_create_reaction(recv_msg, "👍");
+					const LinphoneAddress *reactionAddr = linphone_chat_message_reaction_get_from_address(reactionMsg);
+					BC_ASSERT_TRUE(
+					    linphone_address_weak_equal(reactionAddr, linphone_chat_message_get_to_address(recv_msg)));
 
 					LinphoneChatMessageCbs *recv_cbs = linphone_chat_message_get_callbacks(recv_msg);
 					linphone_chat_message_cbs_set_new_message_reaction(

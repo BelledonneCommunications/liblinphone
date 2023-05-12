@@ -603,12 +603,11 @@ bctbx_list_t *linphone_chat_message_get_reactions(const LinphoneChatMessage *msg
 LinphoneChatMessageReaction *linphone_chat_message_create_reaction(LinphoneChatMessage *message,
                                                                    const char *utf8_reaction) {
 	const std::string &messageId = L_GET_CPP_PTR_FROM_C_OBJECT(message)->getImdnMessageId();
-	const LinphoneAddress *fromAddr = linphone_chat_message_get_from_address(message);
-	auto fromAddress = LinphonePrivate::Address::toCpp(fromAddr);
-	LinphoneChatMessageReaction *reaction = LinphonePrivate::ChatMessageReaction::createCObject(
-	    messageId, L_C_TO_STRING(utf8_reaction), fromAddress->getSharedFromThis());
-
 	auto chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_chat_message_get_chat_room(message));
+	auto fromAddress = chatRoom->getLocalAddress();
+	LinphoneChatMessageReaction *reaction =
+	    LinphonePrivate::ChatMessageReaction::createCObject(messageId, L_C_TO_STRING(utf8_reaction), fromAddress);
+
 	LinphonePrivate::ChatMessageReaction::toCpp(reaction)->setChatRoom(chatRoom);
 
 	return reaction;
