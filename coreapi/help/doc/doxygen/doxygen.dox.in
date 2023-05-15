@@ -183,3 +183,10 @@
  * be used by C API users.
  */
 
+/**
+ * @defgroup IOS
+ * @brief iOS specific functions
+ *
+ * These functions handle specific aspects of iOS, mainly CallKit integration.
+ */
+
