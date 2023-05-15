@@ -79,3 +79,114 @@
  * This is to be done thanks to the #LinphoneFriendList and #LinphoneFriend object.
  *
 **/
+
+
+/**
+ * @defgroup initializing Initializing
+ * @brief Initializing liblinphone.
+**/
+
+/**
+ * @defgroup logging Logging
+ * @brief Logging service of Linphone.
+ */
+
+/**
+ * @defgroup call_control Call control
+ * @brief Placing and receiving calls.
+ *
+ * The #LinphoneCall object represents an incoming or outgoing call managed by the #LinphoneCore.
+ *
+**/
+
+/**
+ * @defgroup call_misc Call misc
+ * @brief Obtaining information about a running call: sound volumes, quality indicators.
+ *
+ * When a call is running, it is possible to retrieve in real time current measured volumes and quality indicator.
+ *
+**/
+
+/**
+ * @defgroup media_parameters Media parameters
+ * @brief Controlling media parameters.
+ *
+ * <b>Multicast</b>
+ *
+ * Call using rtp multicast addresses are supported for both audio and video with some limitations. Limitations are, no stun, no ice, no encryption.
+ *  - Incoming call with multicast address are automatically accepted. The called party switches in a media receive only mode.
+ *  - Outgoing call willing to send media to a multicast address can activate multicast using linphone_core_enable_video_multicast()
+ *    or linphone_core_enable_audio_multicast(). The calling party switches in a media listen send only mode.
+**/
+
+/**
+ * @defgroup network_parameters Network parameters
+ * @brief Controlling network parameters (ports, mtu...).
+**/
+
+/**
+ * @defgroup authentication Authentication
+ * @brief Managing authentication: userid and passwords.
+**/
+
+/**
+ * @defgroup chatroom Chatroom
+ * @brief Instant messaging
+ *
+**/
+
+/**
+ * @defgroup call_logs Call logs
+ * @brief Managing call logs.
+**/
+
+/**
+ * @defgroup alert Alert
+ * @brief Managing Alerts.
+**/
+
+/**
+ * @defgroup dictionary Dictionary
+ * @brief Managing Dictionary.
+**/
+
+/**
+ * @defgroup linphone_address Linphone address
+ * @brief SIP address parser API.
+
+ * This api is useful for manipulating SIP addresses ('from' or 'to' headers).
+**/
+
+/**
+ * @defgroup conference Conferencing
+ * @brief Making a audio/video conferences.
+ *
+ *
+**/
+
+/**
+ * @defgroup event_api Event api
+ * @brief Managing generic subscriptions and publishes.
+ *
+ * The LinphoneEvent api allows application to control subscriptions, receive notifications and make publish to peers, in a generic manner.
+ */
+
+/**
+ * @defgroup misc Misc
+ * @brief Miscenalleous: logs, version strings, config storage.
+**/
+
+/**
+ * @defgroup wrapper
+ * @brief Wrapper utilities.
+ *
+ * These functions are used by automatic API wrapper generators and should not
+ * be used by C API users.
+ */
+
+/**
+ * @defgroup IOS
+ * @brief iOS specific functions
+ *
+ * These functions handle specific aspects of iOS, mainly CallKit integration.
+ */
