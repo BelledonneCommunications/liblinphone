@@ -424,7 +424,7 @@ public class AndroidPlatformHelper {
         if (view instanceof SurfaceTexture) {
             Log.i("[Platform Helper] Preview window surface is a SurfaceTexture");
             SurfaceTexture surface = (SurfaceTexture) view;
-            setNativeVideoWindowId(mNativePtr, surface);
+            setNativePreviewWindowId(mNativePtr, surface);
             return;
         }
 
