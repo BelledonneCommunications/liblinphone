@@ -1541,7 +1541,9 @@ static void accept_call_in_send_only_base(LinphoneCoreManager *pauline, Linphone
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_get_payload_type(pauline->lc, "h264", -1, -1) != NULL) {
+	LinphonePayloadType *type = linphone_core_get_payload_type(pauline->lc, "h264", -1, -1);
+	if (type != NULL) {
+		linphone_payload_type_unref(type);
 		disable_all_video_codecs_except_one(pauline->lc, "h264");
 		disable_all_video_codecs_except_one(marie->lc, "h264");
 	}
@@ -1891,7 +1893,9 @@ static void classic_video_entry_phone_setup(void) {
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_get_payload_type(caller_mgr->lc, "h264", -1, -1) != NULL) {
+	LinphonePayloadType *type = linphone_core_get_payload_type(caller_mgr->lc, "h264", -1, -1);
+	if (type != NULL) {
+		linphone_payload_type_unref(type);
 		disable_all_video_codecs_except_one(caller_mgr->lc, "h264");
 		disable_all_video_codecs_except_one(callee_mgr->lc, "h264");
 
@@ -2127,7 +2131,9 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_get_payload_type(pauline->lc, "h264", -1, -1) != NULL) {
+	LinphonePayloadType *type = linphone_core_get_payload_type(pauline->lc, "h264", -1, -1);
+	if (type != NULL) {
+		linphone_payload_type_unref(type);
 		disable_all_video_codecs_except_one(pauline->lc, "h264");
 		disable_all_video_codecs_except_one(marie->lc, "h264");
 	}
@@ -3174,7 +3180,7 @@ static test_t call_video_tests[] = {
     TEST_ONE_TAG("Audio call with ICE paused with caller video policy enabled",
                  audio_call_with_ice_with_video_policy_enabled,
                  "ICE"),
-    TEST_NO_TAG("Video call recording (H264)", video_call_recording_h264_test),
+    TEST_ONE_TAG("Video call recording (H264)", video_call_recording_h264_test, "H264"),
     TEST_NO_TAG("Video call recording (VP8)", video_call_recording_vp8_test),
     TEST_NO_TAG("Snapshot", video_call_snapshot),
     TEST_NO_TAG("Snapshots", video_call_snapshots),
@@ -3184,18 +3190,22 @@ static test_t call_video_tests[] = {
     TEST_TWO_TAGS("DTLS SRTP ice video call", dtls_srtp_ice_video_call, "ICE", "DTLS"),
     TEST_TWO_TAGS("DTLS SRTP ice video call with relay", dtls_srtp_ice_video_call_with_relay, "ICE", "DTLS"),
     TEST_NO_TAG("Video call with limited bandwidth", video_call_limited_bandwidth),
-    TEST_NO_TAG("Video call accepted in send only", accept_call_in_send_only),
-    TEST_ONE_TAG("Video call accepted in send only with ice", accept_call_in_send_only_with_ice, "ICE"),
-    TEST_NO_TAG("2 Video call accepted in send only", two_accepted_call_in_send_only),
-    TEST_NO_TAG("Video call with re-invite(inactive) followed by re-invite",
-                video_call_with_re_invite_inactive_followed_by_re_invite),
-    TEST_NO_TAG("Video call with re-invite(inactive) followed by re-invite(no sdp)",
-                video_call_with_re_invite_inactive_followed_by_re_invite_no_sdp),
-    TEST_NO_TAG("SRTP Video call with re-invite(inactive) followed by re-invite",
-                srtp_video_call_with_re_invite_inactive_followed_by_re_invite),
-    TEST_NO_TAG("SRTP Video call with re-invite(inactive) followed by re-invite(no sdp)",
-                srtp_video_call_with_re_invite_inactive_followed_by_re_invite_no_sdp),
-    TEST_NO_TAG("Classic video entry phone setup", classic_video_entry_phone_setup),
+    TEST_ONE_TAG("Video call accepted in send only", accept_call_in_send_only, "H264"),
+    TEST_TWO_TAGS("Video call accepted in send only with ice", accept_call_in_send_only_with_ice, "ICE", "H264"),
+    TEST_ONE_TAG("2 Video call accepted in send only", two_accepted_call_in_send_only, "H264"),
+    TEST_ONE_TAG("Video call with re-invite(inactive) followed by re-invite",
+                 video_call_with_re_invite_inactive_followed_by_re_invite,
+                 "H264"),
+    TEST_ONE_TAG("Video call with re-invite(inactive) followed by re-invite(no sdp)",
+                 video_call_with_re_invite_inactive_followed_by_re_invite_no_sdp,
+                 "H264"),
+    TEST_ONE_TAG("SRTP Video call with re-invite(inactive) followed by re-invite",
+                 srtp_video_call_with_re_invite_inactive_followed_by_re_invite,
+                 "H264"),
+    TEST_ONE_TAG("SRTP Video call with re-invite(inactive) followed by re-invite(no sdp)",
+                 srtp_video_call_with_re_invite_inactive_followed_by_re_invite_no_sdp,
+                 "H264"),
+    TEST_ONE_TAG("Classic video entry phone setup", classic_video_entry_phone_setup, "H264"),
     TEST_NO_TAG("Incoming REINVITE with invalid SDP in ACK", incoming_reinvite_with_invalid_ack_sdp),
     TEST_NO_TAG("Outgoing REINVITE with invalid SDP in ACK", outgoing_reinvite_with_invalid_ack_sdp),
     TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),

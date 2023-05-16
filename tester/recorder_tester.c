@@ -74,7 +74,9 @@ static void record_file(const char *filename,
 		if (linphone_core_find_payload_type(lc_manager->lc, video_mime, -1, -1)) {
 			disable_all_video_codecs_except_one(lc_manager->lc, video_mime);
 		} else {
-			ms_warning("call_recording(): the %s payload has not been found. Only sound will be recorded", video_mime);
+			ms_warning("call_recording(): the %s payload has not been found. Skip Test", video_mime);
+			linphone_core_manager_destroy(lc_manager);
+			return;
 		}
 	}
 
@@ -161,27 +163,29 @@ static void record_wav_pcm_test(void) {
 }
 
 static void record_mkv_opus_h264_test(void) {
-#ifdef HAVE_OPENH264
+#ifdef VIDEO_ENABLED
 	char *filename = bctbx_strdup_printf("%s/testrecordopush264.mkv", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "h264";
 	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime,
-	            LINPHONE_RECORDER_FORMAT_MATROSKA);
+	            LinphoneRecorderFileFormatMkv);
 	ms_free(filename);
 #endif
 }
 
 static void record_mkv_opus_vp8_test(void) {
+#ifdef VIDEO_ENABLED
 	char *filename = bctbx_strdup_printf("%s/testrecordopusvp8.mkv", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "vp8";
 	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime,
 	            LinphoneRecorderFileFormatMkv);
 	ms_free(filename);
+#endif
 }
 
 test_t recorder_tests[] = {TEST_NO_TAG("Recording wave", record_wav_pcm_test),
-                           TEST_NO_TAG("Recording mkv opus+h264", record_mkv_opus_h264_test),
+                           TEST_ONE_TAG("Recording mkv opus+h264", record_mkv_opus_h264_test, "H264"),
                            TEST_NO_TAG("Recording mkv opus+VP8", record_mkv_opus_vp8_test)};
 
 test_suite_t recorder_test_suite = {"Recorder",
