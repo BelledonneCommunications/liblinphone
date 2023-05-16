@@ -25,7 +25,7 @@ set(OTHER_LIBS_FOR_TESTER
 	bctoolbox
 	bctoolbox-tester
 	ortp
-	mediastreamer
+	mediastreamer2
 	${BELLESIP_TARGETNAME}
 	belr
 	${XML2_LIBRARIES} ${XSD_LIBRARIES}
@@ -62,7 +62,7 @@ if(TURBOJPEG_FOUND)
 endif()
 
 if(ENABLE_CXX_WRAPPER)
-	list(APPEND OTHER_LIBS_FOR_TESTER linphone++)
+	list(APPEND OTHER_LIBS_FOR_TESTER liblinphone++)
 endif()
 
 set(SOUND_FILES
@@ -489,24 +489,24 @@ endif()
 
 if(NOT ANDROID)
 	if(NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-		add_executable(liblinphone_tester ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${SOURCE_FILES_OBJC})
-		set_target_properties(liblinphone_tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
-		set_target_properties(liblinphone_tester PROPERTIES LINKER_LANGUAGE CXX)
-		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
-		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
-		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
+		add_executable(liblinphone-tester ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${SOURCE_FILES_OBJC})
+		set_target_properties(liblinphone-tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+		set_target_properties(liblinphone-tester PROPERTIES LINKER_LANGUAGE CXX)
+		set_target_properties(liblinphone-tester PROPERTIES C_STANDARD 99)
+		target_include_directories(liblinphone-tester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
+		target_link_libraries(liblinphone-tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 		if(APPLE)
-			target_link_libraries(liblinphone_tester "-framework AppKit")
+			target_link_libraries(liblinphone-tester "-framework AppKit")
 		endif()
 		if(MSVC)
 				if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-						install(FILES $<TARGET_PDB_FILE:liblinphone_tester>
+						install(FILES $<TARGET_PDB_FILE:liblinphone-tester>
 								DESTINATION ${CMAKE_INSTALL_BINDIR}
 								PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 						)
 				endif()
 		endif()
-		install(TARGETS liblinphone_tester
+		install(TARGETS liblinphone-tester
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -516,14 +516,14 @@ if(NOT ANDROID)
 			configure_file("${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/Info.plist")
 		endif()
 
-		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})
-		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
-		set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
-		set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)
-		target_include_directories(groupchat_benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
-		target_link_libraries(groupchat_benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
+		add_executable(liblinphone-groupchat-benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})
+		set_target_properties(liblinphone-groupchat-benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+		set_target_properties(liblinphone-groupchat-benchmark PROPERTIES LINKER_LANGUAGE CXX)
+		set_target_properties(liblinphone-groupchat-benchmark PROPERTIES C_STANDARD 99)
+		target_include_directories(liblinphone-groupchat-benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
+		target_link_libraries(liblinphone-groupchat-benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
-		install(TARGETS groupchat_benchmark
+		install(TARGETS liblinphone-groupchat-benchmark
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -531,14 +531,14 @@ if(NOT ANDROID)
 		)
 
 	endif()
-	install(FILES ${CERTIFICATE_ALT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/certificates/altname")
-	install(FILES ${CERTIFICATE_CLIENT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/certificates/client")
-	install(FILES ${CERTIFICATE_CN_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/certificates/cn")
-	install(FILES ${DB_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/db")
-	install(FILES ${IMAGE_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/images")
-	install(FILES ${OTHER_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester")
-	install(FILES ${RC_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/rcfiles")
-	install(FILES ${SIPP_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/sipp")
-	install(FILES ${SOUND_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/sounds")
-	install(FILES ${VCARD_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/vcards")
+	install(FILES ${CERTIFICATE_ALT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/certificates/altname")
+	install(FILES ${CERTIFICATE_CLIENT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/certificates/client")
+	install(FILES ${CERTIFICATE_CN_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/certificates/cn")
+	install(FILES ${DB_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/db")
+	install(FILES ${IMAGE_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/images")
+	install(FILES ${OTHER_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester")
+	install(FILES ${RC_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/rcfiles")
+	install(FILES ${SIPP_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/sipp")
+	install(FILES ${SOUND_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/sounds")
+	install(FILES ${VCARD_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone-tester/vcards")
 endif()

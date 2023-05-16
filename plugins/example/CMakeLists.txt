@@ -99,7 +99,7 @@ if(ENABLE_SHARED)
 		PRIVATE ${INCLUDE_DIRS}
 	)
 
-	target_link_libraries(exampleplugin PRIVATE linphone mediastreamer ${LIBS})
+	target_link_libraries(exampleplugin PRIVATE linphone mediastreamer2 ${LIBS})
 	set_target_properties(exampleplugin PROPERTIES LINKER_LANGUAGE CXX)
 	if(APPLE)
 		if(IOS)

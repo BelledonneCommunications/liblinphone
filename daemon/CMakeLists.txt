@@ -126,7 +126,7 @@ bc_apply_compile_flags(DAEMON_PIPETEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OP
 bc_apply_compile_flags(DAEMON_SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 add_executable(linphone-daemon ${DAEMON_SOURCE_FILES} ${DAEMON_SOURCE_FILES_OBJC})
 target_include_directories(linphone-daemon PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${LINPHONE_INCLUDE_DIRS})
-target_link_libraries(linphone-daemon ${LINPHONE_LIBS_FOR_TOOLS} mediastreamer ortp bctoolbox bellesip ${XSD_LIBRARIES})
+target_link_libraries(linphone-daemon ${LINPHONE_LIBS_FOR_TOOLS} mediastreamer2 ortp bctoolbox belle-sip ${XSD_LIBRARIES})
 set_target_properties(linphone-daemon PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 set_target_properties(linphone-daemon PROPERTIES LINKER_LANGUAGE CXX)
 if(APPLE)
@@ -134,7 +134,7 @@ if(APPLE)
 endif()
 
 add_executable(linphone-daemon-pipetest ${DAEMON_PIPETEST_SOURCE_FILES})
-target_link_libraries(linphone-daemon-pipetest ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer)
+target_link_libraries(linphone-daemon-pipetest ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer2)
 set_target_properties(linphone-daemon-pipetest PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 set_target_properties(linphone-daemon-pipetest PROPERTIES LINKER_LANGUAGE CXX)
 

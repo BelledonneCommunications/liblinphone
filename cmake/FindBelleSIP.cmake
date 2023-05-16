@@ -27,11 +27,11 @@
 #  BELLESIP_LIBRARIES - The library needed to use bellesip
 #  BELLESIP_TARGETNAME - The target name for the bellesip library
 
-if(TARGET bellesip)
+if(TARGET belle-sip)
 
-	set(BELLESIP_LIBRARIES bellesip)
-	set(BELLESIP_TARGETNAME bellesip)
-	get_target_property(BELLESIP_INCLUDE_DIRS bellesip INTERFACE_INCLUDE_DIRECTORIES)
+	set(BELLESIP_LIBRARIES belle-sip)
+	set(BELLESIP_TARGETNAME belle-sip)
+	get_target_property(BELLESIP_INCLUDE_DIRS belle-sip INTERFACE_INCLUDE_DIRECTORIES)
 
 
 	include(FindPackageHandleStandardArgs)

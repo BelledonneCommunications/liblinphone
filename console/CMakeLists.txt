@@ -38,7 +38,7 @@ if(MSVC)
 endif()
 
 add_executable(linphonec ${LINPHONEC_SOURCE_FILES})
-target_link_libraries(linphonec ${LINPHONE_LIBS_FOR_TOOLS} bctoolbox ortp mediastreamer ${XSD_LIBRARIES})
+target_link_libraries(linphonec ${LINPHONE_LIBS_FOR_TOOLS} bctoolbox ortp mediastreamer2 ${XSD_LIBRARIES})
 set_target_properties(linphonec PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 set_target_properties(linphonec PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -48,7 +48,7 @@ endif()
 
 if(WIN32)
 	add_executable(linphoned WIN32 ${LINPHONEC_SOURCE_FILES})
-	target_link_libraries(linphoned ${LINPHONE_LIBS_FOR_TOOLS} bctoolbox ortp mediastreamer ${XSD_LIBRARIES})
+	target_link_libraries(linphoned ${LINPHONE_LIBS_FOR_TOOLS} bctoolbox ortp mediastreamer2 ${XSD_LIBRARIES})
 	if(INTL_FOUND)
 		target_link_libraries(linphoned ${INTL_LIBRARIES})
 	endif()

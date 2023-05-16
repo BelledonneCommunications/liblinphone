@@ -30,10 +30,10 @@ add_custom_command(OUTPUT LinphoneWrapper.cs
 	genwrapper.py
 	wrapper_impl.mustache
 	${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml/index.xml
-	linphone-doc
+	liblinphone-doc
 )
 
-add_custom_target(linphonecs ALL DEPENDS LinphoneWrapper.cs)
+add_custom_target(liblinphone-csharp ALL DEPENDS LinphoneWrapper.cs)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonecs/"
@@ -75,9 +75,9 @@ if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 		)
 
 		add_custom_target(
-			linphonecs-doc-site 
+			liblinphone-csharp-doc-site 
 			ALL 
-			DEPENDS linphonecs "docfx_project/_site/index.html"
+			DEPENDS liblinphone-csharp "docfx_project/_site/index.html"
 		)
 
 		install(

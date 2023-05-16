@@ -91,7 +91,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_definitions("-DDEBUG")
 endif()
 
-set(LINPHONE_LIBS_FOR_TOOLS linphone)
+set(LINPHONE_LIBS_FOR_TOOLS liblinphone)
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LINPHONE_LIBS_FOR_TOOLS "Ws2_32" "Iphlpapi" "user32")
 endif()

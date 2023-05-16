@@ -43,7 +43,7 @@ add_custom_command(OUTPUT LinphoneWrapper.swift
 	${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml/index.xml
 	genwrapper.py
 	wrapper_impl.mustache
-	linphone-doc
+	liblinphone-doc
 )
 
 # When ENABLE_SWIFT_WRAPPER=YES and ENABLE_SWIFT_WRAPPER_COMPILATION=NO, we use the swift file directly, which is recommended.

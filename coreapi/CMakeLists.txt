@@ -131,26 +131,26 @@ bc_apply_compile_flags(LINPHONE_SOURCE_FILES_CXX STRICT_OPTIONS_CPP STRICT_OPTIO
 bc_apply_compile_flags(LINPHONE_SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 
 
-add_library(linphone-coreapi OBJECT
+add_library(liblinphone-coreapi OBJECT
 	${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 )
-target_include_directories(linphone-coreapi PRIVATE
+target_include_directories(liblinphone-coreapi PRIVATE
 	${LINPHONE_INCLUDE_DIRS}
 	$<TARGET_PROPERTY:${BELLESIP_TARGETNAME},INTERFACE_INCLUDE_DIRECTORIES>
 	$<TARGET_PROPERTY:belr,INTERFACE_INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:mediastreamer,INTERFACE_INCLUDE_DIRECTORIES>
+	$<TARGET_PROPERTY:mediastreamer2,INTERFACE_INCLUDE_DIRECTORIES>
 	$<TARGET_PROPERTY:ortp,INTERFACE_INCLUDE_DIRECTORIES>
 )
 if(BELCARD_FOUND)
-	target_include_directories(linphone-coreapi PRIVATE $<TARGET_PROPERTY:belcard,INTERFACE_INCLUDE_DIRECTORIES>)
+	target_include_directories(liblinphone-coreapi PRIVATE $<TARGET_PROPERTY:belcard,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
-add_dependencies(linphone-coreapi liblinphone-git-version)
+add_dependencies(liblinphone-coreapi liblinphone-git-version)
 if(ENABLE_JAVA_WRAPPER)
-      add_dependencies(linphone-coreapi linphonej)
+      add_dependencies(liblinphone-coreapi linphonej)
 endif()
 
 if(BUILD_SHARED_LIBS)
-	set_target_properties(linphone-coreapi PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+	set_target_properties(liblinphone-coreapi PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 endif()
 
 

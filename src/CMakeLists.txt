@@ -28,7 +28,7 @@ set(LINK_LIBS
 )
 set(PUBLIC_LINK_LIBS
 	ortp
-	mediastreamer
+	mediastreamer2
 )
 
 #APPLE_LIBS is mandatory for apple compilation
@@ -683,54 +683,54 @@ if(BUILD_SHARED_LIBS)
 	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
 endif()
 
-add_library(linphone ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
+add_library(liblinphone ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 	${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
-	$<TARGET_OBJECTS:linphone-coreapi>
+	$<TARGET_OBJECTS:liblinphone-coreapi>
 )
 if(APPLE)
-	set_target_properties(linphone PROPERTIES OUTPUT_NAME linphone)
+	set_target_properties(liblinphone PROPERTIES OUTPUT_NAME linphone)
 else()
-	set_target_properties(linphone PROPERTIES OUTPUT_NAME liblinphone)
+	set_target_properties(liblinphone PROPERTIES OUTPUT_NAME liblinphone)
 endif()
-set_target_properties(linphone PROPERTIES PREFIX "")
-set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(liblinphone PROPERTIES PREFIX "")
+set_target_properties(liblinphone PROPERTIES LINKER_LANGUAGE CXX)
 if(NOT ANDROID)
 	# Do not version shared library on Android
-	set_target_properties(linphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
+	set_target_properties(liblinphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 endif()
-target_include_directories(linphone PUBLIC
+target_include_directories(liblinphone PUBLIC
 	$<INSTALL_INTERFACE:include/>
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
 	PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS}
 )
-target_link_libraries(linphone
+target_link_libraries(liblinphone
 	PUBLIC ${PUBLIC_LINK_LIBS}
 	PRIVATE ${LINK_LIBS}
 )
 if(ENABLE_FLEXIAPI)
-	target_link_libraries(linphone PUBLIC ${JSONCPP_LIBRARIES})
+	target_link_libraries(liblinphone PUBLIC ${JSONCPP_LIBRARIES})
 endif()
 
 if(APPLE)
-	target_link_libraries(linphone PUBLIC ${APPLE_LIBS})
+	target_link_libraries(liblinphone PUBLIC ${APPLE_LIBS})
 endif()
 
 if(ICONV_FOUND)
 	if(APPLE)
 		# Prevent conflict between the system iconv.h header and the one from macports.
-		target_compile_options(linphone PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
+		target_compile_options(liblinphone PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
 	else()
-		target_include_directories(linphone PRIVATE ${ICONV_INCLUDE_DIRS})
+		target_include_directories(liblinphone PRIVATE ${ICONV_INCLUDE_DIRS})
 	endif()
 endif()
 
 if(BUILD_SHARED_LIBS)
 	if(MSVC)
-		set_target_properties(linphone PROPERTIES PDB_NAME liblinphone)
+		set_target_properties(liblinphone PROPERTIES PDB_NAME liblinphone)
 	endif()
-	target_compile_definitions(linphone PRIVATE "-DLINPHONE_EXPORTS")
+	target_compile_definitions(liblinphone PRIVATE "-DLINPHONE_EXPORTS")
 	if(APPLE)
 		if(IOS)
 			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
@@ -743,7 +743,7 @@ if(BUILD_SHARED_LIBS)
 		set_source_files_properties(${LINPHONE_ENUMS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/enums")
 		set_source_files_properties(${LINPHONE_UTILS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/utils")
 		list(GET LINPHONE_ROOT_HEADER_FILES 0 one_header_file)
-		set_target_properties(linphone PROPERTIES
+		set_target_properties(liblinphone PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
 			MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
@@ -755,18 +755,18 @@ if(BUILD_SHARED_LIBS)
 	if(WIN32)
 		# Export Xerces and Soci symbols.
 		if(ENABLE_DB_STORAGE)
-			target_compile_definitions(linphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
+			target_compile_definitions(liblinphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
 		endif()
 	elseif(ANDROID)
 		if (SUPPORT_FOUND)
-			target_link_libraries(linphone PUBLIC "log" ${SUPPORT_LIBRARIES} ${CPUFEATURES_LIBRARIES})
+			target_link_libraries(liblinphone PUBLIC "log" ${SUPPORT_LIBRARIES} ${CPUFEATURES_LIBRARIES})
 		else()
-			target_link_libraries(linphone PUBLIC "log" ${CPUFEATURES_LIBRARIES})
+			target_link_libraries(liblinphone PUBLIC "log" ${CPUFEATURES_LIBRARIES})
 		endif()
 	endif()
 	if(MSVC)
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-			install(FILES $<TARGET_PDB_FILE:linphone>
+			install(FILES $<TARGET_PDB_FILE:liblinphone>
 				DESTINATION ${CMAKE_INSTALL_BINDIR}
 				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
@@ -774,7 +774,7 @@ if(BUILD_SHARED_LIBS)
 	endif()
 endif()
 
-install(TARGETS linphone EXPORT ${EXPORT_TARGETS_NAME}Targets
+install(TARGETS liblinphone EXPORT ${EXPORT_TARGETS_NAME}Targets
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

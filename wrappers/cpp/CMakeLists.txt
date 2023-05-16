@@ -35,38 +35,38 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/linpho
 	enums_header.mustache
 	main_header.mustache
 	${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml/index.xml
-	linphone-doc
+	liblinphone-doc
 )
-add_custom_target(linphone-cxx-wrapper ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/linphone.hh" "${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc")
+add_custom_target(liblinphone-cxx-wrapper ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/linphone.hh" "${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc")
 
-add_library(linphone++
+add_library(liblinphone++
 	object.cc
 	tools.cc
 	${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc
 )
-add_dependencies(linphone++ linphone-cxx-wrapper)
+add_dependencies(liblinphone++ liblinphone-cxx-wrapper)
 
 if(APPLE)
-	set_target_properties(linphone++ PROPERTIES OUTPUT_NAME linphone++)
+	set_target_properties(liblinphone++ PROPERTIES OUTPUT_NAME linphone++)
 else()
-	set_target_properties(linphone++ PROPERTIES OUTPUT_NAME liblinphone++)
+	set_target_properties(liblinphone++ PROPERTIES OUTPUT_NAME liblinphone++)
 endif()
-set_target_properties(linphone++ PROPERTIES PREFIX "")
+set_target_properties(liblinphone++ PROPERTIES PREFIX "")
 if(MSVC)
-    set_target_properties(linphone++ PROPERTIES PDB_NAME liblinphone++)
+    set_target_properties(liblinphone++ PROPERTIES PDB_NAME liblinphone++)
 endif()
-target_compile_definitions(linphone++ PRIVATE "-DLINPHONECXX_EXPORTS")
-target_link_libraries(linphone++
-	PRIVATE bctoolbox bellesip linphone
+target_compile_definitions(liblinphone++ PRIVATE "-DLINPHONECXX_EXPORTS")
+target_link_libraries(liblinphone++
+	PRIVATE bctoolbox belle-sip liblinphone
 )
 
-set_target_properties(linphone++ PROPERTIES
+set_target_properties(liblinphone++ PROPERTIES
 	FRAMEWORK TRUE
 	MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonecpp
 	MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
 )
 
-target_include_directories(linphone++
+target_include_directories(liblinphone++
 	PUBLIC
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -75,9 +75,9 @@ target_include_directories(linphone++
 	PRIVATE
 		${PROJECT_BINARY_DIR}/include
 )
-set_target_properties(linphone++ PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
+set_target_properties(liblinphone++ PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 
-install(TARGETS linphone++ EXPORT LinphoneCxxTargets
+install(TARGETS liblinphone++ EXPORT LinphoneCxxTargets
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -134,7 +134,7 @@ if(ENABLE_DOC OR ENABLE_CXX_WRAPPER)
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${CPP_HTML_DIR}
 			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 			DEPENDS ${DOC_INPUT_FILES}
-			linphone-cxx-wrapper
+			liblinphone-cxx-wrapper
 		)
 		add_custom_target(linphone-cpp-html-doc ALL DEPENDS "${CPP_HTML_DIR}/index.html")
 		if(ENABLE_DOC)

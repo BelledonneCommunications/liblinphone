@@ -55,7 +55,7 @@ if(ENABLE_DOC OR ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAP
 			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 			DEPENDS ${DOC_INPUT_FILES}
 		)
-		add_custom_target(linphone-doc ALL DEPENDS "${XML_DIR}/index.xml" "${C_HTML_DIR}/index.html")
+		add_custom_target(liblinphone-doc ALL DEPENDS "${XML_DIR}/index.xml" "${C_HTML_DIR}/index.html")
 		if(ENABLE_DOC)
 			install(DIRECTORY "${C_HTML_DIR}"
 				DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
