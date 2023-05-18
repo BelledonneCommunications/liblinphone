@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -21,7 +21,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.22)
 project(exampleplugin VERSION 1.1.1 LANGUAGES C CXX)
 
 set(PACKAGE "${PROJECT_NAME}")
@@ -32,9 +32,6 @@ set(PACKAGE_BUGREPORT "support@belledonne-communications.com")
 set(PACKAGE_TARNAME "exampleplugin")
 set(PACKAGE_URL "")
 set(VERSION "${PACKAGE_VERSION}")
-
-option(ENABLE_SHARED "Build shared library." YES)
-option(ENABLE_STATIC "Build static library." YES)
 
 option(ENABLE_XML2 "Build with libxml2 support - for presence feature mainly" YES)
 
@@ -71,65 +68,54 @@ endif()
 
 set(PLUGINS_DIR "${LINPHONE_PACKAGE_PLUGINS_DIR}")
 
-if(ENABLE_STATIC)
-	add_library(exampleplugin-static STATIC ${SOURCE_FILES})
-	target_include_directories(exampleplugin-static PUBLIC
-		PRIVATE ${INCLUDE_DIRS}
-	)
-	set_target_properties(exampleplugin-static PROPERTIES OUTPUT_NAME exampleplugin)
-	set_target_properties(exampleplugin-static PROPERTIES LINKER_LANGUAGE CXX)
-	target_link_libraries(exampleplugin-static ${LIBS})
-	install(TARGETS exampleplugin-static
-		ARCHIVE DESTINATION "${PLUGINS_DIR}"
-		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	)
-endif()
-if(ENABLE_SHARED)
+if(BUILD_SHARED_LIBS)
 	if(NOT IOS)
 		add_library(exampleplugin MODULE ${SOURCE_FILES})
 	else()
 		add_library(exampleplugin SHARED ${SOURCE_FILES})
 	endif()
-
-	target_include_directories(exampleplugin PUBLIC
-		$<INSTALL_INTERFACE:include/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
-		PRIVATE ${INCLUDE_DIRS}
-	)
-
-	target_link_libraries(exampleplugin PRIVATE linphone mediastreamer2 ${LIBS})
-	set_target_properties(exampleplugin PROPERTIES LINKER_LANGUAGE CXX)
-	if(APPLE)
-		if(IOS)
-			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
-			set_target_properties(exampleplugin 	PROPERTIES
-				FRAMEWORK TRUE
-				MACOSX_FRAMEWORK_IDENTIFIER org.linphone.exampleplugin
-				MACOSX_FRAMEWORK_INFO_PLIST Info.plist.in
-			)
-		else()
-			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
-		endif()
-		set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/osx/")
-	endif()
-	if(MSVC)
-		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-			install(FILES $<TARGET_PDB_FILE:exampleplugin>
-				DESTINATION ${CMAKE_INSTALL_BINDIR}
-				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-			)
-		endif()
-		if(NOT IOS)
-			set_target_properties(exampleplugin PROPERTIES PREFIX "lib")
-		endif()
-	endif()
-	install(TARGETS exampleplugin
-			RUNTIME DESTINATION ${PLUGINS_DIR}
-			LIBRARY DESTINATION ${PLUGINS_DIR}
-			ARCHIVE DESTINATION ${PLUGINS_DIR}
-			FRAMEWORK DESTINATION Frameworks
-			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	)
+else()
+	add_library(exampleplugin STATIC ${SOURCE_FILES})
 endif()
+
+target_include_directories(exampleplugin PUBLIC
+	$<INSTALL_INTERFACE:include/>
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
+	PRIVATE ${INCLUDE_DIRS}
+)
+
+target_link_libraries(exampleplugin PRIVATE liblinphone ${LIBS})
+set_target_properties(exampleplugin PROPERTIES LINKER_LANGUAGE CXX)
+if(APPLE)
+	if(IOS)
+		set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
+		set_target_properties(exampleplugin PROPERTIES
+			FRAMEWORK TRUE
+			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.exampleplugin
+			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
+		)
+	else()
+		set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
+	endif()
+endif()
+if(MSVC)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		install(FILES $<TARGET_PDB_FILE:exampleplugin>
+			DESTINATION ${CMAKE_INSTALL_BINDIR}
+			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+		)
+	endif()
+	if(NOT IOS)
+		set_target_properties(exampleplugin PROPERTIES PREFIX "lib")
+	endif()
+endif()
+
+install(TARGETS exampleplugin
+		RUNTIME DESTINATION ${PLUGINS_DIR}
+		LIBRARY DESTINATION ${PLUGINS_DIR}
+		ARCHIVE DESTINATION ${PLUGINS_DIR}
+		FRAMEWORK DESTINATION Frameworks
+		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)

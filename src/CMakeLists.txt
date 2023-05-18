@@ -29,6 +29,7 @@ set(LINK_LIBS
 set(PUBLIC_LINK_LIBS
 	ortp
 	mediastreamer2
+	belle-sip
 )
 
 #APPLE_LIBS is mandatory for apple compilation
@@ -89,7 +90,7 @@ if (ENABLE_DB_STORAGE)
 endif()
 if(SQLITE3_FOUND)
 	list(APPEND INTERFACE_LIBS sqlite3)
-	list(APPEND LINK_LIBS ${SQLITE3_LIBRARIES})
+	list(APPEND PUBLIC_LINK_LIBS ${SQLITE3_LIBRARIES})
 endif()
 if(ICONV_FOUND)
 	list(APPEND INTERFACE_LIBS iconv)

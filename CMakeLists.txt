@@ -529,9 +529,6 @@ if (ENABLE_PACKAGE_SOURCE)
 endif()
 
 if(ENABLE_EXAMPLE_PLUGIN)
-	if(ENABLE_XML2)
-		list(APPEND EP_exampleplugin_DEPENDENCIES "EP_xml2")
-	endif()
 	add_subdirectory(plugins/example)
 endif()
 
