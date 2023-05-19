@@ -79,8 +79,10 @@ _create_call_log(LinphoneCore *lc, LinphoneAddress *addrFrom, LinphoneAddress *a
 	                                                      LinphoneCallSuccess, FALSE, 1.0));
 }
 
-static LinphoneLdap *
-_create_default_ldap_server(LinphoneCoreManager *manager, BCTBX_UNUSED(const char *password), const char *bind_dn, const bool_t test_fallback) {
+static LinphoneLdap *_create_default_ldap_server(LinphoneCoreManager *manager,
+                                                 BCTBX_UNUSED(const char *password),
+                                                 const char *bind_dn,
+                                                 const bool_t test_fallback) {
 	LinphoneLdap *ldap = NULL;
 	if (linphone_core_ldap_available(manager->lc)) {
 		// 1) Create LDAP params and set values
@@ -94,10 +96,10 @@ _create_default_ldap_server(LinphoneCoreManager *manager, BCTBX_UNUSED(const cha
 		linphone_ldap_params_set_max_results(params, 50);
 		linphone_ldap_params_set_auth_method(params, LinphoneLdapAuthMethodSimple);
 		linphone_ldap_params_set_base_object(params, "dc=bc,dc=com");
-		if(test_fallback)
-			linphone_ldap_params_set_server(params, "ldap:///,ldap://unknwown.example.org://sipv4-nat64.example.org,ldap://srv-ldap.example.org/");
-		else
-			linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");
+		if (test_fallback)
+			linphone_ldap_params_set_server(
+			    params, "ldap:///,ldap://unknwown.example.org://sipv4-nat64.example.org,ldap://srv-ldap.example.org/");
+		else linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");
 		linphone_ldap_params_set_filter(params, "(sn=*%s*)");
 		linphone_ldap_params_set_name_attribute(params, "sn");
 		linphone_ldap_params_set_sip_attribute(params, "mobile,telephoneNumber,homePhone,sn");
@@ -180,24 +182,46 @@ static void core_init_test(void) {
 		linphone_core_verify_server_certificates(lc, FALSE);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
 		const char *example_plugin_name = "libexampleplugin";
+		const char *ekt_server_plugin_name = "libektserver";
 		const bctbx_list_t *plugins = linphone_core_get_loaded_plugins(lc);
-#ifdef HAVE_EXAMPLE_PLUGIN
+#if defined(HAVE_EXAMPLE_PLUGIN) || defined(HAVE_EKT_SERVER_PLUGIN)
 #ifdef __IOS__
 		BC_ASSERT_EQUAL(bctbx_list_size(plugins), 0, size_t, "%zu");
 		BC_ASSERT_PTR_NULL(
 		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, example_plugin_name));
 		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, example_plugin_name));
+		BC_ASSERT_PTR_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, ekt_server_plugin_name));
+		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, ekt_server_plugin_name));
 #else
 		BC_ASSERT_GREATER_STRICT(bctbx_list_size(plugins), 0, size_t, "%zu");
+#ifdef HAVE_EXAMPLE_PLUGIN
 		BC_ASSERT_PTR_NOT_NULL(
 		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, example_plugin_name));
 		BC_ASSERT_TRUE(linphone_core_is_plugin_loaded(lc, example_plugin_name));
-#endif // __IOS__
 #else
 		BC_ASSERT_PTR_NULL(
 		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, example_plugin_name));
 		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, example_plugin_name));
 #endif // HAVE_EXAMPLE_PLUGIN
+#ifdef HAVE_EKT_SERVER_PLUGIN
+		BC_ASSERT_PTR_NOT_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, ekt_server_plugin_name));
+		BC_ASSERT_TRUE(linphone_core_is_plugin_loaded(lc, ekt_server_plugin_name));
+#else
+		BC_ASSERT_PTR_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, ekt_server_plugin_name));
+		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, ekt_server_plugin_name));
+#endif // HAVE_EKT_SERVER_PLUGIN
+#endif // __IOS__
+#else
+		BC_ASSERT_PTR_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, example_plugin_name));
+		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, example_plugin_name));
+		BC_ASSERT_PTR_NULL(
+		    bctbx_list_find_custom((bctbx_list_t *)plugins, (bctbx_compare_func)strcmp, ekt_server_plugin_name));
+		BC_ASSERT_FALSE(linphone_core_is_plugin_loaded(lc, ekt_server_plugin_name));
+#endif // HAVE_EXAMPLE_PLUGIN || HAVE_EKT_SERVER_PLUGIN
 		linphone_core_unref(lc);
 	}
 }
@@ -1561,7 +1585,8 @@ static void search_friend_with_presence(void) {
 	LinphonePresenceModel *chloePresence = linphone_core_create_presence_model(manager->lc);
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(manager->lc);
 
-	LinphoneLdap *ldap = _create_default_ldap_server(manager, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com", FALSE);
+	LinphoneLdap *ldap =
+	    _create_default_ldap_server(manager, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com", FALSE);
 
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
@@ -2273,13 +2298,13 @@ static void search_friend_get_capabilities(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-
 static void search_friend_chat_room_remote_with_fallback(bool_t check_ldap_fallback) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneLdap *ldap = _create_default_ldap_server(marie, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com", check_ldap_fallback);
+	LinphoneLdap *ldap = _create_default_ldap_server(marie, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com",
+	                                                 check_ldap_fallback);
 
 	LinphoneChatRoom *room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	BC_ASSERT_PTR_NOT_NULL(room);
@@ -2758,7 +2783,6 @@ static void ldap_search(void) {
 		linphone_ldap_params_unref(params);
 	}
 
-
 	// Test star characters (not wild)
 	linphone_magic_search_get_contacts_list_async(magicSearch, "*", "", LinphoneMagicSearchSourceLdapServers,
 	                                              LinphoneMagicSearchAggregationNone);
@@ -2791,7 +2815,6 @@ static void ldap_search(void) {
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
-	
 
 	linphone_magic_search_get_contacts_list_async(magicSearch, "ine**", "", LinphoneMagicSearchSourceLdapServers,
 	                                              LinphoneMagicSearchAggregationNone);
@@ -2800,8 +2823,6 @@ static void ldap_search(void) {
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
-	
-	
 
 	// Test space character
 	linphone_magic_search_get_contacts_list_async(magicSearch, "la dy", "", LinphoneMagicSearchSourceLdapServers,
@@ -3471,7 +3492,9 @@ test_t setup_tests[] = {
     TEST_ONE_TAG("Search friend in large friends database", search_friend_large_database, "MagicSearch"),
     TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
     TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
-    TEST_ONE_TAG("Search friend result chat room remote ldap fallback", search_friend_chat_room_remote_ldap_fallback, "MagicSearch"),
+    TEST_ONE_TAG("Search friend result chat room remote ldap fallback",
+                 search_friend_chat_room_remote_ldap_fallback,
+                 "MagicSearch"),
     TEST_ONE_TAG("Search friend in non default friend list", search_friend_non_default_list, "MagicSearch"),
     TEST_ONE_TAG("Async search friend in sources", async_search_friend_in_sources, "MagicSearch"),
     TEST_ONE_TAG("Ldap search", ldap_search, "MagicSearch"),

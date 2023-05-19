@@ -71,6 +71,7 @@ option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive 
 option(ENABLE_SQLITE "Build with sqlite support" YES)
 option(ENABLE_XML2 "Build with libxml2 support - for presence feature mainly" YES)
 option(ENABLE_EXAMPLE_PLUGIN "Enable build of the example plugin" NO)
+option(ENABLE_EKT_SERVER_PLUGIN "Enable build of the EKT encryption plugin" NO)
 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
@@ -437,12 +438,12 @@ endif()
 
 if(ENABLE_RELATIVE_PREFIX)
 	if(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" OR CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-		set(LINPHONE_PACKAGE_PLUGINS_DIR ".")
+		set(LINPHONE_PACKAGE_PLUGINS_DIR "." CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
 	else()
-		set(LINPHONE_PACKAGE_PLUGINS_DIR "./${LINPHONE_PLUGINS_LOCATION}")
+		set(LINPHONE_PACKAGE_PLUGINS_DIR "./${LINPHONE_PLUGINS_LOCATION}" CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
 	endif()
 else()
-	set(LINPHONE_PACKAGE_PLUGINS_DIR "${CMAKE_INSTALL_PREFIX}/${LINPHONE_PLUGINS_LOCATION}")
+	set(LINPHONE_PACKAGE_PLUGINS_DIR "${CMAKE_INSTALL_PREFIX}/${LINPHONE_PLUGINS_LOCATION}" CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
@@ -463,6 +464,10 @@ endif()
 
 if(ENABLE_EXAMPLE_PLUGIN)
 	add_definitions(-DHAVE_EXAMPLE_PLUGIN)
+endif()
+
+if(ENABLE_EKT_SERVER_PLUGIN)
+	add_definitions(-DHAVE_EKT_SERVER_PLUGIN)
 endif()
 
 set(EXPORT_TARGETS_NAME "Linphone")
