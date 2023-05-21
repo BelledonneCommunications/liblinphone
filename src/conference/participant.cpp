@@ -213,10 +213,10 @@ Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ig
 	std::list<std::string> participantDevices{};
 	// build a list of participants devices address
 	for (const auto &device : getDevices()) {
-		participantDevices.push_back(device->getAddress()->toString());
+		participantDevices.push_back(device->getAddress()->asStringUriOnly());
 	}
 	if (ignoredDevice != nullptr) {
-		participantDevices.remove(ignoredDevice->getAddress()->toString());
+		participantDevices.remove(ignoredDevice->getAddress()->asStringUriOnly());
 	}
 	if (participantDevices.empty()) {
 		return AbstractChatRoom::SecurityLevel::Safe; // There is no device to query status on, return safe

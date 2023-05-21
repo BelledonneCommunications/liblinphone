@@ -118,7 +118,7 @@ void ParticipantDevice::setConferenceSubscribeEvent(const shared_ptr<EventSubscr
 
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel() const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
-	if (encryptionEngine) return encryptionEngine->getSecurityLevel(getAddress()->toString());
+	if (encryptionEngine) return encryptionEngine->getSecurityLevel(getAddress()->asStringUriOnly());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }

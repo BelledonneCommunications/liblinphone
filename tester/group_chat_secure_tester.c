@@ -2823,6 +2823,30 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 
 	// Check that the safe security level is reached for everyone
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+
+	// Check all participants are safe in Marie Chatroom
+	bctbx_list_t *participants = linphone_chat_room_get_participants(marieCr);
+	BC_ASSERT_PTR_NOT_NULL(participants);
+	bctbx_list_t *parts = participants;
+	while (parts != NULL) {
+		const LinphoneParticipant *part = (const LinphoneParticipant *)bctbx_list_get_data(parts);
+		BC_ASSERT_EQUAL(linphone_participant_get_security_level(part), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+		// Check all devices are safe for each participants
+		bctbx_list_t *p_devices = linphone_participant_get_devices(part);
+		BC_ASSERT_PTR_NOT_NULL(p_devices);
+		bctbx_list_t *p_devs = p_devices;
+		while (p_devs != NULL) {
+			const LinphoneParticipantDevice *p_dev = (const LinphoneParticipantDevice *)bctbx_list_get_data(p_devs);
+			BC_ASSERT_EQUAL(linphone_participant_device_get_security_level(p_dev), LinphoneChatRoomSecurityLevelSafe,
+			                int, "%d");
+			p_devs = bctbx_list_next(p_devs);
+		}
+		bctbx_list_free_with_data(p_devices, (bctbx_list_free_func)linphone_participant_device_unref);
+
+		parts = bctbx_list_next(parts);
+	}
+	bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
+
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(pauline1Cr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 
