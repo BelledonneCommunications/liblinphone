@@ -684,6 +684,11 @@ public class CoreManager {
     }
 
     private void updateOrientation(int displayId) {
+        if (mCore == null) {
+            Log.e("[Core Manager] Core is null, don't notify device rotation");
+            return;
+        }
+
         Display display = mDisplayManager.getDisplay(displayId);
         if (display == null) {
             Log.e("[Core Manager] Failed to get display from id: ", displayId);
