@@ -8534,6 +8534,23 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCor
  * @return A boolean value telling whether the plugin has been loaded
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name);
+
+/**
+ * Sets if accounts will wait for network to be connected before trying to REGISTER.
+ * @param core the #LinphoneCore
+ * @param register_only_when_network_is_up TRUE to wait for an internet connection before trying to REGISTER, FALSE to
+ * do it no matter the network state.
+ */
+LINPHONE_PUBLIC void linphone_core_set_register_only_when_network_is_up(LinphoneCore *core,
+                                                                        bool_t register_only_when_network_is_up);
+
+/**
+ * Gets if accounts will wait for network to be connected before trying to REGISTER or not.
+ * @param core the #LinphoneCore
+ * @return TRUE if accounts will wait for internet connection before trying to REGISTER, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_core_get_register_only_when_network_is_up(const LinphoneCore *core);
+
 #ifdef __cplusplus
 }
 #endif

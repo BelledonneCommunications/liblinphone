@@ -1919,8 +1919,9 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	/*for tuning or test*/
 	lc->sip_conf.sdp_200_ack = !!linphone_config_get_int(lc->config, "sip", "sdp_200_ack", 0);
-	lc->sip_conf.register_only_when_network_is_up =
+	bool_t register_only_when_network_is_up =
 	    !!linphone_config_get_int(lc->config, "sip", "register_only_when_network_is_up", 1);
+	linphone_core_set_register_only_when_network_is_up(lc, register_only_when_network_is_up);
 	lc->sip_conf.register_only_when_upnp_is_ok =
 	    !!linphone_config_get_int(lc->config, "sip", "register_only_when_upnp_is_ok", 1);
 	lc->sip_conf.ping_with_options = !!linphone_config_get_int(lc->config, "sip", "ping_with_options", 0);
@@ -9607,4 +9608,13 @@ const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core) {
 
 bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(core)->isPluginLoaded(L_C_TO_STRING(name));
+}
+
+void linphone_core_set_register_only_when_network_is_up(LinphoneCore *core, bool_t register_only_when_network_is_up) {
+	core->sip_conf.register_only_when_network_is_up = register_only_when_network_is_up;
+	linphone_config_set_bool(core->config, "sip", "register_only_when_network_is_up", register_only_when_network_is_up);
+}
+
+bool_t linphone_core_get_register_only_when_network_is_up(const LinphoneCore *core) {
+	return core->sip_conf.register_only_when_network_is_up;
 }
