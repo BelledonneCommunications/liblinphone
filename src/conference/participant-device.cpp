@@ -259,8 +259,11 @@ void ParticipantDevice::setState (State newState, bool notify) {
 		const bool sendNotify = !(newStateLeavingState && currentStateLeavingState) && notify;
 
 		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
+lInfo() << __func__ << " DEBUG DEBUG BEFORE  devicestate " << Utils::toString(getState()) << " new state " << Utils::toString(newState) << " before time of joining " << getTimeOfJoining() << " now " << ms_time(nullptr);
 			setTimeOfJoining(time(nullptr));
+lInfo() << __func__ << " DEBUG DEBUG AFTER device state " << Utils::toString(getState()) << " new state " << Utils::toString(newState) << " before time of joining " << getTimeOfJoining() << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - getTimeOfJoining());
 		}
+		lInfo() << __func__ << " DEBUG DEBUG Moving participant device " << getAddress() << " from state " << mState << " current leaving state " << currentStateLeavingState << " to " << newState << " new leaving state " << newStateLeavingState << " conference " << getConference() << " send notify " << sendNotify << " notify " << notify;
 		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);

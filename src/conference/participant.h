@@ -130,6 +130,7 @@ protected:
 	inline void removeSession () { session.reset(); }
 	inline void setAddress (const IdentityAddress &addr) { this->addr = addr; }
 
+	std::shared_ptr<ParticipantDevice> addDevice (const std::shared_ptr<ParticipantDevice> &device);
 	std::shared_ptr<ParticipantDevice> addDevice (const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name = "");
 	std::shared_ptr<ParticipantDevice> addDevice (const IdentityAddress &gruu, const std::string &name = "");
 	void clearDevices ();

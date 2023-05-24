@@ -1560,7 +1560,6 @@ list<ParticipantImdnState> ChatMessage::getParticipantsByImdnState (ChatMessage:
 	auto sender = getChatRoom()->findParticipant(getFromAddress());
 	for (const auto &dbResult : dbResults) {
 		auto participant = getChatRoom()->findParticipant(dbResult.address);
-lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_identity(getChatRoom()->getCore()->getCCore())) << " address " << dbResult.address << " sender " << (sender ? sender->getAddress().asString() : std::string("<unknown>"));
 		if (participant && (participant != sender))
 			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
 	}

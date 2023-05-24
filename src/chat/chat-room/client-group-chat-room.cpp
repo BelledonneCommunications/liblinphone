@@ -467,16 +467,15 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->setFocus(true);
 	getConference()->participants = std::move(newParticipants);
-
 	setConferenceId(conferenceId);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setConferenceAddress(peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setSubject(subject);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->enableChat(true);
 
 	getMe()->setAdmin(me->isAdmin());
-	for (const auto &device : me->getDevices())
-		getMe()->addDevice(device->getAddress(), device->getName());
-
+	for (const auto &device : me->getDevices()) {
+		getMe()->addDevice(device);
+	}
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state", FALSE);
 	getConference()->setLastNotify(forceFullState ? 0 : lastNotifyId);
 	if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {

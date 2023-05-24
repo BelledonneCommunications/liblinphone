@@ -73,6 +73,48 @@ shared_ptr<CallSession> Participant::createSession (
 
 // -----------------------------------------------------------------------------
 
+std::shared_ptr<ParticipantDevice> Participant::addDevice (const std::shared_ptr<ParticipantDevice> &device) {
+	std::shared_ptr<ParticipantDevice> newDevice = nullptr; 
+	const auto & session = device->getSession();
+	if (session) {
+		newDevice = findDevice(session, false);
+		if (newDevice) {
+			return newDevice;
+		}
+	}
+	const auto & gruu = device->getAddress();
+	if (gruu.isValid()) {
+		newDevice = findDevice(gruu, false);
+		if (newDevice) {
+			return newDevice;
+		}
+	}
+
+	const auto & name = device->getName();
+	if (session) {
+		newDevice = addDevice(session, name);
+	} else if (gruu.isValid()) {
+		newDevice = addDevice(gruu, name);
+	} else {
+		lError() << "Attempting to add a device that has neither call session associated nor a valid address";
+		return nullptr;
+	}
+
+	if (newDevice) {
+
+lInfo() << __func__ << " DEBUG DEBUG device state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
+		newDevice->setState(device->getState(), false);
+		newDevice->setTimeOfJoining(device->getTimeOfJoining());
+		newDevice->setTimeOfDisconnection(device->getTimeOfDisconnection());
+		newDevice->setJoiningMethod(device->getJoiningMethod());
+		newDevice->setDisconnectionMethod(device->getDisconnectionMethod());
+		newDevice->setDisconnectionReason(device->getDisconnectionReason());
+	}
+
+	return newDevice;
+
+}
+
 std::shared_ptr<ParticipantDevice> Participant::addDevice (const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(session, false);
 	if (device)

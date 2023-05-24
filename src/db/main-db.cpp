@@ -70,7 +70,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 20);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 21);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -576,9 +576,12 @@ void MainDbPrivate::insertChatRoomParticipantDevice (
 
 		unsigned int state = static_cast<unsigned int>(device->getState());
 		const std::string deviceName = device->getName();
-		*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id, name, state)"
-			" VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName, :participantDeviceState)",
-			soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName), soci::use(state);
+		auto joiningTime = dbSession.getTimeWithSociIndicator(device->getTimeOfJoining());
+lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_identity(q->getCore()->getCCore())) << " device state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
+		unsigned int joiningMethod = static_cast<unsigned int>(device->getJoiningMethod());
+		*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id, name, state, joining_time, joining_method)"
+			" VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName, :participantDeviceState, :joiningTime, :joiningMethod)",
+			soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName), soci::use(state), soci::use(joiningTime.first, joiningTime.second), soci::use(joiningMethod);
 	}
 #endif
 }
@@ -2303,6 +2306,12 @@ void MainDbPrivate::updateSchema () {
 	if (version < makeVersion(1, 0, 20)) {
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN params VARCHAR(2048) DEFAULT ''";
+	}
+
+	if (version < makeVersion(1, 0, 21)) {
+		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_method TINYINT UNSIGNED DEFAULT 0";
+		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_time"
+			+ dbSession.timestampType() + " NOT NULL DEFAULT " + dbSession.currentTimestamp();
 	}
 
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
@@ -4418,14 +4427,18 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					// Fetch devices.
 					{
 						const long long &participantId = d->dbSession.resolveId(row, 0);
-						static const string query = "SELECT sip_address.value, state, name FROM chat_room_participant_device, sip_address"
+						static const string query = "SELECT sip_address.value, state, name, joining_time, joining_method FROM chat_room_participant_device, sip_address"
 							" WHERE chat_room_participant_id = :participantId"
 							" AND participant_device_sip_address_id = sip_address.id";
 
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(participantId));
 						for (const auto &row : rows) {
 							shared_ptr<ParticipantDevice> device = participant->addDevice(IdentityAddress(row.get<string>(0)), row.get<string>(2, ""));
-							device->setState(ParticipantDevice::State(static_cast<unsigned int>(row.get<int>(1, 0))));
+							device->setState(ParticipantDevice::State(static_cast<unsigned int>(row.get<int>(1, 0))), false);
+							device->setJoiningMethod(ParticipantDevice::JoiningMethod(static_cast<unsigned int>(row.get<int>(4, 0))));
+							time_t joiningTime = d->dbSession.getTime(row, 3);
+							device->setTimeOfJoining(joiningTime);
+lInfo() << __func__ << " DEBUG DEBUG get chat rooms core " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " device " << device->getAddress() << " state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " db value " << joiningTime << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
 						}
 					}
 
@@ -4854,9 +4867,12 @@ void MainDb::updateChatRoomParticipantDevice (
 			const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
 			const long long &participantDeviceSipAddressId = d->selectSipAddressId(device->getAddress().asString());
 			unsigned int state = static_cast<unsigned int>(device->getState());
-			*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name"
+			auto joiningTime = d->dbSession.getTimeWithSociIndicator(device->getTimeOfJoining());
+lInfo() << __func__ << " DEBUG DEBUG update participant device core " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " device state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
+			unsigned int joiningMethod = static_cast<unsigned int>(device->getJoiningMethod());
+			*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name, joining_time = :joiningTime, joining_method = :joiningMethod"
 				" WHERE chat_room_participant_id = :participantId AND participant_device_sip_address_id = :participantDeviceSipAddressId",
-				soci::use(state), soci::use(device->getName()), soci::use(participantId), soci::use(participantDeviceSipAddressId);
+				soci::use(state), soci::use(device->getName()), soci::use(joiningTime.first, joiningTime.second), soci::use(joiningMethod), soci::use(participantId), soci::use(participantDeviceSipAddressId);
 
 			tr.commit();
 		};
