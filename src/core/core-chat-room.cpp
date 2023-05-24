@@ -680,6 +680,7 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms() const {
 	    !!linphone_config_get_int(config, "misc", "hide_chat_rooms_from_removed_proxies", 1);
 
 	list<shared_ptr<AbstractChatRoom>> rooms;
+
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		if (hideEmptyChatRooms) {

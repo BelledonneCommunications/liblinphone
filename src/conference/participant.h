@@ -167,9 +167,10 @@ protected:
 		this->addr = addr;
 	}
 
+	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<ParticipantDevice> &device);
 	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<LinphonePrivate::CallSession> &session,
 	                                             const std::string &name = "");
-	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<Address> &address, const std::string &name = "");
+	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<Address> &gruu, const std::string &name = "");
 	void clearDevices();
 	void removeDevice(const std::shared_ptr<Address> &gruu);
 	void removeDevice(const std::shared_ptr<const CallSession> &session);

@@ -265,8 +265,7 @@ void ParticipantDevice::setState(State newState, bool notify) {
 		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
 			setTimeOfJoining(time(nullptr));
 		}
-		lInfo() << "Moving participant device " << getAddress()->toString() << " from state " << mState << " to "
-		        << newState;
+		lInfo() << "Moving participant device " << *getAddress() << " from state " << mState << " to " << newState;
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
 		const auto &conference = getConference();
@@ -724,13 +723,12 @@ void ParticipantDeviceCbs::setStreamAvailabilityChanged(LinphoneParticipantDevic
 	mStreamAvailabilityChangedCb = cb;
 }
 
-LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb ParticipantDeviceCbs::getVideoDisplayErrorOccurred() const{
+LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb ParticipantDeviceCbs::getVideoDisplayErrorOccurred() const {
 	return mVideoDisplayErrorOccurredCb;
 }
 
-void ParticipantDeviceCbs::setVideoDisplayErrorOccurred(LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb){
+void ParticipantDeviceCbs::setVideoDisplayErrorOccurred(LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb) {
 	mVideoDisplayErrorOccurredCb = cb;
 }
-
 
 LINPHONE_END_NAMESPACE

@@ -474,7 +474,6 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->setFocus(true);
 	getConference()->participants = std::move(newParticipants);
-
 	setConferenceId(conferenceId);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setConferenceAddress(peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setSubject(subject);
@@ -482,8 +481,7 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
 
 	getMe()->setAdmin(me->isAdmin());
 	for (const auto &device : me->getDevices()) {
-		shared_ptr<ParticipantDevice> d = getMe()->addDevice(device->getAddress(), device->getName());
-		d->setState(device->getState(), false);
+		shared_ptr<ParticipantDevice> d = getMe()->addDevice(device);
 	}
 
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc",

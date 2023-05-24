@@ -515,7 +515,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 								state = ParticipantDevice::State::MutedByFocus;
 								break;
 						}
-						device->setState(state, (!chatRoom && !isFullState));
+						device->setState(state, !isFullState);
 					}
 
 					if (endpoint.getCallInfo().present()) {
