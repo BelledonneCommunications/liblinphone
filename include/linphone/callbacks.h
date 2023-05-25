@@ -590,7 +590,7 @@ typedef LinphoneCoreCbsNotifyReceivedCb LinphoneCoreNotifyReceivedCb;
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
  * @param subscribe_event The event as string @notnil
- * @param body the #LinphoneContent of the event @notnil
+ * @param body the #LinphoneContent of the event @maybenil
  */
 typedef void (*LinphoneCoreCbsSubscribeReceivedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const char *subscribe_event, const LinphoneContent *body);
 
