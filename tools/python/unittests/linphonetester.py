@@ -281,7 +281,7 @@ class CoreManagerStats:
         self.number_of_LinphonePresenceActivityWorship = 0
         self.last_received_presence = None
 
-        self.number_of_inforeceived = 0
+        self.number_of_InfoReceived = 0
 
         self.number_of_LinphoneSubscriptionIncomingReceived = 0
         self.number_of_LinphoneSubscriptionOutgoingInit = 0
