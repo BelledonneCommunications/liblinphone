@@ -380,7 +380,7 @@ typedef struct _stats {
 	int number_of_LinphoneConsolidatedPresenceDoNotDisturb;
 	int number_of_LinphoneConsolidatedPresenceOffline;
 
-	int number_of_inforeceived;
+	int number_of_InfoReceived;
 	LinphoneInfoMessage *last_received_info_message;
 
 	int number_of_LinphoneSubscriptionIncomingReceived;

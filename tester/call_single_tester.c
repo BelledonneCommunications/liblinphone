@@ -4314,8 +4314,8 @@ static void call_established_with_rejected_info(void) {
 
 		im2 = linphone_core_create_info_message(pauline->lc);
 		linphone_call_send_info_message(linphone_core_get_current_call(pauline->lc), im2);
-		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_inforeceived, 1));
-		BC_ASSERT_EQUAL(marie->stat.number_of_inforeceived, 1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_InfoReceived, 1));
+		BC_ASSERT_EQUAL(marie->stat.number_of_InfoReceived, 1, int, "%d");
 		linphone_info_message_unref(im2);
 
 		check_call_state(pauline, LinphoneCallStreamsRunning);
@@ -4354,8 +4354,8 @@ static void call_established_with_complex_rejected_operation(void) {
 		info = linphone_core_create_info_message(marie->lc);
 		linphone_call_send_info_message(linphone_core_get_current_call(marie->lc), info);
 		linphone_info_message_unref(info);
-		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_inforeceived, 1));
-		BC_ASSERT_EQUAL(pauline->stat.number_of_inforeceived, 1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_InfoReceived, 1));
+		BC_ASSERT_EQUAL(pauline->stat.number_of_InfoReceived, 1, int, "%d");
 		/*to give time for 200ok to arrive*/
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 
@@ -4425,8 +4425,8 @@ static void call_established_with_rejected_info_during_reinvite(void) {
 		info = linphone_core_create_info_message(marie->lc);
 		linphone_call_send_info_message(linphone_core_get_current_call(marie->lc), info);
 		linphone_info_message_unref(info);
-		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_inforeceived, 1));
-		BC_ASSERT_EQUAL(pauline->stat.number_of_inforeceived, 1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_InfoReceived, 1));
+		BC_ASSERT_EQUAL(pauline->stat.number_of_InfoReceived, 1, int, "%d");
 		/*to give time for 200ok to arrive*/
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 

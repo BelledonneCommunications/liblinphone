@@ -3517,7 +3517,7 @@ void info_message_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneCall *call), c
 		linphone_info_message_unref(counters->last_received_info_message);
 	}
 	counters->last_received_info_message = linphone_info_message_copy(msg);
-	counters->number_of_inforeceived++;
+	counters->number_of_InfoReceived++;
 }
 
 void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {

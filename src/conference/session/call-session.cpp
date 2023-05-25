@@ -635,15 +635,22 @@ void CallSessionPrivate::updated(bool isUpdate) {
 			         "Call updated by remote while in transcient state (Pausing/Updating/Resuming)");
 			acceptUpdate(nullptr, localState, Utils::toString(localState));
 			break;
+		case CallSession::State::End:
+		case CallSession::State::Released:
+			lWarning() << "Session [" << q
+			           << "] is going to reject the reINVITE or UPDATE because it is already in state ["
+			           << Utils::toString(state) << "]";
+			sal_error_info_set(&sei, SalReasonNoMatch, "SIP", 0, "Incompatible SDP", nullptr);
+			op->declineWithErrorInfo(&sei, nullptr);
+			sal_error_info_reset(&sei);
+			break;
 		case CallSession::State::Idle:
 		case CallSession::State::OutgoingInit:
-		case CallSession::State::End:
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::OutgoingProgress:
 		case CallSession::State::Referred:
 		case CallSession::State::Error:
-		case CallSession::State::Released:
 		case CallSession::State::EarlyUpdatedByRemote:
 		case CallSession::State::EarlyUpdating:
 			lWarning() << "Receiving reINVITE or UPDATE while in state [" << Utils::toString(state)

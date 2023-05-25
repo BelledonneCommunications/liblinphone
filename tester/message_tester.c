@@ -2347,7 +2347,7 @@ void info_message_base(bool_t with_content) {
 		linphone_call_send_info_message(linphone_core_get_current_call(marie->lc), info);
 		linphone_info_message_unref(info);
 
-		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_inforeceived, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_InfoReceived, 1));
 
 		BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_info_message);
 		hvalue = linphone_info_message_get_header(pauline->stat.last_received_info_message, "Weather");

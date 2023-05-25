@@ -65,19 +65,24 @@ static void call_with_video_added_by_both_parties(void) {
 	linphone_call_params_unref(pauline_params);
 	linphone_call_params_unref(marie_params);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdating, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdating, 1, liblinphone_tester_sip_timeout));
 
 	/* Marie shall transition to UpdatedByRemote (Pauline has priority per RFC3261 since she is the call-id owner)*/
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1, 10000));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1, liblinphone_tester_sip_timeout));
 
 	/* Marie will succeed with its re INVITE transaction */
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, liblinphone_tester_sip_timeout));
 
 	/* Pauline shall return to Updating state*/
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdating, 2, 10000));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdating, 2, liblinphone_tester_sip_timeout));
 	/* And finally succeed too */
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2, liblinphone_tester_sip_timeout));
 
 	ei = linphone_call_get_error_info(marie_call);
 	BC_ASSERT_TRUE(linphone_error_info_get_protocol_code(ei) == 0);
@@ -85,6 +90,51 @@ static void call_with_video_added_by_both_parties(void) {
 	BC_ASSERT_TRUE(linphone_error_info_get_protocol_code(ei) == 0);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
+
+	end_call(pauline, marie);
+end:
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_info_sent_by_both_parties(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *marie_call, *pauline_call;
+	LinphoneInfoMessage *marie_info, *pauline_info;
+	bctbx_list_t *lcs = NULL;
+	bool_t call_ok;
+	int number_of_infos = 4;
+
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	BC_ASSERT_TRUE(call_ok = call(pauline, marie));
+	if (!call_ok) goto end;
+
+	marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+
+	// Send multiple INFO messages in order to be sure to have at least one 491 request pending
+	for (int i = 0; i < number_of_infos; i++) {
+		marie_info = linphone_core_create_info_message(marie->lc);
+		pauline_info = linphone_core_create_info_message(pauline->lc);
+
+		linphone_call_send_info_message(pauline_call, pauline_info);
+		linphone_call_send_info_message(marie_call, marie_info);
+
+		linphone_info_message_unref(marie_info);
+		linphone_info_message_unref(pauline_info);
+	}
+
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_InfoReceived, number_of_infos, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_InfoReceived, number_of_infos, liblinphone_tester_sip_timeout));
 
 	end_call(pauline, marie);
 end:
@@ -113,11 +163,11 @@ static void call_paused_by_both_parties(void) {
 	linphone_call_pause(marie_call);
 	linphone_call_pause(pauline_call);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausing, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausing, 1, liblinphone_tester_sip_timeout));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPaused, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPaused, 1, liblinphone_tester_sip_timeout));
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallPausing, 2, int, "%d");
@@ -128,8 +178,10 @@ static void call_paused_by_both_parties(void) {
 	/* both resume the call at the same time */
 	linphone_call_resume(marie_call);
 	linphone_call_resume(pauline_call);
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2, liblinphone_tester_sip_timeout));
 	liblinphone_tester_check_rtcp(pauline, marie);
 
 	end_call(pauline, marie);
@@ -168,7 +220,6 @@ static void call_end_and_reinvite(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 10000));
-
 end:
 	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(marie);
@@ -177,6 +228,7 @@ end:
 
 static test_t call_race_conditions_tests[] = {
     TEST_NO_TAG("Call with video added by both parties", call_with_video_added_by_both_parties),
+    TEST_NO_TAG("Call with INFO sent by both parties", call_with_info_sent_by_both_parties),
     TEST_NO_TAG("Call paused by both parties", call_paused_by_both_parties),
     TEST_NO_TAG("Call ended and re-invited at the same time", call_end_and_reinvite)};
 

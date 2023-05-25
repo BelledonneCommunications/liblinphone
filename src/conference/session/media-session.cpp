@@ -696,6 +696,17 @@ bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDes
 
 void MediaSessionPrivate::updating(bool isUpdate) {
 	L_Q();
+	if ((state == CallSession::State::End) || (state == CallSession::State::Released)) {
+		lWarning() << "Session [" << q << "] is going to reject the reINVITE or UPDATE because it is already in state ["
+		           << Utils::toString(state) << "]";
+		SalErrorInfo sei;
+		memset(&sei, 0, sizeof(sei));
+		sal_error_info_set(&sei, SalReasonNoMatch, "SIP", 0, "Incompatible SDP", nullptr);
+		op->declineWithErrorInfo(&sei, nullptr);
+		sal_error_info_reset(&sei);
+		return;
+	}
+
 	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 	// Fix local parameter before creating new local media description in order to have it consistent with the offer.
 	// Note that in some case such as if we are the offerer or transition from the state UpdateByRemote to
