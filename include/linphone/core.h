@@ -8453,7 +8453,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneOnlineStatus linphone_core_get_prese
  * @param core the linphone core @notnil
  * @param path filesystem path @maybenil
  * @deprecated 07/12/2021: Use only for migration purposes
- * @donotwrap
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_path(LinphoneCore *core,
                                                                                    const char *path);
@@ -8463,8 +8462,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
  * @ingroup initializing
  * @param core the linphone core @notnil
  * @return filesystem path. @maybenil
- * @deprecated 07/12/2021
- * @donotwrap
+ * @deprecated 07/12/2021: Use only for migration purposes
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_call_logs_database_path(LinphoneCore *core);
 
