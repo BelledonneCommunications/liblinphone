@@ -1178,7 +1178,7 @@ void MediaSessionPrivate::discoverMtu(const Address &remoteAddr) {
  */
 void MediaSessionPrivate::getLocalIp(const Address &remoteAddr) {
 	L_Q();
-	// Next, sometime, override from config
+	// Next, sometimes, override from config
 	const char *ip =
 		linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "bind_address", nullptr);
 	if (ip) {
@@ -1186,7 +1186,6 @@ void MediaSessionPrivate::getLocalIp(const Address &remoteAddr) {
 		lInfo() << "Found media local-ip from configuration file: " << mediaLocalIp;
 		return;
 	}
-
 	// If a known proxy was identified for this call, then we may have a chance to take the local ip address
 	// from the socket that connects to this proxy
 	if (destProxy && linphone_proxy_config_get_op(destProxy)) {
@@ -1290,7 +1289,11 @@ void MediaSessionPrivate::runStunTestsIfNeeded() {
 void MediaSessionPrivate::selectIncomingIpVersion() {
 	L_Q();
 	if (linphone_core_ipv6_enabled(q->getCore()->getCCore())) {
-		if (destProxy && linphone_proxy_config_get_op(destProxy))
+		const auto &remoteDesc = op->getRemoteMediaDescription();
+		if (remoteDesc) {
+			// retrieve the address family from the offerer in order to stick with its choice of address family
+			af = remoteDesc->hasIpv6() ? AF_INET6 : AF_INET;
+		} else if (destProxy && linphone_proxy_config_get_op(destProxy))
 			af = linphone_proxy_config_get_op(destProxy)->getAddressFamily();
 		else
 			af = op->getAddressFamily();
