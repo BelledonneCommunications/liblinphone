@@ -175,6 +175,22 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus
 linphone_account_creator_request_auth_token(LinphoneAccountCreator *creator);
 
 /**
+ * Request an account creation "request_token" to be used on account creations. The request_token is retrieved from the callback linphone_account_creator_cbs_get_account_creation_request_token()
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus
+linphone_account_creator_request_account_creation_request_token(LinphoneAccountCreator *creator);
+
+/**
+ * Send a request to get a token to be used for account creation from a request_token. The token is retrieved from the callback linphone_account_creator_cbs_get_account_creation_token_using_request_token()
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param token the request token to check. It comes from linphone_account_creator_cbs_get_account_creation_request_token()
+ * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent, #LinphoneAccountCreatorStatusRequestFailed otherwise
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_request_account_creation_token_using_request_token(LinphoneAccountCreator *creator);
+
+/**
  * Acquire a reference to the LinphoneAccountCreator.
  * @param creator #LinphoneAccountCreator object. @notnil
  * @return The same #LinphoneAccountCreator object. @notnil
@@ -280,6 +296,20 @@ LINPHONE_PUBLIC void linphone_account_creator_set_token(LinphoneAccountCreator *
  * @return The token set, if any @maybenil
  **/
 LINPHONE_PUBLIC const char *linphone_account_creator_get_token(const LinphoneAccountCreator *creator);
+
+/**
+ * Set the account creation request token received to be used to check user validation.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param token The token to set @maybenil
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_account_creation_request_token(LinphoneAccountCreator *creator, const char* token);
+
+/**
+ * Get the account creation request token received to be used to check user validation.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The token set, if any @maybenil
+**/
+LINPHONE_PUBLIC const char* linphone_account_creator_get_account_creation_request_token(const LinphoneAccountCreator *creator);
 
 /**
  * Set the phone number normalized.
@@ -592,6 +622,48 @@ linphone_account_creator_cbs_get_send_token(const LinphoneAccountCreatorCbs *cbs
  **/
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_send_token(LinphoneAccountCreatorCbs *cbs,
                                                                  LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the callback on account creation request token.
+ * In response:
+ *   - "token" is the request token to used with linphone_account_creator_request_account_creation_token_using_request_token().
+ *   - "validation_url" is a URL to redirect the user into a browser for validation.
+ * In status:
+ *   - LinphoneAccountCreatorStatusRequestOk: the request token should be in response with the validation url.
+ *
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @return The current request token request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_account_creation_request_token(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorCbs object.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @param cb The request token callback used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_account_creation_request_token(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the callback on account creation token.
+ * In response, "token" is the token to pass to linphone_account_creator_set_token(). It is used for linphone_account_creator_create_account()
+ *
+ * In status:
+ *   - LinphoneAccountCreatorStatusRequestOk: token can be retrieved from the "token" field in response.
+ *   - LinphoneAccountCreatorStatusRequestFailed: request token has not been validated. Recall linphone_account_creator_request_account_creation_token_using_request_token() after some time.
+ *   - LinphoneAccountCreatorStatusMissingArguments: request_token has not been set from linphone_account_creator_set_token().
+ *   - LinphoneAccountCreatorStatusServerError: URL is not reachable.
+ *
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @return The current request token request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_account_creation_token_using_request_token(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorCbs object.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @param cb The token callback used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_account_creation_token_using_request_token(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
  * Get the is account activated request.

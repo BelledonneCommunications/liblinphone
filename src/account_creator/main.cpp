@@ -168,6 +168,14 @@ const char *linphone_account_creator_get_token(const LinphoneAccountCreator *cre
 	return creator->token;
 }
 
+void linphone_account_creator_set_account_creation_request_token(LinphoneAccountCreator *creator, const char* token) {
+	set_string(&creator->account_creation_request_token, token, FALSE);
+}
+
+const char* linphone_account_creator_get_account_creation_request_token(const LinphoneAccountCreator *creator) {
+	return creator->account_creation_request_token;
+}
+
 LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_number(LinphoneAccountCreator *creator,
                                                                                       const char *phone_number,
                                                                                       const char *country_code) {
@@ -608,6 +616,20 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(Lin
 LinphoneAccountCreatorStatus linphone_account_creator_request_auth_token(LinphoneAccountCreator *creator) {
 	if (creator->service->send_token_request_cb) {
 		return creator->service->send_token_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_request_account_creation_request_token(LinphoneAccountCreator *creator) {
+	if (creator->service->account_creation_request_token_request_cb) {
+		return creator->service->account_creation_request_token_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_request_account_creation_token_using_request_token(LinphoneAccountCreator *creator) {
+	if (creator->service->account_creation_token_using_request_token_request_cb) {
+		return creator->service->account_creation_token_using_request_token_request_cb(creator);
 	}
 	return LinphoneAccountCreatorStatusNotImplementedError;
 }

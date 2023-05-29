@@ -239,10 +239,17 @@ static void server_account_send_token(void) {
 	linphone_account_creator_set_pn_prid(creator, "123456789");
 	linphone_account_creator_cbs_set_send_token(cbs, account_creator_cb);
 
-	BC_ASSERT_EQUAL(linphone_account_creator_send_token_flexiapi(creator), LinphoneAccountCreatorStatusRequestOk,
-	                LinphoneAccountCreatorStatus, "%i");
-
-	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_send_token_flexiapi(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_account_creation_request_token_flexiapi(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 2, TIMEOUT_REQUEST);
 
 	ms_free(stats);
 	linphone_account_creator_unref(creator);

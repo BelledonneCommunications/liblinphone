@@ -130,8 +130,23 @@ void linphone_account_creator_cbs_set_send_token(LinphoneAccountCreatorCbs *cbs,
 	cbs->send_token_cb = cb;
 }
 
-LinphoneAccountCreatorCbsStatusCb
-linphone_account_creator_cbs_get_is_account_activated(const LinphoneAccountCreatorCbs *cbs) {
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_account_creation_request_token(const LinphoneAccountCreatorCbs *cbs) {
+	return cbs->account_creation_request_token_cb;
+}
+
+void linphone_account_creator_cbs_set_account_creation_request_token(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb) {
+	cbs->account_creation_request_token_cb = cb;
+}
+
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_account_creation_token_using_request_token(const LinphoneAccountCreatorCbs *cbs) {
+	return cbs->account_creation_token_using_request_token_cb;
+}
+
+void linphone_account_creator_cbs_set_account_creation_token_using_request_token(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb) {
+	cbs->account_creation_token_using_request_token_cb = cb;
+}
+
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_is_account_activated(const LinphoneAccountCreatorCbs *cbs) {
 	return cbs->is_account_activated_response_cb;
 }
 
