@@ -353,7 +353,7 @@ static void server_account_created_with_phone(void) {
 	string authToken = obtain_auth_token(marie);
 
 	// Create
-	string phone = string("000").append(to_string(rand()).substr(0, 6));
+	string phone = string("000").append(to_string(bctbx_random()).substr(0, 6));
 	string password = "password";
 
 	linphone_account_creator_set_phone_number(creator, phone.c_str(), "1");

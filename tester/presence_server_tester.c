@@ -1215,7 +1215,7 @@ static void long_term_presence_with_phone_without_sip(void) {
 			;
 		/*now with have a dialplan*/
 		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phone) - 1); i++) {
-			phone[i] = '0' + rand() % 10;
+			phone[i] = '0' + bctbx_random() % 10;
 		}
 		phone[i] = '\0';
 
@@ -2365,14 +2365,14 @@ static void notify_friend_capabilities_with_alias(void) {
 		/*now with have a dialplan*/
 		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneMarie) - 1);
 		     i++) {
-			phoneMarie[i] = '0' + rand() % 10;
+			phoneMarie[i] = '0' + bctbx_random() % 10;
 		}
 		phoneMarie[i] = '\0';
 		e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);
 
 		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneLaure) - 1);
 		     i++) {
-			phoneLaure[i] = '0' + rand() % 10;
+			phoneLaure[i] = '0' + bctbx_random() % 10;
 		}
 		phoneLaure[i] = '\0';
 		e164Laure = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneLaure);
@@ -2464,7 +2464,7 @@ static void notify_search_result_capabilities_with_alias(void) {
 		/*now with have a dialplan*/
 		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneMarie) - 1);
 		     i++) {
-			phoneMarie[i] = '0' + rand() % 10;
+			phoneMarie[i] = '0' + bctbx_random() % 10;
 		}
 		phoneMarie[i] = '\0';
 		e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);

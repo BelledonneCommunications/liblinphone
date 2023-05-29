@@ -4370,9 +4370,10 @@ int MediaSession::getRandomRtpPort(const SalStreamDescription &stream) const {
 		           << " has minimum and maximum value set to " << portRange.first
 		           << ". It will not be possible to have multiple streams of the same type in the SDP";
 	}
-	const int rtp_port = (portRange.second == portRange.first)
-	                         ? portRange.first
-	                         : ((rand() % abs(portRange.second - portRange.first)) + portRange.first);
+	const int rtp_port =
+	    (portRange.second == portRange.first)
+	        ? portRange.first
+	        : ((int)(bctbx_random() % (unsigned int)abs(portRange.second - portRange.first)) + portRange.first);
 	if ((rtp_port > portRange.second) && (rtp_port < portRange.first)) {
 		lWarning() << "The chosen port " << rtp_port << " is not within the desired range (min=" << portRange.first
 		           << ", max=" << portRange.second << ")";

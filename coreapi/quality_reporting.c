@@ -646,7 +646,7 @@ void linphone_reporting_update_media_info(LinphoneCall *call, int stats_type) {
 
 /* generate random float in interval ] 0.9 t ; 1.1 t [*/
 static float reporting_rand(float t) {
-	return t * (.2f * ((float)rand() / (float)RAND_MAX) + 0.9f);
+	return t * (.2f * ((float)bctbx_random() / (float)0xffffffff) + 0.9f);
 }
 
 void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_type) {

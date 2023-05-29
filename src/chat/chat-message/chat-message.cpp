@@ -958,7 +958,7 @@ void ChatMessagePrivate::handleAutoDownload() {
 						ostringstream sstream;
 						size_t randomSize = 12;
 						for (size_t i = 0; i < randomSize; i++) {
-							sstream << rand() % 10;
+							sstream << bctbx_random() % 10;
 						}
 						string file = sstream.str();
 						string filepath = downloadPath + file;
