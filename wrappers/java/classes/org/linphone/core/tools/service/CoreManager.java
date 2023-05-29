@@ -114,6 +114,9 @@ public class CoreManager {
         sInstance = this;
         mServiceRunningInForeground = false;
 
+        mTimer = null;
+        mForcedIterateTimer = null;
+
         // DO NOT ADD A LISTENER ON THE CORE HERE!
         // Wait for onLinphoneCoreStart()
 
@@ -364,6 +367,11 @@ public class CoreManager {
 
     public void startAutoIterate() {
         if (mCore.isAutoIterateEnabled()) {
+            if (mTimer != null) {
+                Log.w("[Core Manager] core.iterate() scheduling is already active");
+                return;
+            }
+
             if (mCore.isInBackground()) {
                 Log.i("[Core Manager] Start core.iterate() scheduling with background timer");
                 startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
@@ -394,6 +402,7 @@ public class CoreManager {
                         @Override
                         public void run() {
                             Log.i("[Core Manager] Resetting core.iterate() schedule depending on background/foreground state");
+                            stopAutoIterate();
                             startAutoIterate();
                         }
                     });
@@ -444,6 +453,8 @@ public class CoreManager {
             mTimer.cancel();
             mTimer.purge();
             mTimer = null;
+        } else {
+            Log.w("[Core Manager] core.iterate() scheduling wasn't started or already stopped");
         }
     }
 
