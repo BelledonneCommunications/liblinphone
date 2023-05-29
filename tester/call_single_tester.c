@@ -658,7 +658,6 @@ static void _direct_call_well_known_port(int iptype) {
 	linphone_core_set_default_proxy_config(marie->lc, NULL);
 	linphone_core_set_default_proxy_config(pauline->lc, NULL);
 
-	// pauline_transports ne servirait à rien puisque je le set dans le rcfile
 	linphone_core_get_sip_transports_used(pauline->lc, &pauline_transports);
 	linphone_address_set_port(pauline_dest, pauline_transports.tcp_port);
 
@@ -684,6 +683,72 @@ static void direct_call_well_known_port_ipv4(void) {
 
 static void direct_call_well_known_port_ipv6(void) {
 	_direct_call_well_known_port(6);
+}
+
+static void direct_call_with_ipv4_dest_and_ipv6_media_ip(void) {
+	LinphoneCoreManager *marie = NULL;
+	LinphoneCoreManager *pauline = NULL;
+
+	LinphoneSipTransports pauline_transports;
+	LinphoneAddress *pauline_dest = NULL;
+
+	// we use new2 because we do not need to check proxy registration
+	// because if we do it, the client will try to register with the well_known port, and the test server doesn't handle
+	// it.
+	marie = linphone_core_manager_new_with_proxies_check("marie_well_known_port_rc", FALSE);
+	pauline = linphone_core_manager_new_with_proxies_check("pauline_well_known_port_rc", FALSE);
+	pauline_dest = linphone_address_new("sip:127.0.0.1;transport=tcp");
+	linphone_core_enable_ipv6(marie->lc, TRUE);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", TRUE);
+	linphone_core_enable_ipv6(pauline->lc, TRUE);
+	BC_ASSERT_PTR_NOT_NULL(pauline_dest);
+	if (pauline_dest == NULL) goto end;
+
+	linphone_core_set_default_proxy_config(marie->lc, NULL);
+	linphone_core_set_default_proxy_config(pauline->lc, NULL);
+
+	linphone_core_get_sip_transports_used(pauline->lc, &pauline_transports);
+	linphone_address_set_port(pauline_dest, pauline_transports.tcp_port);
+
+	linphone_core_invite_address(marie->lc, pauline_dest);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	linphone_call_accept(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (marie_call) {
+		_check_call_media_ip_consistency(marie_call);
+	}
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if (pauline_call) {
+		_check_call_media_ip_consistency(pauline_call);
+	}
+
+	wait_for_until(marie->lc, pauline->lc, NULL, 5, 500);
+	LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, marie_call);
+	linphone_call_update(marie_call, params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+
+	if (marie_call) {
+		_check_call_media_ip_consistency(marie_call);
+	}
+	if (pauline_call) {
+		_check_call_media_ip_consistency(pauline_call);
+	}
+
+	linphone_address_unref(pauline_dest);
+	liblinphone_tester_check_rtcp(marie, pauline);
+	end_call(marie, pauline);
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void call_outbound_with_multiple_proxy(void) {
@@ -7307,6 +7372,7 @@ test_t call_tests[] = {
     TEST_NO_TAG("Direct call over IPv6", direct_call_over_ipv6),
     TEST_NO_TAG("Direct call well known port", direct_call_well_known_port_ipv4),
     TEST_NO_TAG("Direct call well known port ipv6", direct_call_well_known_port_ipv6),
+    TEST_NO_TAG("Direct call with IPv4 destination and IPv6 media IP", direct_call_with_ipv4_dest_and_ipv6_media_ip),
     TEST_NO_TAG("Call IPv6 to IPv4 without relay", v6_to_v4_call_without_relay),
     TEST_NO_TAG("IPv6 call over NAT64", v6_call_over_nat_64),
     TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),

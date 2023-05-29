@@ -334,6 +334,17 @@ void check_local_desc_stream(LinphoneCall *call) {
 	}
 }
 
+void _check_call_media_ip_consistency(LinphoneCall *call) {
+	// The offer media server address must be of the same type as the result
+	const SalMediaDescription *call_ref_desc = (linphone_call_get_dir(call) == LinphoneCallIncoming)
+	                                               ? _linphone_call_get_remote_desc(call)
+	                                               : _linphone_call_get_local_desc(call);
+	bool ref_is_ipv6 = ms_is_ipv6(call_ref_desc->addr.c_str());
+	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
+	bool result_is_ipv6 = ms_is_ipv6(call_result_desc->addr.c_str());
+	BC_ASSERT_FALSE(ref_is_ipv6 ^ result_is_ipv6);
+}
+
 void _linphone_call_check_max_nb_streams(const LinphoneCall *call,
                                          const size_t nb_audio_streams,
                                          const size_t nb_video_streams,
@@ -349,7 +360,10 @@ void _linphone_call_check_max_nb_streams(const LinphoneCall *call,
 	}
 }
 
-void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
+void _linphone_call_check_nb_streams(const LinphoneCall *call,
+                                     const int nb_audio_streams,
+                                     const int nb_video_streams,
+                                     const int nb_text_streams) {
 	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
 	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
 	if (call_result_desc) {
@@ -558,11 +572,12 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 
 		LinphoneParticipant *participant = linphone_conference_get_me(confMgr3);
 		bctbx_list_t *devices = linphone_participant_get_devices(participant);
-		const LinphoneAddress *addrMgr3 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+		const LinphoneAddress *addrMgr3 =
+		    linphone_participant_device_get_address((LinphoneParticipantDevice *)devices->data);
 
 		BC_ASSERT_TRUE(linphone_address_equal(addrMgr2, addrMgr3));
 
-		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func)linphone_participant_device_unref);
 	}
 
 	// mgr2 speaks until mgr1's video change

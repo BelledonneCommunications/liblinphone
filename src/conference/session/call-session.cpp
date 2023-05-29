@@ -1944,10 +1944,9 @@ void CallSession::updateContactAddressInOp() {
 	if (account) {
 		const auto &accountOp = account->getOp();
 		const auto &accountContactAddress = account->getContactAddress();
-		if (accountOp) {
+		if (accountOp && accountOp->getContactAddress()) {
 			/* Give a chance to update the contact address if connectivity has changed */
 			contactAddress.setImpl(accountOp->getContactAddress());
-
 		} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && accountContactAddress) {
 			contactAddress = *accountContactAddress;
 		}

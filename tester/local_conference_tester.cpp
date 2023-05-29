@@ -334,6 +334,7 @@ private:
 		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 		LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
 		linphone_account_params_enable_rtp_bundle(new_account_params, TRUE);
+		linphone_account_params_set_conference_factory_uri(new_account_params, getIdentity().toString().c_str());
 		linphone_account_set_params(account, new_account_params);
 		linphone_account_params_unref(new_account_params);
 		BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));
@@ -341,10 +342,6 @@ private:
 		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
 		//		linphone_core_cbs_set_refer_received(cbs, linphone_conference_server_refer_received);
-		auto config = getDefaultProxyConfig();
-		linphone_proxy_config_edit(config);
-		linphone_proxy_config_set_conference_factory_uri(config, getIdentity().toString().c_str());
-		linphone_proxy_config_done(config);
 	}
 
 	std::multimap<Address, Address> mParticipantDevices;
