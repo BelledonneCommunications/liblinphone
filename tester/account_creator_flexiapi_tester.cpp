@@ -259,8 +259,12 @@ static void server_account_send_token(void) {
 		LinphoneAccountCreatorStatusRequestOk,
 		LinphoneAccountCreatorStatus,
 		"%i");
-
-	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_account_creation_request_token_flexiapi(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 2, TIMEOUT_REQUEST);
 
 	ms_free(stats);
 	linphone_account_creator_unref(creator);

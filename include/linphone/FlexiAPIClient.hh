@@ -76,6 +76,8 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	// Public endpoinds
 	FlexiAPIClient *ping();
 	FlexiAPIClient *sendAccountCreationTokenByPush(string pnProvider, string pnParam, string pnPrid);
+	FlexiAPIClient *accountCreationRequestToken();
+	FlexiAPIClient *accountCreationTokenUsingRequestToken(string token);
 	FlexiAPIClient *accountCreateWithAccountCreationToken(string username, string password, string algorithm, string token);
 	FlexiAPIClient *accountCreateWithAccountCreationToken(string username, string domain, string password,
 														  string algorithm, string token);
