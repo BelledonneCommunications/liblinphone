@@ -1890,10 +1890,14 @@ static void write_xml_presence_note_obj(LinphonePresenceNote *note, struct _pres
 	if (err < 0) *st->err = err;
 }
 
-static int write_xml_presence_timestamp(xmlTextWriterPtr writer, time_t timestamp) {
+static int write_xml_presence_timestamp(xmlTextWriterPtr writer, time_t timestamp, const char *ns) {
 	int err;
 	char *timestamp_str = linphone_timestamp_to_rfc3339_string(timestamp);
-	err = xmlTextWriterWriteElement(writer, (const xmlChar *)"timestamp", (const xmlChar *)timestamp_str);
+	if (ns != NULL) {
+		err = xmlTextWriterWriteElementNS(writer, (const xmlChar *)ns, (const xmlChar *)"timestamp", NULL, (const xmlChar *)timestamp_str);
+	} else {
+		err = xmlTextWriterWriteElement(writer, (const xmlChar *)"timestamp", (const xmlChar *)timestamp_str);
+	}
 	if (timestamp_str) ms_free(timestamp_str);
 	return err;
 }
@@ -1959,9 +1963,9 @@ static int write_xml_presence_service(xmlTextWriterPtr writer, LinphonePresenceS
 	}
 	if (err >= 0) {
 		if (service == NULL)
-			err = write_xml_presence_timestamp(writer, time(NULL));
+			err = write_xml_presence_timestamp(writer, time(NULL), NULL);
 		else
-			err = write_xml_presence_timestamp(writer, service->timestamp);
+			err = write_xml_presence_timestamp(writer, service->timestamp, NULL);
 	}
 	if (err >= 0) {
 		/* Close the "tuple" element. */
@@ -2030,7 +2034,7 @@ static int write_xml_presence_person(xmlTextWriterPtr writer, LinphonePresencePe
 		bctbx_list_for_each2(person->notes, (MSIterate2Func)write_xml_presence_note_obj, &st);
 	}
 	if (err >= 0) {
-		write_xml_presence_timestamp(writer, person->timestamp);
+		write_xml_presence_timestamp(writer, person->timestamp, "dm");
 	}
 	if (err >= 0) {
 		/* Close the "person" element. */
