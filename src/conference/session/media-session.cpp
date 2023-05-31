@@ -3617,13 +3617,12 @@ void MediaSessionPrivate::updateCurrentParams() const {
 			validNegotiatedEncryption = true;
 			break;
 	}
-
 	if (updateEncryption) {
 		if (validNegotiatedEncryption) {
 			getCurrentParams()->setMediaEncryption(enc);
 		} else {
 			/* To avoid too many traces */
-			lDebug() << "Encryption was requested to be " << linphone_media_encryption_to_string(enc)
+			lDebug() << "Encryption was requested to be " << std::string(linphone_media_encryption_to_string(enc))
 			         << ", but isn't effective (allStreamsEncrypted=" << allStreamsEncrypted()
 			         << ", auth_token=" << authToken << ")";
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
@@ -4687,7 +4686,7 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 			if ((conferenceState != ConferenceInterface::State::Instantiated) &&
 			    (conferenceState != ConferenceInterface::State::CreationPending) &&
 			    (!d->getParams()->rtpBundleEnabled())) {
-				lInfo() << "Forcing RTP bundle in Media session (local address " << getLocalAddress()
+				lInfo() << "Forcing RTP bundle in Media session (local address " << *getLocalAddress()
 				        << " remote address " << *getRemoteAddress() << ") was added to conference "
 				        << *conference->getConferenceAddress();
 				d->getParams()->enableRtpBundle(true);

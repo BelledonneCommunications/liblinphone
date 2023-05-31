@@ -91,7 +91,7 @@ public:
 		return mToAddress;
 	}
 
-	SalAddress *getRequestAddress() {
+	const SalAddress *getRequestAddress() {
 		return mRequestAddress.borrow();
 	}
 

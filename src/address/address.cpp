@@ -121,7 +121,7 @@ bool Address::operator<(const Address &other) const {
 
 Address Address::getUri() const {
 	if (mImpl) {
-		return Address(sal_address_new_uri_only(mImpl));
+		return sal_address_new_uri_only(mImpl);
 	}
 	return Address();
 }

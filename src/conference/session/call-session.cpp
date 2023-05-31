@@ -1806,11 +1806,14 @@ const std::shared_ptr<Address> CallSession::getToAddress() const {
 const std::shared_ptr<Address> CallSession::getRequestAddress() const {
 	L_D();
 	if (d->op) {
-		std::shared_ptr<Address> addr = Address::create();
-		addr->setImpl(d->op->getRequestAddress());
-		return addr;
+		if (!d->requestAddress) {
+			d->requestAddress = Address::create();
+		}
+		d->requestAddress->setImpl(d->op->getRequestAddress());
+	} else {
+		d->requestAddress = nullptr;
 	}
-	return nullptr;
+	return d->requestAddress;
 }
 
 CallSession::State CallSession::getTransferState() const {
@@ -1886,6 +1889,18 @@ const CallSessionParams *CallSession::getParams() const {
 void CallSession::updateContactAddress(Address &contactAddress) const {
 	L_D();
 
+	auto conference = d->listener
+	                      ? d->listener->getCallSessionConference(const_pointer_cast<CallSession>(getSharedFromThis()))
+	                      : nullptr;
+	if (conference) {
+		auto confParams = conference->getCurrentParams();
+		if (confParams.isHidden()) {
+			lInfo() << "Do not update contact address because conference " << *conference->getConferenceAddress()
+			        << " is hidden";
+			return;
+		}
+	}
+
 	const auto isInConference = d->isInConference();
 	const std::string confId(d->getConferenceId());
 	if (isInConference) {
@@ -1910,9 +1925,6 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 	}
 
 	bool isAdmin = false;
-	std::shared_ptr<MediaConference::Conference> conference =
-	    d->listener ? d->listener->getCallSessionConference(const_pointer_cast<CallSession>(getSharedFromThis()))
-	                : nullptr;
 	if (conference) {
 		const auto &me = conference->getMe();
 		isAdmin = me->isAdmin();

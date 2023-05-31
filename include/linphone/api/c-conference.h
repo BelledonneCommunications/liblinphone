@@ -185,6 +185,20 @@ LINPHONE_PUBLIC void linphone_conference_params_set_participant_list_type(Linpho
                                                                           LinphoneConferenceParticipantListType type);
 
 /**
+ * Set the conference as hidden. This means that the contact address will not have any conference releated attribute such as isfocus, the conference ID and the admin status.
+ * @param conference The #LinphoneConference object. @notnil
+ * @param hidden Boolean that states whether the conference is hidden or not
+ */
+void linphone_conference_params_set_hidden(LinphoneConferenceParams *params, bool_t hidden);
+
+/**
+ * Get the value of the hidden flag
+ * @param conference The #LinphoneConference object. @notnil
+ * @return whether the conference is hidden or not
+ */
+bool_t linphone_conference_params_is_hidden(const LinphoneConferenceParams *params);
+
+/**
  * Get the participant list type
  * @param conference The #LinphoneConference object. @notnil
  * @return participant list type #LinphoneConferenceParticipantListType.

@@ -591,6 +591,14 @@ linphone_conference_params_get_participant_list_type(const LinphoneConferencePar
 	    ConferenceParams::toCpp(params)->getParticipantListType());
 }
 
+void linphone_conference_params_set_hidden(LinphoneConferenceParams *params, bool_t hidden) {
+	return ConferenceParams::toCpp(params)->setHidden(!!hidden);
+}
+
+bool_t linphone_conference_params_is_hidden(const LinphoneConferenceParams *params) {
+	return (ConferenceParams::toCpp(params)->isHidden() ? TRUE : FALSE);
+}
+
 bool_t linphone_conference_params_is_static(const LinphoneConferenceParams *params) {
 	return (ConferenceParams::toCpp(params)->isStatic() ? TRUE : FALSE);
 }

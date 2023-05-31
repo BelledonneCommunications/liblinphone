@@ -62,6 +62,13 @@ public:
 		return m_factoryAddress;
 	};
 
+	void setHidden(bool enable) {
+		m_hidden = enable;
+	}
+	bool isHidden() const {
+		return m_hidden;
+	}
+
 	void setStatic(bool enable) {
 		m_static = enable;
 	}
@@ -200,6 +207,7 @@ private:
 	time_t m_endTime = (time_t)-1;
 	std::shared_ptr<Account> m_account = nullptr;
 	bool m_static = false;
+	bool m_hidden = false;
 };
 
 LINPHONE_END_NAMESPACE

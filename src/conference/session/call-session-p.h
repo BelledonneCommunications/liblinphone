@@ -151,6 +151,7 @@ protected:
 	std::shared_ptr<CallLog> log = nullptr;
 	mutable std::string referTo;
 	std::shared_ptr<Address> referToAddress;
+	mutable std::shared_ptr<Address> requestAddress;
 	// This counter is used to keep active track of reINVITEs and UPDATEs under processing at any given time.
 	// In fact Linphone can have multiple active transaction at the same time on the same dialog as the transaction
 	// queue is popped after receiving the 100 Trying and not the 200 Ok

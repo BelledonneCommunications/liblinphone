@@ -283,8 +283,8 @@ void Account::setContactAddressWithoutParams(const std::shared_ptr<Address> cont
 		mContactAddressWithoutParams = contact->clone()->toSharedPtr();
 		mContactAddressWithoutParams->clean();
 		mContactAddressWithoutParams->setPort(-1);
-		mContactAddressWithoutParams->setDomain(nullptr);
-		mContactAddressWithoutParams->setDisplayName(nullptr);
+		mContactAddressWithoutParams->setDomain(std::string());
+		mContactAddressWithoutParams->setDisplayName(std::string());
 	}
 }
 
