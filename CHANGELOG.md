@@ -11,9 +11,13 @@ This changelog file was started on October 2019. Previous changes were more or l
 ## [5.3.0] Unreleased
 
 ### Changed
-- Enum relocations dictionnary is now automatically computed, causing an API change in C++, Swift & Java wrappers!
+- Enum relocations dictionnary is now automatically computed, which fixes some enum that were not
+  scoped where there have to be. For example, in Swift linphonesw.ConferenceSchedulerState becomes linphonesw.ConferenceScheduler.State.
+  This is an API change for C++, Swift and Java, requiring application code to be adapated.
 - TLS Client certificate request authentication callback removed (due to mbedtls update).
   Application using TLS client certificate must provide it before any TLS connexion needing it.
+- Refactoring of LinphoneAddress object implementation, leading to greater internal simplicity and performance.
+
 
 ## [5.2.0] 2022-11-14
 

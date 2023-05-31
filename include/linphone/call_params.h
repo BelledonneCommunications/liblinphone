@@ -58,10 +58,14 @@ LINPHONE_PUBLIC const char *linphone_call_params_get_custom_header(const Linphon
 
 /**
  * Copy an existing #LinphoneCallParams object to a new #LinphoneCallParams object.
+ * linphone_call_params_copy() is error-prone, leading to inconsistent parameters being passed to
+ * linphone_core_invite_address_with_params() or linphone_call_accept_with_params().
+ * @deprecated use exclusively linphone_core_create_call_params() to create #LinphoneCallParams object.
  * @param call_params The #LinphoneCallParams object to copy. @notnil
  * @return A copy of the #LinphoneCallParams object. @notnil @tobefreed
  **/
-LINPHONE_PUBLIC LinphoneCallParams *linphone_call_params_copy(const LinphoneCallParams *call_params);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCallParams *
+linphone_call_params_copy(const LinphoneCallParams *call_params);
 
 /**
  * Indicate whether sending of early media was enabled.

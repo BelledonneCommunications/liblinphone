@@ -1160,7 +1160,7 @@ int LocalConference::inviteAddresses(const list<std::shared_ptr<Address>> &addre
 			/* Start a new call by indicating that it has to be put into the conference directly */
 			LinphoneCallParams *new_params;
 			if (params) {
-				new_params = linphone_call_params_copy(params);
+				new_params = _linphone_call_params_copy(params);
 			} else {
 				new_params = linphone_core_create_call_params(lc, nullptr);
 				linphone_call_params_enable_video(new_params, confParams->videoEnabled());

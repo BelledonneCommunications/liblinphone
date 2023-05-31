@@ -27,15 +27,16 @@
  * @ingroup conference
  */
 typedef enum _LinphoneConferenceState {
-	LinphoneConferenceStateNone = 0,               /**< Initial state */
-	LinphoneConferenceStateInstantiated = 1,       /**< Conference is now instantiated on local */
-	LinphoneConferenceStateCreationPending = 2,    /**< One creation request was sent to the server */
-	LinphoneConferenceStateCreated = 3,            /**< Conference was created on the server */
-	LinphoneConferenceStateCreationFailed = 4,     /**< Conference creation failed */
-	LinphoneConferenceStateTerminationPending = 5, /**< Wait for conference termination */
-	LinphoneConferenceStateTerminated = 6,         /**< Conference exists on server but not in local */
-	LinphoneConferenceStateTerminationFailed = 7,  /**< Conference termination failed */
-	LinphoneConferenceStateDeleted = 8,            /**< Conference was deleted on the server */
+	LinphoneConferenceStateNone = 0,               /**< Initial state. */
+	LinphoneConferenceStateInstantiated = 1,       /**< Conference is now instantiated locally. */
+	LinphoneConferenceStateCreationPending = 2,    /**< One creation request was sent to the service. */
+	LinphoneConferenceStateCreated = 3,            /**< Conference was created on the service. */
+	LinphoneConferenceStateCreationFailed = 4,     /**< Conference creation on service failed. */
+	LinphoneConferenceStateTerminationPending = 5, /**< Wait for conference termination. */
+	LinphoneConferenceStateTerminated = 6, /**< The conference is terminated locally, though it may still exist on the
+	                                          service for other participants. */
+	LinphoneConferenceStateTerminationFailed = 7, /**< Conference termination failed. */
+	LinphoneConferenceStateDeleted = 8,           /**< Conference was deleted locally and on the service. */
 } LinphoneConferenceState;
 
 /**

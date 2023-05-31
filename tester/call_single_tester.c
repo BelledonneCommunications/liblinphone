@@ -2627,29 +2627,29 @@ static void call_with_custom_sdp_attributes(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *lc),
+static void call_with_custom_header_or_sdp_cb(LinphoneCore *lc,
                                               LinphoneCall *call,
                                               LinphoneCallState cstate,
                                               BCTBX_UNUSED(const char *message)) {
 	const char *value;
 	if (cstate == LinphoneCallOutgoingInit) {
-		LinphoneCallParams *params = linphone_call_params_copy(linphone_call_get_params(call));
+		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 		linphone_call_params_add_custom_sdp_attribute(params, "working", "maybe");
 		linphone_call_set_params(call, params);
 		linphone_call_params_unref(params);
 	} else if (cstate == LinphoneCallIncomingReceived) {
 		const LinphoneCallParams *tparams = linphone_call_get_remote_params(call);
-		LinphoneCallParams *params = linphone_call_params_copy(tparams);
 		// Check received params
 		// SDP
-		value = linphone_call_params_get_custom_sdp_attribute(params, "working");
+		value = linphone_call_params_get_custom_sdp_attribute(tparams, "working");
 		BC_ASSERT_PTR_NOT_NULL(value);
 		if (value) BC_ASSERT_STRING_EQUAL(value, "maybe");
 		// header
-		value = linphone_call_params_get_custom_header(params, "weather");
+		value = linphone_call_params_get_custom_header(tparams, "weather");
 		BC_ASSERT_PTR_NOT_NULL(value);
 		if (value) BC_ASSERT_STRING_EQUAL(value, "thunderstorm");
 		// modify SDP
+		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 		linphone_call_params_add_custom_sdp_attribute(params, "working", "yes");
 		linphone_call_set_params(call, params);
 		linphone_call_params_unref(params);
@@ -2747,22 +2747,22 @@ static void call_caller_with_custom_header_or_sdp_attributes(void) {
 	linphone_core_manager_destroy(caller_mgr);
 }
 
-static void call_callee_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *lc),
+static void call_callee_with_custom_header_or_sdp_cb(LinphoneCore *lc,
                                                      LinphoneCall *call,
                                                      LinphoneCallState cstate,
                                                      BCTBX_UNUSED(const char *message)) {
 	const char *value;
 	if (cstate == LinphoneCallOutgoingInit) {
-		LinphoneCallParams *params = linphone_call_params_copy(linphone_call_get_params(call));
+		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 		linphone_call_params_add_custom_sdp_attribute(params, "working", "maybe");
 		linphone_call_set_params(call, params);
 		linphone_call_params_unref(params);
 	} else if (cstate == LinphoneCallIncomingReceived) {
 		const LinphoneCallParams *tparams = linphone_call_get_remote_params(call);
-		LinphoneCallParams *params = linphone_call_params_copy(tparams);
-		value = linphone_call_params_get_custom_sdp_attribute(params, "working");
+		value = linphone_call_params_get_custom_sdp_attribute(tparams, "working");
 		BC_ASSERT_PTR_NOT_NULL(value);
 		if (value) BC_ASSERT_STRING_EQUAL(value, "maybe");
+		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 		linphone_call_set_params(call, params);
 		linphone_call_params_unref(params);
 	}

@@ -2299,7 +2299,7 @@ static int lpc_cmd_camera(LinphoneCore *lc, char *args) {
 			if (linphone_call_get_state(call) == LinphoneCallStreamsRunning) {
 				if ((activated && !linphone_call_params_video_enabled(cp))) {
 					/*update the call to add the video stream*/
-					LinphoneCallParams *ncp = linphone_call_params_copy(cp);
+					LinphoneCallParams *ncp = linphone_core_create_call_params(call);
 					linphone_call_params_enable_video(ncp, TRUE);
 					linphone_call_update(call, ncp);
 					linphone_call_params_unref(ncp);

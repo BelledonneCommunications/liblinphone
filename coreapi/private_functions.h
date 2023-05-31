@@ -101,6 +101,7 @@ MSAudioEndpoint *_linphone_call_get_endpoint(const LinphoneCall *call);
 void _linphone_call_set_endpoint(LinphoneCall *call, MSAudioEndpoint *endpoint);
 
 LinphoneCallParams *linphone_call_params_new(LinphoneCore *core);
+LinphoneCallParams *_linphone_call_params_copy(const LinphoneCallParams *params);
 SalMediaProto get_proto_from_call_params(const LinphoneCallParams *params);
 SalStreamDir get_audio_dir_from_call_params(const LinphoneCallParams *params);
 SalStreamDir get_video_dir_from_call_params(const LinphoneCallParams *params);

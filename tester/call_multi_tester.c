@@ -910,8 +910,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 			}
 			BC_ASSERT_PTR_NOT_NULL(call_to_update);
 			if (call_to_update) {
-				const LinphoneCallParams *old_params = linphone_call_get_params(call_to_update);
-				LinphoneCallParams *new_params = linphone_call_params_copy(old_params);
+				LinphoneCallParams *new_params = linphone_core_create_call_params(c, call_to_update);
 				linphone_call_params_enable_video(new_params, TRUE);
 				linphone_call_update(call_to_update, new_params);
 				linphone_call_params_unref(new_params);

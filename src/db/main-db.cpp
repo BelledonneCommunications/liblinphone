@@ -4008,7 +4008,7 @@ ChatMessage::State MainDb::getChatMessageParticipantState(const shared_ptr<Event
 		const long long &eventId = dEventKey->storageId;
 		const long long &participantSipAddressId = d->selectSipAddressId(participantAddress);
 
-		unsigned int state;
+		unsigned int state = (unsigned int)ChatMessage::State::Idle;
 		*d->dbSession.getBackendSession()
 		    << "SELECT state FROM chat_message_participant"
 		       " WHERE event_id = :eventId AND participant_sip_address_id = :participantSipAddressId",
@@ -4017,7 +4017,7 @@ ChatMessage::State MainDb::getChatMessageParticipantState(const shared_ptr<Event
 		return ChatMessage::State(state);
 	};
 #else
-	return ChatMessage::State();
+	return ChatMessage::Idle;
 #endif
 }
 

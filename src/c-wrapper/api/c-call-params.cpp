@@ -226,8 +226,12 @@ void linphone_call_params_clear_custom_sdp_media_attributes(LinphoneCallParams *
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->clearCustomSdpMediaAttributes(type);
 }
 
-LinphoneCallParams *linphone_call_params_copy(const LinphoneCallParams *params) {
+LinphoneCallParams *_linphone_call_params_copy(const LinphoneCallParams *params) {
 	return (LinphoneCallParams *)belle_sip_object_clone((const belle_sip_object_t *)params);
+}
+
+LinphoneCallParams *linphone_call_params_copy(const LinphoneCallParams *params) {
+	return _linphone_call_params_copy(params);
 }
 
 bool_t linphone_call_params_early_media_sending_enabled(const LinphoneCallParams *params) {

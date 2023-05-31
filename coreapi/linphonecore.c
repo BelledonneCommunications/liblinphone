@@ -2750,12 +2750,12 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 #ifdef HAVE_ADVANCED_IM
 		const auto ev = Event::toCpp(lev)->getSharedFromThis();
 		const auto resourceAddr = ev->getResource();
-		const char *resourceAddrStr = L_STRING_TO_C(resourceAddr->asStringUriOnly());
+		const auto resourceAddrUri = resourceAddr->asStringUriOnly();
 		const bctbx_list_t *elem;
 		for (elem = linphone_core_get_proxy_config_list(lc); elem != NULL; elem = elem->next) {
 			LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)elem->data;
 			const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
-			if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
+			if (factoryUri && (strcmp(resourceAddrUri.c_str(), factoryUri) == 0)) {
 				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(
 				    ev, body ? L_GET_CPP_PTR_FROM_C_OBJECT(body) : nullptr);
 				return;
@@ -2982,8 +2982,10 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 
 		// FlexiAPI specific endpoints
 		linphone_account_creator_service_set_send_token_cb(service, linphone_account_creator_send_token_flexiapi);
-		linphone_account_creator_service_set_account_creation_request_token_cb(service, linphone_account_creator_account_creation_request_token_flexiapi);
-		linphone_account_creator_service_set_account_creation_token_using_request_token_cb(service, linphone_account_creator_account_creation_token_using_request_token_flexiapi);
+		linphone_account_creator_service_set_account_creation_request_token_cb(
+		    service, linphone_account_creator_account_creation_request_token_flexiapi);
+		linphone_account_creator_service_set_account_creation_token_using_request_token_cb(
+		    service, linphone_account_creator_account_creation_token_using_request_token_flexiapi);
 		linphone_account_creator_service_set_create_account_cb(
 		    service, linphone_account_creator_create_account_with_token_flexiapi);
 		linphone_account_creator_service_set_recover_account_cb(
@@ -4895,7 +4897,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 	proxy = linphone_call_params_get_proxy_config(params);
 	if (proxy == NULL) proxy = linphone_core_lookup_known_proxy(lc, addr);
 
-	cp = linphone_call_params_copy(params);
+	cp = _linphone_call_params_copy(params);
 	if (!linphone_call_params_has_avpf_enabled_been_set(cp)) {
 		if (proxy != NULL) {
 			linphone_call_params_enable_avpf(cp, linphone_proxy_config_avpf_enabled(proxy));
@@ -8163,7 +8165,7 @@ LinphoneGlobalState linphone_core_get_global_state(const LinphoneCore *lc) {
 LinphoneCallParams *linphone_core_create_call_params(LinphoneCore *lc, LinphoneCall *call) {
 	if (!call) return linphone_call_params_new(lc);
 	if (linphone_call_get_params(call)) {
-		return linphone_call_params_copy(linphone_call_get_params(call));
+		return _linphone_call_params_copy(linphone_call_get_params(call));
 	}
 	ms_error(
 	    "linphone_core_create_call_params(): call [%p] is not in a state where call params can be created or used.",
