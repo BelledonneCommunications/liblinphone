@@ -118,7 +118,7 @@ string MacPlatformHelpers::getResourceDirPath (const string &framework, const st
 	if (resourceUrl) {
 		CFURLRef resourceUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, resourceUrl);
 		CFStringRef resourcePath = CFURLCopyFileSystemPath(resourceUrlDirectory, kCFURLPOSIXPathStyle);
-		path = CFStringGetCStringPtr(resourcePath, encodingMethod);
+		path = toString(resourcePath, encodingMethod);
 		CFRelease(resourcePath);
 		CFRelease(resourceUrlDirectory);
 		CFRelease(resourceUrl);
@@ -208,23 +208,27 @@ void MacPlatformHelpers::getHttpProxySettings(void) {
 	}
 }
 
-//Safely get an UTF-8 string from the given CFStringRef
-string MacPlatformHelpers::toUTF8String(CFStringRef str) {
+//Safely get a string from the given CFStringRef
+string MacPlatformHelpers::toString(CFStringRef str, CFStringEncoding encodingMethod) {
 	string ret;
 
 	if (str == NULL) {
 		return ret;
 	}
 	CFIndex length = CFStringGetLength(str);
-	CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
+	CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, encodingMethod) + 1;
 	char *buffer = (char *) malloc((size_t) maxSize);
 	if (buffer) {
-		if (CFStringGetCString(str, buffer, maxSize, kCFStringEncodingUTF8)) {
+		if (CFStringGetCString(str, buffer, maxSize, encodingMethod)) {
 			ret = buffer;
 		}
 		free(buffer);
 	}
 	return ret;
+}
+
+string MacPlatformHelpers::toUTF8String(CFStringRef str) {
+	return toString(str, kCFStringEncodingUTF8);
 }
 
 // -----------------------------------------------------------------------------

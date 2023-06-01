@@ -47,8 +47,8 @@ public:
 protected:
 	static const string Framework;
 	void getHttpProxySettings(void);
-	string toUTF8String(CFStringRef str);
-
+	static string toString(CFStringRef str, CFStringEncoding encodingMethod);
+	static string toUTF8String(CFStringRef str);
 private:
 	static string getBundleResourceDirPath(const string &framework, const string &resource);
 	static string getResourceDirPath(const string &framework, const string &resource);
