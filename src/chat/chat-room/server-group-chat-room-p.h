@@ -193,12 +193,10 @@ private:
 	std::map<std::string, RegistrationSubscriptionContext>
 	    registrationSubscriptions;               /*map of registrationSubscriptions for each participant*/
 	int unnotifiedRegistrationSubscriptions = 0; /*count of not-yet notified registration subscriptions*/
-	std::shared_ptr<ParticipantDevice>
-	    mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
-	bool joiningPendingAfterCreation = false;
-	bool needsUnref = false;
+	std::shared_ptr<ParticipantDevice> mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
 	std::unordered_map<std::string, std::queue<std::shared_ptr<Message>>> queuedMessages;
 	Utils::Version protocolVersion;
+	bool joiningPendingAfterCreation = false;
 	L_DECLARE_PUBLIC(ServerGroupChatRoom);
 };
 
