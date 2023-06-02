@@ -259,6 +259,13 @@ public:
 		wrappedObject->weakCppPtr.~weak_ptr();
 	}
 
+	template<typename CppType>
+	static bool isOwnedByC(void *cObject){
+		WrappedBaseObject<CppType> *base = static_cast<WrappedBaseObject<CppType>*>(cObject);
+		return base->owner == WrappedObjectOwner::External;
+	}
+
+
 	template<
 		typename CType,
 		typename CppType = typename CTypeMetaInfo<CType>::cppType,

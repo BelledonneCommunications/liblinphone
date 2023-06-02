@@ -216,14 +216,13 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	 * The destruction is defered to next main loop iteration, in order to make the self-destruction outside of the call stack that leaded to it.
 	 * TODO: remove this after switching chatrooms to HybridObject.
 	 */
-	if (needsUnref){
-		LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(chatRoom);
-		/* If the chatroom was created as "external" mode, explicitely unref the C object to destroy it.*/
-		if (cChatRoom){
-			q->getCore()->doLater([cChatRoom](){
-				linphone_chat_room_unref(cChatRoom);
-			});
-		}
+
+	LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(chatRoom);
+	/* If the chatroom was created as "external" mode, explicitely unref the C object to destroy it.*/
+	if (cChatRoom && Wrapper::isOwnedByC<ServerGroupChatRoom>(cChatRoom)){
+		q->getCore()->doLater([cChatRoom](){
+			linphone_chat_room_unref(cChatRoom);
+		});
 	}
 }
 
@@ -1230,6 +1229,10 @@ void ServerGroupChatRoomPrivate::onBye(const shared_ptr<ParticipantDevice> &part
 bool ServerGroupChatRoomPrivate::dispatchMessagesAfterFullState(const shared_ptr<CallSession> &session) const {
 	L_Q();
 	auto device = q->findCachedParticipantDevice(session);
+	if (!device) {
+		lWarning() << q << " dispatchMessagesAfterFullState on unknown device.";
+		return false; // Assume it is a recent device.
+	}
 	return dispatchMessagesAfterFullState(device);
 }
 
@@ -1374,13 +1377,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	d->protocolVersion = CorePrivate::groupChatProtocolVersion;
-	
-	/*
-	 * HACK: see comment in ServerGroupChatRoomPrivate::requestDeletion() for details.
-	 * When this constructor is used, a reference to the C object is given to the core.
-	 * Thus, remember that it will have to be released.
-	 */
-	d->needsUnref = true;
+
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom (
