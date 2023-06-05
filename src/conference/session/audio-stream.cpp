@@ -264,6 +264,10 @@ MediaStream *MS2AudioStream::getMediaStream() const {
 
 void MS2AudioStream::setupMediaLossCheck() {
 	int disconnectTimeout = linphone_core_get_nortp_timeout(getCCore());
+	if (disconnectTimeout == 0) {
+		lInfo() << "No RTP timeout disabled";
+		return;
+	}
 	mMediaLostCheckTimer = getCore().createTimer(
 	    [this, disconnectTimeout]() -> bool {
 		    if (!audio_stream_alive(mStream, disconnectTimeout)) {
