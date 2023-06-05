@@ -197,7 +197,7 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices() co
 	for (const auto &p : participants) {
 		const auto &d = p->getDevices();
 		if (!d.empty()) {
-			devices.insert(devices.begin(), d.begin(), d.end());
+			devices.insert(devices.end(), d.begin(), d.end());
 		}
 	}
 	if (isIn()) {
