@@ -376,6 +376,8 @@ void AccountParams::setOutboundProxyEnabled(bool enable) {
 		}
 
 		mRoutes.emplace_back(mProxyAddress);
+	} else {
+		mRoutes.clear();
 	}
 }
 
@@ -814,6 +816,8 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 		auto routesString = L_GET_C_LIST_FROM_CPP_LIST(getRoutesString());
 		linphone_config_set_string_list(config, key, "reg_route", routesString);
 		bctbx_list_free_with_data(routesString, (bctbx_list_free_func)bctbx_free);
+	} else {
+		linphone_config_clean_entry(config, key, "reg_route");
 	}
 	if (!mIdentity.empty()) {
 		linphone_config_set_string(config, key, "reg_identity", mIdentity.c_str());
