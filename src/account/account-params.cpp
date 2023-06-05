@@ -827,6 +827,8 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	}
 	if (mRoutesString != NULL) {
 		linphone_config_set_string_list(config, key, "reg_route", mRoutesString);
+	} else {
+		linphone_config_clean_entry(config, key, "reg_route");
 	}
 	if (!mIdentity.empty()){
 		linphone_config_set_string(config, key, "reg_identity", mIdentity.c_str());
