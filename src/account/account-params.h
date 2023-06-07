@@ -56,6 +56,7 @@ public:
 	void setPublishEnabled(bool enable);
 	void setOutboundProxyEnabled(bool enable);
 	void setPushNotificationAllowed(bool allow);
+	void setPushNotificationReplyWRegisterAlways(bool enable);
 	void setRemotePushNotificationAllowed(bool allow);
 	void setUseInternationalPrefixForCallsAndChats(bool enable);
 	void setCpimMessagesAllowedInBasicChatRooms(bool allow);
@@ -95,6 +96,7 @@ public:
 	bool getPublishEnabled() const;
 	bool getOutboundProxyEnabled() const;
 	bool getPushNotificationAllowed() const;
+	bool getPushNotificationReplyWRegisterAlways() const;
 	bool getRemotePushNotificationAllowed() const;
 	bool getUseInternationalPrefixForCallsAndChats() const;
 	bool isPushNotificationAvailable() const;
@@ -152,6 +154,7 @@ private:
 	bool mQualityReportingEnabled;
 	bool mPublishEnabled;
 	bool mPushNotificationAllowed;
+	bool mPushNotificationReplyWRegisterAlways;
 	bool mRemotePushNotificationAllowed;
 	bool mUseInternationalPrefixForCallsAndChats;
 	bool mRtpBundleEnabled;

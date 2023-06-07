@@ -1312,6 +1312,16 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 	bool sendKeepAlive = false;
 	while (it) {
 		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)bctbx_list_get_data(it);
+
+		// check if SIP proxy server requires to always reply with REGISTER request (refresh) 
+		LinphoneAccountParams *params = linphone_account_get_params(proxy->account);
+		bool sendRegisterAlways = linphone_account_params_get_PushNotificationReplyWRegisterAlways(params);
+		if (sendRegisterAlways) {
+			lInfo() << "Proxy config [" << proxy << "] requires to always reply by sending REGISTER request, refreshing REGISTER";
+			linphone_proxy_config_refresh_register(proxy);
+			continue;
+		}
+		
 		LinphoneRegistrationState state = linphone_proxy_config_get_state(proxy);
 		if (state == LinphoneRegistrationFailed) {
 			lInfo() << "Proxy config [" << proxy << "] is in failed state, refreshing REGISTER";

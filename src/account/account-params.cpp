@@ -86,6 +86,7 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	mPushNotificationAllowed =
 	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault)
 	       : pushAllowedDefault;
+	mPushNotificationReplyWRegisterAlways = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_reply_register_always", 0) : 0;
 	mRemotePushNotificationAllowed =
 	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed",
 	                                           remotePushAllowedDefault)
@@ -383,6 +384,10 @@ void AccountParams::setPushNotificationAllowed(bool allow) {
 	mPushNotificationAllowed = allow;
 }
 
+void AccountParams::setPushNotificationReplyWRegisterAlways(bool allow) {
+	mPushNotificationReplyWRegisterAlways = allow;
+}
+
 void AccountParams::setRemotePushNotificationAllowed(bool allow) {
 	mRemotePushNotificationAllowed = allow;
 }
@@ -566,6 +571,10 @@ uint8_t AccountParams::getAvpfRrInterval() const {
 
 bool AccountParams::getRegisterEnabled() const {
 	return mRegisterEnabled;
+}
+
+bool AccountParams::getPushNotificationReplyWRegisterAlways() const {
+	return mPushNotificationReplyWRegisterAlways;
 }
 
 bool AccountParams::getDialEscapePlusEnabled() const {

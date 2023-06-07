@@ -220,6 +220,10 @@ bool_t linphone_account_params_register_enabled(const LinphoneAccountParams *par
 	return AccountParams::toCpp(params)->getRegisterEnabled();
 }
 
+bool_t linphone_account_params_get_PushNotificationReplyWRegisterAlways(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->getPushNotificationReplyWRegisterAlways();
+}
+
 const char *linphone_account_params_get_contact_parameters(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getContactParameters());
 }
