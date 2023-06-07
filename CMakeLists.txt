@@ -518,6 +518,14 @@ configure_package_config_file(cmake/LinphoneConfig.cmake.in
 	NO_SET_AND_CHECK_MACRO
 )
 
+set(prefix ${CMAKE_INSTALL_PREFIX})
+set(exec_prefix ${prefix}/${CMAKE_INSTALL_BINDIR})
+set(libdir ${prefix}/${CMAKE_INSTALL_LIBDIR})
+set(includedir ${prefix}/include)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/linphone.pc.in ${CMAKE_CURRENT_BINARY_DIR}/linphone.pc)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/linphone.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
 install(EXPORT ${EXPORT_TARGETS_NAME}Targets
 	FILE LinphoneTargets.cmake
 	DESTINATION ${CONFIG_PACKAGE_LOCATION}
