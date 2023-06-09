@@ -105,6 +105,7 @@ public class CoreManager {
     private native void enterBackground(long ptr);
     private native void enterForeground(long ptr);
     private native void processPushNotification(long ptr, String callId, String payload, boolean isCoreStarting);
+    private native void healNetworkConnections(long ptr);
 
     private boolean mServiceRunningInForeground;
 
@@ -229,6 +230,12 @@ public class CoreManager {
 
         Log.i("[Core Manager] Notifying Core a push with Call-ID [" + callId + "] has been received");
         processPushNotification(mCore.getNativePointer(), callId, payload, isCoreStarting);
+    }
+
+    public void healNetwork() {
+        if (mCore != null) {
+            healNetworkConnections(mCore.getNativePointer());
+        }
     }
 
     public void onLinphoneCoreStart() {

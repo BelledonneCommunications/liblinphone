@@ -336,6 +336,7 @@ void CorePrivate::shutdown() {
 	}
 
 	pushReceivedBackgroundTask.stop();
+	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
 }
 
 // Called by _linphone_core_stop_async_end() just before going to globalStateOff.
@@ -381,6 +382,7 @@ void CorePrivate::uninit() {
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
 	pushReceivedBackgroundTask.stop();
+	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
 	mLdapServers.clear();
 
 	q->mPublishByEtag.clear();
@@ -1249,6 +1251,7 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 	// Stop any previous background task we might already have
 	d->pushReceivedBackgroundTask.stop();
 
+	LinphoneCore *lc = getCCore();
 	bool found = false;
 	if (!callId.empty()) {
 		for (const auto &call : d->calls) {
@@ -1271,12 +1274,12 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 
 		if (!found) {
 			d->lastPushReceivedCallId = callId;
+			static_cast<PlatformHelpers *>(lc->platform_helper)->startPushService();
 			// Start a background task for 20 seconds to ensure we have time to process the push
 			d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
 		}
 	}
 
-	LinphoneCore *lc = getCCore();
 	linphone_core_notify_push_notification_received(lc, payload.c_str());
 
 	if (isCoreStarting) {
@@ -1287,6 +1290,13 @@ void Core::pushNotificationReceived(const string &callId, const string &payload,
 		lInfo() << "Call-ID was found, skipping network tasks that ensures sockets are alive";
 		return;
 	}
+
+	healNetworkConnections();
+}
+
+void Core::healNetworkConnections() {
+	L_D();
+	LinphoneCore *lc = getCCore();
 
 #ifdef __ANDROID__
 	if (linphone_core_wifi_only_enabled(lc)) {

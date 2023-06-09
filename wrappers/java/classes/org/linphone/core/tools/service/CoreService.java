@@ -249,7 +249,7 @@ public class CoreService extends Service {
      * This method is called when the service should be stopped as foreground.
      */
     public void hideForegroundServiceNotification() {
-        stopForeground(true);
+        stopForeground(true); // True to remove the notification
     }
 
     void startForeground() {

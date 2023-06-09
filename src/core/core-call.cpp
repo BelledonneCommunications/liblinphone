@@ -50,6 +50,7 @@ int CorePrivate::addCall(const shared_ptr<Call> &call) {
 			lInfo() << "Call ID matches last push received Call-ID, stopping push background task";
 			lastPushReceivedCallId = "";
 			pushReceivedBackgroundTask.stop();
+			static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
 		}
 	}
 

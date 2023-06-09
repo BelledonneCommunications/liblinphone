@@ -959,6 +959,7 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 		lInfo() << "Chat message Call-ID matches last push received Call-ID, stopping push background task";
 		d->lastPushReceivedCallId = "";
 		d->pushReceivedBackgroundTask.stop();
+		static_cast<PlatformHelpers *>(cCore->platform_helper)->stopPushService();
 	}
 
 	return reason;

@@ -91,6 +91,7 @@ public class AndroidPlatformHelper {
     private InteractivityReceiver mInteractivityReceiver;
     private String[] mDnsServers;
     private NetworkSignalMonitor mNetworkSignalMonitor;
+    private boolean mPushServiceStarted;
 
     private static int mTempCountWifi = 0;
     private static int mTempCountMCast = 0;
@@ -889,5 +890,24 @@ public class AndroidPlatformHelper {
             Log.i("[Platform Helper] Enabling audio route changes in mediastreamer2");
         }
         MediastreamerAndroidContext.disableAudioRouteChanges(disable);
+    }
+
+    public synchronized void startPushService() {
+        boolean connected = mNetworkManager.isCurrentlyConnected(mContext);
+        if (!connected) {
+            Log.i("[Platform Helper] Push has been received but network seems unreachable, starting foreground push service");
+            Intent i = new Intent(mContext, org.linphone.core.tools.service.PushService.class); 
+            mContext.startForegroundService(i);
+            mPushServiceStarted = true;
+        }
+    }
+
+    public synchronized void stopPushService() {
+        if (mPushServiceStarted) {
+            Log.i("[Platform Helper] Foreground push service is no longer required");
+            Intent i = new Intent(mContext, org.linphone.core.tools.service.PushService.class); 
+            mContext.stopService(i);
+            mPushServiceStarted = false;
+        }
     }
 };

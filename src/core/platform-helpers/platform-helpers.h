@@ -78,8 +78,7 @@ public:
 	virtual void setVideoPreviewWindow(void *windowId) = 0;
 	virtual std::string getDownloadPath() = 0;
 	virtual void setVideoWindow(void *windowId) = 0;
-	virtual void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice,
-	                                             void *windowId) = 0;
+	virtual void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void *windowId) = 0;
 	virtual void resizeVideoPreview(int width, int height) = 0;
 
 	// This method shall retrieve DNS server list from the platform and assign it to the core.
@@ -93,6 +92,8 @@ public:
 
 	virtual bool startNetworkMonitoring() = 0;
 	virtual void stopNetworkMonitoring() = 0;
+	virtual void startPushService() = 0;
+	virtual void stopPushService() = 0;
 
 	virtual void onLinphoneCoreStart(bool monitoringEnabled) = 0;
 	virtual void onLinphoneCoreStop() = 0;
@@ -169,6 +170,8 @@ public:
 
 	bool startNetworkMonitoring() override;
 	void stopNetworkMonitoring() override;
+	void startPushService() override;
+	void stopPushService() override;
 
 	void onLinphoneCoreStart(bool monitoringEnabled) override;
 	void onLinphoneCoreStop() override;

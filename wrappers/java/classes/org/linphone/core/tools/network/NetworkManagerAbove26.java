@@ -181,10 +181,12 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
         if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
             // Device is restricting metered network activity while application is running on background.
             // In this state, application should not try to use the network while running on background, because it would be denied.
-            Log.w("[Platform Helper] [Network Manager 26] Device is restricting metered network activity while application is running on background");
+            Log.w("[Platform Helper] [Network Manager 26] Device is restricting metered network activity while application is running on background, data saver is probably ON");
             if (mConnectivityManager.isActiveNetworkMetered() && mHelper.isInBackground()) {
-                Log.w("[Platform Helper] [Network Manager 26] Device is in background, returning false");
+                Log.w("[Platform Helper] [Network Manager 26] Considering network is not reachable due to background restrictions!");
                 return false;
+            } else {
+                Log.i("[Platform Helper] [Network Manager 26] Active network not metered, considering network is reachable");
             }
         }
         return mNetworkAvailable != null;

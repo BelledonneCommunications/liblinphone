@@ -101,8 +101,8 @@ void GenericPlatformHelpers::setVideoPreviewWindow(BCTBX_UNUSED(void *windowId))
 void GenericPlatformHelpers::setVideoWindow(BCTBX_UNUSED(void *widowId)) {
 }
 
-void GenericPlatformHelpers::setParticipantDeviceVideoWindow(
-    BCTBX_UNUSED(LinphoneParticipantDevice *participantDevice), BCTBX_UNUSED(void *windowId)) {
+void GenericPlatformHelpers::setParticipantDeviceVideoWindow(BCTBX_UNUSED(LinphoneParticipantDevice *participantDevice),
+                                                             BCTBX_UNUSED(void *windowId)) {
 }
 
 void GenericPlatformHelpers::resizeVideoPreview(BCTBX_UNUSED(int width), BCTBX_UNUSED(int height)) {
@@ -156,6 +156,10 @@ bool GenericPlatformHelpers::startNetworkMonitoring() {
 
 void GenericPlatformHelpers::stopNetworkMonitoring() {
 }
+
+void GenericPlatformHelpers::startPushService(){};
+
+void GenericPlatformHelpers::stopPushService(){};
 
 void GenericPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
