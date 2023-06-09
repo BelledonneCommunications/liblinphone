@@ -69,6 +69,8 @@ public:
 	void setDnsServers () override;
 	void setNetworkReachable (bool reachable) override;
 	void setHttpProxy (const string &host, int port) override;
+	void startPushService () override;
+	void stopPushService () override;
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
@@ -128,6 +130,8 @@ private:
 	jmethodID mUpdateNetworkReachabilityId = nullptr;
 	jmethodID mRotateVideoPreviewId = nullptr;
 	jmethodID mDisableAudioRouteChangesId = nullptr;
+	jmethodID mStartPushService = nullptr;
+	jmethodID mStopPushService = nullptr;
 
 	// CoreManager methods
 	jmethodID mCoreManagerDestroyId = nullptr;
@@ -251,6 +255,8 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
 	mRotateVideoPreviewId = getMethodId(env, klass, "rotateVideoPreview", "()V");
 	mDisableAudioRouteChangesId = getMethodId(env, klass, "disableAudioRouteChanges", "(Z)V");
+	mStartPushService = getMethodId(env, klass, "startPushService", "()V");
+	mStopPushService = getMethodId(env, klass, "stopPushService", "()V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -485,6 +491,20 @@ void AndroidPlatformHelpers::setDnsServers () {
 void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
 	mNetworkReachable = reachable;
 	linphone_core_set_network_reachable_internal(getCore()->getCCore(), reachable ? 1 : 0);
+}
+
+void AndroidPlatformHelpers::startPushService() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mStartPushService);
+	}
+}
+
+void AndroidPlatformHelpers::stopPushService() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mStopPushService);
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -824,6 +844,11 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 		ms_free(push_payload);
 	};
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_healNetworkConnections(BCTBX_UNUSED(JNIEnv *env), BCTBX_UNUSED(jobject thiz), jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->healNetworkConnections();
 }
 
 LINPHONE_END_NAMESPACE

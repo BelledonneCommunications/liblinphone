@@ -280,6 +280,8 @@ public:
 	// ---------------------------------------------------------------------------
 
 	void pushNotificationReceived (const std::string& callId, const std::string& payload, bool isCoreStarting);
+	void healNetworkConnections();
+	
 	int getUnreadChatMessageCount () const;
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
