@@ -72,7 +72,7 @@ static void completion_cb(BCTBX_UNUSED(void *user_data), int percentage) {
 static void audio_call_stereo_call(const char *codec_name, int clock_rate, int bitrate_override, bool_t stereo) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
-	PayloadType *pt;
+	LinphonePayloadType *pt;
 	char *stereo_file = bc_tester_res("sounds/vrroom.wav");
 	char *recordpath = bc_tester_file("stereo-record.wav");
 	bool_t audio_cmp_failed = FALSE;
@@ -83,16 +83,18 @@ static void audio_call_stereo_call(const char *codec_name, int clock_rate, int b
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	/*make sure we have opus*/
-	pt = linphone_core_find_payload_type(marie->lc, codec_name, clock_rate, 2);
+	pt = linphone_core_get_payload_type(marie->lc, codec_name, clock_rate, 2);
 	if (!pt) {
 		ms_warning("%s not available, stereo with %s not tested.", codec_name, codec_name);
 		goto end;
 	}
-	if (stereo) payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(marie->lc, pt, bitrate_override);
-	pt = linphone_core_find_payload_type(pauline->lc, codec_name, clock_rate, 2);
-	if (stereo) payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(pauline->lc, pt, bitrate_override);
+	if (stereo) linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	if (bitrate_override) linphone_payload_type_set_normal_bitrate(pt, bitrate_override);
+	linphone_payload_type_unref(pt);
+	pt = linphone_core_get_payload_type(pauline->lc, codec_name, clock_rate, 2);
+	if (stereo) linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	if (bitrate_override) linphone_payload_type_set_normal_bitrate(pt, bitrate_override);
+	linphone_payload_type_unref(pt);
 
 	disable_all_audio_codecs_except_one(marie->lc, codec_name, clock_rate);
 	disable_all_audio_codecs_except_one(pauline->lc, codec_name, clock_rate);
@@ -179,7 +181,7 @@ static void audio_call_loss_resilience(const char *codec_name,
 	double similarityRef = 0.0;
 
 	OrtpNetworkSimulatorParams simparams = {0};
-	PayloadType *mariePt, *paulinePt;
+	LinphonePayloadType *mariePt = NULL, *paulinePt = NULL;
 	int sampleLength = 6000;
 	std::string recordFileNameRoot = "loss-record.wav", recordFileName, refRecordFileName;
 	FmtpManager marieFmtp, paulineFmtp;
@@ -194,8 +196,8 @@ static void audio_call_loss_resilience(const char *codec_name,
 	if (!BC_ASSERT_PTR_NOT_NULL(marie) || !BC_ASSERT_PTR_NOT_NULL(pauline)) goto end;
 
 	/*make sure we have opus*/
-	mariePt = linphone_core_find_payload_type(marie->lc, codec_name, clock_rate, 2);
-	paulinePt = linphone_core_find_payload_type(pauline->lc, codec_name, clock_rate, 2);
+	mariePt = linphone_core_get_payload_type(marie->lc, codec_name, clock_rate, 2);
+	paulinePt = linphone_core_get_payload_type(pauline->lc, codec_name, clock_rate, 2);
 	if (!BC_ASSERT_PTR_NOT_NULL(mariePt) || !BC_ASSERT_PTR_NOT_NULL(paulinePt)) {
 		ms_warning("%s not available, stereo with %s and fec not tested.", codec_name, codec_name);
 		goto end;
@@ -207,8 +209,8 @@ static void audio_call_loss_resilience(const char *codec_name,
 	}
 	disable_all_audio_codecs_except_one(marie->lc, codec_name, clock_rate);
 	disable_all_audio_codecs_except_one(pauline->lc, codec_name, clock_rate);
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(marie->lc, mariePt, bitrate_override);
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(pauline->lc, paulinePt, bitrate_override);
+	if (bitrate_override) linphone_payload_type_set_normal_bitrate(mariePt, bitrate_override);
+	if (bitrate_override) linphone_payload_type_set_normal_bitrate(paulinePt, bitrate_override);
 	linphone_core_set_use_files(marie->lc, TRUE);
 	linphone_core_set_play_file(marie->lc, playFile);
 	linphone_core_set_use_files(pauline->lc, TRUE);
@@ -233,8 +235,8 @@ static void audio_call_loss_resilience(const char *codec_name,
 	referenceFile = bc_tester_file(refRecordFileName.c_str());
 	linphone_core_set_record_file(pauline->lc, referenceFile);
 	paulineFmtp = marieFmtp;
-	payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
-	payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
+	linphone_payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
+	linphone_payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
 	unlink(referenceFile);
 	if (BC_ASSERT_TRUE(call(pauline, marie))) {
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength + jitterBufferMs);
@@ -255,8 +257,8 @@ static void audio_call_loss_resilience(const char *codec_name,
 				double similarityMin = 1.0, similarityMax = 0.0;
 				marieFmtp.setFmtp("packetlosspercentage", packetLossPercentage[packetLossIndex]);
 				paulineFmtp = marieFmtp;
-				payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
-				payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
+				linphone_payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
+				linphone_payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
 				for (int loopIndex = 0; loopIndex < 2; ++loopIndex) {
 					recordFileName = useinbandfec[inbandIndex] + "_" + std::to_string(lossRates[lossRateIndex]) + "_" +
 					                 std::to_string(lossRates[loopIndex]) + "_" +
@@ -284,6 +286,8 @@ static void audio_call_loss_resilience(const char *codec_name,
 	unlink(referenceFile);
 end:
 
+	linphone_payload_type_unref(mariePt);
+	linphone_payload_type_unref(paulinePt);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	bc_free(recordPath);
@@ -301,11 +305,174 @@ static void audio_call_loss_resilience_opus() {
 	audio_call_loss_resilience("opus", 48000, 120, 1000, TRUE, std::pair<double, double>(0.7, 1.0));
 }
 
+/**
+ * - Make a call using opus 48kHz with high bit rate (60kb/s)
+ * - Constraint the bandwidth(to 24kb/s) on Marie's outbound to provoque a congestion
+ *   	-> check the congestion is detected and requested bitrate is decrease via TMMBR
+ *   	-> check a second TMMBR with a higher bandwidth is received: this is the end of the congestion
+ * - Wait 20s to assert the ABE will not give false positive
+ * - Release the constraint
+ * 	-> Check the current (monitored on the last 3 s) upload bandwidth is under 30kb/s
+ * - the audio bandwidth estimator should detect it and set the requested bitrate to its orignal value (via TMMBR again)
+ *   	-> check Marie receive a TMMBR above 60kb/s (it shall be actually much more)
+ * - wait a little while and check the mean upload bandwidth is now above 45kb/s
+ * - enable video, check this has disabled the ABE on pauline's side
+ * - constraint the bandwidth, wait for congestion
+ * - release the constraint and check the VBE is working and that Marie's ABE did not duplicated packets.
+ */
+static void audio_bandwidth_estimation_base(bool srtp) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
+	LinphonePayloadType *pt;
+	OrtpNetworkSimulatorParams params = {0};
+	int lastTMMBRvalue = 0;
+	const abe_stats_t *marie_abe_stats = NULL;
+	int marie_sent_dup = 0;
+
+	char *stereo_file = bc_tester_res("sounds/vrroom.wav");
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	if (srtp) {
+		linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionSRTP);
+		linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionSRTP);
+	}
+
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, FALSE);
+	linphone_core_set_video_activation_policy(marie->lc, pol);
+	linphone_core_set_video_activation_policy(pauline->lc, pol);
+	linphone_video_activation_policy_unref(pol);
+
+	/*set the video preset to custom so the video quality controller won't update the video size*/
+	linphone_core_set_video_preset(marie->lc, "custom");
+	linphone_core_set_preferred_framerate(marie->lc, 10);
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "vga");
+	linphone_core_set_upload_bandwidth(marie->lc, 430); /*It will result in approxy 350kbit/s VP8 output*/
+
+	/*make sure we have opus, and force the usage of it in stereo, 48kHz at 60 kb/s */
+	pt = linphone_core_get_payload_type(marie->lc, "opus", 48000, 2);
+	if (!pt) {
+		ms_warning("Opus stereo not available, skip test");
+		goto end;
+	}
+	linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	linphone_payload_type_set_normal_bitrate(pt, 60);
+	linphone_payload_type_unref(pt);
+	disable_all_audio_codecs_except_one(marie->lc, "opus", 48000);
+
+	pt = linphone_core_get_payload_type(pauline->lc, "opus", 48000, 2);
+	linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	linphone_payload_type_set_normal_bitrate(pt, 60);
+	linphone_payload_type_unref(pt);
+	disable_all_audio_codecs_except_one(pauline->lc, "opus", 48000);
+
+	linphone_core_set_use_files(marie->lc, TRUE);
+	linphone_core_set_play_file(marie->lc, stereo_file);
+
+	if (!BC_ASSERT_TRUE(call(pauline, marie))) goto end;
+
+	// Lower Marie's outbound bitrate on the network
+	params.enabled = TRUE;
+	params.loss_rate = 0;
+	params.max_bandwidth = 24000;
+	params.mode = OrtpNetworkSimulatorOutbound;
+	params.max_buffer_size = 72000;
+	params.latency = 60;
+	linphone_core_set_network_simulator_params(marie->lc, &params);
+
+	// a TMMBR should arrive when the congestion is detected
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 15000));
+	lastTMMBRvalue = marie->stat.last_tmmbr_value_received;
+	// a second TMMBR should arrive when the congestion is resolved but still low
+	BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received,
+	                                       lastTMMBRvalue * 1.2, 30000, 30000));
+	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(marie), 30, int, "%i");
+	lastTMMBRvalue = marie->stat.last_tmmbr_value_received;
+	// Wait 20 seconds, we shall not have any false positive: check we do not receive a TMMBR with a higher bandwidth
+	// than the last one
+	BC_ASSERT_FALSE(
+	    wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, lastTMMBRvalue + 1, 20000));
+	// Set the bw constraint high enough to release the congestion
+	params.max_bandwidth = 500000;
+	params.max_bandwidth = 1000000;
+	linphone_core_set_network_simulator_params(marie->lc, &params);
+	// ABE should detect it and send a TMMBR, bandwidth is likely to be huge, just check we are back above the 60kb/s
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 60000, 25000));
+	// Wait a little while for the output bitrate to stabilize and check the new setting is effective
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 4000);
+	BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(marie), 45, int, "%i");
+
+	marie_abe_stats = rtp_session_get_audio_bandwidth_estimator_stats(
+	    linphone_call_get_stream(linphone_core_get_current_call(marie->lc), LinphoneStreamTypeAudio)
+	        ->sessions.rtp_session);
+	marie_sent_dup = marie_abe_stats->sent_dup;
+	BC_ASSERT_GREATER(marie_sent_dup, 0, int, "%d");
+
+#ifdef VIDEO_ENABLED
+	// Add video : This will enable a sendOnly video stream from Marie to Pauline
+	BC_ASSERT_TRUE(request_video(marie, pauline, TRUE));
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
+
+	// Check the audio bandwidth estimator is now
+	// - disabled on Pauline side(as VBE is enabled)
+	// - enabled on Marie's side as Video is send only so the VBE is disabled
+	BC_ASSERT_FALSE(linphone_call_get_stream(linphone_core_get_current_call(pauline->lc), LinphoneStreamTypeAudio)
+	                    ->sessions.rtp_session->audio_bandwidth_estimator_enabled);
+	BC_ASSERT_TRUE(linphone_call_get_stream(linphone_core_get_current_call(marie->lc), LinphoneStreamTypeAudio)
+	                   ->sessions.rtp_session->audio_bandwidth_estimator_enabled);
+
+	// Set the constraint back (with a 200 kb/s constraint, that shall trigger a congestion with the video enabled)
+	// The audio is not bandwidth controlled so 60kb/s goes to it.
+	// This should generate a TMMBR requestion the video to use 200*0.7(congestion coeff) - 60(audio bandwidth) = 95
+	// kb/s
+	params.max_bandwidth = 200000;
+	params.max_buffer_size = 400000;
+	linphone_core_set_network_simulator_params(marie->lc, &params);
+	BC_ASSERT_TRUE(
+	    wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 60000, 140000, 30000));
+	lastTMMBRvalue = marie->stat.last_tmmbr_value_received;
+	BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received,
+	                                       lastTMMBRvalue * 1.2, 220000, 30000));
+
+	// Remove the bw constraint
+	params.enabled = FALSE;
+	linphone_core_set_network_simulator_params(marie->lc, &params);
+	// VBE should detect it and send a TMMBR
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 250000, 25000));
+
+	// Check the ABE was never active while the video is on (no new duplicates sent)
+	BC_ASSERT_EQUAL(marie_abe_stats->sent_dup, marie_sent_dup, int, "%d");
+#endif
+
+	end_call(pauline, marie);
+
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	ms_free(stereo_file);
+}
+
+static void audio_bandwidth_estimation() {
+	audio_bandwidth_estimation_base(false);
+}
+static void audio_bandwidth_estimation_on_secure_call() {
+	audio_bandwidth_estimation_base(true);
+}
 test_t audio_quality_tests[] = {
     TEST_NO_TAG("Audio loss rate resilience opus", audio_call_loss_resilience_opus),
     TEST_NO_TAG("Simple stereo call with L16", audio_stereo_call_l16),
     TEST_NO_TAG("Simple stereo call with opus", audio_stereo_call_opus),
     TEST_NO_TAG("Simple mono call with opus", audio_mono_call_opus),
+    TEST_NO_TAG("Audio bandwidth estimation", audio_bandwidth_estimation),
+    TEST_NO_TAG("Audio bandwidth estimation on secure call", audio_bandwidth_estimation_on_secure_call),
 };
 
 test_suite_t audio_quality_test_suite = {"Audio Call quality",
