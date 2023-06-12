@@ -613,10 +613,9 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev){
 	}
 }
 
-void MS2VideoStream::zrtpStarted(BCTBX_UNUSED(Stream *mainZrtpStream)){
+void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
+	MS2Stream::zrtpStarted(mainZrtpStream);
 	if (getState() == Running){
-		lInfo() << "Trying to start ZRTP encryption on video stream";
-		startZrtp();
 		if (getMediaSessionPrivate().isEncryptionMandatory()) {
 			/* Nothing could have been sent yet so generating key frame */
 			video_stream_send_vfu(mStream);

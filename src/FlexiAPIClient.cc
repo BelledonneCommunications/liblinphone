@@ -81,6 +81,12 @@ FlexiAPIClient *FlexiAPIClient::sendAccountCreationTokenByPush(string pnProvider
 	return this;
 }
 
+FlexiAPIClient *FlexiAPIClient::sendAccountCreationToken() {
+	JsonParams params;
+	prepareAndSendRequest("account_creation_tokens", "POST", params);
+	return this;
+}
+
 FlexiAPIClient *FlexiAPIClient::accountCreationRequestToken() {
 	prepareAndSendRequest("account_creation_request_tokens", "POST");
 	return this;
