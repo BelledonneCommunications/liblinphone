@@ -45,7 +45,7 @@ static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy 
 	linphone_core_enable_video_capture(lc, TRUE);
 	linphone_core_enable_video_display(lc, TRUE);
 	linphone_core_set_video_activation_policy(lc, policy);
-	linphone_core_set_preferred_video_size(lc, {800, 600});
+	linphone_core_set_preferred_video_definition_by_name(lc, "VGA");
 }
 static void disable_all_audio_codecs(LinphoneCore *lc) {
 	const bctbx_list_t *elem = linphone_core_get_audio_codecs(lc);
@@ -134,6 +134,50 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+static void video_call_with_flexfec_adaptation(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
+	OrtpNetworkSimulatorParams network_params = {0};
+	network_params.enabled = TRUE;
+	network_params.loss_rate = 2.5;
+	network_params.mode = OrtpNetworkSimulatorOutbound;
+	network_params.max_buffer_size = 1500000;
+	network_params.max_bandwidth = 1500000.f;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new("pauline_rc");
+
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+
+	linphone_core_set_network_simulator_params(marie->lc, &network_params);
+	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
+
+	enable_rtp_bundle(marie->lc, TRUE);
+	enable_rtp_bundle(pauline->lc, TRUE);
+
+	linphone_core_enable_fec(marie->lc, TRUE);
+	linphone_core_enable_fec(pauline->lc, TRUE);
+
+	enable_video_stream(marie->lc, pol);
+	enable_video_stream(pauline->lc, pol);
+
+	linphone_video_activation_policy_unref(pol);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000));
+	network_params.max_buffer_size = 5000000;
+	network_params.max_bandwidth = 500000.f;
+	linphone_core_set_network_simulator_params(marie->lc, &network_params);
+	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000));
+	end_call(marie, pauline);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
 
 static void video_call_with_flexfec_and_ice(void) {
 	flexfec_tests_params params{
@@ -179,6 +223,8 @@ static test_t call_flexfec_tests[] = {
     TEST_NO_TAG("Video call with flexfec and srtp", video_call_with_flexfec_and_srtp),
     TEST_NO_TAG("Video call with flexfec and dtls", video_call_with_flexfec_and_dtls),
     TEST_NO_TAG("Video call with flexfec and zrtp", video_call_with_flexfec_and_zrtp),
+    TEST_NO_TAG("Video call with flexfec adaptation", video_call_with_flexfec_adaptation),
+
 };
 
 test_suite_t call_flexfec_suite = {"Call with FlexFec",
