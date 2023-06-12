@@ -75,12 +75,14 @@ public:
 
 	// Public endpoinds
 	FlexiAPIClient *ping();
+	FlexiAPIClient *sendAccountCreationToken();
 	FlexiAPIClient *sendAccountCreationTokenByPush(string pnProvider, string pnParam, string pnPrid);
 	FlexiAPIClient *accountCreationRequestToken();
 	FlexiAPIClient *accountCreationTokenUsingRequestToken(string token);
-	FlexiAPIClient *accountCreateWithAccountCreationToken(string username, string password, string algorithm, string token);
-	FlexiAPIClient *accountCreateWithAccountCreationToken(string username, string domain, string password,
-														  string algorithm, string token);
+	FlexiAPIClient *
+	accountCreateWithAccountCreationToken(string username, string password, string algorithm, string token);
+	FlexiAPIClient *accountCreateWithAccountCreationToken(
+	    string username, string domain, string password, string algorithm, string token);
 	FlexiAPIClient *accountInfo(string sip);
 	FlexiAPIClient *accountActivateEmail(string sip, string code);
 	FlexiAPIClient *accountActivatePhone(string sip, string code);

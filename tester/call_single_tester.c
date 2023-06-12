@@ -7163,6 +7163,64 @@ static void call_with_unknown_stream_accepted(void) {
 	_call_with_unknown_stream(TRUE);
 }
 
+static void call_with_maformed_from(void) {
+	const char *crashing_invite =
+	    "INVITE sip:631453@212.55.48.36:51230;transport=udp SIP/2.0\r\n"
+	    "Via: SIP/2.0/UDP 212.55.48.2:5060;branch=z9hG4bKac1473882254\r\n"
+	    "Max-Forwards: 19\r\n"
+	    "From: \"\r\n\" <sip:mickey@example.com;user=phone>;tag=1c849167855\r\n"
+	    "To: \"Bugs Bunny\" <sip:bunny@example.com>\r\n"
+	    "Call-ID: 9771187781832022142418@212.55.48.2\r\n"
+	    "CSeq: 1 INVITE\r\n"
+	    "Contact: <sip:212.55.48.2:5060>\r\n"
+	    "Supported: 100rel,sdp-anat\r\n"
+	    "Allow: ACK,BYE,CANCEL,INFO,INVITE,OPTIONS,PRACK,REFER,NOTIFY,UPDATE\r\n"
+	    "User-Agent: vSBC PROD/v.7.20A.258.459\r\n"
+	    "Accept:application/media_control+xml,application/sdp,multipart/mixed\r\n"
+	    "Recv-Info:x-broadworks-client-session-info\r\n"
+	    "Content-Type: application/sdp\r\n"
+	    "Content-Length: 860\r\n"
+	    "\r\n"
+	    "v=0\r\n"
+	    "o=BroadWorks 1693848685 415741525 IN IP4 212.55.48.2\r\n"
+	    "s=-\r\n"
+	    "c=IN IP4 212.55.48.2\r\n"
+	    "t=0 0\r\n"
+	    "m=audio 15536 RTP/AVP 8 0 18 116\r\n"
+	    "a=rtpmap:8 PCMA/8000\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:116 telephone-event/8000\r\n"
+	    "a=ptime:20\r\n"
+	    "a=3gOoBTC\r\n"
+	    "a=rtpmap:18 G729/8000\r\n"
+	    "a=fmtp:18 annexb=yes\r\n"
+	    "m=audio 15536 RTP/SAVP 8 0 18 116\r\n"
+	    "a=rtpmap:8 PCMA/8000\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:116 telephone-event/8000\r\n"
+	    "a=ptime:20\r\n"
+	    "a=3gOoBTC\r\n"
+	    "a=rtpmap:18 G729/8000\r\n"
+	    "a=fmtp:18 annexb=yes\r\n"
+	    "a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:zc409/eT1JuwUPQAswLkF878WJvn5Rpo+aLUt+SI|2^31\r\n"
+	    "a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:ebHN/WPPcu2E+Jm4kdx9YK58jVFDKD4uRgwFu18k|2^31\r\n"
+	    "a=crypto:3 AES_256_CM_HMAC_SHA1_80 "
+	    "inline:M9UR+6n8F8DZ5mh/V5vh2VKdYZ+5Hb4K3mwepx8oM9aIQYb7RzdfJE42ezOTcQ==|2^31\r\n"
+	    "a=crypto:4 AES_256_CM_HMAC_SHA1_32 "
+	    "inline:AIsXIk2O8tsCefUYXpqP96hNZKJR+nJZcXlCOiXZW6TDEtg/g5HQD7lcj0KJPA==|2^31\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(crashing_invite, strlen(crashing_invite), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	wait_for_until(laure->lc, NULL, NULL, 0, 1000);
+
+	linphone_core_manager_destroy(laure);
+}
+
 static void enable_specific_payloads(LinphoneCore *lc) {
 	bctbx_list_t *payloads = linphone_core_get_audio_payload_types(lc);
 	LinphonePayloadType *type;
@@ -7503,6 +7561,7 @@ test_t call_not_established_tests[] = {
     TEST_NO_TAG("Call cancelled with reason", cancel_call_with_error),
     TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
     TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream),
+    TEST_NO_TAG("Call with malformed from", call_with_maformed_from),
     TEST_NO_TAG("Call rejected with 403", call_rejected_with_403),
 
 };

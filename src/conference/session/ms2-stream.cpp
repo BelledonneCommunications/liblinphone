@@ -1328,6 +1328,13 @@ void MS2Stream::confirmGoClear() {
 	}
 }
 
+void MS2Stream::zrtpStarted(BCTBX_UNUSED(Stream *mainZrtpStream)) {
+	if (getState() == Running && !mRtpBundle) { // No need to start zrtp on secondary streams if bundle is used.
+		lInfo() << "Trying to start ZRTP encryption on stream" << *this;
+		startZrtp();
+	}
+}
+
 void MS2Stream::encryptionChanged() {
 	getGroup().propagateEncryptionChanged();
 }

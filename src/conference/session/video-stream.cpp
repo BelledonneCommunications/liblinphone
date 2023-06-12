@@ -145,10 +145,7 @@ void MS2VideoStream::videoStreamEventCb(BCTBX_UNUSED(const MSFilter *f), const u
 	}
 }
 
-
-void MS2VideoStream::sVideoStreamDisplayCb(void *userData,
-                                         const unsigned int eventId,
-                                         const void *args) {
+void MS2VideoStream::sVideoStreamDisplayCb(void *userData, const unsigned int eventId, const void *args) {
 	MS2VideoStream *zis = static_cast<MS2VideoStream *>(userData);
 	zis->videoStreamDisplayCb(eventId, args);
 }
@@ -157,14 +154,14 @@ void MS2VideoStream::videoStreamDisplayCb(const unsigned int eventId, const void
 	CallSessionListener *callListener = getMediaSessionPrivate().getCallSessionListener();
 	auto participantDevice = getMediaSession().getParticipantDevice(getLabel());
 
-	switch(eventId){
-		case MS_VIDEO_DISPLAY_ERROR_OCCURRED :
-		if (callListener)
-			callListener->onVideoDisplayErrorOccurred(getMediaSession().getSharedFromThis(), *((int*)args));
-		if(participantDevice)
-			participantDevice->videoDisplayErrorOccurred(*((int*)args));
-		break;
-		default:{}
+	switch (eventId) {
+		case MS_VIDEO_DISPLAY_ERROR_OCCURRED:
+			if (callListener)
+				callListener->onVideoDisplayErrorOccurred(getMediaSession().getSharedFromThis(), *((int *)args));
+			if (participantDevice) participantDevice->videoDisplayErrorOccurred(*((int *)args));
+			break;
+		default: {
+		}
 	}
 }
 
@@ -637,10 +634,9 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev) {
 	mNetworkMonitor.checkNackQuality(mStream->ms.sessions.rtp_session);
 }
 
-void MS2VideoStream::zrtpStarted(BCTBX_UNUSED(Stream *mainZrtpStream)) {
+void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream) {
+	MS2Stream::zrtpStarted(mainZrtpStream);
 	if (getState() == Running) {
-		lInfo() << "Trying to start ZRTP encryption on video stream";
-		startZrtp();
 		if (getMediaSessionPrivate().isEncryptionMandatory()) {
 			/* Nothing could have been sent yet so generating key frame */
 			video_stream_send_vfu(mStream);

@@ -239,16 +239,10 @@ static void server_account_send_token(void) {
 	linphone_account_creator_set_pn_prid(creator, "123456789");
 	linphone_account_creator_cbs_set_send_token(cbs, account_creator_cb);
 
-	BC_ASSERT_EQUAL(
-		linphone_account_creator_send_token_flexiapi(creator),
-		LinphoneAccountCreatorStatusRequestOk,
-		LinphoneAccountCreatorStatus,
-		"%i");
-	BC_ASSERT_EQUAL(
-		linphone_account_creator_account_creation_request_token_flexiapi(creator),
-		LinphoneAccountCreatorStatusRequestOk,
-		LinphoneAccountCreatorStatus,
-		"%i");
+	BC_ASSERT_EQUAL(linphone_account_creator_send_token_flexiapi(creator), LinphoneAccountCreatorStatusRequestOk,
+	                LinphoneAccountCreatorStatus, "%i");
+	BC_ASSERT_EQUAL(linphone_account_creator_account_creation_request_token_flexiapi(creator),
+	                LinphoneAccountCreatorStatusRequestOk, LinphoneAccountCreatorStatus, "%i");
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 2, TIMEOUT_REQUEST);
 
 	ms_free(stats);
@@ -322,6 +316,26 @@ static void server_account_created_with_email(void) {
 	linphone_account_creator_cbs_unref(cbs);
 }
 
+static string obtain_auth_token(LinphoneCoreManager *mgr) {
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(mgr->lc);
+	flexiAPIClient->useTestAdminAccount(true);
+
+	int code = 0;
+	int fetched = 0;
+	string token;
+
+	// Create the account
+	flexiAPIClient->sendAccountCreationToken()->then([&code, &fetched, &token](FlexiAPIClient::Response response) {
+		code = response.code;
+		fetched = 1;
+		token = response.json()["token"].asString();
+	});
+
+	wait_for_until(mgr->lc, NULL, &fetched, 1, 10000);
+	BC_ASSERT_EQUAL(code, 201, int, "%d");
+	return token;
+}
+
 static void server_account_created_with_phone(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
 	LinphoneAccountCreator *creator = init(marie->lc);
@@ -334,6 +348,10 @@ static void server_account_created_with_phone(void) {
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator),
 	                                               (void *)LinphoneAccountCreatorStatusAccountCreated);
 
+	// Obtain auth token (normally it is sent via push notification.
+
+	string authToken = obtain_auth_token(marie);
+
 	// Create
 	string phone = string("000").append(to_string(rand()).substr(0, 6));
 	string password = "password";
@@ -341,6 +359,7 @@ static void server_account_created_with_phone(void) {
 	linphone_account_creator_set_phone_number(creator, phone.c_str(), "1");
 	linphone_account_creator_set_email(creator, "username@linphone.org");
 	linphone_account_creator_set_password(creator, password.c_str());
+	linphone_account_creator_set_token(creator, authToken.c_str());
 	linphone_account_creator_cbs_set_create_account(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(linphone_account_creator_create_account_flexiapi(creator), LinphoneAccountCreatorStatusRequestOk,

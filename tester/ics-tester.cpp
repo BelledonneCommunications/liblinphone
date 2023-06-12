@@ -381,8 +381,6 @@ static void send_conference_invitations(bool_t enable_encryption,
 			linphone_conference_info_unref(conf_info_from_original_content);
 		}
 		linphone_chat_message_unref(msg);
-
-		linphone_chat_room_unref(marieCr);
 	}
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
@@ -449,6 +447,8 @@ static void send_conference_invitations(bool_t enable_encryption,
 		LinphoneChatRoom *laureCr = linphone_chat_message_get_chat_room(laure->stat.last_received_chat_message);
 		linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
 	}
+
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 
 	linphone_address_unref(conf_uri);
 

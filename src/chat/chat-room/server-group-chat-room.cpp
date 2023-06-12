@@ -226,10 +226,8 @@ void ServerGroupChatRoomPrivate::requestDeletion() {
 
 	LinphoneChatRoom *cChatRoom = L_GET_C_BACK_PTR(chatRoom);
 	/* If the chatroom was created as "external" mode, explicitely unref the C object to destroy it.*/
-	if (cChatRoom && Wrapper::isOwnedByC<ServerGroupChatRoom>(cChatRoom)){
-		q->getCore()->doLater([cChatRoom](){
-			linphone_chat_room_unref(cChatRoom);
-		});
+	if (cChatRoom && Wrapper::isOwnedByC<ServerGroupChatRoom>(cChatRoom)) {
+		q->getCore()->doLater([cChatRoom]() { linphone_chat_room_unref(cChatRoom); });
 	}
 }
 
@@ -1429,7 +1427,6 @@ ServerGroupChatRoom::ServerGroupChatRoom(const shared_ptr<Core> &core, SalCallOp
 	const auto to = Address::create(op->getTo());
 	session->configure(LinphoneCallIncoming, nullptr, op, from, to);
 	d->protocolVersion = CorePrivate::groupChatProtocolVersion;
-
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom(const shared_ptr<Core> &core,

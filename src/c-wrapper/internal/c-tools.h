@@ -231,14 +231,13 @@ public:
 		wrappedObject->weakCppPtr.~weak_ptr();
 	}
 
-	template<typename CppType>
-	static bool isOwnedByC(void *cObject){
-		WrappedBaseObject<CppType> *base = static_cast<WrappedBaseObject<CppType>*>(cObject);
+	template <typename CppType>
+	static bool isOwnedByC(void *cObject) {
+		WrappedBaseObject<CppType> *base = static_cast<WrappedBaseObject<CppType> *>(cObject);
 		return base->owner == WrappedObjectOwner::External;
 	}
 
-	template<
-		typename CType,
+	template <typename CType,
 	          typename CppType = typename CTypeMetaInfo<CType>::cppType,
 	          typename = typename std::enable_if<IsDefinedClonableCppObject<CppType>::value, CppType>::type>
 	static void uninitClonableCppObject(CType *cObject) {

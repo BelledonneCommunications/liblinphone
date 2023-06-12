@@ -85,6 +85,7 @@ public:
 
 protected:
 	virtual void handleEvent(const OrtpEvent *ev) = 0;
+	virtual void zrtpStarted(Stream *mainZrtpStream) override;
 	MS2Stream(StreamsGroup &sm, const OfferAnswerContext &params);
 	void startEventHandling();
 	void stopEventHandling();
@@ -341,10 +342,10 @@ public:
 protected:
 	AudioStream *getPeerAudioStream();
 	virtual void onSnapshotTaken(const std::string &filepath) override;
+	virtual void zrtpStarted(Stream *mainZrtpStream) override;
 
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
-	virtual void zrtpStarted(Stream *mainZrtpStream) override;
 	static void sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 	void snapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 	void videoStreamEventCb(const MSFilter *f, const unsigned int eventId, const void *args);
