@@ -3799,7 +3799,7 @@ ChatMessage::State MainDb::getChatMessageParticipantState (
 		return ChatMessage::State(state);
 	};
 #else
-	return ChatMessage::Idle;
+	return ChatMessage::State::Idle;
 #endif
 }
 

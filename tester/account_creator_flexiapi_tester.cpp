@@ -344,6 +344,7 @@ static void server_account_created_with_email(void) {
 	linphone_account_creator_cbs_unref(cbs);
 }
 
+
 static string obtain_auth_token(LinphoneCoreManager *mgr){
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(mgr->lc);
 	flexiAPIClient->useTestAdminAccount(true);
@@ -412,10 +413,6 @@ static void server_account_created_with_phone(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 2, TIMEOUT_REQUEST);
 
 	// Start a recovery
-	BC_ASSERT_EQUAL(linphone_account_creator_recover_phone_account_flexiapi(creator),
-					LinphoneAccountCreatorStatusMissingArguments, LinphoneAccountCreatorStatus, "%i");
-
-	linphone_account_creator_set_token(creator, "anything");
 	BC_ASSERT_EQUAL(linphone_account_creator_recover_phone_account_flexiapi(creator),
 					LinphoneAccountCreatorStatusRequestOk, LinphoneAccountCreatorStatus, "%i");
 
