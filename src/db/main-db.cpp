@@ -4017,7 +4017,7 @@ ChatMessage::State MainDb::getChatMessageParticipantState(const shared_ptr<Event
 		return ChatMessage::State(state);
 	};
 #else
-	return ChatMessage::Idle;
+	return ChatMessage::State::Idle;
 #endif
 }
 

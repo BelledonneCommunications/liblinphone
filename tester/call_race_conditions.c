@@ -119,23 +119,18 @@ static void call_with_info_sent_by_both_parties(void) {
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 
-	// Send multiple INFO messages in order to be sure to have at least one 491 request pending
 	for (int i = 0; i < number_of_infos; i++) {
 		marie_info = linphone_core_create_info_message(marie->lc);
 		pauline_info = linphone_core_create_info_message(pauline->lc);
 
 		linphone_call_send_info_message(pauline_call, pauline_info);
 		linphone_call_send_info_message(marie_call, marie_info);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_InfoReceived, i, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_InfoReceived, i, liblinphone_tester_sip_timeout));
 
 		linphone_info_message_unref(marie_info);
 		linphone_info_message_unref(pauline_info);
 	}
-
-	BC_ASSERT_TRUE(
-	    wait_for_list(lcs, &pauline->stat.number_of_InfoReceived, number_of_infos, liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(
-	    wait_for_list(lcs, &marie->stat.number_of_InfoReceived, number_of_infos, liblinphone_tester_sip_timeout));
-
 	end_call(pauline, marie);
 end:
 	bctbx_list_free(lcs);
