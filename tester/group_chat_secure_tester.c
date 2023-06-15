@@ -102,7 +102,7 @@ static void group_chat_lime_x3dh_change_server_url_curve(const int curveId) {
 
 	// Wait a little while to check NO lime users are created for Marie
 	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess,
-	                              initialMarieStats.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
+	                              initialMarieStats.number_of_X3dhUserCreationSuccess + 1, 3000));
 
 	// Wait for pauline lime users to be created on X3DH server
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess,
@@ -827,8 +827,7 @@ static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const int 
 	    wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(
 	    wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
-	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageNotDelivered, 2,
-	                              liblinphone_tester_sip_timeout));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageNotDelivered, 2, 3000));
 
 	linphone_chat_message_unref(message);
 
@@ -1408,7 +1407,8 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineReceivedMessage), textMessage);
 
 	// Pauline will react to Marie's message with love emoji
-	LinphoneChatMessageReaction *paulineReaction = linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
+	LinphoneChatMessageReaction *paulineReaction =
+	    linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
 
 	const LinphoneAddress *paulineReactionAddr = linphone_chat_message_reaction_get_from_address(paulineReaction);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineReactionAddr, pauline->identity));
@@ -3593,7 +3593,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(const int cu
 		    linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "I'll be back.");
 		linphone_chat_message_send(offline_message);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, 5000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1, 3000));
 		linphone_chat_message_unref(offline_message);
 
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
@@ -3613,8 +3613,8 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(const int cu
 		if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 2000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 1000));
 
 		exhumedConfAddr =
 		    linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
@@ -3625,7 +3625,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(const int cu
 			    linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "I'm back.");
 			linphone_chat_message_send(exhume_message);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 2, 5000));
-			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
+			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 3000));
 			linphone_chat_message_unref(exhume_message);
 
 			// Pauline goes back online
@@ -3635,7 +3635,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_3(const int cu
 			    wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
 			BC_ASSERT_FALSE(
-			    wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+			    wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 3000));
 
 			int pauline_messages = linphone_chat_room_get_history_size(paulineOneToOneCr);
 			BC_ASSERT_EQUAL(pauline_messages, 3, int, "%d");
@@ -3756,8 +3756,8 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(const int cu
 		linphone_chat_message_send(exhume_message);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 2, 5000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 3000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, 1000));
 		linphone_chat_message_unref(exhume_message);
 
 		exhumedConfAddr =
@@ -4623,7 +4623,7 @@ static void imdn_for_group_chat_room_curve(const int curveId) {
 	// Marie marks the message as read, check that the state is not yet displayed on Chloe's side
 	linphone_chat_room_mark_as_read(marieCr);
 	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed,
-	                              initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 5000));
+	                              initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 0, 1000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_participant_state_changed, 3, 1000));
 	bctbx_list_t *participantsThatDisplayedChloeMessage =

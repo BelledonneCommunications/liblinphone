@@ -505,8 +505,10 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&video_test_suite);
 	bc_tester_add_suite(&call_video_test_suite);
 	bc_tester_add_suite(&call_video_msogl_test_suite); // Conditionals are defined in suite
+	bc_tester_add_suite(&call_video_advanced_scenarios_test_suite);
 	bc_tester_add_suite(&call_video_quality_test_suite);
 	bc_tester_add_suite(&alerts_test_suite);
+	bc_tester_add_suite(&call_flexfec_suite);
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);

@@ -55,6 +55,8 @@ extern test_suite_t call_video_test_suite;
 extern test_suite_t call_video_msogl_test_suite;
 extern test_suite_t call_video_quality_test_suite;
 extern test_suite_t alerts_test_suite;
+extern test_suite_t call_flexfec_suite;
+extern test_suite_t call_video_advanced_scenarios_test_suite;
 #endif // if VIDEO_ENABLED
 
 extern test_suite_t clonable_object_test_suite;

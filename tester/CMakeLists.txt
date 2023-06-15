@@ -298,6 +298,7 @@ set(SOURCE_FILES_CXX
 	audio-quality-tester.cpp
 	clonable-object-tester.cpp
 	call_video_tester.cpp
+	call_flexfec_tester.cpp
 	call_ice_tester.cpp
 	call_secure_tester.cpp
 	capability_negotiation_tester.cpp

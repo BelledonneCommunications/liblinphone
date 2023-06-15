@@ -2990,153 +2990,10 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void enable_rtp_bundle(LinphoneCore *lc, bool_t enable) {
-
-	if (enable == false) {
-		linphone_config_set_bool(linphone_core_get_config(lc), "rtp", "accept_bundle", FALSE);
-	}
-	LinphoneAccount *account = linphone_core_get_default_account(lc);
-	LinphoneAccountParams *account_params = linphone_account_params_clone(linphone_account_get_params(account));
-	linphone_account_params_enable_rtp_bundle(account_params, enable);
-	linphone_account_set_params(account, account_params);
-	linphone_account_params_unref(account_params);
-}
-static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy *policy) {
-
-	linphone_core_set_video_device(lc, "Mire: Mire (synthetic moving picture)");
-	linphone_core_enable_video_capture(lc, TRUE);
-	linphone_core_enable_video_display(lc, TRUE);
-	linphone_core_set_video_activation_policy(lc, policy);
-	linphone_core_set_preferred_video_size(lc, {800, 600});
-}
-static void disable_all_audio_codecs(LinphoneCore *lc) {
-	const bctbx_list_t *elem = linphone_core_get_audio_codecs(lc);
-	PayloadType *pt;
-
-	for (; elem != NULL; elem = elem->next) {
-		pt = (PayloadType *)elem->data;
-		linphone_core_enable_payload_type(lc, pt, FALSE);
-	}
-}
-typedef struct _flexfec_tests_params {
-
-	LinphoneMediaEncryption encryption_mode;
-	bool_t ice;
-	bool_t audio_enabled;
-
-} flexfec_tests_params;
-static void video_call_with_flexfec_base(flexfec_tests_params params) {
-	LinphoneCoreManager *marie;
-	LinphoneCoreManager *pauline;
-	OrtpNetworkSimulatorParams network_params = {0};
-	network_params.enabled = TRUE;
-	network_params.loss_rate = 5.;
-	network_params.mode = OrtpNetworkSimulatorOutbound;
-
-	marie = linphone_core_manager_new("marie_rc");
-	pauline = linphone_core_manager_new("pauline_rc");
-	fec_stats *stats = NULL;
-
-	linphone_core_set_media_encryption(marie->lc, params.encryption_mode);
-	linphone_core_set_media_encryption(pauline->lc, params.encryption_mode);
-	if (params.encryption_mode == LinphoneMediaEncryptionDTLS) {
-		char *path = bc_tester_file("certificates-marie");
-		linphone_core_set_user_certificates_path(marie->lc, path);
-		bc_free(path);
-		path = bc_tester_file("certificates-pauline");
-		linphone_core_set_user_certificates_path(pauline->lc, path);
-		bc_free(path);
-		bctbx_mkdir(linphone_core_get_user_certificates_path(marie->lc));
-		bctbx_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
-	}
-	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
-	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
-	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
-
-	linphone_core_set_network_simulator_params(marie->lc, &network_params);
-	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
-
-	if (params.ice) {
-		enable_stun_in_core(marie, TRUE, TRUE);
-		enable_stun_in_core(pauline, TRUE, TRUE);
-	}
-	enable_rtp_bundle(marie->lc, TRUE);
-	enable_rtp_bundle(pauline->lc, TRUE);
-
-	linphone_core_enable_fec(marie->lc, TRUE);
-	linphone_core_enable_fec(pauline->lc, TRUE);
-
-	if (!params.audio_enabled) {
-		disable_all_audio_codecs(marie->lc);
-		disable_all_audio_codecs(pauline->lc);
-	}
-
-	enable_video_stream(marie->lc, pol);
-	enable_video_stream(pauline->lc, pol);
-
-	linphone_video_activation_policy_unref(pol);
-
-	BC_ASSERT_TRUE(call(marie, pauline));
-	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
-	VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
-	if (vstream->ms.fec_stream) {
-		stats = fec_stream_get_stats(vstream->ms.fec_stream);
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &stats->packets_recovered, 50, 15000));
-	}
-	end_call(marie, pauline);
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-static void video_call_with_flexfec_and_ice(void) {
-	flexfec_tests_params params{
-	    LinphoneMediaEncryptionNone,
-	    TRUE,
-	    FALSE,
-	};
-	video_call_with_flexfec_base(params);
-}
-static void video_call_with_flexfec(void) {
-	flexfec_tests_params params{
-	    LinphoneMediaEncryptionNone,
-	    FALSE,
-	    FALSE,
-	};
-	video_call_with_flexfec_base(params);
-}
-static void video_call_with_flexfec_and_srtp(void) {
-	flexfec_tests_params params{
-	    LinphoneMediaEncryptionSRTP,
-	    FALSE,
-	    FALSE,
-	};
-	video_call_with_flexfec_base(params);
-}
-static void video_call_with_flexfec_and_dtls(void) {
-	flexfec_tests_params params{
-	    LinphoneMediaEncryptionDTLS,
-	    FALSE,
-	    FALSE,
-	};
-	video_call_with_flexfec_base(params);
-}
-static void video_call_with_flexfec_and_zrtp(void) {
-	flexfec_tests_params params{LinphoneMediaEncryptionZRTP, FALSE, TRUE};
-	video_call_with_flexfec_base(params);
-}
 static test_t call_video_tests[] = {
     TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
     TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
     TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
-    TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
-    TEST_NO_TAG("Call paused resumed with video no sdk ack using video policy for resume offers",
-                call_paused_resumed_with_no_sdp_ack_using_video_policy),
-    TEST_NO_TAG("Call paused, updated and resumed with video no sdk ack using video policy for resume offers",
-                call_paused_updated_resumed_with_no_sdp_ack_using_video_policy),
-    TEST_NO_TAG("Call paused, updated and resumed with video no sdk ack using video policy for resume offers with "
-                "accept call update",
-                call_paused_updated_resumed_with_no_sdp_ack_using_video_policy_and_accept_call_update),
     TEST_NO_TAG("ZRTP video call", zrtp_video_call),
     TEST_NO_TAG("Simple video call AVPF", video_call_avpf),
     TEST_NO_TAG("Simple video call implicit AVPF both", video_call_using_policy_AVPF_implicit_caller_and_callee),
@@ -3193,6 +3050,28 @@ static test_t call_video_tests[] = {
     TEST_ONE_TAG("Video call accepted in send only", accept_call_in_send_only, "H264"),
     TEST_TWO_TAGS("Video call accepted in send only with ice", accept_call_in_send_only_with_ice, "ICE", "H264"),
     TEST_ONE_TAG("2 Video call accepted in send only", two_accepted_call_in_send_only, "H264"),
+    TEST_ONE_TAG("Classic video entry phone setup", classic_video_entry_phone_setup, "H264"),
+    TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
+    TEST_NO_TAG("Video call with automatic video acceptance disabled on one end only",
+                video_call_with_auto_video_accept_disabled_on_one_end),
+    TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video",
+                call_with_early_media_and_no_sdp_in_200_with_video),
+    TEST_NO_TAG("Video call with fallback to Static Picture when no fps",
+                video_call_with_fallback_to_static_picture_when_no_fps),
+    TEST_NO_TAG("Video call with mire and analyse", video_call_with_mire_and_analyse),
+
+    TEST_NO_TAG("Video call recv-only", call_with_video_recvonly),
+};
+
+static test_t call_video_advanced_scenarios_tests[] = {
+    TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
+    TEST_NO_TAG("Call paused resumed with video no sdk ack using video policy for resume offers",
+                call_paused_resumed_with_no_sdp_ack_using_video_policy),
+    TEST_NO_TAG("Call paused, updated and resumed with video no sdk ack using video policy for resume offers",
+                call_paused_updated_resumed_with_no_sdp_ack_using_video_policy),
+    TEST_NO_TAG("Call paused, updated and resumed with video no sdk ack using video policy for resume offers with "
+                "accept call update",
+                call_paused_updated_resumed_with_no_sdp_ack_using_video_policy_and_accept_call_update),
     TEST_ONE_TAG("Video call with re-invite(inactive) followed by re-invite",
                  video_call_with_re_invite_inactive_followed_by_re_invite,
                  "H264"),
@@ -3205,34 +3084,15 @@ static test_t call_video_tests[] = {
     TEST_ONE_TAG("SRTP Video call with re-invite(inactive) followed by re-invite(no sdp)",
                  srtp_video_call_with_re_invite_inactive_followed_by_re_invite_no_sdp,
                  "H264"),
-    TEST_ONE_TAG("Classic video entry phone setup", classic_video_entry_phone_setup, "H264"),
     TEST_NO_TAG("Incoming REINVITE with invalid SDP in ACK", incoming_reinvite_with_invalid_ack_sdp),
     TEST_NO_TAG("Outgoing REINVITE with invalid SDP in ACK", outgoing_reinvite_with_invalid_ack_sdp),
-    TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
-    TEST_NO_TAG("Video call with automatic video acceptance disabled on one end only",
-                video_call_with_auto_video_accept_disabled_on_one_end),
-    TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video",
-                call_with_early_media_and_no_sdp_in_200_with_video),
-    TEST_NO_TAG("Video call with fallback to Static Picture when no fps",
-                video_call_with_fallback_to_static_picture_when_no_fps),
-    TEST_NO_TAG("Video call with mire and analyse", video_call_with_mire_and_analyse),
     TEST_NO_TAG("Video call with file streaming", call_with_video_mkv_file_player),
     TEST_NO_TAG("Video call with video forwarding", video_call_with_video_forwarding),
     TEST_NO_TAG("Video call with video forwarding forwardee ends first",
                 video_call_with_video_forwarding_forwardee_ends_first),
-    TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source),
-    TEST_NO_TAG("Video call recv-only", call_with_video_recvonly),
-    TEST_NO_TAG("Video call with flexfec", video_call_with_flexfec),
+    TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source)};
 
-    TEST_NO_TAG("Video call with flexfec", video_call_with_flexfec),
-    TEST_NO_TAG("Video call with flexfec and ice", video_call_with_flexfec_and_ice),
-    TEST_NO_TAG("Video call with flexfec and srtp", video_call_with_flexfec_and_srtp),
-    TEST_NO_TAG("Video call with flexfec and dtls", video_call_with_flexfec_and_dtls),
-    TEST_NO_TAG("Video call with flexfec and zrtp", video_call_with_flexfec_and_zrtp),
-
-};
-
-int init_msogl_call_suite() {
+static int init_msogl_call_suite() {
 #if defined(__ANDROID__) || defined(__APPLE__)
 	return -1;
 #else
@@ -3258,4 +3118,12 @@ test_suite_t call_video_msogl_test_suite = {"Video Call MSOGL",
                                             liblinphone_tester_after_each,
                                             sizeof(call_video_tests) / sizeof(call_video_tests[0]),
                                             call_video_tests};
+test_suite_t call_video_advanced_scenarios_test_suite = {"Video Call advanced scenarios",
+                                                         NULL,
+                                                         NULL,
+                                                         liblinphone_tester_before_each,
+                                                         liblinphone_tester_after_each,
+                                                         sizeof(call_video_advanced_scenarios_tests) /
+                                                             sizeof(call_video_advanced_scenarios_tests[0]),
+                                                         call_video_advanced_scenarios_tests};
 #endif // ifdef VIDEO_ENABLED

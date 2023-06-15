@@ -1282,7 +1282,7 @@ static void group_chat_room_creation_server_network_down_up(void) {
 	                              liblinphone_tester_sip_timeout));
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
-	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &dummy, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &dummy, 1, 5000));
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &(marie->stat.number_of_LinphoneConferenceStateCreated), 1,
@@ -3189,7 +3189,6 @@ static void group_chat_room_notify_after_core_restart(void) {
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
-	int dummy = 0;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
@@ -3260,7 +3259,6 @@ static void group_chat_room_notify_after_core_restart(void) {
 
 	// Paulines starts it's Core again
 	linphone_core_manager_start(pauline, TRUE);
-	wait_for_list(coresList, &dummy, 1, 5000);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_removed,
 	                             initialPaulineStats.number_of_participants_removed + 1,
@@ -4251,7 +4249,6 @@ static void group_chat_room_send_file_with_or_without_text(bool_t with_text, boo
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
-	int dummy = 0;
 	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
 	char *sendFilepath2 = NULL;
 	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
@@ -4302,8 +4299,6 @@ static void group_chat_room_send_file_with_or_without_text(bool_t with_text, boo
 	} else {
 		_send_file(marieCr, sendFilepath, sendFilepath2, use_buffer);
 	}
-
-	wait_for_list(coresList, &dummy, 1, 10000);
 
 	// Check that chat rooms have received the file
 	if (with_text) {
@@ -8674,7 +8669,7 @@ static void group_chat_forward_file_transfer_message_url(const char *file_transf
 	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
 	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
 	char *receiveMarieFilepath = bc_tester_file("receive_file_marie.dump");
-	int dummy = 0;
+
 	/* Remove any previously downloaded file */
 	remove(receivePaulineFilepath);
 	remove(receiveMarieFilepath);
@@ -8706,7 +8701,7 @@ static void group_chat_forward_file_transfer_message_url(const char *file_transf
 
 	// Marie sends a message
 	_send_file(marieCr, sendFilepath, NULL, FALSE);
-	wait_for_list(coresList, &dummy, 1, 10000);
+
 	// Check pauline got it
 	// Note: we must not use the buffer reception(last param to FALSE) or our message transfer won't work, probably some
 	// fix to be done in the callback
