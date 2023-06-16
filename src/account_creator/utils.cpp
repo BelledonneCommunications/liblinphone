@@ -71,21 +71,22 @@ end:
 
 char *_get_identity(const LinphoneAccountCreator *creator) {
 	char *identity = NULL;
-	if ((creator->username || creator->phone_number)) {
+	const char *username = creator->username ? creator->username : creator->phone_number;
+	if (username) {
 		// we must escape username
 		LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(creator->core);
-		LinphoneAddress *addr;
+		LinphoneAddress *addr = linphone_proxy_config_normalize_sip_uri(proxy, username);
+		const char *addr_domain = addr ? linphone_address_get_domain(addr) : nullptr;
+		const char *creator_domain = creator->domain;
 
-		addr = linphone_proxy_config_normalize_sip_uri(proxy,
-		                                               creator->username ? creator->username : creator->phone_number);
-		if (addr == NULL || (creator->domain && strcmp(linphone_address_get_domain(addr), creator->domain) != 0)) {
-			if ((creator->username || creator->phone_number) && creator->domain) {
-				char *url = ms_strdup_printf("sip:%s", creator->domain);
+		if (addr_domain == nullptr || (creator_domain != nullptr && strcmp(addr_domain, creator_domain) != 0)) {
+			if (creator_domain != nullptr) {
+				char *url = ms_strdup_printf("sip:%s", creator_domain);
 				addr = linphone_address_new(url);
 				ms_free(url);
 
 				if (addr) {
-					linphone_address_set_username(addr, creator->username ? creator->username : creator->phone_number);
+					linphone_address_set_username(addr, username);
 				} else {
 					goto end;
 				}
