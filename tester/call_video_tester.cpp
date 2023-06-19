@@ -1663,7 +1663,7 @@ static void accept_call_in_send_only_with_ice(void) {
 }
 
 // The goal of this test is to verify that 2 calls with streams in send only can be taken at the same time
-void two_accepted_call_in_send_only(void) {
+static void two_accepted_call_in_send_only(void) {
 	LinphoneCoreManager *pauline, *marie, *laure;
 	bctbx_list_t *lcs = NULL;
 
@@ -2990,6 +2990,65 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_video_requested_and_terminate(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneVideoPolicy marie_policy, pauline_policy;
+
+	if (g_display_filter != "") {
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	marie_policy.automatically_initiate = FALSE;
+	marie_policy.automatically_accept = TRUE;
+	pauline_policy.automatically_initiate = FALSE;
+	pauline_policy.automatically_accept = FALSE;
+
+	linphone_core_set_video_policy(marie->lc, &marie_policy);
+	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", TRUE);
+
+	// Marie calls Pauline
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	if (pauline_call && marie_call) {
+		LinphoneCallParams *marie_call_params = linphone_core_create_call_params(marie->lc, NULL);
+		linphone_call_params_enable_video(marie_call_params, TRUE);
+		linphone_call_update(marie_call, marie_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+
+		const LinphoneCallParams *updated_pauline_call_params = linphone_call_get_remote_params(pauline_call);
+		BC_ASSERT_PTR_NOT_NULL(updated_pauline_call_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(updated_pauline_call_params));
+
+		linphone_call_params_unref(marie_call_params);
+	}
+	// marie ends the call immediately
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static test_t call_video_tests[] = {
     TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
     TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
@@ -3031,6 +3090,7 @@ static test_t call_video_tests[] = {
     TEST_ONE_TAG("Call with ICE and video added 5", call_with_ice_video_added_5, "ICE"),
     TEST_ONE_TAG("Call with ICE and video added 6", call_with_ice_video_added_6, "ICE"),
     TEST_ONE_TAG("Call with ICE and video added 7", call_with_ice_video_added_7, "ICE"),
+    TEST_NO_TAG("Call with video requested but call ends right after", call_with_video_requested_and_terminate),
     TEST_ONE_TAG("Call with ICE, video and realtime text", call_with_ice_video_and_rtt, "ICE"),
     TEST_ONE_TAG("Call with ICE, video only", call_with_ice_video_only, "ICE"),
     TEST_ONE_TAG("Video call with ICE accepted using call params", video_call_ice_params, "ICE"),
