@@ -24,6 +24,7 @@
 #include "linphone/utils/utils.h"
 #include "sal/sal_media_description.h"
 #include "sal/sal_stream_description.h"
+#include "shared_tester_functions.h"
 #include "tester_utils.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -910,6 +911,175 @@ end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
+
+static void call_with_two_audio_streams(void) {
+	const char *crashing_invite =
+	    "INVITE sip:631453@212.55.48.36:51230;transport=udp SIP/2.0\r\n"
+	    "Via: SIP/2.0/UDP 212.55.48.2:5060;branch=z9hG4bKac1473882254\r\n"
+	    "Max-Forwards: 19\r\n"
+	    "From: \"Mickey Mouse\" <sip:mickey@example.com;user=phone>;tag=1c849167855\r\n"
+	    "To: \"Bugs Bunny\" <sip:bunny@example.com>\r\n"
+	    "Call-ID: 9771187781832022142418@212.55.48.2\r\n"
+	    "CSeq: 1 INVITE\r\n"
+	    "Contact: <sip:212.55.48.2:5060>\r\n"
+	    "Supported: 100rel,sdp-anat\r\n"
+	    "Allow: ACK,BYE,CANCEL,INFO,INVITE,OPTIONS,PRACK,REFER,NOTIFY,UPDATE\r\n"
+	    "User-Agent: vSBC PROD/v.7.20A.258.459\r\n"
+	    "Accept:application/media_control+xml,application/sdp,multipart/mixed\r\n"
+	    "Recv-Info:x-broadworks-client-session-info\r\n"
+	    "Content-Type: application/sdp\r\n"
+	    "Content-Length: 860\r\n"
+	    "\r\n"
+	    "v=0\r\n"
+	    "o=BroadWorks 1693848685 415741525 IN IP4 212.55.48.2\r\n"
+	    "s=-\r\n"
+	    "c=IN IP4 212.55.48.2\r\n"
+	    "t=0 0\r\n"
+	    "m=audio 15536 RTP/AVP 8 0 18 116\r\n"
+	    "a=rtpmap:8 PCMA/8000\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:116 telephone-event/8000\r\n"
+	    "a=ptime:20\r\n"
+	    "a=3gOoBTC\r\n"
+	    "a=rtpmap:18 G729/8000\r\n"
+	    "a=fmtp:18 annexb=yes\r\n"
+	    "m=audio 15536 RTP/SAVP 8 0 18 116\r\n"
+	    "a=rtpmap:8 PCMA/8000\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:116 telephone-event/8000\r\n"
+	    "a=ptime:20\r\n"
+	    "a=3gOoBTC\r\n"
+	    "a=rtpmap:18 G729/8000\r\n"
+	    "a=fmtp:18 annexb=yes\r\n"
+	    "a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:zc409/eT1JuwUPQAswLkF878WJvn5Rpo+aLUt+SI|2^31\r\n"
+	    "a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:ebHN/WPPcu2E+Jm4kdx9YK58jVFDKD4uRgwFu18k|2^31\r\n"
+	    "a=crypto:3 AES_256_CM_HMAC_SHA1_80 "
+	    "inline:M9UR+6n8F8DZ5mh/V5vh2VKdYZ+5Hb4K3mwepx8oM9aIQYb7RzdfJE42ezOTcQ==|2^31\r\n"
+	    "a=crypto:4 AES_256_CM_HMAC_SHA1_32 "
+	    "inline:AIsXIk2O8tsCefUYXpqP96hNZKJR+nJZcXlCOiXZW6TDEtg/g5HQD7lcj0KJPA==|2^31\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(crashing_invite, strlen(crashing_invite), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
+
+	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	if (laure_call) {
+		linphone_call_accept(laure_call);
+		BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallStreamsRunning, 1));
+		const LinphoneCallParams *laure_call_param = linphone_call_get_current_params(laure_call);
+		const LinphoneMediaEncryption laure_enc = linphone_call_params_get_media_encryption(laure_call_param);
+		BC_ASSERT_EQUAL(laure_enc, LinphoneMediaEncryptionNone, int, "%d");
+
+		linphone_call_terminate(laure_call);
+	}
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	linphone_core_manager_destroy(laure);
+}
+
+static void _call_with_unknown_stream(bool_t accepted, bool_t unknown_at_end) {
+	const char *unsupported_invite_base =
+	    "INVITE sip:3827m@192.168.50.222:54989;transport=udp SIP/2.0\r\n"
+	    "Via: SIP/2.0/UDP 5.135.31.160:5060;branch=z9hG4bKsAOMEtSQmuUlZRFV268653\r\n"
+	    "Accept-Language: en\r\n"
+	    "Call-ID: 20220209215755041746-3e68c7f9f40b7da9df92cf4b0e08742e\r\n"
+	    "Contact: <sip:5.135.31.160:5060;transport=udp>\r\n"
+	    "CSeq: 201 INVITE\r\n"
+	    "From: \"Donald duck\" <sip:7956@example.com>;tag=gOobZHXFNJsMD6aT268645\r\n"
+	    "Max-Forwards: 19\r\n"
+	    "To: <sip:mickey@example.com>\r\n"
+	    "Date: Wed, 09 Feb 2022 21:57:58 GMT\r\n"
+	    "Server: unknown server\r\n"
+	    "Allow: INVITE,ACK,BYE,CANCEL,OPTIONS,INFO,MESSAGE,SUBSCRIBE,NOTIFY,PRACK,UPDATE,REFER\r\n"
+	    "Allow-Events: conference,talk,hold\r\n"
+	    "Supported: timer\r\n"
+	    "Content-Type: application/sdp\r\n"
+	    "Content-Length: 908\r\n"
+	    "\r\n"
+	    "v=0\r\n"
+	    "o=PouetPouet_Tra 1644443875 1644443878181 IN IP4 5.135.31.160\r\n"
+	    "s=kokokok IP Phone\r\n"
+	    "c=IN IP4 5.135.31.160\r\n"
+	    "b=AS:2048\r\n"
+	    "t=0 0\r\n"
+	    "a=sendrecv\r\n"
+	    "m=audio 26192 RTP/AVP 0 8 9 18 101\r\n"
+	    "a=rtpmap:0 PCMU/8000\r\n"
+	    "a=rtpmap:8 PCMA/8000\r\n"
+	    "a=rtpmap:9 G722/8000\r\n"
+	    "a=rtpmap:18 G729/8000\r\n"
+	    "a=fmtp:18 annexb=no\r\n"
+	    "a=rtpmap:101 telephone-event/8000\r\n";
+	const char *application_stream_sdp = "m=application 2244 RTP/AVP 124\r\n"
+	                                     "a=rtpmap:124 H224/4800\r\n";
+	const char *video_stream_sdp =
+	    "m=video 26592 RTP/AVP 100 113 109 99\r\n"
+	    "a=rtcp-fb:* ccm fir\r\n"
+	    "a=rtpmap:100 H264/90000\r\n"
+	    "a=fmtp:100 profile-level-id=64001f; packetization-mode=1; max-mbps=108000; max-fs=3600\r\n"
+	    "a=rtpmap:113 H264/90000\r\n"
+	    "a=fmtp:113 profile-level-id=64001f; packetization-mode=0; max-mbps=108000; max-fs=3600\r\n"
+	    "a=rtpmap:109 H264/90000\r\n"
+	    "a=fmtp:109 profile-level-id=42801f; packetization-mode=1; max-mbps=108000; max-fs=3600\r\n"
+	    "a=rtpmap:99 H264/90000\r\n"
+	    "a=fmtp:99 profile-level-id=42801f; packetization-mode=0; max-mbps=108000; max-fs=3600\r\n"
+	    "a=rtcp-fb:* ccm fir\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+
+	char *unsupported_invite;
+	if (unknown_at_end) {
+		unsupported_invite =
+		    bctbx_strdup_printf("%s%s%s", unsupported_invite_base, video_stream_sdp, application_stream_sdp);
+	} else {
+		unsupported_invite =
+		    bctbx_strdup_printf("%s%s%s", unsupported_invite_base, application_stream_sdp, video_stream_sdp);
+	}
+
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(unsupported_invite, strlen(unsupported_invite), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+	bctbx_free(unsupported_invite);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
+
+	if (accepted) {
+		linphone_call_accept(linphone_core_get_current_call(laure->lc));
+		BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallStreamsRunning, 1));
+		auto resultDesc = _linphone_call_get_result_desc(linphone_core_get_current_call(laure->lc));
+		std::string streamType = resultDesc->getStreamIdx(unknown_at_end ? 2 : 1).getTypeAsString();
+		BC_ASSERT_STRING_EQUAL(streamType.c_str(), "application");
+		linphone_call_terminate(linphone_core_get_current_call(laure->lc));
+	} else {
+		linphone_call_decline(linphone_core_get_current_call(laure->lc), LinphoneReasonDeclined);
+	}
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	linphone_core_manager_destroy(laure);
+}
+
+static void call_with_unknown_stream(void) {
+	_call_with_unknown_stream(FALSE, FALSE);
+}
+
+static void call_with_unknown_stream_accepted(void) {
+	_call_with_unknown_stream(TRUE, FALSE);
+}
+
+static void call_with_unknown_stream_accepted_2(void) {
+	_call_with_unknown_stream(TRUE, TRUE);
+}
+
 #endif
 
 static test_t offeranswer_tests[] = {
@@ -979,7 +1149,10 @@ static test_t offeranswer_tests[] = {
     TEST_NO_TAG("flexfec both proposed nothing accepted", flexfec_test_both_proposed_nothing_accepted),
     TEST_NO_TAG("flexfec both proposed only fec accepted", flexfec_test_both_poposed_only_fec_accepted),
     TEST_NO_TAG("flexfec only fec proposed and accepted", flexfec_test_only_fec_proposed_and_accepted),
-
+    TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream),
+    TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted),
+    TEST_NO_TAG("Call with unknown stream, accepted 2", call_with_unknown_stream_accepted_2),
+    TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams)
 #endif
 };
 
