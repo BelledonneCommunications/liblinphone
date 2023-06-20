@@ -72,6 +72,7 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 #endif
 	mPushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault) : pushAllowedDefault;
 	mRemotePushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed", remotePushAllowedDefault) : remotePushAllowedDefault;
+	mForceRegisterOnPush = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "force_register_on_push", false) : false;
 	mRefKey = lc ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
 
 	/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
@@ -177,6 +178,7 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mPublishEnabled = !!linphone_config_get_int(config, key, "publish", mPublishEnabled);
 	setPushNotificationAllowed(!!linphone_config_get_int(config, key, "push_notification_allowed", mPushNotificationAllowed));
 	setRemotePushNotificationAllowed(!!linphone_config_get_int(config, key, "remote_push_notification_allowed", mRemotePushNotificationAllowed));
+	setForceRegisterOnPushNotification(!!linphone_config_get_int(config, key, "force_register_on_push", mForceRegisterOnPush));
 	mAvpfMode = static_cast<LinphoneAVPFMode>(linphone_config_get_int(config, key, "avpf", static_cast<int>(mAvpfMode)));
 	mAvpfRrInterval = (uint8_t) linphone_config_get_int(config, key, "avpf_rr_interval", (int) mAvpfRrInterval);
 	mDialEscapePlusEnabled = !!linphone_config_get_int(config, key, "dial_escape_plus", mDialEscapePlusEnabled);
@@ -241,6 +243,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other),
 	mPublishEnabled = other.mPublishEnabled;
 	mPushNotificationAllowed = other.mPushNotificationAllowed;
 	mRemotePushNotificationAllowed = other.mRemotePushNotificationAllowed;
+	mForceRegisterOnPush = other.mForceRegisterOnPush;
 	mUseInternationalPrefixForCallsAndChats = other.mUseInternationalPrefixForCallsAndChats;
 	mAllowCpimMessagesInBasicChatRooms = other.mAllowCpimMessagesInBasicChatRooms;
 
@@ -359,6 +362,10 @@ void AccountParams::setPushNotificationAllowed (bool allow) {
 
 void AccountParams::setRemotePushNotificationAllowed (bool allow) {
 	mRemotePushNotificationAllowed = allow;
+}
+
+void AccountParams::setForceRegisterOnPushNotification(bool force) {
+	mForceRegisterOnPush = force;
 }
 
 void AccountParams::setUseInternationalPrefixForCallsAndChats (bool enable) {
@@ -605,6 +612,10 @@ bool AccountParams::getPushNotificationAllowed () const {
 
 bool AccountParams::getRemotePushNotificationAllowed () const {
 	return mRemotePushNotificationAllowed;
+}
+
+bool AccountParams::getForceRegisterOnPushNotification () const {
+	return mForceRegisterOnPush;
 }
 
 bool AccountParams::getUseInternationalPrefixForCallsAndChats () const {
@@ -864,6 +875,7 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "privacy", (int)mPrivacy);
 	linphone_config_set_int(config, key, "push_notification_allowed", (int)mPushNotificationAllowed);
 	linphone_config_set_int(config, key, "remote_push_notification_allowed", (int)mRemotePushNotificationAllowed);
+	linphone_config_set_int(config, key, "force_register_on_push", (int)mForceRegisterOnPush);
 	linphone_config_set_int(config, key, "cpim_in_basic_chat_rooms_enabled", (int)mAllowCpimMessagesInBasicChatRooms);
 	if (!mRefKey.empty()) linphone_config_set_string(config, key, "refkey", mRefKey.c_str());
 	if (!mDependsOn.empty()) linphone_config_set_string(config, key, "depends_on", mDependsOn.c_str());
