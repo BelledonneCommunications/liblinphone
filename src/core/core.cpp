@@ -1317,8 +1317,8 @@ void Core::healNetworkConnections() {
 	// registration.
 	linphone_core_set_network_reachable_internal(lc, TRUE);
 
-	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
-	bctbx_list_t *it = (bctbx_list_t *)proxies;
+	const bctbx_list_t *accounts = linphone_core_get_account_list(lc);
+	bctbx_list_t *it = (bctbx_list_t *)accounts;
 
 	/*
 	 * The following is a bit hacky. But sometimes 3 lines of code are better than
@@ -1337,12 +1337,20 @@ void Core::healNetworkConnections() {
 	 */
 	bool sendKeepAlive = false;
 	while (it) {
-		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)bctbx_list_get_data(it);
-		LinphoneRegistrationState state = linphone_proxy_config_get_state(proxy);
+		LinphoneAccount *account = (LinphoneAccount *)bctbx_list_get_data(it);
+		const LinphoneAccountParams *params = linphone_account_get_params(account);
+		if (AccountParams::toCpp(params)->getForceRegisterOnPushNotification()) {
+			lInfo() << "Account [" << account
+			        << "] is configured to force a REGISTER when a push is received, doing it now";
+			linphone_account_refresh_register(account);
+			continue;
+		}
+
+		LinphoneRegistrationState state = linphone_account_get_state(account);
 		if (state == LinphoneRegistrationFailed) {
-			lInfo() << "Proxy config [" << proxy << "] is in failed state, refreshing REGISTER";
-			if (linphone_proxy_config_register_enabled(proxy) && linphone_proxy_config_get_expires(proxy) > 0) {
-				linphone_proxy_config_refresh_register(proxy);
+			lInfo() << "Account [" << account << "] is in failed state, refreshing REGISTER";
+			if (linphone_account_params_register_enabled(params) && linphone_account_params_get_expires(params) > 0) {
+				linphone_account_refresh_register(account);
 			}
 		} else if (state == LinphoneRegistrationOk) {
 			// Send a keep-alive to ensure the socket isn't broken
