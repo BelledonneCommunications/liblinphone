@@ -165,7 +165,7 @@ public class PushService extends Service {
             createServiceNotification();
         }
         Log.i("[Push Service] Notification has been created, start service as foreground for real");
-        startForeground(SERVICE_NOTIF_ID, mServiceNotification);
+        DeviceUtils.startDataSyncForegroundService(this, SERVICE_NOTIF_ID, mServiceNotification);
     }
 
     void startForeground() {

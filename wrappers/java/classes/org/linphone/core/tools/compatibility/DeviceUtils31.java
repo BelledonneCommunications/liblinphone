@@ -22,6 +22,8 @@ package org.linphone.core.tools.compatibility;
 
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
+import android.app.Notification;
+import android.app.Service;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.text.format.DateFormat;
@@ -82,5 +84,13 @@ public class DeviceUtils31 {
 
 	public static boolean isBluetoothConnectPermissionGranted(Context context) {
 		return context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+	}
+
+	public static void startForegroundService(Service service, int notifId, Notification notif) {
+		try {
+			service.startForeground(notifId, notif);
+		} catch (Exception e) {
+			Log.e("[Device Utils 31] Can't start service as foreground!", e);
+		}
 	}
 }
