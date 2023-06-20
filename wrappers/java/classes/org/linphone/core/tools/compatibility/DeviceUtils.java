@@ -20,7 +20,9 @@
 
 package org.linphone.core.tools.compatibility;
 
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.Service;
 import android.content.Context;
 import android.database.Cursor;
 import android.content.Context;
@@ -169,5 +171,25 @@ public class DeviceUtils {
 			return DeviceUtils24.getStringOrDefaultFromMap(map, key, defaultValue);
 		}
 		return DeviceUtils23.getStringOrDefaultFromMap(map, key, defaultValue);
+	}
+
+	public static void startCallForegroundService(Service service, int notifId, Notification notif) {
+		if (Version.sdkAboveOrEqual(Version.API34_ANDROID_14_UPSIDE_DOWN_CAKE)) {
+			DeviceUtils34.startCallForegroundService(service, notifId, notif);
+		} else if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
+			DeviceUtils31.startForegroundService(service, notifId, notif);
+		} else {
+			DeviceUtils23.startForegroundService(service, notifId, notif);
+		}
+	}
+
+	public static void startDataSyncForegroundService(Service service, int notifId, Notification notif) {
+		if (Version.sdkAboveOrEqual(Version.API34_ANDROID_14_UPSIDE_DOWN_CAKE)) {
+			DeviceUtils34.startDataSyncForegroundService(service, notifId, notif);
+		} else if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
+			DeviceUtils31.startForegroundService(service, notifId, notif);
+		} else {
+			DeviceUtils23.startForegroundService(service, notifId, notif);
+		}
 	}
 }

@@ -20,6 +20,8 @@
 
 package org.linphone.core.tools.compatibility;
 
+import android.app.Notification;
+import android.app.Service;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.Ringtone;
@@ -57,5 +59,9 @@ public class DeviceUtils23 {
 			}
 		}
 		return defaultValue;
+	}
+
+	public static void startForegroundService(Service service, int notifId, Notification notif) {
+		service.startForeground(notifId, notif);
 	}
 }

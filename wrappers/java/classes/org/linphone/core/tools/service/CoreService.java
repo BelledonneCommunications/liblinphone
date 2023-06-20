@@ -242,7 +242,7 @@ public class CoreService extends Service {
         if (mServiceNotification == null) {
             createServiceNotification();
         }
-        startForeground(SERVICE_NOTIF_ID, mServiceNotification);
+        DeviceUtils.startCallForegroundService(this, SERVICE_NOTIF_ID, mServiceNotification);
     }
 
     /*
