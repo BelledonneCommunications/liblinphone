@@ -199,7 +199,11 @@ class SwiftTranslator:
                 if normalType == "Bool":
                     listenerDict['delegate']['params'] += argName + ": " + argName + " != 0"
                 elif type(arg.type) is AbsApi.ClassType:
-                    listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSwiftObject(cObject: " + argName + "!)"
+                    if arg.maybenil:
+                        normalType += "?"
+                        listenerDict['delegate']['params'] += argName + ": (" + argName + " != nil) ? " + normalType + ".getSwiftObject(cObject: " + argName + "!) : nil"
+                    else:
+                        listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSwiftObject(cObject: " + argName + "!)"
                 elif type(arg.type) is AbsApi.EnumType:
                     ends = "" if arg.type.desc.isFlag else "!"
                     listenerDict['delegate']['params'] += argName + ": " + referenceType + "(rawValue: Int(" + argName + ".rawValue))" + ends
