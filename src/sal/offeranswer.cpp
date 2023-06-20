@@ -655,7 +655,9 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 						bool one_matching_codec, const std::string &bundle_owner_mid, const bool allowCapabilityNegotiation){
 	SalStreamDescription result;
 	result.name = local_cap.name;
-	result.type=local_cap.getType();
+	result.type = local_cap.getType();
+	if (result.type == SalOther)
+		result.typeother = remote_offer.typeother;
 
 	auto remoteCfgIdx = remote_offer.getActualConfigurationIndex();
 	auto localCfgIdx = local_cap.getActualConfigurationIndex();
