@@ -22,14 +22,13 @@
 ############################################################################
 
 set(LINK_LIBS
-	bctoolbox
-	${BELLESIP_TARGETNAME}
-	belr
+	${BCToolbox_TARGET}
+	${Belr_TARGET}
 )
 set(PUBLIC_LINK_LIBS
-	ortp
-	mediastreamer2
-	belle-sip
+	${Ortp_TARGET}
+	${Mediastreamer2_TARGET}
+	${BelleSIP_TARGET}
 )
 
 #APPLE_LIBS is mandatory for apple compilation
@@ -40,94 +39,68 @@ if(APPLE)
 	endif()
 endif()
 
-#interface_libs is used in export cmake config file
-if(APPLE)
-	list(APPEND INTERFACE_LIBS ${APPLE_LIBS})
+if(LibXml2_FOUND)
+	list(APPEND PUBLIC_LINK_LIBS ${LibXml2_TARGET})
 endif()
-
-if(ENABLE_XML2)
-	list(APPEND LINK_LIBS ${XML2_LIBRARIES})
-endif()
-
-list(APPEND INTERFACE_LIBS ${LINK_LIBS} xsd)
 
 if(HAVE_DLOPEN)
 	list(APPEND LINK_LIBS dl)
 endif()
 
-if (ENABLE_ADVANCED_IM)
+if(ENABLE_ADVANCED_IM)
 	list(APPEND LINK_LIBS ${XercesC_TARGET})
 	if (APPLE AND NOT IOS)
 		list(APPEND APPLE_LIBS "-framework CoreServices")
 	endif()
 endif()
 
-if (LIME_FOUND)
-	list(APPEND PUBLIC_LINK_LIBS ${LIME_TARGETNAME})
+if(Lime_FOUND)
+	list(APPEND PUBLIC_LINK_LIBS ${Lime_TARGET})
 endif ()
-if(ENABLE_LIME OR ENABLE_LIME_X3DH)
-	list(APPEND LINK_LIBS ${BZRTP_LIBRARIES})
+if(ENABLE_LIME_X3DH)
+	list(APPEND LINK_LIBS ${BZRTP_TARGET})
 endif()
 if(ZLIB_FOUND)
-	list(APPEND INTERFACE_LIBS z)
-	if (ANDROID)
-		# Starting NDK r21, libz.a has issues: https://github.com/android/ndk/issues/1179
-		list(APPEND LINK_LIBS z)
-	else()
-		list(APPEND LINK_LIBS ${ZLIB_LIBRARIES})
+	list(APPEND LINK_LIBS ${ZLIB_TARGET})
+endif()
+if(ENABLE_DB_STORAGE)
+	if(Soci_FOUND)
+		list(APPEND LINK_LIBS ${Soci_sqlite3_TARGET} ${Soci_TARGET})
 	endif()
 endif()
-if (ENABLE_DB_STORAGE)
-	if (SOCI_FOUND)
-		#take care of the order  for static link
-		if(APPLE OR ANDROID)
-			list(APPEND INTERFACE_LIBS ${SOCI_sqlite3_PLUGIN})
-			list(APPEND LINK_LIBS ${SOCI_sqlite3_PLUGIN})
-		endif()
-		list(APPEND INTERFACE_LIBS soci)
-		list(APPEND LINK_LIBS ${SOCI_LIBRARIES})
-	endif()
+if(SQLite3_FOUND)
+	list(APPEND PUBLIC_LINK_LIBS ${SQLite3_TARGET})
 endif()
-if(SQLITE3_FOUND)
-	list(APPEND INTERFACE_LIBS sqlite3)
-	list(APPEND PUBLIC_LINK_LIBS ${SQLITE3_LIBRARIES})
+if(Iconv_FOUND)
+	list(APPEND LINK_LIBS Iconv::Iconv)
 endif()
-if(ICONV_FOUND)
-	list(APPEND INTERFACE_LIBS iconv)
-	list(APPEND LINK_LIBS ${ICONV_LIBRARIES})
-endif()
-if(ENABLE_TUNNEL)
-	list(APPEND LINK_LIBS ${TUNNEL_LIBRARIES})
-  	add_definitions(-DTUNNEL_ENABLED)
+if(Tunnel_FOUND)
+	list(APPEND LINK_LIBS ${Tunnel_TARGET})
+	add_definitions(-DTUNNEL_ENABLED)
 endif()
 
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LINK_LIBS shlwapi)
 endif()
 if(INTL_FOUND)
-	list(APPEND INTERFACE_LIBS intl)
 	list(APPEND LINK_LIBS ${INTL_LIBRARIES})
 endif()
-if(BELCARD_FOUND)
-	list(APPEND INTERFACE_LIBS belcard)
-	list(APPEND LINK_LIBS belcard)
+if(BelCard_FOUND)
+	list(APPEND LINK_LIBS ${BelCard_TARGET})
 endif()
-if(OPENLDAP_FOUND)
-	list(APPEND LINK_LIBS ${OPENLDAP_LIBRARIES})
-endif()
-#define log domain for this part of code
-add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
-if(ENABLE_LDAP)
+if(OpenLDAP_FOUND)
+	list(APPEND LINK_LIBS ${OpenLDAP_TARGETS})
 	add_definitions(-DBUILD_LDAP)
 endif()
-
-if(ZXING_FOUND)
-	list(APPEND LINK_LIBS ${ZXING_LIBRARIES})
+if(ZXing_FOUND)
+	list(APPEND LINK_LIBS ${ZXing_TARGET})
+endif()
+if(TurboJpeg_FOUND)
+	list(APPEND LINK_LIBS ${TurboJpeg_TARGET})
 endif()
 
-if(TURBOJPEG_FOUND)
-	list(APPEND LINK_LIBS ${TURBOJPEG_LIBRARIES})
-endif()
+#define log domain for this part of code
+add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	account/account.h
@@ -630,15 +603,13 @@ elseif (UNIX)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-linux.h)
 endif ()
 
-if(LIME_FOUND)
+if(Lime_FOUND)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-encryption-engine.h)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES chat/encryption/lime-x3dh-encryption-engine.cpp)
 endif()
 
 set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS
 	${LIBXSD_INCLUDE_DIRS}
-	${SOCI_INCLUDE_DIRS}
-	${SOCI_MYSQL_INCLUDES}
 )
 
 set(LINPHONE_PRIVATE_HEADER_FILES)
@@ -700,6 +671,7 @@ if(NOT ANDROID)
 	# Do not version shared library on Android
 	set_target_properties(liblinphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 endif()
+set_target_properties(liblinphone PROPERTIES LIBLINPHONE_PLUGINS_DIR "${LIBLINPHONE_PLUGINS_DIR}")
 target_include_directories(liblinphone PUBLIC
 	$<INSTALL_INTERFACE:include/>
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
@@ -711,21 +683,20 @@ target_link_libraries(liblinphone
 	PUBLIC ${PUBLIC_LINK_LIBS}
 	PRIVATE ${LINK_LIBS}
 )
+if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+	target_link_libraries(liblinphone PUBLIC "Ws2_32" "Iphlpapi" "user32")
+endif()
 if(ENABLE_FLEXIAPI)
-	target_link_libraries(liblinphone PUBLIC ${JSONCPP_LIBRARIES})
+	target_link_libraries(liblinphone PUBLIC ${JsonCPP_TARGET})
 endif()
 
 if(APPLE)
 	target_link_libraries(liblinphone PUBLIC ${APPLE_LIBS})
 endif()
 
-if(ICONV_FOUND)
-	if(APPLE)
-		# Prevent conflict between the system iconv.h header and the one from macports.
-		target_compile_options(liblinphone PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
-	else()
-		target_include_directories(liblinphone PRIVATE ${ICONV_INCLUDE_DIRS})
-	endif()
+if(Iconv_FOUND AND APPLE)
+	# Prevent conflict between the system iconv.h header and the one from macports.
+	target_compile_options(liblinphone PRIVATE "-include" "${Iconv_INCLUDE_DIRS}/iconv.h")
 endif()
 
 if(BUILD_SHARED_LIBS)
@@ -760,10 +731,12 @@ if(BUILD_SHARED_LIBS)
 			target_compile_definitions(liblinphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
 		endif()
 	elseif(ANDROID)
-		if (SUPPORT_FOUND)
-			target_link_libraries(liblinphone PUBLIC "log" ${SUPPORT_LIBRARIES} ${CPUFEATURES_LIBRARIES})
-		else()
-			target_link_libraries(liblinphone PUBLIC "log" ${CPUFEATURES_LIBRARIES})
+		target_link_libraries(liblinphone PUBLIC log)
+		if(CpuFeatures_FOUND)
+			target_link_libraries(liblinphone PUBLIC ${CpuFeatures_TARGET})
+		endif()
+		if(Support_FOUND)
+			target_link_libraries(liblinphone PUBLIC ${Support_TARGET})
 		endif()
 	endif()
 	if(MSVC)
@@ -776,7 +749,7 @@ if(BUILD_SHARED_LIBS)
 	endif()
 endif()
 
-install(TARGETS liblinphone EXPORT ${EXPORT_TARGETS_NAME}Targets
+install(TARGETS liblinphone EXPORT ${PROJECT_NAME}Targets
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

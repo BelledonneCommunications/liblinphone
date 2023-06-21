@@ -62,7 +62,6 @@ if (ENABLE_JAZZY_DOC)
 endif()
 
 if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
-	cmake_minimum_required(VERSION 3.15)
 	set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
 	enable_language(Swift)
 
@@ -70,9 +69,7 @@ if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 		${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift
 	)
 
-	target_link_libraries(linphonesw
-		PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} liblinphone
-	)
+	target_link_libraries(linphonesw PRIVATE ${BCToolbox_TARGET} ${BelleSIP_TARGET} liblinphone)
 
 	if (NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
 	# LinphoneWrapper.swift is attached to multiple targets: linphonesw linphoneswsource
@@ -88,7 +85,7 @@ if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 					MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
 					)
 
-		install(TARGETS linphonesw EXPORT ${EXPORT_TARGETS_NAME}Targets
+		install(TARGETS linphonesw EXPORT ${PROJECT_NAME}Targets
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

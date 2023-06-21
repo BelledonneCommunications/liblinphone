@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -126,16 +126,14 @@ bc_apply_compile_flags(DAEMON_PIPETEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OP
 bc_apply_compile_flags(DAEMON_SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 add_executable(linphone-daemon ${DAEMON_SOURCE_FILES} ${DAEMON_SOURCE_FILES_OBJC})
 target_include_directories(linphone-daemon PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${LINPHONE_INCLUDE_DIRS})
-target_link_libraries(linphone-daemon ${LINPHONE_LIBS_FOR_TOOLS} mediastreamer2 ortp bctoolbox belle-sip ${XSD_LIBRARIES})
-set_target_properties(linphone-daemon PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+target_link_libraries(linphone-daemon PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${BelleSIP_TARGET} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${BCToolbox_TARGET} ${XSD_LIBRARIES})
 set_target_properties(linphone-daemon PROPERTIES LINKER_LANGUAGE CXX)
 if(APPLE)
-	target_link_libraries(linphone-daemon "-framework AppKit")
+	target_link_libraries(linphone-daemon PRIVATE "-framework AppKit")
 endif()
 
 add_executable(linphone-daemon-pipetest ${DAEMON_PIPETEST_SOURCE_FILES})
-target_link_libraries(linphone-daemon-pipetest ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer2)
-set_target_properties(linphone-daemon-pipetest PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+target_link_libraries(linphone-daemon-pipetest PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET})
 set_target_properties(linphone-daemon-pipetest PROPERTIES LINKER_LANGUAGE CXX)
 
 set(INSTALL_TARGETS linphone-daemon linphone-daemon-pipetest)

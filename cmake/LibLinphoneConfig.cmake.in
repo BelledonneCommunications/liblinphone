@@ -1,0 +1,97 @@
+############################################################################
+# LibLinphoneConfig.cmake
+# Copyright (C) 2015-2023  Belledonne Communications, Grenoble France
+#
+############################################################################
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+############################################################################
+#
+# Config file for the liblinphone package.
+#
+# Targets
+# ^^^^^^^
+#
+# The following targets are defined:
+#  liblinphone - The liblinphone library target
+#
+#
+# Result variables
+# ^^^^^^^^^^^^^^^^
+#
+# This config file will set the following variables in your project:
+#
+#  LibLinphone_FOUND - The liblinphone library has been found
+#  LibLinphone_TARGET - The name of the CMake target for the liblinphone library
+#  LibLinphone_PLUGINS_DIR - The directory where to install liblinphone plugins
+
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/LibLinphoneTargets.cmake")
+
+set(LibLinphone_TARGET liblinphone)
+set_and_check(LibLinphone_PLUGINS_DIR "@PACKAGE_LIBLINPHONE_PLUGINS_DIR@")
+
+# We must propagate the public dependencies and the private dependencies for static build
+include(CMakeFindDependencyMacro)
+find_dependency(BelleSIP)
+find_dependency(Mediastreamer2)
+find_dependency(Ortp)
+if(@SQLite3_FOUND@)
+	find_dependency(SQLite3)
+endif()
+if(@LibXml2_FOUND@)
+	find_dependency(LibXml2)
+endif()
+if(@Lime_FOUND@)
+	find_dependency(Lime)
+endif()
+if(@BUILD_SHARED_LIBS@)
+else()
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+	if(@BelCard_FOUND@)
+		find_dependency(BelCard)
+	endif()
+	find_dependency(BCToolbox)
+	find_dependency(Belr)
+	if(@XercesC_FOUND@)
+		find_dependency(XercesC)
+	endif()
+	if(@Soci_FOUND@)
+		find_dependency(Soci)
+	endif()
+	if(@ZLIB_FOUND@)
+		find_dependency(ZLIB)
+	endif()
+	if(@Tunnel_FOUND@)
+		find_dependency(Tunnel)
+	endif()
+	if(@BZRTP_FOUND@)
+		find_dependency(BZRTP)
+	endif()
+	if(@OpenLDAP_FOUND@)
+		find_dependency(OpenLDAP)
+	endif()
+	if(@ZXing_FOUND@)
+		find_dependency(ZXing)
+	endif()
+	if(@TurboJpeg_FOUND@)
+		find_dependency(TurboJpeg)
+	endif()
+endif()
+
+check_required_components(LibLinphone)

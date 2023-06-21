@@ -20,52 +20,77 @@
 #
 ############################################################################
 #
-# - Find the turbojpeg include file and library
+# Find the turbojpeg library.
 #
-#  TURBOJPEG_FOUND - system has turbojpeg
-#  TURBOJPEG_INCLUDE_DIRS - the turbojpeg include directory
-#  TURBOJPEG_LIBRARIES - The libraries needed to use turbojpeg
+# Targets
+# ^^^^^^^
+#
+# The following targets may be defined:
+#
+#  turbojpeg - If the turbojpeg library has been found
+#
+#
+# Result variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module will set the following variables in your project:
+#
+#  TurboJpeg_FOUND - The turbojpeg library has been found
+#  TurboJpeg_TARGET - The name of the CMake target for the turbojpeg library
+
+
+include(FindPackageHandleStandardArgs)
+
+set(_TurboJpeg_REQUIRED_VARS TurboJpeg_TARGET)
+set(_TurboJpeg_CACHE_VARS ${_TurboJpeg_REQUIRED_VARS})
 
 if(TARGET turbojpeg)
 
-	set(TURBOJPEG_LIBRARIES turbojpeg)
-	get_target_property(TURBOJPEG_INCLUDE_DIRS turbojpeg INTERFACE_INCLUDE_DIRECTORIES)
-	set(HAVE_TURBOJPEG_H 1)
+	set(TurboJpeg_TARGET turbojpeg)
 
 else()
 
-	find_path(TURBOJPEG_INCLUDE_DIRS
+	find_path(_TurboJpeg_INCLUDE_DIRS
 		NAMES turbojpeg.h
 		PATH_SUFFIXES include
 	)
-	if(TURBOJPEG_INCLUDE_DIRS)
-		set(HAVE_TURBOJPEG_H 1)
-	endif()
 
-	find_library(TURBOJPEG_LIBRARIES
+	find_library(_TurboJpeg_LIBRARY
 		NAMES turbojpeg turbojpeg-static
 		PATH_SUFFIXES bin lib
 	)
 
-	if(TURBOJPEG_INCLUDE_DIRS AND TURBOJPEG_LIBRARIES AND NOT MSVC)
-		include(CheckCSourceCompiles)
-		include(CMakePushCheckState)
+	if(_TurboJpeg_INCLUDE_DIRS AND _TurboJpeg_LIBRARY)
+		add_library(turbojpeg UNKNOWN IMPORTED)
+		if(WIN32)
+			set_target_properties(turbojpeg PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${_TurboJpeg_INCLUDE_DIRS}"
+				IMPORTED_IMPLIB "${_TurboJpeg_LIBRARY}"
+			)
+		else()
+			set_target_properties(turbojpeg PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${_TurboJpeg_INCLUDE_DIRS}"
+				IMPORTED_LOCATION "${_TurboJpeg_LIBRARY}"
+			)
+		endif()
 
-		cmake_push_check_state(RESET)
-		list(APPEND CMAKE_REQUIRED_INCLUDES ${TURBOJPEG_INCLUDE_DIRS})
-		list(APPEND CMAKE_REQUIRED_LIBRARIES ${TURBOJPEG_LIBRARIES})
-		set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror")
-		if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Wno-error=unused-command-line-argument")
-	  endif()
+		if(NOT MSVC)
+			include(CMakePushCheckState)
+			cmake_push_check_state(RESET)
+			list(APPEND CMAKE_REQUIRED_INCLUDES ${_TurboJpeg_INCLUDE_DIRS})
+			list(APPEND CMAKE_REQUIRED_LIBRARIES ${_TurboJpeg_LIBRARIES})
+			set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror")
+			if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Wno-error=unused-command-line-argument")
+		  endif()
+		endif()
+
+		set(TurboJpeg_TARGET turbojpeg)
 	endif()
 
 endif()
 
-include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(TurboJpeg
-	DEFAULT_MSG
-	TURBOJPEG_INCLUDE_DIRS TURBOJPEG_LIBRARIES
+	REQUIRED_VARS ${_TurboJpeg_REQUIRED_VARS}
 )
-
-mark_as_advanced(TURBOJPEG_INCLUDE_DIRS TURBOJPEG_LIBRARIES)
+mark_as_advanced(${_TurboJpeg_CACHE_VARS})

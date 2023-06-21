@@ -82,7 +82,6 @@ set(LINPHONE_SOURCE_FILES_CXX
 if(ENABLE_JAVA_WRAPPER)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX ${LINPHONE_JNI_SOURCES})
 	set_source_files_properties(${LINPHONE_JNI_SOURCES} PROPERTIES GENERATED TRUE)
-	set_source_files_properties(${LINPHONE_JNI_SOURCES} PROPERTIES INCLUDE_DIRECTORIES "${CPUFEATURES_INCLUDE_DIRS}")
 endif()
 
 set(LINPHONE_SOURCE_FILES_OBJC)
@@ -109,7 +108,7 @@ else()
 	list(APPEND LINPHONE_SOURCE_FILES_C linphone_tunnel_stubs.c)
 endif()
 
-if(BELCARD_FOUND)
+if(BelCard_FOUND)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX vcard.cc)
 	list(APPEND LINPHONE_SOURCE_FILES_C carddav.c)
 else()
@@ -134,19 +133,32 @@ bc_apply_compile_flags(LINPHONE_SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTI
 add_library(liblinphone-coreapi OBJECT
 	${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 )
-target_include_directories(liblinphone-coreapi PRIVATE
-	${LINPHONE_INCLUDE_DIRS}
-	$<TARGET_PROPERTY:${BELLESIP_TARGETNAME},INTERFACE_INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:belr,INTERFACE_INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:mediastreamer2,INTERFACE_INCLUDE_DIRECTORIES>
-	$<TARGET_PROPERTY:ortp,INTERFACE_INCLUDE_DIRECTORIES>
-)
-if(BELCARD_FOUND)
-	target_include_directories(liblinphone-coreapi PRIVATE $<TARGET_PROPERTY:belcard,INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(liblinphone-coreapi PRIVATE ${LINPHONE_INCLUDE_DIRS})
+target_link_libraries(liblinphone-coreapi PRIVATE ${BelleSIP_TARGET} ${Belr_TARGET} ${Mediastreamer2_TARGET} ${Ortp_TARGET})
+if(LibXml2_FOUND)
+	target_link_libraries(liblinphone-coreapi PRIVATE ${LibXml2_TARGET})
+endif()
+if(XercesC_FOUND)
+	target_link_libraries(liblinphone-coreapi PRIVATE ${XercesC_TARGET})
+endif()
+if(SQLite3_FOUND)
+	target_link_libraries(liblinphone-coreapi PRIVATE ${SQLite3_TARGET})
+endif()
+if(Tunnel_FOUND)
+	target_link_libraries(liblinphone-coreapi PRIVATE ${Tunnel_TARGET})
+endif()
+if(BelCard_FOUND)
+	target_link_libraries(liblinphone-coreapi PRIVATE ${BelCard_TARGET})
+endif()
+if(ZLIB_FOUND)
+	target_link_libraries(liblinphone-coreapi PRIVATE ${ZLIB_TARGET})
+endif()
+if(CpuFeatures_FOUND)
+	target_link_libraries(liblinphone-coreapi PRIVATE ${CpuFeatures_TARGET})
 endif()
 add_dependencies(liblinphone-coreapi liblinphone-git-version)
 if(ENABLE_JAVA_WRAPPER)
-      add_dependencies(liblinphone-coreapi linphonej)
+	add_dependencies(liblinphone-coreapi linphonej)
 endif()
 
 if(BUILD_SHARED_LIBS)

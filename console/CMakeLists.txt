@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -38,8 +38,7 @@ if(MSVC)
 endif()
 
 add_executable(linphonec ${LINPHONEC_SOURCE_FILES})
-target_link_libraries(linphonec ${LINPHONE_LIBS_FOR_TOOLS} bctoolbox ortp mediastreamer2 ${XSD_LIBRARIES})
-set_target_properties(linphonec PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+target_link_libraries(linphonec PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${BCToolbox_TARGET} ${XSD_LIBRARIES})
 set_target_properties(linphonec PROPERTIES LINKER_LANGUAGE CXX)
 
 if(INTL_FOUND)
@@ -48,15 +47,14 @@ endif()
 
 if(WIN32)
 	add_executable(linphoned WIN32 ${LINPHONEC_SOURCE_FILES})
-	target_link_libraries(linphoned ${LINPHONE_LIBS_FOR_TOOLS} bctoolbox ortp mediastreamer2 ${XSD_LIBRARIES})
+	target_link_libraries(linphoned PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${BCToolbox_TARGET} ${XSD_LIBRARIES})
 	if(INTL_FOUND)
-		target_link_libraries(linphoned ${INTL_LIBRARIES})
+		target_link_libraries(linphoned PRIVATE ${INTL_LIBRARIES})
 	endif()
 endif()
 
 add_executable(linphonecsh ${LINPHONECSH_SOURCE_FILES})
-target_link_libraries(linphonecsh ${LINPHONE_LIBS_FOR_TOOLS} bctoolbox ortp)
-set_target_properties(linphonecsh PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+target_link_libraries(linphonecsh PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Ortp_TARGET} ${BCToolbox_TARGET})
 set_target_properties(linphonecsh PROPERTIES LINKER_LANGUAGE CXX)
 
 set(INSTALL_TARGETS linphonec linphonecsh)

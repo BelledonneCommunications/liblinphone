@@ -57,7 +57,7 @@ if(MSVC)
 endif()
 target_compile_definitions(liblinphone++ PRIVATE "-DLINPHONECXX_EXPORTS")
 target_link_libraries(liblinphone++
-	PRIVATE bctoolbox belle-sip liblinphone
+	PRIVATE ${BCToolbox_TARGET} ${BelleSIP_TARGET} liblinphone
 )
 
 set_target_properties(liblinphone++ PROPERTIES

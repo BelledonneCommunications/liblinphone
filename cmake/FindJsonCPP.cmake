@@ -20,29 +20,64 @@
 #
 ############################################################################
 #
-# - Find the jsoncpp include files and library
+# Find the jsoncpp library.
 #
-#  JSONCPP_FOUND - system has lib jsoncpp
-#  JSONCPP_INCLUDE_DIRS - the jsoncpp include directory
-#  JSONCPP_LIBRARIES - The library needed to use jsoncpp
+# Targets
+# ^^^^^^^
+#
+# The following targets may be defined:
+#
+#  jsoncpp_lib - If the jsoncpp library has been found and is a shared lib
+#  jsoncpp_static - If the jsoncpp library has been found and is a static lib
+#
+#
+# Result variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module will set the following variables in your project:
+#
+#  JsonCPP_FOUND - The jsoncpp library has been found
+#  JsonCPP_TARGET - The name of the CMake target for the jsoncpp library
+
 
 if(TARGET jsoncpp_lib OR TARGET jsoncpp_static)
 
 	if(TARGET jsoncpp_lib)
-		set(JSONCPP_LIBRARIES jsoncpp_lib)
-		get_target_property(JSONCPP_INCLUDE_DIRS jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
+		set(JsonCPP_TARGET jsoncpp_lib)
 	else()
-		set(JSONCPP_LIBRARIES jsoncpp_static)
-		get_target_property(JSONCPP_INCLUDE_DIRS jsoncpp_static INTERFACE_INCLUDE_DIRECTORIES)
+		set(JsonCPP_TARGET jsoncpp_static)
 	endif()
 
 
 	include(FindPackageHandleStandardArgs)
 	find_package_handle_standard_args(JsonCPP
 		DEFAULT_MSG
-		JSONCPP_INCLUDE_DIRS JSONCPP_LIBRARIES
+		JsonCPP_TARGET
 	)
+	mark_as_advanced(JsonCPP_TARGET)
 
-	mark_as_advanced(JSONCPP_INCLUDE_DIRS JSONCPP_LIBRARIES)
+else()
+	
+	set(_OPTIONS "CONFIG")
+	if(JsonCPP_FIND_REQUIRED)
+		list(APPEND _OPTIONS "REQUIRED")
+	endif()  
+	if(JsonCPP_FIND_QUIETLY)
+		list(APPEND _OPTIONS "QUIET")
+	endif()
+	if(JsonCPP_FIND_VERSION)
+		list(PREPEND _OPTIONS "${jsoncpp_FIND_VERSION}")
+	endif()
+	if(JsonCPP_FIND_EXACT)
+		list(APPEND _OPTIONS "EXACT")
+	endif()
+
+	find_package(jsoncpp ${_OPTIONS})
+
+	if(TARGET jsoncpp_lib)
+		set(JsonCPP_TARGET jsoncpp_lib)
+	else()
+		set(JsonCPP_TARGET jsoncpp_static)
+	endif()
 
 endif()

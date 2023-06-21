@@ -23,7 +23,7 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-project(linphone VERSION 5.3.0 LANGUAGES C CXX)
+project(LibLinphone VERSION 5.3.0 LANGUAGES C CXX)
 
 
 set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
@@ -66,14 +66,11 @@ option(ENABLE_UNIT_TESTS "Enable compilation of unit tests." YES)
 option(ENABLE_VCARD "Turn on compilation of vcard4 support." YES)
 option(ENABLE_VIDEO "Build with video support." YES)
 option(ENABLE_ASSETS "Package sound assets." YES)
-option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive making (CMake >= 3.11)" OFF)
+option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive making" OFF)
 option(ENABLE_SQLITE "Build with sqlite support" YES)
 option(ENABLE_XML2 "Build with libxml2 support - for presence feature mainly" YES)
 option(ENABLE_EXAMPLE_PLUGIN "Enable build of the example plugin" NO)
 option(ENABLE_EKT_SERVER_PLUGIN "Enable build of the EKT encryption plugin" NO)
-
-cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
-cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
 
 option(ENABLE_SRTP "Build with the SRTP transport support." YES)
 cmake_dependent_option(ENABLE_ZRTP "Build with ZRTP support." YES "ENABLE_SRTP" NO)
@@ -92,11 +89,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 set(LINPHONE_LIBS_FOR_TOOLS liblinphone)
-if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	list(APPEND LINPHONE_LIBS_FOR_TOOLS "Ws2_32" "Iphlpapi" "user32")
-endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CheckSymbolExists)
 include(CheckLibraryExists)
@@ -116,43 +110,18 @@ endif()
 # find_package should be invoked here to check for libraries - however do NOT
 # call include_directories here (see below)
 if(ENABLE_VCARD)
-	find_package(Belcard)
-	if(NOT BELCARD_FOUND)
-		find_package(belcard CONFIG REQUIRED)
-	endif()
+	find_package(BelCard 5.3.0 REQUIRED)
 	add_definitions(-DVCARD_ENABLED)
 endif()
 
-find_package(BelleSIP)
-if(NOT BELLESIP_FOUND)
-	find_package(BelleSIP CONFIG REQUIRED)
-endif()
-find_package(Mediastreamer2)
-if(NOT MEDIASTREAMER2_FOUND)
-	find_package(Mediastreamer2 CONFIG REQUIRED)
-endif()
-find_package(Ortp)
-if(NOT ORTP_FOUND)
-	find_package(ortp CONFIG REQUIRED)
-endif()
-find_package(BcToolbox)
-if(NOT BCTOOLBOX_FOUND)
-	find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
-endif()
-find_package(Belr)
-if(NOT BELR_FOUND)
-	find_package(belr CONFIG REQUIRED)
-endif()
+find_package(BelleSIP 5.3.0 REQUIRED)
+find_package(Mediastreamer2 5.3.0 REQUIRED)
+find_package(Ortp 5.3.0 REQUIRED)
+find_package(BCToolbox 5.3.0 REQUIRED OPTIONAL_COMPONENTS tester)
+find_package(Belr 5.3.0 REQUIRED)
 
 if(ENABLE_ADVANCED_IM)
-	find_package(IntegratedXercesC)
-	if(INTEGRATEDXERCESC_FOUND)
-		set(XercesC_FOUND 1)
-		set(XercesC_TARGET "xerces-c")
-	else()
-		find_package(XercesC REQUIRED)
-		set(XercesC_TARGET "XercesC::XercesC")
-	endif()
+	bc_find_package(XercesC XercesC::XercesC xerces-c REQUIRED)
 	set(HAVE_ADVANCED_IM 1)
 	set(LIBXSD_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/libxsd")
 endif()
@@ -169,18 +138,18 @@ if(ENABLE_ZRTP)
 endif()
 
 if(ENABLE_SQLITE)
-	find_package(Sqlite3 REQUIRED)
+	bc_find_package(SQLite3 SQLite::SQLite3 sqlite3 REQUIRED)
 	add_definitions(-DHAVE_SQLITE)
 endif()
 
 if(ENABLE_XML2)
-	find_package(XML2 REQUIRED)
+	bc_find_package(LibXml2 LibXml2::LibXml2 xml2 REQUIRED)
 	add_definitions(-DHAVE_XML2)
 endif()
 
 if(ENABLE_DB_STORAGE)
 	# APPLE platform does not use dlopen for soci backend
-	if (APPLE OR ANDROID)
+	if(APPLE OR ANDROID)
 		find_package(Soci REQUIRED COMPONENTS sqlite3)
 	else()
 		find_package(Soci REQUIRED)
@@ -188,38 +157,21 @@ if(ENABLE_DB_STORAGE)
 	set(HAVE_DB_STORAGE 1)
 endif()
 
-find_package(IntegratedZLIB)
-if(INTEGRATEDZLIB_FOUND)
-	set(ZLIB_FOUND 1)
-else()
-	find_package(ZLIB)
+bc_find_package(ZLIB ZLIB::ZLIB zlib)
+if(ZLIB_FOUND)
+	set(HAVE_ZLIB 1)
 endif()
 
 if(ENABLE_TUNNEL)
-	find_package(Tunnel)
-	if(NOT TUNNEL_FOUND)
+	find_package(Tunnel 0.7.0)
+	if(NOT Tunnel_FOUND)
 		message(WARNING "Could not find the tunnel library!")
 		set(ENABLE_TUNNEL OFF CACHE BOOL "Enable tunnel support." FORCE)
 	endif()
 endif()
-if(ENABLE_NOTIFY)
-	find_package(Notify)
-	if(NOTIFY_FOUND)
-		set(HAVE_NOTIFY4 1)
-	else()
-		message(WARNING "Could not find the notify library!")
-		set(ENABLE_NOTIFY OFF CACHE BOOL "Enable libnotify support." FORCE)
-	endif()
-endif()
-if(ENABLE_ASSISTANT)
-	set(BUILD_WIZARD 1)
-endif()
 if(ENABLE_LIME_X3DH)
-	find_package(BZRTP)
-	if(NOT BZRTP_FOUND)
-		find_package(BZRTP REQUIRED CONFIG)
-	endif()
-	bc_find_package(lime REQUIRED CONFIG)
+	find_package(BZRTP 5.3.0 REQUIRED)
+	find_package(Lime 5.3.0 REQUIRED)
 	set(HAVE_LIME_X3DH 1)
 endif()
 if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_SWIFT_WRAPPER OR ENABLE_DOC)
@@ -235,17 +187,14 @@ if(ENABLE_LDAP)
 endif()
 
 if(ENABLE_FLEXIAPI)
-	find_package(JsonCPP)
-	if(NOT JSONCPP_FOUND)
-		find_package(jsoncpp REQUIRED)
-	endif()
+	find_package(JsonCPP REQUIRED)
 	set(HAVE_FLEXIAPI TRUE)
 endif()
 
 if(ENABLE_QRCODE)
 	find_package(ZXing REQUIRED)
 	add_definitions(-DQRCODE_ENABLED)
-	if(ENABLE_JPEG)# only needed for QRCode. Move from it for other
+	if(ENABLE_JPEG) # Only needed for QRCode. Move from it for other
 		add_definitions(-DJPEG_ENABLED)
 		find_package(TurboJpeg REQUIRED)
 	endif()
@@ -268,8 +217,6 @@ if(ANDROID)
 	endif()
 endif()
 
-set(LINPHONE_LDFLAGS "${BELLESIP_LDFLAGS} ${MEDIASTREAMER2_LDFLAGS}")
-
 # include_directories must be called only UNDER THIS LINE in order to use our
 # projects submodules first (we do NOT want to have system headers in first position)
 include_directories(
@@ -280,51 +227,18 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}/coreapi/
 )
 set(LINPHONE_INCLUDE_DIRS
- 	${BELLESIP_INCLUDE_DIRS}
- 	${MEDIASTREAMER2_INCLUDE_DIRS}
- 	${BCTOOLBOX_CORE_INCLUDE_DIRS}
- 	${BELR_INCLUDE_DIRS}
 	${LIBXSD_INCLUDE_DIRS}
-	${XercesC_INCLUDE_DIRS}
 )
 
 if(ANDROID)
 	include_directories(${CMAKE_CURRENT_BINARY_DIR}/java)
 endif()
-if(ENABLE_TUNNEL)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${TUNNEL_INCLUDE_DIRS})
+
+if(ZXing_FOUND AND ZXing_USE_BUILD_INTERFACE)
+	add_compile_definitions("ZXING_USE_BUILD_INTERFACE")
 endif()
 
-if(ENABLE_XML2)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${XML2_INCLUDE_DIRS})
-endif()
-
-if(ENABLE_SQLITE)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${SQLITE3_INCLUDE_DIRS})
-endif()
-
-if(ZLIB_FOUND)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${ZLIB_INCLUDE_DIRS})
-	set(HAVE_ZLIB 1)
-endif()
-if(INTL_FOUND)
-	set(HAVE_INTL 1)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${INTL_INCLUDE_DIRS})
-endif()
-if(OPENLDAP_FOUND)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${OPENLDAP_INCLUDE_DIRS})
-endif()
-if(ZXING_FOUND)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${ZXING_INCLUDE_DIRS})
-	if(ZXING_USE_BUILD_INTERFACE)
-		add_compile_definitions("ZXING_USE_BUILD_INTERFACE")
-	endif()
-endif()
-if(TURBOJPEG_FOUND)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${TURBOJPEG_INCLUDE_DIRS})
-endif()
-
-set(LINPHONE_CPPFLAGS ${BELCARD_CPPFLAGS} ${BELLESIP_CPPFLAGS} ${MEDIASTREAMER2_CPPFLAGS} ${BCTOOLBOX_CPPFLAGS} ${BELR_CPPFLAGS})
+set(LINPHONE_CPPFLAGS )
 if(NOT BUILD_SHARED_LIBS)
 	list(APPEND LINPHONE_CPPFLAGS "-DLINPHONE_STATIC")
 endif()
@@ -425,28 +339,28 @@ set(PACKAGE_FREEDESKTOP_DIR "${PACKAGE_DATA_DIR}/applications")
 set(LINPHONE_FRAMEWORK_VERSION "A")
 
 if(APPLE AND NOT IOS)
-	set(LINPHONE_PLUGINS_LOCATION "Frameworks/linphone.framework/Versions/${LINPHONE_FRAMEWORK_VERSION}/Libraries")
-	install(DIRECTORY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LINPHONE_PLUGINS_LOCATION}")
-
+	set(LIBLINPHONE_PLUGINS_DIR "Frameworks/linphone.framework/Versions/${LINPHONE_FRAMEWORK_VERSION}/Libraries")
 	if (NOT EXISTS "${CMAKE_INSTALL_PREFIX}/Frameworks/linphone.framework/Libraries")
 		install(CODE "execute_process(COMMAND sh -c \"ln -sf Versions/Current/Libraries ${CMAKE_INSTALL_PREFIX}/Frameworks/linphone.framework/Libraries\")")
 	endif()
 else()
-	set(LINPHONE_PLUGINS_LOCATION "${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
+	set(LIBLINPHONE_PLUGINS_DIR "${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
 endif()
+define_property(TARGET PROPERTY "LIBLINPHONE_PLUGINS_DIR" BRIEF_DOCS "Stores the location of liblinphone plugins" FULL_DOCS "Stores the location of liblinphone plugins")
+install(DIRECTORY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBLINPHONE_PLUGINS_DIR}")
 
 if(ENABLE_RELATIVE_PREFIX)
 	if(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" OR CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set(LINPHONE_PACKAGE_PLUGINS_DIR "." CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
 	else()
-		set(LINPHONE_PACKAGE_PLUGINS_DIR "./${LINPHONE_PLUGINS_LOCATION}" CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
+		set(LINPHONE_PACKAGE_PLUGINS_DIR "./${LINPHONE_PLUGINS_DIR}" CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
 	endif()
 else()
-	set(LINPHONE_PACKAGE_PLUGINS_DIR "${CMAKE_INSTALL_PREFIX}/${LINPHONE_PLUGINS_LOCATION}" CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
+	set(LINPHONE_PACKAGE_PLUGINS_DIR "${CMAKE_INSTALL_PREFIX}/${LINPHONE_PLUGINS_DIR}" CACHE STRING "Folder where plugins loaded by liblinphone must be stored")
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/config.h PROPERTIES GENERATED ON)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/config.h" PROPERTIES GENERATED ON)
 add_definitions(-DHAVE_CONFIG_H)
 
 if(ENABLE_VIDEO)
@@ -468,8 +382,6 @@ endif()
 if(ENABLE_EKT_SERVER_PLUGIN)
 	add_definitions(-DHAVE_EKT_SERVER_PLUGIN)
 endif()
-
-set(EXPORT_TARGETS_NAME "Linphone")
 
 add_subdirectory(include)
 if(ENABLE_JAVA_WRAPPER)
@@ -505,27 +417,37 @@ if(ENABLE_UNIT_TESTS)
 endif()
 
 include(CMakePackageConfigHelpers)
-set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Linphone/cmake")
-
-write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfigVersion.cmake"
-	VERSION ${LINPHONE_VERSION}
+set(CMAKE_MODULES_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/cmake")
+configure_package_config_file("cmake/${PROJECT_NAME}Config.cmake.in" "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+	INSTALL_DESTINATION "${CMAKE_MODULES_INSTALL_DIR}"
+	PATH_VARS LIBLINPHONE_PLUGINS_DIR
+)
+write_basic_package_version_file("${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY AnyNewerVersion
 )
-configure_package_config_file(cmake/LinphoneConfig.cmake.in
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfig.cmake"
-	INSTALL_DESTINATION ${CONFIG_PACKAGE_LOCATION}
-	NO_SET_AND_CHECK_MACRO
+install(FILES
+	"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+	"${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+	DESTINATION ${CMAKE_MODULES_INSTALL_DIR}
 )
 
-install(EXPORT ${EXPORT_TARGETS_NAME}Targets
-	FILE LinphoneTargets.cmake
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
-)
-install(FILES
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfig.cmake"
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfigVersion.cmake"
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
+if(Soci_FOUND)
+	install(FILES "cmake/FindSoci.cmake" DESTINATION ${CMAKE_MODULES_INSTALL_DIR})
+endif()
+if(OpenLDAP_FOUND)
+	install(FILES "cmake/FindOpenLDAP.cmake" DESTINATION ${CMAKE_MODULES_INSTALL_DIR})
+endif()
+if(ZXing_FOUND)
+	install(FILES "cmake/FindZXing.cmake" DESTINATION ${CMAKE_MODULES_INSTALL_DIR})
+endif()
+if(TurboJpeg_FOUND)
+	install(FILES "cmake/FindTurboJpeg.cmake" DESTINATION ${CMAKE_MODULES_INSTALL_DIR})
+endif()
+
+install(EXPORT ${PROJECT_NAME}Targets
+	FILE "${PROJECT_NAME}Targets.cmake"
+	DESTINATION ${CMAKE_MODULES_INSTALL_DIR}
 )
 
 if (ENABLE_PACKAGE_SOURCE)

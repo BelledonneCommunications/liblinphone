@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -21,9 +21,9 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
-if (ENABLE_TOOLS)
+if(ENABLE_TOOLS)
 	set(USE_BUNDLE )
-	if (IOS)
+	if(IOS)
 		set(USE_BUNDLE MACOSX_BUNDLE)
 	endif()
 	set(LINPHONE_C_EXAMPLES_SOURCE
@@ -41,8 +41,7 @@ if (ENABLE_TOOLS)
 		string(REPLACE ".c" "" EXECUTABLE_NAME ${EXECUTABLE})
 		bc_apply_compile_flags(${EXECUTABLE} STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 		add_executable(${EXECUTABLE_NAME} ${USE_BUNDLE} ${EXECUTABLE})
-		target_link_libraries(${EXECUTABLE_NAME} ${LINPHONE_LIBS_FOR_TOOLS} ${MEDIASTREAMER2_LIBRARIES} ${ORTP_LIBRARIES} ${BCTOOLBOX_CORE_LIBRARIES} ${XSD_LIBRARIES})
-		set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+		target_link_libraries(${EXECUTABLE_NAME} PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${BCToolbox_TARGET} ${XSD_LIBRARIES})
 		if (NOT IOS)
 			install(TARGETS ${EXECUTABLE_NAME}
 				RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

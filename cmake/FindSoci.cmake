@@ -1,111 +1,139 @@
-###############################################################################
-# CMake module to search for SOCI library
+############################################################################
+# FindSoci.cmake
+# Copyright (C) 2023  Belledonne Communications, Grenoble France
 #
-# WARNING: This module is experimental work in progress.
+############################################################################
 #
-# This module defines:
-#  SOCI_INCLUDE_DIRS        = include dirs to be used when using the soci library
-#  SOCI_LIBRARIES           = full path to the soci library
-#  SOCI_VERSION             = the soci version found (not yet. soci does not provide that info.)
-#  SOCI_FOUND               = true if soci was found
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
 #
-# For each component you specify in find_package(), the following variables are set.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#  SOCI_${COMPONENT}_PLUGIN = full path to the soci plugin
-#  SOCI_${COMPONENT}_FOUND
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-# Copyright (c) 2011 Michael Jansen <info@michael-jansen.biz>
+############################################################################
 #
-# Redistribution and use is allowed according to the terms of the BSD license.
-# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+# Find the soci library.
 #
-###############################################################################
+# Targets
+# ^^^^^^^
 #
-### Global Configuration Section
+# The following targets may be defined:
 #
-SET(_SOCI_ALL_PLUGINS    mysql sqlite3)
+#  soci - If the soci library has been found
+#
+#
+# Result variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module will set the following variables in your project:
+#
+#  Soci_FOUND - The soci library has been found
+#  Soci_TARGET - The name of the CMake target for the soci library
+#
+# This module may set the following variable:
+#
+#  Soci_mysql_TARGET - The name of the CMake target for the mysql soci plugin
+#  Soci_odbc_TARGET - The name of the CMake target for the obdc soci plugin
+#  Soci_postgresql_TARGET - The name of the CMake target for the postgresql soci plugin
+#  Soci_sqlite3_TARGET - The name of the CMake target for the sqlite3 soci plugin
 
-SET(_SOCI_REQUIRED_VARS  SOCI_INCLUDE_DIRS SOCI_LIBRARIES)
-SET(_SOCI_VERSION "_4_0")
+
+include(FindPackageHandleStandardArgs)
+
+set(_Soci_ALL_PLUGINS mysql odbc postgresql sqlite3)
+
+set(_Soci_REQUIRED_VARS Soci_TARGET)
+set(_Soci_CACHE_VARS ${_Soci_REQUIRED_VARS})
+set(_Soci_VERSION "_4_0")
 
 if(TARGET soci_core OR TARGET soci_core_static)
 
     if(TARGET soci_core)
-      set(SOCI_CORE_TARGET soci_core)
+        set(Soci_TARGET soci_core)
     else()
-      set(SOCI_CORE_TARGET soci_core_static)
+        set(Soci_TARGET soci_core_static)
     endif()
-    set(SOCI_LIBRARIES ${SOCI_CORE_TARGET})
-    get_target_property(SOCI_INCLUDE_DIRS ${SOCI_CORE_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
 
     if(TARGET soci_sqlite3 OR TARGET soci_sqlite3_static)
-      if(TARGET soci_sqlite3)
-        set(SOCI_SQLITE3_TARGET soci_sqlite3)
-      else()
-        set(SOCI_SQLITE3_TARGET soci_sqlite3_static)
-      endif()
-			set(SOCI_sqlite3_PLUGIN ${SOCI_SQLITE3_TARGET})
+        list(APPEND _Soci_REQUIRED_VARS Soci_sqlite3_TARGET)
+        if(TARGET soci_sqlite3)
+            set(Soci_sqlite3_TARGET soci_sqlite3)
+        else()
+            set(Soci_sqlite3_TARGET soci_sqlite3_static)
+        endif()
+        set(Soci_sqlite3_FOUND TRUE)
     endif()
 
 else()
 
-    #
-    ### FIRST STEP: Find the soci headers.
-    #
-    FIND_PATH(SOCI_INCLUDE_DIRS soci/soci.h
-        DOC "Soci (http://soci.sourceforge.net) include directory")
-    MARK_AS_ADVANCED(SOCI_INCLUDE_DIRS)
+    find_path(_Soci_INCLUDE_DIRS NAMES soci/soci.h)
 
-    #
-    ### SECOND STEP: Find the soci core library. Respect LIB_SUFFIX
-    #
-    FIND_LIBRARY(SOCI_LIBRARIES
-        NAMES soci_core soci_core${_SOCI_VERSION} libsoci_core libsoci_core${_SOCI_VERSION}
-        PATH_SUFFIXES Frameworks lib lib64)
-    MARK_AS_ADVANCED(SOCI_LIBRARIES)
+    find_library(_Soci_LIBRARY
+        NAMES soci_core soci_core${_Soci_VERSION} libsoci_core libsoci_core${_Soci_VERSION}
+        PATH_SUFFIXES Frameworks lib lib64
+    )
 
-    GET_FILENAME_COMPONENT(SOCI_LIBRARY_DIR ${SOCI_LIBRARIES} PATH)
-    MARK_AS_ADVANCED(SOCI_LIBRARY_DIR)
+    if(_Soci_INCLUDE_DIRS AND _Soci_LIBRARY)
+        if(NOT TARGET soci)
+            add_library(soci UNKNOWN IMPORTED)
+            if(WIN32)
+                set_target_properties(soci PROPERTIES
+                    INTERFACE_INCLUDE_DIRECTORIES "${_Soci_INCLUDE_DIRS}"
+                    IMPORTED_IMPLIB "${_Soci_LIBRARY}"
+                )
+            else()
+                set_target_properties(soci PROPERTIES
+                    INTERFACE_INCLUDE_DIRECTORIES "${_Soci_INCLUDE_DIRS}"
+                    IMPORTED_LOCATION "${_Soci_LIBRARY}"
+                )
+            endif()
+        endif()
+        set(Soci_TARGET soci)
 
-    #
-    ### THIRD STEP: Find all installed plugins if the library was found
-    #
-    IF(SOCI_INCLUDE_DIRS AND SOCI_LIBRARIES)
-
-        MESSAGE(STATUS "Soci found: Looking for plugins")
-        FOREACH(plugin IN LISTS _SOCI_ALL_PLUGINS)
-
-            FIND_LIBRARY(
-                SOCI_${plugin}_PLUGIN
-                NAMES soci_${plugin} soci_${plugin}${_SOCI_VERSION} libsoci_${plugin} libsoci_${plugin}${_SOCI_VERSION}
-                PATH_SUFFIXES Frameworks lib lib64)
-            MARK_AS_ADVANCED(SOCI_${plugin}_PLUGIN)
-
-            IF(SOCI_${plugin}_PLUGIN)
-                MESSAGE(STATUS "    * Plugin ${plugin} found ${SOCI_${plugin}_PLUGIN}.")
-                SET(SOCI_${plugin}_FOUND True)
-            ELSE()
-                MESSAGE(STATUS "    * Plugin ${plugin} not found.")
-                SET(SOCI_${plugin}_FOUND False)
-            ENDIF()
-
-        ENDFOREACH()
-
-        #
-        ### FOURTH CHECK: Check if the required components were all found
-        #
-        FOREACH(component ${Soci_FIND_COMPONENTS})
-            IF(NOT SOCI_${component}_FOUND)
-                MESSAGE(SEND_ERROR "Required component ${component} not found. It seems that Soci was built without support of ${component}, consider rebuilding it.")
-            ENDIF()
-        ENDFOREACH()
-
-    ENDIF()
+        message(STATUS "Soci found: Looking for plugins")
+        foreach(_Soci_PLUGIN IN LISTS _Soci_ALL_PLUGINS)
+            find_library(_Soci_${_Soci_PLUGIN}_PLUGIN
+                NAMES soci_${_Soci_PLUGIN} soci_${_Soci_PLUGIN}${_Soci_VERSION} libsoci_${_Soci_PLUGIN} libsoci_${_Soci_PLUGIN}${_Soci_VERSION}
+                PATH_SUFFIXES Frameworks lib lib64
+            )
+            if(_Soci_${_Soci_PLUGIN}_PLUGIN)
+                message(STATUS "    * Plugin ${_Soci_PLUGIN} found ${_Soci_${_Soci_PLUGIN}_PLUGIN}.")
+                if(NOT TARGET soci_${_Soci_PLUGIN})
+                    add_library(soci_${_Soci_PLUGIN} UNKNOWN IMPORTED)
+                    if(WIN32)
+                        set_target_properties(soci_${_Soci_PLUGIN} PROPERTIES
+                            INTERFACE_INCLUDE_DIRECTORIES "${_Soci_INCLUDE_DIRS}"
+                            IMPORTED_IMPLIB "${_Soci_${_Soci_PLUGIN}_PLUGIN}"
+                        )
+                    else()
+                        set_target_properties(soci_${_Soci_PLUGIN} PROPERTIES
+                            INTERFACE_INCLUDE_DIRECTORIES "${_Soci_INCLUDE_DIRS}"
+                            IMPORTED_LOCATION "${_Soci_${_Soci_PLUGIN}_PLUGIN}"
+                        )
+                    endif()
+                endif()
+                set(Soci_${_Soci_PLUGIN}_FOUND TRUE)
+                set(Soci_${_Soci_PLUGIN}_TARGET soci_${_Soci_PLUGIN})
+                list(APPEND _Soci_CACHE_VARS Soci_${_Soci_PLUGIN}_TARGET)
+            else()
+                message(STATUS "    * Plugin ${_Soci_PLUGIN} not found.")
+            endif()
+        endforeach()
+        
+    endif()
 
 endif()
 
-#
-### ADHERE TO STANDARDS
-#
-include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Soci DEFAULT_MSG ${_SOCI_REQUIRED_VARS})
+find_package_handle_standard_args(Soci
+    REQUIRED_VARS ${_Soci_REQUIRED_VARS}
+    HANDLE_COMPONENTS
+)
+mark_as_advanced(${_Soci_CACHE_VARS})

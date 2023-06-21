@@ -1,5 +1,5 @@
 ############################################################################
-# FindZxing.cmake
+# FindZXing.cmake
 # Copyright (C) 2018-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
@@ -20,21 +20,42 @@
 #
 ############################################################################
 #
-# - Find the zxing include file and library
+# Find the XZing library.
 #
-#  ZXING_FOUND - system has zxing
-#  ZXING_INCLUDE_DIRS - the zxing include directory
-#  ZXING_LIBRARIES - The libraries needed to use zxing
+# Targets
+# ^^^^^^^
+#
+# The following targets may be defined:
+#
+#  ZXing - If the ZXing library has been found
+#
+#
+# Result variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module will set the following variables in your project:
+#
+#  ZXing_FOUND - The ZXing library has been found
+#  ZXing_TARGET - The name of the CMake target for the ZXing library
+#
+# This module may set the following variable:
+#
+#  ZXing_USE_BUILD_INTERFACE - If the ZXing library is used from its build directory
+
+
+include(FindPackageHandleStandardArgs)
+
+set(_ZXing_REQUIRED_VARS ZXing_TARGET)
+set(_ZXing_CACHE_VARS ${_ZXing_REQUIRED_VARS})
 
 if(TARGET ZXing)
 
-	set(ZXING_LIBRARIES ZXing)
-	get_target_property(ZXING_INCLUDE_DIRS ZXing INTERFACE_INCLUDE_DIRECTORIES)
-	set(ZXING_USE_BUILD_INTERFACE ON)
+	set(ZXing_TARGET ZXing)
+	set(ZXing_USE_BUILD_INTERFACE TRUE)
 
 else()
 
-	find_path(ZXING_INCLUDE_DIRS
+	find_path(_ZXing_INCLUDE_DIRS
 		NAMES
 			ZXing/BarcodeFormat.h
 			ZXing/BitHacks.h
@@ -48,18 +69,31 @@ else()
 		PATH_SUFFIXES include
 	)
 
-	find_library(ZXING_LIBRARIES
+	find_library(_ZXing_LIBRARY
 		NAMES ZXing libZXing
 		PATH_SUFFIXES Frameworks bin lib lib64
 	)
 
+	if(_ZXing_INCLUDE_DIRS AND _ZXing_LIBRARY)
+		add_library(ZXing UNKNOWN IMPORTED)
+		if(WIN32)
+			set_target_properties(ZXing PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${_ZXing_INCLUDE_DIRS}"
+				IMPORTED_IMPLIB "${_ZXing_LIBRARY}"
+			)
+		else()
+			set_target_properties(ZXing PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${_ZXing_INCLUDE_DIRS}"
+				IMPORTED_LOCATION "${_ZXing_LIBRARY}"
+			)
+		endif()
+
+		set(ZXing_TARGET ZXing)
+	endif()
+
 endif()
 
-include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ZXing
-	DEFAULT_MSG
-	ZXING_INCLUDE_DIRS ZXING_LIBRARIES
+	REQUIRED_VARS ${_ZXing_REQUIRED_VARS}
 )
-
-mark_as_advanced(ZXING_INCLUDE_DIRS ZXING_LIBRARIES)
-
+mark_as_advanced(${_ZXing_CACHE_VARS})

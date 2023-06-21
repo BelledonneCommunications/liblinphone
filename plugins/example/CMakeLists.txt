@@ -35,8 +35,6 @@ set(PACKAGE_TARNAME "exampleplugin")
 set(PACKAGE_URL "")
 set(VERSION "${PACKAGE_VERSION}")
 
-option(ENABLE_XML2 "Build with libxml2 support - for presence feature mainly" YES)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -48,8 +46,8 @@ if(NOT CMAKE_INSTALL_RPATH AND CMAKE_INSTALL_PREFIX)
 endif()
 
 find_library(LIBM NAMES m)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/config.h PROPERTIES GENERATED ON)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/config.h" PROPERTIES GENERATED ON)
 add_definitions(-DHAVE_CONFIG_H)
 
 set(SOURCE_FILES
@@ -57,18 +55,11 @@ set(SOURCE_FILES
 )
 
 set(INCLUDE_DIRS )
-
-if(ENABLE_XML2)
-	list(APPEND INCLUDE_DIRS ${XML2_INCLUDE_DIRS})
-endif()
-
 set(LIBS )
 
 if(LIBM)
 	list(APPEND LIBS ${LIBM})
 endif()
-
-set(PLUGINS_DIR "${LINPHONE_PACKAGE_PLUGINS_DIR}")
 
 if(BUILD_SHARED_LIBS)
 	if(NOT IOS)
@@ -87,7 +78,6 @@ target_include_directories(exampleplugin PUBLIC
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
 	PRIVATE ${INCLUDE_DIRS}
 )
-
 target_link_libraries(exampleplugin PRIVATE liblinphone ${LIBS})
 set_target_properties(exampleplugin PROPERTIES LINKER_LANGUAGE CXX)
 if(APPLE)
@@ -115,9 +105,9 @@ if(MSVC)
 endif()
 
 install(TARGETS exampleplugin
-		RUNTIME DESTINATION ${PLUGINS_DIR}
-		LIBRARY DESTINATION ${PLUGINS_DIR}
-		ARCHIVE DESTINATION ${PLUGINS_DIR}
+		RUNTIME DESTINATION ${LIBLINPHONE_PLUGINS_DIR}
+		LIBRARY DESTINATION ${LIBLINPHONE_PLUGINS_DIR}
+		ARCHIVE DESTINATION ${LIBLINPHONE_PLUGINS_DIR}
 		FRAMEWORK DESTINATION Frameworks
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )

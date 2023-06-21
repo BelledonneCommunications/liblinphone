@@ -22,13 +22,13 @@
 ############################################################################
 
 set(OTHER_LIBS_FOR_TESTER
-	bctoolbox
-	bctoolbox-tester
-	ortp
-	mediastreamer2
-	${BELLESIP_TARGETNAME}
-	belr
-	${XML2_LIBRARIES} ${XSD_LIBRARIES}
+	${BCToolbox_tester_TARGET}
+	${Ortp_TARGET}
+	${Mediastreamer2_TARGET}
+	${BelleSIP_TARGET}
+	${Belr_TARGET}
+	${LibXml2_TARGET}
+	${XSD_LIBRARIES}
 )
 
 if(INTL_FOUND)
@@ -37,28 +37,24 @@ endif()
 if(SQLITE3_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${SQLITE3_LIBRARIES})
 endif()
-if(SOCI_FOUND)
-	list(APPEND OTHER_LIBS_FOR_TESTER  ${SOCI_LIBRARIES} ${SOCI_sqlite3_PLUGIN})
+if(Soci_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${Soci_TARGET} ${Soci_sqlite3_TARGET})
 	add_definitions(-DHAVE_SOCI=1)
 endif()
 if(ZLIB_FOUND)
-	if (ANDROID)
-		# Starting NDK r21, libz.a has issues: https://github.com/android/ndk/issues/1179
-		list(APPEND OTHER_LIBS_FOR_TESTER z)
-	else()
-		list(APPEND OTHER_LIBS_FOR_TESTER ${ZLIB_LIBRARIES})
-	endif()
+	list(APPEND OTHER_LIBS_FOR_TESTER ${ZLIB_TARGET})
 endif()
-if(OPENLDAP_FOUND)
-	list(APPEND OTHER_LIBS_FOR_TESTER ${OPENLDAP_LIBRARIES})
+if(OpenLDAP_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${OpenLDAP_TARGETS})
 endif()
-
-if(ZXING_FOUND)
-	list(APPEND OTHER_LIBS_FOR_TESTER ${ZXING_LIBRARIES})
+if(ZXing_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${ZXing_TARGET})
 endif()
-
-if(TURBOJPEG_FOUND)
-	list(APPEND OTHER_LIBS_FOR_TESTER ${TURBOJPEG_LIBRARIES})
+if(TurboJpeg_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${TurboJpeg_TARGET})
+endif()
+if(XercesC_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${XercesC_TARGET})
 endif()
 
 if(ENABLE_CXX_WRAPPER)
@@ -427,7 +423,7 @@ endif()
 # on mobile platforms, we compile the tester as a library so that we can link with it directly from native applications
 if(ANDROID OR IOS)
 	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${LINPHONETESTER_RESOURCES})
-	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
+	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS})
 	target_link_libraries(linphonetester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
 	if(IOS)
@@ -458,7 +454,7 @@ if(ANDROID OR IOS)
 	)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	add_library(linphone_tester_static STATIC ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
-	target_include_directories(linphone_tester_static PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
+	target_include_directories(linphone_tester_static PRIVATE ${LINPHONE_INCLUDE_DIRS})
 	target_link_libraries(linphone_tester_static ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 	set(RUNTIME_COMPONENT_SOURCES
@@ -491,10 +487,9 @@ endif()
 if(NOT ANDROID)
 	if(NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		add_executable(liblinphone-tester ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${SOURCE_FILES_OBJC})
-		set_target_properties(liblinphone-tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(liblinphone-tester PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(liblinphone-tester PROPERTIES C_STANDARD 99)
-		target_include_directories(liblinphone-tester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
+		target_include_directories(liblinphone-tester PRIVATE ${LINPHONE_INCLUDE_DIRS})
 		target_link_libraries(liblinphone-tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 		if(APPLE)
 			target_link_libraries(liblinphone-tester "-framework AppKit")
@@ -518,10 +513,9 @@ if(NOT ANDROID)
 		endif()
 
 		add_executable(liblinphone-groupchat-benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})
-		set_target_properties(liblinphone-groupchat-benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(liblinphone-groupchat-benchmark PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(liblinphone-groupchat-benchmark PROPERTIES C_STANDARD 99)
-		target_include_directories(liblinphone-groupchat-benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
+		target_include_directories(liblinphone-groupchat-benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS})
 		target_link_libraries(liblinphone-groupchat-benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 		install(TARGETS liblinphone-groupchat-benchmark

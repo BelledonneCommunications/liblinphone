@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -22,38 +22,33 @@
 ############################################################################
 
 set(USE_BUNDLE )
-if (IOS)
+if(IOS)
 	set(USE_BUNDLE MACOSX_BUNDLE)
 endif()
 
 set(LP_AUTO_ANSWER_SOURCE_FILES	auto_answer.c)
 bc_apply_compile_flags(LP_AUTO_ANSWER_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 add_executable(liblinphone-auto-answer ${USE_BUNDLE} ${LP_AUTO_ANSWER_SOURCE_FILES})
-target_link_libraries(liblinphone-auto-answer ${LINPHONE_LIBS_FOR_TOOLS} mediastreamer2 ortp bctoolbox ${XSD_LIBRARIES})
-set_target_properties(liblinphone-auto-answer PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+target_link_libraries(liblinphone-auto-answer PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${BCToolbox_TARGET} ${XSD_LIBRARIES})
 set_target_properties(liblinphone-auto-answer PROPERTIES LINKER_LANGUAGE CXX)
 
 set(LP_SENDMSG_SOURCE_FILES lpsendmsg.c)
 bc_apply_compile_flags(LP_SENDMSG_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 add_executable(liblinphone-sendmsg ${USE_BUNDLE} ${LP_SENDMSG_SOURCE_FILES})
-target_link_libraries(liblinphone-sendmsg ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer2 ${XSD_LIBRARIES})
-set_target_properties(liblinphone-sendmsg PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+target_link_libraries(liblinphone-sendmsg PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${XSD_LIBRARIES})
 set_target_properties(liblinphone-sendmsg PROPERTIES LINKER_LANGUAGE CXX)
 
 if(ENABLE_XML2)
-
 	set(LP_LPC2XML_TEST_SOURCE_FILES lpc2xml_test.c)
 	bc_apply_compile_flags(LP_LPC2XML_TEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 	add_executable(liblinphone-lpc2xml-test ${USE_BUNDLE} ${LP_LPC2XML_TEST_SOURCE_FILES})
-	target_link_libraries(liblinphone-lpc2xml-test ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer2 ${XSD_LIBRARIES})
-	set_target_properties(liblinphone-lpc2xml-test PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+	target_link_libraries(liblinphone-lpc2xml-test PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${XSD_LIBRARIES})
 	set_target_properties(liblinphone-lpc2xml-test PROPERTIES LINKER_LANGUAGE CXX)
 
 	set(LP_XML2LPC_TEST_SOURCE_FILES xml2lpc_test.c)
 	bc_apply_compile_flags(LP_XML2LPC_TEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 	add_executable(liblinphone-xml2lpc-test ${USE_BUNDLE} ${LP_XML2LPC_TEST_SOURCE_FILES})
-	target_link_libraries(liblinphone-xml2lpc-test ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer2 ${XSD_LIBRARIES})
-	set_target_properties(liblinphone-xml2lpc-test PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+	target_link_libraries(liblinphone-xml2lpc-test PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${XSD_LIBRARIES})
 	set_target_properties(liblinphone-xml2lpc-test PROPERTIES LINKER_LANGUAGE CXX)
 
 	set(LINPHONE_XMLTOOLS liblinphone-lpc2xml-test liblinphone-xml2lpc-test)
@@ -62,15 +57,14 @@ endif()
 set(LP_TEST_ECC_SOURCE_FILES test_ecc.c)
 bc_apply_compile_flags(LP_TEST_ECC_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 add_executable(liblinphone-test-ecc ${USE_BUNDLE} ${LP_TEST_ECC_SOURCE_FILES})
-target_link_libraries(liblinphone-test-ecc ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer2 bctoolbox ${XSD_LIBRARIES})
-set_target_properties(liblinphone-test-ecc PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+target_link_libraries(liblinphone-test-ecc PRIVATE ${LINPHONE_LIBS_FOR_TOOLS} ${Mediastreamer2_TARGET} ${Ortp_TARGET} ${BCToolbox_TARGET} ${XSD_LIBRARIES})
 set_target_properties(liblinphone-test-ecc PROPERTIES LINKER_LANGUAGE CXX)
 
-if (NOT IOS)
+if(NOT IOS)
 	install(TARGETS liblinphone-auto-answer liblinphone-sendmsg liblinphone-test-ecc ${LINPHONE_XMLTOOLS}
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-		)
+	)
 endif()

@@ -61,7 +61,7 @@ Here the main dependencies listed:
 * **`ENABLE_UNIT_TESTS=NO`**          : do not build testing binaries
 * **`ENABLE_VCARD=NO`**               : disable VCard4 support
 * **`ENABLE_TOOLS=NO`**               : do not build tool binaries
-* **`ENABLE_LIME=NO`**                : disable Linphone Instant Messaging Encryption
+* **`ENABLE_LIME_X3DH=NO`**                : disable Linphone Instant Messaging Encryption
 
 ## Note for packagers
 
