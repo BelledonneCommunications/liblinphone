@@ -1798,16 +1798,20 @@ LinphoneAddress *Core::getAudioVideoConferenceFactoryAddress(const std::shared_p
 }
 
 void Core::initPlugins() {
-	std::string pluginDir;
+	std::string pluginDir = Factory::get()->getLiblinphonePluginsDir();
+
+	if (pluginDir.empty()) {
 #ifdef __APPLE__
-	pluginDir = getPlatformHelpers(getCCore())->getPluginsDir();
+		pluginDir = getPlatformHelpers(getCCore())->getPluginsDir();
 #else
 #ifdef LINPHONE_PACKAGE_PLUGINS_DIR
-	pluginDir = LINPHONE_PACKAGE_PLUGINS_DIR;
+		pluginDir = LINPHONE_PACKAGE_PLUGINS_DIR;
 #else
-	pluginDir = "";
+		pluginDir = "";
 #endif
 #endif
+	}
+
 	if (!pluginDir.empty()) {
 		lInfo() << "Loading linphone core plugins from " << pluginDir;
 		loadPlugins(pluginDir);

@@ -24,6 +24,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(exampleplugin VERSION 1.1.1 LANGUAGES C CXX)
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/liblinphone/plugins")
+
 set(PACKAGE "${PROJECT_NAME}")
 set(PACKAGE_NAME "${PROJECT_NAME}")
 set(PACKAGE_VERSION "${PROJECT_VERSION}")

@@ -18,12 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <exception>
+#include <string>
+
+#include <bctoolbox/utils.hh>
+#include <belr/grammarbuilder.h>
+
 #ifdef HAVE_SOCI
 #include <soci/soci.h>
 #endif
+
 #include "liblinphone_tester.h"
 #include "logger/logger.h"
-#include <exception>
 
 /* */
 #ifndef _MSC_VER
@@ -70,3 +76,11 @@ uint64_t lime_get_userUpdateTs(const char *limedb) {
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
+
+bool_t liblinphone_tester_is_executable_installed(const char *executable, const char *resource) {
+	return bctoolbox::Utils::isExecutableInstalled(std::string(executable), std::string(resource));
+}
+
+void liblinphone_tester_add_grammar_loader_path(const char *path) {
+	belr::GrammarLoader::get().addPath(std::string(path));
+}

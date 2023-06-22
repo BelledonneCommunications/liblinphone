@@ -152,6 +152,9 @@ public:
 	const std::string &getMspluginsDir() const;
 	void setMspluginsDir(const std::string &path);
 
+	const std::string &getLiblinphonePluginsDir() const;
+	void setLiblinphonePluginsDir(const std::string &path);
+
 	LinphoneErrorInfo *createErrorInfo() const;
 	LinphoneRange *createRange() const;
 	LinphoneTransports *createTransports() const;
@@ -248,6 +251,7 @@ private:
 	std::string mRingResourcesDir;
 	std::string mImageResourcesDir;
 	std::string mMspluginsDir;
+	std::string mLiblinphonePluginsDir;
 	std::string mConfigDir;
 	std::string mDataDir;
 	std::string mDownloadDir;

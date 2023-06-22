@@ -1013,6 +1013,9 @@ void liblinphone_tester_simulate_mire_defunct(
 bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *name);
 bctbx_list_t *liblinphone_tester_remove_v6_addr(bctbx_list_t *l);
 
+bool_t liblinphone_tester_is_executable_installed(const char *executable, const char *resource);
+void liblinphone_tester_add_grammar_loader_path(const char *path);
+
 #ifdef __cplusplus
 };
 #endif

@@ -480,6 +480,14 @@ void Factory::setMspluginsDir(const std::string &path) {
 	mMspluginsDir = path;
 }
 
+const std::string &Factory::getLiblinphonePluginsDir() const {
+	return mLiblinphonePluginsDir;
+}
+
+void Factory::setLiblinphonePluginsDir(const std::string &path) {
+	mLiblinphonePluginsDir = path;
+}
+
 const std::string &Factory::getConfigDir(void *context) {
 	if (!mConfigDir.empty()) return mConfigDir;
 	mCachedConfigDir = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);

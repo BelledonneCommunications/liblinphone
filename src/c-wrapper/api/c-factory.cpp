@@ -139,13 +139,13 @@ LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *fac
 	                                               algorithm ? algorithm : "");
 }
 
-char * linphone_factory_compute_ha1_for_algorithm(const LinphoneFactory *factory, const char *userid, const char *password, const char *realm, const char *algorithm) {
-	auto ha1 = Factory::toCpp(factory)->computeHa1ForAlgorithm(
-		userid ? userid : "",
-		password ? password : "",
-		realm ? realm : "",
-		algorithm ? algorithm : ""
-	);
+char *linphone_factory_compute_ha1_for_algorithm(const LinphoneFactory *factory,
+                                                 const char *userid,
+                                                 const char *password,
+                                                 const char *realm,
+                                                 const char *algorithm) {
+	auto ha1 = Factory::toCpp(factory)->computeHa1ForAlgorithm(userid ? userid : "", password ? password : "",
+	                                                           realm ? realm : "", algorithm ? algorithm : "");
 	if (ha1.empty()) {
 		return NULL;
 	} else {
@@ -261,6 +261,14 @@ const char *linphone_factory_get_msplugins_dir(LinphoneFactory *factory) {
 
 void linphone_factory_set_msplugins_dir(LinphoneFactory *factory, const char *path) {
 	Factory::toCpp(factory)->setMspluginsDir(path ? path : "");
+}
+
+const char *linphone_factory_get_liblinphone_plugins_dir(LinphoneFactory *factory) {
+	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getLiblinphonePluginsDir());
+}
+
+void linphone_factory_set_liblinphone_plugins_dir(LinphoneFactory *factory, const char *path) {
+	Factory::toCpp(factory)->setLiblinphonePluginsDir(path ? path : "");
 }
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {

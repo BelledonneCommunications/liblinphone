@@ -120,6 +120,21 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 	liblinphone_tester_init(NULL);
 	linphone_core_set_log_level(ORTP_ERROR);
 
+#ifdef HAVE_CONFIG_H
+	// If the tester is not installed we configure it, so it can be launched without installing
+	if (!liblinphone_tester_is_executable_installed(argv[0], "rcfiles/marie_rc")) {
+		bc_tester_set_resource_dir_prefix(LIBLINPHONE_LOCAL_RESOURCE_LOCATION);
+		printf("Resource dir set to %s\n", LIBLINPHONE_LOCAL_RESOURCE_LOCATION);
+
+		liblinphone_tester_add_grammar_loader_path(VCARD_LOCAL_GRAMMAR_LOCATION);
+		liblinphone_tester_add_grammar_loader_path(SDP_LOCAL_GRAMMAR_LOCATION);
+		liblinphone_tester_add_grammar_loader_path(LIBLINPHONE_LOCAL_GRAMMARS_LOCATION);
+
+		linphone_factory_set_msplugins_dir(linphone_factory_get(), MEDIASTREAMER2_LOCAL_PLUGINS_LOCATION);
+		linphone_factory_set_liblinphone_plugins_dir(linphone_factory_get(), LIBLINPHONE_LOCAL_PLUGINS_LOCATION);
+	}
+#endif
+
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--domain") == 0) {
 			CHECK_ARG("--domain", ++i, argc);

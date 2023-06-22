@@ -253,8 +253,9 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const Linp
  * @param realm the real to use. @notnil
  * @param algorithm the algorithm to use (MD5 or SHA-256). @notnil
  * @return the generated hash if it succeeded, NULL otherwise. @maybenil @tobefreed
-*/
-LINPHONE_PUBLIC char * linphone_factory_compute_ha1_for_algorithm(const LinphoneFactory *factory, const char *userid, const char *password, const char *realm, const char *algorithm);
+ */
+LINPHONE_PUBLIC char *linphone_factory_compute_ha1_for_algorithm(
+    const LinphoneFactory *factory, const char *userid, const char *password, const char *realm, const char *algorithm);
 
 /**
  * Create a #LinphoneCallCbs object that holds callbacks for events happening on a call.
@@ -427,6 +428,21 @@ LINPHONE_PUBLIC const char *linphone_factory_get_msplugins_dir(LinphoneFactory *
  * @param path The path to the directory where the mediastreamer2 plugins are located @maybenil
  */
 LINPHONE_PUBLIC void linphone_factory_set_msplugins_dir(LinphoneFactory *factory, const char *path);
+
+/**
+ * Get the directory where the liblinphone plugins are located.
+ * @param factory #LinphoneFactory object @notnil
+ * @return The path to the directory where the liblinphone plugins are located, or NULL if it has not been set.
+ * @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_factory_get_liblinphone_plugins_dir(LinphoneFactory *factory);
+
+/**
+ * Set the directory where the liblinphone plugins are located.
+ * @param factory #LinphoneFactory object @notnil
+ * @param path The path to the directory where the liblinphone plugins are located @maybenil
+ */
+LINPHONE_PUBLIC void linphone_factory_set_liblinphone_plugins_dir(LinphoneFactory *factory, const char *path);
 
 /**
  * Get the config path
