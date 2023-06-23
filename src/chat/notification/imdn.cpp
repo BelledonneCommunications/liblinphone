@@ -374,6 +374,11 @@ LinphoneProxyConfig *Imdn::getRelatedProxyConfig() {
 }
 
 void Imdn::send() {
+	if (deliveredMessages.empty() && displayedMessages.empty() && nonDeliveredMessages.empty()) {
+		/* nothing to do */
+		return;
+	}
+
 	try {
 		if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
 			LinphoneProxyConfig *cfg = getRelatedProxyConfig();

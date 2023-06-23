@@ -30,6 +30,11 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceId::ConferenceId() {
 }
 
+ConferenceId::ConferenceId(Address &&peerAddress, Address &&localAddress) {
+	this->peerAddress = Address::create(std::move(peerAddress));
+	this->localAddress = Address::create(std::move(localAddress));
+}
+
 ConferenceId::ConferenceId(const std::shared_ptr<Address> &peerAddress,
                            const std::shared_ptr<const Address> &localAddress) {
 	this->peerAddress = (peerAddress) ? Address::create(peerAddress->getUri()) : nullptr;

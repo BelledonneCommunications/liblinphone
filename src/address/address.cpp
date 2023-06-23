@@ -20,6 +20,7 @@
 
 #include <bctoolbox/defs.h>
 
+#include "address-parser.h"
 #include "belle-sip/sip-uri.h"
 
 #include "address.h"
@@ -34,30 +35,33 @@ LINPHONE_BEGIN_NAMESPACE
 
 std::unordered_map<std::string, std::unique_ptr<SalAddress, Address::SalAddressDeleter>> Address::sAddressCache;
 
-SalAddress *Address::getSalAddressFromCache(const string &uri,
-                                            std::function<SalAddress *(const std::string &)> alternateParserFunction) {
-	auto &ptr = sAddressCache[uri];
+SalAddress *Address::getSalAddressFromCache(const string &address, bool assumeGrUri) {
+	auto &ptr = sAddressCache[address];
 	if (ptr) return sal_address_clone(ptr.get());
 
-	// lInfo() << "Creating SalAddress for " << uri;
-	SalAddress *address = nullptr;
-	if (alternateParserFunction) {
-		address = alternateParserFunction(uri);
-	} else address = sal_address_new(L_STRING_TO_C(uri));
-	if (address) {
-		removeFromLeakDetector(address);
-		ptr = (unique_ptr<SalAddress, SalAddressDeleter>(address, SalAddressDeleter()));
-		return sal_address_clone(address);
+	// lInfo() << "Creating SalAddress for " << address;
+	/* To optimize, use the fast uri parser from AddressParser when we can assume that it is a simple URI with
+	 * gr param.
+	 */
+	SalAddress *parsedAddress = nullptr;
+	if (assumeGrUri) {
+		parsedAddress = AddressParser::get().parseAddress(address);
+	}
+	if (!parsedAddress) parsedAddress = sal_address_new(L_STRING_TO_C(address));
+	if (parsedAddress) {
+		removeFromLeakDetector(parsedAddress);
+		ptr = (unique_ptr<SalAddress, SalAddressDeleter>(parsedAddress, SalAddressDeleter()));
+		return sal_address_clone(parsedAddress);
 	}
 	return nullptr;
 }
 
 // -----------------------------------------------------------------------------
 
-Address::Address(const string &address) {
+Address::Address(const string &address, bool assumeGrUri) {
 	if (address.empty()) {
 		mImpl = sal_address_new_empty();
-	} else if (!(mImpl = getSalAddressFromCache(address, nullptr))) {
+	} else if (!(mImpl = getSalAddressFromCache(address, assumeGrUri))) {
 		lWarning() << "Cannot create Address, bad uri [" << address << "]";
 	}
 }
@@ -76,7 +80,7 @@ Address::Address() {
 	mImpl = sal_address_new_empty();
 }
 
-Address::Address(Address &&other) {
+Address::Address(Address &&other) : bellesip::HybridObject<LinphoneAddress, Address>(std::move(other)) {
 	mImpl = other.mImpl;
 	other.mImpl = nullptr;
 }
@@ -348,8 +352,11 @@ std::string Address::asStringUriOnly() const {
 }
 
 bool Address::weakEqual(const Address &address) const {
-	return getUsername() == address.getUsername() && getDomain() == address.getDomain() &&
-	       getPort() == address.getPort();
+	return !!sal_address_weak_equals(mImpl, address.mImpl);
+}
+
+bool Address::uriEqual(const Address &other) const {
+	return !!sal_address_uri_equals(mImpl, other.mImpl);
 }
 
 const char *Address::getHeaderValueCstr(const string &headerName) const {

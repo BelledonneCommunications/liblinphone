@@ -334,9 +334,38 @@ bool_t sal_address_is_ipv6(const SalAddress *addr) {
 	return FALSE;
 }
 
+static inline int c_string_equal(const char *a, const char *b) {
+	if (a && b && strcmp(a, b) == 0) return TRUE;
+	if (a == NULL && b == NULL) return TRUE;
+	return FALSE;
+}
+
+int sal_address_weak_equals(const SalAddress *addr_a, const SalAddress *addr_b) {
+	belle_sip_uri_t *uri_a = belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr_a));
+	belle_sip_uri_t *uri_b = belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr_b));
+
+	const char *user_a = belle_sip_uri_get_user(uri_a);
+	const char *user_b = belle_sip_uri_get_user(uri_b);
+
+	if (c_string_equal(user_a, user_b)) {
+		const char *host_a = belle_sip_uri_get_host(uri_a);
+		const char *host_b = belle_sip_uri_get_host(uri_b);
+		if (c_string_equal(host_a, host_b)) {
+			return belle_sip_uri_get_port(uri_a) == belle_sip_uri_get_port(uri_b);
+		}
+	}
+	return FALSE;
+}
+
 int sal_address_equals(const SalAddress *addr_a, const SalAddress *addr_b) {
 	belle_sip_header_address_t *header_addr_a = BELLE_SIP_HEADER_ADDRESS(addr_a);
 	belle_sip_header_address_t *header_addr_b = BELLE_SIP_HEADER_ADDRESS(addr_b);
 
 	return belle_sip_header_address_equals(header_addr_a, header_addr_b);
+}
+
+int sal_address_uri_equals(const SalAddress *addr_a, const SalAddress *addr_b) {
+	belle_sip_uri_t *uri_a = belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr_a));
+	belle_sip_uri_t *uri_b = belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr_b));
+	return belle_sip_uri_equals(uri_a, uri_b);
 }

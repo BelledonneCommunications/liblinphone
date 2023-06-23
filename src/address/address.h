@@ -39,7 +39,7 @@ LINPHONE_BEGIN_NAMESPACE
  */
 class LINPHONE_PUBLIC Address : public bellesip::HybridObject<LinphoneAddress, Address> {
 public:
-	explicit Address(const std::string &address);
+	explicit Address(const std::string &address, bool assumeGrUri = false);
 	Address();
 	Address(Address &&other);
 	Address(const Address &other);
@@ -135,6 +135,7 @@ public:
 
 	bool clean();
 	bool weakEqual(const Address &other) const;
+	bool uriEqual(const Address &other) const;
 
 	inline const SalAddress *getImpl() const {
 		return mImpl;
@@ -144,8 +145,7 @@ public:
 	static void clearSipAddressesCache();
 
 protected:
-	static SalAddress *getSalAddressFromCache(const std::string &uri,
-	                                          std::function<SalAddress *(const std::string &)> alternateParserFunction);
+	static SalAddress *getSalAddressFromCache(const std::string &address, bool assumeGrUri);
 
 private:
 	SalAddress *mImpl = nullptr;

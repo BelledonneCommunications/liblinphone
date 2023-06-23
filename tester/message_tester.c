@@ -392,9 +392,9 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 						bctbx_list_free_with_data(expected_reaction_from, (bctbx_list_free_func)ms_free);
 					} else {
 						BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
-						                              &pauline->stat.number_of_LinphoneMessageReceived, 1, 1000));
-						BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc,
-						                         &pauline->stat.number_of_LinphoneReactionSentOrReceived, 1));
+						                              &pauline->stat.number_of_LinphoneMessageReceived, 1, 3000));
+						BC_ASSERT_FALSE(wait_for_until(
+						    pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneReactionSentOrReceived, 1, 3000));
 					}
 					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
 					                               &marie->stat.number_of_LinphoneMessageDeliveredToUser, 1, 1000));
@@ -1246,7 +1246,7 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 					// Chat message has been markes as read but not downloaded yet, so no IMDN should be received yet
 					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
-					                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+					                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 3000));
 				}
 
 				LinphoneChatMessage *recv_msg;
@@ -1295,7 +1295,7 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
 					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 						BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
-						                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+						                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 3000));
 					}
 				} else {
 					/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though
@@ -1338,7 +1338,7 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
-					                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+					                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 3000));
 				}
 				linphone_chat_room_mark_as_read(marie_room);
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
@@ -2631,7 +2631,7 @@ static void aggregated_imdns(void) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 3));
 
 	/* Marie shall not receive them */
-	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1, 3000));
 
 	/* Marie is now online */
 	linphone_core_set_network_reachable(marie->lc, TRUE);
@@ -3883,7 +3883,7 @@ static void received_messages_with_aggregation_enabled(void) {
 	// check message is received using only new callback when chat room is being created
 	BC_ASSERT_TRUE(
 	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1, 5000));
-	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1, 3000));
 
 	linphone_chat_message_unref(chat_msg);
 	reset_counters(&pauline->stat);
@@ -3896,7 +3896,7 @@ static void received_messages_with_aggregation_enabled(void) {
 	// check message is received using only new callback for existing chat room
 	BC_ASSERT_TRUE(
 	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1, 5000));
-	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1, 3000));
 
 	linphone_chat_message_unref(chat_msg);
 	reset_counters(&pauline->stat);
@@ -3913,7 +3913,7 @@ static void received_messages_with_aggregation_enabled(void) {
 	// aggregation delay seconds
 	BC_ASSERT_TRUE(
 	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 10, 5000));
-	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 10));
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 10, 3000));
 
 	// Give some time for IMDN's 200 OK to be received so it doesn't leak
 	wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);

@@ -86,8 +86,10 @@ public:
 	                     const std::shared_ptr<Address> &address,
 	                     std::shared_ptr<CallSession> callSession);
 	explicit Participant(Conference *conference, const std::shared_ptr<Address> &address);
-	Participant();
-	virtual ~Participant();
+	explicit Participant(
+	    std::shared_ptr<Address> address); // acquires the address, that must be a simple URI without 'gr' parameter.
+	Participant() = default;
+	virtual ~Participant() = default;
 	// non clonable object
 	Participant *clone() const override {
 		return nullptr;

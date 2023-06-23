@@ -201,6 +201,10 @@ void sal_address_set_header(SalAddress *addr, const char *header_name, const cha
 const char *sal_address_get_header(const SalAddress *addr, const char *name);
 
 int sal_address_equals(const SalAddress *addr_a, const SalAddress *addr_b);
+/* comparison of user, host, port only */
+int sal_address_weak_equals(const SalAddress *addr_a, const SalAddress *addr_b);
+/* comparison of uri part only */
+int sal_address_uri_equals(const SalAddress *addr_a, const SalAddress *addr_b);
 
 void sal_address_clean_params(const SalAddress *addr);
 

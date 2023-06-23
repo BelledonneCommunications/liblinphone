@@ -985,7 +985,7 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 	LinphoneCall *caller_call, *callee_call;
 	LinphoneCallParams *params;
 	VideoStream *vstream;
-	char *record_file = bc_tester_file("avrecord.mkv");
+	char *record_file = bc_tester_file((generateRandomFilename("avrecord") + ".mkv").c_str());
 
 	policy.automatically_initiate = FALSE;
 	policy.automatically_accept = FALSE;

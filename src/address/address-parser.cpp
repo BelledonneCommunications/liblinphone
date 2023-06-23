@@ -71,8 +71,9 @@ AddressParser::AddressParser() {
 SalAddress *AddressParser::parseAddress(const string &input) {
 	size_t parsedSize;
 	SalAddress *identityAddress = (SalAddress *)mParser->parseInput("address", input, &parsedSize);
-	if (!identityAddress) {
+	if (!identityAddress || parsedSize < input.size()) {
 		lDebug() << "Unable to parse identity address from " << input;
+		if (identityAddress) sal_address_unref(identityAddress);
 		return nullptr;
 	}
 	return identityAddress;

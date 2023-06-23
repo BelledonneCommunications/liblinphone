@@ -4585,12 +4585,13 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 
 		list<shared_ptr<AbstractChatRoom>> chatRooms;
 		shared_ptr<Core> core = getCore();
+		bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 
 		soci::session *session = d->dbSession.getBackendSession();
 
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
-			ConferenceId conferenceId(Address::create(row.get<string>(1)), Address::create(row.get<string>(2)));
+			ConferenceId conferenceId(Address(row.get<string>(1), true), Address(row.get<string>(2), true));
 
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
@@ -4627,7 +4628,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
 					shared_ptr<Participant> participant =
-					    Participant::create(nullptr, Address::create(row.get<string>(1)));
+					    Participant::create(Address::create(row.get<string>(1), true));
 					participant->setAdmin(!!row.get<int>(2));
 
 					// Fetch devices.
@@ -4640,8 +4641,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(participantId));
 						for (const auto &row : rows) {
-							shared_ptr<ParticipantDevice> device =
-							    participant->addDevice(Address::create(row.get<string>(0)), row.get<string>(2, ""));
+							shared_ptr<ParticipantDevice> device = participant->addDevice(
+							    Address::create(row.get<string>(0), true), row.get<string>(2, ""));
 							device->setState(ParticipantDevice::State(static_cast<unsigned int>(row.get<int>(1, 0))));
 						}
 					}
@@ -4654,7 +4655,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				}
 
 				Conference *conference = nullptr;
-				if (!linphone_core_conference_server_enabled(core->getCCore())) {
+				if (!serverMode) {
 					bool hasBeenLeft = !!row.get<int>(8, 0);
 					if (!me) {
 						lError() << "Unable to find me in: (peer=" +
@@ -4682,7 +4683,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 						for (const auto &row : rows) {
 							ConferenceId previousId =
-							    ConferenceId(Address::create(row.get<string>(0)), conferenceId.getLocalAddress());
+							    ConferenceId(Address::create(row.get<string>(0), true), conferenceId.getLocalAddress());
 							if (previousId != conferenceId) {
 								lInfo() << "Keeping around previous chat room ID [" << previousId
 								        << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";

@@ -44,17 +44,15 @@ Participant::Participant(Conference *conference,
 	session = callSession;
 }
 
-Participant::Participant() {
+Participant::Participant(std::shared_ptr<Address> address) : addr(address) {
+	L_ASSERT(address->getDisplayNameCstr() == nullptr);
+	L_ASSERT(!address->hasUriParam("gr"));
 }
 
 void Participant::configure(Conference *conference, const std::shared_ptr<Address> &address) {
 	mConference = conference;
 	auto identityAddress = Address::create(address->getUriWithoutGruu());
 	addr = identityAddress;
-}
-
-Participant::~Participant() {
-	clearDevices();
 }
 
 // =============================================================================
@@ -100,12 +98,18 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<
 std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<Address> &gruu, const string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(gruu, false);
 	if (device) return device;
+	/* addDevice() is intensively called during Core startup, when loading chatrooms from database.
+	 * we cannot afford to call Address:toString() for nothing when logs are disabled */
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
-		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
-		        << " to participant " << getAddress()->toString();
+		if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_MESSAGE)) {
+			lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
+			        << " to participant " << getAddress()->toString();
+		}
 	} else {
-		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
-		         << " to participant " << getAddress()->toString();
+		if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_DEBUG)) {
+			lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
+			         << " to participant " << getAddress()->toString();
+		}
 	}
 	device = ParticipantDevice::create(getSharedFromThis(), gruu, name);
 	devices.push_back(device);
@@ -148,9 +152,8 @@ shared_ptr<ParticipantDevice> Participant::findDeviceBySsrc(uint32_t ssrc, Linph
 
 shared_ptr<ParticipantDevice> Participant::findDevice(const std::shared_ptr<Address> &gruu,
                                                       const bool logFailure) const {
-	const auto &it = std::find_if(devices.cbegin(), devices.cend(), [&gruu](const auto &device) {
-		return (device->getAddress()->getUri() == gruu->getUri());
-	});
+	const auto &it = std::find_if(devices.cbegin(), devices.cend(),
+	                              [&gruu](const auto &device) { return device->getAddress()->uriEqual(*gruu); });
 
 	if (it != devices.cend()) {
 		return *it;

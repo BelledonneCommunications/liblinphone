@@ -647,28 +647,26 @@ bool RemoteConferenceEventHandler::alreadySubscribed() const {
 void RemoteConferenceEventHandler::subscribe() {
 	if (!alreadySubscribed()) return; // Already subscribed or application did not request subscription
 
-	const string &localAddress = getConferenceId().getLocalAddress()->toString();
-	LinphoneAddress *lAddr = linphone_address_new(localAddress.c_str());
+	const auto localAddress = getConferenceId().getLocalAddress();
 
 	LinphoneCore *lc = conf->getCore()->getCCore();
-	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity(lc, lAddr);
+	LinphoneAccount *acc = linphone_core_lookup_account_by_identity(lc, localAddress->toC());
 
-	if (!cfg || (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk)) {
-		linphone_address_unref(lAddr);
+	if (!acc || (linphone_account_get_state(acc) != LinphoneRegistrationOk)) {
 		return;
 	}
 
 	const auto &peerAddress = getConferenceId().getPeerAddress();
 	ev = dynamic_pointer_cast<EventSubscribe>(
-	    (new EventSubscribe(conf->getCore(), peerAddress, cfg, "conference", 600))->toSharedPtr());
-	ev->getOp()->setFrom(localAddress);
+	    (new EventSubscribe(conf->getCore(), peerAddress, Account::toCpp(acc)->getConfig(), "conference", 600))
+	        ->toSharedPtr());
+	ev->getOp()->setFromAddress(localAddress->getImpl());
 	setInitialSubscriptionUnderWayFlag(true);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	ev->addCustomHeader("Last-Notify-Version", lastNotifyStr.c_str());
-	linphone_address_unref(lAddr);
 	ev->setInternal(true);
 	ev->setProperty("event-handler-private", this);
-	lInfo() << localAddress << " is subscribing to chat room or conference: " << *peerAddress
+	lInfo() << *localAddress << " is subscribing to chat room or conference: " << *peerAddress
 	        << " with last notify: " << lastNotifyStr;
 	ev->send(nullptr);
 }
