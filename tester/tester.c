@@ -2774,7 +2774,7 @@ void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_pr
 	linphone_core_manager_start(mgr, check_for_proxies);
 }
 
-void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
+void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb, bool_t unlinkRc) {
 	if (mgr->phone_alias) {
 		ms_free(mgr->phone_alias);
 	}
@@ -2806,6 +2806,9 @@ void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
 	if (mgr->cbs) linphone_core_cbs_unref(mgr->cbs);
 
 	if (mgr->rc_local) {
+		if (unlinkRc == TRUE) {
+			unlink(mgr->rc_local);
+		}
 		bctbx_free(mgr->rc_local);
 		mgr->rc_local = NULL;
 	}
@@ -2815,7 +2818,7 @@ void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
 	manager_count--;
 }
 void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
-	linphone_core_manager_uninit2(mgr, TRUE);
+	linphone_core_manager_uninit2(mgr, TRUE, TRUE);
 }
 
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {

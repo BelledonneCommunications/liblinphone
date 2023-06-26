@@ -69,7 +69,10 @@ static void simple_account_creation(void) {
 	    "yes");
 
 	char *local_rc = ms_strdup(marie->rc_local);
-	linphone_core_manager_destroy(marie);
+
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_uninit2(marie, TRUE, FALSE); // uninit but do not unlink the rc file
+	ms_free(marie);
 
 	// Verify that the custom parameters are written to the rc file
 	bctbx_vfs_file_t *cfg_file = bctbx_file_open(bctbx_vfs_get_default(), local_rc, "r");
@@ -80,6 +83,8 @@ static void simple_account_creation(void) {
 	BC_ASSERT_PTR_NOT_NULL(strstr(buf, "x-custom-property:default"));
 	bctbx_file_close(cfg_file);
 	bctbx_free(buf);
+
+	unlink(local_rc);
 
 	ms_free(local_rc);
 }

@@ -121,7 +121,7 @@ static void register_user(const uint16_t encryptionModule, const char *random_id
 	}
 
 	linphone_core_manager_stop(marie);
-	linphone_core_manager_uninit2(marie, FALSE); // uinit but do not unlink the db files
+	linphone_core_manager_uninit2(marie, FALSE, FALSE); // uinit but do not unlink the db files
 	ms_free(marie);
 
 	// check the linphone dbs and local_rc are encrypted or not
@@ -276,10 +276,10 @@ static void zrtp_call(const uint16_t encryptionModule,
 
 	// cleaning
 	linphone_core_manager_stop(marie);
-	linphone_core_manager_uninit2(marie, FALSE); // uinit but do not unlink the db files
+	linphone_core_manager_uninit2(marie, FALSE, FALSE); // uinit but do not unlink the db files
 	ms_free(marie);
 	linphone_core_manager_stop(pauline);
-	linphone_core_manager_uninit2(pauline, FALSE); // uinit but do not unlink the db files
+	linphone_core_manager_uninit2(pauline, FALSE, FALSE); // uinit but do not unlink the db files
 	ms_free(pauline);
 
 	// check the linphone dbs and local_rc are encrypted or not
@@ -553,9 +553,9 @@ end:
 		bctbx_free(plainFilePath3);
 	}
 
-	linphone_core_manager_uninit2(marie, FALSE); // uinit but do not unlink the db files
+	linphone_core_manager_uninit2(marie, FALSE, FALSE); // uinit but do not unlink the db files
 	ms_free(marie);
-	linphone_core_manager_uninit2(pauline, FALSE); // uinit but do not unlink the db files
+	linphone_core_manager_uninit2(pauline, FALSE, FALSE); // uinit but do not unlink the db files
 	ms_free(pauline);
 
 	// check the linphone dbs and local_rc are encrypted or not
