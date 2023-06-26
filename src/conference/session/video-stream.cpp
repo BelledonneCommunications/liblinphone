@@ -183,12 +183,9 @@ void MS2VideoStream::csrcChangedCb(uint32_t new_csrc) {
 
 	if (listener) {
 		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
-
 		if (conference) {
-			const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-			    MediaConference::Conference::toCpp(conference)->getSharedFromThis());
-
-			if (cppConference) cppConference->notifyDisplayedSpeaker(new_csrc);
+			const auto remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
+			if (remoteConference) remoteConference->notifyDisplayedSpeaker(new_csrc);
 		}
 	}
 }
@@ -305,7 +302,6 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 
 	const auto conference =
 	    (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
-
 	if (conference) {
 		video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, this);
 	} else {

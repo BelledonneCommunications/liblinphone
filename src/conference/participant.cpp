@@ -226,12 +226,15 @@ const list<shared_ptr<ParticipantDevice>> &Participant::getDevices() const {
 
 void Participant::removeDevice(const shared_ptr<const CallSession> &session) {
 	devices.erase(std::remove_if(devices.begin(), devices.end(),
-	                             [&session](auto &device) { return (device->getSession() == session); }));
+	                             [&session](const auto &device) { return (device->getSession() == session); }),
+	              devices.end());
 }
 
 void Participant::removeDevice(const std::shared_ptr<Address> &gruu) {
-	devices.erase(std::remove_if(devices.begin(), devices.end(),
-	                             [&gruu](auto &device) { return (device->getAddress()->getUri() == gruu->getUri()); }));
+	devices.erase(
+	    std::remove_if(devices.begin(), devices.end(),
+	                   [&gruu](const auto &device) { return (device->getAddress()->getUri() == gruu->getUri()); }),
+	    devices.end());
 }
 
 // -----------------------------------------------------------------------------

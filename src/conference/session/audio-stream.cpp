@@ -88,10 +88,8 @@ void MS2AudioStream::audioStreamActiveSpeakerCb(uint32_t ssrc) {
 		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
 
 		if (conference) {
-			const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-			    MediaConference::Conference::toCpp(conference)->getSharedFromThis());
-
-			if (cppConference) cppConference->notifyLouderSpeaker(ssrc);
+			const auto remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
+			if (remoteConference) remoteConference->notifyLouderSpeaker(ssrc);
 		}
 	}
 }
@@ -556,9 +554,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
 
 		if (getMediaSessionPrivate().getCallSessionListener()) {
-			LinphoneConference *conference =
-			    getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
-			        getMediaSession().getSharedFromThis());
+			auto conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
+			    getMediaSession().getSharedFromThis());
 			if (conference) {
 				audio_stream_set_active_speaker_callback(mStream, &MS2AudioStream::sAudioStreamActiveSpeakerCb, this);
 			}
@@ -584,11 +581,10 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 	std::shared_ptr<ParticipantDevice> device = nullptr;
 	if (getMediaSessionPrivate().getCallSessionListener()) {
-		LinphoneConference *conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
+		auto conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
 		    getMediaSession().getSharedFromThis());
 		if (conference) {
-			device = MediaConference::Conference::toCpp(conference)
-			             ->findParticipantDevice(getMediaSession().getSharedFromThis());
+			device = conference->findParticipantDevice(getMediaSession().getSharedFromThis());
 		}
 	}
 
@@ -596,7 +592,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
 		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
-	//	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(
 	    getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
 

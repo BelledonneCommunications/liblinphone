@@ -31,7 +31,6 @@
 
 #include "object/object-p.h"
 
-//#include "call/audio-device/audio-device.h"
 #include "conference/session/call-session-listener.h"
 #include "utils/background-task.h"
 
@@ -302,7 +301,8 @@ public:
 	void onVideoDisplayErrorOccurred(const std::shared_ptr<CallSession> &session, int error_code) override;
 	bool areSoundResourcesAvailable(const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone(const std::shared_ptr<CallSession> &session) override;
-	LinphoneConference *getCallSessionConference(const std::shared_ptr<CallSession> &session) const override;
+	std::shared_ptr<MediaConference::Conference>
+	getCallSessionConference(const std::shared_ptr<CallSession> &session) const override;
 	void onRealTimeTextCharacterReceived(const std::shared_ptr<CallSession> &session,
 	                                     RealtimeTextReceivedCharacter *character) override;
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
@@ -312,9 +312,9 @@ public:
 
 	void confirmGoClear() const override;
 
-	LinphoneConference *getConference() const;
+	std::shared_ptr<MediaConference::Conference> getConference() const;
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
-	void setConference(LinphoneConference *ref);
+	void setConference(std::shared_ptr<MediaConference::Conference> ref);
 	MSAudioEndpoint *getEndpoint() const;
 	void setEndpoint(MSAudioEndpoint *endpoint);
 	bool canSoundResourcesBeFreed() const;
@@ -335,7 +335,7 @@ private:
 	bool mPlayingRingbackTone = false;
 
 	BackgroundTask mBgTask;
-	LinphoneConference *mConfRef = nullptr;
+	std::shared_ptr<MediaConference::Conference> mConfRef;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
 	void cleanupSessionAndUnrefCObjectCall();

@@ -137,7 +137,7 @@ public:
 	                                BCTBX_UNUSED(const char *camera_name)) {
 	}
 	virtual void onVideoDisplayErrorOccurred(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
-	                                BCTBX_UNUSED(int error_code)) {
+	                                         BCTBX_UNUSED(int error_code)) {
 	}
 
 	virtual bool areSoundResourcesAvailable(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
@@ -146,8 +146,7 @@ public:
 	virtual bool isPlayingRingbackTone(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 		return false;
 	}
-
-	virtual LinphoneConference *
+	virtual std::shared_ptr<MediaConference::Conference>
 	getCallSessionConference(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) const {
 		return nullptr;
 	}

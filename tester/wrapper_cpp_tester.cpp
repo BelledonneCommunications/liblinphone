@@ -175,7 +175,7 @@ static void various_api_checks(void) {
 	auto conferenceInfo = linphone::Factory::get()->createConferenceInfo();
 	conferenceInfo->setParticipants(participants);
 	auto testList = conferenceInfo->getParticipants();
-	bctbx_message("Number of participants: %i", (int)testList.size());
+	BC_ASSERT_EQUAL(participants.size(), testList.size(), size_t, "%zu");
 
 	linphone_core_manager_destroy(marie);
 }

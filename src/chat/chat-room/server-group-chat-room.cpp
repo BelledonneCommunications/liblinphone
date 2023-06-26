@@ -550,12 +550,7 @@ void ServerGroupChatRoomPrivate::unSubscribeRegistrationForParticipant(const std
 		return;
 	}
 	registrationSubscriptions.erase(p);
-
-	auto c = std::find_if(q->cachedParticipants.begin(), q->cachedParticipants.end(),
-	                      [&identAddress](const auto &p) { return (identAddress->weakEqual(*p->getAddress())); });
-	if (c != q->cachedParticipants.end()) {
-		q->cachedParticipants.erase(c);
-	}
+	removeCachedParticipant(identAddress);
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	LinphoneAddress *laddr = identAddress->toC();
@@ -598,6 +593,17 @@ bool ServerGroupChatRoomPrivate::initializeParticipants(const shared_ptr<Partici
 		conclude();
 	}
 	return true;
+}
+
+void ServerGroupChatRoomPrivate::removeCachedParticipant(const std::shared_ptr<Address> &address) {
+	L_Q();
+	auto c = std::find_if(q->cachedParticipants.begin(), q->cachedParticipants.end(),
+	                      [&address](const auto &p) { return (address->weakEqual(*p->getAddress())); });
+	if (c == q->cachedParticipants.end()) {
+		lDebug() << "Unable to find participant " << *address << " in the list of cached participants";
+	} else {
+		q->cachedParticipants.erase(c);
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -676,6 +682,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const std::shared_ptr<
 		} else {
 			lInfo() << q << " " << participantAddress->toString() << " has no compatible devices.";
 			unSubscribeRegistrationForParticipant(participantAddress);
+			removeCachedParticipant(participantAddress);
 			return;
 		}
 	} else {

@@ -62,7 +62,7 @@ public:
 	long long resolveId(const soci::row &row, int col) const;
 
 	std::time_t getTime(const soci::row &row, int col) const;
-	static std::pair<std::tm, soci::indicator> getTimeWithSociIndicator(time_t t);
+	std::pair<std::tm, soci::indicator> getTimeWithSociIndicator(time_t t) const;
 
 	unsigned int getUnsignedInt(const soci::row &row, std::size_t col, const unsigned int def = 0) const;
 

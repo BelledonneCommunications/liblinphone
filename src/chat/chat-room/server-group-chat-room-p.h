@@ -159,6 +159,7 @@ private:
 	void removeParticipantDevice(const std::shared_ptr<Participant> &participant,
 	                             const std::shared_ptr<Address> &deviceAddress);
 
+	void removeCachedParticipant(const std::shared_ptr<Address> &address);
 	void onParticipantDeviceLeft(const std::shared_ptr<ParticipantDevice> &device);
 	void onBye(const std::shared_ptr<ParticipantDevice> &participantLeaving);
 	void determineProtocolVersion();

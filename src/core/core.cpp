@@ -324,7 +324,6 @@ void CorePrivate::shutdown() {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const auto &chatRoomPrivate = chatRoom->getPrivate();
-		chatRoom->sendPendingMessages();
 		for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
 			if (chatMessage->getState() == ChatMessage::State::FileTransferInProgress) {
 				// Abort auto download file transfers
@@ -353,6 +352,7 @@ void CorePrivate::uninit() {
 	for (const auto &chatRoom : chatRooms) {
 		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
 		if (cr) {
+			cr->sendPendingMessages();
 			cr->getPrivate()->getImdnHandler()->onLinphoneCoreStop();
 #ifdef HAVE_ADVANCED_IM
 			for (const auto &participant : cr->getParticipants()) {

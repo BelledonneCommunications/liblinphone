@@ -970,7 +970,7 @@ void MediaSessionPrivate::fixCallParams(std::shared_ptr<SalMediaDescription> &rm
 	 * when video is later added to the call. I did the choice of commenting it out.
 	 */
 
-	LinphoneConference *conference = nullptr;
+	std::shared_ptr<MediaConference::Conference> conference = nullptr;
 	if (listener) {
 		conference = listener->getCallSessionConference(q->getSharedFromThis());
 	}
@@ -981,7 +981,6 @@ void MediaSessionPrivate::fixCallParams(std::shared_ptr<SalMediaDescription> &rm
 	 * sal_media_description_has_implicit_avpf(rmd));*/
 	const MediaSessionParams *rcp = q->getRemoteParams();
 	if (rcp) {
-
 		/*
 		 * This is to avoid to re-propose again some streams that have just been declined.
 		 */
@@ -1008,8 +1007,8 @@ void MediaSessionPrivate::fixCallParams(std::shared_ptr<SalMediaDescription> &rm
 			// be enabled or not
 			bool isConferenceVideoCapabilityOn = false;
 			if (conference) {
-				const LinphoneConferenceParams *params = linphone_conference_get_current_params(conference);
-				isConferenceVideoCapabilityOn = !!linphone_conference_params_video_enabled(params);
+				const auto &params = conference->getCurrentParams();
+				isConferenceVideoCapabilityOn = params.videoEnabled();
 				if (rcp->videoEnabled() && !!linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
 					getParams()->enableVideo(isConferenceVideoCapabilityOn);
 				}
@@ -1247,7 +1246,7 @@ void MediaSessionPrivate::runStunTestsIfNeeded() {
 		const auto audioStreamIndex = md->findIdxBestStream(SalAudio);
 		int audioPort = portFromStreamIndex(audioStreamIndex);
 
-		LinphoneConference *conference =
+		std::shared_ptr<MediaConference::Conference> conference =
 		    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 		bool isConferenceLayoutActiveSpeaker = false;
 		if (conference) {
@@ -1372,14 +1371,13 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState(std::shared_ptr<SalMed
 		if (sd.getType() == SalAudio) {
 			getCurrentParams()->setAudioDirection(sd.getDirection());
 		} else if (sd.getType() == SalVideo) {
-			LinphoneConference *conference =
+			std::shared_ptr<MediaConference::Conference> conference =
 			    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 			SalStreamDir streamDir = SalStreamInactive;
 			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			if (conference) {
 				if (isInLocalConference) {
-					const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-					const auto &currentConfParams = cppConference->getCurrentParams();
+					const auto &currentConfParams = conference->getCurrentParams();
 					if (currentConfParams.videoEnabled()) {
 						// At least receive the video streams of other participants if video is disabled in the call
 						// params
@@ -1584,17 +1582,15 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 			const auto &content = newStream.getContent();
 			const bool isInLocalConference = getParams()->getPrivate()->getInConference();
 
-			LinphoneConference *conference =
+			std::shared_ptr<MediaConference::Conference> conference =
 			    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
-			const auto cppConference =
-			    (conference) ? MediaConference::Conference::toCpp(conference)->getSharedFromThis() : nullptr;
 			const auto &participantDevice =
-			    cppConference ? (isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis())
-			                                         : cppConference->getMe()->findDevice(q->getSharedFromThis()))
-			                  : nullptr;
+			    conference ? (isInLocalConference ? conference->findParticipantDevice(q->getSharedFromThis())
+			                                      : conference->getMe()->findDevice(q->getSharedFromThis()))
+			               : nullptr;
 
 			auto dir = SalStreamInactive;
-			if (cppConference && (participantDevice == dev)) {
+			if (conference && (participantDevice == dev)) {
 				dir = (isInLocalConference) ? SalStreamRecvOnly
 				                            : ((getParams()->getPrivate()->getSalVideoDirection() == SalStreamSendRecv)
 				                                   ? SalStreamSendOnly
@@ -1673,7 +1669,7 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 		cfg.replacePayloads(codecs);
 		cfg.rtcp_cname = getMe()->getAddress()->toString();
 
-		LinphoneConference *conference =
+		std::shared_ptr<MediaConference::Conference> conference =
 		    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 		if ((type == SalAudio) && isInConference()) {
 			cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
@@ -1772,13 +1768,13 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
                                                                const std::list<LinphoneMediaEncryption> &encs) {
 	L_Q();
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	LinphoneConference *conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
+	std::shared_ptr<MediaConference::Conference> conference =
+	    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
 	std::list<OrtpPayloadType *> emptyList;
 	emptyList.clear();
 	if (conference) {
-		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto &currentConfParams = cppConference->getCurrentParams();
+		const auto &currentConfParams = conference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
 
 		// Add additional video streams if required
@@ -1794,8 +1790,8 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 				    (isInLocalConference) ? remoteContactAddress : q->getContactAddress();
 
 				const auto &participantDevice = isInLocalConference
-				                                    ? cppConference->findParticipantDevice(q->getSharedFromThis())
-				                                    : cppConference->getMe()->findDevice(q->getSharedFromThis());
+				                                    ? conference->findParticipantDevice(q->getSharedFromThis())
+				                                    : conference->getMe()->findDevice(q->getSharedFromThis());
 				const auto &devLabel = participantDevice->getLabel();
 				const std::string content("thumbnail");
 				const auto &foundStreamIdx = oldMd->findIdxStreamWithContent(content, devLabel);
@@ -1804,7 +1800,7 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 				newStream.setContent(content);
 				fillConferenceParticipantVideoStream(newStream, oldMd, md, participantDevice, pth, encs);
 
-				for (const auto &p : cppConference->getParticipants()) {
+				for (const auto &p : conference->getParticipants()) {
 					for (const auto &dev : p->getDevices()) {
 						const auto &devAddress = dev->getAddress();
 						const auto &devState = dev->getState();
@@ -1827,8 +1823,8 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 					}
 				}
 
-				if (cppConference->isIn() && isInLocalConference) {
-					const auto &me = cppConference->getMe();
+				if (conference->isIn() && isInLocalConference) {
+					const auto &me = conference->getMe();
 					for (const auto &dev : me->getDevices()) {
 						const auto &devLabel = dev->getLabel();
 						std::vector<std::pair<std::string, std::string>> attributes;
@@ -1864,10 +1860,10 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 
 							std::shared_ptr<ParticipantDevice> dev = nullptr;
 							if (!participantsAttrValue.empty()) {
-								dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
-								if (!dev && cppConference->getMe()) {
+								dev = conference->findParticipantDeviceByLabel(participantsAttrValue);
+								if (!dev && conference->getMe()) {
 									// It might be me
-									dev = cppConference->getMe()->findDevice(participantsAttrValue, false);
+									dev = conference->getMe()->findDevice(participantsAttrValue, false);
 								}
 							}
 
@@ -2010,7 +2006,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	descParams.enableCapabilityNegotiationSupport(supportsCapabilityNegotiationAttributes);
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(descParams);
 	std::shared_ptr<SalMediaDescription> &oldMd = localDesc;
-	LinphoneConference *conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
+	std::shared_ptr<MediaConference::Conference> conference =
+	    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	const std::shared_ptr<SalMediaDescription> &refMd =
 	    (conference) ? ((isInLocalConference) ? oldMd : op->getRemoteMediaDescription())
 	                 : ((localIsOfferer) ? oldMd : op->getRemoteMediaDescription());
@@ -2106,12 +2103,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	auto deviceState = ParticipantDevice::State::ScheduledForJoining;
 	std::shared_ptr<ParticipantDevice> participantDevice = nullptr;
 	if (conference) {
-		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto &currentConfParams = cppConference->getCurrentParams();
-		const auto &conferenceState = cppConference->getState();
+		const auto &currentConfParams = conference->getCurrentParams();
+		const auto &conferenceState = conference->getState();
 
-		participantDevice = isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis())
-		                                        : cppConference->getMe()->findDevice(q->getSharedFromThis());
+		participantDevice = isInLocalConference ? conference->findParticipantDevice(q->getSharedFromThis())
+		                                        : conference->getMe()->findDevice(q->getSharedFromThis());
 		if (participantDevice) {
 			deviceState = participantDevice->getState();
 		}
@@ -2964,7 +2960,7 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 	L_Q();
 
 	string authToken = getStreamsGroup().getAuthenticationToken();
-	LinphoneConference *conference = nullptr;
+	std::shared_ptr<MediaConference::Conference> conference = nullptr;
 	if (listener) {
 		conference = listener->getCallSessionConference(q->getSharedFromThis());
 	}
@@ -3097,15 +3093,15 @@ LinphoneStatus MediaSessionPrivate::pause() {
 	}
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	auto conference = listener->getCallSessionConference(q->getSharedFromThis());
 	if (isInLocalConference) {
 		const auto contactAddress = q->getContactAddress();
+
 		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc",
 		                               "conference_event_log_enabled", TRUE) &&
 		    contactAddress && contactAddress->hasParam("isfocus")) {
 			if (listener) {
-				auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
-				if (callConference) {
-					auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
+				if (conference) {
 					if (conference->findParticipantDevice(q->getSharedFromThis())) {
 						lWarning() << "Unable to pause media session (local address "
 						           << q->getLocalAddress()->toString() << " remote address "
@@ -3126,12 +3122,10 @@ LinphoneStatus MediaSessionPrivate::pause() {
 		q->updateContactAddressInOp();
 
 		if (listener) {
-			auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
-			if (callConference) {
-				auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
+			if (conference) {
 				lInfo() << "Removing participant with session " << q << " (local addres "
 				        << q->getLocalAddress()->toString() << " remote address " << q->getRemoteAddress()->toString()
-				        << ")  from conference " << conference->getConferenceAddress();
+				        << ")  from conference " << *conference->getConferenceAddress();
 				// Do not preserve conference after removing the participant
 				conference->removeParticipant(q->getSharedFromThis(), false);
 				return 0;
@@ -3140,11 +3134,6 @@ LinphoneStatus MediaSessionPrivate::pause() {
 	}
 
 	string subject;
-
-	LinphoneConference *conference = nullptr;
-	if (listener) {
-		conference = listener->getCallSessionConference(q->getSharedFromThis());
-	}
 	if (!conference) {
 		if (resultDesc->hasDir(SalStreamSendRecv)) {
 			subject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::CallOnHold);
@@ -3233,12 +3222,11 @@ void MediaSessionPrivate::terminate() {
 
 LinphoneMediaDirection MediaSessionPrivate::getVideoDirFromMd(const std::shared_ptr<SalMediaDescription> &md) const {
 	L_Q();
-	LinphoneConference *conference = nullptr;
+	std::shared_ptr<MediaConference::Conference> conference = nullptr;
 	if (listener) {
 		conference = listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()));
 	}
 	if (conference) {
-		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto hasVideoSendRecvStream = (md->containsStreamWithDir(SalStreamSendRecv, SalVideo));
 		const auto hasVideoSendOnlyStream = (md->containsStreamWithDir(SalStreamSendOnly, SalVideo));
 		const auto hasVideoRecvOnlyStream = (md->containsStreamWithDir(SalStreamRecvOnly, SalVideo));
@@ -3265,7 +3253,7 @@ int MediaSessionPrivate::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDes
 	// for the label in the main stream and then reuses the label to look for the desired thumbnail stream
 	auto streamIdx = -1;
 	if (md) {
-		LinphoneConference *conference =
+		auto conference =
 		    listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()))
 		             : nullptr;
 		if (conference && op) {
@@ -3292,13 +3280,12 @@ int MediaSessionPrivate::getThumbnailStreamIdx(const std::shared_ptr<SalMediaDes
 	auto streamIdx = -1;
 	if (md) {
 		auto mainStreamIdx = getMainVideoStreamIdx(md);
-		LinphoneConference *conference =
+		auto conference =
 		    listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()))
 		             : nullptr;
 		if (conference && op && (mainStreamIdx >= 0)) {
 			const SalStreamDescription &mainVideoStream = md->getStreamIdx(static_cast<unsigned int>(mainStreamIdx));
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto meDevices = cppConference->getMe()->getDevices();
+			const auto meDevices = conference->getMe()->getDevices();
 			const bool conferenceEventPackageEnabled = linphone_config_get_bool(
 			    linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE);
 			const bool isInLocalConference = getParams()->getPrivate()->getInConference();
@@ -3477,8 +3464,10 @@ void MediaSessionPrivate::updateCurrentParams() const {
 				const std::string &rtpAddr =
 				    (videoStream.getRtpAddress().empty() == false) ? videoStream.getRtpAddress() : md->addr;
 				getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr.c_str()));
-			} else getCurrentParams()->enableVideoMulticast(false);
-			LinphoneConference *conference =
+			} else {
+				getCurrentParams()->enableVideoMulticast(false);
+			}
+			std::shared_ptr<MediaConference::Conference> conference =
 			    listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()))
 			             : nullptr;
 			const auto enable =
@@ -3514,15 +3503,15 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 	bool isThisNotCurrentMediaSession = currentCall && (currentCall->getActiveSession() != q->getSharedFromThis());
 
 	bool isCoreInLocalConference = linphone_core_is_in_conference(q->getCore()->getCCore());
-	LinphoneConference *callConference = nullptr;
+	std::shared_ptr<MediaConference::Conference> callConference = nullptr;
 	if (listener) {
 		callConference = listener->getCallSessionConference(q->getSharedFromThis());
 	}
-	LinphoneConference *coreConference = linphone_core_get_conference(q->getCore()->getCCore());
+	auto coreConference = linphone_core_get_conference(q->getCore()->getCCore());
 	// If the core in a conference, request to empty sound resources only if the call is in a different conference or
 	// the call is not part of a conference
 	bool isThisNotCurrentConference =
-	    isCoreInLocalConference && (!callConference || (callConference != coreConference));
+	    isCoreInLocalConference && (!callConference || (callConference->toC() != coreConference));
 
 	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
 	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
@@ -4486,20 +4475,19 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		d->broken = false;
 		d->setParams(new MediaSessionParams(*msp));
 
-		LinphoneConference *conference = nullptr;
+		std::shared_ptr<MediaConference::Conference> conference = nullptr;
 		if (d->listener) {
 			conference = d->listener->getCallSessionConference(getSharedFromThis());
 		}
 
 		if (conference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto &conferenceState = cppConference->getState();
+			const auto &conferenceState = conference->getState();
 			if ((conferenceState != ConferenceInterface::State::Instantiated) &&
 			    (conferenceState != ConferenceInterface::State::CreationPending) &&
 			    (!d->getParams()->rtpBundleEnabled())) {
 				lInfo() << "Forcing RTP bundle in Media session (local address " << getLocalAddress()
-				        << " remote address " << getRemoteAddress()->toString() << ") was added to conference "
-				        << cppConference->getConferenceAddress();
+				        << " remote address " << *getRemoteAddress() << ") was added to conference "
+				        << *conference->getConferenceAddress();
 				d->getParams()->enableRtpBundle(true);
 			}
 		}
@@ -5144,12 +5132,11 @@ bool MediaSession::pausedByApp() const {
 
 void MediaSession::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
 	L_D();
-	LinphoneConference *conference = nullptr;
+	std::shared_ptr<MediaConference::Conference> conference = nullptr;
 	if (d->listener) {
 		conference = d->listener->getCallSessionConference(getSharedFromThis());
 		if (conference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			cppConference->notifySpeakingDevice(ssrc, isSpeaking);
+			conference->notifySpeakingDevice(ssrc, isSpeaking);
 		} else {
 			lDebug() << "IsSpeaking: unable to notify speaking device because there is no conference.";
 		}
@@ -5159,10 +5146,10 @@ void MediaSession::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
 void MediaSession::notifyMutedDevice(uint32_t ssrc, bool muted) {
 	L_D();
 	if (d->listener) {
-		LinphoneConference *conference = d->listener->getCallSessionConference(getSharedFromThis());
+		std::shared_ptr<MediaConference::Conference> conference =
+		    d->listener->getCallSessionConference(getSharedFromThis());
 		if (conference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			cppConference->notifyMutedDevice(ssrc, muted);
+			conference->notifyMutedDevice(ssrc, muted);
 		} else {
 			lDebug() << "IsMuted: unable to notify muted device because there is no conference.";
 		}
@@ -5177,10 +5164,10 @@ void MediaSession::onGoClearAckSent() {
 std::shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::string &label) {
 	L_D();
 	if (d->listener) {
-		LinphoneConference *conference = d->listener->getCallSessionConference(getSharedFromThis());
+		std::shared_ptr<MediaConference::Conference> conference =
+		    d->listener->getCallSessionConference(getSharedFromThis());
 		if (conference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			return cppConference->findParticipantDeviceByLabel(label);
+			return conference->findParticipantDeviceByLabel(label);
 		}
 	}
 	return nullptr;

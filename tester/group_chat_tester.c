@@ -8757,7 +8757,9 @@ static void group_chat_forward_file_transfer_message_url(const char *file_transf
 	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(pauline->lc));
 
-	// linphone_address_unref(confAddr);
+	ms_free(sendFilepath);
+	ms_free(receivePaulineFilepath);
+	ms_free(receiveMarieFilepath);
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);

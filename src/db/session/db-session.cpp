@@ -309,9 +309,21 @@ time_t DbSession::getTime(const soci::row &row, int col) const {
 	return 0;
 }
 
-pair<tm, soci::indicator> DbSession::getTimeWithSociIndicator(time_t t) {
+pair<tm, soci::indicator> DbSession::getTimeWithSociIndicator(time_t t) const {
+	L_D();
 	auto dateTime = Utils::getTimeTAsTm(t);
-	auto indicator = (t == 0) ? soci::i_null : soci::i_ok;
+	auto indicator = soci::i_ok;
+	switch (d->backend) {
+		case DbSessionPrivate::Backend::Mysql:
+			indicator = (t <= 0) ? soci::i_null : soci::i_ok;
+			break;
+		case DbSessionPrivate::Backend::Sqlite3:
+			indicator = (t == 0) ? soci::i_null : soci::i_ok;
+			break;
+		case DbSessionPrivate::Backend::None:
+			indicator = soci::i_ok;
+			break;
+	}
 	pair<tm, soci::indicator> dataInDb(dateTime, indicator);
 	return dataInDb;
 }

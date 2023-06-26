@@ -1153,10 +1153,17 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent(const soci::row &r
 shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent(const shared_ptr<AbstractChatRoom> &chatRoom,
                                                                      BCTBX_UNUSED(EventLog::Type type),
                                                                      const soci::row &row) const {
+	L_Q();
+	if (!q->isInitialized()) {
+		lWarning() << "Database has not been initialized";
+		return nullptr;
+	}
+
 	long long eventId = getConferenceEventIdFromRow(row);
 	shared_ptr<ChatMessage> chatMessage = getChatMessageFromCache(eventId);
 	if (!chatMessage) {
 		chatMessage = shared_ptr<ChatMessage>(new ChatMessage(chatRoom, ChatMessage::Direction(row.get<int>(8))));
+
 		chatMessage->setIsSecured(!!row.get<int>(9));
 
 		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
@@ -1953,6 +1960,7 @@ shared_ptr<ChatMessage> MainDbPrivate::getChatMessageFromCache(long long storage
 	if (it == storageIdToChatMessage.cend()) return nullptr;
 
 	shared_ptr<ChatMessage> chatMessage = it->second.lock();
+
 	L_ASSERT(chatMessage);
 	return chatMessage;
 #else
@@ -3861,8 +3869,7 @@ void MainDb::updateEphemeralMessageInfos(const long long &eventId, const time_t 
 list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages(const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	// TODO: Optimize.
-	static const string query =
-		Statements::get(Statements::SelectConferenceEvents)	+ string(" AND marked_as_read = 0");
+	static const string query = Statements::get(Statements::SelectConferenceEvents) + string(" AND marked_as_read = 0");
 
 	DurationLogger durationLogger(
 	    "Get unread chat messages: (peer=" + conferenceId.getPeerAddress()->toStringUriOnlyOrdered() +
@@ -4579,19 +4586,21 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 #ifdef HAVE_DB_STORAGE
 	static const string query =
-		"SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
-		" creation_time, last_update_time, capabilities, subject, last_notify_id, flags, last_message_id,"
-		" ephemeral_enabled, ephemeral_messages_lifetime,"
-		" unread_messages_count.message_count"
-		" FROM chat_room"
-		" LEFT JOIN (SELECT conference_event.chat_room_id, count(*) as message_count"
-		" FROM conference_chat_message_event, conference_event"
-		" WHERE conference_chat_message_event.event_id=conference_event.event_id AND conference_chat_message_event.marked_as_read = 0"
-		" GROUP BY conference_event.chat_room_id) AS unread_messages_count"
-		" ON unread_messages_count.chat_room_id = chat_room.id"
-		" , sip_address AS peer_sip_address, sip_address AS local_sip_address"
-		" WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = local_sip_address.id"
-		" ORDER BY last_update_time DESC";
+	    "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
+	    " creation_time, last_update_time, capabilities, subject, last_notify_id, flags, last_message_id,"
+	    " ephemeral_enabled, ephemeral_messages_lifetime,"
+	    " unread_messages_count.message_count"
+	    " FROM chat_room"
+	    " LEFT JOIN (SELECT conference_event.chat_room_id, count(*) as message_count"
+	    " FROM conference_chat_message_event, conference_event"
+	    " WHERE conference_chat_message_event.event_id=conference_event.event_id AND "
+	    "conference_chat_message_event.marked_as_read = 0"
+	    " GROUP BY conference_event.chat_room_id) AS unread_messages_count"
+	    " ON unread_messages_count.chat_room_id = chat_room.id"
+	    " , sip_address AS peer_sip_address, sip_address AS local_sip_address"
+	    " WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = "
+	    "local_sip_address.id"
+	    " ORDER BY last_update_time DESC";
 
 	DurationLogger durationLogger("Get chat rooms.");
 
@@ -4605,17 +4614,18 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 		soci::session *session = d->dbSession.getBackendSession();
 
 		soci::rowset<soci::row> rows = (session->prepare << query);
-// SOCI use a hack for sqlite3:
-// "sqlite3 type system does not have a date or time field.  Also it does not reliably id other data types.
-// It has a tendency to see everything as text.
-// sqlite3_column_decltype returns the text that is used in the create table statement"
-// The data type on the count can be a string (as of SOCI 4.0.0) but as it is a "hack", we have to work with both types (integer and string)
+		// SOCI use a hack for sqlite3:
+		// "sqlite3 type system does not have a date or time field.  Also it does not reliably id other data types.
+		// It has a tendency to see everything as text.
+		// sqlite3_column_decltype returns the text that is used in the create table statement"
+		// The data type on the count can be a string (as of SOCI 4.0.0) but as it is a "hack", we have to work with
+		// both types (integer and string)
 		soci::data_type unreadMessageCountType;
 		bool typeHasBeenSet = false;
 		d->unreadChatMessageCountCache.clear();
 
 		for (const auto &row : rows) {
-			if(!typeHasBeenSet) {
+			if (!typeHasBeenSet) {
 				unreadMessageCountType = row.get_properties(12).get_data_type();
 				typeHasBeenSet = true;
 			}
@@ -4630,11 +4640,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, 0);
 			d->cache(conferenceId, dbChatRoomId);
 			int unreadMessagesCount = 0;
-			if(unreadMessageCountType == soci::dt_string)
-				unreadMessagesCount = std::stoi(row.get<string>(12,"0"));
-			else
-				unreadMessagesCount = row.get<int>(12,0);
-			d->unreadChatMessageCountCache.insert(conferenceId,unreadMessagesCount);
+			if (unreadMessageCountType == soci::dt_string) unreadMessagesCount = std::stoi(row.get<string>(12, "0"));
+			else unreadMessagesCount = row.get<int>(12, 0);
+			d->unreadChatMessageCountCache.insert(conferenceId, unreadMessagesCount);
 
 			time_t creationTime = d->dbSession.getTime(row, 3);
 			time_t lastUpdateTime = d->dbSession.getTime(row, 4);
@@ -4738,8 +4746,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 					chatRoom = serverGroupChatRoom;
 					conference = serverGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);
-					chatRoom->enableEphemeral(!!row.get<int>(10, 0), false);
-					chatRoom->setEphemeralLifetime((long)row.get<double>(11), false);
 					chatRoom->setState(ConferenceInterface::State::Created);
 				}
 				for (auto participant : chatRoom->getParticipants())

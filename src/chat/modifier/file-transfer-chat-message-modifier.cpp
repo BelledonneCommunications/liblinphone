@@ -944,8 +944,7 @@ bool FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage>
 		return false;
 	}
 	FileContent *fileContent = fileTransferContent->getFileContent();
-	if(fileContent)
-		delete fileContent;
+	if (fileContent) delete fileContent;
 	createFileContentFromFileTransferContent(fileTransferContent);
 	fileContent = fileTransferContent->getFileContent();
 	currentFileContentToTransfer = fileContent;
@@ -1081,6 +1080,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 		bctbx_base64_encode(keyb64, &b64Size, contentKey, contentKeySize);
 		keyb64[b64Size] = '\0';
 		fakeXml << "<file-key>" << keyb64 << "</file-key>\r\n";
+		ms_free(keyb64);
 
 		if (contentAuthTagSize > 0) {
 			// Convert it to b64

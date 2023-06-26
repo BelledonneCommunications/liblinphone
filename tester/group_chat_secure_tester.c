@@ -938,10 +938,8 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 	group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(448);
 }
 
-static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(bool_t with_text,
-                                                                          bool_t two_files,
-                                                                          bool_t use_buffer,
-                                                                          const int curveId) {
+static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(
+    bool_t with_text, bool_t two_files, bool_t use_buffer, const int curveId, bool_t core_restart) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
@@ -996,7 +994,7 @@ static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(bool_t
 	LinphoneChatRoom *marieCr =
 	    create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE,
 	                                 LinphoneChatRoomEphemeralModeDeviceManaged);
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
@@ -1026,7 +1024,86 @@ static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(bool_t
 		_receive_file(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2,
 		              use_buffer);
 	}
+
+	if (core_restart) {
+		// take refs on current proxy and auth
+		LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(marie->lc);
+		linphone_proxy_config_ref(cfg);
+		LinphoneAuthInfo *auth_info =
+		    (LinphoneAuthInfo *)bctbx_list_get_data(linphone_core_get_auth_info_list(marie->lc));
+		linphone_auth_info_ref(auth_info);
+
+		// Stop/start Core
+		initialMarieStats = marie->stat;
+		linphone_core_stop(marie->lc);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalShutdown,
+		                             initialMarieStats.number_of_LinphoneGlobalShutdown + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalOff,
+		                             initialMarieStats.number_of_LinphoneGlobalOff + 1, 5000));
+
+		initialMarieStats = marie->stat;
+		linphone_core_start(marie->lc);
+
+		// restore dns setup, proxy and auth info
+		linphone_core_manager_setup_dns(marie);
+		linphone_core_remove_proxy_config(marie->lc, linphone_core_get_default_proxy_config(marie->lc));
+		linphone_core_add_proxy_config(marie->lc, cfg);
+		linphone_core_set_default_proxy_config(marie->lc, cfg);
+		linphone_proxy_config_unref(cfg);
+		linphone_core_add_auth_info(marie->lc, auth_info);
+		linphone_auth_info_unref(auth_info);
+
+		// Check if Marie's encryption is still active after restart
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphoneRegistrationOk,
+		                        initialMarieStats.number_of_LinphoneRegistrationOk + 1));
+	}
+
+	marieCr = linphone_core_search_chat_room(marie->lc, NULL, NULL, confAddr, NULL);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	if (marieCr) {
+		int history_size = linphone_chat_room_get_history_events_size(marieCr);
+		BC_ASSERT_GREATER(history_size, 0, int, "%d");
+		if (history_size > 0) {
+			bctbx_list_t *history = linphone_chat_room_get_history(marieCr, history_size);
+			for (bctbx_list_t *msg_it = history; msg_it; msg_it = bctbx_list_next(msg_it)) {
+				LinphoneChatMessage *msg = (LinphoneChatMessage *)(bctbx_list_get_data(msg_it));
+				BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_chat_room(msg));
+			}
+			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+		}
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(chloeCr);
+	if (chloeCr) {
+		int history_size = linphone_chat_room_get_history_events_size(chloeCr);
+		BC_ASSERT_GREATER(history_size, 0, int, "%d");
+		if (history_size > 0) {
+			bctbx_list_t *history = linphone_chat_room_get_history(chloeCr, history_size);
+			for (bctbx_list_t *msg_it = history; msg_it; msg_it = bctbx_list_next(msg_it)) {
+				LinphoneChatMessage *msg = (LinphoneChatMessage *)(bctbx_list_get_data(msg_it));
+				BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_chat_room(msg));
+			}
+			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+		}
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
+	if (paulineCr) {
+		int history_size = linphone_chat_room_get_history_events_size(paulineCr);
+		BC_ASSERT_GREATER(history_size, 0, int, "%d");
+		if (history_size > 0) {
+			bctbx_list_t *history = linphone_chat_room_get_history(paulineCr, history_size);
+			for (bctbx_list_t *msg_it = history; msg_it; msg_it = bctbx_list_next(msg_it)) {
+				LinphoneChatMessage *msg = (LinphoneChatMessage *)(bctbx_list_get_data(msg_it));
+				BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_chat_room(msg));
+			}
+			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+		}
+	}
 end:
+	if (confAddr) linphone_address_unref(confAddr);
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);
@@ -1046,23 +1123,28 @@ end:
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 25519);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 448);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 448, FALSE);
+}
+
+static void group_chat_lime_x3dh_send_encrypted_file_with_core_restart(void) {
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 25519, TRUE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE, 448, TRUE);
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file_2(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, 25519);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, 448);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, 25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE, 448, FALSE);
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file_plus_text(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, 25519);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, 448);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, 25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE, 448, FALSE);
 }
 
 static void group_chat_lime_x3dh_send_two_encrypted_files_plus_text(void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, 25519);
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, 448);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, 25519, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE, 448, FALSE);
 }
 
 static void group_chat_lime_x3dh_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(
@@ -5027,6 +5109,10 @@ test_t secure_message_tests[] = {
                  group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys,
                  "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH send encrypted file", group_chat_lime_x3dh_send_encrypted_file, "LimeX3DH"),
+    TEST_TWO_TAGS("LIME X3DH send encrypted file with core restart",
+                  group_chat_lime_x3dh_send_encrypted_file_with_core_restart,
+                  "LimeX3DH",
+                  "LeaksMemory"),
     TEST_ONE_TAG("LIME X3DH send encrypted file using buffer", group_chat_lime_x3dh_send_encrypted_file_2, "LimeX3DH"),
     TEST_ONE_TAG(
         "LIME X3DH send encrypted file + text", group_chat_lime_x3dh_send_encrypted_file_plus_text, "LimeX3DH"),

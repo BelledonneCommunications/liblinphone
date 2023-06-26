@@ -868,7 +868,7 @@ LinphoneStatus CallSessionPrivate::startUpdate(const CallSession::UpdateMethod m
 	string newSubject(subject);
 
 	if (newSubject.empty()) {
-		LinphoneConference *conference = nullptr;
+		std::shared_ptr<MediaConference::Conference> conference = nullptr;
 		if (listener) {
 			conference = listener->getCallSessionConference(q->getSharedFromThis());
 		}
@@ -1900,12 +1900,11 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 	}
 
 	bool isAdmin = false;
-	LinphoneConference *conference =
+	std::shared_ptr<MediaConference::Conference> conference =
 	    d->listener ? d->listener->getCallSessionConference(const_pointer_cast<CallSession>(getSharedFromThis()))
 	                : nullptr;
 	if (conference) {
-		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto &me = cppConference->getMe();
+		const auto &me = conference->getMe();
 		isAdmin = me->isAdmin();
 		contactAddress.setParam("admin", Utils::toString(isAdmin));
 	} else {
