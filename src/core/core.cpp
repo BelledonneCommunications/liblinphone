@@ -300,7 +300,6 @@ void CorePrivate::shutdown() {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const auto &chatRoomPrivate = chatRoom->getPrivate();
-		chatRoom->sendPendingMessages();
 		for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
 			if (chatMessage->getState() == ChatMessage::State::FileTransferInProgress) {
 				// Abort auto download file transfers
@@ -329,6 +328,7 @@ void CorePrivate::uninit() {
 	for (const auto &chatRoom : chatRooms) {
 		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
 		if (cr) {
+			cr->sendPendingMessages();
 			cr->getPrivate()->getImdnHandler()->onLinphoneCoreStop();
 #ifdef HAVE_ADVANCED_IM
 			for (const auto &participant: cr->getParticipants()) {
@@ -1531,7 +1531,6 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 }
 
 shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params, const ConferenceAddress &localAddress, const ConferenceAddress &remoteAddress, const std::list<IdentityAddress> &participants) const {
-
 	const auto it = std::find_if (audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&] (const auto & p) {
 		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
 		const auto &audioVideoConference = p.second;

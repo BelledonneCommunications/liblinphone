@@ -84,7 +84,7 @@ public:
 	virtual bool areSoundResourcesAvailable (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) { return true; }
 	virtual bool isPlayingRingbackTone (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) { return false; }
 
-	virtual LinphoneConference * getCallSessionConference (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) const { return nullptr; }
+	virtual std::shared_ptr<MediaConference::Conference> getCallSessionConference (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) const { return nullptr; }
 
 	virtual void onRealTimeTextCharacterReceived (BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), BCTBX_UNUSED(RealtimeTextReceivedCharacter *data)) {}
 

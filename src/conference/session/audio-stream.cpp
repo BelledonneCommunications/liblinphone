@@ -86,10 +86,8 @@ void MS2AudioStream::audioStreamActiveSpeakerCb(uint32_t ssrc) {
 		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
 
 		if (conference) {
-			const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-			    MediaConference::Conference::toCpp(conference)->getSharedFromThis());
-
-			if (cppConference) cppConference->notifyLouderSpeaker(ssrc);
+			const auto remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
+			if (remoteConference) remoteConference->notifyLouderSpeaker(ssrc);
 		}
 	}
 }
@@ -539,7 +537,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
 
 		if (getMediaSessionPrivate().getCallSessionListener()) {
-			LinphoneConference *conference =
+			auto conference =
 			    getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
 			        getMediaSession().getSharedFromThis());
 			if (conference) {
@@ -568,9 +566,9 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 	std::shared_ptr<ParticipantDevice> device = nullptr;
 	if (getMediaSessionPrivate().getCallSessionListener()) {
-		LinphoneConference * conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(getMediaSession().getSharedFromThis());
+		auto conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(getMediaSession().getSharedFromThis());
 		if (conference) {
-			device = MediaConference::Conference::toCpp(conference)->findParticipantDevice(getMediaSession().getSharedFromThis());
+			device = conference->findParticipantDevice(getMediaSession().getSharedFromThis());
 		}
 	}
 

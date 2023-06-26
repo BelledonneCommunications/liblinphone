@@ -29,6 +29,7 @@
 #include "conference/session/ms2-streams.h"
 #include "core/core-p.h"
 #include "call/audio-device/audio-device.h"
+#include "conference_private.h"
 
 // =============================================================================
 
@@ -48,7 +49,7 @@ void _post_configure_audio_stream (AudioStream *st, LinphoneCore *lc, bool_t mut
 // =============================================================================
 
 void _linphone_call_set_conf_ref (LinphoneCall *call, LinphoneConference *ref) {
-	Call::toCpp(call)->setConference(ref);
+	Call::toCpp(call)->setConference(MediaConference::Conference::toCpp(ref)->getSharedFromThis());
 }
 
 MSAudioEndpoint *_linphone_call_get_endpoint (const LinphoneCall *call) {
@@ -352,7 +353,8 @@ bool_t linphone_call_is_in_conference (const LinphoneCall *call) {
 }
 
 LinphoneConference *linphone_call_get_conference (const LinphoneCall *call) {
-	return Call::toCpp(call)->getConference();
+	auto conference = Call::toCpp(call)->getConference();
+	return conference ? conference->toC() : NULL;
 }
 
 int linphone_call_get_stream_count (const LinphoneCall *call) {

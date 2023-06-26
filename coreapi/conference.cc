@@ -1150,7 +1150,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 		}
 		/* If the local participant is not yet created, created it and it to the conference */
 		addLocalEndpoint();
-		Call::toCpp(call)->setConference(toC());
+		Call::toCpp(call)->setConference(getSharedFromThis());
 	}
 
 	// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
@@ -1399,7 +1399,7 @@ bool LocalConference::addParticipants (const std::list<IdentityAddress> &address
 bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
 	bool success = Conference::addParticipantDevice(call);
 	if (success) {
-		call->setConference(toC());
+		call->setConference(getSharedFromThis());
 		auto session = call->getActiveSession();
 		auto device = findParticipantDevice (session);
 		if (device) {
@@ -2174,7 +2174,7 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
 	LocalConference *conf = (LocalConference *)linphone_core_v_table_get_user_data(vtable);
 	auto cppCall = Call::toCpp(call)->getSharedFromThis();
-	if (conf && conf->toC() == cppCall->getConference()) {
+	if (conf && conf->getSharedFromThis() == cppCall->getConference()) {
 		const auto & session = cppCall->getActiveSession();
 		switch(cstate) {
 			case LinphoneCallStateOutgoingRinging:
@@ -2755,7 +2755,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				linphone_call_params_unref(params);
 				if(focusCallC) {
 					focusCall = Call::toCpp(focusCallC)->getSharedFromThis();
-					focusCall->setConference(toC());
+					focusCall->setConference(getSharedFromThis());
 					focus->setSession(focusCall->getActiveSession());
 				}
 				auto callIt = std::find(m_pendingCalls.begin(), m_pendingCalls.end(), call);
@@ -2795,7 +2795,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 					linphone_call_params_enable_video(params, confParams->videoEnabled());
 					Conference::setSubject(pendingSubject);
 					focusCall = Call::toCpp(linphone_core_invite_address_with_params_2(getCore()->getCCore(), addr, params, L_STRING_TO_C(pendingSubject), nullptr))->getSharedFromThis();
-					focusCall->setConference(toC());
+					focusCall->setConference(getSharedFromThis());
 					focus->setSession(focusCall->getActiveSession());
 					m_pendingCalls.push_back(call);
 					linphone_call_params_unref(params);
@@ -2985,7 +2985,6 @@ int RemoteConference::terminate () {
 			if (sessionCall) {
 				// Conference will be deleted by terminating the session
 				session->terminate();
-				sessionCall->setConference(nullptr);
 				return 0;
 			}
 			break;
@@ -3041,7 +3040,7 @@ int RemoteConference::enter () {
 		linphone_call_params_unref(new_params);
 
 		auto cppCall = Call::toCpp(cCall);
-		cppCall->setConference(toC());
+		cppCall->setConference(getSharedFromThis());
 		focus->setSession(cppCall->getActiveSession());
 	}
 	return 0;

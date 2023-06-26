@@ -167,9 +167,8 @@ bool Call::getMicrophoneMuted () const {
 
 void Call::setMicrophoneMuted (bool muted) {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setMicrophoneMuted(muted);
-
 	if (getConference()) {
-		MediaConference::Conference::toCpp(getConference())->notifyLocalMutedDevices(muted || !linphone_core_mic_enabled(getCore()->getCCore()));
+		getConference()->notifyLocalMutedDevices(muted || !linphone_core_mic_enabled(getCore()->getCCore()));
 	}
 }
 
@@ -377,14 +376,13 @@ void Call::onCallSessionStartReferred (BCTBX_UNUSED(const shared_ptr<CallSession
 }
 
 void Call::reenterLocalConference(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) {
-	if (getConference()) {
-		auto conference = MediaConference::Conference::toCpp(getConference());
-		if (conference->getState() == ConferenceInterface::State::Created) {
+	auto conference = getConference();
+	if (conference) {
+		auto confState = conference->getState();
+		if (confState == ConferenceInterface::State::Created) {
 			conference->enter();
 		} else {
-			char * conf_state = linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
-			lInfo() << "Unable to add participant because conference is in state " << conf_state;
-			ms_free(conf_state);
+			lInfo() << "Unable to add participant because conference is in state " << Utils::toString(confState);
 		}
 	}
 }
@@ -429,7 +427,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				if (remoteContactAddress.hasParam("isfocus")) {
 					// Check if the request was sent by the focus (remote conference)
 					createRemoteConference(session);
-					auto conference = getConference() ? MediaConference::Conference::toCpp(getConference()) : nullptr;
+					auto conference = getConference();
 					if (conference && conference->getState() == ConferenceInterface::State::CreationPending) {
 						conference->finalizeCreation();
 					}
@@ -462,7 +460,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 							ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
 							conference = getCore()->findAudioVideoConference(localConferenceId, false);
 							if (conference) {
-								setConference(conference->toC());
+								setConference(conference);
 								reenterLocalConference(session);
 								conference->addParticipantDevice(getSharedFromThis());
 							}
@@ -562,7 +560,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 		}
 	}
 
-	setConference(remoteConference->toC());
+	setConference(remoteConference);
 
 	// Record conf-id to be used later when terminating the remote conference
 	if (remoteContactAddress.hasUriParam("conf-id")) {
@@ -718,7 +716,7 @@ bool Call::areSoundResourcesAvailable(BCTBX_UNUSED(const shared_ptr<CallSession>
 	shared_ptr<Call> currentCall = getCore()->getCurrentCall();
 	// If core is in a conference, then check if the call is in the same conference
 	// If the core left the conference or it is not hosting any conference, then check that there is no active call or the active one is the current one.
-	bool soundResourcesFree = linphone_core_is_in_conference(lc) ? (linphone_core_get_conference(lc) == getConference()) : (!currentCall || (currentCall == getSharedFromThis()));
+	bool soundResourcesFree = linphone_core_is_in_conference(lc) ? (getConference() && (linphone_core_get_conference(lc) == getConference()->toC())) : (!currentCall || (currentCall == getSharedFromThis()));
 	return soundResourcesFree;
 }
 
@@ -726,7 +724,7 @@ bool Call::isPlayingRingbackTone (BCTBX_UNUSED(const shared_ptr<CallSession> &se
 	return mPlayingRingbackTone;
 }
 
-LinphoneConference * Call::getCallSessionConference (BCTBX_UNUSED(const shared_ptr<CallSession> &session)) const {
+std::shared_ptr<MediaConference::Conference> Call::getCallSessionConference (BCTBX_UNUSED(const shared_ptr<CallSession> &session)) const {
 	return getConference();
 }
 
@@ -1306,11 +1304,11 @@ void Call::confirmGoClear() const {
 
 // -----------------------------------------------------------------------------
 
-LinphoneConference *Call::getConference () const{
+std::shared_ptr<MediaConference::Conference> Call::getConference () const {
 	return mConfRef;
 }
 
-void Call::setConference (LinphoneConference *ref) {
+void Call::setConference (std::shared_ptr<MediaConference::Conference> ref) {
 	mConfRef = ref;
 }
 

@@ -1066,6 +1066,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 		bctbx_base64_encode(keyb64, &b64Size, contentKey, contentKeySize);
 		keyb64[b64Size] = '\0';
 		fakeXml << "<file-key>" << keyb64 << "</file-key>\r\n";
+		ms_free(keyb64);
 
 		if (contentAuthTagSize > 0) {
 			// Convert it to b64

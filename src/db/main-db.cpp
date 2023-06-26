@@ -1181,6 +1181,12 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 	BCTBX_UNUSED(EventLog::Type type),
 	const soci::row &row
 ) const {
+	L_Q();
+	if (!q->isInitialized()) {
+		lWarning() << "Database has not been initialized";
+		return nullptr;
+	}
+
 	long long eventId = getConferenceEventIdFromRow(row);
 	shared_ptr<ChatMessage> chatMessage = getChatMessageFromCache(eventId);
 	if (!chatMessage) {
@@ -1188,6 +1194,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 			chatRoom,
 			ChatMessage::Direction(row.get<int>(8))
 		));
+
 		chatMessage->setIsSecured(!!row.get<int>(9));
 
 		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
@@ -1973,6 +1980,7 @@ shared_ptr<ChatMessage> MainDbPrivate::getChatMessageFromCache (long long storag
 		return nullptr;
 
 	shared_ptr<ChatMessage> chatMessage = it->second.lock();
+
 	L_ASSERT(chatMessage);
 	return chatMessage;
 #else
@@ -4503,8 +4511,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					chatRoom = serverGroupChatRoom;
 					conference = serverGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);
-					chatRoom->enableEphemeral(!!row.get<int>(10, 0), false);
-					chatRoom->setEphemeralLifetime((long)row.get<double>(11), false);
 					chatRoom->setState(ConferenceInterface::State::Created);
 				}
 				for (auto participant : chatRoom->getParticipants())
