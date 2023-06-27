@@ -24,6 +24,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -171,6 +172,14 @@ public class DeviceUtils {
 			return DeviceUtils24.getStringOrDefaultFromMap(map, key, defaultValue);
 		}
 		return DeviceUtils23.getStringOrDefaultFromMap(map, key, defaultValue);
+	}
+
+	public static void startForegroundService(Context context, Intent intent) {
+		if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
+			DeviceUtils26.startForegroundService(context, intent);
+		} else {
+			DeviceUtils23.startForegroundService(context, intent);
+		}
 	}
 
 	public static void startCallForegroundService(Service service, int notifId, Notification notif) {

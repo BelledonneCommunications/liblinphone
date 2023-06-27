@@ -23,6 +23,7 @@ package org.linphone.core.tools.compatibility;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.Ringtone;
 import android.os.PowerManager;
@@ -64,4 +65,8 @@ public class DeviceUtils23 {
 	public static void startForegroundService(Service service, int notifId, Notification notif) {
 		service.startForeground(notifId, notif);
 	}
+
+    public static void startForegroundService(Context context, Intent intent) {
+        context.startService(intent);
+    }
 }

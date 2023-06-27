@@ -20,6 +20,8 @@
 
 package org.linphone.core.tools.compatibility;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.SurfaceTexture;
 import android.media.AudioAttributes;
 import android.os.Vibrator;
@@ -40,4 +42,8 @@ public class DeviceUtils26 {
                         .build();
         vibrator.vibrate(effect, audioAttrs);
 	}
+
+    public static void startForegroundService(Context context, Intent intent) {
+        context.startForegroundService(intent);
+    }
 }
