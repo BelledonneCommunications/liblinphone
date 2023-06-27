@@ -896,8 +896,8 @@ public class AndroidPlatformHelper {
         boolean connected = mNetworkManager.isCurrentlyConnected(mContext);
         if (!connected) {
             Log.i("[Platform Helper] Push has been received but network seems unreachable, starting foreground push service");
-            Intent i = new Intent(mContext, org.linphone.core.tools.service.PushService.class); 
-            mContext.startForegroundService(i);
+            Intent i = new Intent(mContext, org.linphone.core.tools.service.PushService.class);
+            DeviceUtils.startForegroundService(mContext, i);
             mPushServiceStarted = true;
         }
     }
