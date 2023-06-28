@@ -101,8 +101,6 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice (const std::shared_ptr
 	}
 
 	if (newDevice) {
-
-lInfo() << __func__ << " DEBUG DEBUG device state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
 		newDevice->setState(device->getState(), false);
 		newDevice->setTimeOfJoining(device->getTimeOfJoining());
 		newDevice->setTimeOfDisconnection(device->getTimeOfDisconnection());

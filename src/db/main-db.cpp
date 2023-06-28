@@ -577,7 +577,6 @@ void MainDbPrivate::insertChatRoomParticipantDevice (
 		unsigned int state = static_cast<unsigned int>(device->getState());
 		const std::string deviceName = device->getName();
 		auto joiningTime = dbSession.getTimeWithSociIndicator(device->getTimeOfJoining());
-lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_identity(q->getCore()->getCCore())) << " device state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
 		unsigned int joiningMethod = static_cast<unsigned int>(device->getJoiningMethod());
 		*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id, name, state, joining_time, joining_method)"
 			" VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName, :participantDeviceState, :joiningTime, :joiningMethod)",
@@ -4438,7 +4437,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 							device->setJoiningMethod(ParticipantDevice::JoiningMethod(static_cast<unsigned int>(row.get<int>(4, 0))));
 							time_t joiningTime = d->dbSession.getTime(row, 3);
 							device->setTimeOfJoining(joiningTime);
-lInfo() << __func__ << " DEBUG DEBUG get chat rooms core " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " device " << device->getAddress() << " state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " db value " << joiningTime << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
 						}
 					}
 
@@ -4868,7 +4866,6 @@ void MainDb::updateChatRoomParticipantDevice (
 			const long long &participantDeviceSipAddressId = d->selectSipAddressId(device->getAddress().asString());
 			unsigned int state = static_cast<unsigned int>(device->getState());
 			auto joiningTime = d->dbSession.getTimeWithSociIndicator(device->getTimeOfJoining());
-lInfo() << __func__ << " DEBUG DEBUG update participant device core " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " device state " << Utils::toString(device->getState()) << " time of joining " << device->getTimeOfJoining() << " now " << ms_time(nullptr) << " elapsed time " << (ms_time(nullptr) - device->getTimeOfJoining());
 			unsigned int joiningMethod = static_cast<unsigned int>(device->getJoiningMethod());
 			*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name, joining_time = :joiningTime, joining_method = :joiningMethod"
 				" WHERE chat_room_participant_id = :participantId AND participant_device_sip_address_id = :participantDeviceSipAddressId",

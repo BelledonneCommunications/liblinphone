@@ -464,7 +464,6 @@ bool checkChatroom(Focus & focus, const CoreManager & core, const time_t baseJoi
 		}
 		for (const auto &participant : participants) {
 			for (const auto &device : participant->getDevices()) {
-ms_message("%s - DEBUG DEBUG core %s state %s joining time %zu base %zu", __func__, linphone_address_as_string(linphone_participant_device_get_address(device->toC())), Utils::toString(device->getState()).c_str(), linphone_participant_device_get_time_of_joining(device->toC()), baseJoiningTime); 
 				if (device->getState() != ParticipantDevice::State::Present) {
 					return false;
 				}
@@ -2083,8 +2082,6 @@ static void group_chat_room_with_client_restart_base(bool encrypted) {
 		BC_ASSERT_PTR_NOT_NULL(michelle2Cr);
 
 		for (const CoreManager &core : cores) {
-		const LinphoneAddress *deviceAddr = linphone_proxy_config_get_contact(core.getDefaultProxyConfig());
-ms_message("%s - DEBUG DEBUG core %s", __func__, linphone_address_as_string(deviceAddr)); 
 			BC_ASSERT_TRUE(checkChatroom(focus, core, participantAddedTime));
 			for (auto chatRoom : core.getCore().getChatRooms()) {
 				BC_ASSERT_EQUAL(chatRoom->getParticipants().size(), ((focus.getLc() == core.getLc())) ? 4 : 3, size_t, "%zu");

@@ -555,7 +555,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								state = ParticipantDevice::State::MutedByFocus;
 								break;
 						}
-						lInfo() << __func__ << " DEBUG DEBUG device " << device->getAddress() << " chat room " << chatRoom << " is full state " << isFullState;
 						device->setState(state, !isFullState);
 					}
 
