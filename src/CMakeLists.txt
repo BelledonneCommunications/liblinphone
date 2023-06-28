@@ -111,6 +111,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	auth-info/auth-info.h
 	auth-info/auth-stack.h
 	c-wrapper/c-wrapper.h
+	c-wrapper/list-holder.h
 	c-wrapper/internal/c-sal.h
 	c-wrapper/internal/c-tools.h
 	call/call-log.h
@@ -168,6 +169,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/params/call-session-params.h
 	conference/params/media-session-params-p.h
 	conference/params/media-session-params.h
+	conference/participant-info.h
 	conference/participant-device.h
 	conference/participant-imdn-state-p.h
 	conference/participant-imdn-state.h
@@ -374,6 +376,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-magic-search-cbs.cpp
 	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-participant-info.cpp
 	c-wrapper/api/c-participant-device.cpp
 	c-wrapper/api/c-participant-device-cbs.cpp
 	c-wrapper/api/c-participant-device-identity.cpp
@@ -420,6 +423,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
+	conference/participant-info.cpp
 	conference/participant-device.cpp
 	conference/participant-imdn-state.cpp
 	conference/participant.cpp

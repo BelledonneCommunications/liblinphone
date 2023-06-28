@@ -119,10 +119,10 @@ public:
 	virtual const std::string &getSubject() const = 0;
 
 	/*
-	* Get the subject of this conference
-	* @return The subject of the chat room in UTF8
-	*/
-	virtual const std::string &getUtf8Subject () const = 0;
+	 * Get the subject of this conference
+	 * @return The subject of the chat room in UTF8
+	 */
+	virtual const std::string &getUtf8Subject() const = 0;
 
 	/*
 	 * Set the subject of this conference. If not focus,  this operation is only available if the local participant

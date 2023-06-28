@@ -30,6 +30,7 @@
 #include "conference/handlers/local-conference-event-handler.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/local-conference.h"
+#include "conference/participant-info.h"
 #include "conference/participant.h"
 #include "conference/session/call-session-p.h"
 #include "content/content-disposition.h"
@@ -624,18 +625,18 @@ void ServerGroupChatRoomPrivate::unSubscribeRegistrationForParticipant(const std
 }
 
 bool ServerGroupChatRoomPrivate::initializeParticipants(const shared_ptr<Participant> &initiator, SalCallOp *op) {
-
 	handleSubjectChange(op);
 	// Handle participants addition
-	list<std::shared_ptr<Address>> identAddresses = Utils::parseResourceLists(op->getRemoteBody());
+	const auto participantList = Utils::parseResourceLists(op->getRemoteBody());
+	std::list<std::shared_ptr<Address>> identAddresses;
 	// DO not try to add participants with invalid address
-	for (auto it = identAddresses.begin(); it != identAddresses.end();) {
-		if (!((*it)->isValid())) {
-			lError() << "ServerGroupChatRoomPrivate::initializeParticipants(): removing invalid address "
-			         << ((*it)->toString()) << " at position " << std::distance(it, identAddresses.begin());
-			it = identAddresses.erase(it);
+	for (auto it = participantList.begin(); it != participantList.end(); ++it) {
+		const auto &address = (*it)->getAddress();
+		if (!(address->isValid())) {
+			lError() << "ServerGroupChatRoomPrivate::initializeParticipants(): removing invalid address " << *address
+			         << " at position " << std::distance(it, participantList.begin());
 		} else {
-			++it;
+			identAddresses.push_back(address);
 		}
 	}
 	if (identAddresses.empty()) {

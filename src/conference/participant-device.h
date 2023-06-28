@@ -22,6 +22,7 @@
 #define _L_PARTICIPANT_DEVICE_H_
 
 #include <ctime>
+#include <set>
 #include <string>
 
 #include <belle-sip/object++.hh>
@@ -50,9 +51,8 @@ class Participant;
 class ParticipantDeviceCbs;
 
 class LINPHONE_PUBLIC ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>,
-                          public UserDataAccessor,
-                          public CallbacksHolder<ParticipantDeviceCbs>
-                           {
+                                          public UserDataAccessor,
+                                          public CallbacksHolder<ParticipantDeviceCbs> {
 public:
 	enum class State {
 		Joining = LinphoneParticipantDeviceStateJoining,
@@ -172,17 +172,18 @@ public:
 	void *getUserData() const;
 	void setUserData(void *ud);
 
-	// Media getters and setters
-	bool updateMediaCapabilities();
-	bool updateStreamAvailabilities();
+	std::set<LinphoneStreamType> updateMediaCapabilities();
+	std::set<LinphoneStreamType> updateStreamAvailabilities();
 
 	bool adminModeSupported() const;
 	void enableAdminModeSupport(bool support);
 
+	// Media getters and setters
 	void *createWindowId() const;
 	void setWindowId(void *newWindowId);
 	void *getWindowId() const;
 
+	// Media getters and setters
 	bool setLabel(const std::string &label, const LinphoneStreamType type);
 	const std::string &getLabel(const LinphoneStreamType type) const;
 

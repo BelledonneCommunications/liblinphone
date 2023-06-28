@@ -21,8 +21,10 @@
 #include "conference-info.h"
 
 #include "chat/ics/ics.h"
+#include "factory/factory.h"
 #include "linphone/api/c-address.h"
 #include "linphone/types.h"
+#include "participant-info.h"
 #include "private.h"
 
 #include "c-wrapper/c-wrapper.h"
@@ -33,8 +35,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-const std::string ConferenceInfo::sequenceParam = "X-SEQ";
-
 ConferenceInfo::ConferenceInfo() {
 }
 
@@ -43,84 +43,115 @@ const ConferenceInfo::organizer_t &ConferenceInfo::getOrganizer() const {
 }
 
 const std::shared_ptr<Address> &ConferenceInfo::getOrganizerAddress() const {
-	return getOrganizer().first;
+	const auto &organizer = getOrganizer();
+	mOrganizerAddress = organizer ? organizer->getAddress() : nullptr;
+	return mOrganizerAddress;
 }
 
-void ConferenceInfo::setOrganizer(const std::shared_ptr<Address> &organizer, const participant_params_t &params) {
-	mOrganizer = std::make_pair(Address::create(organizer->getUri()), params);
+void ConferenceInfo::setOrganizer(const std::shared_ptr<const ParticipantInfo> &organizer) {
+	mOrganizer = organizer->clone()->toSharedPtr();
 }
 
-void ConferenceInfo::setOrganizer(const std::shared_ptr<Address> &organizer) {
-	ConferenceInfo::participant_params_t params;
-	setOrganizer(organizer, params);
-}
-
-void ConferenceInfo::addOrganizerParam(const std::string &param, const std::string &value) {
-	mOrganizer.second[param] = value;
-}
-
-const std::string ConferenceInfo::getOrganizerParam(const std::string &param) const {
-	try {
-		const auto &params = mOrganizer.second;
-		return params.at(param);
-	} catch (std::out_of_range &) {
-		return std::string();
+void ConferenceInfo::setOrganizer(const std::shared_ptr<const Address> &organizer) {
+	auto organizerInfo = Factory::get()->createParticipantInfo(Address::create(organizer->getUri()));
+	for (const auto &[name, value] : organizer->getParams()) {
+		organizerInfo->addParameter(name, value);
 	}
+	setOrganizer(organizerInfo);
 }
 
 const ConferenceInfo::participant_list_t &ConferenceInfo::getParticipants() const {
 	return mParticipants;
 }
 
-void ConferenceInfo::setParticipants(const participant_list_t &participants) {
-	for (const auto &p : participants) {
-		addParticipant(p.first, p.second);
+const bctbx_list_t *ConferenceInfo::getParticipantsCList() const {
+	mParticipantList.mList = mParticipants;
+	return mParticipantList.getCList();
+}
+
+const std::list<std::shared_ptr<Address>> &ConferenceInfo::getParticipantAddressList() const {
+	updateParticipantAddresses();
+	return mParticipantAddresses.mList;
+}
+
+const bctbx_list_t *ConferenceInfo::getParticipantAddressCList() const {
+	updateParticipantAddresses();
+	return mParticipantAddresses.getCList();
+}
+
+void ConferenceInfo::updateParticipantAddresses() const {
+	std::list<std::shared_ptr<Address>> addressList;
+	for (const auto &participantInfo : mParticipants) {
+		addressList.push_back(participantInfo->getAddress());
+	}
+	mParticipantAddresses.mList = addressList;
+}
+
+void ConferenceInfo::setParticipants(const std::list<std::shared_ptr<Address>> &participants) {
+	for (const auto &info : participants) {
+		addParticipant(info);
 	}
 }
 
-void ConferenceInfo::addParticipant(const std::shared_ptr<Address> &participant) {
-	ConferenceInfo::participant_params_t params;
-	addParticipant(participant, params);
+void ConferenceInfo::setParticipants(const ConferenceInfo::participant_list_t &participants) {
+	for (const auto &info : participants) {
+		addParticipant(info);
+	}
 }
 
-void ConferenceInfo::addParticipant(const std::shared_ptr<Address> &participant, const participant_params_t &params) {
-	mParticipants.insert(std::make_pair(Address::create(participant->getUri()), params));
+void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) {
+	const auto &address = participantInfo->getAddress();
+	if (hasParticipant(address)) {
+		mParticipants.push_back(participantInfo->clone()->toSharedPtr());
+	} else {
+		lInfo() << "Participant with address " << *address << " is already in the list of conference info " << this
+		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+	}
 }
 
-void ConferenceInfo::removeParticipant(const std::shared_ptr<Address> &participant) {
-	auto it = std::find_if(mParticipants.begin(), mParticipants.end(),
-	                       [&participant](const auto &p) { return (participant->weakEqual(*p.first)); });
+void ConferenceInfo::addParticipant(const std::shared_ptr<const Address> &participant) {
+	auto participantInfo = Factory::get()->createParticipantInfo(participant->clone()->toSharedPtr());
+	addParticipant(participantInfo);
+}
+
+void ConferenceInfo::removeParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) {
+	removeParticipant(participantInfo->getAddress());
+}
+
+void ConferenceInfo::removeParticipant(const std::shared_ptr<const Address> &participant) {
+	auto it = findParticipantIt(participant);
 	if (it == mParticipants.cend()) {
-		lInfo() << "Unable to find participant with address " << participant << " in conference info " << this
-		        << " (address " << *getUri() << ")";
+		lInfo() << "Unable to remove participant with address " << *participant << " in conference info " << this
+		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
 	} else {
 		mParticipants.erase(it);
 	}
 }
 
-void ConferenceInfo::addParticipantParam(const std::shared_ptr<Address> &participant,
-                                         const std::string &param,
-                                         const std::string &value) {
-	auto it = std::find_if(mParticipants.begin(), mParticipants.end(),
-	                       [&participant](const auto &p) { return (participant->weakEqual(*p.first)); });
-	if (it != mParticipants.end()) {
-		auto &params = (*it).second;
-		params[param] = value;
-	}
+void ConferenceInfo::updateParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) {
+	removeParticipant(participantInfo);
+	addParticipant(participantInfo);
 }
 
-const std::string ConferenceInfo::getParticipantParam(const std::shared_ptr<Address> &participant,
-                                                      const std::string &param) const {
-	try {
-		auto it = std::find_if(mParticipants.begin(), mParticipants.end(),
-		                       [&participant](const auto &p) { return (participant->weakEqual(*p.first)); });
-		if (it != mParticipants.cend()) {
-			const auto &params = (*it).second;
-			return params.at(param);
-		}
-	} catch (std::out_of_range &) {
-	}
-	return std::string();
+ConferenceInfo::participant_list_t::const_iterator
+ConferenceInfo::findParticipantIt(const std::shared_ptr<const Address> &address) const {
+	return std::find_if(mParticipants.begin(), mParticipants.end(),
+	                    [&address](const auto &p) { return (address->weakEqual(*p->getAddress())); });
+}
+
+bool ConferenceInfo::hasParticipant(const std::shared_ptr<const Address> &address) const {
+	return (findParticipantIt(address) == mParticipants.end());
+}
+
+const std::shared_ptr<ParticipantInfo>
+ConferenceInfo::findParticipant(const std::shared_ptr<const Address> &address) const {
+	auto it = findParticipantIt(address);
+	if (it != mParticipants.end()) {
+		return *it;
+	};
+	lInfo() << "Unable to find participant with address " << *address << " in conference info " << this << " (address "
+	        << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+	return nullptr;
 }
 
 bool ConferenceInfo::isValidUri() const {
@@ -131,7 +162,7 @@ const std::shared_ptr<Address> &ConferenceInfo::getUri() const {
 	return mUri;
 }
 
-void ConferenceInfo::setUri(const std::shared_ptr<Address> uri) {
+void ConferenceInfo::setUri(const std::shared_ptr<const Address> uri) {
 	mUri = Address::create(uri->getUri());
 }
 
@@ -232,14 +263,17 @@ void ConferenceInfo::updateFrom(const std::shared_ptr<ConferenceInfo> &info) {
 	setIcsSequence(info->getIcsSequence() + 1);
 
 	const auto &participants = info->getParticipants();
-
 	for (auto &participant : mParticipants) {
-		const auto &otherParticipant =
+		const auto &pAddress = participant->getAddress();
+		const auto &otherParticipantIt =
 		    std::find_if(participants.cbegin(), participants.cend(),
-		                 [&participant](const auto &p) { return (p.first == participant.first); });
+		                 [&pAddress](const auto &p) { return (pAddress->weakEqual(*p->getAddress())); });
 
-		if (otherParticipant != participants.cend()) {
-			participant.second = otherParticipant->second;
+		if (otherParticipantIt != participants.cend()) {
+			const auto &otherParticipant = (*otherParticipantIt);
+			// Copy sequence number in order to keep it inceasing.
+			// IF this is not done, the sequence number may be arbitrarly changed and clients could get out of sync
+			participant->setSequenceNumber(otherParticipant->getSequenceNumber());
 		}
 	}
 }
@@ -272,7 +306,7 @@ const string ConferenceInfo::toIcsString(bool cancel, int sequence) const {
 	const auto &organizerAddress = getOrganizerAddress();
 	if (organizerAddress && organizerAddress->isValid()) {
 		const auto uri = organizerAddress->asStringUriOnly();
-		event->setOrganizer(uri, mOrganizer.second);
+		event->setOrganizer(uri, mOrganizer->getAllParameters());
 	}
 
 	event->setSummary(mSubject);
@@ -282,10 +316,11 @@ const string ConferenceInfo::toIcsString(bool cancel, int sequence) const {
 		const auto uri = mUri->asStringUriOnly();
 		event->setXConfUri(uri);
 	}
-	for (const auto &[address, params] : mParticipants) {
+	for (const auto &participantInfo : mParticipants) {
+		const auto &address = participantInfo->getAddress();
 		if (address->isValid()) {
 			const auto uri = address->asStringUriOnly();
-			event->addAttendee(uri, params);
+			event->addAttendee(uri, participantInfo->getAllParameters());
 		}
 	}
 
@@ -328,32 +363,6 @@ const string ConferenceInfo::toIcsString(bool cancel, int sequence) const {
 
 void ConferenceInfo::setCreationTime(time_t time) {
 	mCreationTime = time;
-}
-
-const std::string ConferenceInfo::memberParametersToString(const ConferenceInfo::participant_params_t &params) {
-	std::string str;
-	for (const auto &[name, value] : params) {
-		if (!str.empty()) {
-			str.append(";");
-		}
-		str.append(name + "=" + value);
-	}
-	return str;
-}
-
-const ConferenceInfo::participant_params_t ConferenceInfo::stringToMemberParameters(const std::string &paramsString) {
-	ConferenceInfo::participant_params_t params;
-	if (!paramsString.empty()) {
-		const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(paramsString), ";");
-		for (const auto &param : splittedValue) {
-			auto equal = param.find("=");
-			string name = param.substr(0, equal);
-			string value = param.substr(equal + 1, param.size());
-			params.insert(std::make_pair(name, value));
-		}
-	}
-
-	return params;
 }
 
 std::ostream &operator<<(std::ostream &lhs, ConferenceInfo::State s) {

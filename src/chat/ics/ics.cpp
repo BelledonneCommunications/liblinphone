@@ -22,10 +22,12 @@
 #include <iomanip>
 #include <sstream>
 
-#include "ics.h"
-
 #include "bctoolbox/utils.hh"
+
 #include "chat/ics/parser/ics-parser.h"
+#include "conference/conference-params.h"
+#include "conference/participant-info.h"
+#include "ics.h"
 
 // =============================================================================
 
@@ -46,7 +48,7 @@ void Ics::Event::setOrganizer(const std::string &organizer) {
 	setOrganizer(organizer, params);
 }
 
-void Ics::Event::setOrganizer(const std::string &organizer, const attendee_params_t &params) {
+void Ics::Event::setOrganizer(const std::string &organizer, const Ics::Event::attendee_params_t &params) {
 	mOrganizer = std::make_pair(organizer, params);
 }
 
@@ -59,7 +61,7 @@ void Ics::Event::addAttendee(const std::string &attendee) {
 	addAttendee(attendee, params);
 }
 
-void Ics::Event::addAttendee(const std::string &attendee, const attendee_params_t &params) {
+void Ics::Event::addAttendee(const std::string &attendee, const Ics::Event::attendee_params_t &params) {
 	mAttendees.insert(std::make_pair(attendee, params));
 }
 
@@ -280,6 +282,14 @@ std::string Ics::Icalendar::asString() const {
 	return bctoolbox::Utils::fold(output.str());
 }
 
+std::shared_ptr<ParticipantInfo>
+Ics::Icalendar::fillParticipantInfo(const std::shared_ptr<Address> &address,
+                                    const Ics::Event::attendee_params_t &params) const {
+	auto participantInfo = ParticipantInfo::create(address);
+	participantInfo->setParameters(params);
+	return participantInfo;
+}
+
 std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 	if (mEvents.empty()) return nullptr;
 
@@ -287,11 +297,11 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 	const auto &event = mEvents.front(); // It should always be one event
 
 	if (!event->getOrganizerAddress().empty()) {
-		const auto &org = event->getOrganizer();
-		const auto &orgAddress = Address::create(org.first);
-		const auto &orgParams = org.second;
+		const auto &[orgAddressStr, orgParams] = event->getOrganizer();
+		const auto &orgAddress = Address::create(orgAddressStr);
 		if (orgAddress && orgAddress->isValid()) {
-			confInfo->setOrganizer(orgAddress, orgParams);
+			const auto organizerInfo = fillParticipantInfo(orgAddress, orgParams);
+			confInfo->setOrganizer(organizerInfo);
 		} else {
 			lWarning() << "Could not parse organizer's address: " << event->getOrganizerAddress()
 			           << " because it is not a valid address";
@@ -302,7 +312,8 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 		if (!address.empty()) {
 			const auto addr = Address::create(address);
 			if (addr && addr->isValid()) {
-				confInfo->addParticipant(addr, params);
+				const auto participantInfo = fillParticipantInfo(addr, params);
+				confInfo->addParticipant(participantInfo);
 			} else {
 				lWarning() << "Could not parse attendee's address: " << address << " because it is not a valid address";
 			}

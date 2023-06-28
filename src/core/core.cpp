@@ -878,7 +878,7 @@ bool Core::hasSpec(const std::string &spec) const {
 #if __GNUC__ == 7
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
+#endif //  __GNUC__ == 7
 	const auto [name, version] = Core::getSpecNameVersion(spec);
 #if __GNUC__ == 7
 #pragma GCC diagnostic pop
@@ -893,7 +893,7 @@ void Core::removeSpec(const std::string &spec) {
 #if __GNUC__ == 7
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
+#endif //  __GNUC__ == 7
 	const auto [name, version] = Core::getSpecNameVersion(spec);
 #if __GNUC__ == 7
 #pragma GCC diagnostic pop

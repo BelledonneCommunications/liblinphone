@@ -161,29 +161,24 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t *sdp)
 
 	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
 	value = belle_sdp_session_description_get_attribute_value(sdp, "ice-ufrag");
-	if (value)
-		ice_ufrag = L_C_TO_STRING(value);
+	if (value) ice_ufrag = L_C_TO_STRING(value);
 
 	value = belle_sdp_session_description_get_attribute_value(sdp, "ice-pwd");
-	if (value)
-		ice_pwd = L_C_TO_STRING(value);
+	if (value) ice_pwd = L_C_TO_STRING(value);
 
 	value = belle_sdp_session_description_get_attribute_value(sdp, "ice-lite");
-	if (value)
-		ice_lite = true;
+	if (value) ice_lite = true;
 
 	/* Get session RTCP-XR attributes if any */
 	sdp_parse_session_rtcp_xr_parameters(sdp, &rtcp_xr);
 
 	/* Do we have Lime Ik attribute */
 	value = belle_sdp_session_description_get_attribute_value(sdp, "Ik");
-	if (value)
-		haveLimeIk = true;
+	if (value) haveLimeIk = true;
 
 	/* get ready to parse also lime-Ik */
 	value = belle_sdp_session_description_get_attribute_value(sdp, "lime-Ik");
-	if (value)
-		haveLimeIk = true;
+	if (value) haveLimeIk = true;
 
 	value = belle_sdp_session_description_get_attribute_value(sdp, "record");
 	if (value) {
@@ -259,8 +254,7 @@ bool SalMediaDescription::hasDir(const SalStreamDir &stream_dir) const {
 		if (containsStreamWithDir(SalStreamSendOnly) || containsStreamWithDir(SalStreamSendRecv) ||
 		    containsStreamWithDir(SalStreamRecvOnly))
 			return false;
-		else
-			return true;
+		else return true;
 	}
 	return false;
 }
@@ -272,8 +266,7 @@ const SalMediaDescriptionParams &SalMediaDescription::getParams() const {
 bool SalMediaDescription::containsStreamWithDir(const SalStreamDir &stream_dir, const SalStreamType &type) const {
 	/* we are looking for at least one stream with requested direction, inactive streams are ignored*/
 	for (auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
+		if (!stream.enabled()) continue;
 		if ((stream.getType() == type) && (stream.getDirection() == stream_dir)) {
 			return true;
 		}
@@ -289,8 +282,7 @@ bool SalMediaDescription::containsStreamWithDir(const SalStreamDir &stream_dir, 
 bool SalMediaDescription::containsStreamWithDir(const SalStreamDir &stream_dir) const {
 	/* we are looking for at least one stream with requested direction, inactive streams are ignored*/
 	for (auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
+		if (!stream.enabled()) continue;
 		if (stream.getDirection() == stream_dir) {
 			return true;
 		}
@@ -352,8 +344,7 @@ std::list<int> SalMediaDescription::getTransportOwnerIndexes() const {
 int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription &sd) const {
 	std::string master_mid;
 	int index;
-	if (sd.getChosenConfiguration().getMid().empty() == true)
-		return -1; /* not part of any bundle */
+	if (sd.getChosenConfiguration().getMid().empty() == true) return -1; /* not part of any bundle */
 	/* lookup the mid in the bundle descriptions */
 	const auto &bundle = getBundleFromMid(sd.getChosenConfiguration().getMid());
 	if (bundle == Utils::getEmptyConstRefObject<SalStreamBundle>()) {
@@ -407,7 +398,7 @@ SalMediaDescription::findStreamItWithLabel(SalStreamType type, const std::string
 }
 
 const SalStreamDescription &SalMediaDescription::findStreamWithLabel(SalStreamType type,
-																	 const std::string label) const {
+                                                                     const std::string label) const {
 	const auto &streamIt = findStreamItWithLabel(type, label);
 	if (streamIt != streams.end()) {
 		return *streamIt;
@@ -477,7 +468,7 @@ std::vector<SalStreamDescription>::const_iterator
 SalMediaDescription::findStreamItWithContent(const std::string content, const std::string label) const {
 	const auto &streamIt = std::find_if(streams.cbegin(), streams.cend(), [&content, &label](const auto &stream) {
 		return ((content.empty() && stream.getContent().empty()) || stream.getContent().compare(content) == 0) &&
-			   (stream.getLabel().compare(label) == 0);
+		       ((label.empty() && stream.getLabel().empty()) || (stream.getLabel().compare(label) == 0));
 	});
 	return streamIt;
 }
@@ -502,8 +493,7 @@ int SalMediaDescription::findIdxStreamWithContent(const std::string content, con
 unsigned int SalMediaDescription::nbStreamsOfType(SalStreamType type) const {
 	unsigned int nb = 0;
 	for (const auto &stream : streams) {
-		if (stream.getType() == type)
-			nb++;
+		if (stream.getType() == type) nb++;
 	}
 	return nb;
 }
@@ -511,8 +501,7 @@ unsigned int SalMediaDescription::nbStreamsOfType(SalStreamType type) const {
 unsigned int SalMediaDescription::nbActiveStreamsOfType(SalStreamType type) const {
 	unsigned int nb = 0;
 	for (const auto &stream : streams) {
-		if (stream.enabled() && (stream.getType() == type))
-			nb++;
+		if (stream.enabled() && (stream.getType() == type)) nb++;
 	}
 	return nb;
 }
@@ -529,8 +518,7 @@ const SalStreamDescription &SalMediaDescription::getActiveStreamOfType(SalStream
 
 const SalStreamDescription &SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
 	auto idx = findIdxStream(SalProtoRtpSavpf, type);
-	if (idx == -1)
-		idx = findIdxStream(SalProtoRtpSavp, type);
+	if (idx == -1) idx = findIdxStream(SalProtoRtpSavp, type);
 	if (idx != -1) {
 		return getStreamIdx(static_cast<unsigned int>(idx));
 	}
@@ -547,16 +535,11 @@ const SalStreamDescription &SalMediaDescription::findBestStream(SalStreamType ty
 
 int SalMediaDescription::findIdxBestStream(SalStreamType type) const {
 	auto idx = findIdxStream(SalProtoUdpTlsRtpSavpf, type);
-	if (idx == -1)
-		idx = findIdxStream(SalProtoUdpTlsRtpSavp, type);
-	if (idx == -1)
-		idx = findIdxStream(SalProtoRtpSavpf, type);
-	if (idx == -1)
-		idx = findIdxStream(SalProtoRtpSavp, type);
-	if (idx == -1)
-		idx = findIdxStream(SalProtoRtpAvpf, type);
-	if (idx == -1)
-		idx = findIdxStream(SalProtoRtpAvp, type);
+	if (idx == -1) idx = findIdxStream(SalProtoUdpTlsRtpSavp, type);
+	if (idx == -1) idx = findIdxStream(SalProtoRtpSavpf, type);
+	if (idx == -1) idx = findIdxStream(SalProtoRtpSavp, type);
+	if (idx == -1) idx = findIdxStream(SalProtoRtpAvpf, type);
+	if (idx == -1) idx = findIdxStream(SalProtoRtpAvp, type);
 	return idx;
 }
 
@@ -597,7 +580,7 @@ const SalStreamDescription &SalMediaDescription::findStreamWithSdpAttribute(
 }
 
 std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(
-	const std::vector<std::pair<std::string, std::string>> &attributes) const {
+    const std::vector<std::pair<std::string, std::string>> &attributes) const {
 	return std::find_if(streams.cbegin(), streams.cend(), [&attributes](const auto &stream) {
 		bool found = true;
 		for (const auto &[attrName, attrValue] : attributes) {
@@ -613,7 +596,7 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStrea
 }
 
 std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(
-	const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &attributes) const {
+    const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &attributes) const {
 	return std::find_if(streams.cbegin(), streams.cend(), [&type, &attributes](const auto &stream) {
 		bool found = true;
 		for (const auto &[attrName, attrValue] : attributes) {
@@ -629,11 +612,11 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStrea
 }
 
 std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findFirstStreamItOfType(SalStreamType type,
-																							   int startingIdx) const {
+                                                                                               int startingIdx) const {
 	auto streamSize = static_cast<int>(streams.size());
 	auto idx = (startingIdx < 0) ? 0 : ((startingIdx >= streamSize) ? (streamSize - 1) : startingIdx);
 	const auto &streamIt = std::find_if(streams.cbegin() + idx, streams.cend(),
-										[&type](const auto &stream) { return (stream.getType() == type); });
+	                                    [&type](const auto &stream) { return (stream.getType() == type); });
 	return streamIt;
 }
 
@@ -664,23 +647,20 @@ const std::list<SalStreamDescription> SalMediaDescription::findAllStreamsOfType(
 }
 
 bool SalMediaDescription::isEmpty() const {
-	if (getNbActiveStreams() > 0)
-		return false;
+	if (getNbActiveStreams() > 0) return false;
 	return true;
 }
 
 bool SalMediaDescription::isAcceptable() const {
 	for (auto &stream : streams) {
-		if (!stream.isAcceptable())
-			return false;
+		if (!stream.isAcceptable()) return false;
 	}
 	return true;
 }
 
 void SalMediaDescription::setDir(SalStreamDir stream_dir) {
 	for (auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
+		if (!stream.enabled()) continue;
 		stream.setDirection(stream_dir);
 	}
 }
@@ -688,8 +668,7 @@ void SalMediaDescription::setDir(SalStreamDir stream_dir) {
 int SalMediaDescription::getNbActiveStreams() const {
 	int nb = 0;
 	for (auto &stream : streams) {
-		if (stream.enabled())
-			nb++;
+		if (stream.enabled()) nb++;
 	}
 	return nb;
 }
@@ -699,8 +678,7 @@ bool SalMediaDescription::hasIceParams() const {
 	bool foundIceCandidates = true;
 	bool foundIceStreamDescParams = true;
 	for (const auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
+		if (!stream.enabled()) continue;
 		foundIceCandidates &= stream.hasIceCandidates();
 		foundIceStreamDescParams &= stream.hasIceParams();
 	}
@@ -710,61 +688,46 @@ bool SalMediaDescription::hasIceParams() const {
 }
 
 bool SalMediaDescription::hasAvpf() const {
-	if (streams.empty())
-		return false;
+	if (streams.empty()) return false;
 	for (const auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
-		if (stream.hasAvpf() != true)
-			return false;
+		if (!stream.enabled()) continue;
+		if (stream.hasAvpf() != true) return false;
 	}
 	return true;
 }
 
 bool SalMediaDescription::hasImplicitAvpf() const {
-	if (streams.empty())
-		return false;
+	if (streams.empty()) return false;
 	for (const auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
-		if (stream.hasImplicitAvpf() != true)
-			return false;
+		if (!stream.enabled()) continue;
+		if (stream.hasImplicitAvpf() != true) return false;
 	}
 	return true;
 }
 
 bool SalMediaDescription::hasSrtp() const {
-	if (streams.empty())
-		return false;
+	if (streams.empty()) return false;
 	for (const auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
-		if (stream.hasSrtp() != true)
-			return false;
+		if (!stream.enabled()) continue;
+		if (stream.hasSrtp() != true) return false;
 	}
 	return true;
 }
 
 bool SalMediaDescription::hasDtls() const {
-	if (streams.empty())
-		return false;
+	if (streams.empty()) return false;
 	for (const auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
-		if (stream.hasDtls() != true)
-			return false;
+		if (!stream.enabled()) continue;
+		if (stream.hasDtls() != true) return false;
 	}
 	return true;
 }
 
 bool SalMediaDescription::hasZrtp() const {
-	if (streams.empty())
-		return false;
+	if (streams.empty()) return false;
 	for (const auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
-		if (stream.hasZrtp() != true)
-			return false;
+		if (!stream.enabled()) continue;
+		if (stream.hasZrtp() != true) return false;
 	}
 	return true;
 }
@@ -774,17 +737,13 @@ bool SalMediaDescription::hasLimeIk() const {
 }
 
 bool SalMediaDescription::hasIpv6() const {
-	if (streams.empty())
-		return false;
+	if (streams.empty()) return false;
 	for (const auto &stream : streams) {
-		if (!stream.enabled())
-			continue;
+		if (!stream.enabled()) continue;
 		if (stream.getRtpAddress().empty() == false) {
-			if (!stream.hasIpv6())
-				return false;
+			if (!stream.hasIpv6()) return false;
 		} else {
-			if (addr.find(':') == std::string::npos)
-				return false;
+			if (addr.find(':') == std::string::npos) return false;
 		}
 	}
 	return true;
@@ -801,9 +760,8 @@ bool SalMediaDescription::operator!=(const SalMediaDescription &other) const {
 int SalMediaDescription::compareToActualConfiguration(const SalMediaDescription &otherMd) const {
 	int result = globalEqual(otherMd);
 	for (auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin();
-		 (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2) {
-		if (!stream1->enabled() && !stream2->enabled())
-			continue;
+	     (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2) {
+		if (!stream1->enabled() && !stream2->enabled()) continue;
 		result |= stream1->compareToActualConfiguration(*stream2);
 	}
 	return result;
@@ -812,9 +770,8 @@ int SalMediaDescription::compareToActualConfiguration(const SalMediaDescription 
 int SalMediaDescription::compareToChosenConfiguration(const SalMediaDescription &otherMd) const {
 	int result = globalEqual(otherMd);
 	for (auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin();
-		 (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2) {
-		if (!stream1->enabled() && !stream2->enabled())
-			continue;
+	     (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2) {
+		if (!stream1->enabled() && !stream2->enabled()) continue;
 		result |= stream1->compareToChosenConfiguration(*stream2);
 	}
 	return result;
@@ -823,9 +780,8 @@ int SalMediaDescription::compareToChosenConfiguration(const SalMediaDescription 
 int SalMediaDescription::equal(const SalMediaDescription &otherMd) const {
 	int result = globalEqual(otherMd);
 	for (auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin();
-		 (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2) {
-		if (!stream1->enabled() && !stream2->enabled())
-			continue;
+	     (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2) {
+		if (!stream1->enabled() && !stream2->enabled()) continue;
 		result |= stream1->equal(*stream2);
 	}
 	return result;
@@ -834,15 +790,12 @@ int SalMediaDescription::equal(const SalMediaDescription &otherMd) const {
 int SalMediaDescription::globalEqual(const SalMediaDescription &otherMd) const {
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
-	if (addr.compare(otherMd.addr) != 0)
-		result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if (addr.compare(otherMd.addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	if (addr.empty() == false && otherMd.addr.empty() == false &&
-		ms_is_multicast(L_STRING_TO_C(addr)) != ms_is_multicast(L_STRING_TO_C(otherMd.addr)))
+	    ms_is_multicast(L_STRING_TO_C(addr)) != ms_is_multicast(L_STRING_TO_C(otherMd.addr)))
 		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
-	if (streams.size() != otherMd.streams.size())
-		result |= SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
-	if (bandwidth != otherMd.bandwidth)
-		result |= SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED;
+	if (streams.size() != otherMd.streams.size()) result |= SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
+	if (bandwidth != otherMd.bandwidth) result |= SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED;
 
 	/* ICE */
 	if (ice_ufrag.compare(otherMd.ice_ufrag) != 0 && !otherMd.ice_ufrag.empty())
@@ -926,8 +879,7 @@ const std::string SalMediaDescription::printDifferences(int result) {
 	if (result) {
 		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::printDifferences(), fix it");
 	}
-	if (out.empty())
-		out = "NONE";
+	if (out.empty()) out = "NONE";
 	return out;
 }
 

@@ -45,7 +45,7 @@ RemoteConference::RemoteConference(const shared_ptr<Core> &core,
                                    const std::shared_ptr<LinphonePrivate::CallSession> &focusSession,
                                    const std::shared_ptr<Address> &confAddr,
                                    const ConferenceId &conferenceId,
-                                   const std::list<std::shared_ptr<Address>> &invitees,
+                                   const ConferenceInfo::participant_list_t &invitees,
                                    CallSessionListener *listener,
                                    const std::shared_ptr<LinphonePrivate::ConferenceParams> params)
     : Conference(core, conferenceId.getLocalAddress(), listener, params) {
@@ -68,7 +68,7 @@ RemoteConference::RemoteConference(const shared_ptr<Core> &core,
 #endif
 	getMe()->setAdmin((organizer == nullptr) || organizer->weakEqual(*(getMe()->getAddress())));
 
-	invitedAddresses = invitees;
+	mInvitedParticipants = invitees;
 
 	setState(ConferenceInterface::State::Instantiated);
 
@@ -168,8 +168,16 @@ void RemoteConference::finalizeCreation() {
 std::shared_ptr<ConferenceInfo> RemoteConference::createConferenceInfo() const {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
-	const auto organizer = (referer) ? referer->getRemoteAddress() : getMe()->getAddress();
-	return createConferenceInfoWithOrganizer(organizer);
+	const auto guessedOrganizer = getOrganizer();
+	std::shared_ptr<Address> organizer = nullptr;
+	if (guessedOrganizer) {
+		organizer = guessedOrganizer;
+	} else if (referer) {
+		organizer = referer->getRemoteAddress();
+	} else {
+		organizer = getMe()->getAddress();
+	}
+	return createConferenceInfoWithCustomParticipantList(organizer, getFullParticipantList());
 }
 
 void RemoteConference::setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> &session) {
@@ -1335,7 +1343,14 @@ void RemoteConference::onParticipantDeviceRemoved(
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams *params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) &&
+	const auto &confSecurityLevel = confParams->getSecurityLevel();
+	const auto &audioAvailable = device->getStreamAvailability(LinphoneStreamTypeAudio);
+	const auto audioNeedsReInvite = ((confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd) &&
+	                                 confParams->audioEnabled() && params->audioEnabled() && audioAvailable);
+
+	const auto videoNeedsReInvite = (confParams->videoEnabled() && params->videoEnabled());
+
+	if ((audioNeedsReInvite || videoNeedsReInvite) && (getState() == ConferenceInterface::State::Created) &&
 	    !isMe(device->getAddress()) && (device->getTimeOfJoining() >= 0)) {
 		auto updateSession = [this, device]() -> LinphoneStatus {
 			lInfo() << "Sending re-INVITE in order to update streams because participant device "
@@ -1368,16 +1383,12 @@ void RemoteConference::onParticipantDeviceStateChanged(
 		return (*devAddr == contactAddress);
 	});
 
-	const auto &audioDir = device->getStreamCapability(LinphoneStreamTypeAudio);
+	const auto &audioAvailable = device->getStreamAvailability(LinphoneStreamTypeAudio);
 	const auto &confSecurityLevel = confParams->getSecurityLevel();
-	const auto audioNeedsReInvite =
-	    ((confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd) && confParams->audioEnabled() &&
-	     params->audioEnabled() &&
-	     ((audioDir == LinphoneMediaDirectionSendOnly) || (audioDir == LinphoneMediaDirectionSendRecv)));
-	const auto &videoDir = device->getStreamCapability(LinphoneStreamTypeVideo);
-	const auto videoNeedsReInvite =
-	    (confParams->videoEnabled() && params->videoEnabled() &&
-	     ((videoDir == LinphoneMediaDirectionSendOnly) || (videoDir == LinphoneMediaDirectionSendRecv)));
+	const auto audioNeedsReInvite = ((confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd) &&
+	                                 confParams->audioEnabled() && params->audioEnabled() && audioAvailable);
+	const auto &videoAvailable = device->getStreamAvailability(LinphoneStreamTypeVideo);
+	const auto videoNeedsReInvite = (confParams->videoEnabled() && params->videoEnabled() && videoAvailable);
 	if ((getState() == ConferenceInterface::State::Created) && (callIt == m_pendingCalls.cend()) && isIn() &&
 	    (device->getState() == ParticipantDevice::State::Present) && ((videoNeedsReInvite || audioNeedsReInvite))) {
 		auto updateSession = [this, device]() -> LinphoneStatus {

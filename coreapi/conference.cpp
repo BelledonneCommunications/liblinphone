@@ -21,9 +21,11 @@
 #include "conference.h"
 #include "call/call.h"
 #include "conference/notify-conference-listener.h"
+#include "conference/participant-info.h"
 #include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "core/core.h"
+#include "factory/factory.h"
 #include "linphone/api/c-call.h"
 #include "linphone/core.h"
 
@@ -212,6 +214,40 @@ bool Conference::isConferenceStarted() const {
 	return conferenceStarted;
 }
 
+void Conference::fillParticipantAttributes(std::shared_ptr<Participant> &p) {
+	const auto &pAddress = p->getAddress();
+	const auto participantInfo =
+	    std::find_if(mInvitedParticipants.cbegin(), mInvitedParticipants.cend(),
+	                 [&pAddress](const auto &info) { return pAddress->weakEqual(*info->getAddress()); });
+	const auto conferenceAddressStr =
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<address-not-defined>"));
+
+	if (participantInfo == mInvitedParticipants.cend()) {
+		if (mInvitedParticipants.empty()) {
+			// It is a conference created on the fly, therefore all participants are speakers
+			p->setRole(Participant::Role::Speaker);
+			lInfo() << "Conference " << this << " (address " << conferenceAddressStr
+			        << ") has been created on the fly, either by inviting addresses or by merging existing calls "
+			           "therefoe participant "
+			        << *pAddress << " is given the role of " << p->getRole();
+		} else {
+			lInfo() << "Unable to find participant " << *pAddress
+			        << " in the list of invited participants. Assuming its role to be " << p->getRole()
+			        << " in conference " << this << " (address " << conferenceAddressStr << ")";
+		}
+	} else {
+		const auto &role = (*participantInfo)->getRole();
+		if (role == Participant::Role::Unknown) {
+			p->setRole(Participant::Role::Speaker);
+			lInfo() << "No role was given to participant " << *pAddress << " when the conference " << this
+			        << " (address " << conferenceAddressStr << ") was created. Assuming its role to be "
+			        << p->getRole();
+		} else {
+			p->setRole(role);
+		}
+	}
+}
+
 bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	bool success = LinphonePrivate::Conference::addParticipant(participantAddress);
 
@@ -222,6 +258,7 @@ bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddre
 		        << conferenceAddressStr;
 		time_t creationTime = time(nullptr);
 		std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(participantAddress);
+		fillParticipantAttributes(p);
 		notifyParticipantAdded(creationTime, false, p);
 	} else {
 		lError() << "Unable to add participant with address " << *participantAddress << " to conference "
@@ -239,6 +276,7 @@ bool Conference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call) {
 	if (p == nullptr) {
 		auto session = call->getActiveSession();
 		p = Participant::create(this, remoteAddress);
+		fillParticipantAttributes(p);
 		p->setFocus(false);
 		std::shared_ptr<Address> toAddr;
 		if (session) {
@@ -444,27 +482,6 @@ void Conference::setState(LinphonePrivate::ConferenceInterface::State state) {
 	}
 }
 
-std::shared_ptr<ConferenceInfo>
-Conference::createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const {
-
-	std::list<std::shared_ptr<Address>> participantAddresses;
-	if (!invitedAddresses.empty()) {
-		participantAddresses = invitedAddresses;
-	}
-
-	// Add participants that are not part of the invitees'list
-	for (const auto &p : getParticipants()) {
-		const auto &pAddress = p->getAddress();
-		auto pIt = std::find_if(participantAddresses.begin(), participantAddresses.end(),
-		                        [&pAddress](const auto &address) { return (pAddress->weakEqual(*address)); });
-		if (pIt == participantAddresses.end()) {
-			participantAddresses.push_back(pAddress);
-		}
-	}
-
-	return createConferenceInfoWithCustomParticipantList(organizer, participantAddresses);
-}
-
 void Conference::notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) {
 	// Call listeners
 	LinphonePrivate::Conference::notifyStateChanged(state);
@@ -513,6 +530,30 @@ void Conference::transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered
 	if (conf) {
 		conf->transferStateChangedCb(lc, transfered, new_call_state);
 	}
+}
+
+std::list<std::shared_ptr<Address>> Conference::getInvitedAddresses() const {
+	list<std::shared_ptr<Address>> addresses;
+	for (auto &participant : mInvitedParticipants) {
+		addresses.push_back(participant->getAddress());
+	}
+	return addresses;
+}
+
+ConferenceInfo::participant_list_t Conference::getFullParticipantList() const {
+	auto participantList = mInvitedParticipants;
+	// Add participants that are not part of the invitees'list
+	for (const auto &p : getParticipants()) {
+		const auto &pAddress = p->getAddress();
+		auto pIt = std::find_if(participantList.begin(), participantList.end(), [&pAddress](const auto &participant) {
+			return (pAddress->weakEqual(*participant->getAddress()));
+		});
+		if (pIt == participantList.end()) {
+			auto participantInfo = Factory::get()->createParticipantInfo(pAddress);
+			participantList.push_back(participantInfo);
+		}
+	}
+	return participantList;
 }
 
 } // end of namespace MediaConference

@@ -132,8 +132,16 @@ static void abort_call_to_ice_conference(void) {
 
 		stats focus_stat = focus.getStats();
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time,
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
+		for (auto &p : participants) {
+			participantList.insert(std::make_pair(p, role));
+			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
+			                                                : LinphoneParticipantRoleSpeaker;
+		}
+		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
 		                                                        initialSubject, description, TRUE, security_level);
+
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS

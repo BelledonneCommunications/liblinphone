@@ -542,10 +542,9 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 				time_t endTime = startTime + static_cast<time_t>(duration) * 60;
 				confParams->setEndTime(endTime);
 			}
-			std::list<std::shared_ptr<Address>> invitees{conferenceInfo->getOrganizerAddress()};
-			for (const auto &participant : conferenceInfo->getParticipants()) {
-				invitees.push_back(participant.first);
-			}
+			auto invitees = conferenceInfo->getParticipants();
+			const auto &organizer = conferenceInfo->getOrganizer();
+			invitees.push_back(organizer);
 
 			const std::shared_ptr<Address> confAddr = conferenceInfo->getUri();
 			const ConferenceId confId(confAddr, session->getLocalAddress());
@@ -558,9 +557,10 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			const auto &remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
 			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
 			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
-			auto organizer = Utils::getSipFragAddress(sipfrag);
 			auto invitees = Utils::parseResourceLists(resourceList);
-			invitees.push_back(Address::create(organizer));
+			const auto organizer = Utils::getSipFragAddress(sipfrag);
+			auto organizerInfo = Factory::get()->createParticipantInfo(Address::create(organizer));
+			invitees.push_back(organizerInfo);
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(
 			    new MediaConference::RemoteConference(getCore(), session, remoteContactAddress, conferenceId, invitees,
 			                                          nullptr, confParams),

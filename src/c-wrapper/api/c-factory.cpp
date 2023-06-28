@@ -21,6 +21,7 @@
 #include <bctoolbox/defs.h>
 
 #include "c-wrapper/c-wrapper.h"
+#include "conference/participant-info.h"
 #include "factory/factory.h"
 #include "linphone/api/c-factory.h"
 
@@ -464,6 +465,12 @@ LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_c
 	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo =
 	    Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
 	return conferenceInfo ? linphone_conference_info_ref(conferenceInfo->toC()) : nullptr;
+}
+
+LinphoneParticipantInfo *linphone_factory_create_participant_info(LinphoneFactory *factory, LinphoneAddress *address) {
+	std::shared_ptr<LinphonePrivate::ParticipantInfo> participantInfo =
+	    Factory::toCpp(factory)->createParticipantInfo(Address::toCpp(address)->getSharedFromThis());
+	return participantInfo ? linphone_participant_info_ref(participantInfo->toC()) : nullptr;
 }
 
 LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs(LinphoneFactory *factory) {

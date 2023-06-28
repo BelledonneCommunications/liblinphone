@@ -33,7 +33,7 @@ class EventSubscribe;
 class EventPublish;
 
 namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
-                            // src/conference/*
+	                        // src/conference/*
 
 /*
  * Class for an audio/video conference running locally.
@@ -172,6 +172,9 @@ private:
 	bool mIsIn = false;
 	std::shared_ptr<Address> organizer;
 	static constexpr int confIdLength = 10;
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
+#endif // HAVE_ADVANCED_IM
 
 	bool validateNewParameters(const LinphonePrivate::ConferenceParams &newConfParams) const;
 	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> &session);
@@ -184,12 +187,10 @@ private:
 	void checkIfTerminated();
 	std::list<std::shared_ptr<Address>> getAllowedAddresses() const;
 	void configure(SalCallOp *op);
+	void fillInvitedParticipantList(SalCallOp *op, bool cancelling);
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
-#ifdef HAVE_ADVANCED_IM
-	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
-#endif // HAVE_ADVANCED_IM
 
 	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const override;
 	bool tryAddMeDevice();

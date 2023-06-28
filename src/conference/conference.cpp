@@ -23,6 +23,7 @@
 #include "conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-device.h"
+#include "conference/participant-info.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session.h"
 #include "content/content-disposition.h"
@@ -715,22 +716,14 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
 	return nullptr;
 }
 
-std::shared_ptr<ConferenceInfo>
-Conference::createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const {
-	// Add participants that are currently in the conference
-	std::list<std::shared_ptr<Address>> participantAddresses;
-	for (const auto &p : getParticipants()) {
-		const auto &pAddress = p->getAddress();
-		participantAddresses.push_back(pAddress);
-	}
-
-	return createConferenceInfoWithCustomParticipantList(organizer, participantAddresses);
-}
-
 std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomParticipantList(
-    const std::shared_ptr<Address> &organizer, const std::list<std::shared_ptr<Address>> invitedParticipants) const {
+    const std::shared_ptr<Address> &organizer, const ConferenceInfo::participant_list_t invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
-	info->setOrganizer(organizer);
+	auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
+	for (const auto &[name, value] : organizer->getParams()) {
+		organizerInfo->addParameter(name, value);
+	}
+	info->setOrganizer(organizerInfo);
 	for (const auto &participant : invitedParticipants) {
 		info->addParticipant(participant);
 	}
@@ -823,9 +816,9 @@ void Conference::updateParticipantsInConferenceInfo(const std::shared_ptr<Addres
 		auto info = createOrGetConferenceInfo();
 		if (info) {
 			const auto &currentParticipants = info->getParticipants();
-			const auto participantAddressIt =
-			    std::find_if(currentParticipants.begin(), currentParticipants.end(),
-			                 [&participantAddress](const auto &p) { return (*p.first == *participantAddress); });
+			const auto participantAddressIt = std::find_if(
+			    currentParticipants.begin(), currentParticipants.end(),
+			    [&participantAddress](const auto &p) { return (participantAddress->weakEqual(*p->getAddress())); });
 			if (participantAddressIt == currentParticipants.end()) {
 				info->addParticipant(participantAddress);
 

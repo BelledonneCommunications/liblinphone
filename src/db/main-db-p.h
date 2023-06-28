@@ -26,6 +26,7 @@
 #include "linphone/utils/utils.h"
 
 #include "abstract/abstract-db-p.h"
+#include "conference/participant-info.h"
 #include "containers/lru-cache.h"
 #include "event-log/event-log.h"
 #include "main-db.h"
@@ -73,10 +74,10 @@ private:
 	long long insertOrUpdateConferenceInfoParticipant(long long conferenceInfoId,
 	                                                  long long participantSipAddressId,
 	                                                  bool deleted,
-	                                                  const ConferenceInfo::participant_params_t params);
+	                                                  const ParticipantInfo::participant_params_t params);
 	long long insertOrUpdateConferenceInfoOrganizer(long long conferenceInfoId,
 	                                                long long organizerSipAddressId,
-	                                                const ConferenceInfo::participant_params_t params);
+	                                                const ParticipantInfo::participant_params_t params);
 	long long insertOrUpdateConferenceCall(const std::shared_ptr<CallLog> &callLog,
 	                                       const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 

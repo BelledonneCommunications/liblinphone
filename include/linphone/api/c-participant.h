@@ -125,6 +125,13 @@ LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device(cons
 LINPHONE_PUBLIC time_t linphone_participant_get_creation_time(const LinphoneParticipant *participant);
 
 /**
+ * Get the role of the participant within the conference
+ * @param participant A #LinphoneParticipant object @notnil
+ * @return role within the conference #LinphoneParticipantRole
+ */
+LINPHONE_PUBLIC LinphoneParticipantRole linphone_participant_get_role(const LinphoneParticipant *participant);
+
+/**
  * @}
  */
 

@@ -324,17 +324,25 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 			auto &roles = user.getRoles();
 			if (roles) {
-
 				auto &entry = roles->getEntry();
+
+				// Admin
 				bool isAdmin = (find(entry, "admin") != entry.end() ? true : false);
-
 				if (participant->isAdmin() != isAdmin) {
-
 					participant->setAdmin(isAdmin);
-
 					if (!isFullState) {
 						conf->notifyParticipantSetAdmin(creationTime, isFullState, participant, isAdmin);
 					}
+				}
+
+				// Role
+				bool isSpeaker = (find(entry, "speaker") != entry.end() ? true : false);
+				bool isListener = (find(entry, "listener") != entry.end() ? true : false);
+				if (isListener) {
+					participant->setRole(Participant::Role::Listener);
+				} else if (isSpeaker || (state == StateType::full)) {
+					// When a participant is added, then set its role to speaker by default to be backward compatible
+					participant->setRole(Participant::Role::Speaker);
 				}
 			}
 
@@ -425,7 +433,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					                        }
 					                    }
 					*/
-					bool mediaCapabilityChanged = false;
+					std::set<LinphoneStreamType> mediaCapabilityChanged;
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
 						LinphoneStreamType streamType = LinphoneStreamTypeUnknown;
@@ -441,7 +449,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 						LinphoneMediaDirection mediaDirection =
 						    RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
-						mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, streamType);
+						if (device->setStreamCapability(mediaDirection, streamType)) {
+							mediaCapabilityChanged.insert(streamType);
+						}
 						if (media.getLabel()) {
 							const std::string label = media.getLabel().get();
 							if (!label.empty()) {
@@ -459,19 +469,19 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						}
 					}
 
-					bool mediaAvailabilityChanged = device->updateStreamAvailabilities();
+					auto mediaAvailabilityChanged = device->updateStreamAvailabilities();
 					// Do not notify availability changed during full states and participant addition because it is
 					// already done by the listener method onFullStateReceived
 					if (!isFullState && (state != StateType::full) &&
 					    (previousDeviceState != ParticipantDevice::State::ScheduledForJoining) &&
 					    (previousDeviceState != ParticipantDevice::State::Joining) &&
 					    (previousDeviceState != ParticipantDevice::State::Alerting)) {
-						if (mediaAvailabilityChanged) {
+						if (!mediaAvailabilityChanged.empty()) {
 							conf->notifyParticipantDeviceMediaAvailabilityChanged(creationTime, isFullState,
 							                                                      participant, device);
 						}
 
-						if (mediaCapabilityChanged) {
+						if (!mediaCapabilityChanged.empty()) {
 							conf->notifyParticipantDeviceMediaCapabilityChanged(creationTime, isFullState, participant,
 							                                                    device);
 						}

@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+#include "participant.h"
+
 #include "core/core.h"
 #include "params/media-session-params.h"
 #include "participant.h"
@@ -140,13 +142,13 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<
 	 * we cannot afford to call Address:toString() for nothing when logs are disabled */
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
 		if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_MESSAGE)) {
-			lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
-			        << " to participant " << getAddress()->toString();
+			lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << *gruu
+			        << " to participant " << *getAddress();
 		}
 	} else {
 		if (bctbx_log_level_enabled(BCTBX_LOG_DOMAIN, BCTBX_LOG_DEBUG)) {
-			lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu->toString()
-			         << " to participant " << getAddress()->toString();
+			lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << *gruu
+			         << " to participant " << *getAddress();
 		}
 	}
 	device = ParticipantDevice::create(getSharedFromThis(), gruu, name);
@@ -295,6 +297,39 @@ void *Participant::getUserData() const {
 
 void Participant::setUserData(void *ud) {
 	mUserData = ud;
+}
+
+string Participant::roleToText(const Participant::Role &role) {
+	std::string roleText = std::string();
+	switch (role) {
+		case Participant::Role::Speaker:
+			roleText = "speaker";
+			break;
+		case Participant::Role::Listener:
+			roleText = "listener";
+			break;
+		case Participant::Role::Unknown:
+			roleText = "unknown";
+			break;
+	}
+	return roleText;
+}
+
+Participant::Role Participant::textToRole(const string &str) {
+	Participant::Role role = Participant::Role::Speaker;
+	if (str.compare("speaker") == 0) {
+		role = Participant::Role::Speaker;
+	} else if (str.compare("listener") == 0) {
+		role = Participant::Role::Listener;
+	} else if (str.compare("unknown") == 0) {
+		role = Participant::Role::Unknown;
+	}
+	return role;
+}
+
+ostream &operator<<(ostream &stream, Participant::Role role) {
+	const auto &str = Participant::roleToText(role);
+	return stream << str;
 }
 
 LINPHONE_END_NAMESPACE

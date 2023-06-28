@@ -24,6 +24,8 @@
 #include "belle-sip/object++.hh"
 
 #include "conference-cbs.h"
+#include "conference/conference-interface.h"
+#include "conference/conference.h"
 #include "linphone/conference.h"
 #include "linphone/utils/general.h"
 
@@ -63,8 +65,19 @@ void linphone_conference_set_state_changed_callback(LinphoneConference *obj,
 
 LINPHONE_BEGIN_NAMESPACE
 
+class AudioControlInterface;
+class VideoControlInterface;
+class MixerSession;
+class ConferenceParams;
+class Call;
+class CallSession;
+class CallSessionListener;
+class ParticipantDevice;
+class AudioDevice;
+class ConferenceId;
+
 namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
-                            // src/conference/*
+	                        // src/conference/*
 
 /*
  * Base class for audio/video conference.
@@ -180,7 +193,7 @@ public:
 	virtual void notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
 
 protected:
-	std::list<std::shared_ptr<Address>> invitedAddresses;
+	ConferenceInfo::participant_list_t mInvitedParticipants;
 
 	// Legacy member
 	std::string mConferenceID;
@@ -196,9 +209,9 @@ protected:
 	callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) = 0;
 	virtual void
 	transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) = 0;
-
-	virtual std::shared_ptr<ConferenceInfo>
-	createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const override;
+	std::list<std::shared_ptr<Address>> getInvitedAddresses() const;
+	ConferenceInfo::participant_list_t getFullParticipantList() const;
+	void fillParticipantAttributes(std::shared_ptr<Participant> &p);
 };
 
 } // end of namespace MediaConference

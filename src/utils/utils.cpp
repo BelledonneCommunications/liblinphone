@@ -29,6 +29,7 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "conference/conference-info.h"
+#include "conference/participant-info.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "private.h"
@@ -371,7 +372,8 @@ std::string Utils::getResourceLists(const std::list<std::shared_ptr<Address>> &a
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-std::list<std::shared_ptr<Address>> Utils::parseResourceLists(const Content &content) {
+ConferenceInfo::participant_list_t Utils::parseResourceLists(const Content &content) {
+	ConferenceInfo::participant_list_t resources;
 #ifdef HAVE_ADVANCED_IM
 	if ((content.getContentType() == ContentType::ResourceLists) &&
 	    ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList)) ||
@@ -379,19 +381,22 @@ std::list<std::shared_ptr<Address>> Utils::parseResourceLists(const Content &con
 		std::istringstream data(content.getBodyAsString());
 		std::unique_ptr<Xsd::ResourceLists::ResourceLists> rl(
 		    Xsd::ResourceLists::parseResourceLists(data, Xsd::XmlSchema::Flags::dont_validate));
-		std::list<std::shared_ptr<Address>> addresses;
 		for (const auto &l : rl->getList()) {
 			for (const auto &entry : l.getEntry()) {
-				std::shared_ptr<Address> addr = Address::create(entry.getUri());
-				addresses.push_back(addr);
+				Address address(entry.getUri());
+				auto participantInfo = ParticipantInfo::create(Address::create(address.getUri()));
+				for (const auto &[name, value] : address.getParams()) {
+					participantInfo->addParameter(name, value);
+				}
+				resources.push_back(participantInfo);
 			}
 		}
-		return addresses;
+		return resources;
 	}
-	return std::list<std::shared_ptr<Address>>();
+	return resources;
 #else
 	lWarning() << "Advanced IM such as group chat is disabled!";
-	return std::list<std::shared_ptr<Address>>();
+	return resources;
 #endif
 }
 #ifndef _MSC_VER
@@ -405,14 +410,19 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 
 	if (!sipfrag.isEmpty()) {
-		auto organizer = Utils::getSipFragAddress(sipfrag);
-		info->setOrganizer(Address::create(organizer));
+		auto organizerStr = Utils::getSipFragAddress(sipfrag);
+		auto organizer = Address::create(organizerStr);
+		auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
+		for (const auto &[name, value] : organizer->getParams()) {
+			organizerInfo->addParameter(name, value);
+		}
+		info->setOrganizer(organizerInfo);
 	}
 
 	if (!resourceList.isEmpty()) {
 		auto invitees = Utils::parseResourceLists(resourceList);
-		for (const auto &i : invitees) {
-			info->addParticipant(i);
+		for (const auto &invitee : invitees) {
+			info->addParticipant(invitee);
 		}
 	}
 

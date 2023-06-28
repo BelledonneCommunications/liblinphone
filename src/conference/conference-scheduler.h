@@ -80,6 +80,7 @@ private:
 	void setState(State newState);
 	std::string stateToString(State state);
 
+	std::shared_ptr<Address> createParticipantAddress(const ConferenceInfo::participant_list_t::value_type &p) const;
 	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom,
 	                                                         const std::shared_ptr<Address> participant,
 	                                                         bool cancel);

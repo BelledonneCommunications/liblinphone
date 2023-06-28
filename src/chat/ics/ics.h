@@ -122,6 +122,9 @@ public:
 	void setCreationTime(time_t time);
 
 private:
+	std::shared_ptr<ParticipantInfo> fillParticipantInfo(const std::shared_ptr<Address> &address,
+	                                                     const Ics::Event::attendee_params_t &params) const;
+
 	Method mMethod = Method::Request;
 	std::list<std::shared_ptr<Event>> mEvents;
 };

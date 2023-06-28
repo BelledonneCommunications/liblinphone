@@ -106,6 +106,7 @@ set(C_API_HEADER_FILES
 	c-magic-search.h
 	c-magic-search-cbs.h
 	c-participant.h
+	c-participant-info.h
 	c-participant-device.h
 	c-participant-device-cbs.h
 	c-participant-device-identity.h
@@ -128,6 +129,7 @@ set(ENUMS_HEADER_FILES
 	chat-message-enums.h
 	chat-room-enums.h
 	conference-enums.h
+	participant-enums.h
 	participant-device-enums.h
 	encryption-engine-enums.h
 	event-log-enums.h

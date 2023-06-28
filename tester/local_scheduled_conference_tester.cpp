@@ -218,7 +218,15 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
 		const char *initialSubject = "Test characters: ^ :) ¤ çà @";
 		const char *description = "Chamrousse Pub";
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time,
+
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		LinphoneParticipantRole role = LinphoneParticipantRoleUnknown;
+		for (auto &p : participants) {
+			participantList.insert(std::make_pair(p, role));
+			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
+			                                                : LinphoneParticipantRoleSpeaker;
+		}
+		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
 		                                                        initialSubject, description, TRUE, security_level);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
@@ -273,8 +281,8 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 			BC_ASSERT_TRUE(
 			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
-			BC_ASSERT_TRUE(
-			    wait_for_list(coresList, &mgr->stat.number_of_NotifyReceived, 1, liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
+			                             liblinphone_tester_sip_timeout));
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived,
@@ -307,8 +315,26 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 		                             focus_stat.number_of_participant_devices_joined + 3,
 		                             liblinphone_tester_sip_timeout));
 
-		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), members, confAddr,
-		                            TRUE);
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> memberList;
+		for (const auto &member : members) {
+			try {
+				const auto &participantInfo = participantList.at(member);
+				auto role = participantInfo;
+				if (role == LinphoneParticipantRoleUnknown) {
+					role = LinphoneParticipantRoleSpeaker;
+				}
+				memberList.insert(std::make_pair(member, role));
+			} catch (std::out_of_range &) {
+				if (member == marie.getCMgr()) {
+					memberList.insert(std::make_pair(marie.getCMgr(), LinphoneParticipantRoleSpeaker));
+				} else {
+					ms_fatal("Unable to find active participant %s in the participant list",
+					         linphone_core_get_identity(member->lc));
+				}
+			}
+		}
+		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), memberList,
+		                            confAddr, TRUE);
 
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(fconference);
@@ -345,7 +371,7 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 						                (int)LinphoneCallStateStreamsRunning, int, "%0d");
 					}
 
-					size_t no_streams_audio = (security_level == LinphoneConferenceSecurityLevelEndToEnd) ? 3 : 1;
+					size_t no_streams_audio = 0;
 					size_t no_streams_video = 0;
 					size_t no_active_streams_video = 0;
 					size_t no_streams_text = 0;
@@ -353,6 +379,7 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
+						no_streams_audio = compute_no_audio_streams(pcall, pconference);
 						_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video,
 						                                       no_streams_text);
@@ -429,14 +456,14 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 						linphone_address_unref(uri);
 						BC_ASSERT_PTR_NOT_NULL(pconference);
 						if (pconference) {
-							size_t no_streams_audio =
-							    (security_level == LinphoneConferenceSecurityLevelEndToEnd) ? 3 : 1;
+							size_t no_streams_audio = 0;
 							size_t no_active_streams_video = 0;
 							size_t no_streams_text = 0;
 
 							LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 							BC_ASSERT_PTR_NOT_NULL(pcall);
 							if (pcall) {
+								no_streams_audio = compute_no_audio_streams(pcall, pconference);
 								no_active_streams_video =
 								    static_cast<int>(compute_no_video_streams(enable, pcall, pconference));
 								_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video,
@@ -608,7 +635,15 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 		const char *description = "Paris Baker";
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time,
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
+		for (auto &p : participants) {
+			participantList.insert(std::make_pair(p, role));
+			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
+			                                                : LinphoneParticipantRoleSpeaker;
+		}
+		participantList.insert(std::make_pair(marie.getCMgr(), LinphoneParticipantRoleListener));
+		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
 		                                                        initialSubject, description, TRUE, security_level);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
@@ -721,8 +756,22 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 			                             liblinphone_tester_sip_timeout));
 		}
 
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> memberList;
+		for (const auto &member : members) {
+			try {
+				const auto &participantInfo = participantList.at(member);
+				memberList.insert(std::make_pair(member, participantInfo));
+			} catch (std::out_of_range &) {
+				if (member == marie.getCMgr()) {
+					memberList.insert(std::make_pair(marie.getCMgr(), LinphoneParticipantRoleSpeaker));
+				} else {
+					ms_fatal("Unable to find active participant %s in the participant list",
+					         linphone_core_get_identity(member->lc));
+				}
+			}
+		}
 		wait_for_conference_streams({focus, marie, pauline, laure, michelle, berthe}, conferenceMgrs, focus.getCMgr(),
-		                            members, confAddr, TRUE);
+		                            memberList, confAddr, TRUE);
 
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(fconference);
@@ -958,7 +1007,16 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 		const char *initialSubject = "Test characters: ^ :) ¤ çà @";
 		const char *description = "London Pub";
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time,
+
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
+		for (auto &p : participants) {
+			participantList.insert(std::make_pair(p, role));
+			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
+			                                                : LinphoneParticipantRoleSpeaker;
+		}
+		participantList.insert(std::make_pair(marie.getCMgr(), LinphoneParticipantRoleSpeaker));
+		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
 		                                                        initialSubject, description, TRUE, security_level);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
@@ -1060,8 +1118,22 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 		                             focus_stat.number_of_participant_devices_joined + 3,
 		                             liblinphone_tester_sip_timeout));
 
-		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), members, confAddr,
-		                            TRUE);
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> memberList;
+		for (const auto &member : members) {
+			try {
+				const auto &participantInfo = participantList.at(member);
+				memberList.insert(std::make_pair(member, participantInfo));
+			} catch (std::out_of_range &) {
+				if (member == marie.getCMgr()) {
+					memberList.insert(std::make_pair(marie.getCMgr(), LinphoneParticipantRoleSpeaker));
+				} else {
+					ms_fatal("Unable to find active participant %s in the participant list",
+					         linphone_core_get_identity(member->lc));
+				}
+			}
+		}
+		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), memberList,
+		                            confAddr, TRUE);
 
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(fconference);
@@ -1291,7 +1363,14 @@ static void create_simple_conference_with_update_deferred(void) {
 		const char *description = "Paris Baker";
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time,
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
+		for (auto &p : participants) {
+			participantList.insert(std::make_pair(p, role));
+			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
+			                                                : LinphoneParticipantRoleSpeaker;
+		}
+		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
 		                                                        initialSubject, description, TRUE, security_level);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
@@ -1751,7 +1830,12 @@ static void change_active_speaker(void) {
 		const char *description = "hello";
 		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
 
-		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, invitesList, start_time, end_time,
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
+		for (auto &p : invitesList) {
+			participantList.insert(std::make_pair(p, role));
+		}
+		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time,
 		                                                        initialSubject, description, TRUE, security_level);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
@@ -2010,7 +2094,13 @@ static void conference_with_participant_added_outside_valid_time_slot (bool_t be
 		const char *initialSubject = "Colleagues";
 		const char *description = "Tom Black";
 
-		LinphoneAddress* confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time, initialSubject, description, TRUE, security_level);
+		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
+		for (auto &p : participants) {
+			participantList.insert(std::make_pair(p, role));
+			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener : LinphoneParticipantRoleSpeaker;
+		}
+		LinphoneAddress* confAddr = create_conference_on_server(focus, marie, participantList, start_time, end_time, initialSubject, description, TRUE, security_level);
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout));

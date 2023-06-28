@@ -1368,13 +1368,16 @@ static void group_chat_room_add_participant(void) {
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(pauline, TRUE);
 	paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, paulineAddr, NULL);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	linphone_address_unref(paulineAddr);
 
 	// Pauline adds Chloe to the chat room
 	participantsAddresses = NULL;
 	participantsAddresses =
 	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
-	linphone_chat_room_add_participants(paulineCr, participantsAddresses);
+	if (paulineCr) {
+		linphone_chat_room_add_participants(paulineCr, participantsAddresses);
+	}
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	participantsAddresses = NULL;
 
@@ -7945,7 +7948,7 @@ static void participant_removed_then_added(void) {
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(pauline1, TRUE);
 
-	// Check that the chat room has correctly created on Laure's side and that the participants are added
+	// Check that the chat room has correctly created on Pauline's side and that the participants are added
 	pauline1Cr =
 	    check_has_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, FALSE);
 

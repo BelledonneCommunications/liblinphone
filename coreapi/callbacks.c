@@ -49,6 +49,7 @@
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
 #endif
+#include "conference/participant-info.h"
 #include "conference/participant.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/call-session.h"
@@ -125,8 +126,8 @@ static void call_received(SalCallOp *h) {
 						return;
 					}
 					std::shared_ptr<Address> fromOp = Address::create(h->getFrom());
-					list<std::shared_ptr<Address>> identAddresses = Utils::parseResourceLists(h->getRemoteBody());
-					if (identAddresses.size() != 1) {
+					const auto participantList = Utils::parseResourceLists(h->getRemoteBody());
+					if (participantList.size() != 1) {
 						h->decline(SalReasonNotAcceptable);
 						h->release();
 						return;
@@ -134,10 +135,10 @@ static void call_received(SalCallOp *h) {
 					const char *endToEndEncryptedStr =
 					    sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
 					bool encrypted = endToEndEncryptedStr && strcmp(endToEndEncryptedStr, "true") == 0;
-
+					const auto &participant = (*participantList.begin())->getAddress();
 					std::shared_ptr<Address> confAddr =
 					    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(
-					        fromOp, identAddresses.front(), encrypted);
+					        fromOp, participant, encrypted);
 					if (confAddr && confAddr->isValid()) {
 						shared_ptr<AbstractChatRoom> chatRoom =
 						    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
@@ -164,9 +165,9 @@ static void call_received(SalCallOp *h) {
 
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
-				list<std::shared_ptr<Address>> participantList = Utils::parseResourceLists(h->getRemoteBody());
+				const auto participantList = Utils::parseResourceLists(h->getRemoteBody());
 				if (participantList.size() == 1) {
-					std::shared_ptr<Address> participant = participantList.front();
+					const auto &participant = (*participantList.begin())->getAddress();
 					shared_ptr<AbstractChatRoom> chatRoom =
 					    L_GET_PRIVATE_FROM_C_OBJECT(lc)->findExhumableOneToOneChatRoom(to, participant,
 					                                                                   endToEndEncrypted == "true");

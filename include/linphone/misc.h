@@ -109,6 +109,8 @@ linphone_core_log_collection_upload_state_to_string(const LinphoneCoreLogCollect
 
 LINPHONE_PUBLIC const char *linphone_call_state_to_string(LinphoneCallState cs);
 
+LINPHONE_PUBLIC const char *linphone_participant_role_to_string(LinphoneParticipantRole role);
+
 /**
  * Converts a #LinphoneConfiguringState enum to a string.
  * @param state #LinphoneConfiguringState the value for which we want a string representation

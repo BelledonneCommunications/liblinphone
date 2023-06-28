@@ -247,9 +247,7 @@ protected:
 	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
 	virtual std::shared_ptr<ConferenceInfo>
 	createConferenceInfoWithCustomParticipantList(const std::shared_ptr<Address> &organizer,
-	                                              const std::list<std::shared_ptr<Address>> invitedParticipants) const;
-	virtual std::shared_ptr<ConferenceInfo>
-	createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const;
+	                                              const ConferenceInfo::participant_list_t invitedParticipants) const;
 
 private:
 	L_DISABLE_COPY(Conference);

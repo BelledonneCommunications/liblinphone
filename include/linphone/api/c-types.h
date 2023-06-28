@@ -31,6 +31,7 @@
 #include "linphone/enums/encryption-engine-enums.h"
 #include "linphone/enums/event-log-enums.h"
 #include "linphone/enums/participant-device-enums.h"
+#include "linphone/enums/participant-enums.h"
 #include "linphone/enums/security-event-enums.h"
 #include "linphone/utils/enum-generator.h"
 
@@ -196,6 +197,13 @@ typedef struct _LinphoneConferenceSchedulerCbs LinphoneConferenceSchedulerCbs;
  * @ingroup conference
  */
 typedef struct _LinphoneParticipant LinphoneParticipant;
+
+/**
+ * @brief Object defining all information related to a participant
+ *
+ * @ingroup conference
+ */
+typedef struct _LinphoneParticipantInfo LinphoneParticipantInfo;
 
 /**
  * @brief This object represents a unique device for a member of a #LinphoneConference or #LinphoneChatRoom.

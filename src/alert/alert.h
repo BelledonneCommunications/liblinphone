@@ -20,12 +20,15 @@
 #ifndef ALERT_H
 #define ALERT_H
 
-#include "call/call.h"
-#include "dictionary/dictionary.h"
-#include "linphone/api/c-types.h"
-#include <belle-sip/object++.hh>
 #include <memory>
 #include <unordered_map>
+
+#include <belle-sip/object++.hh>
+
+#include "call/call.h"
+#include "conference/session/streams.h"
+#include "dictionary/dictionary.h"
+#include "linphone/api/c-types.h"
 
 using namespace std;
 

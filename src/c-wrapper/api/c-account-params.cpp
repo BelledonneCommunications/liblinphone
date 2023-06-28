@@ -25,6 +25,7 @@
 #include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
+#include "linphone/utils/utils.h"
 #include "nat/nat-policy.h"
 #include "push-notification/push-notification-config.h"
 

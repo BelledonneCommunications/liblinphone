@@ -439,7 +439,6 @@ void CorePrivate::loadChatRooms() {
 #ifdef HAVE_ADVANCED_IM
 	if (remoteListEventHandler) remoteListEventHandler->clearHandlers();
 #endif
-
 	if (!mainDb->isInitialized()) return;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		insertChatRoom(chatRoom);

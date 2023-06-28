@@ -353,6 +353,7 @@ void sendEphemeralMessageInAdminMode(Focus &focus,
                                      LinphoneChatRoom *recipientCr,
                                      const std::string basicText,
                                      const int noMsg);
+
 bool checkChatroom(Focus &focus, const ConfCoreManager &core, const time_t baseJoiningTime);
 
 // Conference
@@ -362,6 +363,7 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
                                                  bool_t toggle_all_mananger_video,
                                                  bool_t change_layout,
                                                  LinphoneConferenceSecurityLevel security_level);
+
 void create_conference_base(time_t start_time,
                             int duration,
                             bool_t uninvited_participant_dials,
@@ -379,13 +381,16 @@ void create_conference_base(time_t start_time,
                             LinphoneMediaDirection video_direction,
                             bool_t network_restart,
                             LinphoneConferenceSecurityLevel security_level);
+
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,
                                  LinphoneCoreManager *focus,
-                                 std::list<LinphoneCoreManager *> members,
+                                 std::map<LinphoneCoreManager *, LinphoneParticipantRole> members,
                                  const LinphoneAddress *confAddr,
                                  bool_t enable_video);
+
 void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout);
+
 void create_conference_with_late_participant_addition_base(time_t start_time,
                                                            int duration,
                                                            LinphoneConferenceLayout layout,
@@ -393,19 +398,24 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
                                                            bool_t accept,
                                                            bool_t one_addition,
                                                            LinphoneConferenceSecurityLevel security_level);
+
 void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayout layout,
                                                          bool_t enable_ice,
                                                          bool_t enable_stun);
+
 void create_conference_with_active_call_base(bool_t dialout);
-LinphoneAddress *create_conference_on_server(Focus &focus,
-                                             ClientConference &organizer,
-                                             std::list<LinphoneCoreManager *> requested_participants,
-                                             time_t start_time,
-                                             time_t end_time,
-                                             const char *subject,
-                                             const char *description,
-                                             bool_t send_ics,
-                                             LinphoneConferenceSecurityLevel security_level);
+
+LinphoneAddress *
+create_conference_on_server(Focus &focus,
+                            ClientConference &organizer,
+                            std::map<LinphoneCoreManager *, LinphoneParticipantRole> requested_participants,
+                            time_t start_time,
+                            time_t end_time,
+                            const char *subject,
+                            const char *description,
+                            bool_t send_ics,
+                            LinphoneConferenceSecurityLevel security_level);
+
 void set_video_settings_in_conference(LinphoneCoreManager *focus,
                                       LinphoneCoreManager *participant,
                                       std::list<LinphoneCoreManager *> members,
@@ -414,7 +424,9 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
                                       LinphoneMediaDirection video_direction,
                                       bool_t answer_enable_video,
                                       LinphoneMediaDirection answer_video_direction);
+
 size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, LinphoneConference *conference);
+
 void check_conference_info(LinphoneCoreManager *mgr,
                            LinphoneAddress *confAddr,
                            LinphoneCoreManager *organizer,
@@ -426,9 +438,11 @@ void check_conference_info(LinphoneCoreManager *mgr,
                            unsigned int sequence,
                            LinphoneConferenceInfoState state,
                            LinphoneConferenceSecurityLevel security_level);
-size_t compute_no_audio_streams(LinphoneConference *conference);
+
+size_t compute_no_audio_streams(LinphoneCall *call, LinphoneConference *conference);
 
 void conference_scheduler_state_changed(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state);
+
 void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler,
                                            const bctbx_list_t *failed_addresses);
 

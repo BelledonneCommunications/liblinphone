@@ -40,9 +40,9 @@
 class LocalConferenceTester;
 
 namespace LinphoneTest {
-	class LocalConferenceTester;
-	class ClientConference;
-}
+class LocalConferenceTester;
+class ClientConference;
+} // namespace LinphoneTest
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -82,6 +82,15 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ::LocalConferenceTester;
 
 public:
+	enum class Role {
+		Speaker = LinphoneParticipantRoleSpeaker,
+		Listener = LinphoneParticipantRoleListener,
+		Unknown = LinphoneParticipantRoleUnknown
+	};
+
+	static std::string roleToText(const Participant::Role &role);
+	static Participant::Role textToRole(const std::string &str);
+
 	explicit Participant(Conference *conference,
 	                     const std::shared_ptr<Address> &address,
 	                     std::shared_ptr<CallSession> callSession);
@@ -131,6 +140,13 @@ public:
 
 	void *getUserData() const;
 	void setUserData(void *ud);
+
+	inline void setRole(Role role) {
+		mRole = role;
+	};
+	inline Role getRole() const {
+		return mRole;
+	};
 
 protected:
 	std::shared_ptr<Core> getCore() const {
@@ -184,6 +200,7 @@ private:
 	std::list<std::shared_ptr<ParticipantDevice>> devices;
 	time_t creationTime;
 	bool preserveSession = false;
+	Role mRole = Role::Listener;
 
 	void *mUserData = nullptr;
 
@@ -194,6 +211,8 @@ inline std::ostream &operator<<(std::ostream &os, const Participant &participant
 	return os << participant.getAddress()->toString();
 	return os;
 }
+
+std::ostream &operator<<(std::ostream &stream, Participant::Role role);
 
 LINPHONE_END_NAMESPACE
 

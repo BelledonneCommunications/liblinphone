@@ -195,6 +195,7 @@ Content LocalConferenceEventHandler::createNotifyFullState(const shared_ptr<Even
 		user.setEndpoint(endpoints);
 		user.setEntity(participant->getAddress()->asStringUriOnly());
 		user.getRoles()->getEntry().push_back(participant->isAdmin() ? "admin" : "participant");
+		user.getRoles()->getEntry().push_back(Participant::roleToText(participant->getRole()));
 		user.setState(StateType::full);
 
 		for (const auto &device : participant->getDevices()) {
@@ -539,6 +540,9 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded(const std::shar
 	user.setRoles(roles);
 	user.setEntity(pAddress->asStringUriOnly());
 	user.getRoles()->getEntry().push_back((participant && participant->isAdmin()) ? "admin" : "participant");
+	if (participant) {
+		user.getRoles()->getEntry().push_back(Participant::roleToText(participant->getRole()));
+	}
 	user.setState(StateType::full);
 
 	confInfo.getUsers()->getUser().push_back(user);

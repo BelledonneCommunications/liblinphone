@@ -55,6 +55,7 @@
 #include "alert/alert.h"
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
+#include "conference/participant-info.h"
 #include "content/file-content.h"
 #include "core/paths/paths.h"
 #include "dictionary/dictionary.h"
@@ -820,6 +821,10 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarConten
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
+
+std::shared_ptr<ParticipantInfo> Factory::createParticipantInfo(const std::shared_ptr<Address> &address) const {
+	return ParticipantInfo::create(address);
+}
 
 #ifndef _MSC_VER
 #pragma GCC diagnostic push

@@ -22,6 +22,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "conference/conference-info.h"
+#include "conference/participant-info.h"
 #include "linphone/api/c-address.h"
 
 // =============================================================================
@@ -50,38 +51,60 @@ const LinphoneAddress *linphone_conference_info_get_organizer(const LinphoneConf
 	return address && address->isValid() ? address->toC() : nullptr;
 }
 
-void linphone_conference_info_set_organizer(LinphoneConferenceInfo *conference_info, LinphoneAddress *organizer) {
+void linphone_conference_info_set_organizer(LinphoneConferenceInfo *conference_info, const LinphoneAddress *organizer) {
 	ConferenceInfo::toCpp(conference_info)->setOrganizer(Address::toCpp(organizer)->getSharedFromThis());
 }
 
-bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
-	const auto &participants = ConferenceInfo::toCpp(conference_info)->getParticipants();
-	bctbx_list_t *participant_addresses = NULL;
-	for (const auto &participant : participants) {
-		const auto &address = participant.first;
-		participant_addresses = bctbx_list_append(participant_addresses, address->toC());
-	}
-	return participant_addresses;
+const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
+	return ConferenceInfo::toCpp(conference_info)->getParticipantAddressCList();
 }
 
-void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info, bctbx_list_t *participants) {
+const bctbx_list_t *linphone_conference_info_get_participant_infos(const LinphoneConferenceInfo *conference_info) {
+	return ConferenceInfo::toCpp(conference_info)->getParticipantsCList();
+}
+
+void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info,
+                                               const bctbx_list_t *participants) {
 	const std::list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
 	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(participants);
-	ConferenceInfo::participant_list_t participantsMap;
-	ConferenceInfo::participant_params_t participantsParams;
-	for (const auto &p : participantsList) {
-		participantsMap[p] = participantsParams;
-	}
-	ConferenceInfo::toCpp(conference_info)->setParticipants(participantsMap);
+	ConferenceInfo::toCpp(conference_info)->setParticipants(participantsList);
 }
 
-void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant) {
+void linphone_conference_info_set_participants_2(LinphoneConferenceInfo *conference_info,
+                                                 const bctbx_list_t *participant_infos) {
+	const std::list<std::shared_ptr<LinphonePrivate::ParticipantInfo>> participantInfos =
+	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneParticipantInfo, LinphonePrivate::ParticipantInfo>(
+	        participant_infos);
+	ConferenceInfo::toCpp(conference_info)->setParticipants(participantInfos);
+}
+
+void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference_info,
+                                              const LinphoneAddress *participant) {
 	ConferenceInfo::toCpp(conference_info)->addParticipant(Address::toCpp(participant)->getSharedFromThis());
 }
 
+void linphone_conference_info_add_participant_2(LinphoneConferenceInfo *conference_info,
+                                                const LinphoneParticipantInfo *participant_info) {
+	ConferenceInfo::toCpp(conference_info)
+	    ->addParticipant(ParticipantInfo::toCpp(participant_info)->getSharedFromThis());
+}
+
+void linphone_conference_info_update_participant(LinphoneConferenceInfo *conference_info,
+                                                 const LinphoneParticipantInfo *participant_info) {
+	ConferenceInfo::toCpp(conference_info)
+	    ->updateParticipant(ParticipantInfo::toCpp(participant_info)->getSharedFromThis());
+}
+
 void linphone_conference_info_remove_participant(LinphoneConferenceInfo *conference_info,
-                                                 LinphoneAddress *participant) {
+                                                 const LinphoneAddress *participant) {
 	ConferenceInfo::toCpp(conference_info)->removeParticipant(Address::toCpp(participant)->getSharedFromThis());
+}
+
+const LinphoneParticipantInfo *linphone_conference_info_find_participant(LinphoneConferenceInfo *conference_info,
+                                                                         const LinphoneAddress *participant) {
+	const auto &participant_info =
+	    ConferenceInfo::toCpp(conference_info)->findParticipant(Address::toCpp(participant)->getSharedFromThis());
+	return (participant_info) ? participant_info->toC() : NULL;
 }
 
 const LinphoneAddress *linphone_conference_info_get_uri(const LinphoneConferenceInfo *conference_info) {
@@ -89,7 +112,7 @@ const LinphoneAddress *linphone_conference_info_get_uri(const LinphoneConference
 	return address && address->isValid() ? address->toC() : nullptr;
 }
 
-void linphone_conference_info_set_uri(LinphoneConferenceInfo *conference_info, LinphoneAddress *uri) {
+void linphone_conference_info_set_uri(LinphoneConferenceInfo *conference_info, const LinphoneAddress *uri) {
 	ConferenceInfo::toCpp(conference_info)->setUri(Address::toCpp(uri)->getSharedFromThis());
 }
 
@@ -139,7 +162,7 @@ linphone_conference_info_get_security_level(const LinphoneConferenceInfo *confer
 }
 
 void linphone_conference_info_set_security_level(LinphoneConferenceInfo *conference_info,
-												 LinphoneConferenceSecurityLevel security_level) {
+                                                 LinphoneConferenceSecurityLevel security_level) {
 	ConferenceInfo::toCpp(conference_info)->setSecurityLevel((ConferenceParamsInterface::SecurityLevel)security_level);
 }
 

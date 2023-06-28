@@ -53,7 +53,7 @@ public:
 	                 const std::shared_ptr<LinphonePrivate::CallSession> &focusSession,
 	                 const std::shared_ptr<Address> &confAddr,
 	                 const ConferenceId &conferenceId,
-	                 const std::list<std::shared_ptr<Address>> &invitees,
+	                 const ConferenceInfo::participant_list_t &invitees,
 	                 CallSessionListener *listener,
 	                 const std::shared_ptr<LinphonePrivate::ConferenceParams> params);
 	virtual ~RemoteConference();

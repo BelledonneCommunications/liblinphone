@@ -25,6 +25,7 @@
 #include "conference/conference-info.h"
 #include "conference/params/media-session-params.h"
 #include "conference/participant-device.h"
+#include "conference/participant-info.h"
 #include "conference/session/media-session.h"
 #include "liblinphone_tester.h"
 #include "mediastreamer2/msmire.h"
@@ -349,21 +350,6 @@ void _linphone_call_check_max_nb_streams(const LinphoneCall *call,
                                          const size_t nb_audio_streams,
                                          const size_t nb_video_streams,
                                          const size_t nb_text_streams) {
-	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
-	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
-	if (call_result_desc) {
-		BC_ASSERT_LOWER(call_result_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, size_t,
-		                "%zu");
-		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalAudio), nb_audio_streams, size_t, "%zu");
-		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalVideo), nb_video_streams, size_t, "%zu");
-		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalText), nb_text_streams, size_t, "%zu");
-	}
-}
-
-void _linphone_call_check_nb_streams(const LinphoneCall *call,
-                                     const int nb_audio_streams,
-                                     const int nb_video_streams,
-                                     const int nb_text_streams) {
 	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
 	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
 	if (call_result_desc) {
@@ -753,23 +739,22 @@ bool_t linphone_conference_type_is_full_state(const char *text) {
 	           : FALSE;
 }
 
+void linphone_conference_info_check_participant_info(const std::shared_ptr<ParticipantInfo> &info,
+                                                     int sequence_number) {
+	const auto &sequence = info->getSequenceNumber();
+	BC_ASSERT_GREATER(sequence, 0, int, "%0d");
+	BC_ASSERT_EQUAL(sequence, sequence_number, int, "%d");
+}
+
 void linphone_conference_info_check_participant(const LinphoneConferenceInfo *conference_info,
                                                 LinphoneAddress *address,
                                                 int sequence_number) {
-	const auto &sequence = LinphonePrivate::ConferenceInfo::toCpp(conference_info)
-	                           ->getParticipantParam(Address::toCpp(address)->getSharedFromThis(), "X-SEQ");
-	BC_ASSERT_TRUE(!sequence.empty());
-	if (!sequence.empty()) {
-		const int sequenceNumber = std::atoi(sequence.c_str());
-		BC_ASSERT_EQUAL(sequenceNumber, sequence_number, int, "%d");
-	}
+	const auto &participantInfo = LinphonePrivate::ConferenceInfo::toCpp(conference_info)
+	                                  ->findParticipant(Address::toCpp(address)->getSharedFromThis());
+	linphone_conference_info_check_participant_info(participantInfo, sequence_number);
 }
 
 void linphone_conference_info_check_organizer(const LinphoneConferenceInfo *conference_info, int sequence_number) {
-	const auto &sequence = LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getOrganizerParam("X-SEQ");
-	BC_ASSERT_TRUE(!sequence.empty());
-	if (!sequence.empty()) {
-		const int sequenceNumber = std::atoi(sequence.c_str());
-		BC_ASSERT_EQUAL(sequenceNumber, sequence_number, int, "%d");
-	}
+	const auto &organizer = LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getOrganizer();
+	linphone_conference_info_check_participant_info(organizer, sequence_number);
 }

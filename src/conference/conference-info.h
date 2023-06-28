@@ -28,6 +28,7 @@
 #include <belle-sip/object++.hh>
 
 #include "address/address.h"
+#include "c-wrapper/list-holder.h"
 #include "conference/conference-params-interface.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
@@ -35,6 +36,8 @@
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class ParticipantInfo;
 class LINPHONE_PUBLIC ConferenceInfo : public bellesip::HybridObject<LinphoneConferenceInfo, ConferenceInfo> {
 public:
 	struct AddressCmp {
@@ -43,10 +46,8 @@ public:
 		}
 	};
 
-	static const std::string sequenceParam;
-	using participant_params_t = std::map<std::string, std::string>;
-	using participant_list_t = std::map<std::shared_ptr<Address>, participant_params_t, AddressCmp>;
-	using organizer_t = std::pair<std::shared_ptr<Address>, participant_params_t>;
+	using participant_list_t = std::list<std::shared_ptr<ParticipantInfo>>;
+	using organizer_t = std::shared_ptr<ParticipantInfo>;
 
 	enum class State {
 		New = LinphoneConferenceInfoStateNew,
@@ -60,31 +61,33 @@ public:
 		return new ConferenceInfo(*this);
 	}
 
-	static const std::string memberParametersToString(const participant_params_t &params);
-	static const participant_params_t stringToMemberParameters(const std::string &params);
-
 	const organizer_t &getOrganizer() const;
 	const std::shared_ptr<Address> &getOrganizerAddress() const;
-	void setOrganizer(const std::shared_ptr<Address> &organizer, const participant_params_t &params);
-	void setOrganizer(const std::shared_ptr<Address> &organizer);
+	void setOrganizer(const std::shared_ptr<const ParticipantInfo> &organizer);
+	void setOrganizer(const std::shared_ptr<const Address> &organizer);
 
-	void addOrganizerParam(const std::string &param, const std::string &value);
-	const std::string getOrganizerParam(const std::string &param) const;
-
+	const std::list<std::shared_ptr<Address>> &getParticipantAddressList() const;
+	const bctbx_list_t *getParticipantAddressCList() const;
 	const participant_list_t &getParticipants() const;
-	void setParticipants(const participant_list_t &participants);
-	void addParticipant(const std::shared_ptr<Address> &participant);
-	void addParticipant(const std::shared_ptr<Address> &participant, const participant_params_t &params);
-	void removeParticipant(const std::shared_ptr<Address> &participant);
+	const bctbx_list_t *getParticipantsCList() const;
 
-	void addParticipantParam(const std::shared_ptr<Address> &participant,
-	                         const std::string &param,
-	                         const std::string &value);
-	const std::string getParticipantParam(const std::shared_ptr<Address> &participant, const std::string &param) const;
+	void setParticipants(const std::list<std::shared_ptr<Address>> &participants);
+	void setParticipants(const participant_list_t &participants);
+
+	void addParticipant(const std::shared_ptr<const Address> &participant);
+	void addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo);
+
+	void removeParticipant(const std::shared_ptr<const Address> &participant);
+	void removeParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo);
+
+	bool hasParticipant(const std::shared_ptr<const Address> &address) const;
+	const std::shared_ptr<ParticipantInfo> findParticipant(const std::shared_ptr<const Address> &address) const;
+
+	void updateParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo);
 
 	bool isValidUri() const;
 	const std::shared_ptr<Address> &getUri() const;
-	void setUri(const std::shared_ptr<Address> uri);
+	void setUri(const std::shared_ptr<const Address> uri);
 
 	time_t getDateTime() const;
 	void setDateTime(time_t dateTime);
@@ -124,8 +127,14 @@ public:
 	void setCreationTime(time_t time);
 
 private:
+	void updateParticipantAddresses() const;
+	participant_list_t::const_iterator findParticipantIt(const std::shared_ptr<const Address> &address) const;
+
 	organizer_t mOrganizer;
+	mutable std::shared_ptr<Address> mOrganizerAddress;
 	participant_list_t mParticipants;
+	mutable ListHolder<Address> mParticipantAddresses;
+	mutable ListHolder<ParticipantInfo> mParticipantList;
 	std::shared_ptr<Address> mUri;
 	time_t mDateTime = (time_t)-1;
 	unsigned int mDuration = 0;

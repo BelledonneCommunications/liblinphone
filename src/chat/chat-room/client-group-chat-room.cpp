@@ -33,6 +33,7 @@
 #include "conference/handlers/remote-conference-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #include "conference/participant-device.h"
+#include "conference/participant-info.h"
 #include "conference/participant.h"
 #include "conference/remote-conference.h"
 #include "conference/session/call-session-p.h"
@@ -190,11 +191,12 @@ void ClientGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 	if (!previousSession && !found) {
 		q->setState(ConferenceInterface::State::CreationPending);
 		// Handle participants addition
-		list<std::shared_ptr<Address>> identAddresses = Utils::parseResourceLists(op->getRemoteBody());
-		for (const auto &addr : identAddresses) {
-			auto participant = q->findParticipant(addr);
+		const auto participantList = Utils::parseResourceLists(op->getRemoteBody());
+		for (const auto &participantInfo : participantList) {
+			const auto &address = participantInfo->getAddress();
+			auto participant = q->findParticipant(address);
 			if (!participant) {
-				participant = Participant::create(q->getConference().get(), addr);
+				participant = Participant::create(q->getConference().get(), address);
 				q->getConference()->participants.push_back(participant);
 			}
 		}
@@ -417,8 +419,11 @@ ClientGroupChatRoom::ClientGroupChatRoom(const shared_ptr<Core> &core,
 	                                                         [](BCTBX_UNUSED(ConferenceListenerInterface * p)) {}));
 
 	getConference()->setSubject(subject);
-	for (const auto &addr : Utils::parseResourceLists(content))
-		getConference()->participants.push_back(Participant::create(getConference().get(), addr));
+	const auto participantList = Utils::parseResourceLists(content);
+	for (const auto &participantInfo : participantList) {
+		getConference()->participants.push_back(
+		    Participant::create(getConference().get(), participantInfo->getAddress()));
+	}
 
 	if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;

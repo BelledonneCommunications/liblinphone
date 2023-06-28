@@ -98,3 +98,19 @@ time_t linphone_participant_get_creation_time(const LinphoneParticipant *partici
 bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant) {
 	return LinphonePrivate::Participant::toCpp(participant)->getPreserveSession();
 }
+
+LinphoneParticipantRole linphone_participant_get_role(const LinphoneParticipant *participant) {
+	return (LinphoneParticipantRole)LinphonePrivate::Participant::toCpp(participant)->getRole();
+}
+
+const char *linphone_participant_role_to_string(LinphoneParticipantRole role) {
+	switch (role) {
+		case LinphoneParticipantRoleSpeaker:
+			return "LinphoneParticipantRoleSpeaker";
+		case LinphoneParticipantRoleListener:
+			return "LinphoneParticipantRoleListener";
+		case LinphoneParticipantRoleUnknown:
+			return "LinphoneParticipantRoleUnknown";
+	}
+	return NULL;
+}

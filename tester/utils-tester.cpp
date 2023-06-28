@@ -21,6 +21,7 @@
 #include "bctoolbox/utils.hh"
 
 #include "address/address.h"
+#include "conference/conference-id.h"
 #include "liblinphone_tester.h"
 #include "linphone/utils/utils.h"
 #include "tester_utils.h"

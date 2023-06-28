@@ -793,6 +793,15 @@ LINPHONE_PUBLIC LinphoneConferenceInfo *
 linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content);
 
 /**
+ * Creates an object #LinphoneConferenceInfo from an Icalendar #LinphoneContent
+ * @param factory the #LinphoneFactory @notnil
+ * @param address the #LinphoneAddress of the participant @notnil
+ * @return a #LinphoneParticipantInfo @maybenil
+ */
+LINPHONE_PUBLIC LinphoneParticipantInfo *linphone_factory_create_participant_info(LinphoneFactory *factory,
+                                                                                  LinphoneAddress *address);
+
+/**
  * Creates an object #LinphoneConferenceSchedulerCbs
  * @param factory the #LinphoneFactory @notnil
  * @return a #LinphoneConferenceSchedulerCbs @notnil

@@ -41,6 +41,7 @@
 #include "linphone/conference.h"
 #include "local_conference.h"
 #include "remote_conference.h"
+#include "linphone/utils/utils.h"
 
 using namespace std;
 

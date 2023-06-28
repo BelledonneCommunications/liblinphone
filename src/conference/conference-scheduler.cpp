@@ -23,8 +23,9 @@
 #include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "conference-scheduler.h"
+#include "conference/conference-scheduler.h"
 #include "conference/params/call-session-params-p.h"
+#include "conference/participant-info.h"
 #include "conference/session/media-session.h"
 #include "content/file-content.h"
 #include "core/core-p.h"
@@ -85,21 +86,19 @@ const std::shared_ptr<ConferenceInfo> ConferenceScheduler::getInfo() const {
 void ConferenceScheduler::fillCancelList(const ConferenceInfo::participant_list_t &oldList,
                                          const ConferenceInfo::participant_list_t &newList) {
 	mCancelToSend.clear();
-	for (const auto &participant : oldList) {
-		const bool participantFound = (std::find_if(newList.cbegin(), newList.cend(), [&participant](const auto &e) {
-			                               return (e.first->weakEqual(*participant.first));
-		                               }) != newList.cend());
+	for (const auto &oldParticipantInfo : oldList) {
+		const auto &address = oldParticipantInfo->getAddress();
+		// Workaroud for CLang issue: https://github.com/llvm/llvm-project/issues/52720
+		const bool participantFound =
+		    (std::find_if(newList.cbegin(), newList.cend(), [&address = address](const auto &e) {
+			     return (address->weakEqual(*e->getAddress()));
+		     }) != newList.cend());
 		if (!participantFound) {
-			auto sequence = -1;
-			try {
-				const auto params = participant.second;
-				const auto &value = params.at(ConferenceInfo::sequenceParam);
-				if (!value.empty()) {
-					sequence = std::atoi(value.c_str()) + 1;
-				}
-			} catch (std::out_of_range &) {
+			auto sequence = oldParticipantInfo->getSequenceNumber();
+			if (sequence >= 0) {
+				sequence++;
 			}
-			mCancelToSend.insert(std::make_pair(participant.first, sequence));
+			mCancelToSend.insert(std::make_pair(address, sequence));
 		}
 	}
 }
@@ -109,11 +108,19 @@ void ConferenceScheduler::cancelConference(const std::shared_ptr<ConferenceInfo>
 		auto clone = info->clone()->toSharedPtr();
 		while (!clone->getParticipants().empty()) {
 			const auto &participants = clone->getParticipants();
-			const auto &participant = *(participants.begin());
-			clone->removeParticipant(participant.first);
+			clone->removeParticipant(*(participants.begin()));
 		}
 		setInfo(clone);
 	}
+}
+
+std::shared_ptr<Address>
+ConferenceScheduler::createParticipantAddress(const ConferenceInfo::participant_list_t::value_type &p) const {
+	std::shared_ptr<Address> address = Address::create(p->getAddress()->getUri());
+	for (const auto &[name, value] : p->getAllParameters()) {
+		address->setParam(name, value);
+	}
+	return address;
 }
 
 void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
@@ -146,7 +153,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	const auto &participants = clone->getParticipants();
 	const auto participantListEmpty = participants.empty();
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator](const auto &p) {
-		                               return (creator->weakEqual(*(p.first)));
+		                               return (creator->weakEqual(*p->getAddress()));
 	                               }) != participants.cend());
 	if (!creator->weakEqual(*organizer) && !participantFound) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Address " << creator->toString()
@@ -232,7 +239,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 
 	std::list<std::shared_ptr<Address>> invitees;
 	for (const auto &p : mConferenceInfo->getParticipants()) {
-		invitees.push_back(p.first);
+		invitees.push_back(createParticipantAddress(p));
 	}
 
 	if (isUpdate) {
@@ -353,10 +360,9 @@ void ConferenceScheduler::onCallSessionSetTerminated(const shared_ptr<CallSessio
 			// Participant with the focus call is admin
 			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
 			std::list<std::shared_ptr<Address>> addressesList;
-			for (const auto &p : mConferenceInfo->getParticipants()) {
-				addressesList.push_back(p.first);
+			for (const auto &participantInfo : mConferenceInfo->getParticipants()) {
+				addressesList.push_back(participantInfo->getAddress());
 			}
-
 			addressesList.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
 			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
 
@@ -374,8 +380,8 @@ void ConferenceScheduler::onCallSessionSetTerminated(const shared_ptr<CallSessio
 			LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(getCore()->getCCore());
 			bool_t initiate_video = !!linphone_video_activation_policy_get_automatically_initiate(pol);
 			linphone_call_params_enable_video(
-				new_params,
-				static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled() && initiate_video);
+			    new_params,
+			    static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled() && initiate_video);
 			linphone_video_activation_policy_unref(pol);
 
 			linphone_core_invite_address_with_params_2(getCore()->getCCore(), remoteAddress->toC(), new_params,
@@ -415,10 +421,9 @@ shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_
 		    std::find_if(mCancelToSend.cbegin(), mCancelToSend.cend(),
 		                 [&participant](const auto &p) { return (participant->weakEqual(*p.first)); });
 		if (cancelParticipant == mCancelToSend.cend()) {
-			const auto participantSequence =
-			    mConferenceInfo->getParticipantParam(participant, ConferenceInfo::sequenceParam);
-			if (!participantSequence.empty()) {
-				sequence = std::atoi(participantSequence.c_str());
+			const auto &participantInfo = mConferenceInfo->findParticipant(participant);
+			if (participantInfo) {
+				sequence = participantInfo->getSequenceNumber();
 			}
 		} else {
 			sequence = (*cancelParticipant).second;
@@ -467,12 +472,12 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 
 	const auto &participants = mConferenceInfo->getParticipants();
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&sender](const auto &p) {
-		                               return (sender->weakEqual(*p.first));
+		                               return (sender->weakEqual(*p->getAddress()));
 	                               }) != participants.cend());
-	const auto &organizer = mConferenceInfo->getOrganizerAddress();
+	const auto organizer = mConferenceInfo->getOrganizerAddress();
 	if (!sender->weakEqual(*organizer) && !participantFound) {
-		lWarning() << "[Conference Scheduler] [" << this << "] Unable to find the address " << sender
-		           << " sending invitations among the list of participants or the organizer (" << organizer
+		lWarning() << "[Conference Scheduler] [" << this << "] Unable to find the address " << *sender
+		           << " sending invitations among the list of participants or the organizer (" << *organizer
 		           << ") of conference " << *mConferenceInfo->getUri();
 		return;
 	}
@@ -489,12 +494,20 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 	}
 
 	std::list<std::shared_ptr<Address>> invitees;
-	for (const auto &p : participants) {
-		invitees.push_back(p.first);
+	for (const auto &participantInfo : participants) {
+		invitees.push_back(participantInfo->getAddress());
 	}
-	for (const auto &p : mCancelToSend) {
-		invitees.push_back(p.first);
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?format=multiple&id=81767
+#if __GNUC__ == 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif //  __GNUC__ == 7
+	for (const auto &[address, value] : mCancelToSend) {
+		invitees.push_back(address);
 	}
+#if __GNUC__ == 7
+#pragma GCC diagnostic pop
+#endif //  __GNUC__ == 7
 
 	mInvitationsToSend.clear();
 	for (auto participant : invitees) {
@@ -505,14 +518,24 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 			        << "] from chat room participants as it is ourselves";
 		}
 
-		const std::string &sequence = mConferenceInfo->getParticipantParam(participant, ConferenceInfo::sequenceParam);
-		const int newSequence = (sequence.empty()) ? 0 : std::atoi(sequence.c_str()) + 1;
-		mConferenceInfo->addParticipantParam(participant, ConferenceInfo::sequenceParam, std::to_string(newSequence));
+		const auto &participantInfo = mConferenceInfo->findParticipant(participant);
+		if (participantInfo) {
+			auto newParticipantInfo = participantInfo->clone()->toSharedPtr();
+			const auto &sequence = newParticipantInfo->getSequenceNumber();
+			const auto newSequence = (sequence < 0) ? 0 : sequence + 1;
+			newParticipantInfo->setSequenceNumber(newSequence);
+			mConferenceInfo->updateParticipant(newParticipantInfo);
+		}
 	}
 
-	const std::string &organizerSequence = mConferenceInfo->getOrganizerParam(ConferenceInfo::sequenceParam);
-	const int newOrganizerSequence = (organizerSequence.empty()) ? 0 : std::atoi(organizerSequence.c_str()) + 1;
-	mConferenceInfo->addOrganizerParam(ConferenceInfo::sequenceParam, std::to_string(newOrganizerSequence));
+	const auto &organizerInfo = mConferenceInfo->getOrganizer();
+	if (organizerInfo) {
+		auto newOrganizerInfo = organizerInfo->clone()->toSharedPtr();
+		const auto &sequence = newOrganizerInfo->getSequenceNumber();
+		const auto newSequence = (sequence < 0) ? 0 : sequence + 1;
+		newOrganizerInfo->setSequenceNumber(newSequence);
+		mConferenceInfo->setOrganizer(newOrganizerInfo);
+	}
 
 	if (!sender->weakEqual(*organizer)) {
 		const bool organizerFound =

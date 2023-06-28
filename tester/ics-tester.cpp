@@ -25,14 +25,14 @@
 #include "chat/ics/ics.h"
 #include "chat/ics/parser/ics-parser.h"
 #include "conference/conference-info.h"
+#include "conference/participant-info.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core.h"
+#include "liblinphone_tester.h"
 #include "linphone/api/c-api.h"
 // TODO: Remove me later.
 #include "private.h"
-
-#include "liblinphone_tester.h"
 #include "tester_utils.h"
 
 // =============================================================================
@@ -125,15 +125,13 @@ static void parse_folded_example() {
 			const auto &participants = confInfo->getParticipants();
 			BC_ASSERT_EQUAL(participants.size(), 3, size_t, "%0zu");
 			for (const auto &participant : participants) {
-				const auto &address = participant.first;
-				const auto &params = participant.second;
+				const auto &address = participant->getAddress();
+				const auto &params = participant->getAllParameters();
 				size_t no_params = 0;
 				bool found = false;
 				if (*address == *Address::create("sip:jdoe@sip.example.org")) {
 					no_params = 2;
-					for (const auto &param : params) {
-						const auto &name = param.first;
-						const auto &value = param.second;
+					for (const auto &[name, value] : params) {
 						BC_ASSERT_TRUE((name.compare("RSVP") == 0) || (name.compare("X-PARAM") == 0));
 						if (name.compare("RSVP") == 0) {
 							BC_ASSERT_STRING_EQUAL(value.c_str(), "TRUE");
@@ -145,9 +143,7 @@ static void parse_folded_example() {
 					}
 				} else if (*address == *Address::create("sip:pwhite@sip.example.org")) {
 					no_params = 1;
-					for (const auto &param : params) {
-						const auto &name = param.first;
-						const auto &value = param.second;
+					for (const auto &[name, value] : params) {
 						BC_ASSERT_TRUE((name.compare("ROLE") == 0));
 						if (name.compare("ROLE") == 0) {
 							BC_ASSERT_STRING_EQUAL(value.c_str(), "CHAIR");
@@ -157,9 +153,7 @@ static void parse_folded_example() {
 				} else if (*address == *Address::create("sip:tmurphy@sip.example.org")) {
 					// no_params = 2;
 					no_params = 1;
-					for (const auto &param : params) {
-						const auto &name = param.first;
-						const auto &value = param.second;
+					for (const auto &[name, value] : params) {
 						BC_ASSERT_TRUE((name.compare("MEMBER") == 0) || (name.compare("X-PARAM") == 0));
 						if (name.compare("MEMBER") == 0) {
 							BC_ASSERT_STRING_EQUAL(value.c_str(), "mailto:devs@example.com");
@@ -369,13 +363,13 @@ static void send_conference_invitations(bool_t enable_encryption,
 			    marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
 			BC_ASSERT_TRUE(linphone_address_weak_equal(
 			    conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
-			bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_original_content);
+			const bctbx_list_t *participants =
+			    linphone_conference_info_get_participants(conf_info_from_original_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
 			}
-			bctbx_list_free(participants);
 			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_original_content), 120, int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_original_content) == conf_time);
 			linphone_conference_info_unref(conf_info_from_original_content);
@@ -423,13 +417,12 @@ static void send_conference_invitations(bool_t enable_encryption,
 			                                           linphone_conference_info_get_organizer(conf_info_from_content)));
 			BC_ASSERT_TRUE(
 			    linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_content)));
-			bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_content);
+			const bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
 			}
-			bctbx_list_free(participants);
 			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_content), 120, int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_content) == conf_time);
 			linphone_conference_info_unref(conf_info_from_content);
