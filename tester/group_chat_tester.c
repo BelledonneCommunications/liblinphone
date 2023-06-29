@@ -8927,6 +8927,7 @@ test_t group_chat_tests[] = {
                  "Migration"),
     TEST_NO_TAG("Send file", group_chat_room_send_file),
     TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2)};
+
 test_t group_chat2_tests[] = {
     TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
     TEST_NO_TAG("Send 2 files + text", group_chat_room_send_two_files_plus_text),
@@ -8972,7 +8973,10 @@ test_t group_chat2_tests[] = {
         "Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
     TEST_NO_TAG("Group chat room subscription denied", group_chat_room_subscription_denied),
     TEST_ONE_TAG("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch"),
-    TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory"),
+    TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory")
+};
+
+test_t group_chat3_tests[] = {
     TEST_ONE_TAG(
         "Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),
     TEST_ONE_TAG("Check if participant device are removed",
@@ -9012,6 +9016,7 @@ test_suite_t group_chat_test_suite = {"Group Chat",
                                       liblinphone_tester_after_each,
                                       sizeof(group_chat_tests) / sizeof(group_chat_tests[0]),
                                       group_chat_tests};
+
 test_suite_t group_chat2_test_suite = {"Group Chat2",
                                        NULL,
                                        NULL,
@@ -9019,6 +9024,14 @@ test_suite_t group_chat2_test_suite = {"Group Chat2",
                                        liblinphone_tester_after_each,
                                        sizeof(group_chat2_tests) / sizeof(group_chat2_tests[0]),
                                        group_chat2_tests};
+
+test_suite_t group_chat3_test_suite = {"Group Chat3",
+                                       NULL,
+                                       NULL,
+                                       liblinphone_tester_before_each,
+                                       liblinphone_tester_after_each,
+                                       sizeof(group_chat3_tests) / sizeof(group_chat3_tests[0]),
+                                       group_chat3_tests};
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

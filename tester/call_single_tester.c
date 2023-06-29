@@ -7316,7 +7316,10 @@ static test_t call_tests[] = {
     TEST_NO_TAG("Call with file player", call_with_file_player),
     TEST_NO_TAG("Call with mkv file player", call_with_mkv_file_player),
     TEST_NO_TAG("Call with privacy", call_with_privacy),
-    TEST_NO_TAG("Call with privacy 2", call_with_privacy2),
+    TEST_NO_TAG("Call with privacy 2", call_with_privacy2)
+};
+
+static test_t call2_tests[] = {
     TEST_NO_TAG("Call with custom headers", call_with_custom_headers),
     TEST_NO_TAG("Call with custom reserved headers", call_with_custom_reserved_headers),
     TEST_NO_TAG("Call with custom SDP attributes", call_with_custom_sdp_attributes),
@@ -7365,7 +7368,6 @@ static test_t call_tests[] = {
     TEST_NO_TAG("Call with same codecs ordered differently", call_with_same_codecs_ordered_differently),
     TEST_NO_TAG("Call with audio stream added later on", call_with_audio_stream_added_later_on),
     TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
-
 };
 
 static test_t call_not_established_tests[] = {
@@ -7422,6 +7424,14 @@ test_suite_t call_test_suite = {"Single Call",
                                 liblinphone_tester_after_each,
                                 sizeof(call_tests) / sizeof(call_tests[0]),
                                 call_tests};
+
+test_suite_t call2_test_suite = {"Single Call2",
+                                NULL,
+                                NULL,
+                                liblinphone_tester_before_each,
+                                liblinphone_tester_after_each,
+                                sizeof(call2_tests) / sizeof(call2_tests[0]),
+                                call2_tests};
 
 test_suite_t call_not_established_test_suite = {"Single Call (Not established)",
                                                 NULL,

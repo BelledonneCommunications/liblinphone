@@ -651,10 +651,11 @@ if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
 	list(APPEND STRICT_OPTIONS_CXX "-Wno-attributes")
 endif()
 
-# Fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105562
+# Fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105562 and https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105616
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
 		AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12
-		AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+		AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
 	set_source_files_properties(sal/potential_config_graph.cpp
 			utils/version.cpp
 			PROPERTIES COMPILE_OPTIONS "-Wno-error=maybe-uninitialized")

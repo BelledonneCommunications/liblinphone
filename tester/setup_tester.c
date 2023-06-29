@@ -2548,7 +2548,7 @@ static void check_results(LinphoneCoreManager *manager, bctbx_list_t *resultList
 	}
 	BC_ASSERT_EQUAL(resultIndex + 1, resultSize, int, "%d");   // Check if all friends are found.
 	if (resultIndex + 1 != (int)bctbx_list_size(resultList)) { // Allows to debug what is missing.
-		char buffer[20];
+		char buffer[25];
 		sprintf(buffer, "SourceFlags=%d", sourceFlags);
 		for (int i = 0; i < (int)bctbx_list_size(resultList); ++i) {
 			_check_friend_result_list(manager->lc, resultList, i, buffer, NULL);

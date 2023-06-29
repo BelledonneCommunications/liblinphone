@@ -2584,8 +2584,6 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 			ms_error("Did not register after %d seconds for %d proxies", REGISTER_TIMEOUT, proxy_count);
 		}
 	}
-	ms_error("core %s Old registration ok %d number of proxies %d", linphone_core_get_identity(mgr->lc),
-	         old_registration_ok, proxy_count);
 	BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk, old_registration_ok + proxy_count, int, "%d");
 	enable_codec(mgr->lc, "PCMU", 8000);
 
@@ -4623,7 +4621,7 @@ void linphone_conference_server_refer_received(LinphoneCore *core, const char *r
 	LinphoneCall *call;
 
 	if (refer_to_addr == NULL) return;
-	strncpy(method, linphone_address_get_method_param(refer_to_addr), sizeof(method));
+	strncpy(method, linphone_address_get_method_param(refer_to_addr), sizeof(method) - 1);
 	method[sizeof(method) - 1] = '\0';
 	if (strcmp(method, "BYE") == 0) {
 		linphone_address_clean(refer_to_addr);
