@@ -373,6 +373,8 @@ public class CoreManager {
     }
 
     public void startAutoIterate() {
+        if (mCore == null) return;
+        
         if (mCore.isAutoIterateEnabled()) {
             if (mTimer != null) {
                 Log.w("[Core Manager] core.iterate() scheduling is already active");
