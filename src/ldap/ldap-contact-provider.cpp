@@ -41,14 +41,20 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+#ifdef _WIN32
+// someone does include the evil windef.h so we must undef the min and max macros to be able to use std::min and std::max
+#undef min
+#undef max
+#endif
 // Custom redefinitions
 
 //*******************************************	CREATION
 
-LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, std::shared_ptr<Ldap> ldap) {
+LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, std::shared_ptr<Ldap> ldap, int maxResults) {
 	mAwaitingMessageId = 0;
 	mConnected = FALSE;
 	mCore = core;
+	mMaxResults = maxResults;
 	mLd = nullptr;
 	mLdapServer = ldap;
 	mSalContext = NULL;
@@ -88,14 +94,14 @@ LdapContactProvider::~LdapContactProvider(){
 	}
 }
 
-std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(const std::shared_ptr<Core> &core){
+std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(const std::shared_ptr<Core> &core, int maxResults){
 	std::vector<std::shared_ptr<LdapContactProvider> > providers;
 	auto ldapList = core->getLdapList();
 
 	for(auto itLdap : ldapList){
 		auto params = itLdap->getLdapParams();
 		if(params->getEnabled())
-			providers.push_back(std::make_shared<LdapContactProvider>(core, itLdap));
+			providers.push_back(std::make_shared<LdapContactProvider>(core, itLdap, maxResults));
 	}
 	return providers;
 }
@@ -300,7 +306,7 @@ bool LdapContactProvider::search(const std::string& predicate, ContactSearchCall
 int LdapContactProvider::search(std::shared_ptr<LdapContactSearch> request){
 	int ret = -1;
 	struct timeval timeout = { atoi(mConfig["timeout"].c_str()), 0 };
-	int maxResults = atoi(mConfig["max_results"].c_str());
+	int maxResults = std::min(atoi(mConfig["max_results"].c_str()), mMaxResults);
 	if( maxResults > 0) ++maxResults;	// +1 to know if there is more than limit
 	if( request->mMsgId == 0 ){
 		ret = ldap_search_ext(mLd,

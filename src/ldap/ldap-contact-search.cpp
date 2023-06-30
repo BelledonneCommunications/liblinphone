@@ -58,9 +58,13 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string p
 	snprintf(temp, FILTER_MAX_SIZE-1, parent->getFilter().c_str(), predicate.c_str());
 	temp[FILTER_MAX_SIZE-1] = '\0';
 	
-// Replace all '**' by '*' in filter.
 	mFilter = temp;
+// Replace all '**' by '*' in filter.
 	bctoolbox::Utils::replace( mFilter, "**", "*", false);// Do not step as replacement can still contain double stars.
+	if(!mFilter.empty() && mFilter[0] != '('){
+		mFilter.insert(0,1, '(');
+		mFilter.push_back(')');
+	}
 }
 
 LdapContactSearch::~LdapContactSearch(){

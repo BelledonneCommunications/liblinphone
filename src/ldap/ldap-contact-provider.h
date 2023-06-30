@@ -36,6 +36,7 @@
 
 #include <ldap.h>	// OpenLDAP
 #include "../search/search-request.h"
+#include "../search/magic-search.h"
 #include "ldap.h"	// Linphone
 
 LINPHONE_BEGIN_NAMESPACE
@@ -69,7 +70,7 @@ public:
 	 * @param ldap The LDAP server to use from linphone_core_get_ldap_list()
 	 */
 	
-	LdapContactProvider(const std::shared_ptr<Core> &core, std::shared_ptr<Ldap> ldap);
+	LdapContactProvider(const std::shared_ptr<Core> &core, std::shared_ptr<Ldap> ldap, int maxResults);
 	
 	
 	virtual ~LdapContactProvider();
@@ -77,10 +78,11 @@ public:
 	/**
 	 * @brief create Create a list of #LdapContactProvider from the core's configuration : The section name is 'ldap' and have an additionnal index to separate servers (eg. 'ldap_4'). 
 	 * A section must be enabled with 'enable' to 1 to be taken account.
-	 * @param core The Linphone core
+	 * @param core The Linphone Core
+	 * @param maxResults The max results to return
 	 * @return A list of #LdapContactProvider
 	 */
-	static std::vector<std::shared_ptr<LdapContactProvider> > create(const std::shared_ptr<Core> &core);
+	static std::vector<std::shared_ptr<LdapContactProvider> > create(const std::shared_ptr<Core> &core, int maxResults);
 	
 	/**
 	 * @brief initializeLdap  Call ldap_initialize, set options and start TLS if needed.
@@ -213,6 +215,7 @@ private:
 	std::vector<std::string> mSipAttributes;// Optimization to avoid split each times
 	LDAP *mLd;
 	std::list<std::shared_ptr<LdapContactSearch> > mRequests;
+	int mMaxResults;
 
 	int mAwaitingMessageId; // Waiting Message for ldap_abandon_ext on bind
 	bool_t mConnected;	// If we are connected to server (bind)
