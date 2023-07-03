@@ -492,7 +492,7 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromGroupChatRoomPart
 void MagicSearch::getAddressFromLDAPServerStartAsync(const string &filter,
                                                      const string &withDomain,
                                                      SearchAsyncData *asyncData) const {
-	std::vector<std::shared_ptr<LdapContactProvider>> providers = LdapContactProvider::create(this->getCore());
+	std::vector<std::shared_ptr<LdapContactProvider>> providers = LdapContactProvider::create(this->getCore(), (int)getSearchLimit());
 	// Requests
 	for (size_t i = 0; i < providers.size(); ++i) {
 		std::shared_ptr<LdapCbData> data = std::make_shared<LdapCbData>();

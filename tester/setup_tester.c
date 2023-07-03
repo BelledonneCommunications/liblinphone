@@ -95,7 +95,7 @@ static LinphoneLdap *_create_default_ldap_server(LinphoneCoreManager *manager,
 		linphone_ldap_params_set_timeout_tls_ms(params, 999);
 		linphone_ldap_params_set_max_results(params, 50);
 		linphone_ldap_params_set_auth_method(params, LinphoneLdapAuthMethodSimple);
-		linphone_ldap_params_set_base_object(params, "dc=bc,dc=com");
+		linphone_ldap_params_set_base_object(params, "ou=people,dc=bc,dc=com");
 		if (test_fallback)
 			linphone_ldap_params_set_server(
 			    params, "ldap:///,ldap://unknwown.example.org://sipv4-nat64.example.org,ldap://srv-ldap.example.org/");
@@ -2533,7 +2533,7 @@ static void check_results(LinphoneCoreManager *manager, bctbx_list_t *resultList
 		return; // Should have no results, previous test is enough.
 	int resultIndex = -1;
 	bctbx_list_t *currentResult = resultList;
-	for (int count = 0; count < 12; ++count) {
+	for (int count = 0; count < 12 && currentResult; ++count) {
 		if (linphone_core_ldap_available(manager->lc) || (sources[count] != LinphoneMagicSearchSourceLdapServers)) {
 			if (currentResult && (sources[count] & sourceFlags) != LinphoneMagicSearchSourceNone) {
 				_check_friend_result_list(manager->lc, resultList, ++resultIndex, sortredAddresses[count],
@@ -3139,6 +3139,41 @@ static void ldap_features_more_results(void) {
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	stat->number_of_LinphoneMagicSearchLdapHaveMoreResults = 0;
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+
+	linphone_core_set_network_reachable(manager->lc, TRUE);
+
+	//-----------------------------		MAX RESULTS
+	if (linphone_core_ldap_available(manager->lc)) {
+		LinphoneLdapParams *params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
+		int maxTimeout = 30;
+		linphone_ldap_params_set_base_object(params, "ou=big_people,dc=bc,dc=com");
+		linphone_ldap_params_set_max_results(params, 100);
+		linphone_magic_search_set_search_limit(magicSearch, 30);
+		linphone_ldap_params_set_timeout(params, maxTimeout);
+		linphone_ldap_set_params(ldap, params);
+		linphone_ldap_params_unref(params);
+
+		// Check when magic search is limited to 30 items
+		linphone_magic_search_get_contacts_list_async(magicSearch, "Big", "", LinphoneMagicSearchSourceLdapServers,
+													  LinphoneMagicSearchAggregationNone);
+		// add 10ms to let some times to timeout callbacks.
+		BC_ASSERT_TRUE(wait_for_until(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1, maxTimeout*1000 + 10));
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 30, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+
+		// Upgrade magic search limit to 100
+		linphone_magic_search_set_search_limit(magicSearch, 100);
+
+		linphone_magic_search_get_contacts_list_async(magicSearch, "Big", "", LinphoneMagicSearchSourceLdapServers,
+													  LinphoneMagicSearchAggregationNone);
+		// add 10ms to let some times to timeout callbacks.
+		BC_ASSERT_TRUE(wait_for_until(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1, maxTimeout*1000 + 10));
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 100, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
 
 	linphone_magic_search_cbs_unref(searchHandler);
 	linphone_magic_search_unref(magicSearch);

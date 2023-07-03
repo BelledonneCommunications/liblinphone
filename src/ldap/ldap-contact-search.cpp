@@ -64,6 +64,11 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider *parent,
 	// Replace all '**' by '*' in filter.
 	mFilter = temp;
 	bctoolbox::Utils::replace(mFilter, "**", "*", false); // Do not step as replacement can still contain double stars.
+
+	if(!mFilter.empty() && mFilter[0] != '(') {
+		mFilter.insert(0,1, '(');
+		mFilter.push_back(')');
+	}
 }
 
 LdapContactSearch::~LdapContactSearch() {
