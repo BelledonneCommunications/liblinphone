@@ -3752,7 +3752,7 @@ int MainDb::getUnreadChatMessageCount(const ConferenceId &conferenceId) const {
 		         "  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 		         ") AND";
 
-	query += " marked_as_read == 0 ";
+	query += " marked_as_read = 0 ";
 
 	/*
 	DurationLogger durationLogger(
@@ -3786,7 +3786,7 @@ void MainDb::markChatMessagesAsRead(const ConferenceId &conferenceId) const {
 
 	static const string query = "UPDATE conference_chat_message_event"
 	                            "  SET marked_as_read = 1"
-	                            "  WHERE marked_as_read == 0"
+	                            "  WHERE marked_as_read = 0"
 	                            "  AND event_id IN ("
 	                            "    SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 	                            "  )";
@@ -3862,7 +3862,7 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages(const ConferenceId &
 #ifdef HAVE_DB_STORAGE
 	// TODO: Optimize.
 	static const string query =
-	    Statements::get(Statements::SelectConferenceEvents) + string(" AND marked_as_read == 0");
+		Statements::get(Statements::SelectConferenceEvents)	+ string(" AND marked_as_read = 0");
 
 	DurationLogger durationLogger(
 	    "Get unread chat messages: (peer=" + conferenceId.getPeerAddress()->toStringUriOnlyOrdered() +
@@ -4583,12 +4583,13 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 		" creation_time, last_update_time, capabilities, subject, last_notify_id, flags, last_message_id,"
 		" ephemeral_enabled, ephemeral_messages_lifetime,"
 		" unread_messages_count.message_count"
-		" FROM chat_room, sip_address AS peer_sip_address, sip_address AS local_sip_address"
+		" FROM chat_room"
 		" LEFT JOIN (SELECT conference_event.chat_room_id, count(*) as message_count"
 		" FROM conference_chat_message_event, conference_event"
-		" WHERE conference_chat_message_event.event_id=conference_event.event_id AND conference_chat_message_event.marked_as_read==0"
+		" WHERE conference_chat_message_event.event_id=conference_event.event_id AND conference_chat_message_event.marked_as_read = 0"
 		" GROUP BY conference_event.chat_room_id) AS unread_messages_count"
 		" ON unread_messages_count.chat_room_id = chat_room.id"
+		" , sip_address AS peer_sip_address, sip_address AS local_sip_address"
 		" WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = local_sip_address.id"
 		" ORDER BY last_update_time DESC";
 
