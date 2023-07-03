@@ -4619,10 +4619,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 				unreadMessageCountType = row.get_properties(12).get_data_type();
 				typeHasBeenSet = true;
 			}
-			ConferenceId conferenceId = ConferenceId(
-				ConferenceAddress(row.get<string>(1)),
-				ConferenceAddress(row.get<string>(2))
-			);
+			ConferenceId conferenceId(Address(row.get<string>(1), true), Address(row.get<string>(2), true));
 
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
