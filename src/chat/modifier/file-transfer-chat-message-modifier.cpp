@@ -279,7 +279,7 @@ FileTransferChatMessageModifier::prepare_upload_body_handler(shared_ptr<ChatMess
 		belle_sip_user_body_handler_t *body_handler = (belle_sip_user_body_handler_t *)first_part_bh;
 		// No need to add again the callback for progression, otherwise it will be called twice
 		first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(
-		    currentFileContentToTransfer->getFilePathSys().c_str(), nullptr, this);
+		    currentFileContentToTransfer->getFilePathSys().c_str(), nullptr, this, BELLE_SIP_BODY_HANDLER_SEND);
 		belle_sip_file_body_handler_set_user_body_handler((belle_sip_file_body_handler_t *)first_part_bh, body_handler);
 		// Ensure the file size has been set to the correct value
 		currentFileTransferContent->setFileSize(
@@ -837,7 +837,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 
 			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(
 			    currentFileContentToTransfer->getFilePathSys().c_str(), 16, _chat_message_file_transfer_on_progress,
-			    this);
+			    this, BELLE_SIP_BODY_HANDLER_RECV);
 			if (belle_sip_body_handler_get_size((belle_sip_body_handler_t *)body_handler) == 0) {
 				// If the size of the body has not been initialized from the file stat, use the one from the
 				// file_transfer_information.
@@ -943,9 +943,11 @@ bool FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage>
 		lError() << "Content type is not a FileTransfer.";
 		return false;
 	}
-
-	createFileContentFromFileTransferContent(fileTransferContent);
 	FileContent *fileContent = fileTransferContent->getFileContent();
+	if(fileContent)
+		delete fileContent;
+	createFileContentFromFileTransferContent(fileTransferContent);
+	fileContent = fileTransferContent->getFileContent();
 	currentFileContentToTransfer = fileContent;
 	if (!currentFileContentToTransfer) return false;
 	currentFileTransferContent = fileTransferContent;

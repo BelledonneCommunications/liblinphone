@@ -506,6 +506,17 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 		linphone_chat_message_download_content(msg, fileTransferContent);
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int,
 		                "%d");
+// Cancel the download
+		wait_for_list(coresList, NULL, 0, 400);
+
+		char * downloaded_file_temp = bctbx_concat(downloaded_file, ".copy", NULL);
+		remove(downloaded_file_temp);
+		liblinphone_tester_copy_file(downloaded_file, downloaded_file_temp);
+		linphone_chat_message_cancel_file_transfer(msg);
+		liblinphone_tester_copy_file(downloaded_file_temp, downloaded_file);
+		remove(downloaded_file_temp);
+		bctbx_free(downloaded_file_temp);
+		linphone_chat_message_download_content(msg, fileTransferContent);
 
 		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageFileTransferDone,
 		                                 receiverStats->number_of_LinphoneMessageFileTransferDone + 1,
