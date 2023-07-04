@@ -478,6 +478,7 @@ void liblinphone_tester_add_suites(void) {
 #ifdef HAVE_ADVANCED_IM
 	bc_tester_add_suite(&group_chat_test_suite);
 	bc_tester_add_suite(&group_chat2_test_suite);
+	bc_tester_add_suite(&group_chat3_test_suite);
 	bc_tester_add_suite(&cpim_test_suite);
 	bc_tester_add_suite(&ics_test_suite);
 #ifdef HAVE_LIME_X3DH
@@ -499,6 +500,7 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
+	bc_tester_add_suite(&call2_test_suite);
 	bc_tester_add_suite(&call_not_established_test_suite);
 	bc_tester_add_suite(&push_incoming_call_test_suite);
 	bc_tester_add_suite(&call_recovery_test_suite);

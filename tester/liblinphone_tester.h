@@ -47,6 +47,7 @@ extern test_suite_t account_creator_local_test_suite;
 extern test_suite_t account_creator_flexiapi_test_suite;
 extern test_suite_t account_creator_xmlrpc_test_suite;
 extern test_suite_t call_test_suite;
+extern test_suite_t call2_test_suite;
 extern test_suite_t call_not_established_test_suite;
 extern test_suite_t push_incoming_call_test_suite;
 
@@ -71,6 +72,7 @@ extern test_suite_t main_db_test_suite;
 extern test_suite_t flexisip_test_suite;
 extern test_suite_t group_chat_test_suite;
 extern test_suite_t group_chat2_test_suite;
+extern test_suite_t group_chat3_test_suite;
 extern test_suite_t secure_group_chat_test_suite;
 extern test_suite_t secure_message_test_suite;
 extern test_suite_t ephemeral_group_chat_test_suite;
