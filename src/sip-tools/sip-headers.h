@@ -44,6 +44,10 @@ constexpr char HeaderName[] = "X-fs-message-type";
 constexpr char ChatService[] = "chat-service";
 } // namespace XFsMessageTypeHeader
 
+namespace XFsEventIdHeader {
+constexpr char HeaderName[] = "X-fs-event-id";
+}
+
 LINPHONE_END_NAMESPACE
 
 #endif // _L_SIP_HEADERS_H_

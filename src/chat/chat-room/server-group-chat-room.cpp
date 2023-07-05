@@ -771,7 +771,7 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const std::shared_ptr<Add
 
 void ServerGroupChatRoomPrivate::copyMessageHeaders(const shared_ptr<Message> &fromMessage,
                                                     const shared_ptr<ChatMessage> &toMessage) {
-	string headersToCopy[] = {"Content-Encoding", "Expires", "Priority"};
+	static const string headersToCopy[] = {"Content-Encoding", "Expires", "Priority", XFsEventIdHeader::HeaderName};
 	for (const auto &headerName : headersToCopy) {
 		const char *headerValue = sal_custom_header_find(fromMessage->customHeaders, headerName.c_str());
 		if (headerValue) toMessage->getPrivate()->addSalCustomHeader(headerName, headerValue);
