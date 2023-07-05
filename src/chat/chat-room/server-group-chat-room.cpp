@@ -741,10 +741,11 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &pa
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoomPrivate::copyMessageHeaders (const shared_ptr<Message> &fromMessage, const shared_ptr<ChatMessage> &toMessage) {
-	string headersToCopy[] = {
+	static const string headersToCopy[] = {
 		"Content-Encoding",
 		"Expires",
-		"Priority"
+		"Priority",
+		XFsEventIdHeader::HeaderName
 	};
 	for (const auto &headerName : headersToCopy) {
 		const char *headerValue = sal_custom_header_find(fromMessage->customHeaders, headerName.c_str());
