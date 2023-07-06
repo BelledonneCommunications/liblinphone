@@ -78,10 +78,12 @@ static void check_payload_type_numbers(LinphoneCall *call1, LinphoneCall *call2,
 	}
 }
 
-static void simple_call_with_different_codec_mappings(void) {
+static void simple_call_with_different_codec_mappings_and_config_supplied_sdp_addresses(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call;
+	const char *marie4 = "10.0.0.56";
+	const char *marie6 = "fd00:0bad:f00d::56";
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -92,12 +94,20 @@ static void simple_call_with_different_codec_mappings(void) {
 	/*marie set a fantasy number to PCMU*/
 	payload_type_set_number(linphone_core_find_payload_type(marie->lc, "PCMU", 8000, -1), 104);
 
+	LinphoneConfig *cfg = linphone_core_get_config(marie->lc);
+	linphone_config_set_string(cfg, "rtp", "ipv4_sdp_address", marie4);
+	linphone_config_set_string(cfg, "rtp", "ipv6_sdp_address", marie6);
+
+	cfg = linphone_core_get_config(pauline->lc);
+
 	BC_ASSERT_TRUE(call(marie, pauline));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
 		LinphoneCallParams *params;
 		check_payload_type_numbers(linphone_core_get_current_call(marie->lc), pauline_call, 104);
+		std::string sdp_address = _linphone_call_get_remote_desc(pauline_call)->getConnectionAddress();
+		BC_ASSERT_TRUE(sdp_address == marie4 || sdp_address == marie6);
 		/*make a reinvite in the other direction*/
 		linphone_call_update(pauline_call, params = linphone_core_create_call_params(pauline->lc, pauline_call));
 		linphone_call_params_unref(params);
@@ -1085,7 +1095,8 @@ static void call_with_unknown_stream_accepted_2(void) {
 static test_t offeranswer_tests[] = {
     TEST_NO_TAG("Start with no config", start_with_no_config),
     TEST_NO_TAG("Call failed because of codecs", call_failed_because_of_codecs),
-    TEST_NO_TAG("Simple call with different codec mappings", simple_call_with_different_codec_mappings),
+    TEST_NO_TAG("Simple call with different codec mappings and config-supplied sdp address",
+                simple_call_with_different_codec_mappings_and_config_supplied_sdp_addresses),
     TEST_NO_TAG("Simple call with fmtps", simple_call_with_fmtps),
     TEST_NO_TAG("AVP to AVP call", avp_to_avp_call),
     TEST_NO_TAG("AVP to AVPF call", avp_to_avpf_call),

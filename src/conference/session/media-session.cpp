@@ -1190,18 +1190,41 @@ void MediaSessionPrivate::discoverMtu(const std::shared_ptr<Address> &remoteAddr
 /**
  * Fill the local ip that routes to the internet according to the destination, or guess it by other special means.
  */
+
 void MediaSessionPrivate::getLocalIp(const std::shared_ptr<Address> &remoteAddr) {
 	L_Q();
-	// Next, sometimes, override from config
+
+	/*
+	 * Use config-supplied addresses in SDP.
+	 * This helps to workaround rare firewall issues (https://bugs.linphone.org/view.php?id=11800), by advertising
+	 * wrong IP addresses (for example fd00:0bad:f00d::1 / 10.0.0.10 ).
+	 */
+	const char *mediaLocalIp4, *mediaLocalIp6;
+	mediaLocalIp4 = linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp",
+	                                           "ipv4_sdp_address", nullptr);
+	mediaLocalIp6 = linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp",
+	                                           "ipv6_sdp_address", nullptr);
+	if (af == AF_INET && mediaLocalIp4) {
+		mediaLocalIp = mediaLocalIp4;
+		lInfo() << "Advertising a config-supplied ipv4 address in SDP";
+		return;
+	} else if (af == AF_INET6 && mediaLocalIp6) {
+		mediaLocalIp = mediaLocalIp6;
+		lInfo() << "Advertising a config-supplied ipv6 address in SDP";
+		return;
+	}
+
+	// Legacy bind_address property handling.
 	const char *ip =
 	    linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "bind_address", nullptr);
 	if (ip) {
 		mediaLocalIp = ip;
-		lInfo() << "Found media local-ip from configuration file: " << mediaLocalIp;
+		lInfo() << "Use media local-ip from configuration file (bind_address): " << mediaLocalIp;
 		return;
 	}
 	const auto &account = getDestAccount();
 	const auto &accountOp = account ? account->getOp() : nullptr;
+
 	// If a known proxy was identified for this call, then we may have a chance to take the local ip address
 	// from the socket that connects to this proxy
 	if (accountOp) {
