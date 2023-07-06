@@ -1186,7 +1186,17 @@ void MediaSessionPrivate::discoverMtu(const Address &remoteAddr) {
  * Fill the local ip that routes to the internet according to the destination, or guess it by other special means.
  */
 void MediaSessionPrivate::getLocalIp(const Address &remoteAddr) {
+#if 1
+	(void)remoteAddr;
+	lInfo() << "Advertising a wrong ip address in SDP";
+	if (af == AF_INET6){
+		mediaLocalIp = "fd00:0bad:f00d::1";
+	}else{
+		mediaLocalIp = "10.0.0.10";
+	}
+#else
 	L_Q();
+
 	// Next, sometimes, override from config
 	const char *ip =
 		linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "bind_address", nullptr);
@@ -1244,6 +1254,7 @@ void MediaSessionPrivate::getLocalIp(const Address &remoteAddr) {
 		needLocalIpRefresh = false;
 		lInfo() << "Media local ip to reach " << (dest.empty() ? "default route" : dest) << " is :" << mediaLocalIp;
 	}
+#endif
 }
 
 int MediaSessionPrivate::portFromStreamIndex(int index) {
