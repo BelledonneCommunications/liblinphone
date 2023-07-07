@@ -363,6 +363,18 @@ bool_t linphone_account_creator_get_set_as_default(const LinphoneAccountCreator 
 	return creator->set_as_default;
 }
 
+void linphone_account_creator_use_test_admin_account(LinphoneAccountCreator *creator){
+	if (linphone_core_get_account_creator_backend(creator->core) != LinphoneAccountCreatorBackendFlexiAPI){
+		lWarning() << "linphone_account_creator_use_test_admin_account() is only meaningful for FlexiAPI backend.";
+		return;
+	}
+#ifdef HAVE_FLEXIAPI
+	linphone_account_creator_service_set_create_account_cb(linphone_account_creator_get_service(creator), linphone_account_creator_admin_create_account_flexiapi);
+#else
+	lError() << "linphone_account_creator_use_test_admin_account(): FlexiAPI not compiled in this version.";
+#endif
+}
+
 
 /************************** Start Account Creator data **************************/
 static void _linphone_account_creator_destroy(LinphoneAccountCreator *creator) {

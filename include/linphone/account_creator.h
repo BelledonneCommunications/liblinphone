@@ -755,6 +755,16 @@ linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creat
  **/
 LINPHONE_PUBLIC LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator);
 
+
+/**
+ * Require the account creator to use special "test admin account".
+ * @warning The "test admin account" is a special feature required for automated test, and requires the APP_EVERYONE_IS_ADMIN
+ * property to be enabled on the remote Flexisip Account Manager (FlexiAPI).
+ * This feature must never be turned on for a production-stage app.
+ * @param creator #LinphoneAccountCreator object @notnil
+ **/
+LINPHONE_PUBLIC void linphone_account_creator_use_test_admin_account(LinphoneAccountCreator *creator);
+
 /**************/
 /* DEPRECATED */
 /**************/
