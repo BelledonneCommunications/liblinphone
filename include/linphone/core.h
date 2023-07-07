@@ -2430,12 +2430,20 @@ LINPHONE_PUBLIC const char *linphone_core_get_account_creator_url(LinphoneCore *
 
 /**
  * Set the #LinphoneAccountCreator backend on the #LinphoneCore
- * @param core The #LinphoneCore used for the XML-RPC communication @notnil
+ * @param core The #LinphoneCore  @notnil
  * @param backend The #LinphoneAccountCreatorBackend
  * @ingroup account_creator
  **/
 LINPHONE_PUBLIC void linphone_core_set_account_creator_backend(LinphoneCore *core,
                                                                LinphoneAccountCreatorBackend backend);
+
+/**
+ * Get the #LinphoneAccountCreator backend set for the #LinphoneCore
+ * @param core The #LinphoneCore @notnil
+ * @return The #LinphoneAccountCreatorBackend
+ * @ingroup account_creator
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorBackend linphone_core_get_account_creator_backend(const LinphoneCore *lc);
 
 /**
  * Sets an default account creator service in the core

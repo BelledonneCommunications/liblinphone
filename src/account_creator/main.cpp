@@ -168,11 +168,11 @@ const char *linphone_account_creator_get_token(const LinphoneAccountCreator *cre
 	return creator->token;
 }
 
-void linphone_account_creator_set_account_creation_request_token(LinphoneAccountCreator *creator, const char* token) {
+void linphone_account_creator_set_account_creation_request_token(LinphoneAccountCreator *creator, const char *token) {
 	set_string(&creator->account_creation_request_token, token, FALSE);
 }
 
-const char* linphone_account_creator_get_account_creation_request_token(const LinphoneAccountCreator *creator) {
+const char *linphone_account_creator_get_account_creation_request_token(const LinphoneAccountCreator *creator) {
 	return creator->account_creation_request_token;
 }
 
@@ -383,6 +383,19 @@ LinphoneAccountCreatorStatus linphone_account_creator_set_as_default(LinphoneAcc
 
 bool_t linphone_account_creator_get_set_as_default(const LinphoneAccountCreator *creator) {
 	return creator->set_as_default;
+}
+
+void linphone_account_creator_use_test_admin_account(LinphoneAccountCreator *creator) {
+	if (linphone_core_get_account_creator_backend(creator->core) != LinphoneAccountCreatorBackendFlexiAPI) {
+		lWarning() << "linphone_account_creator_use_test_admin_account() is only meaningful for FlexiAPI backend.";
+		return;
+	}
+#ifdef HAVE_FLEXIAPI
+	linphone_account_creator_service_set_create_account_cb(linphone_account_creator_get_service(creator),
+	                                                       linphone_account_creator_admin_create_account_flexiapi);
+#else
+	lError() << "linphone_account_creator_use_test_admin_account(): FlexiAPI not compiled in this version.";
+#endif
 }
 
 /************************** Start Account Creator data **************************/
@@ -620,14 +633,16 @@ LinphoneAccountCreatorStatus linphone_account_creator_request_auth_token(Linphon
 	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
-LinphoneAccountCreatorStatus linphone_account_creator_request_account_creation_request_token(LinphoneAccountCreator *creator) {
+LinphoneAccountCreatorStatus
+linphone_account_creator_request_account_creation_request_token(LinphoneAccountCreator *creator) {
 	if (creator->service->account_creation_request_token_request_cb) {
 		return creator->service->account_creation_request_token_request_cb(creator);
 	}
 	return LinphoneAccountCreatorStatusNotImplementedError;
 }
 
-LinphoneAccountCreatorStatus linphone_account_creator_request_account_creation_token_using_request_token(LinphoneAccountCreator *creator) {
+LinphoneAccountCreatorStatus
+linphone_account_creator_request_account_creation_token_using_request_token(LinphoneAccountCreator *creator) {
 	if (creator->service->account_creation_token_using_request_token_request_cb) {
 		return creator->service->account_creation_token_using_request_token_request_cb(creator);
 	}

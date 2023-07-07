@@ -2922,12 +2922,16 @@ void linphone_core_set_account_creator_backend(LinphoneCore *lc, LinphoneAccount
 	linphone_config_set_int(lc->config, "account_creator", "backend", (int)backend);
 }
 
+LinphoneAccountCreatorBackend linphone_core_get_account_creator_backend(const LinphoneCore *lc) {
+	return (LinphoneAccountCreatorBackend)linphone_config_get_int(lc->config, "account_creator", "backend",
+	                                                              (int)LinphoneAccountCreatorBackendXMLRPC);
+}
+
 static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 
 #ifdef HAVE_FLEXIAPI
-	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendXMLRPC) ==
-	    LinphoneAccountCreatorBackendXMLRPC) {
+	if (linphone_core_get_account_creator_backend(lc) == LinphoneAccountCreatorBackendXMLRPC) {
 #endif
 		linphone_account_creator_service_set_constructor_cb(service,
 		                                                    linphone_account_creator_constructor_linphone_xmlrpc);
