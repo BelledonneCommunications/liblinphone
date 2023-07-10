@@ -263,7 +263,7 @@ LINPHONE_PUBLIC int linphone_account_get_unread_chat_message_count(LinphoneAccou
  * @param username The string to parse. @notnil
  * @return TRUE if input is a phone number, FALSE otherwise.
  **/
-LINPHONE_PUBLIC bool_t linphone_account_is_phone_number(LinphoneAccount *account, const char *username);
+LINPHONE_PUBLIC bool_t linphone_account_is_phone_number(const LinphoneAccount *account, const char *username);
 
 /**
  * Normalize a human readable phone number into a basic string. 888-444-222 becomes 888444222
@@ -275,7 +275,7 @@ LINPHONE_PUBLIC bool_t linphone_account_is_phone_number(LinphoneAccount *account
  * @return NULL if input is an invalid phone number, normalized phone number from username input otherwise. @maybenil
  * @tobefreed
  */
-LINPHONE_PUBLIC char *linphone_account_normalize_phone_number(LinphoneAccount *account, const char *username);
+LINPHONE_PUBLIC char *linphone_account_normalize_phone_number(const LinphoneAccount *account, const char *username);
 
 /**
  * Normalize a human readable sip uri into a fully qualified LinphoneAddress.

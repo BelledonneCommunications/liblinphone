@@ -3155,9 +3155,10 @@ static void ldap_features_more_results(void) {
 
 		// Check when magic search is limited to 30 items
 		linphone_magic_search_get_contacts_list_async(magicSearch, "Big", "", LinphoneMagicSearchSourceLdapServers,
-													  LinphoneMagicSearchAggregationNone);
+		                                              LinphoneMagicSearchAggregationNone);
 		// add 10ms to let some times to timeout callbacks.
-		BC_ASSERT_TRUE(wait_for_until(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1, maxTimeout*1000 + 10));
+		BC_ASSERT_TRUE(wait_for_until(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1,
+		                              maxTimeout * 1000 + 10));
 		resultList = linphone_magic_search_get_last_search(magicSearch);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 30, int, "%d");
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
@@ -3167,9 +3168,10 @@ static void ldap_features_more_results(void) {
 		linphone_magic_search_set_search_limit(magicSearch, 100);
 
 		linphone_magic_search_get_contacts_list_async(magicSearch, "Big", "", LinphoneMagicSearchSourceLdapServers,
-													  LinphoneMagicSearchAggregationNone);
+		                                              LinphoneMagicSearchAggregationNone);
 		// add 10ms to let some times to timeout callbacks.
-		BC_ASSERT_TRUE(wait_for_until(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1, maxTimeout*1000 + 10));
+		BC_ASSERT_TRUE(wait_for_until(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1,
+		                              maxTimeout * 1000 + 10));
 		resultList = linphone_magic_search_get_last_search(magicSearch);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 100, int, "%d");
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
@@ -3288,6 +3290,33 @@ static void dial_plan(void) {
 		}
 	}
 	bctbx_list_free_with_data(dial_plans, (bctbx_list_free_func)linphone_dial_plan_unref);
+}
+
+static void friend_phone_number_lookup_without_plus(void) {
+	LinphoneCoreManager *manager = linphone_core_manager_new("marie_rc");
+	LinphoneCore *core = manager->lc;
+
+	LinphoneFriend *lf = linphone_core_create_friend(core);
+	linphone_friend_set_name(lf, "Test Number");
+	linphone_friend_add_phone_number(lf, "+4912345678901");
+	linphone_core_add_friend(core, lf);
+	linphone_friend_unref(lf);
+
+	LinphoneFriend *found = linphone_core_find_friend_by_phone_number(core, "4912345678901");
+	BC_ASSERT_PTR_NULL(found);
+
+	const bctbx_list_t *accounts = linphone_core_get_account_list(core);
+	LinphoneAccount *account = (LinphoneAccount *)bctbx_list_get_data(accounts);
+	const LinphoneAccountParams *params = linphone_account_get_params(account);
+	LinphoneAccountParams *cloned_params = linphone_account_params_clone(params);
+	linphone_account_params_set_international_prefix(cloned_params, "49");
+	linphone_account_set_params(account, cloned_params);
+	linphone_account_params_unref(cloned_params);
+
+	found = linphone_core_find_friend_by_phone_number(core, "4912345678901");
+	BC_ASSERT_PTR_NOT_NULL(found);
+
+	linphone_core_manager_destroy(manager);
 }
 
 static void audio_devices(void) {
@@ -3539,6 +3568,7 @@ test_t setup_tests[] = {
     TEST_NO_TAG("Ldap params edition with check", ldap_params_edition_with_check),
     TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
     TEST_NO_TAG("Dialplan", dial_plan),
+    TEST_NO_TAG("Friend phone number lookup without plus", friend_phone_number_lookup_without_plus),
     TEST_NO_TAG("Audio devices", audio_devices),
     TEST_NO_TAG("Migrate from call history database", migration_from_call_history_db),
 };

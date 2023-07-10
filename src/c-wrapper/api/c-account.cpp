@@ -182,7 +182,7 @@ void _linphone_account_notify_registration_state_changed(LinphoneAccount *accoun
 	                                  linphone_account_cbs_get_registration_state_changed, state, message);
 }
 
-bool_t linphone_account_is_phone_number(BCTBX_UNUSED(LinphoneAccount *account), const char *username) {
+bool_t linphone_account_is_phone_number(BCTBX_UNUSED(const LinphoneAccount *account), const char *username) {
 	if (!username) return FALSE;
 
 	const char *p;
@@ -223,16 +223,26 @@ static char *replace_icp_with_plus(char *phone, const char *icp) {
 	return (strstr(phone, icp) == phone) ? ms_strdup_printf("+%s", phone + strlen(icp)) : ms_strdup(phone);
 }
 
-char *linphone_account_normalize_phone_number(LinphoneAccount *account, const char *username) {
-	LinphoneAccountParams *tmpparams = account ? NULL : linphone_account_params_new(NULL);
-	LinphoneAccount *tmpaccount = account ? account : linphone_account_new(NULL, tmpparams);
-	if (tmpparams) linphone_account_params_unref(tmpparams);
+char *linphone_account_normalize_phone_number(const LinphoneAccount *account, const char *username) {
 	char *result = NULL;
 	std::shared_ptr<DialPlan> dialplan;
 	char *nationnal_significant_number = NULL;
 	int ccc = -1;
+	const char *dial_prefix;
+	bool_t dial_escape_plus;
 
-	if (linphone_account_is_phone_number(tmpaccount, username)) {
+	if (account) {
+		const LinphoneAccountParams *accountParams = linphone_account_get_params(account);
+		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
+		dial_escape_plus = linphone_account_params_get_dial_escape_plus_enabled(accountParams);
+	} else {
+		LinphoneAccountParams *accountParams = linphone_account_params_new(NULL);
+		dial_prefix = linphone_account_params_get_international_prefix(accountParams);
+		dial_escape_plus = linphone_account_params_get_dial_escape_plus_enabled(accountParams);
+		linphone_account_params_unref(accountParams);
+	}
+
+	if (linphone_account_is_phone_number(account, username)) {
 		char *flatten = linphone_account_flatten_phone_number(username);
 		ms_debug("Flattened number is '%s' for '%s'", flatten, username);
 
@@ -247,24 +257,35 @@ char *linphone_account_normalize_phone_number(LinphoneAccount *account, const ch
 			ms_message("Unknown ccc for e164 like number [%s]", flatten);
 			goto end;
 		} else {
-			const char *dial_prefix =
-			    linphone_account_params_get_international_prefix(linphone_account_get_params(tmpaccount));
 			if (dial_prefix) {
 				dialplan = DialPlan::findByCcc(dial_prefix); // copy dial plan;
 			} else {
 				dialplan = DialPlan::MostCommon;
 			}
+
 			if (dial_prefix) {
-				if (strcmp(dial_prefix, dialplan->getCountryCallingCode().c_str()) != 0) {
+				const char *country_calling_code = dialplan->getCountryCallingCode().c_str();
+				if (strcmp(dial_prefix, country_calling_code) != 0) {
 					// probably generic dialplan, preserving proxy dial prefix
 					dialplan->setCountryCallingCode(dial_prefix);
+					country_calling_code = dial_prefix;
+				}
+
+				// If phone number starts by international prefix but without +, add it
+				if (strstr(flatten, country_calling_code) == flatten &&
+				    strlen(flatten) > strlen(country_calling_code)) {
+					ms_warning("Phone number seems to start by international prefix but without '+', adding it");
+					char *e164 = ms_strdup_printf("+%s", flatten);
+					result = linphone_account_normalize_phone_number(account, e164);
+					ms_free(e164);
+					goto end;
 				}
 
 				/*it does not make sens to try replace icp with + if we are not sure from the country we are (I.E
 				 * dial_prefix==NULL)*/
 				if (strstr(flatten, dialplan->getInternationalCallPrefix().c_str()) == flatten) {
 					char *e164 = replace_icp_with_plus(flatten, dialplan->getInternationalCallPrefix().c_str());
-					result = linphone_account_normalize_phone_number(tmpaccount, e164);
+					result = linphone_account_normalize_phone_number(account, e164);
 					ms_free(e164);
 					goto end;
 				}
@@ -286,8 +307,6 @@ char *linphone_account_normalize_phone_number(LinphoneAccount *account, const ch
 			/*1. First prepend international calling prefix or +*/
 			/*2. Second add prefix*/
 			/*3. Finally add user digits */
-			bool_t dial_escape_plus =
-			    linphone_account_params_get_dial_escape_plus_enabled(linphone_account_get_params(tmpaccount));
 			result = ms_strdup_printf("%s%s%s", dial_escape_plus ? dialplan->getInternationalCallPrefix().c_str() : "+",
 			                          dialplan->getCountryCallingCode().c_str(), nationnal_significant_number_start);
 			ms_debug("Prepended prefix resulted in %s", result);
@@ -299,10 +318,6 @@ char *linphone_account_normalize_phone_number(LinphoneAccount *account, const ch
 		} else {
 			ms_free(flatten);
 		}
-	}
-	if (account == NULL) {
-		// linphone_account_params_unref(tmpparams);
-		linphone_account_unref(tmpaccount);
 	}
 	return result;
 }

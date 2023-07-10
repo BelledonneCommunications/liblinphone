@@ -1098,17 +1098,46 @@ LinphoneFriend *linphone_friend_list_find_friend_by_address(const LinphoneFriend
 	return lf;
 }
 
-LinphoneFriend *linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list,
-                                                                 const char *phoneNumber) {
+LinphoneFriend *_linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list,
+                                                                  const LinphoneAccount *account,
+                                                                  const char *normalized_phone_number) {
 	LinphoneFriend *result = NULL;
-
 	const bctbx_list_t *elem;
 	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
-		if (linphone_friend_has_phone_number(lf, phoneNumber)) {
+		if (_linphone_friend_has_phone_number(lf, account, normalized_phone_number)) {
 			result = lf;
 			break;
 		}
+	}
+
+	return result;
+}
+
+LinphoneFriend *linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list,
+                                                                 const char *phoneNumber) {
+	LinphoneFriend *result = NULL;
+	LinphoneAccount *account = linphone_core_get_default_account(list->lc);
+	// Account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number can handle
+	// it
+	if (phoneNumber == NULL || !linphone_account_is_phone_number(account, phoneNumber)) {
+		ms_warning("Phone number [%s] isn't valid", phoneNumber);
+		return result;
+	}
+
+	if (!linphone_core_vcard_supported()) {
+		ms_warning("SDK built without vCard support, can't do a phone number search without it");
+		return NULL;
+	}
+
+	const bctbx_list_t *elem;
+	const bctbx_list_t *accounts = linphone_core_get_account_list(list->lc);
+	for (elem = accounts; elem != NULL; elem = bctbx_list_next(elem)) {
+		account = (LinphoneAccount *)bctbx_list_get_data(elem);
+		char *normalized_phone_number = linphone_account_normalize_phone_number(account, phoneNumber);
+		result = _linphone_friend_list_find_friend_by_phone_number(list, account, normalized_phone_number);
+		ms_free(normalized_phone_number);
+		if (result) return result;
 	}
 
 	return result;

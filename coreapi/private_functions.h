@@ -214,6 +214,9 @@ void linphone_friend_list_subscription_state_changed(LinphoneCore *lc,
                                                      LinphoneEvent *lev,
                                                      LinphoneSubscriptionState state);
 void linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
+LinphoneFriend *_linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list,
+                                                                  const LinphoneAccount *account,
+                                                                  const char *normalized_phone_number);
 
 /**
  * Removes all bodyless friend lists.
@@ -265,6 +268,9 @@ LinphoneFriendListCbs *linphone_friend_list_cbs_new(void);
 void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
 void linphone_friend_add_addresses_and_numbers_into_maps(LinphoneFriend *lf, LinphoneFriendList *list);
 void linphone_friend_notify_presence_received(LinphoneFriend *lf);
+bool_t _linphone_friend_has_phone_number(const LinphoneFriend *lf,
+                                         const LinphoneAccount *account,
+                                         const char *normalized_phone_number);
 
 int linphone_parse_host_port(const char *input, char *host, size_t hostlen, int *port);
 int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, socklen_t *socklen, int default_port);

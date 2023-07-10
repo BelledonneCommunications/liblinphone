@@ -576,6 +576,31 @@ bctbx_list_t *linphone_friend_get_phone_numbers_with_label(const LinphoneFriend 
 	return NULL;
 }
 
+bool_t _linphone_friend_has_phone_number(const LinphoneFriend *lf,
+                                         const LinphoneAccount *account,
+                                         const char *normalized_phone_number) {
+	if (!lf || !normalized_phone_number) return FALSE;
+
+	bool_t found = FALSE;
+	bctbx_list_t *numbers = linphone_friend_get_phone_numbers(lf);
+	bctbx_list_t *it = NULL;
+	for (it = numbers; it != NULL; it = bctbx_list_next(it)) {
+		const char *value = (const char *)bctbx_list_get_data(it);
+		char *normalized_value = linphone_account_normalize_phone_number(account, value);
+		if (normalized_value) {
+			if (strcmp(normalized_value, normalized_phone_number) == 0) {
+				found = TRUE;
+				ms_free(normalized_value);
+				break;
+			}
+			ms_free(normalized_value);
+		}
+	}
+	bctbx_list_free(numbers);
+
+	return found;
+}
+
 bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *phoneNumber) {
 	if (!lf || !phoneNumber) return FALSE;
 
@@ -587,6 +612,11 @@ bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *ph
 		return FALSE;
 	}
 
+	if (!linphone_core_vcard_supported()) {
+		ms_warning("SDK built without vCard support, can't do a phone number search without it");
+		return FALSE;
+	}
+
 	bool_t found = FALSE;
 	const bctbx_list_t *elem;
 	const bctbx_list_t *accounts = linphone_core_get_account_list(lf->lc);
@@ -594,27 +624,47 @@ bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *ph
 		account = (LinphoneAccount *)bctbx_list_get_data(elem);
 
 		char *normalized_phone_number = linphone_account_normalize_phone_number(account, phoneNumber);
-		if (linphone_core_vcard_supported()) {
-			bctbx_list_t *numbers = linphone_friend_get_phone_numbers(lf);
-			bctbx_list_t *it = NULL;
-			for (it = numbers; it != NULL; it = bctbx_list_next(it)) {
-				const char *value = (const char *)bctbx_list_get_data(it);
-				char *normalized_value = linphone_account_normalize_phone_number(account, value);
-				if (normalized_value && strcmp(normalized_value, normalized_phone_number) == 0) {
-					found = TRUE;
-					ms_free(normalized_value);
-					break;
-				}
-				if (normalized_value) ms_free(normalized_value);
-			}
-			bctbx_list_free(numbers);
-		}
+		found = _linphone_friend_has_phone_number(lf, account, normalized_phone_number);
 		if (normalized_phone_number) ms_free(normalized_phone_number);
 
 		if (found) break;
 	}
 
 	return found;
+}
+
+LinphoneFriend *linphone_core_find_friend_by_phone_number(const LinphoneCore *lc, const char *phoneNumber) {
+	LinphoneAccount *account = linphone_core_get_default_account(lc);
+	// Account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number can handle
+	// it
+	if (phoneNumber == NULL || !linphone_account_is_phone_number(account, phoneNumber)) {
+		ms_warning("Phone number [%s] isn't valid", phoneNumber);
+		return NULL;
+	}
+
+	if (!linphone_core_vcard_supported()) {
+		ms_warning("SDK built without vCard support, can't do a phone number search without it");
+		return NULL;
+	}
+
+	const bctbx_list_t *elem;
+	const bctbx_list_t *accounts = linphone_core_get_account_list(lc);
+	for (elem = accounts; elem != NULL; elem = bctbx_list_next(elem)) {
+		account = (LinphoneAccount *)bctbx_list_get_data(elem);
+		char *normalized_phone_number = linphone_account_normalize_phone_number(account, phoneNumber);
+
+		bctbx_list_t *lists = lc->friends_lists;
+		LinphoneFriend *lf = NULL;
+		while (lists && !lf) {
+			LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(lists);
+			lf = _linphone_friend_list_find_friend_by_phone_number(list, account, normalized_phone_number);
+			lists = bctbx_list_next(lists);
+		}
+
+		ms_free(normalized_phone_number);
+		if (lf) return lf;
+	}
+	return NULL;
 }
 
 void linphone_friend_remove_phone_number(LinphoneFriend *lf, const char *phone) {
@@ -1177,17 +1227,6 @@ LinphoneFriend *linphone_core_find_friend(const LinphoneCore *lc, const Linphone
 	while (lists && !lf) {
 		LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(lists);
 		lf = linphone_friend_list_find_friend_by_address(list, addr);
-		lists = bctbx_list_next(lists);
-	}
-	return lf;
-}
-
-LinphoneFriend *linphone_core_find_friend_by_phone_number(const LinphoneCore *lc, const char *phoneNumber) {
-	bctbx_list_t *lists = lc->friends_lists;
-	LinphoneFriend *lf = NULL;
-	while (lists && !lf) {
-		LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(lists);
-		lf = linphone_friend_list_find_friend_by_phone_number(list, phoneNumber);
 		lists = bctbx_list_next(lists);
 	}
 	return lf;
