@@ -51,9 +51,7 @@ const std::string &CustomParams::getCustomParam(const std::string &key) const {
 }
 
 void CustomParams::writeCustomParamsToConfigFile(LinphoneConfig *config, std::string configKey) const {
-	for (const auto &p : params) {
-		const auto &key = p.first;
-		const auto &value = p.second;
+	for (const auto &[key, value] : params) {
 		const auto paramsName(std::string(paramPrefix) + key);
 		linphone_config_set_string(config, configKey.c_str(), paramsName.c_str(), value.c_str());
 	}

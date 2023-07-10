@@ -325,9 +325,9 @@ const SalStreamBundle &SalMediaDescription::getBundleFromMid(const std::string m
 
 std::list<int> SalMediaDescription::getTransportOwnerIndexes() const {
 	std::list<int> owners;
-	for (const auto & sd : streams) {
+	for (const auto &sd : streams) {
 		auto ownerIdx = getIndexOfTransportOwner(sd);
-		if (ownerIdx >= 0){
+		if (ownerIdx >= 0) {
 			auto it = std::find(owners.begin(), owners.end(), ownerIdx);
 			if (owners.empty() || (it == owners.end())) {
 				owners.push_back(ownerIdx);
@@ -341,7 +341,7 @@ std::list<int> SalMediaDescription::getTransportOwnerIndexes() const {
 // - integer greater than or equal to 0 -> index of the stream holding the transport owner
 // - -1 -> stream is not part of a bundle
 // - -2 -> stream is part of a bundle but the transport owner cannot be found
-int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & sd) const {
+int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription &sd) const {
 	std::string master_mid;
 	int index;
 	if (sd.getChosenConfiguration().getMid().empty() == true) return -1; /* not part of any bundle */
@@ -353,7 +353,8 @@ int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & s
 	}
 	master_mid = bundle.getMidOfTransportOwner();
 	if (master_mid.empty()) {
-		ms_warning("Orphan stream with mid '%s' because the transport owner mid cannot be found", L_STRING_TO_C(sd.getChosenConfiguration().getMid()));
+		ms_warning("Orphan stream with mid '%s' because the transport owner mid cannot be found",
+		           L_STRING_TO_C(sd.getChosenConfiguration().getMid()));
 		return -2;
 	}
 	index = lookupMid(master_mid);
@@ -580,12 +581,10 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStrea
     const std::vector<std::pair<std::string, std::string>> &attributes) const {
 	return std::find_if(streams.cbegin(), streams.cend(), [&attributes](const auto &stream) {
 		bool found = true;
-		for (const auto &attrPair : attributes) {
-			const auto name = attrPair.first;
-			const auto value = attrPair.second;
-			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
+		for (const auto &[attrName, attrValue] : attributes) {
+			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, attrName.c_str());
 			if (foundAttrVal) {
-				found &= (strcmp(foundAttrVal, value.c_str()) == 0);
+				found &= (strcmp(foundAttrVal, attrValue.c_str()) == 0);
 			} else {
 				found = false;
 			}
@@ -598,12 +597,10 @@ std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStrea
     const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &attributes) const {
 	return std::find_if(streams.cbegin(), streams.cend(), [&type, &attributes](const auto &stream) {
 		bool found = true;
-		for (const auto &attrPair : attributes) {
-			const auto name = attrPair.first;
-			const auto value = attrPair.second;
-			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
+		for (const auto &[attrName, attrValue] : attributes) {
+			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, attrName.c_str());
 			if (foundAttrVal && (type == stream.getType())) {
-				found &= (strcmp(foundAttrVal, value.c_str()) == 0);
+				found &= (strcmp(foundAttrVal, attrValue.c_str()) == 0);
 			} else {
 				found = false;
 			}
@@ -921,9 +918,7 @@ belle_sdp_session_description_t *SalMediaDescription::toSdp() const {
 	}
 
 	if (times.size() > 0) {
-		for (const auto &timePair : times) {
-			auto startTime = timePair.first;
-			auto stopTime = timePair.second;
+		for (const auto &[startTime, stopTime] : times) {
 			long long ntpStartTime = (startTime < 0) ? 0 : startTime + SalMediaDescription::ntpToUnix;
 			long long ntpStopTime = (stopTime < 0) ? 0 : stopTime + SalMediaDescription::ntpToUnix;
 			belle_sdp_session_description_set_time_description(
@@ -969,12 +964,8 @@ belle_sdp_session_description_t *SalMediaDescription::toSdp() const {
 	}
 
 	if (params.capabilityNegotiationSupported()) {
-		for (const auto &acap : acaps) {
-			const auto &idx = acap.first;
-			const auto &nameValuePair = acap.second;
-			const auto &name = nameValuePair.first;
-			const auto &value = nameValuePair.second;
-
+		for (const auto &[idx, nameValuePair] : acaps) {
+			const auto &[name, value] = nameValuePair;
 			std::string acapValue{};
 			if (value.empty()) {
 				acapValue = std::to_string(idx) + " " + name;
@@ -988,9 +979,7 @@ belle_sdp_session_description_t *SalMediaDescription::toSdp() const {
 
 		std::string tcapValue;
 		SalStreamDescription::tcap_map_t::key_type prevIdx = 0;
-		for (const auto &tcap : tcaps) {
-			const auto &idx = tcap.first;
-			const auto &value = tcap.second;
+		for (const auto &[idx, value] : tcaps) {
 			if (params.tcapLinesMerged()) {
 				if (tcapValue.empty()) {
 					tcapValue = std::to_string(idx) + " " + value;

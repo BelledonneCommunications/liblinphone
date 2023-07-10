@@ -208,9 +208,7 @@ void MS2Stream::addAcapToStream(std::shared_ptr<SalMediaDescription> &desc,
                                 const std::string &attrValue) {
 	const auto &acaps = desc->getAllAcapForStream(streamIdx);
 	const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &attrValue](const auto &cap) {
-		const auto &nameValuePair = cap.second;
-		const auto &name = nameValuePair.first;
-		const auto &value = nameValuePair.second;
+		const auto [name, value] = cap.second;
 		return ((name.compare(attrName) == 0) && (value.compare(attrValue) == 0));
 	});
 	// Do not add duplicates acaps
@@ -396,8 +394,15 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext &ctx) {
 						const auto &acaps = localMediaDesc->getAllAcapForStream(streamIndex);
 						const auto &cryptoCap =
 						    std::find_if(acaps.cbegin(), acaps.cend(), [&attrName](const auto &cap) {
-							    const auto &nameValuePair = cap.second;
-							    const auto &name = nameValuePair.first;
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?format=multiple&id=81767
+#if __GNUC__ == 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif //  __GNUC__ == 7
+							    const auto [name, value] = cap.second;
+#if __GNUC__ == 7
+#pragma GCC diagnostic pop
+#endif //  __GNUC__ == 7
 							    return (name.compare(attrName) == 0);
 						    });
 
@@ -435,9 +440,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext &ctx) {
 								if (ms_crypto_suite_to_name_params(crypto.algo, &desc) == 0) {
 									const auto nameValueMatch =
 									    std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc](const auto &cap) {
-										    const auto &nameValuePair = cap.second;
-										    const auto &name = nameValuePair.first;
-										    const auto &value = nameValuePair.second;
+										    const auto [name, value] = cap.second;
 										    return ((name.compare(attrName) == 0) &&
 										            (value.find(desc.name) != std::string::npos));
 									    });

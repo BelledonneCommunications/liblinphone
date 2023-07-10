@@ -16227,16 +16227,6 @@ static test_t local_conference_chat_tests[] = {
     TEST_ONE_TAG("Group chat with client restart",
                  LinphoneTest::group_chat_room_with_client_restart,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
-    TEST_ONE_TAG("Group chat with INVITE session error",
-                 LinphoneTest::group_chat_room_with_invite_error,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Group chat with SUBSCRIBE session error",
-                 LinphoneTest::group_chat_room_with_subscribe_error,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_NO_TAG("Group chat Add participant with invalid address",
-                LinphoneTest::group_chat_room_add_participant_with_invalid_address),
-    TEST_NO_TAG("Group chat Only participant with invalid address",
-                LinphoneTest::group_chat_room_with_only_participant_with_invalid_address),
     TEST_NO_TAG("Group chat room bulk notify to participant",
                 LinphoneTest::group_chat_room_bulk_notify_to_participant), /* because of network up and down*/
     TEST_ONE_TAG("One to one chatroom exhumed while participant is offline",
@@ -16248,13 +16238,47 @@ static test_t local_conference_chat_tests[] = {
     TEST_ONE_TAG("One to one group chat deletion initiated by server and client",
                  LinphoneTest::one_to_one_group_chat_room_deletion_by_server_client,
                  "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Group chat with client IMDN after restart",
-                 LinphoneTest::group_chat_room_with_client_idmn_after_restart,
-                 "LeaksMemory"), /* because of network up and down */
     TEST_ONE_TAG("Multi domain chatroom",
                  LinphoneTest::multidomain_group_chat_room,
                  "LeaksMemory") /* because of coreMgr restart*/
 };
+
+static test_t local_conference_chat_error_tests[] = {
+    TEST_ONE_TAG("Group chat with INVITE session error",
+                 LinphoneTest::group_chat_room_with_invite_error,
+                 "LeaksMemory"), /* because of network up and down */
+    TEST_ONE_TAG("Group chat with SUBSCRIBE session error",
+                 LinphoneTest::group_chat_room_with_subscribe_error,
+                 "LeaksMemory"), /* because of network up and down */
+    TEST_NO_TAG("Group chat Add participant with invalid address",
+                LinphoneTest::group_chat_room_add_participant_with_invalid_address),
+    TEST_NO_TAG("Group chat Only participant with invalid address",
+                LinphoneTest::group_chat_room_with_only_participant_with_invalid_address),
+
+};
+
+static test_t local_conference_chat_imdn_tests[] = {
+    TEST_ONE_TAG("Group chat with client IMDN after restart",
+                 LinphoneTest::group_chat_room_with_client_idmn_after_restart,
+                 "LeaksMemory"), /* because of network up and down */
+    TEST_NO_TAG("Group chat Lime Server chat room send imdn error",
+                LinphoneTest::group_chat_room_lime_session_corrupted),
+    TEST_ONE_TAG("Secure one to one group chat deletion initiated by server and client",
+                 LinphoneTest::secure_one_to_one_group_chat_room_deletion_by_server_client,
+                 "LeaksMemory"), /* because of network up and down */
+    TEST_ONE_TAG("Secure group chat with client IMDN sent after restart",
+                 LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart,
+                 "LeaksMemory"), /* because of network up and down */
+    TEST_ONE_TAG("Secure group chat with client IMDN sent after restart and participant added",
+                 LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart_and_participant_added,
+                 "LeaksMemory"), /* because of network up and down */
+    TEST_ONE_TAG(
+        "Secure group chat with client IMDN sent after restart and participant added and core stopped before sending "
+        "IMDN",
+        LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart_and_participant_added_and_core_stopped,
+        "LeaksMemory"), /* because of network up and down */
+    TEST_NO_TAG("Group chat Lime Server chat room clear message",
+                LinphoneTest::group_chat_room_lime_server_clear_message)};
 
 static test_t local_conference_ephemeral_chat_tests[] = {
     TEST_NO_TAG("Unencrypted group chat server chat room with admin managed ephemeral messages",
@@ -16288,25 +16312,7 @@ static test_t local_conference_secure_chat_tests[] = {
                  LinphoneTest::secure_group_chat_room_with_chat_room_deleted_before_server_restart,
                  "LeaksMemory"), /* because of network up and down */
     TEST_NO_TAG("Group chat Lime Server chat room encrypted message",
-                LinphoneTest::group_chat_room_lime_server_encrypted_message),
-    TEST_NO_TAG("Group chat Lime Server chat room send imdn error",
-                LinphoneTest::group_chat_room_lime_session_corrupted),
-    TEST_ONE_TAG("Secure one to one group chat deletion initiated by server and client",
-                 LinphoneTest::secure_one_to_one_group_chat_room_deletion_by_server_client,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Secure group chat with client IMDN sent after restart",
-                 LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Secure group chat with client IMDN sent after restart and participant added",
-                 LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart_and_participant_added,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG(
-        "Secure group chat with client IMDN sent after restart and participant added and core stopped before sending "
-        "IMDN",
-        LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart_and_participant_added_and_core_stopped,
-        "LeaksMemory"), /* because of network up and down */
-    TEST_NO_TAG("Group chat Lime Server chat room clear message",
-                LinphoneTest::group_chat_room_lime_server_clear_message)};
+                LinphoneTest::group_chat_room_lime_server_encrypted_message)};
 
 static test_t local_conference_scheduled_conference_basic_tests[] = {
 
@@ -16402,26 +16408,10 @@ static test_t local_conference_inpromptu_conference_tests[] = {
     TEST_NO_TAG("Create simple dial out conference", LinphoneTest::create_simple_conference_dial_out),
     TEST_NO_TAG("Create simple dial out conference and ICS sent",
                 LinphoneTest::create_simple_conference_dial_out_and_ics),
-    TEST_NO_TAG("Create simple dial out conference with calls declined",
-                LinphoneTest::create_simple_conference_dial_out_with_calls_declined),
-    TEST_NO_TAG("Create simple dial out conference with some calls declined",
-                LinphoneTest::create_simple_conference_dial_out_with_some_calls_declined),
-    TEST_NO_TAG("Create simple dial out conference with some calls busy",
-                LinphoneTest::create_simple_conference_dial_out_with_some_calls_busy),
     TEST_NO_TAG("Create simple dial out conference with late participant addition",
                 LinphoneTest::create_simple_conference_dial_out_with_late_participant_addition),
     TEST_NO_TAG("Create simple dial out conference with many late participant additions",
                 LinphoneTest::create_simple_conference_dial_out_with_many_late_participant_additions),
-    TEST_NO_TAG("Create simple dial out conference with participant codec mismatch",
-                LinphoneTest::create_simple_conference_dial_out_participant_codec_mismatch),
-    TEST_NO_TAG("Create simple dial out conference with organizer codec mismatch",
-                LinphoneTest::create_simple_conference_dial_out_organizer_codec_mismatch),
-    TEST_NO_TAG("Create simple dial out conference with video not initiated",
-                LinphoneTest::create_simple_conference_dial_out_with_video_not_initiated),
-    TEST_NO_TAG("Create simple dial out conference with video not accepted",
-                LinphoneTest::create_simple_conference_dial_out_with_video_not_accepted),
-    TEST_NO_TAG("Simple dial out conference with no payloads",
-                LinphoneTest::simple_dial_out_conference_with_no_payloads),
     TEST_NO_TAG("Create simple conference by merging calls", LinphoneTest::create_simple_conference_merging_calls),
     TEST_ONE_TAG("Create simple conference by merging calls with video toggling",
                  LinphoneTest::create_simple_conference_merging_calls_with_video_toggling,
@@ -16435,6 +16425,24 @@ static test_t local_conference_inpromptu_conference_tests[] = {
     TEST_NO_TAG("2 overlapping dialout conferences from different organizers",
                 LinphoneTest::two_overlapping_dialout_conferences_from_different_organizers)};
 
+static test_t local_conference_inpromptu_mismatch_conference_tests[] = {
+    TEST_NO_TAG("Create simple dial out conference with calls declined",
+                LinphoneTest::create_simple_conference_dial_out_with_calls_declined),
+    TEST_NO_TAG("Create simple dial out conference with some calls declined",
+                LinphoneTest::create_simple_conference_dial_out_with_some_calls_declined),
+    TEST_NO_TAG("Create simple dial out conference with some calls busy",
+                LinphoneTest::create_simple_conference_dial_out_with_some_calls_busy),
+    TEST_NO_TAG("Create simple dial out conference with participant codec mismatch",
+                LinphoneTest::create_simple_conference_dial_out_participant_codec_mismatch),
+    TEST_NO_TAG("Create simple dial out conference with organizer codec mismatch",
+                LinphoneTest::create_simple_conference_dial_out_organizer_codec_mismatch),
+    TEST_NO_TAG("Create simple dial out conference with video not initiated",
+                LinphoneTest::create_simple_conference_dial_out_with_video_not_initiated),
+    TEST_NO_TAG("Create simple dial out conference with video not accepted",
+                LinphoneTest::create_simple_conference_dial_out_with_video_not_accepted),
+    TEST_NO_TAG("Simple dial out conference with no payloads",
+                LinphoneTest::simple_dial_out_conference_with_no_payloads)};
+
 test_suite_t local_conference_test_suite_chat = {"Local conference tester (Chat)",
                                                  NULL,
                                                  NULL,
@@ -16443,6 +16451,24 @@ test_suite_t local_conference_test_suite_chat = {"Local conference tester (Chat)
                                                  sizeof(local_conference_chat_tests) /
                                                      sizeof(local_conference_chat_tests[0]),
                                                  local_conference_chat_tests};
+
+test_suite_t local_conference_test_suite_chat_error = {"Local conference tester (Chat error)",
+                                                       NULL,
+                                                       NULL,
+                                                       liblinphone_tester_before_each,
+                                                       liblinphone_tester_after_each,
+                                                       sizeof(local_conference_chat_error_tests) /
+                                                           sizeof(local_conference_chat_error_tests[0]),
+                                                       local_conference_chat_error_tests};
+
+test_suite_t local_conference_test_suite_chat_imdn = {"Local conference tester (Chat IMDN)",
+                                                      NULL,
+                                                      NULL,
+                                                      liblinphone_tester_before_each,
+                                                      liblinphone_tester_after_each,
+                                                      sizeof(local_conference_chat_imdn_tests) /
+                                                          sizeof(local_conference_chat_imdn_tests[0]),
+                                                      local_conference_chat_imdn_tests};
 
 test_suite_t local_conference_test_suite_ephemeral_chat = {"Local conference tester (Ephemeral Chat)",
                                                            NULL,
@@ -16509,6 +16535,16 @@ test_suite_t local_conference_test_suite_inpromptu_conference = {
     liblinphone_tester_after_each,
     sizeof(local_conference_inpromptu_conference_tests) / sizeof(local_conference_inpromptu_conference_tests[0]),
     local_conference_inpromptu_conference_tests};
+
+test_suite_t local_conference_test_suite_inpromptu_mismatch_conference = {
+    "Local conference tester (Inpromptu Conference with mismatch)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_inpromptu_mismatch_conference_tests) /
+        sizeof(local_conference_inpromptu_mismatch_conference_tests[0]),
+    local_conference_inpromptu_mismatch_conference_tests};
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

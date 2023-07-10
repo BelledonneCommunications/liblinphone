@@ -2456,10 +2456,10 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters(std::shared_ptr<SalM
 	list<EncryptionParameter> paramList = encryptionEngine->getEncryptionParameters();
 
 	// Loop over IM Encryption Engine parameters and append them to the SDP
-	for (const auto &param : paramList) {
-		lInfo() << "Appending " << param.first << " parameter to SDP attributes";
+	for (const auto &[name, value] : paramList) {
+		lInfo() << "Appending " << name << " parameter to SDP attributes";
 		md->custom_sdp_attributes =
-		    sal_custom_sdp_attribute_append(md->custom_sdp_attributes, param.first.c_str(), param.second.c_str());
+		    sal_custom_sdp_attribute_append(md->custom_sdp_attributes, name.c_str(), value.c_str());
 	}
 }
 
@@ -2507,8 +2507,7 @@ void MediaSessionPrivate::setupEncryptionKeys(std::shared_ptr<SalMediaDescriptio
 						    oldStream.getChosenConfiguration().getAcapIndexes();
 						// Search crypto attributes in acaps if previous media description did support capability
 						// negotiations Copy acap crypto attributes if old stream supports it as potential configuration
-						for (const auto &cap : oldStream.acaps) {
-							const auto &idx = cap.first;
+						for (const auto &[idx, nameValuePair] : oldStream.acaps) {
 							// If only negotiated keys should be added, then check acaps in the chosen configuration
 							if (addOnlyAcceptedKeys) {
 								bool found = false;
@@ -2519,12 +2518,9 @@ void MediaSessionPrivate::setupEncryptionKeys(std::shared_ptr<SalMediaDescriptio
 									continue;
 								}
 							}
-							const auto &nameValuePair = cap.second;
-							const auto &name = nameValuePair.first;
+							const auto &[name, value] = nameValuePair;
 							if (name.compare(attrName) == 0) {
-								const auto &attrValue = nameValuePair.second;
-
-								const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(attrValue);
+								const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(value);
 								if (keyEnc.algo != MS_CRYPTO_SUITE_INVALID) {
 									newStreamActualCfgCrypto.push_back(keyEnc);
 								}
@@ -2541,12 +2537,9 @@ void MediaSessionPrivate::setupEncryptionKeys(std::shared_ptr<SalMediaDescriptio
 					if (newStreamSupportsSrtp && !forceKeyGeneration) {
 						if (oldStreamSupportsSrtp && oldMd->getParams().capabilityNegotiationSupported()) {
 							// Copy acap crypto attributes if old stream supports it as potential configuration
-							for (const auto &cap : oldStream.acaps) {
-								const auto &nameValuePair = cap.second;
-								const auto &name = nameValuePair.first;
+							for (const auto &[idx, nameValuePair] : oldStream.acaps) {
+								const auto &[name, value] = nameValuePair;
 								if (name.compare(attrName) == 0) {
-									const auto &value = nameValuePair.second;
-									const auto &idx = cap.first;
 									newStream.addAcap(idx, name, value);
 								}
 							}
@@ -4351,32 +4344,30 @@ void MediaSession::startIncomingNotification(bool notifyRinging) {
 }
 
 int MediaSession::getRandomRtpPort(const SalStreamDescription &stream) const {
-	pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), stream.type);
-	if (portRange.first <= 0) {
-		portRange.first = 1024;
-		lInfo() << "Setting minimum value of port range to " << portRange.first;
+	auto [minPort, maxPort] = Stream::getPortRange(getCore()->getCCore(), stream.type);
+	if (minPort <= 0) {
+		minPort = 1024;
+		lInfo() << "Setting minimum value of port range to " << minPort;
 	}
-	if (portRange.second <= 0) {
+	if (maxPort <= 0) {
 		// 2^16 - 1
-		portRange.second = 65535;
-		lInfo() << "Setting maximum value of port range to " << portRange.second;
+		maxPort = 65535;
+		lInfo() << "Setting maximum value of port range to " << maxPort;
 	}
-	if (portRange.second < portRange.first) {
+	if (maxPort < minPort) {
 		lError() << "Invalid port range provided for stream type " << Utils::toString(stream.type)
-		         << ": min=" << portRange.first << " max=" << portRange.second;
+		         << ": min=" << minPort << " max=" << maxPort;
 		return 0;
-	} else if (portRange.second == portRange.first) {
+	} else if (maxPort == minPort) {
 		lWarning() << "Port range provided for stream type " << Utils::toString(stream.type)
-		           << " has minimum and maximum value set to " << portRange.first
+		           << " has minimum and maximum value set to " << minPort
 		           << ". It will not be possible to have multiple streams of the same type in the SDP";
 	}
 	const int rtp_port =
-	    (portRange.second == portRange.first)
-	        ? portRange.first
-	        : ((int)(bctbx_random() % (unsigned int)abs(portRange.second - portRange.first)) + portRange.first);
-	if ((rtp_port > portRange.second) && (rtp_port < portRange.first)) {
-		lWarning() << "The chosen port " << rtp_port << " is not within the desired range (min=" << portRange.first
-		           << ", max=" << portRange.second << ")";
+	    (maxPort == minPort) ? minPort : ((int)(bctbx_random() % (unsigned int)abs(maxPort - minPort)) + minPort);
+	if ((rtp_port > maxPort) && (rtp_port < minPort)) {
+		lWarning() << "The chosen port " << rtp_port << " is not within the desired range (min=" << minPort
+		           << ", max=" << maxPort << ")";
 	}
 
 	return rtp_port;
@@ -4947,9 +4938,9 @@ const MediaSessionParams *MediaSession::getRemoteParams() {
 
 			const auto &times = md->times;
 			if (times.size() > 0) {
-				const auto &timePair = times.front();
-				params->getPrivate()->setStartTime(timePair.first);
-				params->getPrivate()->setEndTime(timePair.second);
+				const auto [start, end] = times.front();
+				params->getPrivate()->setStartTime(start);
+				params->getPrivate()->setEndTime(end);
 			}
 		} else {
 			lInfo() << "Unable to retrieve remote streams because op " << d->op

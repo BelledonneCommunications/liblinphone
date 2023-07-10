@@ -274,12 +274,10 @@ const string ConferenceInfo::toIcsString(bool cancel, int sequence) const {
 		const auto uri = mUri->asStringUriOnly();
 		event->setXConfUri(uri);
 	}
-
-	for (const auto &participant : mParticipants) {
-		const auto &address = participant.first;
-		if (address && address->isValid()) {
+	for (const auto &[address, params] : mParticipants) {
+		if (address->isValid()) {
 			const auto uri = address->asStringUriOnly();
-			event->addAttendee(uri, participant.second);
+			event->addAttendee(uri, params);
 		}
 	}
 
@@ -326,11 +324,11 @@ void ConferenceInfo::setCreationTime(time_t time) {
 
 const std::string ConferenceInfo::memberParametersToString(const ConferenceInfo::participant_params_t &params) {
 	std::string str;
-	for (const auto &param : params) {
+	for (const auto &[name, value] : params) {
 		if (!str.empty()) {
 			str.append(";");
 		}
-		str.append(param.first + "=" + param.second);
+		str.append(name + "=" + value);
 	}
 	return str;
 }

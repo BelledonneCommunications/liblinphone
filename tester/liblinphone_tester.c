@@ -479,11 +479,14 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&group_chat_test_suite);
 	bc_tester_add_suite(&group_chat2_test_suite);
 	bc_tester_add_suite(&group_chat3_test_suite);
+	bc_tester_add_suite(&group_chat4_test_suite);
 	bc_tester_add_suite(&cpim_test_suite);
 	bc_tester_add_suite(&ics_test_suite);
 #ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
+	bc_tester_add_suite(&secure_group_chat_exhume_test_suite);
 	bc_tester_add_suite(&secure_message_test_suite);
+	bc_tester_add_suite(&secure_message2_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 	bc_tester_add_suite(&ephemeral_group_chat_basic_test_suite);
@@ -493,7 +496,10 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&local_conference_test_suite_scheduled_conference_advanced);
 	bc_tester_add_suite(&local_conference_test_suite_scheduled_ice_conference);
 	bc_tester_add_suite(&local_conference_test_suite_inpromptu_conference);
+	bc_tester_add_suite(&local_conference_test_suite_inpromptu_mismatch_conference);
 	bc_tester_add_suite(&local_conference_test_suite_chat);
+	bc_tester_add_suite(&local_conference_test_suite_chat_error);
+	bc_tester_add_suite(&local_conference_test_suite_chat_imdn);
 	bc_tester_add_suite(&local_conference_test_suite_ephemeral_chat);
 	bc_tester_add_suite(&local_conference_test_suite_secure_chat);
 #endif
@@ -507,6 +513,7 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&call_with_ice_test_suite);
 	bc_tester_add_suite(&call_secure_test_suite);
 	bc_tester_add_suite(&capability_negotiation_test_suite);
+	bc_tester_add_suite(&capability_negotiation_parameters_test_suite);
 	bc_tester_add_suite(&capability_negotiation_no_sdp_test_suite);
 	bc_tester_add_suite(&srtp_capability_negotiation_basic_test_suite);
 	bc_tester_add_suite(&srtp_capability_negotiation_test_suite);
@@ -531,8 +538,13 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&audio_routes_test_suite);
 	bc_tester_add_suite(&audio_quality_test_suite);
 	bc_tester_add_suite(&audio_video_conference_basic_test_suite);
+	bc_tester_add_suite(&audio_video_conference_basic2_test_suite);
 	bc_tester_add_suite(&audio_conference_test_suite);
+	bc_tester_add_suite(&audio_conference_local_participant_test_suite);
+	bc_tester_add_suite(&audio_conference_remote_participant_test_suite);
 	bc_tester_add_suite(&video_conference_test_suite);
+	bc_tester_add_suite(&video_conference_layout_test_suite);
+	bc_tester_add_suite(&ice_conference_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&rtt_message_test_suite);

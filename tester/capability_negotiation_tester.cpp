@@ -3465,16 +3465,6 @@ test_t capability_negotiation_tests[] = {
     TEST_NO_TAG("Call with incompatible encryptions in call params", call_with_incompatible_encs_in_call_params),
     TEST_NO_TAG("Call with update and incompatible encryptions in call params",
                 call_with_update_and_incompatible_encs_in_call_params),
-    TEST_NO_TAG("Call with tcap line merge on caller", call_with_tcap_line_merge_on_caller),
-    TEST_NO_TAG("Call with tcap line merge on callee", call_with_tcap_line_merge_on_callee),
-    TEST_NO_TAG("Call with tcap line merge on both sides", call_with_tcap_line_merge_on_both_sides),
-    TEST_NO_TAG("Call with no cfg line merge", call_with_no_cfg_lines_merge),
-    TEST_NO_TAG("Call with cfg line merge on caller", call_with_cfg_lines_merge_on_caller),
-    TEST_NO_TAG("Call with cfg line merge on callee", call_with_cfg_lines_merge_on_callee),
-    TEST_NO_TAG("Call with cfg line merge on both sides", call_with_cfg_lines_merge_on_both_sides),
-    TEST_NO_TAG("Call with AVPF and capability negotiations on caller", call_with_avpf_and_cap_neg_on_caller),
-    TEST_NO_TAG("Call with AVPF and capability negotiations on callee", call_with_avpf_and_cap_neg_on_callee),
-    TEST_NO_TAG("Call with AVPF and capability negotiations on both sides", call_with_avpf_and_cap_neg_on_both_sides),
     TEST_NO_TAG("Call changes encryption with update and capability negotiations on caller",
                 call_changes_enc_on_update_cap_neg_caller),
     TEST_NO_TAG("Call changes encryption with update and capability negotiations on callee",
@@ -3487,6 +3477,18 @@ test_t capability_negotiation_tests[] = {
                 unencrypted_call_with_potential_configuration_same_as_actual_configuration),
     TEST_NO_TAG("Back to back call with capability negotiations on one side", back_to_back_calls_cap_neg_one_side),
     TEST_NO_TAG("Back to back call with capability negotiations on both sides", back_to_back_calls_cap_neg_both_sides)};
+
+test_t capability_negotiation_parameters_tests[] = {
+    TEST_NO_TAG("Call with tcap line merge on caller", call_with_tcap_line_merge_on_caller),
+    TEST_NO_TAG("Call with tcap line merge on callee", call_with_tcap_line_merge_on_callee),
+    TEST_NO_TAG("Call with tcap line merge on both sides", call_with_tcap_line_merge_on_both_sides),
+    TEST_NO_TAG("Call with no cfg line merge", call_with_no_cfg_lines_merge),
+    TEST_NO_TAG("Call with cfg line merge on caller", call_with_cfg_lines_merge_on_caller),
+    TEST_NO_TAG("Call with cfg line merge on callee", call_with_cfg_lines_merge_on_callee),
+    TEST_NO_TAG("Call with cfg line merge on both sides", call_with_cfg_lines_merge_on_both_sides),
+    TEST_NO_TAG("Call with AVPF and capability negotiations on caller", call_with_avpf_and_cap_neg_on_caller),
+    TEST_NO_TAG("Call with AVPF and capability negotiations on callee", call_with_avpf_and_cap_neg_on_callee),
+    TEST_NO_TAG("Call with AVPF and capability negotiations on both sides", call_with_avpf_and_cap_neg_on_both_sides)};
 
 test_t capability_negotiation_tests_no_sdp[] = {
     TEST_NO_TAG("Call with no SDP and capability negotiations on caller", call_with_no_sdp_cap_neg_on_caller),
@@ -3513,6 +3515,15 @@ test_suite_t capability_negotiation_test_suite = {"Capability Negotiation (SDP)"
                                                   sizeof(capability_negotiation_tests) /
                                                       sizeof(capability_negotiation_tests[0]),
                                                   capability_negotiation_tests};
+
+test_suite_t capability_negotiation_parameters_test_suite = {"Capability Negotiation (Parameters)",
+                                                             NULL,
+                                                             NULL,
+                                                             liblinphone_tester_before_each,
+                                                             liblinphone_tester_after_each,
+                                                             sizeof(capability_negotiation_parameters_tests) /
+                                                                 sizeof(capability_negotiation_parameters_tests[0]),
+                                                             capability_negotiation_parameters_tests};
 
 test_suite_t capability_negotiation_no_sdp_test_suite = {"Capability Negotiation (No SDP)",
                                                          NULL,

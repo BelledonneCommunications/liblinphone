@@ -1407,8 +1407,7 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineReceivedMessage), textMessage);
 
 	// Pauline will react to Marie's message with love emoji
-	LinphoneChatMessageReaction *paulineReaction =
-	    linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
+	LinphoneChatMessageReaction *paulineReaction = linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
 
 	const LinphoneAddress *paulineReactionAddr = linphone_chat_message_reaction_get_from_address(paulineReaction);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineReactionAddr, pauline->identity));
@@ -4991,14 +4990,6 @@ test_t secure_group_chat_tests[] = {
                  group_chat_lime_x3dh_chatroom_security_level_self_multidevices,
                  "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH chatroom security alert", group_chat_lime_x3dh_chatroom_security_alert, "LimeX3DH"),
-    TEST_ONE_TAG(
-        "LIME X3DH exhumed one-to-one chat room 1", exhume_group_chat_lime_x3dh_one_to_one_chat_room_1, "LimeX3DH"),
-    TEST_ONE_TAG(
-        "LIME X3DH exhumed one-to-one chat room 2", exhume_group_chat_lime_x3dh_one_to_one_chat_room_2, "LimeX3DH"),
-    TEST_ONE_TAG(
-        "LIME X3DH exhumed one-to-one chat room 3", exhume_group_chat_lime_x3dh_one_to_one_chat_room_3, "LimeX3DH"),
-    TEST_ONE_TAG(
-        "LIME X3DH exhumed one-to-one chat room 4", exhume_group_chat_lime_x3dh_one_to_one_chat_room_4, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH call security alert", group_chat_lime_x3dh_call_security_alert, "LimeX3DH"),
     TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
     TEST_ONE_TAG("Lime Unique one-to-one chatroom recreated from message",
@@ -5009,6 +5000,17 @@ test_t secure_group_chat_tests[] = {
                   group_chat_lime_x3dh_session_corrupted,
                   "LimeX3DH",
                   "LeaksMemory" /*due to core restart*/)};
+
+test_t secure_group_chat_exhume_tests[] = {
+    TEST_ONE_TAG(
+        "LIME X3DH exhumed one-to-one chat room 1", exhume_group_chat_lime_x3dh_one_to_one_chat_room_1, "LimeX3DH"),
+    TEST_ONE_TAG(
+        "LIME X3DH exhumed one-to-one chat room 2", exhume_group_chat_lime_x3dh_one_to_one_chat_room_2, "LimeX3DH"),
+    TEST_ONE_TAG(
+        "LIME X3DH exhumed one-to-one chat room 3", exhume_group_chat_lime_x3dh_one_to_one_chat_room_3, "LimeX3DH"),
+    TEST_ONE_TAG(
+        "LIME X3DH exhumed one-to-one chat room 4", exhume_group_chat_lime_x3dh_one_to_one_chat_room_4, "LimeX3DH"),
+};
 
 test_t secure_message_tests[] = {
     TEST_ONE_TAG("LIME X3DH message", group_chat_lime_x3dh_send_encrypted_message, "LimeX3DH"),
@@ -5048,7 +5050,9 @@ test_t secure_message_tests[] = {
     TEST_TWO_TAGS("LIME X3DH send reaction message with core restart",
                   group_chat_lime_x3dh_chat_room_reaction_message_with_core_restart,
                   "LimeX3DH",
-                  "LeaksMemory" /*due to core restart*/),
+                  "LeaksMemory" /*due to core restart*/)};
+
+test_t secure_message2_tests[] = {
     TEST_ONE_TAG("LIME X3DH verify SAS before message", group_chat_lime_x3dh_verify_sas_before_message, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH reject SAS before message", group_chat_lime_x3dh_reject_sas_before_message, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH message before verify SAS", group_chat_lime_x3dh_message_before_verify_sas, "LimeX3DH"),
@@ -5086,6 +5090,15 @@ test_suite_t secure_group_chat_test_suite = {"Secure group chat",
                                              sizeof(secure_group_chat_tests) / sizeof(secure_group_chat_tests[0]),
                                              secure_group_chat_tests};
 
+test_suite_t secure_group_chat_exhume_test_suite = {"Secure group chat (Exhume)",
+                                                    NULL,
+                                                    NULL,
+                                                    liblinphone_tester_before_each,
+                                                    liblinphone_tester_after_each,
+                                                    sizeof(secure_group_chat_exhume_tests) /
+                                                        sizeof(secure_group_chat_exhume_tests[0]),
+                                                    secure_group_chat_exhume_tests};
+
 test_suite_t secure_message_test_suite = {"Secure Message",
                                           NULL,
                                           NULL,
@@ -5093,6 +5106,14 @@ test_suite_t secure_message_test_suite = {"Secure Message",
                                           liblinphone_tester_after_each,
                                           sizeof(secure_message_tests) / sizeof(secure_message_tests[0]),
                                           secure_message_tests};
+
+test_suite_t secure_message2_test_suite = {"Secure Message2",
+                                           NULL,
+                                           NULL,
+                                           liblinphone_tester_before_each,
+                                           liblinphone_tester_after_each,
+                                           sizeof(secure_message2_tests) / sizeof(secure_message2_tests[0]),
+                                           secure_message2_tests};
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop
 #endif

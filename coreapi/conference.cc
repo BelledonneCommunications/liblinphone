@@ -680,8 +680,7 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 			msp->getPrivate()->setInConference(true);
 
 			if (times.size() > 0) {
-				const auto startTime = times.front().first;
-				const auto endTime = times.front().second;
+				const auto [startTime, endTime] = times.front();
 				confParams->setStartTime(startTime);
 				confParams->setEndTime(endTime);
 				msp->getPrivate()->setStartTime(startTime);

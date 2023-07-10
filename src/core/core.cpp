@@ -832,8 +832,8 @@ void Core::setSpecs(const std::map<std::string, std::string> &specsMap) {
 void Core::setSpecs(const std::list<std::string> &specsList) {
 	std::map<std::string, std::string> specsMap;
 	for (const auto &spec : specsList) {
-		const auto specNameVersion = getSpecNameVersion(spec);
-		specsMap[specNameVersion.first] = specNameVersion.second;
+		const auto [name, version] = getSpecNameVersion(spec);
+		specsMap[name] = version;
 	}
 	setSpecs(specsMap);
 }
@@ -858,21 +858,37 @@ void Core::addSpec(const std::string &specName, const std::string &specVersion) 
 }
 
 void Core::addSpec(const std::string &spec) {
-	const auto specNameVersion = getSpecNameVersion(spec);
-	addSpec(specNameVersion.first, specNameVersion.second);
+	const auto [name, version] = getSpecNameVersion(spec);
+	addSpec(name, version);
 }
 
 bool Core::hasSpec(const std::string &spec) const {
 	L_D();
-	const auto specNameVersion = getSpecNameVersion(spec);
-	const auto specIt = d->specs.find(specNameVersion.first);
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?format=multiple&id=81767
+#if __GNUC__ == 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+	const auto [name, version] = Core::getSpecNameVersion(spec);
+#if __GNUC__ == 7
+#pragma GCC diagnostic pop
+#endif //  __GNUC__ == 7
+	const auto specIt = d->specs.find(name);
 	return (specIt != d->specs.end());
 }
 
 void Core::removeSpec(const std::string &spec) {
 	L_D();
-	const auto specNameVersion = getSpecNameVersion(spec);
-	const auto specIt = d->specs.find(specNameVersion.first);
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?format=multiple&id=81767
+#if __GNUC__ == 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+	const auto [name, version] = Core::getSpecNameVersion(spec);
+#if __GNUC__ == 7
+#pragma GCC diagnostic pop
+#endif //  __GNUC__ == 7
+	const auto specIt = d->specs.find(name);
 	if (specIt != d->specs.end()) {
 		d->specs.erase(specIt);
 		setSpecs(d->specs);
@@ -907,12 +923,12 @@ const std::list<std::string> Core::getSpecsList() const {
 	const std::map<std::string, std::string> &specsMap = getSpecsMap();
 
 	std::list<std::string> specsList;
-	for (const auto &spec : specsMap) {
+	for (const auto &[name, version] : specsMap) {
 		std::string specNameVersion;
-		specNameVersion += spec.first;
-		if (!spec.second.empty()) {
+		specNameVersion += name;
+		if (!version.empty()) {
 			specNameVersion += "/";
-			specNameVersion += spec.second;
+			specNameVersion += version;
 		}
 		specsList.push_back(specNameVersion);
 	}

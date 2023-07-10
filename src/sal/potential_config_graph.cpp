@@ -247,8 +247,8 @@ bool PotentialCfgGraph::processMediaAcfg(const unsigned int &idx, const belle_sd
 	auto cfgsIt = unparsed_cfgs.find(idx);
 	if (cfgsIt != unparsed_cfgs.cend()) {
 		auto cfgs = cfgsIt->second;
-		for (const auto &cfg : cfgs) {
-			unparsed_config[cfg.first] = cfg.second;
+		for (const auto &[id, line] : cfgs) {
+			unparsed_config[id] = line;
 		}
 	}
 	unparsed_cfgs[idx] = unparsed_config;
@@ -284,8 +284,8 @@ bool PotentialCfgGraph::processMediaPcfg(const unsigned int &idx, const belle_sd
 	auto cfgsIt = unparsed_cfgs.find(idx);
 	if (cfgsIt != unparsed_cfgs.cend()) {
 		auto cfgs = cfgsIt->second;
-		for (const auto &cfg : cfgs) {
-			unparsed_config[cfg.first] = cfg.second;
+		for (const auto &[id, line] : cfgs) {
+			unparsed_config[id] = line;
 		}
 	}
 	unparsed_cfgs[idx] = unparsed_config;
@@ -365,9 +365,7 @@ PotentialCfgGraph::processConfig(const belle_sip_list_t *configList,
 		// parsed and trying to add another one, print an error
 		if (cap == capability_type_t::ATTRIBUTE) {
 			if (acapCfgList.empty()) {
-				const auto parsedListPair = parseIdxList(idxList, mediaAcap);
-				const auto &success = parsedListPair.second;
-				const auto &parsedList = parsedListPair.first;
+				const auto [parsedList, success] = parseIdxList(idxList, mediaAcap);
 				// trigger error if an issue has been detected in the parsing and the generated list is empty
 				acapProcessingError |= (!success && parsedList.empty());
 				// Add only if list is not empty
@@ -392,9 +390,7 @@ PotentialCfgGraph::processConfig(const belle_sip_list_t *configList,
 			}
 		} else if (cap == capability_type_t::TRANSPORT_PROTOCOL) {
 			if (tcapCfgList.empty()) {
-				const auto parsedListPair = parseIdxList(idxList, mediaTcap);
-				const auto &success = parsedListPair.second;
-				const auto &parsedList = parsedListPair.first;
+				const auto [parsedList, success] = parseIdxList(idxList, mediaTcap);
 				// trigger error if an issue has been detected in the parsing and the generated list is empty
 				tcapProcessingError |= (!success && parsedList.empty());
 				// Add only if list is not empty
@@ -717,17 +713,17 @@ PotentialCfgGraph::createAcapList(const PotentialCfgGraph::session_description_c
 	std::list<config_capability<acapability>> acapList;
 
 	const auto &acaps = getAllAcapForStream(streamIdx);
-	for (const auto &acapPair : acapIdx) {
-		const auto &idx = acapPair.first;
-		const auto &mandatory = acapPair.second;
-		config_capability<acapability> cfgCap;
-		cfgCap.mandatory = mandatory;
-		auto acapIt = std::find_if(acaps.cbegin(), acaps.cend(),
-		                           [&idx](const std::shared_ptr<acapability> &cap) { return (cap->index == idx); });
+	for (const auto &[idx, mandatory] : acapIdx) {
+		// Workaroud for CLang issue: https://github.com/llvm/llvm-project/issues/52720
+		auto acapIt = std::find_if(acaps.cbegin(), acaps.cend(), [&idx = idx](const std::shared_ptr<acapability> &cap) {
+			return (cap->index == idx);
+		});
 		if (acapIt == acaps.cend()) {
 			lError() << "Unable to find attribute capability with index " << idx << " - skipping it";
 			break;
 		} else {
+			config_capability<acapability> cfgCap;
+			cfgCap.mandatory = mandatory;
 			cfgCap.cap = *acapIt;
 			acapList.push_back(cfgCap);
 		}
@@ -742,14 +738,14 @@ PotentialCfgGraph::createTcapList(const PotentialCfgGraph::session_description_c
 	std::list<config_capability<capability>> tcapList;
 	const auto &tcaps = getAllTcapForStream(streamIdx);
 	for (const auto &idx : tcapIdx) {
-		config_capability<capability> cfgCap;
-		cfgCap.mandatory = false;
 		auto tcapIt = std::find_if(tcaps.cbegin(), tcaps.cend(),
 		                           [&idx](const std::shared_ptr<capability> &cap) { return (cap->index == idx); });
 		if (tcapIt == tcaps.cend()) {
 			lError() << "Unable to find transport capability with index " << idx << " - skipping it";
 			break;
 		} else {
+			config_capability<capability> cfgCap;
+			cfgCap.mandatory = false;
 			cfgCap.cap = *tcapIt;
 			tcapList.push_back(cfgCap);
 		}

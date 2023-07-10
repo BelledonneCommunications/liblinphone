@@ -189,20 +189,18 @@ std::string Ics::Event::asString() const {
 	if (!organizerAddress.empty()) {
 		output << "ORGANIZER";
 		const auto &params = mOrganizer.second;
-		for (const auto &param : params) {
-			output << ";" << param.first << "=" << param.second;
+		for (const auto &[name, value] : params) {
+			output << ";" << name << "=" << value;
 		}
 		output << ":" << organizerAddress;
 		output << "\r\n";
 	}
 	if (!mAttendees.empty()) {
-		for (const auto &attendee : mAttendees) {
+		for (const auto &[address, params] : mAttendees) {
 			output << "ATTENDEE";
-			const auto &params = attendee.second;
-			for (const auto &param : params) {
-				output << ";" << param.first << "=" << param.second;
+			for (const auto &[name, value] : params) {
+				output << ";" << name << "=" << value;
 			}
-			const auto &address = attendee.first;
 			output << ":" << address;
 			output << "\r\n";
 		}
@@ -300,9 +298,7 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 		}
 	}
 
-	for (const auto &attendee : event->getAttendees()) {
-		auto address = attendee.first;
-		auto params = attendee.second;
+	for (const auto &[address, params] : event->getAttendees()) {
 		if (!address.empty()) {
 			const auto addr = Address::create(address);
 			if (addr && addr->isValid()) {

@@ -506,10 +506,10 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 		linphone_chat_message_download_content(msg, fileTransferContent);
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int,
 		                "%d");
-// Cancel the download
+		// Cancel the download
 		wait_for_list(coresList, NULL, 0, 400);
 
-		char * downloaded_file_temp = bctbx_concat(downloaded_file, ".copy", NULL);
+		char *downloaded_file_temp = bctbx_concat(downloaded_file, ".copy", NULL);
 		remove(downloaded_file_temp);
 		liblinphone_tester_copy_file(downloaded_file, downloaded_file_temp);
 		linphone_chat_message_cancel_file_transfer(msg);
@@ -8893,40 +8893,7 @@ test_t group_chat_tests[] = {
     TEST_NO_TAG("Create chat room with disconnected friends", group_chat_room_create_room_with_disconnected_friends),
     TEST_NO_TAG("Create chat room with disconnected friends and initial message",
                 group_chat_room_create_room_with_disconnected_friends_and_initial_message),
-    TEST_NO_TAG("Reinvited after removed from group chat room", group_chat_room_reinvited_after_removed),
-    TEST_ONE_TAG(
-        "Reinvited after removed from group chat room 2", group_chat_room_reinvited_after_removed_2, "LeaksMemory"),
-    TEST_ONE_TAG("Reinvited after removed from group chat room while offline",
-                 group_chat_room_reinvited_after_removed_while_offline,
-                 "LeaksMemory"),
-    TEST_ONE_TAG("Reinvited after removed from group chat room while offline 2",
-                 group_chat_room_reinvited_after_removed_while_offline_2,
-                 "LeaksMemory"),
-    TEST_NO_TAG("Reinvited after removed from group chat room with several devices",
-                group_chat_room_reinvited_after_removed_with_several_devices),
-    TEST_NO_TAG("Notify after disconnection", group_chat_room_notify_after_disconnection),
-    TEST_ONE_TAG("Notify after core restart",
-                 group_chat_room_notify_after_core_restart,
-                 "LeaksMemory"), /* due to Core restart */
-    TEST_NO_TAG("Send refer to all participants devices", group_chat_room_send_refer_to_all_devices),
-    TEST_NO_TAG("Admin add device and doesn't lose admin status", group_chat_room_add_device),
-    TEST_NO_TAG("Send multiple is composing", multiple_is_composing_notification),
-    TEST_ONE_TAG("Fallback to basic chat room", group_chat_room_fallback_to_basic_chat_room, "LeaksMemory"),
-    TEST_NO_TAG("Group chat room creation fails if invited participants don't support it",
-                group_chat_room_creation_fails_if_invited_participants_dont_support_it),
-    TEST_NO_TAG("Group chat room creation successful if at least one invited participant supports it",
-                group_chat_room_creation_successful_if_at_least_one_invited_participant_supports_it),
-    TEST_ONE_TAG(
-        "Migrate basic chat room to client group chat room", group_chat_room_migrate_from_basic_chat_room, "Migration"),
-    TEST_TWO_TAGS("Migrate basic chat room to client group chat room failure",
-                  group_chat_room_migrate_from_basic_to_client_fail,
-                  "LeaksMemory",
-                  "Migration"),
-    TEST_ONE_TAG("Migrate basic chat room to client group chat room not needed",
-                 group_chat_donot_room_migrate_from_basic_chat_room,
-                 "Migration"),
-    TEST_NO_TAG("Send file", group_chat_room_send_file),
-    TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2)};
+    TEST_NO_TAG("Reinvited after removed from group chat room", group_chat_room_reinvited_after_removed)};
 
 test_t group_chat2_tests[] = {
     TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
@@ -8973,8 +8940,7 @@ test_t group_chat2_tests[] = {
         "Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
     TEST_NO_TAG("Group chat room subscription denied", group_chat_room_subscription_denied),
     TEST_ONE_TAG("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch"),
-    TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory")
-};
+    TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory")};
 
 test_t group_chat3_tests[] = {
     TEST_ONE_TAG(
@@ -9009,6 +8975,41 @@ test_t group_chat3_tests[] = {
                 group_chat_forward_file_transfer_message_digest_auth_server_encryptedFS),
 };
 
+test_t group_chat4_tests[] = {
+    TEST_ONE_TAG(
+        "Reinvited after removed from group chat room 2", group_chat_room_reinvited_after_removed_2, "LeaksMemory"),
+    TEST_ONE_TAG("Reinvited after removed from group chat room while offline",
+                 group_chat_room_reinvited_after_removed_while_offline,
+                 "LeaksMemory"),
+    TEST_ONE_TAG("Reinvited after removed from group chat room while offline 2",
+                 group_chat_room_reinvited_after_removed_while_offline_2,
+                 "LeaksMemory"),
+    TEST_NO_TAG("Reinvited after removed from group chat room with several devices",
+                group_chat_room_reinvited_after_removed_with_several_devices),
+    TEST_NO_TAG("Notify after disconnection", group_chat_room_notify_after_disconnection),
+    TEST_ONE_TAG("Notify after core restart",
+                 group_chat_room_notify_after_core_restart,
+                 "LeaksMemory"), /* due to Core restart */
+    TEST_NO_TAG("Send refer to all participants devices", group_chat_room_send_refer_to_all_devices),
+    TEST_NO_TAG("Admin add device and doesn't lose admin status", group_chat_room_add_device),
+    TEST_NO_TAG("Send multiple is composing", multiple_is_composing_notification),
+    TEST_ONE_TAG("Fallback to basic chat room", group_chat_room_fallback_to_basic_chat_room, "LeaksMemory"),
+    TEST_NO_TAG("Group chat room creation fails if invited participants don't support it",
+                group_chat_room_creation_fails_if_invited_participants_dont_support_it),
+    TEST_NO_TAG("Group chat room creation successful if at least one invited participant supports it",
+                group_chat_room_creation_successful_if_at_least_one_invited_participant_supports_it),
+    TEST_ONE_TAG(
+        "Migrate basic chat room to client group chat room", group_chat_room_migrate_from_basic_chat_room, "Migration"),
+    TEST_TWO_TAGS("Migrate basic chat room to client group chat room failure",
+                  group_chat_room_migrate_from_basic_to_client_fail,
+                  "LeaksMemory",
+                  "Migration"),
+    TEST_ONE_TAG("Migrate basic chat room to client group chat room not needed",
+                 group_chat_donot_room_migrate_from_basic_chat_room,
+                 "Migration"),
+    TEST_NO_TAG("Send file", group_chat_room_send_file),
+    TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2)};
+
 test_suite_t group_chat_test_suite = {"Group Chat",
                                       NULL,
                                       NULL,
@@ -9032,6 +9033,14 @@ test_suite_t group_chat3_test_suite = {"Group Chat3",
                                        liblinphone_tester_after_each,
                                        sizeof(group_chat3_tests) / sizeof(group_chat3_tests[0]),
                                        group_chat3_tests};
+
+test_suite_t group_chat4_test_suite = {"Group Chat4",
+                                       NULL,
+                                       NULL,
+                                       liblinphone_tester_before_each,
+                                       liblinphone_tester_after_each,
+                                       sizeof(group_chat4_tests) / sizeof(group_chat4_tests[0]),
+                                       group_chat4_tests};
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

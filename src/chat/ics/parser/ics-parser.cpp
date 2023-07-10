@@ -149,7 +149,6 @@ private:
 	int mMinute;
 	int mSecond;
 };
-
 void replace_all(string &inout, string what, string with) {
 	for (string::size_type pos{}; inout.npos != (pos = inout.find(what.data(), pos, what.length()));
 	     pos += with.length()) {
@@ -305,8 +304,8 @@ public:
 		event->setOrganizer(mOrganizer.first, mOrganizer.second);
 		event->setXConfUri(mXConfUri);
 
-		for (const auto &attendee : mAttendees) {
-			event->addAttendee(attendee.first, attendee.second);
+		for (const auto &[address, params] : mAttendees) {
+			event->addAttendee(address, params);
 		}
 
 		event->setUid(mUid);
