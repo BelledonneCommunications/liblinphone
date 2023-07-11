@@ -323,8 +323,8 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 		}
 	} else if (newState == CallSession::State::Released) {
 		if (q->getState() == ConferenceInterface::State::TerminationPending) {
-			if (session->getReason() == LinphoneReasonNone
-                || session->getReason() ==  LinphoneReasonDeclined) {
+			const auto &reason = session->getReason();
+			if ((reason == LinphoneReasonNone) || (reason ==  LinphoneReasonDeclined)) {
 				// Everything is fine, the chat room has been left on the server side.
 				// Or received 603 Declined, the chat room has been left on the server side but
 				// remains local.
@@ -336,6 +336,7 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 			}
 		}
 	} else if (newState == CallSession::State::Error) {
+		const auto &reason = session->getReason();
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
 			q->setState(ConferenceInterface::State::CreationFailed);
 			// If there are chat message pending chat room creation, set state to NotDelivered and remove them from queue.
@@ -343,8 +344,12 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 				message->getPrivate()->setState(ChatMessage::State::NotDelivered);
 			}
 			pendingCreationMessages.clear();
+			if (reason == LinphoneReasonForbidden) {
+				q->onConferenceTerminated(q->getConferenceAddress());
+				q->deleteFromDb();
+			}
 		} else if (q->getState() == ConferenceInterface::State::TerminationPending) {
-			if (session->getReason() == LinphoneReasonNotFound) {
+			if (reason == LinphoneReasonNotFound) {
 				// Somehow the chat room is no longer known on the server, so terminate it
 				q->onConferenceTerminated(q->getConferenceAddress());
 			} else {
@@ -370,9 +375,7 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 	ConferenceAddress addr(remoteContact);
 	q->onConferenceCreated(addr);
 	if (remoteContact.hasParam("isfocus")) {
-		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
-			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
-		} else {
+		if (!q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
 			bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
 			static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->subscribe(q->getConferenceId());
 		}

@@ -70,12 +70,12 @@ void RemoteConferenceListEventHandler::subscribe () {
 	const bctbx_list_t* list=linphone_core_get_account_list(lc);
 
 	for(;list!=NULL;list=list->next){
-		subscribe((LinphoneAccount *)list->data);
+		subscribe(Account::toCpp((LinphoneAccount *)list->data)->getSharedFromThis());
 	}
 }
 
-void RemoteConferenceListEventHandler::subscribe (LinphoneAccount * c_account) {
-	unsubscribe(c_account);
+void RemoteConferenceListEventHandler::subscribe (const std::shared_ptr<Account> &account) {
+	unsubscribe(account);
 
 	if (handlers.empty())
 		return;
@@ -86,7 +86,6 @@ void RemoteConferenceListEventHandler::subscribe (LinphoneAccount * c_account) {
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 
-	auto account = Account::toCpp(c_account);
 	const auto & accountParams = account->getAccountParams();
 	Address identityAddress = *L_GET_CPP_PTR_FROM_C_OBJECT(accountParams->getIdentityAddress());
 
@@ -158,8 +157,7 @@ void RemoteConferenceListEventHandler::unsubscribe () {
 	levs.clear();
 }
 
-void RemoteConferenceListEventHandler::unsubscribe (LinphoneAccount * c_account) {
-	auto account = Account::toCpp(c_account);
+void RemoteConferenceListEventHandler::unsubscribe (const std::shared_ptr<Account> &account) {
 	if(!account || !account->getContactAddress())
 		return;
 	char *from = linphone_address_as_string(account->getContactAddress());
@@ -384,18 +382,20 @@ void RemoteConferenceListEventHandler::onNetworkReachable (bool sipNetworkReacha
 	}
 }
 
-void RemoteConferenceListEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, BCTBX_UNUSED(const std::string &message)) {
-	if (state == LinphoneRegistrationOk )
-		subscribe(cfg->account);
+void RemoteConferenceListEventHandler::onAccountRegistrationStateChanged (std::shared_ptr<Account> account, LinphoneRegistrationState state, BCTBX_UNUSED(const std::string &message)) {
+	if (state == LinphoneRegistrationOk && (account->getPreviousState() != LinphoneRegistrationRefreshing))
+		subscribe(account);
 	else if(state == LinphoneRegistrationCleared){// On cleared, restart subscription if the cleared proxy config is the current subscription
-		const LinphoneAddress * cfgAddress = linphone_proxy_config_get_identity_address(cfg);
+		const auto &accountParams = account->getAccountParams();
+		const auto &cfgAddress = accountParams->getIdentityAddress();
 		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress] (const auto & lev) {
 			LinphoneAddress * currentAddress = linphone_address_new(lev->op->getFrom().c_str());
 			return linphone_address_weak_equal(currentAddress, cfgAddress);
 		});
 
+		// If no subscription is found, then unsubscribe the account
 		if(it != levs.end())
-			unsubscribe(cfg->account);
+			unsubscribe(account);
 	}
 }
 

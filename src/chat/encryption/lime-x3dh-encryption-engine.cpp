@@ -944,12 +944,11 @@ void LimeX3dhEncryptionEngine::onNetworkReachable(BCTBX_UNUSED(bool sipNetworkRe
 												  BCTBX_UNUSED(bool mediaNetworkReachable)) {
 }
 
-void LimeX3dhEncryptionEngine::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state,
+void LimeX3dhEncryptionEngine::onAccountRegistrationStateChanged(std::shared_ptr<Account> account, LinphoneRegistrationState state,
 														  BCTBX_UNUSED(const string &message)) {
 	if (state != LinphoneRegistrationState::LinphoneRegistrationOk)
 		return;
 
-	auto account = Account::toCpp(cfg->account);
 	auto accountParams = account->getAccountParams();
 	// The LIME server URL set in the account parameters is preferred to that set in the core parameters
 	string accountLimeServerUrl = accountParams->getLimeServerUrl();
@@ -964,13 +963,13 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged(LinphoneProxyConfig *c
 		return;
 	}
 
-	char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
+	char *contactAddress = linphone_address_as_string_uri_only(account->getContactAddress());
 	IdentityAddress identityAddress = IdentityAddress(contactAddress);
 	string localDeviceId = identityAddress.asString();
 	if (contactAddress)
 		ms_free(contactAddress);
 
-	LinphoneCore *lc = linphone_proxy_config_get_core(cfg);
+	LinphoneCore *lc = account->getCore();
 	lInfo() << "[LIME] Load lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl
 			<< "]";
 

@@ -452,7 +452,8 @@ typedef enum _LinphoneRegistrationState {
 	LinphoneRegistrationProgress = 1, /**< Registration is in progress */
 	LinphoneRegistrationOk = 2,	/**< Registration is successful */
 	LinphoneRegistrationCleared = 3, /**< Unregistration succeeded */
-	LinphoneRegistrationFailed = 4	/**< Registration failed */
+	LinphoneRegistrationFailed = 4,	/**< Registration failed */
+	LinphoneRegistrationRefreshing = 5	/**< Registration refreshing */
 } LinphoneRegistrationState;
 
 /**

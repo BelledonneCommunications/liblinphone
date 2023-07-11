@@ -1189,6 +1189,9 @@ const char *linphone_registration_state_to_string(LinphoneRegistrationState cs){
 		case LinphoneRegistrationProgress:
 			return "LinphoneRegistrationProgress";
 		break;
+		case LinphoneRegistrationRefreshing:
+			 return "LinphoneRegistrationRefreshing";
+		break;
 		case LinphoneRegistrationOk:
 			 return "LinphoneRegistrationOk";
 		break;

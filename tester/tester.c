@@ -2599,6 +2599,7 @@ void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *c
 	switch (cstate) {
 	case LinphoneRegistrationNone:counters->number_of_LinphoneRegistrationNone++;break;
 	case LinphoneRegistrationProgress:counters->number_of_LinphoneRegistrationProgress++;break;
+	case LinphoneRegistrationRefreshing:counters->number_of_LinphoneRegistrationRefreshing++;break;
 	case LinphoneRegistrationOk:counters->number_of_LinphoneRegistrationOk++;break;
 	case LinphoneRegistrationCleared:counters->number_of_LinphoneRegistrationCleared++;break;
 	case LinphoneRegistrationFailed:counters->number_of_LinphoneRegistrationFailed++;break;

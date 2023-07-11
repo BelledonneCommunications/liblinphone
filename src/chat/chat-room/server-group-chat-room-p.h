@@ -46,6 +46,7 @@ class ParticipantDeviceIdentity : public bellesip::HybridObject<LinphoneParticip
 public:
 	ParticipantDeviceIdentity(const Address &address, const std::string &name);
 	void setCapabilityDescriptor(const std::string & capabilities);
+	void setCapabilityDescriptor(const std::list<std::string> &capabilities);
 	const Address &getAddress () const{
 		return mDeviceAddress;
 	}
@@ -55,15 +56,15 @@ public:
 	const std::string &getName () const{
 		return mDeviceName;
 	}
-	const std::string &getCapabilityDescriptor()const{
-		return mCapabilityDescriptor;
-	}
+	const std::string& getCapabilityDescriptor()const;
+	const std::list<std::string> getCapabilityDescriptorList()const;
 	virtual ~ParticipantDeviceIdentity();
 private:
 	Address mDeviceAddress;
 	LinphoneAddress *mDeviceAddressCache; // To be removed once Address becomes an HybridObject.
 	std::string mDeviceName;
-	std::string mCapabilityDescriptor; // +org.linphone.specs capability descriptor
+	mutable std::string mCapabilityDescriptorString;
+	std::map<std::string, std::string> mCapabilityDescriptor; // +org.linphone.specs capability descriptor
 };
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {

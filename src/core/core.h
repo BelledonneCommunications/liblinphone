@@ -247,6 +247,7 @@ public:
 	std::string getSpecs() const;
 	const std::map<std::string, std::string> &getSpecsMap () const;
 	const std::list<std::string> getSpecsList () const;
+	static std::pair<std::string, std::string> getSpecNameVersion (const std::string &spec);
 
 	// ---------------------------------------------------------------------------
 	// Friends.
@@ -332,8 +333,6 @@ private:
 
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId & conferenceId) const;
-
-	std::pair<std::string, std::string> getSpecNameVersion (const std::string &spec) const;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);

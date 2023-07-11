@@ -46,9 +46,9 @@ public:
 	~RemoteConferenceListEventHandler ();
 
 	void subscribe () override;
-	void subscribe (LinphoneAccount * c_account);
+	void subscribe (const std::shared_ptr<Account> &account);
 	void unsubscribe () override;
-	void unsubscribe (LinphoneAccount * c_account);
+	void unsubscribe (const std::shared_ptr<Account> &account);
 	void invalidateSubscription () override;
 	void notifyReceived (LinphoneEvent *notifyLev, const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
@@ -67,7 +67,7 @@ private:
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
-	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
+	void onAccountRegistrationStateChanged (std::shared_ptr<Account> account, LinphoneRegistrationState state, BCTBX_UNUSED(const std::string &message)) override;
 	void onEnteringBackground () override;
 	void onEnteringForeground () override;
 };

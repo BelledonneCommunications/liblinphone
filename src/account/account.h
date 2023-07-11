@@ -86,6 +86,7 @@ public:
 	const LinphoneAddress* getPendingContactAddress () const;
 	const LinphoneAddress* getServiceRouteAddress ();
 	LinphoneRegistrationState getState () const;
+	LinphoneRegistrationState getPreviousState () const;
 	SalRegisterOp* getOp() const;
 	const char* getCustomHeader (const std::string& headerName) const;
 	LinphoneEvent* getPresencePublishEvent () const;
@@ -166,6 +167,7 @@ private:
 	LinphoneAddress *mServiceRouteAddress = nullptr;
 
 	LinphoneRegistrationState mState = LinphoneRegistrationNone;
+	LinphoneRegistrationState mPreviousState = LinphoneRegistrationNone;
 
 	SalRegisterOp *mOp = nullptr;
 	SalCustomHeader *mSentHeaders = nullptr;

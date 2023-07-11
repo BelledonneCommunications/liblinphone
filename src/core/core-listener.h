@@ -31,6 +31,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Account;
+
 class LINPHONE_PUBLIC CoreListener {
 public:
 	virtual ~CoreListener () = default;
@@ -38,6 +40,7 @@ public:
 	virtual void onGlobalStateChanged (BCTBX_UNUSED(LinphoneGlobalState state)) {}
 	virtual void onNetworkReachable (BCTBX_UNUSED(bool sipNetworkReachable), BCTBX_UNUSED(bool mediaNetworkReachable)) {}
 	virtual void onRegistrationStateChanged (BCTBX_UNUSED(LinphoneProxyConfig *cfg), BCTBX_UNUSED(LinphoneRegistrationState state), BCTBX_UNUSED(const std::string &message)) {}
+	virtual void onAccountRegistrationStateChanged (BCTBX_UNUSED(std::shared_ptr<Account> account), BCTBX_UNUSED(LinphoneRegistrationState state), BCTBX_UNUSED(const std::string &message)) {}
 	virtual void onCallStateChanged (BCTBX_UNUSED(LinphoneCall *call), BCTBX_UNUSED(LinphoneCallState state), BCTBX_UNUSED(const std::string &message)) {}
 	virtual void onEnteringBackground () {}
 	virtual void onEnteringForeground () {}

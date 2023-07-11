@@ -20,7 +20,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "core/core-p.h"
-
+#include "account/account.h"
 #include "private.h"
 #include "linphone/wrapper_utils.h"
 
@@ -151,6 +151,7 @@ void linphone_core_notify_registration_state_changed(LinphoneCore *lc, LinphoneP
 }
 
 void linphone_core_notify_account_registration_state_changed(LinphoneCore *lc, LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->notifyRegistrationStateChanged(LinphonePrivate::Account::toCpp(account)->getSharedFromThis(), state, message);
 	NOTIFY_IF_EXIST(account_registration_state_changed, lc, account, state, message);
 	cleanup_dead_vtable_refs(lc);
 }
