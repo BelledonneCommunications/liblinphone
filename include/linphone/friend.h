@@ -38,7 +38,7 @@ extern "C" {
  * Set #LinphoneAddress for this friend
  * @param linphone_friend #LinphoneFriend object @notnil
  * @param address the #LinphoneAddress to set @maybenil
- * return 0 if successfull, -1 otherwise
+ * return 0 if successful, -1 otherwise
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_friend_set_address(LinphoneFriend *fr, const LinphoneAddress *address);
 

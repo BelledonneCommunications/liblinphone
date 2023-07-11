@@ -430,6 +430,14 @@ void CorePrivate::notifyCallStateChanged(LinphoneCall *call, LinphoneCallState s
 		listener->onCallStateChanged(call, state, message);
 }
 
+void CorePrivate::notifyRegistrationStateChanged(std::shared_ptr<Account> account,
+                                                 LinphoneRegistrationState state,
+                                                 const string &message) {
+	auto listenersCopy = listeners; // Allow removal of a listener in its own call
+	for (const auto &listener : listenersCopy)
+		listener->onAccountRegistrationStateChanged(account, state, message);
+}
+
 void CorePrivate::notifyRegistrationStateChanged(LinphoneProxyConfig *cfg,
                                                  LinphoneRegistrationState state,
                                                  const string &message) {
@@ -834,13 +842,13 @@ void Core::setSpecs(const std::map<std::string, std::string> &specsMap) {
 void Core::setSpecs(const std::list<std::string> &specsList) {
 	std::map<std::string, std::string> specsMap;
 	for (const auto &spec : specsList) {
-		const auto [name, version] = getSpecNameVersion(spec);
+		const auto [name, version] = Core::getSpecNameVersion(spec);
 		specsMap[name] = version;
 	}
 	setSpecs(specsMap);
 }
 
-std::pair<std::string, std::string> Core::getSpecNameVersion(const std::string &spec) const {
+std::pair<std::string, std::string> Core::getSpecNameVersion(const std::string &spec) {
 	std::string specName;
 	std::string specVersion;
 	const auto slashPos = spec.find("/");
@@ -860,7 +868,7 @@ void Core::addSpec(const std::string &specName, const std::string &specVersion) 
 }
 
 void Core::addSpec(const std::string &spec) {
-	const auto [name, version] = getSpecNameVersion(spec);
+	const auto [name, version] = Core::getSpecNameVersion(spec);
 	addSpec(name, version);
 }
 
@@ -934,7 +942,6 @@ const std::list<std::string> Core::getSpecsList() const {
 		}
 		specsList.push_back(specNameVersion);
 	}
-
 	return specsList;
 }
 

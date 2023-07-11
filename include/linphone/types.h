@@ -459,11 +459,12 @@ typedef enum _LinphoneGlobalState {
  * @ingroup proxies
  **/
 typedef enum _LinphoneRegistrationState {
-	LinphoneRegistrationNone = 0,     /**< Initial state for registrations */
-	LinphoneRegistrationProgress = 1, /**< Registration is in progress */
-	LinphoneRegistrationOk = 2,       /**< Registration is successful */
-	LinphoneRegistrationCleared = 3,  /**< Unregistration succeeded */
-	LinphoneRegistrationFailed = 4    /**< Registration failed */
+	LinphoneRegistrationNone = 0,      /**< Initial state for registrations */
+	LinphoneRegistrationProgress = 1,  /**< Registration is in progress */
+	LinphoneRegistrationOk = 2,        /**< Registration is successful */
+	LinphoneRegistrationCleared = 3,   /**< Unregistration succeeded */
+	LinphoneRegistrationFailed = 4,    /**< Registration failed */
+	LinphoneRegistrationRefreshing = 5 /**< Registration refreshing */
 } LinphoneRegistrationState;
 
 /**

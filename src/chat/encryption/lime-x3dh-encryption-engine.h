@@ -140,9 +140,9 @@ public:
 
 	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
 
-	void onRegistrationStateChanged(LinphoneProxyConfig *cfg,
-	                                LinphoneRegistrationState state,
-	                                const std::string &message) override;
+	void onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
+	                                       LinphoneRegistrationState state,
+	                                       const std::string &message) override;
 
 	void onServerUrlChanged(const std::shared_ptr<Account> &account, const std::string &limeServerUrl) override;
 

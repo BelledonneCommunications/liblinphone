@@ -509,8 +509,22 @@ static void register_success(SalOp *op, bool_t registered) {
 		ms_message("Registration success for deleted account, ignored");
 		return;
 	}
-	Account::toCpp(account)->setState(registered ? LinphoneRegistrationOk : LinphoneRegistrationCleared,
-	                                  registered ? "Registration successful" : "Unregistration done");
+
+	// If this register is a refresh sent by belle-sip, then move to the Refreshing register first
+	if (Account::toCpp(account)->getPreviousState() == LinphoneRegistrationOk) {
+		Account::toCpp(account)->setState(LinphoneRegistrationRefreshing, "Registration refreshing");
+	}
+
+	LinphoneRegistrationState state = LinphoneRegistrationNone;
+	std::string stateMessage;
+	if (registered) {
+		state = LinphoneRegistrationOk;
+		stateMessage = "Registration successful";
+	} else {
+		state = LinphoneRegistrationCleared;
+		stateMessage = "Unregistration done";
+	}
+	Account::toCpp(account)->setState(state, stateMessage);
 }
 
 static void register_failure(SalOp *op) {

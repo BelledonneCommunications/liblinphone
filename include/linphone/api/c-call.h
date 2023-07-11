@@ -232,7 +232,7 @@ LINPHONE_PUBLIC bool_t linphone_call_camera_enabled(const LinphoneCall *call);
  *returns.
  * @param call #LinphoneCall object. @notnil
  * @param file_path a path where to write the jpeg content. @notnil
- * @return 0 if successfull, -1 otherwise (typically if jpeg format is not supported).
+ * @return 0 if successful, -1 otherwise (typically if jpeg format is not supported).
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_take_video_snapshot(LinphoneCall *call, const char *file_path);
 
@@ -242,7 +242,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_take_video_snapshot(LinphoneCall *c
  *returns.
  * @param call #LinphoneCall object. @notnil
  * @param file_path a path where to write the jpeg content. @notnil
- * @return 0 if successfull, -1 otherwise (typically if jpeg format is not supported).
+ * @return 0 if successful, -1 otherwise (typically if jpeg format is not supported).
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_take_preview_snapshot(LinphoneCall *call, const char *file_path);
 

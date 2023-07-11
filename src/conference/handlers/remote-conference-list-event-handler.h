@@ -69,9 +69,9 @@ private:
 
 	// CoreListener
 	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
-	void onRegistrationStateChanged(LinphoneProxyConfig *cfg,
-	                                LinphoneRegistrationState state,
-	                                const std::string &message) override;
+	void onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
+	                                       LinphoneRegistrationState state,
+	                                       BCTBX_UNUSED(const std::string &message)) override;
 	void onEnteringBackground() override;
 	void onEnteringForeground() override;
 };

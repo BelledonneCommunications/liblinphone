@@ -57,7 +57,39 @@ ParticipantDeviceIdentity::ParticipantDeviceIdentity(const std::shared_ptr<Addre
 }
 
 void ParticipantDeviceIdentity::setCapabilityDescriptor(const string &capabilities) {
-	mCapabilityDescriptor = capabilities;
+	setCapabilityDescriptor(Utils::toList(bctoolbox::Utils::split(capabilities, ",")));
+}
+
+void ParticipantDeviceIdentity::setCapabilityDescriptor(const std::list<std::string> &capabilities) {
+	for (const auto &spec : capabilities) {
+		const auto nameVersion = Core::getSpecNameVersion(spec);
+		const auto &name = nameVersion.first;
+		const auto &version = nameVersion.second;
+		mCapabilityDescriptor[name] = version;
+	}
+}
+
+const std::string &ParticipantDeviceIdentity::getCapabilityDescriptor() const {
+	const std::list<std::string> capabilityDescriptor = getCapabilityDescriptorList();
+	mCapabilityDescriptorString = Utils::join(Utils::toVector(capabilityDescriptor), ",");
+	return mCapabilityDescriptorString;
+}
+
+const std::list<std::string> ParticipantDeviceIdentity::getCapabilityDescriptorList() const {
+	std::list<std::string> specsList;
+	for (const auto &nameVersion : mCapabilityDescriptor) {
+		const auto &name = nameVersion.first;
+		const auto &version = nameVersion.second;
+		std::string specNameVersion;
+		specNameVersion += name;
+		if (!version.empty()) {
+			specNameVersion += "/";
+			specNameVersion += version;
+		}
+		specsList.push_back(specNameVersion);
+	}
+
+	return specsList;
 }
 
 ParticipantDeviceIdentity::~ParticipantDeviceIdentity() {
@@ -158,6 +190,25 @@ void ServerGroupChatRoomPrivate::confirmCreation() {
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->getSession();
 	session->startIncomingNotification(false);
+
+	const auto &remoteContactAddress = session->getRemoteContactAddress();
+	if (remoteContactAddress->hasParam("+org.linphone.specs")) {
+		const auto linphoneSpecs = remoteContactAddress->getParamValue("+org.linphone.specs");
+		// The creator of the chatroom must have the capability "groupchat"
+		auto protocols = Utils::parseCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size() - 2));
+		auto groupchat = protocols.find("groupchat");
+		if (groupchat == protocols.end()) {
+			lError() << "Creator " << remoteContactAddress->asStringUriOnly()
+			         << " has no groupchat capability set: " << linphoneSpecs;
+			q->setState(ConferenceInterface::State::CreationFailed);
+			auto errorInfo = linphone_error_info_new();
+			linphone_error_info_set(errorInfo, nullptr, LinphoneReasonNotAcceptable, 488,
+			                        "\"groupchat\" capability has not been found in remote contact address", nullptr);
+			session->decline(errorInfo);
+			linphone_error_info_unref(errorInfo);
+			return;
+		}
+	}
 
 	/* Assign a random conference address to this new chatroom, with domain
 	 * set according to the proxy config used to receive the INVITE.
@@ -727,18 +778,33 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const std::shared_ptr<
 
 void ServerGroupChatRoomPrivate::conclude() {
 	L_Q();
-	lInfo() << q << "All devices are known, the chatroom creation can be concluded.";
+	lInfo() << q << " All devices are known, the chatroom creation can be concluded.";
 	shared_ptr<CallSession> session = mInitiatorDevice->getSession();
 
 	if (!session) {
-		lError() << "ServerGroupChatRoomPrivate::conclude(): initiator's session died.";
+		lError() << q << "ServerGroupChatRoomPrivate::conclude(): initiator's session died.";
 		requestDeletion();
 		return;
 	}
 
+	const auto device = q->getConference()->findParticipantDevice(session);
 	if (q->getParticipants().size() < 2) {
 		lError() << q << ": there are less than 2 participants in this chatroom, refusing creation.";
 		declineSession(session, LinphoneReasonNotAcceptable);
+		requestDeletion();
+	} else if (!device || (device->getState() != ParticipantDevice::State::Joining)) {
+		// We may end up here if a client successfully created a chat room but the conference server thinks it should be
+		// allowed to be part of a conference. A scenario where this branch is hit is the following. The client creating
+		// the chatroom registered into the server without the groupchat capability. Nonetheless, the capability is
+		// added in the INVITE creating the chatroom. Upon reception of the 302 Moved Temporarely, the client will dial
+		// the chatroom URI directly and the server will look for devices allowed to join the chatroom in method
+		// ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(). Since "groupchat" capability was not
+		// there, then the server doesn't allow to conclude the creation of the chatroom
+		// -
+		lError() << q
+		         << ": Declining session because it looks like the device creating the chatroom is not allowed to be "
+		            "part of this chatroom";
+		declineSession(session, LinphoneReasonForbidden);
 		requestDeletion();
 	} else {
 		/* Ok we are going to accept the session with 200Ok. However we want to wait for the ACK to be sure
@@ -1296,6 +1362,17 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 	auto device = q->findCachedParticipantDevice(session);
 	if (!device) {
 		lInfo() << q << " onCallSessionStateChanged on unknown device (maybe not yet).";
+		if ((newState == CallSession::State::Released) && (session->getReason() == LinphoneReasonNotAcceptable) &&
+		    (q->getState() == ConferenceInterface::State::CreationFailed)) {
+			// Delete the chat room from the main DB as its termination process started and it cannot be retrieved in
+			// the future
+			lInfo() << q << ": Delete chatroom from MainDB as its creation failed";
+			unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+			mainDb->deleteChatRoom(q->getConferenceId());
+			q->setState(ConferenceInterface::State::TerminationPending);
+			q->setState(ConferenceInterface::State::Terminated);
+			requestDeletion();
+		}
 		return;
 	}
 	switch (newState) {

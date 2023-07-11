@@ -72,11 +72,24 @@ void linphone_participant_device_identity_set_capability_descriptor(LinphonePart
 	ParticipantDeviceIdentity::toCpp(deviceIdentity)->setCapabilityDescriptor(L_C_TO_STRING(descriptor));
 #endif
 }
-
+void linphone_participant_device_identity_set_capability_descriptor_2(LinphoneParticipantDeviceIdentity *deviceIdentity,
+                                                                      const bctbx_list_t *descriptor_list) {
+#ifdef HAVE_ADVANCED_IM
+	ParticipantDeviceIdentity::toCpp(deviceIdentity)
+	    ->setCapabilityDescriptor(L_GET_CPP_LIST_FROM_C_LIST(descriptor_list, const char *, string));
+#endif
+}
 const char *linphone_participant_device_identity_get_capability_descriptor(
     const LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
 	return L_STRING_TO_C(ParticipantDeviceIdentity::toCpp(deviceIdentity)->getCapabilityDescriptor());
+#endif
+	return NULL;
+}
+const bctbx_list_t *linphone_participant_device_identity_get_capability_descriptor_list(
+    const LinphoneParticipantDeviceIdentity *deviceIdentity) {
+#ifdef HAVE_ADVANCED_IM
+	return L_GET_C_LIST_FROM_CPP_LIST(ParticipantDeviceIdentity::toCpp(deviceIdentity)->getCapabilityDescriptorList());
 #endif
 	return NULL;
 }

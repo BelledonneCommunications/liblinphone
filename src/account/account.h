@@ -88,6 +88,7 @@ public:
 	const std::shared_ptr<Address> &getPendingContactAddress() const;
 	const std::shared_ptr<Address> getServiceRouteAddress() const;
 	LinphoneRegistrationState getState() const;
+	LinphoneRegistrationState getPreviousState() const;
 	SalRegisterOp *getOp() const;
 	const char *getCustomHeader(const std::string &headerName) const;
 	std::shared_ptr<EventPublish> getPresencePublishEvent() const;
@@ -170,6 +171,7 @@ private:
 	mutable std::shared_ptr<Address> mServiceRouteAddress = nullptr;
 
 	LinphoneRegistrationState mState = LinphoneRegistrationNone;
+	LinphoneRegistrationState mPreviousState = LinphoneRegistrationNone;
 
 	SalRegisterOp *mOp = nullptr;
 	SalCustomHeader *mSentHeaders = nullptr;

@@ -249,6 +249,7 @@ extern unsigned int liblinphone_tester_max_cpu_count;
 typedef struct _stats {
 	int number_of_LinphoneRegistrationNone;
 	int number_of_LinphoneRegistrationProgress;
+	int number_of_LinphoneRegistrationRefreshing;
 	int number_of_LinphoneRegistrationOk;
 	int number_of_LinphoneRegistrationCleared;
 	int number_of_LinphoneRegistrationFailed;

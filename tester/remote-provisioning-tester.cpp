@@ -51,7 +51,7 @@ static void remote_provisioning_http(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1));
 
-	/*make sure proxy config is not added in double, one time at core init, next time at configuring successfull*/
+	/*make sure proxy config is not added in double, one time at core init, next time at configuring successful*/
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc)), 1, int, "%i");
 	BC_ASSERT_FALSE(linphone_friend_list_subscriptions_enabled(list));
 
@@ -429,7 +429,7 @@ static void remote_provisioning_check_push_params(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1));
 
-	/*make sure proxy config is not added in double, one time at core init, next time at configuring successfull*/
+	/*make sure proxy config is not added in double, one time at core init, next time at configuring successful*/
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc)), 1, int, "%i");
 
 	LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);

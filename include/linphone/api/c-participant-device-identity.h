@@ -61,19 +61,40 @@ LINPHONE_PUBLIC void linphone_participant_device_identity_unref(LinphoneParticip
  * Set the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
  * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
  * @param capability_descriptor the capability descriptor string.
+ * @deprecated 12/06/2023 Use linphone_participant_device_identity_set_capability_descriptor_2() instead
+ *
+ **/
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void
+linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *device_identity,
+                                                               const char *capability_descriptor);
+
+/**
+ * Set the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
+ * @param capability_descriptor_list the capability descriptor list. \bctbx_list{const char *} @maybenil
  *
  **/
 LINPHONE_PUBLIC void
-linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *device_identity,
-                                                               const char *capability_descriptor);
+linphone_participant_device_identity_set_capability_descriptor_2(LinphoneParticipantDeviceIdentity *device_identity,
+                                                                 const bctbx_list_t *capability_descriptor_list);
 
 /**
  * Get the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
  * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
  * @return the capability descriptor string.
+ * @deprecated 12/06/2023 Use linphone_participant_device_identity_get_capability_descriptor_list() instead
  *
  **/
-LINPHONE_PUBLIC const char *linphone_participant_device_identity_get_capability_descriptor(
+LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_participant_device_identity_get_capability_descriptor(
+    const LinphoneParticipantDeviceIdentity *device_identity);
+
+/**
+ * Get the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
+ * @return the capability descriptor list. \bctbx_list{const char *} @maybenil
+ *
+ **/
+LINPHONE_PUBLIC const bctbx_list_t *linphone_participant_device_identity_get_capability_descriptor_list(
     const LinphoneParticipantDeviceIdentity *device_identity);
 
 /**

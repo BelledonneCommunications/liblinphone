@@ -3888,7 +3888,7 @@ LINPHONE_PUBLIC bool_t linphone_core_qrcode_video_preview_enabled(const Linphone
  * @ingroup misc
  * @param core the linphone core @notnil
  * @param file a path where to write the jpeg content. @notnil
- * @return 0 if successfull, -1 otherwise (typically if jpeg format is not supported).
+ * @return 0 if successful, -1 otherwise (typically if jpeg format is not supported).
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *core, const char *file);
 

@@ -43,9 +43,7 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 typedef struct belle_sip_source belle_sip_source_t;
 
-namespace LinphoneTest {
 class LocalConferenceTester;
-}
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -110,7 +108,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class MediaConference::RemoteConference;
 	friend class ConferenceScheduler;
 
-	friend class LinphoneTest::LocalConferenceTester;
+	friend class ::LocalConferenceTester;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
@@ -272,6 +270,7 @@ public:
 	std::string getSpecs() const;
 	const std::map<std::string, std::string> &getSpecsMap() const;
 	const std::list<std::string> getSpecsList() const;
+	static std::pair<std::string, std::string> getSpecNameVersion(const std::string &spec);
 
 	// ---------------------------------------------------------------------------
 	// Friends.
@@ -382,8 +381,6 @@ private:
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 	std::shared_ptr<SignalInformation> mSignalInformation = nullptr;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
-
-	std::pair<std::string, std::string> getSpecNameVersion(const std::string &spec) const;
 
 	std::list<std::string> plugins;
 #if defined(_WIN32) && !defined(_WIN32_WCE)

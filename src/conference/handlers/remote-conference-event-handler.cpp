@@ -693,9 +693,9 @@ void RemoteConferenceEventHandler::onNetworkReachable(bool sipNetworkReachable,
 	}
 }
 
-void RemoteConferenceEventHandler::onRegistrationStateChanged(BCTBX_UNUSED(LinphoneProxyConfig *cfg),
-                                                              LinphoneRegistrationState state,
-                                                              BCTBX_UNUSED(const std::string &message)) {
+void RemoteConferenceEventHandler::onAccountRegistrationStateChanged(BCTBX_UNUSED(std::shared_ptr<Account> account),
+                                                                     LinphoneRegistrationState state,
+                                                                     BCTBX_UNUSED(const std::string &message)) {
 	if (state == LinphoneRegistrationOk) subscribe();
 }
 

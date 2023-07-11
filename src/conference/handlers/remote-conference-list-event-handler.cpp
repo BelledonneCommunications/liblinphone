@@ -361,19 +361,20 @@ void RemoteConferenceListEventHandler::onNetworkReachable(bool sipNetworkReachab
 	}
 }
 
-void RemoteConferenceListEventHandler::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
-                                                                  LinphoneRegistrationState state,
-                                                                  BCTBX_UNUSED(const std::string &message)) {
-	const auto &account = Account::toCpp(cfg->account)->getSharedFromThis();
-	if (state == LinphoneRegistrationOk) subscribe(account);
-	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config
-		                                             // is the current subscription
-		const LinphoneAddress *cfgAddress = linphone_proxy_config_get_identity_address(cfg);
-		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &evSub) {
-			const auto &currentAddress = evSub->getFrom();
-			return currentAddress->weakEqual(*Address::toCpp(cfgAddress));
+void RemoteConferenceListEventHandler::onAccountRegistrationStateChanged(std::shared_ptr<Account> account,
+                                                                         LinphoneRegistrationState state,
+                                                                         BCTBX_UNUSED(const std::string &message)) {
+	if (state == LinphoneRegistrationOk && (account->getPreviousState() != LinphoneRegistrationRefreshing))
+		subscribe(account);
+	else if (state == LinphoneRegistrationCleared) { // On cleared, restart subscription if the cleared proxy config is
+		                                             // the current subscription
+		const auto &accountParams = account->getAccountParams();
+		const auto &cfgAddress = accountParams->getIdentityAddress();
+		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress](const auto &lev) {
+			return (*Address::create(lev->getOp()->getFrom()) == *cfgAddress);
 		});
 
+		// If no subscription is found, then unsubscribe the account
 		if (it != levs.end()) unsubscribe(account);
 	}
 }

@@ -44,21 +44,22 @@ class ParticipantDeviceIdentity
 public:
 	ParticipantDeviceIdentity(const std::shared_ptr<Address> &address, const std::string &name);
 	void setCapabilityDescriptor(const std::string &capabilities);
+	void setCapabilityDescriptor(const std::list<std::string> &capabilities);
 	const std::shared_ptr<Address> &getAddress() const {
 		return mDeviceAddress;
 	}
 	const std::string &getName() const {
 		return mDeviceName;
 	}
-	const std::string &getCapabilityDescriptor() const {
-		return mCapabilityDescriptor;
-	}
+	const std::string &getCapabilityDescriptor() const;
+	const std::list<std::string> getCapabilityDescriptorList() const;
 	virtual ~ParticipantDeviceIdentity();
 
 private:
 	std::shared_ptr<Address> mDeviceAddress;
 	std::string mDeviceName;
-	std::string mCapabilityDescriptor; // +org.linphone.specs capability descriptor
+	mutable std::string mCapabilityDescriptorString;
+	std::map<std::string, std::string> mCapabilityDescriptor; // +org.linphone.specs capability descriptor
 };
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {

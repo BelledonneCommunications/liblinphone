@@ -3062,6 +3062,9 @@ void registration_state_changed(struct _LinphoneCore *lc,
 		case LinphoneRegistrationProgress:
 			counters->number_of_LinphoneRegistrationProgress++;
 			break;
+		case LinphoneRegistrationRefreshing:
+			counters->number_of_LinphoneRegistrationRefreshing++;
+			break;
 		case LinphoneRegistrationOk:
 			counters->number_of_LinphoneRegistrationOk++;
 			break;

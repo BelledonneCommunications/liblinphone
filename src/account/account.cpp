@@ -466,6 +466,10 @@ const std::shared_ptr<Address> Account::getServiceRouteAddress() const {
 	return mServiceRouteAddress;
 }
 
+LinphoneRegistrationState Account::getPreviousState() const {
+	return mPreviousState;
+}
+
 LinphoneRegistrationState Account::getState() const {
 	return mState;
 }
@@ -663,7 +667,7 @@ void Account::refreshRegister() {
 
 	if (mParams->mRegisterEnabled && mOp && mState != LinphoneRegistrationProgress) {
 		if (mOp->refreshRegister(mParams->mExpires) == 0) {
-			setState(LinphoneRegistrationProgress, "Refresh registration");
+			setState(LinphoneRegistrationRefreshing, "Refresh registration");
 		}
 	}
 }
