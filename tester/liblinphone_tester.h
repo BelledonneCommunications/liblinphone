@@ -1029,6 +1029,9 @@ bctbx_list_t *liblinphone_tester_remove_v6_addr(bctbx_list_t *l);
 
 bool_t liblinphone_tester_is_executable_installed(const char *executable, const char *resource);
 void liblinphone_tester_add_grammar_loader_path(const char *path);
+#ifdef HAVE_SOCI
+void liblinphone_tester_add_soci_search_path(const char *path);
+#endif
 
 #ifdef __cplusplus
 };

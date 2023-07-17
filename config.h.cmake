@@ -51,6 +51,8 @@
 #define MEDIASTREAMER2_LOCAL_PLUGINS_LOCATION "${CMAKE_BINARY_DIR}/lib/mediastreamer2/plugins"
 #define LIBLINPHONE_LOCAL_PLUGINS_LOCATION "${CMAKE_BINARY_DIR}/lib/liblinphone/plugins"
 
+#define SOCI_LOCAL_PLUGINS_LOCATION "${CMAKE_BINARY_DIR}/lib"
+
 #cmakedefine HAVE_ZLIB 1
 #cmakedefine HAVE_CU_GET_SUITE 1
 #cmakedefine HAVE_CU_CURSES 1

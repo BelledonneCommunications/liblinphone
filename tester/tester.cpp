@@ -25,6 +25,7 @@
 #include <belr/grammarbuilder.h>
 
 #ifdef HAVE_SOCI
+#include <soci/backend-loader.h>
 #include <soci/soci.h>
 #endif
 
@@ -84,3 +85,9 @@ bool_t liblinphone_tester_is_executable_installed(const char *executable, const 
 void liblinphone_tester_add_grammar_loader_path(const char *path) {
 	belr::GrammarLoader::get().addPath(std::string(path));
 }
+
+#ifdef HAVE_SOCI
+void liblinphone_tester_add_soci_search_path(const char *path) {
+	soci::dynamic_backends::search_paths().emplace_back(path);
+}
+#endif
