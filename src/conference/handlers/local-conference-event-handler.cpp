@@ -399,6 +399,7 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 }
 
 Content LocalConferenceEventHandler::createNotifyMultipart(int notifyId) {
+
 	list<shared_ptr<EventLog>> events = conf->getCore()->getPrivate()->mainDb->getConferenceNotifiedEvents(
 	    ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress()), static_cast<unsigned int>(notifyId));
 
@@ -1040,11 +1041,15 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for conference ["
 			        << conf->getConferenceAddress() << "] to: " << participant->getAddress();
 
+			const int fullStateTrigger =
+			    linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
+			                            "full_state_trigger_due_to_missing_updates", 10);
+			bool forceFullState = static_cast<int>(lastNotify - evLastNotify) > fullStateTrigger;
 			// FIXME: Temporary workaround until chatrooms and conference will be one single class with different
 			// capabilities. Every subscribe sent for a conference will be answered by a notify full state as events are
 			// not stored in the database
 			const auto &audioVideoConference = conf->getCore()->findAudioVideoConference(conf->getConferenceId());
-			if (audioVideoConference) {
+			if (audioVideoConference || forceFullState) {
 				notifyFullState(createNotifyFullState(ev), device);
 			} else {
 				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
@@ -1081,7 +1086,12 @@ void LocalConferenceEventHandler::subscriptionStateChanged(const shared_ptr<Even
 
 Content LocalConferenceEventHandler::getNotifyForId(int notifyId, const shared_ptr<EventSubscribe> &ev) {
 	unsigned int lastNotify = conf->getLastNotify();
-	if ((notifyId == 0) || (notifyId > static_cast<int>(lastNotify))) {
+
+	const int fullStateTrigger = linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
+	                                                     "full_state_trigger_due_to_missing_updates", 10);
+	bool forceFullState =
+	    (notifyId > static_cast<int>(lastNotify)) || (static_cast<int>(lastNotify) - notifyId) > fullStateTrigger;
+	if ((notifyId == 0) || forceFullState) {
 		auto content = createNotifyFullState(ev);
 		list<Content *> contentPtrs;
 		contentPtrs.push_back(&content);

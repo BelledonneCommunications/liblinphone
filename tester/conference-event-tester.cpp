@@ -1761,8 +1761,8 @@ add_participant_to_conference_through_call(bctbx_list_t **mgrs,
 	int *subscription_count = ((int *)(conf_mgr->user_info));
 	BC_ASSERT_TRUE(wait_for_list(lcs, subscription_count, (init_subscription_count + 1), 5000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_NotifyReceived,
-	                             (initial_participant_stats.number_of_NotifyReceived + 1), 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_NotifyFullStateReceived,
+	                             (initial_participant_stats.number_of_NotifyFullStateReceived + 1), 5000));
 
 	if (other_participants != NULL) {
 		int idx = 0;

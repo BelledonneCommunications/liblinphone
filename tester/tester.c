@@ -1150,8 +1150,8 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs,
 		if (p2_event_log_enabled && conf_event_log_enabled) {
 			if (bctbx_list_find(new_participants, m2)) {
 				// Notify full state
-				BC_ASSERT_TRUE(wait_for_list(lcs, &m2->stat.number_of_NotifyReceived,
-				                             (participant_initial_stats[idx2].number_of_NotifyReceived + 1),
+				BC_ASSERT_TRUE(wait_for_list(lcs, &m2->stat.number_of_NotifyFullStateReceived,
+				                             (participant_initial_stats[idx2].number_of_NotifyFullStateReceived + 1),
 				                             liblinphone_tester_sip_timeout));
 			} else {
 				// Participant added
@@ -3646,14 +3646,16 @@ void linphone_notify_received(LinphoneCore *lc,
                               LinphoneEvent *lev,
                               BCTBX_UNUSED(const char *eventname),
                               const LinphoneContent *content) {
-	LinphoneCoreManager *mgr;
+	LinphoneCoreManager *mgr = get_manager(lc);
 	const char *ua = linphone_event_get_custom_header(lev, "User-Agent");
-	if (content && !linphone_content_is_multipart(content) &&
-	    (!ua || !strstr(ua, "flexisip"))) { /*disable check for full presence server support*/
-		/*hack to disable content checking for list notify */
-		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), notify_content);
+	if (content) {
+		const char *text = linphone_content_get_utf8_text(content);
+		if (!linphone_content_is_multipart(content) &&
+		    (!ua || !strstr(ua, "flexisip"))) { /*disable check for full presence server support*/
+			/*hack to disable content checking for list notify */
+			BC_ASSERT_STRING_EQUAL(text, notify_content);
+		}
 	}
-	mgr = get_manager(lc);
 	mgr->stat.number_of_NotifyReceived++;
 }
 
@@ -4659,6 +4661,12 @@ static void linphone_notify_received_internal(LinphoneCore *lc,
                                               BCTBX_UNUSED(const char *eventname),
                                               BCTBX_UNUSED(const LinphoneContent *content)) {
 	LinphoneCoreManager *mgr = get_manager(lc);
+	if (content) {
+		const char *text = linphone_content_get_utf8_text(content);
+		if (linphone_conference_type_is_full_state(text)) {
+			mgr->stat.number_of_NotifyFullStateReceived++;
+		}
+	}
 	mgr->stat.number_of_NotifyReceived++;
 }
 
