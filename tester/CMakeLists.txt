@@ -277,7 +277,15 @@ set(SOURCE_FILES_C
 	tunnel_tester.c
 	vcard_tester.c
 	video_quality_tester.c
-	local_conference_tester.cpp
+	local_conference_tester_functions.cpp
+	local_scheduled_conference_tester.cpp
+	local_ice_conference_tester.cpp
+	local_inpromptu_conference_tester.cpp
+	local_conference_edition_tester.cpp
+	local_chat_tester.cpp
+	local_chat_imdn_tester.cpp
+	local_secure_chat_tester.cpp
+	local_ephemeral_chat_tester.cpp
 	video_tester.c
 )
 
@@ -339,6 +347,7 @@ endif()
 set(HEADER_FILES
 	audio_quality_tester.h
 	shared_tester_functions.h
+	local_conference_tester_functions.h
 	capability_negotiation_tester.h
 	liblinphone_tester.h
 	tools/private-access.h
