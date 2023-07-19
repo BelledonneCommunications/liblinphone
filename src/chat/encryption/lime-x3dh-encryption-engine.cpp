@@ -495,7 +495,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 		lWarning() << "[LIME] discard malformed incoming message [" << message << "] for [" << localDeviceId
 		           << "]: no sender Device Id found ";
 		errorCode = 488; // Not Acceptable
-		return ChatMessageModifier::Result::Done;
+		return ChatMessageModifier::Result::Error;
 	}
 
 	// Discard incoming messages from unsafe peer devices
@@ -533,13 +533,13 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	if (forceFailure) {
 		lError() << "No key found (on purpose for tests) for [" << localDeviceId << "] for message [" << message << "]";
 		errorCode = 488; // Not Acceptable
-		return ChatMessageModifier::Result::Done;
+		return ChatMessageModifier::Result::Error;
 	}
 
 	if (cipherHeader.empty()) {
 		lError() << "No key found for [" << localDeviceId << "] for message [" << message << "]";
 		errorCode = 488; // Not Acceptable
-		return ChatMessageModifier::Result::Done;
+		return ChatMessageModifier::Result::Error;
 	}
 
 	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
@@ -557,7 +557,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) {
 		lError() << "Failed to decrypt message from " << senderDeviceId;
 		errorCode = 488; // Not Acceptable
-		return ChatMessageModifier::Result::Done;
+		return ChatMessageModifier::Result::Error;
 	}
 
 	// Prepare decrypted message for next modifier
