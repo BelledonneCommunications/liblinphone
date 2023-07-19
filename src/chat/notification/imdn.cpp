@@ -263,7 +263,7 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 				auto &status = deliveryNotification.get().getStatus();
 				if (status.getDelivered().present() && linphone_im_notif_policy_get_recv_imdn_delivered(policy)) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::DeliveredToUser, imdnTime);
-				} else if ((status.getFailed().present() || status.getError().present()) && linphone_im_notif_policy_get_recv_imdn_delivered(policy)) {
+				} else if ((status.getFailed().present() || status.getError().present()) && (linphone_im_notif_policy_get_recv_imdn_delivered(policy) || linphone_im_notif_policy_get_recv_imdn_delivery_error(policy))) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::NotDelivered, imdnTime);
 					// When the IMDN status is failed for reason code 488 (Not acceptable here) and the chatroom is encrypted,
 					// something is wrong with our encryption session with this peer, stale the active session the next

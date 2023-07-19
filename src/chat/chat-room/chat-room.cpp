@@ -236,7 +236,7 @@ void ChatRoomPrivate::sendDeliveryErrorNotification (const shared_ptr<ChatMessag
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(chatMessage->getCore()->getCCore());
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	if (
-		linphone_im_notif_policy_get_send_imdn_delivered(policy) &&
+		( linphone_im_notif_policy_get_send_imdn_delivered(policy) || linphone_im_notif_policy_get_send_imdn_delivery_error(policy)) &&
 		chatMessage->getPrivate()->getNegativeDeliveryNotificationRequired()
 	) {
 		dChatMessage->setNegativeDeliveryNotificationRequired(false);
