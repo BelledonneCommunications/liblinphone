@@ -51,9 +51,10 @@ bool SalCallOp::capabilityNegotiationEnabled() const {
 }
 
 int SalCallOp::setLocalMediaDescription(std::shared_ptr<SalMediaDescription> desc) {
-	if (desc) {
+	mLocalMedia = desc;
+	if (mLocalMedia) {
 		belle_sip_error_code error;
-		belle_sdp_session_description_t *sdp = desc->toSdp();
+		belle_sdp_session_description_t *sdp = mLocalMedia->toSdp();
 		vector<char> buffer = marshalMediaDescription(sdp, error);
 		belle_sip_object_unref(sdp);
 		if (error != BELLE_SIP_OK) return -1;
@@ -63,8 +64,6 @@ int SalCallOp::setLocalMediaDescription(std::shared_ptr<SalMediaDescription> des
 	} else {
 		mLocalBody = Content();
 	}
-
-	mLocalMedia = desc;
 
 	if (mRemoteMedia) {
 		// Case of an incoming call where we modify the local capabilities between the time

@@ -319,7 +319,6 @@ std::list<OrtpPayloadType *> PayloadTypeHandler::makeCodecsList(SalStreamType ty
 			payload_type_set_number(clonedPt, num);
 			payload_type_set_flag(clonedPt, PAYLOAD_TYPE_FROZEN_NUMBER);
 		}
-
 		result.push_back(clonedPt);
 		nb++;
 		if ((maxCodecs > 0) && (nb >= maxCodecs)) break;

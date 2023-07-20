@@ -1356,15 +1356,20 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 			                                          belle_sdp_attribute_create("tcap", tcapValue.c_str()));
 		}
 
-		for (const auto &cfgPair : cfgs) {
-			const auto &cfg = cfgPair.second;
+		for (const auto &[cfgKey, cfg] : cfgs) {
+			if (stream_enabled && (cfg.hasAvpf() || cfg.hasImplicitAvpf())) {
+				for (const auto &pt : cfg.payloads) {
+					/* AVPF/SAVPF profile is used so enable AVPF for all payload types. */
+					payload_type_set_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
+				}
+			}
+
 			const auto &cfgSdpString = cfg.getSdpString();
 			if (!cfgSdpString.empty()) {
 				const auto &cfgIdx = cfg.index;
 				// Add acfg or pcfg attributes if not the actual configuration or if the actual configuration refer to a
 				// potential configuration (member index is not the actual configuration index)
 				std::string attrName;
-				const auto &cfgKey = cfgPair.first;
 				if (cfgKey != getActualConfigurationIndex()) {
 					attrName = "pcfg";
 				} else if (cfgKey == getActualConfigurationIndex() && (cfgIdx != getActualConfigurationIndex())) {
@@ -1657,7 +1662,6 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 	}
 
 	for (const auto &pt : cfg.payloads) {
-
 		/* AVPF/SAVPF profile is used so enable AVPF for all payload types. */
 		payload_type_set_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 		avpf_params = payload_type_get_avpf_params(pt);

@@ -183,7 +183,6 @@ PayloadType *OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType *> 
                                              const PayloadType *refpt,
                                              BCTBX_UNUSED(const std::list<OrtpPayloadType *> &remote_payloads)) {
 	for (const auto &pt : local_payloads) {
-
 		if (pt->mime_type && refpt->mime_type && strcasecmp(pt->mime_type, refpt->mime_type) == 0 &&
 		    pt->clock_rate == refpt->clock_rate && pt->channels == refpt->channels)
 			return payload_type_clone(pt);
@@ -1100,7 +1099,6 @@ OfferAnswerEngine::initiateIncoming(MSFactory *factory,
                                     const std::shared_ptr<SalMediaDescription> local_capabilities,
                                     std::shared_ptr<SalMediaDescription> remote_offer,
                                     bool one_matching_codec) {
-
 	auto result = std::make_shared<SalMediaDescription>(local_capabilities->getParams());
 	size_t i = 0;
 
