@@ -119,7 +119,7 @@ void linphone_core_remove_linphone_spec (LinphoneCore *lc, const char *spec) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->removeSpec(L_C_TO_STRING(spec));
 }
 
-const bctbx_list_t *linphone_core_get_linphone_specs_list(LinphoneCore *lc) {
+bctbx_list_t *linphone_core_get_linphone_specs_list (LinphoneCore *lc) {
 	return L_GET_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getSpecsList());
 }
 

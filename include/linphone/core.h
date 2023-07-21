@@ -5800,10 +5800,10 @@ LINPHONE_PUBLIC void linphone_core_remove_linphone_spec(LinphoneCore *core, cons
  * Get the list of linphone specs string values representing what functionalities the linphone client supports
  * @param core #LinphoneCore object @notnil
  * @return A list of supported specs. The list must be freed with bctbx_list_free() after usage. \bctbx_list{char *}
- * @maybenil
+ * @maybenil @tobefreed
  * @ingroup initializing
  */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_linphone_specs_list(LinphoneCore *core);
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_linphone_specs_list(LinphoneCore *core);
 
 /**
  * @addtogroup chatroom

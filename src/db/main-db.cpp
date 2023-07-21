@@ -614,8 +614,8 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		                                  "  security_level = :security_level"
 		                                  " WHERE id = :conferenceInfoId",
 		    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
-		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid), soci::use(security_level),
-		    soci::use(conferenceInfoId);
+		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
+		    soci::use(security_level), soci::use(conferenceInfoId);
 	} else {
 		lInfo() << "Insert new conference info in database.";
 
@@ -5155,9 +5155,11 @@ void MainDb::deleteChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 	L_D();
 	if (isInitialized()) {
 		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
-		const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress());
+		const long long &participantDeviceSipAddressId = d->selectSipAddressId(device->getAddress()->asString());
+		const long long &participantSipAddressId =
+		    d->selectSipAddressId(device->getParticipant()->getAddress()->asString());
 		const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
-		d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
+		d->deleteChatRoomParticipantDevice(participantId, participantDeviceSipAddressId);
 	}
 #endif
 }

@@ -39,6 +39,11 @@
 
 class LocalConferenceTester;
 
+namespace LinphoneTest {
+	class LocalConferenceTester;
+	class ClientConference;
+}
+
 LINPHONE_BEGIN_NAMESPACE
 
 namespace MediaConference {
@@ -73,7 +78,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class RemoteConferenceEventHandler;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
-
+	friend class LinphoneTest::ClientConference;
 	friend class ::LocalConferenceTester;
 
 public:

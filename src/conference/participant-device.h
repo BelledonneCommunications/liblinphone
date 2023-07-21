@@ -49,7 +49,7 @@ class Core;
 class Participant;
 class ParticipantDeviceCbs;
 
-class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>,
+class LINPHONE_PUBLIC ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>,
                           public UserDataAccessor,
                           public CallbacksHolder<ParticipantDeviceCbs>
                            {

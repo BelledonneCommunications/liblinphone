@@ -72,7 +72,7 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	else internalContent = message->getContents().front();
 
 	// Check if the message is encrypted
-	if (!isMessageEncrypted(internalContent)) {
+	if (!internalContent || !isMessageEncrypted(internalContent)) {
 		return ChatMessageModifier::Result::Skipped;
 	}
 
@@ -93,10 +93,7 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 		return ChatMessageModifier::Result::Error;
 	}
 
-	/* FIXME: to preserve backward compatibility with liblinphone <= 5.1, we must keep using an fixed multipart
-	 * boundary. Remove this awful stuff after March 2023. */
-	const char *harcodedBoundary = "---------------------------14737809831466499882746641449";
-	Content finalContent = ContentManager::contentListToMultipart(contents, harcodedBoundary, true);
+	Content finalContent = ContentManager::contentListToMultipart(contents, true);
 	/* Set the original ContentType, but we need to set the new boundary parameter for the new forged multipart. */
 	string boundary = finalContent.getContentType().getParameter("boundary").getValue();
 	finalContent.setContentType(internalContent->getContentType());

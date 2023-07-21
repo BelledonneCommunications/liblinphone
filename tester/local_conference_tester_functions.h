@@ -17,12 +17,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#ifndef LOCAL_CONFERENCE_TESTER_FUNCTIONS_H_
+#define LOCAL_CONFERENCE_TESTER_FUNCTIONS_H_
+
 #include <map>
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/ownership.hh"
 #include <bctoolbox/defs.h>
 
+#include "conference/participant.h"
 #include "liblinphone_tester++.h"
 #include "linphone/core.h"
 
@@ -109,8 +114,8 @@ public:
 	LinphoneCoreManager *getCMgr() {
 		return mMgr.get();
 	};
-	BorrowedMut<LinphoneCore> getLc() const {
-		return borrowed_mut(mMgr->lc);
+	LinphoneCore *getLc() const {
+		return mMgr->lc;
 	};
 
 private:
@@ -182,6 +187,12 @@ public:
 			linphone_chat_message_send(msg);
 		}
 		return msg;
+	}
+
+	static void deleteAllDevices(std::shared_ptr<Participant> &participant) {
+		if (participant) {
+			participant->clearDevices();
+		}
 	}
 
 	friend Focus;
@@ -282,7 +293,7 @@ private:
 				auto participantRange = focus->mParticipantDevices.equal_range(participant);
 				for (auto participantIt = participantRange.first; participantIt != participantRange.second;
 				     participantIt++) {
-					const bctbx_list_t *specs = linphone_core_get_linphone_specs_list(linphone_chat_room_get_core(cr));
+					bctbx_list_t *specs = linphone_core_get_linphone_specs_list(linphone_chat_room_get_core(cr));
 					bool groupchat_enabled = false;
 					for (const bctbx_list_t *specIt = specs; specIt != NULL; specIt = specIt->next) {
 						const char *spec = (const char *)bctbx_list_get_data(specIt);
@@ -297,6 +308,7 @@ private:
 						devices = bctbx_list_append(devices, identity);
 						linphone_address_unref(deviceAddr);
 					}
+					bctbx_list_free_with_data(specs, ms_free);
 				}
 				linphone_chat_room_set_participant_devices(cr, participant.toC(), devices);
 				bctbx_list_free_with_data(devices, (bctbx_list_free_func)belle_sip_object_unref);
@@ -421,3 +433,5 @@ void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *schedule
                                            const bctbx_list_t *failed_addresses);
 
 } // namespace LinphoneTest
+
+#endif // LOCAL_CONFERENCE_TESTER_FUNCTIONS_H_

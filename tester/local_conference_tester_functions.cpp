@@ -394,8 +394,9 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 
 		LinphoneAddress *michelle2Contact = linphone_address_clone(
 		    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(michelle2.getLc())));
-		ms_message("%s is adding device %s", linphone_core_get_identity(focus.getLc()),
-		           linphone_address_as_string(michelle2Contact));
+		char *michelle2ContactString = linphone_address_as_string(michelle2Contact);
+		ms_message("%s is adding device %s", linphone_core_get_identity(focus.getLc()), michelle2ContactString);
+		ms_free(michelle2ContactString);
 		focus.registerAsParticipantDevice(michelle2);
 
 		// Notify chat room that a participant has registered
@@ -403,14 +404,16 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		const LinphoneAddress *deviceAddr = linphone_proxy_config_get_contact(michelle.getDefaultProxyConfig());
 		LinphoneParticipantDeviceIdentity *identity =
 		    linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
-		linphone_participant_device_identity_set_capability_descriptor_2(
-		    identity, linphone_core_get_linphone_specs_list(michelle.getLc()));
+		bctbx_list_t *specs = linphone_core_get_linphone_specs_list(michelle.getLc());
+		linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
+		bctbx_list_free_with_data(specs, ms_free);
 		devices = bctbx_list_append(devices, identity);
 
 		deviceAddr = linphone_proxy_config_get_contact(michelle2.getDefaultProxyConfig());
 		identity = linphone_factory_create_participant_device_identity(linphone_factory_get(), deviceAddr, "");
-		linphone_participant_device_identity_set_capability_descriptor_2(
-		    identity, linphone_core_get_linphone_specs_list(michelle2.getLc()));
+		specs = linphone_core_get_linphone_specs_list(michelle2.getLc());
+		linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
+		bctbx_list_free_with_data(specs, ms_free);
 		devices = bctbx_list_append(devices, identity);
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
@@ -522,7 +525,9 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(L_GET_C_BACK_PTR(chatRoom)), 4, int, "%d");
 		}
 
-		ms_message("%s is restarting its core", linphone_address_as_string(michelle2Contact));
+		michelle2ContactString = linphone_address_as_string(michelle2Contact);
+		ms_message("%s is restarting its core", michelle2ContactString);
+		ms_free(michelle2ContactString);
 		coresList = bctbx_list_remove(coresList, michelle2.getLc());
 		// Restart michelle
 		michelle2.reStart();
