@@ -3759,10 +3759,9 @@ static test_t call_video_advanced_scenarios_tests[] = {
     TEST_NO_TAG("Video call with video forwarding", video_call_with_video_forwarding),
     TEST_NO_TAG("Video call with video forwarding forwardee ends first",
                 video_call_with_video_forwarding_forwardee_ends_first),
-    TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source),
-};
+    TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source)};
 
-int init_msogl_call_suite() {
+static int init_msogl_call_suite() {
 #if defined(__ANDROID__) || defined(__APPLE__)
 	return -1;
 #else

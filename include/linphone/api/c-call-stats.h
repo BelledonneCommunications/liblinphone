@@ -151,6 +151,22 @@ LINPHONE_PUBLIC float linphone_call_stats_get_download_bandwidth(const LinphoneC
 LINPHONE_PUBLIC float linphone_call_stats_get_upload_bandwidth(const LinphoneCallStats *stats);
 
 /**
+ * Get the bandwidth measurement of the part of the received stream dedicated to FEC, expressed in kbit/s, including
+ * IP/UDP/RTP headers.
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The bandwidth measurement of the received FEC stream in kbit/s.
+ */
+LINPHONE_PUBLIC float linphone_call_stats_get_fec_download_bandwidth(const LinphoneCallStats *stats);
+
+/**
+ * Get the bandwidth measurement of the part of the sent stream dedicated to FEC, expressed in kbit/s, including
+ * IP/UDP/RTP headers.
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The bandwidth measurement of the sent stream in kbit/s.
+ */
+LINPHONE_PUBLIC float linphone_call_stats_get_fec_upload_bandwidth(const LinphoneCallStats *stats);
+
+/**
  * Get the bandwidth measurement of the received RTCP, expressed in kbit/s, including IP/UDP/RTP headers.
  * @param stats #LinphoneCallStats object @notnil
  * @return The bandwidth measurement of the received RTCP in kbit/s.

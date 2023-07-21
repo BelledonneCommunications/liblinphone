@@ -360,6 +360,7 @@ public:
 	virtual MSWebCam *getVideoDevice() const override;
 	virtual std::string getLabel() const override;
 	bool isThumbnail() const;
+	virtual bool isFecEnabled() const override;
 	void oglRender();
 	MSWebCam *getVideoDevice(CallSession::State targetState) const;
 

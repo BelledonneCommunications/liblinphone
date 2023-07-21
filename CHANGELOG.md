@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
 
 ## Unreleased
+### Added
+- Tests for improvement of video calls with flexible Forward Error Correction.
 
 ## [5.4.0] unreleased
 ### Added

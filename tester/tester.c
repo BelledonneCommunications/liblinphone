@@ -319,6 +319,17 @@ bool_t wait_for_until(LinphoneCore *lc_1, LinphoneCore *lc_2, const int *counter
 	return result;
 }
 
+bool_t wait_for_until_for_uint64(
+    LinphoneCore *lc_1, LinphoneCore *lc_2, const uint64_t *counter, uint64_t value, int timeout) {
+	bctbx_list_t *lcs = NULL;
+	bool_t result;
+	if (lc_1) lcs = bctbx_list_append(lcs, lc_1);
+	if (lc_2) lcs = bctbx_list_append(lcs, lc_2);
+	result = wait_for_list_for_uint64(lcs, counter, value, timeout);
+	bctbx_list_free(lcs);
+	return result;
+}
+
 bool_t wait_for(LinphoneCore *lc_1, LinphoneCore *lc_2, int *counter, int value) {
 	return wait_for_until(lc_1, lc_2, counter, value, liblinphone_tester_sip_timeout);
 }
@@ -350,6 +361,32 @@ bool_t wait_for_list_interval(bctbx_list_t *lcs, int *counter, int min, int max,
 }
 
 bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeout_ms) {
+	bctbx_list_t *iterator;
+	MSTimeSpec start;
+
+	liblinphone_tester_clock_start(&start);
+	while ((counter == NULL || *counter < value) && !liblinphone_tester_clock_elapsed(&start, timeout_ms)) {
+		for (iterator = lcs; iterator != NULL; iterator = iterator->next) {
+			linphone_core_iterate((LinphoneCore *)(iterator->data));
+		}
+#ifdef LINPHONE_WINDOWS_UWP
+		{ bc_tester_process_events(); }
+#elif defined(LINPHONE_WINDOWS_DESKTOP)
+		{
+			MSG msg;
+			while (PeekMessage(&msg, NULL, 0, 0, 1)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+#endif
+		ms_usleep(20000);
+	}
+	if (counter && *counter < value) return FALSE;
+	else return TRUE;
+}
+
+bool_t wait_for_list_for_uint64(bctbx_list_t *lcs, const uint64_t *counter, uint64_t value, int timeout_ms) {
 	bctbx_list_t *iterator;
 	MSTimeSpec start;
 

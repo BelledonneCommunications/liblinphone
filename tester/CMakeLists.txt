@@ -327,6 +327,17 @@ set(SOURCE_FILES_CXX
 	conference-info-tester.cpp
 	alerts_tester.cpp
 	vcard_tester.cpp
+	local-chat-tester-functions.cpp
+	local-conference-tester-functions.cpp
+	local-scheduled-conference-tester.cpp
+	local-transfered-conference-tester.cpp
+	local-ice-conference-tester.cpp
+	local-inpromptu-conference-tester.cpp
+	local-conference-edition-tester.cpp
+	local-chat-tester.cpp
+	local-chat-imdn-tester.cpp
+	local-secure-chat-tester.cpp
+	local-ephemeral-chat-tester.cpp
 )
 
 if(ENABLE_FLEXIAPI)

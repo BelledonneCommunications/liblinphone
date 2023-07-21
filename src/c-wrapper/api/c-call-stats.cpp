@@ -54,10 +54,14 @@ struct _LinphoneCallStats {
 	                                 IP/UDP/RTP headers*/
 	float upload_bandwidth; /**<Download bandwidth measurement of sent stream, expressed in kbit/s, including IP/UDP/RTP
 	                           headers*/
-	float local_late_rate;  /**<percentage of packet received too late over last second*/
-	float local_loss_rate;  /**<percentage of lost packet over last second*/
-	int updated;            /**< Tell which RTCP packet has been updated (received_rtcp or sent_rtcp). Can be either
-	                           LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE or LINPHONE_CALL_STATS_SENT_RTCP_UPDATE */
+	float fec_download_bandwidth; /**<Download bandwidth measurement of received stream for FEC only, expressed in
+	                                 kbit/s, including IP/UDP/RTP headers*/
+	float fec_upload_bandwidth;   /**<Download bandwidth measurement of sent stream for FEC only, expressed in kbit/s,
+	                                 including IP/UDP/RTP   headers*/
+	float local_late_rate;        /**<percentage of packet received too late over last second*/
+	float local_loss_rate;        /**<percentage of lost packet over last second*/
+	int updated; /**< Tell which RTCP packet has been updated (received_rtcp or sent_rtcp). Can be either
+	                LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE or LINPHONE_CALL_STATS_SENT_RTCP_UPDATE */
 	float rtcp_download_bandwidth; /**<RTCP download bandwidth measurement of received stream, expressed in kbit/s,
 	                                  including IP/UDP/RTP headers*/
 	float rtcp_upload_bandwidth; /**<RTCP download bandwidth measurement of sent stream, expressed in kbit/s, including
@@ -117,6 +121,8 @@ static void _linphone_call_stats_clone(LinphoneCallStats *dst, const LinphoneCal
 	dst->upnp_state = src->upnp_state;
 	dst->download_bandwidth = src->download_bandwidth;
 	dst->upload_bandwidth = src->upload_bandwidth;
+	dst->fec_download_bandwidth = src->fec_download_bandwidth;
+	dst->fec_upload_bandwidth = src->fec_upload_bandwidth;
 	dst->local_late_rate = src->local_late_rate;
 	dst->local_loss_rate = src->local_loss_rate;
 	dst->updated = src->updated;
@@ -184,6 +190,14 @@ void _linphone_call_stats_set_download_bandwidth(LinphoneCallStats *stats, float
 
 void _linphone_call_stats_set_upload_bandwidth(LinphoneCallStats *stats, float bandwidth) {
 	stats->upload_bandwidth = bandwidth;
+}
+
+void _linphone_call_stats_set_fec_download_bandwidth(LinphoneCallStats *stats, float bandwidth) {
+	stats->fec_download_bandwidth = bandwidth;
+}
+
+void _linphone_call_stats_set_fec_upload_bandwidth(LinphoneCallStats *stats, float bandwidth) {
+	stats->fec_upload_bandwidth = bandwidth;
 }
 
 void _linphone_call_stats_set_rtcp_download_bandwidth(LinphoneCallStats *stats, float bandwidth) {
@@ -393,6 +407,14 @@ float linphone_call_stats_get_download_bandwidth(const LinphoneCallStats *stats)
 
 float linphone_call_stats_get_upload_bandwidth(const LinphoneCallStats *stats) {
 	return stats->upload_bandwidth;
+}
+
+float linphone_call_stats_get_fec_download_bandwidth(const LinphoneCallStats *stats) {
+	return stats->fec_download_bandwidth;
+}
+
+float linphone_call_stats_get_fec_upload_bandwidth(const LinphoneCallStats *stats) {
+	return stats->fec_upload_bandwidth;
 }
 
 float linphone_call_stats_get_rtcp_download_bandwidth(const LinphoneCallStats *stats) {

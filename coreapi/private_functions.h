@@ -317,6 +317,8 @@ void _linphone_call_stats_set_updated(LinphoneCallStats *stats, int updated);
 void _linphone_call_stats_set_rtp_stats(LinphoneCallStats *stats, const rtp_stats_t *rtpStats);
 void _linphone_call_stats_set_download_bandwidth(LinphoneCallStats *stats, float bandwidth);
 void _linphone_call_stats_set_upload_bandwidth(LinphoneCallStats *stats, float bandwidth);
+void _linphone_call_stats_set_fec_download_bandwidth(LinphoneCallStats *stats, float bandwidth);
+void _linphone_call_stats_set_fec_upload_bandwidth(LinphoneCallStats *stats, float bandwidth);
 void _linphone_call_stats_set_rtcp_download_bandwidth(LinphoneCallStats *stats, float bandwidth);
 void _linphone_call_stats_set_rtcp_upload_bandwidth(LinphoneCallStats *stats, float bandwidth);
 void _linphone_call_stats_set_ip_family_of_remote(LinphoneCallStats *stats, LinphoneAddressFamily family);

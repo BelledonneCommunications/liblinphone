@@ -523,7 +523,7 @@ void StreamsGroup::computeAndReportBandwidth() {
 		if (stream->getState() != Stream::Running) continue;
 		LinphoneCallStats *stats = stream->getStats();
 		if (!introDone) {
-			ostr << "Bandwidth usage for CallSession [" << &getMediaSession() << "]:" << endl
+			ostr << "Bandwidth usage for CallSession [" << &getMediaSession() << "] : " << endl
 			     << fixed << setprecision(2);
 			introDone = true;
 		}
@@ -534,11 +534,24 @@ void StreamsGroup::computeAndReportBandwidth() {
 			labelStr += label;
 			labelStr.append(" | ");
 		}
+		float rtp_down_bw = linphone_call_stats_get_download_bandwidth(stats);
+		float rtp_up_bw = linphone_call_stats_get_upload_bandwidth(stats);
+		float fec_down_bw = 0.f;
+		float fec_up_bw = 0.f;
+		if (stream->isFecEnabled()) {
+			fec_down_bw = linphone_call_stats_get_fec_download_bandwidth(stats);
+			fec_up_bw = linphone_call_stats_get_fec_upload_bandwidth(stats);
+		}
+		float total_rtp_down_bw = rtp_down_bw + fec_down_bw;
+		float total_rtp_up_bw = rtp_up_bw + fec_up_bw;
 		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | "
 		     << labelStr << "cpu: " << stream->getCpuUsage() << "% |"
-		     << " RTP: [d=" << linphone_call_stats_get_download_bandwidth(stats)
-		     << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
-		     << "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats)
+		     << " RTP: [d=" << total_rtp_down_bw << ",u=" << total_rtp_up_bw << "] ";
+		if (stream->isFecEnabled()) {
+			ostr << " part of FEC in RTP: [d=" << fec_down_bw << "(" << fec_down_bw / total_rtp_down_bw * 100.f << "%)"
+			     << ",u=" << fec_up_bw << "(" << fec_up_bw / total_rtp_up_bw * 100.f << "%)] ";
+		}
+		ostr << "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats)
 		     << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";
 
 		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);

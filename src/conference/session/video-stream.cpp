@@ -262,6 +262,11 @@ std::string MS2VideoStream::getLabel() const {
 	return L_C_TO_STRING(mStream->label);
 }
 
+bool MS2VideoStream::isFecEnabled() const {
+	MediaStream *ms = getMediaStream();
+	return media_stream_fec_enabled(ms);
+}
+
 bool MS2VideoStream::prepare() {
 
 	MS2Stream::prepare();

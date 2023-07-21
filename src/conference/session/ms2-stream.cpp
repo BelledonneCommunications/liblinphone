@@ -1641,6 +1641,10 @@ void MS2Stream::updateBandwidthReports() {
 	bool active = ms ? (media_stream_get_state(ms) == MSStreamStarted) : false;
 	_linphone_call_stats_set_download_bandwidth(mStats, active ? (float)(media_stream_get_down_bw(ms) * 1e-3) : 0.f);
 	_linphone_call_stats_set_upload_bandwidth(mStats, active ? (float)(media_stream_get_up_bw(ms) * 1e-3) : 0.f);
+	_linphone_call_stats_set_fec_download_bandwidth(mStats,
+	                                                active ? (float)(media_stream_get_fec_down_bw(ms) * 1e-3) : 0.f);
+	_linphone_call_stats_set_fec_upload_bandwidth(mStats,
+	                                              active ? (float)(media_stream_get_fec_up_bw(ms) * 1e-3) : 0.f);
 	_linphone_call_stats_set_rtcp_download_bandwidth(mStats,
 	                                                 active ? (float)(media_stream_get_rtcp_down_bw(ms) * 1e-3) : 0.f);
 	_linphone_call_stats_set_rtcp_upload_bandwidth(mStats,

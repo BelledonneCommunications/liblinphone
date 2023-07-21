@@ -3834,6 +3834,7 @@ static void call_with_file_player(void) {
 		/*cannot run on iphone simulator because locks main loop beyond permitted time (should run
 		on another thread) */
 		BC_ASSERT_EQUAL(ms_audio_diff(hellopath, recordpath, &similar, &audio_cmp_params, NULL, NULL), 0, int, "%d");
+		if (cbs) linphone_player_cbs_unref(cbs);
 		if (similar >= threshold) break;
 	}
 	BC_ASSERT_GREATER(similar, threshold, double, "%g");
@@ -3843,7 +3844,6 @@ static void call_with_file_player(void) {
 	}
 
 end:
-	if (cbs) linphone_player_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	ms_free(recordpath);

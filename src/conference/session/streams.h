@@ -137,6 +137,12 @@ public:
 	virtual float getCpuUsage() const = 0;
 	virtual std::string getLabel() const = 0;
 	virtual void configure(const OfferAnswerContext &params) = 0;
+	/**
+	 * Return true if flexfec is enabled.
+	 */
+	virtual bool isFecEnabled() const {
+		return false;
+	};
 	size_t getIndex() const {
 		return mIndex;
 	}
