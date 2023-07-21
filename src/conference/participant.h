@@ -41,6 +41,7 @@ class LocalConferenceTester;
 
 namespace LinphoneTest {
 	class LocalConferenceTester;
+	class ClientConference;
 }
 
 LINPHONE_BEGIN_NAMESPACE
@@ -78,7 +79,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
-	friend class LinphoneTest::LocalConferenceTester;
+	friend class LinphoneTest::ClientConference;
 	friend class ::LocalConferenceTester;
 public:
 	explicit Participant (Conference *conference, const IdentityAddress &address, std::shared_ptr<CallSession> callSession);

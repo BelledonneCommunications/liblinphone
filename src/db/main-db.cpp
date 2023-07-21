@@ -4905,9 +4905,10 @@ void MainDb::deleteChatRoomParticipantDevice (
 	L_D();
 	if (isInitialized()) {
 		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+		const long long &participantDeviceSipAddressId = d->selectSipAddressId(device->getAddress().asString());
 		const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
 		const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
-		d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
+		d->deleteChatRoomParticipantDevice(participantId, participantDeviceSipAddressId);
 	}
 #endif
 }

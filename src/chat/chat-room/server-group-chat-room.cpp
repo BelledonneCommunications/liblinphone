@@ -448,7 +448,9 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant> &participant) {
 	L_Q();
 
-	for (const auto &device : participant->getDevices()) {
+	const auto &devices = participant->getDevices();
+	const auto participantHasNoDevices = (devices.size() == 0);
+	for (const auto &device : devices) {
 		if ((device->getState() == ParticipantDevice::State::Leaving)
 			|| (device->getState() == ParticipantDevice::State::Left)
 		)
@@ -459,7 +461,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant
 
 	for (const auto &p : q->getParticipants()) {
 		if (participant->getAddress() == p->getAddress()) {
-			lInfo() << q <<" 'participant ' "<< p->getAddress() <<" no more authorized'";
+			lInfo() << q <<" 'participant ' "<< p->getAddress() << " is no more authorized'";
 			q->getConference()->removeParticipant(p);
 			break;
 		}
@@ -467,8 +469,17 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant
 
 	queuedMessages.erase(participant->getAddress().asString());
 
+	unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
 	shared_ptr<ConferenceParticipantEvent> event = q->getConference()->notifyParticipantRemoved(time(nullptr), false, participant);
-	q->getCore()->getPrivate()->mainDb->addConferenceParticipantEventToDb(event);
+	mainDb->addConferenceParticipantEventToDb(event);
+
+	// Remove participant from the database immediately because it has no devices associated.
+	// In case of registration in the future, the devices will attempt to subscribe and the conference server will reply 603 Decline
+	if (participantHasNoDevices) {
+		lInfo() << q << ": Participant '" << participant->getAddress() << "' is immediately removed because there has been an explicit request to do it and it has no deviecs associated to it, unsubscribing";
+		unSubscribeRegistrationForParticipant(participant->getAddress());
+		mainDb->deleteChatRoomParticipant(q->getSharedFromThis(), participant->getAddress());
+	}
 
 	if (!isAdminLeft())
 		designateAdmin();
