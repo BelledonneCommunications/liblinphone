@@ -543,7 +543,8 @@ int FileTransferChatMessageModifier::startHttpTransfer(const string &url,
 	httpRequest = belle_http_request_create(
 	    action.c_str(), uri,
 	    belle_http_header_create("User-Agent", linphone_core_get_user_agent(message->getCore()->getCCore())),
-	    belle_http_header_create("From", message->getLocalAddress()->toString().c_str()), nullptr);
+	    belle_http_header_create("From", message->getLocalAddress()->toString().c_str()),
+	    (bh == nullptr && action == "POST") ? belle_http_header_create("Content-Length", "0") : nullptr, nullptr);
 
 	if (!httpRequest) {
 		lWarning() << "Could not create http request for uri " << url;
