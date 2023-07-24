@@ -393,7 +393,7 @@ static void audio_bandwidth_estimation_base(bool srtp) {
 	lastTMMBRvalue = marie->stat.last_tmmbr_value_received;
 	// a second TMMBR should arrive when the congestion is resolved but still low
 	BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received,
-	                                       lastTMMBRvalue * 1.2, 30000, 30000));
+	                                       (int)(lastTMMBRvalue * 1.2), 30000, 30000));
 	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(marie), 30, int, "%i");
 	lastTMMBRvalue = marie->stat.last_tmmbr_value_received;
 	// Wait 20 seconds, we shall not have any false positive: check we do not receive a TMMBR with a higher bandwidth
@@ -440,7 +440,7 @@ static void audio_bandwidth_estimation_base(bool srtp) {
 	    wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 60000, 140000, 30000));
 	lastTMMBRvalue = marie->stat.last_tmmbr_value_received;
 	BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received,
-	                                       lastTMMBRvalue * 1.2, 220000, 30000));
+	                                       (int)(lastTMMBRvalue * 1.2), 220000, 30000));
 
 	// Remove the bw constraint
 	params.enabled = FALSE;
