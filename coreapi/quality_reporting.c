@@ -677,35 +677,38 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 		metrics = &report->local_metrics;
 		block = _linphone_call_stats_get_sent_rtcp(stats);
 	}
-	do {
-		if (rtcp_is_XR(block) && (rtcp_XR_get_block_type(block) == RTCP_XR_VOIP_METRICS)) {
+	RtcpParserContext rtcpctx;
+	const mblk_t *rtcpMessage = rtcp_parser_context_init(&rtcpctx, block);
 
-			uint8_t config = rtcp_XR_voip_metrics_get_rx_config(block);
+	do {
+		if (rtcp_is_XR(rtcpMessage) && (rtcp_XR_get_block_type(rtcpMessage) == RTCP_XR_VOIP_METRICS)) {
+
+			uint8_t config = rtcp_XR_voip_metrics_get_rx_config(rtcpMessage);
 
 			metrics->rtcp_xr_count++;
 
 			// for local mos rating, we'll use the quality indicator directly
 			// because rtcp XR might not be enabled
 			if (_linphone_call_stats_get_updated(stats) == LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
-				metrics->quality_estimates.moslq = (rtcp_XR_voip_metrics_get_mos_lq(block) == 127)
+				metrics->quality_estimates.moslq = (rtcp_XR_voip_metrics_get_mos_lq(rtcpMessage) == 127)
 				                                       ? 127
-				                                       : rtcp_XR_voip_metrics_get_mos_lq(block) / 10.f;
-				metrics->quality_estimates.moscq = (rtcp_XR_voip_metrics_get_mos_cq(block) == 127)
+				                                       : rtcp_XR_voip_metrics_get_mos_lq(rtcpMessage) / 10.f;
+				metrics->quality_estimates.moscq = (rtcp_XR_voip_metrics_get_mos_cq(rtcpMessage) == 127)
 				                                       ? 127
-				                                       : rtcp_XR_voip_metrics_get_mos_cq(block) / 10.f;
+				                                       : rtcp_XR_voip_metrics_get_mos_cq(rtcpMessage) / 10.f;
 			}
 
-			metrics->jitter_buffer.nominal += rtcp_XR_voip_metrics_get_jb_nominal(block);
-			metrics->jitter_buffer.max += rtcp_XR_voip_metrics_get_jb_maximum(block);
-			metrics->jitter_buffer.abs_max = rtcp_XR_voip_metrics_get_jb_abs_max(block);
+			metrics->jitter_buffer.nominal += rtcp_XR_voip_metrics_get_jb_nominal(rtcpMessage);
+			metrics->jitter_buffer.max += rtcp_XR_voip_metrics_get_jb_maximum(rtcpMessage);
+			metrics->jitter_buffer.abs_max = rtcp_XR_voip_metrics_get_jb_abs_max(rtcpMessage);
 			metrics->jitter_buffer.adaptive = (config >> 4) & 0x3;
-			metrics->packet_loss.network_packet_loss_rate = rtcp_XR_voip_metrics_get_loss_rate(block);
-			metrics->packet_loss.jitter_buffer_discard_rate = rtcp_XR_voip_metrics_get_discard_rate(block);
+			metrics->packet_loss.network_packet_loss_rate = rtcp_XR_voip_metrics_get_loss_rate(rtcpMessage);
+			metrics->packet_loss.jitter_buffer_discard_rate = rtcp_XR_voip_metrics_get_discard_rate(rtcpMessage);
 
 			metrics->session_description.packet_loss_concealment = (config >> 6) & 0x3;
 
-			metrics->delay.round_trip_delay += rtcp_XR_voip_metrics_get_round_trip_delay(block);
-		} else if (rtcp_is_SR(block)) {
+			metrics->delay.round_trip_delay += rtcp_XR_voip_metrics_get_round_trip_delay(rtcpMessage);
+		} else if (rtcp_is_SR(rtcpMessage)) {
 			MediaStream *ms = (stats_type == 0)
 			                      ? Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio)
 			                      : ((stats_type == 1) ? Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo)
@@ -717,7 +720,8 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 				metrics->delay.round_trip_delay += (int)(1000 * rtt);
 			}
 		}
-	} while (rtcp_next_packet(block));
+	} while ((rtcpMessage = rtcp_parser_context_next_packet(&rtcpctx)) != nullptr);
+	rtcp_parser_context_uninit(&rtcpctx);
 
 	/* check if we should send an interval report - use a random sending time to
 	dispatch reports and avoid sending them too close from each other */

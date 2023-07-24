@@ -1375,16 +1375,18 @@ void MS2Stream::handleEvents() {
 
 		/*This MUST be done before any call to "linphone_call_stats_fill" since it has ownership over evd->packet*/
 		if (evt == ORTP_EVENT_RTCP_PACKET_RECEIVED) {
+			RtcpParserContext rtcpctx;
+			const mblk_t *rtcpMessage = rtcp_parser_context_init(&rtcpctx, evd->packet);
 			do {
-				if (evd->packet && rtcp_is_RTPFB(evd->packet)) {
-					if (rtcp_RTPFB_get_type(evd->packet) == RTCP_RTPFB_TMMBR) {
+				if (rtcpMessage && rtcp_is_RTPFB(rtcpMessage)) {
+					if (rtcp_RTPFB_get_type(rtcpMessage) == RTCP_RTPFB_TMMBR) {
 						CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 						listener->onTmmbrReceived(getMediaSession().getSharedFromThis(), (int)getIndex(),
-						                          (int)rtcp_RTPFB_tmmbr_get_max_bitrate(evd->packet));
+						                          (int)rtcp_RTPFB_tmmbr_get_max_bitrate(rtcpMessage));
 					}
 				}
-			} while (rtcp_next_packet(evd->packet));
-			rtcp_rewind(evd->packet);
+			} while ((rtcpMessage = rtcp_parser_context_next_packet(&rtcpctx)) != nullptr);
+			rtcp_parser_context_uninit(&rtcpctx);
 		}
 		if (ms) linphone_call_stats_fill(mStats, ms, ev);
 		bool isIceEvent = false;

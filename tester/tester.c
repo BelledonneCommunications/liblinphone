@@ -3753,21 +3753,24 @@ void dtmf_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneCall *call), int dtmf)
 	counters->dtmf_count++;
 }
 
-bool_t rtcp_is_type(const mblk_t *m, rtcp_type_t type) {
+static bool_t rtcp_is_type(const mblk_t *m, rtcp_type_t type) {
 	const rtcp_common_header_t *ch = rtcp_get_common_header(m);
 	return (ch != NULL && rtcp_common_header_get_packet_type(ch) == type);
 }
 
-void rtcp_received(stats *counters, mblk_t *packet) {
+static void rtcp_received(stats *counters, mblk_t *packet) {
+	RtcpParserContext rtcpParser;
+
+	const mblk_t *rtcpMessage = rtcp_parser_context_init(&rtcpParser, packet);
 	do {
-		if (rtcp_is_type(packet, RTCP_RTPFB)) {
-			if (rtcp_RTPFB_get_type(packet) == RTCP_RTPFB_TMMBR) {
+		if (rtcp_is_type(rtcpMessage, RTCP_RTPFB)) {
+			if (rtcp_RTPFB_get_type(rtcpMessage) == RTCP_RTPFB_TMMBR) {
 				counters->number_of_tmmbr_received++;
-				counters->last_tmmbr_value_received = (int)rtcp_RTPFB_tmmbr_get_max_bitrate(packet);
+				counters->last_tmmbr_value_received = (int)rtcp_RTPFB_tmmbr_get_max_bitrate(rtcpMessage);
 			}
 		}
-	} while (rtcp_next_packet(packet));
-	rtcp_rewind(packet);
+	} while ((rtcpMessage = rtcp_parser_context_next_packet(&rtcpParser)) != NULL);
+	rtcp_parser_context_uninit(&rtcpParser);
 }
 
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *lstats) {
