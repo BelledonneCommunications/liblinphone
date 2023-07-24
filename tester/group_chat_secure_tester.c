@@ -4877,14 +4877,23 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 
 /**
  * Scenario:
- * - Marie and Pauline exchange messages
+ * - Marie, Pauline and Laure exchange messages
  * - Pauline db is corrupted, its session with Marie is cancelled
- * - Marie sends a message to Pauline, she cannot decrypt, Marie is notified with a 488
+ * - Marie sends a message to Pauline and Laure. Pauline cannot decrypt, Marie is notified with a 488 but Laure can
  * - Marie resend the message, it is encrypted again with a new session as the old one is staled.
  * - Pauline decrypts with succes
+ *
+ *   Scenario is modified according to the paulineImdnPolicy value:
+ *   NO_DELIVERY_IMDN : Pauline does not deliver any delivery IMDN: the mecanism fails to recover
+ *   ERROR_DELIVERY_IMDN : Pauline delivers error IMDN only, the mechanism works but Marie does not get any delivered
+ * imdn from Pauline FULL_DELIVERY_IMDN : original scenario
  */
 
-static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId) {
+#define NO_DELIVERY_IMDN 1
+#define DELIVERY_ERROR_IMDN 2
+#define FULL_DELIVERY_IMDN 3
+
+static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint8_t paulineImdnPolicy) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -4986,6 +4995,15 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId) {
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
 	initialLaureStats = laure->stat;
+	LinphoneImNotifPolicy *paulinePolicy = linphone_core_get_im_notif_policy(pauline->lc);
+
+	if (paulineImdnPolicy == NO_DELIVERY_IMDN) { // Pauline setting is to deliver no imdn -> lime recovery cannot work
+		linphone_im_notif_policy_set_send_imdn_delivered(paulinePolicy, FALSE);
+		linphone_im_notif_policy_set_send_imdn_delivery_error(paulinePolicy, FALSE);
+	} else if (paulineImdnPolicy == DELIVERY_ERROR_IMDN) { // Pauline setting is to delivered only the delivery error
+		linphone_im_notif_policy_set_send_imdn_delivered(paulinePolicy, FALSE);
+	}
+
 	marieMessage = _send_message(marieCr, marieTextMessage2);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered,
 	                             initialMarieStats.number_of_LinphoneMessageDelivered + 1,
@@ -4993,9 +5011,17 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived,
 	                             initialLaureStats.number_of_LinphoneMessageReceived + 1,
 	                             10000)); // the message is correctly received by Laure
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,
-	                             initialMarieStats.number_of_LinphoneMessageNotDelivered + 1,
-	                             10000)); // Not delivered to pauline
+
+	if (paulineImdnPolicy == NO_DELIVERY_IMDN) { // Pauline shall not send any IMDN, wait 5 seconds to be sure
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,
+		                              initialMarieStats.number_of_LinphoneMessageNotDelivered + 1,
+		                              5000)); // Not delivered to pauline
+	} else {                                  // Pauline sends a delivery error IMDN, so Marie should get it
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,
+		                             initialMarieStats.number_of_LinphoneMessageNotDelivered + 1,
+		                             10000)); // Not delivered to pauline
+	}
+
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	linphone_chat_message_unref(marieMessage);
 	laureLastMsg = laure->stat.last_received_chat_message;
@@ -5005,7 +5031,7 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId) {
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr);
 
-	// Try again, it shall work this time
+	// Try again, it shall work this time (unless Pauline's policy is to no deliver any IMDN)
 	const char *marieTextMessage3 = "Hello again";
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
@@ -5014,20 +5040,33 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered,
 	                             initialMarieStats.number_of_LinphoneMessageDelivered + 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
-	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived,
 	                             initialLaureStats.number_of_LinphoneMessageReceived + 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
-	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 10000));
-	paulineLastMsg = pauline->stat.last_received_chat_message;
-	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg)) goto end;
+	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+	if (paulineImdnPolicy == NO_DELIVERY_IMDN) { // Pauline setting is to deliver no imdn -> lime recovery cannot work
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,
+		                              initialMarieStats.number_of_LinphoneMessageNotDelivered + 1,
+		                              5000)); // Not delivered to pauline
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
+	} else { // Pauline did delivered at least a delivery error IMDN, so the recovery shall work
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
+		                             initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+		paulineLastMsg = pauline->stat.last_received_chat_message;
+		if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg)) goto end;
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieTextMessage3);
+		BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+		if (paulineImdnPolicy == FULL_DELIVERY_IMDN) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
+			                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 10000));
+		} else { // Pauline delivered the error IMDN but not the delivered one, wait 5s and check we do not get it
+			BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
+			                              initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1, 5000));
+		}
+	}
+
 	laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg)) goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieTextMessage3);
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieTextMessage3);
-	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
-	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr);
 	linphone_chat_message_unref(marieMessage);
@@ -5048,8 +5087,18 @@ end:
 }
 
 static void group_chat_lime_x3dh_session_corrupted(void) {
-	group_chat_lime_x3dh_session_corrupted_curve(25519);
-	group_chat_lime_x3dh_session_corrupted_curve(448);
+	group_chat_lime_x3dh_session_corrupted_curve(25519, FULL_DELIVERY_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(448, FULL_DELIVERY_IMDN);
+}
+
+static void group_chat_lime_x3dh_session_corrupted_error_imdn_only(void) {
+	group_chat_lime_x3dh_session_corrupted_curve(25519, DELIVERY_ERROR_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(448, DELIVERY_ERROR_IMDN);
+}
+
+static void group_chat_lime_x3dh_session_corrupted_no_imdn(void) {
+	group_chat_lime_x3dh_session_corrupted_curve(25519, NO_DELIVERY_IMDN);
+	group_chat_lime_x3dh_session_corrupted_curve(448, NO_DELIVERY_IMDN);
 }
 
 test_t secure_group_chat_tests[] = {
@@ -5080,6 +5129,14 @@ test_t secure_group_chat_tests[] = {
     TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH"),
     TEST_TWO_TAGS("LIME X3DH session corrupted",
                   group_chat_lime_x3dh_session_corrupted,
+                  "LimeX3DH",
+                  "LeaksMemory" /*due to core restart*/),
+    TEST_TWO_TAGS("LIME X3DH session corrupted without delivery IMDN",
+                  group_chat_lime_x3dh_session_corrupted_no_imdn,
+                  "LimeX3DH",
+                  "LeaksMemory" /*due to core restart*/),
+    TEST_TWO_TAGS("LIME X3DH session corrupted with delivery error IMDN only",
+                  group_chat_lime_x3dh_session_corrupted_error_imdn_only,
                   "LimeX3DH",
                   "LeaksMemory" /*due to core restart*/)};
 

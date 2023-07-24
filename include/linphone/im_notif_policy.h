@@ -61,6 +61,7 @@ LINPHONE_PUBLIC void linphone_im_notif_policy_set_user_data(LinphoneImNotifPolic
 
 /**
  * Clear an IM notif policy (deactivate all receiving and sending of notifications).
+ * Note: Error IMDN must be enabled for Lime recovery mechanism
  * @param policy #LinphoneImNotifPolicy object. @notnil
  */
 LINPHONE_PUBLIC void linphone_im_notif_policy_clear(LinphoneImNotifPolicy *policy);
@@ -126,6 +127,38 @@ LINPHONE_PUBLIC bool_t linphone_im_notif_policy_get_recv_imdn_delivered(const Li
  * @param enable Boolean value telling whether to notify received imdn delivered notifications.
  */
 LINPHONE_PUBLIC void linphone_im_notif_policy_set_recv_imdn_delivered(LinphoneImNotifPolicy *policy, bool_t enable);
+
+/**
+ * Tell whether imdn delivery error notifications are being sent.
+ * @param policy #LinphoneImNotifPolicy object @notnil
+ * @return Boolean value telling whether imdn delivery error notifications are being sent.
+ */
+LINPHONE_PUBLIC bool_t linphone_im_notif_policy_get_send_imdn_delivery_error(const LinphoneImNotifPolicy *policy);
+
+/**
+ * Enable imdn delivery error notifications sending.
+ * Note: Error IMDN must be enabled for Lime recovery mechanism
+ * @param policy #LinphoneImNotifPolicy object @notnil
+ * @param enable Boolean value telling whether to send imdn delivery error notifications.
+ */
+LINPHONE_PUBLIC void linphone_im_notif_policy_set_send_imdn_delivery_error(LinphoneImNotifPolicy *policy,
+                                                                           bool_t enable);
+
+/**
+ * Tell whether imdn delivery error notifications are being notified when received.
+ * @param policy #LinphoneImNotifPolicy object @notnil
+ * @return Boolean value telling whether imdn delivery error notifications are being notified when received.
+ */
+LINPHONE_PUBLIC bool_t linphone_im_notif_policy_get_recv_imdn_delivery_error(const LinphoneImNotifPolicy *policy);
+
+/**
+ * Enable imdn delivery error notifications receiving.
+ * Note: Error IMDN must be enabled for Lime recovery mechanism
+ * @param policy #LinphoneImNotifPolicy object @notnil
+ * @param enable Boolean value telling whether to notify received imdn delivery error notifications.
+ */
+LINPHONE_PUBLIC void linphone_im_notif_policy_set_recv_imdn_delivery_error(LinphoneImNotifPolicy *policy,
+                                                                           bool_t enable);
 
 /**
  * Tell whether imdn displayed notifications are being sent.

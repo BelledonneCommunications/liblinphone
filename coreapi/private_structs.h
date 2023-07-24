@@ -379,6 +379,8 @@ struct _LinphoneImNotifPolicy {
 	bool_t recv_is_composing;
 	bool_t send_imdn_delivered;
 	bool_t recv_imdn_delivered;
+	bool_t send_imdn_delivery_error;
+	bool_t recv_imdn_delivery_error;
 	bool_t send_imdn_displayed;
 	bool_t recv_imdn_displayed;
 };
