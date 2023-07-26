@@ -31,7 +31,7 @@
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
-#include "conference_private.h"
+#include "conference.h"
 
 // =============================================================================
 

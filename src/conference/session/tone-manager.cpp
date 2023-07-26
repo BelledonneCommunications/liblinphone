@@ -20,10 +20,10 @@
 
 #include "tone-manager.h"
 #include "call/call.h"
+#include "conference.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
-#include "conference_private.h"
 #include "core/core-p.h"
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"

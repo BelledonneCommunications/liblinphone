@@ -29,9 +29,9 @@
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
 
+#include "conference.h"
 #include "conference/participant.h"
 #include "conference/remote-conference.h"
-#include "conference_private.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "content/content.h"

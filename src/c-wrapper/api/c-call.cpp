@@ -26,9 +26,9 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call/audio-device/audio-device.h"
 #include "call/call.h"
+#include "conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/ms2-streams.h"
-#include "conference_private.h"
 #include "core/core-p.h"
 
 // =============================================================================

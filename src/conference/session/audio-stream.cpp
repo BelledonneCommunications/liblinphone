@@ -17,28 +17,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <cmath>
+
 #include "bctoolbox/defs.h"
+
+#include "mediastreamer2/flowcontrol.h"
+#include "mediastreamer2/msfileplayer.h"
+#include "mediastreamer2/msvolume.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
+#include "conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
 #include "core/core.h"
+#include "linphone/core.h"
 #include "media-session-p.h"
 #include "media-session.h"
 #include "mediastreamer2/mediastream.h"
 #include "mixers.h"
 #include "ms2-streams.h"
 #include "nat/ice-service.h"
-
-#include "mediastreamer2/flowcontrol.h"
-#include "mediastreamer2/msfileplayer.h"
-#include "mediastreamer2/msvolume.h"
-
-#include "conference_private.h"
-#include "linphone/core.h"
-
-#include <cmath>
+#include "remote_conference.h"
 
 using namespace ::std;
 

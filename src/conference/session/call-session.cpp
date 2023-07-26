@@ -36,7 +36,7 @@
 #include "factory/factory.h"
 #include "logger/logger.h"
 
-#include "conference_private.h"
+#include "conference.h"
 #include "private.h"
 
 using namespace std;

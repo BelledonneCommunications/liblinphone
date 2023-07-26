@@ -24,10 +24,10 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
+#include "conference.h"
 #include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
-#include "conference_private.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"

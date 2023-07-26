@@ -20,28 +20,26 @@
 
 #include "bctoolbox/defs.h"
 
-#include "mixers.h"
-#include "ms2-streams.h"
-
-#include "c-wrapper/c-wrapper.h"
-#include "call/call.h"
-#include "conference/params/media-session-params-p.h"
-#include "conference/participant.h"
-#include "core/core.h"
-#include "media-session-p.h"
-#include "media-session.h"
-
+#include "mediastreamer2/msitc.h"
 #include "mediastreamer2/msjpegwriter.h"
 #include "mediastreamer2/msogl.h"
-
-#include "linphone/core.h"
-#include "mediastreamer2/msitc.h"
-
-#include "conference_private.h"
 
 #ifdef HAVE_LIME_X3DH
 #include "bzrtp/bzrtp.h"
 #endif
+
+#include "c-wrapper/c-wrapper.h"
+#include "call/call.h"
+#include "conference.h"
+#include "conference/params/media-session-params-p.h"
+#include "conference/participant.h"
+#include "core/core.h"
+#include "linphone/core.h"
+#include "media-session-p.h"
+#include "media-session.h"
+#include "mixers.h"
+#include "ms2-streams.h"
+#include "remote_conference.h"
 
 using namespace ::std;
 

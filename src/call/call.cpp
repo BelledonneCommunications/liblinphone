@@ -23,6 +23,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call.h"
 #include "chat/chat-room/abstract-chat-room-p.h"
+#include "conference.h"
 #include "conference/conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
@@ -31,9 +32,8 @@
 #include "core/core-p.h"
 #include "factory/factory.h"
 #include "logger/logger.h"
+#include "remote_conference.h"
 #include "sal/sal_media_description.h"
-
-#include "conference_private.h"
 
 // =============================================================================
 

@@ -55,7 +55,7 @@
 #include <mediastreamer2/msvolume.h>
 #include <ortp/b64.h>
 
-#include "conference_private.h"
+#include "conference.h"
 #include "private.h"
 
 using namespace std;

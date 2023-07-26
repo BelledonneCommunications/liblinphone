@@ -21,11 +21,12 @@
 #include <memory>
 
 #include "c-wrapper/c-wrapper.h"
-#include "conference_private.h"
+#include "conference.h"
 #include "core/core.h"
 #include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-conference.h"
 #include "linphone/wrapper_utils.h"
+#include "remote_conference.h"
 
 using namespace std;
 using namespace LinphonePrivate;

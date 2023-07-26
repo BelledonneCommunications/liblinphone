@@ -19,7 +19,7 @@
  */
 
 #include "local-audio-video-conference-event-handler.h"
-#include "conference_private.h"
+#include "conference.h"
 #include "logger/logger.h"
 
 // TODO: remove me.

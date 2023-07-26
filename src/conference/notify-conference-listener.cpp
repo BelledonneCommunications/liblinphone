@@ -23,10 +23,10 @@
 
 #include <bctoolbox/defs.h>
 
+#include "../../coreapi/conference.h"
 #include "conference/notify-conference-listener.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
-#include "conference_private.h"
 #include "private_functions.h"
 
 LINPHONE_BEGIN_NAMESPACE

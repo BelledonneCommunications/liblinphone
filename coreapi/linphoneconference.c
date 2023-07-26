@@ -32,13 +32,15 @@
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "call/call.h"
+#include "conference.h"
 #include "conference/participant.h"
 #include "conference/session/ms2-streams.h"
 #include "conference/session/streams.h"
-#include "conference_private.h"
 #include "core/core.h"
 #include "linphone/api/c-conference.h"
 #include "linphone/conference.h"
+#include "local_conference.h"
+#include "remote_conference.h"
 
 using namespace std;
 

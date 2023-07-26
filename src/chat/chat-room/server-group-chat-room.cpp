@@ -499,8 +499,8 @@ void ServerGroupChatRoomPrivate::removeParticipant(const shared_ptr<Participant>
 	// In case of registration in the future, the devices will attempt to subscribe and the conference server will reply
 	// 603 Decline
 	if (participantHasNoDevices) {
-		lInfo() << q << ": Participant '" << participant->getAddress()
-		        << "' is immediately removed because there has been an explicit request to do it and it has no deviecs "
+		lInfo() << q << ": Participant '" << *participant->getAddress()
+		        << "' is immediately removed because there has been an explicit request to do it and it has no devices "
 		           "associated to it, unsubscribing";
 		unSubscribeRegistrationForParticipant(participant->getAddress());
 		mainDb->deleteChatRoomParticipant(q->getSharedFromThis(), participant->getAddress());
@@ -1107,7 +1107,7 @@ void ServerGroupChatRoomPrivate::inviteDevice(const shared_ptr<ParticipantDevice
 void ServerGroupChatRoomPrivate::byeDevice(const std::shared_ptr<ParticipantDevice> &device) {
 	L_Q();
 
-	lInfo() << q << ": Asking device '" << device->getAddress()->toString() << "' to leave";
+	lInfo() << q << ": Asking device '" << *device->getAddress() << "' to leave";
 	setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 	shared_ptr<CallSession> session = makeSession(device);
 	switch (session->getState()) {
@@ -1186,10 +1186,10 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice(const shared_ptr<Partic
 	L_Q();
 	shared_ptr<Participant> participantCopy = participant; // make a copy of the shared_ptr because the participant may
 	                                                       // be removed by setParticipantDeviceState().
-	lInfo() << q << " device " << deviceAddress << " is removed because it is has unregistered.";
+	lInfo() << q << " device " << *deviceAddress << " is removed because it is has unregistered.";
 	auto participantDevice = participant->findDevice(deviceAddress);
 	if (!participantDevice) {
-		lError() << q << " device " << deviceAddress << " is removed, but we can't find it in this chatroom.";
+		lError() << q << " device " << *deviceAddress << " is removed, but we can't find it in this chatroom.";
 		return;
 	}
 	// Notify to everyone the retirement of this device.
@@ -1259,7 +1259,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft(const std::shared_ptr<P
 		if (allLeft) {
 			// Delete the chat room from the main DB as its termination process started and it cannot be retrieved in
 			// the future
-			lInfo() << q << ": Delete chatroom from MainDB as not participant is left";
+			lInfo() << q << ": Delete chatroom from MainDB as last participant has left";
 			mainDb->deleteChatRoom(q->getConferenceId());
 			if (q->getState() != ConferenceInterface::State::TerminationPending) {
 				q->setState(ConferenceInterface::State::TerminationPending);
@@ -1330,7 +1330,7 @@ void ServerGroupChatRoomPrivate::onBye(const shared_ptr<ParticipantDevice> &part
 				q->removeParticipant(otherParticipant);
 				// Do not wait to delete the chat room from the list stored in the core as the process of terminating it
 				// has already started and it cannot be restored
-				lInfo() << q << ": Delete chatroom from MainDB as not participant is left";
+				lInfo() << q << ": Delete chatroom from MainDB as last participant has left";
 				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
 				mainDb->deleteChatRoom(q->getConferenceId());
 			}
@@ -1817,8 +1817,7 @@ void ServerGroupChatRoom::subscribeReceived(const shared_ptr<EventSubscribe> &ev
 		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		const auto deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 		if (device && (deviceState == ParticipantDevice::State::ScheduledForJoining)) {
-			lInfo() << "Inviting device " << device->getAddress()->toString()
-			        << " because it was scheduled to join the chat room";
+			lInfo() << "Inviting device " << *device->getAddress() << " because it was scheduled to join the chat room";
 			// Invite device as last time round it was attempted, the INVITE session errored out
 			d->inviteDevice(device);
 		}

@@ -135,18 +135,23 @@ static void group_chat_room_server_deletion(void) {
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity());
 		ClientConference pauline("pauline_rc", focus.getIdentity());
+		ClientConference pauline2("pauline_rc", focus.getIdentity());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
+		focus.registerAsParticipantDevice(pauline2);
 
 		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
+		coresList = bctbx_list_append(coresList, pauline2.getLc());
 		Address paulineAddr = pauline.getIdentity();
 		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
 
+		stats initialFocusStats = focus.getStats();
 		stats initialMarieStats = marie.getStats();
 		stats initialPaulineStats = pauline.getStats();
+		stats initialPauline2Stats = pauline2.getStats();
 
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues #together";
@@ -159,10 +164,17 @@ static void group_chat_room_server_deletion(void) {
 		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(
 		    coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 
-		/*BC_ASSERT_TRUE(*/ CoreManagerAssert({focus, marie, pauline}).wait([&focus] {
+		LinphoneChatRoom *pauline2Cr = check_creation_chat_room_client_side(
+		    coresList, pauline2.getCMgr(), &initialPauline2Stats, confAddr, initialSubject, 1, FALSE);
+
+		/*BC_ASSERT_TRUE(*/ CoreManagerAssert({focus, marie, pauline, pauline2}).wait([&focus] {
 			for (auto chatRoom : focus.getCore().getChatRooms()) {
 				for (auto participant : chatRoom->getParticipants()) {
-					for (auto device : participant->getDevices())
+					const auto &devices = participant->getDevices();
+					if (devices.size() > 0) {
+						return false;
+					}
+					for (auto device : devices)
 						if (device->getState() != ParticipantDevice::State::Present) {
 							return false;
 						}
@@ -173,11 +185,14 @@ static void group_chat_room_server_deletion(void) {
 
 		LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "message blabla");
 		linphone_chat_message_send(msg);
-		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([msg] {
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2}).wait([msg] {
 			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
 		}));
-		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([paulineCr] {
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2}).wait([paulineCr] {
 			return linphone_chat_room_get_unread_messages_count(paulineCr) == 1;
+		}));
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2}).wait([pauline2Cr] {
+			return linphone_chat_room_get_unread_messages_count(pauline2Cr) == 1;
 		}));
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
@@ -189,12 +204,15 @@ static void group_chat_room_server_deletion(void) {
 		}
 
 		// wait until chatroom is deleted server side
-		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline}).wait([&focus] {
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2}).wait([&focus] {
 			return focus.getCore().getChatRooms().size() == 0;
 		}));
 
 		// wait bit more to detect side effect if any
-		CoreManagerAssert({focus, marie, pauline}).waitUntil(chrono::seconds(2), [] { return false; });
+		CoreManagerAssert({focus, marie, pauline, pauline2}).waitUntil(chrono::seconds(2), [] { return false; });
+
+		BC_ASSERT_EQUAL(focus.getStats().number_of_LinphoneConferenceStateDeleted,
+		                initialFocusStats.number_of_LinphoneConferenceStateDeleted + 1, int, "%d");
 
 		// Clean db from chat room
 		linphone_chat_message_unref(msg);

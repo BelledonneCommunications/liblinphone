@@ -69,12 +69,12 @@
 #include "logger/logger.h"
 #include "paths/paths.h"
 
+#include "conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
-#include "conference_private.h"
 
 #include "sal/sal_media_description.h"
 

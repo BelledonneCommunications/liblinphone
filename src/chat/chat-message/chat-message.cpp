@@ -20,7 +20,7 @@
 
 #include "object/object-p.h"
 
-#include "conference_private.h"
+#include "conference.h"
 
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
