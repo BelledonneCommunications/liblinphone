@@ -18,26 +18,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/account_creator.h"
-#include "linphone/core.h"
-#include "linphone/lpconfig.h"
-
-#include "linphone/flexi-api-client.h"
-
-#include "c-wrapper/c-wrapper.h"
-#include "dial-plan/dial-plan.h"
-#include "http/http-client.h"
-
-#include "bctoolbox/crypto.h"
-#include "bctoolbox/regex.h"
-
-#include "core_private.h"
 #include "private.h"
 
 #include <algorithm>
 #include <functional>
 #include <json/json.h>
 #include <string>
+
+#include "bctoolbox/crypto.h"
+#include "bctoolbox/regex.h"
+
+#include "c-wrapper/c-wrapper.h"
+#include "core_private.h"
+#include "dial-plan/dial-plan.h"
+#include "http/http-client.h"
+#include "linphone/account_creator.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/core.h"
+#include "linphone/flexi-api-client.h"
+#include "linphone/lpconfig.h"
+#include "private.h"
 
 using namespace std;
 

@@ -20,6 +20,7 @@
 
 #include <bctoolbox/defs.h>
 
+#include "content/content.h"
 #include "message-waiting-indication-summary.h"
 #include "message-waiting-indication.h"
 #include "parser/mwi-parser.h"

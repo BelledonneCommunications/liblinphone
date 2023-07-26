@@ -26,16 +26,11 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
-	                        // src/conference/*
-
 class Conference;
-
-}
 
 class LINPHONE_PUBLIC NotifyConferenceListener : public ConferenceListenerInterface {
 public:
-	NotifyConferenceListener(MediaConference::Conference *conference) : conf(conference){};
+	NotifyConferenceListener(Conference *conference) : conf(conference){};
 	virtual ~NotifyConferenceListener() = default;
 
 	/*
@@ -157,13 +152,19 @@ public:
 	virtual void onStateChanged(ConferenceInterface::State newState) override;
 
 	/*
+	 * Notify Conference full state received.
+	 ** @param[in] newState the new state of this conference.
+	 */
+	virtual void onFullStateReceived() override;
+
+	/*
 	 * Notify which participant device is being currently displayed as active speaker.
 	 * @param[in] device participant device currently being displayed as active speaker. @notnil
 	 */
 	virtual void onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) override;
 
 private:
-	MediaConference::Conference *conf;
+	Conference *conf;
 };
 
 LINPHONE_END_NAMESPACE

@@ -48,6 +48,9 @@
 #include "call/call.h"
 #include "conference/session/media-session-p.h"
 #include "event/event.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 
 #define STR_REASSIGN(dest, src)                                                                                        \
 	{                                                                                                                  \
@@ -728,8 +731,9 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 
 	/* check if we should send an interval report - use a random sending time to
 	dispatch reports and avoid sending them too close from each other */
-	if ((report_interval > 0) &&
-	    ((float)(ms_time(NULL) - report->last_report_date) > reporting_rand((float)report_interval))) {
+	time_t now = ms_time(NULL);
+	float rand = reporting_rand((float)report_interval);
+	if ((report_interval > 0) && ((float)(now - report->last_report_date) > rand)) {
 		linphone_reporting_update_media_info(call, stats_type);
 		send_report(call, report, "VQIntervalReport");
 	}

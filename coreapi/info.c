@@ -36,11 +36,11 @@
 
 #include <bctoolbox/defs.h>
 
+#include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
-
-#include "c-wrapper/c-wrapper.h"
+#include "private_functions.h"
 
 struct _LinphoneInfoMessage {
 	belle_sip_object_t base;

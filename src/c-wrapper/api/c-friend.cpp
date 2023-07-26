@@ -36,28 +36,27 @@
 
 #include <bctoolbox/defs.h>
 
-#include "c-wrapper/internal/c-tools.h"
-#include "linphone/core.h"
-#include "linphone/lpconfig.h"
-#include "presence/presence-model.h"
-#include "vcard/vcard-context.h"
-
 #if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__QNXNTO__)
 #include <iconv.h>
 #include <langinfo.h>
 #include <string.h>
 #endif // if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__QNXNTO__)
 
-#define MAX_PATH_SIZE 1024
-
 #include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "core/core-p.h"
 #include "db/main-db.h"
 #include "friend/friend-device.h"
 #include "friend/friend-list.h"
 #include "friend/friend-phone-number.h"
 #include "friend/friend.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-friend-phone-number.h"
+#include "presence/presence-model.h"
 #include "vcard/vcard.h"
+
+#define MAX_PATH_SIZE 1024
 
 using namespace std;
 

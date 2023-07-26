@@ -19,17 +19,17 @@
  */
 
 #include "linphone/api/c-call.h"
-#include "linphone/api/c-call-cbs.h"
-#include "linphone/api/c-call-stats.h"
-#include "linphone/wrapper_utils.h"
-
 #include "c-wrapper/c-wrapper.h"
 #include "call/audio-device/audio-device.h"
 #include "call/call.h"
-#include "conference.h"
+#include "conference/conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/ms2-streams.h"
 #include "core/core-p.h"
+#include "linphone/api/c-call-cbs.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-call-stats.h"
+#include "linphone/wrapper_utils.h"
 #include "player/call-player.h"
 
 // =============================================================================
@@ -47,7 +47,7 @@ void _post_configure_audio_stream(AudioStream *st, LinphoneCore *lc, bool_t mute
 // =============================================================================
 
 void _linphone_call_set_conf_ref(LinphoneCall *call, LinphoneConference *ref) {
-	Call::toCpp(call)->setConference(MediaConference::Conference::toCpp(ref)->getSharedFromThis());
+	Call::toCpp(call)->setConference(Conference::toCpp(ref)->getSharedFromThis());
 }
 
 MSAudioEndpoint *_linphone_call_get_endpoint(const LinphoneCall *call) {
@@ -528,7 +528,7 @@ bool_t linphone_call_echo_limiter_enabled(const LinphoneCall *call) {
 LinphoneChatRoom *linphone_call_get_chat_room(LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> acr = Call::toCpp(call)->getChatRoom();
-	if (acr) return L_GET_C_BACK_PTR(acr);
+	if (acr) return acr->toC();
 	return nullptr;
 }
 

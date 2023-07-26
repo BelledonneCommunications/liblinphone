@@ -36,6 +36,7 @@
 #include "conference/encryption/ekt-info.h"
 #endif // HAVE_ADVANCED_IM
 #include "event-log/event-log.h"
+#include "linphone/enums/c-enums.h"
 #include "linphone/types.h"
 #include "object/object.h"
 #include "sal/event-op.h"
@@ -46,7 +47,7 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 typedef struct belle_sip_source belle_sip_source_t;
 
-class LocalConferenceTester;
+class ServerConferenceTester;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -58,9 +59,11 @@ class AuthInfo;
 class Call;
 class CallLog;
 class CallSession;
+class Conference;
 class ConferenceId;
 class ConferenceInfo;
 class Participant;
+class CallSessionListener;
 class ConferenceParams;
 class Event;
 class CorePrivate;
@@ -76,49 +79,34 @@ class SalOp;
 class SignalInformation;
 class HttpClient;
 
-namespace MediaConference {
-class LocalConference;
-class RemoteConference;
-class Conference;
-} // namespace MediaConference
-
 class LINPHONE_PUBLIC Core : public Object {
 	friend class Account;
-	friend class BasicToClientGroupChatRoom;
-	friend class BasicToClientGroupChatRoomPrivate;
 	friend class Call;
 	friend class CallSession;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
 	friend class ChatMessageReaction;
 	friend class ChatRoom;
-	friend class ChatRoomPrivate;
 	friend class Conference;
 	friend class ConferenceScheduler;
 	friend class SIPConferenceScheduler;
-	friend class ClientGroupChatRoom;
-	friend class ClientGroupChatRoomPrivate;
-	friend class ClientGroupToBasicChatRoomPrivate;
+	friend class ClientChatRoom;
 	friend class Imdn;
-	friend class LocalConferenceEventHandler;
-	friend class LocalConference;
+	friend class ServerConferenceEventHandler;
+	friend class ServerConference;
 	friend class MainDb;
 	friend class MainDbEventKey;
 	friend class MS2Stream;
 	friend class MediaSessionPrivate;
-	friend class RemoteConferenceEventHandler;
-	friend class RemoteConferenceListEventHandler;
-	friend class ServerGroupChatRoom;
-	friend class ServerGroupChatRoomPrivate;
+	friend class ClientConference;
+	friend class ClientConferenceEventHandler;
+	friend class ClientConferenceListEventHandler;
+	friend class ServerChatRoom;
 	friend class CallSessionPrivate;
 	friend class ToneManager;
 	friend class EventLog;
 
-	friend class MediaConference::Conference;
-	friend class MediaConference::LocalConference;
-	friend class MediaConference::RemoteConference;
-
-	friend class ::LocalConferenceTester;
+	friend class ::ServerConferenceTester;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
@@ -138,7 +126,7 @@ public:
 	                                                                  const std::shared_ptr<Account> account);
 	static const std::shared_ptr<Address>
 	getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-	                                      const std::shared_ptr<Address> &localAddress);
+	                                      const std::shared_ptr<const Address> &localAddress);
 	static const std::shared_ptr<Address> getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
 	                                                                            const std::shared_ptr<Account> account);
 
@@ -191,35 +179,37 @@ public:
 	// ChatRoom.
 	// ---------------------------------------------------------------------------
 
-	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms() const;
+	std::list<std::shared_ptr<AbstractChatRoom>> getRawChatRoomList() const;
+	std::list<std::shared_ptr<AbstractChatRoom>> &getChatRooms() const;
+	const bctbx_list_t *getChatRoomsCList() const;
 
 	std::shared_ptr<AbstractChatRoom> findChatRoom(const ConferenceId &conferenceId, bool logIfNotFound = true) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms(const std::shared_ptr<Address> &peerAddress) const;
 
 	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom(const std::shared_ptr<const Address> &localAddress,
-	                                                       const std::shared_ptr<Address> &participantAddress,
+	                                                       const std::shared_ptr<const Address> &participantAddress,
 	                                                       bool basicOnly,
 	                                                       bool conferenceOnly,
 	                                                       bool encrypted) const;
 
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, bool fallback = true);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
-	                                                            LinphoneChatRoomCapabilitiesMask capabilities,
-	                                                            bool fallback = true);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
-	                                                            const std::shared_ptr<Address> *localAddress,
-	                                                            LinphoneChatRoomCapabilitiesMask capabilities,
-	                                                            bool fallback = true);
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject, bool fallback = true);
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject,
+	                                                       LinphoneChatRoomCapabilitiesMask capabilities,
+	                                                       bool fallback = true);
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject,
+	                                                       const std::shared_ptr<Address> *localAddress,
+	                                                       LinphoneChatRoomCapabilitiesMask capabilities,
+	                                                       bool fallback = true);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom(const ConferenceId &conferenceId);
 
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom(const std::shared_ptr<Address> &localAddress,
-	                                                           const std::shared_ptr<Address> &peerAddress);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom(const std::shared_ptr<const Address> &localAddress,
+	                                                           const std::shared_ptr<const Address> &peerAddress);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoomFromUri(const std::string &localAddressUri,
 	                                                                  const std::string &peerAddressUri);
 
-	static void deleteChatRoom(const std::shared_ptr<const AbstractChatRoom> &chatRoom);
+	static void deleteChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom);
 
 	static const std::string ephemeralVersionAsString();
 	static const std::string groupChatVersionAsString();
@@ -235,17 +225,17 @@ public:
 	// Audio Video Conference.
 	// ---------------------------------------------------------------------------
 
-	void insertAudioVideoConference(const std::shared_ptr<MediaConference::Conference> audioVideoConference);
-	std::shared_ptr<MediaConference::Conference> findAudioVideoConference(const ConferenceId &conferenceId,
-	                                                                      bool logIfNotFound = true) const;
-	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
-	std::shared_ptr<MediaConference::Conference>
-	searchAudioVideoConference(const std::shared_ptr<ConferenceParams> &params,
-	                           const std::shared_ptr<const Address> &localAddress,
-	                           const std::shared_ptr<const Address> &remoteAddress,
-	                           const std::list<std::shared_ptr<Address>> &participants) const;
-	std::shared_ptr<MediaConference::Conference>
-	searchAudioVideoConference(const std::shared_ptr<Address> &conferenceAddress) const;
+	void insertConference(const std::shared_ptr<Conference> conference);
+	std::shared_ptr<Conference> findConference(const std::shared_ptr<const CallSession> &session,
+	                                           bool logIfNotFound = true) const;
+	std::shared_ptr<Conference> findConference(const ConferenceId &conferenceId, bool logIfNotFound = true) const;
+	void deleteConference(const std::shared_ptr<const Conference> &conference);
+	void deleteConference(const ConferenceId &conferenceId);
+	std::shared_ptr<Conference> searchConference(const std::shared_ptr<ConferenceParams> &params,
+	                                             const std::shared_ptr<const Address> &localAddress,
+	                                             const std::shared_ptr<const Address> &remoteAddress,
+	                                             const std::list<std::shared_ptr<Address>> &participants) const;
+	std::shared_ptr<Conference> searchConference(const std::shared_ptr<const Address> &conferenceAddress) const;
 
 	// ---------------------------------------------------------------------------
 	// Paths.
@@ -319,7 +309,7 @@ public:
 	void healNetworkConnections();
 
 	int getUnreadChatMessageCount() const;
-	int getUnreadChatMessageCount(const std::shared_ptr<Address> &localAddress) const;
+	int getUnreadChatMessageCount(const std::shared_ptr<const Address> &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals() const;
 	std::shared_ptr<PushNotificationMessage> getPushNotificationMessage(const std::string &callId) const;
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) const;
@@ -360,14 +350,11 @@ public:
 	void onStopAsyncBackgroundTaskStopped();
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
 
-	std::shared_ptr<CallSession> createConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-	                                                      const std::shared_ptr<Address> &localAddr,
-	                                                      const std::list<std::shared_ptr<Address>> &participants);
-	std::shared_ptr<CallSession>
-	createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-	                                 const std::shared_ptr<Address> &localAddr,
-	                                 const std::list<std::shared_ptr<Address>> &participants,
-	                                 const std::shared_ptr<Address> &confAddr);
+	std::shared_ptr<CallSession> createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
+	                                                              const std::shared_ptr<const Address> &localAddr,
+	                                                              const std::list<Address> &participants,
+	                                                              const std::shared_ptr<Address> &confAddr,
+	                                                              CallSessionListener *listener);
 
 	bool isCurrentlyAggregatingChatMessages();
 	// ---------------------------------------------------------------------------
@@ -423,7 +410,6 @@ public:
 	std::shared_ptr<Account> lookupKnownAccount(const std::shared_ptr<const Address> uri, bool fallbackToDefault) const;
 	std::shared_ptr<Account> findAccountByIdentityAddress(const std::shared_ptr<const Address> identity) const;
 	void accountUpdate();
-
 	void releaseAccounts();
 	const bctbx_list_t *getProxyConfigList() const;
 
@@ -443,9 +429,9 @@ public:
 
 private:
 	Core();
+	void updateChatRoomList() const;
 
 	bool deleteEmptyChatrooms = true;
-	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 	std::shared_ptr<SignalInformation> mSignalInformation = nullptr;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
 	void clearProxyConfigList() const;
@@ -456,6 +442,7 @@ private:
 #elif defined(HAVE_DLOPEN)
 	std::list<void *> loadedPlugins;
 #endif
+
 	void initPlugins();
 	void uninitPlugins();
 	int loadPlugins(const std::string &dir);

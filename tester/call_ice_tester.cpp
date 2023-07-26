@@ -18,19 +18,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "bctoolbox/defs.h"
+
 #include "belle-sip/sipstack.h"
+
+#include "mediastreamer2/msutils.h"
+
 #include "c-wrapper/c-wrapper.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-nat-policy.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
-#include "mediastreamer2/msutils.h"
 #include "sal/sal_media_description.h"
 #include "sal/sal_stream_description.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
-#include <bctoolbox/defs.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 static void call_with_ice_in_ipv4_with_v6_enabled(void) {
 	LinphoneCoreManager *marie;

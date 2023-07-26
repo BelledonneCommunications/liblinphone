@@ -25,9 +25,9 @@
 
 #include "account/account.h"
 #include "chat/encryption/encryption-engine.h"
+#include "conference/client-conference.h"
 #include "conference/encryption/client-ekt-manager.h"
 #include "conference/encryption/ekt-info.h"
-#include "remote_conference.h"
 
 // =============================================================================
 

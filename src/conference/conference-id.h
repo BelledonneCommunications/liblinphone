@@ -33,7 +33,7 @@ public:
 	// Caution: this optimized constructor does not care about extracting the URI part only. Use it for URI only
 	// Address.
 	ConferenceId(Address &&peerAddress, Address &&localAddress);
-	ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<const Address> &localAddress);
+	ConferenceId(const std::shared_ptr<const Address> &peerAddress, const std::shared_ptr<const Address> &localAddress);
 	ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<Address> &localAddress);
 	ConferenceId(const ConferenceId &other);
 	ConferenceId(ConferenceId &&other) = default;

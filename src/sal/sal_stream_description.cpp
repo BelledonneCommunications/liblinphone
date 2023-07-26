@@ -24,8 +24,8 @@
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/misc.h"
 #include "linphone/utils/utils.h"
+#include "sal/sal_media_description.h"
 #include "sal/sal_stream_description.h"
-#include "sal_media_description.h"
 #include "utils/payload-type-handler.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -1027,7 +1027,7 @@ SalStreamDir SalStreamDescription::getDirection() const {
 	return getChosenConfiguration().getDirection();
 }
 
-const std::list<PayloadType *> &SalStreamDescription::getPayloads() const {
+const std::list<OrtpPayloadType *> &SalStreamDescription::getPayloads() const {
 	return getChosenConfiguration().getPayloads();
 }
 
@@ -1426,7 +1426,7 @@ bool SalStreamDescription::sdpParseRtcpFbParameters(SalStreamConfiguration &cfg,
 
 void SalStreamDescription::sdpParsePayloadTypes(SalStreamConfiguration &cfg,
                                                 const belle_sdp_media_description_t *media_desc) const {
-	PayloadType *pt;
+	OrtpPayloadType *pt;
 	PayloadTypeAvpfParams avpf_params;
 	belle_sip_list_t *mime_param_it = NULL;
 	belle_sdp_mime_parameter_t *mime_param;
@@ -1541,7 +1541,7 @@ void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_desc
 
 void SalStreamDescription::applyRtcpFbAttributeToPayload(SalStreamConfiguration &cfg,
                                                          belle_sdp_rtcp_fb_attribute_t *fb_attribute,
-                                                         PayloadType *pt) {
+                                                         OrtpPayloadType *pt) {
 	PayloadTypeAvpfParams avpf_params = payload_type_get_avpf_params(pt);
 	switch (belle_sdp_rtcp_fb_attribute_get_type(fb_attribute)) {
 		case BELLE_SDP_RTCP_FB_ACK:

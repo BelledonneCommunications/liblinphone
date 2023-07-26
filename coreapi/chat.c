@@ -22,26 +22,24 @@
 
 #include "belle-sip/belle-sip.h"
 
-#include "linphone/core.h"
-#include "linphone/lpconfig.h"
-#include "linphone/wrapper_utils.h"
-#include "private.h"
-#include <linphone/utils/utils.h>
-
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "chat/chat-room/abstract-chat-room-p.h"
+#include "chat/chat-room/abstract-chat-room.h"
 #include "chat/chat-room/basic-chat-room.h"
-#include "chat/chat-room/chat-room-params.h"
-#ifdef HAVE_ADVANCED_IM
-#include "chat/chat-room/client-group-chat-room.h"
-#include "chat/chat-room/client-group-to-basic-chat-room.h"
-#endif
+#include "conference/conference-params.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "linphone/api/c-address.h"
 #include "linphone/api/c-chat-room-params.h"
+#include "linphone/chat.h"
+#include "linphone/core.h"
+#include "linphone/lpconfig.h"
+#include "linphone/utils/utils.h"
+#include "linphone/wrapper_utils.h"
+#include "private.h"
 
 using namespace std;
+using namespace LinphonePrivate;
 
 void linphone_core_disable_chat(LinphoneCore *lc, LinphoneReason deny_reason) {
 	lc->chat_deny_code = deny_reason;
@@ -56,9 +54,7 @@ bool_t linphone_core_chat_enabled(const LinphoneCore *lc) {
 }
 
 const bctbx_list_t *linphone_core_get_chat_rooms(LinphoneCore *lc) {
-	if (lc->chat_rooms) bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
-	lc->chat_rooms = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getChatRooms());
-	return lc->chat_rooms;
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getChatRoomsCList();
 }
 
 LinphoneChatRoom *linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback) {
@@ -70,8 +66,9 @@ LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc
                                                                 const char *subject,
                                                                 bool_t fallback,
                                                                 bool_t encrypted) {
-	return L_GET_C_BACK_PTR(
-	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(L_C_TO_STRING(subject), !!fallback, !!encrypted));
+	return L_GET_PRIVATE_FROM_C_OBJECT(lc)
+	    ->createClientChatRoom(L_C_TO_STRING(subject), !!fallback, !!encrypted)
+	    ->toC();
 }
 
 // Deprecated see linphone_core_create_chat_room_6
@@ -134,22 +131,27 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc,
                                                    const LinphoneChatRoomParams *params,
                                                    const LinphoneAddress *localAddr,
                                                    const bctbx_list_t *participants) {
-	shared_ptr<LinphonePrivate::ChatRoomParams> chatRoomParams =
-	    params ? LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
+	CoreLogContextualizer logContextualizer(lc);
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
+	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	// If a participant has an invalid address, the pointer to its address is NULL.
 	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty Address (that is invalid)
-	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
-	    LinphonePrivate::Address::getCppListFromCList(participants);
-	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() ==
-	                                     LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat
-	                               : false;
+	std::list<std::shared_ptr<const LinphonePrivate::Address>> participantsList;
+	for (const bctbx_list_t *elem = participants; elem != NULL; elem = elem->next) {
+		const LinphoneAddress *data = static_cast<const LinphoneAddress *>(bctbx_list_get_data(elem));
+		participantsList.push_back(LinphonePrivate::Address::toCpp(data)->getSharedFromThis());
+	}
+
+	bool withGruu = conferenceParams ? conferenceParams->getChatParams()->getBackend() ==
+	                                       LinphonePrivate::ChatParams::Backend::FlexisipChat
+	                                 : false;
 	shared_ptr<const LinphonePrivate::Address> identityAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room =
-	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(chatRoomParams, identityAddress, participantsList);
+	    L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(conferenceParams, identityAddress, participantsList);
 	if (room) {
-		auto cRoom = L_GET_C_BACK_PTR(room);
+		auto cRoom = room->toC();
 		linphone_chat_room_ref(cRoom);
 		return cRoom;
 	}
@@ -161,42 +163,38 @@ LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc,
                                                  const LinphoneAddress *localAddr,
                                                  const LinphoneAddress *remoteAddr,
                                                  const bctbx_list_t *participants) {
-	shared_ptr<LinphonePrivate::ChatRoomParams> chatRoomParams =
-	    params ? LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
+	CoreLogContextualizer logContextualizer(lc);
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
+	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	const list<std::shared_ptr<LinphonePrivate::Address>> participantsList =
 	    LinphonePrivate::Address::getCppListFromCList(participants);
-	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() ==
-	                                     LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat
-	                               : false;
+	bool withGruu = conferenceParams ? conferenceParams->getChatParams()->getBackend() ==
+	                                       LinphonePrivate::ChatParams::Backend::FlexisipChat
+	                                 : false;
 	shared_ptr<const LinphonePrivate::Address> identityAddress =
 	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
 	shared_ptr<const LinphonePrivate::Address> remoteAddress =
 	    remoteAddr ? LinphonePrivate::Address::toCpp(remoteAddr)->getSharedFromThis() : nullptr;
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(
-	    chatRoomParams, identityAddress, remoteAddress, participantsList);
-	if (room) return L_GET_C_BACK_PTR(room);
+	    conferenceParams, identityAddress, remoteAddress, participantsList);
+	if (room) return room->toC();
 	return NULL;
 }
 
 LinphoneChatRoomParams *linphone_core_create_default_chat_room_params(LinphoneCore *lc) {
-	auto params = LinphonePrivate::ChatRoomParams::getDefaults(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getSharedFromThis());
-	params->ref();
-	return params->toC();
+	auto params = linphone_chat_room_params_new_and_init(lc);
+	return params;
 }
 
 static LinphoneChatRoomParams *_linphone_core_create_default_chat_room_params() {
-	auto params = LinphonePrivate::ChatRoomParams::getDefaults();
-	params->ref();
-	return params->toC();
+	auto params = linphone_chat_room_params_new();
+	return params;
 }
 
-LinphoneChatRoom *_linphone_core_create_server_group_chat_room(LinphoneCore *lc, LinphonePrivate::SalCallOp *op) {
-	return _linphone_server_group_chat_room_new(lc, op);
-}
-
-void linphone_core_delete_chat_room(LinphoneCore *, LinphoneChatRoom *cr) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->deleteFromDb();
+void linphone_core_delete_chat_room(LinphoneCore *lc, LinphoneChatRoom *cr) {
+	CoreLogContextualizer logContextualizer(lc);
+	LinphonePrivate::AbstractChatRoom::toCpp(cr)->deleteFromDb();
 }
 
 // Deprecated see linphone_core_search_chat_room

@@ -32,6 +32,7 @@
 #include "c-wrapper/internal/c-tools.h"
 #include "core/core.h"
 
+#include "linphone/api/c-account.h"
 #include "linphone/sipsetup.h"
 #include "presence/presence-model.h"
 #include "private.h" // TODO: To remove if possible

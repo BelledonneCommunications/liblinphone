@@ -28,9 +28,10 @@
 #include "mediastreamer2/msutils.h"
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-audio-device.h"
+#include "linphone/api/c-conference-params.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
-#include "mediastreamer2/msutils.h"
 #include "tester_utils.h"
 
 static int audio_device_name_match(LinphoneAudioDevice *audio_device, const char *name) {
@@ -1831,7 +1832,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_core_set_default_input_audio_device(pauline->lc, pauline_current_dev);
 	linphone_core_set_default_output_audio_device(pauline->lc, pauline_current_dev);
 
-	// Laure creates the conference
+	// Pauline creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(pauline->lc, NULL);
 	linphone_conference_params_set_video_enabled(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(pauline->lc, conf_params);
@@ -2403,7 +2404,7 @@ static void simple_conference_with_audio_device_change_using_public_api(void) {
 	linphone_core_set_default_input_audio_device(marie->lc, current_dev);
 	linphone_core_set_default_output_audio_device(marie->lc, current_dev);
 
-	// Laure creates the conference
+	// Marie creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
 	linphone_conference_params_set_video_enabled(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(marie->lc, conf_params);

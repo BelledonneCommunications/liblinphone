@@ -19,6 +19,9 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-dial-plan.h"
+#include "linphone/api/c-nat-policy.h"
 #include "tester_utils.h"
 
 void linphone_proxy_config_stop_refreshing(LinphoneProxyConfig *obj);

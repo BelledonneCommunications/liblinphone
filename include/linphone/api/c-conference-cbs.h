@@ -343,6 +343,22 @@ linphone_conference_cbs_set_active_speaker_participant_device(LinphoneConference
                                                               LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb cb);
 
 /**
+ * Get the full state received callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current full state received callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsFullStateReceivedCb
+linphone_conference_cbs_get_full_state_received(const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the full state received callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The full state received callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_full_state_received(LinphoneConferenceCbs *cbs,
+                                                                     LinphoneConferenceCbsFullStateReceivedCb cb);
+
+/**
  * @}
  */
 

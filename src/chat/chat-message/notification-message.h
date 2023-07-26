@@ -31,7 +31,7 @@ class NotificationMessagePrivate;
 
 class LINPHONE_PUBLIC NotificationMessage : public ChatMessage {
 public:
-	friend class ChatRoomPrivate;
+	friend class ChatRoom;
 
 	L_OVERRIDE_SHARED_FROM_THIS(NotificationMessage);
 

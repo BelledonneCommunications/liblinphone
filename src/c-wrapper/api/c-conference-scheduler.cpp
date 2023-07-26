@@ -25,6 +25,8 @@
 #include "conference/conference-scheduler.h"
 #include "core/core.h"
 #include "linphone/api/c-address.h"
+#include "linphone/wrapper_utils.h"
+#include "private_functions.h"
 
 // =============================================================================
 
@@ -82,7 +84,7 @@ void linphone_conference_scheduler_send_invitations(LinphoneConferenceScheduler 
                                                     LinphoneChatRoomParams *chat_room_params) {
 	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
 	ConferenceScheduler::toCpp(conference_scheduler)
-	    ->sendInvitations(ChatRoomParams::toCpp(chat_room_params)->getSharedFromThis());
+	    ->sendInvitations(ConferenceParams::toCpp(chat_room_params)->getSharedFromThis());
 }
 
 void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceScheduler *conference_scheduler,

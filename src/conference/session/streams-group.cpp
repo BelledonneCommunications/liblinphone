@@ -18,7 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iomanip>
+#include <vector>
+
 #include <bctoolbox/defs.h>
+
+#include "mediastreamer2/mediastream.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
@@ -28,13 +33,11 @@
 #include "linphone/core.h"
 #include "media-session-p.h"
 #include "media-session.h"
-#include "mediastreamer2/mediastream.h"
 #include "mixers.h"
 #include "nat/ice-service.h"
+#include "sal/sal_stream_description.h"
 #include "streams.h"
 #include "utils/payload-type-handler.h"
-
-#include <iomanip>
 
 using namespace ::std;
 

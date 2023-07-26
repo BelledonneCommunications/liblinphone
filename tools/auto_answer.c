@@ -22,6 +22,8 @@
 
 #include <bctoolbox/defs.h>
 
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-call-log.h"
 #include "linphone/core.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"

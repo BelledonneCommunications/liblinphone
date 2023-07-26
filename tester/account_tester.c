@@ -22,6 +22,11 @@
 #include <bctoolbox/vfs.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-cbs.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-room.h"
 #include "tester_utils.h"
 
 static void simple_account_creation(void) {

@@ -18,6 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fstream>
+#include <set>
+
 #include <bctoolbox/defs.h>
 
 #include "bctoolbox/list.h"
@@ -31,18 +34,17 @@
 #include "db/main-db.h"
 #include "event/event.h"
 #include "http/http-client.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-content.h"
+#include "linphone/types.h"
 #include "presence/presence-model.h"
+#include "private.h" // TODO: To remove if possible
+#include "private_functions.h"
 #include "vcard/carddav-context.h"
 #include "vcard/vcard-context.h"
 #include "vcard/vcard.h"
 #include "xml/xml-parsing-context.h"
-
-#include "linphone/types.h"
-#include "private.h" // TODO: To remove if possible
-#include "private_functions.h"
-
-#include <fstream>
-#include <set>
 
 // =============================================================================
 
@@ -130,6 +132,10 @@ const std::shared_ptr<Address> &FriendList::getRlsAddress() const {
 
 const std::string &FriendList::getRlsUri() const {
 	return mRlsUri;
+}
+
+const std::list<std::shared_ptr<Friend>> &FriendList::getDirtyFriendsToUpdate() const {
+	return mDirtyFriendsToUpdate;
 }
 
 LinphoneFriendListType FriendList::getType() const {

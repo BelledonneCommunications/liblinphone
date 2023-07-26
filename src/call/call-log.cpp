@@ -23,6 +23,7 @@
 #include <ctime>
 #include <sstream>
 
+#include "address/address.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "core/core-p.h"
 #include "linphone/types.h"
@@ -163,7 +164,7 @@ const LinphoneErrorInfo *CallLog::getErrorInfo() const {
 
 void CallLog::setErrorInfo(LinphoneErrorInfo *errorInfo) {
 	if (mErrorInfo) linphone_error_info_unref(mErrorInfo);
-	mErrorInfo = errorInfo;
+	mErrorInfo = linphone_error_info_clone(errorInfo);
 }
 
 const std::shared_ptr<Address> &CallLog::getRemoteAddress() const {

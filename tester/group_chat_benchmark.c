@@ -21,6 +21,11 @@
 #include "bctoolbox/defs.h"
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-friend.h"
+#include "linphone/chat.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
 
@@ -555,7 +560,7 @@ int main(int argc, char *argv[]) {
 	linphone_core_set_log_level(ORTP_ERROR);
 
 	test_t setup_tests = TEST_NO_TAG("Group chat benchmark", groupchat_benchmark);
-	test_suite_t test_suite = {"Group Chat Benchmark",        NULL, NULL,        liblinphone_tester_before_each,
+	test_suite_t test_suite = {"Group Chat Benchmark",        NULL, NULL,         liblinphone_tester_before_each,
 	                           liblinphone_tester_after_each, 1,    &setup_tests, 0};
 	bc_tester_add_suite(&test_suite);
 

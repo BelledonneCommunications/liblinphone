@@ -42,9 +42,6 @@ ConferenceScheduler::ConferenceScheduler(const shared_ptr<Core> &core) : CoreAcc
 	mAccount = core->getDefaultAccount();
 }
 
-ConferenceScheduler::~ConferenceScheduler() {
-}
-
 const std::shared_ptr<Account> ConferenceScheduler::getAccount() const {
 	return mAccount.lock();
 }
@@ -103,15 +100,6 @@ void ConferenceScheduler::cancelConference(const std::shared_ptr<ConferenceInfo>
 		}
 		setInfo(clone);
 	}
-}
-
-std::shared_ptr<Address>
-ConferenceScheduler::createParticipantAddress(const ConferenceInfo::participant_list_t::value_type &p) const {
-	std::shared_ptr<Address> address = Address::create(p->getAddress()->getUri());
-	for (const auto &[name, value] : p->getAllParameters()) {
-		address->setUriParam(name, value);
-	}
-	return address;
 }
 
 void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
@@ -329,7 +317,7 @@ shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_
 	return message;
 }
 
-void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomParams) {
+void ConferenceScheduler::sendInvitations(shared_ptr<ConferenceParams> conferenceParams) {
 	if (mState != State::Ready) {
 		lWarning() << "[Conference Scheduler] [" << this
 		           << "] Can't send conference invitation if state ins't Ready, current state is " << mState;
@@ -360,13 +348,13 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 		return;
 	}
 
-	if (chatRoomParams->isGroup()) {
+	if (conferenceParams->isGroup()) {
 		lError() << "[Conference Scheduler] [" << this
 		         << "] Unable to send invitations to a group chat. Participant must be notified using individual chat "
 		            "rooms.";
 		return;
 	}
-	if (!chatRoomParams->isValid()) {
+	if (!conferenceParams->isValid()) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Given chat room params aren't valid!";
 		return;
 	}
@@ -459,22 +447,22 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 
 	// Sending the ICS once for each participant in a separated chat room each time.
 	for (auto participant : mInvitationsToSend) {
-		list<std::shared_ptr<Address>> chatRoomParticipantList;
+		list<std::shared_ptr<const Address>> chatRoomParticipantList;
 		chatRoomParticipantList.push_back(participant);
 		list<std::shared_ptr<Address>> participantList;
 		std::shared_ptr<Address> remoteAddress = nullptr;
-		if (chatRoomParams->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat) {
+		if (conferenceParams->getChatParams()->getBackend() == LinphonePrivate::ChatParams::Backend::FlexisipChat) {
 			participantList.push_back(participant);
 		} else {
 			remoteAddress = participant;
 		}
 		shared_ptr<AbstractChatRoom> chatRoom =
-		    getCore()->getPrivate()->searchChatRoom(chatRoomParams, sender, remoteAddress, participantList);
+		    getCore()->getPrivate()->searchChatRoom(conferenceParams, sender, remoteAddress, participantList);
 
 		if (!chatRoom) {
 			lInfo() << "[Conference Scheduler] [" << this << "] Existing chat room between [" << *sender << "] and ["
 			        << *participant << "] wasn't found, creating it.";
-			chatRoom = getCore()->getPrivate()->createChatRoom(chatRoomParams, sender, chatRoomParticipantList);
+			chatRoom = getCore()->getPrivate()->createChatRoom(conferenceParams, sender, chatRoomParticipantList);
 		} else {
 			lInfo() << "[Conference Scheduler] [" << this << "] Found existing chat room ["
 			        << *chatRoom->getPeerAddress() << "] between [" << *sender << "] and [" << *participant

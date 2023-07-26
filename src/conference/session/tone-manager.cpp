@@ -18,9 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tone-manager.h"
+#include <bctoolbox/defs.h>
+
 #include "call/call.h"
-#include "conference.h"
+#include "conference/conference.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
@@ -28,8 +29,7 @@
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
-
-#include <bctoolbox/defs.h>
+#include "tone-manager.h"
 
 using namespace ::std;
 

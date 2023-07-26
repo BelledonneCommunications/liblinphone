@@ -18,7 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "core/core.h"
+#include "linphone/core.h"
+#include "logger/logger.h"
 
 LINPHONE_BEGIN_NAMESPACE
 

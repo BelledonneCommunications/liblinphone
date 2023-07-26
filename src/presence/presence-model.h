@@ -21,7 +21,12 @@
 #ifndef _L_PRESENCE_MODEL_H_
 #define _L_PRESENCE_MODEL_H_
 
+#ifdef HAVE_XML2
+#include <libxml/xmlwriter.h>
+#endif // HAVE_XML2
+
 #include "c-wrapper/c-wrapper.h"
+#include "private_functions.h"
 
 // =============================================================================
 
@@ -58,8 +63,8 @@ public:
 	friend FriendList;
 	friend PresencePerson;
 	friend PresenceService;
-	friend char * ::linphone_presence_basic_status_to_string(LinphonePresenceBasicStatus basic_status);
 	friend char * ::linphone_presence_model_to_xml(LinphonePresenceModel *model);
+	friend char * ::linphone_presence_basic_status_to_string(LinphonePresenceBasicStatus basic_status);
 	friend void ::linphone_notify_parse_presence(const char *content_type,
 	                                             const char *content_subtype,
 	                                             const char *body,

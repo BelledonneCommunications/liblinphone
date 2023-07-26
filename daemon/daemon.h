@@ -22,10 +22,12 @@
 #define DAEMON_H_
 
 #include <bctoolbox/list.h>
-#include <linphone/core.h>
-#include <linphone/core_utils.h>
+
 #include <mediastreamer2/mediastream.h>
 #include <mediastreamer2/mscommon.h>
+
+#include <linphone/core.h>
+#include <linphone/core_utils.h>
 
 #include <list>
 #include <map>

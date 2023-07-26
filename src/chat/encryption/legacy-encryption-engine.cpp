@@ -49,7 +49,7 @@ ChatMessageModifier::Result LegacyEncryptionEngine::processOutgoingMessage(const
 
 	if (!cbProcessOutgoingMessage) return ChatMessageModifier::Result::Skipped;
 
-	errorCode = cbProcessOutgoingMessage(imee, L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(message));
+	errorCode = cbProcessOutgoingMessage(imee, chatRoom->toC(), L_GET_C_BACK_PTR(message));
 	if (errorCode == -1) return ChatMessageModifier::Result::Skipped;
 
 	if (errorCode != 0 && errorCode != 1) {
@@ -73,7 +73,7 @@ ChatMessageModifier::Result LegacyEncryptionEngine::processIncomingMessage(const
 
 	if (!cbProcessIncomingMessage) return ChatMessageModifier::Result::Skipped;
 
-	errorCode = cbProcessIncomingMessage(imee, L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(message));
+	errorCode = cbProcessIncomingMessage(imee, chatRoom->toC(), L_GET_C_BACK_PTR(message));
 	if (errorCode == -1) return ChatMessageModifier::Result::Skipped;
 
 	if (errorCode != 0 && errorCode != 1) {
@@ -91,7 +91,7 @@ bool LegacyEncryptionEngine::isEncryptionEnabledForFileTransfer(const shared_ptr
 	LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb is_encryption_enabled_for_file_transfer_cb =
 	    linphone_im_encryption_engine_cbs_get_is_encryption_enabled_for_file_transfer(imee_cbs);
 	if (is_encryption_enabled_for_file_transfer_cb) {
-		return is_encryption_enabled_for_file_transfer_cb(imee, L_GET_C_BACK_PTR(chatRoom));
+		return is_encryption_enabled_for_file_transfer_cb(imee, chatRoom->toC());
 	}
 	return false;
 }
@@ -105,7 +105,7 @@ void LegacyEncryptionEngine::generateFileTransferKey(
 	LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key_cb =
 	    linphone_im_encryption_engine_cbs_get_generate_file_transfer_key(imee_cbs);
 	if (generate_file_transfer_key_cb) {
-		generate_file_transfer_key_cb(imee, L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(message));
+		generate_file_transfer_key_cb(imee, chatRoom->toC(), L_GET_C_BACK_PTR(message));
 	}
 }
 

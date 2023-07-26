@@ -30,17 +30,17 @@
 #include "sal/sal_stream_configuration.h"
 #include "utils/payload-type-handler.h"
 
-static PayloadType *opus_match(BCTBX_UNUSED(MSOfferAnswerContext *ctx),
-                               const bctbx_list_t *local_payloads,
-                               const PayloadType *refpt,
-                               BCTBX_UNUSED(const bctbx_list_t *remote_payloads),
-                               BCTBX_UNUSED(bool_t reading_response)) {
-	PayloadType *pt;
+static OrtpPayloadType *opus_match(BCTBX_UNUSED(MSOfferAnswerContext *ctx),
+                                   const bctbx_list_t *local_payloads,
+                                   const OrtpPayloadType *refpt,
+                                   BCTBX_UNUSED(const bctbx_list_t *remote_payloads),
+                                   BCTBX_UNUSED(bool_t reading_response)) {
+	OrtpPayloadType *pt;
 	const bctbx_list_t *elem;
-	PayloadType *legacy_opus = NULL;
+	OrtpPayloadType *legacy_opus = NULL;
 
 	for (elem = local_payloads; elem != NULL; elem = elem->next) {
-		pt = (PayloadType *)elem->data;
+		pt = (OrtpPayloadType *)elem->data;
 
 		/*workaround a bug in earlier versions of linphone where opus/48000/1 is offered, which is uncompliant with opus
 		 * rtp draft*/
@@ -68,17 +68,17 @@ static MSOfferAnswerContext *opus_offer_answer_create_context(void) {
 MSOfferAnswerProvider opus_offer_answer_provider = {"opus", opus_offer_answer_create_context};
 
 /* the reason for this matcher is for some stupid uncompliant phone that offer G729a mime type !*/
-static PayloadType *g729A_match(BCTBX_UNUSED(MSOfferAnswerContext *ctx),
-                                const bctbx_list_t *local_payloads,
-                                const PayloadType *refpt,
-                                BCTBX_UNUSED(const bctbx_list_t *remotoe_payloads),
-                                BCTBX_UNUSED(bool_t reading_resonse)) {
-	PayloadType *pt;
+static OrtpPayloadType *g729A_match(BCTBX_UNUSED(MSOfferAnswerContext *ctx),
+                                    const bctbx_list_t *local_payloads,
+                                    const OrtpPayloadType *refpt,
+                                    BCTBX_UNUSED(const bctbx_list_t *remotoe_payloads),
+                                    BCTBX_UNUSED(bool_t reading_resonse)) {
+	OrtpPayloadType *pt;
 	const bctbx_list_t *elem;
-	PayloadType *candidate = NULL;
+	OrtpPayloadType *candidate = NULL;
 
 	for (elem = local_payloads; elem != NULL; elem = elem->next) {
-		pt = (PayloadType *)elem->data;
+		pt = (OrtpPayloadType *)elem->data;
 
 		if (strcasecmp(pt->mime_type, "G729") == 0 && refpt->channels == pt->channels) {
 			candidate = pt;
@@ -94,22 +94,22 @@ static MSOfferAnswerContext *g729a_offer_answer_create_context(void) {
 
 MSOfferAnswerProvider g729a_offer_answer_provider = {"G729A", g729a_offer_answer_create_context};
 
-static PayloadType *red_match(BCTBX_UNUSED(MSOfferAnswerContext *ctx),
-                              const bctbx_list_t *local_payloads,
-                              BCTBX_UNUSED(const PayloadType *refpt),
-                              const bctbx_list_t *remote_payloads,
-                              BCTBX_UNUSED(bool_t reading_response)) {
+static OrtpPayloadType *red_match(BCTBX_UNUSED(MSOfferAnswerContext *ctx),
+                                  const bctbx_list_t *local_payloads,
+                                  BCTBX_UNUSED(const OrtpPayloadType *refpt),
+                                  const bctbx_list_t *remote_payloads,
+                                  BCTBX_UNUSED(bool_t reading_response)) {
 	const bctbx_list_t *elem_local, *elem_remote;
-	PayloadType *red = NULL;
+	OrtpPayloadType *red = NULL;
 
 	for (elem_local = local_payloads; elem_local != NULL; elem_local = elem_local->next) {
-		PayloadType *pt = (PayloadType *)elem_local->data;
+		OrtpPayloadType *pt = (OrtpPayloadType *)elem_local->data;
 
 		if (strcasecmp(pt->mime_type, payload_type_t140_red.mime_type) == 0) {
 			red = payload_type_clone(pt);
 
 			for (elem_remote = remote_payloads; elem_remote != NULL; elem_remote = elem_remote->next) {
-				PayloadType *pt2 = (PayloadType *)elem_remote->data;
+				OrtpPayloadType *pt2 = (OrtpPayloadType *)elem_remote->data;
 				if (strcasecmp(pt2->mime_type, payload_type_t140.mime_type) == 0) {
 					int t140_payload_number = payload_type_get_number(pt2);
 					char *red_fmtp =
@@ -190,9 +190,9 @@ bool OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType *> &l
 	return true;
 }
 
-PayloadType *OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType *> &local_payloads,
-                                             const PayloadType *refpt,
-                                             BCTBX_UNUSED(const std::list<OrtpPayloadType *> &remote_payloads)) {
+OrtpPayloadType *OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType *> &local_payloads,
+                                                 const OrtpPayloadType *refpt,
+                                                 BCTBX_UNUSED(const std::list<OrtpPayloadType *> &remote_payloads)) {
 	for (const auto &pt : local_payloads) {
 		if (pt->mime_type && refpt->mime_type && strcasecmp(pt->mime_type, refpt->mime_type) == 0 &&
 		    pt->clock_rate == refpt->clock_rate && pt->channels == refpt->channels)
@@ -202,7 +202,7 @@ PayloadType *OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType *> 
 }
 
 /*
- * Returns a PayloadType from the local list that matches a PayloadType offered or answered in the remote list
+ * Returns a PayloadType from the local list that matches a OrtpPayloadType offered or answered in the remote list
  */
 PayloadType *OfferAnswerEngine::findPayloadTypeBestMatch(const std::list<OrtpPayloadType *> &local_payloads,
                                                          const PayloadType *refpt,
@@ -231,11 +231,11 @@ std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(const std::list<Or
                                                               bool reading_response,
                                                               bool bundle_enabled) {
 	std::list<OrtpPayloadType *> res;
-	PayloadType *matched;
+	OrtpPayloadType *matched;
 	bool found_codec = false;
 
 	for (const auto &p2 : remote) {
-		matched = OfferAnswerEngine::findPayloadTypeBestMatch(local, p2, remote, reading_response);
+		matched = findPayloadTypeBestMatch(local, p2, remote, reading_response);
 		if (matched) {
 			int local_number = payload_type_get_number(matched);
 			int remote_number = payload_type_get_number(p2);
@@ -328,7 +328,7 @@ std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(const std::list<Or
 	} else {
 		/* case of generating an answer */
 		/* resort result list to put high-priority codecs first */
-		res.sort([](const PayloadType *p1, const PayloadType *p2) -> bool {
+		res.sort([](const OrtpPayloadType *p1, const OrtpPayloadType *p2) -> bool {
 			if (p1->flags & PAYLOAD_TYPE_PRIORITY_BONUS && !(p2->flags & PAYLOAD_TYPE_PRIORITY_BONUS)) {
 				return true;
 			}
@@ -608,8 +608,7 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 
 	const auto &availableEncs = local_offer.getSupportedEncryptions();
 	if (remoteCfg != Utils::getEmptyConstRefObject<SalStreamConfiguration>()) {
-		resultCfg.payloads =
-		    OfferAnswerEngine::matchPayloads(localCfg.payloads, remoteCfg.payloads, true, bundle_enabled);
+		resultCfg.payloads = matchPayloads(localCfg.payloads, remoteCfg.payloads, true, bundle_enabled);
 	} else {
 		lWarning() << "[Initiate Outgoing Configuration] Remote configuration has not been found";
 		return std::nullopt;
@@ -877,7 +876,7 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 	}
 
 	const auto &availableEncs = local_cap.getSupportedEncryptions();
-	resultCfg.payloads = OfferAnswerEngine::matchPayloads(localCfg.payloads, remoteCfg.payloads, false, bundle_enabled);
+	resultCfg.payloads = matchPayloads(localCfg.payloads, remoteCfg.payloads, false, bundle_enabled);
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		if (localCfg.getProto() != remoteCfg.getProto() && remoteCfg.hasAvpf()) {
 			lWarning() << "[Initiate Incoming Configuration] Sending a downgraded AVP answer (transport protocol "

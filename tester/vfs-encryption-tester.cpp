@@ -18,14 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fstream>
+#include <iostream>
+
 #include "bctoolbox/logging.h"
 #include "bctoolbox/vfs_encrypted.hh" // included for testing purpose, we could use encryption without it from a C file
+
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "linphone/wrapper_utils.h"
 #include "tester_utils.h"
-#include <fstream>
-#include <iostream>
 
 static void enable_encryption(const uint16_t encryptionModule, const bool encryptDbJournal = true) {
 	// enable encryption. The call to linphone_factory_set_vfs_encryption will set the VfsEncryption class callback

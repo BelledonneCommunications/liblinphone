@@ -25,7 +25,6 @@
 
 #include "chat/chat-message/chat-message.h"
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
-#include "chat/notification/imdn.h"
 #include "conference/conference-id.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -38,6 +37,8 @@
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class AbstractChatRoom;
 
 class ChatMessagePrivate : public ObjectPrivate {
 	friend class CpimChatMessageModifier;
@@ -261,7 +262,7 @@ private:
 	// Keep setState private as the chat message state must only be set through setParticipantState
 	virtual void setState(ChatMessage::State newState);
 
-	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
+	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction dir);
 	virtual ~ChatMessagePrivate();
 
 	// TODO: Clean attributes.
@@ -292,7 +293,7 @@ private:
 	// TODO: Remove my comment. VARIABLES OK.
 	// Do not expose.
 
-	std::weak_ptr<AbstractChatRoom> chatRoom;
+	std::weak_ptr<AbstractChatRoom> mChatRoom;
 	ConferenceId conferenceId;
 	std::shared_ptr<Address> fromAddress;
 	Address authenticatedFromAddress;

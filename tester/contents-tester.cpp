@@ -26,6 +26,7 @@
 #include "content/content.h"
 #include "content/header/header-param.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-content.h"
 #include "logger/logger.h"
 #include "tester_utils.h"
 

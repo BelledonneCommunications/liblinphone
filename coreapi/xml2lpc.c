@@ -18,9 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "xml2lpc.h"
 #include <libxml/xmlreader.h>
 #include <string.h>
+
+#include "xml2lpc.h"
 
 #define XML2LPC_BZ 2048
 

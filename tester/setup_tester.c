@@ -24,7 +24,19 @@
 #include <bctoolbox/defs.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-audio-device.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-dial-plan.h"
+#include "linphone/api/c-friend-phone-number.h"
+#include "linphone/api/c-ldap-params.h"
+#include "linphone/api/c-ldap.h"
 #include "linphone/api/c-magic-search.h"
+#include "linphone/api/c-search-result.h"
+#include "linphone/chat.h"
 #include "linphone/core.h"
 #include "linphone/friend.h"
 #include "linphone/friendlist.h"
@@ -3043,7 +3055,7 @@ static void ldap_params_edition_with_check(void) {
 			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_filter(const_params), "glouglou");
 			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_name_attribute(const_params), "sn");
 			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_sip_attribute(const_params),
-			                       "mobile,telephoneNumber,homePhone,sn");
+			                       "mobile,telephonenumber,homephone,sn");
 			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_sip_domain(const_params), "ldap.example.org");
 			BC_ASSERT_EQUAL(linphone_ldap_params_get_server_certificates_verification_mode(const_params),
 			                LinphoneLdapCertVerificationDisabled, int, "%d");

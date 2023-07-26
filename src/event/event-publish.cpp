@@ -23,6 +23,7 @@
 #include "account/account.h"
 #include "core/core.h"
 #include "core_private.h"
+#include "linphone/api/c-event-cbs.h"
 
 // =============================================================================
 
@@ -172,7 +173,7 @@ LinphonePublishState EventPublish::getState() const {
 
 void EventPublish::setState(LinphonePublishState state) {
 	if (mPublishState != state) {
-		ms_message("Event [%p] moving from [%s] to publish state %s", this,
+		ms_message("Event [%p] moving from [%s] to publish state [%s]", this,
 		           linphone_publish_state_to_string(mPublishState), linphone_publish_state_to_string(state));
 		mPublishState = state;
 

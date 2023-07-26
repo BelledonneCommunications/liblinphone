@@ -19,20 +19,20 @@
  */
 
 #include "linphone/api/c-chat-message.h"
-#include "linphone/api/c-content.h"
-#include "linphone/utils/utils.h"
-#include "linphone/wrapper_utils.h"
-
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/chat-room.h"
 #include "chat/notification/imdn.h"
 #include "conference/participant-imdn-state.h"
 #include "conference/participant.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core-p.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-content.h"
+#include "linphone/utils/utils.h"
+#include "linphone/wrapper_utils.h"
 
 // =============================================================================
 
@@ -202,7 +202,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_chat_message_get_core(const LinphoneChatM
 }
 
 LinphoneChatRoom *linphone_chat_message_get_chat_room(const LinphoneChatMessage *msg) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getChatRoom());
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getChatRoom()->toC();
 }
 
 const char *linphone_chat_message_get_external_body_url(const LinphoneChatMessage *msg) {
@@ -644,7 +644,7 @@ const LinphoneChatMessageReaction *linphone_chat_message_get_own_reaction(const 
 LinphoneChatMessageReaction *linphone_chat_message_create_reaction(LinphoneChatMessage *message,
                                                                    const char *utf8_reaction) {
 	const std::string &messageId = L_GET_CPP_PTR_FROM_C_OBJECT(message)->getImdnMessageId();
-	auto chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_chat_message_get_chat_room(message));
+	auto chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(message)->getChatRoom();
 	auto fromAddress = chatRoom->getLocalAddress();
 	LinphoneChatMessageReaction *reaction =
 	    LinphonePrivate::ChatMessageReaction::createCObject(messageId, L_C_TO_STRING(utf8_reaction), fromAddress, "");

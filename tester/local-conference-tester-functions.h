@@ -29,6 +29,13 @@
 
 #include "conference/participant.h"
 #include "liblinphone_tester++.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room-cbs.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-participant-device-identity.h"
 #include "linphone/core.h"
 #include "shared_tester_functions.h"
 
@@ -106,8 +113,8 @@ public:
 	                                             const LinphoneChatRoomParams *params = nullptr) {
 		return borrowed_mut(linphone_core_search_chat_room(mMgr->lc, params, localAddr, remoteAddr, participants));
 	}
-	LinphoneProxyConfig *getDefaultProxyConfig() const {
-		return linphone_core_get_default_proxy_config(mMgr->lc);
+	LinphoneAccount *getDefaultAccount() const {
+		return linphone_core_get_default_account(mMgr->lc);
 	}
 	stats &getStats() const {
 		return mMgr->stat;
@@ -163,9 +170,9 @@ public:
 	}
 
 	void deleteChatRoomSync(AbstractChatRoom &chatroom) {
-		linphone_core_delete_chat_room(getLc(), L_GET_C_BACK_PTR(&chatroom));
+		linphone_core_delete_chat_room(getLc(), chatroom.toC());
 		CoreManagerAssert({*mFocus, *this}).wait([&chatroom] {
-			return chatroom.getState() == ChatRoom::State::Deleted;
+			return chatroom.getState() == ConferenceInterface::State::Deleted;
 		});
 	}
 
@@ -178,7 +185,7 @@ public:
 	static LinphoneChatMessage *sendTextMsg(LinphoneChatRoom *cr, const std::string text) {
 		LinphoneChatMessage *msg = nullptr;
 		if (cr && !text.empty()) {
-			lInfo() << " Chat room " << L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getConferenceId()
+			lInfo() << " Chat room " << AbstractChatRoom::toCpp(cr)->getConferenceId()
 			        << " is sending message with text " << text;
 			msg = linphone_chat_room_create_message_from_utf8(cr, text.c_str());
 			BC_ASSERT_PTR_NOT_NULL(msg);
@@ -245,8 +252,8 @@ public:
 	}
 
 	void registerAsParticipantDevice(ClientConference &otherMgr) {
-		const LinphoneAddress *cAddr = linphone_proxy_config_get_contact(otherMgr.getDefaultProxyConfig());
-		Address participantDevice = Address::toCpp(const_cast<LinphoneAddress *>(cAddr))->getUri();
+		const LinphoneAddress *cAddr = linphone_account_get_contact_address(otherMgr.getDefaultAccount());
+		Address participantDevice = Address::toCpp(cAddr)->getUri();
 		Address participant = participantDevice.getUriWithoutGruu();
 		mParticipantDevices.insert({participant, participantDevice});
 		// to allow client conference to delete chatroom in its destructor
@@ -288,7 +295,7 @@ private:
 		char config_id[6];
 		belle_sip_random_token(config_id, sizeof(config_id));
 		LinphoneAddress *conference_address =
-		    linphone_address_clone(linphone_proxy_config_get_contact(focus->getDefaultProxyConfig()));
+		    linphone_address_clone(linphone_account_get_contact_address(focus->getDefaultAccount()));
 		linphone_address_set_uri_param(conference_address, "conf-id", config_id);
 		linphone_chat_room_set_conference_address(cr, conference_address);
 		linphone_address_unref(conference_address);
@@ -319,7 +326,7 @@ private:
 	                                                                      const LinphoneAddress *participantAddr) {
 		BC_ASSERT_PTR_NOT_NULL(participantAddr);
 		if (participantAddr) {
-			Address participant = Address::toCpp(const_cast<LinphoneAddress *>(participantAddr))->getUri();
+			Address participant = Address::toCpp(participantAddr)->getUri();
 			BC_ASSERT_TRUE(participant.isValid());
 			if (participant.isValid()) {
 				Focus *focus =

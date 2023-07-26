@@ -31,17 +31,17 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "conference.h"
+#include "conference/client-conference.h"
+#include "conference/conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
+#include "conference/server-conference.h"
 #include "core/core.h"
 #include "linphone/core.h"
-#include "local_conference.h"
 #include "media-session-p.h"
 #include "media-session.h"
 #include "mixers.h"
 #include "ms2-streams.h"
-#include "remote_conference.h"
 
 using namespace ::std;
 
@@ -109,7 +109,6 @@ void MS2VideoStream::sVideoStreamEventCb(void *userData,
 }
 
 void MS2VideoStream::videoStreamEventCb(BCTBX_UNUSED(const MSFilter *f), const unsigned int eventId, const void *args) {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 
 	switch (eventId) {
 		case MS_VIDEO_DECODER_DECODING_ERRORS:
@@ -129,7 +128,7 @@ void MS2VideoStream::videoStreamEventCb(BCTBX_UNUSED(const MSFilter *f), const u
 			break;
 		case MS_VIDEO_DECODER_FIRST_IMAGE_DECODED:
 			lInfo() << "First video frame decoded successfully";
-			if (listener) listener->onFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
+			getMediaSession().notifyFirstVideoFrameDecoded();
 			break;
 		case MS_VIDEO_DECODER_SEND_PLI:
 		case MS_VIDEO_DECODER_SEND_SLI:
@@ -154,13 +153,11 @@ void MS2VideoStream::sVideoStreamDisplayCb(void *userData, const unsigned int ev
 }
 
 void MS2VideoStream::videoStreamDisplayCb(const unsigned int eventId, const void *args) {
-	CallSessionListener *callListener = getMediaSessionPrivate().getCallSessionListener();
 	auto participantDevice = getMediaSession().getParticipantDevice(LinphoneStreamTypeVideo, getLabel());
 
 	switch (eventId) {
 		case MS_VIDEO_DISPLAY_ERROR_OCCURRED:
-			if (callListener)
-				callListener->onVideoDisplayErrorOccurred(getMediaSession().getSharedFromThis(), *((int *)args));
+			getMediaSession().notifyVideoDisplayErrorOccurred(*((int *)args));
 			if (participantDevice) participantDevice->videoDisplayErrorOccurred(*((int *)args));
 			break;
 		default: {
@@ -174,22 +171,14 @@ void MS2VideoStream::sCameraNotWorkingCb(void *userData, const MSWebCam *oldWebc
 }
 
 void MS2VideoStream::cameraNotWorkingCb(const char *cameraName) {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-
-	if (listener) {
-		listener->onCameraNotWorking(getMediaSession().getSharedFromThis(), cameraName);
-	}
+	getMediaSession().notifyCameraNotWorking(cameraName);
 }
 
 void MS2VideoStream::csrcChangedCb(uint32_t new_csrc) {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-
-	if (listener) {
-		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
-		if (conference) {
-			const auto remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
-			if (remoteConference) remoteConference->notifyDisplayedSpeaker(new_csrc);
-		}
+	const auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+	if (conference) {
+		const auto clientConference = dynamic_pointer_cast<ClientConference>(conference);
+		if (clientConference) clientConference->notifyDisplayedSpeaker(new_csrc);
 	}
 }
 
@@ -361,7 +350,6 @@ void MS2VideoStream::updateWindowId(const std::shared_ptr<ParticipantDevice> &pa
 
 void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State targetState) {
 	bool reusedPreview = false;
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	MS2VideoMixer *videoMixer = getVideoMixer();
 	const auto localIsInConference = getMediaSessionPrivate().getParams()->getPrivate()->getInConference();
 	const auto &localDesc = ctx.getLocalStreamDescription();
@@ -391,8 +379,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	bool isConferenceScreenSharing = false; // Used to check display mode for SendRecv stream (aka isMain())
 	MS2VideoStream *auxStream = nullptr;
 
-	const auto conference =
-	    (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
+	const auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
 	if (conference) {
 		auto screenSharingDevice = conference->getScreenSharingDevice();
 		if (screenSharingDevice) isConferenceScreenSharing = screenSharingDevice->screenSharingEnabled();
@@ -586,8 +573,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 			rtp_session_set_ssrc_changed_threshold(mStream->ms.sessions.rtp_session, 1);
 		}
 
-		const auto localConference = dynamic_pointer_cast<MediaConference::LocalConference>(conference);
-		if (localConference) {
+		const auto serverConference = dynamic_pointer_cast<ServerConference>(conference);
+		if (serverConference) {
 			// when conference is local(we are a server), enable the transfer mode if needed
 			LinphoneConfig *config = linphone_core_get_config(getCCore());
 			if (static_cast<MSConferenceMode>(
@@ -766,7 +753,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	}
 	mInternalStats.number_of_starts++;
 
-	if (listener) listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
+	getMediaSession().notifyResetFirstVideoFrameDecoded();
 	/* Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute */
 	const auto &remoteStream = ctx.getRemoteStreamDescription();
 	if ((getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionZRTP) ||
@@ -857,8 +844,7 @@ AudioStream *MS2VideoStream::getPeerAudioStream() {
 }
 
 void MS2VideoStream::onSnapshotTaken(const string &filepath) {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-	listener->onSnapshotTaken(getMediaSession().getSharedFromThis(), filepath.c_str());
+	getMediaSession().notifySnapshotTaken(L_STRING_TO_C(filepath));
 }
 
 void MS2VideoStream::finish() {

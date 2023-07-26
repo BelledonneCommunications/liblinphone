@@ -26,8 +26,6 @@
 #include "core/core-listener.h"
 #include "utils/background-task.h"
 
-#include "private.h"
-
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE

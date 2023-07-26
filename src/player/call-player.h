@@ -22,6 +22,7 @@
 #define _L_CALL_PLAYER_H_
 
 #include <mediastreamer2/mediastream.h>
+#include <mediastreamer2/msconference.h>
 
 #include "c-wrapper/c-wrapper.h"
 #include "player/player.h"

@@ -34,7 +34,9 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
+class ClientChatRoom;
 class Address;
+class Conference;
 class Content;
 class FileContent;
 class FileTransferContent;
@@ -46,19 +48,17 @@ class ConferenceScheduler;
 class ChatMessageReaction;
 
 class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
-	friend class BasicToClientGroupChatRoom;
-	friend class BasicToClientGroupChatRoomPrivate;
+	friend class ServerConference;
+	friend class ClientConference;
 	friend class ChatRoom;
-	friend class ChatRoomPrivate;
-	friend class ClientGroupChatRoom;
+	friend class ClientChatRoom;
+	friend class ServerChatRoom;
 	friend class CpimChatMessageModifier;
 	friend class FileTransferChatMessageModifier;
 	friend class Imdn;
 	friend class ImdnMessagePrivate;
 	friend class MainDb;
 	friend class MainDbPrivate;
-	friend class ClientGroupChatRoomPrivate;
-	friend class ServerGroupChatRoomPrivate;
 	friend class LimeX3dhEncryptionEngine;
 	friend class CorePrivate;
 	friend class ConferenceScheduler;

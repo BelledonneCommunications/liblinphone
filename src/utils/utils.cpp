@@ -127,6 +127,10 @@ STRING_TO_NUMBER_IMPL_BASE_LESS(float, f)
 #undef STRING_TO_NUMBER_IMPL
 #undef STRING_TO_NUMBER_IMPL_BASE_LESS
 
+const string Utils::btos(bool val) {
+	return (val) ? "true" : "false";
+}
+
 bool Utils::stob(const string &str) {
 	const string lowerStr = stringToLower(str);
 	return !lowerStr.empty() && (lowerStr == "true" || lowerStr == "1");
@@ -349,13 +353,13 @@ std::string Utils::getSipFragAddress(const Content &content) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-std::string Utils::getResourceLists(const std::list<std::shared_ptr<Address>> &addresses) {
+std::string Utils::getResourceLists(const std::list<Address> &addresses) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 	for (const auto &addr : addresses) {
-		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr->asStringUriOnly());
-		const auto &displayName = addr->getDisplayName();
+		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
+		const auto &displayName = addr.getDisplayName();
 		if (!displayName.empty()) {
 			entry.setDisplayName(displayName);
 		}

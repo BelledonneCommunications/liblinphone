@@ -28,6 +28,7 @@
 #include "auth-info/auth-stack.h"
 #include "call/audio-device/audio-device.h"
 #include "chat/chat-room/abstract-chat-room.h"
+#include "conference/conference.h"
 #include "conference/session/tone-manager.h"
 #include "core.h"
 #include "db/main-db.h"
@@ -41,8 +42,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 class CoreListener;
 class EncryptionEngine;
-class LocalConferenceListEventHandler;
-class RemoteConferenceListEventHandler;
+class ServerConferenceListEventHandler;
+class ClientConferenceListEventHandler;
 
 class CorePrivate : public ObjectPrivate {
 	friend class AuthStack;
@@ -103,59 +104,49 @@ public:
 	void insertChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void insertChatRoomWithDb(const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
 	std::shared_ptr<AbstractChatRoom> createBasicChatRoom(const ConferenceId &conferenceId,
-	                                                      AbstractChatRoom::CapabilitiesMask capabilities,
-	                                                      const std::shared_ptr<ChatRoomParams> &params);
+	                                                      const std::shared_ptr<ConferenceParams> &params);
 
 	ToneManager &getToneManager();
 
 	void reloadLdapList();
 
 	// Base
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
-	                                                            const std::shared_ptr<Address> &conferenceFactoryUri,
-	                                                            const ConferenceId &conferenceId,
-	                                                            const Content &content,
-	                                                            AbstractChatRoom::CapabilitiesMask capabilities,
-	                                                            const std::shared_ptr<ChatRoomParams> &params,
-	                                                            bool fallback);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject,
-	                                                            const ConferenceId &conferenceId,
-	                                                            const Content &content,
-	                                                            bool encrypted,
-	                                                            AbstractChatRoom::EphemeralMode ephemerableMode,
-	                                                            long ephemeralLifeTime);
-	std::shared_ptr<AbstractChatRoom>
-	createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
+	std::shared_ptr<AbstractChatRoom> createServerChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
+	                                                       SalCallOp *op,
+	                                                       const std::shared_ptr<ConferenceParams> &params);
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::shared_ptr<Address> &conferenceFactoryUri,
+	                                                       const ConferenceId &conferenceId,
+	                                                       SalCallOp *op,
+	                                                       const std::shared_ptr<ConferenceParams> &params);
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject,
+	                                                       const ConferenceId &conferenceId,
+	                                                       SalCallOp *op,
+	                                                       bool encrypted,
+	                                                       AbstractChatRoom::EphemeralMode ephemerableMode,
+	                                                       long ephemeralLifeTime);
+	std::shared_ptr<AbstractChatRoom> createClientChatRoom(const std::string &subject, bool fallback, bool encrypted);
 
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
 	                                                 const std::shared_ptr<const Address> &localAddr,
-	                                                 const std::string &subject,
-	                                                 const std::list<std::shared_ptr<Address>> &participants);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-	                                                 const std::shared_ptr<const Address> &localAddr,
-	                                                 const std::list<std::shared_ptr<Address>> &participants);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
-	                                                 const std::string &subject,
-	                                                 const std::list<std::shared_ptr<Address>> &participants);
+	                                                 const std::list<std::shared_ptr<const Address>> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
+	                                                 const std::list<std::shared_ptr<const Address>> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
-	                                                 const std::list<std::shared_ptr<Address>> &participants);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+	                                                 const std::list<std::shared_ptr<const Address>> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ConferenceParams> &params,
 	                                                 const std::shared_ptr<Address> &localAddr,
-	                                                 const std::shared_ptr<Address> &participant);
-	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<Address> &participant);
+	                                                 const std::shared_ptr<const Address> &participant);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<const Address> &participant);
 
-	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ConferenceParams> &params,
 	                                                 const std::shared_ptr<const Address> &localAddr,
 	                                                 const std::shared_ptr<const Address> &remoteAddr,
 	                                                 const std::list<std::shared_ptr<Address>> &participants) const;
 
-	std::shared_ptr<const Address> getDefaultLocalAddress(const std::shared_ptr<Address> peerAddress,
+	std::shared_ptr<const Address> getDefaultLocalAddress(const std::shared_ptr<const Address> peerAddress,
 	                                                      bool withGruu) const;
 	std::shared_ptr<const Address>
 	getIdentityAddressWithGruu(const std::shared_ptr<const Address> &identityAddress) const;
-
-	void replaceChatRoom(const std::shared_ptr<AbstractChatRoom> &replacedChatRoom,
-	                     const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 
 	void updateChatRoomConferenceId(const std::shared_ptr<AbstractChatRoom> &chatRoom, ConferenceId newConferenceId);
 	std::shared_ptr<AbstractChatRoom> findExhumableOneToOneChatRoom(const std::shared_ptr<Address> &localAddress,
@@ -168,11 +159,10 @@ public:
 	// Cancel task scheduled on the main loop
 	void doLater(const std::function<void()> &something);
 	belle_sip_main_loop_t *getMainLoop();
-	bool basicToFlexisipChatroomMigrationEnabled() const;
 	std::unique_ptr<MainDb> mainDb;
 #ifdef HAVE_ADVANCED_IM
-	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
-	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;
+	std::unique_ptr<ClientConferenceListEventHandler> clientListEventHandler;
+	std::unique_ptr<ServerConferenceListEventHandler> serverListEventHandler;
 #endif
 	AuthStack &getAuthStack() {
 		return authStack;
@@ -206,7 +196,10 @@ private:
 	std::list<std::shared_ptr<Call>> calls;
 	std::shared_ptr<Call> currentCall;
 
-	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>> chatRoomsById;
+	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
+	    chatRoomsById;
+	std::unordered_map<ConferenceId, std::shared_ptr<Conference>, ConferenceId::WeakHash, ConferenceId::WeakEqual>
+	    conferenceById;
 
 	std::unique_ptr<EncryptionEngine> imee;
 
@@ -214,9 +207,6 @@ private:
 
 	std::unique_ptr<ToneManager> toneManager;
 
-	// This is to keep a ref on a clientGroupChatRoom while it is being created
-	// Otherwise the chatRoom will be freed() before it is inserted
-	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
 	AuthStack authStack;
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;

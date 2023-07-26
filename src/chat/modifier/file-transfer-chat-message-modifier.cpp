@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdio>
+
 #include <bctoolbox/defs.h>
 
 #include "linphone/api/c-content.h"
@@ -28,16 +30,15 @@
 #include "bctoolbox/parser.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/chat-room.h"
 #include "chat/encryption/encryption-engine.h"
+#include "conference/conference.h"
 #include "conference/participant.h"
 #include "content/content-type.h"
 #include "core/core.h"
-#include "logger/logger.h"
-
 #include "file-transfer-chat-message-modifier.h"
-
-#include <cstdio>
+#include "linphone/api/c-chat-message.h"
+#include "logger/logger.h"
 
 // =============================================================================
 
@@ -335,6 +336,8 @@ void FileTransferChatMessageModifier::processResponseFromPostFile(const belle_ht
 
 	// check the answer code
 	if (event->response) {
+		const auto chatRoom = message->getChatRoom();
+		const auto meAddress = (chatRoom) ? chatRoom->getMe()->getAddress() : nullptr;
 		int code = belle_http_response_get_status_code(event->response);
 		if (code == 204) { // this is the reply to the first post to the server - an empty msg
 			auto bh = prepare_upload_body_handler(message);
@@ -359,8 +362,8 @@ void FileTransferChatMessageModifier::processResponseFromPostFile(const belle_ht
 					message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 					currentFileTransferContent = nullptr;
 
-					message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-					                                           ChatMessage::State::NotDelivered, ::ms_time(nullptr));
+					message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::NotDelivered,
+					                                           ::ms_time(nullptr));
 					releaseHttpRequest();
 					fileUploadEndBackgroundTask();
 
@@ -388,8 +391,8 @@ void FileTransferChatMessageModifier::processResponseFromPostFile(const belle_ht
 				currentFileTransferContent->setBodyFromUtf8(xml_body.c_str());
 				currentFileTransferContent = nullptr;
 
-				message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-				                                           ChatMessage::State::FileTransferDone, ::ms_time(nullptr));
+				message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferDone,
+				                                           ::ms_time(nullptr));
 				releaseHttpRequest();
 				message->getPrivate()->send();
 				fileUploadEndBackgroundTask();
@@ -398,8 +401,9 @@ void FileTransferChatMessageModifier::processResponseFromPostFile(const belle_ht
 				message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 				currentFileTransferContent = nullptr;
 
-				message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-				                                           ChatMessage::State::NotDelivered, ::ms_time(nullptr));
+				message->getPrivate()->setParticipantState(
+				    message->getChatRoom()->getConference()->getMe()->getAddress(), ChatMessage::State::NotDelivered,
+				    ::ms_time(nullptr));
 				releaseHttpRequest();
 				fileUploadEndBackgroundTask();
 			}
@@ -409,8 +413,8 @@ void FileTransferChatMessageModifier::processResponseFromPostFile(const belle_ht
 			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			currentFileTransferContent = nullptr;
 
-			message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-			                                           ChatMessage::State::FileTransferError, ::ms_time(nullptr));
+			message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferError,
+			                                           ::ms_time(nullptr));
 			releaseHttpRequest();
 			fileUploadEndBackgroundTask();
 		} else if (code == 401) {
@@ -419,8 +423,8 @@ void FileTransferChatMessageModifier::processResponseFromPostFile(const belle_ht
 			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			currentFileTransferContent = nullptr;
 
-			message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-			                                           ChatMessage::State::FileTransferError, ::ms_time(nullptr));
+			message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferError,
+			                                           ::ms_time(nullptr));
 			releaseHttpRequest();
 			fileUploadEndBackgroundTask();
 		} else {
@@ -428,8 +432,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile(const belle_ht
 			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			currentFileTransferContent = nullptr;
 
-			message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-			                                           ChatMessage::State::NotDelivered, ::ms_time(nullptr));
+			message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::NotDelivered, ::ms_time(nullptr));
 			releaseHttpRequest();
 			fileUploadEndBackgroundTask();
 		}
@@ -445,8 +448,8 @@ void FileTransferChatMessageModifier::processIoErrorUpload(BCTBX_UNUSED(const be
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	lError() << "I/O Error during file upload of message [" << message << "]";
 	if (!message) return;
-	message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-	                                           ChatMessage::State::NotDelivered, ::ms_time(nullptr));
+	const auto &meAddress = message->getChatRoom()->getMe()->getAddress();
+	message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::NotDelivered, ::ms_time(nullptr));
 	releaseHttpRequest();
 }
 
@@ -712,6 +715,7 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 	if (!message) return;
 
 	shared_ptr<Core> core = message->getCore();
+	const auto &meAddress = message->getChatRoom()->getMe()->getAddress();
 
 	int retval = -1;
 	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
@@ -759,8 +763,8 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 
 			releaseHttpRequest();
 
-			message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-			                                           ChatMessage::State::FileTransferDone, ::ms_time(nullptr));
+			message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferDone,
+			                                           ::ms_time(nullptr));
 
 			if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
 				message->getPrivate()->handleAutoDownload();
@@ -768,8 +772,8 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 		}
 	} else {
 		lWarning() << "File transfer decrypt failed with code " << (int)retval;
-		message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-		                                           ChatMessage::State::FileTransferError, ::ms_time(nullptr));
+		message->getPrivate()->setParticipantState(meAddress, ChatMessage::State::FileTransferError,
+		                                           ::ms_time(nullptr));
 		releaseHttpRequest();
 		currentFileTransferContent = nullptr;
 	}
@@ -807,7 +811,6 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 	if (event->response) {
 		int code = belle_http_response_get_status_code(event->response);
 		shared_ptr<ChatMessage> message = chatMessage.lock();
-
 		if (!message) return;
 
 		if (code >= 400 && code < 500) {

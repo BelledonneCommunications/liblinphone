@@ -23,6 +23,7 @@
 #include "core/core.h"
 #include "logger/logger.h"
 #include "platform-helpers.h"
+#include "signal-information/signal-information.h"
 // TODO: Remove me.
 #include "private.h"
 

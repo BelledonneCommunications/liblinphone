@@ -20,10 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 	bellesip_sal/sal_impl.h
-	conference.h
 	conference-cbs.h
-	local_conference.h
-	remote_conference.h
 	contact_providers_priv.h
 	core_private.h
 	enum.h
@@ -53,7 +50,6 @@ set(LINPHONE_SOURCE_FILES_C
 	im_encryption_engine.c
 	linphonecall.c
 	linphonecore.c
-	linphoneconference.c
 	linphone_tunnel_config.c
 	logging.c
 	lpconfig.c
@@ -71,9 +67,6 @@ set(LINPHONE_SOURCE_FILES_C
 	xmlrpc.c
 )
 set(LINPHONE_SOURCE_FILES_CXX
-	conference.cpp
-	local_conference.cpp
-	remote_conference.cpp
 	tester_utils.cpp
 )
 

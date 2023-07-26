@@ -66,13 +66,14 @@ struct _LinphoneAccountCreatorService {
 	    login_linphone_account_request_cb; /**< Request to get password & algorithm from confirmation key */
 
 	LinphoneAccountCreatorRequestFunc send_token_request_cb; /**< Generate and send a token via push notification */
-	LinphoneAccountCreatorRequestFunc
-	    account_creation_request_token_request_cb; /**< Generate and get a request token */
-	LinphoneAccountCreatorRequestFunc
-	    account_creation_token_using_request_token_request_cb; /**< Generate and get a token for account creation */
-	LinphoneAccountCreatorRequestFunc
-	    create_account_with_token_request_cb;                         /**< Use a received token to create an account */
-	LinphoneAccountCreatorRequestFunc create_push_account_request_cb; /**< Request to create a push account */
+	/**< Generate and get a request token */
+	LinphoneAccountCreatorRequestFunc account_creation_request_token_request_cb;
+	/**< Generate and get a token for account creation */
+	LinphoneAccountCreatorRequestFunc account_creation_token_using_request_token_request_cb;
+	/**< Use a received token to create an account */
+	LinphoneAccountCreatorRequestFunc create_account_with_token_request_cb;
+	/**< Request to create a push account */
+	LinphoneAccountCreatorRequestFunc create_push_account_request_cb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorService);
@@ -367,6 +368,10 @@ linphone_account_creator_admin_create_account_flexiapi(LinphoneAccountCreator *c
  **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus
 linphone_account_creator_create_push_account_with_token_flexiapi(LinphoneAccountCreator *creator);
+
+char *linphone_account_creator_get_identity(const LinphoneAccountCreator *creator);
+void linphone_account_creator_fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator);
+const char *linphone_account_creator_get_domain_with_fallback_to_proxy_domain(LinphoneAccountCreator *creator);
 
 #ifdef __cplusplus
 }

@@ -18,9 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <ctype.h>
+
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
 #include "linphone/core.h"
 #include "private.h"
-#include <ctype.h>
 
 static void sip_login_init_instance(SipSetupContext *ctx) {
 	LinphoneProxyConfig *cfg = sip_setup_context_get_proxy_config(ctx);

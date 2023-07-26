@@ -137,12 +137,16 @@ char *linphone_address_as_string_uri_only(const LinphoneAddress *address) {
 	return Address::toCpp(address)->asStringUriOnlyCstr();
 }
 
+char *linphone_address_as_string_uri_only_ordered(const LinphoneAddress *address) {
+	return Address::toCpp(address)->toStringUriOnlyOrderedCstr();
+}
+
 bool_t linphone_address_weak_equal(const LinphoneAddress *address1, const LinphoneAddress *address2) {
-	return Address::toCpp(address1)->weakEqual(*Address::toCpp(address2)) ? TRUE : FALSE;
+	return (address1 && address2 && Address::toCpp(address1)->weakEqual(*Address::toCpp(address2))) ? TRUE : FALSE;
 }
 
 bool_t linphone_address_equal(const LinphoneAddress *address1, const LinphoneAddress *address2) {
-	return *Address::toCpp(address1) == *Address::toCpp(address2);
+	return address1 && address2 && *Address::toCpp(address1) == *Address::toCpp(address2);
 }
 
 const char *linphone_address_get_header(const LinphoneAddress *address, const char *header_name) {

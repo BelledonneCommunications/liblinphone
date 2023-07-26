@@ -84,7 +84,7 @@ LinphoneParticipantDevice *linphone_participant_find_device(const LinphonePartic
                                                             const LinphoneAddress *address) {
 	std::shared_ptr<LinphonePrivate::ParticipantDevice> device =
 	    LinphonePrivate::Participant::toCpp(participant)
-	        ->findDevice(LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(address))->getSharedFromThis());
+	        ->findDevice(LinphonePrivate::Address::toCpp(address)->getSharedFromThis());
 	if (device) {
 		return device->toC();
 	}

@@ -31,12 +31,16 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Address;
+
 class LINPHONE_PUBLIC SearchResult : public bellesip::HybridObject<LinphoneSearchResult, SearchResult> {
 public:
-	// TODO: Use C++ Address! Not LinphoneAddress.
 	SearchResult();
-	SearchResult(
-	    const unsigned int weight, const LinphoneAddress *a, const std::string &pn, LinphoneFriend *f, int sourceFlags);
+	SearchResult(const unsigned int weight,
+	             std::shared_ptr<const Address> a,
+	             const std::string &pn,
+	             LinphoneFriend *f,
+	             int sourceFlags);
 	SearchResult(const SearchResult &other);
 	~SearchResult();
 
@@ -65,7 +69,7 @@ public:
 	/**
 	 * @return LinphoneAddress associed
 	 **/
-	const LinphoneAddress *getAddress() const;
+	const std::shared_ptr<Address> getAddress() const;
 
 	/**
 	 * @return Phone Number associed
@@ -108,7 +112,7 @@ private:
 
 	int mSourceFlags;
 	LinphoneFriend *mFriend;
-	const LinphoneAddress *mAddress;
+	std::shared_ptr<Address> mAddress;
 	std::string mPhoneNumber;
 	int mCapabilities = LinphoneFriendCapabilityGroupChat | LinphoneFriendCapabilityLimeX3dh |
 	                    LinphoneFriendCapabilityEphemeralMessages;

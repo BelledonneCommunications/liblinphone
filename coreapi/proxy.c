@@ -40,33 +40,32 @@
 #include "linphone/core_utils.h"
 #include "linphone/lpconfig.h"
 #include "linphone/sipsetup.h"
+
 #include <bctoolbox/defs.h>
 
 #include "mediastreamer2/mediastream.h"
 
-#include "core/core-p.h"
-#include "core/core.h"
-#include "enum.h"
-#include "private.h"
-
-// For migration purpose.
 #include "account/account-params.h"
 #include "account/account.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
-#include "event/event-publish.h"
-#include "linphone/api/c-dial-plan.h"
-
+#include "core/core-p.h"
+#include "core/core.h"
 #include "dial-plan/dial-plan.h"
+#include "enum.h"
+#include "event/event-publish.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-dial-plan.h"
+#include "private.h"
 
 using namespace LinphonePrivate;
 
 LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(const LinphoneAddress *a,
                                                                                const LinphoneAddress *b) {
-	std::shared_ptr<Address> aAddr =
-	    a ? Address::toCpp(const_cast<LinphoneAddress *>(a))->getSharedFromThis() : nullptr;
-	std::shared_ptr<Address> bAddr =
-	    b ? Address::toCpp(const_cast<LinphoneAddress *>(b))->getSharedFromThis() : nullptr;
+	std::shared_ptr<const Address> aAddr = a ? Address::toCpp(a)->getSharedFromThis() : nullptr;
+	std::shared_ptr<const Address> bAddr = b ? Address::toCpp(b)->getSharedFromThis() : nullptr;
 	return (LinphoneProxyConfigAddressComparisonResult)Account::compareLinphoneAddresses(aAddr, bAddr);
 }
 

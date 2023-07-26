@@ -18,8 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "conference/conference.h"
 #include "conference/participant.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/chat.h"
 #include "local-conference-tester-functions.h"
 
 namespace LinphoneTest {
@@ -86,25 +89,29 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		linphone_chat_room_params_enable_group(params, FALSE);
 		LinphoneChatRoom *marieCr =
 		    linphone_core_create_chat_room_2(marie.getLc(), params, initialSubject, participantsAddresses);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
 		linphone_chat_room_params_unref(params);
+		if (!marieCr) {
+			return;
+		}
 
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).wait([&focus] {
 			return focus.getCore().getChatRooms().size() == 1;
 		}));
 
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
-			linphone_chat_room_set_user_data(L_GET_C_BACK_PTR(chatRoom), marie.getCMgr());
+			linphone_chat_room_set_user_data(chatRoom->toC(), marie.getCMgr());
 		}
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
-		                             initialFocusStats.number_of_participants_added + 1, 5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added,
-		                             initialFocusStats.number_of_participant_devices_added + 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_chat_room_participants_added,
+		                             initialFocusStats.number_of_chat_room_participants_added + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_chat_room_participant_devices_added,
+		                             initialFocusStats.number_of_chat_room_participant_devices_added + 2, 5000));
 
 		check_create_chat_room_client_side(coresList, marie.getCMgr(), marieCr, &initialMarieStats,
 		                                   participantsAddresses, initialSubject, 1);
 
-		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+		const LinphoneAddress *confAddr = marieCr ? linphone_chat_room_get_conference_address(marieCr) : NULL;
 		// Check that the chat room is correctly created on Pauline's and Michelle's side and that the participants are
 		// added
 		LinphoneChatRoom *marie2Cr = check_creation_chat_room_client_side(
@@ -260,30 +267,32 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 			return false;
 		});
 
+		initialMarieStats = marie.getStats();
+		initialMichelleStats = michelle.getStats();
 		msg_text = "Cou cou Marieeee.....";
 		msg = ClientConference::sendTextMsg(michelle2Cr, msg_text);
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated,
-		                             initialMarieStats.number_of_LinphoneConferenceStateCreated + 2,
-		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneConferenceStateCreated,
-		                             initialMichelleStats.number_of_LinphoneConferenceStateCreated + 2,
+		                             initialMichelleStats.number_of_LinphoneConferenceStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated,
-		                             initialMichelle2Stats.number_of_LinphoneConferenceStateCreated + 2,
+		                             initialMichelle2Stats.number_of_LinphoneConferenceStateCreated + 1,
 		                             liblinphone_tester_sip_timeout));
 
-		confAddr = linphone_chat_room_get_conference_address(michelle2Cr);
+		confAddr = linphone_chat_room_get_conference_address(michelleCr);
 		marieCr = check_creation_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, confAddr,
 		                                               initialSubject, 1, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
 
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).wait([msg] {
 			return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
 		}));
 
-		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).wait([marieCr] {
-			return linphone_chat_room_get_unread_messages_count(marieCr) == 1;
-		}));
+		if (marieCr) {
+			BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, marie2, michelle, michelle2}).wait([marieCr] {
+				return linphone_chat_room_get_unread_messages_count(marieCr) == 1;
+			}));
+		}
 		marieLastMsg = marie.getStats().last_received_chat_message;
 		BC_ASSERT_PTR_NOT_NULL(marieLastMsg);
 		if (marieLastMsg) {
@@ -299,9 +308,15 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marie2LastMsg), msg_text.c_str());
 		}
 
-		linphone_chat_room_mark_as_read(michelleCr);
-		linphone_chat_room_mark_as_read(marieCr);
-		linphone_chat_room_mark_as_read(marie2Cr);
+		if (michelleCr) {
+			linphone_chat_room_mark_as_read(michelleCr);
+		}
+		if (marieCr) {
+			linphone_chat_room_mark_as_read(marieCr);
+		}
+		if (marie2Cr) {
+			linphone_chat_room_mark_as_read(marie2Cr);
+		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneMessageDisplayed,
 		                             initialMichelle2Stats.number_of_LinphoneMessageDisplayed + 1,
@@ -311,7 +326,7 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 

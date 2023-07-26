@@ -28,6 +28,7 @@
 
 #include "TunnelManager.hh"
 #include "account/account.h"
+#include "linphone/api/c-auth-info.h"
 #include "linphone/core.h"
 #include "linphone/core_utils.h"
 #include "private.h"

@@ -28,10 +28,12 @@
 #include "chat/chat-message/imdn-message.h"
 #include "chat/chat-message/is-composing-message.h"
 #include "chat/chat-message/notification-message-p.h"
-#include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/chat-room.h"
 #include "conference/conference.h"
 #include "content/content-manager.h"
 #include "core/core-p.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-event-log.h"
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
@@ -46,18 +48,97 @@ LINPHONE_BEGIN_NAMESPACE
 #define CRLF 0x0D0A
 #define LF 0x0A
 
+// =============================================================================
+
+ChatRoom::ChatRoom(const shared_ptr<Core> &core, const std::shared_ptr<Conference> &conf) : AbstractChatRoom(core) {
+	conference = conf;
+	mImdnHandler.reset(new Imdn(this));
+	mIsComposingHandler.reset(new IsComposing(core->getCCore(), this));
+}
+
+ChatRoom::~ChatRoom() {
+	mImdnHandler.reset();
+	conference = nullptr;
+}
+
+std::shared_ptr<Conference> ChatRoom::getConference() const {
+	return conference;
+};
+
+ConferenceInterface::State ChatRoom::getState() const {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		return conferencePtr->getState();
+	}
+	return ConferenceInterface::State::None;
+}
+
+void ChatRoom::setState(ConferenceInterface::State newState) {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		conferencePtr->setState(newState);
+	}
+}
+
+void ChatRoom::notifyStateChanged() {
+	LinphoneChatRoom *cr = getCChatRoom();
+	const auto &state = getState();
+	const auto cCore = getCore()->getCCore();
+	// Do not output this log while Core is starting up, a lot of them may happen
+	if (cCore->state == LinphoneGlobalStartup) {
+		lDebug() << "Chat room [" << getConferenceId() << "] state changed to: " << Utils::toString(state);
+	} else {
+		lInfo() << "Chat room [" << getConferenceId() << "] state changed to: " << Utils::toString(state);
+	}
+	LinphoneChatRoomState chatRoomCState =
+	    linphone_conference_state_to_chat_room_state(static_cast<LinphoneConferenceState>(state));
+	linphone_core_notify_chat_room_state_changed(cCore, cr, chatRoomCState);
+	_linphone_chat_room_notify_state_changed(cr, chatRoomCState);
+}
+
+void ChatRoom::onStateChanged(BCTBX_UNUSED(ConferenceInterface::State state)) {
+	notifyStateChanged();
+}
+
+const std::string &ChatRoom::getSubject() const {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		return conferencePtr->getSubject();
+	}
+	return Utils::getEmptyConstRefObject<std::string>();
+}
+
+void ChatRoom::setSubject(const std::string &subject) {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		conferencePtr->setSubject(subject);
+	}
+}
+
+void ChatRoom::setUtf8Subject(const std::string &subject) {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		conferencePtr->setUtf8Subject(subject);
+	}
+}
+
+const ConferenceId &ChatRoom::getConferenceId() const {
+	const auto conferencePtr = getConference();
+	if (conferencePtr) {
+		return conferencePtr->getConferenceId();
+	}
+	return Utils::getEmptyConstRefObject<ConferenceId>();
+};
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage) {
-	L_Q();
-
-	shared_ptr<Call> call = q->getCall();
+void ChatRoom::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage) {
+	shared_ptr<Call> call = getCall();
 	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
 		chatMessage->putCharacter(NEW_LINE);
 	} else {
 		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 		dChatMessage->setTime(ms_time(0));
-		if (!q->canHandleCpim()) {
+		if (!canHandleCpim()) {
 			// if not using cpim, ImdnMessageId = SIP Message call id, so should be computed each time, specially in
 			// case of resend.
 			dChatMessage->setImdnMessageId("");
@@ -66,24 +147,21 @@ void ChatRoomPrivate::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage
 	}
 }
 
-void ChatRoomPrivate::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
-	L_Q();
-
+void ChatRoom::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
 	LinphoneChatRoom *cr = getCChatRoom();
-	unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, chatMessage->getStorageId());
 
 	_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(eventLog));
-	linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
+	linphone_core_notify_message_sent(getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
 
-	if (isComposing) isComposing = false;
-	isComposingHandler->stopIdleTimer();
-	isComposingHandler->stopRefreshTimer();
+	if (mIsComposing) mIsComposing = false;
+	mIsComposingHandler->stopIdleTimer();
+	mIsComposingHandler->stopRefreshTimer();
 }
 
-void ChatRoomPrivate::sendIsComposingNotification() {
-	L_Q();
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
+void ChatRoom::sendIsComposingNotification() {
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(getCore()->getCCore());
 	if (!linphone_im_notif_policy_get_send_is_composing(policy)) return;
 
 	auto isComposingMsg = createIsComposingMessage();
@@ -92,12 +170,19 @@ void ChatRoomPrivate::sendIsComposingNotification() {
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::addEvent(const shared_ptr<EventLog> &eventLog) {
-	L_Q();
+void ChatRoom::addCapability(AbstractChatRoom::CapabilitiesMask capability) {
+	const auto &params = getCurrentParams();
+	auto conferenceCapabilities = ConferenceParams::toCapabilities(params);
+	conferenceCapabilities |= capability;
+	if (params) {
+		params->updateAccordingToCapabilities(conferenceCapabilities);
+	}
+}
 
+void ChatRoom::addEvent(const shared_ptr<EventLog> &eventLog) {
 	EventLog::Type type = eventLog->getType();
 
-	if (!q->getCore()->getPrivate()->mainDb->addEvent(eventLog)) {
+	if (!getCore()->getPrivate()->mainDb->addEvent(eventLog)) {
 		lWarning() << "Failed to add event of type " << type << " to the database";
 	}
 
@@ -106,7 +191,7 @@ void ChatRoomPrivate::addEvent(const shared_ptr<EventLog> &eventLog) {
 		// because they are visible and may cause the chat room to move
 		// up in the list, so the user will know why.
 		setLastUpdateTime(eventLog->getCreationTime());
-		q->getCore()->getPrivate()->mainDb->updateChatRoomLastUpdatedTime(q->getConferenceId(), lastUpdateTime);
+		getCore()->getPrivate()->mainDb->updateChatRoomLastUpdatedTime(getConferenceId(), lastUpdateTime);
 
 		if (type == EventLog::Type::ConferenceChatMessage) {
 			setIsEmpty(false);
@@ -114,54 +199,48 @@ void ChatRoomPrivate::addEvent(const shared_ptr<EventLog> &eventLog) {
 	}
 }
 
-void ChatRoomPrivate::addTransientEvent(const shared_ptr<EventLog> &eventLog) {
+void ChatRoom::addTransientEvent(const shared_ptr<EventLog> &eventLog) {
 	auto it = find(transientEvents, eventLog);
 	if (it == transientEvents.end()) transientEvents.push_back(eventLog);
 }
 
-void ChatRoomPrivate::removeTransientEvent(const shared_ptr<EventLog> &eventLog) {
+void ChatRoom::removeTransientEvent(const shared_ptr<EventLog> &eventLog) {
 	auto it = find(transientEvents, eventLog);
 	if (it != transientEvents.end()) transientEvents.erase(it);
 }
 
-void ChatRoomPrivate::addTransientChatMessage(const shared_ptr<ChatMessage> &message) {
+void ChatRoom::addTransientChatMessage(const shared_ptr<ChatMessage> &message) {
 	auto it = find(transientMessages, message);
 	if (it == transientMessages.end()) transientMessages.push_back(message);
 }
 
-void ChatRoomPrivate::removeTransientChatMessage(const shared_ptr<ChatMessage> &message) {
+void ChatRoom::removeTransientChatMessage(const shared_ptr<ChatMessage> &message) {
 	auto it = find(transientMessages, message);
 	if (it != transientMessages.end()) transientMessages.erase(it);
 }
 
-std::list<std::shared_ptr<ChatMessage>> ChatRoomPrivate::getTransientChatMessages() {
+std::list<std::shared_ptr<ChatMessage>> ChatRoom::getTransientChatMessages() {
 	return transientMessages;
 }
 
-void ChatRoomPrivate::setIsEmpty(const bool empty) {
-	isEmpty = empty;
+void ChatRoom::setIsEmpty(const bool empty) {
+	mEmpty = empty;
 }
 
-void ChatRoomPrivate::setIsMuted(const bool muted) {
-	isMuted = muted;
-}
-
-void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<Call> &call) {
-	L_Q();
-
-	shared_ptr<Core> core = q->getCore();
+void ChatRoom::realtimeTextReceived(uint32_t character, const shared_ptr<Call> &call) {
+	shared_ptr<Core> core = getCore();
 	LinphoneCore *cCore = core->getCCore();
 
 	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
-		receivedRttCharacters.push_back(character);
-		remoteIsComposing.push_back(q->getPeerAddress());
+		mReceivedRttCharacters.push_back(character);
+		remoteIsComposing.push_back(getPeerAddress());
 		linphone_core_notify_is_composing_received(cCore, getCChatRoom());
 
 		if ((character == NEW_LINE) || (character == CRLF) || (character == LF)) {
 			// End of message
-			string completeText = Utils::unicodeToUtf8(lastMessageCharacters);
+			string completeText = Utils::unicodeToUtf8(mLastMessageCharacters);
 
-			shared_ptr<ChatMessage> pendingMessage = q->createChatMessage();
+			shared_ptr<ChatMessage> pendingMessage = createChatMessage();
 			pendingMessage->getPrivate()->setDirection(ChatMessage::Direction::Incoming);
 			auto content = Content::create();
 			content->setContentType(ContentType::PlainText);
@@ -169,7 +248,7 @@ void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<
 			pendingMessage->addContent(content);
 
 			bctbx_debug("New line received, forge a message with content [%s]", content->getBodyAsString().c_str());
-			pendingMessage->getPrivate()->setParticipantState(q->getMe()->getAddress(), ChatMessage::State::Delivered,
+			pendingMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Delivered,
 			                                                  ::ms_time(nullptr));
 			pendingMessage->getPrivate()->setTime(::ms_time(0));
 
@@ -178,10 +257,10 @@ void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<
 			}
 
 			onChatMessageReceived(pendingMessage);
-			lastMessageCharacters.clear();
+			mLastMessageCharacters.clear();
 		} else {
-			lastMessageCharacters.push_back(character);
-			string completeText = Utils::unicodeToUtf8(lastMessageCharacters);
+			mLastMessageCharacters.push_back(character);
+			string completeText = Utils::unicodeToUtf8(mLastMessageCharacters);
 			lDebug() << "Received RTT character: [" << character << "], pending text is [" << completeText << "]";
 		}
 	}
@@ -189,109 +268,137 @@ void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage(ChatMessage::Direction direction) {
-	L_Q();
-	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
-	if (q->ephemeralEnabled() && direction == ChatMessage::Direction::Outgoing) {
-		lDebug() << "Create an outgoing ephemeral message " << message << " with lifetime " << q->getEphemeralLifetime()
-		         << " in chat room [" << q->getConferenceId() << "]";
-		message->getPrivate()->enableEphemeralWithTime(q->getEphemeralLifetime());
+shared_ptr<ChatMessage> ChatRoom::createChatMessage(ChatMessage::Direction direction) {
+	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(getSharedFromThis(), direction));
+	if (ephemeralEnabled() && direction == ChatMessage::Direction::Outgoing) {
+		lDebug() << "Create an outgoing ephemeral message " << message << " with lifetime " << getEphemeralLifetime()
+		         << " in chat room [" << getConferenceId() << "]";
+		message->getPrivate()->enableEphemeralWithTime(getEphemeralLifetime());
 	}
 	return message;
 }
 
-shared_ptr<ImdnMessage> ChatRoomPrivate::createImdnMessage(const list<shared_ptr<ChatMessage>> &deliveredMessages,
-                                                           const list<shared_ptr<ChatMessage>> &displayedMessages) {
-	L_Q();
-	return shared_ptr<ImdnMessage>(new ImdnMessage(q->getSharedFromThis(), deliveredMessages, displayedMessages));
+shared_ptr<ImdnMessage> ChatRoom::createImdnMessage(const list<shared_ptr<ChatMessage>> &deliveredMessages,
+                                                    const list<shared_ptr<ChatMessage>> &displayedMessages) {
+	return shared_ptr<ImdnMessage>(new ImdnMessage(getSharedFromThis(), deliveredMessages, displayedMessages));
 }
 
-shared_ptr<ImdnMessage> ChatRoomPrivate::createImdnMessage(const list<Imdn::MessageReason> &nonDeliveredMessages) {
-	L_Q();
-	return shared_ptr<ImdnMessage>(new ImdnMessage(q->getSharedFromThis(), nonDeliveredMessages));
+shared_ptr<ImdnMessage> ChatRoom::createImdnMessage(const list<Imdn::MessageReason> &nonDeliveredMessages) {
+	return shared_ptr<ImdnMessage>(new ImdnMessage(getSharedFromThis(), nonDeliveredMessages));
 }
 
-shared_ptr<ImdnMessage> ChatRoomPrivate::createImdnMessage(const shared_ptr<ImdnMessage> &message) {
+shared_ptr<ImdnMessage> ChatRoom::createImdnMessage(const shared_ptr<ImdnMessage> &message) {
 	return shared_ptr<ImdnMessage>(new ImdnMessage(message));
 }
 
-shared_ptr<IsComposingMessage> ChatRoomPrivate::createIsComposingMessage() {
-	L_Q();
+shared_ptr<IsComposingMessage> ChatRoom::createIsComposingMessage() {
 	return shared_ptr<IsComposingMessage>(
-	    new IsComposingMessage(q->getSharedFromThis(), *isComposingHandler.get(), isComposing));
+	    new IsComposingMessage(getSharedFromThis(), *mIsComposingHandler.get(), mIsComposing));
 }
 
-list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages(const string &messageId) const {
-	L_Q();
-	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getConferenceId(), messageId);
+shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId) const {
+	list<shared_ptr<ChatMessage>> chatMessages = findChatMessages(messageId);
+	return chatMessages.empty() ? nullptr : chatMessages.front();
 }
 
-list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages(const list<string> &messageIds) const {
-	L_Q();
-	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getConferenceId(), messageIds);
+shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId, ChatMessage::Direction direction) const {
+	for (auto &chatMessage : findChatMessages(messageId))
+		if (chatMessage->getDirection() == direction) return chatMessage;
+	return nullptr;
+}
+
+void ChatRoom::markAsRead() {
+	const auto &meAddress = getMe()->getAddress();
+	// Mark any message currently waiting aggregation as read
+	for (auto &chatMessage : aggregatedMessages) {
+		chatMessage->getPrivate()->markAsRead();
+		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
+		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
+			chatMessage->getPrivate()->setParticipantState(meAddress, ChatMessage::State::Displayed,
+			                                               ::ms_time(nullptr));
+		}
+	}
+
+	CorePrivate *dCore = getCore()->getPrivate();
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {
+		chatMessage->getPrivate()->markAsRead();
+		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
+		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
+			chatMessage->getPrivate()->setParticipantState(meAddress, ChatMessage::State::Displayed,
+			                                               ::ms_time(nullptr));
+		}
+	}
+
+	dCore->mainDb->markChatMessagesAsRead(getConferenceId());
+	_linphone_chat_room_notify_chat_room_read(getCChatRoom());
+	linphone_core_notify_chat_room_read(getCore()->getCCore(), getCChatRoom());
+}
+
+list<shared_ptr<ChatMessage>> ChatRoom::findChatMessages(const string &messageId) const {
+	return getCore()->getPrivate()->mainDb->findChatMessages(getConferenceId(), messageId);
+}
+
+list<shared_ptr<ChatMessage>> ChatRoom::findChatMessages(const list<string> &messageIds) const {
+	return getCore()->getPrivate()->mainDb->findChatMessages(getConferenceId(), messageIds);
 }
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::sendDeliveryErrorNotification(const shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason) {
+void ChatRoom::sendDeliveryErrorNotification(const shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason) {
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(chatMessage->getCore()->getCCore());
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	if ((linphone_im_notif_policy_get_send_imdn_delivered(policy) ||
 	     linphone_im_notif_policy_get_send_imdn_delivery_error(policy)) &&
 	    chatMessage->getPrivate()->getNegativeDeliveryNotificationRequired()) {
 		dChatMessage->setNegativeDeliveryNotificationRequired(false);
-		imdnHandler->notifyDeliveryError(chatMessage, reason);
+		mImdnHandler->notifyDeliveryError(chatMessage, reason);
 	}
 }
 
-void ChatRoomPrivate::sendDeliveryNotification(const shared_ptr<ChatMessage> &chatMessage) {
+void ChatRoom::sendDeliveryNotification(const shared_ptr<ChatMessage> &chatMessage) {
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(chatMessage->getCore()->getCCore());
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	if (linphone_im_notif_policy_get_send_imdn_delivered(policy) &&
 	    dChatMessage->getPositiveDeliveryNotificationRequired()) {
 		dChatMessage->setPositiveDeliveryNotificationRequired(false);
-		imdnHandler->notifyDelivery(chatMessage);
+		mImdnHandler->notifyDelivery(chatMessage);
 	}
 }
 
-void ChatRoomPrivate::sendDeliveryNotifications(const std::shared_ptr<ChatMessage> &chatMessage) {
+void ChatRoom::sendDeliveryNotifications(const std::shared_ptr<ChatMessage> &chatMessage) {
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	if (dChatMessage->getPositiveDeliveryNotificationRequired()) {
 		dChatMessage->setPositiveDeliveryNotificationRequired(false);
-		imdnHandler->notifyDelivery(chatMessage);
+		mImdnHandler->notifyDelivery(chatMessage);
 	}
 }
 
-void ChatRoomPrivate::sendDisplayNotification(const shared_ptr<ChatMessage> &chatMessage) {
-	L_Q();
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
+void ChatRoom::sendDisplayNotification(const shared_ptr<ChatMessage> &chatMessage) {
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(getCore()->getCCore());
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	if (linphone_im_notif_policy_get_send_imdn_displayed(policy) &&
 	    chatMessage->getPrivate()->getDisplayNotificationRequired()) {
 		dChatMessage->setPositiveDeliveryNotificationRequired(false);
 		dChatMessage->setDisplayNotificationRequired(false);
-		imdnHandler->notifyDisplay(chatMessage);
+		mImdnHandler->notifyDisplay(chatMessage);
 	}
 }
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::notifyChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
-	L_Q();
+void ChatRoom::notifyChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
 	LinphoneChatRoom *cr = getCChatRoom();
 	if (!chatMessage->getPrivate()->getText().empty()) {
 		/* Legacy API */
 		LinphoneAddress *fromAddress = chatMessage->getFromAddress()->toC();
-		linphone_core_notify_text_message_received(q->getCore()->getCCore(), cr, fromAddress,
+		linphone_core_notify_text_message_received(getCore()->getCCore(), cr, fromAddress,
 		                                           chatMessage->getPrivate()->getText().c_str());
 	}
 	_linphone_chat_room_notify_message_received(cr, L_GET_C_BACK_PTR(chatMessage));
-	linphone_core_notify_message_received(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
+	linphone_core_notify_message_received(getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
 }
 
-void ChatRoomPrivate::notifyIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, bool isComposing) {
-	L_Q();
-
+void ChatRoom::notifyIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, bool isComposing) {
 	auto it = find_if(remoteIsComposing.cbegin(), remoteIsComposing.cend(),
 	                  [&remoteAddress](const auto &address) { return (*remoteAddress == *address); });
 
@@ -309,41 +416,23 @@ void ChatRoomPrivate::notifyIsComposingReceived(const std::shared_ptr<Address> &
 	LinphoneAddress *lAddr = remoteAddress->toC();
 	_linphone_chat_room_notify_is_composing_received(cr, lAddr, !!isComposing);
 	// Legacy notification
-	linphone_core_notify_is_composing_received(q->getCore()->getCCore(), cr);
+	linphone_core_notify_is_composing_received(getCore()->getCCore(), cr);
 }
 
-void ChatRoomPrivate::notifyStateChanged() {
-	L_Q();
-	LinphoneChatRoom *cr = getCChatRoom();
-	// Do not output this log while Core is starting up, a lot of them may happen
-	if (q->getCore()->getCCore()->state == LinphoneGlobalStartup) {
-		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(q->getState());
-	} else {
-		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(q->getState());
-	}
-	LinphoneChatRoomState chatRoomCState =
-	    linphone_conference_state_to_chat_room_state(static_cast<LinphoneConferenceState>(q->getState()));
-	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, chatRoomCState);
-	_linphone_chat_room_notify_state_changed(cr, chatRoomCState);
-}
-
-void ChatRoomPrivate::notifyUndecryptableChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
-	L_Q();
+void ChatRoom::notifyUndecryptableChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
 	LinphoneChatRoom *cr = getCChatRoom();
 	_linphone_chat_room_notify_undecryptable_message_received(cr, L_GET_C_BACK_PTR(chatMessage));
-	linphone_core_notify_message_received_unable_decrypt(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
+	linphone_core_notify_message_received_unable_decrypt(getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
 }
 
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<ChatMessage> ChatRoomPrivate::getMessageFromSal(SalOp *op, const SalMessage *message) {
-	L_Q();
-
+std::shared_ptr<ChatMessage> ChatRoom::getMessageFromSal(SalOp *op, const SalMessage *message) {
 	shared_ptr<ChatMessage> msg;
 
 	auto from = Address::create(op->getFrom());
-	msg = createChatMessage((*from == *q->getLocalAddress()) ? ChatMessage::Direction::Outgoing
-	                                                         : ChatMessage::Direction::Incoming);
+	msg = createChatMessage((*from == *getLocalAddress()) ? ChatMessage::Direction::Outgoing
+	                                                      : ChatMessage::Direction::Incoming);
 
 	Content content;
 	if (message->url && ContentType(message->content_type) == ContentType::ExternalBody) {
@@ -370,7 +459,8 @@ std::shared_ptr<ChatMessage> ChatRoomPrivate::getMessageFromSal(SalOp *op, const
 	// Don't do it for flexisip backend chat rooms, we need to know if the real message id from CPIM was retrieved or
 	// not Based on that we will send IMDNs or not In case CPIM was enabled on a Basic chat room, IMDN message ID will
 	// be overwritten by real one
-	if (q->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
+	const bool isBasicChatRoom = (getCurrentParams()->getChatParams()->getBackend() == ChatParams::Backend::Basic);
+	if (isBasicChatRoom) {
 		msg->getPrivate()->setImdnMessageId(messageId.str());
 	}
 	msg->getPrivate()->setCallId(op->getCallId());
@@ -383,16 +473,14 @@ std::shared_ptr<ChatMessage> ChatRoomPrivate::getMessageFromSal(SalOp *op, const
 	return msg;
 }
 
-LinphoneReason ChatRoomPrivate::onSipMessageReceived(SalOp *op, const SalMessage *message) {
+LinphoneReason ChatRoom::onSipMessageReceived(SalOp *op, const SalMessage *message) {
 	auto msg = getMessageFromSal(op, message);
 	LinphoneReason reason = msg->getPrivate()->receive();
 	return reason;
 }
 
-void ChatRoomPrivate::onChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
-	L_Q();
-
-	shared_ptr<Core> core = q->getCore();
+void ChatRoom::onChatMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
+	shared_ptr<Core> core = getCore();
 	LinphoneCore *cCore = core->getCCore();
 
 	if (chatMessage->getPrivate()->getContentType() == ContentType::ImIsComposing) {
@@ -406,17 +494,17 @@ void ChatRoomPrivate::onChatMessageReceived(const shared_ptr<ChatMessage> &chatM
 	const std::shared_ptr<Address> &fromAddress = chatMessage->getFromAddress();
 	if ((chatMessage->getPrivate()->getContentType() != ContentType::ImIsComposing) &&
 	    (chatMessage->getPrivate()->getContentType() != ContentType::Imdn)) {
-		isComposingHandler->stopRemoteRefreshTimer(fromAddress->toString());
+		mIsComposingHandler->stopRemoteRefreshTimer(fromAddress->toString());
 		notifyIsComposingReceived(fromAddress, false);
 	}
 
 	if (core->isCurrentlyAggregatingChatMessages()) {
-		lDebug() << "[Chat Room] [" << q->getConferenceId()
+		lDebug() << "[Chat Room] [" << getConferenceId()
 		         << "] Core is currently aggregating chat messages, push message to list";
 		aggregatedMessages.push_back(chatMessage);
 	} else {
 		// No aggregation, notify right away
-		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] No aggregation, notify right away";
+		lDebug() << "[Chat Room] [" << getConferenceId() << "] No aggregation, notify right away";
 
 		bool chatMessagesAggregationEnabled = !!linphone_core_get_chat_messages_aggregation_enabled(cCore);
 		if (chatMessagesAggregationEnabled) { // Need to notify using aggregated callback even if there is only on
@@ -430,7 +518,7 @@ void ChatRoomPrivate::onChatMessageReceived(const shared_ptr<ChatMessage> &chatM
 	}
 }
 
-void ChatRoomPrivate::notifyMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
+void ChatRoom::notifyMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
 	shared_ptr<ConferenceChatMessageEvent> event =
 	    make_shared<ConferenceChatMessageEvent>(::time(nullptr), chatMessage);
 	_linphone_chat_room_notify_chat_message_received(getCChatRoom(), L_GET_C_BACK_PTR(event));
@@ -440,23 +528,21 @@ void ChatRoomPrivate::notifyMessageReceived(const shared_ptr<ChatMessage> &chatM
 	sendDeliveryNotification(chatMessage);
 }
 
-void ChatRoomPrivate::notifyAggregatedChatMessages() {
-	L_Q();
-
+void ChatRoom::notifyAggregatedChatMessages() {
 	if (aggregatedMessages.empty()) {
-		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] No aggregated message to notify";
+		lDebug() << "[Chat Room] [" << getConferenceId() << "] No aggregated message to notify";
 		return;
 	}
 
 	size_t aggregatedMessagesSize = aggregatedMessages.size();
 	if (aggregatedMessagesSize == 1) {
-		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] There is 1 aggregated message to notify";
+		lDebug() << "[Chat Room] [" << getConferenceId() << "] There is 1 aggregated message to notify";
 	} else {
-		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] There are " << aggregatedMessagesSize
+		lDebug() << "[Chat Room] [" << getConferenceId() << "] There are " << aggregatedMessagesSize
 		         << " aggregated messages to notify";
 	}
 	LinphoneChatRoom *cChatRoom = getCChatRoom();
-	auto core = q->getCore()->getCCore();
+	auto core = getCore()->getCCore();
 
 	// Notify as ChatMessages
 	bctbx_list_t *cMessages = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(aggregatedMessages);
@@ -475,7 +561,7 @@ void ChatRoomPrivate::notifyAggregatedChatMessages() {
 
 	// Notify delivery
 	for (auto &chatMessage : aggregatedMessages) {
-		chatMessage->getPrivate()->setParticipantState(q->getMe()->getAddress(), ChatMessage::State::DeliveredToUser,
+		chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::DeliveredToUser,
 		                                               ::ms_time(nullptr));
 	}
 
@@ -485,69 +571,36 @@ void ChatRoomPrivate::notifyAggregatedChatMessages() {
 	aggregatedMessages.clear();
 }
 
-void ChatRoomPrivate::onImdnReceived(const shared_ptr<ChatMessage> &chatMessage) {
+void ChatRoom::onImdnReceived(const shared_ptr<ChatMessage> &chatMessage) {
 	Imdn::parse(chatMessage);
 }
 
-void ChatRoomPrivate::onIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, const string &text) {
-	isComposingHandler->parse(remoteAddress, text);
+void ChatRoom::onIsComposingReceived(const std::shared_ptr<Address> &remoteAddress, const string &text) {
+	mIsComposingHandler->parse(remoteAddress, text);
 }
 
-void ChatRoomPrivate::onIsComposingRefreshNeeded() {
+void ChatRoom::onIsComposingRefreshNeeded() {
 	sendIsComposingNotification();
 }
 
-void ChatRoomPrivate::onIsComposingStateChanged(bool isComposing) {
-	this->isComposing = isComposing;
+void ChatRoom::onIsComposingStateChanged(bool isComposing) {
+	mIsComposing = isComposing;
 	sendIsComposingNotification();
 }
 
-void ChatRoomPrivate::onIsRemoteComposingStateChanged(const std::shared_ptr<Address> &remoteAddress, bool isComposing) {
+void ChatRoom::onIsRemoteComposingStateChanged(const std::shared_ptr<Address> &remoteAddress, bool isComposing) {
 	notifyIsComposingReceived(remoteAddress, isComposing);
 }
 
-bool ChatRoomPrivate::isSubscriptionUnderWay() const {
-	return false;
-}
-
-void ChatRoomPrivate::addPendingMessage(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &chatMessage)) {
+void ChatRoom::addPendingMessage(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &chatMessage)) {
 	lInfo() << __func__ << ": not implemented";
 }
 
 // -----------------------------------------------------------------------------
 
-LinphoneChatRoom *ChatRoomPrivate::getCChatRoom() const {
-	L_Q();
-	if (proxyChatRoom) return L_GET_C_BACK_PTR(proxyChatRoom);
-	else return L_GET_C_BACK_PTR(q);
+LinphoneChatRoom *ChatRoom::getCChatRoom() {
+	return toC();
 }
-
-// =============================================================================
-
-ChatRoom::ChatRoom(ChatRoomPrivate &p,
-                   const shared_ptr<Core> &core,
-                   const std::shared_ptr<ChatRoomParams> &params,
-                   const shared_ptr<Conference> &conf)
-    : AbstractChatRoom(p, core) {
-	L_D();
-
-	d->params = params;
-	d->imdnHandler.reset(new Imdn(this));
-	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
-
-	this->conference = conf;
-}
-
-ChatRoom::~ChatRoom() {
-	L_D();
-
-	if (d->params) {
-		d->params.reset();
-	}
-	d->imdnHandler.reset();
-}
-
-// -----------------------------------------------------------------------------
 
 const std::shared_ptr<Address> &ChatRoom::getPeerAddress() const {
 	return getConferenceId().getPeerAddress();
@@ -560,25 +613,14 @@ const std::shared_ptr<Address> &ChatRoom::getLocalAddress() const {
 // -----------------------------------------------------------------------------
 
 time_t ChatRoom::getCreationTime() const {
-	L_D();
-	return d->creationTime;
+	return creationTime;
 }
 
 time_t ChatRoom::getLastUpdateTime() const {
-	L_D();
-	return d->lastUpdateTime;
+	return lastUpdateTime;
 }
 
 // -----------------------------------------------------------------------------
-
-ConferenceInterface::State ChatRoom::getState() const {
-	if (conference) {
-		return conference->getState();
-	} else {
-		return ConferenceInterface::State::None;
-	}
-}
-
 ChatRoom::SecurityLevel ChatRoom::getSecurityLevel() const {
 	return ChatRoom::SecurityLevel::ClearText;
 }
@@ -638,19 +680,16 @@ void ChatRoom::deleteFromDb() {
 }
 
 void ChatRoom::deleteHistory() {
-	L_D();
 	getCore()->getPrivate()->mainDb->cleanHistory(getConferenceId());
-	d->setIsEmpty(true);
+	setIsEmpty(true);
 }
 
 void ChatRoom::deleteMessageFromHistory(const shared_ptr<ChatMessage> &message) {
-	L_D();
-
 	shared_ptr<LinphonePrivate::EventLog> event =
 	    LinphonePrivate::MainDb::getEvent(getCore()->getPrivate()->mainDb, message->getStorageId());
 	if (event) {
 		LinphonePrivate::EventLog::deleteFromDatabase(event);
-		d->setIsEmpty(getCore()->getPrivate()->mainDb->isChatRoomEmpty(getConferenceId()));
+		setIsEmpty(getCore()->getPrivate()->mainDb->isChatRoomEmpty(getConferenceId()));
 	}
 }
 
@@ -659,9 +698,7 @@ shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory() const {
 }
 
 bool ChatRoom::isEmpty() const {
-	L_D();
-
-	return d->isEmpty;
+	return mEmpty;
 }
 
 int ChatRoom::getChatMessageCount() const {
@@ -675,30 +712,26 @@ int ChatRoom::getUnreadChatMessageCount() const {
 // -----------------------------------------------------------------------------
 
 void ChatRoom::compose() {
-	L_D();
-	if (!d->isComposing) {
-		d->isComposing = true;
-		d->sendIsComposingNotification();
-		d->isComposingHandler->startRefreshTimer();
+	if (!mIsComposing) {
+		mIsComposing = true;
+		sendIsComposingNotification();
+		mIsComposingHandler->startRefreshTimer();
 	}
-	d->isComposingHandler->startIdleTimer();
+	mIsComposingHandler->startIdleTimer();
 }
 
 bool ChatRoom::isRemoteComposing() const {
-	L_D();
-	return !d->remoteIsComposing.empty();
+	return !remoteIsComposing.empty();
 }
 
 list<std::shared_ptr<Address>> ChatRoom::getComposingAddresses() const {
-	L_D();
-	return d->remoteIsComposing;
+	return remoteIsComposing;
 }
 
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ChatRoom::createChatMessage() {
-	L_D();
-	return d->createChatMessage(ChatMessage::Direction::Outgoing);
+	return createChatMessage(ChatMessage::Direction::Outgoing);
 }
 
 // Deprecated
@@ -753,58 +786,65 @@ shared_ptr<ChatMessage> ChatRoom::createReplyMessage(const shared_ptr<ChatMessag
 }
 
 // -----------------------------------------------------------------------------
-
-list<shared_ptr<ChatMessage>> ChatRoom::findChatMessages(const list<string> &messageIds) const {
-	L_D();
-	list<shared_ptr<ChatMessage>> chatMessages = d->findChatMessages(messageIds);
-	return chatMessages;
-}
-
-shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId) const {
-	L_D();
-	list<shared_ptr<ChatMessage>> chatMessages = d->findChatMessages(messageId);
-	return chatMessages.empty() ? nullptr : chatMessages.front();
-}
-
-shared_ptr<ChatMessage> ChatRoom::findChatMessage(const string &messageId, ChatMessage::Direction direction) const {
-	L_D();
-	for (auto &chatMessage : d->findChatMessages(messageId))
-		if (chatMessage->getDirection() == direction) return chatMessage;
-	return nullptr;
-}
-
-void ChatRoom::markAsRead() {
-	L_D();
-
-	// Mark any message currently waiting aggregation as read
-	for (auto &chatMessage : d->aggregatedMessages) {
-		chatMessage->getPrivate()->markAsRead();
-		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
-		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
-			chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Displayed,
-			                                               ::ms_time(nullptr));
-		}
+bool ChatRoom::isSubscriptionUnderWay() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return false;
 	}
-
-	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {
-		chatMessage->getPrivate()->markAsRead();
-		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
-		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
-			chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Displayed,
-			                                               ::ms_time(nullptr));
-		}
-	}
-
-	dCore->mainDb->markChatMessagesAsRead(getConferenceId());
-	_linphone_chat_room_notify_chat_room_read(d->getCChatRoom());
-	linphone_core_notify_chat_room_read(getCore()->getCCore(), d->getCChatRoom());
+	return conference->isSubscriptionUnderWay();
 }
 
-const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
-	L_D();
+bool ChatRoom::isMe(const std::shared_ptr<Address> &address) const {
+	const auto conference = getConference();
+	if (!conference) {
+		return false;
+	}
+	return conference->isMe(address);
+}
 
-	return d->params;
+const std::shared_ptr<Participant> ChatRoom::getMe() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return Utils::getEmptyConstRefObject<std::shared_ptr<Participant>>();
+	}
+	return conference->getMe();
+}
+
+const std::shared_ptr<Address> ChatRoom::getConferenceAddress() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return Utils::getEmptyConstRefObject<std::shared_ptr<Address>>();
+	}
+	return conference->getConferenceAddress();
+}
+
+const std::shared_ptr<Participant> ChatRoom::findParticipant(const std::shared_ptr<Address> &address) const {
+	const auto conference = getConference();
+	if (!conference) {
+		return Utils::getEmptyConstRefObject<std::shared_ptr<Participant>>();
+	}
+	return conference->findParticipant(address);
+}
+
+const std::list<std::shared_ptr<Participant>> ChatRoom::getParticipants() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return Utils::getEmptyConstRefObject<std::list<std::shared_ptr<Participant>>>();
+	}
+	return conference->getParticipants();
+}
+
+const std::shared_ptr<ConferenceParams> &ChatRoom::getCurrentParams() const {
+	const auto conference = getConference();
+	if (!conference) {
+		return Utils::getEmptyConstRefObject<std::shared_ptr<ConferenceParams>>();
+	}
+	auto &params = conference->getCurrentParams();
+	shared_ptr<Call> call = getCall();
+	if (call && call->getCurrentParams()) {
+		params->getChatParams()->setRealTimeText(call->getCurrentParams()->realtimeTextEnabled());
+	}
+	return params;
 }
 
 void ChatRoom::enableEphemeral(BCTBX_UNUSED(bool ephem), BCTBX_UNUSED(bool updateDb)) {
@@ -836,91 +876,43 @@ bool ChatRoom::ephemeralSupportedByAllParticipants() const {
 	return false;
 }
 
-void ChatRoom::setState(ConferenceInterface::State newState) {
-	L_D();
-
-	if (conference) {
-		if (getState() != newState) {
-			conference->setState(newState);
-			d->notifyStateChanged();
-		}
-	}
-}
-
-void ChatRoom::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
-	if (conference) {
-		conference->addListener(listener);
-	}
-}
-
-bool ChatRoom::removeParticipants(const list<shared_ptr<Participant>> &participants) {
-	bool soFarSoGood = true;
-	for (const auto &p : participants)
-		soFarSoGood &= removeParticipant(p);
-	return soFarSoGood;
-}
-
-bool ChatRoom::addParticipants(const std::list<std::shared_ptr<Address>> &addresses) {
-	list<std::shared_ptr<Address>> sortedAddresses(addresses);
-	sortedAddresses.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
-	sortedAddresses.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
-
-	bool soFarSoGood = true;
-	for (const auto &address : sortedAddresses)
-		soFarSoGood &= addParticipant(address);
-	return soFarSoGood;
-}
-
-bool ChatRoom::isMe(const std::shared_ptr<Address> &address) const {
-	return getConference()->isMe(address);
-};
-
 uint32_t ChatRoom::getChar() {
-	L_D();
 	uint32_t character = 0;
 
-	if (d->readCharacterIndex < d->receivedRttCharacters.size()) {
-		character = d->receivedRttCharacters.at(d->readCharacterIndex);
-		d->readCharacterIndex += 1;
+	if (mReadCharacterIndex < mReceivedRttCharacters.size()) {
+		character = mReceivedRttCharacters.at(mReadCharacterIndex);
+		mReadCharacterIndex += 1;
 	}
 
-	if (d->readCharacterIndex == d->receivedRttCharacters.size()) {
-		d->readCharacterIndex = 0;
-		d->receivedRttCharacters.clear();
+	if (mReadCharacterIndex == mReceivedRttCharacters.size()) {
+		mReadCharacterIndex = 0;
+		mReceivedRttCharacters.clear();
 	}
 
 	return character;
 }
 
+void ChatRoom::setCallId(const std::string &value) {
+	mCallId = value;
+}
+
 std::shared_ptr<Call> ChatRoom::getCall() const {
-	L_D();
-	return getCore()->getCallByCallId(d->callId);
-}
-
-const string &ChatRoom::getSubject() const {
-	return getConference()->getSubject();
-}
-
-const string &ChatRoom::getUtf8Subject() const {
-	return getConference()->getUtf8Subject();
+	return getCore()->getCallByCallId(mCallId);
 }
 
 bool ChatRoom::getIsMuted() const {
-	L_D();
-	return d->isMuted;
+	return mIsMuted;
 }
 
 void ChatRoom::setIsMuted(const bool muted) {
-	L_D();
-
-	if (muted != d->isMuted) {
-		d->setIsMuted(muted);
+	if (muted != mIsMuted) {
+		mIsMuted = muted;
 		getCore()->getPrivate()->mainDb->updateChatRoomMutedState(getConferenceId(), muted);
 	}
 }
 
 ChatRoomLogContextualizer::ChatRoomLogContextualizer(const LinphoneChatRoom *cr)
-    : CoreLogContextualizer(*L_GET_CPP_PTR_FROM_C_OBJECT(cr)) {
+    : CoreLogContextualizer(*AbstractChatRoom::toCpp(cr)) {
 }
 
 LINPHONE_END_NAMESPACE

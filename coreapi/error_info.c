@@ -63,6 +63,10 @@ void linphone_error_info_unref(LinphoneErrorInfo *ei) {
 	belle_sip_object_unref(ei);
 }
 
+LinphoneErrorInfo *linphone_error_info_clone(const LinphoneErrorInfo *ei) {
+	return (LinphoneErrorInfo *)belle_sip_object_clone((const belle_sip_object_t *)ei);
+}
+
 const char *linphone_reason_to_string(LinphoneReason err) {
 	switch (err) {
 		case LinphoneReasonNone:

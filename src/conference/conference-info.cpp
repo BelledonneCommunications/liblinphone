@@ -93,29 +93,29 @@ void ConferenceInfo::updateParticipantAddresses() const {
 	mParticipantAddresses.mList = addressList;
 }
 
-void ConferenceInfo::setParticipants(const std::list<std::shared_ptr<Address>> &participants) {
+void ConferenceInfo::setParticipants(const std::list<std::shared_ptr<Address>> &participants, bool logActivity) {
 	mParticipants.clear();
-	addParticipants(participants);
+	addParticipants(participants, logActivity);
 }
 
-void ConferenceInfo::setParticipants(const ConferenceInfo::participant_list_t &participants) {
+void ConferenceInfo::setParticipants(const ConferenceInfo::participant_list_t &participants, bool logActivity) {
 	mParticipants.clear();
-	addParticipants(participants);
+	addParticipants(participants, logActivity);
 }
 
-void ConferenceInfo::addParticipants(const std::list<std::shared_ptr<Address>> &participants) {
+void ConferenceInfo::addParticipants(const std::list<std::shared_ptr<Address>> &participants, bool logActivity) {
 	for (const auto &address : participants) {
-		addParticipant(address);
+		addParticipant(address, logActivity);
 	}
 }
 
-void ConferenceInfo::addParticipants(const ConferenceInfo::participant_list_t &participants) {
+void ConferenceInfo::addParticipants(const ConferenceInfo::participant_list_t &participants, bool logActivity) {
 	for (const auto &info : participants) {
-		addParticipant(info);
+		addParticipant(info, logActivity);
 	}
 }
 
-void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) {
+void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo, bool logActivity) {
 	const auto &address = participantInfo->getAddress();
 	const auto &participant = findParticipant(address);
 	const auto &organizerAddress = mOrganizer ? mOrganizer->getAddress() : nullptr;
@@ -131,9 +131,15 @@ void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo>
 			newInfo = participantInfo->clone()->toSharedPtr();
 		}
 		mParticipants.push_back(newInfo);
-		lDebug() << "Participant with address " << *address << "has been added to conference info " << this
-		         << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
-		         << ") with role " << newInfo->getRole();
+		if (logActivity) {
+			lInfo() << "Participant with address " << *address << " has been added to conference info " << this
+			        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
+			        << ") with role " << newInfo->getRole();
+		} else {
+			lDebug() << "Participant with address " << *address << " has been added to conference info " << this
+			         << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
+			         << ") with role " << newInfo->getRole();
+		}
 	} else {
 		lInfo() << "Participant with address " << *address << " is already in the list of conference info " << this
 		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
@@ -144,19 +150,22 @@ void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo>
 	}
 }
 
-void ConferenceInfo::addParticipant(const std::shared_ptr<const Address> &participant) {
+void ConferenceInfo::addParticipant(const std::shared_ptr<const Address> &participant, bool logActivity) {
 	auto participantInfo = Factory::get()->createParticipantInfo(participant->clone()->toSharedPtr());
-	addParticipant(participantInfo);
+	addParticipant(participantInfo, logActivity);
 }
 
-void ConferenceInfo::removeParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) {
-	removeParticipant(participantInfo->getAddress());
+void ConferenceInfo::removeParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo,
+                                       bool logActivity) {
+	removeParticipant(participantInfo->getAddress(), logActivity);
 }
 
-void ConferenceInfo::removeParticipant(const std::shared_ptr<const Address> &participant) {
+void ConferenceInfo::removeParticipant(const std::shared_ptr<const Address> &participant, bool logActivity) {
 	if (hasParticipant(participant)) {
-		lInfo() << "Participant with address " << *participant << " has been removed from conference info " << this
-		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+		if (logActivity) {
+			lInfo() << "Participant with address " << *participant << " has been removed from conference info " << this
+			        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+		}
 		auto it = findParticipantIt(participant);
 		mParticipants.erase(it);
 	} else {
@@ -170,8 +179,8 @@ void ConferenceInfo::updateParticipant(const std::shared_ptr<const ParticipantIn
 	if (hasParticipant(address)) {
 		lInfo() << "Updating participant with address " << *address << " in conference info " << this << " (address "
 		        << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
-		removeParticipant(participantInfo);
-		addParticipant(participantInfo);
+		removeParticipant(participantInfo, false);
+		addParticipant(participantInfo, false);
 	} else {
 		lError() << "Unable to update informations of participant with address " << *participantInfo->getAddress()
 		         << " in conference info " << this << " (address "
@@ -210,7 +219,7 @@ const std::shared_ptr<Address> &ConferenceInfo::getUri() const {
 }
 
 void ConferenceInfo::setUri(const std::shared_ptr<const Address> uri) {
-	mUri = Address::create(uri->getUri());
+	mUri = Address::create(uri->getUriWithoutGruu());
 }
 
 time_t ConferenceInfo::getDateTime() const {

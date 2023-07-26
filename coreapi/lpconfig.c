@@ -70,11 +70,11 @@
 
 #define lp_new0(type, n) (type *)calloc(n, sizeof(type))
 
-#include "linphone/lpconfig.h"
-#include "lpc2xml.h"
-
 #include "c-wrapper/c-wrapper.h"
 #include "core/paths/paths.h"
+#include "linphone/lpconfig.h"
+#include "lpc2xml.h"
+#include "private_functions.h"
 
 typedef struct _LpItem {
 	char *key;

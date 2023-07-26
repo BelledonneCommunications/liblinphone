@@ -19,17 +19,17 @@
  */
 
 #include "c-wrapper/c-wrapper.h"
-#include "core/core.h"
-#include "linphone/utils/utils.h"
-#include "linphone/wrapper_utils.h"
-
-#include "private_structs.h"
-
-#include "../../ldap/ldap.h"
 #include "call/audio-device/audio-device.h"
 #include "chat/encryption/encryption-engine.h"
 #include "chat/encryption/legacy-encryption-engine.h"
+#include "core_private.h"
+#include "ldap/ldap.h"
+#include "linphone/api/c-ldap-params.h"
+#include "linphone/api/c-ldap.h"
 #include "linphone/api/c-types.h"
+#include "linphone/utils/utils.h"
+#include "linphone/wrapper_utils.h"
+#include "private_structs.h"
 #include "push-notification-message/push-notification-message.h"
 
 // =============================================================================
@@ -41,15 +41,7 @@ using namespace LinphonePrivate;
 static void _linphone_core_constructor(LinphoneCore *lc);
 static void _linphone_core_destructor(LinphoneCore *lc);
 
-L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
-    Core, _linphone_core_constructor, _linphone_core_destructor, LINPHONE_CORE_STRUCT_FIELDS;
-
-    struct Cache {
-	    ~Cache() {
-	    }
-
-	    string lime_server_url;
-    } mutable cache;)
+L_INTERNAL_DECLARE_C_OBJECT_FUNCTIONS(Core, _linphone_core_constructor, _linphone_core_destructor);
 
 static void _linphone_core_constructor(LinphoneCore *lc) {
 	lc->state = LinphoneGlobalOff;
@@ -60,7 +52,6 @@ static void _linphone_core_destructor(LinphoneCore *lc) {
 	lc->cache.~Cache();
 	_linphone_core_uninit(lc);
 }
-
 void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
 	if (lc->im_encryption_engine) {
 		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
@@ -176,7 +167,7 @@ already here */
 LinphoneChatRoom *linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc, const char *chat_room_addr) {
 	std::shared_ptr<ChatRoom> cppChatRoom =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoom(L_C_TO_STRING(chat_room_addr));
-	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(cppChatRoom);
+	LinphoneChatRoom *chatRoom = cppChatRoom->toC();
 
 	return chatRoom;
 }

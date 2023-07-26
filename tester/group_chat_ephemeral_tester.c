@@ -19,7 +19,13 @@
  */
 
 #include "bctoolbox/crypto.h"
+
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-event-log.h"
+#include "linphone/api/c-participant-imdn-state.h"
 #include "linphone/core.h"
 #include "linphone/wrapper_utils.h"
 #include "tester_utils.h"

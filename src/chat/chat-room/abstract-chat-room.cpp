@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "abstract-chat-room-p.h"
+#include "abstract-chat-room.h"
 #include "linphone/utils/utils.h"
 
 // =============================================================================
@@ -29,12 +29,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-AbstractChatRoom::AbstractChatRoom(AbstractChatRoomPrivate &p, const shared_ptr<Core> &core)
-    : Object(p), CoreAccessor(core) {
+AbstractChatRoom::AbstractChatRoom(const shared_ptr<Core> &core) : CoreAccessor(core) {
 }
 
-void AbstractChatRoom::setUtf8Subject(const string &subject) {
-	setSubject(Utils::utf8ToLocale(subject));
+AbstractChatRoom::~AbstractChatRoom() {
+	bctbx_list_free(composingCAddresses);
 }
 
 std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::Capabilities e) {
@@ -98,6 +97,15 @@ std::ostream &operator<<(std::ostream &lhs, AbstractChatRoom::EphemeralMode e) {
 			break;
 	}
 	return lhs;
+}
+
+const bctbx_list_t *AbstractChatRoom::getComposingCAddresses() const {
+	if (composingCAddresses) {
+		bctbx_list_free(composingCAddresses);
+	}
+	list<shared_ptr<LinphonePrivate::Address>> addresses = getComposingAddresses();
+	composingCAddresses = Utils::listToCBctbxList<LinphoneAddress, Address>(addresses);
+	return composingCAddresses;
 }
 
 LINPHONE_END_NAMESPACE

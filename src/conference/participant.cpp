@@ -34,12 +34,12 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-Participant::Participant(Conference *conference, const std::shared_ptr<const Address> &address) {
+Participant::Participant(const std::shared_ptr<Conference> conference, const std::shared_ptr<const Address> &address) {
 	configure(conference, address);
 	creationTime = time(nullptr);
 }
 
-Participant::Participant(Conference *conference,
+Participant::Participant(const std::shared_ptr<Conference> conference,
                          const std::shared_ptr<Address> &address,
                          std::shared_ptr<CallSession> callSession)
     : Participant(conference, address) {
@@ -56,8 +56,9 @@ Participant::~Participant() {
 	            (addr) ? addr->toString().c_str() : "<unknown address>");
 }
 
-void Participant::configure(Conference *conference, const std::shared_ptr<const Address> &address) {
-	mConference = conference;
+void Participant::configure(const std::shared_ptr<Conference> conference,
+                            const std::shared_ptr<const Address> &address) {
+	setConference(conference);
 	auto identityAddress = Address::create(address->getUriWithoutGruu());
 	addr = identityAddress;
 }
@@ -125,7 +126,7 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<
 	return newDevice;
 }
 
-std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<LinphonePrivate::CallSession> &session,
+std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<CallSession> &session,
                                                           const std::string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(session, false);
 	if (device) return device;
@@ -141,7 +142,8 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<
 	return device;
 }
 
-std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<Address> &gruu, const string &name) {
+std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<const Address> &gruu,
+                                                          const string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(gruu, false);
 	if (device) return device;
 	/* addDevice() is intensively called during Core startup, when loading chatrooms from database.
@@ -201,11 +203,10 @@ shared_ptr<ParticipantDevice> Participant::findDeviceBySsrc(uint32_t ssrc, Linph
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice(const std::shared_ptr<Address> &gruu,
+shared_ptr<ParticipantDevice> Participant::findDevice(const std::shared_ptr<const Address> &gruu,
                                                       const bool logFailure) const {
 	const auto &it = std::find_if(devices.cbegin(), devices.cend(),
 	                              [&gruu](const auto &device) { return device->getAddress()->uriEqual(*gruu); });
-
 	if (it != devices.cend()) {
 		return *it;
 	}
@@ -288,15 +289,24 @@ Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ig
 // -----------------------------------------------------------------------------
 
 std::shared_ptr<Core> Participant::getCore() const {
-	return mConference ? mConference->getCore() : nullptr;
+	auto conference = getConference();
+	return conference ? conference->getCore() : nullptr;
 }
 
-Conference *Participant::getConference() const {
-	return mConference;
+std::shared_ptr<Conference> Participant::getConference() const {
+	if (mConference.expired()) {
+		lDebug() << "The conference owning participant " << this << " (address " << *getAddress()
+		         << ") has already been deleted";
+	}
+	return mConference.lock();
 }
 
-void Participant::setConference(Conference *conference) {
+void Participant::setConference(const std::shared_ptr<Conference> conference) {
 	mConference = conference;
+}
+
+void Participant::setAdmin(bool isAdmin) {
+	isThisAdmin = isAdmin;
 }
 
 bool Participant::isAdmin() const {

@@ -18,13 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/stat.h>
+
 #include <bctoolbox/defs.h>
 #include <bctoolbox/vfs.h>
 
-#include "liblinphone_tester.h"
-#include "tester_utils.h"
 #include <mediastreamer2/mediastream.h>
-#include <sys/stat.h>
+
+#include "liblinphone_tester.h"
+#include "linphone/api/c-content.h"
+#include "linphone/api/c-recorder.h"
+#include "tester_utils.h"
 
 #ifdef _WIN32
 #include <io.h>

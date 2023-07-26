@@ -18,15 +18,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "object/clonable-object-p.h"
-#include "object/clonable-object.h"
-
-#include "linphone/flexi-api-client.h"
+#include <json/json.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/flexi-api-client.h"
+#include "object/clonable-object-p.h"
+#include "object/clonable-object.h"
 #include "tester_utils.h"
-
-#include <json/json.h>
 
 using namespace Json;
 

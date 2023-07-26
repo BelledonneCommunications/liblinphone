@@ -71,17 +71,17 @@ public:
 	const participant_list_t &getParticipants() const;
 	const bctbx_list_t *getParticipantsCList() const;
 
-	void setParticipants(const std::list<std::shared_ptr<Address>> &participants);
-	void setParticipants(const participant_list_t &participants);
+	void setParticipants(const std::list<std::shared_ptr<Address>> &participants, bool logActivity = true);
+	void setParticipants(const participant_list_t &participants, bool logActivity = true);
 
-	void addParticipants(const std::list<std::shared_ptr<Address>> &participants);
-	void addParticipants(const participant_list_t &participants);
+	void addParticipants(const std::list<std::shared_ptr<Address>> &participants, bool logActivity = true);
+	void addParticipants(const participant_list_t &participants, bool logActivity = true);
 
-	void addParticipant(const std::shared_ptr<const Address> &participant);
-	void addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo);
+	void addParticipant(const std::shared_ptr<const Address> &participant, bool logActivity = true);
+	void addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo, bool logActivity = true);
 
-	void removeParticipant(const std::shared_ptr<const Address> &participant);
-	void removeParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo);
+	void removeParticipant(const std::shared_ptr<const Address> &participant, bool logActivity = true);
+	void removeParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo, bool logActivity = true);
 
 	bool hasParticipant(const std::shared_ptr<const Address> &address) const;
 	const std::shared_ptr<ParticipantInfo> findParticipant(const std::shared_ptr<const Address> &address) const;

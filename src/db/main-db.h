@@ -186,11 +186,6 @@ public:
 	long long addConferenceParticipantEventToDb(const std::shared_ptr<EventLog> &eventLog,
 	                                            long long *chatRoomId = nullptr);
 
-	void enableChatRoomMigration(const ConferenceId &conferenceId, bool enable);
-
-	void migrateBasicToClientGroupChatRoom(const std::shared_ptr<AbstractChatRoom> &basicChatRoom,
-	                                       const std::shared_ptr<AbstractChatRoom> &clientGroupChatRoom);
-
 	std::shared_ptr<Address>
 	findMissingOneToOneConferenceChatRoomParticipantAddress(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                                                        const std::shared_ptr<Address> &presentParticipantAddr);
@@ -202,6 +197,9 @@ public:
 	void updateChatRoomParticipantDevice(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                                     const std::shared_ptr<ParticipantDevice> &device);
 
+	std::list<std::shared_ptr<Participant>>
+	selectChatRoomParticipants(const std::shared_ptr<AbstractChatRoom> &chatRoom) const;
+	std::list<std::shared_ptr<Participant>> selectChatRoomParticipants(const long long chatRoomId) const;
 	void deleteChatRoomParticipant(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                               const std::shared_ptr<Address> &participant);
 
@@ -235,8 +233,9 @@ public:
 	std::list<std::shared_ptr<CallLog>> getCallHistory(int limit = -1);
 	std::list<std::shared_ptr<CallLog>> getCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress,
 	                                                                  int limit = -1);
-	std::list<std::shared_ptr<CallLog>>
-	getCallHistory(const std::shared_ptr<Address> &peer, const std::shared_ptr<Address> &local, int limit = -1);
+	std::list<std::shared_ptr<CallLog>> getCallHistory(const std::shared_ptr<const Address> &peer,
+	                                                   const std::shared_ptr<const Address> &local,
+	                                                   int limit = -1);
 	std::shared_ptr<CallLog> getLastOutgoingCall();
 	void deleteCallHistory();
 	void deleteCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress);

@@ -55,17 +55,19 @@
 #define pclose _pclose
 #endif
 
-#include "nat/stun-client.h"
-#include "utils/payload-type-handler.h"
-
-#include "c-wrapper/c-wrapper.h"
-
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
+#include "c-wrapper/c-wrapper.h"
 #include "call/call-log.h"
 #include "call/call.h"
 #include "conference/session/media-session-p.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-nat-policy.h"
+#include "nat/stun-client.h"
+#include "utils/payload-type-handler.h"
 
 char *linphone_timestamp_to_rfc3339_string(time_t timestamp) {
 	struct tm *ret;

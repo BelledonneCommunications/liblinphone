@@ -34,12 +34,12 @@ class MediaSession;
 class MediaSessionPrivate;
 class MediaSessionParamsPrivate;
 
-namespace MediaConference {
-class LocalConference;
-}
-
 class LINPHONE_INTERNAL_PUBLIC MediaSessionParams : public CallSessionParams {
 	friend class Call;
+	friend class Core;
+	friend class Conference;
+	friend class ServerConference;
+	friend class ClientConference;
 	friend class MediaSession;
 	friend class MediaSessionPrivate;
 	friend class MS2Stream;
@@ -47,9 +47,6 @@ class LINPHONE_INTERNAL_PUBLIC MediaSessionParams : public CallSessionParams {
 	friend class MS2VideoStream;
 	friend class MS2RTTStream;
 	friend class ParticipantDevice;
-
-	friend class Conference;
-	friend class MediaConference::LocalConference;
 
 public:
 	MediaSessionParams();

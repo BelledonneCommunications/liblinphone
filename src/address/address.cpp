@@ -360,6 +360,11 @@ string Address::toStringOrdered(bool lowercaseParams) const {
 	return res;
 }
 
+char *Address::toStringUriOnlyOrderedCstr(bool lowercaseParams) const {
+	auto ordered = toStringUriOnlyOrdered(lowercaseParams);
+	return ms_strdup(ordered.c_str());
+}
+
 char *Address::asStringUriOnlyCstr() const {
 	return isValid() ? sal_address_as_string_uri_only(mImpl) : ms_strdup("");
 }
@@ -458,6 +463,25 @@ bool Address::removeUriParam(const string &uriParamName) {
 
 	sal_address_remove_uri_param(mImpl, L_STRING_TO_C(uriParamName));
 	return true;
+}
+
+void Address::copyUriParams(const Address &other) {
+	const auto otherUriParams = other.getParams();
+	for (const auto &[name, value] : otherUriParams) {
+		setUriParam(name, value);
+	}
+}
+
+void Address::copyParams(const Address &other) {
+	const auto otherParams = other.getParams();
+	for (const auto &[name, value] : otherParams) {
+		setParam(name, value);
+	}
+}
+
+void Address::merge(const Address &other) {
+	copyParams(other);
+	copyUriParams(other);
 }
 
 void Address::removeFromLeakDetector(SalAddress *addr) {

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "conference/conference-enums.h"
@@ -25,8 +26,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/call-session.h"
 #include "core/core.h"
-
-#include "account/account.h"
+#include "linphone/api/c-content.h"
 #include "linphone/call_params.h"
 
 // =============================================================================

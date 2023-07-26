@@ -25,6 +25,9 @@
 #include <belle-sip/belle-sip.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/api/c-dial-plan.h"
 #include "tester_utils.h"
 
 struct _Account {

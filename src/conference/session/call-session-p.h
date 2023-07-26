@@ -89,13 +89,6 @@ public:
 	virtual void updating(bool isUpdate);
 	virtual void refreshed(); /* Called when an incoming UPDATE is received (for session timers)*/
 
-	void setCallSessionListener(CallSessionListener *listener) {
-		this->listener = listener;
-	}
-	CallSessionListener *getCallSessionListener() const {
-		return listener;
-	}
-
 	void init();
 
 	void accept(const CallSessionParams *params);
@@ -132,7 +125,7 @@ public:
 	void updateToFromAssertedIdentity();
 
 protected:
-	CallSessionListener *listener = nullptr;
+	std::list<CallSessionListener *> listeners;
 	CallSessionParams *params = nullptr;
 	mutable CallSessionParams *currentParams = nullptr;
 	mutable CallSessionParams *remoteParams = nullptr;

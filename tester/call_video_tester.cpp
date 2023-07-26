@@ -20,11 +20,15 @@
 
 #include "bctoolbox/defs.h"
 
-#include "call/call.h"
-#include "liblinphone_tester.h"
-#include "linphone/core.h"
 #include "mediastreamer2/msanalysedisplay.h"
 #include "mediastreamer2/msmire.h"
+
+#include "call/call.h"
+#include "liblinphone_tester.h"
+#include "linphone/api//c-address.h"
+#include "linphone/api//c-call-log.h"
+#include "linphone/api//c-video-source-descriptor.h"
+#include "linphone/core.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
 #include "shared_tester_functions.h"

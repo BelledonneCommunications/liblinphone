@@ -19,9 +19,20 @@
  */
 
 #include "bctoolbox/crypto.h"
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room-cbs.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-participant-device.h"
+#include "linphone/api/c-participant-imdn-state.h"
+#include "linphone/api/c-participant.h"
+#include "linphone/chat.h"
 #include "linphone/core.h"
 #include "linphone/wrapper_utils.h"
 #include "tester_utils.h"
@@ -1057,8 +1068,8 @@ static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(
 	bctbx_list_t *participantsAddresses = NULL;
 	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
 	char *sendFilepath2 = NULL;
-	char *receivePaulineFilepath = bc_tester_file("receive_file_secure_pauline.dump");
-	char *receiveChloeFilepath = bc_tester_file("receive_file_secure_chloe.dump");
+	char *receivePaulineFilepath = random_filepath("receive_file_secure_pauline", "dump");
+	char *receiveChloeFilepath = random_filepath("receive_file_secure_chloe", "dump");
 	const char *text = "Hello Group !";
 
 	if (two_files) {
@@ -1988,66 +1999,80 @@ group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_differe
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneReactionSentOrReceived,
 	                             initialPaulineStats.number_of_LinphoneReactionSentOrReceived + 1, 5000));
 
-	bctbx_list_t *reactions = linphone_chat_message_get_reactions(marie1SentMessage);
-	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "😢");
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	bctbx_list_t *reactions = NULL;
+	if (marie1SentMessage) {
+		reactions = linphone_chat_message_get_reactions(marie1SentMessage);
+		BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "😢");
+		bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	}
 
-	reactions = linphone_chat_message_get_reactions(paulineReceivedMessage);
-	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "😢");
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	if (paulineReceivedMessage) {
+		reactions = linphone_chat_message_get_reactions(paulineReceivedMessage);
+		BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "😢");
+		bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	}
 
-	reactions = linphone_chat_message_get_reactions(marie2ReceivedMessage);
-	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "😢");
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	if (marie2ReceivedMessage) {
+		reactions = linphone_chat_message_get_reactions(marie2ReceivedMessage);
+		BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "😢");
+		bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
 
-	// Now marie's second device will react
-	LinphoneChatMessageReaction *marie2Reaction = linphone_chat_message_create_reaction(marie2ReceivedMessage, "❤️");
-	marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
-	BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
+		// Now marie's second device will react
+		LinphoneChatMessageReaction *marie2Reaction = linphone_chat_message_create_reaction(marie2ReceivedMessage, "❤️");
+		marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
+		BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
+		linphone_chat_message_reaction_send(marie2Reaction);
 
-	linphone_chat_message_reaction_send(marie2Reaction);
-
-	// When sent, reactionReceived callback will be triggered
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneReactionSentOrReceived,
-	                             initialMarie2Stats.number_of_LinphoneReactionSentOrReceived + 2, 5000));
-	linphone_chat_message_reaction_unref(marie2Reaction);
+		// When sent, reactionReceived callback will be triggered
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneReactionSentOrReceived,
+		                             initialMarie2Stats.number_of_LinphoneReactionSentOrReceived + 2, 5000));
+		linphone_chat_message_reaction_unref(marie2Reaction);
+	}
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_LinphoneReactionSentOrReceived,
 	                             initialMarie1Stats.number_of_LinphoneReactionSentOrReceived + 2, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneReactionSentOrReceived,
 	                             initialPaulineStats.number_of_LinphoneReactionSentOrReceived + 2, 5000));
 
-	reactions = linphone_chat_message_get_reactions(marie1SentMessage);
-	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "❤️");
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	if (marie1SentMessage) {
+		reactions = linphone_chat_message_get_reactions(marie1SentMessage);
+		BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "❤️");
+		bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	}
 
-	reactions = linphone_chat_message_get_reactions(paulineReceivedMessage);
-	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "❤️");
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	if (paulineReceivedMessage) {
+		reactions = linphone_chat_message_get_reactions(paulineReceivedMessage);
+		BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "❤️");
+		bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	}
 
-	reactions = linphone_chat_message_get_reactions(marie2ReceivedMessage);
-	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "❤️");
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	if (marie2ReceivedMessage) {
+		reactions = linphone_chat_message_get_reactions(marie2ReceivedMessage);
+		BC_ASSERT_EQUAL(bctbx_list_size(reactions), 1, size_t, "%zu");
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_reaction_get_body(reactions->data), "❤️");
+		bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
 
-	// Marie1 is sending an empty reaction to remove it's previous reaction
-	LinphoneChatMessageReaction *marieEmptyReaction = linphone_chat_message_create_reaction(marie1SentMessage, "");
-	marieOwnReaction = linphone_chat_message_get_own_reaction(marie1SentMessage);
-	BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
-	marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
-	BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
+		// Marie1 is sending an empty reaction to remove it's previous reaction
+		LinphoneChatMessageReaction *marieEmptyReaction = linphone_chat_message_create_reaction(marie1SentMessage, "");
+		marieOwnReaction = linphone_chat_message_get_own_reaction(marie1SentMessage);
+		BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
+		marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
+		BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
 
-	linphone_chat_message_reaction_send(marieEmptyReaction);
+		linphone_chat_message_reaction_send(marieEmptyReaction);
 
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_LinphoneReactionRemoved,
-	                             initialMarie1Stats.number_of_LinphoneReactionRemoved + 1, 5000));
-	linphone_chat_message_reaction_unref(marieEmptyReaction);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_LinphoneReactionRemoved,
+		                             initialMarie1Stats.number_of_LinphoneReactionRemoved + 1, 5000));
+		linphone_chat_message_reaction_unref(marieEmptyReaction);
+	}
 
-	marieOwnReaction = linphone_chat_message_get_own_reaction(marie1SentMessage);
+	if (marie1SentMessage) {
+		marieOwnReaction = linphone_chat_message_get_own_reaction(marie1SentMessage);
+	}
 	BC_ASSERT_PTR_NULL(marieOwnReaction);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneReactionRemoved,
@@ -2055,23 +2080,34 @@ group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_differe
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneReactionRemoved,
 	                             initialPaulineStats.number_of_LinphoneReactionRemoved + 1, 5000));
 
-	marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
+	if (marie2ReceivedMessage) {
+		marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
+	}
 	BC_ASSERT_PTR_NULL(marieOwnReaction);
 
-	reactions = linphone_chat_message_get_reactions(marie1SentMessage);
+	if (marie1SentMessage) {
+		reactions = linphone_chat_message_get_reactions(marie1SentMessage);
+	}
 	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 0, size_t, "%zu");
 	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
 
-	reactions = linphone_chat_message_get_reactions(paulineReceivedMessage);
+	if (paulineReceivedMessage) {
+		reactions = linphone_chat_message_get_reactions(paulineReceivedMessage);
+	}
 	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 0, size_t, "%zu");
 	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
+	reactions = NULL;
 
-	reactions = linphone_chat_message_get_reactions(marie2ReceivedMessage);
+	if (marie2ReceivedMessage) {
+		reactions = linphone_chat_message_get_reactions(marie2ReceivedMessage);
+	}
 	BC_ASSERT_EQUAL(bctbx_list_size(reactions), 0, size_t, "%zu");
 	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
 
 end:
-	linphone_chat_message_unref(marie1SentMessage);
+	if (marie1SentMessage) {
+		linphone_chat_message_unref(marie1SentMessage);
+	}
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie1, marie1Cr, coresList);

@@ -18,16 +18,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "belle-sip/sipstack.h"
-#include "liblinphone_tester.h"
-#include "linphone/core.h"
-#include "linphone/lpconfig.h"
-#include "mediastreamer2/msutils.h"
-#include "shared_tester_functions.h"
-#include "tester_utils.h"
-#include <bctoolbox/defs.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <bctoolbox/defs.h>
+
+#include "belle-sip/sipstack.h"
+
+#include "mediastreamer2/msutils.h"
+
+#include "liblinphone_tester.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/core.h"
+#include "linphone/lpconfig.h"
+#include "shared_tester_functions.h"
+#include "tester_utils.h"
 
 /*Case where the caller disconnects just after initiating the call (state outgoingprogress).
 The callee may not have received the INVITE, so we can't send new INVITE with Replaces header,

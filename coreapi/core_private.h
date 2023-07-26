@@ -21,16 +21,18 @@
 #ifndef _CORE_PRIVATE_H_
 #define _CORE_PRIVATE_H_
 
+#include "c-wrapper/internal/c-tools.h"
+#include "core/core.h"
 #include "linphone/types.h"
+#include "private_functions.h"
 #include "private_structs.h"
-#include "private_types.h"
 
-struct _LinphoneCore {
-	belle_sip_object_t base;
-	std::shared_ptr<LinphonePrivate::Core> cppPtr;
-	std::weak_ptr<LinphonePrivate::Core> weakCppPtr;
-	int owner;
-	LINPHONE_CORE_STRUCT_FIELDS
-};
+L_INTERNAL_DECLARE_C_OBJECT(
+    Core, LINPHONE_CORE_STRUCT_FIELDS; struct Cache {
+	    ~Cache() {
+	    }
+
+	    std::string lime_server_url;
+    } mutable cache;);
 
 #endif /* _CORE_PRIVATE_H_ */

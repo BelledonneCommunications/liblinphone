@@ -23,6 +23,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-types.h"
+#include "linphone/enums/c-enums.h"
 #include "linphone/enums/encryption-engine-enums.h"
 
 // =============================================================================

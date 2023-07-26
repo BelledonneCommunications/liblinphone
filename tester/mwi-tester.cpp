@@ -26,6 +26,11 @@
 #include "address/address.h"
 #include "belr/grammarbuilder.h"
 #include "core/core.h"
+#include "linphone/api/c-account-cbs.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-content.h"
 // TODO: Remove me later.
 #include "private.h"
 

@@ -24,11 +24,12 @@
 
 #include "call/call.h"
 #include "chat/encryption/encryption-engine.h"
+#include "conference/client-conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
 #include "core/core-p.h"
 #include "core/core.h"
-#include "remote_conference.h"
+#include "linphone/api/c-account.h"
 #include "xml/ekt-linphone-extension.h"
 
 // =============================================================================
@@ -136,16 +137,16 @@ ClientEktManager::ClientEktManager(MSEKTCipherType cipherType, MSCryptoSuite cry
 ClientEktManager::ClientEktManager(const shared_ptr<EktContext> &ektCtx) : mEktCtx(ektCtx) {
 }
 
-void ClientEktManager::init(shared_ptr<MediaConference::RemoteConference> rc) {
+void ClientEktManager::init(shared_ptr<ClientConference> rc) {
 	lInfo() << "Init ClientEktManager [" << this << "]";
-	mRemoteConf = rc;
+	mClientConf = rc;
 	L_GET_PRIVATE_FROM_C_OBJECT(rc->getCore()->getCCore())->registerListener(this);
 	rc->addListener(this->shared_from_this());
 }
 
 ClientEktManager::~ClientEktManager() {
 	lInfo() << "Destroying ClientEktManager [" << this << "]";
-	auto rc = mRemoteConf.lock();
+	auto rc = mClientConf.lock();
 	if (rc) {
 		auto core = rc->getCore();
 		if (core) {
@@ -201,7 +202,7 @@ void ClientEktManager::onStateChanged(ConferenceInterface::State newState) {
 		case ConferenceInterface::State::Deleted:
 			break;
 		case ConferenceInterface::State::Terminated:
-			auto rc = mRemoteConf.lock();
+			auto rc = mClientConf.lock();
 			if (rc) {
 				auto core = rc->getCore();
 				if (core) {
@@ -250,18 +251,18 @@ bool ClientEktManager::getSelectedEkt() const {
 void ClientEktManager::subscribe() {
 	if (mEventSubscribe) return; // Already subscribed
 
-	const auto &localAddress = mRemoteConf.lock()->getConferenceId().getLocalAddress();
-	LinphoneCore *lc = mRemoteConf.lock()->getCore()->getCCore();
+	const auto &localAddress = mClientConf.lock()->getConferenceId().getLocalAddress();
+	LinphoneCore *lc = mClientConf.lock()->getCore()->getCCore();
 	LinphoneAccount *acc = linphone_core_lookup_account_by_identity(lc, localAddress->toC());
 
 	if (!acc || (linphone_account_get_state(acc) != LinphoneRegistrationOk)) {
 		return;
 	}
 
-	const auto &peerAddress = mRemoteConf.lock()->getConferenceId().getPeerAddress();
+	const auto &peerAddress = mClientConf.lock()->getConferenceAddress();
 	if (mEventSubscribe == nullptr) {
 		mEventSubscribe =
-		    dynamic_pointer_cast<EventSubscribe>((new EventSubscribe(mRemoteConf.lock()->getCore(), peerAddress,
+		    dynamic_pointer_cast<EventSubscribe>((new EventSubscribe(mClientConf.lock()->getCore(), peerAddress,
 		                                                             Account::toCpp(acc)->getConfig(), "ekt", 600))
 		                                             ->toSharedPtr());
 		mEventSubscribe->getOp()->setFromAddress(localAddress->getImpl());
@@ -335,13 +336,13 @@ int ClientEktManager::recoverEkt(shared_ptr<EktInfo> ei) {
 		mSelectedEkt = true;
 		MSEKTParametersSet ektParams;
 		mEktCtx->fillMSParametersSet(&ektParams);
-		mRemoteConf.lock()->getCall()->setEkt(&ektParams);
+		mClientConf.lock()->getCall()->setEkt(&ektParams);
 	}
 	return 0;
 }
 
 void ClientEktManager::notifyReceived(const Content &content) {
-	const auto &core = mRemoteConf.lock()->getCore();
+	const auto &core = mClientConf.lock()->getCore();
 	auto ei = core->createEktInfoFromXml(content.getBodyAsUtf8String());
 
 	// Check SSPI
@@ -360,7 +361,7 @@ void ClientEktManager::notifyReceived(const Content &content) {
 		map<string, Variant> devices;
 		if (dict) devices = dict->getProperties();
 		for (auto device : devices) {
-			if (mRemoteConf.lock()->getMe()->findDevice(Address::create(device.first)) == nullptr) {
+			if (mClientConf.lock()->getMe()->findDevice(Address::create(device.first)) == nullptr) {
 				to.push_back(device.first);
 			} else {
 				lError() << "ClientEktManager::notifyReceived : No need to send the ekt to myself";
@@ -388,7 +389,7 @@ void ClientEktManager::notifyReceived(const Content &content) {
 			map<string, Variant> devices;
 			if (dict) devices = dict->getProperties();
 			for (auto device : devices) {
-				if (mRemoteConf.lock()->getMe()->findDevice(Address::create(device.first)) == nullptr) {
+				if (mClientConf.lock()->getMe()->findDevice(Address::create(device.first)) == nullptr) {
 					to.push_back(device.first);
 				} else {
 					lError() << "ClientEktManager::notifyReceived : No need to send the EKT to myself";
@@ -417,14 +418,14 @@ void ClientEktManager::notifyReceived(const Content &content) {
 				mSelectedEkt = true;
 				MSEKTParametersSet ektParams;
 				mEktCtx->fillMSParametersSet(&ektParams);
-				mRemoteConf.lock()->getCall()->setEkt(&ektParams);
+				mClientConf.lock()->getCall()->setEkt(&ektParams);
 			}
 		}
 	}
 }
 
 void ClientEktManager::sendPublish(shared_ptr<EktInfo> ei) {
-	auto core = mRemoteConf.lock()->getCore();
+	auto core = mClientConf.lock()->getCore();
 	string xmlBody = core->createXmlFromEktInfo(ei);
 
 	shared_ptr<Content> content = make_shared<Content>();
@@ -436,8 +437,7 @@ void ClientEktManager::sendPublish(shared_ptr<EktInfo> ei) {
 
 	if (mEventPublish == nullptr) {
 		mEventPublish = dynamic_pointer_cast<EventPublish>(
-		    (new EventPublish(core, mRemoteConf.lock()->getConferenceId().getPeerAddress(), "ekt", 600))
-		        ->toSharedPtr());
+		    (new EventPublish(core, mClientConf.lock()->getConferenceAddress(), "ekt", 600))->toSharedPtr());
 		shared_ptr<EventCbs> cbs = EventCbs::create();
 		cbs->setUserData(this);
 		cbs->publishStateChangedCb = onPublishStateChangedCb;
@@ -474,7 +474,7 @@ void ClientEktManager::encryptAndSendEkt(shared_ptr<EktInfo> ei,
 	associatedData.push_back((uint8_t)((mEktCtx->mSSpi >> 0) & 0xff));
 	associatedData.insert(associatedData.end(), mEktCtx->mCSpi.begin(), mEktCtx->mCSpi.end());
 	auto AD = std::make_shared<std::vector<uint8_t>>(associatedData.begin(), associatedData.end());
-	auto core = mRemoteConf.lock()->getCore();
+	auto core = mClientConf.lock()->getCore();
 	if (!to.empty()) {
 		core->getEncryptionEngine()->rawEncrypt(
 		    from->asStringUriOnly(), to, plainText, AD,
@@ -493,7 +493,7 @@ bool ClientEktManager::decrypt(const string &from, const string &to, const vecto
 	associatedData.insert(associatedData.end(), mEktCtx->mCSpi.begin(), mEktCtx->mCSpi.end());
 	vector<uint8_t> ekt;
 	bool success =
-	    mRemoteConf.lock()->getCore()->getEncryptionEngine()->rawDecrypt(to, from, associatedData, cipher, ekt);
+	    mClientConf.lock()->getCore()->getEncryptionEngine()->rawDecrypt(to, from, associatedData, cipher, ekt);
 	if (success) mEktCtx->mEkt = ekt;
 	else lInfo() << "EktContext::decrypt - EKT decryption";
 	return success;
@@ -506,7 +506,7 @@ void ClientEktManager::clearData() {
 }
 
 shared_ptr<Account> ClientEktManager::getAccount() const {
-	return mRemoteConf.lock()->getCall()->getDestAccount();
+	return mClientConf.lock()->getCall()->getDestAccount();
 }
 
 LINPHONE_END_NAMESPACE

@@ -27,12 +27,15 @@
 
 #include "bctoolbox/defs.h"
 
-#include "linphone/core.h"
+#include "xml/xml-parsing-context.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "http/http-client.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 #include "linphone/api/c-auth-info.h"
-#include "xml/xml-parsing-context.h"
+#include "linphone/core.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"

@@ -30,8 +30,6 @@
 
 #include "mediastreamer2/msmire.h"
 
-#include "call-session.h"
-#include "call/audio-device/audio-device.h"
 #include "media-description-renderer.h"
 #include "port-config.h"
 #include "tester_utils.h"
@@ -39,6 +37,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class StreamsGroup;
+class CallSession;
 class MediaSession;
 class MediaSessionPrivate;
 class MediaSessionParams;

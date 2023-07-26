@@ -30,6 +30,7 @@
 
 #include "core/core.h"
 #include "linphone/core.h"
+#include "linphone/api/c-api.h"
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
 #include "chat/chat-room/chat-room.h"
@@ -740,7 +741,7 @@ static void on_push_notification_chat_room_joined(LinphoneChatRoom *cr, BCTBX_UN
 	PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
 	IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
 	lInfo() << "[push] the chat room associated with the push is joined.";
-	shared_core_helper->setChatRoomInvite(static_pointer_cast<ChatRoom>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)));
+	shared_core_helper->setChatRoomInvite(static_pointer_cast<ChatRoom>(AbstractChatRoom::toCpp(cr)->getSharedFromThis()));
 }
 
 static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state) {

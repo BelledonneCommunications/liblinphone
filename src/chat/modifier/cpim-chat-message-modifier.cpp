@@ -27,6 +27,7 @@
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room.h"
 #include "chat/cpim/cpim.h"
+#include "conference/conference-params.h"
 #include "content/content-disposition.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
@@ -303,7 +304,13 @@ string CpimChatMessageModifier::cpimAddressUri(const std::shared_ptr<Address> &a
 std::shared_ptr<Content>
 CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
+	const auto &chatRoomParams = chatRoom->getCurrentParams();
+	const auto &account = chatRoomParams->getAccount();
+	if (!account) {
+		lWarning() << "Unable to create CPIM becaus the account attached to the message is unknown";
+		return Content::create();
+	}
+	const string &localDeviceId = account->getContactAddress()->asStringUriOnly();
 
 	Cpim::Message cpimMessage;
 	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress())));

@@ -81,10 +81,10 @@ public:
 
 	ParticipantDevice();
 	explicit ParticipantDevice(std::shared_ptr<Participant> participant,
-	                           const std::shared_ptr<LinphonePrivate::CallSession> &session,
+	                           const std::shared_ptr<CallSession> &session,
 	                           const std::string &name = "");
 	explicit ParticipantDevice(std::shared_ptr<Participant> participant,
-	                           const std::shared_ptr<Address> &gruu,
+	                           const std::shared_ptr<const Address> &gruu,
 	                           const std::string &name = "");
 	virtual ~ParticipantDevice();
 	// non clonable object
@@ -211,10 +211,13 @@ public:
 	bool enableScreenSharing(bool enabled);
 	bool screenSharingEnabled() const;
 
+	void clearChangingSubscribeEvent();
+	bool isChangingSubscribeEvent() const;
+
 	static bool isLeavingState(const ParticipantDevice::State &state);
 
 protected:
-	Conference *getConference() const;
+	std::shared_ptr<Conference> getConference() const;
 
 private:
 	std::weak_ptr<Participant> mParticipant;
@@ -237,6 +240,12 @@ private:
 	bool mIsMuted = false;
 	bool mIsSpeaking = false;
 	bool mIsScreenSharing = false;
+
+	// The following boolean tells if the device is changing the SUBSCRIBE event. In fact, it may happen that the client
+	// and server get out of sychronization and the recovery process kicks in. The client unsubscribes and send a new
+	// subscribe with Last Notify Version set to 0 to trigger a Notify Full State and align with the informations stored
+	// on the server.
+	bool mChangingSubscribeEvent = false;
 
 	struct StreamData {
 		bool available = false;

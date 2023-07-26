@@ -21,6 +21,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "capability_negotiation_tester.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-call-log.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
 

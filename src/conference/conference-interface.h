@@ -54,11 +54,6 @@ class ConferenceParamsInterface;
  */
 class LINPHONE_PUBLIC ConferenceInterface {
 public:
-	// TODO: Start Delete
-
-	virtual void join() = 0;
-	// TODO: End Delete
-
 	virtual const ConferenceId &getConferenceId() const = 0;
 
 	/**
@@ -90,10 +85,16 @@ public:
 	virtual ~ConferenceInterface() = default;
 
 	/*
-	 *Listener reporting events for this conference. Use this function mainly to add listener when conference is created
-	 *at the initiative of the focus.
+	 *Listener reporting events for this conference. Use this function mainly to add a listener when conference is
+	 *created at the initiative of the focus.
 	 */
 	virtual void addListener(std::shared_ptr<ConferenceListenerInterface> listener) = 0;
+
+	/*
+	 *Listener reporting events for this conference. Use this function mainly to remove a listener when conference is
+	 *created at the initiative of the focus.
+	 */
+	virtual void removeListener(std::shared_ptr<ConferenceListenerInterface> listener) = 0;
 
 	/*
 	 Get the current State of this conference
@@ -160,7 +161,7 @@ public:
 	 <br>
 	 @param[in] participantAddress The address of the participant to add to this Conference.
 	*/
-	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) = 0;
+	virtual bool addParticipant(const std::shared_ptr<const Address> &participantAddress) = 0;
 
 	/*
 	 * Same as function addParticipant(const std::shared_ptr<Address> &participantAddress), except that call to add is
@@ -183,7 +184,7 @@ public:
 	 * @param[in] addresses
 	 * @return True if everything is OK, False otherwise
 	 */
-	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) = 0;
+	virtual bool addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) = 0;
 
 	/*
 	 * Add local participant to this conference, this fonction is only available for local focus. Behavior is the same
@@ -196,7 +197,8 @@ public:
 	 * @param[in] participantAddress The address to search in the list of participants of the chat room
 	 * @return The participant if found, NULL otherwise.
 	 */
-	virtual std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &participantAddress) const = 0;
+	virtual std::shared_ptr<Participant>
+	findParticipant(const std::shared_ptr<const Address> &participantAddress) const = 0;
 
 	/*
 	 * Get the number of participants in this conference (that is without ourselves).

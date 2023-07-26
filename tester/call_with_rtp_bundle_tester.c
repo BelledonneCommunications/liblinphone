@@ -18,16 +18,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "belle-sip/sipstack.h"
-#include "liblinphone_tester.h"
-#include "linphone/core.h"
-#include "linphone/lpconfig.h"
-#include "mediastreamer2/msutils.h"
-#include "shared_tester_functions.h"
-#include "tester_utils.h"
-#include <bctoolbox/defs.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <bctoolbox/defs.h>
+
+#include "belle-sip/sipstack.h"
+
+#include "mediastreamer2/msutils.h"
+
+#include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/core.h"
+#include "linphone/lpconfig.h"
+#include "shared_tester_functions.h"
+#include "tester_utils.h"
 
 static void check_rtp_bundle(LinphoneCall *call, bool_t bundle_in_remote_expected, bool_t bundle_in_current_expected) {
 	const LinphoneCallParams *remote_params = linphone_call_get_remote_params(call);

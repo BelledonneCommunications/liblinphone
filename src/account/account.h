@@ -28,6 +28,7 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "call/call-log.h"
 #include "conference/conference-info.h"
+#include "linphone/api/c-callbacks.h"
 #include "linphone/api/c-types.h"
 #include "sal/register-op.h"
 
@@ -52,12 +53,13 @@ enum class LimeUserAccountStatus {
 class AccountCbs;
 class Address;
 class Event;
+class AbstractChatRoom;
 class EventPublish;
 
-class Account : public bellesip::HybridObject<LinphoneAccount, Account>,
-                public UserDataAccessor,
-                public CallbacksHolder<AccountCbs>,
-                public CoreAccessor {
+class LINPHONE_PUBLIC Account : public bellesip::HybridObject<LinphoneAccount, Account>,
+                                public UserDataAccessor,
+                                public CallbacksHolder<AccountCbs>,
+                                public CoreAccessor {
 public:
 	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params);
 	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);
@@ -108,11 +110,12 @@ public:
 	LimeUserAccountStatus getLimeUserAccountStatus() const;
 
 	int getUnreadChatMessageCount() const;
-	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms() const;
+	const std::list<std::shared_ptr<AbstractChatRoom>> &getChatRooms() const;
+	const bctbx_list_t *getChatRoomsCList() const;
 
 	int getMissedCallsCount() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogs() const;
-	std::list<std::shared_ptr<CallLog>> getCallLogsForAddress(const std::shared_ptr<Address>) const;
+	std::list<std::shared_ptr<CallLog>> getCallLogsForAddress(const std::shared_ptr<const Address> &) const;
 	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos() const;
 
 	// Other
@@ -148,8 +151,8 @@ public:
 	// Callbacks
 
 	// Utils
-	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses(const std::shared_ptr<Address> &a,
-	                                                                       const std::shared_ptr<Address> &b);
+	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses(const std::shared_ptr<const Address> &a,
+	                                                                       const std::shared_ptr<const Address> &b);
 
 	static void writeAllToConfigFile(const std::shared_ptr<Core> core);
 	static void writeToConfigFile(LpConfig *config, const std::shared_ptr<Account> &account, int index);
@@ -180,6 +183,7 @@ private:
 	void onMwiServerAddressChanged();
 	bool customContactChanged();
 	std::list<SalAddress *> getOtherContacts();
+	void updateChatRoomList() const;
 
 	std::shared_ptr<AccountParams> mParams;
 
@@ -216,6 +220,8 @@ private:
 
 	unsigned long long mPreviousPublishParamsHash[2] = {0};
 	std::shared_ptr<AccountParams> mOldParams;
+
+	mutable ListHolder<AbstractChatRoom> mChatRoomList;
 
 	// This is a back pointer intended to keep both LinphoneProxyConfig and Account
 	// api to be usable at the same time. This should be removed as soon as

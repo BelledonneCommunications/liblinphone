@@ -21,6 +21,9 @@
 #include <bctoolbox/defs.h>
 
 #include "http/http-client.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 #include "linphone/lpconfig.h"
 #include "private.h"
 #include "xml2lpc.h"

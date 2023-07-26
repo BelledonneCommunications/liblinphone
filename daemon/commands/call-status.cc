@@ -20,6 +20,8 @@
 
 #include "call-status.h"
 
+#include "linphone/api/c-address.h"
+
 using namespace std;
 
 CallStatusCommand::CallStatusCommand()

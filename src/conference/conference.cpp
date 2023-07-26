@@ -20,23 +20,28 @@
 
 #include <bctoolbox/defs.h>
 
-#include "conference.h"
+#include "call/call.h"
+#include "conference/conference.h"
+#include "conference/notify-conference-listener.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-device.h"
 #include "conference/participant-info.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
+#include "conference/session/ms2-streams.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core-p.h"
 #include "core/core.h"
+#include "factory/factory.h"
 #include "logger/logger.h"
 #include "participant.h"
 #include "private_functions.h"
 
 #ifdef HAVE_ADVANCED_IM
+#include "chat/chat-room/server-chat-room.h"
 #include "xml/resource-lists.h"
 #endif
 
@@ -52,75 +57,255 @@ const std::string Conference::SecurityModeParameter = "conference-security-mode"
 
 Conference::Conference(const shared_ptr<Core> &core,
                        const std::shared_ptr<Address> &myAddress,
-                       CallSessionListener *listener,
-                       const std::shared_ptr<ConferenceParams> params)
+                       CallSessionListener *callSessionListener,
+                       const std::shared_ptr<const ConferenceParams> params)
     : CoreAccessor(core) {
-	this->me = Participant::create(this, myAddress);
-	this->listener = listener;
-	this->update(*params);
-	this->confParams->setMe(myAddress);
-	this->startTime = ms_time(nullptr);
+	mCallSessionListener = callSessionListener;
+	update(*params);
+	mConfParams->setMe(myAddress);
+
+	if (mConfParams->videoEnabled()) {
+		// If video is enabled, then always enable audio capabilities
+		mConfParams->enableAudio(true);
+	}
+
+	addListener(std::make_shared<NotifyConferenceListener>(this));
+
+	if (mConfParams->getStartTime() < 0) {
+		mConfParams->setStartTime(ms_time(NULL));
+	}
+
+	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
+		auto startTime = mConfParams->getStartTime();
+		auto endTime = mConfParams->getEndTime();
+		auto duration = (endTime >= 0) ? (endTime - startTime) : startTime;
+
+		if (duration < 0) {
+			lError() << "Unable to create conference due to an invalid time settings";
+			lError() << "Start time (" << startTime << "): " << ctime(&startTime);
+			lError() << "End time (" << endTime << "): " << ctime(&endTime);
+			lError() << "Duration: " << duration << " seconds";
+			setState(ConferenceInterface::State::CreationFailed);
+		}
+	}
 }
 
 Conference::~Conference() {
-	confListeners.clear();
+	setChatRoom(nullptr);
+	mConfListeners.clear();
+	// Make sure that when the conference is destroyed, it unregisters from all session participant and participant
+	// devices are attached to It may happen that an application terminates a conference by calling
+	// linphone_core_terminate_all_calls and therefore we must make sure that everything is properly cleaned up
+	for (const auto &p : getParticipants()) {
+		const auto &pSession = p->getSession();
+		if (pSession) {
+			pSession->removeListener(this);
+		}
+		for (const auto &d : p->getDevices()) {
+			const auto &dSession = d->getSession();
+			if (dSession) {
+				dSession->removeListener(this);
+			}
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------
 
+void Conference::removeListener(std::shared_ptr<ConferenceListenerInterface> listener) {
+	mConfListeners.remove(listener);
+}
+
+void Conference::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
+	mConfListeners.push_back(listener);
+}
+
 time_t Conference::getStartTime() const {
-	return startTime;
+	return mConfParams->getStartTime();
 }
 
 int Conference::getDuration() const {
-	return (int)(ms_time(nullptr) - startTime);
+	return (int)(ms_time(nullptr) - getStartTime());
 }
 
 shared_ptr<Participant> Conference::getActiveParticipant() const {
-	return activeParticipant;
+	return mActiveParticipant;
 }
 
 void Conference::clearParticipants() {
-	me->clearDevices();
-	participants.clear();
+	mMe->clearDevices();
+	mParticipants.clear();
 }
 
 // -----------------------------------------------------------------------------
+
+bool Conference::addParticipantDevice(std::shared_ptr<Call> call) {
+	const std::shared_ptr<Address> &remoteAddress = call->getRemoteAddress();
+	auto p = findParticipant(remoteAddress);
+	if (p) {
+		const auto &session = call->getActiveSession();
+		const auto conferenceAddressStr =
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		// If device is not found, then add it
+		if (p->findDevice(session, false) == nullptr) {
+			shared_ptr<ParticipantDevice> device = p->addDevice(session);
+			// If there is already a call for this participant, then he/she is joining the conference
+			device->setState(ParticipantDevice::State::Joining);
+			lInfo() << "Participant with address " << *call->getRemoteAddress() << " has added device with session "
+			        << session << " (address " << *device->getAddress() << ") to conference " << conferenceAddressStr;
+			return true;
+		} else {
+			lDebug() << "Participant with address " << *call->getRemoteAddress() << " to conference "
+			         << conferenceAddressStr << " has already a device with session " << session;
+		}
+	}
+	return false;
+}
+
+const Address
+Conference::createParticipantAddressForResourceList(const ConferenceInfo::participant_list_t::value_type &p) {
+	Address address = p->getAddress()->getUri();
+	for (const auto &[name, value] : p->getAllParameters()) {
+		address.setUriParam(name, value);
+	}
+	return address;
+}
+
+void Conference::fillParticipantAttributes(std::shared_ptr<Participant> &p) {
+	const auto &pAddress = p->getAddress();
+	const auto participantInfo =
+	    std::find_if(mInvitedParticipants.cbegin(), mInvitedParticipants.cend(),
+	                 [&pAddress](const auto &info) { return pAddress->weakEqual(*info->getAddress()); });
+	const auto conferenceAddressStr =
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+
+	if (participantInfo == mInvitedParticipants.cend()) {
+		if (mInvitedParticipants.empty()) {
+			// It is a conference created on the fly, therefore all participants are speakers
+			p->setRole(Participant::Role::Speaker);
+			lInfo() << "Conference " << this << " (address " << conferenceAddressStr
+			        << ") has been created on the fly, either by inviting addresses or by merging existing calls "
+			           "therefore participant "
+			        << *pAddress << " is given the role of " << p->getRole();
+		} else {
+			const bool isThereAListener =
+			    std::find_if(mInvitedParticipants.cbegin(), mInvitedParticipants.cend(), [](const auto &info) {
+				    return (info->getRole() == Participant::Role::Listener);
+			    }) != mInvitedParticipants.cend();
+
+			std::string reason;
+			Participant::Role role = Participant::Role::Unknown;
+			if (isThereAListener) {
+				role = Participant::Role::Listener;
+				reason.assign("at least one participant with role Listener has been found");
+			} else {
+				role = Participant::Role::Speaker;
+				reason.assign("no participants with role Listener has been found");
+			}
+			p->setRole(role);
+
+			lInfo() << "Unable to find participant " << *pAddress
+			        << " in the list of invited participants. Assuming its role to be " << p->getRole()
+			        << " in conference " << this << " (address " << conferenceAddressStr << ") because " << reason;
+		}
+	} else {
+		const auto &role = (*participantInfo)->getRole();
+		if (role == Participant::Role::Unknown) {
+			p->setRole(Participant::Role::Speaker);
+			lInfo() << "No role was given to participant " << *pAddress << " when the conference " << this
+			        << " (address " << conferenceAddressStr << ") was created. Assuming its role to be "
+			        << p->getRole();
+		} else {
+			p->setRole(role);
+		}
+	}
+}
 
 bool Conference::addParticipant(BCTBX_UNUSED(const std::shared_ptr<ParticipantInfo> &info)) {
 	lError() << "Conference class does not handle addParticipant() generically";
 	return false;
 }
 
-bool Conference::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
-	lError() << "Conference class does not handle addParticipant() generically";
-	return false;
+bool Conference::addParticipant(std::shared_ptr<Call> call) {
+	const std::shared_ptr<Address> &remoteAddress = call->getRemoteAddress();
+	std::shared_ptr<Participant> p = findParticipant(remoteAddress);
+	bool success = false;
+	// Add a new participant only if it is not in the conference
+	if (p == nullptr) {
+		auto session = call->getActiveSession();
+		p = Participant::create(getSharedFromThis(), remoteAddress);
+		fillParticipantAttributes(p);
+		p->setFocus(false);
+		std::shared_ptr<Address> toAddr;
+		if (session) {
+			auto op = session->getPrivate()->getOp();
+			if (op) {
+				toAddr = Address::create(op->getTo());
+			}
+		}
+		if (toAddr && toAddr->isValid()) {
+			p->setPreserveSession(!toAddr->hasUriParam("conf-id"));
+		} else {
+			p->setPreserveSession(true);
+		}
+
+		// Pass admin information on if it is available in the contact address
+		std::shared_ptr<Address> remoteContactAddress = Address::create(call->getRemoteContact());
+
+		if (remoteContactAddress->hasParam("admin")) {
+			bool value = Utils::stob(remoteContactAddress->getParamValue("admin"));
+			p->setAdmin(value);
+		}
+		mParticipants.push_back(p);
+
+		time_t creationTime = time(nullptr);
+		notifyParticipantAdded(creationTime, false, p);
+		success = true;
+	} else {
+		lWarning() << "Participant with address " << *call->getRemoteAddress() << " is already part of conference "
+		           << *getConferenceAddress();
+		success = false;
+	}
+
+	addParticipantDevice(call);
+
+	return success;
 }
 
-bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
+bool Conference::addParticipant(const std::shared_ptr<const Address> &participantAddress) {
 	shared_ptr<Participant> participant = findParticipant(participantAddress);
 	if (participant) {
 		lWarning() << "Not adding participant '" << *participantAddress
 		           << "' because it is already a participant of the Conference";
 		return false;
 	}
-	participant = Participant::create(this, participantAddress);
-	participant->createSession(*this, nullptr, (confParams->chatEnabled() == false), listener);
+	participant = Participant::create(getSharedFromThis(), participantAddress);
+	participant->createSession(*this, nullptr, true, mCallSessionListener);
 	const auto confAddr = getConferenceAddress();
 	bool isFocus = participantAddress && confAddr && (*participantAddress == *confAddr);
 	participant->setFocus(isFocus);
 	participant->setPreserveSession(false);
-	participants.push_back(participant);
-	if (!activeParticipant) activeParticipant = participant;
+	mParticipants.push_back(participant);
+	if (!mActiveParticipant) mActiveParticipant = participant;
+
+	const auto conferenceAddressStr =
+	    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+	lInfo() << "Participant with address " << *participantAddress << " has been added to conference "
+	        << conferenceAddressStr;
+	time_t creationTime = time(nullptr);
+	std::shared_ptr<Participant> p = findParticipant(participantAddress);
+	fillParticipantAttributes(p);
+	notifyParticipantAdded(creationTime, false, p);
+
 	return true;
 }
 
-const std::shared_ptr<CallSession> Conference::getMainSession() const {
-	return me->getSession();
+std::shared_ptr<CallSession> Conference::getMainSession() const {
+	return mMe->getSession();
 }
 
-bool Conference::addParticipants(const std::list<std::shared_ptr<Address>> &addresses) {
-	list<std::shared_ptr<Address>> sortedAddresses(addresses);
+bool Conference::addParticipants(const std::list<std::shared_ptr<const Address>> &addresses) {
+	list<std::shared_ptr<const Address>> sortedAddresses(addresses);
 	sortedAddresses.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
 	sortedAddresses.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
 
@@ -142,6 +327,196 @@ bool Conference::addParticipants(const std::list<std::shared_ptr<Call>> &calls) 
 	return soFarSoGood;
 }
 
+bool Conference::setParticipants(const std::list<std::shared_ptr<Participant>> &&newParticipants) {
+	mParticipants.clear();
+	mParticipants = std::move(newParticipants);
+	return 0;
+}
+
+void Conference::removeParticipantDevice(BCTBX_UNUSED(const shared_ptr<Participant> &participant),
+                                         BCTBX_UNUSED(const std::shared_ptr<Address> &deviceAddress)) {
+	lError() << __func__ << " Should be overridden by the derived class";
+}
+
+int Conference::removeParticipantDevice(const std::shared_ptr<CallSession> &session) {
+	const std::shared_ptr<Address> &remoteAddress = session->getRemoteAddress();
+	std::shared_ptr<Participant> p = findParticipant(remoteAddress);
+	if (p) {
+		std::shared_ptr<ParticipantDevice> device = p->findDevice(session);
+		// If device is not found, then add it
+		if (device != nullptr) {
+			device->setState(ParticipantDevice::State::ScheduledForLeaving);
+			shared_ptr<EventSubscribe> ev = device->getConferenceSubscribeEvent();
+			if (ev) {
+				// try to terminate subscription if any, but do not wait for answer.
+				ev->clearCallbacksList();
+				ev->terminate();
+			}
+
+			const auto ei = session->getErrorInfo();
+			device->setDisconnectionData(static_pointer_cast<MediaSession>(session)->isTerminator(),
+			                             linphone_error_info_get_protocol_code(ei), linphone_error_info_get_reason(ei));
+			device->setState(ParticipantDevice::State::Left);
+			time_t creationTime = time(nullptr);
+			notifyParticipantDeviceRemoved(creationTime, false, p, device);
+
+			lInfo() << "Removing device with session " << session << " from participant " << *p->getAddress()
+			        << " in conference " << *getConferenceAddress();
+			p->removeDevice(session);
+
+			// Try to remove listener here even though it is likely that this operation will be only done by conferences
+			// of type ServerConference.
+			session->removeListener(this);
+			auto op = session->getPrivate()->getOp();
+			shared_ptr<Call> call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
+			if (call) {
+				call->setConference(nullptr);
+			}
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+int Conference::removeParticipant(std::shared_ptr<Call> call) {
+	const std::shared_ptr<Address> &remoteAddress = call->getRemoteAddress();
+	std::shared_ptr<Participant> p = findParticipant(remoteAddress);
+	if (!p) {
+		lDebug() << "Unable to participant with address " << remoteAddress;
+		return -1;
+	}
+	return removeParticipant(p);
+}
+
+int Conference::removeParticipant(const std::shared_ptr<CallSession> &session,
+                                  BCTBX_UNUSED(const bool preserveSession)) {
+	const std::shared_ptr<Address> &pAddress = session->getRemoteAddress();
+	const auto &conferenceAddress = getConferenceAddress();
+	std::shared_ptr<Participant> p = findParticipant(pAddress);
+	removeParticipantDevice(session);
+	if (!p) {
+		lInfo() << "Participant removal failed: Participant with address " << *pAddress
+		        << " has not been found in conference " << *conferenceAddress;
+		return -1;
+	}
+	if (p->getDevices().empty()) {
+		lInfo() << "Remove participant with address " << *pAddress << " from conference " << *conferenceAddress;
+		mParticipants.remove(p);
+		time_t creationTime = time(nullptr);
+		notifyParticipantRemoved(creationTime, false, p);
+		return 0;
+	}
+	return -1;
+}
+
+int Conference::removeParticipant(const std::shared_ptr<Address> &addr) {
+	std::shared_ptr<Participant> p = findParticipant(addr);
+	return removeParticipant(p);
+}
+
+bool Conference::removeParticipant(const std::shared_ptr<Participant> &participant) {
+	if (!participant) {
+		lWarning() << "Asking to remove a participant whose pointer is NULL";
+		return false;
+	}
+	auto conferenceParticipant = findParticipant(participant->getAddress());
+	if (!conferenceParticipant) {
+		lWarning() << "Unable to remove participant " << *participant->getAddress() << " from conference "
+		           << *getConferenceAddress() << " because it is not a member of it";
+		return false;
+	}
+
+	lInfo() << "Removing participant with address " << *conferenceParticipant->getAddress() << " from conference "
+	        << *getConferenceAddress();
+
+	if (!mConfParams->chatEnabled()) {
+		auto &devices = conferenceParticipant->getDevices();
+		// Delete all devices of a participant
+		for (const auto &device : devices) {
+			shared_ptr<EventSubscribe> ev = device->getConferenceSubscribeEvent();
+			if (ev) {
+				// try to terminate subscription if any, but do not wait for answer.
+				ev->clearCallbacksList();
+				ev->terminate();
+			}
+
+			const auto &dSession = device->getSession();
+			if (dSession) {
+				dSession->removeListener(this);
+			}
+
+			time_t creationTime = time(nullptr);
+			notifyParticipantDeviceRemoved(creationTime, false, conferenceParticipant, device);
+		}
+
+		conferenceParticipant->clearDevices();
+		auto pSession = conferenceParticipant->getSession();
+		// Detach call from conference
+		if (pSession) {
+			auto op = pSession->getPrivate()->getOp();
+			shared_ptr<Call> pSessionCall = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
+			if (pSessionCall) {
+				pSessionCall->setConference(nullptr);
+			}
+			pSession->removeListener(this);
+		}
+	}
+	mParticipants.remove(conferenceParticipant);
+	return true;
+}
+
+void Conference::fillInvitedParticipantList(SalCallOp *op, const std::shared_ptr<Address> &organizer, bool cancelling) {
+	mInvitedParticipants.clear();
+	const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
+	if (resourceList && !resourceList.value().get().isEmpty()) {
+		auto invitees = Utils::parseResourceLists(resourceList);
+		mInvitedParticipants = invitees;
+		if (!cancelling && organizer) {
+			auto organizerNotFound = std::find_if(mInvitedParticipants.begin(), mInvitedParticipants.end(),
+			                                      [&organizer](const auto &invitee) {
+				                                      return organizer->weakEqual(*invitee->getAddress());
+			                                      }) == mInvitedParticipants.end();
+			if (organizerNotFound) {
+				Participant::Role role = Participant::Role::Speaker;
+				lInfo() << "Setting role of organizer " << *organizer << " to " << role;
+				auto organizerInfo = Factory::get()->createParticipantInfo(organizer);
+				organizerInfo->setRole(role);
+				mInvitedParticipants.push_back(organizerInfo);
+			}
+		}
+	}
+}
+
+std::list<std::shared_ptr<const Address>> Conference::getInvitedAddresses() const {
+	list<std::shared_ptr<const Address>> addresses;
+	for (auto &participant : mInvitedParticipants) {
+		addresses.push_back(participant->getAddress());
+	}
+	return addresses;
+}
+
+ConferenceInfo::participant_list_t Conference::getFullParticipantList() const {
+	auto participantList = mInvitedParticipants;
+	// Add participants that are not part of the invitees'list
+	for (const auto &p : getParticipants()) {
+		const auto &pAddress = p->getAddress();
+		auto pIt = std::find_if(participantList.begin(), participantList.end(), [&pAddress](const auto &participant) {
+			return (pAddress->weakEqual(*participant->getAddress()));
+		});
+		if (pIt == participantList.end()) {
+			auto participantInfo = ParticipantInfo::create(pAddress);
+			participantList.push_back(participantInfo);
+		}
+	}
+	return participantList;
+}
+
+int Conference::terminate() {
+	mParticipants.clear();
+	return 0;
+}
+
 LinphoneStatus Conference::updateMainSession(bool modifyParams) {
 	LinphoneStatus ret = -1;
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
@@ -152,11 +527,11 @@ LinphoneStatus Conference::updateMainSession(bool modifyParams) {
 			currentParams->getPrivate()->setInternalCallUpdate(false);
 
 			// Update parameters based on conference capabilities
-			if (!confParams->audioEnabled()) {
-				currentParams->enableAudio(confParams->audioEnabled());
+			if (!mConfParams->audioEnabled()) {
+				currentParams->enableAudio(mConfParams->audioEnabled());
 			}
-			if (!confParams->videoEnabled()) {
-				currentParams->enableVideo(confParams->videoEnabled());
+			if (!mConfParams->videoEnabled()) {
+				currentParams->enableVideo(mConfParams->videoEnabled());
 			}
 
 			bool wasScreenSharingEnabled = currentParams->screenSharingEnabled();
@@ -197,21 +572,41 @@ void Conference::setLayout(const ConferenceLayout layout) {
 	if (session && (getLayout() != layout)) {
 		lInfo() << "Changing layout of conference " << getConferenceAddress() << " from " << getLayout() << " to "
 		        << layout;
-		const_cast<LinphonePrivate::CallSessionParams *>(session->getParams())->setConferenceVideoLayout(layout);
+		const_cast<CallSessionParams *>(session->getParams())->setConferenceVideoLayout(layout);
 		updateMainSession();
 	}
 }
 
 const std::shared_ptr<Address> &Conference::getConferenceAddress() const {
-	return confParams->getConferenceAddress();
+	return mConfParams->getConferenceAddress();
 }
 
 void Conference::setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) {
-	confParams->setConferenceAddress(conferenceAddress);
+	if ((getState() == ConferenceInterface::State::Instantiated) ||
+	    (getState() == ConferenceInterface::State::CreationPending)) {
+		if (!conferenceAddress || !conferenceAddress->isValid()) {
+			lError() << "Cannot set the conference address to " << *conferenceAddress;
+			shared_ptr<CallSession> session = getMe()->getSession();
+			LinphoneErrorInfo *ei = linphone_error_info_new();
+			linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 500, "Server internal error", NULL);
+			session->decline(ei);
+			linphone_error_info_unref(ei);
+			setState(ConferenceInterface::State::CreationFailed);
+			return;
+		}
+
+		mConfParams->setConferenceAddress(conferenceAddress);
+		setState(ConferenceInterface::State::CreationPending);
+		lInfo() << "Conference " << this << " has been given the address " << *conferenceAddress;
+	} else {
+		lDebug() << "Cannot set the conference address of the Conference in state " << getState() << " to "
+		         << *conferenceAddress;
+		return;
+	}
 }
 
 shared_ptr<Participant> Conference::getMe() const {
-	return me;
+	return mMe;
 }
 
 int Conference::getParticipantCount() const {
@@ -219,12 +614,12 @@ int Conference::getParticipantCount() const {
 }
 
 const list<shared_ptr<Participant>> &Conference::getParticipants() const {
-	return participants;
+	return mParticipants;
 }
 
 const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices() const {
 	list<shared_ptr<ParticipantDevice>> devices;
-	for (const auto &p : participants) {
+	for (const auto &p : mParticipants) {
 		const auto &d = p->getDevices();
 		if (!d.empty()) {
 			devices.insert(devices.end(), d.begin(), d.end());
@@ -241,15 +636,15 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices() co
 }
 
 void Conference::setCachedScreenSharingDevice() {
-	cachedScreenSharingDevice = getScreenSharingDevice();
+	mCachedScreenSharingDevice = getScreenSharingDevice();
 }
 
 void Conference::resetCachedScreenSharingDevice() {
-	cachedScreenSharingDevice = nullptr;
+	mCachedScreenSharingDevice = nullptr;
 }
 
 std::shared_ptr<ParticipantDevice> Conference::getCachedScreenSharingDevice() const {
-	return cachedScreenSharingDevice;
+	return mCachedScreenSharingDevice;
 }
 
 const std::shared_ptr<Participant> Conference::getScreenSharingParticipant() const {
@@ -265,11 +660,11 @@ const std::shared_ptr<ParticipantDevice> Conference::getScreenSharingDevice() co
 }
 
 const string &Conference::getSubject() const {
-	return confParams->getSubject();
+	return mConfParams->getSubject();
 }
 
 const string &Conference::getUtf8Subject() const {
-	return confParams->getUtf8Subject();
+	return mConfParams->getUtf8Subject();
 }
 
 const string &Conference::getUsername() const {
@@ -277,9 +672,6 @@ const string &Conference::getUsername() const {
 }
 
 void Conference::join(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) {
-}
-
-void Conference::join() {
 }
 
 void Conference::leave() {
@@ -290,29 +682,19 @@ void Conference::setLocalParticipantStreamCapability(BCTBX_UNUSED(const Linphone
 }
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
-	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams &>(newParameters);
-	if (confParams && ((confParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) ||
-	                   (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
+	const ConferenceParams &newConfParams = static_cast<const ConferenceParams &>(newParameters);
+	if (mConfParams && ((mConfParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) ||
+	                    (mConfParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
 		lError() << "Trying to change frozen conference parameters:";
-		lError() << " -  factory address: actual " << *confParams->getConferenceFactoryAddress() << " new value "
+		lError() << " -  factory address: actual " << *mConfParams->getConferenceFactoryAddress() << " new value "
 		         << *newConfParams.getConferenceFactoryAddress();
-		lError() << " -  conference address: actual " << *confParams->getConferenceAddress() << " new value "
+		lError() << " -  conference address: actual " << *mConfParams->getConferenceAddress() << " new value "
 		         << *newConfParams.getConferenceAddress();
 		return false;
 	}
-	confParams = ConferenceParams::create(newConfParams);
+	mConfParams = ConferenceParams::create(newConfParams);
 	return true;
 };
-
-bool Conference::removeParticipant(const shared_ptr<Participant> &participant) {
-	for (const auto &p : participants) {
-		if (*participant->getAddress() == *p->getAddress()) {
-			participants.remove(p);
-			return true;
-		}
-	}
-	return false;
-}
 
 bool Conference::removeParticipants(const list<shared_ptr<Participant>> &participants) {
 	bool soFarSoGood = true;
@@ -331,7 +713,7 @@ void Conference::setUtf8Subject(const string &subject) {
 }
 
 void Conference::setSubject(const string &subject) {
-	confParams->setSubject(subject);
+	mConfParams->setSubject(subject);
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent>
@@ -340,12 +722,12 @@ Conference::notifyParticipantDeviceStateChanged(time_t creationTime,
                                                 const std::shared_ptr<Participant> &participant,
                                                 const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
-	    EventLog::Type::ConferenceParticipantDeviceStatusChanged, creationTime, conferenceId, participant->getAddress(),
-	    participantDevice->getAddress(), participantDevice->getName());
+	    EventLog::Type::ConferenceParticipantDeviceStatusChanged, creationTime, mConferenceId,
+	    participant->getAddress(), participantDevice->getAddress(), participantDevice->getName());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceStateChanged(event, participantDevice);
 	}
 	return event;
@@ -357,23 +739,23 @@ Conference::notifyParticipantDeviceScreenSharingChanged(time_t creationTime,
                                                         const std::shared_ptr<Participant> &participant,
                                                         const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
-	    EventLog::Type::ConferenceParticipantDeviceStatusChanged, creationTime, conferenceId, participant->getAddress(),
-	    participantDevice->getAddress(), participantDevice->getName());
+	    EventLog::Type::ConferenceParticipantDeviceStatusChanged, creationTime, mConferenceId,
+	    participant->getAddress(), participantDevice->getAddress(), participantDevice->getName());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceScreenSharingChanged(event, participantDevice);
 	}
 	return event;
 }
 
 void Conference::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
-	for (const auto &participant : participants) {
+	for (const auto &participant : mParticipants) {
 		for (const auto &device : participant->getDevices()) {
 			if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 				_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
-				for (const auto &l : confListeners) {
+				for (const auto &l : mConfListeners) {
 					l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
 				}
 				return;
@@ -383,7 +765,7 @@ void Conference::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
 	for (const auto &device : getMe()->getDevices()) {
 		if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 			_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
-			for (const auto &l : confListeners) {
+			for (const auto &l : mConfListeners) {
 				l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
 			}
 			return;
@@ -393,14 +775,14 @@ void Conference::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
 }
 
 void Conference::notifyMutedDevice(uint32_t ssrc, bool muted) {
-	for (const auto &participant : participants) {
+	for (const auto &participant : mParticipants) {
 		for (const auto &device : participant->getDevices()) {
 			if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 				_linphone_participant_device_notify_is_muted(device->toC(), muted);
-				for (const auto &l : confListeners) {
+				for (const auto &l : mConfListeners) {
 					l->onParticipantDeviceIsMuted(device, muted);
 				}
-				pendingParticipantsMutes.erase(ssrc);
+				mPendingParticipantsMutes.erase(ssrc);
 				return;
 			}
 		}
@@ -408,14 +790,14 @@ void Conference::notifyMutedDevice(uint32_t ssrc, bool muted) {
 	for (const auto &device : getMe()->getDevices()) {
 		if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 			_linphone_participant_device_notify_is_muted(device->toC(), muted);
-			for (const auto &l : confListeners) {
+			for (const auto &l : mConfListeners) {
 				l->onParticipantDeviceIsMuted(device, muted);
 			}
-			pendingParticipantsMutes.erase(ssrc);
+			mPendingParticipantsMutes.erase(ssrc);
 			return;
 		}
 	}
-	pendingParticipantsMutes[ssrc] = muted;
+	mPendingParticipantsMutes[ssrc] = muted;
 	lDebug() << "IsMuted: unable to notify muted device because there is no device found - queuing it waiting to match "
 	            "a device to ssrc "
 	         << ssrc;
@@ -424,14 +806,14 @@ void Conference::notifyMutedDevice(uint32_t ssrc, bool muted) {
 void Conference::notifyLocalMutedDevices(bool muted) {
 	for (const auto &device : getMe()->getDevices()) {
 		_linphone_participant_device_notify_is_muted(device->toC(), muted);
-		for (const auto &l : confListeners) {
+		for (const auto &l : mConfListeners) {
 			l->onParticipantDeviceIsMuted(device, muted);
 		}
 	}
 }
 
 const std::map<uint32_t, bool> &Conference::getPendingParticipantsMutes() const {
-	return pendingParticipantsMutes;
+	return mPendingParticipantsMutes;
 }
 
 void Conference::setUsername(const string &username) {
@@ -440,8 +822,22 @@ void Conference::setUsername(const string &username) {
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<Address> &addr) const {
-	for (const auto &participant : participants) {
+shared_ptr<Participant> Conference::findParticipant(const shared_ptr<const CallSession> &session) const {
+	for (const auto &participant : mParticipants) {
+		shared_ptr<ParticipantDevice> device = participant->findDevice(session);
+		if (device || (participant->getSession() == session)) {
+			return participant;
+		}
+	}
+
+	lWarning() << "Unable to find participant in conference "
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
+	           << " (" << this << ") with session " << session;
+	return nullptr;
+}
+
+shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<const Address> &addr) const {
+	for (const auto &participant : mParticipants) {
 		if (participant->getAddress()->weakEqual(*addr)) {
 			return participant;
 		}
@@ -453,9 +849,25 @@ shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<Addres
 	return nullptr;
 }
 
+std::shared_ptr<ParticipantInfo>
+Conference::findInvitedParticipant(const std::shared_ptr<const Address> &participantAddress) const {
+	const auto &it = std::find_if(
+	    mInvitedParticipants.begin(), mInvitedParticipants.end(),
+	    [&participantAddress](const auto &invitee) { return participantAddress->weakEqual(*invitee->getAddress()); });
+
+	if (it != mInvitedParticipants.end()) {
+		return (*it);
+	}
+
+	lWarning() << "Unable to find invited participant in conference "
+	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
+	           << " (" << this << ") with address " << *participantAddress;
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const LinphoneStreamType type,
                                                                        const std::string &label) const {
-	for (const auto &participant : participants) {
+	for (const auto &participant : mParticipants) {
 		auto device = participant->findDevice(type, label, false);
 		if (device) return device;
 	}
@@ -468,7 +880,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const Lin
 }
 
 shared_ptr<ParticipantDevice> Conference::findParticipantDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const {
-	for (const auto &participant : participants) {
+	for (const auto &participant : mParticipants) {
 		auto device = participant->findDeviceBySsrc(ssrc, type);
 		if (device) {
 			return device;
@@ -482,9 +894,9 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceBySsrc(uint32_t s
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::shared_ptr<Address> &pAddr,
-                                                                const std::shared_ptr<Address> &dAddr) const {
-	for (const auto &participant : participants) {
+shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::shared_ptr<const Address> &pAddr,
+                                                                const std::shared_ptr<const Address> &dAddr) const {
+	for (const auto &participant : mParticipants) {
 		if (pAddr->weakEqual(*participant->getAddress())) {
 			auto device = participant->findDevice(dAddr, false);
 			if (device) {
@@ -495,14 +907,14 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const std::share
 
 	lDebug() << "Unable to find participant device in conference "
 	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown-address>"))
-	         << " with device address " << dAddr->toString() << " belonging to participant " << pAddr->toString();
+	         << " with device address " << *dAddr << " belonging to participant " << *pAddr;
 
 	return nullptr;
 }
 
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const shared_ptr<const CallSession> &session) const {
 
-	for (const auto &participant : participants) {
+	for (const auto &participant : mParticipants) {
 		auto device = participant->findDevice(session, false);
 		if (device) {
 			return device;
@@ -517,45 +929,52 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice(const shared_ptr
 }
 
 shared_ptr<ParticipantDevice> Conference::getActiveSpeakerParticipantDevice() const {
-	return activeSpeakerDevice;
+	return mActiveSpeakerDevice;
 }
 
 std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() const {
 	std::map<ConferenceMediaCapabilities, bool> mediaCapabilities;
-	mediaCapabilities[ConferenceMediaCapabilities::Audio] = confParams->audioEnabled();
-	mediaCapabilities[ConferenceMediaCapabilities::Video] = confParams->videoEnabled();
-	mediaCapabilities[ConferenceMediaCapabilities::Text] = confParams->chatEnabled();
+	mediaCapabilities[ConferenceMediaCapabilities::Audio] = mConfParams->audioEnabled();
+	mediaCapabilities[ConferenceMediaCapabilities::Video] = mConfParams->videoEnabled();
+	mediaCapabilities[ConferenceMediaCapabilities::Text] = mConfParams->chatEnabled();
 	return mediaCapabilities;
 }
 
 // -----------------------------------------------------------------------------
 
-bool Conference::isMe(const std::shared_ptr<Address> &addr) const {
+bool Conference::isMe(const std::shared_ptr<const Address> &addr) const {
 	Address cleanedAddr = addr->getUriWithoutGruu();
-	Address cleanedMeAddr = me->getAddress()->getUriWithoutGruu();
+	Address cleanedMeAddr = mMe->getAddress()->getUriWithoutGruu();
 	return cleanedMeAddr == cleanedAddr;
 }
 
 // -----------------------------------------------------------------------------
 
+void Conference::incrementLastNotify() {
+	setLastNotify(mLastNotify + 1);
+}
+
 void Conference::setLastNotify(unsigned int lastNotify) {
-	this->lastNotify = lastNotify;
-}
-
-void Conference::setConferenceId(const ConferenceId &conferenceId) {
-	this->conferenceId = conferenceId;
-}
-
-const ConferenceId &Conference::getConferenceId() const {
-	return conferenceId;
+	mLastNotify = lastNotify;
 }
 
 void Conference::resetLastNotify() {
 	setLastNotify(0);
 }
 
+void Conference::setConferenceId(const ConferenceId &conferenceId) {
+	mConferenceId = conferenceId;
+	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup) {
+		getCore()->insertConference(getSharedFromThis());
+	}
+}
+
+const ConferenceId &Conference::getConferenceId() const {
+	return mConferenceId;
+}
+
 void Conference::notifyFullState() {
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onFullStateReceived();
 	}
 }
@@ -563,11 +982,11 @@ void Conference::notifyFullState() {
 shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded(
     time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
-	    EventLog::Type::ConferenceParticipantAdded, creationTime, conferenceId, participant->getAddress());
+	    EventLog::Type::ConferenceParticipantAdded, creationTime, mConferenceId, participant->getAddress());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantAdded(event, participant);
 	}
 	return event;
@@ -576,11 +995,11 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded(
 shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved(
     time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
-	    EventLog::Type::ConferenceParticipantRemoved, creationTime, conferenceId, participant->getAddress());
+	    EventLog::Type::ConferenceParticipantRemoved, creationTime, mConferenceId, participant->getAddress());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantRemoved(event, participant);
 	}
 	return event;
@@ -604,11 +1023,11 @@ Conference::notifyParticipantSetRole(time_t creationTime,
 			break;
 	}
 	shared_ptr<ConferenceParticipantEvent> event =
-	    make_shared<ConferenceParticipantEvent>(eventType, creationTime, conferenceId, participant->getAddress());
+	    make_shared<ConferenceParticipantEvent>(eventType, creationTime, mConferenceId, participant->getAddress());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantSetRole(event, participant);
 	}
 	return event;
@@ -618,11 +1037,11 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin(
     time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 	    isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
-	    creationTime, conferenceId, participant->getAddress());
+	    creationTime, mConferenceId, participant->getAddress());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantSetAdmin(event, participant);
 	}
 	return event;
@@ -630,11 +1049,12 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin(
 
 shared_ptr<ConferenceSubjectEvent>
 Conference::notifySubjectChanged(time_t creationTime, const bool isFullState, const std::string subject) {
-	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(creationTime, conferenceId, subject);
+	shared_ptr<ConferenceSubjectEvent> event =
+	    make_shared<ConferenceSubjectEvent>(creationTime, mConferenceId, subject);
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onSubjectChanged(event);
 	}
 	return event;
@@ -643,11 +1063,11 @@ Conference::notifySubjectChanged(time_t creationTime, const bool isFullState, co
 shared_ptr<ConferenceAvailableMediaEvent> Conference::notifyAvailableMediaChanged(
     time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
 	shared_ptr<ConferenceAvailableMediaEvent> event =
-	    make_shared<ConferenceAvailableMediaEvent>(creationTime, conferenceId, mediaCapabilities);
+	    make_shared<ConferenceAvailableMediaEvent>(creationTime, mConferenceId, mediaCapabilities);
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onAvailableMediaChanged(event);
 	}
 	return event;
@@ -659,12 +1079,12 @@ Conference::notifyParticipantDeviceAdded(time_t creationTime,
                                          const std::shared_ptr<Participant> &participant,
                                          const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
-	    EventLog::Type::ConferenceParticipantDeviceAdded, creationTime, conferenceId, participant->getAddress(),
+	    EventLog::Type::ConferenceParticipantDeviceAdded, creationTime, mConferenceId, participant->getAddress(),
 	    participantDevice->getAddress(), participantDevice->getName());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceAdded(event, participantDevice);
 	}
 	return event;
@@ -676,12 +1096,12 @@ Conference::notifyParticipantDeviceRemoved(time_t creationTime,
                                            const std::shared_ptr<Participant> &participant,
                                            const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
-	    EventLog::Type::ConferenceParticipantDeviceRemoved, creationTime, conferenceId, participant->getAddress(),
+	    EventLog::Type::ConferenceParticipantDeviceRemoved, creationTime, mConferenceId, participant->getAddress(),
 	    participantDevice->getAddress(), participantDevice->getName());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceRemoved(event, participantDevice);
 	}
 	return event;
@@ -693,12 +1113,12 @@ Conference::notifyParticipantDeviceMediaCapabilityChanged(time_t creationTime,
                                                           const std::shared_ptr<Participant> &participant,
                                                           const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
-	    EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged, creationTime, conferenceId,
+	    EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged, creationTime, mConferenceId,
 	    participant->getAddress(), participantDevice->getAddress(), participantDevice->getName());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceMediaCapabilityChanged(event, participantDevice);
 	}
 	return event;
@@ -710,12 +1130,12 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
     const std::shared_ptr<Participant> &participant,
     const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
-	    EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged, creationTime, conferenceId,
+	    EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged, creationTime, mConferenceId,
 	    participant->getAddress(), participantDevice->getAddress(), participantDevice->getName());
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onParticipantDeviceMediaAvailabilityChanged(event, participantDevice);
 	}
 	return event;
@@ -726,11 +1146,11 @@ Conference::notifyEphemeralModeChanged(time_t creationTime, const bool isFullSta
 	L_ASSERT((type == EventLog::Type::ConferenceEphemeralMessageManagedByAdmin) ||
 	         (type == EventLog::Type::ConferenceEphemeralMessageManagedByParticipants));
 	shared_ptr<ConferenceEphemeralMessageEvent> event =
-	    make_shared<ConferenceEphemeralMessageEvent>(type, creationTime, conferenceId, 0);
+	    make_shared<ConferenceEphemeralMessageEvent>(type, creationTime, mConferenceId, 0);
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onEphemeralModeChanged(event);
 	}
 	return event;
@@ -745,9 +1165,9 @@ Conference::notifyEphemeralMessageEnabled(time_t creationTime, const bool isFull
 	                                                 creationTime, getConferenceId(), 0);
 
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onEphemeralMessageEnabled(event);
 	}
 	return event;
@@ -756,37 +1176,77 @@ Conference::notifyEphemeralMessageEnabled(time_t creationTime, const bool isFull
 shared_ptr<ConferenceEphemeralMessageEvent>
 Conference::notifyEphemeralLifetimeChanged(time_t creationTime, const bool isFullState, const long lifetime) {
 	shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(
-	    EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, creationTime, conferenceId, lifetime);
+	    EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, creationTime, mConferenceId, lifetime);
 	event->setFullState(isFullState);
-	event->setNotifyId(lastNotify);
+	event->setNotifyId(mLastNotify);
 
-	for (const auto &l : confListeners) {
+	for (const auto &l : mConfListeners) {
 		l->onEphemeralLifetimeChanged(event);
 	}
 	return event;
 }
 
-void Conference::setState(LinphonePrivate::ConferenceInterface::State state) {
-	if (this->state != state) {
-		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
-			lDebug() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
-		} else {
-			lInfo() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+bool Conference::isTerminationState(ConferenceInterface::State state) {
+	switch (state) {
+		case ConferenceInterface::State::None:
+		case ConferenceInterface::State::Instantiated:
+		case ConferenceInterface::State::CreationPending:
+		case ConferenceInterface::State::CreationFailed:
+		case ConferenceInterface::State::Created:
+			return false;
+			break;
+		case ConferenceInterface::State::TerminationPending:
+		case ConferenceInterface::State::Terminated:
+		case ConferenceInterface::State::TerminationFailed:
+		case ConferenceInterface::State::Deleted:
+			return true;
+			break;
+	}
+	return false;
+}
+
+void Conference::setState(ConferenceInterface::State state) {
+	ConferenceInterface::State previousState = getState();
+	shared_ptr<Conference> ref = getSharedFromThis();
+	// Change state if:
+	// - current state is not Deleted
+	// - current state is Deleted and trying to move to Instantiated state
+	if ((previousState != ConferenceInterface::State::Deleted) ||
+	    ((previousState == ConferenceInterface::State::Deleted) &&
+	     (state == ConferenceInterface::State::Instantiated))) {
+		if (mState != state) {
+			if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+				lDebug() << "Switching conference [" << this << "] from state " << mState << " to " << state;
+			} else {
+				lInfo() << "Switching conference [" << this << "] from state " << mState << " to " << state;
+			}
+			mState = state;
+			notifyStateChanged(mState);
 		}
-		this->state = state;
-		notifyStateChanged(state);
+	}
+
+	if (mState == ConferenceInterface::State::Terminated) {
+		onConferenceTerminated(getConferenceAddress());
+	} else if (mState == ConferenceInterface::State::Deleted) {
+		// If core is in Global Shutdown state, then do not remove it from the map as it will be freed by Core::uninit()
+		if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalShutdown) {
+			getCore()->deleteConference(ref);
+		}
+#ifdef HAVE_ADVANCED_IM
+		setChatRoom(nullptr);
+#endif // HAVE_ADVANCED_IM
 	}
 }
 
-void Conference::notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) {
-	for (const auto &l : confListeners) {
+void Conference::notifyStateChanged(ConferenceInterface::State state) {
+	for (const auto &l : mConfListeners) {
 		l->onStateChanged(state);
 	}
 }
 
 void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &participantDevice) {
-	activeSpeakerDevice = participantDevice;
-	for (const auto &l : confListeners) {
+	mActiveSpeakerDevice = participantDevice;
+	for (const auto &l : mConfListeners) {
 		l->onActiveSpeakerParticipantDevice(participantDevice);
 	}
 }
@@ -823,17 +1283,34 @@ const std::shared_ptr<ParticipantDevice> Conference::getFocusOwnerDevice() const
 
 const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() const {
 	auto conferenceInfo = createOrGetConferenceInfo();
-
-	const auto focusOwnerDevice = getFocusOwnerDevice();
-	if (focusOwnerDevice) {
-		const auto &organizer = focusOwnerDevice->getParticipant()->getAddress();
-		if (organizer) {
-			auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
-			for (const auto &[name, value] : organizer->getParams()) {
-				organizerInfo->addParameter(name, value);
+	if (conferenceInfo) {
+		const auto focusOwnerDevice = getFocusOwnerDevice();
+		if (focusOwnerDevice) {
+			const auto &organizer = focusOwnerDevice->getParticipant()->getAddress();
+			if (organizer) {
+				auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
+				for (const auto &[name, value] : organizer->getParams()) {
+					organizerInfo->addParameter(name, value);
+				}
+				conferenceInfo->setOrganizer(organizerInfo);
 			}
-			conferenceInfo->setOrganizer(organizerInfo);
 		}
+
+		// Update me only if he/she is already in the list of participants info
+		const auto &meAddress = getMe()->getAddress();
+		const auto &currentParticipants = conferenceInfo->getParticipants();
+		const auto meInfoIt =
+		    std::find_if(currentParticipants.begin(), currentParticipants.end(),
+		                 [&meAddress](const auto &p) { return (meAddress->weakEqual(*p->getAddress())); });
+		if (meInfoIt != currentParticipants.end()) {
+			updateParticipantInfoInConferenceInfo(conferenceInfo, getMe());
+		}
+		for (const auto &participant : getParticipants()) {
+			updateParticipantInfoInConferenceInfo(conferenceInfo, participant);
+		}
+
+		conferenceInfo->setSecurityLevel(mConfParams->getSecurityLevel());
+		conferenceInfo->setSubject(mConfParams->getSubject());
 	}
 
 	// Update me only if he/she is already in the list of participants info
@@ -853,16 +1330,16 @@ const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() con
 	// Update start time and duration as this information can be sent through the SUBSCRIBE/NOTIFY dialog. In fact, if a
 	// client dials a conference without prior knowledge (for example it is given an URI to call), the start and end
 	// time are initially estimated as there is no conference information associated to that URI.
-	time_t startTime = confParams->getStartTime();
-	time_t endTime = confParams->getEndTime();
+	time_t startTime = mConfParams->getStartTime();
+	time_t endTime = mConfParams->getEndTime();
 	conferenceInfo->setDateTime(startTime);
 	if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
 		unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
 		conferenceInfo->setDuration(duration);
 	}
 
-	conferenceInfo->setSecurityLevel(confParams->getSecurityLevel());
-	conferenceInfo->setSubject(confParams->getSubject());
+	conferenceInfo->setSecurityLevel(mConfParams->getSecurityLevel());
+	conferenceInfo->setSubject(mConfParams->getSubject());
 
 	return conferenceInfo;
 }
@@ -886,16 +1363,16 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomPartic
 		info->setUri(conferenceAddress);
 	}
 
-	time_t startTime = confParams->getStartTime();
-	time_t endTime = confParams->getEndTime();
+	time_t startTime = mConfParams->getStartTime();
+	time_t endTime = mConfParams->getEndTime();
 	info->setDateTime(startTime);
 	if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
 		unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
 		info->setDuration(duration);
 	}
 
-	info->setSubject(confParams->getSubject());
-	info->setSecurityLevel(confParams->getSecurityLevel());
+	info->setSubject(mConfParams->getSubject());
+	info->setSecurityLevel(mConfParams->getSecurityLevel());
 
 	return info;
 }
@@ -1059,7 +1536,7 @@ void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Partici
 bool Conference::updateMinatureRequestedFlag() const {
 	auto oldMinaturesRequested = thumbnailsRequested;
 	int thumbnailAvailableCount = 0;
-	for (const auto &p : participants) {
+	for (const auto &p : mParticipants) {
 		for (const auto &d : p->getDevices()) {
 			auto dir = d->getThumbnailStreamCapability();
 			if ((dir == LinphoneMediaDirectionSendOnly) || (dir == LinphoneMediaDirectionSendRecv)) {
@@ -1070,7 +1547,7 @@ bool Conference::updateMinatureRequestedFlag() const {
 	int max_thumbnails = linphone_core_get_conference_max_thumbnails(getCore()->getCCore());
 	thumbnailsRequested = (thumbnailAvailableCount <= max_thumbnails) && sessionParamsAllowThumbnails();
 	bool changed = (oldMinaturesRequested != thumbnailsRequested);
-	for (const auto &p : participants) {
+	for (const auto &p : mParticipants) {
 		for (const auto &d : p->getDevices()) {
 			// Even if the request of thumbnails has not changed, it may be possible that the stream availabilities have
 			// changed if one participant devices stqrts or stops sharing its screen
@@ -1101,6 +1578,236 @@ LinphoneMediaDirection Conference::verifyVideoDirection(BCTBX_UNUSED(const std::
                                                         const LinphoneMediaDirection suggestedVideoDirection) const {
 	// By default do not do anything
 	return suggestedVideoDirection;
+}
+
+void Conference::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
+	if (audioDevice) {
+		const auto &currentInputDevice = getInputAudioDevice();
+		// If pointer toward the new device has changed or at least one member of the audio device changed or no current
+		// audio device is set, then return true
+		bool change =
+		    currentInputDevice ? ((audioDevice != currentInputDevice) || (*audioDevice != *currentInputDevice)) : true;
+
+		if (!change) {
+			lInfo() << "Ignoring request to change input audio device of conference " << *getConferenceAddress()
+			        << " to [" << audioDevice << "] (" << audioDevice
+			        << ") because it is the same as the one currently used";
+			return;
+		}
+		if (audioDevice &&
+		    ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) != 0)) {
+			AudioControlInterface *aci = getAudioControlInterface();
+			if (aci) {
+				lInfo() << "Set input audio device [" << audioDevice->toString() << "] (" << audioDevice
+				        << ") to audio control interface " << aci << " for conference " << *getConferenceAddress();
+				aci->setInputDevice(audioDevice);
+				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+			} else {
+				lError() << "Unable to set input audio device [" << audioDevice->toString() << "] (" << audioDevice
+				         << ") of conference " << *getConferenceAddress() << " because audio control interface is NULL";
+			}
+		} else {
+			lError() << "Unable to set input audio device to [" << audioDevice->toString() << "] (" << audioDevice
+			         << ") for conference " << *getConferenceAddress() << " due to missing record capability";
+		}
+	} else {
+		lError() << "Unable to set undefined input audio device (" << audioDevice << ") for conference "
+		         << *getConferenceAddress();
+	}
+}
+
+void Conference::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
+	if (audioDevice) {
+		const auto &currentOutputDevice = getOutputAudioDevice();
+		// If pointer toward the new device has changed or at least one member of the audio device changed or no current
+		// audio device is set, then return true
+		bool change = currentOutputDevice
+		                  ? ((audioDevice != currentOutputDevice) || (*audioDevice != *currentOutputDevice))
+		                  : true;
+
+		if (!change) {
+			lInfo() << "Ignoring request to change output audio device of conference " << *getConferenceAddress()
+			        << " to [" << audioDevice->toString() << "] (" << audioDevice
+			        << ") because it is the same as the one currently used";
+			return;
+		}
+		if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) != 0) {
+			AudioControlInterface *aci = getAudioControlInterface();
+			if (aci) {
+				lInfo() << "Set output audio device [" << audioDevice->toString() << "] (" << audioDevice
+				        << ") to audio control interface " << aci << " for conference " << *getConferenceAddress();
+				aci->setOutputDevice(audioDevice);
+				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+			} else {
+				lError() << "Unable to set output audio device [" << audioDevice->toString() << "] (" << audioDevice
+				         << ") of conference " << *getConferenceAddress() << " because audio control interface is NULL";
+			}
+		} else {
+			lError() << "Unable to set output audio device to [" << audioDevice->toString() << "] (" << audioDevice
+			         << ") for conference " << *getConferenceAddress() << " due to missing play capability";
+		}
+	} else {
+		lError() << "Unable to set undefined output audio device (" << audioDevice << ") for conference "
+		         << *getConferenceAddress();
+	}
+}
+
+int Conference::stopRecording() {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		aci->stopRecording();
+	} else {
+		lError() << "ServerConference::stopRecording(): no audio mixer.";
+		return -1;
+	}
+	return 0;
+}
+
+bool Conference::isRecording() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->isRecording();
+	}
+	return false;
+}
+
+shared_ptr<AudioDevice> Conference::getInputAudioDevice() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->getInputDevice();
+	}
+
+	lError() << "Unable to retrieve input audio device from undefined audio control interface of conference "
+	         << *getConferenceAddress();
+	return nullptr;
+}
+
+shared_ptr<AudioDevice> Conference::getOutputAudioDevice() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->getOutputDevice();
+	}
+
+	lError() << "Unable to retrieve output audio device from undefined audio control interface of conference "
+	         << *getConferenceAddress();
+	return nullptr;
+}
+
+bool Conference::getMicrophoneMuted() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return !aci->micEnabled();
+	}
+	lError() << "Unable to get status of microphone because the audio control interface of conference "
+	         << *getConferenceAddress() << " cannot be found";
+	return false;
+}
+
+void Conference::setMicrophoneMuted(bool muted) {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		aci->enableMic(!muted);
+		for (const auto &participant : mParticipants) {
+			for (const auto &device : participant->getDevices()) {
+				// If the core is holding a conference (conference server or client holding the conference because it
+				// has scheduled a conference without having a conference server set), every participant device has a
+				// media session associated to. In such a scenario all calls are muted one by one.
+				auto deviceSession = device->getSession();
+				if (deviceSession) {
+					auto op = deviceSession->getPrivate()->getOp();
+					shared_ptr<Call> call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
+					if (call) {
+						call->setMicrophoneMuted(muted);
+					}
+				}
+			}
+		}
+		bool coreMicrophoneEnabled = !!linphone_core_mic_enabled(getCore()->getCCore());
+		notifyLocalMutedDevices(muted || !coreMicrophoneEnabled);
+	} else {
+		const auto conferenceAddressStr =
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("sip:unknown"));
+		lError() << "Unable to " << std::string(muted ? "disable" : "enable")
+		         << " microphone because the audio control interface of conference " << conferenceAddressStr
+		         << " cannot be found";
+	}
+}
+
+float Conference::getRecordVolume() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->getRecordVolume();
+	}
+	lError() << "Unable to get record volume because the audio control interface of conference "
+	         << *getConferenceAddress() << " cannot be found";
+	return 0.0;
+}
+
+bool Conference::isConferenceEnded() const {
+	const auto &endTime = mConfParams->getEndTime();
+	const auto now = time(NULL);
+	const auto conferenceEnded = (endTime >= 0) && (endTime < now);
+	return conferenceEnded;
+}
+
+bool Conference::isConferenceStarted() const {
+	const auto &startTime = mConfParams->getStartTime();
+	const auto now = time(NULL);
+	// negative start time means immediate start
+	const auto conferenceStarted = (startTime < 0) || (startTime <= now);
+	return conferenceStarted;
+}
+
+void Conference::onConferenceTerminated(BCTBX_UNUSED(const std::shared_ptr<Address> &addr)) {
+	// Keep a reference to the conference to be able to set the state to Deleted
+	shared_ptr<Conference> ref = getSharedFromThis();
+	if (mConfParams->audioEnabled() || mConfParams->videoEnabled()) {
+		setState(ConferenceInterface::State::Deleted);
+	}
+}
+
+bool Conference::isSubscriptionUnderWay() const {
+	return false;
+}
+
+std::shared_ptr<Player> Conference::getPlayer() const {
+	lWarning() << "Getting a player is not available for this conference.";
+	return nullptr;
+}
+
+void Conference::setChatRoom(const std::shared_ptr<AbstractChatRoom> &chatRoom) {
+	if (mChatRoom) {
+		removeListener(mChatRoom);
+	}
+	mChatRoom = chatRoom;
+	if (mChatRoom) {
+		addListener(mChatRoom);
+	}
+}
+
+const std::shared_ptr<AbstractChatRoom> Conference::getChatRoom() const {
+	return mChatRoom;
+}
+
+std::unique_ptr<LogContextualizer> Conference::getLogContextualizer() {
+	return unique_ptr<LogContextualizer>(new ConferenceLogContextualizer(*this));
+}
+
+ConferenceLogContextualizer::~ConferenceLogContextualizer() {
+	if (mPushed) bctbx_pop_log_tag(sTagIdentifier);
+}
+
+void ConferenceLogContextualizer::pushTag(const Conference &conference) {
+	auto address = conference.getConferenceAddress();
+	if (address) {
+		const char *value = address->getUriParamValueCstr("conf-id");
+		if (!value) value = address->getUsernameCstr();
+		if (!value) value = address->getDomainCstr();
+		if (value) {
+			bctbx_push_log_tag(sTagIdentifier, value);
+			mPushed = true;
+		}
+	}
 }
 
 LINPHONE_END_NAMESPACE

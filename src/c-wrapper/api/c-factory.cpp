@@ -24,7 +24,12 @@
 #include "c-wrapper/c-wrapper.h"
 #include "conference/participant-info.h"
 #include "factory/factory.h"
+#include "linphone/api/c-bearer-token.h"
+#include "linphone/api/c-conference-info.h"
 #include "linphone/api/c-factory.h"
+#include "linphone/api/c-friend-phone-number.h"
+#include "linphone/api/c-participant-info.h"
+#include "linphone/api/c-video-source-descriptor.h"
 
 using namespace LinphonePrivate;
 

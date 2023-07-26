@@ -66,28 +66,29 @@ public:
 	                                                      std::shared_ptr<SalMediaDescription> remote_offer);
 
 private:
-	void verifyBundles(const std::shared_ptr<SalMediaDescription> &local,
-	                   const std::shared_ptr<SalMediaDescription> &remote,
-	                   std::shared_ptr<SalMediaDescription> &result);
-	bool onlyTelephoneEvent(const std::list<OrtpPayloadType *> &l);
-	bool areProtoInStreamCompatibles(const SalStreamDescription &localStream, const SalStreamDescription &otherStream);
-	bool areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto);
-	SalStreamDir computeDirIncoming(SalStreamDir local, SalStreamDir offered);
-	SalStreamDir computeConferenceStreamDir(SalStreamDir dir);
-	SalStreamDir computeDirOutgoing(SalStreamDir local, SalStreamDir answered);
-	bool matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local,
-	                     const std::vector<SalSrtpCryptoAlgo> &remote,
-	                     SalSrtpCryptoAlgo &result,
-	                     bool use_local_key);
+	static void verifyBundles(const std::shared_ptr<SalMediaDescription> &local,
+	                          const std::shared_ptr<SalMediaDescription> &remote,
+	                          std::shared_ptr<SalMediaDescription> &result);
+	static bool onlyTelephoneEvent(const std::list<OrtpPayloadType *> &l);
+	static bool areProtoInStreamCompatibles(const SalStreamDescription &localStream,
+	                                        const SalStreamDescription &otherStream);
+	static bool areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto);
+	static SalStreamDir computeDirIncoming(SalStreamDir local, SalStreamDir offered);
+	static SalStreamDir computeConferenceStreamDir(SalStreamDir dir);
+	static SalStreamDir computeDirOutgoing(SalStreamDir local, SalStreamDir answered);
+	static bool matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local,
+	                            const std::vector<SalSrtpCryptoAlgo> &remote,
+	                            SalSrtpCryptoAlgo &result,
+	                            bool use_local_key);
 	std::list<OrtpPayloadType *> matchPayloads(const std::list<OrtpPayloadType *> &local,
 	                                           const std::list<OrtpPayloadType *> &remote,
 	                                           bool reading_response,
 	                                           bool bundle_enabled);
-	PayloadType *genericMatch(const std::list<OrtpPayloadType *> &local_payloads,
-	                          const PayloadType *refpt,
-	                          const std::list<OrtpPayloadType *> &remote_payloads);
+	static OrtpPayloadType *genericMatch(const std::list<OrtpPayloadType *> &local_payloads,
+	                                     const OrtpPayloadType *refpt,
+	                                     const std::list<OrtpPayloadType *> &remote_payloads);
 	PayloadType *findPayloadTypeBestMatch(const std::list<OrtpPayloadType *> &local_payloads,
-	                                      const PayloadType *refpt,
+	                                      const OrtpPayloadType *refpt,
 	                                      const std::list<OrtpPayloadType *> &remote_payloads,
 	                                      bool reading_response);
 

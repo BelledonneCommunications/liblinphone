@@ -23,15 +23,16 @@
 
 #include "account/account.h"
 #include "call/call.h"
+#include "conference/conference.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
 #include "core-p.h"
+#include "linphone/api/c-call-log.h"
 #include "logger/logger.h"
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
-#include "conference.h"
 
 // =============================================================================
 
@@ -162,7 +163,7 @@ void CorePrivate::setVideoWindowId(bool preview, void *id) {
 #ifdef VIDEO_ENABLED
 	L_Q();
 	if (q->getCCore()->conf_ctx) {
-		MediaConference::Conference *conf = MediaConference::Conference::toCpp(q->getCCore()->conf_ctx);
+		Conference *conf = Conference::toCpp(q->getCCore()->conf_ctx);
 		if (conf->isIn() && conf->getVideoControlInterface()) {
 			lInfo() << "There is a conference " << conf->getConferenceAddress() << ", video window " << id
 			        << "is assigned to the conference.";
@@ -368,10 +369,10 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 	// that have been merged in a conference. In fact, in such a scenario, the client that merges calls to put them in a
 	// conference will call the conference factory or the audio video conference factory directly but still its call
 	// must be added to the call logs
+	std::shared_ptr<Address> from = callLog->getFromAddress() ? callLog->getFromAddress() : nullptr;
 	if (!confInfo && to) {
 		// Do not add calls made to the conference factory in the history
 		auto account = lookupKnownAccount(to, true);
-		std::shared_ptr<Address> from = callLog->getFromAddress() ? callLog->getFromAddress() : nullptr;
 		if (account) {
 			const auto &conferenceFactoryUri = account->getAccountParams()->getConferenceFactoryAddress();
 			if (conferenceFactoryUri && conferenceFactoryUri->isValid()) {
@@ -388,7 +389,9 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 				}
 			}
 		}
+	}
 
+	if (from && to) {
 		// For PushIncomingState call, from and to address are unknow.
 		const std::string usernameFrom = from ? from->getUsername() : std::string();
 		const std::string usernameTo = to ? to->getUsername() : std::string();

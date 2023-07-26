@@ -19,6 +19,7 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-participant-info.h"
 #include "local-conference-tester-functions.h"
 #include "shared_tester_functions.h"
 

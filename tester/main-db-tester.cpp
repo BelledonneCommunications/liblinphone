@@ -128,33 +128,33 @@ static void get_history(void) {
 	const MainDb &mainDb = provider.getMainDb();
 	if (mainDb.isInitialized()) {
 		BC_ASSERT_EQUAL(
-		    (int)mainDb
+		    mainDb
 		        .getHistoryRange(ConferenceId(Address::create("sip:test-4@sip.linphone.org")->getSharedFromThis(),
 		                                      Address::create("sip:test-1@sip.linphone.org")),
 		                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
 		        .size(),
-		    54, int, "%d");
+		    54, size_t, "%zu");
 		BC_ASSERT_EQUAL(
-		    (int)mainDb
+		    mainDb
 		        .getHistoryRange(ConferenceId(Address::create("sip:test-7@sip.linphone.org")->getSharedFromThis(),
 		                                      Address::create("sip:test-7@sip.linphone.org")),
 		                         0, -1, MainDb::Filter::ConferenceCallFilter)
 		        .size(),
-		    0, int, "%d");
+		    0, size_t, "%zu");
 		BC_ASSERT_EQUAL(
-		    (int)mainDb
+		    mainDb
 		        .getHistoryRange(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
 		                                      Address::create("sip:test-1@sip.linphone.org")),
 		                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
 		        .size(),
-		    804, int, "%d");
+		    804, size_t, "%zu");
 		BC_ASSERT_EQUAL(
-		    (int)mainDb
+		    mainDb
 		        .getHistory(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
 		                                 Address::create("sip:test-1@sip.linphone.org")),
 		                    100, MainDb::Filter::ConferenceChatMessageFilter)
 		        .size(),
-		    100, int, "%d");
+		    100, size_t, "%zu");
 	} else {
 		BC_FAIL("Database not initialized");
 	}
@@ -168,7 +168,7 @@ static void get_conference_notified_events(void) {
 		    ConferenceId(Address::create("sip:test-44@sip.linphone.org")->getSharedFromThis(),
 		                 Address::create("sip:test-1@sip.linphone.org")),
 		    1);
-		BC_ASSERT_EQUAL((int)events.size(), 3, int, "%d");
+		BC_ASSERT_EQUAL(events.size(), 3, size_t, "%zu");
 		if (events.size() != 3) return;
 
 		shared_ptr<EventLog> event;
@@ -304,7 +304,7 @@ static void get_chat_rooms() {
 				BC_ASSERT_PTR_NOT_NULL(lastMessage);
 			}
 		}
-		BC_ASSERT_EQUAL((int)emptyChatRooms.size(), 4, int, "%d");
+		BC_ASSERT_EQUAL(emptyChatRooms.size(), 4, size_t, "%zu");
 
 		// Check an empty chat room last_message_id is updated after adding a message into it
 		BC_ASSERT_PTR_NOT_NULL(emptyMessageRoom);
@@ -418,6 +418,18 @@ static void load_chatroom_conference(void) {
 	}
 }
 
+static void database_with_chatroom_duplicates(void) {
+	MainDbProvider provider("db/chatroom_duplicates.db");
+	MainDb &mainDb = provider.getMainDb();
+	if (mainDb.isInitialized()) {
+		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
+		BC_ASSERT_EQUAL(chatRooms.size(), 10, size_t, "%zu");
+		for (const auto &chatRoom : chatRooms) {
+			BC_ASSERT_EQUAL(mainDb.getChatMessageCount(chatRoom->getConferenceId()), 3, size_t, "%zu");
+		}
+	}
+}
+
 test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
                           TEST_NO_TAG("Get messages count", get_messages_count),
                           TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
@@ -425,8 +437,9 @@ test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
                           TEST_NO_TAG("Get conference events", get_conference_notified_events),
                           TEST_NO_TAG("Get chat rooms", get_chat_rooms),
                           TEST_NO_TAG("Set/get conference info", set_get_conference_info),
-                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms),
-                          TEST_NO_TAG("Load chatroom and conference", load_chatroom_conference)};
+                          TEST_NO_TAG("Load chatroom and conference", load_chatroom_conference),
+                          TEST_NO_TAG("Database with chatroom duplicates", database_with_chatroom_duplicates),
+                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)};
 
 test_suite_t main_db_test_suite = {"MainDb",
                                    NULL,

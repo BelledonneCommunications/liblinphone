@@ -29,6 +29,8 @@
 #include "capability_negotiation_tester.h"
 #include "conference/session/media-session-p.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-nat-policy.h"
 #include "linphone/core.h"
 #include "sal/call-op.h"
 #include "shared_tester_functions.h"

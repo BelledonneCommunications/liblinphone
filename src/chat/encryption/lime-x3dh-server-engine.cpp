@@ -25,8 +25,8 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/chat-room/chat-room-p.h"
-#include "chat/chat-room/client-group-chat-room.h"
+#include "chat/chat-room/chat-room.h"
+#include "chat/chat-room/client-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
@@ -61,7 +61,8 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	const Content *internalContent;
 
 	// Check if chatroom is encrypted or not
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
+	const auto &chatRoomParams = chatRoom->getCurrentParams();
+	if (chatRoomParams->getChatParams()->isEncrypted()) {
 		lInfo() << "[LIME][server] this chatroom is encrypted, proceed to encrypt outgoing message";
 	} else {
 		lInfo() << "[LIME][server] this chatroom is not encrypted, no need to encrypt outgoing message";

@@ -21,9 +21,21 @@
 #include "local-conference-tester-functions.h"
 
 #include "chat/encryption/encryption-engine.h"
-#include "conference.h"
+#include "conference/client-conference.h"
+#include "conference/conference.h"
+#include "conference/encryption/client-ekt-manager.h"
 #include "conference/participant.h"
-#include "remote_conference.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-chat-room-params.h"
+#include "linphone/api/c-conference-info.h"
+#include "linphone/api/c-conference-params.h"
+#include "linphone/api/c-conference-scheduler.h"
+#include "linphone/api/c-conference.h"
+#include "linphone/api/c-content.h"
+#include "linphone/api/c-participant-device.h"
+#include "linphone/api/c-participant-info.h"
+#include "linphone/api/c-participant.h"
+#include "linphone/chat.h"
 #include "shared_tester_functions.h"
 
 #ifdef _MSC_VER
@@ -289,13 +301,6 @@ create_conference_on_server(Focus &focus,
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_removed,
 		                             focus_stat.number_of_participant_devices_removed + call_errors_cnt,
 		                             liblinphone_tester_sip_timeout));
-
-		if (focus_organizer_common_payload) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &organizer.getStats().number_of_participant_devices_removed,
-			                             organizer_stat.number_of_participant_devices_removed + call_errors_cnt,
-			                             liblinphone_tester_sip_timeout));
-		}
-
 	} else {
 		actual_participants = participants;
 	}
@@ -363,7 +368,7 @@ create_conference_on_server(Focus &focus,
 			auto old_stats = participant_stats[idx];
 			if (!!send_ics) {
 				// chat room in created state
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, 1,
 				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceived,
 				                             old_stats.number_of_LinphoneMessageReceived + 1,
@@ -388,7 +393,6 @@ create_conference_on_server(Focus &focus,
 				BC_ASSERT_PTR_NOT_NULL(cr);
 				if (cr) {
 					LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
-					linphone_chat_room_unref(cr);
 					BC_ASSERT_PTR_NOT_NULL(msg);
 
 					if (msg) {
@@ -549,8 +553,7 @@ static bool check_conference_security(BCTBX_UNUSED(LinphoneConference *conferenc
 	const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(conference);
 	auto security_level = linphone_conference_params_get_security_level(conference_params);
 	if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-		auto clientConference =
-		    dynamic_cast<const MediaConference::RemoteConference *>(MediaConference::Conference::toCpp(conference));
+		auto clientConference = dynamic_cast<const LinphonePrivate::ClientConference *>(Conference::toCpp(conference));
 		if (clientConference) {
 			const auto &clientEktManager = clientConference->getClientEktManager();
 			if (clientEktManager) {
@@ -576,17 +579,16 @@ static void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
 	const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(focusConference);
 	auto security_level = linphone_conference_params_get_security_level(conference_params);
 	if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-		auto firstClientConf =
-		    dynamic_cast<const MediaConference::RemoteConference *>(MediaConference::Conference::toCpp(
-		        linphone_core_search_conference_2(members.begin()->first->lc, confAddr)));
+		auto firstClientConf = dynamic_cast<const LinphonePrivate::ClientConference *>(
+		    Conference::toCpp(linphone_core_search_conference_2(members.begin()->first->lc, confAddr)));
 		shared_ptr<ClientEktManager::EktContext> firstClientEktCtx;
 		BC_ASSERT_PTR_NOT_NULL(firstClientConf);
 		if (firstClientConf) {
 			firstClientEktCtx = firstClientConf->getClientEktManager()->getEktCtx();
 			BC_ASSERT_PTR_NOT_NULL(firstClientEktCtx);
 			for (auto member : members) {
-				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(member.first->lc, confAddr)));
+				auto rcConf = dynamic_cast<const LinphonePrivate::ClientConference *>(
+				    Conference::toCpp(linphone_core_search_conference_2(member.first->lc, confAddr)));
 				BC_ASSERT_PTR_NOT_NULL(rcConf);
 				if (rcConf) {
 					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
@@ -636,7 +638,6 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 			bool security_check = true;
 
 			LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
-
 			if (conference && mgr != focus) {
 				security_check = check_conference_security(conference);
 			}
@@ -691,8 +692,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 
 			if (conference) {
 				bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
-				bool thumbnails_requested =
-				    MediaConference::Conference::toCpp(conference)->areThumbnailsRequested(true);
+				bool thumbnails_requested = Conference::toCpp(conference)->areThumbnailsRequested(true);
 				size_t devices_nb = bctbx_list_size(devices);
 				video_check = (devices_nb > 0);
 				participant_check = (devices_nb > 0);
@@ -793,6 +793,8 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 						bool_t thumbnail_available = linphone_participant_device_get_thumbnail_stream_availability(d);
 						const LinphoneCallParams *call_params = linphone_call_get_params(call);
 						bool_t call_video_enabled = linphone_call_params_video_enabled(call_params);
+						bool_t video_available =
+						    linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo);
 						if (enable_video && ((mgr == focus) || call_video_enabled)) {
 							// Video is available if the direction is sendrecv or sendonly
 							bool_t expected_video_available = FALSE;
@@ -842,10 +844,12 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 							participant_check = false;
 						}
 						participant_check &=
-						    (linphone_participant_get_role(p) == linphone_participant_info_get_role(info));
+						    ((linphone_participant_get_role(p) == linphone_participant_info_get_role(info)) &&
+						     (linphone_participant_get_role(p) != LinphoneParticipantRoleUnknown));
 					}
 				}
 			}
+
 			return audio_direction_check && video_check && device_check && call_check && participant_check &&
 			       security_check;
 		}));
@@ -1274,7 +1278,7 @@ void create_conference_base(time_t start_time,
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		if (server_restart) {
@@ -1361,12 +1365,13 @@ void create_conference_base(time_t start_time,
 			                             liblinphone_tester_sip_timeout));
 			// Update to add to conference.
 			// If ICE is enabled, the addition to a conference may go through a resume of the call
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-			                             ((mgr == marie.getCMgr()) ? 3 : 2), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,
 			                             nb_subscriptions, 5000));
 			BC_ASSERT_TRUE(
 			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, nb_subscriptions, 5000));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_conference_full_state_received, 1, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
@@ -2550,6 +2555,8 @@ void create_conference_base(time_t start_time,
 				                             nb_subscriptions, 5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionActive,
 				                             nb_subscriptions, 5000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_conference_full_state_received,
+				                             1, liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(
 				    wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived,
 				                  focus_stat2.number_of_LinphoneSubscriptionIncomingReceived + nb_subscriptions,
@@ -2625,6 +2632,12 @@ void create_conference_base(time_t start_time,
 					    liblinphone_tester_sip_timeout));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
 					                             marie_stat2.number_of_LinphoneSubscriptionActive + nb_subscriptions,
+					                             liblinphone_tester_sip_timeout));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_conference_full_state_received,
+					                             marie_stat2.number_of_conference_full_state_received + 1,
+					                             liblinphone_tester_sip_timeout));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
+					                             focus_stat2.number_of_LinphoneSubscriptionActive + 2,
 					                             liblinphone_tester_sip_timeout));
 					BC_ASSERT_TRUE(
 					    wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
@@ -2931,6 +2944,8 @@ void create_conference_base(time_t start_time,
 					                             nb_subscriptions, 5000));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_LinphoneSubscriptionActive,
 					                             nb_subscriptions, 5000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_conference_full_state_received,
+					                             1, liblinphone_tester_sip_timeout));
 
 					if (enable_ice) {
 						BC_ASSERT_TRUE(check_ice(berthe.getCMgr(), focus.getCMgr(), LinphoneIceStateHostConnection));
@@ -3294,6 +3309,9 @@ void create_conference_base(time_t start_time,
 					                  liblinphone_tester_sip_timeout));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
 					                             marie_stat2.number_of_LinphoneSubscriptionActive + nb_subscriptions,
+					                             liblinphone_tester_sip_timeout));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_conference_full_state_received,
+					                             marie_stat2.number_of_conference_full_state_received + 1,
 					                             liblinphone_tester_sip_timeout));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
 					                             focus_stat2.number_of_LinphoneSubscriptionActive + nb_subscriptions,
@@ -3668,7 +3686,7 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		for (auto mgr : members) {
@@ -3700,8 +3718,10 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 			                             liblinphone_tester_sip_timeout));
 			// Update to add to conference.
 			// If ICE is enabled, the addition to a conference may go through a resume of the call
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-			                             ((mgr == marie.getCMgr()) ? 3 : 2), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
+			                             ((mgr == marie.getCMgr()) ? 2 : 1), liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,
 			                             1 * nb_subscriptions, 5000));
 			BC_ASSERT_TRUE(
@@ -4865,7 +4885,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		auto members = participants;
@@ -4919,6 +4939,9 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
 		                             marie_stat.number_of_LinphoneSubscriptionActive + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_conference_full_state_received,
+		                             marie_stat.number_of_conference_full_state_received + 1,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_NotifyFullStateReceived,
 		                             marie_stat.number_of_NotifyFullStateReceived + 1, liblinphone_tester_sip_timeout));
@@ -5742,7 +5765,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 		char *conference1_address_str = (confAddr1) ? linphone_address_as_string(confAddr1) : ms_strdup("<unknown>");
 		BC_ASSERT_PTR_NOT_NULL(confAddr1);
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
@@ -5757,7 +5780,7 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, 1,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 2,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
@@ -5904,10 +5927,10 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 
 		// Chat room creation to send ICS
 		if (same_organizer) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 3,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 3,
 			                             liblinphone_tester_sip_timeout));
 		} else {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneConferenceStateCreated, 2,
+			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 			                             liblinphone_tester_sip_timeout));
 		}
 
@@ -5959,8 +5982,8 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(
 			    wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallPaused, 1, liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-			                             ((mgr == marie.getCMgr()) ? 4 : 3), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 2,
+			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 2,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 2,
@@ -5982,8 +6005,10 @@ void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 		for (auto mgr : {michelle.getCMgr()}) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, 1,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-			                             ((same_organizer) ? 2 : 3), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
+			                             ((same_organizer) ? 1 : 2), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1,
@@ -6628,7 +6653,7 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		for (auto mgr : {marie.getCMgr()}) {
@@ -6647,8 +6672,10 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, no_streams_running,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-			                             ((mgr == marie.getCMgr()) ? 3 : 2), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
+			                             ((mgr == marie.getCMgr()) ? 2 : 1), liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1,
@@ -7368,7 +7395,9 @@ void create_conference_with_active_call_base(bool_t dialout) {
 		if (dialout) {
 			// Chat room creation to send ICS
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated,
-			                             (send_ics ? 2 : 1), liblinphone_tester_sip_timeout));
+			                             (send_ics ? 1 : 0), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,
+			                             liblinphone_tester_sip_timeout));
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallOutgoingInit,
 			                             marie_stat.number_of_LinphoneCallOutgoingInit + 1,
@@ -8358,10 +8387,10 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 					set_video_settings_in_conference(focus.getCMgr(), mgr, participants, confAddr, TRUE,
 					                                 video_direction, TRUE, video_direction);
 
-					// wait a bit more to detect side effect if any. During this time, some participants light
-					// enable or disable video streams due to video toggling actions. It occurs for example when
-					// everybody is using a Grid layout and one participants enables its video stream with direction
-					// either SendOnly or SendRecv.
+					// wait a bit more to detect side effect if any. During this time, some participants might enable or
+					// disable video streams due to video toggling actions. It occurs for example when everybody is
+					// using a Grid layout and one participants enables its video stream with direction either SendOnly
+					// or SendRecv.
 					CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(5), [] {
 						return false;
 					});
@@ -8677,9 +8706,11 @@ void create_conference_dial_out_base(bool_t send_ics,
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
-		int marie_conferences = ((send_ics) ? 1 : 0) + 1;
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated,
+		int marie_conferences = ((send_ics) ? 1 : 0);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated,
 		                             marie_conferences, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 1,
+		                             liblinphone_tester_sip_timeout));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallOutgoingInit,
 		                             marie_stat.number_of_LinphoneCallOutgoingInit + 1,
@@ -8774,11 +8805,15 @@ void create_conference_dial_out_base(bool_t send_ics,
 
 		if (BC_ASSERT_PTR_NOT_NULL(oconference)) {
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(oconference), 4, int, "%0d");
-			bctbx_list_t *devices = linphone_conference_get_participant_device_list(oconference);
-			BC_ASSERT_EQUAL(bctbx_list_size(devices), members.size(), size_t, "%zu");
-			if (devices) {
-				bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
-			}
+			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+			    .waitUntil(chrono::seconds(2), [&oconference, &members] {
+				    bctbx_list_t *devices = linphone_conference_get_participant_device_list(oconference);
+				    const size_t no_devices = bctbx_list_size(devices);
+				    if (devices) {
+					    bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+				    }
+				    return (no_devices == members.size());
+			    });
 		}
 
 		bctbx_list_t *participants_info2 = NULL;
@@ -9479,7 +9514,7 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		coresList = bctbx_list_remove(coresList, focus.getLc());
@@ -9525,8 +9560,10 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, no_streams_running,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-			                             ((mgr == marie.getCMgr()) ? 4 : 2), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
+			                             ((mgr == marie.getCMgr()) ? 3 : 1), liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,
 			                             nb_subscriptions, 5000));
 			BC_ASSERT_TRUE(
@@ -9682,9 +9719,9 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		                             (no_streams_running - 1), liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getCMgr()->stat.number_of_LinphoneCallStreamsRunning,
 		                             no_streams_running, liblinphone_tester_sip_timeout));
-		// Update to add to conference.
-		// If ICE is enabled, the addition to a conference may go through a resume of the call
-		BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getCMgr()->stat.number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getCMgr()->stat.number_of_LinphoneConferenceStateCreated, 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getCMgr()->stat.number_of_LinphoneChatRoomStateCreated, 1,
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(
 		    wait_for_list(coresList, &berthe.getCMgr()->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
@@ -10691,7 +10728,7 @@ void change_active_speaker_base(bool transfer_mode) {
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		for (LinphoneCoreManager *mgr : participantsList) {
@@ -10710,8 +10747,10 @@ void change_active_speaker_base(bool transfer_mode) {
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, nbStreamsRunning,
 			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-			                             ((mgr == marie.getCMgr()) ? 3 : 2), liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+			                             liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
+			                             ((mgr == marie.getCMgr()) ? 2 : 1), liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1,

@@ -21,17 +21,19 @@
 #ifndef _L_CALL_LOG_H_
 #define _L_CALL_LOG_H_
 
-#include "conference/conference-info.h"
+#include <belle-sip/object++.hh>
+
 #include "core/core-accessor.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
-#include <belle-sip/object++.hh>
-
 #include "quality_reporting.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class Address;
+class ConferenceInfo;
 
 class LINPHONE_PUBLIC CallLog : public bellesip::HybridObject<LinphoneCallLog, CallLog>, public CoreAccessor {
 public:

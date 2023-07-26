@@ -19,6 +19,11 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-content.h"
+#include "linphone/api/c-event-cbs.h"
 #include "linphone/api/c-event.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"

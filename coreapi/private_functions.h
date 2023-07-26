@@ -31,13 +31,12 @@
 #include <mediastreamer2/msconference.h>
 
 #include "conference/participant-imdn-state.h"
+#include "linphone/core_utils.h"
 #include "private_types.h"
 #include "sal/event-op.h"
 #include "sal/op.h"
 #include "sal/register-op.h"
 #include "tester_utils.h"
-
-#include "linphone/core_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -377,7 +376,6 @@ extern LinphonePrivate::Sal::Callbacks linphone_sal_callbacks;
 LINPHONE_PUBLIC bool_t linphone_core_rtcp_enabled(const LinphoneCore *lc);
 LINPHONE_PUBLIC bool_t linphone_core_symmetric_rtp_enabled(LinphoneCore *lc);
 bool_t _linphone_core_is_conference_creation(const LinphoneCore *lc, const LinphoneAddress *addr);
-LinphoneChatRoom *_linphone_core_create_server_group_chat_room(LinphoneCore *lc, LinphonePrivate::SalCallOp *op);
 
 void linphone_core_queue_task(LinphoneCore *lc,
                               belle_sip_source_func_t task_fun,
@@ -425,6 +423,7 @@ void _linphone_conference_notify_participant_device_is_muted(LinphoneConference 
                                                              bool_t is_muted);
 void _linphone_conference_notify_active_speaker_participant_device(LinphoneConference *conference,
                                                                    const LinphoneParticipantDevice *participant_device);
+void _linphone_conference_notify_full_state_received(LinphoneConference *conference);
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device,
                                                              bool_t is_speaking);
@@ -466,7 +465,6 @@ void linphone_core_notify_alert(LinphoneCore *lc, LinphoneAlert *alert);
 LINPHONE_PUBLIC void linphone_alert_notify_on_terminated(LinphoneAlert *alert);
 
 /*chat*/
-LinphoneChatRoom *_linphone_server_group_chat_room_new(LinphoneCore *core, LinphonePrivate::SalCallOp *op);
 void linphone_chat_room_set_call(LinphoneChatRoom *cr, LinphoneCall *call);
 LinphoneChatRoomCbs *_linphone_chat_room_cbs_new(void);
 void linphone_chat_room_notify_session_state_changed(LinphoneChatRoom *cr,
@@ -664,6 +662,7 @@ SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bo
 SalReason linphone_reason_to_sal(LinphoneReason reason);
 LinphoneReason linphone_reason_from_sal(SalReason reason);
 void linphone_error_info_to_sal(const LinphoneErrorInfo *ei, SalErrorInfo *sei);
+LinphoneErrorInfo *linphone_error_info_clone(const LinphoneErrorInfo *ei);
 
 SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type);
 LinphoneStreamType sal_stream_type_to_linphone(SalStreamType type);
@@ -694,7 +693,7 @@ LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscr
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state);
 void _linphone_event_notify_notify_response(LinphoneEvent *lev);
 LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatus ss);
-int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneContent *body, bool_t notify_err);
+int _linphone_event_send_publish(LinphoneEvent *lev, LinphoneContent *body, bool_t notify_err);
 LINPHONE_PUBLIC bool_t linphone_event_is_out_of_dialog_op(const LinphoneEvent *linphone_event);
 LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *ref, bool parseMultipart = true);
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
@@ -975,9 +974,6 @@ void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height)
 // Account creator functions
 LinphoneAccountCreatorCbs *linphone_account_creator_cbs_new(void);
 void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
-char *linphone_account_creator_get_identity(const LinphoneAccountCreator *creator);
-void linphone_account_creator_fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator);
-const char *linphone_account_creator_get_domain_with_fallback_to_proxy_domain(LinphoneAccountCreator *creator);
 
 LinphoneXmlRpcRequestCbs *linphone_xml_rpc_request_cbs_new(void);
 void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
@@ -1052,6 +1048,38 @@ LINPHONE_PUBLIC LinphoneNatPolicy *linphone_core_create_nat_policy_from_ref(Linp
  * @return A new #LinphoneNatPolicy object. @maybenil
  */
 LINPHONE_PUBLIC LinphoneNatPolicy *linphone_core_create_nat_policy_from_config(LinphoneCore *core, const char *section);
+
+/**
+ * Set the conference start time
+ * @param conference The #LinphoneConference object. @notnil
+ * @param start the conference start time as the number of seconds between the desired start time and the 1st of January
+ * 1970. In order to program an immediate start of a conference, then program the start time to 0
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start);
+
+/**
+ * Get the start time of the conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return start time of a conference as time_t type or 0 for immediate start of a conference. For UNIX based systems it
+ * is the number of seconds since 00:00hours of the 1st of January 1970
+ */
+LINPHONE_PUBLIC time_t linphone_conference_params_get_start_time(const LinphoneConferenceParams *params);
+
+/**
+ * Set the conference end time
+ * @param conference The #LinphoneConference object. @notnil
+ * @param end the conference end time as the number of seconds between the desired end time and the 1st of January 1970.
+ * In order to program an undefined end of a conference, then program the end time to 0
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, time_t end);
+
+/**
+ * Get the end time of the conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return end time of a conference as time_t type or 0 for open end of a conference. For UNIX based systems it is the
+ * number of seconds since 00:00hours of the 1st of January 1970
+ */
+LINPHONE_PUBLIC time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params);
 
 #ifdef __cplusplus
 }

@@ -22,6 +22,8 @@
 #define _L_PLAYER_H_
 
 #include "c-wrapper/c-wrapper.h"
+#include "core/core-accessor.h"
+#include "linphone/callbacks.h"
 
 // =============================================================================
 

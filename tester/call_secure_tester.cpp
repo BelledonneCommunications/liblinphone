@@ -29,6 +29,7 @@
 #include "mediastreamer2/msutils.h"
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-call-log.h"
 #include "linphone/api/c-call-stats.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"

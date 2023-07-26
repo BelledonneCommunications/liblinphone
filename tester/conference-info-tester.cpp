@@ -24,8 +24,9 @@
 #include "conference/conference-info.h"
 #include "core/core-p.h"
 #include "core/core.h"
-
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-call-log.h"
 #include "tester_utils.h"
 
 // =============================================================================

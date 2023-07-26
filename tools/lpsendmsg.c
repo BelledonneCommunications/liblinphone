@@ -25,6 +25,12 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room.h"
 #include "linphone/core.h"
 
 static bool_t running = TRUE;

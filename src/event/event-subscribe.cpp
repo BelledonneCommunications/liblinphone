@@ -22,6 +22,7 @@
 
 #include "core/core.h"
 #include "core_private.h"
+#include "linphone/api/c-event-cbs.h"
 
 // =============================================================================
 
@@ -130,7 +131,8 @@ LinphoneStatus EventSubscribe::send(const std::shared_ptr<const Content> &body) 
 		mOp->setRequestUri(mRequestAddress->asStringUriOnly());
 	}
 
-	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr);
+	const LinphoneContent *cBody = (body && !body->isEmpty()) ? body->toC() : nullptr;
+	body_handler = sal_body_handler_from_content(cBody);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
 	err = subscribeOp->subscribe(mName, mExpires, body_handler);
 	if (err == 0) {
@@ -184,7 +186,8 @@ LinphoneStatus EventSubscribe::notify(const std::shared_ptr<const Content> &body
 		ms_error("EventSubscribe::notify(): cannot notify if not an incoming subscription.");
 		return -1;
 	}
-	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr, false);
+	const LinphoneContent *cBody = (body && !body->isEmpty()) ? body->toC() : nullptr;
+	body_handler = sal_body_handler_from_content(cBody, false);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
 	return subscribeOp->notify(body_handler);
 }

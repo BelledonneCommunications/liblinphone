@@ -20,6 +20,8 @@
 
 #include <bctoolbox/tester.h>
 
+#include "mediastreamer2/msmire.h"
+
 #include "c-wrapper/internal/c-tools.h"
 #include "call/call.h"
 #include "conference/conference-info.h"
@@ -29,7 +31,10 @@
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "liblinphone_tester.h"
-#include "mediastreamer2/msmire.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-participant.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
 #include "shared_tester_functions.h"

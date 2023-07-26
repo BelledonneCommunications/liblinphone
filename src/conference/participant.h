@@ -29,57 +29,44 @@
 #include "address/address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "conference/params/call-session-params.h"
-
-#include "conference/params/call-session-params.h"
 #include "conference/participant-device.h"
 #include "conference/session/call-session-listener.h"
 #include "conference/session/call-session.h"
 
 // =============================================================================
 
-class LocalConferenceTester;
+class ServerConferenceTester;
 
 namespace LinphoneTest {
-class LocalConferenceTester;
+class ServerConferenceTester;
 class ClientConference;
 } // namespace LinphoneTest
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace MediaConference {
-class Conference;
-class LocalConference;
-class RemoteConference;
-} // namespace MediaConference
-
-class ClientGroupChatRoom;
+class ClientChatRoom;
 class Conference;
 
 class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphoneParticipant, Participant> {
 	// TODO: Remove... It's ugly.
 	friend class Call;
-	friend class ClientGroupChatRoom;
-	friend class ClientGroupChatRoomPrivate;
+	friend class ClientChatRoom;
 	friend class Core;
 	friend class CorePrivate;
 	friend class Conference;
-	friend class MediaConference::Conference;
-	friend class MediaConference::LocalConference;
-	friend class MediaConference::RemoteConference;
 	friend class LimeX3dhEncryptionEngine;
-	friend class LocalConference;
-	friend class LocalConferenceEventHandler;
-	friend class LocalConferenceListEventHandler;
+	friend class ServerConference;
+	friend class ServerConferenceEventHandler;
+	friend class ServerConferenceListEventHandler;
 	friend class MainDb;
 	friend class MainDbPrivate;
 	friend class MediaSessionPrivate;
 	friend class ParticipantDevice;
-	friend class RemoteConference;
-	friend class RemoteConferenceEventHandler;
-	friend class ServerGroupChatRoom;
-	friend class ServerGroupChatRoomPrivate;
+	friend class ClientConference;
+	friend class ClientConferenceEventHandler;
+	friend class ServerChatRoom;
 	friend class LinphoneTest::ClientConference;
-	friend class ::LocalConferenceTester;
+	friend class ::ServerConferenceTester;
 
 public:
 	enum class Role {
@@ -91,12 +78,12 @@ public:
 	static std::string roleToText(const Participant::Role &role);
 	static Participant::Role textToRole(const std::string &str);
 
-	explicit Participant(Conference *conference,
+	explicit Participant(const std::shared_ptr<Conference> conference,
 	                     const std::shared_ptr<Address> &address,
 	                     std::shared_ptr<CallSession> callSession);
-	explicit Participant(Conference *conference, const std::shared_ptr<const Address> &address);
-	explicit Participant(
-	    std::shared_ptr<Address> address); // acquires the address, that must be a simple URI without 'gr' parameter.
+	explicit Participant(const std::shared_ptr<Conference> conference, const std::shared_ptr<const Address> &address);
+	// acquires the address, that must be a simple URI without 'gr' parameter.
+	explicit Participant(std::shared_ptr<Address> address);
 	Participant() = default;
 	virtual ~Participant();
 	// non clonable object
@@ -104,7 +91,7 @@ public:
 		return nullptr;
 	}
 
-	void configure(Conference *conference, const std::shared_ptr<const Address> &address);
+	void configure(const std::shared_ptr<Conference> conference, const std::shared_ptr<const Address> &address);
 
 	const std::shared_ptr<Address> &getAddress() const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel() const;
@@ -112,7 +99,7 @@ public:
 	getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ignoredDevice) const;
 
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices() const;
-	std::shared_ptr<ParticipantDevice> findDevice(const std::shared_ptr<Address> &address,
+	std::shared_ptr<ParticipantDevice> findDevice(const std::shared_ptr<const Address> &address,
 	                                              const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDevice(const std::shared_ptr<const CallSession> &session,
 	                                              const bool logFailure = true) const;
@@ -122,9 +109,7 @@ public:
 	                                                      const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const;
 
-	inline void setAdmin(bool isAdmin) {
-		this->isThisAdmin = isAdmin;
-	}
+	void setAdmin(bool isAdmin);
 	bool isAdmin() const;
 
 	inline void setFocus(bool isFocus) {
@@ -147,8 +132,8 @@ public:
 
 protected:
 	std::shared_ptr<Core> getCore() const;
-	Conference *getConference() const;
-	void setConference(Conference *conference);
+	std::shared_ptr<Conference> getConference() const;
+	void setConference(const std::shared_ptr<Conference> conference);
 
 	std::shared_ptr<CallSession> createSession(const Conference &conference,
 	                                           const CallSessionParams *params,
@@ -173,15 +158,16 @@ protected:
 	void setAddress(const std::shared_ptr<Address> &addr);
 
 	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<ParticipantDevice> &device);
-	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<LinphonePrivate::CallSession> &session,
+	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<CallSession> &session,
 	                                             const std::string &name = "");
-	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<Address> &gruu, const std::string &name = "");
+	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<const Address> &gruu,
+	                                             const std::string &name = "");
 	void clearDevices();
 	void removeDevice(const std::shared_ptr<Address> &gruu);
 	void removeDevice(const std::shared_ptr<const CallSession> &session);
 
 private:
-	Conference *mConference = nullptr;
+	std::weak_ptr<Conference> mConference;
 	std::shared_ptr<Address> addr;
 	bool isThisAdmin = false;
 	bool isThisFocus = false;

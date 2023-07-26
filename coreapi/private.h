@@ -57,7 +57,7 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "linphone/conference.h"
+#include "linphone/api/c-conference.h"
 
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/call-op.h"

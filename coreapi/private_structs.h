@@ -538,7 +538,6 @@ class Core;
 	LinphoneImEncryptionEngine *im_encryption_engine;                                                                  \
 	struct _LinphoneAccountCreatorService *default_ac_service;                                                         \
 	MSBandwidthController *bw_controller;                                                                              \
-	bctbx_list_t *chat_rooms;                                                                                          \
 	bctbx_list_t *supported_encryptions;                                                                               \
 	bctbx_list_t *callsCache;                                                                                          \
 	bool_t dns_set_by_app;                                                                                             \

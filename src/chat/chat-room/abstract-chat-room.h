@@ -23,34 +23,39 @@
 
 #include <bctoolbox/defs.h>
 
-#include "linphone/utils/enum-mask.h"
+#include "belle-sip/object++.hh"
 
 #include "chat/chat-message/chat-message.h"
+#include "chat/chat-room/chat-room-cbs.h"
 #include "conference/conference-interface.h"
+#include "conference/session/call-session-listener.h"
 #include "core/core-accessor.h"
+#include "linphone/utils/enum-mask.h"
 
 // =============================================================================
 
+L_DECL_C_STRUCT_PREFIX_LESS(SalMessage);
+
 LINPHONE_BEGIN_NAMESPACE
 
-class AbstractChatRoomPrivate;
+class Imdn;
 class ConferenceId;
+class ConferenceParams;
 class EventLog;
-class ChatRoomParams;
 
-class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, public ConferenceInterface {
+class LINPHONE_PUBLIC AbstractChatRoom : public bellesip::HybridObject<LinphoneChatRoom, AbstractChatRoom>,
+                                         public CallbacksHolder<ChatRoomCbs>,
+                                         public ConferenceListenerInterface,
+                                         public CoreAccessor,
+                                         public UserDataAccessor {
 	friend class Call;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
-	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class Core;
 	friend class CorePrivate;
 	friend class MainDb;
-	friend class ProxyChatRoomPrivate;
 
 public:
-	L_OVERRIDE_SHARED_FROM_THIS(AbstractChatRoom);
-
 	/*enum class is used to create namespaces for Enums
 	  doing this prevents the compiler to confuse members from different Enums with same name.
 	    i.e. "None" for the "State" Enum and "None" from the Capabilities Enum */
@@ -133,6 +138,7 @@ public:
 	virtual void compose() = 0;
 	virtual bool isRemoteComposing() const = 0;
 	virtual std::list<std::shared_ptr<Address>> getComposingAddresses() const = 0;
+	const bctbx_list_t *getComposingCAddresses() const;
 
 	virtual std::shared_ptr<ChatMessage> createChatMessage() = 0;
 	virtual std::shared_ptr<ChatMessage> createChatMessage(const std::string &text) = 0;
@@ -159,30 +165,77 @@ public:
 	virtual AbstractChatRoom::EphemeralMode getEphemeralMode() const = 0;
 	virtual bool ephemeralSupportedByAllParticipants() const = 0;
 
-	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
+	virtual const std::shared_ptr<ConferenceParams> &getCurrentParams() const = 0;
 
-	virtual bool update(BCTBX_UNUSED(const ConferenceParamsInterface &newParameters)) override {
-		return false;
-	};
+	virtual bool isSubscriptionUnderWay() const = 0;
+
+	virtual bool isMe(const std::shared_ptr<Address> &address) const = 0;
+	virtual const std::shared_ptr<Participant> getMe() const = 0;
+
+	virtual const std::shared_ptr<Address> getConferenceAddress() const = 0;
+	virtual const std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &address) const = 0;
+	virtual const std::list<std::shared_ptr<Participant>> getParticipants() const = 0;
 
 	virtual bool canHandleParticipants() const = 0;
 	virtual std::shared_ptr<Conference> getConference() const = 0;
+	virtual const ConferenceId &getConferenceId() const = 0;
+
+	virtual ConferenceInterface::State getState() const = 0;
+	virtual void setState(ConferenceInterface::State newState) = 0;
+
+	virtual const std::string &getSubject() const = 0;
+	virtual void setSubject(const std::string &subject) = 0;
+	virtual void setUtf8Subject(const std::string &subject) = 0;
 
 	virtual uint32_t getChar() = 0;
 	virtual std::shared_ptr<Call> getCall() const = 0;
 
-	virtual void setUtf8Subject(const std::string &subject) override;
-
-	virtual bool isMe(const std::shared_ptr<Address> &address) const = 0;
-
 	virtual bool getIsMuted() const = 0;
 	virtual void setIsMuted(const bool muted) = 0;
 
+	virtual void setCreationTime(time_t creationTime) = 0;
+	virtual void setLastUpdateTime(time_t lastUpdateTime) = 0;
+
+	virtual void sendChatMessage(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void onChatMessageSent(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+
+	virtual void addEvent(const std::shared_ptr<EventLog> &eventLog) = 0;
+
+	virtual void addTransientEvent(const std::shared_ptr<EventLog> &eventLog) = 0;
+	virtual void removeTransientEvent(const std::shared_ptr<EventLog> &eventLog) = 0;
+
+	virtual void sendDeliveryNotifications(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+
+	virtual void notifyChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+	virtual void notifyUndecryptableChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+
+	virtual LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *message) = 0;
+	virtual void onChatMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+
+	virtual void addTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;
+	virtual void removeTransientChatMessage(const std::shared_ptr<ChatMessage> &message) = 0;
+	virtual std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages() = 0;
+
+	virtual void setIsEmpty(const bool empty) = 0;
+
+	virtual void realtimeTextReceived(uint32_t character, const std::shared_ptr<Call> &call) = 0;
+	virtual void setCallId(const std::string &value) = 0;
+
+	virtual void notifyAggregatedChatMessages() = 0;
+
+	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+
+	virtual void addCapability(AbstractChatRoom::CapabilitiesMask capability) = 0;
+
+	virtual Imdn *getImdnHandler() const = 0;
+
 protected:
-	explicit AbstractChatRoom(AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
+	explicit AbstractChatRoom(const std::shared_ptr<Core> &core);
+	virtual ~AbstractChatRoom();
 
 private:
-	L_DECLARE_PRIVATE(AbstractChatRoom);
+	mutable bctbx_list_t *composingCAddresses = nullptr;
+
 	L_DISABLE_COPY(AbstractChatRoom);
 };
 

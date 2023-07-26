@@ -18,12 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <array>
+
 #include "bctoolbox/crypto.h"
+
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
 #include "linphone/core.h"
 #include "linphone/wrapper_utils.h"
 #include "tester_utils.h"
-#include <array>
 
 // enum the different methods for the client to retrieve the certificate
 enum class certProvider {

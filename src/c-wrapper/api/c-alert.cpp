@@ -22,6 +22,7 @@
 #include "alert/alert.h"
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-alert-cbs.h"
+
 using namespace LinphonePrivate;
 
 const char *linphone_alert_type_to_string(LinphoneAlertType type) {

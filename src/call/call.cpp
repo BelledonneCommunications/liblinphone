@@ -22,8 +22,8 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "call.h"
-#include "chat/chat-room/abstract-chat-room-p.h"
-#include "conference.h"
+#include "chat/chat-room/abstract-chat-room.h"
+#include "conference/client-conference.h"
 #include "conference/conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
@@ -33,7 +33,6 @@
 #include "factory/factory.h"
 #include "logger/logger.h"
 #include "player/call-player.h"
-#include "remote_conference.h"
 #include "sal/sal_media_description.h"
 
 // =============================================================================
@@ -52,7 +51,7 @@ shared_ptr<AbstractChatRoom> Call::getChatRoom() {
 		mChatRoom = getCore()->getOrCreateBasicChatRoom(getLocalAddress(), getRemoteAddress());
 		if (mChatRoom) {
 			lInfo() << "Setting call id [" << getLog()->getCallId() << "] to ChatRoom [" << mChatRoom << "]";
-			mChatRoom->getPrivate()->setCallId(getLog()->getCallId());
+			mChatRoom->setCallId(getLog()->getCallId());
 		}
 	}
 	return mChatRoom;
@@ -267,7 +266,7 @@ void Call::createPlayer() {
 
 // -----------------------------------------------------------------------------
 void Call::terminateBecauseOfLostMedia() {
-	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->toString()
+	lInfo() << "Call [" << this << "]: Media connectivity with " << *getRemoteAddress()
 	        << " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
 }
@@ -312,7 +311,7 @@ bool Call::setOutputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audio
 
 void Call::cleanupSessionAndUnrefCObjectCall() {
 	auto session = getActiveSession();
-	if (session) session->getPrivate()->setCallSessionListener(nullptr);
+	if (session) session->removeListener(this);
 	linphone_call_unref(this->toC());
 }
 
@@ -399,7 +398,7 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 	const auto op = session->getPrivate()->getOp();
 
 	bool remoteContactIsFocus = false;
-	std::shared_ptr<MediaConference::Conference> conference = nullptr;
+	std::shared_ptr<Conference> conference = nullptr;
 	if (op) {
 		if (op->getRemoteContactAddress()) {
 			Address remoteContactAddress;
@@ -409,7 +408,7 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 
 		if (!op->getTo().empty()) {
 			const auto to = Address::create(op->getTo());
-			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(to, to));
+			conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
 		}
 	}
 
@@ -466,8 +465,8 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 					} else if (!confId.empty()) {
 						auto localAddress = session->getContactAddress();
 						if (localAddress && localAddress->isValid()) {
-							ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
-							conference = getCore()->findAudioVideoConference(localConferenceId, false);
+							ConferenceId serverConferenceId = ConferenceId(localAddress, localAddress);
+							conference = getCore()->findConference(serverConferenceId, false);
 							if (conference) {
 								setConference(conference);
 								reenterLocalConference(session);
@@ -487,8 +486,7 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 	linphone_call_notify_state_changed(this->toC(), static_cast<LinphoneCallState>(state), message.c_str());
 }
 
-void Call::tryToAddToConference(shared_ptr<MediaConference::Conference> &conference,
-                                const shared_ptr<CallSession> &session) {
+void Call::tryToAddToConference(shared_ptr<Conference> &conference, const shared_ptr<CallSession> &session) {
 	// If the call is for a conference stored in the core, then add call to conference once ICE negotiations are
 	// terminated
 	if (!mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()),
@@ -516,83 +514,36 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	remoteContactAddress->setImpl(op->getRemoteContactAddress());
 	ConferenceId conferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 
-	const auto &conference = getCore()->findAudioVideoConference(conferenceId, false);
+	const auto &conference = getCore()->findConference(conferenceId, false);
 
-	std::shared_ptr<MediaConference::RemoteConference> remoteConference = nullptr;
+	std::shared_ptr<ClientConference> clientConference = nullptr;
 
 	if (conference) {
+		const auto &conferenceAddress = conference->getConferenceAddress();
+		const auto conferenceAddressStr =
+		    (conferenceAddress ? conferenceAddress->toString() : std::string("<address-not-defined>"));
 		lInfo() << "Attaching call (local address " << *session->getLocalAddress() << " remote address "
-		        << *session->getRemoteAddress() << ") to conference " << *conference->getConferenceAddress() << " ID "
-		        << conferenceId;
-		remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
-		if (remoteConference) {
-			remoteConference->setMainSession(session);
+		        << *session->getRemoteAddress() << ") to conference " << conference << " (address "
+		        << conferenceAddressStr << ") ID " << conferenceId;
+		clientConference = dynamic_pointer_cast<ClientConference>(conference);
+		if (clientConference) {
+			clientConference->setMainSession(session);
+			clientConference->setConferenceAddress(remoteContactAddress);
 		}
 	} else {
 		auto confParams = ConferenceParams::create(getCore()->getCCore());
-		std::shared_ptr<ConferenceInfo> conferenceInfo =
-#ifdef HAVE_DB_STORAGE
-		    getCore()->getPrivate()->mainDb
-		        ? getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(remoteContactAddress)
-		        :
-#endif
-		        nullptr;
-
-#ifdef HAVE_ADVANCED_IM
-		const auto op = session->getPrivate()->getOp();
-		const auto &sipfrag = op->getContentInRemote(ContentType::SipFrag);
-		const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
-#endif
-		if (conferenceInfo) {
-			confParams->setUtf8Subject(conferenceInfo->getUtf8Subject());
-			auto startTime = conferenceInfo->getDateTime();
-			confParams->setStartTime(startTime);
-			auto duration = conferenceInfo->getDuration();
-			if (duration > 0) {
-				// duration is in minutes therefore convert it to seconds by multiplying it by 60
-				time_t endTime = startTime + static_cast<time_t>(duration) * 60;
-				confParams->setEndTime(endTime);
-			}
-			auto invitees = conferenceInfo->getParticipants();
-			const auto &organizer = conferenceInfo->getOrganizer();
-			invitees.push_back(organizer);
-
-			const std::shared_ptr<Address> confAddr = conferenceInfo->getUri();
-			const ConferenceId confId(confAddr, session->getLocalAddress());
-			remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-			    (new MediaConference::RemoteConference(getCore(), confId.getLocalAddress(), nullptr, confParams))
-			        ->toSharedPtr());
-			remoteConference->initWithInvitees(confAddr, confAddr, session, invitees, confId);
-#ifdef HAVE_ADVANCED_IM
-		} else if (resourceList || sipfrag) {
-			const auto &remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
-			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
-			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
-			auto invitees = Utils::parseResourceLists(resourceList);
-			string organizer;
-			if (sipfrag) organizer = Utils::getSipFragAddress(sipfrag.value());
-			auto organizerInfo = Factory::get()->createParticipantInfo(Address::create(organizer));
-			invitees.push_back(organizerInfo);
-			remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-			    (new MediaConference::RemoteConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))
-			        ->toSharedPtr());
-			remoteConference->initWithInvitees(remoteContactAddress, remoteContactAddress, session, invitees,
-			                                   conferenceId);
-#endif // HAVE_ADVANCED_IM
-		} else {
-			const auto &remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
-			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
-			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
-			ConferenceInfo::participant_list_t invitees;
-			// It is expected that the core of the remote conference is the participant one
-			remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
-			    (new MediaConference::RemoteConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))
-			        ->toSharedPtr());
-			remoteConference->initWithInvitees(getSharedFromThis(), invitees, conferenceId);
+		std::shared_ptr<SalMediaDescription> md = (op) ? op->getFinalMediaDescription() : nullptr;
+		if (md) {
+			confParams->enableAudio(md->nbActiveStreamsOfType(SalAudio) > 0);
+			confParams->enableVideo(md->nbActiveStreamsOfType(SalVideo) > 0);
 		}
+
+		clientConference = dynamic_pointer_cast<ClientConference>(
+		    (new ClientConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))->toSharedPtr());
+		clientConference->initWithFocus(remoteContactAddress, session, op);
 	}
 
-	setConference(remoteConference);
+	setConference(clientConference);
 
 	// Record conf-id to be used later when terminating the remote conference
 	if (remoteContactAddress->hasUriParam("conf-id")) {
@@ -761,16 +712,11 @@ bool Call::isPlayingRingbackTone(BCTBX_UNUSED(const shared_ptr<CallSession> &ses
 	return mPlayingRingbackTone;
 }
 
-std::shared_ptr<MediaConference::Conference>
-Call::getCallSessionConference(BCTBX_UNUSED(const shared_ptr<CallSession> &session)) const {
-	return getConference();
-}
-
 void Call::onRealTimeTextCharacterReceived(BCTBX_UNUSED(const shared_ptr<CallSession> &session),
                                            RealtimeTextReceivedCharacter *data) {
 	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
 	if (chatRoom) {
-		chatRoom->getPrivate()->realtimeTextReceived(data->character, getSharedFromThis());
+		chatRoom->realtimeTextReceived(data->character, getSharedFromThis());
 	} else {
 		lError() << "CallPrivate::onRealTimeTextCharacterReceived: no chatroom.";
 	}
@@ -826,9 +772,6 @@ Call::Call(std::shared_ptr<Core> core, LinphoneCallDir direction, const string &
 	mParticipant = Participant::create();
 	mParticipant->createSession(getCore(), nullptr, TRUE, this);
 	mParticipant->getSession()->configure(direction, callid);
-}
-
-Call::~Call() {
 }
 
 void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
@@ -1340,11 +1283,11 @@ void Call::onAlertNotified(std::shared_ptr<Alert> &alert) {
 
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<MediaConference::Conference> Call::getConference() const {
-	return mConfRef;
+std::shared_ptr<Conference> Call::getConference() const {
+	return mConfRef.lock();
 }
 
-void Call::setConference(std::shared_ptr<MediaConference::Conference> ref) {
+void Call::setConference(std::shared_ptr<Conference> ref) {
 	mConfRef = ref;
 }
 

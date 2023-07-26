@@ -120,7 +120,7 @@ SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfigu
 	return *this;
 }
 
-bool SalStreamConfiguration::isRecvOnly(const PayloadType *p) {
+bool SalStreamConfiguration::isRecvOnly(const OrtpPayloadType *p) {
 	return (p->flags & PAYLOAD_TYPE_FLAG_CAN_RECV) && !(p->flags & PAYLOAD_TYPE_FLAG_CAN_SEND);
 }
 
@@ -336,7 +336,7 @@ SalStreamDir SalStreamConfiguration::getDirection() const {
 	return dir;
 }
 
-const std::list<PayloadType *> &SalStreamConfiguration::getPayloads() const {
+const std::list<OrtpPayloadType *> &SalStreamConfiguration::getPayloads() const {
 	return payloads;
 }
 
@@ -464,7 +464,7 @@ std::string SalStreamConfiguration::cryptoToSdpValue(const SalSrtpCryptoAlgo &cr
 	return sdpValue;
 }
 
-void SalStreamConfiguration::replacePayloads(const std::list<PayloadType *> &newPayloads) {
+void SalStreamConfiguration::replacePayloads(const std::list<OrtpPayloadType *> &newPayloads) {
 	PayloadTypeHandler::clearPayloadList(payloads);
 	for (const auto &pt : newPayloads) {
 		payloads.push_back(payload_type_clone(pt));

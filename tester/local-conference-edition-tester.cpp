@@ -19,6 +19,13 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-conference-info.h"
+#include "linphone/api/c-conference-params.h"
+#include "linphone/api/c-conference-scheduler.h"
+#include "linphone/api/c-participant-info.h"
+#include "linphone/api/c-participant.h"
+#include "linphone/chat.h"
 #include "local-conference-tester-functions.h"
 #include "shared_tester_functions.h"
 
@@ -110,7 +117,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		char *conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
@@ -327,10 +334,10 @@ static void edit_simple_conference_base(bool_t from_organizer,
 				                             (no_streams_running - 1), liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning,
 				                             no_streams_running, liblinphone_tester_sip_timeout));
-				// Update to add to conference.
-				// If ICE is enabled, the addition to a conference may go through a resume of the call
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated,
-				                             ((mgr == marie.getCMgr()) ? 3 : 2), liblinphone_tester_sip_timeout));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated,
+				                             ((mgr == marie.getCMgr()) ? 2 : 1), liblinphone_tester_sip_timeout));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(
 				    wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
@@ -1024,7 +1031,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		const char *subject = "Test characters: <S-F12><S-F11><S-F6> £$%§ (+edits)";
@@ -1296,7 +1303,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		char *uid = NULL;

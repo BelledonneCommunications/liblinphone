@@ -21,6 +21,11 @@
 #include <bctoolbox/defs.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/api/c-digest-authentication-policy.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
 

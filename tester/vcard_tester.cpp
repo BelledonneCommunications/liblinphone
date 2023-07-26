@@ -27,6 +27,7 @@
 #include <bctoolbox/map.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
 #include "vcard/carddav-context.h"

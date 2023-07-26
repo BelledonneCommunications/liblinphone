@@ -21,6 +21,8 @@
 #ifndef _L_XML_PARSING_CONTEXT_H_
 #define _L_XML_PARSING_CONTEXT_H_
 
+#include <libxml/xpath.h>
+
 #include "c-wrapper/c-wrapper.h"
 
 // =============================================================================

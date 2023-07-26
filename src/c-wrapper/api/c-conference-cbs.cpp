@@ -19,7 +19,7 @@
  */
 
 #include "linphone/api/c-conference-cbs.h"
-#include "conference.h"
+#include "conference/conference.h"
 
 #include "c-wrapper/c-wrapper.h"
 
@@ -212,4 +212,14 @@ linphone_conference_cbs_get_active_speaker_participant_device(const LinphoneConf
 void linphone_conference_cbs_set_active_speaker_participant_device(
     LinphoneConferenceCbs *cbs, LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb cb) {
 	ConferenceCbs::toCpp(cbs)->activeSpeakerParticipantDeviceCb = cb;
+}
+
+LinphoneConferenceCbsFullStateReceivedCb
+linphone_conference_cbs_get_full_state_received(const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->fullStateReceivedCb;
+}
+
+void linphone_conference_cbs_set_full_state_received(LinphoneConferenceCbs *cbs,
+                                                     LinphoneConferenceCbsFullStateReceivedCb cb) {
+	ConferenceCbs::toCpp(cbs)->fullStateReceivedCb = cb;
 }

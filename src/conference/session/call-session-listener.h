@@ -23,9 +23,9 @@
 
 #include <bctoolbox/defs.h>
 
-#include "conference/session/call-session.h"
-
 #include <mediastreamer2/msrtt4103.h>
+
+#include "conference/session/call-session.h"
 
 // =============================================================================
 
@@ -50,8 +50,7 @@ public:
 	}
 	virtual void onCallSessionAccepting(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 	}
-	virtual bool onCallSessionAccepted(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
-		return false;
+	virtual void onCallSessionAccepted(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 	}
 	virtual void onCallSessionEarlyFailed(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
 	                                      BCTBX_UNUSED(LinphoneErrorInfo *ei)) {
@@ -146,10 +145,6 @@ public:
 	}
 	virtual bool isPlayingRingbackTone(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
 		return false;
-	}
-	virtual std::shared_ptr<MediaConference::Conference>
-	getCallSessionConference(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) const {
-		return nullptr;
 	}
 
 	virtual void onRealTimeTextCharacterReceived(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),

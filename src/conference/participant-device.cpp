@@ -49,7 +49,7 @@ ParticipantDevice::ParticipantDevice() {
 }
 
 ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
-                                     const std::shared_ptr<LinphonePrivate::CallSession> &session,
+                                     const std::shared_ptr<CallSession> &session,
                                      const std::string &name)
     : mParticipant(participant), mGruu(Address::create(participant->getAddress()->getUri())), mName(name),
       mSession(session) {
@@ -61,7 +61,7 @@ ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
 }
 
 ParticipantDevice::ParticipantDevice(std::shared_ptr<Participant> participant,
-                                     const std::shared_ptr<Address> &gruu,
+                                     const std::shared_ptr<const Address> &gruu,
                                      const std::string &name)
     : mParticipant(participant), mGruu(Address::create(gruu->getUri())), mName(name) {
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
@@ -77,7 +77,7 @@ bool ParticipantDevice::operator==(const ParticipantDevice &device) const {
 	return (*getAddress() == *device.getAddress());
 }
 
-Conference *ParticipantDevice::getConference() const {
+std::shared_ptr<Conference> ParticipantDevice::getConference() const {
 	return getParticipant() ? getParticipant()->getConference() : nullptr;
 }
 
@@ -111,9 +111,18 @@ std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
 	return participant;
 }
 
+void ParticipantDevice::clearChangingSubscribeEvent() {
+	mChangingSubscribeEvent = false;
+}
+
+bool ParticipantDevice::isChangingSubscribeEvent() const {
+	return mChangingSubscribeEvent;
+}
+
 void ParticipantDevice::setConferenceSubscribeEvent(const shared_ptr<EventSubscribe> &ev) {
 	if (ev) ev->ref();
 	if (mConferenceSubscribeEvent) {
+		mChangingSubscribeEvent = true;
 		mConferenceSubscribeEvent->unref();
 		mConferenceSubscribeEvent = nullptr;
 	}
@@ -319,7 +328,7 @@ bool ParticipantDevice::enableScreenSharing(bool enabled) {
 		mIsScreenSharing = enabled;
 		if (mSession && mSession->getPrivate()->isInConference()) {
 			if (enabled) {
-				char label[LinphonePrivate::Conference::labelLength];
+				char label[LinphonePrivate::Conference::sLabelLength];
 				belle_sip_random_token(label, sizeof(label));
 				setLabel(label, LinphoneStreamTypeVideo);
 			} else {
@@ -379,11 +388,12 @@ bool ParticipantDevice::setLabel(const std::string &streamLabel, const LinphoneS
 	const bool idxFound = (streams.find(type) != streams.cend());
 	if (!idxFound || (streams[type].label != streamLabel)) {
 		auto conference = getConference();
+		const auto conferenceAddress =
+		    ((conference && conference->getConferenceAddress()) ? conference->getConferenceAddress()->toString()
+		                                                        : std::string("sip:unknown"));
 		lInfo() << "Setting label of " << std::string(linphone_stream_type_to_string(type))
 		        << " stream of participant device " << this << " (address " << *getAddress() << ") in conference "
-		        << (conference->getConferenceAddress() ? conference->getConferenceAddress()->toString()
-		                                               : std::string("sip:unknown"))
-		        << " to " << streamLabel;
+		        << conferenceAddress << " to " << streamLabel;
 		streams[type].label = streamLabel;
 		return true;
 	}
@@ -451,8 +461,8 @@ LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const Li
 	auto isInLocalConference = false;
 	if (mSession) {
 		isInLocalConference = mSession->getPrivate()->isInConference();
-		const auto mMediaSession = static_pointer_cast<MediaSession>(mSession);
-		if (sessionNotEstablished) {
+		const auto mMediaSession = dynamic_pointer_cast<MediaSession>(mSession);
+		if (mMediaSession && sessionNotEstablished) {
 			if (mSession->getPrivate()->isInConference()) {
 				participantParams = mMediaSession->getRemoteParams();
 			} else {
@@ -553,9 +563,9 @@ std::set<LinphoneStreamType> ParticipantDevice::updateMediaCapabilities() {
 	if (conference) {
 		const auto &isMe = conference->isMe(getAddress());
 		const auto &conferenceParams = conference->getCurrentParams();
-		const auto &conferenceAudioEnabled = conferenceParams.audioEnabled();
-		const auto &conferenceVideoEnabled = conferenceParams.videoEnabled();
-		const auto &conferenceTextEnabled = conferenceParams.chatEnabled();
+		const auto &conferenceAudioEnabled = conferenceParams->audioEnabled();
+		const auto &conferenceVideoEnabled = conferenceParams->videoEnabled();
+		const auto &conferenceTextEnabled = conferenceParams->chatEnabled();
 		auto audioEnabled = false;
 		auto videoEnabled = false;
 		auto textEnabled = false;
@@ -594,26 +604,29 @@ std::set<LinphoneStreamType> ParticipantDevice::updateMediaCapabilities() {
 			// different than those the client requested. For example if the video will be inactive if all clients are
 			// RecvOnly and their layout is Grid but as soon as one toggles the video direction to SendRecv, then
 			// everybody should be able to get stream in
-			auto mMediaSession = static_pointer_cast<MediaSession>(mSession);
-			bool isInConference = mSession->getPrivate()->isInConference();
-			const MediaSessionParams *participantParams =
-			    (isInConference) ? mMediaSession->getRemoteParams() : mMediaSession->getMediaParams();
-			if (participantParams) {
-				audioEnabled = participantParams->audioEnabled();
-				videoEnabled = participantParams->videoEnabled();
-				textEnabled = participantParams->realtimeTextEnabled();
-				audioDir = getStreamDirectionFromSession(LinphoneStreamTypeAudio);
-				videoDir = getStreamDirectionFromSession(LinphoneStreamTypeVideo);
-				textDir = getStreamDirectionFromSession(LinphoneStreamTypeText);
-				thumbnailDir = mMediaSession->getDirectionOfStream(MediaSessionPrivate::ThumbnailVideoContentAttribute);
-			}
+			auto mMediaSession = dynamic_pointer_cast<MediaSession>(mSession);
+			if (mMediaSession) {
+				bool isInConference = mSession->getPrivate()->isInConference();
+				const MediaSessionParams *participantParams =
+				    (isInConference) ? mMediaSession->getRemoteParams() : mMediaSession->getMediaParams();
+				if (participantParams) {
+					audioEnabled = participantParams->audioEnabled();
+					videoEnabled = participantParams->videoEnabled();
+					textEnabled = participantParams->realtimeTextEnabled();
+					audioDir = getStreamDirectionFromSession(LinphoneStreamTypeAudio);
+					videoDir = getStreamDirectionFromSession(LinphoneStreamTypeVideo);
+					textDir = getStreamDirectionFromSession(LinphoneStreamTypeText);
+					thumbnailDir =
+					    mMediaSession->getDirectionOfStream(MediaSessionPrivate::ThumbnailVideoContentAttribute);
+				}
 
-			updateSsrc = isInConference;
-			if (isInConference) {
-				audioSsrc = mMediaSession->getSsrc(LinphoneStreamTypeAudio);
-				videoSsrc = mMediaSession->getSsrc(LinphoneStreamTypeVideo);
-				thumbnailSsrc = mMediaSession->getSsrc(MediaSessionPrivate::ThumbnailVideoContentAttribute);
-				textSsrc = mMediaSession->getSsrc(LinphoneStreamTypeText);
+				updateSsrc = isInConference;
+				if (isInConference) {
+					audioSsrc = mMediaSession->getSsrc(LinphoneStreamTypeAudio);
+					videoSsrc = mMediaSession->getSsrc(LinphoneStreamTypeVideo);
+					thumbnailSsrc = mMediaSession->getSsrc(MediaSessionPrivate::ThumbnailVideoContentAttribute);
+					textSsrc = mMediaSession->getSsrc(LinphoneStreamTypeText);
+				}
 			}
 		}
 		resultAudioDir = computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir);
@@ -671,27 +684,27 @@ std::set<LinphoneStreamType> ParticipantDevice::updateStreamAvailabilities() {
 	const auto &conference = getConference();
 	std::set<LinphoneStreamType> streamAvailabilityChanged;
 
-	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
 	if (conference) {
 		const auto &conferenceParams = conference->getCurrentParams();
-		const auto &conferenceAudioEnabled = conferenceParams.audioEnabled();
-		const auto &conferenceVideoEnabled = conferenceParams.videoEnabled();
-		const auto &conferenceTextEnabled = conferenceParams.chatEnabled();
+		const auto &conferenceAudioEnabled = conferenceParams->audioEnabled();
+		const auto &conferenceVideoEnabled = conferenceParams->videoEnabled();
+		const auto &conferenceTextEnabled = conferenceParams->chatEnabled();
+		const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
 		if (session) {
 			auto audioEnabled = false;
 			auto videoEnabled = false;
 			auto textEnabled = false;
-			auto ms = static_pointer_cast<MediaSession>(session);
+			auto mMediaSession = dynamic_pointer_cast<MediaSession>(session);
 			const auto isInLocalConference = session->getPrivate()->isInConference();
-			if (isInLocalConference && conferenceParams.localParticipantEnabled()) {
+			if (isInLocalConference && conferenceParams->localParticipantEnabled()) {
 				if (conference->isMe(getAddress())) {
 					audioEnabled = conferenceAudioEnabled;
 					videoEnabled = conferenceVideoEnabled;
 					textEnabled = conferenceTextEnabled;
 				} else {
 					std::shared_ptr<ParticipantDevice> meDev = nullptr;
-					if (conferenceParams.getAccount()) {
-						const auto &devAddr = conferenceParams.getAccount()->getContactAddress();
+					if (conferenceParams->getAccount()) {
+						const auto &devAddr = conferenceParams->getAccount()->getContactAddress();
 						if (devAddr) {
 							meDev = conference->getMe()->findDevice(devAddr);
 						}
@@ -708,11 +721,14 @@ std::set<LinphoneStreamType> ParticipantDevice::updateStreamAvailabilities() {
 				// are different than those the client requested. For example the video will be inactive if all
 				// clients are RecvOnly and their layout is Grid but as soon as one toggles the video direction to
 				// SendRecv, then everybody should be able to get stream in
-				const MediaSessionParams *params = (isInLocalConference) ? ms->getRemoteParams() : ms->getMediaParams();
-				if (params) {
-					audioEnabled = params->audioEnabled();
-					videoEnabled = params->videoEnabled();
-					textEnabled = params->realtimeTextEnabled();
+				if (mMediaSession) {
+					const MediaSessionParams *params =
+					    (isInLocalConference) ? mMediaSession->getRemoteParams() : mMediaSession->getMediaParams();
+					if (params) {
+						audioEnabled = params->audioEnabled();
+						videoEnabled = params->videoEnabled();
+						textEnabled = params->realtimeTextEnabled();
+					}
 				}
 			}
 			if (setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, audioEnabled,
@@ -732,7 +748,8 @@ std::set<LinphoneStreamType> ParticipantDevice::updateStreamAvailabilities() {
 			// the participants
 			bool videoRequested =
 			    (thumbnailRequested ||
-			     (conference->isMe(getAddress()) && (isInLocalConference || ms->getMediaParams()->rtpBundleEnabled())));
+			     (conference->isMe(getAddress()) &&
+			      (isInLocalConference || (mMediaSession && mMediaSession->getMediaParams()->rtpBundleEnabled()))));
 			if (setThumbnailStreamAvailability(
 			        videoRequested &&
 			        computeStreamAvailable(conferenceVideoEnabled, videoEnabled, getThumbnailStreamCapability()))) {
@@ -743,7 +760,7 @@ std::set<LinphoneStreamType> ParticipantDevice::updateStreamAvailabilities() {
 			                          LinphoneStreamTypeText)) {
 				streamAvailabilityChanged.insert(LinphoneStreamTypeText);
 			}
-		} else if (conference->isMe(getAddress()) && conferenceParams.localParticipantEnabled()) {
+		} else if (conference->isMe(getAddress()) && conferenceParams->localParticipantEnabled()) {
 			if (setStreamAvailability(computeStreamAvailable(conferenceAudioEnabled, conferenceAudioEnabled,
 			                                                 getStreamCapability(LinphoneStreamTypeAudio)),
 			                          LinphoneStreamTypeAudio)) {

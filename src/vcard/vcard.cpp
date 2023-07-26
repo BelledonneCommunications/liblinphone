@@ -21,6 +21,7 @@
 #include <bctoolbox/defs.h>
 
 #include "friend/friend-phone-number.h"
+#include "sal/sal.h"
 #include "vcard.h"
 
 // =============================================================================

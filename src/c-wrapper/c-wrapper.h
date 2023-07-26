@@ -133,9 +133,6 @@ LINPHONE_END_NAMESPACE
 
 #include "internal/c-tools.h"
 
-// TODO: From coreapi. Remove me later.
-#include "private_functions.h"
-
 // =============================================================================
 // Declare exported C types.
 // =============================================================================
@@ -155,11 +152,9 @@ LINPHONE_END_NAMESPACE
 
 #define L_REGISTER_SUBTYPES(F)                                                                                         \
 	F(AbstractChatRoom, BasicChatRoom)                                                                                 \
-	F(AbstractChatRoom, BasicToClientGroupChatRoom)                                                                    \
 	F(AbstractChatRoom, ChatRoom)                                                                                      \
-	F(AbstractChatRoom, ClientGroupChatRoom)                                                                           \
-	F(AbstractChatRoom, ClientGroupToBasicChatRoom)                                                                    \
-	F(AbstractChatRoom, ServerGroupChatRoom)                                                                           \
+	F(AbstractChatRoom, ClientChatRoom)                                                                                \
+	F(AbstractChatRoom, ServerChatRoom)                                                                                \
 	F(EventLog, ConferenceCallEvent)                                                                                   \
 	F(EventLog, ConferenceChatMessageEvent)                                                                            \
 	F(EventLog, ConferenceEvent)                                                                                       \
@@ -189,7 +184,6 @@ BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService),
 BELLE_SIP_TYPE_ID(LinphoneBuffer),
 BELLE_SIP_TYPE_ID(LinphoneCallStats),
 BELLE_SIP_TYPE_ID(LinphoneChatMessageCbs),
-BELLE_SIP_TYPE_ID(LinphoneChatRoomCbs),
 BELLE_SIP_TYPE_ID(LinphoneConfig),
 BELLE_SIP_TYPE_ID(LinphoneContactProvider),
 BELLE_SIP_TYPE_ID(LinphoneContactSearch),
@@ -232,16 +226,16 @@ BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequest),
 BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequestCbs),
 BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession)
 BELLE_SIP_DECLARE_TYPES_END
-// clang-format on
 
 #undef L_REGISTER_ID
 
-    // =============================================================================
-    // Register C types.
-    // =============================================================================
+// =============================================================================
+// Register C types.
+// =============================================================================
 
-    L_REGISTER_TYPES(L_REGISTER_TYPE);
+L_REGISTER_TYPES(L_REGISTER_TYPE);
 L_REGISTER_SUBTYPES(L_REGISTER_SUBTYPE);
+// clang-format on
 
 #undef L_REGISTER_SUBTYPES
 #undef L_REGISTER_TYPES

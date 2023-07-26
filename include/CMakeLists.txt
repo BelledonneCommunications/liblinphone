@@ -30,7 +30,6 @@ set(ROOT_HEADER_FILES
 	call.h
 	callbacks.h
 	chat.h
-	conference.h
 	contactprovider.h
 	core_utils.h
 	core.h
@@ -82,6 +81,7 @@ set(C_API_HEADER_FILES
 	c-call-stats.h
 	c-call.h
 	c-conference.h
+	c-conference-params.h
 	c-conference-cbs.h
 	c-callbacks.h
 	c-chat-message-cbs.h
@@ -90,6 +90,7 @@ set(C_API_HEADER_FILES
 	c-chat-room-cbs.h
 	c-chat-room.h
 	c-chat-room-params.h
+	c-chat-params.h
 	c-content.h
 	c-conference-info.h
 	c-conference-scheduler.h

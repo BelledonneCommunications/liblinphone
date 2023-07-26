@@ -20,6 +20,8 @@
 
 #include "register-status.h"
 
+#include "linphone/api/c-account.h"
+
 using namespace std;
 
 class RegisterStatusResponse : public Response {

@@ -24,7 +24,7 @@
 
 #include "linphone/utils/utils.h"
 
-#include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/chat-room.h"
 #include "chat/notification/is-composing.h"
 #include "logger/logger.h"
 

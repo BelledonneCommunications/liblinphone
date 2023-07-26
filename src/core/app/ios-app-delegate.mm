@@ -18,10 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#import <AVFoundation/AVFoundation.h>
+
 #include "ios-app-delegate.h"
+#include "linphone/api/c-api.h"
 #include "push-notification/push-notification-config.h"
 #include "call/call.h"
-#import <AVFoundation/AVFoundation.h>
 
 @implementation IosObject
 

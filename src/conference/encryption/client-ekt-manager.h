@@ -37,9 +37,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace MediaConference {
-class RemoteConference;
-}
+class ClientConference;
 
 class LINPHONE_PUBLIC ClientEktManager : public std::enable_shared_from_this<ClientEktManager>,
                                          public CoreListener,
@@ -100,7 +98,7 @@ public:
 
 	static void onPublishStateChangedCb(LinphoneEvent *lev, LinphonePublishState state);
 
-	void init(std::shared_ptr<MediaConference::RemoteConference> rc);
+	void init(std::shared_ptr<ClientConference> rc);
 
 	const std::shared_ptr<ClientEktManager::EktContext> &getEktCtx() const;
 
@@ -133,7 +131,7 @@ private:
 	std::shared_ptr<ClientEktManager::EktContext> mEktCtx = nullptr;
 	std::shared_ptr<EventPublish> mEventPublish = nullptr;
 	std::shared_ptr<EventSubscribe> mEventSubscribe = nullptr;
-	std::weak_ptr<LinphonePrivate::MediaConference::RemoteConference> mRemoteConf;
+	std::weak_ptr<LinphonePrivate::ClientConference> mClientConf;
 
 	std::list<std::string> mWaitingParticipants;
 

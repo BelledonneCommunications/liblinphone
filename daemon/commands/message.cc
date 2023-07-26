@@ -21,6 +21,9 @@
 #include <bctoolbox/defs.h>
 
 #include "daemon.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room.h"
 #include "message.h"
 
 using namespace std;

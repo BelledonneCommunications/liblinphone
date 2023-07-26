@@ -21,6 +21,8 @@
 #ifndef _L_LOCAL_PLAYER_H_
 #define _L_LOCAL_PLAYER_H_
 
+#include "mediastreamer2/msmediaplayer.h"
+
 #include "c-wrapper/c-wrapper.h"
 #include "player/player.h"
 

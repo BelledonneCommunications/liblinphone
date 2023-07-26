@@ -129,9 +129,15 @@ public:
 	bool setUriParams(const std::string &uriParams);
 	bool removeUriParam(const std::string &uriParamName);
 
+	// This function copies the parameters of the argument address other to this
+	void merge(const Address &other);
+	void copyParams(const Address &other);
+	void copyUriParams(const Address &other);
+
 	inline std::string asString() const {
 		return toString();
 	}
+	char *toStringUriOnlyOrderedCstr(bool lowercaseParams = false) const;
 	std::string toStringUriOnlyOrdered(bool lowercaseParams = false) const;
 	std::string toStringOrdered(bool lowercaseParams = false) const;
 

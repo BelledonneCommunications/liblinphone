@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include "linphone/api/c-address.h"
 #include "linphone/core.h"
 
 extern SipSetup linphone_sip_login;

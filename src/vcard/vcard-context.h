@@ -21,10 +21,15 @@
 #ifndef _L_VCARD_CONTEXT_H_
 #define _L_VCARD_CONTEXT_H_
 
-#include "c-wrapper/c-wrapper.h"
+#include "belle-sip/object++.hh"
+
 #ifdef VCARD_ENABLED
 #include <belcard/belcard.hpp>
 #endif /* VCARD_ENABLED */
+
+#include "c-wrapper/c-wrapper.h"
+#include "linphone/api/c-types.h"
+#include "tester_utils.h"
 
 // =============================================================================
 

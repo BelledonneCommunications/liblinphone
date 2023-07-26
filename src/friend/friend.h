@@ -25,7 +25,9 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-room/abstract-chat-room.h"
+#include "linphone/api/c-friend.h"
 #include "linphone/api/c-types.h"
+#include "private_functions.h"
 
 // =============================================================================
 
@@ -41,6 +43,8 @@ class MainDb;
 class MainDbPrivate;
 class PresenceModel;
 class PresenceService;
+class SalPresenceOp;
+class SalOp;
 class Vcard;
 
 class LINPHONE_PUBLIC Friend : public bellesip::HybridObject<LinphoneFriend, Friend>,

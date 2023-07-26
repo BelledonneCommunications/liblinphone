@@ -21,6 +21,7 @@
 #include "alert/alert.h"
 #include "call/call.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-alert-cbs.h"
 #include "linphone/api/c-alert.h"
 #include "linphone/api/c-signal-information.h"
 #include "linphone/core.h"

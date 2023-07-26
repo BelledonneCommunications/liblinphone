@@ -27,14 +27,16 @@
 #include <windows.h>
 #include <winsock2.h>
 #endif
-#include "private.h"
-#include "tester_utils.h"
+
+#include "mediastreamer2/msanalysedisplay.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/chat-room.h"
+#include "private.h"
+#include "tester_utils.h"
 #ifdef HAVE_ADVANCED_IM
-#include "chat/chat-room/client-group-chat-room-p.h"
+#include "chat/chat-room/client-chat-room.h"
 #endif // HAVE_ADVANCED_IM
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/media-session-p.h"
@@ -43,7 +45,7 @@
 #include "friend/friend-list.h"
 #include "friend/friend.h"
 #include "http/http-client.h"
-#include "mediastreamer2/msanalysedisplay.h"
+#include "linphone/api/c-address.h"
 
 using namespace std;
 
@@ -201,21 +203,18 @@ int _linphone_call_get_main_video_stream_index(const LinphoneCall *call) {
 	return Call::toCpp(call)->getMediaStreamIndex(LinphoneStreamTypeVideo);
 }
 
-void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, bool_t enable) {
-	shared_ptr<AbstractChatRoom> acr = L_GET_CPP_PTR_FROM_C_OBJECT(cr);
-	L_GET_PRIVATE(acr->getCore())->mainDb->enableChatRoomMigration(acr->getConferenceId(), !!enable);
-}
-
 int _linphone_chat_room_get_transient_message_count(const LinphoneChatRoom *cr) {
-	shared_ptr<const ChatRoom> chatRoom = static_pointer_cast<const ChatRoom>(L_GET_CPP_PTR_FROM_C_OBJECT(cr));
-	return (int)L_GET_PRIVATE(chatRoom)->transientEvents.size();
+	shared_ptr<const ChatRoom> chatRoom =
+	    static_pointer_cast<const ChatRoom>(AbstractChatRoom::toCpp(cr)->getSharedFromThis());
+	return (int)chatRoom->transientEvents.size();
 }
 
 LinphoneChatMessage *_linphone_chat_room_get_first_transient_message(const LinphoneChatRoom *cr) {
-	shared_ptr<const ChatRoom> chatRoom = static_pointer_cast<const ChatRoom>(L_GET_CPP_PTR_FROM_C_OBJECT(cr));
-	if (L_GET_PRIVATE(chatRoom)->transientEvents.empty()) return nullptr;
+	shared_ptr<const ChatRoom> chatRoom =
+	    static_pointer_cast<const ChatRoom>(AbstractChatRoom::toCpp(cr)->getSharedFromThis());
+	if (chatRoom->transientEvents.empty()) return nullptr;
 	shared_ptr<ConferenceChatMessageEvent> event =
-	    static_pointer_cast<ConferenceChatMessageEvent>(L_GET_PRIVATE(chatRoom)->transientEvents.front());
+	    static_pointer_cast<ConferenceChatMessageEvent>(chatRoom->transientEvents.front());
 	return L_GET_C_BACK_PTR(event->getChatMessage());
 }
 
@@ -253,11 +252,12 @@ char *linphone_core_get_download_path(LinphoneCore *lc) {
 	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getDownloadPath().c_str());
 }
 
-size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr) {
-	auto abstract = L_GET_CPP_PTR_FROM_C_OBJECT(cr);
+size_t linphone_chat_room_get_previouses_conference_ids_count(BCTBX_UNUSED(LinphoneChatRoom *cr)) {
 #ifdef HAVE_ADVANCED_IM
-	return L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(abstract))->getPreviousConferenceIds().size();
+	shared_ptr<AbstractChatRoom> chatRoom = AbstractChatRoom::toCpp(cr)->getSharedFromThis();
+	return static_pointer_cast<ClientChatRoom>(chatRoom)->getPreviousConferenceIds().size();
 #else
+	lError() << "Unable to retrieve previous chat room previous IDs as Advanced IM features have been disabled";
 	return 0;
 #endif // HAVE_ADVANCED_IM
 }

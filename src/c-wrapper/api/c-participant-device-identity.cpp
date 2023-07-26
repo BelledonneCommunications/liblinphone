@@ -27,11 +27,9 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_ADVANCED_IM
-#include "chat/chat-room/server-group-chat-room-p.h"
-#endif
-
 #include "c-wrapper/c-wrapper.h"
+#include "conference/participant-device-identity.h"
+#include "linphone/api/c-participant-device-identity.h"
 
 // =============================================================================
 
@@ -43,8 +41,7 @@ using namespace LinphonePrivate;
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new(const LinphoneAddress *address,
                                                                             const char *name) {
 #ifdef HAVE_ADVANCED_IM
-	return ParticipantDeviceIdentity::createCObject(
-	    Address::toCpp(const_cast<LinphoneAddress *>(address))->getSharedFromThis(), L_C_TO_STRING(name));
+	return ParticipantDeviceIdentity::createCObject(Address::toCpp(address)->getSharedFromThis(), L_C_TO_STRING(name));
 #else
 	return NULL;
 #endif

@@ -32,6 +32,7 @@
 
 #include "bctoolbox/utils.hh"
 
+#include "address/address.h"
 #include "conference/conference-info.h"
 #include "linphone/utils/enum-generator.h"
 
@@ -41,7 +42,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Address;
 class Content;
-class ConferenceInfo;
 class SalCallOp;
 
 namespace Utils {
@@ -107,6 +107,8 @@ LINPHONE_PUBLIC long long stoll(const char *str, size_t *idx = 0, int base = 10)
 LINPHONE_PUBLIC unsigned long long stoull(const char *str, size_t *idx = 0, int base = 10);
 LINPHONE_PUBLIC double stod(const char *str, size_t *idx = 0);
 LINPHONE_PUBLIC float stof(const char *str, size_t *idx = 0);
+
+LINPHONE_PUBLIC const std::string btos(bool val);
 
 LINPHONE_PUBLIC std::string stringToLower(const std::string &str);
 LINPHONE_PUBLIC std::vector<std::string> stringToLower(const std::vector<std::string> &strs);
@@ -262,7 +264,7 @@ private:
  */
 LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const std::string &descriptor);
 std::string getSipFragAddress(const Content &content);
-std::string getResourceLists(const std::list<std::shared_ptr<Address>> &addresses);
+std::string getResourceLists(const std::list<Address> &addresses);
 ConferenceInfo::participant_list_t parseResourceLists(const Content &content);
 ConferenceInfo::participant_list_t parseResourceLists(std::optional<std::reference_wrapper<const Content>> content);
 std::shared_ptr<ConferenceInfo> createConferenceInfoFromOp(SalCallOp *op, bool remote);

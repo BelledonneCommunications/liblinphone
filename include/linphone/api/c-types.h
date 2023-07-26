@@ -423,6 +423,29 @@ typedef struct _LinphoneChatMessageCbs LinphoneChatMessageCbs;
 typedef struct _LinphoneChatRoom LinphoneChatRoom;
 
 /**
+ * @brief An object to handle the callbacks for the handling a #LinphoneChatRoom objects.
+ *
+ * Use linphone_factory_create_chat_room_cbs() to create an instance.
+ * Then pass the object to a #LinphoneChatRoom instance through linphone_chat_room_add_callbacks().
+ * @ingroup chatroom
+ */
+typedef struct _LinphoneChatRoomCbs LinphoneChatRoomCbs;
+
+/**
+ * @brief Object defining settings strictly associated with #LinphoneChatRoom objects such as ephemeral settings and
+ * backends.
+ *
+ * It is automatically created when you enable chat capabilities in the #LinphoneConferenceParams.
+ *
+ * If the #LinphoneChatRoom backend is #LinphoneChatRoomBackendBasic, then no other parameter is required,
+ * but #LinphoneChatMessage sent and received won't benefit from all features a #LinphoneChatRoomBackendFlexisipChat can
+ * offer like conversation with multiple participants and a subject, end-to-end encryption, ephemeral messages, etc...
+ * but this type is the only one that can interoperate with other SIP clients or with non-flexisip SIP proxies.
+ * @ingroup chatroom
+ */
+typedef struct _LinphoneChatParams LinphoneChatParams;
+
+/**
  * @brief Object defining parameters for a #LinphoneChatRoom.
  *
  * Can be created with linphone_core_create_default_chat_room_params().
@@ -434,19 +457,13 @@ typedef struct _LinphoneChatRoom LinphoneChatRoom;
  * but this type is the only one that can interoperate with other SIP clients or with non-flexisip SIP proxies.
  * @ingroup chatroom
  */
-typedef struct _LinphoneChatRoomParams LinphoneChatRoomParams;
+typedef struct _LinphoneConferenceParams LinphoneChatRoomParams;
 
 /**
  * @brief A mask of #LinphoneChatRoomCapabilities
  * @ingroup chatroom
  */
 typedef int LinphoneChatRoomCapabilitiesMask;
-
-/**
- * @brief An object to handle the callbacks for the handling a #LinphoneChatRoom objects.
- * @ingroup chatroom
- */
-typedef struct _LinphoneChatRoomCbs LinphoneChatRoomCbs;
 
 // -----------------------------------------------------------------------------
 // Ekt.

@@ -38,21 +38,19 @@ class Account;
 class CallSessionParamsPrivate;
 class Core;
 
-namespace MediaConference {
-class LocalConference;
-}
-
 class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
 	friend class Call;
 	friend class CallSession;
 	friend class CallSessionPrivate;
 	friend class MediaSessionPrivate;
-	friend class ClientGroupChatRoom;
-	friend class ToneManager;
 	friend class SIPConferenceScheduler;
+	friend class ClientChatRoom;
+	friend class SIPClientConference;
+	friend class ConferenceScheduler;
+	friend class ServerConference;
+	friend class ClientConference;
 	friend class SalMediaDescriptionParams;
-	friend class Conference;
-	friend class MediaConference::LocalConference;
+	friend class ToneManager;
 
 public:
 	CallSessionParams();

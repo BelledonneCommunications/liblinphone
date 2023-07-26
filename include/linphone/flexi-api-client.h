@@ -17,7 +17,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef FLEXIAPICLIENT_H
+#define FLEXIAPICLIENT_H
+
 #include <functional>
+
 #include <json/json.h>
 
 #include <belle-sip/listener.h>
@@ -170,3 +174,5 @@ private:
 };
 
 LINPHONE_END_NAMESPACE
+
+#endif /* FLEXIAPICLIENT_H */

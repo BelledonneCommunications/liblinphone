@@ -22,9 +22,11 @@
 
 #include "account.h"
 
+#include "content/content.h"
 #include "core/core.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 #include "push-notification/push-notification-config.h"
 #ifdef HAVE_ADVANCED_IM
 #ifdef HAVE_LIME_X3DH
@@ -121,8 +123,8 @@ bool Account::computePublishParamsHash() {
 	return previous_hash[0] != mPreviousPublishParamsHash[0] || previous_hash[1] != mPreviousPublishParamsHash[1];
 }
 
-LinphoneAccountAddressComparisonResult Account::compareLinphoneAddresses(const std::shared_ptr<Address> &a,
-                                                                         const std::shared_ptr<Address> &b) {
+LinphoneAccountAddressComparisonResult Account::compareLinphoneAddresses(const std::shared_ptr<const Address> &a,
+                                                                         const std::shared_ptr<const Address> &b) {
 	if (a == NULL && b == NULL) return LinphoneAccountAddressEqual;
 	else if (!a || !b) return LinphoneAccountAddressDifferent;
 
@@ -858,11 +860,12 @@ int Account::getUnreadChatMessageCount() const {
 	return getCore()->getUnreadChatMessageCount(mParams->mIdentityAddress);
 }
 
-list<shared_ptr<AbstractChatRoom>> Account::getChatRooms() const {
+void Account::updateChatRoomList() const {
 	list<shared_ptr<AbstractChatRoom>> results;
 	if (!mParams) {
-		lWarning() << "getChatRooms is called but no AccountParams is set on Account [" << this << "]";
-		return results;
+		lWarning() << "updateChatRoomList is called but no AccountParams is set on Account [" << this << "]";
+		mChatRoomList.mList = list<shared_ptr<AbstractChatRoom>>();
+		return;
 	}
 
 	auto localAddress = mParams->mIdentityAddress;
@@ -872,7 +875,17 @@ list<shared_ptr<AbstractChatRoom>> Account::getChatRooms() const {
 			results.push_back(chatRoom);
 		}
 	}
-	return results;
+	mChatRoomList.mList = results;
+}
+
+const list<shared_ptr<AbstractChatRoom>> &Account::getChatRooms() const {
+	updateChatRoomList();
+	return mChatRoomList.mList;
+}
+
+const bctbx_list_t *Account::getChatRoomsCList() const {
+	updateChatRoomList();
+	return mChatRoomList.getCList();
 }
 
 int Account::getMissedCallsCount() const {
@@ -899,7 +912,7 @@ list<shared_ptr<CallLog>> Account::getCallLogs() const {
 	return mainDb->getCallHistoryForLocalAddress(localAddress, linphone_core_get_max_call_logs(getCore()->getCCore()));
 }
 
-list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<Address> remoteAddress) const {
+list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<const Address> &remoteAddress) const {
 	if (!mParams) {
 		lWarning() << "getCallLogsForAddress is called but no AccountParams is set on Account [" << this << "]";
 		list<shared_ptr<CallLog>> callLogs;

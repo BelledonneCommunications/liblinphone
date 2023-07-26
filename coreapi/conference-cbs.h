@@ -24,6 +24,7 @@
 #include "belle-sip/object++.hh"
 
 #include "c-wrapper/c-wrapper.h"
+#include "linphone/api/c-callbacks.h"
 #include "linphone/api/c-types.h"
 #include "linphone/utils/general.h"
 
@@ -48,6 +49,7 @@ public:
 	LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb participantDeviceIsSpeakingChangedCb;
 	LinphoneConferenceCbsParticipantDeviceIsMutedCb participantDeviceIsMutedCb;
 	LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb activeSpeakerParticipantDeviceCb;
+	LinphoneConferenceCbsFullStateReceivedCb fullStateReceivedCb;
 };
 
 LINPHONE_END_NAMESPACE

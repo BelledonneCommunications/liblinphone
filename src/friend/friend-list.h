@@ -21,7 +21,11 @@
 #ifndef _L_FRIEND_LIST_H_
 #define _L_FRIEND_LIST_H_
 
+#include "belle-sip/object++.hh"
+
 #include "c-wrapper/c-wrapper.h"
+#include "core/core-accessor.h"
+#include "private_functions.h"
 
 // =============================================================================
 
@@ -37,6 +41,7 @@ class FriendListCbs;
 class MainDb;
 class MainDbPrivate;
 class PresenceModel;
+class SalOp;
 class Vcard;
 
 class LINPHONE_PUBLIC FriendList : public bellesip::HybridObject<LinphoneFriendList, FriendList>,
@@ -101,6 +106,7 @@ public:
 	const std::string &getRlsUri() const;
 	LinphoneFriendListType getType() const;
 	const std::string &getUri() const;
+	const std::list<std::shared_ptr<Friend>> &getDirtyFriendsToUpdate() const;
 	bool isSubscriptionBodyless() const;
 
 	// Other

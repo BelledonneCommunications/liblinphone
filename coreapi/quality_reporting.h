@@ -22,7 +22,6 @@
 #define quality_reporting_h
 
 #include "c-wrapper/internal/c-sal.h"
-#include "linphone/core.h"
 
 #ifdef __cplusplus
 extern "C" {

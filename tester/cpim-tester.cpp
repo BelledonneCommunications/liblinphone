@@ -28,11 +28,12 @@
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core.h"
+#include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-message.h"
+#include "tester_utils.h"
 // TODO: Remove me later.
 #include "private.h"
-
-#include "liblinphone_tester.h"
-#include "tester_utils.h"
 
 // =============================================================================
 

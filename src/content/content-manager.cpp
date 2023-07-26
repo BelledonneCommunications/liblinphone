@@ -21,14 +21,13 @@
 #include <belle-sip/belle-sip.h>
 
 #include "c-wrapper/c-wrapper.h"
-
-#include "linphone/api/c-content.h"
-
 #include "content-disposition.h"
 #include "content-manager.h"
 #include "content-type.h"
 #include "content/content.h"
 #include "content/header/header-param.h"
+#include "linphone/api/c-content.h"
+#include "private_functions.h"
 
 // =============================================================================
 

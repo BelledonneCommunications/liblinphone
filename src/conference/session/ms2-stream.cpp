@@ -26,13 +26,13 @@
 #include "conference/participant.h"
 #include "core/core-p.h"
 #include "core/core.h"
+#include "linphone/core.h"
 #include "media-session-p.h"
 #include "media-session.h"
 #include "ms2-streams.h"
 #include "nat/ice-service.h"
+#include "sal/sal_stream_description.h"
 #include "utils/payload-type-handler.h"
-
-#include "linphone/core.h"
 
 using namespace ::std;
 
@@ -997,7 +997,6 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 		int cryptoIdx = Sal::findCryptoIndexFromAlgo(localStreamDesc.getChosenConfiguration().crypto, algo);
 		if (cryptoIdx >= 0) {
 			auto newSendMasterKey = localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key;
-			CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 			// The master key of an SRTP stream must be set in one of the following scenarios:
 			// - the new stream has just been added
 			// - the master key has changed. Note that the SRTP context will not be updated if this streams was
@@ -1005,10 +1004,7 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 			if (mSendMasterKey.compare(newSendMasterKey) != 0) {
 				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, L_STRING_TO_C(newSendMasterKey),
 				                                               MSSrtpKeySourceSDES);
-
-				if (listener) {
-					listener->onSendMasterKeyChanged(getMediaSession().getSharedFromThis(), newSendMasterKey);
-				}
+				getMediaSession().notifySendMasterKeyChanged(newSendMasterKey);
 				mSendMasterKey = newSendMasterKey;
 			}
 
@@ -1016,9 +1012,7 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 			if (mReceiveMasterKey.compare(newReceiveMasterKey) != 0) {
 				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, L_STRING_TO_C(newReceiveMasterKey),
 				                                               MSSrtpKeySourceSDES);
-				if (listener) {
-					listener->onReceiveMasterKeyChanged(getMediaSession().getSharedFromThis(), newReceiveMasterKey);
-				}
+				getMediaSession().notifyReceiveMasterKeyChanged(newReceiveMasterKey);
 				mReceiveMasterKey = newReceiveMasterKey;
 			}
 		} else {
@@ -1317,26 +1311,22 @@ LinphoneCallStats *MS2Stream::getStats() {
 }
 
 void MS2Stream::stop() {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-
-	if (listener) {
-		int statsType = -1;
-		switch (getType()) {
-			case SalAudio:
-				statsType = LINPHONE_CALL_STATS_AUDIO;
-				break;
-			case SalVideo:
-				statsType = LINPHONE_CALL_STATS_VIDEO;
-				break;
-			case SalText:
-				statsType = LINPHONE_CALL_STATS_TEXT;
-				break;
-			default:
-				break;
-		}
-
-		if (statsType != -1) listener->onUpdateMediaInfoForReporting(getMediaSession().getSharedFromThis(), statsType);
+	int statsType = -1;
+	switch (getType()) {
+		case SalAudio:
+			statsType = LINPHONE_CALL_STATS_AUDIO;
+			break;
+		case SalVideo:
+			statsType = LINPHONE_CALL_STATS_VIDEO;
+			break;
+		case SalText:
+			statsType = LINPHONE_CALL_STATS_TEXT;
+			break;
+		default:
+			break;
 	}
+
+	if (statsType != -1) getMediaSession().notifyUpdateMediaInfoForReporting(statsType);
 	if (getMixer() == nullptr) {
 		ms_bandwidth_controller_remove_stream(getCCore()->bw_controller, getMediaStream());
 	} else {
@@ -1369,19 +1359,16 @@ void MS2Stream::stop() {
 }
 
 void MS2Stream::notifyStatsUpdated() {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	if (_linphone_call_stats_get_updated(mStats)) {
 		switch (_linphone_call_stats_get_updated(mStats)) {
 			case LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE:
 			case LINPHONE_CALL_STATS_SENT_RTCP_UPDATE:
-				if (listener) {
-					listener->onRtcpUpdateForReporting(getMediaSession().getSharedFromThis(), getType());
-				}
+				getMediaSession().notifyRtcpUpdateForReporting(getType());
 				break;
 			default:
 				break;
 		}
-		if (listener) listener->onStatsUpdated(getMediaSession().getSharedFromThis(), mStats);
+		getMediaSession().notifyStatsUpdated(mStats);
 		_linphone_call_stats_set_updated(mStats, 0);
 	}
 }
@@ -1493,9 +1480,8 @@ void MS2Stream::handleEvents() {
 			do {
 				if (rtcpMessage && rtcp_is_RTPFB(rtcpMessage)) {
 					if (rtcp_RTPFB_get_type(rtcpMessage) == RTCP_RTPFB_TMMBR) {
-						CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-						listener->onTmmbrReceived(getMediaSession().getSharedFromThis(), (int)getIndex(),
-						                          (int)rtcp_RTPFB_tmmbr_get_max_bitrate(rtcpMessage));
+						getMediaSession().notifyTmmbrReceived((int)getIndex(),
+						                                      (int)rtcp_RTPFB_tmmbr_get_max_bitrate(rtcpMessage));
 					}
 				}
 			} while ((rtcpMessage = rtcp_parser_context_next_packet(&rtcpctx)) != nullptr);
@@ -1660,11 +1646,10 @@ void MS2Stream::updateBandwidthReports() {
 	                                                            : LinphoneAddressFamilyUnspec);
 
 	if (getCCore()->send_call_stats_periodical_updates) {
-		CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 		if (active) linphone_call_stats_update(mStats, ms);
 		_linphone_call_stats_set_updated(mStats, _linphone_call_stats_get_updated(mStats) |
 		                                             LINPHONE_CALL_STATS_PERIODICAL_UPDATE);
-		if (listener) listener->onStatsUpdated(getMediaSession().getSharedFromThis(), mStats);
+		getMediaSession().notifyStatsUpdated(mStats);
 		_linphone_call_stats_set_updated(mStats, 0);
 	}
 }

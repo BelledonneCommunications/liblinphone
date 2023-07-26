@@ -17,17 +17,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "linphone/account_creator.h"
-#include "linphone/core.h"
-
-#include "c-wrapper/c-wrapper.h"
-#include "dial-plan/dial-plan.h"
-
-// TODO: From coreapi. Remove me later.
-#include "private.h"
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
+
+#include "c-wrapper/c-wrapper.h"
+#include "dial-plan/dial-plan.h"
+#include "linphone/account_creator.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/core.h"
+
+// TODO: From coreapi. Remove me later.
+#include "private.h"
 
 using namespace LinphonePrivate;
 

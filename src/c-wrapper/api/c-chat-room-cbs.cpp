@@ -1,7 +1,4 @@
-/*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
- *
- * This file is part of Liblinphone
+/* * Copyright (c) 2010-2022 Belledonne Communications SARL.  * * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,65 +16,13 @@
  */
 
 #include "linphone/api/c-chat-room-cbs.h"
-
-#include "c-wrapper/c-wrapper.h"
-
-// =============================================================================
-
-struct _LinphoneChatRoomCbs {
-	belle_sip_object_t base;
-	void *userData;
-	LinphoneChatRoomCbsSessionStateChangedCb sessionStateChangedCb;
-	LinphoneChatRoomCbsIsComposingReceivedCb isComposingReceivedCb;
-	LinphoneChatRoomCbsMessageReceivedCb messageReceivedCb;
-	LinphoneChatRoomCbsMessagesReceivedCb messagesReceivedCb;
-	LinphoneChatRoomCbsParticipantAddedCb participantAddedCb;
-	LinphoneChatRoomCbsParticipantRemovedCb participantRemovedCb;
-	LinphoneChatRoomCbsParticipantDeviceAddedCb participantDeviceAddedCb;
-	LinphoneChatRoomCbsParticipantDeviceRemovedCb participantDeviceRemovedCb;
-	LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb participantDeviceMediaAvailabilityChangedCb;
-	LinphoneChatRoomCbsParticipantDeviceStateChangedCb participantDeviceStateChangedCb;
-	LinphoneChatRoomCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
-	LinphoneChatRoomCbsStateChangedCb stateChangedCb;
-	LinphoneChatRoomCbsSecurityEventCb securityEventCb;
-	LinphoneChatRoomCbsSubjectChangedCb subjectChangedCb;
-	LinphoneChatRoomCbsConferenceJoinedCb conferenceJoinedCb;
-	LinphoneChatRoomCbsConferenceLeftCb conferenceLeftCb;
-	LinphoneChatRoomCbsUndecryptableMessageReceivedCb undecryptableMessageReceivedCb;
-	LinphoneChatRoomCbsChatMessageReceivedCb chatMessageReceivedCb;
-	LinphoneChatRoomCbsChatMessagesReceivedCb chatMessagesReceivedCb;
-	LinphoneChatRoomCbsChatMessageSendingCb chatMessageSendingCb;
-	LinphoneChatRoomCbsChatMessageSentCb chatMessageSentCb;
-	LinphoneChatRoomCbsConferenceAddressGenerationCb conferenceAddressGenerationCb;
-	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
-	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb
-	    participantRegistrationUnsubscriptionRequestedCb;
-	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
-	LinphoneChatRoomCbsEphemeralEventCb ephemeralEventCb;
-	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
-	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
-	LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb chatMessageParticipantImdnStateChangedCb;
-	LinphoneChatRoomCbsNewEventCb newEventCb;
-	LinphoneChatRoomCbsNewEventsCb newEventsCb;
-	LinphoneChatRoomCbsChatRoomReadCb chatRoomReadCb;
-	LinphoneChatRoomCbsNewMessageReactionCb newMessageReactionCb;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
-
-BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneChatRoomCbs);
-
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneChatRoomCbs,
-                           belle_sip_object_t,
-                           NULL, // destroy
-                           NULL, // clone
-                           NULL, // marshal
-                           FALSE);
+#include "chat/chat-room/chat-room-cbs.h"
+#include "private_functions.h"
 
 // =============================================================================
 
 LinphoneChatRoomCbs *_linphone_chat_room_cbs_new(void) {
-	return belle_sip_object_new(LinphoneChatRoomCbs);
+	return LinphonePrivate::ChatRoomCbs::createCObject();
 }
 
 LinphoneChatRoomCbs *linphone_chat_room_cbs_ref(LinphoneChatRoomCbs *cbs) {
@@ -90,312 +35,312 @@ void linphone_chat_room_cbs_unref(LinphoneChatRoomCbs *cbs) {
 }
 
 void *linphone_chat_room_cbs_get_user_data(const LinphoneChatRoomCbs *cbs) {
-	return cbs->userData;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->getUserData();
 }
 
 void linphone_chat_room_cbs_set_user_data(LinphoneChatRoomCbs *cbs, void *ud) {
-	cbs->userData = ud;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->setUserData(ud);
 }
 
 void linphone_chat_room_cbs_set_session_state_changed(LinphoneChatRoomCbs *cbs,
                                                       LinphoneChatRoomCbsSessionStateChangedCb cb) {
-	cbs->sessionStateChangedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->sessionStateChangedCb = cb;
 }
 
 LinphoneChatRoomCbsSessionStateChangedCb
 linphone_chat_room_cbs_get_session_state_changed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->sessionStateChangedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->sessionStateChangedCb;
 }
 
 LinphoneChatRoomCbsIsComposingReceivedCb
 linphone_chat_room_cbs_get_is_composing_received(const LinphoneChatRoomCbs *cbs) {
-	return cbs->isComposingReceivedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->isComposingReceivedCb;
 }
 
 void linphone_chat_room_cbs_set_is_composing_received(LinphoneChatRoomCbs *cbs,
                                                       LinphoneChatRoomCbsIsComposingReceivedCb cb) {
-	cbs->isComposingReceivedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->isComposingReceivedCb = cb;
 }
 
 LinphoneChatRoomCbsMessageReceivedCb linphone_chat_room_cbs_get_message_received(const LinphoneChatRoomCbs *cbs) {
-	return cbs->messageReceivedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->messageReceivedCb;
 }
 
 void linphone_chat_room_cbs_set_message_received(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageReceivedCb cb) {
-	cbs->messageReceivedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->messageReceivedCb = cb;
 }
 
 void linphone_chat_room_cbs_set_chat_messages_received(LinphoneChatRoomCbs *cbs,
                                                        LinphoneChatRoomCbsChatMessagesReceivedCb cb) {
-	cbs->chatMessagesReceivedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessagesReceivedCb = cb;
 }
 
 LinphoneChatRoomCbsMessagesReceivedCb linphone_chat_room_cbs_get_messages_received(const LinphoneChatRoomCbs *cbs) {
-	return cbs->messagesReceivedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->messagesReceivedCb;
 }
 
 LinphoneChatRoomCbsNewEventCb linphone_chat_room_cbs_get_new_event(const LinphoneChatRoomCbs *cbs) {
-	return cbs->newEventCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->newEventCb;
 }
 
 void linphone_chat_room_cbs_set_new_event(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsNewEventCb cb) {
-	cbs->newEventCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->newEventCb = cb;
 }
 
 LinphoneChatRoomCbsNewEventsCb linphone_chat_room_cbs_get_new_events(const LinphoneChatRoomCbs *cbs) {
-	return cbs->newEventsCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->newEventsCb;
 }
 
 void linphone_chat_room_cbs_set_new_events(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsNewEventsCb cb) {
-	cbs->newEventsCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->newEventsCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessageReceivedCb
 linphone_chat_room_cbs_get_chat_message_received(const LinphoneChatRoomCbs *cbs) {
-	return cbs->chatMessageReceivedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageReceivedCb;
 }
 
 void linphone_chat_room_cbs_set_chat_message_received(LinphoneChatRoomCbs *cbs,
                                                       LinphoneChatRoomCbsChatMessageReceivedCb cb) {
-	cbs->chatMessageReceivedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageReceivedCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessagesReceivedCb
 linphone_chat_room_cbs_get_chat_messages_received(const LinphoneChatRoomCbs *cbs) {
-	return cbs->chatMessagesReceivedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessagesReceivedCb;
 }
 
 void linphone_chat_room_cbs_set_messages_received(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessagesReceivedCb cb) {
-	cbs->messagesReceivedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->messagesReceivedCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessageSendingCb
 linphone_chat_room_cbs_get_chat_message_sending(const LinphoneChatRoomCbs *cbs) {
-	return cbs->chatMessageSendingCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageSendingCb;
 }
 
 void linphone_chat_room_cbs_set_chat_message_sending(LinphoneChatRoomCbs *cbs,
                                                      LinphoneChatRoomCbsChatMessageSendingCb cb) {
-	cbs->chatMessageSendingCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageSendingCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessageSentCb linphone_chat_room_cbs_get_chat_message_sent(const LinphoneChatRoomCbs *cbs) {
-	return cbs->chatMessageSentCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageSentCb;
 }
 
 void linphone_chat_room_cbs_set_chat_message_sent(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageSentCb cb) {
-	cbs->chatMessageSentCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageSentCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantAddedCb linphone_chat_room_cbs_get_participant_added(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantAddedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantAddedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_added(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantAddedCb cb) {
-	cbs->participantAddedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantAddedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantRemovedCb linphone_chat_room_cbs_get_participant_removed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantRemovedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantRemovedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_removed(LinphoneChatRoomCbs *cbs,
                                                     LinphoneChatRoomCbsParticipantRemovedCb cb) {
-	cbs->participantRemovedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantRemovedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantAdminStatusChangedCb
 linphone_chat_room_cbs_get_participant_admin_status_changed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantAdminStatusChangedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantAdminStatusChangedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_admin_status_changed(
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantAdminStatusChangedCb cb) {
-	cbs->participantAdminStatusChangedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantAdminStatusChangedCb = cb;
 }
 
 LinphoneChatRoomCbsStateChangedCb linphone_chat_room_cbs_get_state_changed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->stateChangedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->stateChangedCb;
 }
 
 void linphone_chat_room_cbs_set_state_changed(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsStateChangedCb cb) {
-	cbs->stateChangedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->stateChangedCb = cb;
 }
 
 LinphoneChatRoomCbsSecurityEventCb linphone_chat_room_cbs_get_security_event(const LinphoneChatRoomCbs *cbs) {
-	return cbs->securityEventCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->securityEventCb;
 }
 
 void linphone_chat_room_cbs_set_security_event(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsSecurityEventCb cb) {
-	cbs->securityEventCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->securityEventCb = cb;
 }
 
 LinphoneChatRoomCbsSubjectChangedCb linphone_chat_room_cbs_get_subject_changed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->subjectChangedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->subjectChangedCb;
 }
 
 void linphone_chat_room_cbs_set_subject_changed(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsSubjectChangedCb cb) {
-	cbs->subjectChangedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->subjectChangedCb = cb;
 }
 
 LinphoneChatRoomCbsUndecryptableMessageReceivedCb
 linphone_chat_room_cbs_get_undecryptable_message_received(const LinphoneChatRoomCbs *cbs) {
-	return cbs->undecryptableMessageReceivedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->undecryptableMessageReceivedCb;
 }
 
 void linphone_chat_room_cbs_set_undecryptable_message_received(LinphoneChatRoomCbs *cbs,
                                                                LinphoneChatRoomCbsUndecryptableMessageReceivedCb cb) {
-	cbs->undecryptableMessageReceivedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->undecryptableMessageReceivedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantDeviceAddedCb
 linphone_chat_room_cbs_get_participant_device_added(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantDeviceAddedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceAddedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_device_added(LinphoneChatRoomCbs *cbs,
                                                          LinphoneChatRoomCbsParticipantDeviceAddedCb cb) {
-	cbs->participantDeviceAddedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceAddedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantDeviceRemovedCb
 linphone_chat_room_cbs_get_participant_device_removed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantDeviceRemovedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceRemovedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_device_removed(LinphoneChatRoomCbs *cbs,
                                                            LinphoneChatRoomCbsParticipantDeviceRemovedCb cb) {
-	cbs->participantDeviceRemovedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceRemovedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb
 linphone_chat_room_cbs_get_participant_device_media_availability_changed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantDeviceMediaAvailabilityChangedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceMediaAvailabilityChangedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_device_media_availability_changed(
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb cb) {
-	cbs->participantDeviceMediaAvailabilityChangedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceMediaAvailabilityChangedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantDeviceStateChangedCb
 linphone_chat_room_cbs_get_participant_device_state_changed(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantDeviceStateChangedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceStateChangedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_device_state_changed(
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceStateChangedCb cb) {
-	cbs->participantDeviceStateChangedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantDeviceStateChangedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceJoinedCb linphone_chat_room_cbs_get_conference_joined(const LinphoneChatRoomCbs *cbs) {
-	return cbs->conferenceJoinedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->conferenceJoinedCb;
 }
 
 void linphone_chat_room_cbs_set_conference_joined(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceJoinedCb cb) {
-	cbs->conferenceJoinedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->conferenceJoinedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_conference_left(const LinphoneChatRoomCbs *cbs) {
-	return cbs->conferenceLeftCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->conferenceLeftCb;
 }
 
 void linphone_chat_room_cbs_set_conference_left(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb) {
-	cbs->conferenceLeftCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->conferenceLeftCb = cb;
 }
 
 LinphoneChatRoomCbsEphemeralEventCb linphone_chat_room_cbs_get_ephemeral_event(const LinphoneChatRoomCbs *cbs) {
-	return cbs->ephemeralEventCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->ephemeralEventCb;
 }
 
 void linphone_chat_room_cbs_set_ephemeral_event(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralEventCb cb) {
-	cbs->ephemeralEventCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->ephemeralEventCb = cb;
 }
 
 LinphoneChatRoomCbsEphemeralMessageTimerStartedCb
 linphone_chat_room_cbs_get_ephemeral_message_timer_started(const LinphoneChatRoomCbs *cbs) {
-	return cbs->EphemeralMessageTimerStartedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->ephemeralMessageTimerStartedCb;
 }
 
 void linphone_chat_room_cbs_set_ephemeral_message_timer_started(LinphoneChatRoomCbs *cbs,
                                                                 LinphoneChatRoomCbsEphemeralMessageTimerStartedCb cb) {
-	cbs->EphemeralMessageTimerStartedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->ephemeralMessageTimerStartedCb = cb;
 }
 
 LinphoneChatRoomCbsEphemeralMessageDeletedCb
 linphone_chat_room_cbs_get_ephemeral_message_deleted(const LinphoneChatRoomCbs *cbs) {
-	return cbs->ephemeralMessageDeletedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->ephemeralMessageDeletedCb;
 }
 
 void linphone_chat_room_cbs_set_ephemeral_message_deleted(LinphoneChatRoomCbs *cbs,
                                                           LinphoneChatRoomCbsEphemeralMessageDeletedCb cb) {
-	cbs->ephemeralMessageDeletedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->ephemeralMessageDeletedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceAddressGenerationCb
 linphone_chat_room_cbs_get_conference_address_generation(const LinphoneChatRoomCbs *cbs) {
-	return cbs->conferenceAddressGenerationCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->conferenceAddressGenerationCb;
 }
 
 void linphone_chat_room_cbs_set_conference_address_generation(LinphoneChatRoomCbs *cbs,
                                                               LinphoneChatRoomCbsConferenceAddressGenerationCb cb) {
-	cbs->conferenceAddressGenerationCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->conferenceAddressGenerationCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb
 linphone_chat_room_cbs_get_participant_registration_subscription_requested(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantRegistrationSubscriptionRequestedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantRegistrationSubscriptionRequestedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_registration_subscription_requested(
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb cb) {
-	cbs->participantRegistrationSubscriptionRequestedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantRegistrationSubscriptionRequestedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb
 linphone_chat_room_cbs_get_participant_registration_unsubscription_requested(const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantRegistrationUnsubscriptionRequestedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantRegistrationUnsubscriptionRequestedCb;
 }
 
 void linphone_chat_room_cbs_set_participant_registration_unsubscription_requested(
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb cb) {
-	cbs->participantRegistrationUnsubscriptionRequestedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->participantRegistrationUnsubscriptionRequestedCb = cb;
 }
 
 LinphoneChatRoomCbsShouldChatMessageBeStoredCb
 linphone_chat_room_cbs_get_chat_message_should_be_stored(LinphoneChatRoomCbs *cbs) {
-	return cbs->shouldMessageBeStoredCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->shouldMessageBeStoredCb;
 }
 
 void linphone_chat_room_cbs_set_chat_message_should_be_stored(LinphoneChatRoomCbs *cbs,
                                                               LinphoneChatRoomCbsShouldChatMessageBeStoredCb cb) {
-	cbs->shouldMessageBeStoredCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->shouldMessageBeStoredCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb
 linphone_chat_room_cbs_get_chat_message_participant_imdn_state_changed(LinphoneChatRoomCbs *cbs) {
-	return cbs->chatMessageParticipantImdnStateChangedCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageParticipantImdnStateChangedCb;
 }
 
 void linphone_chat_room_cbs_set_chat_message_participant_imdn_state_changed(
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb cb) {
-	cbs->chatMessageParticipantImdnStateChangedCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatMessageParticipantImdnStateChangedCb = cb;
 }
 
 LinphoneChatRoomCbsChatRoomReadCb linphone_chat_room_cbs_get_chat_room_read(const LinphoneChatRoomCbs *cbs) {
-	return cbs->chatRoomReadCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatRoomReadCb;
 }
 
 void linphone_chat_room_cbs_set_chat_room_read(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatRoomReadCb cb) {
-	cbs->chatRoomReadCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->chatRoomReadCb = cb;
 }
 
 LinphoneChatRoomCbsNewMessageReactionCb
 linphone_chat_room_cbs_get_new_message_reaction(const LinphoneChatRoomCbs *cbs) {
-	return cbs->newMessageReactionCb;
+	return LinphonePrivate::ChatRoomCbs::toCpp(cbs)->newMessageReactionCb;
 }
 
 void linphone_chat_room_cbs_set_new_message_reaction(LinphoneChatRoomCbs *cbs,
                                                      LinphoneChatRoomCbsNewMessageReactionCb cb) {
-	cbs->newMessageReactionCb = cb;
+	LinphonePrivate::ChatRoomCbs::toCpp(cbs)->newMessageReactionCb = cb;
 }

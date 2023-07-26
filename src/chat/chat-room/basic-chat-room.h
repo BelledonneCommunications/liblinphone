@@ -28,8 +28,6 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class BasicChatRoomPrivate;
-
 class LINPHONE_PUBLIC BasicChatRoom : public ChatRoom {
 	friend class Core;
 	friend class CorePrivate;
@@ -39,63 +37,40 @@ public:
 	void allowMultipart(bool value) override;
 	bool canHandleCpim() const override;
 	bool canHandleMultipart() const override;
+	const std::shared_ptr<ConferenceParams> &getCurrentParams() const override;
 
 	CapabilitiesMask getCapabilities() const override;
 	bool hasBeenLeft() const override;
 	bool isReadOnly() const override;
 
-	const std::shared_ptr<Address> &getConferenceAddress() const override;
-
-	bool removeParticipant(const std::shared_ptr<Participant> &participant) override;
-	bool removeParticipants(const std::list<std::shared_ptr<Participant>> &participants) override;
-
-	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<Address> &addr) const override;
-
-	std::shared_ptr<Participant> getMe() const override;
-	int getParticipantCount() const override;
-	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
-	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices() const override;
-
-	void setParticipantAdminStatus(const std::shared_ptr<Participant> &participant, bool isAdmin) override;
-
-	const std::string &getSubject() const override;
-	const std::string &getUtf8Subject() const override;
-	void setSubject(const std::string &subject) override;
-
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::join;
-	void join() override;
-	void leave() override;
-
 	const ConferenceId &getConferenceId() const override;
 
-	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
-	bool addParticipant(std::shared_ptr<Call> call) override;
-	bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
-	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
-	void join(const std::shared_ptr<Address> &participantAddress) override;
-	bool update(const ConferenceParamsInterface &newParameters) override;
+	void setSubject(const std::string &subject) override;
+	void setUtf8Subject(const std::string &subject) override;
 
-	State getState() const override;
 	void setState(ConferenceInterface::State newState) override;
+	ConferenceInterface::State getState() const override;
+
+	bool isMe(const std::shared_ptr<Address> &address) const override;
+	const std::shared_ptr<Participant> getMe() const override;
+	const std::list<std::shared_ptr<Participant>> getParticipants() const override;
 
 protected:
-	explicit BasicChatRoom(BasicChatRoomPrivate &p,
-	                       const std::shared_ptr<Core> &core,
+	explicit BasicChatRoom(const std::shared_ptr<Core> &core,
 	                       const ConferenceId &conferenceId,
-	                       const std::shared_ptr<ChatRoomParams> &params);
+	                       const std::shared_ptr<ConferenceParams> &params);
 
 private:
-	BasicChatRoom(const std::shared_ptr<Core> &core,
-	              const ConferenceId &conferenceId,
-	              const std::shared_ptr<ChatRoomParams> &params);
+	ConferenceId mConferenceId;
+	std::shared_ptr<ConferenceParams> mParams;
+	std::shared_ptr<Participant> mMe;
+	std::list<std::shared_ptr<Participant>> mParticipants;
+	bool mCpimAllowed = false;
+	bool mMultipartAllowed = false;
+	std::string mSubject;
 
-	ConferenceId conferenceId;
+	ConferenceInterface::State mState = ConferenceInterface::State::None;
 
-	ConferenceInterface::State state = ConferenceInterface::State::None;
-
-	L_DECLARE_PRIVATE(BasicChatRoom);
 	L_DISABLE_COPY(BasicChatRoom);
 };
 

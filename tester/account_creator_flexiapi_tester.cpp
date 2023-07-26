@@ -18,16 +18,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bctoolbox/defs.h"
+#include <ctype.h>
 
-#include "linphone/flexi-api-client.h"
+#include <json/json.h>
+
+#include "bctoolbox/defs.h"
 
 #include "account/account-params.h"
 #include "core/core.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/flexi-api-client.h"
 #include "tester_utils.h"
-#include <ctype.h>
-#include <json/json.h>
 
 static const int TIMEOUT_REQUEST = 3000;
 

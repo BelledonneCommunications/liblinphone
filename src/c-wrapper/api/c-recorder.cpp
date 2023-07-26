@@ -20,8 +20,11 @@
 
 #include <ctype.h>
 
+#include "linphone/api/c-recorder.h"
+
 #include "c-wrapper/c-wrapper.h"
 #include "core/core.h"
+#include "linphone/misc.h"
 #include "recorder/recorder-params.h"
 #include "recorder/recorder.h"
 

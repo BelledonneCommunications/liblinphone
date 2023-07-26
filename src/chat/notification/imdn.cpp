@@ -23,7 +23,7 @@
 #include "linphone/utils/algorithm.h"
 
 #include "chat/chat-message/imdn-message-p.h"
-#include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/chat-room.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
 
@@ -269,6 +269,8 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 				            linphone_im_notif_policy_get_recv_imdn_delivery_error(policy))) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::NotDelivered,
 					                                      imdnTime);
+
+					const auto &chatRoomParams = cr->getCurrentParams();
 					// When the IMDN status is failed for reason code 488 (Not acceptable here) and the chatroom is
 					// encrypted, something is wrong with our encryption session with this peer, stale the active
 					// session the next message (which can be a resend of this one) will be encrypted with a new session
@@ -276,8 +278,7 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 					                                                     // sent by the local user
 					    && status.getFailed().present()                  // that we have a fail tag
 					    && status.getReason().present()                  // and a reason tag
-					    &&
-					    (cr->getCapabilities() & ChatRoom::Capabilities::Encrypted)) { // and the chatroom is encrypted
+					    && chatRoomParams->getChatParams()->isEncrypted()) { // and the chatroom is encrypted
 						// Check the reason code is 488
 						auto reason = status.getReason().get();
 						auto imee = cm->getCore()->getEncryptionEngine();
@@ -366,11 +367,12 @@ bool Imdn::aggregationEnabled() const {
 }
 
 LinphoneProxyConfig *Imdn::getRelatedProxyConfig() {
-	LinphoneAddress *addr = chatRoom->getLocalAddress()->toC();
+	const auto &addr = chatRoom->getLocalAddress();
 	if (!addr) {
 		return NULL;
 	}
-	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity_strict(chatRoom->getCore()->getCCore(), addr);
+	LinphoneProxyConfig *cfg =
+	    linphone_core_lookup_proxy_by_identity_strict(chatRoom->getCore()->getCCore(), addr->toC());
 	return cfg;
 }
 
@@ -399,7 +401,7 @@ void Imdn::send() {
 
 	if (!deliveredMessages.empty() || !displayedMessages.empty()) {
 		if (aggregationEnabled()) {
-			auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(deliveredMessages, displayedMessages);
+			auto imdnMessage = chatRoom->createImdnMessage(deliveredMessages, displayedMessages);
 			if (imdnMessage->getPrivate()->getContents().empty()) {
 				lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
 			} else {
@@ -411,12 +413,12 @@ void Imdn::send() {
 			for (const auto &message : deliveredMessages) {
 				list<shared_ptr<ChatMessage>> l;
 				l.push_back(message);
-				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(l, list<shared_ptr<ChatMessage>>()));
+				imdnMessages.push_back(chatRoom->createImdnMessage(l, list<shared_ptr<ChatMessage>>()));
 			}
 			for (const auto &message : displayedMessages) {
 				list<shared_ptr<ChatMessage>> l;
 				l.push_back(message);
-				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(list<shared_ptr<ChatMessage>>(), l));
+				imdnMessages.push_back(chatRoom->createImdnMessage(list<shared_ptr<ChatMessage>>(), l));
 			}
 			for (const auto &message : imdnMessages) {
 				if (message->getPrivate()->getContents().empty()) {
@@ -432,7 +434,7 @@ void Imdn::send() {
 	}
 	if (!nonDeliveredMessages.empty()) {
 		if (aggregationEnabled()) {
-			auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(nonDeliveredMessages);
+			auto imdnMessage = chatRoom->createImdnMessage(nonDeliveredMessages);
 			if (imdnMessage->getPrivate()->getContents().empty()) {
 				lWarning() << "Not sending IMDN not delivered message as it contains no content";
 			} else {
@@ -444,7 +446,7 @@ void Imdn::send() {
 			for (const auto &message : nonDeliveredMessages) {
 				list<MessageReason> l;
 				l.push_back(message);
-				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(l));
+				imdnMessages.push_back(chatRoom->createImdnMessage(l));
 			}
 			for (const auto &message : imdnMessages) {
 				if (message->getPrivate()->getContents().empty()) {

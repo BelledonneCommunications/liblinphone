@@ -18,12 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/api/c-auth-info.h"
+#include <list>
+
 #include "auth-info/auth-info.h"
 #include "c-wrapper/c-wrapper.h"
+#include "linphone/api/c-auth-info.h"
 #include "linphone/lpconfig.h"
-
-#include <list>
+#include "private_functions.h"
 
 using namespace LinphonePrivate;
 

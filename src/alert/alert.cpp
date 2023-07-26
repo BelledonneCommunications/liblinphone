@@ -19,8 +19,8 @@
  */
 
 #include "alert.h"
-
 #include "conference/session/media-session-p.h"
+#include "linphone/api/c-alert.h"
 #include "signal-information/signal-information.h"
 
 // =============================================================================
@@ -114,13 +114,12 @@ AlertMonitor::AlertMonitor(MediaSession &mediaSession) : mMediaSession(mediaSess
 }
 
 void AlertMonitor::notify(const std::shared_ptr<Dictionary> &properties, LinphoneAlertType type) {
-	auto alert = (new Alert(type))->toSharedPtr();
+	auto alert = Alert::create(type);
 
 	alert->mInformations = properties;
 	mRunningAlerts[type] = alert;
 
-	const auto listener = mMediaSession.getPrivate()->getCallSessionListener();
-	if (listener) listener->onAlertNotified(alert);
+	mMediaSession.notifyAlert(alert);
 
 	linphone_core_notify_alert(mMediaSession.getCore()->getCCore(), alert->toC());
 

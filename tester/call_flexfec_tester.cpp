@@ -19,13 +19,15 @@
  */
 
 #include <set>
+#include <sys/stat.h>
 
 #include "bctoolbox/defs.h"
 
 #include "call/call.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
 #include "linphone/core.h"
-#include <sys/stat.h>
 
 #include "tester_utils.h"
 

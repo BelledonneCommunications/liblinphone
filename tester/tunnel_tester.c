@@ -18,12 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "tester_utils.h"
-#include <sys/stat.h>
-#include <sys/types.h>
 
 /* Retrieve the public IP from a given hostname */
 int get_ip_from_hostname(const char *tunnel_hostname, char *ip, size_t ip_size) {

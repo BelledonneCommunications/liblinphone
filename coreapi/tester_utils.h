@@ -189,7 +189,6 @@ LINPHONE_PUBLIC bool_t linphone_call_compare_video_color(LinphoneCall *call,
                                                          const char *label);
 LINPHONE_PUBLIC bool_t linphone_call_check_rtp_sessions(LinphoneCall *call);
 
-LINPHONE_PUBLIC void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, bool_t enable);
 LINPHONE_PUBLIC int _linphone_chat_room_get_transient_message_count(const LinphoneChatRoom *cr);
 LINPHONE_PUBLIC LinphoneChatMessage *_linphone_chat_room_get_first_transient_message(const LinphoneChatRoom *cr);
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);

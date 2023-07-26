@@ -34,6 +34,7 @@ LINPHONE_BEGIN_NAMESPACE
 void CallSessionParamsPrivate::clone(const CallSessionParamsPrivate *src) {
 	sessionName = src->sessionName;
 	privacy = src->privacy;
+	conferenceCreation = src->conferenceCreation;
 	inConference = src->inConference;
 	conferenceId = src->conferenceId;
 	from = src->from;

@@ -20,20 +20,22 @@
 
 #include "ldap-contact-provider.h"
 
-#include "../search/search-result.h"
+#include <algorithm>
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+
 #include "contact_providers_priv.h"
 #include "ldap-config-keys.h"
 #include "ldap-contact-fields.h"
 #include "ldap-contact-search.h"
 #include "ldap-params.h"
 #include "ldap.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 #include "linphone/api/c-types.h"
-
-#include <algorithm>
-#include <cstdlib>
-#include <iomanip>
-#include <iostream>
-
+#include "search/search-result.h"
+//
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
@@ -497,8 +499,8 @@ bool LdapContactProvider::iterate(void *data) {
 			if (provider->mConfig["use_sal"][0] == "0") {
 				provider->mServerUrl = provider->mConfig["server"];
 				provider->mConfigServerIndex =
-				    provider->mConfig.size() - 1; // we don't use sal, so mConfigServerIndex doesn't need to
-				                                  // correspond to the current mConfig (for TLS resolution)
+				    provider->mConfig.size() - 1; // we don't use sal, so mConfigServerIndex doesn't need to correspond
+				                                  // to the current mConfig (for TLS resolution)
 				provider->mCurrentAction = ACTION_INITIALIZE;
 			} else {
 				belle_generic_uri_t *uri =
@@ -528,9 +530,9 @@ bool LdapContactProvider::iterate(void *data) {
 						belle_sip_object_ref(provider->mSalContext);
 						provider->mCurrentAction = ACTION_WAIT_DNS;
 					} else if (provider->mCurrentAction ==
-					           ACTION_INIT) // //Sal is NULL : we cannot use it or it could be done synchonously. In
-					                        // the last case, mCurrentAction will be changed directly from callback.
-					                        // Try another iteration to use it by not setting any new action.
+					           ACTION_INIT) // //Sal is NULL : we cannot use it or it could be done synchonously. In the
+					                        // last case, mCurrentAction will be changed directly from callback. Try
+					                        // another iteration to use it by not setting any new action.
 						lError() << "[LDAP] Cannot request DNS : no context for Sal. Retry on next iteration.";
 				} else {
 					lError() << "[LDAP] Cannot parse the server to URI : "
@@ -734,9 +736,9 @@ void LdapContactProvider::handleSearchResult(LDAPMessage *message) {
 
 								int maxResults = atoi(mConfig["max_results"][0].c_str());
 								if (maxResults == 0 || req->mFoundCount < (unsigned int)maxResults) {
-									std::shared_ptr<SearchResult> searchResult =
-									    SearchResult::create((unsigned int)0, la, sipAddress.second, lfriend,
-									                         LinphoneMagicSearchSourceLdapServers);
+									std::shared_ptr<SearchResult> searchResult = SearchResult::create(
+									    (unsigned int)0, Address::toCpp(la)->getSharedFromThis(), sipAddress.second,
+									    lfriend, LinphoneMagicSearchSourceLdapServers);
 									req->mFoundEntries.push_back(searchResult);
 									++req->mFoundCount;
 								} else { // Have more result (requested max_results+1). Do not store this result to

@@ -52,7 +52,7 @@ public:
 	 *Created. If not set the conference is instanciated with a local focus. In this case conferenceId must be set.
 	 * @param[in] Address of the conference factory (ex: sip:conference-factory@conf.linphone.org).
 	 */
-	virtual void setConferenceFactoryAddress(const std::shared_ptr<Address> &address) = 0;
+	virtual void setConferenceFactoryAddress(const std::shared_ptr<const Address> &address) = 0;
 
 	/*Set focus address of this conference. If set, the Conference is created as an Adhoc conference from a remote
 	 *conferencing server

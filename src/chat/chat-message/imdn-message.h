@@ -29,10 +29,11 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ImdnMessagePrivate;
+class Imdn;
 
 class LINPHONE_PUBLIC ImdnMessage : public NotificationMessage {
 public:
-	friend class ChatRoomPrivate;
+	friend class ChatRoom;
 	friend class Imdn;
 
 	L_OVERRIDE_SHARED_FROM_THIS(ImdnMessage);
@@ -44,14 +45,14 @@ private:
 		Context(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 		        const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
 		        const std::list<std::shared_ptr<ChatMessage>> &displayedMessages)
-		    : chatRoom(chatRoom), deliveredMessages(deliveredMessages), displayedMessages(displayedMessages) {
+		    : mChatRoom(chatRoom), deliveredMessages(deliveredMessages), displayedMessages(displayedMessages) {
 		}
 		Context(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 		        const std::list<Imdn::MessageReason> &nonDeliveredMessages)
-		    : chatRoom(chatRoom), nonDeliveredMessages(nonDeliveredMessages) {
+		    : mChatRoom(chatRoom), nonDeliveredMessages(nonDeliveredMessages) {
 		}
 
-		std::shared_ptr<AbstractChatRoom> chatRoom;
+		std::shared_ptr<AbstractChatRoom> mChatRoom;
 		std::list<std::shared_ptr<ChatMessage>> deliveredMessages;
 		std::list<std::shared_ptr<ChatMessage>> displayedMessages;
 		std::list<Imdn::MessageReason> nonDeliveredMessages;

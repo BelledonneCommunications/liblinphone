@@ -21,6 +21,8 @@
 #ifndef _L_CALL_SESSION_H_
 #define _L_CALL_SESSION_H_
 
+#include <mediastreamer2/msrtt4103.h>
+
 #include "address/address.h"
 #include "conference/conference-id.h"
 #include "conference/params/call-session-params.h"
@@ -34,6 +36,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Alert;
 class CallLog;
 class CallSessionPrivate;
 class CallSessionListener;
@@ -41,26 +44,16 @@ class Content;
 class Core;
 class Conference;
 
-namespace MediaConference {
-class Conference;
-class RemoteConference;
-class LocalConference;
-} // namespace MediaConference
-
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;
 	friend class Core;
-	friend class ClientGroupChatRoom;
-	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
 	friend class CorePrivate;
-	friend class ServerGroupChatRoom;
-	friend class ServerGroupChatRoomPrivate;
+	friend class ServerConference;
+	friend class ClientConference;
+	friend class ClientChatRoom;
+	friend class ServerChatRoom;
 	friend class ParticipantDevice;
-
-	friend class MediaConference::Conference;
-	friend class MediaConference::LocalConference;
-	friend class MediaConference::RemoteConference;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(CallSession);
@@ -109,7 +102,9 @@ public:
 	static const std::map<PredefinedSubjectType, std::string> predefinedSubject;
 
 	CallSession(const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
-	void setListener(CallSessionListener *listener);
+	void addListener(CallSessionListener *listener);
+	void removeListener(CallSessionListener *listener);
+	void clearListeners();
 	void setStateToEnded();
 	~CallSession();
 
@@ -191,6 +186,49 @@ public:
 	void addPendingAction(std::function<LinphoneStatus()> f);
 
 	static bool isPredefinedSubject(const std::string &subject);
+
+	void notifyCameraNotWorking(const char *cameraName);
+	void notifyResetFirstVideoFrameDecoded();
+	void notifyFirstVideoFrameDecoded();
+	void notifySnapshotTaken(const char *filepath);
+	void notifyRealTimeTextCharacterReceived(RealtimeTextReceivedCharacter *data);
+	void notifySendMasterKeyChanged(const std::string key);
+	void notifyReceiveMasterKeyChanged(const std::string key);
+	void notifyUpdateMediaInfoForReporting(const int type);
+	void notifyRtcpUpdateForReporting(SalStreamType type);
+	void notifyStatsUpdated(const LinphoneCallStats *stats);
+	void notifyTmmbrReceived(const int index, const int max_bitrate);
+	void notifyAlert(std::shared_ptr<Alert> &alert);
+	void notifyCallSessionStateChanged(CallSession::State newState, const std::string &message);
+	void notifyCallSessionTransferStateChanged(CallSession::State newState);
+	void notifyCallSessionStateChangedForReporting();
+	void notifyStartRingtone();
+	void notifyIncomingCallSessionTimeoutCheck(int elapsed, bool oneSecondElapsed);
+	void notifyPushCallSessionTimeoutCheck(int elapsed);
+	void notifyIncomingCallSessionNotified();
+	void notifyIncomingCallSessionStarted();
+	void notifyCallSessionAccepting();
+	void notifyCallSessionAccepted();
+	void notifyCallSessionEarlyFailed(LinphoneErrorInfo *ei);
+	void notifyCallSessionStartReferred();
+	void notifyCallSessionSetTerminated();
+	void notifyCallSessionSetReleased();
+	void notifyCheckForAcceptation();
+	void notifyGoClearAckSent();
+	void notifyAckBeingSent(LinphoneHeaders *headers);
+	void notifyAckReceived(LinphoneHeaders *headers);
+	void notifyBackgroundTaskToBeStarted();
+	void notifyBackgroundTaskToBeStopped();
+	void notifyInfoReceived(LinphoneInfoMessage *info);
+	bool isPlayingRingbackTone();
+	bool areSoundResourcesAvailable();
+	void notifyLossOfMediaDetected();
+	void notifySetCurrentSession();
+	void notifyResetCurrentSession();
+	void notifyDtmfReceived(char dtmf);
+	void notifyRemoteRecording(bool isRecording);
+	void notifyEncryptionChanged(bool activated, const std::string &authToken);
+	void notifyVideoDisplayErrorOccurred(int errorCode);
 
 protected:
 	explicit CallSession(CallSessionPrivate &p, const std::shared_ptr<Core> &core);

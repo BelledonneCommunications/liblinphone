@@ -23,23 +23,23 @@
 #include "bctoolbox/defs.h"
 
 #include "mediastreamer2/flowcontrol.h"
+#include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/msfileplayer.h"
 #include "mediastreamer2/msvolume.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "conference.h"
+#include "conference/client-conference.h"
+#include "conference/conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
 #include "core/core.h"
 #include "linphone/core.h"
 #include "media-session-p.h"
 #include "media-session.h"
-#include "mediastreamer2/mediastream.h"
 #include "mixers.h"
 #include "ms2-streams.h"
 #include "nat/ice-service.h"
-#include "remote_conference.h"
 
 using namespace ::std;
 
@@ -83,15 +83,10 @@ void MS2AudioStream::sAudioStreamIsMutedCb(void *userData, uint32_t ssrc, bool_t
 }
 
 void MS2AudioStream::audioStreamActiveSpeakerCb(uint32_t ssrc) {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-
-	if (listener) {
-		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
-
-		if (conference) {
-			const auto remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
-			if (remoteConference) remoteConference->notifyLouderSpeaker(ssrc);
-		}
+	const auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+	if (conference) {
+		const auto clientConference = dynamic_pointer_cast<ClientConference>(conference);
+		if (clientConference) clientConference->notifyLouderSpeaker(ssrc);
 	}
 }
 
@@ -290,8 +285,7 @@ void MS2AudioStream::setupMediaLossCheck() {
 	mMediaLostCheckTimer = getCore().createTimer(
 	    [this, disconnectTimeout]() -> bool {
 		    if (!audio_stream_alive(mStream, disconnectTimeout)) {
-			    CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-			    listener->onLossOfMediaDetected(getMediaSession().getSharedFromThis());
+			    getMediaSession().notifyLossOfMediaDetected();
 		    }
 		    return true;
 	    },
@@ -351,10 +345,9 @@ void MS2AudioStream::audioRouteChangeCb(void *userData,
 
 void MS2AudioStream::configureConference() {
 	// When in conference and it is remote, always enable the local mix
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-	const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
+	const auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
 	if (conference) {
-		const auto remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
+		const auto remoteConference = dynamic_pointer_cast<ClientConference>(conference);
 		if (remoteConference) { // we are a client, enable local mix of several audio stream
 			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters
 			// properly
@@ -370,7 +363,6 @@ void MS2AudioStream::configureConference() {
 }
 void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State targetState) {
 	const auto &stream = params.getResultStreamDescription();
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
 
@@ -475,7 +467,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		recfile = "";
 		// And we will eventually play "playfile" if set by the user
 	}
-	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())) {
+	if (getMediaSession().isPlayingRingbackTone()) {
 		captcard = nullptr;
 		playfile = ""; /* It is setup later */
 		if (linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "send_ringback_without_playback",
@@ -495,7 +487,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		// Create the graph without soundcard resources.
 		captcard = playcard = nullptr;
 	}
-	if (listener && !listener->areSoundResourcesAvailable(getMediaSession().getSharedFromThis())) {
+	if (!getMediaSession().areSoundResourcesAvailable()) {
 		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
 		captcard = playcard = nullptr;
 		if (targetState == CallSession::State::OutgoingEarlyMedia) {
@@ -597,17 +589,14 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::sAudioStreamIsSpeakingCb, this);
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
 
-		if (getMediaSessionPrivate().getCallSessionListener()) {
-			auto conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
-			    getMediaSession().getSharedFromThis());
-			if (conference) {
-				audio_stream_set_active_speaker_callback(mStream, &MS2AudioStream::sAudioStreamActiveSpeakerCb, this);
+		auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+		if (conference) {
+			audio_stream_set_active_speaker_callback(mStream, &MS2AudioStream::sAudioStreamActiveSpeakerCb, this);
 
-				// Enable Voice Activity Detection
-				auto features = audio_stream_get_features(mStream);
-				features |= AUDIO_STREAM_FEATURE_VAD;
-				audio_stream_set_features(mStream, features);
-			}
+			// Enable Voice Activity Detection
+			auto features = audio_stream_get_features(mStream);
+			features |= AUDIO_STREAM_FEATURE_VAD;
+			audio_stream_set_features(mStream, features);
 		}
 
 		audio_stream_set_audio_route_changed_callback(mStream, &MS2AudioStream::audioRouteChangeCb, &getCore());
@@ -616,9 +605,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		                                     dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		VideoStream *vs = getPeerVideoStream();
 		if (vs) audio_stream_link_video(mStream, vs);
-		if (err == 0)
-			postConfigureAudioStream((mMuted || mMicMuted) && (listener && !listener->isPlayingRingbackTone(
-			                                                                   getMediaSession().getSharedFromThis())));
+		if (err == 0) postConfigureAudioStream((mMuted || mMicMuted) && !getMediaSession().isPlayingRingbackTone());
 		mInternalStats.number_of_starts++;
 	}
 
@@ -626,15 +613,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		int pauseTime = 500;
 		ms_filter_call_method(mStream->soundread, MS_FILE_PLAYER_LOOP, &pauseTime);
 	}
-	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())) setupRingbackPlayer();
+	if (getMediaSession().isPlayingRingbackTone()) setupRingbackPlayer();
 
 	std::shared_ptr<ParticipantDevice> device = nullptr;
-	if (getMediaSessionPrivate().getCallSessionListener()) {
-		auto conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(
-		    getMediaSession().getSharedFromThis());
-		if (conference) {
-			device = conference->findParticipantDevice(getMediaSession().getSharedFromThis());
-		}
+	auto conference = getCore().findConference(getMediaSession().getSharedFromThis(), false);
+	if (conference) {
+		device = conference->findParticipantDevice(getMediaSession().getSharedFromThis());
 	}
 
 	if (audioMixer && !mMuted) {

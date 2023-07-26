@@ -18,7 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-nat-policy.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "linphone/utils/utils.h"
@@ -26,8 +32,6 @@
 #include "sal/sal_stream_description.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
-#include <sys/stat.h>
-#include <sys/types.h>
 
 using namespace LinphonePrivate;
 

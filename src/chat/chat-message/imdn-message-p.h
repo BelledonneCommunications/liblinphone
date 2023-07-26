@@ -36,7 +36,7 @@ public:
 
 private:
 	ImdnMessagePrivate(const ImdnMessage::Context &context)
-	    : NotificationMessagePrivate(context.chatRoom, ChatMessage::Direction::Outgoing), context(context) {
+	    : NotificationMessagePrivate(context.mChatRoom, ChatMessage::Direction::Outgoing), context(context) {
 	}
 
 	void setState(ChatMessage::State newState) override;

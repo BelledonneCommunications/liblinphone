@@ -18,7 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/api/c-address.h"
+#include "address/address.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "linphone/friend.h"
 #include "linphone/presence.h"
 
@@ -37,9 +38,8 @@ void SearchResult::updateCapabilities() {
 	const LinphonePresenceModel *presenceModel = nullptr;
 
 	if (mAddress) {
-		char *addressString = linphone_address_as_string_uri_only(mAddress);
-		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, addressString);
-		bctbx_free(addressString);
+		std::string addressString = mAddress->asStringUriOnly();
+		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, L_STRING_TO_C(addressString));
 	}
 
 	if (!presenceModel && !mPhoneNumber.empty()) {
@@ -52,19 +52,18 @@ void SearchResult::updateCapabilities() {
 // ------------------------------------------------------------------------------
 SearchResult::SearchResult() {
 	mWeight = 0;
-	mAddress = NULL;
-	mFriend = NULL;
+	mAddress = nullptr;
+	mFriend = nullptr;
 	mSourceFlags = LinphoneMagicSearchSourceNone;
 }
 
 SearchResult::SearchResult(const unsigned int weight,
-                           const LinphoneAddress *address,
+                           std::shared_ptr<const Address> address,
                            const string &phoneNumber,
                            LinphoneFriend *linphoneFriend,
                            int sourceFlags) {
 	mWeight = weight;
-	mAddress = address;
-	if (mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
+	mAddress = (address) ? address->clone()->toSharedPtr() : nullptr;
 	mPhoneNumber = phoneNumber;
 	mFriend = linphoneFriend;
 	if (mFriend) linphone_friend_ref(mFriend);
@@ -74,8 +73,7 @@ SearchResult::SearchResult(const unsigned int weight,
 
 SearchResult::SearchResult(const SearchResult &sr) : HybridObject(sr) {
 	mWeight = sr.getWeight();
-	mAddress = sr.getAddress();
-	if (mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
+	mAddress = sr.getAddress()->clone()->toSharedPtr();
 	mPhoneNumber = sr.getPhoneNumber();
 	mFriend = sr.getFriend();
 	if (mFriend) linphone_friend_ref(mFriend);
@@ -84,8 +82,6 @@ SearchResult::SearchResult(const SearchResult &sr) : HybridObject(sr) {
 }
 
 SearchResult::~SearchResult() {
-	// FIXME: Ugly temporary workaround to solve weak. Remove me later.
-	if (mAddress) linphone_address_unref(const_cast<LinphoneAddress *>(mAddress));
 	if (mFriend) linphone_friend_unref(mFriend);
 };
 
@@ -109,9 +105,9 @@ std::string SearchResult::toString() const {
 	std::ostringstream ss;
 	ss << getDisplayName();
 
-	const LinphoneAddress *addr = getAddress();
+	const auto &addr = getAddress();
 	if (addr) {
-		ss << " address [" << linphone_address_as_string(addr) << "]";
+		ss << " address [" << *addr << "]";
 	}
 
 	const string &phoneNumber = getPhoneNumber();
@@ -127,9 +123,10 @@ const char *SearchResult::getDisplayName() const {
 	if (getFriend()) {
 		name = linphone_friend_get_name(getFriend());
 	}
-	if (!name && getAddress()) {
-		name = linphone_address_get_display_name(getAddress()) ? linphone_address_get_display_name(getAddress())
-		                                                       : linphone_address_get_username(getAddress());
+	const auto &addr = getAddress();
+	if (!name && addr) {
+		const char *displayName = addr->getDisplayNameCstr();
+		name = displayName ? displayName : addr->getUsernameCstr();
 	}
 	if (!name) {
 		return getPhoneNumber().c_str();
@@ -141,7 +138,7 @@ LinphoneFriend *SearchResult::getFriend() const {
 	return mFriend;
 }
 
-const LinphoneAddress *SearchResult::getAddress() const {
+const std::shared_ptr<Address> SearchResult::getAddress() const {
 	return mAddress;
 }
 
@@ -176,10 +173,8 @@ void SearchResult::merge(const std::shared_ptr<SearchResult> &withResult) {
 	mSourceFlags |= withResult->getSourceFlags();
 
 	if (withResult->getAddress()) { // There is a new data
-		if (doOverride && mAddress) linphone_address_unref(const_cast<LinphoneAddress *>(mAddress));
 		if (doOverride || !mAddress) {
-			mAddress = withResult->getAddress();
-			linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
+			mAddress = withResult->getAddress()->clone()->toSharedPtr();
 		}
 	}
 

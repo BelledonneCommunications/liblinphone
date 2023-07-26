@@ -23,13 +23,16 @@
 
 #include <bctoolbox/defs.h>
 #include <bctoolbox/logging.h>
+
 #include <belle-sip/object.h>
+
 #include <mediastreamer2/mscommon.h>
 
-#include "linphone/logging.h"
-
 #include "c-wrapper/c-wrapper.h"
+#include "linphone/core_utils.h"
+#include "linphone/logging.h"
 #include "logging-private.h"
+#include "private_functions.h"
 
 struct _LinphoneLoggingService {
 	belle_sip_object_t base;

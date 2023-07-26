@@ -30,7 +30,11 @@
 #include "content/content.h"
 #include "core/core.h"
 #include "liblinphone_tester.h"
-#include "linphone/api/c-api.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-room-params.h"
+#include "linphone/api/c-conference-info.h"
+#include "linphone/api/c-conference-scheduler.h"
+#include "linphone/chat.h"
 // TODO: Remove me later.
 #include "private.h"
 #include "tester_utils.h"

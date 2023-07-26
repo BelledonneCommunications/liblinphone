@@ -23,10 +23,13 @@
 
 #include <array>
 
-#include "c-wrapper/c-wrapper.h"
 #ifdef VCARD_ENABLED
 #include <belcard/belcard.hpp>
 #endif /* VCARD_ENABLED */
+
+#include "c-wrapper/c-wrapper.h"
+#include "linphone/api/c-vcard.h"
+#include "linphone/wrapper_utils.h"
 
 // =============================================================================
 

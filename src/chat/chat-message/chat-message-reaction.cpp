@@ -79,7 +79,7 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 		message->getPrivate()->storeInDb();
 
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
-		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(message->getChatRoom());
+		LinphoneChatRoom *cr = message->getChatRoom()->toC();
 
 		if (reaction.empty()) {
 			lInfo() << "[Chat Message Reaction] Sending empty reaction to chat message ID [" << messageId

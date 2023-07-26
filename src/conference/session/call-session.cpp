@@ -25,8 +25,8 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call/call-log.h"
 #include "call/call.h"
-#include "conference.h"
 #include "conference/conference-scheduler.h"
+#include "conference/conference.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/participant.h"
 #include "conference/session/call-session-p.h"
@@ -103,6 +103,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 			         << "] to Released state while it was not previously in Error or End state, aborting";
 			return;
 		}
+
 		lInfo() << "CallSession [" << q << "] moving from state " << Utils::toString(state) << " to "
 		        << Utils::toString(newState);
 
@@ -125,8 +126,8 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 						const std::shared_ptr<Address> to = Address::create(op->getTo());
 						// Local conference
 						if (to->hasUriParam("conf-id")) {
-							shared_ptr<MediaConference::Conference> conference =
-							    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(to, to));
+							shared_ptr<Conference> conference =
+							    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findConference(ConferenceId(to, to));
 
 							std::shared_ptr<ConferenceInfo> confInfo = nullptr;
 #ifdef HAVE_DB_STORAGE
@@ -140,7 +141,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 							// video
 							if (conference || confInfo) {
 								const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
-								const auto dialout = conference && (conference->getCurrentParams().getJoiningMode() ==
+								const auto dialout = conference && (conference->getCurrentParams()->getJoiningMode() ==
 								                                    ConferenceParams::JoiningMode::DialOut);
 								if (conference &&
 								    (!resourceList ||
@@ -155,17 +156,17 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 								auto params = linphone_core_create_call_params(lc, call->toC());
 								linphone_call_params_enable_audio(params, TRUE);
 								const bool videoConferencing =
-								    conference ? conference->getCurrentParams().videoEnabled() : true;
+								    conference ? conference->getCurrentParams()->videoEnabled() : true;
 								linphone_call_params_enable_video(
 								    params,
 								    (call->getRemoteParams()->videoEnabled() && videoConferencing) ? TRUE : FALSE);
 								//								linphone_call_params_set_video_direction(params,
 								// LinphoneMediaDirectionInactive);
-								const auto &startTime = conference ? conference->getCurrentParams().getStartTime()
+								const auto &startTime = conference ? conference->getCurrentParams()->getStartTime()
 								                                   : (confInfo ? confInfo->getDateTime() : -1);
 								linphone_call_params_set_start_time(params, startTime);
 								const auto &endTime = conference
-								                          ? conference->getCurrentParams().getEndTime()
+								                          ? conference->getCurrentParams()->getEndTime()
 								                          : (confInfo ? (confInfo->getDateTime() +
 								                                         static_cast<time_t>(confInfo->getDuration()))
 								                                      : -1);
@@ -246,7 +247,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 			setTerminated();
 		}
 
-		if (listener) listener->onCallSessionStateChanged(q->getSharedFromThis(), newState, message);
+		q->notifyCallSessionStateChanged(newState, message);
 
 		if (newState == CallSession::State::Released) {
 			setReleased(); /* Shall be performed after app notification */
@@ -293,14 +294,14 @@ void CallSessionPrivate::setTransferState(CallSession::State newState) {
 	        << "] to [" << Utils::toString(newState) << "]";
 
 	transferState = newState;
-	if (listener) listener->onCallSessionTransferStateChanged(q->getSharedFromThis(), newState);
+	q->notifyCallSessionTransferStateChanged(newState);
 }
 
 void CallSessionPrivate::handleIncoming(bool tryStartRingtone) {
 	L_Q();
 
 	if (tryStartRingtone) { // The state is still in IncomingReceived state. Start ringing if it was needed
-		listener->onStartRingtone(q->getSharedFromThis());
+		q->notifyStartRingtone();
 	}
 
 	handleIncomingReceivedStateInIncomingNotification();
@@ -310,15 +311,15 @@ void CallSessionPrivate::startIncomingNotification() {
 	L_Q();
 	bool_t tryStartRingtone =
 	    TRUE; // Try to start a tone if this notification is not a PushIncomingReceived and have listener
-	if (listener && state != CallSession::State::PushIncomingReceived)
-		listener->onIncomingCallSessionStarted(q->getSharedFromThis()); // Can set current call to this sessions
-	else tryStartRingtone = FALSE;
+	if (state != CallSession::State::PushIncomingReceived) {
+		q->notifyIncomingCallSessionStarted(); // Can set current call to this sessions
+	} else tryStartRingtone = FALSE;
 
 	setState(CallSession::State::IncomingReceived, "Incoming call received"); // Change state and notify listeners
 
 	// From now on, the application is aware of the call and supposed to take background task or already submitted
 	// notification to the user. We can then drop our background task.
-	if (listener) listener->onBackgroundTaskToBeStopped(q->getSharedFromThis());
+	q->notifyBackgroundTaskToBeStopped();
 
 	if ((state == CallSession::State::IncomingReceived &&
 	     linphone_core_auto_send_ringing_enabled(q->getCore()->getCCore())) ||
@@ -326,9 +327,9 @@ void CallSessionPrivate::startIncomingNotification() {
 		handleIncoming(tryStartRingtone);
 	}
 
-	if (q->mIsAccepting && listener) {
+	if (q->mIsAccepting) {
 		lInfo() << "CallSession [" << q << "] is accepted early.";
-		listener->onCallSessionAccepting(q->getSharedFromThis());
+		q->notifyCallSessionAccepting();
 	}
 }
 
@@ -409,12 +410,12 @@ void CallSessionPrivate::accepted() {
 
 void CallSessionPrivate::ackBeingSent(LinphoneHeaders *headers) {
 	L_Q();
-	if (listener) listener->onAckBeingSent(q->getSharedFromThis(), headers);
+	q->notifyAckBeingSent(headers);
 }
 
 void CallSessionPrivate::ackReceived(LinphoneHeaders *headers) {
 	L_Q();
-	if (listener) listener->onAckReceived(q->getSharedFromThis(), headers);
+	q->notifyAckReceived(headers);
 }
 
 void CallSessionPrivate::cancelDone() {
@@ -484,9 +485,12 @@ bool CallSessionPrivate::failure() {
 	if ((state != CallSession::State::End) && (state != CallSession::State::Error)) {
 		if (ei->reason == SalReasonDeclined) setState(CallSession::State::End, "Call declined");
 		else {
-			if (CallSession::isEarlyState(state))
-				setState(CallSession::State::Error, ei->full_string ? ei->full_string : "");
-			else setState(CallSession::State::End, ei->full_string ? ei->full_string : "");
+			std::string errorString(ei->full_string ? ei->full_string : "");
+			if (CallSession::isEarlyState(state)) {
+				lInfo() << "Call error on state [" << Utils::toString(state) << "] has failed with error "
+				        << (errorString.empty() ? std::string("Unknown error") : errorString);
+				setState(CallSession::State::Error, errorString);
+			} else setState(CallSession::State::End, errorString);
 		}
 	}
 	if (referer) {
@@ -505,7 +509,7 @@ void CallSessionPrivate::infoReceived(SalBodyHandler *bodyHandler) {
 		linphone_info_message_set_content(info, content);
 		linphone_content_unref(content);
 	}
-	if (listener) listener->onInfoReceived(q->getSharedFromThis(), info);
+	q->notifyInfoReceived(info);
 	linphone_info_message_unref(info);
 }
 
@@ -522,7 +526,7 @@ void CallSessionPrivate::referred(const std::shared_ptr<Address> &referToAddr) {
 	referToAddress = referToAddr;
 	referPending = true;
 	setState(CallSession::State::Referred, "Referred");
-	if (referPending && listener) listener->onCallSessionStartReferred(q->getSharedFromThis());
+	if (referPending) q->notifyCallSessionStartReferred();
 }
 
 void CallSessionPrivate::updateToFromAssertedIdentity() {
@@ -618,7 +622,7 @@ void CallSessionPrivate::terminated() {
 		default:
 			break;
 	}
-	if (referPending && listener) listener->onCallSessionStartReferred(q->getSharedFromThis());
+	if (referPending) q->notifyCallSessionStartReferred();
 
 	setState(CallSession::State::End, "Call ended");
 }
@@ -783,7 +787,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation() {
 			         << "], operation not permitted";
 			return -1;
 	}
-	if (listener) listener->onCheckForAcceptation(q->getSharedFromThis());
+	q->notifyCheckForAcceptation();
 
 	/* Check if this call is supposed to replace an already running one */
 	SalOp *replaced = op->getReplaces();
@@ -871,7 +875,7 @@ void CallSessionPrivate::setReleased() {
 		pendingActions.pop();
 	}
 
-	if (listener) listener->onCallSessionSetReleased(q->getSharedFromThis());
+	q->notifyCallSessionSetReleased();
 }
 
 /* This method is called internally to get rid of a call that was notified to the application,
@@ -882,7 +886,7 @@ void CallSessionPrivate::setReleased() {
 void CallSessionPrivate::setTerminated() {
 	L_Q();
 	completeLog();
-	if (listener) listener->onCallSessionSetTerminated(q->getSharedFromThis());
+	q->notifyCallSessionSetTerminated();
 }
 
 LinphoneStatus CallSessionPrivate::startAcceptUpdate(CallSession::State nextState, const string &stateInfo) {
@@ -896,10 +900,7 @@ LinphoneStatus CallSessionPrivate::startUpdate(const CallSession::UpdateMethod m
 	string newSubject(subject);
 
 	if (newSubject.empty()) {
-		std::shared_ptr<MediaConference::Conference> conference = nullptr;
-		if (listener) {
-			conference = listener->getCallSessionConference(q->getSharedFromThis());
-		}
+		const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
 		if (!conference) {
 			if (isInConference())
 				newSubject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::Conference);
@@ -990,12 +991,16 @@ void CallSessionPrivate::setContactOp() {
 	if (contactAddress && contactAddress->isValid()) {
 		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
 		for (auto it = contactParams.begin(); it != contactParams.end(); it++) {
-			contactAddress->setParam(it->first, it->second);
+			if (it->second.empty()) {
+				contactAddress->setParam(it->first);
+			} else {
+				contactAddress->setParam(it->first, it->second);
+			}
 		}
 		q->updateContactAddress(*contactAddress);
 		if (isInConference()) {
-			std::shared_ptr<MediaConference::Conference> conference =
-			    q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+			std::shared_ptr<Conference> conference =
+			    q->getCore()->findConference(ConferenceId(contactAddress, contactAddress));
 
 			auto guessedConferenceAddress =
 			    Address::create((direction == LinphoneCallIncoming) ? op->getTo() : op->getFrom());
@@ -1005,10 +1010,18 @@ void CallSessionPrivate::setContactOp() {
 				// Try to change conference address in order to add GRUU to it
 				// Note that this operation may fail if the conference was previously created on the server
 				conference->setConferenceAddress(contactAddress);
-			} else if (confInfo && confInfo->getUri()->isValid()) {
-				// The conference may have already been terminated when setting the contact address.
-				// This happens when an admin cancel a conference by sending an INVITE with an empty resource list
-				contactAddress = confInfo->getUri();
+			} else if (confInfo) {
+				const auto &conferenceAddress = confInfo->getUri();
+				if (conferenceAddress && conferenceAddress->isValid()) {
+					// The conference may have already been terminated when setting the contact address.
+					// This happens when an admin cancel a conference by sending an INVITE with an empty resource list
+					// Add parameters stored in the conference information URI to the contact address
+					if (contactAddress && contactAddress->isValid()) {
+						contactAddress->merge(*conferenceAddress);
+					} else {
+						contactAddress = conferenceAddress;
+					}
+				}
 			}
 		}
 
@@ -1047,7 +1060,7 @@ void CallSessionPrivate::completeLog() {
 	L_Q();
 	int duration = log->getConnectedTime() == 0 ? 0 : computeDuration(); /* Store duration since connected */
 	log->setDuration(duration);
-	log->setErrorInfo(linphone_error_info_ref(ei));
+	log->setErrorInfo(ei);
 	if (log->getStatus() == LinphoneCallMissed) {
 		auto account = getDestAccount();
 		if (account) {
@@ -1097,7 +1110,7 @@ std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 			addr = accountContactAddress;
 		} else {
 			lError() << "Unable to retrieve contact address from account for call session " << q << " (local address "
-			         << q->getLocalAddress()->toString() << " remote address "
+			         << *q->getLocalAddress() << " remote address "
 			         << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "Unknown") << ").";
 		}
 		if (addr && (account->getOp() || (account->getDependency() != nullptr) ||
@@ -1284,7 +1297,7 @@ CallSession::CallSession(const shared_ptr<Core> &core, const CallSessionParams *
     : Object(*new CallSessionPrivate), CoreAccessor(core) {
 	L_D();
 	getCore()->getPrivate()->registerListener(d);
-	setListener(listener);
+	addListener(listener);
 	if (params) d->setParams(new CallSessionParams(*params));
 	d->init();
 	lInfo() << "New CallSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version()
@@ -1312,9 +1325,23 @@ CallSession::~CallSession() {
 
 // -----------------------------------------------------------------------------
 
-void CallSession::setListener(CallSessionListener *listener) {
+void CallSession::addListener(CallSessionListener *listener) {
 	L_D();
-	d->listener = listener;
+	if (listener) {
+		d->listeners.push_back(listener);
+	}
+}
+
+void CallSession::removeListener(CallSessionListener *listener) {
+	L_D();
+	if (listener) {
+		d->listeners.remove(listener);
+	}
+}
+
+void CallSession::clearListeners() {
+	L_D();
+	d->listeners.clear();
 }
 
 void CallSession::setStateToEnded() {
@@ -1356,10 +1383,6 @@ void CallSession::configure(LinphoneCallDir direction,
 	L_D();
 	d->direction = direction;
 	d->log = CallLog::create(getCore(), direction, from, to);
-
-	auto conference = d->listener
-	                      ? d->listener->getCallSessionConference(const_pointer_cast<CallSession>(getSharedFromThis()))
-	                      : nullptr;
 
 	const auto &core = getCore()->getCCore();
 	if (op) {
@@ -1570,19 +1593,19 @@ void CallSession::iterate(time_t currentRealTime, bool oneSecondElapsed) {
 		startInvite(nullptr, "");
 	}
 	if ((d->state == CallSession::State::IncomingReceived) || (d->state == CallSession::State::IncomingEarlyMedia)) {
-		if (d->listener) d->listener->onIncomingCallSessionTimeoutCheck(getSharedFromThis(), elapsed, oneSecondElapsed);
+		notifyIncomingCallSessionTimeoutCheck(elapsed, oneSecondElapsed);
 	}
 
 	if (d->direction == LinphoneCallIncoming && !isOpConfigured()) {
-		if (d->listener) d->listener->onPushCallSessionTimeoutCheck(getSharedFromThis(), elapsed);
+		notifyPushCallSessionTimeoutCheck(elapsed);
 	}
 
 	const auto callTimeout = getCore()->getCCore()->sip_conf.in_call_timeout;
 	const auto &connectedTime = d->log->getConnectedTime();
 	if ((callTimeout > 0) && (connectedTime != 0) && ((currentRealTime - connectedTime) > callTimeout)) {
-		lInfo() << "Terminating call session " << this << " (local address " << getLocalAddress()->toString()
-		        << " remote address " << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown")
-		        << ") because the call timeout (" << callTimeout << "s) has been reached";
+		lInfo() << "Terminating call session " << this << " (local address " << *getLocalAddress() << " remote address "
+		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ") because the call timeout ("
+		        << callTimeout << "s) has been reached";
 		terminate();
 	}
 }
@@ -1631,10 +1654,8 @@ void CallSession::startIncomingNotification(bool notifyRinging) {
 void CallSession::startBasicIncomingNotification(bool notifyRinging) {
 	L_D();
 	d->notifyRinging = notifyRinging;
-	if (d->listener) {
-		d->listener->onIncomingCallSessionNotified(getSharedFromThis());
-		d->listener->onBackgroundTaskToBeStarted(getSharedFromThis());
-	}
+	notifyIncomingCallSessionNotified();
+	notifyBackgroundTaskToBeStarted();
 	/* Prevent the CallSession from being destroyed while we are notifying, if the user declines within the state
 	 * callback */
 	shared_ptr<CallSession> ref = getSharedFromThis();
@@ -1642,10 +1663,8 @@ void CallSession::startBasicIncomingNotification(bool notifyRinging) {
 
 void CallSession::startPushIncomingNotification() {
 	L_D();
-	if (d->listener) {
-		d->listener->onIncomingCallSessionStarted(getSharedFromThis());
-		d->listener->onStartRingtone(getSharedFromThis());
-	}
+	notifyIncomingCallSessionStarted();
+	notifyStartRingtone();
 
 	d->setState(CallSession::State::PushIncomingReceived, "Push notification received");
 }
@@ -1818,11 +1837,11 @@ const std::shared_ptr<Address> CallSession::getLocalAddress() const {
 	L_D();
 	std::shared_ptr<Address> addr = nullptr;
 	if (d->direction == LinphoneCallIncoming) {
-		if (d->log->getToAddress()) {
+		if (d->log && d->log->getToAddress()) {
 			addr = d->log->getToAddress();
 		}
 	} else {
-		if (d->log->getFromAddress()) {
+		if (d->log && d->log->getFromAddress()) {
 			addr = d->log->getFromAddress();
 		}
 	}
@@ -1879,7 +1898,8 @@ const std::shared_ptr<Address> CallSession::getReferToAddress() const {
 
 const std::shared_ptr<Address> CallSession::getRemoteAddress() const {
 	L_D();
-	return (d->direction == LinphoneCallIncoming) ? d->log->getFromAddress() : d->log->getToAddress();
+	return (d->log) ? (d->direction == LinphoneCallIncoming) ? d->log->getFromAddress() : d->log->getToAddress()
+	                : nullptr;
 }
 
 const string &CallSession::getRemoteContact() const {
@@ -2035,12 +2055,10 @@ const CallSessionParams *CallSession::getParams() const {
 void CallSession::updateContactAddress(Address &contactAddress) const {
 	L_D();
 
-	auto conference = d->listener
-	                      ? d->listener->getCallSessionConference(const_pointer_cast<CallSession>(getSharedFromThis()))
-	                      : nullptr;
+	const auto conference = getCore()->findConference(getSharedFromThis(), false);
 	if (conference) {
-		auto confParams = conference->getCurrentParams();
-		if (confParams.isHidden()) {
+		auto conferenceParams = conference->getCurrentParams();
+		if (conferenceParams->isHidden()) {
 			lInfo() << "Do not update contact address because conference " << *conference->getConferenceAddress()
 			        << " is hidden";
 			return;
@@ -2051,10 +2069,8 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 	const std::string confId(d->getConferenceId());
 	if (isInConference) {
 		// Add conference ID
-		if (!contactAddress.hasUriParam("conf-id")) {
-			if (confId.empty() == false) {
-				contactAddress.setUriParam("conf-id", confId);
-			}
+		if (!contactAddress.hasUriParam("conf-id") && !confId.empty()) {
+			contactAddress.setUriParam("conf-id", confId);
 		}
 		if (!contactAddress.hasParam("isfocus")) {
 			// If in conference and contact address doesn't have isfocus
@@ -2164,6 +2180,429 @@ bool CallSession::isPredefinedSubject(const std::string &subject) {
 	return std::find_if(CallSession::predefinedSubject.cbegin(), CallSession::predefinedSubject.cend(),
 	                    [&subject](const auto &element) { return (subject.compare(element.second) == 0); }) !=
 	       CallSession::predefinedSubject.cend();
+}
+
+bool CallSession::areSoundResourcesAvailable() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	bool available = (listeners.size() > 0);
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		available &= listener->areSoundResourcesAvailable(getSharedFromThis());
+	}
+	return available;
+}
+
+bool CallSession::isPlayingRingbackTone() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	bool playing = (listeners.size() > 0);
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		playing &= listener->isPlayingRingbackTone(getSharedFromThis());
+	}
+	return playing;
+}
+
+void CallSession::notifyCameraNotWorking(const char *cameraName) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCameraNotWorking(getSharedFromThis(), cameraName);
+	}
+}
+
+void CallSession::notifyResetFirstVideoFrameDecoded() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onResetFirstVideoFrameDecoded(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyFirstVideoFrameDecoded() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onFirstVideoFrameDecoded(getSharedFromThis());
+	}
+}
+
+void CallSession::notifySnapshotTaken(const char *filepath) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onSnapshotTaken(getSharedFromThis(), filepath);
+	}
+}
+
+void CallSession::notifyRealTimeTextCharacterReceived(RealtimeTextReceivedCharacter *data) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onRealTimeTextCharacterReceived(getSharedFromThis(), data);
+	}
+}
+
+void CallSession::notifyLossOfMediaDetected() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onLossOfMediaDetected(getSharedFromThis());
+	}
+}
+
+void CallSession::notifySendMasterKeyChanged(const std::string key) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onSendMasterKeyChanged(getSharedFromThis(), key);
+	}
+}
+
+void CallSession::notifyReceiveMasterKeyChanged(const std::string key) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		listener->onReceiveMasterKeyChanged(getSharedFromThis(), key);
+	}
+}
+
+void CallSession::notifyUpdateMediaInfoForReporting(const int type) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onUpdateMediaInfoForReporting(getSharedFromThis(), type);
+	}
+}
+
+void CallSession::notifyRtcpUpdateForReporting(SalStreamType type) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onRtcpUpdateForReporting(getSharedFromThis(), type);
+	}
+}
+
+void CallSession::notifyStatsUpdated(const LinphoneCallStats *stats) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onStatsUpdated(getSharedFromThis(), stats);
+	}
+}
+
+void CallSession::notifyTmmbrReceived(const int index, const int max_bitrate) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onTmmbrReceived(getSharedFromThis(), index, max_bitrate);
+	}
+}
+
+void CallSession::notifyAlert(std::shared_ptr<Alert> &alert) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onAlertNotified(alert);
+	}
+}
+
+void CallSession::notifyCallSessionStateChanged(CallSession::State newState, const string &message) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionStateChanged(getSharedFromThis(), newState, message);
+	}
+}
+
+void CallSession::notifyCallSessionTransferStateChanged(CallSession::State newState) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionTransferStateChanged(getSharedFromThis(), newState);
+	}
+}
+
+void CallSession::notifyCallSessionStateChangedForReporting() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionStateChangedForReporting(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyCallSessionEarlyFailed(LinphoneErrorInfo *ei) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
+	}
+}
+
+void CallSession::notifyStartRingtone() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onStartRingtone(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyIncomingCallSessionTimeoutCheck(int elapsed, bool oneSecondElapsed) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onIncomingCallSessionTimeoutCheck(getSharedFromThis(), elapsed, oneSecondElapsed);
+	}
+}
+
+void CallSession::notifyPushCallSessionTimeoutCheck(int elapsed) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onPushCallSessionTimeoutCheck(getSharedFromThis(), elapsed);
+	}
+}
+
+void CallSession::notifyIncomingCallSessionNotified() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onIncomingCallSessionNotified(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyIncomingCallSessionStarted() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onIncomingCallSessionStarted(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyCallSessionAccepted() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionAccepted(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyCallSessionAccepting() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionAccepting(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyCallSessionStartReferred() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionStartReferred(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyCallSessionSetTerminated() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionSetTerminated(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyCallSessionSetReleased() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCallSessionSetReleased(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyCheckForAcceptation() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onCheckForAcceptation(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyGoClearAckSent() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onGoClearAckSent();
+	}
+}
+
+void CallSession::notifyAckBeingSent(LinphoneHeaders *headers) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onAckBeingSent(getSharedFromThis(), headers);
+	}
+}
+
+void CallSession::notifyAckReceived(LinphoneHeaders *headers) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onAckReceived(getSharedFromThis(), headers);
+	}
+}
+
+void CallSession::notifyBackgroundTaskToBeStarted() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onBackgroundTaskToBeStarted(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyBackgroundTaskToBeStopped() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onBackgroundTaskToBeStopped(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyInfoReceived(LinphoneInfoMessage *info) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onInfoReceived(getSharedFromThis(), info);
+	}
+}
+
+void CallSession::notifySetCurrentSession() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onSetCurrentSession(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyResetCurrentSession() {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onResetCurrentSession(getSharedFromThis());
+	}
+}
+
+void CallSession::notifyDtmfReceived(char dtmf) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onDtmfReceived(getSharedFromThis(), dtmf);
+	}
+}
+
+void CallSession::notifyRemoteRecording(bool isRecording) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onRemoteRecording(getSharedFromThis(), isRecording);
+	}
+}
+
+void CallSession::notifyEncryptionChanged(bool activated, const std::string &authToken) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onEncryptionChanged(getSharedFromThis(), activated, authToken);
+	}
+}
+
+void CallSession::notifyVideoDisplayErrorOccurred(int errorCode) {
+	L_D();
+	// Copy list of listeners as the callback might delete one
+	auto listeners = d->listeners;
+	for (const auto &listener : listeners) {
+		auto logContext = listener->getLogContextualizer();
+		listener->onVideoDisplayErrorOccurred(getSharedFromThis(), errorCode);
+	}
 }
 
 LINPHONE_END_NAMESPACE

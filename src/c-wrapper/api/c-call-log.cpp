@@ -358,8 +358,8 @@ bctbx_list_t *linphone_core_get_call_history_2(LinphoneCore *lc,
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return NULL;
 
-	const auto peerAddr = Address::toCpp(const_cast<LinphoneAddress *>(peer_addr))->getSharedFromThis();
-	const auto localAddr = Address::toCpp(const_cast<LinphoneAddress *>(local_addr))->getSharedFromThis();
+	const auto peerAddr = Address::toCpp(peer_addr)->getSharedFromThis();
+	const auto localAddr = Address::toCpp(local_addr)->getSharedFromThis();
 	auto list = mainDb->getCallHistory(peerAddr, localAddr);
 
 	bctbx_list_t *results = NULL;

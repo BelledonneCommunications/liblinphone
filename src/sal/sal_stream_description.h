@@ -24,10 +24,11 @@
 #include <map>
 #include <vector>
 
+#include "ortp/rtpsession.h"
+
 #include "c-wrapper/internal/c-sal.h"
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
-#include "ortp/rtpsession.h"
 #include "sal/potential_config_graph.h"
 #include "sal/sal_stream_configuration.h"
 
@@ -138,7 +139,7 @@ public:
 	const int &getRtcpPort() const;
 	const std::string &getRtpAddress() const;
 	const int &getRtpPort() const;
-	const std::list<PayloadType *> &getPayloads() const;
+	const std::list<OrtpPayloadType *> &getPayloads() const;
 	const std::list<LinphoneMediaEncryption> &getSupportedEncryptions() const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptionsInPotentialCfgs() const;
 	bool isBundleOnly() const;
@@ -193,8 +194,8 @@ public:
 	std::string rtcp_addr;
 	int rtp_port = 0;
 	int rtcp_port = 0;
-	std::list<PayloadType *> already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct
-	                                                       allocation of payload type numbers*/
+	std::list<OrtpPayloadType *> already_assigned_payloads; /**<list of OrtpPayloadType offered in the past, used for
+	                                                       correct allocation of payload type numbers*/
 	int bandwidth = 0;
 	SalMulticastRole multicast_role = SalMulticastInactive;
 	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
@@ -274,7 +275,7 @@ private:
 	void addMidAttributesToSdp(const SalStreamConfiguration &cfg, belle_sdp_media_description_t *media_desc) const;
 	void applyRtcpFbAttributeToPayload(SalStreamConfiguration &cfg,
 	                                   belle_sdp_rtcp_fb_attribute_t *fb_attribute,
-	                                   PayloadType *pt);
+	                                   OrtpPayloadType *pt);
 	bool sdpParseRtcpFbParameters(SalStreamConfiguration &cfg, const belle_sdp_media_description_t *media_desc);
 	void sdpParsePayloadTypes(SalStreamConfiguration &cfg, const belle_sdp_media_description_t *media_desc) const;
 	void sdpParseMediaCryptoParameters(SalStreamConfiguration &cfg,

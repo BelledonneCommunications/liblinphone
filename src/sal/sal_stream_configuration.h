@@ -100,7 +100,7 @@ public:
 	bool hasZrtpHash() const;
 	const uint8_t *getZrtpHash() const;
 
-	const std::list<PayloadType *> &getPayloads() const;
+	const std::list<OrtpPayloadType *> &getPayloads() const;
 	const int &getMaxRate() const;
 	const std::string &getMid() const;
 	const int &getMidRtpExtHeaderId() const;
@@ -116,7 +116,7 @@ public:
 	const int &getClientToMixerExtensionId() const;
 	const int &getFrameMarkingExtensionId() const;
 
-	void replacePayloads(const std::list<PayloadType *> &newPayloads);
+	void replacePayloads(const std::list<OrtpPayloadType *> &newPayloads);
 
 	void addToSdpMediaDescription(belle_sdp_media_description_t *media_desc) const;
 
@@ -133,7 +133,7 @@ private:
 	std::string proto_other;
 	unsigned int rtp_ssrc = 0;
 	std::string rtcp_cname;
-	std::list<PayloadType *> payloads; /**<list of PayloadType */
+	std::list<OrtpPayloadType *> payloads; /**<list of OrtpPayloadType */
 	int ptime = 0;
 	int maxptime = 0;
 	SalStreamDir dir = SalStreamInactive;
@@ -165,9 +165,9 @@ private:
 	unsigned int tcapIndex = 0;
 	std::list<std::list<unsigned int>> acapIndexes;
 
-	static bool isRecvOnly(const PayloadType *p);
-	static bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2);
-	static bool isSamePayloadList(const std::list<PayloadType *> &l1, const std::list<PayloadType *> &l2);
+	static bool isRecvOnly(const OrtpPayloadType *p);
+	static bool isSamePayloadType(const OrtpPayloadType *p1, const OrtpPayloadType *p2);
+	static bool isSamePayloadList(const std::list<OrtpPayloadType *> &l1, const std::list<OrtpPayloadType *> &l2);
 	static std::string getSetupAttributeForDtlsRole(const SalDtlsRole &role);
 	static SalDtlsRole getDtlsRoleFromSetupAttribute(const std::string setupAtte);
 

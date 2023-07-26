@@ -19,6 +19,10 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-conference-params.h"
+#include "linphone/api/c-participant-info.h"
+#include "linphone/api/c-participant.h"
 #include "local-conference-tester-functions.h"
 #include "shared_tester_functions.h"
 
@@ -158,7 +162,7 @@ static void abort_call_to_ice_conference(void) {
 		char *confAddrStr = (confAddr) ? linphone_address_as_string(confAddr) : NULL;
 
 		// Chat room creation to send ICS
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomStateCreated, 2,
 		                             liblinphone_tester_sip_timeout));
 
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {

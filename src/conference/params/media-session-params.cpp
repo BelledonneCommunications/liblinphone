@@ -18,15 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "media-session-params.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "call-session-params-p.h"
-#include "media-session-params-p.h"
-
-#include "media-session-params.h"
-
 #include "core/core.h"
+#include "linphone/api/c-conference-params.h"
 #include "logger/logger.h"
-
+#include "media-session-params-p.h"
 #include "private.h"
 
 using namespace std;

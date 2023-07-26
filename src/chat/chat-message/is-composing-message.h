@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC IsComposingMessage : public NotificationMessage {
 public:
-	friend class ChatRoomPrivate;
+	friend class ChatRoom;
 
 	L_OVERRIDE_SHARED_FROM_THIS(IsComposingMessage);
 

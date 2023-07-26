@@ -22,6 +22,7 @@
 #define nat_policy_hh
 
 #include "c-wrapper/c-wrapper.h"
+#include "core/core-accessor.h"
 
 LINPHONE_BEGIN_NAMESPACE
 

@@ -330,6 +330,15 @@ typedef struct _stats {
 	int number_of_LinphoneChatRoomSessionEarlyUpdatedByRemote;
 	int number_of_LinphoneChatRoomSessionEarlyUpdating;
 
+	int number_of_LinphoneChatRoomStateInstantiated;
+	int number_of_LinphoneChatRoomStateCreationPending;
+	int number_of_LinphoneChatRoomStateCreated;
+	int number_of_LinphoneChatRoomStateCreationFailed;
+	int number_of_LinphoneChatRoomStateTerminationPending;
+	int number_of_LinphoneChatRoomStateTerminated;
+	int number_of_LinphoneChatRoomStateTerminationFailed;
+	int number_of_LinphoneChatRoomStateDeleted;
+
 	int number_of_LinphoneConferenceStateInstantiated;
 	int number_of_LinphoneConferenceStateCreationPending;
 	int number_of_LinphoneConferenceStateCreated;
@@ -492,6 +501,15 @@ typedef struct _stats {
 	int last_tmmbr_value_received;
 	int tmmbr_received_from_cb;
 
+	int number_of_chat_room_participants_added;
+	int number_of_chat_room_participants_removed;
+	int number_of_chat_room_participant_admin_statuses_changed;
+
+	int number_of_chat_room_participant_devices_added;
+	int number_of_chat_room_participant_devices_removed;
+
+	int number_of_chat_room_subject_changed;
+
 	int number_of_participants_added;
 	int number_of_participant_role_changed;
 	int number_of_participant_admin_statuses_changed;
@@ -499,10 +517,12 @@ typedef struct _stats {
 	int number_of_subject_changed;
 	int number_of_available_media_changed;
 	int number_of_core_chat_room_subject_changed;
+
 	int number_of_participant_devices_added;
 	int number_of_participant_devices_removed;
 	int number_of_participant_devices_screen_sharing_enabled;
 	int number_of_participant_devices_screen_sharing_disabled;
+	int number_of_conference_full_state_received;
 	int number_of_participant_devices_media_capability_changed;
 	int number_of_participant_devices_scheduled_for_joining;
 	int number_of_participant_devices_pending;
@@ -689,6 +709,8 @@ void reaction_removed(LinphoneCore *lc,
                       LinphoneChatRoom *room,
                       LinphoneChatMessage *msg,
                       const LinphoneAddress *address);
+char *random_filename(char *prefix, char *extension);
+char *random_filepath(char *prefix, char *extension);
 void file_transfer_received(LinphoneChatMessage *message, LinphoneContent *content, const LinphoneBuffer *buffer);
 LinphoneBuffer *
 tester_file_transfer_send(LinphoneChatMessage *message, LinphoneContent *content, size_t offset, size_t size);

@@ -23,7 +23,7 @@
 
 #include <bctoolbox/defs.h>
 
-#include "../../coreapi/conference.h"
+#include "conference/conference.h"
 #include "conference/notify-conference-listener.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
@@ -118,6 +118,10 @@ void NotifyConferenceListener::onStateChanged(ConferenceInterface::State newStat
 
 void NotifyConferenceListener::onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_active_speaker_participant_device(conf->toC(), device->toC());
+}
+
+void NotifyConferenceListener::onFullStateReceived() {
+	_linphone_conference_notify_full_state_received(conf->toC());
 }
 
 LINPHONE_END_NAMESPACE

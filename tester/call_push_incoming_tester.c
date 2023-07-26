@@ -18,15 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "belle-sip/sipstack.h"
-#include "liblinphone_tester.h"
-#include "linphone/core.h"
-#include "linphone/lpconfig.h"
-#include "mediastreamer2/msutils.h"
-#include "tester_utils.h"
-#include <bctoolbox/defs.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <bctoolbox/defs.h>
+
+#include "belle-sip/sipstack.h"
+
+#include "mediastreamer2/msutils.h"
+
+#include "liblinphone_tester.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/core.h"
+#include "linphone/lpconfig.h"
+#include "tester_utils.h"
 
 #ifdef _WIN32
 #define unlink _unlink

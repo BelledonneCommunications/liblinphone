@@ -19,6 +19,8 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-friend.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
 

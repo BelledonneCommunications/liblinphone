@@ -21,6 +21,7 @@
 #include "linphone/api/c-payload-type.h"
 #include "c-wrapper/c-wrapper.h"
 #include "payload-type/payload-type.h"
+#include "tester_utils.h"
 
 using namespace LinphonePrivate;
 

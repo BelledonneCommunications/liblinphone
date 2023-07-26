@@ -49,39 +49,35 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #endif
 
-#include "account/account.h"
 #include "account/mwi/message-waiting-indication.h"
-#include "address/address.h"
-#include "call/call.h"
-#include "chat/encryption/encryption-engine.h"
 #ifdef HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
-#endif
-#include "chat/encryption/lime-x3dh-server-engine.h"
-#ifdef HAVE_ADVANCED_IM
-#include "conference/handlers/local-conference-list-event-handler.h"
-#include "conference/handlers/remote-conference-list-event-handler.h"
-#endif
-#include "chat/chat-room/chat-room-p.h"
+#endif // HAVE_LIME_X3DH
+#include "conference/conference.h"
+#include "conference/handlers/client-conference-list-event-handler.h"
+#include "conference/handlers/server-conference-list-event-handler.h"
+#include "conference/params/media-session-params-p.h"
+#include "conference/participant-info.h"
+#include "conference/participant.h"
+#include "conference/session/call-session-listener.h"
+#include "conference/session/media-session-p.h"
+#include "conference/session/media-session.h"
+#include "conference/session/streams.h"
 #include "core/core-listener.h"
 #include "core/core-p.h"
 #include "event/event.h"
 #include "factory/factory.h"
+#include "http/http-client.h"
 #include "ldap/ldap.h"
+#include "linphone/api/c-account-cbs.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 #include "linphone/lpconfig.h"
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "paths/paths.h"
-
-#include "conference.h"
-#include "conference/params/media-session-params-p.h"
-#include "conference/participant.h"
-#include "conference/session/media-session-p.h"
-#include "conference/session/media-session.h"
-#include "conference/session/streams.h"
-#include "http/http-client.h"
-
 #include "sal/sal_media_description.h"
 
 #ifdef HAVE_ADVANCED_IM
@@ -141,8 +137,8 @@ void CorePrivate::init() {
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
 	getToneManager(); // Forces instanciation of the ToneManager.
 #ifdef HAVE_ADVANCED_IM
-	remoteListEventHandler = makeUnique<RemoteConferenceListEventHandler>(q->getSharedFromThis());
-	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
+	clientListEventHandler = makeUnique<ClientConferenceListEventHandler>(q->getSharedFromThis());
+	serverListEventHandler = makeUnique<ServerConferenceListEventHandler>(q->getSharedFromThis());
 #endif
 
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
@@ -314,10 +310,10 @@ bool CorePrivate::isShutdownDone() {
 		return true;
 	}
 
-	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
-		const auto &chatRoom = dynamic_pointer_cast<ChatRoom>(it->second);
-		if (chatRoom && (chatRoom->getPrivate()->getImdnHandler()->isCurrentlySendingImdnMessages() ||
-		                 !chatRoom->getPrivate()->getTransientChatMessages().empty())) {
+	for (const auto &abstractChatRoom : q->getChatRooms()) {
+		const auto &chatRoom = dynamic_pointer_cast<ChatRoom>(abstractChatRoom);
+		if (chatRoom && (chatRoom->getImdnHandler()->isCurrentlySendingImdnMessages() ||
+		                 !chatRoom->getTransientChatMessages().empty())) {
 			return false;
 		}
 	}
@@ -351,10 +347,8 @@ void CorePrivate::shutdown() {
 
 	stopChatMessagesAggregationTimer();
 
-	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
-		const auto &chatRoom = it->second;
-		const auto &chatRoomPrivate = chatRoom->getPrivate();
-		for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
+	for (const auto &chatRoom : q->getChatRooms()) {
+		for (auto &chatMessage : chatRoom->getTransientChatMessages()) {
 			if (chatMessage->getState() == ChatMessage::State::FileTransferInProgress) {
 				// Abort auto download file transfers
 				if (chatMessage->getDirection() == ChatMessage::Direction::Incoming) {
@@ -386,19 +380,18 @@ void CorePrivate::uninit() {
 		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
 		if (cr) {
 			cr->sendPendingMessages();
-			cr->getPrivate()->getImdnHandler()->onLinphoneCoreStop();
+			cr->getImdnHandler()->onLinphoneCoreStop();
 #ifdef HAVE_ADVANCED_IM
 			for (const auto &participant : cr->getParticipants()) {
 				for (std::shared_ptr<ParticipantDevice> device : participant->getDevices()) {
 					// to make sure no more messages are received after Core:uninit because key components like DB are
 					// no longuer available. So it's no more possible to handle any singnaling messages properly.
-					if (device->getSession()) device->getSession()->setListener(nullptr);
+					if (device->getSession()) device->getSession()->clearListeners();
 				}
 			}
 #endif
 			// end all file transfer background tasks before linphonecore off
-			const auto &chatRoomPrivate = cr->getPrivate();
-			for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
+			for (auto &chatMessage : cr->getTransientChatMessages()) {
 				chatMessage->fileUploadEndBackgroundTask();
 			}
 		}
@@ -406,13 +399,20 @@ void CorePrivate::uninit() {
 
 	chatRoomsById.clear();
 
-	for (const auto &audioVideoConference : q->audioVideoConferenceById) {
-		// Terminate audio video conferences just before core is stopped
-		audioVideoConference.second->terminate();
+	// https://gcc.gnu.org/bugzilla/show_bug.cgi?format=multiple&id=81767
+#if __GNUC__ == 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif //  __GNUC__ == 7
+	for (const auto &[id, conference] : conferenceById) {
+#if __GNUC__ == 7
+#pragma GCC diagnostic pop
+#endif //  __GNUC__ == 7
+       // Terminate audio video conferences just before core is stopped
+		conference->terminate();
 	}
-	q->audioVideoConferenceById.clear();
+	conferenceById.clear();
 
-	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
 	pushReceivedBackgroundTask.stop();
 	static_cast<PlatformHelpers *>(getCCore()->platform_helper)->stopPushService();
@@ -421,8 +421,8 @@ void CorePrivate::uninit() {
 	q->mPublishByEtag.clear();
 
 #ifdef HAVE_ADVANCED_IM
-	remoteListEventHandler.reset();
-	localListEventHandler.reset();
+	clientListEventHandler.reset();
+	serverListEventHandler.reset();
 #endif
 
 	Address::clearSipAddressesCache();
@@ -518,7 +518,9 @@ void CorePrivate::notifyEnteringForeground() {
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop() {
 	L_Q();
-	return belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t *>(q->getCCore()->sal->getStackImpl()));
+	return q->getCCore()->sal
+	           ? belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t *>(q->getCCore()->sal->getStackImpl()))
+	           : nullptr;
 }
 
 Sal *CorePrivate::getSal() {
@@ -551,12 +553,6 @@ void CorePrivate::enableMessageWaitingIndicationSubscription(bool enable) {
 		if (enable) account->subscribeToMessageWaitingIndication();
 		else account->unsubscribeFromMessageWaitingIndication();
 	}
-}
-
-bool CorePrivate::basicToFlexisipChatroomMigrationEnabled() const {
-	L_Q();
-	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc",
-	                                "enable_basic_to_client_group_chat_room_migration", FALSE);
 }
 
 CorePrivate::CorePrivate() : authStack(*this) {
@@ -596,7 +592,6 @@ void CorePrivate::stopEphemeralMessageTimer() {
 }
 
 bool CorePrivate::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
-	L_Q();
 	if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0)) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return false;
@@ -610,9 +605,10 @@ bool CorePrivate::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice
 		}
 	}
 
-	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
-		for (const auto &audioVideoConference : q->audioVideoConferenceById) {
-			audioVideoConference.second->getAudioControlInterface()->setInputDevice(audioDevice);
+	for (const auto &[id, conference] : conferenceById) {
+		auto audioControlInterface = conference->getAudioControlInterface();
+		if (audioControlInterface) {
+			audioControlInterface->setInputDevice(audioDevice);
 		}
 	}
 
@@ -620,7 +616,6 @@ bool CorePrivate::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice
 }
 
 bool CorePrivate::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
-	L_Q();
 	if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0)) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return false;
@@ -634,11 +629,10 @@ bool CorePrivate::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevic
 		}
 	}
 
-	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
-		for (const auto &audioVideoConference : q->audioVideoConferenceById) {
-			if (audioVideoConference.second->getAudioControlInterface()) {
-				audioVideoConference.second->getAudioControlInterface()->setOutputDevice(audioDevice);
-			}
+	for (const auto &[id, conference] : conferenceById) {
+		auto audioControlInterface = conference->getAudioControlInterface();
+		if (audioControlInterface) {
+			audioControlInterface->setOutputDevice(audioDevice);
 		}
 	}
 
@@ -663,7 +657,7 @@ void CorePrivate::updateVideoDevice() {
 	}
 	if (getCCore()->conf_ctx) {
 		/* There is a local conference.*/
-		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		Conference *conf = Conference::toCpp(getCCore()->conf_ctx);
 		VideoControlInterface *i = conf->getVideoControlInterface();
 		if (i) i->parametersChanged();
 	}
@@ -1228,7 +1222,7 @@ std::shared_ptr<AudioDevice> Core::getInputAudioDevice() const {
 	// If the core in a local conference, then get the audio device of the audio control interface
 	if (getCCore()->conf_ctx) {
 		/* There is a local conference.*/
-		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		Conference *conf = Conference::toCpp(getCCore()->conf_ctx);
 		AudioControlInterface *i = conf->getAudioControlInterface();
 		return i ? i->getInputDevice() : nullptr;
 	} else {
@@ -1248,7 +1242,7 @@ std::shared_ptr<AudioDevice> Core::getOutputAudioDevice() const {
 	// If the core in a local conference, then get the audio device of the audio control interface
 	if (getCCore()->conf_ctx) {
 		/* There is a local conference.*/
-		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		Conference *conf = Conference::toCpp(getCCore()->conf_ctx);
 		AudioControlInterface *i = conf->getAudioControlInterface();
 		return i ? i->getOutputDevice() : nullptr;
 	} else {
@@ -1515,11 +1509,9 @@ int Core::getUnreadChatMessageCount() const {
 	return d->mainDb->getUnreadChatMessageCount();
 }
 
-int Core::getUnreadChatMessageCount(const std::shared_ptr<Address> &localAddress) const {
-	L_D();
+int Core::getUnreadChatMessageCount(const std::shared_ptr<const Address> &localAddress) const {
 	int count = 0;
-	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
-		const auto &chatRoom = it->second;
+	for (const auto &chatRoom : getChatRooms()) {
 		if (localAddress->weakEqual(*chatRoom->getLocalAddress())) {
 			if (!chatRoom->getIsMuted()) {
 				count += chatRoom->getUnreadChatMessageCount();
@@ -1530,11 +1522,8 @@ int Core::getUnreadChatMessageCount(const std::shared_ptr<Address> &localAddress
 }
 
 int Core::getUnreadChatMessageCountFromActiveLocals() const {
-	L_D();
-
 	int count = 0;
-	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
-		const auto &chatRoom = it->second;
+	for (const auto &chatRoom : getChatRooms()) {
 		for (const auto &account : getAccounts()) {
 			auto identityAddress = account->getAccountParams()->getIdentityAddress();
 			if (identityAddress->weakEqual(*chatRoom->getLocalAddress())) {
@@ -1708,8 +1697,10 @@ void Core::performOnIterateThread(const std::function<void()> &something) {
 
 belle_sip_source_t *
 Core::createTimer(const std::function<bool()> &something, unsigned int milliseconds, const string &name) {
-	return belle_sip_main_loop_create_cpp_timeout_2(getPrivate()->getMainLoop(), something, (unsigned)milliseconds,
-	                                                name.c_str());
+	const auto mainLoop = getPrivate()->getMainLoop();
+	return mainLoop
+	           ? belle_sip_main_loop_create_cpp_timeout_2(mainLoop, something, (unsigned)milliseconds, name.c_str())
+	           : nullptr;
 }
 
 /* Stop and destroy a timer created by createTimer()*/
@@ -1718,31 +1709,41 @@ void Core::destroyTimer(belle_sip_source_t *timer) {
 	belle_sip_object_unref(timer);
 }
 
-const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId &conferenceId) const {
-	std::shared_ptr<Address> peerAddress = nullptr;
-	const auto &rawPeerAddress = conferenceId.getPeerAddress();
-	if (rawPeerAddress) {
-		peerAddress = Address::create(rawPeerAddress->getUriWithoutGruu());
-		peerAddress->removeUriParam(Conference::SecurityModeParameter);
+std::shared_ptr<Conference> Core::findConference(const std::shared_ptr<const CallSession> &session,
+                                                 bool logIfNotFound) const {
+
+	L_D();
+	for (const auto &[id, conference] : d->conferenceById) {
+		if (session == conference->getMainSession()) {
+			return conference;
+		}
 	}
-	std::shared_ptr<Address> localAddress = nullptr;
-	const auto &rawLocalAddress = conferenceId.getLocalAddress();
-	if (rawLocalAddress) {
-		localAddress = Address::create(rawLocalAddress->getUriWithoutGruu());
-		localAddress->removeUriParam(Conference::SecurityModeParameter);
+
+	auto op = session->getPrivate()->getOp();
+	if (op) {
+		shared_ptr<Call> call = getCallByCallId(op->getCallId());
+		if (call) {
+			return call->getConference();
+		}
 	}
-	ConferenceId prunedConferenceId = ConferenceId(peerAddress, localAddress);
-	return prunedConferenceId;
+
+	if (logIfNotFound) {
+		lInfo() << "Unable to find audio video conference session " << session << " (local address "
+		        << *session->getLocalAddress() << " remote address "
+		        << (session->getRemoteAddress() ? session->getRemoteAddress()->toString() : "Unknown")
+		        << ") belongs to";
+	}
+	return nullptr;
 }
 
-std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference(const ConferenceId &conferenceId,
-                                                                            bool logIfNotFound) const {
-	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
-	auto it = audioVideoConferenceById.find(prunedConferenceId);
-
-	if (it != audioVideoConferenceById.cend()) {
-		lInfo() << "Found audio video conference in RAM with conference ID " << conferenceId << ".";
-		return it->second;
+std::shared_ptr<Conference> Core::findConference(const ConferenceId &conferenceId, bool logIfNotFound) const {
+	L_D();
+	auto it = d->conferenceById.find(conferenceId);
+	if (it != d->conferenceById.cend()) {
+		auto conference = it->second;
+		lInfo() << "Found audio video conference " << conference << " in RAM with conference ID " << conferenceId
+		        << ".";
+		return conference;
 	}
 
 	if (logIfNotFound)
@@ -1750,47 +1751,72 @@ std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference(cons
 	return nullptr;
 }
 
-void Core::insertAudioVideoConference(const shared_ptr<MediaConference::Conference> audioVideoConference) {
-	L_ASSERT(audioVideoConference);
+void Core::insertConference(const shared_ptr<Conference> conference) {
+	L_D();
 
-	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+	L_ASSERT(conference);
 
-	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
-	auto conf = findAudioVideoConference(prunedConferenceId);
+	const ConferenceId &conferenceId = conference->getConferenceId();
+	if (!conferenceId.isValid()) {
+		lInfo() << "Attempting to insert conference " << conference << " with invalid conference ID " << conferenceId;
+		return;
+	}
 
-	// Conference does not exist or yes but with the same pointer!
-	L_ASSERT(conf == nullptr || conf == audioVideoConference);
+	auto conf = findConference(conferenceId);
+	if (!conf && conference->getCurrentParams()->chatEnabled()) {
+		// Handling of chat room exhume
+		const auto &chatRoom = findChatRoom(conferenceId);
+		if (chatRoom) {
+			conf = chatRoom->getConference();
+		}
+	}
+	// When starting the LinphoneCore, it may happen to have 2 audio video conferences or chat room that have the same
+	// conference ID apart from the GRUU which is not taken into the account for the comparison. In such a scenario, it
+	// is allowed to replace the pointer towards the audio video conference in the core map. Method addChatRoomToList
+	// will take care of setting the right pointer before exiting
+	L_ASSERT(conf == nullptr || conf == conference ||
+	         linphone_core_get_global_state(getCCore()) == LinphoneGlobalStartup);
 	if (conf == nullptr) {
-		lInfo() << "Insert audio video conference " << audioVideoConference << " in RAM with conference ID "
-		        << conferenceId << ".";
-		audioVideoConferenceById.insert(std::make_pair(prunedConferenceId, audioVideoConference));
+		lInfo() << "Insert audio video conference " << conference << " in RAM with conference ID " << conferenceId
+		        << ".";
+		d->conferenceById.insert(std::make_pair(conferenceId, conference));
+	} else if (conf != conference) {
+		lWarning() << "Replacing audio video conference with conference ID " << conferenceId << " in the core map "
+		           << conf << " with " << conference << ". This might happen if your database has been corrupted";
+		d->conferenceById[conferenceId] = conference;
 	}
 }
 
-void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Conference> &audioVideoConference) {
-	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
-
-	auto it = audioVideoConferenceById.find(prunedConferenceId);
-
-	if (it != audioVideoConferenceById.cend()) {
+void Core::deleteConference(const ConferenceId &conferenceId) {
+	L_D();
+	auto it = d->conferenceById.find(conferenceId);
+	if (it != d->conferenceById.cend()) {
 		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
-		audioVideoConferenceById.erase(it);
+		d->conferenceById.erase(it);
 	}
 }
 
-shared_ptr<MediaConference::Conference>
-Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params,
-                                 const std::shared_ptr<const Address> &localAddress,
-                                 const std::shared_ptr<const Address> &remoteAddress,
-                                 const std::list<std::shared_ptr<Address>> &participants) const {
+void Core::deleteConference(const shared_ptr<const Conference> &conference) {
+	L_D();
+	const ConferenceId &conferenceId = conference->getConferenceId();
+	auto it = d->conferenceById.find(conferenceId);
+	if (it != d->conferenceById.cend()) {
+		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
+		d->conferenceById.erase(it);
+	}
+}
 
+shared_ptr<Conference> Core::searchConference(const shared_ptr<ConferenceParams> &params,
+                                              const std::shared_ptr<const Address> &localAddress,
+                                              const std::shared_ptr<const Address> &remoteAddress,
+                                              const std::list<std::shared_ptr<Address>> &participants) const {
+	L_D();
 	auto localAddressUri = (localAddress) ? localAddress->getUriWithoutGruu() : Address();
 	auto remoteAddressUri = (remoteAddress) ? remoteAddress->getUriWithoutGruu() : Address();
-	const auto it = std::find_if(audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&](const auto &p) {
-		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
-		const auto &audioVideoConference = p.second;
-		const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+	const auto it = std::find_if(d->conferenceById.begin(), d->conferenceById.end(), [&](const auto &p) {
+		// p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
+		const auto &conference = p.second;
+		const ConferenceId &conferenceId = conference->getConferenceId();
 
 		auto curLocalAddress =
 		    (conferenceId.getLocalAddress()) ? conferenceId.getLocalAddress()->getUriWithoutGruu() : Address();
@@ -1802,19 +1828,19 @@ Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params,
 
 		// Check parameters only if pointer provided as argument is not null
 		if (params) {
-			const ConferenceParams confParams = audioVideoConference->getCurrentParams();
-			if (!params->getSubject().empty() && (params->getSubject().compare(confParams.getSubject()) != 0))
+			const auto &conferenceParams = conference->getCurrentParams();
+			if (!params->getSubject().empty() && (params->getSubject().compare(conferenceParams->getSubject()) != 0))
 				return false;
-			if (params->chatEnabled() != confParams.chatEnabled()) return false;
-			if (params->audioEnabled() != confParams.audioEnabled()) return false;
-			if (params->videoEnabled() != confParams.videoEnabled()) return false;
-			if (params->localParticipantEnabled() != confParams.localParticipantEnabled()) return false;
+			if (params->chatEnabled() != conferenceParams->chatEnabled()) return false;
+			if (params->audioEnabled() != conferenceParams->audioEnabled()) return false;
+			if (params->videoEnabled() != conferenceParams->videoEnabled()) return false;
+			if (params->localParticipantEnabled() != conferenceParams->localParticipantEnabled()) return false;
 		}
 
 		// Check participants only if list provided as argument is not empty
 		bool participantListMatch = true;
 		if (participants.empty() == false) {
-			const std::list<std::shared_ptr<Participant>> &confParticipants = audioVideoConference->getParticipants();
+			const std::list<std::shared_ptr<Participant>> &confParticipants = conference->getParticipants();
 			participantListMatch =
 			    equal(participants.cbegin(), participants.cend(), confParticipants.cbegin(), confParticipants.cend(),
 			          [](const auto &p1, const auto &p2) { return (p1->weakEqual(*p2->getAddress())); });
@@ -1822,64 +1848,65 @@ Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params,
 		return participantListMatch;
 	});
 
-	shared_ptr<MediaConference::Conference> conference = nullptr;
-	if (it != audioVideoConferenceById.cend()) {
+	shared_ptr<Conference> conference = nullptr;
+	if (it != d->conferenceById.cend()) {
 		conference = it->second;
 	}
 
 	return conference;
 }
 
-shared_ptr<MediaConference::Conference>
-Core::searchAudioVideoConference(const std::shared_ptr<Address> &conferenceAddress) const {
+shared_ptr<Conference> Core::searchConference(const std::shared_ptr<const Address> &conferenceAddress) const {
+	L_D();
 
 	if (!conferenceAddress || !conferenceAddress->isValid()) return nullptr;
-	const auto it = std::find_if(audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&](const auto &p) {
-		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
-		const auto &audioVideoConference = p.second;
-		const auto curConferenceAddress = audioVideoConference->getConferenceAddress();
+	const auto it = std::find_if(d->conferenceById.begin(), d->conferenceById.end(), [&](const auto &p) {
+		// p is of type std::pair<ConferenceId, std::shared_ptr<Conference>
+		const auto &conference = p.second;
+		const auto curConferenceAddress = conference->getConferenceAddress();
 		return (*conferenceAddress == *curConferenceAddress);
 	});
 
-	shared_ptr<MediaConference::Conference> conference = nullptr;
-	if (it != audioVideoConferenceById.cend()) {
+	shared_ptr<Conference> conference = nullptr;
+	if (it != d->conferenceById.cend()) {
 		conference = it->second;
 	}
 
 	return conference;
 }
 
-shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams,
-                                                       const std::shared_ptr<Address> &localAddr,
-                                                       const std::list<std::shared_ptr<Address>> &participants) {
-	return createOrUpdateConferenceOnServer(confParams, localAddr, participants, nullptr);
-}
-
 shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams,
-                                                               const std::shared_ptr<Address> &localAddr,
-                                                               const std::list<std::shared_ptr<Address>> &participants,
-                                                               const std::shared_ptr<Address> &confAddr) {
+                                                               const std::shared_ptr<const Address> &localAddr,
+                                                               const std::list<Address> &participants,
+                                                               const std::shared_ptr<Address> &confAddr,
+                                                               CallSessionListener *listener) {
 	L_D()
 	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
 		return nullptr;
 	}
 
-	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
-	auto params = linphone_core_create_call_params(lc, nullptr);
+	MediaSessionParams params;
+	params.initDefault(getSharedFromThis(), LinphoneCallOutgoing);
+
 	const auto &account = confParams->getAccount();
-	linphone_call_params_set_account(params, account ? account->toC() : nullptr);
+	params.setAccount(account);
 
 	std::shared_ptr<Address> conferenceFactoryUri;
 	if (confAddr) {
 		conferenceFactoryUri = confAddr;
 	} else {
-		conferenceFactoryUri =
-		    Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr)->clone()->toSharedPtr();
-		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
+		std::shared_ptr<Address> conferenceFactoryUriRef;
+		if (confParams->audioEnabled() || confParams->videoEnabled()) {
+			conferenceFactoryUriRef = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
+		} else {
+			conferenceFactoryUriRef = Core::getConferenceFactoryAddress(getSharedFromThis(), localAddr);
+		}
+		if (!conferenceFactoryUriRef || !conferenceFactoryUriRef->isValid()) {
 			lWarning() << "Not creating conference: no conference factory uri for local address [" << *localAddr << "]";
 			return nullptr;
 		}
+		conferenceFactoryUri = conferenceFactoryUriRef->clone()->toSharedPtr();
 		conferenceFactoryUri->setUriParam(Conference::SecurityModeParameter,
 		                                  ConferenceParams::getSecurityLevelAttribute(confParams->getSecurityLevel()));
 	}
@@ -1892,47 +1919,53 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 			lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";
 			conferenceId = ConferenceId(nullptr, localAddrWithGruu);
 		} else {
-			lError() << "Failed to find matching contact address with gruu for identity address ["
-			         << localAddr->toString() << "], client group chat room creation will fail!";
+			lError() << "Failed to find matching contact address with gruu for identity address [" << *localAddr
+			         << "], client group chat room creation will fail!";
 		}
 	}
 
-	// Participant with the focus call is admin
-	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
-	auto addressesList(participants);
+	if (confParams->chatEnabled()) {
+		params.addCustomContactParameter("text");
+		params.addCustomHeader("Require", "recipient-list-invite");
+		params.addCustomHeader("One-To-One-Chat-Room", Utils::btos(!confParams->isGroup()));
+		params.addCustomHeader("End-To-End-Encrypted", Utils::btos(confParams->getChatParams()->isEncrypted()));
+		params.addCustomHeader("Ephemerable", Utils::btos(confParams->getChatParams()->getEphemeralMode() ==
+		                                                  AbstractChatRoom::EphemeralMode::AdminManaged));
+		params.addCustomHeader("Ephemeral-Life-Time", to_string(confParams->getChatParams()->getEphemeralLifetime()));
+	}
+	params.addCustomContactParameter("admin", Utils::toString(true));
 
-	addressesList.sort();
-	addressesList.unique();
-
-	if (!addressesList.empty()) {
-		auto content = Content::create();
-		content->setBodyFromUtf8(Utils::getResourceLists(addressesList));
-		content->setContentType(ContentType::ResourceLists);
-		content->setContentDisposition(ContentDisposition::RecipientList);
+	if (!participants.empty()) {
+		auto addresses = participants;
+		addresses.sort([](const auto &addr1, const auto &addr2) { return addr1 < addr2; });
+		addresses.unique([](const auto &addr1, const auto &addr2) { return addr1.weakEqual(addr2); });
+		auto resourceList = Content::create();
+		resourceList->setBodyFromUtf8(Utils::getResourceLists(addresses));
+		resourceList->setContentType(ContentType::ResourceLists);
+		resourceList->setContentDisposition(ContentDisposition::RecipientList);
+		LinphoneCore *lc = L_GET_C_BACK_PTR(this);
 		if (linphone_core_content_encoding_supported(lc, "deflate")) {
-			content->setContentEncoding("deflate");
+			resourceList->setContentEncoding("deflate");
 		}
-
-		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContent(content);
+		params.addCustomContent(resourceList);
 	}
-	linphone_call_params_set_start_time(params, confParams->getStartTime());
-	linphone_call_params_set_end_time(params, confParams->getEndTime());
-	linphone_call_params_enable_video(params, confParams->videoEnabled());
-	linphone_call_params_set_description(params, L_STRING_TO_C(confParams->getDescription()));
-	linphone_call_params_set_conference_creation(params, TRUE);
-	linphone_call_params_enable_tone_indications(params, FALSE);
+	params.enableAudio(confParams->audioEnabled());
+	params.enableVideo(confParams->videoEnabled());
+	params.enableRealtimeText(false);
+	params.getPrivate()->setStartTime(confParams->getStartTime());
+	params.getPrivate()->setEndTime(confParams->getEndTime());
+	params.getPrivate()->setDescription(confParams->getDescription());
+	params.getPrivate()->setConferenceCreation(true);
+	params.getPrivate()->enableToneIndications(false);
 
 	auto participant = Participant::create(nullptr, localAddr);
-	auto session = dynamic_pointer_cast<MediaSession>(
-	    participant->createSession(getSharedFromThis(), L_GET_CPP_PTR_FROM_C_OBJECT(params),
-	                               (confParams->audioEnabled() || confParams->videoEnabled()), nullptr));
+	auto session = participant->createSession(getSharedFromThis(), &params, true, listener);
+	bool isMediaSession = (dynamic_pointer_cast<MediaSession>(session) != nullptr);
 
 	if (!session) {
 		lWarning() << "Cannot create conference with subject [" << confParams->getSubject() << "]";
 		return nullptr;
 	}
-
-	linphone_call_params_unref(params);
 
 	std::shared_ptr<Address> meCleanedAddress = Address::create(localAddr->getUriWithoutGruu());
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
@@ -1945,13 +1978,16 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	if (!natPolicy) {
 		natPolicy = NatPolicy::getSharedFromThis(linphone_core_get_nat_policy(getCCore()));
 	}
-	if (natPolicy) {
+	if (natPolicy && isMediaSession) {
 		auto newNatPolicy = natPolicy->clone()->toSharedPtr();
 		// remove stun server asynchronous gathering, we don't actually need it and it looses some time.
 		newNatPolicy->enableStun(false);
-		session->setNatPolicy(newNatPolicy);
+		dynamic_pointer_cast<MediaSession>(session)->setNatPolicy(newNatPolicy);
 	}
 	session->initiateOutgoing();
+	if (!isMediaSession) {
+		session->getPrivate()->createOp();
+	}
 	session->startInvite(nullptr, confParams->getSubject(), nullptr);
 	return session;
 }
@@ -1968,9 +2004,8 @@ const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() co
 
 const std::shared_ptr<Address>
 Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-                                            const std::shared_ptr<Address> &localAddress) {
-	std::shared_ptr<Address> addr = localAddress;
-	auto account = core->lookupKnownAccount(addr, true);
+                                            const std::shared_ptr<const Address> &localAddress) {
+	auto account = core->lookupKnownAccount(localAddress, true);
 	if (!account) {
 		lWarning() << "No account found for local address: [" << *localAddress << "]";
 		return nullptr;

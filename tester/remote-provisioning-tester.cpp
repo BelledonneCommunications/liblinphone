@@ -20,17 +20,23 @@
 
 #include "bctoolbox/defs.h"
 
-#include "c-wrapper/c-wrapper.h"
-#include "liblinphone_tester.h"
-#include "linphone/core.h"
-#include "private_functions.h"
-#include "tester_utils.h"
-
 #ifdef HAVE_FLEXIAPI
-#include "linphone/flexi-api-client.h"
 #include <json/json.h>
 using namespace Json;
 #endif
+
+#include "c-wrapper/c-wrapper.h"
+#include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-friend.h"
+#include "linphone/core.h"
+#ifdef HAVE_FLEXIAPI
+#include "linphone/flexi-api-client.h"
+#endif
+#include "private_functions.h"
+#include "tester_utils.h"
 
 typedef struct _LinphoneFriendListStats {
 	int new_list_count;
@@ -155,14 +161,14 @@ static void flexiapi_remote_provisioning_flow(void) {
 
 	int code = 0;
 	int fetched = 0;
-	string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
+	std::string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
 
 	// Create a test account
 	char *token = sal_get_random_token_lowercase(12);
 	string username = string("test_").append(token);
 	bctbx_free(token);
 	bool activated = false; // Required to get a confirmation key
-	string confirmationKey;
+	std::string confirmationKey;
 	int id;
 
 	flexiAPIClient->adminAccountCreate(username, "1234", "MD5", activated)
@@ -177,7 +183,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	// Provision it
-	string remoteProvisioningURIWithConfirmationKey = remoteProvisioningURI;
+	std::string remoteProvisioningURIWithConfirmationKey = remoteProvisioningURI;
 	remoteProvisioningURIWithConfirmationKey.append("/").append(confirmationKey);
 
 	linphone_core_manager_reinit(marie);
@@ -188,7 +194,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 	                              liblinphone_tester_sip_timeout));
 
 	// Re-provision it, without the confirmationKey
-	string remoteProvisioningURIAuthenticated = remoteProvisioningURI;
+	std::string remoteProvisioningURIAuthenticated = remoteProvisioningURI;
 	remoteProvisioningURIAuthenticated.append("/me");
 
 	linphone_core_manager_reinit(marie);
@@ -222,7 +228,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 	int code = 0;
 	int fetched = 0;
-	string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
+	std::string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
 
 	// Create a test account
 	char *token = sal_get_random_token_lowercase(12);
@@ -289,7 +295,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	// Provision it
-	string remoteProvisioningURIWithConfirmationKey = remoteProvisioningURI;
+	std::string remoteProvisioningURIWithConfirmationKey = remoteProvisioningURI;
 	remoteProvisioningURIWithConfirmationKey.append("/me");
 
 	linphone_core_manager_reinit(marie);

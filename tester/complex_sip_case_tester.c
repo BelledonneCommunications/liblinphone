@@ -19,6 +19,7 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "tester_utils.h"
@@ -444,5 +445,4 @@ test_suite_t complex_sip_call_test_suite = {"Complex SIP Case",
                                             0,
                                             NULL,
 #endif
-                                            0
-};
+                                            0};

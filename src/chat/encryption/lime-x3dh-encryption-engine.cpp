@@ -28,8 +28,10 @@
 #include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/chat-room/chat-room-p.h"
-#include "chat/chat-room/client-group-chat-room.h"
+#include "chat/chat-room/chat-room.h"
+#ifdef HAVE_ADVANCED_IM
+#include "chat/chat-room/client-chat-room.h"
+#endif // HAVE_ADVANCED_IM
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
@@ -252,14 +254,18 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	shared_ptr<ChatMessageModifier::Result> result =
 	    make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
-	auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
+	if (!chatRoom) {
+		lWarning() << "Sending encrypted message on an unknown chatroom";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Error;
+	}
+
+	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	auto conferenceAddress = chatRoom->getConferenceAddress();
 	auto conferenceAddressStr = conferenceAddress ? conferenceAddress->asString() : std::string("<unknown>");
-	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.asStringUriOnly());
 
 	// Check if chatroom is encrypted or not
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
+	if (chatRoomParams->getChatParams()->isEncrypted()) {
 		lInfo() << "[LIME] chatroom " << chatRoom << " (address " << conferenceAddressStr
 		        << ") is encrypted, proceed to encrypt outgoing message";
 	} else {
@@ -271,7 +277,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	// Reject message in unsafe chatroom if not allowed
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime",
 	                            "allow_message_in_unsafe_chatroom", 0) == 0) {
-		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
+		if (chatRoom->getSecurityLevel() == AbstractChatRoom::SecurityLevel::Unsafe) {
 			lWarning() << "Sending encrypted message in an unsafe chatroom";
 			errorCode = 488; // Not Acceptable
 			return ChatMessageModifier::Result::Error;
@@ -294,11 +300,19 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 		if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
 	}
 
+	const auto &account = chatRoomParams->getAccount();
+	if (!account) {
+		lWarning() << "Sending encrypted message with unknown account";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Error;
+	}
+
 	// Add potential other devices of the sender participant
 	int nbDevice = 0;
+	const auto &localAddress = account->getContactAddress();
 	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getDevices();
 	for (const auto &senderDevice : senderDevices) {
-		if (*senderDevice->getAddress() != *chatRoom->getLocalAddress()) {
+		if (*senderDevice->getAddress() != *localAddress) {
 			recipients->emplace_back(senderDevice->getAddress()->asStringUriOnly());
 			nbDevice++;
 		}
@@ -319,7 +333,6 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 		// Check the last 2 events for security alerts before sending a new security event
 		bool recentSecurityAlert = false;
-		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 		list<shared_ptr<EventLog>> eventList = chatRoom->getHistory(2);
 
 		// If there is at least one security alert don't send a new one
@@ -333,14 +346,20 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 			}
 		}
 
+#ifdef HAVE_ADVANCED_IM
 		// If there is no recent security alert send a new one
 		if (!recentSecurityAlert) {
 			ConferenceSecurityEvent::SecurityEventType securityEventType =
 			    ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded;
 			shared_ptr<ConferenceSecurityEvent> securityEvent =
 			    make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityEventType);
-			confListener->onSecurityEvent(securityEvent);
+			shared_ptr<ClientConference> confListener =
+			    dynamic_pointer_cast<ClientConference>(chatRoom->getConference());
+			if (confListener) {
+				confListener->onSecurityEvent(securityEvent);
+			}
 		}
+#endif                   // HAVE_ADVANCED_IM
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
@@ -362,6 +381,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
+		const string localDeviceId = localAddress->asStringUriOnly();
+		auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
+		shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.asStringUriOnly());
 		errorCode = 0; // no need to specify error code because not used later
 		limeManager->encrypt(
 		    localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage,
@@ -448,8 +470,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 			    } else {
 				    lError() << "[LIME] operation failed: " << errorMessage;
-				    message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-				                                               ChatMessage::State::NotDelivered, ::ms_time(nullptr));
+				    message->getPrivate()->setParticipantState(
+				        message->getChatRoom()->getConference()->getMe()->getAddress(),
+				        ChatMessage::State::NotDelivered, ::ms_time(nullptr));
 				    *result = ChatMessageModifier::Result::Error;
 			    }
 		    },
@@ -464,12 +487,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(const shared_ptr<ChatMessage> &message,
                                                                              int &errorCode) {
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
-	auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
-	const string &recipientUserId = peerAddress.asStringUriOnly();
 
 	// Check if chatroom is encrypted or not
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
+	const auto &chatRoomParams = chatRoom->getCurrentParams();
+	if (chatRoomParams->getChatParams()->isEncrypted()) {
 		lInfo() << "[LIME] this chatroom is encrypted, proceed to decrypt incoming message";
 	} else {
 		lInfo() << "[LIME] this chatroom is not encrypted, no need to decrypt incoming message";
@@ -490,6 +511,14 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 		return ChatMessageModifier::Result::Skipped;
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(*internalContent);
+
+	const auto &account = chatRoomParams->getAccount();
+	if (!account) {
+		lWarning() << "Receiving encrypted message with unknown account";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Error;
+	}
+	const string &localDeviceId = account->getContactAddress()->asStringUriOnly();
 
 	// ---------------------------------------------- CPIM
 
@@ -579,6 +608,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	vector<uint8_t> plainMessage{};
 
 	try {
+		auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
+		const string &recipientUserId = peerAddress.asStringUriOnly();
 		peerDeviceStatus = limeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader,
 		                                        decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {
@@ -616,7 +647,9 @@ void LimeX3dhEncryptionEngine::update(const std::string localDeviceId) {
 }
 
 bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer(const shared_ptr<AbstractChatRoom> &chatRoom) {
-	return (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted);
+
+	const auto &chatRoomParams = chatRoom->getCurrentParams()->getChatParams();
+	return chatRoomParams->isEncrypted();
 }
 
 #define FILE_TRANSFER_AUTH_TAG_SIZE 16
@@ -957,12 +990,15 @@ void LimeX3dhEncryptionEngine::addSecurityEventInChatrooms(
     const std::shared_ptr<Address> &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) {
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = getCore()->getChatRooms();
 	for (const auto &chatRoom : chatRooms) {
-		if (chatRoom->findParticipant(peerDeviceAddr) &&
-		    (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
+		const auto &chatRoomParams = chatRoom->getCurrentParams()->getChatParams();
+		if (chatRoom->findParticipant(peerDeviceAddr) && chatRoomParams->isEncrypted()) {
 			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(
 			    time(nullptr), chatRoom->getConferenceId(), securityEventType, peerDeviceAddr);
-			shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
-			confListener->onSecurityEvent(securityEvent);
+			shared_ptr<ClientConference> confListener =
+			    dynamic_pointer_cast<ClientConference>(chatRoom->getConference());
+			if (confListener) {
+				confListener->onSecurityEvent(securityEvent);
+			}
 		}
 	}
 }

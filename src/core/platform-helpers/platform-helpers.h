@@ -43,6 +43,7 @@ L_DECL_C_STRUCT(LinphoneCore);
 LINPHONE_BEGIN_NAMESPACE
 
 class Core;
+class SignalInformation;
 
 /**
  * This interface aims at abstracting some features offered by the platform, most often mobile platforms.

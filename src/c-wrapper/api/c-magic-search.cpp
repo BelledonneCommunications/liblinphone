@@ -18,8 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/api/c-magic-search.h"
 #include "c-wrapper/c-wrapper.h"
+#include "linphone/api/c-magic-search-cbs.h"
 #include "linphone/wrapper_utils.h"
+#include "private_functions.h"
 #include "search/magic-search.h"
 
 // =============================================================================

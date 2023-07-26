@@ -19,7 +19,7 @@
  */
 
 #include "chat/chat-message/imdn-message-p.h"
-#include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/abstract-chat-room.h"
 #include "content/content-disposition.h"
 #include "logger/logger.h"
 #include "sip-tools/sip-headers.h"
@@ -40,16 +40,10 @@ void ImdnMessagePrivate::setState(ChatMessage::State newState) {
 			message->getPrivate()->updateInDb();
 		for (const auto &message : context.displayedMessages)
 			message->getPrivate()->updateInDb();
-		static_pointer_cast<ChatRoom>(context.chatRoom)
-		    ->getPrivate()
-		    ->getImdnHandler()
-		    ->onImdnMessageDelivered(q->getSharedFromThis());
+		context.mChatRoom->getImdnHandler()->onImdnMessageDelivered(q->getSharedFromThis());
 	} else if (newState == ChatMessage::State::NotDelivered) {
 		// TODO: Maybe we should retry sending the IMDN message if we get an error here
-		static_pointer_cast<ChatRoom>(context.chatRoom)
-		    ->getPrivate()
-		    ->getImdnHandler()
-		    ->onImdnMessageNotDelivered(q->getSharedFromThis());
+		context.mChatRoom->getImdnHandler()->onImdnMessageNotDelivered(q->getSharedFromThis());
 	}
 }
 

@@ -19,6 +19,9 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room.h"
 
 static void simple_call(void) {
 	simple_call_base_with_rcs("claire_rc", "pauline_rc", FALSE, FALSE, FALSE, FALSE);

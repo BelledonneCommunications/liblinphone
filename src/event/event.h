@@ -25,6 +25,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "core/core-accessor.h"
+#include "linphone/api/c-callbacks.h"
 #include "linphone/api/c-types.h"
 #include "sal/event-op.h"
 

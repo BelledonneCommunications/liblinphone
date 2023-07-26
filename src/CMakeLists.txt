@@ -132,14 +132,10 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-message/is-composing-message.h
 	chat/chat-message/notification-message-p.h
 	chat/chat-message/notification-message.h
-	chat/chat-room/chat-room-params.h
-	chat/chat-room/abstract-chat-room-p.h
 	chat/chat-room/abstract-chat-room.h
-	chat/chat-room/basic-chat-room-p.h
 	chat/chat-room/basic-chat-room.h
-	chat/chat-room/chat-room-listener.h
-	chat/chat-room/chat-room-p.h
 	chat/chat-room/chat-room.h
+	chat/chat-room/chat-params.h
 	chat/cpim/cpim.h
 	chat/cpim/header/cpim-core-headers.h
 	chat/cpim/header/cpim-generic-header.h
@@ -169,17 +165,18 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
-	conference/local-conference.h
+	conference/server-conference.h
 	conference/params/call-session-params-p.h
 	conference/params/call-session-params.h
 	conference/params/media-session-params-p.h
 	conference/params/media-session-params.h
 	conference/participant-info.h
 	conference/participant-device.h
+	conference/participant-device-identity.h
 	conference/participant-imdn-state-p.h
 	conference/participant-imdn-state.h
 	conference/participant.h
-	conference/remote-conference.h
+	conference/client-conference.h
 	conference/session/call-session-listener.h
 	conference/session/call-session-p.h
 	conference/session/call-session.h
@@ -301,22 +298,15 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
-		chat/chat-room/basic-to-client-group-chat-room.h
-		chat/chat-room/client-group-chat-room-p.h
-		chat/chat-room/client-group-chat-room.h
-		chat/chat-room/client-group-to-basic-chat-room.h
-		chat/chat-room/proxy-chat-room-p.h
-		chat/chat-room/proxy-chat-room.h
-		chat/chat-room/server-group-chat-room-p.h
-		chat/chat-room/server-group-chat-room.h
+		chat/chat-room/client-chat-room.h
+		chat/chat-room/server-chat-room.h
 		conference/encryption/client-ekt-manager.h
 		conference/encryption/ekt-info.h
-		conference/handlers/local-audio-video-conference-event-handler.h
-		conference/handlers/local-conference-event-handler.h
-		conference/handlers/local-conference-list-event-handler.h
-		conference/handlers/remote-conference-event-handler-base.h
-		conference/handlers/remote-conference-event-handler.h
-		conference/handlers/remote-conference-list-event-handler.h
+		conference/handlers/server-conference-event-handler.h
+		conference/handlers/server-conference-list-event-handler.h
+		conference/handlers/client-conference-event-handler-base.h
+		conference/handlers/client-conference-event-handler.h
+		conference/handlers/client-conference-list-event-handler.h
 		xml/conference-info.h
 		xml/conference-info-linphone-extension.h
 		xml/ekt-linphone-extension.h
@@ -391,6 +381,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-chat-message-cbs.cpp
 	c-wrapper/api/c-chat-message-reaction.cpp
 	c-wrapper/api/c-chat-message.cpp
+	c-wrapper/api/c-chat-params.cpp
 	c-wrapper/api/c-chat-room-params.cpp
 	c-wrapper/api/c-chat-room-cbs.cpp
 	c-wrapper/api/c-chat-room.cpp
@@ -398,6 +389,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-conference-cbs.cpp
 	c-wrapper/api/c-conference-info.cpp
 	c-wrapper/api/c-conference-scheduler.cpp
+	c-wrapper/api/c-conference-params.cpp
 	c-wrapper/api/c-conference.cpp
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
@@ -449,7 +441,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/abstract-chat-room.cpp
 	chat/chat-room/basic-chat-room.cpp
 	chat/chat-room/chat-room.cpp
-	chat/chat-room/chat-room-params.cpp
+	chat/chat-room/chat-params.cpp
 	chat/encryption/legacy-encryption-engine.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp
@@ -466,14 +458,15 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-interface.cpp
 	conference/sip-conference-scheduler.cpp
 	conference/notify-conference-listener.cpp
-	conference/local-conference.cpp
+	conference/server-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
 	conference/participant-info.cpp
 	conference/participant-device.cpp
+	conference/participant-device-identity.cpp
 	conference/participant-imdn-state.cpp
 	conference/participant.cpp
-	conference/remote-conference.cpp
+	conference/client-conference.cpp
 	conference/session/call-session.cpp
 	conference/session/media-session.cpp
 	conference/session/tone-manager.cpp
@@ -620,19 +613,15 @@ endif()
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
-		chat/chat-room/basic-to-client-group-chat-room.cpp
-		chat/chat-room/client-group-chat-room.cpp
-		chat/chat-room/client-group-to-basic-chat-room.cpp
-		chat/chat-room/proxy-chat-room.cpp
-		chat/chat-room/server-group-chat-room.cpp
+		chat/chat-room/client-chat-room.cpp
+		chat/chat-room/server-chat-room.cpp
 		chat/modifier/cpim-chat-message-modifier.cpp
 		conference/encryption/client-ekt-manager.cpp
 		conference/encryption/ekt-info.cpp
-		conference/handlers/local-conference-event-handler.cpp
-		conference/handlers/local-audio-video-conference-event-handler.cpp
-		conference/handlers/local-conference-list-event-handler.cpp
-		conference/handlers/remote-conference-event-handler.cpp
-		conference/handlers/remote-conference-list-event-handler.cpp
+		conference/handlers/server-conference-event-handler.cpp
+		conference/handlers/server-conference-list-event-handler.cpp
+		conference/handlers/client-conference-event-handler.cpp
+		conference/handlers/client-conference-list-event-handler.cpp
 		xml/conference-info.cpp
 		xml/conference-info-linphone-extension.cpp
 		xml/ekt-linphone-extension.cpp

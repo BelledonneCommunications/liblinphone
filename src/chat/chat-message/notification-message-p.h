@@ -35,8 +35,8 @@ class NotificationMessagePrivate : public ChatMessagePrivate {
 	friend class IsComposingMessage;
 
 protected:
-	NotificationMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir)
-	    : ChatMessagePrivate(cr, dir) {
+	NotificationMessagePrivate(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction dir)
+	    : ChatMessagePrivate(chatRoom, dir) {
 	}
 
 	void setState(BCTBX_UNUSED(ChatMessage::State state)) override{};

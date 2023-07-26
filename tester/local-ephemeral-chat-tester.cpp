@@ -18,8 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "conference/conference.h"
 #include "conference/participant.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-chat-room-params.h"
+#include "linphone/chat.h"
 #include "local-conference-tester-functions.h"
 
 namespace LinphoneTest {
@@ -158,7 +161,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 
@@ -340,7 +343,12 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 			marie_stat = marie.getStats();
 			pauline_stat = pauline.getStats();
 
-			linphone_chat_room_set_ephemeral_lifetime(marieCr, 5);
+			int lifetime = 5;
+			char *conference_address_str = linphone_address_as_string(confAddr);
+			ms_message("%s enables ephemeral capabilities with lifetime set to %0d seconds in chatroom %s",
+			           linphone_core_get_identity(marie.getLc()), lifetime, conference_address_str);
+			ms_free(conference_address_str);
+			linphone_chat_room_set_ephemeral_lifetime(marieCr, lifetime);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
 			                             marie_stat.number_of_LinphoneSubscriptionActive + 1,
@@ -366,7 +374,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 
@@ -488,7 +496,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 
@@ -680,7 +688,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 
@@ -865,7 +873,7 @@ static void group_chat_room_server_ephemeral_mode_changed(void) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 

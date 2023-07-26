@@ -19,7 +19,6 @@
  */
 
 #include "sal_impl.h"
-#include "tester_utils.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

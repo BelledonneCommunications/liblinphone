@@ -216,23 +216,28 @@ void linphone_account_creator_service_set_send_token_cb(LinphoneAccountCreatorSe
 	service->send_token_request_cb = cb;
 }
 
-LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_account_creation_request_token_cb(const LinphoneAccountCreatorService *service) {
+LinphoneAccountCreatorRequestFunc
+linphone_account_creator_service_get_account_creation_request_token_cb(const LinphoneAccountCreatorService *service) {
 	return service->account_creation_request_token_request_cb;
 }
 
-void linphone_account_creator_service_set_account_creation_request_token_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb) {
+void linphone_account_creator_service_set_account_creation_request_token_cb(LinphoneAccountCreatorService *service,
+                                                                            LinphoneAccountCreatorRequestFunc cb) {
 	service->account_creation_request_token_request_cb = cb;
 }
 
-LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_account_creation_token_using_request_token_cb(const LinphoneAccountCreatorService *service) {
+LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_account_creation_token_using_request_token_cb(
+    const LinphoneAccountCreatorService *service) {
 	return service->account_creation_token_using_request_token_request_cb;
 }
 
-void linphone_account_creator_service_set_account_creation_token_using_request_token_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb) {
+void linphone_account_creator_service_set_account_creation_token_using_request_token_cb(
+    LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb) {
 	service->account_creation_token_using_request_token_request_cb = cb;
 }
 
-LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_create_account_with_token_cb(const LinphoneAccountCreatorService *service) {
+LinphoneAccountCreatorRequestFunc
+linphone_account_creator_service_get_create_account_with_token_cb(const LinphoneAccountCreatorService *service) {
 	return service->create_account_with_token_request_cb;
 }
 

@@ -18,10 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "liblinphone_tester.h"
-#include "linphone/core.h"
 #include "mediastreamer2/stun.h"
+
 #include "ortp/port.h"
+
+#include "liblinphone_tester.h"
+#include "linphone/api/c-auth-info.h"
+#include "linphone/api/c-nat-policy.h"
+#include "linphone/core.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
 

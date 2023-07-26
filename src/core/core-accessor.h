@@ -56,7 +56,7 @@ public:
 	CoreLogContextualizer(const CoreAccessor &coreAccessor) : CoreLogContextualizer(&coreAccessor) {
 	}
 	CoreLogContextualizer(const CoreAccessor *coreAccessor);
-	~CoreLogContextualizer();
+	virtual ~CoreLogContextualizer();
 
 private:
 	void pushTag(const std::string &tag);

@@ -33,7 +33,7 @@ class Conference;
 class Participant;
 
 class LINPHONE_PUBLIC ConferenceParticipantEvent : public ConferenceNotifiedEvent {
-	friend class RemoteConferenceEventHandler;
+	friend class ClientConferenceEventHandler;
 	friend class Conference;
 
 public:

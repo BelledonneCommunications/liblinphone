@@ -18,8 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "conference/conference.h"
 #include "conference/participant.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-participant-imdn-state.h"
 #include "local-conference-tester-functions.h"
 
 namespace LinphoneTest {
@@ -206,7 +208,7 @@ static void group_chat_room_with_imdn(void) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 
@@ -418,7 +420,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 				}
 				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, berthe, laure}).wait([&berthe] {
 					for (auto chatRoom : berthe.getCore().getChatRooms()) {
-						if (chatRoom->getState() != ChatRoom::State::Terminated) {
+						if (chatRoom->getState() != ConferenceInterface::State::Terminated) {
 							return false;
 						}
 					}
@@ -631,7 +633,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 
@@ -813,7 +815,7 @@ static void group_chat_room_lime_session_corrupted(void) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 
@@ -1582,7 +1584,7 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
 				std::shared_ptr<Address> participantAddress = participant->getAddress();
-				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+				linphone_chat_room_set_participant_devices(chatRoom->toC(), participantAddress->toC(), NULL);
 			}
 		}
 

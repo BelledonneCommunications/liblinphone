@@ -260,9 +260,9 @@ LINPHONE_PUBLIC int linphone_account_get_unread_chat_message_count(const Linphon
 /**
  * Returns the list of chat rooms for a given account.
  * @param account The #LinphoneAccount object. @notnil
- * @return The list of chat rooms \bctbx_list{LinphoneChatRoom}. @tobefreed @maybenil
+ * @return The list of chat rooms \bctbx_list{LinphoneChatRoom}. @maybenil
  **/
-LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *account);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *account);
 
 /**
  * Returns the missed calls count for a given account.

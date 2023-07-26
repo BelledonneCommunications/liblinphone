@@ -23,6 +23,10 @@
 
 #include <memory>
 
+#ifdef HAVE_XML2
+#include <libxml/xmlwriter.h>
+#endif // HAVE_XML2
+
 #include "c-wrapper/c-wrapper.h"
 
 // =============================================================================

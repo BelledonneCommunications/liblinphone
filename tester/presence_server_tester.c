@@ -19,6 +19,13 @@
  */
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-dial-plan.h"
+#include "linphone/api/c-friend.h"
+#include "linphone/api/c-magic-search.h"
+#include "linphone/api/c-search-result.h"
 #include "linphone/core.h"
 #include "linphone/core_utils.h"
 #include "tester_utils.h"

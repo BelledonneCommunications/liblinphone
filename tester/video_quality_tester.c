@@ -21,6 +21,9 @@
 #include <bctoolbox/defs.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-alert.h"
+#include "linphone/api/c-conference-params.h"
+#include "linphone/api/c-dictionary.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
 

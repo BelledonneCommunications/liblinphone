@@ -60,6 +60,7 @@
 #include "content/file-content.h"
 #include "core/paths/paths.h"
 #include "dictionary/dictionary.h"
+#include "linphone/api/c-api.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 #include "payload-type/payload-type.h"
@@ -844,7 +845,7 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarConten
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-std::shared_ptr<ParticipantInfo> Factory::createParticipantInfo(const std::shared_ptr<Address> &address) const {
+std::shared_ptr<ParticipantInfo> Factory::createParticipantInfo(const std::shared_ptr<const Address> &address) const {
 	return ParticipantInfo::create(address);
 }
 

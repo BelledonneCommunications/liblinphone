@@ -23,13 +23,12 @@
 #include <bctoolbox/defs.h>
 #include <bctoolbox/map.h>
 
+#include "c-wrapper/c-wrapper.h"
+#include "friend/friend.h"
+#include "linphone/api/c-address.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "linphone/presence.h"
-
-#include "c-wrapper/c-wrapper.h"
-
-#include "friend/friend.h"
 #include "linphone/types.h"
 #include "presence/presence-activity.h"
 #include "presence/presence-model.h"

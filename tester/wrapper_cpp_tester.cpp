@@ -21,16 +21,18 @@
 #include <iostream>
 #include <list>
 
+#include <linphone++/linphone.hh>
+
 #include "bctoolbox/logging.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "liblinphone_tester.h"
+#include "linphone/api/c-chat-room.h"
 #include "linphone/core.h"
 #include "linphone/wrapper_utils.h"
 #include "payload-type/payload-type.h"
 #include "tester_utils.h"
-#include <linphone++/linphone.hh>
 
 //--------------------------------------------------------------------------------------------
 //					Class handlers
@@ -49,7 +51,7 @@ public:
 //--------------------------------------------------------------------------------------------
 
 static void create_account() {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
 	// Get C++ and start working from it.
 	auto core = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
@@ -58,9 +60,9 @@ static void create_account() {
 	accountCreator->setUsername("toto");
 	accountCreator->setDomain("sip.example.org");
 	auto account = accountCreator->createAccountInCore();
-	account = nullptr;	// Clean account
+	account = nullptr; // Clean account
 
-	core = nullptr;// C++ Core deletion
+	core = nullptr; // C++ Core deletion
 	wait_for_until(marie->lc, NULL, NULL, 0, 500);
 
 	// C clean
@@ -219,11 +221,10 @@ static void displaying_payload_type(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-test_t wrapper_cpp_tests[] = {TEST_NO_TAG("Create account", create_account),
-                              TEST_NO_TAG("Create chat room", create_chat_room),
-                              TEST_NO_TAG("Create conference", create_conference),
-                              TEST_NO_TAG("Various API checks", various_api_checks),
-                              TEST_NO_TAG("Displaying PayloadType", displaying_payload_type)};
+test_t wrapper_cpp_tests[] = {
+    TEST_NO_TAG("Create account", create_account), TEST_NO_TAG("Create chat room", create_chat_room),
+    TEST_NO_TAG("Create conference", create_conference), TEST_NO_TAG("Various API checks", various_api_checks),
+    TEST_NO_TAG("Displaying PayloadType", displaying_payload_type)};
 
 test_suite_t wrapper_cpp_test_suite = {"Wrapper Cpp",
                                        NULL,

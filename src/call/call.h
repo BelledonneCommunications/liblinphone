@@ -43,14 +43,10 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Address;
 class CallSessionPrivate;
+class Conference;
 class MediaSessionPrivate;
 class AbstractChatRoom;
-class ConferencePrivate;
 class Player;
-
-namespace MediaConference {
-class Conference;
-}
 
 class CallCbs : public bellesip::HybridObject<LinphoneCallCbs, CallCbs>, public Callbacks {
 public:
@@ -84,8 +80,7 @@ class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>,
 	friend class CorePrivate;
 	friend class MediaSessionPrivate;
 	friend class Stream;
-
-	friend class MediaConference::Conference;
+	friend class Conference;
 
 public:
 	Call(std::shared_ptr<Core> core,
@@ -98,7 +93,7 @@ public:
 
 	Call(std::shared_ptr<Core> core, LinphoneCallDir direction, const std::string &callid);
 
-	virtual ~Call();
+	virtual ~Call() = default;
 
 	void configure(LinphoneCallDir direction,
 	               const std::shared_ptr<const Address> &from,
@@ -300,8 +295,6 @@ public:
 	void onVideoDisplayErrorOccurred(const std::shared_ptr<CallSession> &session, int error_code) override;
 	bool areSoundResourcesAvailable(const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone(const std::shared_ptr<CallSession> &session) override;
-	std::shared_ptr<MediaConference::Conference>
-	getCallSessionConference(const std::shared_ptr<CallSession> &session) const override;
 	void onRealTimeTextCharacterReceived(const std::shared_ptr<CallSession> &session,
 	                                     RealtimeTextReceivedCharacter *character) override;
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
@@ -314,9 +307,9 @@ public:
 	void onAlertNotified(std::shared_ptr<Alert> &alert) override;
 	std::unique_ptr<LogContextualizer> getLogContextualizer() override;
 
-	std::shared_ptr<MediaConference::Conference> getConference() const;
+	std::shared_ptr<Conference> getConference() const;
+	void setConference(std::shared_ptr<Conference> ref);
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
-	void setConference(std::shared_ptr<MediaConference::Conference> ref);
 	MSAudioEndpoint *getEndpoint() const;
 	void setEndpoint(MSAudioEndpoint *endpoint);
 	bool canSoundResourcesBeFreed() const;
@@ -338,15 +331,14 @@ private:
 	bool mPlayingRingbackTone = false;
 
 	BackgroundTask mBgTask;
-	std::shared_ptr<MediaConference::Conference> mConfRef;
+	std::weak_ptr<Conference> mConfRef;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
 	void cleanupSessionAndUnrefCObjectCall();
 
 	void updateRecordState(SalMediaRecord state);
 	void createRemoteConference(const std::shared_ptr<CallSession> &session);
-	void tryToAddToConference(std::shared_ptr<MediaConference::Conference> &conference,
-	                          const std::shared_ptr<CallSession> &session);
+	void tryToAddToConference(std::shared_ptr<Conference> &conference, const std::shared_ptr<CallSession> &session);
 	void configureSoundCardsFromCore(const MediaSessionParams *msp);
 };
 
@@ -358,7 +350,7 @@ public:
 	CallLogContextualizer(const LinphoneCall *call) : CoreLogContextualizer(*Call::toCpp(call)) {
 		if (call) pushTag(*Call::toCpp(call));
 	}
-	~CallLogContextualizer();
+	virtual ~CallLogContextualizer();
 
 private:
 	void pushTag(const Call &call);

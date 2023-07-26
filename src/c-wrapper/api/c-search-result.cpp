@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/api/c-search-result.h"
 #include "c-wrapper/c-wrapper.h"
 #include "search/search-result.h"
 
@@ -37,7 +38,8 @@ LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *se
 }
 
 const LinphoneAddress *linphone_search_result_get_address(const LinphoneSearchResult *searchResult) {
-	return SearchResult::toCpp(searchResult)->getAddress();
+	auto &cppAddr = SearchResult::toCpp(searchResult)->getAddress();
+	return cppAddr ? cppAddr->toC() : nullptr;
 }
 
 const char *linphone_search_result_get_phone_number(const LinphoneSearchResult *searchResult) {

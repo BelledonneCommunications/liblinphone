@@ -49,11 +49,9 @@ void MS2RTTStream::configure(BCTBX_UNUSED(const OfferAnswerContext &params)) {
 }
 
 void MS2RTTStream::realTimeTextCharacterReceived(BCTBX_UNUSED(MSFilter *f), unsigned int id, void *arg) {
-	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-
 	if (id == MS_RTT_4103_RECEIVED_CHAR) {
 		RealtimeTextReceivedCharacter *data = static_cast<RealtimeTextReceivedCharacter *>(arg);
-		if (listener) listener->onRealTimeTextCharacterReceived(getMediaSession().getSharedFromThis(), data);
+		getMediaSession().notifyRealTimeTextCharacterReceived(data);
 	}
 }
 

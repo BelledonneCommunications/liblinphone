@@ -24,10 +24,23 @@
 #include <bctoolbox/list.h>
 
 #include "../ldap/ldap.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "conference/conference-params.h"
+#include "conference/conference.h"
+#include "conference/participant.h"
 #include "friend/friend-list.h"
 #include "friend/friend.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-conference-info.h"
+#include "linphone/api/c-participant-info.h"
+#include "linphone/api/c-participant.h"
+#include "linphone/chat.h"
 #include "linphone/core.h"
 #include "linphone/types.h"
 #include "linphone/utils/utils.h"
@@ -261,11 +274,13 @@ static void sortResultsList(std::shared_ptr<list<std::shared_ptr<SearchResult>>>
 		// Check in order: Friend's display name, address username, address domain, phone number
 		if (nameComp == 0) {
 			if (lsr->getAddress() && rsr->getAddress()) {
-				int usernameComp = compareStringItems(linphone_address_get_username(lsr->getAddress()),
-				                                      linphone_address_get_username(rsr->getAddress()));
+				const auto lsrAddress = lsr->getAddress();
+				const auto rsrAddress = rsr->getAddress();
+				int usernameComp =
+				    compareStringItems(lsrAddress->getUsername().c_str(), rsrAddress->getUsername().c_str());
 				if (usernameComp == 0) {
-					int domainComp = compareStringItems(linphone_address_get_domain(lsr->getAddress()),
-					                                    linphone_address_get_domain(rsr->getAddress()));
+					int domainComp =
+					    compareStringItems(lsrAddress->getDomain().c_str(), rsrAddress->getDomain().c_str());
 					if (domainComp == 0) {
 						if (!lsr->getPhoneNumber().empty() && !rsr->getPhoneNumber().empty()) {
 							int phoneComp = strcmp(lsr->getPhoneNumber().c_str(), rsr->getPhoneNumber().c_str());
@@ -293,11 +308,11 @@ static void sortResultsByFriendInList(std::shared_ptr<list<std::shared_ptr<Searc
 	resultList->sort([](const std::shared_ptr<SearchResult> &lsr, const std::shared_ptr<SearchResult> &rsr) {
 		const char *name1 = linphone_friend_get_name(lsr->getFriend());
 		if (name1 == nullptr) {
-			name1 = linphone_address_get_username(lsr->getAddress());
+			name1 = lsr->getAddress()->getUsernameCstr();
 		}
 		const char *name2 = linphone_friend_get_name(rsr->getFriend());
 		if (name2 == nullptr) {
-			name2 = linphone_address_get_username(rsr->getAddress());
+			name2 = rsr->getAddress()->getUsernameCstr();
 		}
 		int nameComp = compareStringItems(name1, name2);
 		return nameComp < 0;
@@ -348,8 +363,9 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 				LinphoneAddress *lastResult =
 				    linphone_core_interpret_url_2(this->getCore()->getCCore(), strTmp.c_str(), apply_prefix);
 				if (lastResult) {
-					returnList.push_back(SearchResult::create((unsigned int)0, lastResult, "", nullptr,
-					                                          LinphoneMagicSearchSourceRequest));
+					returnList.push_back(SearchResult::create((unsigned int)0,
+					                                          Address::toCpp(lastResult)->getSharedFromThis(), "",
+					                                          nullptr, LinphoneMagicSearchSourceRequest));
 					linphone_address_unref(lastResult);
 				}
 			}
@@ -380,7 +396,7 @@ void MagicSearch::setSearchCache(std::shared_ptr<list<std::shared_ptr<SearchResu
 static bool findAddress(const list<std::shared_ptr<SearchResult>> &list, const LinphoneAddress *addr) {
 	for (auto r : list) {
 		if (r->getAddress()) {
-			if (linphone_address_weak_equal(r->getAddress(), addr)) {
+			if (linphone_address_weak_equal(r->getAddress()->toC(), addr)) {
 				return true;
 			}
 		}
@@ -401,16 +417,17 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromCallLog(
 			                                  ? linphone_call_log_get_from_address(log)
 			                                  : linphone_call_log_get_to_address(log);
 			if (addr && linphone_call_log_get_status(log) != LinphoneCallAborted) {
+				auto cppAddr = Address::toCpp(addr)->getSharedFromThis();
 				if (filter.empty() && withDomain.empty()) {
 					if (findAddress(currentList, addr)) continue;
 					resultList.push_back(
-					    SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
+					    SearchResult::create((unsigned int)0, cppAddr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
 				} else {
 					unsigned int weight = searchInAddress(addr, filter, withDomain);
 					if (weight > getMinWeight()) {
 						if (findAddress(currentList, addr)) continue;
 						resultList.push_back(
-						    SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
+						    SearchResult::create(weight, cppAddr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
 					}
 				}
 			}
@@ -428,59 +445,49 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromGroupChatRoomPart
 
 	// For all call log or when we reach the search limit
 	for (const bctbx_list_t *f = chatRooms; f != nullptr; f = bctbx_list_next(f)) {
-		LinphoneChatRoom *room = static_cast<LinphoneChatRoom *>(f->data);
-		if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesConference) {
-			bctbx_list_t *participants = linphone_chat_room_get_participants(room);
-			for (const bctbx_list_t *p = participants; p != nullptr; p = bctbx_list_next(p)) {
-				LinphoneParticipant *participant = static_cast<LinphoneParticipant *>(p->data);
-				const LinphoneAddress *addr = linphone_address_clone(linphone_participant_get_address(participant));
+		const auto room = AbstractChatRoom::toCpp(static_cast<LinphoneChatRoom *>(f->data))->getSharedFromThis();
+		const auto chatRoomParams = room->getCurrentParams()->getChatParams();
+		const auto backend = chatRoomParams->getBackend();
+		if (backend == ChatParams::Backend::FlexisipChat) {
+			const auto &participants = room->getParticipants();
+			for (const auto &participant : participants) {
+				auto addr = participant->getAddress()->clone()->toSharedPtr();
 				if (filter.empty() && withDomain.empty()) {
-					if (findAddress(currentList, addr)) {
-						linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+					if (findAddress(currentList, addr->toC())) {
 						continue;
 					}
 					resultList.push_back(
 					    SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 				} else {
-					unsigned int weight = searchInAddress(addr, filter, withDomain);
+					unsigned int weight = searchInAddress(addr->toC(), filter, withDomain);
 					if (weight > getMinWeight()) {
-						if (findAddress(currentList, addr)) {
-							linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+						if (findAddress(currentList, addr->toC())) {
 							continue;
 						}
 						resultList.push_back(
 						    SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 					}
-				}
-				if (addr) {
-					linphone_address_unref(const_cast<LinphoneAddress *>(addr));
 				}
 			}
-			bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
-		} else if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesBasic) {
-			const LinphoneAddress *peerAddress =
-			    linphone_chat_room_get_peer_address(room); // Can return NULL if getPeerAddress() is not valid
-			if (peerAddress) {
-				LinphoneAddress *addr = linphone_address_clone(peerAddress);
+		} else if (backend == ChatParams::Backend::Basic) {
+			const auto peerAddress = room->getPeerAddress(); // Can return NULL if getPeerAddress() is not valid
+			if (peerAddress && peerAddress->isValid()) {
 				if (filter.empty()) {
-					if (findAddress(currentList, addr)) {
-						linphone_address_unref(addr);
+					if (findAddress(currentList, peerAddress->toC())) {
 						continue;
 					}
-					resultList.push_back(
-					    SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
+					resultList.push_back(SearchResult::create((unsigned int)0, peerAddress, "", nullptr,
+					                                          LinphoneMagicSearchSourceChatRooms));
 				} else {
-					unsigned int weight = searchInAddress(addr, filter, withDomain);
+					unsigned int weight = searchInAddress(peerAddress->toC(), filter, withDomain);
 					if (weight > getMinWeight()) {
-						if (findAddress(currentList, addr)) {
-							linphone_address_unref(addr);
+						if (findAddress(currentList, peerAddress->toC())) {
 							continue;
 						}
 						resultList.push_back(
-						    SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
+						    SearchResult::create(weight, peerAddress, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 					}
 				}
-				linphone_address_unref(addr);
 			}
 		}
 	}
@@ -498,53 +505,44 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromConferencesInfo(
 		LinphoneConferenceInfo *info = static_cast<LinphoneConferenceInfo *>(f->data);
 		const LinphoneAddress *organizer = linphone_conference_info_get_organizer(info);
 		if (organizer) {
-			LinphoneAddress *addr = linphone_address_clone(organizer);
+			auto addr = Address::toCpp(organizer)->clone()->toSharedPtr();
 			if (filter.empty() && withDomain.empty()) {
-				if (findAddress(currentList, addr)) {
-					linphone_address_unref(addr);
+				if (findAddress(currentList, addr->toC())) {
 					continue;
 				}
 				resultList.push_back(
 				    SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
 			} else {
-				unsigned int weight = searchInAddress(addr, filter, withDomain);
+				unsigned int weight = searchInAddress(addr->toC(), filter, withDomain);
 				if (weight > getMinWeight()) {
-					if (findAddress(currentList, addr)) {
-						linphone_address_unref(addr);
+					if (findAddress(currentList, addr->toC())) {
 						continue;
 					}
 					resultList.push_back(
 					    SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
 				}
 			}
-			linphone_address_unref(addr);
 		}
 
 		const bctbx_list_t *participants = linphone_conference_info_get_participant_infos(info);
 		for (const bctbx_list_t *p = participants; p != nullptr; p = bctbx_list_next(p)) {
 			LinphoneParticipantInfo *participantInfo = static_cast<LinphoneParticipantInfo *>(p->data);
-			const LinphoneAddress *addr =
-			    linphone_address_clone(linphone_participant_info_get_address(participantInfo));
+			auto addr = Address::toCpp(linphone_participant_info_get_address(participantInfo))->clone()->toSharedPtr();
 			if (filter.empty() && withDomain.empty()) {
-				if (findAddress(currentList, addr)) {
-					linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+				if (findAddress(currentList, addr->toC())) {
 					continue;
 				}
 				resultList.push_back(
 				    SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
 			} else {
-				unsigned int weight = searchInAddress(addr, filter, withDomain);
+				unsigned int weight = searchInAddress(addr->toC(), filter, withDomain);
 				if (weight > getMinWeight()) {
-					if (findAddress(currentList, addr)) {
-						linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+					if (findAddress(currentList, addr->toC())) {
 						continue;
 					}
 					resultList.push_back(
 					    SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
 				}
-			}
-			if (addr) {
-				linphone_address_unref(const_cast<LinphoneAddress *>(addr));
 			}
 		}
 	}
@@ -733,7 +731,7 @@ std::shared_ptr<list<std::shared_ptr<SearchResult>>> MagicSearch::continueSearch
 				addResultsToResultsList(results, *resultList);
 				previousFriend = sr->getFriend();
 			} else if (!sr->getFriend()) {
-				unsigned int weight = searchInAddress(sr->getAddress(), filter, withDomain);
+				unsigned int weight = searchInAddress(sr->getAddress()->toC(), filter, withDomain);
 				if (weight > getMinWeight()) {
 					resultList->push_back(SearchResult::create(weight, sr->getAddress(), sr->getPhoneNumber(), nullptr,
 					                                           sr->getSourceFlags()));
@@ -794,7 +792,8 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 		unsigned int weightAddress = searchInAddress(lAddress, filter, withDomain) * 1;
 
 		if ((weightAddress + weight) > getMinWeight()) {
-			friendResult.push_back(SearchResult::create(weight + weightAddress, lAddress, phoneNumber, lFriend, flags));
+			friendResult.push_back(SearchResult::create(
+			    weight + weightAddress, Address::toCpp(lAddress)->getSharedFromThis(), phoneNumber, lFriend, flags));
 		}
 	}
 
@@ -818,35 +817,31 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 		if (presence) {
 			char *contact = linphone_presence_model_get_contact(presence);
 			if (contact) {
-				LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), contact);
+				auto tmpAdd = Address::create(contact);
 				if (tmpAdd) {
 					if (withDomain.empty() || withDomain == "*" ||
-					    compareStringItems(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) {
+					    compareStringItems(L_STRING_TO_C(tmpAdd->getDomain()), withDomain.c_str()) == 0) {
 						weightNumber += getWeight(contact, filter) * 2;
 						if ((weightNumber + weight) > getMinWeight()) {
 							friendResult.push_back(
 							    SearchResult::create(weight + weightNumber, tmpAdd, phoneNumber, lFriend, flags));
 						}
-						linphone_address_unref(tmpAdd);
 						bctbx_free(contact);
 					}
 				}
 			}
 		} else {
-			LinphoneAddress *tmpAdd = nullptr;
+			std::shared_ptr<Address> tmpAdd = nullptr;
 			if (isSipUri(phoneNumber)) { // Will prevent warning & error logs due to parsing failure
-				tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), phoneNumber.c_str());
+				tmpAdd = Address::create(phoneNumber);
 			}
 			if ((weightNumber + weight) > getMinWeight() &&
 			    (withDomain.empty() ||
-			     (tmpAdd != nullptr && compareStringItems(linphone_address_get_domain(tmpAdd), withDomain.c_str()) ==
+			     (tmpAdd != nullptr && compareStringItems(L_STRING_TO_C(tmpAdd->getDomain()), withDomain.c_str()) ==
 			                               0) // To allow for SIP URIs stored in phone number fields...
 			     )) {
 				friendResult.push_back(
 				    SearchResult::create(weight + weightNumber, tmpAdd, phoneNumber, lFriend, flags));
-			}
-			if (tmpAdd) {
-				linphone_address_unref(tmpAdd);
 			}
 		}
 		phoneNumbers = phoneNumbers->next;
@@ -957,9 +952,9 @@ void MagicSearch::addResultsToResultsList(std::list<std::shared_ptr<SearchResult
                                           BCTBX_UNUSED(const std::string &withDomain)) const {
 	auto itResult = results.begin();
 	while (itResult != results.end()) { // Merge addresses that are already in srL
-		const LinphoneAddress *addr = (*itResult)->getAddress();
+		const auto addr = (*itResult)->getAddress();
 		auto srLAddress = std::find_if(srL.begin(), srL.end(), [addr](const std::shared_ptr<SearchResult> &r) {
-			return r->getAddress() && linphone_address_weak_equal(r->getAddress(), addr);
+			return r->getAddress() && addr->weakEqual(*r->getAddress());
 		});
 		if (srLAddress != srL.end()) {
 			(*srLAddress)->merge(*itResult);
@@ -973,12 +968,12 @@ void MagicSearch::addResultsToResultsList(std::list<std::shared_ptr<SearchResult
 
 static bool compareResults(const std::shared_ptr<SearchResult> &lsr, const std::shared_ptr<SearchResult> &rsr) {
 	bool sip_addresses = false;
-	const LinphoneAddress *left = lsr->getAddress();
-	const LinphoneAddress *right = rsr->getAddress();
+	const auto left = lsr->getAddress();
+	const auto right = rsr->getAddress();
 	if (left == nullptr && right == nullptr) {
 		sip_addresses = true;
 	} else if (left != nullptr && right != nullptr) {
-		sip_addresses = linphone_address_weak_equal(left, right);
+		sip_addresses = left->weakEqual(*right);
 	}
 	return sip_addresses && lsr->getCapabilities() == rsr->getCapabilities() &&
 	       lsr->getPhoneNumber() == rsr->getPhoneNumber() &&

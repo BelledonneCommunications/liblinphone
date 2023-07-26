@@ -26,24 +26,21 @@
 #include "mediastreamer2/mscommon.h"
 #include "mediastreamer2/msmediaplayer.h"
 #include "mediastreamer2/msvideo.h"
+
 #include "ortp/ortp.h"
 #include "ortp/payloadtype.h"
 
-#include "linphone/callbacks.h"
-#include "linphone/defs.h"
-#include "linphone/sipsetup.h"
-#include "linphone/types.h"
-
 #include "linphone/account_creator.h"
 #include "linphone/account_creator_service.h"
-
+#include "linphone/api/c-conference.h"
 #include "linphone/api/c-event.h"
 #include "linphone/buffer.h"
 #include "linphone/call.h"
 #include "linphone/call_params.h"
 #include "linphone/call_stats.h"
-#include "linphone/chat.h"
-#include "linphone/conference.h"
+#include "linphone/callbacks.h"
+#include "linphone/defs.h"
+#include "linphone/enums/c-enums.h"
 #include "linphone/error_info.h"
 #include "linphone/factory.h"
 #include "linphone/friendlist.h"
@@ -58,14 +55,11 @@
 #include "linphone/presence.h"
 #include "linphone/proxy_config.h"
 #include "linphone/ringtoneplayer.h"
+#include "linphone/sipsetup.h"
+#include "linphone/types.h"
 #include "linphone/vcard.h"
 #include "linphone/video_definition.h"
 #include "linphone/xmlrpc.h"
-
-// For migration purpose.
-#include "linphone/api/c-api.h"
-
-#include "linphone/enums/c-enums.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -6129,7 +6123,7 @@ LINPHONE_PUBLIC LinphoneContent *linphone_core_create_content(LinphoneCore *core
  * @return a #LinphoneEvent holding the context of the created subcription. @notnil
  **/
 LINPHONE_PUBLIC LinphoneEvent *linphone_core_subscribe(
-    LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body);
+    LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires, LinphoneContent *body);
 
 /**
  * Create an outgoing subscription, specifying the destination resource, the event name, and an optional content body.
@@ -6184,7 +6178,7 @@ linphone_core_create_notify(LinphoneCore *core, LinphoneAddress *resource, const
  * @return the #LinphoneEvent holding the context of the publish. @maybenil
  **/
 LINPHONE_PUBLIC LinphoneEvent *linphone_core_publish(
-    LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body);
+    LinphoneCore *core, LinphoneAddress *resource, const char *event, int expires, LinphoneContent *body);
 
 /**
  * Create a publish context for an event state.

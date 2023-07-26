@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -33,16 +33,60 @@ LINPHONE_BEGIN_NAMESPACE
 
 ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 	if (core) {
-		const LinphoneVideoActivationPolicy *policy = linphone_core_get_video_activation_policy(core);
-		enableVideo(linphone_video_activation_policy_get_automatically_initiate(policy));
-		setParticipantListType(
-		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
 		setAccount(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getDefaultAccount());
 	}
 }
 
+ConferenceParams::ConferenceParams(const ConferenceParams &other) : ConferenceParams(nullptr) {
+	mEnableAudio = other.mEnableAudio;
+	mEnableVideo = other.mEnableVideo;
+	mEnableChat = other.mEnableChat;
+	mLocalParticipantEnabled = other.mLocalParticipantEnabled;
+	mAllowOneParticipantConference = other.mAllowOneParticipantConference;
+	mParticipantListType = other.mParticipantListType;
+	mJoinMode = other.mJoinMode;
+	mConferenceAddress = other.mConferenceAddress ? other.mConferenceAddress->clone()->toSharedPtr() : nullptr;
+	mFactoryAddress = other.mFactoryAddress ? other.mFactoryAddress->clone()->toSharedPtr() : nullptr;
+	mSecurityLevel = other.mSecurityLevel;
+	mUseDefaultFactoryAddress = other.mUseDefaultFactoryAddress;
+	mSubject = other.mSubject;
+	mUtf8Subject = other.mUtf8Subject;
+	mDescription = other.mDescription;
+	mUtf8Description = other.mUtf8Description;
+	mMe = other.mMe ? other.mMe->clone()->toSharedPtr() : nullptr;
+	mStartTime = other.mStartTime;
+	mEndTime = other.mEndTime;
+	mGroup = other.mGroup;
+	mAccount = other.mAccount;
+	mStatic = other.mStatic;
+	mHidden = other.mHidden;
+	mChatParams = other.mChatParams ? other.mChatParams->clone()->toSharedPtr() : nullptr;
+}
+
+void ConferenceParams::setAudioVideoDefaults(const LinphoneCore *core) {
+	if (core) {
+		enableAudio(true);
+		const LinphoneVideoActivationPolicy *policy = linphone_core_get_video_activation_policy(core);
+		enableVideo(linphone_video_activation_policy_get_automatically_initiate(policy));
+		setParticipantListType(
+		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
+	}
+}
+
+void ConferenceParams::setChatDefaults(const LinphoneCore *core) {
+	enableChat(true);
+	mChatParams->setChatDefaults(core);
+}
+
+void ConferenceParams::enableChat(bool enable) {
+	mEnableChat = enable;
+	if (!mChatParams) {
+		mChatParams = ChatParams::create();
+	}
+};
+
 void ConferenceParams::setAccount(const shared_ptr<Account> &a) {
-	m_account = a;
+	mAccount = a;
 	updateFromAccount(a);
 }
 
@@ -57,12 +101,12 @@ void ConferenceParams::updateFromAccount(
 			} else {
 				setMe(nullptr);
 			}
-			if (m_useDefaultFactoryAddress) {
+			if (mUseDefaultFactoryAddress) {
 				auto core = account->getCore();
-				m_factoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
-				if (m_factoryAddress &&
+				mFactoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
+				if (mFactoryAddress &&
 				    (linphone_core_get_global_state(L_GET_C_BACK_PTR(core)) != LinphoneGlobalStartup)) {
-					lInfo() << "Update conference parameters from account, factory: " << *m_factoryAddress;
+					lInfo() << "Update conference parameters from account, factory: " << *mFactoryAddress;
 				}
 			}
 		} else lInfo() << "Update conference parameters from account: no account parameters";
@@ -70,26 +114,58 @@ void ConferenceParams::updateFromAccount(
 }
 
 void ConferenceParams::setUtf8Description(const std::string &description) {
-	m_description = Utils::utf8ToLocale(description);
+	mDescription = Utils::utf8ToLocale(description);
 };
 
 const std::string &ConferenceParams::getUtf8Description() const {
-	m_utf8Description = Utils::localeToUtf8(m_description);
-	return m_utf8Description;
+	mUtf8Description = Utils::localeToUtf8(mDescription);
+	return mUtf8Description;
 };
 
 void ConferenceParams::setUtf8Subject(const std::string &subject) {
-	m_subject = Utils::utf8ToLocale(subject);
+	mSubject = Utils::utf8ToLocale(subject);
 };
 
 const std::string &ConferenceParams::getUtf8Subject() const {
-	m_utf8Subject = Utils::localeToUtf8(m_subject);
-	return m_utf8Subject;
+	mUtf8Subject = Utils::localeToUtf8(mSubject);
+	return mUtf8Subject;
 };
 
 void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) {
-	m_conferenceAddress = Address::create(conferenceAddress->getUri());
+	mConferenceAddress = Address::create(conferenceAddress->getUri());
 };
+
+bool ConferenceParams::isGroup() const {
+	return mGroup;
+}
+
+void ConferenceParams::setGroup(bool group) {
+	mGroup = group;
+	if (group && mChatParams) {
+		mChatParams->setBackend(ChatParams::Backend::FlexisipChat);
+	}
+}
+
+void ConferenceParams::updateAccordingToCapabilities(AbstractChatRoom::CapabilitiesMask capabilities) {
+	if (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::Basic)) {
+		mChatParams->setBackend(ChatParams::Backend::Basic);
+	}
+	if (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::Conference)) {
+		mChatParams->setBackend(ChatParams::Backend::FlexisipChat);
+	}
+	if (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::Encrypted)) {
+		setSecurityLevel(SecurityLevel::EndToEnd);
+	} else {
+		setSecurityLevel(SecurityLevel::None);
+	}
+	if (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::Ephemeral)) {
+		mChatParams->setEphemeralMode(AbstractChatRoom::EphemeralMode::AdminManaged);
+	}
+	setGroup((!(capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::OneToOne))) &&
+	         (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::Conference)));
+	mChatParams->setRealTimeText(
+	    (capabilities & AbstractChatRoom::CapabilitiesMask(AbstractChatRoom::Capabilities::RealTimeText)));
+}
 
 ConferenceParams::SecurityLevel ConferenceParams::getSecurityLevelFromAttribute(const string &level) {
 	if (level.compare("point-to-point") == 0) {
@@ -112,6 +188,55 @@ string ConferenceParams::getSecurityLevelAttribute(const ConferenceParams::Secur
 			return "end-to-end";
 	}
 	return "none";
+}
+
+shared_ptr<ConferenceParams> ConferenceParams::fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities) {
+	auto params = ConferenceParams::create();
+	params->enableAudio(false);
+	params->enableVideo(false);
+	params->enableChat(true);
+	params->updateAccordingToCapabilities(capabilities);
+	return params;
+}
+
+AbstractChatRoom::CapabilitiesMask ConferenceParams::toCapabilities(const std::shared_ptr<ConferenceParams> &params) {
+	AbstractChatRoom::CapabilitiesMask mask;
+	const auto chatBackend = params->getChatParams()->getBackend();
+	if (chatBackend == ChatParams::Backend::Basic) {
+		mask |= AbstractChatRoom::Capabilities::Basic;
+		mask |= AbstractChatRoom::Capabilities::OneToOne;
+	} else if (chatBackend == ChatParams::Backend::FlexisipChat) {
+		mask |= AbstractChatRoom::Capabilities::Conference;
+		if (!params->isGroup()) {
+			mask |= AbstractChatRoom::Capabilities::OneToOne;
+		}
+		if (params->getChatParams()->ephemeralAllowed() &&
+		    (params->getChatParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged)) {
+			mask |= AbstractChatRoom::Capabilities::Ephemeral;
+		}
+	}
+	if (params->getChatParams()->isEncrypted() &&
+	    params->getChatParams()->getEncryptionBackend() != ChatParams::EncryptionBackend::None) {
+		mask |= AbstractChatRoom::Capabilities::Encrypted;
+	}
+	if (params->getChatParams()->isRealTimeText()) {
+		mask |= AbstractChatRoom::Capabilities::RealTimeText;
+	}
+	return mask;
+}
+
+// Returns false	if there are any inconsistencies between parameters
+bool ConferenceParams::isValid() const {
+	auto ret = mChatParams->isValid();
+	if (mGroup && mChatParams->getBackend() != ChatParams::Backend::FlexisipChat) {
+		lError() << "FlexisipChat backend must be used when group is enabled";
+		return false;
+	}
+	if (mSubject.empty() && mChatParams->getBackend() == ChatParams::Backend::FlexisipChat) {
+		lError() << "You must set a non empty subject when using the FlexisipChat backend";
+		return false;
+	}
+	return ret;
 }
 
 LINPHONE_END_NAMESPACE

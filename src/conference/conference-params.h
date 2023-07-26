@@ -25,6 +25,7 @@
 
 #include "belle-sip/object++.hh"
 
+#include "chat/chat-room/chat-params.h"
 #include "conference/conference-interface.h"
 #include "conference/conference-params-interface.h"
 #include "linphone/core.h"
@@ -33,181 +34,197 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Account;
 class Address;
-namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
-	                        // src/conference/*
 class Conference;
-class LocalConference;
-class RemoteConference;
-} // namespace MediaConference
 
 class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>,
                                          public ConferenceParamsInterface {
-	friend class MediaConference::Conference;
-	friend class MediaConference::LocalConference;
-	friend class MediaConference::RemoteConference;
+	friend class ServerConference;
+	friend class ClientConference;
 
 public:
 	ConferenceParams(const LinphoneCore *core = NULL);
+	ConferenceParams(const ConferenceParams &other);
+
+	void setAudioVideoDefaults(const LinphoneCore *core);
+	void setChatDefaults(const LinphoneCore *core);
 
 	ConferenceParams *clone() const override {
 		return new ConferenceParams(*this);
 	}
 
-	virtual void setConferenceFactoryAddress(const std::shared_ptr<Address> &address) override {
-		m_useDefaultFactoryAddress = false;
-		m_factoryAddress = address; // Setting to nullptr means that we want to host a conference on the local device
+	virtual ~ConferenceParams() = default;
+
+	bool isValid() const;
+	void updateAccordingToCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);
+
+	virtual void setConferenceFactoryAddress(const std::shared_ptr<const Address> &address) override {
+		mUseDefaultFactoryAddress = false;
+		// Setting to nullptr means that we want to host a conference on the local device
+		mFactoryAddress = address->clone()->toSharedPtr();
 	};
 
 	const std::shared_ptr<Address> &getConferenceFactoryAddress() const {
-		return m_factoryAddress;
+		return mFactoryAddress;
 	};
 
 	void setHidden(bool enable) {
-		m_hidden = enable;
+		mHidden = enable;
 	}
 	bool isHidden() const {
-		return m_hidden;
+		return mHidden;
 	}
 
 	void setStatic(bool enable) {
-		m_static = enable;
+		mStatic = enable;
 	}
 	bool isStatic() const {
-		return m_static;
+		return mStatic;
 	}
 
 	virtual void enableVideo(bool enable) override {
-		m_enableVideo = enable;
+		mEnableVideo = enable;
 	}
 	bool videoEnabled() const {
-		return m_enableVideo;
+		return mEnableVideo;
 	}
 
 	virtual void enableAudio(bool enable) override {
-		m_enableAudio = enable;
+		mEnableAudio = enable;
 	};
 	bool audioEnabled() const {
-		return m_enableAudio;
+		return mEnableAudio;
 	}
 
-	virtual void enableChat(bool enable) override {
-		m_enableChat = enable;
-	};
+	virtual void enableChat(bool enable) override;
 	bool chatEnabled() const {
-		return m_enableChat;
+		return mEnableChat;
 	}
 
 	void enableLocalParticipant(bool enable) {
-		m_localParticipantEnabled = enable;
+		mLocalParticipantEnabled = enable;
 	}
 	bool localParticipantEnabled() const {
-		return m_localParticipantEnabled;
+		return mLocalParticipantEnabled;
 	}
 
 	void enableOneParticipantConference(bool enable) {
-		m_allowOneParticipantConference = enable;
+		mAllowOneParticipantConference = enable;
 	}
 	bool oneParticipantConferenceEnabled() const {
-		return m_allowOneParticipantConference;
+		return mAllowOneParticipantConference;
 	}
 
 	virtual void setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) override;
 	const std::shared_ptr<Address> &getConferenceAddress() const {
-		return m_conferenceAddress;
+		return mConferenceAddress;
 	};
 
 	void setUtf8Description(const std::string &description);
 	void setDescription(const std::string &description) {
-		m_description = description;
+		mDescription = description;
 	};
 	const std::string &getDescription() const {
-		return m_description;
+		return mDescription;
 	};
 	const std::string &getUtf8Description() const;
 
 	virtual void setUtf8Subject(const std::string &subject) override;
 	virtual void setSubject(const std::string &subject) override {
-		m_subject = subject;
+		mSubject = subject;
 	};
 	const std::string &getUtf8Subject() const;
 	const std::string &getSubject() const {
-		return m_subject;
+		return mSubject;
 	};
 
 	virtual void setMe(const std::shared_ptr<Address> &participantAddress) override {
-		m_me = participantAddress ? participantAddress->clone()->toSharedPtr() : nullptr;
+		mMe = participantAddress ? participantAddress->clone()->toSharedPtr() : nullptr;
 	};
 	const std::shared_ptr<Address> &getMe() const {
-		return m_me;
+		return mMe;
 	};
 
 	void setAccount(const std::shared_ptr<Account> &a);
 	const std::shared_ptr<Account> getAccount() const {
-		return m_account.lock();
+		return mAccount.lock();
 	};
 
 	virtual void setStartTime(const time_t &start) override {
-		m_startTime = start;
+		mStartTime = start;
 	};
 	const time_t &getStartTime() const {
-		return m_startTime;
+		return mStartTime;
 	};
 
 	virtual void setEndTime(const time_t &end) override {
-		m_endTime = end;
+		mEndTime = end;
 	};
 	const time_t &getEndTime() const {
-		return m_endTime;
+		return mEndTime;
 	};
 
 	virtual void setParticipantListType(const ParticipantListType &type) override {
-		m_participantListType = type;
+		mParticipantListType = type;
 	};
 	const ParticipantListType &getParticipantListType() const {
-		return m_participantListType;
+		return mParticipantListType;
 	};
 
 	virtual void setJoiningMode(const JoiningMode &mode) override {
-		m_joinMode = mode;
+		mJoinMode = mode;
 	};
 	const JoiningMode &getJoiningMode() const {
-		return m_joinMode;
+		return mJoinMode;
 	};
 
 	virtual void setSecurityLevel(const SecurityLevel &level) override {
-		m_securityLevel = level;
+		mSecurityLevel = level;
+		if (mChatParams) {
+			mChatParams->updateSecurityParams((mSecurityLevel != SecurityLevel::None));
+		}
 	};
 	const SecurityLevel &getSecurityLevel() const {
-		return m_securityLevel;
+		return mSecurityLevel;
 	};
+
+	std::shared_ptr<ChatParams> &getChatParams() {
+		return mChatParams;
+	};
+
+	bool isGroup() const;
+	void setGroup(bool group);
 
 	static ConferenceParams::SecurityLevel getSecurityLevelFromAttribute(const std::string &level);
 	static std::string getSecurityLevelAttribute(const ConferenceParams::SecurityLevel &level);
+	static AbstractChatRoom::CapabilitiesMask toCapabilities(const std::shared_ptr<ConferenceParams> &params);
+	static std::shared_ptr<ConferenceParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);
 
 private:
 	void updateFromAccount(const std::shared_ptr<Account> &account); // Update Me and default factory from account.
 
-	bool m_enableVideo = false;
-	bool m_enableAudio = false;
-	bool m_enableChat = false;
-	bool m_localParticipantEnabled = true;
-	bool m_allowOneParticipantConference = false;
-	ParticipantListType m_participantListType = ParticipantListType::Open;
-	JoiningMode m_joinMode = JoiningMode::DialIn;
-	std::shared_ptr<Address> m_conferenceAddress = nullptr;
-	std::shared_ptr<Address> m_factoryAddress = nullptr;
-	SecurityLevel m_securityLevel = SecurityLevel::None;
-	bool m_useDefaultFactoryAddress = true;
-	std::string m_subject = "";
-	mutable std::string m_utf8Subject = "";
-	std::string m_description = "";
-	mutable std::string m_utf8Description = "";
-	std::shared_ptr<Address> m_me = nullptr;
-	time_t m_startTime = (time_t)-1;
-	time_t m_endTime = (time_t)-1;
-	std::weak_ptr<Account> m_account;
-	bool m_static = false;
-	bool m_hidden = false;
+	bool mEnableVideo = false;
+	bool mEnableAudio = false;
+	bool mEnableChat = false;
+	bool mLocalParticipantEnabled = true;
+	bool mAllowOneParticipantConference = false;
+	ParticipantListType mParticipantListType = ParticipantListType::Open;
+	JoiningMode mJoinMode = JoiningMode::DialIn;
+	std::shared_ptr<Address> mConferenceAddress = nullptr;
+	std::shared_ptr<Address> mFactoryAddress = nullptr;
+	SecurityLevel mSecurityLevel = SecurityLevel::None;
+	bool mUseDefaultFactoryAddress = true;
+	std::string mSubject = "";
+	mutable std::string mUtf8Subject = "";
+	std::string mDescription = "";
+	mutable std::string mUtf8Description = "";
+	std::shared_ptr<Address> mMe = nullptr;
+	time_t mStartTime = (time_t)-1;
+	time_t mEndTime = (time_t)-1;
+	bool mGroup = true; // group chat
+	std::weak_ptr<Account> mAccount;
+	bool mStatic = false;
+	bool mHidden = false;
+	std::shared_ptr<ChatParams> mChatParams = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

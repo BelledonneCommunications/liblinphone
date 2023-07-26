@@ -37,7 +37,7 @@ SIPConferenceScheduler::SIPConferenceScheduler(const shared_ptr<Core> &core) : C
 
 SIPConferenceScheduler::~SIPConferenceScheduler() {
 	if (mSession != nullptr) {
-		mSession->setListener(nullptr);
+		mSession->removeListener(this);
 	}
 }
 
@@ -59,19 +59,19 @@ void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<Conf
 		conferenceParams->setEndTime(endTime);
 	}
 
-	std::list<std::shared_ptr<Address>> invitees;
+	std::list<Address> invitees;
 	for (const auto &p : mConferenceInfo->getParticipants()) {
-		invitees.push_back(createParticipantAddress(p));
+		invitees.push_back(Conference::createParticipantAddressForResourceList(p));
 	}
 
 	const auto &conferenceAddress = conferenceInfo->getUri();
-	mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress);
+	mSession =
+	    getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress, this);
 	if (mSession == nullptr) {
 		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";
 		setState(State::Error);
 		return;
 	}
-	mSession->setListener(this);
 
 	if ((mConferenceInfo->getDateTime() <= 0) && (getState() == State::AllocationPending)) {
 		// Set start time only if a conference is going to be created
@@ -105,12 +105,12 @@ void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<Ca
 			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 			// Participant with the focus call is admin
 			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
-			std::list<std::shared_ptr<Address>> addressesList;
+			std::list<Address> addressesList;
 			for (const auto &participantInfo : mConferenceInfo->getParticipants()) {
-				addressesList.push_back(participantInfo->getAddress());
+				addressesList.push_back(Conference::createParticipantAddressForResourceList(participantInfo));
 			}
-			addressesList.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
-			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
+			addressesList.sort([](const auto &addr1, const auto &addr2) { return addr1 < addr2; });
+			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1.weakEqual(addr2); });
 
 			if (!addressesList.empty()) {
 				auto content = Content::create();

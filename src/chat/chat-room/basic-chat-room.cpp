@@ -22,9 +22,13 @@
 
 #include "linphone/utils/utils.h"
 
-#include "basic-chat-room-p.h"
+#include "basic-chat-room.h"
+
 #include "call/call.h"
+#include "conference/conference-params.h"
 #include "conference/participant.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
 #include "logger/logger.h"
 
 // =============================================================================
@@ -35,53 +39,41 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-BasicChatRoom::BasicChatRoom(const shared_ptr<Core> &core,
+BasicChatRoom::BasicChatRoom(const std::shared_ptr<Core> &core,
                              const ConferenceId &conferenceId,
-                             const std::shared_ptr<ChatRoomParams> &params)
-    : BasicChatRoom(*new BasicChatRoomPrivate, core, conferenceId, params) {
-}
+                             const std::shared_ptr<ConferenceParams> &params)
+    : ChatRoom(core) {
+	mMe = Participant::create(nullptr, conferenceId.getLocalAddress());
+	mParticipants.push_back(Participant::create(nullptr, conferenceId.getPeerAddress()));
+	mParams = params->clone()->toSharedPtr();
 
-BasicChatRoom::BasicChatRoom(BasicChatRoomPrivate &p,
-                             const std::shared_ptr<Core> &core,
-                             const ConferenceId &conferenceId,
-                             const std::shared_ptr<ChatRoomParams> &params)
-    : ChatRoom(p, core, params) {
-	L_D();
-
-	d->me = Participant::create(nullptr, conferenceId.getLocalAddress());
-	d->participants.push_back(Participant::create(nullptr, conferenceId.getPeerAddress()));
-
-	this->conferenceId = conferenceId;
+	mConferenceId = conferenceId;
 }
 
 void BasicChatRoom::allowCpim(bool value) {
-	L_D();
-	d->cpimAllowed = value;
+	mCpimAllowed = value;
 }
 
 void BasicChatRoom::allowMultipart(bool value) {
-	L_D();
-	d->multipartAllowed = value;
+	mMultipartAllowed = value;
 }
 
 bool BasicChatRoom::canHandleCpim() const {
-	L_D();
 	bool cpimAllowedInBasicChatRooms = false;
 
 	LinphoneCore *lc = getCore()->getCCore();
-	auto addr = conferenceId.getLocalAddress();
+	auto addr = mConferenceId.getLocalAddress();
 	LinphoneAccount *account = linphone_core_lookup_account_by_identity(lc, addr->toC());
 	if (account) {
 		const LinphoneAccountParams *params = linphone_account_get_params(account);
 		cpimAllowedInBasicChatRooms = linphone_account_params_cpim_in_basic_chat_room_enabled(params);
 	}
 
-	return d->cpimAllowed || cpimAllowedInBasicChatRooms;
+	return mCpimAllowed || cpimAllowedInBasicChatRooms;
 }
 
 bool BasicChatRoom::canHandleMultipart() const {
-	L_D();
-	return d->multipartAllowed;
+	return mMultipartAllowed;
 }
 
 BasicChatRoom::CapabilitiesMask BasicChatRoom::getCapabilities() const {
@@ -100,122 +92,47 @@ bool BasicChatRoom::isReadOnly() const {
 	return false;
 }
 
-const std::shared_ptr<Address> &BasicChatRoom::getConferenceAddress() const {
-	lError() << "a BasicChatRoom does not have a conference address";
-	return Utils::getEmptyConstRefObject<std::shared_ptr<Address>>();
-}
-
-bool BasicChatRoom::addParticipant(BCTBX_UNUSED(const std::shared_ptr<ParticipantInfo> &info)) {
-	lError() << "addParticipant() is not allowed on a BasicChatRoom";
-	return false;
-}
-
-bool BasicChatRoom::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
-	lError() << "addParticipant() is not allowed on a BasicChatRoom";
-	return false;
-}
-
-bool BasicChatRoom::addParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) {
-	lError() << "addParticipant() is not allowed on a BasicChatRoom";
-	return false;
-}
-
-bool BasicChatRoom::addParticipants(BCTBX_UNUSED(const list<std::shared_ptr<Address>> &addresses)) {
-	lError() << "addParticipants() is not allowed on a BasicChatRoom";
-	return false;
-}
-
-bool BasicChatRoom::removeParticipant(BCTBX_UNUSED(const shared_ptr<Participant> &participant)) {
-	lError() << "removeParticipant() is not allowed on a BasicChatRoom";
-	return false;
-}
-
-bool BasicChatRoom::removeParticipants(BCTBX_UNUSED(const list<shared_ptr<Participant>> &participant)) {
-	lError() << "removeParticipants() is not allowed on a BasicChatRoom";
-	return false;
-}
-
-shared_ptr<Participant>
-BasicChatRoom::findParticipant(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) const {
-	lError() << "findParticipant() is not allowed on a BasicChatRoom";
-	return nullptr;
-}
-
-shared_ptr<Participant> BasicChatRoom::getMe() const {
-	L_D();
-	return d->me;
-}
-
-int BasicChatRoom::getParticipantCount() const {
-	return 1;
-}
-
-const list<shared_ptr<ParticipantDevice>> BasicChatRoom::getParticipantDevices() const {
-	list<shared_ptr<ParticipantDevice>> devices;
-	for (const auto &p : getParticipants()) {
-		const auto &d = p->getDevices();
-		if (!d.empty()) {
-			devices.insert(devices.begin(), d.begin(), d.end());
-		}
+const std::shared_ptr<ConferenceParams> &BasicChatRoom::getCurrentParams() const {
+	shared_ptr<Call> call = getCall();
+	if (call && call->getCurrentParams()) {
+		mParams->getChatParams()->setRealTimeText(call->getCurrentParams()->realtimeTextEnabled());
 	}
-	return devices;
-}
-
-const list<shared_ptr<Participant>> &BasicChatRoom::getParticipants() const {
-	L_D();
-	return d->participants;
-}
-
-void BasicChatRoom::setParticipantAdminStatus(const shared_ptr<Participant> &, bool) {
-	lError() << "setParticipantAdminStatus() is not allowed on a BasicChatRoom";
-}
-
-const string &BasicChatRoom::getUtf8Subject() const {
-	L_D();
-	d->utf8Subject = Utils::localeToUtf8(getSubject());
-	return d->utf8Subject;
-}
-
-const string &BasicChatRoom::getSubject() const {
-	L_D();
-	return d->subject;
-}
-
-void BasicChatRoom::setSubject(const string &subject) {
-	L_D();
-	d->subject = subject;
-}
-
-void BasicChatRoom::join() {
-	lError() << "join() is not allowed on a BasicChatRoom";
-}
-
-void BasicChatRoom::join(BCTBX_UNUSED(const std::shared_ptr<Address> &participantAddress)) {
-	lError() << "join() is not allowed on a BasicChatRoom";
-}
-
-void BasicChatRoom::leave() {
-	lError() << "leave() is not allowed on a BasicChatRoom";
+	return mParams;
 }
 
 const ConferenceId &BasicChatRoom::getConferenceId() const {
-	return conferenceId;
-}
-
-bool BasicChatRoom::update(const ConferenceParamsInterface &newParameters) {
-	return ChatRoom::update(newParameters);
-}
-
-void BasicChatRoom::setState(ConferenceInterface::State newState) {
-	L_D();
-
-	if (getState() != newState) {
-		state = newState;
-		d->notifyStateChanged();
-	}
+	return mConferenceId;
 }
 
 ConferenceInterface::State BasicChatRoom::getState() const {
-	return state;
+	return mState;
 }
+
+void BasicChatRoom::setState(ConferenceInterface::State newState) {
+	if (getState() != newState) {
+		mState = newState;
+		notifyStateChanged();
+	}
+}
+
+void BasicChatRoom::setSubject(const string &subject) {
+	mParams->setSubject(subject);
+}
+
+void BasicChatRoom::setUtf8Subject(const string &subject) {
+	mParams->setUtf8Subject(subject);
+}
+
+bool BasicChatRoom::isMe(const std::shared_ptr<Address> &address) const {
+	return address->weakEqual(*mMe->getAddress());
+}
+
+const std::shared_ptr<Participant> BasicChatRoom::getMe() const {
+	return mMe;
+}
+
+const std::list<std::shared_ptr<Participant>> BasicChatRoom::getParticipants() const {
+	return mParticipants;
+}
+
 LINPHONE_END_NAMESPACE

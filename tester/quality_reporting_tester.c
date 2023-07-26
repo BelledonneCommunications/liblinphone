@@ -21,6 +21,13 @@
 #include <bctoolbox/defs.h>
 
 #include "liblinphone_tester.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "quality_reporting.h"
 #include "tester_utils.h"

@@ -23,9 +23,9 @@
 #include "conference/db-conference-scheduler.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/participant-info.h"
+#include "conference/server-conference.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
-#include "local_conference.h"
 
 // =============================================================================
 
@@ -44,7 +44,7 @@ void DBConferenceScheduler::createOrUpdateConference(
 			mConferenceInfo->setDateTime(ms_time(NULL));
 		}
 		const auto &conferenceAddress = creator->clone()->toSharedPtr();
-		char confId[LinphonePrivate::MediaConference::LocalConference::confIdLength];
+		char confId[LinphonePrivate::ServerConference::sConfIdLength];
 		belle_sip_random_token(confId, sizeof(confId));
 		conferenceAddress->setUriParam("conf-id", confId);
 		setConferenceAddress(conferenceAddress);

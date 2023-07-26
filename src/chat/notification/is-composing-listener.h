@@ -29,7 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Address;
 
-class IsComposingListener {
+class LINPHONE_PUBLIC IsComposingListener {
 public:
 	virtual ~IsComposingListener() = default;
 

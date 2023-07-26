@@ -30,6 +30,9 @@
 #include "linphone/api/c-account-cbs.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-call-log.h"
+#include "linphone/api/c-conference-info.h"
 #include "linphone/wrapper_utils.h"
 #include "utils/enum.h"
 
@@ -191,9 +194,9 @@ int linphone_account_get_unread_chat_message_count(const LinphoneAccount *accoun
 	return Account::toCpp(account)->getUnreadChatMessageCount();
 }
 
-bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *account) {
+const bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *account) {
 	AccountLogContextualizer logContextualizer(account);
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(Account::toCpp(account)->getChatRooms());
+	return Account::toCpp(account)->getChatRoomsCList();
 }
 
 int linphone_account_get_missed_calls_count(const LinphoneAccount *account) {
@@ -225,7 +228,7 @@ bctbx_list_t *linphone_account_get_call_logs_for_address(const LinphoneAccount *
 	AccountLogContextualizer logContextualizer(account);
 
 	bctbx_list_t *results = NULL;
-	const auto remote = Address::toCpp(const_cast<LinphoneAddress *>(remote_address))->getSharedFromThis();
+	const auto remote = Address::toCpp(remote_address)->getSharedFromThis();
 	std::list list = Account::toCpp(account)->getCallLogsForAddress(remote);
 	if (!list.empty()) {
 		for (auto &log : list) {

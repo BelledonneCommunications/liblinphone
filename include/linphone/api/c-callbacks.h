@@ -814,6 +814,12 @@ typedef void (*LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb)(
     LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Callback used to notify when a notify full state has been received
+ * @param[in] conference #LinphoneConference object @notnil
+ */
+typedef void (*LinphoneConferenceCbsFullStateReceivedCb)(LinphoneConference *conference);
+
+/**
  * Callback used to notify that is this participant device speaking has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
  * @param[in] is_speaking is this participant device speaking

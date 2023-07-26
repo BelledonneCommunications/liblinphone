@@ -36,7 +36,8 @@ ConferenceId::ConferenceId(Address &&pAddress, Address &&lAddress) {
 	localAddress = Address::create(std::move(lAddress));
 }
 
-ConferenceId::ConferenceId(const std::shared_ptr<Address> &pAddress, const std::shared_ptr<const Address> &lAddress) {
+ConferenceId::ConferenceId(const std::shared_ptr<const Address> &pAddress,
+                           const std::shared_ptr<const Address> &lAddress) {
 	setPeerAddress(pAddress);
 	setLocalAddress(lAddress);
 }

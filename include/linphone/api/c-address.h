@@ -221,6 +221,15 @@ LINPHONE_PUBLIC char *linphone_address_as_string(const LinphoneAddress *address)
 LINPHONE_PUBLIC char *linphone_address_as_string_uri_only(const LinphoneAddress *address);
 
 /**
+ * Returns the SIP uri only as a string, that is display name is removed.
+ * This function always returns a string whose URI parameters has a constant order allowing to easily compute hashes for
+ *example. The returned char * must be freed by the application. Use ms_free().
+ * @param address a #LinphoneAddress object. @notnil
+ * @return a string representation of the address. @notnil @tobefreed
+ **/
+LINPHONE_PUBLIC char *linphone_address_as_string_uri_only_ordered(const LinphoneAddress *address);
+
+/**
  * Compare two #LinphoneAddress ignoring tags and headers, basically just domain, username, and port.
  * @param address1 #LinphoneAddress object. @notnil
  * @param address2 #LinphoneAddress object. @notnil

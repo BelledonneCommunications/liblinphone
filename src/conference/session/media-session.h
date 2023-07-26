@@ -40,10 +40,7 @@ class StreamsGroup;
 class NatPolicy;
 class VideoControlInterface;
 
-namespace MediaConference {
 class Conference;
-class RemoteConference;
-} // namespace MediaConference
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class AlertMonitor;
@@ -51,12 +48,11 @@ class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class Conference;
 	friend class Core;
 	friend class IceAgent;
-	friend class ToneManager;
+	friend class ServerConference;
+	friend class ClientConference;
 	friend class Stream;
 	friend class StreamsGroup;
-
-	friend class MediaConference::LocalConference;
-	friend class MediaConference::RemoteConference;
+	friend class ToneManager;
 
 public:
 	ConferenceLayout computeConferenceLayout(const std::shared_ptr<SalMediaDescription> &md) const;

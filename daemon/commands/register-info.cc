@@ -19,8 +19,13 @@
  */
 
 #include "register-info.h"
+
 #include <stdexcept>
 #include <string>
+
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 
 using namespace std;
 

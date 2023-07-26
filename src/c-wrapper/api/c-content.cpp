@@ -23,10 +23,12 @@
 #include "linphone/api/c-content.h"
 
 #include "c-wrapper/c-wrapper.h"
+#include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "content/file-content.h"
 #include "content/file-transfer-content.h"
 #include "content/header/header-param.h"
+#include "private_functions.h"
 
 // =============================================================================
 

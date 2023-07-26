@@ -18,20 +18,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/account_creator.h"
-#include "linphone/core.h"
-#include "linphone/lpconfig.h"
+#include "bctoolbox/crypto.h"
+#include "bctoolbox/regex.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
-
+#include "linphone/account_creator.h"
+#include "linphone/core.h"
+#include "linphone/lpconfig.h"
 #ifdef HAVE_FLEXIAPI
 #include "linphone/flexi-api-client.h"
 #endif
-
-#include "bctoolbox/crypto.h"
-#include "bctoolbox/regex.h"
+#include "linphone/api/c-account-params.h"
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
 #include "linphone/utils/utils.h"
+#include "private_functions.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"

@@ -89,6 +89,10 @@
 #include "commands/video.h"
 #include "daemon.h"
 
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-address.h"
+#include "linphone/api/c-call-log.h"
+
 #include "private.h"
 
 using namespace std;
