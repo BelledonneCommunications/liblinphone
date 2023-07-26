@@ -668,9 +668,9 @@ typedef enum _LinphoneAlertTypes {
 	 */
 	LinphoneAlertQoSVideoStalled,
 	/** A received media stream suffers from high loss or late rate. Information provided is:
-	  - float loss_rate
-	  - float late_rate
-	  - string media_type {audio, video, text}
+	- float loss_rate
+	- float late_rate
+	- string media_type {audio, video, text}
 	 *  @note Use the key "loss_rate_interval" in the section "alerts::network" to set or get the interval at which
 	the problem is checked in a #LinphoneConfig.
 	*/
