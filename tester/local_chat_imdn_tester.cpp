@@ -187,19 +187,29 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 				linphone_chat_room_add_participant(marieCr, bertheAddr.toC());
 				bertheCr = check_creation_chat_room_client_side(coresList, berthe.getCMgr(), &berthe_stat, confAddr,
 				                                                initialSubject, 4, FALSE);
+				// wait until chatroom is deleted from Berthe's standpoint
+				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, berthe, laure}).wait([&berthe] {
+					return berthe.getCore().getChatRooms().size() == 1;
+				}));
 				BC_ASSERT_PTR_NOT_NULL(bertheCr);
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added,
-				                             pauline_stat.number_of_participants_added + 1, 5000));
+				                             pauline_stat.number_of_participants_added + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_added,
-				                             pauline_stat.number_of_participant_devices_added + 1, 5000));
+				                             pauline_stat.number_of_participant_devices_added + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participants_added,
-				                             michelle_stat.number_of_participants_added + 1, 5000));
+				                             michelle_stat.number_of_participants_added + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_added,
-				                             michelle_stat.number_of_participant_devices_added + 1, 5000));
+				                             michelle_stat.number_of_participant_devices_added + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_participants_added,
-				                             michelle2_stat.number_of_participants_added + 1, 5000));
+				                             michelle2_stat.number_of_participants_added + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_participant_devices_added,
-				                             michelle2_stat.number_of_participant_devices_added + 1, 5000));
+				                             michelle2_stat.number_of_participant_devices_added + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, berthe, laure}).wait([&focus] {
 					for (auto chatRoom : focus.getCore().getChatRooms()) {
 						for (auto participant : chatRoom->getParticipants()) {
@@ -234,11 +244,14 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 					return berthe.getCore().getChatRooms().size() == 0;
 				}));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed,
-				                             pauline_stat.number_of_participants_removed + 1, 5000));
+				                             pauline_stat.number_of_participants_removed + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participants_removed,
-				                             michelle_stat.number_of_participants_removed + 1, 5000));
+				                             michelle_stat.number_of_participants_removed + 1,
+				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_participants_removed,
-				                             michelle2_stat.number_of_participants_removed + 1, 5000));
+				                             michelle2_stat.number_of_participants_removed + 1,
+				                             liblinphone_tester_sip_timeout));
 			}
 			marie_stat = marie.getStats();
 			berthe_stat = berthe.getStats();
