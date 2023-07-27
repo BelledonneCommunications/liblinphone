@@ -1755,4 +1755,4 @@ test_t register_tests[] = {
 };
 
 test_suite_t register_test_suite = {"Register", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									sizeof(register_tests) / sizeof(register_tests[0]), register_tests};
+									sizeof(register_tests) / sizeof(register_tests[0]), register_tests, 0};

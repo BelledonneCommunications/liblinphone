@@ -69,5 +69,5 @@ test_t clonable_object_tests[] = {
 
 test_suite_t clonable_object_test_suite = {
 	"ClonableObject", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(clonable_object_tests) / sizeof(clonable_object_tests[0]), clonable_object_tests
+	sizeof(clonable_object_tests) / sizeof(clonable_object_tests[0]), clonable_object_tests, 0
 };

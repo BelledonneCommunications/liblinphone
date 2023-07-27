@@ -605,7 +605,8 @@ test_suite_t vfs_encryption_test_suite = {
 	NULL,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(vfs_encryption_tests) / sizeof(vfs_encryption_tests[0]), vfs_encryption_tests
+	sizeof(vfs_encryption_tests) / sizeof(vfs_encryption_tests[0]), vfs_encryption_tests,
+	0
 };
 
 

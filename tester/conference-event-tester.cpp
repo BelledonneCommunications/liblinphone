@@ -2323,5 +2323,6 @@ test_suite_t conference_event_test_suite = {
 	nullptr,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(conference_event_tests) / sizeof(conference_event_tests[0]), conference_event_tests
+	sizeof(conference_event_tests) / sizeof(conference_event_tests[0]), conference_event_tests,
+	0
 };

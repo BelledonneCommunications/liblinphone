@@ -11153,10 +11153,10 @@ test_t video_conference_tests[] = {
 };
 
 test_suite_t audio_video_conference_basic_test_suite = {"Audio video conference (Basic)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									  sizeof(audio_video_conference_basic_tests) / sizeof(audio_video_conference_basic_tests[0]), audio_video_conference_basic_tests};
+									  sizeof(audio_video_conference_basic_tests) / sizeof(audio_video_conference_basic_tests[0]), audio_video_conference_basic_tests, 0};
 
 test_suite_t audio_conference_test_suite = {"Audio conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									  sizeof(audio_conference_tests) / sizeof(audio_conference_tests[0]), audio_conference_tests};
+									  sizeof(audio_conference_tests) / sizeof(audio_conference_tests[0]), audio_conference_tests, 0};
 
 test_suite_t video_conference_test_suite = {"Video conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									  sizeof(video_conference_tests) / sizeof(video_conference_tests[0]), video_conference_tests};
+									  sizeof(video_conference_tests) / sizeof(video_conference_tests[0]), video_conference_tests, 0};

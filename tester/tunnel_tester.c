@@ -409,4 +409,4 @@ test_t tunnel_tests[] = {
 };
 
 test_suite_t tunnel_test_suite = {"Tunnel", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								  sizeof(tunnel_tests) / sizeof(tunnel_tests[0]), tunnel_tests};
+								  sizeof(tunnel_tests) / sizeof(tunnel_tests[0]), tunnel_tests, 0};

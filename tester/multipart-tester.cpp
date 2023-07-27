@@ -249,5 +249,5 @@ test_t multipart_tests[] = {
 
 test_suite_t multipart_test_suite = {
 	"Multipart", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(multipart_tests) / sizeof(multipart_tests[0]), multipart_tests
+	sizeof(multipart_tests) / sizeof(multipart_tests[0]), multipart_tests, 0
 };

@@ -3049,7 +3049,7 @@ test_t capability_negotiation_tests_no_sdp[] = {
 };
 
 test_suite_t capability_negotiation_test_suite = {"Capability Negotiation (SDP)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(capability_negotiation_tests) / sizeof(capability_negotiation_tests[0]), capability_negotiation_tests};
+								sizeof(capability_negotiation_tests) / sizeof(capability_negotiation_tests[0]), capability_negotiation_tests, 0};
 
 test_suite_t capability_negotiation_no_sdp_test_suite = {"Capability Negotiation (No SDP)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(capability_negotiation_tests_no_sdp) / sizeof(capability_negotiation_tests_no_sdp[0]), capability_negotiation_tests_no_sdp};
+								sizeof(capability_negotiation_tests_no_sdp) / sizeof(capability_negotiation_tests_no_sdp[0]), capability_negotiation_tests_no_sdp, 0};

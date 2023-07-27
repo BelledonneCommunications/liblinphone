@@ -1431,4 +1431,4 @@ test_t multi_call_tests[] = {
 };
 
 test_suite_t multi_call_test_suite = {"Multi call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									  sizeof(multi_call_tests) / sizeof(multi_call_tests[0]), multi_call_tests};
+									  sizeof(multi_call_tests) / sizeof(multi_call_tests[0]), multi_call_tests, 0};

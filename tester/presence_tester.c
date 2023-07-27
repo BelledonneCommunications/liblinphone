@@ -467,4 +467,4 @@ test_t presence_tests[] = {
 };
 
 test_suite_t presence_test_suite = {"Presence", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									sizeof(presence_tests) / sizeof(presence_tests[0]), presence_tests};
+									sizeof(presence_tests) / sizeof(presence_tests[0]), presence_tests, 0};

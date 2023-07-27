@@ -1507,4 +1507,4 @@ test_t call_secure_tests[] = {
 };
 
 test_suite_t call_secure_test_suite = {"Secure Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(call_secure_tests) / sizeof(call_secure_tests[0]), call_secure_tests};
+								sizeof(call_secure_tests) / sizeof(call_secure_tests[0]), call_secure_tests, 0};

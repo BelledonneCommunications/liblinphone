@@ -210,5 +210,6 @@ test_suite_t wrapper_cpp_test_suite = {
 	NULL,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(wrapper_cpp_tests) / sizeof(wrapper_cpp_tests[0]), wrapper_cpp_tests
+	sizeof(wrapper_cpp_tests) / sizeof(wrapper_cpp_tests[0]), wrapper_cpp_tests,
+	0
 };

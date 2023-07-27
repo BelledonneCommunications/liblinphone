@@ -605,5 +605,6 @@ test_suite_t contents_test_suite = {
 	nullptr,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(contents_tests) / sizeof(contents_tests[0]), contents_tests
+	sizeof(contents_tests) / sizeof(contents_tests[0]), contents_tests,
+	0
 };

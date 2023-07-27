@@ -183,4 +183,4 @@ test_t recorder_tests[] = {
 };
 
 test_suite_t recorder_test_suite = {"Recorder", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								  sizeof(recorder_tests) / sizeof(test_t), recorder_tests};
+								  sizeof(recorder_tests) / sizeof(test_t), recorder_tests, 0};

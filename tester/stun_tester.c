@@ -555,4 +555,4 @@ test_t stun_tests[] = {
 };
 
 test_suite_t stun_test_suite = {"Stun", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(stun_tests) / sizeof(stun_tests[0]), stun_tests};
+								sizeof(stun_tests) / sizeof(stun_tests[0]), stun_tests, 0};

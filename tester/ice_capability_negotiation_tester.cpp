@@ -224,13 +224,13 @@ test_t dtls_srtp_ice_capability_negotiation_tests[] = {
 };
 
 test_suite_t ice_capability_negotiation_test_suite = {"ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(ice_capability_negotiation_tests) / sizeof(ice_capability_negotiation_tests[0]), ice_capability_negotiation_tests};
+								sizeof(ice_capability_negotiation_tests) / sizeof(ice_capability_negotiation_tests[0]), ice_capability_negotiation_tests, 0};
 
 test_suite_t srtp_ice_capability_negotiation_test_suite = {"SRTP ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(srtp_ice_capability_negotiation_tests) / sizeof(srtp_ice_capability_negotiation_tests[0]), srtp_ice_capability_negotiation_tests};
+								sizeof(srtp_ice_capability_negotiation_tests) / sizeof(srtp_ice_capability_negotiation_tests[0]), srtp_ice_capability_negotiation_tests, 0};
 
 test_suite_t zrtp_ice_capability_negotiation_test_suite = {"ZRTP ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(zrtp_ice_capability_negotiation_tests) / sizeof(zrtp_ice_capability_negotiation_tests[0]), zrtp_ice_capability_negotiation_tests};
+								sizeof(zrtp_ice_capability_negotiation_tests) / sizeof(zrtp_ice_capability_negotiation_tests[0]), zrtp_ice_capability_negotiation_tests, 0};
 
 test_suite_t dtls_srtp_ice_capability_negotiation_test_suite = {"DTLS SRTP ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(dtls_srtp_ice_capability_negotiation_tests) / sizeof(dtls_srtp_ice_capability_negotiation_tests[0]), dtls_srtp_ice_capability_negotiation_tests};
+								sizeof(dtls_srtp_ice_capability_negotiation_tests) / sizeof(dtls_srtp_ice_capability_negotiation_tests[0]), dtls_srtp_ice_capability_negotiation_tests, 0};

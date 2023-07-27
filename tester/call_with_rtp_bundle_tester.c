@@ -496,6 +496,6 @@ static test_t call_with_rtp_bundle_tests[] = {
 };
 
 test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(call_with_rtp_bundle_tests) / sizeof(call_with_rtp_bundle_tests[0]), call_with_rtp_bundle_tests};
+								sizeof(call_with_rtp_bundle_tests) / sizeof(call_with_rtp_bundle_tests[0]), call_with_rtp_bundle_tests, 0};
 								
 

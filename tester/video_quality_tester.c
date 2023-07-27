@@ -909,6 +909,6 @@ static test_t call_video_quality_tests[] = {
 };
 
 test_suite_t call_video_quality_test_suite = {"Video Call quality", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(call_video_quality_tests) / sizeof(call_video_quality_tests[0]), call_video_quality_tests};
+								sizeof(call_video_quality_tests) / sizeof(call_video_quality_tests[0]), call_video_quality_tests, 0};
 
 #endif // ifdef VIDEO_ENABLED

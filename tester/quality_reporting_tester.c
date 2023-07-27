@@ -521,5 +521,5 @@ test_t quality_reporting_tests[] = {
 test_suite_t quality_reporting_test_suite = {
 	"QualityReporting", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 	sizeof(quality_reporting_tests) / sizeof(quality_reporting_tests[0]),
-	quality_reporting_tests
+	quality_reporting_tests, 0
 };

@@ -4326,7 +4326,8 @@ test_suite_t message_test_suite = {
 	message_tester_after_suite,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(message_tests) / sizeof(message_tests[0]), message_tests
+	sizeof(message_tests) / sizeof(message_tests[0]), message_tests,
+	0
 };
 
 test_suite_t lime_message_test_suite = {
@@ -4335,7 +4336,8 @@ test_suite_t lime_message_test_suite = {
 	message_tester_after_suite,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(lime_message_tests) / sizeof(lime_message_tests[0]), lime_message_tests
+	sizeof(lime_message_tests) / sizeof(lime_message_tests[0]), lime_message_tests,
+	0
 };
 
 test_suite_t rtt_message_test_suite = {
@@ -4344,5 +4346,6 @@ test_suite_t rtt_message_test_suite = {
 	message_tester_after_suite,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(rtt_message_tests) / sizeof(rtt_message_tests[0]), rtt_message_tests
+	sizeof(rtt_message_tests) / sizeof(rtt_message_tests[0]), rtt_message_tests,
+	0
 };

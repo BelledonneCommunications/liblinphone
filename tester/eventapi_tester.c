@@ -691,4 +691,4 @@ test_t event_tests[] = {
 };
 
 test_suite_t event_test_suite = {"Event", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								 sizeof(event_tests) / sizeof(event_tests[0]), event_tests};
+								 sizeof(event_tests) / sizeof(event_tests[0]), event_tests, 0};

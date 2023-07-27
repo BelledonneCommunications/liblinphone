@@ -1603,4 +1603,5 @@ test_suite_t account_creator_xmlrpc_test_suite = {
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
 	sizeof(account_creator_tests) / sizeof(account_creator_tests[0]),
-	account_creator_tests};
+	account_creator_tests,
+	0};

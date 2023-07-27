@@ -210,7 +210,7 @@ test_t video_tests[] = {
 
 test_suite_t video_test_suite = {
 	"Video", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(video_tests) / sizeof(video_tests[0]), video_tests
+	sizeof(video_tests) / sizeof(video_tests[0]), video_tests, 0
 };
 
 #endif // ifdef VIDEO_ENABLED

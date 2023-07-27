@@ -113,5 +113,5 @@ test_t utils_tests[] = {
 
 test_suite_t utils_test_suite = {
 	"Utils", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(utils_tests) / sizeof(utils_tests[0]), utils_tests
+	sizeof(utils_tests) / sizeof(utils_tests[0]), utils_tests, 0
 };

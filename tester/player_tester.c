@@ -161,4 +161,4 @@ test_t player_tests[] = {
 };
 
 test_suite_t player_test_suite = {"Player", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								  sizeof(player_tests) / sizeof(test_t), player_tests};
+								  sizeof(player_tests) / sizeof(test_t), player_tests, 0};

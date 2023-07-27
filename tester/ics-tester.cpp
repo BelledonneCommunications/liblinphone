@@ -474,5 +474,5 @@ static int suite_begin(void) {
 }
 test_suite_t ics_test_suite = {
 	"Ics", suite_begin, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(ics_tests) / sizeof(ics_tests[0]), ics_tests
+	sizeof(ics_tests) / sizeof(ics_tests[0]), ics_tests, 0
 };

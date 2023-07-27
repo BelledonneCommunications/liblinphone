@@ -275,4 +275,4 @@ test_t multicast_call_tests[] = {
 
 test_suite_t multicast_call_test_suite = {"Multicast Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 										  sizeof(multicast_call_tests) / sizeof(multicast_call_tests[0]),
-										  multicast_call_tests};
+										  multicast_call_tests, 0};

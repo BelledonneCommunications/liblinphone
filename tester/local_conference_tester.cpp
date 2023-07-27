@@ -17184,7 +17184,8 @@ test_suite_t local_conference_test_suite_chat = {"Local conference tester (Chat)
 												 liblinphone_tester_after_each,
 												 sizeof(local_conference_chat_tests) /
 													 sizeof(local_conference_chat_tests[0]),
-												 local_conference_chat_tests};
+												 local_conference_chat_tests,
+												 0};
 
 test_suite_t local_conference_test_suite_ephemeral_chat = {"Local conference tester (Ephemeral Chat)",
 														   NULL,
@@ -17193,7 +17194,8 @@ test_suite_t local_conference_test_suite_ephemeral_chat = {"Local conference tes
 														   liblinphone_tester_after_each,
 														   sizeof(local_conference_ephemeral_chat_tests) /
 															   sizeof(local_conference_ephemeral_chat_tests[0]),
-														   local_conference_ephemeral_chat_tests};
+														   local_conference_ephemeral_chat_tests,
+														   0};
 
 test_suite_t local_conference_test_suite_secure_chat = {"Local conference tester (Secure Chat)",
 														NULL,
@@ -17202,7 +17204,8 @@ test_suite_t local_conference_test_suite_secure_chat = {"Local conference tester
 														liblinphone_tester_after_each,
 														sizeof(local_conference_secure_chat_tests) /
 															sizeof(local_conference_secure_chat_tests[0]),
-														local_conference_secure_chat_tests};
+														local_conference_secure_chat_tests,
+														0};
 
 test_suite_t local_conference_test_suite_conference_edition = {"Local conference tester (Conference edition)",
 															   NULL,
@@ -17211,7 +17214,8 @@ test_suite_t local_conference_test_suite_conference_edition = {"Local conference
 															   liblinphone_tester_after_each,
 															   sizeof(local_conference_conference_edition_tests) /
 																   sizeof(local_conference_conference_edition_tests[0]),
-															   local_conference_conference_edition_tests};
+															   local_conference_conference_edition_tests,
+															   0};
 
 test_suite_t local_conference_test_suite_scheduled_conference_basic = {
 	"Local conference tester (Scheduled Conference Basic)",
@@ -17221,7 +17225,8 @@ test_suite_t local_conference_test_suite_scheduled_conference_basic = {
 	liblinphone_tester_after_each,
 	sizeof(local_conference_scheduled_conference_basic_tests) /
 		sizeof(local_conference_scheduled_conference_basic_tests[0]),
-	local_conference_scheduled_conference_basic_tests};
+	local_conference_scheduled_conference_basic_tests,
+	0};
 
 test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
 	"Local conference tester (Scheduled Conference Advanced)",
@@ -17231,7 +17236,8 @@ test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
 	liblinphone_tester_after_each,
 	sizeof(local_conference_scheduled_conference_advanced_tests) /
 		sizeof(local_conference_scheduled_conference_advanced_tests[0]),
-	local_conference_scheduled_conference_advanced_tests};
+	local_conference_scheduled_conference_advanced_tests,
+	0};
 
 test_suite_t local_conference_test_suite_scheduled_ice_conference = {
 	"Local conference tester (Scheduled ICE Conference)",
@@ -17241,7 +17247,8 @@ test_suite_t local_conference_test_suite_scheduled_ice_conference = {
 	liblinphone_tester_after_each,
 	sizeof(local_conference_scheduled_ice_conference_tests) /
 		sizeof(local_conference_scheduled_ice_conference_tests[0]),
-	local_conference_scheduled_ice_conference_tests};
+	local_conference_scheduled_ice_conference_tests,
+	0};
 
 test_suite_t local_conference_test_suite_inpromptu_conference = {
 	"Local conference tester (Inpromptu Conference)",
@@ -17250,7 +17257,8 @@ test_suite_t local_conference_test_suite_inpromptu_conference = {
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
 	sizeof(local_conference_inpromptu_conference_tests) / sizeof(local_conference_inpromptu_conference_tests[0]),
-	local_conference_inpromptu_conference_tests};
+	local_conference_inpromptu_conference_tests,
+	0};
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

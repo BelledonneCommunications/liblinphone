@@ -7718,7 +7718,8 @@ test_suite_t group_chat_test_suite = {
 	NULL,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(group_chat_tests) / sizeof(group_chat_tests[0]), group_chat_tests
+	sizeof(group_chat_tests) / sizeof(group_chat_tests[0]), group_chat_tests,
+	0
 };
 test_suite_t group_chat2_test_suite = {
 	"Group Chat2",
@@ -7726,7 +7727,8 @@ test_suite_t group_chat2_test_suite = {
 	NULL,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(group_chat2_tests) / sizeof(group_chat2_tests[0]), group_chat2_tests
+	sizeof(group_chat2_tests) / sizeof(group_chat2_tests[0]), group_chat2_tests,
+	0
 };
 
 

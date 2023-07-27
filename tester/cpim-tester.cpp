@@ -369,5 +369,6 @@ static int suite_begin(void) {
 }
 test_suite_t cpim_test_suite = {
 	"Cpim", suite_begin, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(cpim_tests) / sizeof(cpim_tests[0]), cpim_tests
+	sizeof(cpim_tests) / sizeof(cpim_tests[0]), cpim_tests,
+	0
 };

@@ -1202,4 +1202,4 @@ test_t proxy_config_tests[] = {
 };
 
 test_suite_t proxy_config_test_suite = {"Proxy config", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-										sizeof(proxy_config_tests) / sizeof(proxy_config_tests[0]), proxy_config_tests};
+										sizeof(proxy_config_tests) / sizeof(proxy_config_tests[0]), proxy_config_tests, 0};

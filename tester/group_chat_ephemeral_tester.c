@@ -694,7 +694,8 @@ test_suite_t ephemeral_group_chat_test_suite = {
 	NULL,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(ephemeral_group_chat_tests) / sizeof(ephemeral_group_chat_tests[0]), ephemeral_group_chat_tests
+	sizeof(ephemeral_group_chat_tests) / sizeof(ephemeral_group_chat_tests[0]), ephemeral_group_chat_tests,
+	0
 };
 
 test_suite_t ephemeral_group_chat_basic_test_suite = {
@@ -703,7 +704,8 @@ test_suite_t ephemeral_group_chat_basic_test_suite = {
 	NULL,
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
-	sizeof(ephemeral_group_chat_basic_tests) / sizeof(ephemeral_group_chat_basic_tests[0]), ephemeral_group_chat_basic_tests
+	sizeof(ephemeral_group_chat_basic_tests) / sizeof(ephemeral_group_chat_basic_tests[0]), ephemeral_group_chat_basic_tests,
+	0
 };
 
 

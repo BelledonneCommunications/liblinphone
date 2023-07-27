@@ -451,9 +451,10 @@ test_suite_t complex_sip_call_test_suite = {
 	after_each,
 #if HAVE_SIPP
 	sizeof(tests) / sizeof(tests[0]),
-	tests
+	tests,
 #else
 	0,
-	NULL
+	NULL,
 #endif
+	0
 };

@@ -256,5 +256,5 @@ test_t push_incoming_call_tests[] = {
 };
 
 test_suite_t push_incoming_call_test_suite = {"Push Incoming Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(push_incoming_call_tests) / sizeof(push_incoming_call_tests[0]), push_incoming_call_tests};
+								sizeof(push_incoming_call_tests) / sizeof(push_incoming_call_tests[0]), push_incoming_call_tests, 0};
 

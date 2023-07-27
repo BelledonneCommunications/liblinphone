@@ -216,4 +216,5 @@ test_suite_t account_test_suite = {
 	"Account", NULL, NULL,
 	liblinphone_tester_before_each, liblinphone_tester_after_each,
 	sizeof(account_tests) / sizeof(account_tests[0]), account_tests
+	,0
 };

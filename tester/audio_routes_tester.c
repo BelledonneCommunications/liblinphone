@@ -2424,4 +2424,4 @@ test_t audio_routes_tests[] = {
 };
 
 test_suite_t audio_routes_test_suite = {"Audio Routes", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(audio_routes_tests) / sizeof(audio_routes_tests[0]), audio_routes_tests};
+								sizeof(audio_routes_tests) / sizeof(audio_routes_tests[0]), audio_routes_tests, 0};

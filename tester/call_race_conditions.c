@@ -227,4 +227,4 @@ static test_t call_race_conditions_tests[] = {
 };
 
 test_suite_t call_race_conditions_suite = {"Call race conditions", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(call_race_conditions_tests) / sizeof(call_race_conditions_tests[0]), call_race_conditions_tests};
+								sizeof(call_race_conditions_tests) / sizeof(call_race_conditions_tests[0]), call_race_conditions_tests, 0};

@@ -171,5 +171,6 @@ test_t conference_tests[] = {
 
 test_suite_t conference_info_tester = {
 	"Conference Info", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(conference_tests) / sizeof(conference_tests[0]), conference_tests
+	sizeof(conference_tests) / sizeof(conference_tests[0]), conference_tests,
+	0
 };
