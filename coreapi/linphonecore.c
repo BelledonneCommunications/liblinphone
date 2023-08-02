@@ -7872,7 +7872,7 @@ void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachab
 	notify_network_reachable_change(lc);
 }
 
-bool_t linphone_core_is_network_reachable(BCTBX_UNUSED(LinphoneCore* lc)) {
+bool_t linphone_core_is_network_reachable(LinphoneCore* lc) {
 	return lc->sip_network_state.global_state;
 }
 
@@ -8221,13 +8221,13 @@ void linphone_core_set_srtp_enabled(LinphoneCore *lc, bool_t enabled) {
 	linphone_config_set_int(lc->config,"sip","srtp",(int)enabled);
 }
 
-void linphone_core_enable_zrtp_go_clear(LinphoneCore *lc, bool_t enabled) {
+void linphone_core_enable_zrtp_go_clear(BCTBX_UNUSED(LinphoneCore *lc), BCTBX_UNUSED(bool_t enabled)) {
 #ifdef HAVE_GOCLEAR
 	linphone_config_set_int(linphone_core_get_config(lc), "sip", "enable_go_clear", (int)enabled);
 #endif // HAVE_GOCLEAR
 }
 
-bool_t linphone_core_zrtp_go_clear_enabled(const LinphoneCore *lc) {
+bool_t linphone_core_zrtp_go_clear_enabled(BCTBX_UNUSED(const LinphoneCore *lc)) {
 #ifdef HAVE_GOCLEAR
 	return linphone_config_get_bool(linphone_core_get_config(lc), "sip", "enable_go_clear", FALSE);
 #else
