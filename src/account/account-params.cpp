@@ -156,7 +156,7 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	setLimeServerUrl(limeServerUrl);
 }
 
-AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc) {
+AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(nullptr) {
 	LpConfig *config = lc->config;
 
 	char key[50];
@@ -256,7 +256,12 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(lc) {
 
 	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
 
-	mLimeServerUrl = linphone_config_get_string(config, key, "lime_server_url", mLimeServerUrl.c_str());
+	setLimeServerUrl(linphone_config_get_string(config, key, "lime_server_url", mLimeServerUrl.c_str()));
+	
+	if (lc && lc->push_config) {
+		mPushNotificationConfig->unref();// Coming from constructor
+		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
+	}
 
 	readCustomParamsFromConfigFile(config, key);
 }
