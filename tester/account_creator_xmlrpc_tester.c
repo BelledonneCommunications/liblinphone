@@ -1349,10 +1349,12 @@ test_t account_creator_tests[] = {
                  "Server"),
 };
 
+
 test_suite_t account_creator_xmlrpc_test_suite = {"Account creator XMLRPC",
                                                   NULL,
                                                   NULL,
                                                   liblinphone_tester_before_each,
                                                   liblinphone_tester_after_each,
                                                   sizeof(account_creator_tests) / sizeof(account_creator_tests[0]),
-                                                  account_creator_tests};
+                                                  account_creator_tests,
+                                                  0};

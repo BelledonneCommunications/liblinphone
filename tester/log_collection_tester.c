@@ -357,4 +357,5 @@ test_suite_t log_collection_test_suite = {"LogCollection",
                                           liblinphone_tester_before_each,
                                           liblinphone_tester_after_each,
                                           sizeof(log_collection_tests) / sizeof(log_collection_tests[0]),
-                                          log_collection_tests};
+                                          log_collection_tests,
+                                          0};

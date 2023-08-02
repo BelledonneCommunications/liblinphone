@@ -408,4 +408,6 @@ test_suite_t account_creator_flexiapi_test_suite = {"Account creator FlexiAPI",
                                                     liblinphone_tester_after_each,
                                                     sizeof(account_creator_flexiapi_tests) /
                                                         sizeof(account_creator_flexiapi_tests[0]),
-                                                    account_creator_flexiapi_tests};
+                                                    account_creator_flexiapi_tests,
+                                                    0};
+

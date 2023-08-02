@@ -5174,7 +5174,8 @@ test_suite_t secure_group_chat_test_suite = {"Secure group chat",
                                              liblinphone_tester_before_each,
                                              liblinphone_tester_after_each,
                                              sizeof(secure_group_chat_tests) / sizeof(secure_group_chat_tests[0]),
-                                             secure_group_chat_tests};
+                                             secure_group_chat_tests,
+                                             0};
 
 test_suite_t secure_group_chat_exhume_test_suite = {"Secure group chat (Exhume)",
                                                     NULL,
@@ -5183,7 +5184,8 @@ test_suite_t secure_group_chat_exhume_test_suite = {"Secure group chat (Exhume)"
                                                     liblinphone_tester_after_each,
                                                     sizeof(secure_group_chat_exhume_tests) /
                                                         sizeof(secure_group_chat_exhume_tests[0]),
-                                                    secure_group_chat_exhume_tests};
+                                                    secure_group_chat_exhume_tests,
+                                                    0};
 
 test_suite_t secure_message_test_suite = {"Secure Message",
                                           NULL,
@@ -5191,7 +5193,8 @@ test_suite_t secure_message_test_suite = {"Secure Message",
                                           liblinphone_tester_before_each,
                                           liblinphone_tester_after_each,
                                           sizeof(secure_message_tests) / sizeof(secure_message_tests[0]),
-                                          secure_message_tests};
+                                          secure_message_tests,
+                                          0};
 
 test_suite_t secure_message2_test_suite = {"Secure Message2",
                                            NULL,
@@ -5199,7 +5202,8 @@ test_suite_t secure_message2_test_suite = {"Secure Message2",
                                            liblinphone_tester_before_each,
                                            liblinphone_tester_after_each,
                                            sizeof(secure_message2_tests) / sizeof(secure_message2_tests[0]),
-                                           secure_message2_tests};
+                                           secure_message2_tests,
+                                           0};
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop
 #endif

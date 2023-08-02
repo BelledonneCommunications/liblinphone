@@ -183,7 +183,6 @@ static void various_api_checks(void) {
 static void displaying_payload_type(void) {
 	// Init from C
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-
 	// Get C++ and start working from it.
 	auto core = linphone::Object::cPtrToSharedPtr<linphone::Core>(marie->lc, TRUE);
 
@@ -212,4 +211,6 @@ test_suite_t wrapper_cpp_test_suite = {"Wrapper Cpp",
                                        liblinphone_tester_before_each,
                                        liblinphone_tester_after_each,
                                        sizeof(wrapper_cpp_tests) / sizeof(wrapper_cpp_tests[0]),
-                                       wrapper_cpp_tests};
+                                       wrapper_cpp_tests,
+                                       0};
+

@@ -556,10 +556,12 @@ test_t quality_reporting_tests[] = {
     TEST_NO_TAG("Sent using custom route", quality_reporting_sent_using_custom_route),
     TEST_NO_TAG("Video bandwidth estimation", video_bandwidth_estimation)};
 
+
 test_suite_t quality_reporting_test_suite = {"QualityReporting",
                                              NULL,
                                              NULL,
                                              liblinphone_tester_before_each,
                                              liblinphone_tester_after_each,
                                              sizeof(quality_reporting_tests) / sizeof(quality_reporting_tests[0]),
-                                             quality_reporting_tests};
+                                             quality_reporting_tests,
+                                             0};

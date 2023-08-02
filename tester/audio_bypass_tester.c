@@ -514,4 +514,5 @@ test_suite_t audio_bypass_suite = {"Audio Bypass",
                                    liblinphone_tester_before_each,
                                    liblinphone_tester_after_each,
                                    sizeof(audio_bypass_tests) / sizeof(audio_bypass_tests[0]),
-                                   audio_bypass_tests};
+                                   audio_bypass_tests,
+                                   0};

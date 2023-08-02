@@ -252,7 +252,8 @@ test_suite_t dtls_srtp_capability_negotiation_test_suite = {"DTLS SRTP Capabilit
                                                             liblinphone_tester_after_each,
                                                             sizeof(dtls_srtp_capability_negotiation_tests) /
                                                                 sizeof(dtls_srtp_capability_negotiation_tests[0]),
-                                                            dtls_srtp_capability_negotiation_tests};
+                                                            dtls_srtp_capability_negotiation_tests,
+                                                            0};
 
 test_suite_t dtls_srtp_capability_negotiation_basic_test_suite = {
     "DTLS SRTP Capability Negotiation (Basic)",
@@ -261,4 +262,5 @@ test_suite_t dtls_srtp_capability_negotiation_basic_test_suite = {
     liblinphone_tester_before_each,
     liblinphone_tester_after_each,
     sizeof(dtls_srtp_capability_negotiation_basic_tests) / sizeof(dtls_srtp_capability_negotiation_basic_tests[0]),
-    dtls_srtp_capability_negotiation_basic_tests};
+    dtls_srtp_capability_negotiation_basic_tests,
+    0};

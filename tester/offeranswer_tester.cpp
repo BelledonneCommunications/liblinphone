@@ -1162,4 +1162,5 @@ test_suite_t offeranswer_test_suite = {"Offer-answer",
                                        liblinphone_tester_before_each,
                                        liblinphone_tester_after_each,
                                        sizeof(offeranswer_tests) / sizeof(offeranswer_tests[0]),
-                                       offeranswer_tests};
+                                       offeranswer_tests,
+                                       0};

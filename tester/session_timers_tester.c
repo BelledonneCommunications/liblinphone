@@ -1076,4 +1076,5 @@ test_suite_t session_timers_test_suite = {"Session Timers",
                                           liblinphone_tester_before_each,
                                           liblinphone_tester_after_each,
                                           sizeof(session_timers_tests) / sizeof(session_timers_tests[0]),
-                                          session_timers_tests};
+                                          session_timers_tests,
+                                          0};

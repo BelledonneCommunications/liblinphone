@@ -224,4 +224,5 @@ test_suite_t player_test_suite = {"Player",
                                   liblinphone_tester_before_each,
                                   liblinphone_tester_after_each,
                                   sizeof(player_tests) / sizeof(test_t),
-                                  player_tests};
+                                  player_tests,
+                                  0};

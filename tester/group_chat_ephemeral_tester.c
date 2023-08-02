@@ -798,7 +798,8 @@ test_suite_t ephemeral_group_chat_test_suite = {"Ephemeral group chat",
                                                 liblinphone_tester_after_each,
                                                 sizeof(ephemeral_group_chat_tests) /
                                                     sizeof(ephemeral_group_chat_tests[0]),
-                                                ephemeral_group_chat_tests};
+                                                ephemeral_group_chat_tests,
+                                                0};
 
 test_suite_t ephemeral_group_chat_basic_test_suite = {"Ephemeral group chat (Basic)",
                                                       NULL,
@@ -807,7 +808,8 @@ test_suite_t ephemeral_group_chat_basic_test_suite = {"Ephemeral group chat (Bas
                                                       liblinphone_tester_after_each,
                                                       sizeof(ephemeral_group_chat_basic_tests) /
                                                           sizeof(ephemeral_group_chat_basic_tests[0]),
-                                                      ephemeral_group_chat_basic_tests};
+                                                      ephemeral_group_chat_basic_tests,
+                                                      0};
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

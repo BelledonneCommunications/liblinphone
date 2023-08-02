@@ -556,7 +556,7 @@ int main(int argc, char *argv[]) {
 
 	test_t setup_tests = TEST_NO_TAG("Group chat benchmark", groupchat_benchmark);
 	test_suite_t test_suite = {"Group Chat Benchmark",        NULL, NULL,        liblinphone_tester_before_each,
-	                           liblinphone_tester_after_each, 1,    &setup_tests};
+	                           liblinphone_tester_after_each, 1,    &setup_tests, 0};
 	bc_tester_add_suite(&test_suite);
 
 	for (i = 1; i < argc; ++i) {

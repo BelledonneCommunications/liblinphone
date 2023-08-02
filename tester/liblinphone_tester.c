@@ -476,128 +476,136 @@ int logfile_arg_func(const char *arg) {
 	return 0;
 }
 
+// Set the specific average time if it was not set by the suite.
+void liblinphone_tester_add_suite_with_default_time(test_suite_t *suite, int average_time) {
+	if(suite->average_time == 0)
+		suite->average_time = average_time;
+	bc_tester_add_suite(suite);
+}
+
 void liblinphone_tester_add_suites(void) {
-	bc_tester_add_suite(&setup_test_suite);
-	bc_tester_add_suite(&register_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&setup_test_suite, 83);
+	liblinphone_tester_add_suite_with_default_time(&register_test_suite, 267);
 #ifdef HAVE_ADVANCED_IM
-	bc_tester_add_suite(&group_chat_test_suite);
-	bc_tester_add_suite(&group_chat2_test_suite);
-	bc_tester_add_suite(&group_chat3_test_suite);
-	bc_tester_add_suite(&group_chat4_test_suite);
-	bc_tester_add_suite(&cpim_test_suite);
-	bc_tester_add_suite(&ics_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&group_chat_test_suite, 230);
+	liblinphone_tester_add_suite_with_default_time(&group_chat2_test_suite, 402);
+	liblinphone_tester_add_suite_with_default_time(&group_chat3_test_suite, 136);
+	liblinphone_tester_add_suite_with_default_time(&group_chat4_test_suite, 250);
+	liblinphone_tester_add_suite_with_default_time(&cpim_test_suite, 3);
+	liblinphone_tester_add_suite_with_default_time(&ics_test_suite, 28);
 #ifdef HAVE_LIME_X3DH
-	bc_tester_add_suite(&secure_group_chat_test_suite);
-	bc_tester_add_suite(&secure_group_chat_exhume_test_suite);
-	bc_tester_add_suite(&secure_message_test_suite);
-	bc_tester_add_suite(&secure_message2_test_suite);
-	bc_tester_add_suite(&lime_server_auth_test_suite);
-	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
-	bc_tester_add_suite(&ephemeral_group_chat_basic_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_test_suite, 332);
+	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_exhume_test_suite, 100);
+	liblinphone_tester_add_suite_with_default_time(&secure_message_test_suite, 352);
+	liblinphone_tester_add_suite_with_default_time(&secure_message2_test_suite, 170);
+	liblinphone_tester_add_suite_with_default_time(&lime_server_auth_test_suite, 125);
+	liblinphone_tester_add_suite_with_default_time(&ephemeral_group_chat_test_suite, 514);
+	liblinphone_tester_add_suite_with_default_time(&ephemeral_group_chat_basic_test_suite, 141);
 #endif
-	bc_tester_add_suite(&local_conference_test_suite_conference_edition);
-	bc_tester_add_suite(&local_conference_test_suite_scheduled_conference_basic);
-	bc_tester_add_suite(&local_conference_test_suite_scheduled_conference_advanced);
-	bc_tester_add_suite(&local_conference_test_suite_scheduled_ice_conference);
-	bc_tester_add_suite(&local_conference_test_suite_inpromptu_conference);
-	bc_tester_add_suite(&local_conference_test_suite_inpromptu_mismatch_conference);
-	bc_tester_add_suite(&local_conference_test_suite_chat);
-	bc_tester_add_suite(&local_conference_test_suite_chat_error);
-	bc_tester_add_suite(&local_conference_test_suite_chat_imdn);
-	bc_tester_add_suite(&local_conference_test_suite_ephemeral_chat);
-	bc_tester_add_suite(&local_conference_test_suite_secure_chat);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_conference_edition, 67);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_basic, 472);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_advanced, 757);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_ice_conference, 371);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_conference, 351);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_mismatch_conference, 198);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat, 448);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_error, 246);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_imdn, 215);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_ephemeral_chat, 201);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_secure_chat, 441);
 #endif
-	bc_tester_add_suite(&tunnel_test_suite);
-	bc_tester_add_suite(&offeranswer_test_suite);
-	bc_tester_add_suite(&call_test_suite);
-	bc_tester_add_suite(&call2_test_suite);
-	bc_tester_add_suite(&call_not_established_test_suite);
-	bc_tester_add_suite(&push_incoming_call_test_suite);
-	bc_tester_add_suite(&call_recovery_test_suite);
-	bc_tester_add_suite(&call_with_ice_test_suite);
-	bc_tester_add_suite(&call_secure_test_suite);
-	bc_tester_add_suite(&capability_negotiation_test_suite);
-	bc_tester_add_suite(&capability_negotiation_parameters_test_suite);
-	bc_tester_add_suite(&capability_negotiation_no_sdp_test_suite);
-	bc_tester_add_suite(&srtp_capability_negotiation_basic_test_suite);
-	bc_tester_add_suite(&srtp_capability_negotiation_test_suite);
-	bc_tester_add_suite(&zrtp_capability_negotiation_basic_test_suite);
-	bc_tester_add_suite(&zrtp_capability_negotiation_test_suite);
-	bc_tester_add_suite(&dtls_srtp_capability_negotiation_basic_test_suite);
-	bc_tester_add_suite(&dtls_srtp_capability_negotiation_test_suite);
-	bc_tester_add_suite(&ice_capability_negotiation_test_suite);
-	bc_tester_add_suite(&srtp_ice_capability_negotiation_test_suite);
-	bc_tester_add_suite(&zrtp_ice_capability_negotiation_test_suite);
-	bc_tester_add_suite(&dtls_srtp_ice_capability_negotiation_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&tunnel_test_suite, 0);
+	liblinphone_tester_add_suite_with_default_time(&offeranswer_test_suite, 185);
+	liblinphone_tester_add_suite_with_default_time(&call_test_suite, 409);
+	liblinphone_tester_add_suite_with_default_time(&call2_test_suite, 244);
+	liblinphone_tester_add_suite_with_default_time(&call_not_established_test_suite, 214);
+	liblinphone_tester_add_suite_with_default_time(&push_incoming_call_test_suite, 40);
+	liblinphone_tester_add_suite_with_default_time(&call_recovery_test_suite, 246);
+	liblinphone_tester_add_suite_with_default_time(&call_with_ice_test_suite, 324);
+	liblinphone_tester_add_suite_with_default_time(&call_secure_test_suite, 324);
+	liblinphone_tester_add_suite_with_default_time(&capability_negotiation_test_suite, 328);
+	liblinphone_tester_add_suite_with_default_time(&capability_negotiation_parameters_test_suite, 236);
+	liblinphone_tester_add_suite_with_default_time(&capability_negotiation_no_sdp_test_suite, 266);
+	liblinphone_tester_add_suite_with_default_time(&srtp_capability_negotiation_basic_test_suite, 363);
+	liblinphone_tester_add_suite_with_default_time(&srtp_capability_negotiation_test_suite, 395);
+	liblinphone_tester_add_suite_with_default_time(&zrtp_capability_negotiation_basic_test_suite, 468);
+	liblinphone_tester_add_suite_with_default_time(&zrtp_capability_negotiation_test_suite, 286);
+	liblinphone_tester_add_suite_with_default_time(&dtls_srtp_capability_negotiation_basic_test_suite, 271);
+	liblinphone_tester_add_suite_with_default_time(&dtls_srtp_capability_negotiation_test_suite, 144);
+	liblinphone_tester_add_suite_with_default_time(&ice_capability_negotiation_test_suite, 10);
+	liblinphone_tester_add_suite_with_default_time(&srtp_ice_capability_negotiation_test_suite, 98);
+	liblinphone_tester_add_suite_with_default_time(&zrtp_ice_capability_negotiation_test_suite, 79);
+	liblinphone_tester_add_suite_with_default_time(&dtls_srtp_ice_capability_negotiation_test_suite, 101);
 #ifdef VIDEO_ENABLED
-	bc_tester_add_suite(&video_test_suite);
-	bc_tester_add_suite(&call_video_test_suite);
-	bc_tester_add_suite(&call_video_msogl_test_suite); // Conditionals are defined in suite
-	bc_tester_add_suite(&call_video_advanced_scenarios_test_suite);
-	bc_tester_add_suite(&call_video_quality_test_suite);
-	bc_tester_add_suite(&alerts_test_suite);
-	bc_tester_add_suite(&call_flexfec_suite);
+	liblinphone_tester_add_suite_with_default_time(&video_test_suite, 19);
+	liblinphone_tester_add_suite_with_default_time(&call_video_test_suite, 478);
+	liblinphone_tester_add_suite_with_default_time(&call_video_msogl_test_suite, 475);// Conditionals are defined in suite
+	liblinphone_tester_add_suite_with_default_time(&call_video_advanced_scenarios_test_suite, 168);
+	liblinphone_tester_add_suite_with_default_time(&call_video_quality_test_suite, 455);
+	liblinphone_tester_add_suite_with_default_time(&alerts_test_suite, 70);
+	liblinphone_tester_add_suite_with_default_time(&call_flexfec_suite, 57);
 #endif // ifdef VIDEO_ENABLED
-	bc_tester_add_suite(&audio_bypass_suite);
-	bc_tester_add_suite(&audio_routes_test_suite);
-	bc_tester_add_suite(&audio_quality_test_suite);
-	bc_tester_add_suite(&audio_video_conference_basic_test_suite);
-	bc_tester_add_suite(&audio_video_conference_basic2_test_suite);
-	bc_tester_add_suite(&audio_conference_test_suite);
-	bc_tester_add_suite(&audio_conference_local_participant_test_suite);
-	bc_tester_add_suite(&audio_conference_remote_participant_test_suite);
-	bc_tester_add_suite(&video_conference_test_suite);
-	bc_tester_add_suite(&video_conference_layout_test_suite);
-	bc_tester_add_suite(&ice_conference_test_suite);
-	bc_tester_add_suite(&multi_call_test_suite);
-	bc_tester_add_suite(&message_test_suite);
-	bc_tester_add_suite(&rtt_message_test_suite);
-	bc_tester_add_suite(&session_timers_test_suite);
-	bc_tester_add_suite(&presence_test_suite);
-	bc_tester_add_suite(&presence_server_test_suite);
-	bc_tester_add_suite(&account_creator_xmlrpc_test_suite);
-	bc_tester_add_suite(&account_creator_local_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&audio_bypass_suite, 11);
+	liblinphone_tester_add_suite_with_default_time(&audio_routes_test_suite, 349);
+	liblinphone_tester_add_suite_with_default_time(&audio_quality_test_suite, 119);
+	liblinphone_tester_add_suite_with_default_time(&audio_video_conference_basic_test_suite, 336);
+	liblinphone_tester_add_suite_with_default_time(&audio_video_conference_basic2_test_suite, 159);
+	liblinphone_tester_add_suite_with_default_time(&audio_conference_test_suite, 283);
+	liblinphone_tester_add_suite_with_default_time(&audio_conference_local_participant_test_suite, 105);
+	liblinphone_tester_add_suite_with_default_time(&audio_conference_remote_participant_test_suite, 126);
+	liblinphone_tester_add_suite_with_default_time(&video_conference_test_suite, 555);
+	liblinphone_tester_add_suite_with_default_time(&video_conference_layout_test_suite, 235);
+	liblinphone_tester_add_suite_with_default_time(&ice_conference_test_suite, 123);
+	liblinphone_tester_add_suite_with_default_time(&multi_call_test_suite, 73);
+	liblinphone_tester_add_suite_with_default_time(&message_test_suite, 521);
+	//liblinphone_tester_add_suite_with_default_time(&lime_message_test_suite, 27);
+	liblinphone_tester_add_suite_with_default_time(&rtt_message_test_suite, 95);
+	liblinphone_tester_add_suite_with_default_time(&session_timers_test_suite, 110);
+	liblinphone_tester_add_suite_with_default_time(&presence_test_suite, 62);
+	liblinphone_tester_add_suite_with_default_time(&presence_server_test_suite, 339);
+	liblinphone_tester_add_suite_with_default_time(&account_creator_xmlrpc_test_suite, 140);
+	liblinphone_tester_add_suite_with_default_time(&account_creator_local_test_suite, 3);
 #ifdef HAVE_FLEXIAPI
-	bc_tester_add_suite(&flexiapiclient_suite);
-	bc_tester_add_suite(&account_creator_flexiapi_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&flexiapiclient_suite, 4);
+	liblinphone_tester_add_suite_with_default_time(&account_creator_flexiapi_test_suite, 20);
 #endif
-	bc_tester_add_suite(&stun_test_suite);
-	bc_tester_add_suite(&event_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&stun_test_suite, 248);
+	liblinphone_tester_add_suite_with_default_time(&event_test_suite, 70);
 #ifdef HAVE_ADVANCED_IM
-	bc_tester_add_suite(&conference_event_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&conference_event_test_suite, 32);
 #endif
-	bc_tester_add_suite(&contents_test_suite);
-	bc_tester_add_suite(&flexisip_test_suite);
-	bc_tester_add_suite(&remote_provisioning_test_suite);
-	bc_tester_add_suite(&quality_reporting_test_suite);
-	bc_tester_add_suite(&log_collection_test_suite);
-	bc_tester_add_suite(&player_test_suite);
-	bc_tester_add_suite(&recorder_test_suite);
-	bc_tester_add_suite(&multipart_test_suite);
-	bc_tester_add_suite(&clonable_object_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&contents_test_suite, 0);
+	liblinphone_tester_add_suite_with_default_time(&flexisip_test_suite, 495);
+	liblinphone_tester_add_suite_with_default_time(&remote_provisioning_test_suite, 11);
+	liblinphone_tester_add_suite_with_default_time(&quality_reporting_test_suite, 47);
+	liblinphone_tester_add_suite_with_default_time(&log_collection_test_suite, 5);
+	liblinphone_tester_add_suite_with_default_time(&player_test_suite, 81);
+	liblinphone_tester_add_suite_with_default_time(&recorder_test_suite, 15);
+	liblinphone_tester_add_suite_with_default_time(&multipart_test_suite, 20);
+	liblinphone_tester_add_suite_with_default_time(&clonable_object_test_suite, 0);
 #ifdef HAVE_DB_STORAGE
-	bc_tester_add_suite(&main_db_test_suite);
-	bc_tester_add_suite(&conference_info_tester);
+	liblinphone_tester_add_suite_with_default_time(&main_db_test_suite, 6);
+	liblinphone_tester_add_suite_with_default_time(&conference_info_tester, 2);
 #endif
-	bc_tester_add_suite(&property_container_test_suite);
-	bc_tester_add_suite(&multicast_call_test_suite);
-	bc_tester_add_suite(&proxy_config_test_suite);
-	bc_tester_add_suite(&account_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&property_container_test_suite, 0);
+	liblinphone_tester_add_suite_with_default_time(&multicast_call_test_suite, 83);
+	liblinphone_tester_add_suite_with_default_time(&proxy_config_test_suite, 20);
+	liblinphone_tester_add_suite_with_default_time(&account_test_suite, 17);
 #if HAVE_SIPP
-	bc_tester_add_suite(&complex_sip_call_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&complex_sip_call_test_suite, 0);
 #endif
 #ifdef VCARD_ENABLED
-	bc_tester_add_suite(&vcard_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&vcard_test_suite, 58);
 #endif
-	bc_tester_add_suite(&utils_test_suite);
-	bc_tester_add_suite(&call_with_rtp_bundle_test_suite);
-	bc_tester_add_suite(&shared_core_test_suite);
-	bc_tester_add_suite(&vfs_encryption_test_suite);
-	bc_tester_add_suite(&external_domain_test_suite);
-	bc_tester_add_suite(&potential_configuration_graph_test_suite);
-	bc_tester_add_suite(&call_race_conditions_suite);
+	liblinphone_tester_add_suite_with_default_time(&utils_test_suite, 0);
+	liblinphone_tester_add_suite_with_default_time(&call_with_rtp_bundle_test_suite, 96);
+	liblinphone_tester_add_suite_with_default_time(&shared_core_test_suite, 22);
+	liblinphone_tester_add_suite_with_default_time(&vfs_encryption_test_suite, 57);
+	liblinphone_tester_add_suite_with_default_time(&external_domain_test_suite, 143);
+	liblinphone_tester_add_suite_with_default_time(&potential_configuration_graph_test_suite, 0);
+	liblinphone_tester_add_suite_with_default_time(&call_race_conditions_suite, 20);
 #ifdef CXX_WRAPPER_ENABLED
-	bc_tester_add_suite(&wrapper_cpp_test_suite);
+	liblinphone_tester_add_suite_with_default_time(&wrapper_cpp_test_suite, 8);
 #endif
 }
 

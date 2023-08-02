@@ -579,4 +579,5 @@ test_suite_t shared_core_test_suite = {"Shared Core",
                                        shared_core_tester_before_each,
                                        liblinphone_tester_after_each,
                                        sizeof(shared_core_tests) / sizeof(shared_core_tests[0]),
-                                       shared_core_tests};
+                                       shared_core_tests,
+                                       0};

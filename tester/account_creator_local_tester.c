@@ -299,4 +299,5 @@ test_suite_t account_creator_local_test_suite = {"Account creator local",
                                                  liblinphone_tester_after_each,
                                                  sizeof(account_creator_local_tests) /
                                                      sizeof(account_creator_local_tests[0]),
-                                                 account_creator_local_tests};
+                                                 account_creator_local_tests,
+                                                 0};

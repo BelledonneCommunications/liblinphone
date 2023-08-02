@@ -9018,7 +9018,8 @@ test_suite_t group_chat_test_suite = {"Group Chat",
                                       liblinphone_tester_before_each,
                                       liblinphone_tester_after_each,
                                       sizeof(group_chat_tests) / sizeof(group_chat_tests[0]),
-                                      group_chat_tests};
+                                      group_chat_tests,
+                                      0};
 
 test_suite_t group_chat2_test_suite = {"Group Chat2",
                                        NULL,
@@ -9026,7 +9027,8 @@ test_suite_t group_chat2_test_suite = {"Group Chat2",
                                        liblinphone_tester_before_each,
                                        liblinphone_tester_after_each,
                                        sizeof(group_chat2_tests) / sizeof(group_chat2_tests[0]),
-                                       group_chat2_tests};
+                                       group_chat2_tests,
+                                       0};
 
 test_suite_t group_chat3_test_suite = {"Group Chat3",
                                        NULL,
@@ -9034,7 +9036,8 @@ test_suite_t group_chat3_test_suite = {"Group Chat3",
                                        liblinphone_tester_before_each,
                                        liblinphone_tester_after_each,
                                        sizeof(group_chat3_tests) / sizeof(group_chat3_tests[0]),
-                                       group_chat3_tests};
+                                       group_chat3_tests,
+                                       0};
 
 test_suite_t group_chat4_test_suite = {"Group Chat4",
                                        NULL,
@@ -9042,7 +9045,8 @@ test_suite_t group_chat4_test_suite = {"Group Chat4",
                                        liblinphone_tester_before_each,
                                        liblinphone_tester_after_each,
                                        sizeof(group_chat4_tests) / sizeof(group_chat4_tests[0]),
-                                       group_chat4_tests};
+                                       group_chat4_tests,
+                                       0};
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

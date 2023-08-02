@@ -241,7 +241,8 @@ constexpr test_suite_t test_suite() {
 	    liblinphone_tester_before_each, // Before each test
 	    liblinphone_tester_after_each,  // After each test
 	    i,                              // test array length
-	    merged                          // test array
+	    merged,                          // test array
+	    26                              // Average execution time of the suite
 	};
 }
 

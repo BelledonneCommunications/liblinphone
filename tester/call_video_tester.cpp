@@ -3176,14 +3176,16 @@ test_suite_t call_video_test_suite = {"Video Call",
                                       liblinphone_tester_before_each,
                                       liblinphone_tester_after_each,
                                       sizeof(call_video_tests) / sizeof(call_video_tests[0]),
-                                      call_video_tests};
+                                      call_video_tests,
+                                      0};
 test_suite_t call_video_msogl_test_suite = {"Video Call MSOGL",
                                             init_msogl_call_suite,
                                             NULL,
                                             liblinphone_tester_before_each,
                                             liblinphone_tester_after_each,
                                             sizeof(call_video_tests) / sizeof(call_video_tests[0]),
-                                            call_video_tests};
+                                            call_video_tests,
+                                            0};
 test_suite_t call_video_advanced_scenarios_test_suite = {"Video Call advanced scenarios",
                                                          NULL,
                                                          NULL,
@@ -3191,5 +3193,7 @@ test_suite_t call_video_advanced_scenarios_test_suite = {"Video Call advanced sc
                                                          liblinphone_tester_after_each,
                                                          sizeof(call_video_advanced_scenarios_tests) /
                                                              sizeof(call_video_advanced_scenarios_tests[0]),
-                                                         call_video_advanced_scenarios_tests};
+                                                         call_video_advanced_scenarios_tests,
+                                                         0};
+
 #endif // ifdef VIDEO_ENABLED

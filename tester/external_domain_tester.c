@@ -440,4 +440,5 @@ test_suite_t external_domain_test_suite = {"External domain",
                                            liblinphone_tester_before_each,
                                            liblinphone_tester_after_each,
                                            sizeof(external_domain_tests) / sizeof(external_domain_tests[0]),
-                                           external_domain_tests};
+                                           external_domain_tests,
+                                           0};

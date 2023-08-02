@@ -1001,4 +1001,5 @@ test_suite_t call_with_ice_test_suite = {"Call with ICE",
                                          liblinphone_tester_before_each,
                                          liblinphone_tester_after_each,
                                          sizeof(call_with_ice_tests) / sizeof(call_with_ice_tests[0]),
-                                         call_with_ice_tests};
+                                         call_with_ice_tests,
+                                         0};

@@ -100,4 +100,5 @@ test_suite_t property_container_test_suite = {"PropertyContainer",
                                               liblinphone_tester_before_each,
                                               liblinphone_tester_after_each,
                                               sizeof(property_container_tests) / sizeof(property_container_tests[0]),
-                                              property_container_tests};
+                                              property_container_tests,
+                                              0};

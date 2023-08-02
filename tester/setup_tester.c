@@ -3579,4 +3579,5 @@ test_suite_t setup_test_suite = {"Setup",
                                  liblinphone_tester_before_each,
                                  liblinphone_tester_after_each,
                                  sizeof(setup_tests) / sizeof(setup_tests[0]),
-                                 setup_tests};
+                                 setup_tests,
+                                 0};

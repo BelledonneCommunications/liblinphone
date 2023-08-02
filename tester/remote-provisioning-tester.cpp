@@ -486,4 +486,5 @@ test_suite_t remote_provisioning_test_suite = {"RemoteProvisioning",
                                                liblinphone_tester_before_each,
                                                liblinphone_tester_after_each,
                                                sizeof(remote_provisioning_tests) / sizeof(remote_provisioning_tests[0]),
-                                               remote_provisioning_tests};
+                                               remote_provisioning_tests,
+                                               0};

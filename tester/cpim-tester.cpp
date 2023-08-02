@@ -365,4 +365,5 @@ test_suite_t cpim_test_suite = {"Cpim",
                                 liblinphone_tester_before_each,
                                 liblinphone_tester_after_each,
                                 sizeof(cpim_tests) / sizeof(cpim_tests[0]),
-                                cpim_tests};
+                                cpim_tests,
+                                0};

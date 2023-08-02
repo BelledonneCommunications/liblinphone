@@ -709,7 +709,8 @@ test_suite_t srtp_capability_negotiation_test_suite = {"SRTP Capability Negotiat
                                                        liblinphone_tester_after_each,
                                                        sizeof(srtp_capability_negotiation_tests) /
                                                            sizeof(srtp_capability_negotiation_tests[0]),
-                                                       srtp_capability_negotiation_tests};
+                                                       srtp_capability_negotiation_tests,
+                                                       0};
 
 test_suite_t srtp_capability_negotiation_basic_test_suite = {"SRTP Capability Negotiation (Basic)",
                                                              NULL,
@@ -718,4 +719,5 @@ test_suite_t srtp_capability_negotiation_basic_test_suite = {"SRTP Capability Ne
                                                              liblinphone_tester_after_each,
                                                              sizeof(srtp_capability_negotiation_basic_tests) /
                                                                  sizeof(srtp_capability_negotiation_basic_tests[0]),
-                                                             srtp_capability_negotiation_basic_tests};
+                                                             srtp_capability_negotiation_basic_tests,
+                                                             0};

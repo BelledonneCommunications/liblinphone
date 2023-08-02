@@ -734,4 +734,5 @@ test_suite_t event_test_suite = {"Event",
                                  liblinphone_tester_before_each,
                                  liblinphone_tester_after_each,
                                  sizeof(event_tests) / sizeof(event_tests[0]),
-                                 event_tests};
+                                 event_tests,
+                                 0};

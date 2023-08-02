@@ -499,4 +499,5 @@ test_suite_t lime_server_auth_test_suite = {"Lime server user authentication",
                                             liblinphone_tester_before_each,
                                             liblinphone_tester_after_each,
                                             sizeof(lime_server_auth_tests) / sizeof(lime_server_auth_tests[0]),
-                                            lime_server_auth_tests};
+                                            lime_server_auth_tests,
+                                            0};

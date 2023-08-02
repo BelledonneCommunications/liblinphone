@@ -2321,4 +2321,5 @@ test_suite_t flexisip_test_suite = {"Flexisip",
                                     liblinphone_tester_before_each,
                                     liblinphone_tester_after_each,
                                     sizeof(flexisip_tests) / sizeof(flexisip_tests[0]),
-                                    flexisip_tests};
+                                    flexisip_tests,
+                                    0};

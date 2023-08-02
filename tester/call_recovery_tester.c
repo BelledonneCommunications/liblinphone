@@ -993,4 +993,5 @@ test_suite_t call_recovery_test_suite = {"Call recovery",
                                          liblinphone_tester_before_each,
                                          liblinphone_tester_after_each,
                                          sizeof(call_recovery_tests) / sizeof(call_recovery_tests[0]),
-                                         call_recovery_tests};
+                                         call_recovery_tests,
+                                         0};

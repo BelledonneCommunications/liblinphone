@@ -2411,4 +2411,5 @@ test_suite_t conference_event_test_suite = {"Conference event",
                                             liblinphone_tester_before_each,
                                             liblinphone_tester_after_each,
                                             sizeof(conference_event_tests) / sizeof(conference_event_tests[0]),
-                                            conference_event_tests};
+                                            conference_event_tests,
+                                            0};

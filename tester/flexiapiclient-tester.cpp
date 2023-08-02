@@ -220,4 +220,5 @@ test_suite_t flexiapiclient_suite = {"FlexiAPI Client",
                                      liblinphone_tester_before_each,
                                      liblinphone_tester_after_each,
                                      sizeof(flexiapiclient_tests) / sizeof(flexiapiclient_tests[0]),
-                                     flexiapiclient_tests};
+                                     flexiapiclient_tests,
+                                     0};

@@ -520,4 +520,6 @@ test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle",
                                                 liblinphone_tester_after_each,
                                                 sizeof(call_with_rtp_bundle_tests) /
                                                     sizeof(call_with_rtp_bundle_tests[0]),
-                                                call_with_rtp_bundle_tests};
+                                                call_with_rtp_bundle_tests,
+                                                0};
+

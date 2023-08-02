@@ -1088,6 +1088,7 @@ test_suite_t vcard_test_suite = {"VCard",
                                  liblinphone_tester_before_each,
                                  liblinphone_tester_after_each,
                                  sizeof(vcard_tests) / sizeof(vcard_tests[0]),
-                                 vcard_tests};
+                                 vcard_tests,
+                                 0};
 
 #endif

@@ -2419,4 +2419,5 @@ test_suite_t potential_configuration_graph_test_suite = {"Potential configuratio
                                                          liblinphone_tester_after_each,
                                                          sizeof(potential_configuration_graph_tests) /
                                                              sizeof(potential_configuration_graph_tests[0]),
-                                                         potential_configuration_graph_tests};
+                                                         potential_configuration_graph_tests,
+                                                         0};

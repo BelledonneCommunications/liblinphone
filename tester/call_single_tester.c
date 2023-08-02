@@ -7423,7 +7423,8 @@ test_suite_t call_test_suite = {"Single Call",
                                 liblinphone_tester_before_each,
                                 liblinphone_tester_after_each,
                                 sizeof(call_tests) / sizeof(call_tests[0]),
-                                call_tests};
+                                call_tests,
+                                0};
 
 test_suite_t call2_test_suite = {"Single Call2",
                                 NULL,
@@ -7431,7 +7432,8 @@ test_suite_t call2_test_suite = {"Single Call2",
                                 liblinphone_tester_before_each,
                                 liblinphone_tester_after_each,
                                 sizeof(call2_tests) / sizeof(call2_tests[0]),
-                                call2_tests};
+                                call2_tests,
+                                0};
 
 test_suite_t call_not_established_test_suite = {"Single Call (Not established)",
                                                 NULL,
@@ -7440,4 +7442,6 @@ test_suite_t call_not_established_test_suite = {"Single Call (Not established)",
                                                 liblinphone_tester_after_each,
                                                 sizeof(call_not_established_tests) /
                                                     sizeof(call_not_established_tests[0]),
-                                                call_not_established_tests};
+                                                call_not_established_tests,
+                                                0};
+

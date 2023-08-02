@@ -356,7 +356,8 @@ test_suite_t zrtp_capability_negotiation_test_suite = {"ZRTP Capability Negotiat
                                                        liblinphone_tester_after_each,
                                                        sizeof(zrtp_capability_negotiation_tests) /
                                                            sizeof(zrtp_capability_negotiation_tests[0]),
-                                                       zrtp_capability_negotiation_tests};
+                                                       zrtp_capability_negotiation_tests,
+                                                       0};
 
 test_suite_t zrtp_capability_negotiation_basic_test_suite = {"ZRTP Capability Negotiation (Basic)",
                                                              NULL,
@@ -365,4 +366,5 @@ test_suite_t zrtp_capability_negotiation_basic_test_suite = {"ZRTP Capability Ne
                                                              liblinphone_tester_after_each,
                                                              sizeof(zrtp_capability_negotiation_basic_tests) /
                                                                  sizeof(zrtp_capability_negotiation_basic_tests[0]),
-                                                             zrtp_capability_negotiation_basic_tests};
+                                                             zrtp_capability_negotiation_basic_tests,
+                                                             0};

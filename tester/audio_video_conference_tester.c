@@ -12252,7 +12252,8 @@ test_suite_t audio_video_conference_basic_test_suite = {"Audio video conference 
                                                         liblinphone_tester_after_each,
                                                         sizeof(audio_video_conference_basic_tests) /
                                                             sizeof(audio_video_conference_basic_tests[0]),
-                                                        audio_video_conference_basic_tests};
+                                                        audio_video_conference_basic_tests,
+                                                        0};
 
 test_suite_t audio_video_conference_basic2_test_suite = {"Audio video conference 2 (Basic)",
                                                          NULL,
@@ -12261,7 +12262,8 @@ test_suite_t audio_video_conference_basic2_test_suite = {"Audio video conference
                                                          liblinphone_tester_after_each,
                                                          sizeof(audio_video_conference_basic2_tests) /
                                                              sizeof(audio_video_conference_basic2_tests[0]),
-                                                         audio_video_conference_basic2_tests};
+                                                         audio_video_conference_basic2_tests,
+                                                         0};
 
 test_suite_t audio_conference_test_suite = {"Audio conference",
                                             NULL,
@@ -12269,7 +12271,8 @@ test_suite_t audio_conference_test_suite = {"Audio conference",
                                             liblinphone_tester_before_each,
                                             liblinphone_tester_after_each,
                                             sizeof(audio_conference_tests) / sizeof(audio_conference_tests[0]),
-                                            audio_conference_tests};
+                                            audio_conference_tests,
+                                            0};
 
 test_suite_t audio_conference_local_participant_test_suite = {"Audio conference (Local participant)",
                                                               NULL,
@@ -12278,7 +12281,8 @@ test_suite_t audio_conference_local_participant_test_suite = {"Audio conference 
                                                               liblinphone_tester_after_each,
                                                               sizeof(audio_conference_local_participant_tests) /
                                                                   sizeof(audio_conference_local_participant_tests[0]),
-                                                              audio_conference_local_participant_tests};
+                                                              audio_conference_local_participant_tests,
+                                                              0};
 
 test_suite_t audio_conference_remote_participant_test_suite = {"Audio conference (Remote participant)",
                                                                NULL,
@@ -12287,7 +12291,8 @@ test_suite_t audio_conference_remote_participant_test_suite = {"Audio conference
                                                                liblinphone_tester_after_each,
                                                                sizeof(audio_conference_remote_participant_tests) /
                                                                    sizeof(audio_conference_remote_participant_tests[0]),
-                                                               audio_conference_remote_participant_tests};
+                                                               audio_conference_remote_participant_tests,
+                                                               0};
 
 test_suite_t video_conference_test_suite = {"Video conference",
                                             NULL,
@@ -12295,7 +12300,8 @@ test_suite_t video_conference_test_suite = {"Video conference",
                                             liblinphone_tester_before_each,
                                             liblinphone_tester_after_each,
                                             sizeof(video_conference_tests) / sizeof(video_conference_tests[0]),
-                                            video_conference_tests};
+                                            video_conference_tests,
+                                            0};
 
 test_suite_t video_conference_layout_test_suite = {"Video conference (Layout)",
                                                    NULL,
@@ -12304,7 +12310,8 @@ test_suite_t video_conference_layout_test_suite = {"Video conference (Layout)",
                                                    liblinphone_tester_after_each,
                                                    sizeof(video_conference_layout_tests) /
                                                        sizeof(video_conference_layout_tests[0]),
-                                                   video_conference_layout_tests};
+                                                   video_conference_layout_tests,
+                                                   0};
 
 test_suite_t ice_conference_test_suite = {"ICE conference",
                                           NULL,
@@ -12312,4 +12319,5 @@ test_suite_t ice_conference_test_suite = {"ICE conference",
                                           liblinphone_tester_before_each,
                                           liblinphone_tester_after_each,
                                           sizeof(ice_conference_tests) / sizeof(ice_conference_tests[0]),
-                                          ice_conference_tests};
+                                          ice_conference_tests,
+                                          0};

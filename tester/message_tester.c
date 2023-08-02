@@ -4090,7 +4090,8 @@ test_suite_t message_test_suite = {"Message",
                                    liblinphone_tester_before_each,
                                    liblinphone_tester_after_each,
                                    sizeof(message_tests) / sizeof(message_tests[0]),
-                                   message_tests};
+                                   message_tests,
+                                   0};
 
 test_suite_t rtt_message_test_suite = {"RTT Message",
                                        message_tester_before_suite,
@@ -4098,4 +4099,6 @@ test_suite_t rtt_message_test_suite = {"RTT Message",
                                        liblinphone_tester_before_each,
                                        liblinphone_tester_after_each,
                                        sizeof(rtt_message_tests) / sizeof(rtt_message_tests[0]),
-                                       rtt_message_tests};
+                                       rtt_message_tests,
+                                       0};
+
