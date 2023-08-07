@@ -161,7 +161,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			}
 
 			const auto ics_participant_number = 3;
-			const bctbx_list_t *ics_participants = linphone_conference_info_get_participants(conf_info);
+			const bctbx_list_t *ics_participants = linphone_conference_info_get_participant_infos(conf_info);
 			BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), ics_participant_number, size_t, "%zu");
 
 			std::list<stats> participant_stats;
@@ -261,7 +261,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 								    confAddr, linphone_conference_info_get_uri(conf_info_from_original_content)));
 
 								const bctbx_list_t *ics_participants =
-								    linphone_conference_info_get_participants(conf_info_from_original_content);
+								    linphone_conference_info_get_participant_infos(conf_info_from_original_content);
 								BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), ics_participant_number, size_t,
 								                "%zu");
 
@@ -594,7 +594,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 				}
 
 				const auto ics_participant_number = ((add) ? 4 : 3) + ((join) ? 1 : 0);
-				const bctbx_list_t *ics_participants = linphone_conference_info_get_participants(conf_info);
+				const bctbx_list_t *ics_participants = linphone_conference_info_get_participant_infos(conf_info);
 				BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), ics_participant_number, size_t, "%zu");
 
 				std::list<stats> participant_stats;
@@ -716,7 +716,8 @@ static void edit_simple_conference_base(bool_t from_organizer,
 										    linphone_conference_info_get_uri(conf_info_from_original_content)));
 
 										const bctbx_list_t *ics_participants =
-										    linphone_conference_info_get_participants(conf_info_from_original_content);
+										    linphone_conference_info_get_participant_infos(
+										        conf_info_from_original_content);
 										BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), ics_participant_number,
 										                size_t, "%zu");
 
@@ -1031,7 +1032,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 		linphone_conference_info_add_participant(conf_info, michelle.getCMgr()->identity);
 		linphone_conference_info_remove_participant(conf_info, laure.getCMgr()->identity);
 
-		const bctbx_list_t *ics_participants = linphone_conference_info_get_participants(conf_info);
+		const bctbx_list_t *ics_participants = linphone_conference_info_get_participant_infos(conf_info);
 		BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), participants.size(), size_t, "%zu");
 
 		std::list<stats> participant_stats;
@@ -1129,7 +1130,7 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 							    confAddr, linphone_conference_info_get_uri(conf_info_from_original_content)));
 
 							const bctbx_list_t *ics_participants =
-							    linphone_conference_info_get_participants(conf_info_from_original_content);
+							    linphone_conference_info_get_participant_infos(conf_info_from_original_content);
 							BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), participants.size(), size_t, "%zu");
 
 							if (start_time > 0) {
@@ -1398,7 +1399,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 							    confAddr, linphone_conference_info_get_uri(conf_info_from_original_content)));
 
 							const bctbx_list_t *ics_participants =
-							    linphone_conference_info_get_participants(conf_info_from_original_content);
+							    linphone_conference_info_get_participant_infos(conf_info_from_original_content);
 							BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 3, size_t, "%zu");
 
 							if (start_time > 0) {
@@ -1493,7 +1494,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 		linphone_conference_info_set_subject(conf_info, subject);
 		linphone_conference_info_set_description(conf_info, description2);
 
-		const bctbx_list_t *ics_participants = linphone_conference_info_get_participants(conf_info);
+		const bctbx_list_t *ics_participants = linphone_conference_info_get_participant_infos(conf_info);
 		BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 3, size_t, "%zu");
 
 		conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
@@ -1594,7 +1595,7 @@ static void conference_cancelled_through_edit_base(bool_t server_restart) {
 							    confAddr, linphone_conference_info_get_uri(conf_info_from_original_content)));
 
 							const bctbx_list_t *ics_participants =
-							    linphone_conference_info_get_participants(conf_info_from_original_content);
+							    linphone_conference_info_get_participant_infos(conf_info_from_original_content);
 							BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 0, size_t, "%zu");
 
 							if (start_time > 0) {

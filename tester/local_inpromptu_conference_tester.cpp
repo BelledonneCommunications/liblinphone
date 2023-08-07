@@ -259,7 +259,7 @@ static void create_conference_dial_out_base(bool_t send_ics,
 						BC_ASSERT_TRUE(
 						    linphone_address_weak_equal(linphone_conference_info_get_uri(call_log_info), confAddr));
 						const bctbx_list_t *info_participants =
-						    linphone_conference_info_get_participants(call_log_info);
+						    linphone_conference_info_get_participant_infos(call_log_info);
 						// Original participants + Marie who joined the conference
 						BC_ASSERT_EQUAL(bctbx_list_size(info_participants), participant_conference_info_participants,
 						                size_t, "%zu");
@@ -437,7 +437,7 @@ static void create_conference_dial_out_base(bool_t send_ics,
 								    linphone_conference_info_get_uri(call_log_info), confAddr));
 
 								const bctbx_list_t *info_participants =
-								    linphone_conference_info_get_participants(call_log_info);
+								    linphone_conference_info_get_participant_infos(call_log_info);
 								// Original participants + Marie who joined the conference
 								BC_ASSERT_EQUAL(bctbx_list_size(info_participants),
 								                participant_conference_info_participants, size_t, "%zu");
@@ -1133,7 +1133,8 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base(Linp
 					BC_ASSERT_TRUE(
 					    linphone_address_weak_equal(linphone_conference_info_get_uri(call_log_info), confAddr));
 
-					const bctbx_list_t *info_participants = linphone_conference_info_get_participants(call_log_info);
+					const bctbx_list_t *info_participants =
+					    linphone_conference_info_get_participant_infos(call_log_info);
 					// Original participants + Marie who joined the conference
 					BC_ASSERT_EQUAL(bctbx_list_size(info_participants), 5, size_t, "%zu");
 

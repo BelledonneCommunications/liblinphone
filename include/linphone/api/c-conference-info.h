@@ -85,7 +85,7 @@ linphone_conference_info_get_participants(const LinphoneConferenceInfo *conferen
 /**
  * Retrieve the list of participants as list of participant infos.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
- * @return The list of participants. \bctbx_list{LinphoneParticipantInfo} @maybenil
+ * @return The list of participant informations. \bctbx_list{LinphoneParticipantInfo} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t *
 linphone_conference_info_get_participant_infos(const LinphoneConferenceInfo *conference_info);
@@ -103,8 +103,8 @@ LINPHONE_PUBLIC void linphone_conference_info_set_participants(LinphoneConferenc
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @param participant_infos The list of participant informations to set. \bctbx_list{LinphoneParticipantInfo} @maybenil
  */
-LINPHONE_PUBLIC void linphone_conference_info_set_participants_2(LinphoneConferenceInfo *conference_info,
-                                                                 const bctbx_list_t *participant_infos);
+LINPHONE_PUBLIC void linphone_conference_info_set_participant_infos(LinphoneConferenceInfo *conference_info,
+                                                                    const bctbx_list_t *participant_infos);
 
 /**
  * Add a participant to the conference.

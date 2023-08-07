@@ -364,7 +364,7 @@ static void send_conference_invitations(bool_t enable_encryption,
 			BC_ASSERT_TRUE(linphone_address_weak_equal(
 			    conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
 			const bctbx_list_t *participants =
-			    linphone_conference_info_get_participants(conf_info_from_original_content);
+			    linphone_conference_info_get_participant_infos(conf_info_from_original_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
@@ -417,7 +417,7 @@ static void send_conference_invitations(bool_t enable_encryption,
 			                                           linphone_conference_info_get_organizer(conf_info_from_content)));
 			BC_ASSERT_TRUE(
 			    linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_content)));
-			const bctbx_list_t *participants = linphone_conference_info_get_participants(conf_info_from_content);
+			const bctbx_list_t *participants = linphone_conference_info_get_participant_infos(conf_info_from_content);
 			if (add_participant_in_error) {
 				BC_ASSERT_EQUAL(bctbx_list_size(participants), 3, size_t, "%zu");
 			} else {
