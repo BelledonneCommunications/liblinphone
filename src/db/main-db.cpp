@@ -2034,7 +2034,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::getConferenceInfoFromCache(long long s
 	if (it == storageIdToConferenceInfo.cend()) return nullptr;
 
 	shared_ptr<ConferenceInfo> conferenceInfo = it->second.lock();
-	return conferenceInfo;
+	return conferenceInfo ? conferenceInfo->clone()->toSharedPtr() : nullptr;
 #else
 	return nullptr;
 #endif

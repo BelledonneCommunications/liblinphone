@@ -254,7 +254,9 @@ CorePrivate::searchChatRoom(const shared_ptr<ChatRoomParams> &params,
 
 			if (params->isEncrypted() != bool(capabilities & ChatRoom::Capabilities::Encrypted)) continue;
 
-			if (!params->getSubject().empty() && params->getSubject() != chatRoom->getSubject()) continue;
+			// Subject doesn't make any sense for basic chat room
+			if ((params->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat) && (!params->getSubject().empty() && params->getSubject() != chatRoom->getSubject()))
+				continue;
 		}
 
 		if (localAddress && localAddress->isValid() && (!localAddress->weakEqual(*curLocalAddress))) continue;

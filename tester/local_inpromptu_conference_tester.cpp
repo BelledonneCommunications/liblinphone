@@ -217,7 +217,7 @@ static void create_conference_dial_out_base(bool_t send_ics,
 		if (confAddr) {
 			for (auto mgr : participants) {
 				// Encryption is None because we haven't received yet the NOTIFY full stae with this information
-				check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject,
+				check_conference_info(mgr, confAddr, marie.getCMgr(), (send_ics) ? 4 : 5, 0, 0, initialSubject,
 				                      (accept && send_ics) ? description : NULL, 0, LinphoneConferenceInfoStateNew,
 				                      LinphoneConferenceSecurityLevelNone);
 
