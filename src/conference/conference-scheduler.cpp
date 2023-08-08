@@ -522,15 +522,22 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 
 	// Sending the ICS once for each participant in a separated chat room each time.
 	for (auto participant : mInvitationsToSend) {
+		list<IdentityAddress> chatRoomParticipantList;
+		chatRoomParticipantList.push_back(participant);
 		list<IdentityAddress> participantList;
-		participantList.push_back(participant);
+		IdentityAddress remoteAddress = IdentityAddress();
+		if (chatRoomParams->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat) {
+			participantList.push_back(participant);
+		} else {
+			remoteAddress = participant;
+		}
 		shared_ptr<AbstractChatRoom> chatRoom =
-			getCore()->getPrivate()->searchChatRoom(chatRoomParams, sender, IdentityAddress(), participantList);
+			getCore()->getPrivate()->searchChatRoom(chatRoomParams, sender, remoteAddress, participantList);
 
 		if (!chatRoom) {
 			lInfo() << "[Conference Scheduler] [" << this << "] Existing chat room between [" << sender << "] and ["
 					<< participant << "] wasn't found, creating it.";
-			chatRoom = getCore()->getPrivate()->createChatRoom(chatRoomParams, sender, participantList);
+			chatRoom = getCore()->getPrivate()->createChatRoom(chatRoomParams, sender, chatRoomParticipantList);
 		} else {
 			lInfo() << "[Conference Scheduler] [" << this << "] Found existing chat room ["
 					<< chatRoom->getPeerAddress() << "] between [" << sender << "] and [" << participant

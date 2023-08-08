@@ -219,7 +219,10 @@ void ConferenceInfo::setState (const ConferenceInfo::State &state) {
 }
 
 void ConferenceInfo::updateFrom (const std::shared_ptr<ConferenceInfo> & info) {
-	setUri(info->getUri());
+	const auto &otherUri = info->getUri();
+	if (otherUri.isValid()) {
+		setUri(otherUri);
+	}
 	setIcsUid(info->getIcsUid());
 	setIcsSequence(info->getIcsSequence() + 1);
 

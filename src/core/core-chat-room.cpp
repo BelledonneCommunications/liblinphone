@@ -271,7 +271,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatR
 			if (params->isEncrypted() != bool(capabilities & ChatRoom::Capabilities::Encrypted))
 				continue;
 
-			if (!params->getSubject().empty() && params->getSubject() != chatRoom->getSubject())
+			// Subject doesn't make any sense for basic chat room
+			if ((params->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat) && (!params->getSubject().empty() && params->getSubject() != chatRoom->getSubject()))
 				continue;
 		}
 
