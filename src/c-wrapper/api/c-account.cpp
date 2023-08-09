@@ -188,7 +188,7 @@ bool_t linphone_account_is_phone_number(BCTBX_UNUSED(const LinphoneAccount *acco
 	const char *p;
 	char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
 	for (p = unescaped_username; *p != '\0'; ++p) {
-		if (isdigit(*p) || *p == ' ' || *p == '.' || *p == '-' || *p == ')' || *p == '(' || *p == '/' || *p == '+' ||
+		if (isdigit((unsigned char)*p) || *p == ' ' || *p == '.' || *p == '-' || *p == ')' || *p == '(' || *p == '/' || *p == '+' ||
 		    // non-breakable space (iOS uses it to format contacts phone number)
 		    (unsigned char)*p == 0xca || (unsigned char)*p == 0xc2 || (unsigned char)*p == 0xa0) {
 			continue;
