@@ -160,6 +160,7 @@ private:
 	void completeLog ();
 	void createOpTo (const LinphoneAddress *to);
 	void executePendingActions();
+	void refreshContactAddress();
 
 	LinphoneAddress * getFixedContact () const;
 

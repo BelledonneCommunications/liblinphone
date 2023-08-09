@@ -867,29 +867,12 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 				newSubject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::MediaChange);
 		}
 	}
-	char * contactAddressStr = NULL;
-	if (destProxy) {
-		if (linphone_proxy_config_get_op(destProxy)) {
-			/* Give a chance to update the contact address if connectivity has changed */
-			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
 
-		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore()) && linphone_proxy_config_get_contact(destProxy)) {
-			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(destProxy));
-		}
-	} else {
-		op->setContactAddress(nullptr);
-	}
-	
+	/* Give a chance to update the contact address if connectivity has changed */
+	refreshContactAddress();
+
 	// Update custom headers
 	op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
-
-	if (contactAddressStr) {
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
-		q->updateContactAddress(contactAddress);
-		op->setContactAddress(contactAddress.getInternalAddress());
-	} else
-		op->setContactAddress(nullptr);
 
 	bool noUserConsent = q->getParams()->getPrivate()->getNoUserConsent();
 	if (method != CallSession::UpdateMethod::Default) {
@@ -1097,6 +1080,32 @@ void CallSessionPrivate::repairByInviteWithReplaces () {
 	q->startInvite(nullptr, subject, &content); // Don't forget to set subject from call-session (and not from OP)
 }
 
+void CallSessionPrivate::refreshContactAddress() {
+	L_Q();
+	char * contactAddressStr = nullptr;
+	if (destProxy) {
+		if (linphone_proxy_config_get_op(destProxy)) {
+			/* Give a chance to update the contact address if connectivity has changed */
+			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
+
+		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore()) && linphone_proxy_config_get_contact(destProxy)) {
+			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(destProxy));
+		}
+	} else {
+		op->setContactAddress(nullptr);
+	}
+
+	if (contactAddressStr) {
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		q->updateContactAddress(contactAddress);
+		op->setContactAddress(contactAddress.getInternalAddress());
+	} else {
+		op->setContactAddress(nullptr);
+	}
+
+}
+
 void CallSessionPrivate::repairIfBroken () {
 	L_Q();
 
@@ -1111,7 +1120,6 @@ void CallSessionPrivate::repairIfBroken () {
 
 	// If we are registered and this session has been broken due to a past network disconnection,
 	// attempt to repair it
-
 	// Make sure that the proxy from which we received this call, or to which we routed this call is registered first
 	if (destProxy) {
 		// In all other cases, ie no proxy config, or a proxy config for which no registration was requested,
@@ -1120,6 +1128,9 @@ void CallSessionPrivate::repairIfBroken () {
 			&& (linphone_proxy_config_get_state(destProxy) != LinphoneRegistrationOk))
 			return;
 	}
+
+	/* Give a chance to update the contact address if connectivity has changed */
+	refreshContactAddress();
 
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
