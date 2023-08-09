@@ -885,9 +885,10 @@ LinphoneStatus CallSessionPrivate::startUpdate(const CallSession::UpdateMethod m
 		}
 	}
 
+	/* Give a chance to update the contact address if connectivity has changed */
+	refreshContactAddress();
 	// Update custom headers
 	op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
-
 	q->updateContactAddressInOp();
 
 	bool noUserConsent = q->getParams()->getPrivate()->getNoUserConsent();
@@ -1108,6 +1109,32 @@ void CallSessionPrivate::repairByInviteWithReplaces() {
 	q->startInvite(nullptr, subject, &content);   // Don't forget to set subject from call-session (and not from OP)
 }
 
+void CallSessionPrivate::refreshContactAddress() {
+	L_Q();
+	Address contactAddress;
+	const auto &account = getDestAccount();
+	if (account) {
+		const auto &accountOp = account->getOp();
+		const auto &accountContactAddress = account->getContactAddress();
+		if (accountOp) {
+			/* Give a chance to update the contact address if connectivity has changed */
+			contactAddress.setImpl(accountOp->getContactAddress());
+		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore()) && accountContactAddress) {
+			contactAddress = Address(*accountContactAddress);
+		}
+
+		if (contactAddress.isValid()) {
+			q->updateContactAddress(contactAddress);
+		}
+	}
+
+	if (contactAddress.isValid()) {
+		op->setContactAddress(contactAddress.getImpl());
+	} else {
+		op->setContactAddress(nullptr);
+	}
+}
+
 void CallSessionPrivate::repairIfBroken() {
 	L_Q();
 
@@ -1123,7 +1150,6 @@ void CallSessionPrivate::repairIfBroken() {
 
 	// If we are registered and this session has been broken due to a past network disconnection,
 	// attempt to repair it
-
 	// Make sure that the proxy from which we received this call, or to which we routed this call is registered first
 	const auto &account = getDestAccount();
 	if (account) {
@@ -1132,6 +1158,9 @@ void CallSessionPrivate::repairIfBroken() {
 		const auto accountParams = account->getAccountParams();
 		if (accountParams->getRegisterEnabled() && (account->getState() != LinphoneRegistrationOk)) return;
 	}
+
+	/* Give a chance to update the contact address if connectivity has changed */
+	refreshContactAddress();
 
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));

@@ -181,6 +181,7 @@ private:
 	void completeLog();
 	void createOpTo(const std::shared_ptr<Address> &to);
 	void executePendingActions();
+	void refreshContactAddress();
 
 	std::shared_ptr<Address> getFixedContact() const;
 
