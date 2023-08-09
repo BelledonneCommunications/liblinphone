@@ -384,4 +384,5 @@ test_suite_t local_conference_test_suite_secure_chat = {"Local conference tester
                                                         liblinphone_tester_after_each,
                                                         sizeof(local_conference_secure_chat_tests) /
                                                             sizeof(local_conference_secure_chat_tests[0]),
-                                                        local_conference_secure_chat_tests};
+                                                        local_conference_secure_chat_tests,
+                                                        0};

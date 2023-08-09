@@ -1719,4 +1719,5 @@ test_suite_t local_conference_test_suite_conference_edition = {"Local conference
                                                                liblinphone_tester_after_each,
                                                                sizeof(local_conference_conference_edition_tests) /
                                                                    sizeof(local_conference_conference_edition_tests[0]),
-                                                               local_conference_conference_edition_tests};
+                                                               local_conference_conference_edition_tests,
+                                                               0};

@@ -58,6 +58,110 @@ static void call_to_inexisting_conference_address(void) {
 	}
 }
 
+static void create_conference_on_unresponsive_server(void) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getIdentity());
+
+		focus.registerAsParticipantDevice(marie);
+
+		setup_conference_info_cbs(marie.getCMgr());
+
+		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
+		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeOpen);
+
+		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+
+		// Wait for 25s to make sure the request times out
+		int request_timeout_wait = 25000;
+
+		time_t start_time = ms_time(NULL) - 60;
+		time_t end_time = start_time + 600;
+		const char *subject = "Colleagues";
+		const char *description = "Tom Black";
+
+		LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelEndToEnd;
+
+		bctbx_list_t *participant_infos = NULL;
+		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
+		const char *domain = linphone_address_get_domain(marie.getCMgr()->identity);
+		char user_address[100];
+		for (int idx = 0; idx < 180; idx++) {
+			snprintf(user_address, sizeof(user_address), "sip:happyuser%0d@%s", idx, domain);
+			LinphoneAddress *user = linphone_factory_create_address(linphone_factory_get(), user_address);
+			LinphoneParticipantInfo *participant_info = linphone_participant_info_new(user);
+			linphone_participant_info_set_role(participant_info, role);
+			participant_infos = bctbx_list_append(participant_infos, participant_info);
+			if (role == LinphoneParticipantRoleSpeaker) {
+				role = LinphoneParticipantRoleListener;
+			} else if (role == LinphoneParticipantRoleListener) {
+				role = LinphoneParticipantRoleUnknown;
+			} else if (role == LinphoneParticipantRoleUnknown) {
+				role = LinphoneParticipantRoleSpeaker;
+			}
+			linphone_address_unref(user);
+		}
+
+		// Turn off Chloe's network
+		linphone_core_set_network_reachable(focus.getLc(), FALSE);
+
+		stats marie_stat = marie.getStats();
+
+		// Marie creates a conference scheduler
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
+		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
+		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
+		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+		linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
+		linphone_conference_scheduler_cbs_unref(cbs);
+
+		LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
+
+		LinphoneAccount *default_account = linphone_core_get_default_account(marie.getLc());
+		LinphoneAddress *organizer_address = default_account
+		                                         ? linphone_address_clone(linphone_account_params_get_identity_address(
+		                                               linphone_account_get_params(default_account)))
+		                                         : linphone_address_new(linphone_core_get_identity(marie.getLc()));
+		linphone_conference_info_set_organizer(conf_info, organizer_address);
+		linphone_conference_info_set_participant_infos(conf_info, participant_infos);
+		linphone_conference_info_set_duration(
+		    conf_info, (int)((end_time - start_time) / 60)); // duration is expected to be set in minutes
+		linphone_conference_info_set_date_time(conf_info, start_time);
+		linphone_conference_info_set_subject(conf_info, subject);
+		linphone_conference_info_set_description(conf_info, description);
+		linphone_conference_info_set_security_level(conf_info, security_level);
+
+		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateAllocationPending,
+		                             marie_stat.number_of_ConferenceSchedulerStateAllocationPending + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateError,
+		                             marie_stat.number_of_ConferenceSchedulerStateError + 1, request_timeout_wait));
+
+		// Marie retries to create a conference and she takes the opportunity to change the duration
+		linphone_conference_info_set_duration(
+		    conf_info, (int)((3 * end_time - start_time) / 60)); // duration is expected to be set in minutes
+
+		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateUpdating,
+		                             marie_stat.number_of_ConferenceSchedulerStateUpdating + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateError,
+		                             marie_stat.number_of_ConferenceSchedulerStateError + 2, request_timeout_wait));
+
+		linphone_conference_info_unref(conf_info);
+		bctbx_list_free_with_data(participant_infos, (bctbx_list_free_func)linphone_participant_info_unref);
+		if (organizer_address) linphone_address_unref(organizer_address);
+		linphone_conference_scheduler_unref(conference_scheduler);
+		bctbx_list_free(coresList);
+	}
+}
+
 static void create_simple_conference(void) {
 	create_conference_base(ms_time(NULL), -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE,
 	                       LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE,
@@ -2142,6 +2246,7 @@ static void conference_with_participants_added_before_start (void) {
 
 static test_t local_conference_scheduled_conference_basic_tests[] = {
     TEST_NO_TAG("Call to inexisting conference address", LinphoneTest::call_to_inexisting_conference_address),
+    TEST_NO_TAG("Create conference on unresponsive server", LinphoneTest::create_conference_on_unresponsive_server),
     TEST_NO_TAG("Create simple conference", LinphoneTest::create_simple_conference),
     TEST_NO_TAG("Create conference with uninvited participant",
                 LinphoneTest::create_conference_with_uninvited_participant),
@@ -2149,8 +2254,6 @@ static test_t local_conference_scheduled_conference_basic_tests[] = {
                 LinphoneTest::create_simple_conference_with_server_restart),
     TEST_NO_TAG("Create simple conference with client restart",
                 LinphoneTest::create_simple_conference_with_client_restart),
-    TEST_NO_TAG("Create simple conference with audio only participant",
-                LinphoneTest::create_simple_conference_with_audio_only_participant),
     TEST_NO_TAG("Create conference with late participant addition",
                 LinphoneTest::create_conference_with_late_participant_addition),
     TEST_NO_TAG("Organizer schedules 2 conferences", LinphoneTest::organizer_schedule_two_conferences),
@@ -2160,8 +2263,6 @@ static test_t local_conference_scheduled_conference_basic_tests[] = {
                 LinphoneTest::create_simple_end_to_end_encrypted_conference),
     TEST_NO_TAG("Create conference starting immediately", LinphoneTest::create_conference_starting_immediately),
     TEST_NO_TAG("Create conference starting in the past", LinphoneTest::create_conference_starting_in_the_past),
-    TEST_NO_TAG("Create conference with audio only participants",
-                LinphoneTest::create_conference_with_audio_only_participants),
     TEST_NO_TAG("Create conference with participant codec mismatch",
                 LinphoneTest::create_conference_with_participant_codec_mismatch),
     TEST_NO_TAG("Create conference with organizer codec mismatch",
@@ -2185,10 +2286,6 @@ static test_t local_conference_scheduled_conference_advanced_tests[] = {
 	TEST_NO_TAG("Conference with participants added after conference end", LinphoneTest::conference_with_participants_added_after_end),
 	TEST_NO_TAG("Conference with participants added before conference start", LinphoneTest::conference_with_participants_added_before_start),
 #endif
-    TEST_NO_TAG("Create conference with audio only and uninvited participant",
-                LinphoneTest::create_conference_with_audio_only_and_uninvited_participant),
-    TEST_NO_TAG("Create simple conference with audio only participant enabling video",
-                LinphoneTest::create_simple_conference_with_audio_only_participant_enabling_video),
     TEST_NO_TAG("Create one participant conference toggles video in grid layout",
                 LinphoneTest::one_participant_conference_toggles_video_grid),
     TEST_NO_TAG("Create one participant conference toggles video in active speaker layout",
@@ -2197,9 +2294,19 @@ static test_t local_conference_scheduled_conference_advanced_tests[] = {
                 LinphoneTest::two_overlapping_scheduled_conferences_from_different_organizers),
     TEST_NO_TAG("Create scheduled conference with active call",
                 LinphoneTest::create_scheduled_conference_with_active_call),
+    TEST_NO_TAG("Change active speaker", LinphoneTest::change_active_speaker)};
+
+static test_t local_conference_scheduled_conference_audio_only_participant_tests[] = {
     TEST_NO_TAG("Create end-to-end encrypted conference with audio only participants",
                 LinphoneTest::create_end_to_end_encryption_conference_with_audio_only_participants),
-    TEST_NO_TAG("Change active speaker", LinphoneTest::change_active_speaker)};
+    TEST_NO_TAG("Create conference with audio only and uninvited participant",
+                LinphoneTest::create_conference_with_audio_only_and_uninvited_participant),
+    TEST_NO_TAG("Create simple conference with audio only participant enabling video",
+                LinphoneTest::create_simple_conference_with_audio_only_participant_enabling_video),
+    TEST_NO_TAG("Create simple conference with audio only participant",
+                LinphoneTest::create_simple_conference_with_audio_only_participant),
+    TEST_NO_TAG("Create conference with audio only participants",
+                LinphoneTest::create_conference_with_audio_only_participants)};
 
 test_suite_t local_conference_test_suite_scheduled_conference_basic = {
     "Local conference tester (Scheduled Conference Basic)",
@@ -2209,7 +2316,8 @@ test_suite_t local_conference_test_suite_scheduled_conference_basic = {
     liblinphone_tester_after_each,
     sizeof(local_conference_scheduled_conference_basic_tests) /
         sizeof(local_conference_scheduled_conference_basic_tests[0]),
-    local_conference_scheduled_conference_basic_tests};
+    local_conference_scheduled_conference_basic_tests,
+    0};
 
 test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
     "Local conference tester (Scheduled Conference Advanced)",
@@ -2219,4 +2327,16 @@ test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
     liblinphone_tester_after_each,
     sizeof(local_conference_scheduled_conference_advanced_tests) /
         sizeof(local_conference_scheduled_conference_advanced_tests[0]),
-    local_conference_scheduled_conference_advanced_tests};
+    local_conference_scheduled_conference_advanced_tests,
+    0};
+
+test_suite_t local_conference_test_suite_scheduled_conference_audio_only_participant = {
+    "Local conference tester (Audio only participants)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_scheduled_conference_audio_only_participant_tests) /
+        sizeof(local_conference_scheduled_conference_audio_only_participant_tests[0]),
+    local_conference_scheduled_conference_audio_only_participant_tests,
+    0};

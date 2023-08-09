@@ -1564,13 +1564,13 @@ const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId &confere
 	const auto &rawPeerAddress = conferenceId.getPeerAddress();
 	if (rawPeerAddress) {
 		peerAddress = Address::create(rawPeerAddress->getUriWithoutGruu());
-		peerAddress->removeUriParam("conference-security-mode");
+		peerAddress->removeUriParam(Conference::SecurityModeParameter);
 	}
 	std::shared_ptr<Address> localAddress = nullptr;
 	const auto &rawLocalAddress = conferenceId.getLocalAddress();
 	if (rawLocalAddress) {
 		localAddress = Address::create(rawLocalAddress->getUriWithoutGruu());
-		localAddress->removeUriParam("conference-security-mode");
+		localAddress->removeUriParam(Conference::SecurityModeParameter);
 	}
 	ConferenceId prunedConferenceId = ConferenceId(peerAddress, localAddress);
 	return prunedConferenceId;
@@ -1715,18 +1715,17 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	} else {
 		LinphoneAddress *factoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
 		if (factoryUri == nullptr) {
-			lWarning() << "Not creating conference: no conference factory uri for local address [" << localAddr << "]";
+			lWarning() << "Not creating conference: no conference factory uri for local address [" << *localAddr << "]";
 			return nullptr;
 		}
 		conferenceFactoryUri = Address::toCpp(factoryUri)->getSharedFromThis();
-		conferenceFactoryUri->setUriParam("conference-security-mode",
+		conferenceFactoryUri->setUriParam(Conference::SecurityModeParameter,
 		                                  ConferenceParams::getSecurityLevelAttribute(confParams->getSecurityLevel()));
 	}
 
 	ConferenceId conferenceId = ConferenceId(nullptr, localAddr);
 	if (!localAddr->hasUriParam("gr")) {
-		lWarning() << "Local identity address [" << localAddr->toString()
-		           << "] doesn't have a gruu, let's try to find it";
+		lWarning() << "Local identity address [" << *localAddr << "] doesn't have a gruu, let's try to find it";
 		auto localAddrWithGruu = d->getIdentityAddressWithGruu(localAddr);
 		if (localAddrWithGruu && localAddrWithGruu->isValid()) {
 			lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";

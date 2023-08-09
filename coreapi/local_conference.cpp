@@ -301,9 +301,9 @@ void LocalConference::configure(SalCallOp *op) {
 	} else {
 		const auto &toAddrStr = op->getTo();
 		Address toAddr(toAddrStr);
-		if (toAddr.hasUriParam("conference-security-mode")) {
-			securityLevel =
-			    ConferenceParams::getSecurityLevelFromAttribute(toAddr.getUriParamValue("conference-security-mode"));
+		if (toAddr.hasUriParam(Conference::SecurityModeParameter)) {
+			securityLevel = ConferenceParams::getSecurityLevelFromAttribute(
+			    toAddr.getUriParamValue(Conference::SecurityModeParameter));
 		}
 	}
 	confParams->setSecurityLevel(securityLevel);

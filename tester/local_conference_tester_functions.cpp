@@ -1679,7 +1679,7 @@ create_conference_on_server(Focus &focus,
 		previous_calls[mgr] = linphone_core_get_call_by_remote_address2(mgr->lc, focus.getCMgr()->identity);
 	}
 
-	// Marie creates a new group chat room
+	// The organizer creates a conference scheduler
 	LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(organizer.getLc());
 	LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
 	linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
@@ -7070,8 +7070,13 @@ void create_conference_with_active_call_base(bool_t dialout) {
 		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
 		for (auto &p : participants) {
 			participantList.insert(std::make_pair(p, role));
-			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
-			                                                : LinphoneParticipantRoleSpeaker;
+			if (role == LinphoneParticipantRoleSpeaker) {
+				role = LinphoneParticipantRoleListener;
+			} else if (role == LinphoneParticipantRoleListener) {
+				role = LinphoneParticipantRoleUnknown;
+			} else if (role == LinphoneParticipantRoleUnknown) {
+				role = LinphoneParticipantRoleSpeaker;
+			}
 		}
 		participantList.insert(std::make_pair(marie.getCMgr(), LinphoneParticipantRoleListener));
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, start_time, -1,

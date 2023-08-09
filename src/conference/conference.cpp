@@ -47,6 +47,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+const std::string Conference::SecurityModeParameter = "conference-security-mode";
+
 Conference::Conference(const shared_ptr<Core> &core,
                        const std::shared_ptr<Address> &myAddress,
                        CallSessionListener *listener,

@@ -689,4 +689,5 @@ test_suite_t local_conference_test_suite_chat_imdn = {"Local conference tester (
                                                       liblinphone_tester_after_each,
                                                       sizeof(local_conference_chat_imdn_tests) /
                                                           sizeof(local_conference_chat_imdn_tests[0]),
-                                                      local_conference_chat_imdn_tests};
+                                                      local_conference_chat_imdn_tests,
+                                                      0};

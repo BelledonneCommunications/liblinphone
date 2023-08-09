@@ -478,8 +478,7 @@ int logfile_arg_func(const char *arg) {
 
 // Set the specific average time if it was not set by the suite.
 void liblinphone_tester_add_suite_with_default_time(test_suite_t *suite, int average_time) {
-	if(suite->average_time == 0)
-		suite->average_time = average_time;
+	if (suite->average_time == 0) suite->average_time = average_time;
 	bc_tester_add_suite(suite);
 }
 
@@ -503,8 +502,10 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&ephemeral_group_chat_basic_test_suite, 141);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_conference_edition, 67);
-	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_basic, 472);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_basic, 540);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_advanced, 757);
+	liblinphone_tester_add_suite_with_default_time(
+	    &local_conference_test_suite_scheduled_conference_audio_only_participant, 300);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_ice_conference, 371);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_conference, 351);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_mismatch_conference, 198);
@@ -539,7 +540,8 @@ void liblinphone_tester_add_suites(void) {
 #ifdef VIDEO_ENABLED
 	liblinphone_tester_add_suite_with_default_time(&video_test_suite, 19);
 	liblinphone_tester_add_suite_with_default_time(&call_video_test_suite, 478);
-	liblinphone_tester_add_suite_with_default_time(&call_video_msogl_test_suite, 475);// Conditionals are defined in suite
+	liblinphone_tester_add_suite_with_default_time(&call_video_msogl_test_suite,
+	                                               475); // Conditionals are defined in suite
 	liblinphone_tester_add_suite_with_default_time(&call_video_advanced_scenarios_test_suite, 168);
 	liblinphone_tester_add_suite_with_default_time(&call_video_quality_test_suite, 455);
 	liblinphone_tester_add_suite_with_default_time(&alerts_test_suite, 70);
@@ -558,7 +560,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&ice_conference_test_suite, 123);
 	liblinphone_tester_add_suite_with_default_time(&multi_call_test_suite, 73);
 	liblinphone_tester_add_suite_with_default_time(&message_test_suite, 521);
-	//liblinphone_tester_add_suite_with_default_time(&lime_message_test_suite, 27);
+	// liblinphone_tester_add_suite_with_default_time(&lime_message_test_suite, 27);
 	liblinphone_tester_add_suite_with_default_time(&rtt_message_test_suite, 95);
 	liblinphone_tester_add_suite_with_default_time(&session_timers_test_suite, 110);
 	liblinphone_tester_add_suite_with_default_time(&presence_test_suite, 62);

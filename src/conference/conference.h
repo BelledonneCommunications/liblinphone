@@ -64,6 +64,7 @@ class LINPHONE_PUBLIC Conference : public ConferenceInterface, public Conference
 
 public:
 	static constexpr int labelLength = 10;
+	static const std::string SecurityModeParameter;
 	~Conference();
 
 	std::shared_ptr<Participant> getActiveParticipant() const;

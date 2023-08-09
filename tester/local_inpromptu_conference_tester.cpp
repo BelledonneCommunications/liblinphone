@@ -103,8 +103,13 @@ static void create_conference_dial_out_base(bool_t send_ics,
 		LinphoneParticipantRole role = LinphoneParticipantRoleUnknown;
 		for (auto &p : participants) {
 			participantList.insert(std::make_pair(p, role));
-			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
-			                                                : LinphoneParticipantRoleSpeaker;
+			if (role == LinphoneParticipantRoleSpeaker) {
+				role = LinphoneParticipantRoleListener;
+			} else if (role == LinphoneParticipantRoleListener) {
+				role = LinphoneParticipantRoleUnknown;
+			} else if (role == LinphoneParticipantRoleUnknown) {
+				role = LinphoneParticipantRoleSpeaker;
+			}
 		}
 		LinphoneAddress *confAddr = create_conference_on_server(focus, marie, participantList, -1, -1, initialSubject,
 		                                                        description, send_ics, security_level);
@@ -1805,7 +1810,8 @@ test_suite_t local_conference_test_suite_inpromptu_conference = {
     liblinphone_tester_before_each,
     liblinphone_tester_after_each,
     sizeof(local_conference_inpromptu_conference_tests) / sizeof(local_conference_inpromptu_conference_tests[0]),
-    local_conference_inpromptu_conference_tests};
+    local_conference_inpromptu_conference_tests,
+    0};
 
 test_suite_t local_conference_test_suite_inpromptu_mismatch_conference = {
     "Local conference tester (Inpromptu Conference with mismatch)",
@@ -1815,4 +1821,5 @@ test_suite_t local_conference_test_suite_inpromptu_mismatch_conference = {
     liblinphone_tester_after_each,
     sizeof(local_conference_inpromptu_mismatch_conference_tests) /
         sizeof(local_conference_inpromptu_mismatch_conference_tests[0]),
-    local_conference_inpromptu_mismatch_conference_tests};
+    local_conference_inpromptu_mismatch_conference_tests,
+    0};

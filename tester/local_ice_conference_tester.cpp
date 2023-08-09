@@ -493,4 +493,5 @@ test_suite_t local_conference_test_suite_scheduled_ice_conference = {
     liblinphone_tester_after_each,
     sizeof(local_conference_scheduled_ice_conference_tests) /
         sizeof(local_conference_scheduled_ice_conference_tests[0]),
-    local_conference_scheduled_ice_conference_tests};
+    local_conference_scheduled_ice_conference_tests,
+    0};

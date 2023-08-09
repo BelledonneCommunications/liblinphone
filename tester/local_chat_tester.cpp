@@ -2644,7 +2644,8 @@ test_suite_t local_conference_test_suite_chat = {"Local conference tester (Chat)
                                                  liblinphone_tester_after_each,
                                                  sizeof(local_conference_chat_tests) /
                                                      sizeof(local_conference_chat_tests[0]),
-                                                 local_conference_chat_tests};
+                                                 local_conference_chat_tests,
+                                                 0};
 
 test_suite_t local_conference_test_suite_chat_error = {"Local conference tester (Chat error)",
                                                        NULL,
@@ -2653,4 +2654,5 @@ test_suite_t local_conference_test_suite_chat_error = {"Local conference tester 
                                                        liblinphone_tester_after_each,
                                                        sizeof(local_conference_chat_error_tests) /
                                                            sizeof(local_conference_chat_error_tests[0]),
-                                                       local_conference_chat_error_tests};
+                                                       local_conference_chat_error_tests,
+                                                       0};
