@@ -4716,15 +4716,6 @@ LINPHONE_PUBLIC float linphone_core_get_conference_local_input_volume(LinphoneCo
 LINPHONE_PUBLIC LinphoneStatus linphone_core_terminate_conference(LinphoneCore *core);
 
 /**
- * Get the number of participants including me, if it in, in the running conference. The local
- * participant is included in the count only if it is in the conference.
- * @param core #LinphoneCore @notnil
- * @return The number of participants including me, if it in.
- * @deprecated 16/04/2021 Use linphone_conference_get_participant_count() instead.
- */
-LINPHONE_PUBLIC int linphone_core_get_conference_size(LinphoneCore *core);
-
-/**
  * Create some default conference parameters for instanciating a conference with
  *linphone_core_create_conference_with_params().
  * @param core the #LinphoneCore object @notnil
@@ -4751,13 +4742,6 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_start_conference_recording(Linphone
  * @deprecated 14/09/2021 Use linphone_conference_stop_recording() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_stop_conference_recording(LinphoneCore *core);
-
-/**
- * Get a pointer on the internal conference object.
- * @param core #LinphoneCore @notnil
- * @return A pointer on #LinphoneConference or NULL if no conference are going on. @maybenil
- */
-LINPHONE_PUBLIC LinphoneConference *linphone_core_get_conference(LinphoneCore *core);
 
 /**
  * Enable the conference server feature. This has the effect to listen of the conference factory uri
@@ -6994,6 +6978,89 @@ LINPHONE_PUBLIC const LinphonePushNotificationConfig *
 linphone_core_get_push_notification_config(const LinphoneCore *core);
 
 /**
+ * Are PostQuantum algoritms available
+ * @return  TRUE if Post Quantum algorithms are available FALSE otherwise
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_get_post_quantum_available(void);
+
+/**
+ * Return the list of the available ZRTP key agreement algorithns.
+ * @param lc The core. @notnil
+ * @return A freshly allocated list of the available algorithms. The list
+ * must be destroyed with bctbx_list_free() after usage. The elements of the list
+ * haven't to be unref. @bctbx_list{LinphoneZrtpKeyAgreement} @maybenil @tobefreed
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_zrtp_available_key_agreement_list(LinphoneCore *lc);
+
+/**
+ * Return the ordonated list of the ZRTP key agreement algorithns currently configured.
+ * @param lc The core. @notnil
+ * @return A freshly allocated list of the available algorithms. The list
+ * must be destroyed with bctbx_list_free() after usage. The elements of the list
+ * haven't to be unref. @bctbx_list{LinphoneZrtpKeyAgreement} @maybenil @tobefreed
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_zrtp_key_agreement_list(LinphoneCore *lc);
+
+/**
+ * Redefine the list of prefered ZRTP key agreement algorithms.
+ * @param lc The core. @notnil
+ * @param key_agreements The new list of key agreements algorithms, in order of preference. The core does not take
+ * ownership on it. The setting accepts a maximum of 7 algorithms, if the list is longer, only the first 7 available
+ * algorithms are selected \bctbx_list{LinphoneZrtpKeyAgreement} @maybenil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_zrtp_key_agreement_suites(LinphoneCore *lc, bctbx_list_t *key_agreements);
+
+/**
+ * Enable the deletion of empty chatrooms (i.e. chatrooms with no participants)
+ * @param core A #LinphoneCore object @notnil
+ * @param enable A boolean value telling whether to enable or disable the deletion of chat rooms with no participants in
+ * it
+ */
+LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable);
+
+/**
+ * Tells whether empty chat rooms are deleted or not.
+ * @param core A #LinphoneCore object @notnil
+ * @return A boolean value telling whether the deletion of empty chatrooms is enabled or not
+ */
+LINPHONE_PUBLIC bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core);
+
+/**
+ * Return the list of loaded plugins
+ * @param core A #LinphoneCore object @notnil
+ * @return the list of loaded plugins \bctbx_list{char *} @maybenil
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core);
+
+/**
+ * Tells whether a plugin is loaded or not.
+ * @param core A #LinphoneCore object @notnil
+ * @param name name of the plugin @notnil
+ * @return A boolean value telling whether the plugin has been loaded
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name);
+
+/**
+ * Sets if accounts will wait for network to be connected before trying to REGISTER.
+ * @param core the #LinphoneCore
+ * @param register_only_when_network_is_up TRUE to wait for an internet connection before trying to REGISTER, FALSE to
+ * do it no matter the network state.
+ */
+LINPHONE_PUBLIC void linphone_core_set_register_only_when_network_is_up(LinphoneCore *core,
+                                                                        bool_t register_only_when_network_is_up);
+
+/**
+ * Gets if accounts will wait for network to be connected before trying to REGISTER or not.
+ * @param core the #LinphoneCore
+ * @return TRUE if accounts will wait for internet connection before trying to REGISTER, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_core_get_register_only_when_network_is_up(const LinphoneCore *core);
+
+/**
  * @}
  */
 
@@ -8475,87 +8542,21 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_call_logs_database_path(LinphoneCore *core);
 
 /**
- * Are PostQuantum algoritms available
- * @return  TRUE if Post Quantum algorithms are available FALSE otherwise
- * @ingroup media_parameters
+ * Get the number of participants including me, if it in, in the running conference. The local
+ * participant is included in the count only if it is in the conference.
+ * @param core #LinphoneCore @notnil
+ * @return The number of participants including me, if it in.
+ * @deprecated 16/04/2021 Use linphone_conference_get_participant_count() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_core_get_post_quantum_available(void);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_conference_size(LinphoneCore *core);
 
 /**
- * Return the list of the available ZRTP key agreement algorithns.
- * @param lc The core. @notnil
- * @return A freshly allocated list of the available algorithms. The list
- * must be destroyed with bctbx_list_free() after usage. The elements of the list
- * haven't to be unref. @bctbx_list{LinphoneZrtpKeyAgreement} @maybenil @tobefreed
- * @ingroup media_parameters
+ * Get a pointer on the internal conference object.
+ * @param core #LinphoneCore @notnil
+ * @return A pointer on #LinphoneConference or NULL if no conference are going on. @maybenil
+ * @deprecated 10/08/2023 Use linphone_core_search_conference() instead.
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_zrtp_available_key_agreement_list(LinphoneCore *lc);
-
-/**
- * Return the ordonated list of the ZRTP key agreement algorithns currently configured.
- * @param lc The core. @notnil
- * @return A freshly allocated list of the available algorithms. The list
- * must be destroyed with bctbx_list_free() after usage. The elements of the list
- * haven't to be unref. @bctbx_list{LinphoneZrtpKeyAgreement} @maybenil @tobefreed
- * @ingroup media_parameters
- */
-LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_zrtp_key_agreement_list(LinphoneCore *lc);
-
-/**
- * Redefine the list of prefered ZRTP key agreement algorithms.
- * @param lc The core. @notnil
- * @param key_agreements The new list of key agreements algorithms, in order of preference. The core does not take
- * ownership on it. The setting accepts a maximum of 7 algorithms, if the list is longer, only the first 7 available
- * algorithms are selected \bctbx_list{LinphoneZrtpKeyAgreement} @maybenil
- * @ingroup media_parameters
- */
-LINPHONE_PUBLIC void linphone_core_set_zrtp_key_agreement_suites(LinphoneCore *lc, bctbx_list_t *key_agreements);
-
-/**
- * Enable the deletion of empty chatrooms (i.e. chatrooms with no participants)
- * @param core A #LinphoneCore object @notnil
- * @param enable A boolean value telling whether to enable or disable the deletion of chat rooms with no participants in
- * it
- */
-LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable);
-
-/**
- * Tells whether empty chat rooms are deleted or not.
- * @param core A #LinphoneCore object @notnil
- * @return A boolean value telling whether the deletion of empty chatrooms is enabled or not
- */
-LINPHONE_PUBLIC bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core);
-
-/**
- * Return the list of loaded plugins
- * @param core A #LinphoneCore object @notnil
- * @return the list of loaded plugins \bctbx_list{char *} @maybenil
- */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core);
-
-/**
- * Tells whether a plugin is loaded or not.
- * @param core A #LinphoneCore object @notnil
- * @param name name of the plugin @notnil
- * @return A boolean value telling whether the plugin has been loaded
- */
-LINPHONE_PUBLIC bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name);
-
-/**
- * Sets if accounts will wait for network to be connected before trying to REGISTER.
- * @param core the #LinphoneCore
- * @param register_only_when_network_is_up TRUE to wait for an internet connection before trying to REGISTER, FALSE to
- * do it no matter the network state.
- */
-LINPHONE_PUBLIC void linphone_core_set_register_only_when_network_is_up(LinphoneCore *core,
-                                                                        bool_t register_only_when_network_is_up);
-
-/**
- * Gets if accounts will wait for network to be connected before trying to REGISTER or not.
- * @param core the #LinphoneCore
- * @return TRUE if accounts will wait for internet connection before trying to REGISTER, FALSE otherwise.
- */
-LINPHONE_PUBLIC bool_t linphone_core_get_register_only_when_network_is_up(const LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneConference *linphone_core_get_conference(LinphoneCore *core);
 
 #ifdef __cplusplus
 }
