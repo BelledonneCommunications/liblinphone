@@ -61,6 +61,7 @@ bool ConferenceAvailableMediaEvent::audioEnabled() const {
 	try {
 		return d->mediaCapabilties.at(ConferenceMediaCapabilities::Audio);
 	} catch (std::out_of_range &) {
+		lError() << "Unable to find audio capability";
 		return false;
 	}
 }
@@ -70,6 +71,7 @@ bool ConferenceAvailableMediaEvent::videoEnabled() const {
 	try {
 		return d->mediaCapabilties.at(ConferenceMediaCapabilities::Video);
 	} catch (std::out_of_range &) {
+		lError() << "Unable to find video capability";
 		return false;
 	}
 }
@@ -79,6 +81,7 @@ bool ConferenceAvailableMediaEvent::chatEnabled() const {
 	try {
 		return d->mediaCapabilties.at(ConferenceMediaCapabilities::Text);
 	} catch (std::out_of_range &) {
+		lError() << "Unable to find chat capability";
 		return false;
 	}
 }

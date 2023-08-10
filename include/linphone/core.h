@@ -6978,6 +6978,42 @@ LINPHONE_PUBLIC const LinphonePushNotificationConfig *
 linphone_core_get_push_notification_config(const LinphoneCore *core);
 
 /**
+ * Return the list of loaded plugins
+ * @param core A #LinphoneCore object @notnil
+ * @return the list of loaded plugins \bctbx_list{char *} @maybenil
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core);
+
+/**
+ * Tells whether a plugin is loaded or not.
+ * @param core A #LinphoneCore object @notnil
+ * @param name name of the plugin @notnil
+ * @return A boolean value telling whether the plugin has been loaded
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name);
+
+/**
+ * Get the number of participants including me, if it in, in the running conference. The local
+ * participant is included in the count only if it is in the conference.
+ * @param core #LinphoneCore @notnil
+ * @return The number of participants including me, if it in.
+ * @deprecated 16/04/2021 Use linphone_conference_get_participant_count() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_conference_size(LinphoneCore *core);
+
+/**
+ * Get a pointer on the internal conference object.
+ * @param core #LinphoneCore @notnil
+ * @return A pointer on #LinphoneConference or NULL if no conference are going on. @maybenil
+ * @deprecated 10/08/2023 Use linphone_core_search_conference() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneConference *linphone_core_get_conference(LinphoneCore *core);
+
+/**
+ * @}
+ */
+
+/**
  * Are PostQuantum algoritms available
  * @return  TRUE if Post Quantum algorithms are available FALSE otherwise
  * @ingroup media_parameters
@@ -7017,7 +7053,7 @@ LINPHONE_PUBLIC void linphone_core_set_zrtp_key_agreement_suites(LinphoneCore *l
 /**
  * Enable the deletion of empty chatrooms (i.e. chatrooms with no participants)
  * @param core A #LinphoneCore object @notnil
- * @param enable A boolean value telling whether to enable or disable the deletion of chat rooms with no participants in
+ * @param enable A boolean value telling whether to enable or disable the deletion of chat rooms with no participants in (Applicable to servers only)
  * it
  */
 LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable);
@@ -7025,24 +7061,9 @@ LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore 
 /**
  * Tells whether empty chat rooms are deleted or not.
  * @param core A #LinphoneCore object @notnil
- * @return A boolean value telling whether the deletion of empty chatrooms is enabled or not
+ * @return A boolean value telling whether the deletion of empty chatrooms is enabled or not (Applicable to servers only)
  */
 LINPHONE_PUBLIC bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core);
-
-/**
- * Return the list of loaded plugins
- * @param core A #LinphoneCore object @notnil
- * @return the list of loaded plugins \bctbx_list{char *} @maybenil
- */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core);
-
-/**
- * Tells whether a plugin is loaded or not.
- * @param core A #LinphoneCore object @notnil
- * @param name name of the plugin @notnil
- * @return A boolean value telling whether the plugin has been loaded
- */
-LINPHONE_PUBLIC bool_t linphone_core_is_plugin_loaded(const LinphoneCore *core, const char *name);
 
 /**
  * Sets if accounts will wait for network to be connected before trying to REGISTER.
@@ -7059,10 +7080,6 @@ LINPHONE_PUBLIC void linphone_core_set_register_only_when_network_is_up(Linphone
  * @return TRUE if accounts will wait for internet connection before trying to REGISTER, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_core_get_register_only_when_network_is_up(const LinphoneCore *core);
-
-/**
- * @}
- */
 
 /************ */
 /* DEPRECATED */
@@ -8540,23 +8557,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
  * @deprecated 07/12/2021: Use only for migration purposes
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_call_logs_database_path(LinphoneCore *core);
-
-/**
- * Get the number of participants including me, if it in, in the running conference. The local
- * participant is included in the count only if it is in the conference.
- * @param core #LinphoneCore @notnil
- * @return The number of participants including me, if it in.
- * @deprecated 16/04/2021 Use linphone_conference_get_participant_count() instead.
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_conference_size(LinphoneCore *core);
-
-/**
- * Get a pointer on the internal conference object.
- * @param core #LinphoneCore @notnil
- * @return A pointer on #LinphoneConference or NULL if no conference are going on. @maybenil
- * @deprecated 10/08/2023 Use linphone_core_search_conference() instead.
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneConference *linphone_core_get_conference(LinphoneCore *core);
 
 #ifdef __cplusplus
 }

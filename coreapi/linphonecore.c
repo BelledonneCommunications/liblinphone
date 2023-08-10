@@ -9490,7 +9490,7 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	const auto uri_addr = LinphonePrivate::Address::toCpp(uri)->getSharedFromThis();
+	const auto uri_addr = uri ? LinphonePrivate::Address::toCpp(uri)->getSharedFromThis() : nullptr;
 	auto confInfo = mainDb->getConferenceInfoFromURI(uri_addr);
 
 	if (confInfo != nullptr) {

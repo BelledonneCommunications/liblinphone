@@ -637,15 +637,20 @@ void *ParticipantDevice::createWindowId() const {
 #ifdef VIDEO_ENABLED
 	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
-	if ((!label.at(LinphoneStreamTypeVideo).empty()) && session) {
-		windowId =
-		    static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(label.at(LinphoneStreamTypeVideo));
-	} else {
-		lError() << "Unable to create a window ID for device " << *getAddress()
-		         << " because either label is empty (actual "
-		         << (label.at(LinphoneStreamTypeVideo).empty() ? "<not-defined>" : label.at(LinphoneStreamTypeVideo))
-		         << ") or no session is linked to this device (actual " << session << ")";
-	}
+	const auto type = LinphoneStreamTypeVideo;
+	try {
+		if ((!label.at(type).empty()) && session) {
+			windowId =
+			    static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(label.at(type));
+		} else {
+			lError() << "Unable to create a window ID for device " << *getAddress()
+				 << " because either label is empty (actual "
+				 << (label.at(type).empty() ? "<not-defined>" : label.at(type))
+				 << ") or no session is linked to this device (actual " << session << ")";
+		}
+	} catch (std::out_of_range &) {
+		lError() << "Unable to create window ID because there is no label for stream of type " << std::string(linphone_stream_type_to_string(type));
+	} 
 #endif
 	return windowId;
 }
@@ -659,19 +664,24 @@ void ParticipantDevice::setWindowId(void *newWindowId) {
 	mWindowId = newWindowId;
 	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
-	const auto videoLabel = label.at(LinphoneStreamTypeVideo);
+	const auto type = LinphoneStreamTypeVideo;
+	try {
+		const auto videoLabel = label.at(type);
 
-	if ((!videoLabel.empty()) && session) {
-		if (conference->isMe(getAddress())) {
-			linphone_core_set_native_preview_window_id(getCore()->getCCore(), mWindowId);
+		if ((!videoLabel.empty()) && session) {
+			if (conference->isMe(getAddress())) {
+				linphone_core_set_native_preview_window_id(getCore()->getCCore(), mWindowId);
+			} else {
+				auto s = static_pointer_cast<MediaSession>(session);
+				s->setNativeVideoWindowId(mWindowId, videoLabel);
+			}
 		} else {
-			auto s = static_pointer_cast<MediaSession>(session);
-			s->setNativeVideoWindowId(mWindowId, videoLabel);
+			lError() << "Unable to set window ID for device " << *getAddress() << " because either label is empty (actual "
+				 << (label.at(type).empty() ? "<not-defined>" : label.at(type))
+				 << ") or no session is linked to this device (actual " << session << ")";
 		}
-	} else {
-		lError() << "Unable to set window ID for device " << *getAddress() << " because either label is empty (actual "
-		         << (label.at(LinphoneStreamTypeVideo).empty() ? "<not-defined>" : label.at(LinphoneStreamTypeVideo))
-		         << ") or no session is linked to this device (actual " << session << ")";
+	} catch (std::out_of_range &) {
+		lError() << "Unable to set window ID because there is no label for stream of type " << std::string(linphone_stream_type_to_string(type));
 	}
 #endif
 }
