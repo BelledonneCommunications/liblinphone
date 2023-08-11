@@ -996,8 +996,8 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 
 	shared_ptr<Participant> participant = getConferenceParticipant(participantAddress);
 	if (!participant) {
-		lError() << "Received SUBSCRIBE corresponds to no participant of the conference [" << conferenceAddressString
-		         << "], no NOTIFY sent";
+		lError() << "Declining SUBSCRIBE because participant " << *participantAddress
+		         << " cannot be found in conference  [" << conferenceAddressString << "]";
 		ev->deny(LinphoneReasonDeclined);
 		return -1;
 	}

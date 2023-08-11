@@ -383,7 +383,7 @@ shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<Addres
 
 	lWarning() << "Unable to find participant in conference "
 	           << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
-	           << " (" << this << ") with address " << addr->toString();
+	           << " (" << this << ") with address " << *addr;
 	return nullptr;
 }
 

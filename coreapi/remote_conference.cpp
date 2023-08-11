@@ -412,7 +412,7 @@ bool RemoteConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> cal
 			case ConferenceInterface::State::None:
 			case ConferenceInterface::State::Instantiated:
 			case ConferenceInterface::State::CreationFailed: {
-				lInfo() << "Calling the conference focus (" << focusAddress << ")";
+				lInfo() << "Calling the conference focus (" << *focusAddress << ")";
 				params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 				// Participant with the focus call is admin
 				L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
@@ -428,15 +428,15 @@ bool RemoteConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> cal
 				}
 				auto callIt = std::find(m_pendingCalls.begin(), m_pendingCalls.end(), call);
 				if (callIt == m_pendingCalls.end()) {
-					lInfo() << "Adding call (local address " << call->getLocalAddress()->toString()
-					        << " remote address " << remoteAddressStr << ") to the list of call to add to conference "
-					        << conferenceAddressStr << " (" << this << ")";
+					lInfo() << "Adding call (local address " << *call->getLocalAddress() << " remote address "
+					        << remoteAddressStr << ") to the list of call to add to conference " << conferenceAddressStr
+					        << " (" << this << ")";
 					m_pendingCalls.push_back(call);
 					Conference::addParticipant(call->getRemoteAddress());
 				} else {
-					lError() << "Trying to add call (local address " << call->getLocalAddress()->toString()
-					         << " remote address " << remoteAddressStr << ") twice to conference "
-					         << conferenceAddressStr << " (" << this << ")";
+					lError() << "Trying to add call (local address " << *call->getLocalAddress() << " remote address "
+					         << remoteAddressStr << ") twice to conference " << conferenceAddressStr << " (" << this
+					         << ")";
 				}
 			}
 				return true;
@@ -810,20 +810,20 @@ bool RemoteConference::transferToFocus(std::shared_ptr<LinphonePrivate::Call> ca
 		referToAddr->setParam("admin", Utils::toString(participant->isAdmin()));
 		const auto &remoteAddress = call->getRemoteAddress();
 		lInfo() << "Transfering call (local address " << call->getLocalAddress()->toString() << " remote address "
-		        << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") to focus " << referToAddr;
+		        << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") to focus " << *referToAddr;
 		const auto &participantAddress = participant->getAddress();
 		updateParticipantsInConferenceInfo(participantAddress);
 		if (call->transfer(referToAddr->toString()) == 0) {
 			m_transferingCalls.push_back(call);
 			return true;
 		} else {
-			lError() << "Conference: could not transfer call " << call << " to " << referToAddr->toString();
+			lError() << "Conference: could not transfer call " << call << " to " << *referToAddr;
 			return false;
 		}
 	} else {
-		lError() << "Conference: could not transfer call " << call << " to " << referToAddr->toString()
+		lError() << "Conference: could not transfer call " << call << " to " << *referToAddr
 		         << " because participant with session " << call->getActiveSession()
-		         << " cannot be found  - guessed address " << referToAddr;
+		         << " cannot be found  - guessed address " << *referToAddr;
 		return false;
 	}
 	return false;

@@ -1810,11 +1810,16 @@ create_conference_on_server(Focus &focus,
 		linphone_conference_info_unref(info);
 	}
 
-	organizer_expected_participant_number = requested_participants.size() + ((!dialout || send_ics || found_me) ? 0 : 1);
-	participant_expected_participant_number = requested_participants.size() + ((!dialout || send_ics || found_me) ? 0 : 1);
+	organizer_expected_participant_number =
+	    requested_participants.size() + ((!dialout || send_ics || found_me) ? 0 : 1);
+	participant_expected_participant_number =
+	    requested_participants.size() + ((!dialout || send_ics || found_me) ? 0 : 1);
 	if (!dialout) {
 		// This check is not reliable when the conference is dialing participants
-		check_conference_info(organizer.getCMgr(), conference_address, organizer.getCMgr(), organizer_expected_participant_number, start_time, ((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time) / 60 : 0, subject, description, 0, LinphoneConferenceInfoStateNew, security_level);
+		check_conference_info(organizer.getCMgr(), conference_address, organizer.getCMgr(),
+		                      organizer_expected_participant_number, start_time,
+		                      ((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time) / 60 : 0, subject,
+		                      description, 0, LinphoneConferenceInfoStateNew, security_level);
 	}
 
 	idx = 0;
@@ -1987,8 +1992,8 @@ create_conference_on_server(Focus &focus,
 	if (conference_address && !dialout) {
 		check_conference_info(organizer.getCMgr(), conference_address, organizer.getCMgr(),
 		                      organizer_expected_participant_number, start_time,
-		                      (((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time) / 60 : 0),
-		                      subject, description, 0, LinphoneConferenceInfoStateNew, security_level);
+		                      (((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time) / 60 : 0), subject,
+		                      description, 0, LinphoneConferenceInfoStateNew, security_level);
 	}
 
 	BC_ASSERT_EQUAL(organizer.getStats().number_of_LinphoneConferenceStateTerminationPending,
@@ -4786,7 +4791,8 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 			}
 		} else if (confAddr) {
 			for (auto mgr : members) {
-				check_conference_info(mgr, confAddr, marie.getCMgr(), participants.size(), start_time, duration, initialSubject, description, 0, LinphoneConferenceInfoStateNew, security_level);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), participants.size(), start_time, duration,
+				                      initialSubject, description, 0, LinphoneConferenceInfoStateNew, security_level);
 
 				LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 				linphone_call_params_set_video_direction(new_params, LinphoneMediaDirectionSendRecv);
@@ -7167,33 +7173,6 @@ void create_conference_with_active_call_base(bool_t dialout) {
 
 			if (confAddr) {
 				for (auto mgr : participants) {
-					LinphoneConferenceInfo *info =
-					    linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
-					if (BC_ASSERT_PTR_NOT_NULL(info)) {
-						BC_ASSERT_TRUE(linphone_address_weak_equal(marie.getCMgr()->identity,
-						                                           linphone_conference_info_get_organizer(info)));
-						BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, linphone_conference_info_get_uri(info)));
-
-						const bctbx_list_t *info_participants = linphone_conference_info_get_participant_infos(info);
-						BC_ASSERT_EQUAL(bctbx_list_size(info_participants), 3, size_t, "%zu");
-
-						BC_ASSERT_NOT_EQUAL((long long)linphone_conference_info_get_date_time(info), 0, long long,
-						                    "%lld");
-						const int duration_m = linphone_conference_info_get_duration(info);
-						BC_ASSERT_EQUAL(duration_m, 0, int, "%d");
-						if (initialSubject) {
-							BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_subject(info), initialSubject);
-						} else {
-							BC_ASSERT_PTR_NULL(linphone_conference_info_get_subject(info));
-						}
-						if (send_ics) {
-							BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_description(info), description);
-						} else {
-							BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(info));
-						}
-						linphone_conference_info_unref(info);
-					}
-
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
@@ -7236,31 +7215,8 @@ void create_conference_with_active_call_base(bool_t dialout) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
 
-			LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
-			if (BC_ASSERT_PTR_NOT_NULL(info)) {
-				BC_ASSERT_TRUE(linphone_address_weak_equal(marie.getCMgr()->identity,
-				                                           linphone_conference_info_get_organizer(info)));
-				BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, linphone_conference_info_get_uri(info)));
-
-				const bctbx_list_t *info_participants = linphone_conference_info_get_participant_infos(info);
-				// Original participants + Marie who joined the conference
-				BC_ASSERT_EQUAL(bctbx_list_size(info_participants), 4, size_t, "%zu");
-
-				BC_ASSERT_GREATER_STRICT((long long)linphone_conference_info_get_date_time(info), 0, long long, "%lld");
-				const int duration_m = linphone_conference_info_get_duration(info);
-				BC_ASSERT_EQUAL(duration_m, 0, int, "%d");
-				if (initialSubject) {
-					BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_subject(info), initialSubject);
-				} else {
-					BC_ASSERT_PTR_NULL(linphone_conference_info_get_subject(info));
-				}
-				if (send_ics) {
-					BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_description(info), description);
-				} else {
-					BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(info));
-				}
-				linphone_conference_info_unref(info);
-			}
+			check_conference_info(mgr, confAddr, marie.getCMgr(), 4, 0, 0, initialSubject,
+			                      (send_ics) ? description : NULL, 0, LinphoneConferenceInfoStateNew, security_level);
 
 			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
