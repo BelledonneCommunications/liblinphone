@@ -1040,11 +1040,11 @@ void RemoteConference::onPendingCallStateChanged(std::shared_ptr<LinphonePrivate
 				if (((focusCallState == CallSession::State::StreamsRunning) ||
 				     (focusCallState == CallSession::State::Connected) ||
 				     (focusCallState == CallSession::State::UpdatedByRemote)) &&
-				    ((getState() == ConferenceInterface::State::CreationPending) ||
+				    ((state == ConferenceInterface::State::CreationPending) ||
 				     (state == ConferenceInterface::State::Created))) {
 					// Transfer call only if focus call remote contact address is available (i.e. the call has been
 					// correctly established and passed through state StreamsRunning)
-					if (!session->getRemoteContactAddress()) {
+					if (session->getRemoteContactAddress()) {
 						m_pendingCalls.remove(call);
 						transferToFocus(call);
 					}

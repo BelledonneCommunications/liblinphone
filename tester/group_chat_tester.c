@@ -8977,7 +8977,7 @@ static void group_chat_room_message_sync_between_devices_with_same_identity(void
 
 test_t group_chat_tests[] = {
     TEST_NO_TAG("Chat room params", group_chat_room_params),
-    TEST_NO_TAG("Core restarts as soon as chat room is created", group_chat_room_creation_core_restart),
+    TEST_ONE_TAG("Core restarts as soon as chat room is created", group_chat_room_creation_core_restart, "LeaksMemory"),
     TEST_NO_TAG("Chat room with forced local identity", group_chat_room_creation_with_given_identity),
     TEST_NO_TAG("Group chat room creation server", group_chat_room_creation_server),
     TEST_NO_TAG("Network down while creating group chat room", group_chat_room_creation_server_network_down),

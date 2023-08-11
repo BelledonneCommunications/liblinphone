@@ -945,6 +945,9 @@ static void simple_conference_notify_speaking_device(void) {
 	                             initial_laure_stat.number_of_LinphoneCallStreamsRunning + 1, 2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning,
 	                             initial_marie_stat.number_of_LinphoneCallStreamsRunning + 2, 3000));
+	BC_ASSERT_FALSE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallPausedByRemote,
+	                              initial_laure_stat.number_of_LinphoneCallPausedByRemote + 1, 2000));
+	BC_ASSERT_EQUAL(laure->stat.number_of_LinphoneCallPausedByRemote, 0, int, "%d");
 
 	// Set Laure is_speaking callback for all participants to check that pauline is speaking
 	LinphoneConference *laure_conf = linphone_call_get_conference(linphone_core_get_current_call(laure->lc));
