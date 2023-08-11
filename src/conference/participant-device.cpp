@@ -63,8 +63,10 @@ ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, 
 }
 
 ParticipantDevice::~ParticipantDevice () {
-	if (mConferenceSubscribeEvent)
+	if (mConferenceSubscribeEvent) {
 		linphone_event_unref(mConferenceSubscribeEvent);
+		mConferenceSubscribeEvent = nullptr;
+	}
 }
 
 bool ParticipantDevice::operator== (const ParticipantDevice &device) const {

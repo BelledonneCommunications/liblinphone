@@ -983,7 +983,6 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 	linphone_event_accept_subscription(lev);
 	if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
 		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
-
 		auto oldLev = device->getConferenceSubscribeEvent();
 		device->setConferenceSubscribeEvent(lev);
 		if (oldLev) {
