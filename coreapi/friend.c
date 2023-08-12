@@ -2283,3 +2283,17 @@ const char *linphone_friend_get_organization(const LinphoneFriend *lf) {
 	}
 	return NULL;
 }
+
+void linphone_friend_set_job_title(LinphoneFriend *lf, const char *job_title) {
+	if (!lf) return;
+	if (linphone_core_vcard_supported() && lf->vcard) {
+		linphone_vcard_set_job_title(lf->vcard, job_title);
+	}
+}
+
+const char *linphone_friend_get_job_title(const LinphoneFriend *lf) {
+	if (lf && linphone_core_vcard_supported() && lf->vcard) {
+		return linphone_vcard_get_job_title(lf->vcard);
+	}
+	return NULL;
+}

@@ -162,6 +162,16 @@ const char *linphone_vcard_get_organization(BCTBX_UNUSED(const LinphoneVcard *vC
 void linphone_vcard_remove_organization(BCTBX_UNUSED(LinphoneVcard *vCard)) {
 }
 
+void linphone_vcard_set_job_title(BCTBX_UNUSED(LinphoneVcard *vCard), BCTBX_UNUSED(const char *job_title)) {
+}
+
+const char *linphone_vcard_get_job_title(BCTBX_UNUSED(const LinphoneVcard *vCard)) {
+	return NULL;
+}
+
+void linphone_vcard_remove_job_title(BCTBX_UNUSED(LinphoneVcard *vCard)) {
+}
+
 void linphone_vcard_set_photo(BCTBX_UNUSED(LinphoneVcard *vCard), BCTBX_UNUSED(const char *picture)) {
 }
 

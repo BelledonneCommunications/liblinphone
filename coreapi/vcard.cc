@@ -430,6 +430,41 @@ void linphone_vcard_remove_organization(LinphoneVcard *vCard) {
 	}
 }
 
+void linphone_vcard_set_job_title(LinphoneVcard *vCard, const char *job_title) {
+	if (!vCard) return;
+
+	if (!job_title) {
+		linphone_vcard_remove_job_title(vCard);
+	} else if (vCard->belCard->getTitles().size() > 0) {
+		const shared_ptr<belcard::BelCardTitle> title = vCard->belCard->getTitles().front();
+		title->setValue(job_title);
+	} else {
+		shared_ptr<belcard::BelCardTitle> title = belcard::BelCardGeneric::create<belcard::BelCardTitle>();
+		title->setValue(job_title);
+		if (!vCard->belCard->addTitle(title)) {
+			ms_error("[vCard] Couldn't add TITLE value [%s] to vCard [%p]", job_title, vCard);
+		}
+	}
+}
+
+const char *linphone_vcard_get_job_title(const LinphoneVcard *vCard) {
+	if (vCard && vCard->belCard->getTitles().size() > 0) {
+		const shared_ptr<belcard::BelCardTitle> title = vCard->belCard->getTitles().front();
+		return title->getValue().c_str();
+	}
+
+	return NULL;
+}
+
+void linphone_vcard_remove_job_title(LinphoneVcard *vCard) {
+	if (!vCard) return;
+
+	if (vCard->belCard->getTitles().size() > 0) {
+		const shared_ptr<belcard::BelCardTitle> title = vCard->belCard->getTitles().front();
+		vCard->belCard->removeTitle(title);
+	}
+}
+
 void linphone_vcard_set_photo(LinphoneVcard *vCard, const char *picture) {
 	if (!vCard) return;
 

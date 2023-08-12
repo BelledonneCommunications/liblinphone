@@ -456,6 +456,22 @@ LINPHONE_PUBLIC void linphone_friend_set_organization(LinphoneFriend *linphone_f
  */
 LINPHONE_PUBLIC const char *linphone_friend_get_organization(const LinphoneFriend *linphone_friend);
 
+/**
+ * Sets the contact's job title.
+ * It's a shortcut to linphone_friend_get_vcard() and linphone_vcard_set_job_title().
+ * @param linphone_friend the #LinphoneFriend object.
+ * @param job_title the job title to store in Friend's vCard. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_friend_set_job_title(LinphoneFriend *linphone_friend, const char *job_title);
+
+/**
+ * Gets the contact's job title from it's vCard.
+ * It's a shortcut to linphone_friend_get_vcard() and linphone_vcard_get_job_title().
+ * @param linphone_friend the #LinphoneFriend object.
+ * @return the job_title set if any & vCard is available, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_friend_get_job_title(const LinphoneFriend *linphone_friend);
+
 /************ */
 /* Friend CBS */
 /* ********** */
