@@ -196,8 +196,7 @@ CorePrivate::createClientGroupChatRoom(const string &subject, bool fallback, boo
 	L_Q();
 
 	auto defaultLocalAddress = getDefaultLocalAddress(nullptr, true);
-	std::shared_ptr<Address> conferenceFactoryUri =
-	    Address::create(Core::getConferenceFactoryUri(q->getSharedFromThis(), defaultLocalAddress));
+	const auto &conferenceFactoryUri = Core::getConferenceFactoryAddress(q->getSharedFromThis(), defaultLocalAddress);
 	shared_ptr<ChatRoomParams> params =
 	    ChatRoomParams::create(subject, encrypted, !fallback, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 
@@ -212,7 +211,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom(const ConferenceId
 
 	shared_ptr<AbstractChatRoom> chatRoom;
 	BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId, params);
-	string conferenceFactoryUri = Core::getConferenceFactoryUri(q->getSharedFromThis(), conferenceId.getLocalAddress());
+	const auto &conferenceFactoryUri =
+	    Core::getConferenceFactoryAddress(q->getSharedFromThis(), conferenceId.getLocalAddress());
 	if (basicToFlexisipChatroomMigrationEnabled()) {
 		capabilities.set(ChatRoom::Capabilities::Migratable);
 	} else {
@@ -220,7 +220,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom(const ConferenceId
 	}
 
 #ifdef HAVE_ADVANCED_IM
-	if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
+	if ((capabilities & ChatRoom::Capabilities::Migratable) && conferenceFactoryUri &&
+	    conferenceFactoryUri->isValid()) {
 		chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
 	} else {
 #endif
@@ -316,8 +317,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
-		string conferenceFactoryUri = Core::getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
-		if (conferenceFactoryUri.empty()) {
+		const auto &conferenceFactoryUri = Core::getConferenceFactoryAddress(q->getSharedFromThis(), localAddr);
+		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
 			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr
 			           << "]";
 			return nullptr;
@@ -344,8 +345,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			}
 		}
 
-		std::shared_ptr<Address> conferenceFactory = Address::create(conferenceFactoryUri);
-		chatRoom = createClientGroupChatRoom(params->getSubject(), conferenceFactory, conferenceId, Content(),
+		chatRoom = createClientGroupChatRoom(params->getSubject(), conferenceFactoryUri, conferenceId, Content(),
 		                                     ChatRoomParams::toCapabilities(params), params, false);
 
 		if (!chatRoom) {
@@ -651,23 +651,26 @@ static bool compare_chat_room(const shared_ptr<AbstractChatRoom> &first, const s
 	return first->getLastUpdateTime() > second->getLastUpdateTime();
 }
 
-string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const std::shared_ptr<const Address> &localAddress) {
-	LinphoneAccount *account = linphone_core_lookup_account_by_identity(core->getCCore(), localAddress->toC());
+const std::shared_ptr<Address> Core::getConferenceFactoryAddress(const shared_ptr<Core> &core,
+                                                                 const std::shared_ptr<const Address> &localAddress) {
+	LinphoneAccount *account =
+	    linphone_core_lookup_account_by_identity(core->getCCore(), localAddress ? localAddress->toC() : nullptr);
 	if (!account) {
 		lWarning() << "No account found for local address: [" << localAddress->toString() << "]";
-		return string();
-	} else return getConferenceFactoryUri(core, account);
+		return nullptr;
+	} else return getConferenceFactoryAddress(core, Account::toCpp(account)->getSharedFromThis());
 }
 
-string Core::getConferenceFactoryUri(BCTBX_UNUSED(const shared_ptr<Core> &core), const LinphoneAccount *account) {
-	const LinphoneAccountParams *params = linphone_account_get_params(account);
+const std::shared_ptr<Address> Core::getConferenceFactoryAddress(BCTBX_UNUSED(const shared_ptr<Core> &core),
+                                                                 const std::shared_ptr<Account> account) {
+	const auto &params = account->getAccountParams();
 	if (params) {
-		const char *uri = linphone_account_params_get_conference_factory_uri(params);
+		const auto &uri = params->getConferenceFactoryAddress();
 		if (uri) {
 			return uri;
 		}
 	}
-	return string();
+	return nullptr;
 }
 
 // -----------------------------------------------------------------------------

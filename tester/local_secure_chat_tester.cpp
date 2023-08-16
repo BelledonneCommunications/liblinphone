@@ -39,10 +39,10 @@ static void secure_group_chat_room_with_subscribe_error(void) {
 static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity(), true);
-		ClientConference marie2("marie_rc", focus.getIdentity(), true);
-		ClientConference michelle("michelle_rc", focus.getIdentity(), true);
-		ClientConference michelle2("michelle_rc", focus.getIdentity(), true);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference marie2("marie_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), true);
 
 		stats initialFocusStats = focus.getStats();
 		stats initialMarieStats = marie.getStats();

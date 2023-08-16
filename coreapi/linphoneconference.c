@@ -257,27 +257,19 @@ int linphone_conference_get_participant_device_volume(LinphoneConference *confer
 	    ->getParticipantDeviceVolume(ParticipantDevice::toCpp(device)->getSharedFromThis());
 }
 
-int linphone_conference_mute_microphone(LinphoneConference *conference, bool_t val) {
-	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
-	MediaConference::Conference::toCpp(conference)->notifyLocalMutedDevices(val);
-	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
-	if (!aci) return -1;
-	aci->enableMic(!val);
-	return 0;
-}
-
-bool_t linphone_conference_microphone_is_muted(const LinphoneConference *conference) {
-	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
-	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
-	if (!aci) return FALSE;
-	return aci->micEnabled() ? FALSE : TRUE;
-}
-
 float linphone_conference_get_input_volume(const LinphoneConference *conference) {
 	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
-	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
-	if (!aci) return 0.0;
-	return aci->getRecordVolume();
+	return MediaConference::Conference::toCpp(conference)->getRecordVolume();
+}
+
+bool_t linphone_conference_get_microphone_muted(const LinphoneConference *conference) {
+	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
+	return MediaConference::Conference::toCpp(conference)->getMicrophoneMuted();
+}
+
+void linphone_conference_set_microphone_muted(LinphoneConference *conference, bool_t muted) {
+	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
+	MediaConference::Conference::toCpp(conference)->setMicrophoneMuted(!!muted);
 }
 
 int linphone_conference_get_participant_count(const LinphoneConference *conference) {

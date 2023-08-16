@@ -233,11 +233,11 @@ static void
 group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add_participant, bool_t stop_core) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity(), encrypted);
-		ClientConference michelle("michelle_rc", focus.getIdentity(), encrypted);
-		ClientConference michelle2("michelle_rc", focus.getIdentity(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getIdentity(), encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getIdentity(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(michelle);
@@ -358,7 +358,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 		ms_message("%s goes offline", linphone_core_get_identity(laure.getLc()));
 		linphone_core_set_network_reachable(laure.getLc(), FALSE);
 
-		ClientConference berthe("berthe_rc", focus.getIdentity(), encrypted);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), encrypted);
 		focus.registerAsParticipantDevice(berthe);
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(berthe.getLc()));
 		stats berthe_stat = berthe.getStats();
@@ -696,9 +696,9 @@ static void group_chat_room_lime_session_corrupted(void) {
 	{ // to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getIdentity(), true);
-		ClientConference pauline("pauline_rc", focus.getIdentity(), true);
-		ClientConference laure("laure_tcp_rc", focus.getIdentity(), true);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), true);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

@@ -31,8 +31,8 @@ static void group_chat_room_server_admin_managed_messages_unencrypted(void) {
 static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_after_creation(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -186,8 +186,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_after_creation(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -395,8 +395,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_update(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 
 		linphone_core_set_default_ephemeral_lifetime(marie.getLc(), 5);
 
@@ -518,8 +518,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_toggle_using_different_methods(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -708,8 +708,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 static void group_chat_room_server_ephemeral_mode_changed(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

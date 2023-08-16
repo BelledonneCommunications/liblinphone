@@ -152,11 +152,6 @@ public:
 	bool isConferenceEnded() const;
 	bool isConferenceStarted() const;
 
-	void setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
-	void setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
-	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
-	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
-
 	virtual AudioControlInterface *getAudioControlInterface() const = 0;
 	virtual VideoControlInterface *getVideoControlInterface() const = 0;
 	virtual AudioStream *getAudioStream() = 0; /* Used by the tone manager, revisit.*/
@@ -165,9 +160,18 @@ public:
 		return getParticipantCount() + (isIn() ? 1 : 0);
 	}
 
+	void setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	void setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
+
 	virtual int startRecording(const char *path) = 0;
-	virtual int stopRecording() = 0;
-	virtual bool isRecording() const = 0;
+	int stopRecording();
+	bool isRecording() const;
+
+	bool getMicrophoneMuted() const;
+	void setMicrophoneMuted(bool muted);
+	float getRecordVolume() const;
 
 	void setState(LinphonePrivate::ConferenceInterface::State state) override;
 	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {

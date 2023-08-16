@@ -1111,13 +1111,13 @@ static void simple_conference_notify_muted_device(void) {
 	}
 	bctbx_list_free_with_data(participant_devices, (void (*)(void *))linphone_participant_device_unref);
 
-	linphone_core_mute_mic(pauline->lc, TRUE);
+	linphone_core_enable_mic(pauline->lc, FALSE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceMuted, 1, 5000));
 
-	linphone_core_mute_mic(pauline->lc, FALSE);
+	linphone_core_enable_mic(pauline->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceUnmuted, 1, 5000));
 
-	linphone_core_mute_mic(laure->lc, TRUE);
+	linphone_core_enable_mic(laure->lc, FALSE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceMuted, 2, 5000));
 
 	terminate_conference(new_participants, marie, NULL, NULL);
@@ -2985,8 +2985,8 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 	linphone_proxy_config_set_route(laure_proxy_config, laure_proxy_uri);
 	linphone_proxy_config_done(laure_proxy_config);
 
-	// Remove conference spec after setting conference factory uri as the callback onConferenceFactoryUriChanged sets
-	// ephemeral, groupchat and conference versions
+	// Remove conference spec after setting conference factory uri as the callback onConferenceFactoryAddressChanged
+	// sets ephemeral, groupchat and conference versions
 	if (remove_conference_version) {
 		linphone_core_remove_linphone_spec(marie->lc, "conference");
 	}

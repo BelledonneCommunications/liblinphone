@@ -315,12 +315,23 @@ void linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *p
 }
 
 const char *linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params) {
-	return L_STRING_TO_C(AccountParams::toCpp(params)->getConferenceFactoryUri());
+	return AccountParams::toCpp(params)->getConferenceFactoryCstr();
 }
 
+void linphone_account_params_set_conference_factory_address(LinphoneAccountParams *params,
+                                                            const LinphoneAddress *address) {
+	AccountParams::toCpp(params)->setConferenceFactoryAddress(address ? Address::toCpp(address)->getSharedFromThis()
+	                                                                  : nullptr);
+}
+
+const LinphoneAddress *linphone_account_params_get_conference_factory_address(const LinphoneAccountParams *params) {
+	const auto &address = AccountParams::toCpp(params)->getConferenceFactoryAddress();
+	return address != nullptr ? address->toC() : nullptr;
+}
 void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params,
                                                                         const LinphoneAddress *address) {
-	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(Address::toCpp(address)->getSharedFromThis());
+	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(
+	    address ? Address::toCpp(address)->getSharedFromThis() : nullptr);
 }
 
 const LinphoneAddress *

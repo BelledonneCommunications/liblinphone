@@ -250,8 +250,8 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 		mNatPolicy = NatPolicy::toCpp(natPolicy)->toSharedPtr();
 	}
 
-	mConferenceFactoryUri =
-	    linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
+	setConferenceFactoryUri(L_C_TO_STRING(linphone_config_get_string(config, key, "conference_factory_uri", "")));
+
 	string audioVideoConferenceFactoryUri =
 	    linphone_config_get_string(config, key, "audio_video_conference_factory_uri", "");
 	mAudioVideoConferenceFactoryAddress = nullptr;
@@ -264,6 +264,7 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
 
 	setLimeServerUrl(linphone_config_get_string(config, key, "lime_server_url", mLimeServerUrl.c_str()));
+
 	setPictureUri(linphone_config_get_string(config, key, "picture_uri", mPictureUri.c_str()));
 
 	readCustomParamsFromConfigFile(config, key);
@@ -296,7 +297,13 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	mRefKey = other.mRefKey;
 	mDependsOn = other.mDependsOn;
 	mIdKey = other.mIdKey;
-	mConferenceFactoryUri = other.mConferenceFactoryUri;
+
+	if (other.mConferenceFactoryAddress) {
+		mConferenceFactoryAddress = other.mConferenceFactoryAddress->clone()->toSharedPtr();
+	} else {
+		mConferenceFactoryAddress = nullptr;
+	}
+
 	if (other.mAudioVideoConferenceFactoryAddress) {
 		mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress->clone()->toSharedPtr();
 	} else {
@@ -469,7 +476,26 @@ void AccountParams::setIdKey(const std::string &idKey) {
 }
 
 void AccountParams::setConferenceFactoryUri(const std::string &conferenceFactoryUri) {
-	mConferenceFactoryUri = conferenceFactoryUri;
+	setConferenceFactoryAddress(conferenceFactoryUri.empty() ? nullptr : Address::create(conferenceFactoryUri));
+}
+
+void AccountParams::setConferenceFactoryAddress(const std::shared_ptr<const Address> conferenceFactoryAddress) {
+	if (mConferenceFactoryAddress != nullptr) {
+		mConferenceFactoryAddress = nullptr;
+	}
+	if (conferenceFactoryAddress != nullptr) {
+		mConferenceFactoryAddress = conferenceFactoryAddress->clone()->toSharedPtr();
+	}
+}
+
+void AccountParams::setAudioVideoConferenceFactoryAddress(
+    const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress) {
+	if (mAudioVideoConferenceFactoryAddress != nullptr) {
+		mAudioVideoConferenceFactoryAddress = nullptr;
+	}
+	if (audioVideoConferenceFactoryAddress != nullptr) {
+		mAudioVideoConferenceFactoryAddress = audioVideoConferenceFactoryAddress->clone()->toSharedPtr();
+	}
 }
 
 void AccountParams::setFileTranferServer(const std::string &fileTransferServer) {
@@ -539,16 +565,6 @@ void AccountParams::setPushNotificationConfig(PushNotificationConfig *pushNotifi
 
 	mPushNotificationConfig = pushNotificationConfig;
 	mPushNotificationConfig->ref();
-}
-
-void AccountParams::setAudioVideoConferenceFactoryAddress(
-    const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress) {
-	if (mAudioVideoConferenceFactoryAddress != nullptr) {
-		mAudioVideoConferenceFactoryAddress = nullptr;
-	}
-	if (audioVideoConferenceFactoryAddress != nullptr) {
-		mAudioVideoConferenceFactoryAddress = audioVideoConferenceFactoryAddress->clone()->toSharedPtr();
-	}
 }
 
 void AccountParams::enableRtpBundle(bool value) {
@@ -693,8 +709,23 @@ const std::string &AccountParams::getIdKey() const {
 	return mIdKey;
 }
 
-const std::string &AccountParams::getConferenceFactoryUri() const {
-	return mConferenceFactoryUri;
+const char *AccountParams::getConferenceFactoryCstr() const {
+	if (mConferenceFactoryAddressCstr) {
+		ms_free(mConferenceFactoryAddressCstr);
+		mConferenceFactoryAddressCstr = nullptr;
+	}
+	if (mConferenceFactoryAddress) {
+		mConferenceFactoryAddressCstr = mConferenceFactoryAddress->asStringUriOnlyCstr();
+	}
+	return mConferenceFactoryAddressCstr;
+}
+
+const std::shared_ptr<Address> &AccountParams::getConferenceFactoryAddress() const {
+	return mConferenceFactoryAddress;
+}
+
+const std::shared_ptr<Address> &AccountParams::getAudioVideoConferenceFactoryAddress() const {
+	return mAudioVideoConferenceFactoryAddress;
 }
 
 const std::string &AccountParams::getFileTransferServer() const {
@@ -750,10 +781,6 @@ shared_ptr<NatPolicy> AccountParams::getNatPolicy() const {
 
 PushNotificationConfig *AccountParams::getPushNotificationConfig() const {
 	return mPushNotificationConfig;
-}
-
-const std::shared_ptr<Address> &AccountParams::getAudioVideoConferenceFactoryAddress() const {
-	return mAudioVideoConferenceFactoryAddress;
 }
 
 bool AccountParams::rtpBundleEnabled() const {
@@ -915,7 +942,9 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 		linphone_config_set_string(config, key, "nat_policy_ref", mNatPolicy->getRef().c_str());
 	}
 
-	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
+	if (mConferenceFactoryAddress != nullptr) {
+		linphone_config_set_string(config, key, "conference_factory_uri", getConferenceFactoryCstr());
+	}
 
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
 		char *factory_address = mAudioVideoConferenceFactoryAddress->asStringUriOnlyCstr();

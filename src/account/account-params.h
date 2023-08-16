@@ -71,6 +71,8 @@ public:
 	void setDependsOn(const std::string &dependsOn);
 	void setIdKey(const std::string &idKey);
 	void setConferenceFactoryUri(const std::string &conferenceFactoryUri);
+	void setConferenceFactoryAddress(const std::shared_ptr<const Address> factoryAddress);
+	void setAudioVideoConferenceFactoryAddress(const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress);
 	void setFileTranferServer(const std::string &fileTransferServer);
 	void setPrivacy(LinphonePrivacyMask privacy);
 	void setAvpfMode(LinphoneAVPFMode avpfMode);
@@ -79,7 +81,6 @@ public:
 	LinphoneStatus setIdentityAddress(const std::shared_ptr<Address> identityAddress);
 	LinphoneStatus setRoutes(const std::list<std::shared_ptr<Address>> &routes);
 	LinphoneStatus setRoutesFromStringList(const bctbx_list_t *routes);
-	void setAudioVideoConferenceFactoryAddress(const std::shared_ptr<const Address> audioVideoConferenceFactoryAddress);
 	void enableRtpBundle(bool value);
 	void enableRtpBundleAssumption(bool value);
 	void setCustomContact(const std::shared_ptr<Address> contact);
@@ -112,10 +113,12 @@ public:
 	const std::string &getRefKey() const;
 	const std::string &getDependsOn() const;
 	const std::string &getIdKey() const;
-	const std::string &getConferenceFactoryUri() const;
+	const std::shared_ptr<Address> &getConferenceFactoryAddress() const;
+	const std::shared_ptr<Address> &getAudioVideoConferenceFactoryAddress() const;
 	const std::string &getFileTransferServer() const;
 	const std::string &getIdentity() const;
 	const char *getDomainCstr() const;
+	const char *getConferenceFactoryCstr() const;
 	const std::string getDomain() const;
 	const std::list<std::shared_ptr<Address>> &getRoutes() const;
 	const std::list<std::string> getRoutesString() const;
@@ -125,7 +128,6 @@ public:
 	LinphoneAVPFMode getAvpfMode() const;
 	std::shared_ptr<NatPolicy> getNatPolicy() const;
 	PushNotificationConfig *getPushNotificationConfig() const;
-	const std::shared_ptr<Address> &getAudioVideoConferenceFactoryAddress() const;
 	bool rtpBundleEnabled() const;
 	bool rtpBundleAssumptionEnabled() const;
 	const std::shared_ptr<Address> &getCustomContact() const;
@@ -168,6 +170,8 @@ private:
 
 	void *mUserData;
 
+	mutable char *mConferenceFactoryAddressCstr = nullptr;
+
 	std::string mInternationalPrefix;
 	std::string mProxy;
 	std::string mRealm;
@@ -177,7 +181,6 @@ private:
 	std::string mRefKey;
 	std::string mDependsOn;
 	std::string mIdKey;
-	std::string mConferenceFactoryUri;
 	std::string mFileTransferServer;
 	std::string mLimeServerUrl;
 	std::string mIdentity;
@@ -197,6 +200,7 @@ private:
 
 	PushNotificationConfig *mPushNotificationConfig;
 
+	std::shared_ptr<Address> mConferenceFactoryAddress = nullptr;
 	std::shared_ptr<Address> mAudioVideoConferenceFactoryAddress = nullptr;
 	std::shared_ptr<Address> mCustomContact = nullptr;
 };

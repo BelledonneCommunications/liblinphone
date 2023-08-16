@@ -1724,12 +1724,11 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	if (confAddr) {
 		conferenceFactoryUri = confAddr;
 	} else {
-		LinphoneAddress *factoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
-		if (factoryUri == nullptr) {
+		conferenceFactoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
+		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
 			lWarning() << "Not creating conference: no conference factory uri for local address [" << *localAddr << "]";
 			return nullptr;
 		}
-		conferenceFactoryUri = Address::toCpp(factoryUri)->getSharedFromThis();
 		conferenceFactoryUri->setUriParam(Conference::SecurityModeParameter,
 		                                  ConferenceParams::getSecurityLevelAttribute(confParams->getSecurityLevel()));
 	}
@@ -1822,29 +1821,29 @@ const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() co
 	return encEnumList;
 }
 
-LinphoneAddress *Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-                                                             const std::shared_ptr<Address> &localAddress) {
+const std::shared_ptr<Address>
+Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+                                            const std::shared_ptr<Address> &localAddress) {
 	std::shared_ptr<Address> addr = localAddress;
 	LinphoneAccount *account = linphone_core_lookup_known_account(core->getCCore(), addr->toC());
 
 	if (!account) {
-		lWarning() << "No account found for local address: [" << localAddress->toString() << "]";
+		lWarning() << "No account found for local address: [" << *localAddress << "]";
 		return nullptr;
-	} else return getAudioVideoConferenceFactoryAddress(core, account);
+	} else return getAudioVideoConferenceFactoryAddress(core, Account::toCpp(account)->getSharedFromThis());
 }
 
-LinphoneAddress *Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
-                                                             const LinphoneAccount *account) {
-	const auto &address = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
+const std::shared_ptr<Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
+                                                                           const std::shared_ptr<Account> account) {
+	const auto &address = account->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 	if (address == nullptr) {
-		string conferenceFactoryUri = getConferenceFactoryUri(core, account);
+		const auto &conferenceFactoryUri = getConferenceFactoryAddress(core, account);
 		lWarning() << "Audio/video conference factory is null, fallback to default conference factory URI ["
-		           << conferenceFactoryUri << "]";
-		if (conferenceFactoryUri.empty()) return nullptr;
-		return linphone_address_new(conferenceFactoryUri.c_str());
+		           << *conferenceFactoryUri << "]";
+		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) return nullptr;
+		return conferenceFactoryUri;
 	}
-	LinphoneAddress *factory_address = address->toC();
-	return factory_address;
+	return address;
 }
 
 void Core::initPlugins() {

@@ -226,25 +226,6 @@ int RemoteConference::startRecording(const char *path) {
 	return 0;
 }
 
-int RemoteConference::stopRecording() {
-	auto session = static_pointer_cast<MediaSession>(getMainSession());
-	if (session) {
-		session->stopRecording();
-	} else {
-		lError() << "RemoteConference::stopRecording(): no audio session.";
-		return -1;
-	}
-	return 0;
-}
-
-bool RemoteConference::isRecording() const {
-	auto session = static_pointer_cast<MediaSession>(getMainSession());
-	if (session) {
-		return session->isRecording();
-	}
-	return false;
-}
-
 void RemoteConference::notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) {
 	// Call callbacks before calling listeners because listeners may change state
 	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());

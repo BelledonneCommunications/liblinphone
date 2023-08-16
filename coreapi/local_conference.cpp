@@ -1889,25 +1889,6 @@ int LocalConference::startRecording(const char *path) {
 	return 0;
 }
 
-int LocalConference::stopRecording() {
-	AudioControlInterface *aci = getAudioControlInterface();
-	if (aci) {
-		aci->stopRecording();
-	} else {
-		lError() << "LocalConference::stopRecording(): no audio mixer.";
-		return -1;
-	}
-	return 0;
-}
-
-bool LocalConference::isRecording() const {
-	AudioControlInterface *aci = getAudioControlInterface();
-	if (aci) {
-		return aci->isRecording();
-	}
-	return false;
-}
-
 bool LocalConference::isIn() const {
 	return mIsIn;
 }

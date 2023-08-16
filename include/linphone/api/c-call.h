@@ -747,6 +747,9 @@ LINPHONE_PUBLIC void linphone_call_set_speaker_muted(LinphoneCall *call, bool_t 
  * linphone_core_enable_mic().
  * @param call The #LinphoneCall object. @notnil
  * @return The microphone muted state.
+ * @warning This method returns state of the mute capability of the call passed as argument. If this call is part of a
+ *conference, it is strongly recommended to call linphone_conference_get_microphone_muted() to know whether this device
+ *is muted or not.
  **/
 LINPHONE_PUBLIC bool_t linphone_call_get_microphone_muted(const LinphoneCall *call);
 
@@ -756,6 +759,9 @@ LINPHONE_PUBLIC bool_t linphone_call_get_microphone_muted(const LinphoneCall *ca
  * linphone_core_enable_mic().
  * @param call The #LinphoneCall object. @notnil
  * @param muted The microphone muted state.
+ * @warning This method only mutes the call passed as argument. If this call is part of a conference, it is strongly
+ *recommended to call linphone_conference_set_microphone_muted() to ensure that the setting is correctly apply across
+ *all participants and the conference callbacks are called.
  **/
 LINPHONE_PUBLIC void linphone_call_set_microphone_muted(LinphoneCall *call, bool_t muted);
 

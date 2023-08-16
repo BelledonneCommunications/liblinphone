@@ -28,7 +28,7 @@ namespace LinphoneTest {
 static void call_to_inexisting_conference_address(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
 
 		bctbx_list_t *coresList = NULL;
 		coresList = bctbx_list_append(coresList, focus.getLc());
@@ -61,7 +61,7 @@ static void call_to_inexisting_conference_address(void) {
 static void create_conference_on_unresponsive_server(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 
@@ -295,10 +295,10 @@ static void two_overlapping_scheduled_conferences_from_different_organizers(void
 static void create_conference_with_audio_only_participants_base(LinphoneConferenceSecurityLevel security_level) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -832,11 +832,11 @@ static void create_end_to_end_encryption_conference_with_audio_only_participants
 static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mismatch) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1230,9 +1230,9 @@ static void create_conference_with_participant_codec_mismatch(void) {
 static void create_conference_with_server_restart_base(bool_t organizer_first) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1574,10 +1574,10 @@ static void create_conference_with_server_restart_participant_first(void) {
 static void create_simple_conference_with_update_deferred(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -2044,9 +2044,9 @@ static void create_simple_conference_with_update_deferred(void) {
 static void change_active_speaker(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity()); // audio only
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress()); // audio only
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		setup_conference_info_cbs(marie.getCMgr());
@@ -2328,9 +2328,9 @@ static void create_scheduled_conference_with_active_call(void) {
 static void conference_with_participant_added_outside_valid_time_slot (bool_t before_start) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

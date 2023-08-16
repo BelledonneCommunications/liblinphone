@@ -35,11 +35,11 @@ static void create_conference_dial_out_base(bool_t send_ics,
                                             LinphoneConferenceSecurityLevel security_level) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -916,11 +916,11 @@ static void create_simple_conference_dial_out_with_video_not_initiated(void) {
 static void create_simple_conference_dial_out_organizer_codec_mismatch(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1004,11 +1004,11 @@ static void create_simple_conference_dial_out_organizer_codec_mismatch(void) {
 static void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneReason reason) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1663,11 +1663,11 @@ static void create_dial_out_conference_with_active_call(void) {
 static void simple_dial_out_conference_with_no_payloads(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

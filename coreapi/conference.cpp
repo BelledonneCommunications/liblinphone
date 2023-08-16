@@ -170,6 +170,75 @@ shared_ptr<AudioDevice> Conference::getOutputAudioDevice() const {
 	return nullptr;
 }
 
+int Conference::stopRecording() {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		aci->stopRecording();
+	} else {
+		lError() << "LocalConference::stopRecording(): no audio mixer.";
+		return -1;
+	}
+	return 0;
+}
+
+bool Conference::isRecording() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->isRecording();
+	}
+	return false;
+}
+
+bool Conference::getMicrophoneMuted() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return !aci->micEnabled();
+	}
+	lError() << "Unable to get status of microphone because the audio control interface of conference "
+	         << *getConferenceAddress() << " cannot be found";
+	return false;
+}
+
+void Conference::setMicrophoneMuted(bool muted) {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		aci->enableMic(!muted);
+		for (const auto &participant : participants) {
+			for (const auto &device : participant->getDevices()) {
+				// If the core is holding a conference (conference server or client holding the conference because it
+				// has scheduled a conference without having a conference server set), every participant device has a
+				// media session associated to. In such a scenario all calls are muted one by one.
+				auto deviceSession = device->getSession();
+				if (deviceSession) {
+					auto op = deviceSession->getPrivate()->getOp();
+					shared_ptr<Call> call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
+					if (call) {
+						call->setMicrophoneMuted(muted);
+					}
+				}
+			}
+		}
+		bool coreMicrophoneEnabled = !!linphone_core_mic_enabled(getCore()->getCCore());
+		notifyLocalMutedDevices(muted || !coreMicrophoneEnabled);
+	} else {
+		const auto conferenceAddressStr =
+		    (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<address-not-defined>"));
+		lError() << "Unable to " << std::string(muted ? "disable" : "enable")
+		         << " microphone because the audio control interface of conference " << conferenceAddressStr
+		         << " cannot be found";
+	}
+}
+
+float Conference::getRecordVolume() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->getRecordVolume();
+	}
+	lError() << "Unable to get record volume because the audio control interface of conference "
+	         << *getConferenceAddress() << " cannot be found";
+	return 0.0;
+}
+
 void Conference::setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) {
 	if ((getState() == ConferenceInterface::State::Instantiated) ||
 	    (getState() == ConferenceInterface::State::CreationPending)) {

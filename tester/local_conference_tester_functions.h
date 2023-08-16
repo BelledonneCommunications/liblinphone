@@ -246,6 +246,13 @@ public:
 		configureFocus();
 	}
 
+	const Address getConferenceFactoryAddress() const {
+		LinphoneAccount *account = linphone_core_get_default_account(getLc());
+		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+		const LinphoneAddress *factory_uri = linphone_account_params_get_conference_factory_address(account_params);
+		return *Address::toCpp(factory_uri);
+	}
+
 private:
 	static void server_core_chat_room_conference_address_generation(LinphoneChatRoom *cr) {
 		Focus *focus =
@@ -327,7 +334,8 @@ private:
 		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 		LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
 		linphone_account_params_enable_rtp_bundle(new_account_params, TRUE);
-		linphone_account_params_set_conference_factory_uri(new_account_params, getIdentity().toString().c_str());
+		Address factoryAddress = getIdentity();
+		linphone_account_params_set_conference_factory_address(new_account_params, factoryAddress.toC());
 		linphone_account_set_params(account, new_account_params);
 		linphone_account_params_unref(new_account_params);
 		BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));

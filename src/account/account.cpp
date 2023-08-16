@@ -206,16 +206,21 @@ void Account::applyParamsChanges() {
 	if (mOldParams == nullptr || mOldParams->mInternationalPrefix != mParams->mInternationalPrefix)
 		onInternationalPrefixChanged();
 
-	if (mOldParams == nullptr || mOldParams->mConferenceFactoryUri != mParams->mConferenceFactoryUri)
-		onConferenceFactoryUriChanged(mParams->mConferenceFactoryUri);
+	if (mOldParams == nullptr ||
+	    ((mOldParams->mConferenceFactoryAddress != nullptr) ^ (mParams->mConferenceFactoryAddress != nullptr)) ||
+	    ((mOldParams->mConferenceFactoryAddress != nullptr) && (mParams->mConferenceFactoryAddress != nullptr) &&
+	     (*mOldParams->mConferenceFactoryAddress == *mParams->mConferenceFactoryAddress))) {
+		onConferenceFactoryAddressChanged(mParams->mConferenceFactoryAddress);
+	}
 
 	if (mOldParams == nullptr ||
 	    ((mOldParams->mAudioVideoConferenceFactoryAddress != nullptr) ^
 	     (mParams->mAudioVideoConferenceFactoryAddress != nullptr)) ||
 	    ((mOldParams->mAudioVideoConferenceFactoryAddress != nullptr) &&
 	     (mParams->mAudioVideoConferenceFactoryAddress != nullptr) &&
-	     (*mOldParams->mAudioVideoConferenceFactoryAddress == *mParams->mAudioVideoConferenceFactoryAddress)))
+	     (*mOldParams->mAudioVideoConferenceFactoryAddress == *mParams->mAudioVideoConferenceFactoryAddress))) {
 		onAudioVideoConferenceFactoryAddressChanged(mParams->mAudioVideoConferenceFactoryAddress);
+	}
 
 	if (mOldParams == nullptr || mOldParams->mNatPolicy != mParams->mNatPolicy)
 		if (mParams->mNatPolicy != nullptr) onNatPolicyChanged(mParams->mNatPolicy);
@@ -1126,10 +1131,16 @@ int Account::sendPublish() {
 }
 
 bool Account::check() {
-	if (mParams->mProxy.empty()) return false;
-	if (mParams->mIdentityAddress == NULL) return false;
+	if (mParams->mProxy.empty()) {
+		lWarning() << "No proxy given for account " << this;
+		return false;
+	}
+	if (mParams->mIdentityAddress == NULL) {
+		lWarning() << "Identity address of account " << this << " has not been set";
+		return false;
+	}
 	resolveDependencies();
-	return TRUE;
+	return true;
 }
 
 void Account::releaseOps() {
@@ -1202,10 +1213,9 @@ void Account::onInternationalPrefixChanged() {
 	}
 }
 
-void Account::onConferenceFactoryUriChanged(const std::string &conferenceFactoryUri) {
+void Account::onConferenceFactoryAddressChanged(const std::shared_ptr<Address> &conferenceFactoryAddress) {
 	auto core = getCCore();
 	if (!core) return;
-
 	std::string conferenceSpec("conference/");
 	conferenceSpec.append(Core::conferenceVersionAsString());
 	std::string groupchatSpec("groupchat/");
@@ -1213,7 +1223,7 @@ void Account::onConferenceFactoryUriChanged(const std::string &conferenceFactory
 	std::string ephemeralSpec("ephemeral/");
 	ephemeralSpec.append(Core::ephemeralVersionAsString());
 
-	if (!conferenceFactoryUri.empty()) {
+	if (conferenceFactoryAddress && conferenceFactoryAddress->isValid()) {
 		linphone_core_add_linphone_spec(core, L_STRING_TO_C(conferenceSpec));
 		linphone_core_add_linphone_spec(core, L_STRING_TO_C(groupchatSpec));
 		linphone_core_add_linphone_spec(core, L_STRING_TO_C(ephemeralSpec));
@@ -1223,9 +1233,9 @@ void Account::onConferenceFactoryUriChanged(const std::string &conferenceFactory
 		// Check that no other account needs the specs before removing it
 		for (bctbx_list_t *it = core->sip_conf.accounts; it; it = it->next) {
 			if (it->data != this->toC()) {
-				const char *confUri = linphone_account_params_get_conference_factory_uri(
+				const auto confUri = linphone_account_params_get_conference_factory_address(
 				    linphone_account_get_params((LinphoneAccount *)it->data));
-				if (confUri && strlen(confUri)) {
+				if (confUri) {
 					remove = false;
 					removeAudioVideoConfAddress = false;
 					break;
@@ -1263,11 +1273,11 @@ void Account::onAudioVideoConferenceFactoryAddressChanged(
 		// Check that no other account needs the specs before removing it
 		for (bctbx_list_t *it = core->sip_conf.accounts; it; it = it->next) {
 			if (it->data != this->toC()) {
-				const char *confUri = linphone_account_params_get_conference_factory_uri(
+				const auto confUri = linphone_account_params_get_conference_factory_address(
 				    linphone_account_get_params((LinphoneAccount *)it->data));
 				const auto audioVideoConfUri = linphone_account_params_get_audio_video_conference_factory_address(
 				    linphone_account_get_params((LinphoneAccount *)it->data));
-				if ((confUri && strlen(confUri)) || audioVideoConfUri) {
+				if (confUri || audioVideoConfUri) {
 					remove = false;
 					break;
 				}

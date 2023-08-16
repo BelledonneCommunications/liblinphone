@@ -110,8 +110,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_address(Linpho
  * @return 0 if successful, -1 otherwise.
  * @deprecated 01/03/2021 Use #linphone_account_params_set_server_address() instead.
  **/
-LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_addr(LinphoneAccountParams *params,
-                                                                       const char *server_address);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneStatus
+linphone_account_params_set_server_addr(LinphoneAccountParams *params, const char *server_address);
 
 /**
  * Sets the user identity as a SIP address.
@@ -153,7 +153,8 @@ LINPHONE_PUBLIC void linphone_account_params_set_expires(LinphoneAccountParams *
  * @param enable If TRUE, registration will be engaged.
  * @deprecated 16/12/2021 Use linphone_account_params_enable_register() instead.
  */
-LINPHONE_PUBLIC void linphone_account_params_set_register_enabled(LinphoneAccountParams *params, bool_t enable);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_account_params_set_register_enabled(LinphoneAccountParams *params,
+                                                                                      bool_t enable);
 
 /**
  * Indicates  either or not, REGISTRATION must be issued for this #LinphoneAccountParams.
@@ -168,7 +169,8 @@ LINPHONE_PUBLIC void linphone_account_params_enable_register(LinphoneAccountPara
  * @param enable If TRUE, publish will be engaged.
  * @deprecated 16/12/2021 Use linphone_account_params_enable_publish() instead.
  */
-LINPHONE_PUBLIC void linphone_account_params_set_publish_enabled(LinphoneAccountParams *params, bool_t enable);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_account_params_set_publish_enabled(LinphoneAccountParams *params,
+                                                                                     bool_t enable);
 
 /**
  * Indicates either or not, PUBLISH must be issued for this #LinphoneAccountParams.
@@ -198,7 +200,8 @@ LINPHONE_PUBLIC int linphone_account_params_get_publish_expires(const LinphoneAc
  * @param enable TRUE to replace + by the international prefix, FALSE otherwise.
  * @deprecated 16/12/2021 Use linphone_account_params_enable_dial_escape_plus() instead.
  **/
-LINPHONE_PUBLIC void linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *params, bool_t enable);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void
+linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *params, bool_t enable);
 
 /**
  * Set whether liblinphone should replace "+" by international calling prefix in dialed numbers (passed to
@@ -232,8 +235,8 @@ linphone_account_params_set_use_international_prefix_for_calls_and_chats(Linphon
  * @param enable TRUE to store quality statistics and send them to the collector, FALSE to disable it.
  * @deprecated 16/12/2021 Use linphone_account_params_enable_quality_reporting() instead.
  */
-LINPHONE_PUBLIC void linphone_account_params_set_quality_reporting_enabled(LinphoneAccountParams *params,
-                                                                           bool_t enable);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void
+linphone_account_params_set_quality_reporting_enabled(LinphoneAccountParams *params, bool_t enable);
 
 /**
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
@@ -248,7 +251,8 @@ LINPHONE_PUBLIC void linphone_account_params_enable_quality_reporting(LinphoneAc
  * @return TRUE if quality repotring is enabled, FALSE otherwise.
  * @deprecated 16/12/2021 Use linphone_account_params_quality_reporting_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_account_params_get_quality_reporting_enabled(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t
+linphone_account_params_get_quality_reporting_enabled(const LinphoneAccountParams *params);
 
 /**
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
@@ -340,7 +344,8 @@ linphone_account_params_get_identity_address(const LinphoneAccountParams *params
  * @return The SIP identity that belongs to this account params. @maybenil
  * @deprecated 01/03/2021 Use linphone_account_params_get_identity_address() instead.
  **/
-LINPHONE_PUBLIC const char *linphone_account_params_get_identity(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *
+linphone_account_params_get_identity(const LinphoneAccountParams *params);
 
 /**
  * Tell if the PUBLISH is enabled.
@@ -348,7 +353,8 @@ LINPHONE_PUBLIC const char *linphone_account_params_get_identity(const LinphoneA
  * @return TRUE if PUBLISH request is enabled for this proxy.
  * @deprecated 16/12/2021 Use linphone_account_params_publish_enabled() instead.
  **/
-LINPHONE_PUBLIC bool_t linphone_account_params_get_publish_enabled(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t
+linphone_account_params_get_publish_enabled(const LinphoneAccountParams *params);
 
 /**
  * Tell if the PUBLISH is enabled.
@@ -370,7 +376,8 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_account_params_get_server_addres
  * @return The proxy's SIP address. @maybenil
  * @deprecated 01/03/2021 Use linphone_account_params_get_server_address() instead.
  **/
-LINPHONE_PUBLIC const char *linphone_account_params_get_server_addr(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *
+linphone_account_params_get_server_addr(const LinphoneAccountParams *params);
 
 /**
  * Get the account params expires.
@@ -385,7 +392,8 @@ LINPHONE_PUBLIC int linphone_account_params_get_expires(const LinphoneAccountPar
  * @return TRUE if registration to the proxy is enabled.
  * @deprecated 16/12/2021 Use linphone_account_params_register_enabled() instead.
  **/
-LINPHONE_PUBLIC bool_t linphone_account_params_get_register_enabled(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t
+linphone_account_params_get_register_enabled(const LinphoneAccountParams *params);
 
 /**
  * Returns whether the account params is enabled or not.
@@ -441,7 +449,8 @@ LINPHONE_PUBLIC const char *linphone_account_params_get_contact_uri_parameters(c
  * @return Whether liblinphone should replace "+" by "00" in dialed numbers (passed to #linphone_core_invite()).
  * @deprecated 16/12/2021 Use linphone_account_params_dial_escape_plus_enabled() instead.
  **/
-LINPHONE_PUBLIC bool_t linphone_account_params_get_dial_escape_plus_enabled(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t
+linphone_account_params_get_dial_escape_plus_enabled(const LinphoneAccountParams *params);
 
 /**
  * Return whether or not the + should be replaced by 00.
@@ -591,8 +600,19 @@ LINPHONE_PUBLIC void linphone_account_params_set_nat_policy(LinphoneAccountParam
  * Set the conference factory uri.
  * @param params The #LinphoneAccountParams object @notnil
  * @param uri The uri of the conference factory. @maybenil
+ * @deprecated 16/08/2023 Use linphone_account_params_set_conference_factory_address() instead.
  */
-LINPHONE_PUBLIC void linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *params, const char *uri);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void
+linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *params, const char *uri);
+
+/**
+ * Set the conference factory uri.
+ * @param params The #LinphoneAccountParams object @notnil
+ * @param address The #LinphoneAddress to set. @maybenil
+ * @param uri The uri of the conference factory as a #LinphoneAddress. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_conference_factory_address(LinphoneAccountParams *params,
+                                                                            const LinphoneAddress *address);
 
 /**
  * Set the audio video conference factory uri.
@@ -609,7 +629,8 @@ LINPHONE_PUBLIC void linphone_account_params_set_audio_video_conference_factory_
  * @param enable TRUE to enable, FALSE otherwise.
  * @deprecated 16/12/2021 Use linphone_account_params_enable_outbound_proxy() instead.
  */
-LINPHONE_PUBLIC void linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params, bool_t enable);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void
+linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params, bool_t enable);
 
 /**
  * If enabled, the proxy will be used as the only route.
@@ -624,7 +645,8 @@ LINPHONE_PUBLIC void linphone_account_params_enable_outbound_proxy(LinphoneAccou
  * @return enable TRUE if enabled, FALSE otherwise.
  * @deprecated 16/12/2021 Use linphone_account_params_outbound_proxy_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t
+linphone_account_params_get_outbound_proxy_enabled(const LinphoneAccountParams *params);
 
 /**
  * Tell if the proxy is used as the only route.
@@ -638,7 +660,16 @@ LINPHONE_PUBLIC bool_t linphone_account_params_outbound_proxy_enabled(const Linp
  * @param params The #LinphoneAccountParams object @notnil
  * @return The uri of the conference factory. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *
+linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params);
+
+/**
+ * Get the conference factory uri.
+ * @param params The #LinphoneAccountParams object @notnil
+ * @return The #LinphoneAddress of the conference factory. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress *
+linphone_account_params_get_conference_factory_address(const LinphoneAccountParams *params);
 
 /**
  * Get the audio video conference factory uri.

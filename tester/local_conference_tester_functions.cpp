@@ -174,8 +174,8 @@ bool checkChatroom(Focus &focus, const ConfCoreManager &core, const time_t baseJ
 void group_chat_room_server_admin_managed_messages_base(bool_t encrypted) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getIdentity(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -272,10 +272,10 @@ void group_chat_room_server_admin_managed_messages_base(bool_t encrypted) {
 void group_chat_room_with_client_restart_base(bool encrypted) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity(), encrypted);
-		ClientConference michelle("michelle_rc", focus.getIdentity(), encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getIdentity(), encrypted);
-		ClientConference berthe("berthe_rc", focus.getIdentity(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(michelle);
@@ -377,7 +377,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 			        .waitUntil(chrono::seconds(10), [&focus, &core] { return checkChatroom(focus, core, -1); }));
 		};
 
-		ClientConference michelle2("michelle_rc", focus.getIdentity(), encrypted);
+		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
 		stats initialMichelle2Stats = michelle2.getStats();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		if (encrypted) {
@@ -648,12 +648,12 @@ server_core_chat_room_state_changed_sip_error(LinphoneCore *core, LinphoneChatRo
 void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_error, bool encrypted) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getIdentity(), encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getIdentity(), encrypted);
-		ClientConference berthe("berthe_rc", focus.getIdentity(), encrypted);
-		ClientConference michelle("michelle_rc", focus.getIdentity(), encrypted);
-		ClientConference michelle2("michelle_rc", focus.getIdentity(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference michelle2("michelle_rc", focus.getConferenceFactoryAddress(), encrypted);
 
 		stats initialFocusStats = focus.getStats();
 		stats initialMarieStats = marie.getStats();
@@ -1252,9 +1252,9 @@ void group_chat_room_lime_server_message(bool encrypted) {
 	{ // to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getIdentity(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getIdentity(), encrypted);
-		ClientConference laure("laure_tcp_rc", focus.getIdentity(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1401,8 +1401,8 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 	{ // to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getIdentity(), encrypted);
-		ClientConference pauline("pauline_rc", focus.getIdentity(), encrypted);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -2651,11 +2651,11 @@ void create_conference_base(time_t start_time,
                             bool_t all_speakers) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -3063,7 +3063,7 @@ void create_conference_base(time_t start_time,
 		LinphoneConference *marie_conference = linphone_core_search_conference_2(marie.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(marie_conference);
 		if (marie_conference) {
-			linphone_conference_mute_microphone(marie_conference, TRUE);
+			linphone_conference_set_microphone_muted(marie_conference, TRUE);
 		}
 
 		for (auto mgr : conferenceMgrs) {
@@ -4877,11 +4877,11 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
                                                            LinphoneConferenceSecurityLevel security_level) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -5608,11 +5608,11 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 void two_overlapping_conferences_base(bool_t same_organizer, bool_t dialout) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -6518,9 +6518,9 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
                                                          bool_t enable_stun) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 
@@ -7201,11 +7201,11 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 void create_conference_with_active_call_base(bool_t dialout) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference berthe("berthe_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference berthe("berthe_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -7817,9 +7817,9 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
                                                  LinphoneConferenceSecurityLevel security_level) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);

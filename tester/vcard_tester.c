@@ -165,7 +165,7 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(sip_addresses), 2, unsigned int, "%u");
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(phone_numbers), 1, unsigned int, "%u");
-	if (phone_numbers) bctbx_list_free(phone_numbers);
+	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, ms_free);
 	linphone_friend_unref(lf);
 
 	lvc = linphone_vcard_context_get_vcard_from_buffer(
@@ -180,7 +180,7 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(sip_addresses), 0, unsigned int, "%u");
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(phone_numbers), 2, unsigned int, "%u");
-	if (phone_numbers) bctbx_list_free(phone_numbers);
+	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, ms_free);
 
 	addr = linphone_address_new("sip:sylvain@sip.linphone.org");
 	linphone_friend_add_address(lf, addr);
@@ -190,12 +190,12 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 	linphone_friend_remove_phone_number(lf, "0952636505");
 	phone_numbers = linphone_friend_get_phone_numbers(lf);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(phone_numbers), 1, unsigned int, "%u");
-	if (phone_numbers) bctbx_list_free(phone_numbers);
+	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, ms_free);
 
 	linphone_friend_remove_phone_number(lf, "0476010203");
 	phone_numbers = linphone_friend_get_phone_numbers(lf);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(phone_numbers), 0, unsigned int, "%u");
-	if (phone_numbers) bctbx_list_free(phone_numbers);
+	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, ms_free);
 
 	linphone_friend_edit(lf);
 	linphone_friend_remove_address(lf, addr);
@@ -206,7 +206,7 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 	linphone_friend_add_phone_number(lf, "+33952636505");
 	phone_numbers = linphone_friend_get_phone_numbers(lf);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(phone_numbers), 1, unsigned int, "%u");
-	if (phone_numbers) bctbx_list_free(phone_numbers);
+	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, ms_free);
 
 	linphone_address_unref(addr);
 	linphone_friend_unref(lf);

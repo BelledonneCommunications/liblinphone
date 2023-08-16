@@ -8059,18 +8059,18 @@ LINPHONE_DEPRECATED char linphone_core_get_sound_source(LinphoneCore *core);
 
 LINPHONE_DEPRECATED void linphone_core_set_sound_source(LinphoneCore *core, char source);
 
-/**
- * @deprecated 09/10/2013 Use #linphone_core_enable_mic() instead.
- * @donotwrap
+/*
+ * Get the list of call logs (past calls) that matches the given #LinphoneAddress.
+ * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once
+ *you are done using it. Requires ENABLE_DB_STORAGE to work.
+ * @param core #LinphoneCore object @notnil
+ * @param address #LinphoneAddress object @notnil
+ * @return A list of #LinphoneCallLog. \bctbx_list{LinphoneCallLog} @tobefreed @maybenil
+ * @deprecated 29/10/2018 Use #linphone_core_get_call_history_2() instead.
+ * @ingroup call_logs
  **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_mute_mic(LinphoneCore *core, bool_t muted);
-
-/**
- * Get mic state.
- * @deprecated 05/06/2014 Use #linphone_core_mic_enabled() instead
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_mic_muted(LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *
+linphone_core_get_call_history_for_address(LinphoneCore *core, const LinphoneAddress *address);
 
 /**
  * Enables video globally.

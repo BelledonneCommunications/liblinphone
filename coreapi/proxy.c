@@ -885,7 +885,7 @@ void linphone_core_remove_account(LinphoneCore *core, LinphoneAccount *account) 
 
 	// Update the associated linphone specs on the core
 	LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
-	linphone_account_params_set_conference_factory_uri(params, NULL);
+	linphone_account_params_set_conference_factory_address(params, NULL);
 	linphone_account_set_params(account, params);
 	linphone_account_params_unref(params);
 }

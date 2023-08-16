@@ -6138,14 +6138,6 @@ bool_t linphone_core_echo_limiter_enabled(const LinphoneCore *lc) {
 	return lc->sound_conf.ea;
 }
 
-void linphone_core_mute_mic(LinphoneCore *lc, bool_t val) {
-	linphone_core_enable_mic(lc, !val);
-}
-
-bool_t linphone_core_is_mic_muted(LinphoneCore *lc) {
-	return !linphone_core_mic_enabled(lc);
-}
-
 void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call;
@@ -6157,14 +6149,19 @@ void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	lc->sound_conf.mic_enabled = enable; /* this is a global switch read everywhere the microphone is used. */
 	/* apply to conference and calls */
 	if (linphone_core_is_in_conference(lc)) {
-		linphone_conference_mute_microphone(lc->conf_ctx, linphone_conference_microphone_is_muted(lc->conf_ctx));
+		linphone_conference_set_microphone_muted(lc->conf_ctx, linphone_conference_get_microphone_muted(lc->conf_ctx));
 	}
 	list = linphone_core_get_calls(lc);
 	for (elem = list; elem != NULL; elem = elem->next) {
 		call = (LinphoneCall *)elem->data;
 		/* re-apply the same setting; we don't modify the call's switch. However the setter will
 		 * take action on the stream in order to take into account the core's new switch state.*/
-		linphone_call_set_microphone_muted(call, linphone_call_get_microphone_muted(call));
+		LinphoneConference *conference = linphone_call_get_conference(call);
+		if (conference) {
+			linphone_conference_set_microphone_muted(conference, linphone_conference_get_microphone_muted(conference));
+		} else {
+			linphone_call_set_microphone_muted(call, linphone_call_get_microphone_muted(call));
+		}
 	}
 }
 
@@ -9328,9 +9325,8 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 				if (strcasecmp(conf_method_name, "remote") == 0) {
 					LinphoneAccount *account = linphone_core_get_default_account(lc);
 					if (account) {
-						const char *uri = linphone_account_params_get_conference_factory_uri(
-						    linphone_account_get_params(linphone_core_get_default_account(lc)));
-						factory_uri = linphone_address_new(uri);
+						factory_uri = linphone_address_clone(linphone_account_params_get_conference_factory_address(
+						    linphone_account_get_params(linphone_core_get_default_account(lc))));
 						char *factory_uri_str = factory_uri ? linphone_address_as_string(factory_uri) : NULL;
 						lInfo() << "Creating remote conference with factory address from default account : "
 						        << std::string(factory_uri_str);

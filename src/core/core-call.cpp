@@ -363,10 +363,10 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 		LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), to->toC());
 		std::shared_ptr<Address> from = callLog->getFromAddress() ? callLog->getFromAddress() : nullptr;
 		if (account) {
-			string conferenceFactoryUri = Account::toCpp(account)->getAccountParams()->getConferenceFactoryUri();
-			if (!conferenceFactoryUri.empty()) {
-				std::shared_ptr<Address> conferenceFactory = Address::create(conferenceFactoryUri);
-				if (to->weakEqual(*conferenceFactory)) {
+			const auto &conferenceFactoryUri =
+			    Account::toCpp(account)->getAccountParams()->getConferenceFactoryAddress();
+			if (conferenceFactoryUri && conferenceFactoryUri->isValid()) {
+				if (to->weakEqual(*conferenceFactoryUri)) {
 					return;
 				}
 			}

@@ -70,7 +70,7 @@ ClientGroupChatRoomPrivate::cleanAddressesList(const list<std::shared_ptr<Addres
 	return cleanedList;
 }
 
-shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo(std::shared_ptr<Address> sessionTo) {
+shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo(const std::shared_ptr<Address> &sessionTo) {
 	L_Q();
 
 	CallSessionParams csp;
@@ -872,8 +872,8 @@ void ClientGroupChatRoom::exhume() {
 		content.setContentEncoding("deflate");
 	}
 
-	string conferenceFactoryUri = Core::getConferenceFactoryUri(getCore(), getConferenceId().getLocalAddress());
-	std::shared_ptr<Address> conferenceFactoryAddress = Address::create(conferenceFactoryUri);
+	const auto &conferenceFactoryAddress =
+	    Core::getConferenceFactoryAddress(getCore(), getConferenceId().getLocalAddress());
 	auto session = d->createSessionTo(conferenceFactoryAddress);
 	session->startInvite(nullptr, getUtf8Subject(), &content);
 	setState(ConferenceInterface::State::CreationPending);

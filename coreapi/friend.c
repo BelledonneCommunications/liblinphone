@@ -2193,7 +2193,7 @@ int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
 		if (!presence) continue;
 		capabilities |= linphone_presence_model_get_capabilities(presence);
 	}
-	bctbx_list_free(phones);
+	bctbx_list_free_with_data(phones, bctbx_free);
 
 	return capabilities;
 }
@@ -2226,7 +2226,7 @@ bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *lf,
 		if (!presence) continue;
 		if (linphone_presence_model_has_capability_with_version(presence, capability, version)) result = TRUE;
 	}
-	bctbx_list_free(phones);
+	bctbx_list_free_with_data(phones, bctbx_free);
 
 	return result;
 }
@@ -2255,7 +2255,7 @@ bool_t linphone_friend_has_capability_with_version_or_more(const LinphoneFriend 
 		if (!presence) continue;
 		if (linphone_presence_model_has_capability_with_version_or_more(presence, capability, version)) result = TRUE;
 	}
-	bctbx_list_free(phones);
+	bctbx_list_free_with_data(phones, bctbx_free);
 
 	return result;
 }
@@ -2284,7 +2284,7 @@ float linphone_friend_get_capability_version(const LinphoneFriend *lf, const Lin
 		float presence_version = linphone_presence_model_get_capability_version(presence, capability);
 		if (presence_version > version) version = presence_version;
 	}
-	bctbx_list_free(phones);
+	bctbx_list_free_with_data(phones, bctbx_free);
 
 	return version;
 }

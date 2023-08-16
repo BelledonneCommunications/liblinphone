@@ -153,7 +153,7 @@ private:
 	std::shared_ptr<Address> guessContactForRegister();
 
 	void onInternationalPrefixChanged();
-	void onConferenceFactoryUriChanged(const std::string &conferenceFactoryUri);
+	void onConferenceFactoryAddressChanged(const std::shared_ptr<Address> &conferenceFactoryAddress);
 	void
 	onAudioVideoConferenceFactoryAddressChanged(const std::shared_ptr<Address> &audioVideoConferenceFactoryAddress);
 	void onNatPolicyChanged(const std::shared_ptr<NatPolicy> &policy);

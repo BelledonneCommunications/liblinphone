@@ -170,9 +170,6 @@ bool Call::getMicrophoneMuted() const {
 
 void Call::setMicrophoneMuted(bool muted) {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setMicrophoneMuted(muted);
-	if (getConference()) {
-		getConference()->notifyLocalMutedDevices(muted || !linphone_core_mic_enabled(getCore()->getCCore()));
-	}
 }
 
 LinphoneCallStats *Call::getPrivateStats(LinphoneStreamType type) const {

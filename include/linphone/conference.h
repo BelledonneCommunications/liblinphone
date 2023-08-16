@@ -671,6 +671,31 @@ LINPHONE_PUBLIC bool_t linphone_conference_is_recording(const LinphoneConference
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_conference_get_call(const LinphoneConference *conference);
 
+/**
+ * Retrieves the volume of a specific participant
+ * @param conference A #LinphoneConference object @notnil
+ * @param device The Participant @notnil
+ * @return The volume of the participant expressed in dbm0.
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_get_microphone_muted(const LinphoneConference *conference);
+
+/**
+ * Get microphone muted state.
+ * Note that the microphone may be disabled globally if FALSE was given to
+ * linphone_core_enable_mic().
+ * @param conference A #LinphoneConference object @notnil
+ * @return The microphone muted state.
+ **/
+LINPHONE_PUBLIC void linphone_conference_set_microphone_muted(LinphoneConference *conference, bool_t muted);
+
+/**
+ * Retrieves the volume of a specific participant
+ * @param conference A #LinphoneConference object @notnil
+ * @param device The Participant @notnil
+ * @return The volume of the participant expressed in dbm0.
+ */
+LINPHONE_PUBLIC float linphone_conference_get_input_volume(const LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -704,10 +729,6 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference);
-
-LINPHONE_PUBLIC int linphone_conference_mute_microphone(LinphoneConference *conference, bool_t val);
-LINPHONE_PUBLIC bool_t linphone_conference_microphone_is_muted(const LinphoneConference *conference);
-float linphone_conference_get_input_volume(const LinphoneConference *conference);
 
 void linphone_conference_on_call_terminating(LinphoneConference *conference, LinphoneCall *call);
 

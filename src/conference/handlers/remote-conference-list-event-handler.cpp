@@ -121,16 +121,15 @@ void RemoteConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 
 	if (account->getState() != LinphoneRegistrationOk) return;
 
-	const auto &factoryUri = accountParams->getConferenceFactoryUri();
-	if (factoryUri.empty()) {
-		lError() << "Couldn't send chat room list subscription for account " << account << " (" << identityAddress
+	const auto &factoryUri = accountParams->getConferenceFactoryAddress();
+	if (!factoryUri || !factoryUri->isValid()) {
+		lError() << "Couldn't send chat room list subscription for account " << account << " (" << *identityAddress
 		         << ") because there's no conference factory uri";
 		return;
 	}
 
-	auto rlsAddr = Address::create(factoryUri);
 	auto evSub = dynamic_pointer_cast<EventSubscribe>(
-	    (new EventSubscribe(getCore(), rlsAddr, "conference", 600))->toSharedPtr());
+	    (new EventSubscribe(getCore(), factoryUri, "conference", 600))->toSharedPtr());
 	std::string from = account->getContactAddress()->toString();
 	evSub->getOp()->setFrom(from);
 	evSub->setInternal(true);
@@ -267,6 +266,9 @@ void RemoteConferenceListEventHandler::addHandler(RemoteConferenceEventHandler *
 	}
 
 	if (!isHandlerInSameDomainAsCore(conferenceId)) {
+		lWarning() << "The chatroom with conference id " << conferenceId
+		           << " is not in the same domain as the conference factory of the account is linked to hence not "
+		              "adding to the list of subscribes";
 		return;
 	}
 
@@ -281,14 +283,17 @@ void RemoteConferenceListEventHandler::addHandler(RemoteConferenceEventHandler *
 bool RemoteConferenceListEventHandler::isHandlerInSameDomainAsCore(const ConferenceId &conferenceId) const {
 	// Ensure that conference and conference factory are in the same domain
 	const std::shared_ptr<Address> &localAddress = conferenceId.getLocalAddress();
-	const std::shared_ptr<Address> &peerAddress = conferenceId.getPeerAddress();
-	std::shared_ptr<Address> conferenceFactoryUri =
-	    Address::create(Core::getConferenceFactoryUri(getCore(), localAddress));
+	const auto conferenceFactoryUri = Core::getConferenceFactoryAddress(getCore(), localAddress);
 
+	if (!conferenceFactoryUri) {
+		lWarning() << "Account with local address " << *localAddress << " hasn't a conference factory URI defined";
+		return false;
+	}
+
+	const std::shared_ptr<Address> &peerAddress = conferenceId.getPeerAddress();
 	if (peerAddress->getDomain() != conferenceFactoryUri->getDomain()) {
-		lWarning() << "Peer address " << peerAddress->toString()
-		           << " is not in the same domain as the conference factory URI " << conferenceFactoryUri->toString()
-		           << " hence not adding to the list of subscribes";
+		lWarning() << "Peer address " << *peerAddress << " is not in the same domain as the conference factory URI "
+		           << *conferenceFactoryUri;
 		return false;
 	}
 
@@ -303,6 +308,9 @@ void RemoteConferenceListEventHandler::removeHandler(RemoteConferenceEventHandle
 	}
 
 	if (!isHandlerInSameDomainAsCore(conferenceId)) {
+		lWarning() << "The chatroom with conference id " << conferenceId
+		           << " is not in the same domain as the conference factory of the account is linked to hence no need "
+		              "to remove it from the list of subscribes";
 		return;
 	}
 

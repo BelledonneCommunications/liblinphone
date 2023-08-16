@@ -150,9 +150,16 @@ void MS2AudioMixer::setRecordPath(const std::string &path) {
 
 void MS2AudioMixer::enableMic(bool value) {
 	mLocalMicEnabled = value;
-	if (mLocalEndpoint)
-		ms_audio_conference_mute_member(mConference, mLocalEndpoint,
-		                                !(value && linphone_core_mic_enabled(mSession.getCore().getCCore())));
+	if (mLocalEndpoint) {
+		bool coreMicrophoneEnabled = !!linphone_core_mic_enabled(mSession.getCore().getCCore());
+		if (!coreMicrophoneEnabled) {
+			lWarning() << "Microphone of the local participant of conference will be muted because the microphone is disabled in the core settings";
+		}
+		bool enabled = (value && coreMicrophoneEnabled);
+		bctbx_message("AudioMixer[%p]: mic of local participnt is [%s].", this, enabled ? "enabled" : "disabled");
+
+		ms_audio_conference_mute_member(mConference, mLocalEndpoint, !enabled);
+	}
 }
 
 bool MS2AudioMixer::micEnabled() const {

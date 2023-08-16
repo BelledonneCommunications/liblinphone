@@ -35,11 +35,11 @@ static void edit_simple_conference_base(bool_t from_organizer,
 
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
-		ClientConference lise("lise_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
+		ClientConference lise("lise_rc", focus.getConferenceFactoryAddress());
 
 		LinphoneCoreManager *manager_editing = (from_organizer) ? marie.getCMgr() : laure.getCMgr();
 		linphone_core_enable_rtp_bundle(manager_editing->lc, enable_bundle_mode);
@@ -956,10 +956,10 @@ static void conference_edition_with_simultaneous_participant_add_remove_base(boo
 	{ // to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_rc", focus.getIdentity(), true);
-		ClientConference pauline("pauline_rc", focus.getIdentity(), true);
-		ClientConference laure("laure_tcp_rc", focus.getIdentity(), true);
-		ClientConference michelle("michelle_rc", focus.getIdentity(), true);
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress(), true);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1252,10 +1252,10 @@ static void conference_edition_with_organizer_codec_mismatch(void) {
 static void conference_cancelled_through_edit_base(bool_t server_restart) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
-		ClientConference marie("marie_rc", focus.getIdentity());
-		ClientConference pauline("pauline_rc", focus.getIdentity());
-		ClientConference laure("laure_tcp_rc", focus.getIdentity());
-		ClientConference michelle("michelle_rc", focus.getIdentity());
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress());
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress());
+		ClientConference michelle("michelle_rc", focus.getConferenceFactoryAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
