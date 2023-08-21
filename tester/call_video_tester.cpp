@@ -880,6 +880,94 @@ static void video_call(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void video_call_dummy_codec(void) {
+	LpConfig *lp;
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	if (linphone_core_get_payload_type(pauline->lc, "h264", -1, -1) != NULL) {
+		bctbx_warning("Test skipped: this test is enabled only when h264 is not available");
+		linphone_core_manager_destroy(pauline);
+		return;
+	}
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_bool(lp, "video", "fallback_to_dummy_codec", FALSE);
+	linphone_config_set_bool(lp, "video", "dont_check_codecs", TRUE);
+	linphone_core_reload_ms_plugins(marie->lc, NULL); // force codec config reload
+	lp = linphone_core_get_config(pauline->lc);
+	linphone_config_set_bool(lp, "video", "fallback_to_dummy_codec", FALSE);
+	linphone_config_set_bool(lp, "video", "dont_check_codecs", TRUE);
+	linphone_core_reload_ms_plugins(pauline->lc, NULL); // force codec config reload
+	disable_all_video_codecs_except_one(marie->lc, "h264");
+	disable_all_video_codecs_except_one(pauline->lc, "h264");
+	LinphoneCallTestParams marie_test_params = {0}, pauline_test_params = {0};
+
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+
+	/* Perform a call, with fallback to dummy deactivated
+	 * Call is established but the video stream is not uploading data */
+	marie_test_params.base = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_video(marie_test_params.base, TRUE);
+	pauline_test_params.base = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_video(pauline_test_params.base, TRUE);
+
+	BC_ASSERT_TRUE(call_with_params2(marie, pauline, &marie_test_params, &pauline_test_params, FALSE));
+	linphone_call_params_unref(marie_test_params.base);
+	linphone_call_params_unref(pauline_test_params.base);
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	/* 2 seconds wait and check the videostream is only initialized (and not started) */
+	int dummy = 0;
+	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 2000);
+
+	if (pauline_call && marie_call) {
+		BC_ASSERT_TRUE(media_stream_get_state(linphone_call_get_stream(pauline_call, LinphoneStreamTypeVideo)) ==
+		               MSStreamInitialized);
+		BC_ASSERT_TRUE(media_stream_get_state(linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo)) ==
+		               MSStreamInitialized);
+	} else {
+		BC_FAIL("Fail to get current calls");
+	}
+	end_call(pauline, marie);
+
+	/* Perform a call, with fallback to dummy activated
+	 * Call is established and the video stream is uploading(meaningless) data */
+	lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_bool(lp, "video", "fallback_to_dummy_codec", TRUE);
+	lp = linphone_core_get_config(pauline->lc);
+	linphone_config_set_bool(lp, "video", "fallback_to_dummy_codec", TRUE);
+	marie_test_params.base = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_video(marie_test_params.base, TRUE);
+	pauline_test_params.base = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_video(pauline_test_params.base, TRUE);
+
+	BC_ASSERT_TRUE(call_with_params2(marie, pauline, &marie_test_params, &pauline_test_params, FALSE));
+	linphone_call_params_unref(marie_test_params.base);
+	linphone_call_params_unref(pauline_test_params.base);
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	marie_call = linphone_core_get_current_call(marie->lc);
+
+	/* 2 seconds wait and check the videostream is started */
+	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 2000);
+	if (pauline_call && marie_call) {
+		BC_ASSERT_TRUE(media_stream_get_state(linphone_call_get_stream(pauline_call, LinphoneStreamTypeVideo)) ==
+		               MSStreamStarted);
+		BC_ASSERT_TRUE(media_stream_get_state(linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo)) ==
+		               MSStreamStarted);
+	} else {
+		BC_FAIL("Fail to get current calls");
+	}
+	end_call(pauline, marie);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void video_call_without_rtcp(void) {
 	LpConfig *lp;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -3068,6 +3156,7 @@ static test_t call_video_tests[] = {
     TEST_NO_TAG("Simple video call implicit AVPF to AVPF", video_call_implicit_AVPF_to_AVPF),
     TEST_NO_TAG("Video added by reINVITE, with implicit AVPF", video_call_established_by_reinvite_with_implicit_avpf),
     TEST_NO_TAG("Simple video call", video_call),
+    TEST_NO_TAG("Simple video call fallback to dummy codec", video_call_dummy_codec),
     TEST_NO_TAG("Simple video call without rtcp", video_call_without_rtcp),
     TEST_NO_TAG("Simple ZRTP video call", video_call_zrtp),
     TEST_ONE_TAG("Simple DTLS video call", video_call_dtls, "DTLS"),

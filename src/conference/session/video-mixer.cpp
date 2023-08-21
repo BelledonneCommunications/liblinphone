@@ -116,6 +116,9 @@ void MS2VideoMixer::addLocalParticipant() {
 void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 	LinphoneCore *core = getSession().getCCore();
 	VideoStream *vs = video_stream_new(core->factory, isThumbnail ? 65000 : 65002, isThumbnail ? 65001 : 65003, FALSE);
+	video_stream_set_fallback_to_dummy_codec(
+	    vs, linphone_config_get_bool(linphone_core_get_config(core), "video", "fallback_to_dummy_codec", TRUE));
+
 	if (!mLocalDummyProfile) mLocalDummyProfile = sMakeDummyProfile();
 	MSMediaStreamIO io;
 	int outputBandwidth = getOutputBandwidth() * 1000;

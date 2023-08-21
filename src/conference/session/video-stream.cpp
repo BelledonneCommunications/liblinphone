@@ -287,6 +287,10 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	const MSWebCam *currentCam = video_stream_get_camera(mStream);
 	bool cameraChanged = currentCam && cam && (currentCam != cam);
 
+	video_stream_set_fallback_to_dummy_codec(
+	    mStream,
+	    linphone_config_get_bool(linphone_core_get_config(getCCore()), "video", "fallback_to_dummy_codec", TRUE));
+
 	/* Shutdown preview */
 	if (getCCore()->previewstream) {
 		if (getCCore()->video_conf.reuse_preview_source)
@@ -605,6 +609,7 @@ void MS2VideoStream::stop() {
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later
 	 * use, keeping the sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = video_stream_new_with_sessions(getCCore()->factory, &mSessions);
+
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(nullptr);
 }
 
