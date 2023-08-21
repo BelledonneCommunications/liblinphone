@@ -1350,6 +1350,7 @@ void Core::healNetworkConnections() {
 			lInfo() << "Account [" << account
 			        << "] is configured to force a REGISTER when a push is received, doing it now";
 			linphone_account_refresh_register(account);
+			it = bctbx_list_next(it);
 			continue;
 		}
 
