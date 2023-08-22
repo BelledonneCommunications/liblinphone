@@ -347,7 +347,7 @@ else()
 	set(LIBLINPHONE_PLUGINS_DIR "${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
 endif()
 define_property(TARGET PROPERTY "LIBLINPHONE_PLUGINS_DIR" BRIEF_DOCS "Stores the location of liblinphone plugins" FULL_DOCS "Stores the location of liblinphone plugins")
-install(DIRECTORY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBLINPHONE_PLUGINS_DIR}")
+install(DIRECTORY DESTINATION "${LIBLINPHONE_PLUGINS_DIR}")
 
 if(ENABLE_RELATIVE_PREFIX)
 	if(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" OR CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
