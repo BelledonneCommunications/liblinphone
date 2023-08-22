@@ -32,7 +32,7 @@
 using namespace LinphonePrivate;
 
 LinphoneCallLog *
-linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to) {
+linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, const LinphoneAddress *from, const LinphoneAddress *to) {
 	const auto cppFrom = Address::toCpp(from)->getSharedFromThis();
 	const auto cppTo = Address::toCpp(to)->getSharedFromThis();
 	return CallLog::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getSharedFromThis(), dir, cppFrom, cppTo);

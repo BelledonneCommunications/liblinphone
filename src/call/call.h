@@ -21,17 +21,17 @@
 #ifndef _L_CALL_CALL_H_
 #define _L_CALL_CALL_H_
 
-#include "conference/params/media-session-params.h"
-#include "conference/session/call-session.h"
-#include "core/core-accessor.h"
-#include "object/object.h"
-#include "linphone/api/c-types.h"
 #include "c-wrapper/c-wrapper.h"
-#include "object/object-p.h"
-#include "conference/session/call-session-listener.h"
-#include "utils/background-task.h"
 #include "call/call-log.h"
 #include "call/video-source/video-source-descriptor.h"
+#include "conference/params/media-session-params.h"
+#include "conference/session/call-session-listener.h"
+#include "conference/session/call-session.h"
+#include "core/core-accessor.h"
+#include "linphone/api/c-types.h"
+#include "object/object-p.h"
+#include "object/object.h"
+#include "utils/background-task.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -88,9 +88,9 @@ class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>,
 public:
 	Call(std::shared_ptr<Core> core,
 	     LinphoneCallDir direction,
-	     const std::shared_ptr<Address> &from,
-	     const std::shared_ptr<Address> &to,
-	     LinphoneProxyConfig *cfg,
+	     const std::shared_ptr<const Address> &from,
+	     const std::shared_ptr<const Address> &to,
+	     const std::shared_ptr<Account> &account,
 	     SalCallOp *op,
 	     const MediaSessionParams *msp);
 
@@ -99,9 +99,9 @@ public:
 	virtual ~Call();
 
 	void configure(LinphoneCallDir direction,
-	               const std::shared_ptr<Address> &from,
-	               const std::shared_ptr<Address> &to,
-	               LinphoneProxyConfig *cfg,
+	               const std::shared_ptr<const Address> &from,
+	               const std::shared_ptr<const Address> &to,
+	               const std::shared_ptr<Account> &account,
 	               SalCallOp *op,
 	               const MediaSessionParams *msp);
 

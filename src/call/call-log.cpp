@@ -37,8 +37,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 CallLog::CallLog(shared_ptr<Core> core,
                  LinphoneCallDir direction,
-                 const std::shared_ptr<Address> &from,
-                 const std::shared_ptr<Address> &to)
+                 const std::shared_ptr<const Address> &from,
+                 const std::shared_ptr<const Address> &to)
     : CoreAccessor(core) {
 	mDirection = direction;
 	setFromAddress(from);
@@ -92,7 +92,7 @@ const std::shared_ptr<Address> &CallLog::getFromAddress() const {
 	return mFrom;
 }
 
-void CallLog::setFromAddress(const std::shared_ptr<Address> &address) {
+void CallLog::setFromAddress(const std::shared_ptr<const Address> &address) {
 	mFrom = address->clone()->toSharedPtr();
 }
 
@@ -100,7 +100,7 @@ const std::shared_ptr<Address> &CallLog::getToAddress() const {
 	return mTo;
 }
 
-void CallLog::setToAddress(const std::shared_ptr<Address> &address) {
+void CallLog::setToAddress(const std::shared_ptr<const Address> &address) {
 	mTo = address->clone()->toSharedPtr();
 }
 

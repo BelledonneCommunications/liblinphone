@@ -33,7 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-Participant::Participant(Conference *conference, const std::shared_ptr<Address> &address) {
+Participant::Participant(Conference *conference, const std::shared_ptr<const Address> &address) {
 	configure(conference, address);
 	creationTime = time(nullptr);
 }
@@ -50,7 +50,7 @@ Participant::Participant(std::shared_ptr<Address> address) : addr(address) {
 	L_ASSERT(!address->hasUriParam("gr"));
 }
 
-void Participant::configure(Conference *conference, const std::shared_ptr<Address> &address) {
+void Participant::configure(Conference *conference, const std::shared_ptr<const Address> &address) {
 	mConference = conference;
 	auto identityAddress = Address::create(address->getUriWithoutGruu());
 	addr = identityAddress;

@@ -75,7 +75,7 @@ LinphoneCall *linphone_call_new_incoming(struct _LinphoneCore *lc,
                                          LinphonePrivate::SalCallOp *op);
 
 LINPHONE_PUBLIC LinphoneCallLog *
-linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to);
+linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, const LinphoneAddress *from, const LinphoneAddress *to);
 void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 LinphonePlayer *linphone_call_build_player(LinphoneCall *call);
 
@@ -371,6 +371,8 @@ LinphoneAccount *
 linphone_core_lookup_known_account_2(LinphoneCore *lc, const LinphoneAddress *uri, bool_t fallback_to_default);
 
 LinphoneAccount *linphone_core_lookup_account_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri);
+LinphoneAccount *linphone_core_lookup_account_by_conference_factory_strict(LinphoneCore *lc,
+                                                                           const LinphoneAddress *uri);
 LinphoneAccount *linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
 
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);

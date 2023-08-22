@@ -4169,18 +4169,17 @@ bool MediaSession::toneIndicationsEnabled() const {
 }
 
 void MediaSession::configure(LinphoneCallDir direction,
-                             LinphoneProxyConfig *cfg,
+                             const std::shared_ptr<Account> &account,
                              SalCallOp *op,
-                             const std::shared_ptr<Address> &from,
-                             const std::shared_ptr<Address> &to) {
+                             const std::shared_ptr<const Address> &from,
+                             const std::shared_ptr<const Address> &to) {
 	L_D();
 	bool makeLocalDescription = true;
 	bool isOfferer = true;
 	std::shared_ptr<Address> remote;
 
-	CallSession::configure(direction, cfg, op, from, to);
+	CallSession::configure(direction, account, op, from, to);
 
-	const auto &account = d->getDestAccount();
 	const auto &accountParams = account ? account->getAccountParams() : nullptr;
 	if (!d->natPolicy) {
 		if (accountParams) {
@@ -4196,7 +4195,7 @@ void MediaSession::configure(LinphoneCallDir direction,
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
 		isOfferer = makeLocalDescription = !getCore()->getCCore()->sip_conf.sdp_200_ack;
-		remote = to;
+		remote = to->clone()->toSharedPtr();
 		/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
 		 * Then the value is stored and later updated into MediaSessionParams. */
 		bool rtpBundleEnabled = false;
@@ -4212,7 +4211,7 @@ void MediaSession::configure(LinphoneCallDir direction,
 		/* Note that the choice of IP version for streams is later refined by setCompatibleIncomingCallParams() when
 		 * examining the remote offer, if any. If the remote offer contains IPv4 addresses, we should propose IPv4 as
 		 * well. */
-		remote = from;
+		remote = from->clone()->toSharedPtr();
 		remote->clean();
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);

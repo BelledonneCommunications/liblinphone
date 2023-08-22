@@ -94,7 +94,7 @@ public:
 	explicit Participant(Conference *conference,
 	                     const std::shared_ptr<Address> &address,
 	                     std::shared_ptr<CallSession> callSession);
-	explicit Participant(Conference *conference, const std::shared_ptr<Address> &address);
+	explicit Participant(Conference *conference, const std::shared_ptr<const Address> &address);
 	explicit Participant(
 	    std::shared_ptr<Address> address); // acquires the address, that must be a simple URI without 'gr' parameter.
 	Participant() = default;
@@ -104,7 +104,7 @@ public:
 		return nullptr;
 	}
 
-	void configure(Conference *conference, const std::shared_ptr<Address> &address);
+	void configure(Conference *conference, const std::shared_ptr<const Address> &address);
 
 	const std::shared_ptr<Address> &getAddress() const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel() const;

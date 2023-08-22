@@ -1012,7 +1012,7 @@ void CallSessionPrivate::onRegistrationStateChanged(LinphoneProxyConfig *cfg,
 	const auto registeredChangedAccount = cfg ? Account::toCpp(cfg->account)->getSharedFromThis() : nullptr;
 	if (registeredChangedAccount == getDestAccount() && cstate == LinphoneRegistrationOk) repairIfBroken();
 	/*else
-	    only repair call when the right proxy is in state connected*/
+	    only repair call when the right account is in state connected*/
 }
 
 // -----------------------------------------------------------------------------
@@ -1038,7 +1038,7 @@ void CallSessionPrivate::createOpTo(const std::shared_ptr<Address> &to) {
 	linphone_configure_op(core, op, to->toC(), q->getParams()->getPrivate()->getCustomHeaders(), false);
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
-	/* else privacy might be set by proxy */
+	/* else privacy might be set by account */
 }
 
 // -----------------------------------------------------------------------------
@@ -1062,14 +1062,14 @@ std::shared_ptr<Address> CallSessionPrivate::getFixedContact() const {
 		if (accountContactAddress) {
 			addr = accountContactAddress;
 		} else {
-			lError() << "Unable to retrieve contact address from proxy confguration for call session " << q
-			         << " (local address " << q->getLocalAddress()->toString() << " remote address "
+			lError() << "Unable to retrieve contact address from account for call session " << q << " (local address "
+			         << q->getLocalAddress()->toString() << " remote address "
 			         << (q->getRemoteAddress() ? q->getRemoteAddress()->toString() : "Unknown") << ").";
 		}
 		if (addr && (account->getOp() || (account->getDependency() != nullptr) ||
 		             linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
-			/* If using a proxy, use the contact address as guessed with the REGISTERs */
-			lInfo() << "Contact has been fixed using proxy";
+			/* If using a account, use the contact address as guessed with the REGISTERs */
+			lInfo() << "Contact " << *addr << " has been fixed using account";
 			result = addr->clone()->toSharedPtr();
 			return result;
 		}
@@ -1150,10 +1150,10 @@ void CallSessionPrivate::repairIfBroken() {
 
 	// If we are registered and this session has been broken due to a past network disconnection,
 	// attempt to repair it
-	// Make sure that the proxy from which we received this call, or to which we routed this call is registered first
+	// Make sure that the account from which we received this call, or to which we routed this call is registered first
 	const auto &account = getDestAccount();
 	if (account) {
-		// In all other cases, ie no proxy config, or a proxy config for which no registration was requested,
+		// In all other cases, ie no account, or a account for which no registration was requested,
 		// we can start the call session repair immediately.
 		const auto accountParams = account->getAccountParams();
 		if (accountParams->getRegisterEnabled() && (account->getState() != LinphoneRegistrationOk)) return;
@@ -1287,13 +1287,17 @@ LinphoneStatus CallSession::acceptUpdate(const CallSessionParams *csp) {
 }
 
 void CallSession::configure(LinphoneCallDir direction,
-                            LinphoneProxyConfig *cfg,
+                            const std::shared_ptr<Account> &account,
                             SalCallOp *op,
-                            const std::shared_ptr<Address> &from,
-                            const std::shared_ptr<Address> &to) {
+                            const std::shared_ptr<const Address> &from,
+                            const std::shared_ptr<const Address> &to) {
 	L_D();
 	d->direction = direction;
 	d->log = CallLog::create(getCore(), direction, from, to);
+
+	auto conference = d->listener
+	                      ? d->listener->getCallSessionConference(const_pointer_cast<CallSession>(getSharedFromThis()))
+	                      : nullptr;
 
 	const auto &core = getCore()->getCCore();
 	if (op) {
@@ -1315,14 +1319,18 @@ void CallSession::configure(LinphoneCallDir direction,
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 	}
 
-	d->setDestAccount(cfg ? Account::toCpp(cfg->account)->getSharedFromThis() : nullptr);
+	d->setDestAccount(account);
 	if (!d->getDestAccount()) {
-		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the
+		/* Try to define the destination account if it has not already been done to have a correct contact field in the
 		 * SIP messages */
-		LinphoneAddress *toAddr = to->toC();
-		const auto cAccount = (direction == LinphoneCallIncoming)
-		                          ? linphone_core_lookup_account_by_identity_strict(core, toAddr)
-		                          : linphone_core_lookup_account_by_identity(core, toAddr);
+		const LinphoneAddress *toAddr = to->toC();
+		auto cAccount = (direction == LinphoneCallIncoming)
+		                    ? linphone_core_lookup_account_by_identity_strict(core, toAddr)
+		                    : linphone_core_lookup_account_by_identity(core, toAddr);
+		if (!cAccount && linphone_core_conference_server_enabled(core)) {
+			// In the case of a server, clients may call the conference factory in order to create a conference
+			cAccount = linphone_core_lookup_account_by_conference_factory_strict(core, toAddr);
+		}
 		if (cAccount) {
 			const auto account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
 			d->setDestAccount(account);
@@ -1735,7 +1743,7 @@ const std::shared_ptr<Address> CallSession::getContactAddress() const {
 		contactAddress = Address::create();
 		contactAddress = accountContactAddress->clone()->toSharedPtr();
 	} else {
-		lError() << "Unable to retrieve contact address from proxy confguration for call session " << this
+		lError() << "Unable to retrieve contact address from op or account for call session " << this
 		         << " (local address " << *getLocalAddress() << " remote address "
 		         << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ").";
 	}

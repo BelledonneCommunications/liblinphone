@@ -70,10 +70,10 @@ public:
 	void setSubject(const std::string &subject);
 	bool toneIndicationsEnabled() const;
 	void configure(LinphoneCallDir direction,
-	               LinphoneProxyConfig *cfg,
+	               const std::shared_ptr<Account> &account,
 	               SalCallOp *op,
-	               const std::shared_ptr<Address> &from,
-	               const std::shared_ptr<Address> &to) override;
+	               const std::shared_ptr<const Address> &from,
+	               const std::shared_ptr<const Address> &to) override;
 	LinphoneStatus deferUpdate() override;
 	void initiateIncoming() override;
 	bool initiateOutgoing(const std::string &subject = "", const Content *content = nullptr) override;

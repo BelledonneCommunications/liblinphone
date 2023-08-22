@@ -67,8 +67,8 @@ public:
 	void setSipEtag(const std::string &sipEtag);
 	void setCore(LinphoneCore *lc);
 	void setErrorInfo(LinphoneErrorInfo *errorInfo);
-	void setContactAddress(const std::shared_ptr<Address> contact);
-	void setContactAddressWithoutParams(const std::shared_ptr<Address> contact);
+	void setContactAddress(const std::shared_ptr<const Address> &contact);
+	void setContactAddressWithoutParams(const std::shared_ptr<const Address> &contact);
 	void setPendingContactAddress(std::shared_ptr<Address> contact);
 	void setServiceRouteAddress(std::shared_ptr<Address> serviceRoute);
 	void setState(LinphoneRegistrationState state, const std::string &message);

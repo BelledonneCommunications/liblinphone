@@ -112,10 +112,10 @@ public:
 	LinphoneStatus accept(const CallSessionParams *csp = nullptr);
 	LinphoneStatus acceptUpdate(const CallSessionParams *csp = nullptr);
 	virtual void configure(LinphoneCallDir direction,
-	                       LinphoneProxyConfig *cfg,
+	                       const std::shared_ptr<Account> &account,
 	                       SalCallOp *op,
-	                       const std::shared_ptr<Address> &from,
-	                       const std::shared_ptr<Address> &to);
+	                       const std::shared_ptr<const Address> &from,
+	                       const std::shared_ptr<const Address> &to);
 	void configure(LinphoneCallDir direction, const std::string &callid);
 	bool isOpConfigured();
 	LinphoneStatus decline(LinphoneReason reason);

@@ -270,13 +270,13 @@ void Account::setErrorInfo(LinphoneErrorInfo *errorInfo) {
 	mErrorInfo = errorInfo;
 }
 
-void Account::setContactAddress(const std::shared_ptr<Address> contact) {
+void Account::setContactAddress(const std::shared_ptr<const Address> &contact) {
 	mContactAddress = nullptr;
 	if (contact) mContactAddress = contact->clone()->toSharedPtr();
 	setContactAddressWithoutParams(contact);
 }
 
-void Account::setContactAddressWithoutParams(const std::shared_ptr<Address> contact) {
+void Account::setContactAddressWithoutParams(const std::shared_ptr<const Address> &contact) {
 	mContactAddressWithoutParams = nullptr;
 
 	if (contact) {

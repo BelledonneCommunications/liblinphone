@@ -628,10 +628,10 @@ LinphoneCall *linphone_call_new_outgoing(LinphoneCore *lc,
                                          const LinphoneAddress *to,
                                          const LinphoneCallParams *params,
                                          LinphoneProxyConfig *cfg) {
-	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
-	                                          Address::toCpp(const_cast<LinphoneAddress *>(from))->getSharedFromThis(),
-	                                          Address::toCpp(const_cast<LinphoneAddress *>(to))->getSharedFromThis(),
-	                                          cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
+	LinphoneCall *lcall = Call::createCObject(
+	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing, Address::toCpp(from)->getSharedFromThis(),
+	    Address::toCpp(to)->getSharedFromThis(), cfg ? Account::toCpp(cfg->account)->getSharedFromThis() : nullptr,
+	    nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
 
 	return lcall;
 }
@@ -641,9 +641,8 @@ LinphoneCall *linphone_call_new_incoming(LinphoneCore *lc,
                                          const LinphoneAddress *to,
                                          LinphonePrivate::SalCallOp *op) {
 	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming,
-	                                          Address::toCpp(const_cast<LinphoneAddress *>(from))->getSharedFromThis(),
-	                                          Address::toCpp(const_cast<LinphoneAddress *>(to))->getSharedFromThis(),
-	                                          nullptr, op, nullptr);
+	                                          Address::toCpp(from)->getSharedFromThis(),
+	                                          Address::toCpp(to)->getSharedFromThis(), nullptr, op, nullptr);
 	Call::toCpp(lcall)->initiateIncoming();
 	return lcall;
 }

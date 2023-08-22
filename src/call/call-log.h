@@ -37,8 +37,8 @@ class LINPHONE_PUBLIC CallLog : public bellesip::HybridObject<LinphoneCallLog, C
 public:
 	CallLog(std::shared_ptr<Core> core,
 	        LinphoneCallDir direction,
-	        const std::shared_ptr<Address> &from,
-	        const std::shared_ptr<Address> &to);
+	        const std::shared_ptr<const Address> &from,
+	        const std::shared_ptr<const Address> &to);
 	virtual ~CallLog();
 
 	LinphoneCallDir getDirection() const;
@@ -51,10 +51,10 @@ public:
 	void setQuality(float quality);
 
 	const std::shared_ptr<Address> &getFromAddress() const;
-	void setFromAddress(const std::shared_ptr<Address> &address);
+	void setFromAddress(const std::shared_ptr<const Address> &address);
 
 	const std::shared_ptr<Address> &getToAddress() const;
-	void setToAddress(const std::shared_ptr<Address> &address);
+	void setToAddress(const std::shared_ptr<const Address> &address);
 
 	const std::string &getCallId() const;
 	void setCallId(const std::string &callId);

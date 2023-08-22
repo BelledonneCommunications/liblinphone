@@ -783,9 +783,9 @@ void Call::onRemoteRecording(BCTBX_UNUSED(const std::shared_ptr<CallSession> &se
 
 Call::Call(shared_ptr<Core> core,
            LinphoneCallDir direction,
-           const std::shared_ptr<Address> &from,
-           const std::shared_ptr<Address> &to,
-           LinphoneProxyConfig *cfg,
+           const std::shared_ptr<const Address> &from,
+           const std::shared_ptr<const Address> &to,
+           const std::shared_ptr<Account> &account,
            SalCallOp *op,
            const MediaSessionParams *msp)
     : CoreAccessor(core) {
@@ -797,7 +797,7 @@ Call::Call(shared_ptr<Core> core,
 	// create session
 	mParticipant = Participant::create(nullptr, ((direction == LinphoneCallIncoming) ? to : from));
 	mParticipant->createSession(getCore(), msp, TRUE, this);
-	mParticipant->getSession()->configure(direction, cfg, op, from, to);
+	mParticipant->getSession()->configure(direction, account, op, from, to);
 
 	configureSoundCardsFromCore(msp);
 }
@@ -845,13 +845,13 @@ void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
 }
 
 void Call::configure(LinphoneCallDir direction,
-                     const std::shared_ptr<Address> &from,
-                     const std::shared_ptr<Address> &to,
-                     LinphoneProxyConfig *cfg,
+                     const std::shared_ptr<const Address> &from,
+                     const std::shared_ptr<const Address> &to,
+                     const std::shared_ptr<Account> &account,
                      SalCallOp *op,
                      BCTBX_UNUSED(const MediaSessionParams *msp)) {
 	mParticipant->configure(nullptr, (direction == LinphoneCallIncoming) ? to : from);
-	mParticipant->getSession()->configure(direction, cfg, op, from, to);
+	mParticipant->getSession()->configure(direction, account, op, from, to);
 }
 
 bool Call::isOpConfigured() const {
