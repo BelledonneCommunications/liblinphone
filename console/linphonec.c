@@ -30,10 +30,10 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include <linphone/core.h>
+#include "linphone/core.h"
 
+#include "bctoolbox/vfs.h"
 #include "linphonec.h"
-#include <bctoolbox/vfs.h>
 
 #ifdef _WIN32
 #include <ctype.h>
@@ -188,7 +188,7 @@ LinphoneCall *linphonec_get_call(int id) {
 /*
  * Linphone core callback
  */
-static void linphonec_display_refer(LinphoneCore *lc, const char *refer_to) {
+static void linphonec_display_refer(BCTBX_UNUSED(LinphoneCore *lc), const char *refer_to) {
 	linphonec_out("Receiving out of call refer to %s\n", refer_to);
 }
 
@@ -216,7 +216,8 @@ static void linphonec_prompt_for_auth(LinphoneCore *lc, const char *realm, const
 /*
  * Linphone core callback
  */
-static void linphonec_transfer_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState new_call_state) {
+static void
+linphonec_transfer_state_changed(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, LinphoneCallState new_call_state) {
 	char *remote = linphone_call_get_remote_address_as_string(call);
 	if (new_call_state == LinphoneCallConnected) {
 		linphonec_out("The distant endpoint %s of call %i has been transfered, you can safely close the call.\n",
@@ -228,7 +229,7 @@ static void linphonec_transfer_state_changed(LinphoneCore *lc, LinphoneCall *cal
 /*
  * Linphone core callback
  */
-static void linphonec_notify_presence_received(LinphoneCore *lc, LinphoneFriend *fid) {
+static void linphonec_notify_presence_received(BCTBX_UNUSED(LinphoneCore *lc), LinphoneFriend *fid) {
 	const LinphoneAddress *addr = linphone_friend_get_address(fid);
 	if (addr) {
 		char *tmp = linphone_address_as_string(addr);
@@ -241,7 +242,8 @@ static void linphonec_notify_presence_received(LinphoneCore *lc, LinphoneFriend 
 /*
  * Linphone core callback
  */
-static void linphonec_new_unknown_subscriber(LinphoneCore *lc, LinphoneFriend *lf, const char *url) {
+static void
+linphonec_new_unknown_subscriber(BCTBX_UNUSED(LinphoneCore *lc), BCTBX_UNUSED(LinphoneFriend *lf), const char *url) {
 	printf("Friend %s requested subscription "
 	       "(accept/deny is not implemented yet)\n",
 	       url);
@@ -256,8 +258,10 @@ static void linphonec_call_updated(LinphoneCall *call) {
 	}
 }
 
-static void
-linphonec_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t encrypted, const char *auth_token) {
+static void linphonec_call_encryption_changed(BCTBX_UNUSED(LinphoneCore *lc),
+                                              LinphoneCall *call,
+                                              bool_t encrypted,
+                                              const char *auth_token) {
 	int id = VOIDPTR_TO_INT(linphone_call_get_user_data(call));
 	if (!encrypted) {
 		linphonec_out("Call %i is not fully encrypted and auth token is %s.\n", id,
@@ -268,7 +272,10 @@ linphonec_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t e
 	}
 }
 
-static void linphonec_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState st, const char *msg) {
+static void linphonec_call_state_changed(LinphoneCore *lc,
+                                         LinphoneCall *call,
+                                         LinphoneCallState st,
+                                         BCTBX_UNUSED(const char *msg)) {
 	char *from = linphone_call_get_remote_address_as_string(call);
 	int id = VOIDPTR_TO_INT(linphone_call_get_user_data(call));
 	switch (st) {
@@ -342,13 +349,15 @@ static void linphonec_call_state_changed(LinphoneCore *lc, LinphoneCall *call, L
 /*
  * Linphone core callback
  */
-static void
-linphonec_text_received(LinphoneCore *lc, LinphoneChatRoom *cr, const LinphoneAddress *from, const char *msg) {
+static void linphonec_text_received(BCTBX_UNUSED(LinphoneCore *lc),
+                                    BCTBX_UNUSED(LinphoneChatRoom *cr),
+                                    const LinphoneAddress *from,
+                                    const char *msg) {
 	linphonec_out("Message received from %s: %s\n", linphone_address_as_string(from), msg);
 	// TODO: provide mechanism for answering.. ('say' command?)
 }
 
-static void linphonec_dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf) {
+static void linphonec_dtmf_received(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, int dtmf) {
 	char *from = linphone_call_get_remote_address_as_string(call);
 	fprintf(stdout, "Receiving tone %c from %s\n", dtmf, from);
 	fflush(stdout);
@@ -359,7 +368,7 @@ static char received_prompt[PROMPT_MAX_LEN];
 static ms_mutex_t prompt_mutex;
 static bool_t have_prompt = FALSE;
 
-static void *prompt_reader_thread(void *arg) {
+static void *prompt_reader_thread(BCTBX_UNUSED(void *arg)) {
 	char *ret;
 	char tmp[PROMPT_MAX_LEN];
 	while ((ret = fgets(tmp, sizeof(tmp), stdin)) != NULL) {
@@ -392,7 +401,7 @@ static bctbx_pipe_t create_server_socket(void) {
 	return bctbx_server_pipe_create(path);
 }
 
-static void *pipe_thread(void *p) {
+static void *pipe_thread(BCTBX_UNUSED(void *p)) {
 	char tmp[250];
 	server_sock = create_server_socket();
 	if (server_sock == ORTP_PIPE_INVALID) return NULL;
@@ -1007,6 +1016,7 @@ static void print_prompt(LinphoneCore *opm) {
 #ifdef IDENTITY_AS_PROMPT
 	snprintf(prompt, PROMPT_MAX_LEN, "%s> ", linphone_core_get_primary_contact(opm));
 #else
+	(void)opm;
 	snprintf(prompt, PROMPT_MAX_LEN, "linphonec> ");
 #endif
 }

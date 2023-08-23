@@ -26,11 +26,11 @@
 #ifndef _WIN32_WCE
 #include <errno.h>
 #endif /*_WIN32_WCE*/
+#include "linphone/core.h"
+#include "linphone/lpconfig.h"
 #include "linphonec.h"
 #include <ctype.h>
 #include <limits.h>
-#include <linphone/core.h>
-#include <linphone/lpconfig.h>
 
 #ifndef _WIN32
 #include <sys/wait.h>
@@ -430,7 +430,7 @@ char *linphonec_command_generator(const char *text, int state) {
  *
  ***************************************************************************/
 
-static int lpc_cmd_help(LinphoneCore *lc, char *arg) {
+static int lpc_cmd_help(BCTBX_UNUSED(LinphoneCore *lc), char *arg) {
 	int i = 0;
 	LPC_COMMAND *cmd;
 
@@ -514,7 +514,7 @@ static int lpc_cmd_call(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int lpc_cmd_calls(LinphoneCore *lc, char *args) {
+static int lpc_cmd_calls(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 	const bctbx_list_t *calls = linphone_core_get_calls(lc);
 	if (calls) {
 		lpc_display_call_states(lc);
@@ -706,7 +706,7 @@ static int lpc_cmd_answer(LinphoneCore *lc, char *args) {
 	return 0;
 }
 
-static int lpc_cmd_autoanswer(LinphoneCore *lc, char *args) {
+static int lpc_cmd_autoanswer(BCTBX_UNUSED(LinphoneCore *lc), char *args) {
 	if (!args) {
 		if (linphonec_get_autoanswer()) {
 			linphonec_out("Auto answer is enabled. Use 'autoanswer disable' to disable.\n");
@@ -726,7 +726,7 @@ static int lpc_cmd_autoanswer(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int lpc_cmd_quit(LinphoneCore *lc, char *args) {
+static int lpc_cmd_quit(BCTBX_UNUSED(LinphoneCore *lc), BCTBX_UNUSED(char *args)) {
 	linphonec_main_loop_exit();
 	return 1;
 }
@@ -1021,7 +1021,7 @@ static int lpc_cmd_proxy(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int lpc_cmd_call_logs(LinphoneCore *lc, char *args) {
+static int lpc_cmd_call_logs(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 	const bctbx_list_t *elem = linphone_core_get_call_logs(lc);
 	for (; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneCallLog *cl = (LinphoneCallLog *)elem->data;
@@ -1263,7 +1263,7 @@ static int lpc_cmd_staticpic(LinphoneCore *lc, char *args) {
 	return 0; /* Syntax error */
 }
 
-static int lpc_cmd_pause(LinphoneCore *lc, char *args) {
+static int lpc_cmd_pause(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 
 	if (linphone_core_in_call(lc)) {
 		linphone_call_pause(linphone_core_get_current_call(lc));
@@ -1760,7 +1760,7 @@ static int lpc_cmd_register(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int lpc_cmd_unregister(LinphoneCore *lc, char *args) {
+static int lpc_cmd_unregister(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
 	if (cfg && linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
 		linphone_proxy_config_edit(cfg);
@@ -1772,7 +1772,7 @@ static int lpc_cmd_unregister(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int lpc_cmd_duration(LinphoneCore *lc, char *args) {
+static int lpc_cmd_duration(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 	LinphoneCallLog *cl;
 	const bctbx_list_t *elem = linphone_core_get_call_logs(lc);
 	for (; elem != NULL; elem = elem->next) {
@@ -2105,12 +2105,12 @@ static int lpc_cmd_echolimiter(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int lpc_cmd_mute_mic(LinphoneCore *lc, char *args) {
+static int lpc_cmd_mute_mic(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 	linphone_core_enable_mic(lc, 0);
 	return 1;
 }
 
-static int lpc_cmd_unmute_mic(LinphoneCore *lc, char *args) {
+static int lpc_cmd_unmute_mic(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 	linphone_core_enable_mic(lc, 1);
 	return 1;
 }
@@ -2299,7 +2299,7 @@ static int lpc_cmd_camera(LinphoneCore *lc, char *args) {
 			if (linphone_call_get_state(call) == LinphoneCallStreamsRunning) {
 				if ((activated && !linphone_call_params_video_enabled(cp))) {
 					/*update the call to add the video stream*/
-					LinphoneCallParams *ncp = linphone_core_create_call_params(call);
+					LinphoneCallParams *ncp = linphone_core_create_call_params(lc, call);
 					linphone_call_params_enable_video(ncp, TRUE);
 					linphone_call_update(call, ncp);
 					linphone_call_params_unref(ncp);
@@ -2335,7 +2335,7 @@ static int lpc_cmd_preview_snapshot(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int lpc_cmd_vfureq(LinphoneCore *lc, char *arg) {
+static int lpc_cmd_vfureq(LinphoneCore *lc, BCTBX_UNUSED(char *arg)) {
 	LinphoneCall *call;
 	call = linphone_core_get_current_call(lc);
 	if (call != NULL) {
@@ -2380,7 +2380,7 @@ static int lpc_cmd_ringback(LinphoneCore *lc, char *args) {
 	return 1;
 }
 
-static int zrtp_set_verified(LinphoneCore *lc, char *args, bool_t verified) {
+static int zrtp_set_verified(LinphoneCore *lc, BCTBX_UNUSED(char *args), bool_t verified) {
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (linphone_call_params_get_media_encryption(linphone_call_get_current_params(call)) ==
 	    LinphoneMediaEncryptionZRTP) {

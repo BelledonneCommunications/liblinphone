@@ -45,6 +45,9 @@
 
 #undef PARAMS
 
+#include "linphone/call.h"
+#include "linphone/core.h"
+
 #define INT_TO_VOIDPTR(i) ((void *)(intptr_t)(i))
 #define VOIDPTR_TO_INT(p) ((int)(intptr_t)(p))
 
@@ -125,6 +128,7 @@ void linphonec_command_finished(void);
 void linphonec_set_caller(const char *caller);
 LinphoneCall *linphonec_get_call(int id);
 void linphonec_call_identify(LinphoneCall *call);
+LinphoneCall *linphonec_get_call(int id);
 
 extern bool_t linphonec_camera_enabled;
 
