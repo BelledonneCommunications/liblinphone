@@ -66,6 +66,7 @@ public class CoreManager {
     private static CoreManager sInstance;
     private static final int AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED = 20; // 20ms
     private static final int AUTO_ITERATE_TIMER_RESET_AFTER = 20000; // 20s
+    private static final int DELAY_BEFORE_UPDATING_DISPLAY_ORIENTATION = 500; // 500ms
 
     public static boolean isReady() {
         return sInstance != null;
@@ -153,8 +154,13 @@ public class CoreManager {
 
             @Override
             public void onDisplayChanged(int displayId) {
-                Log.d("[Core Manager] Display changed: ", displayId);
-                updateOrientation(displayId);
+                Log.i("[Core Manager] Display changed: ", displayId);
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateOrientation(displayId);
+                    }
+                }, DELAY_BEFORE_UPDATING_DISPLAY_ORIENTATION);
             }
 
             @Override
@@ -165,7 +171,6 @@ public class CoreManager {
         mDisplayManager = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
         mHandler = new Handler(Looper.getMainLooper());
         mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
-        updateOrientation(Display.DEFAULT_DISPLAY);
 
         IntentFilter shutdownIntentFilter = new IntentFilter(Intent.ACTION_SHUTDOWN);
         // Without that the broadcast timeout might be reached before we were called
@@ -348,6 +353,7 @@ public class CoreManager {
             editor.apply();
             Log.i("[Core Manager] Push information cleared from storage");
         }
+        
     }
 
     public void stop() {
@@ -571,6 +577,14 @@ public class CoreManager {
         Log.i("[Core Manager] App has left background mode");
         if (mCore != null) {
             enterForeground(mCore.getNativePointer());
+
+            mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateOrientation(Display.DEFAULT_DISPLAY);
+                    }
+                }, DELAY_BEFORE_UPDATING_DISPLAY_ORIENTATION);
+
             if (mCore.isAutoIterateEnabled()) {
                 stopTimerToResetAutoIterateSchedule();
                 Log.i("[Core Manager] Restarting core.iterate() schedule with foreground timer");
@@ -709,25 +723,9 @@ public class CoreManager {
             return;
         }
 
-        Display display = mDisplayManager.getDisplay(displayId);
-        if (display == null) {
-            Log.e("[Core Manager] Failed to get display from id: ", displayId);
-            return;
-        }
-
-        int degrees = 270;
-        int orientation = display.getRotation();
-        if (orientation == Surface.ROTATION_0) {
-            degrees = 0;
-        } else if (orientation == Surface.ROTATION_90) {
-            degrees = 270;
-        } else if (orientation == Surface.ROTATION_180) {
-            degrees = 180;
-        } else if (orientation == Surface.ROTATION_270) {
-            degrees = 90;
-        }
-        Log.i("[Core Manager] Device orientation is ", degrees, " (raw value is ", orientation, ")");
-        int rotation = (360 - degrees) % 360;
-        mCore.setDeviceRotation(rotation);
+        int orientation = mDisplayManager.getDisplay(displayId).getRotation();
+        int degrees = orientation * 90;
+        Log.i("[Core Manager] Device computed rotation is ", degrees, " device display id is ", displayId, ")");
+        mCore.setDeviceRotation(degrees);
     }
 }

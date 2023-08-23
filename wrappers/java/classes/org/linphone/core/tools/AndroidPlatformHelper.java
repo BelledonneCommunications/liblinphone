@@ -40,7 +40,6 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.WindowManager;
 
 import org.linphone.core.SignalType;
 import org.linphone.core.SignalStrengthUnit;
@@ -468,7 +467,6 @@ public class AndroidPlatformHelper {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
                 Log.i("[Platform Helper] Preview window surface texture [" + surface + "] is available for texture view [" + mPreviewTextureView + "]");
-                rotateVideoPreview();
                 setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
             }
 
@@ -504,7 +502,6 @@ public class AndroidPlatformHelper {
 
         if (mPreviewTextureView.isAvailable()) {
             Log.i("[Platform Helper] Preview window surface is directly available for texture view [" + mPreviewTextureView + "]");
-            rotateVideoPreview();
             setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
         }
     }
@@ -657,17 +654,6 @@ public class AndroidPlatformHelper {
             setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, mParticipantTextureView.get(participantDevice));
         } else {
             Log.i("[Platform Helper] Rendering participant device window surface is not available !");
-        }
-    }
-
-    public synchronized void rotateVideoPreview() {
-        if (mPreviewTextureView != null && mPreviewTextureView instanceof CaptureTextureView) {
-            Log.i("[Platform Helper] Found CaptureTextureView, rotating...");
-            WindowManager windowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-            int rotation = windowManager.getDefaultDisplay().getRotation() * 90;
-            ((CaptureTextureView) mPreviewTextureView).rotateToMatchDisplayOrientation(rotation);
-        } else if (mPreviewTextureView != null) {
-            Log.w("[Platform Helper] It seems you are using a TextureView instead of our CaptureTextureView, we strongly advise you to use ours to benefit from correct rotation & ratio");
         }
     }
 

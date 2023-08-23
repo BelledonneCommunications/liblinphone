@@ -129,7 +129,6 @@ private:
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jmethodID mIsActiveNetworkWifiOnlyCompliantId = nullptr;
 	jmethodID mUpdateNetworkReachabilityId = nullptr;
-	jmethodID mRotateVideoPreviewId = nullptr;
 	jmethodID mDisableAudioRouteChangesId = nullptr;
 	jmethodID mStartPushService = nullptr;
 	jmethodID mStopPushService = nullptr;
@@ -256,7 +255,6 @@ AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::
 	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 	mIsActiveNetworkWifiOnlyCompliantId = getMethodId(env, klass, "isActiveNetworkWifiOnlyCompliant", "()Z");
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
-	mRotateVideoPreviewId = getMethodId(env, klass, "rotateVideoPreview", "()V");
 	mDisableAudioRouteChangesId = getMethodId(env, klass, "disableAudioRouteChanges", "(Z)V");
 	mStartPushService = getMethodId(env, klass, "startPushService", "()V");
 	mStopPushService = getMethodId(env, klass, "stopPushService", "()V");
@@ -596,10 +594,6 @@ void AndroidPlatformHelpers::stopRinging() const {
 }
 
 void AndroidPlatformHelpers::setDeviceRotation(BCTBX_UNUSED(int orientation)) const {
-	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
-		env->CallVoidMethod(mJavaHelper, mRotateVideoPreviewId);
-	}
 }
 
 // -----------------------------------------------------------------------------

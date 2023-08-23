@@ -7013,7 +7013,6 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 		}
 	}
 #endif
-	if (lc->platform_helper) getPlatformHelpers(lc)->setDeviceRotation(rotation);
 }
 
 #ifndef _MSC_VER
