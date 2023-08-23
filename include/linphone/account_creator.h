@@ -824,7 +824,7 @@ linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creat
 /**
  * Create and configure a #LinphoneAccount and a #LinphoneAuthInfo from informations set in the #LinphoneAccountCreator.
  * @param creator #LinphoneAccountCreator object @notnil
- * @return A #LinphoneAccount object if successful, NULL otherwise. @maybenil
+ * @return A #LinphoneAccount object if successful, NULL otherwise. @maybenil @tobefreed
  **/
 LINPHONE_PUBLIC LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator);
 

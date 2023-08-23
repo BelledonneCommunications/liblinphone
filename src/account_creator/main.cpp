@@ -83,6 +83,7 @@ LinphoneProxyConfig *linphone_account_creator_create_proxy_config(const Linphone
 		if (creator->set_as_default) {
 			linphone_core_set_default_proxy_config(creator->core, cfg);
 		}
+		linphone_auth_info_unref(info);
 		return cfg;
 	}
 
@@ -98,7 +99,9 @@ LinphoneProxyConfig *linphone_account_creator_configure(const LinphoneAccountCre
 LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator) {
 	LinphoneProxyConfig *cfg = linphone_account_creator_create_proxy_config(creator);
 	if (cfg != nullptr) {
-		return linphone_proxy_config_get_account(cfg);
+		auto account = linphone_account_ref(linphone_proxy_config_get_account(cfg));
+		linphone_proxy_config_unref(cfg);
+		return account;
 	}
 	return nullptr;
 }
