@@ -82,6 +82,8 @@ char *_get_identity(const LinphoneAccountCreator *creator) {
 		if (addr_domain == nullptr || (creator_domain != nullptr && strcmp(addr_domain, creator_domain) != 0)) {
 			if (creator_domain != nullptr) {
 				char *url = ms_strdup_printf("sip:%s", creator_domain);
+				if(addr)
+					linphone_address_unref(addr);
 				addr = linphone_address_new(url);
 				ms_free(url);
 
@@ -96,8 +98,9 @@ char *_get_identity(const LinphoneAccountCreator *creator) {
 		}
 
 		identity = linphone_address_as_string(addr);
-		linphone_address_unref(addr);
 	end:
+		if(addr)
+			linphone_address_unref(addr);
 		linphone_proxy_config_unref(proxy);
 	}
 	return identity;
