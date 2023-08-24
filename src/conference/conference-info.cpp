@@ -88,12 +88,22 @@ void ConferenceInfo::updateParticipantAddresses() const {
 }
 
 void ConferenceInfo::setParticipants(const std::list<std::shared_ptr<Address>> &participants) {
-	for (const auto &info : participants) {
-		addParticipant(info);
-	}
+	mParticipants.clear();
+	addParticipants(participants);
 }
 
 void ConferenceInfo::setParticipants(const ConferenceInfo::participant_list_t &participants) {
+	mParticipants.clear();
+	addParticipants(participants);
+}
+
+void ConferenceInfo::addParticipants(const std::list<std::shared_ptr<Address>> &participants) {
+	for (const auto &address : participants) {
+		addParticipant(address);
+	}
+}
+
+void ConferenceInfo::addParticipants(const ConferenceInfo::participant_list_t &participants) {
 	for (const auto &info : participants) {
 		addParticipant(info);
 	}

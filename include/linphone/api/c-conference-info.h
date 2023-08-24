@@ -78,6 +78,7 @@ LINPHONE_PUBLIC void linphone_conference_info_set_organizer(LinphoneConferenceIn
  * Retrieve the list of participants as list of addresses.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @return The list of participants. \bctbx_list{LinphoneAddress} @maybenil
+ * @deprecated 24/08/2023 use linphone_conference_info_get_participant_infos instead
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const bctbx_list_t *
 linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info);
@@ -94,9 +95,10 @@ linphone_conference_info_get_participant_infos(const LinphoneConferenceInfo *con
  * Set the list of participants.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @param participants The list of participants to set. \bctbx_list{LinphoneAddress} @maybenil
+ * @deprecated 24/08/2023 use linphone_conference_info_set_participant_infos instead
  */
-LINPHONE_PUBLIC void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info,
-                                                               const bctbx_list_t *participants);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void
+linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info, const bctbx_list_t *participants);
 
 /**
  * Set the list of participants.
@@ -104,6 +106,14 @@ LINPHONE_PUBLIC void linphone_conference_info_set_participants(LinphoneConferenc
  * @param participant_infos The list of participant informations to set. \bctbx_list{LinphoneParticipantInfo} @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_info_set_participant_infos(LinphoneConferenceInfo *conference_info,
+                                                                    const bctbx_list_t *participant_infos);
+
+/**
+ * Add a list of participants.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @param participant_infos The list of participant informations to add. \bctbx_list{LinphoneParticipantInfo} @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_info_add_participant_infos(LinphoneConferenceInfo *conference_info,
                                                                     const bctbx_list_t *participant_infos);
 
 /**

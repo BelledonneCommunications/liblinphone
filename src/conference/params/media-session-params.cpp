@@ -416,8 +416,7 @@ LinphoneMediaDirection MediaSessionParams::getVideoDirection() const {
 }
 
 void MediaSessionParams::setVideoDirection(SalStreamDir direction) {
-	L_D();
-	d->videoDirection = MediaSessionParamsPrivate::salStreamDirToMediaDirection(direction);
+	setVideoDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(direction));
 }
 
 void MediaSessionParams::setVideoDirection(LinphoneMediaDirection direction) {

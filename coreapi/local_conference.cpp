@@ -1233,29 +1233,34 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 
 				const auto &participant = findParticipant(session->getRemoteAddress());
 				LinphoneMediaDirection audioDirection = LinphoneMediaDirectionInactive;
+				LinphoneMediaDirection videoDirection = LinphoneMediaDirectionInactive;
 				if (participant) {
 					const auto &role = participant->getRole();
 					switch (role) {
 						case Participant::Role::Speaker:
 							audioDirection = LinphoneMediaDirectionSendRecv;
+							videoDirection = LinphoneMediaDirectionSendRecv;
 							break;
 						case Participant::Role::Listener:
 							audioDirection = LinphoneMediaDirectionSendOnly;
+							videoDirection = LinphoneMediaDirectionSendOnly;
 							break;
 						case Participant::Role::Unknown:
 							audioDirection = LinphoneMediaDirectionInactive;
+							videoDirection = LinphoneMediaDirectionInactive;
 							break;
 					}
 				}
 
 				const_cast<LinphonePrivate::MediaSessionParams *>(call->getParams())->setAudioDirection(audioDirection);
+				const_cast<LinphonePrivate::MediaSessionParams *>(call->getParams())->setVideoDirection(videoDirection);
 			}
 
 			break;
 			default:
-				lError() << "Call " << call << " (local address " << call->getLocalAddress()->toString()
-				         << " remote address " << (remoteAddress ? remoteAddress->toString() : "Unknown")
-				         << ") is in state " << Utils::toString(call->getState())
+				lError() << "Call " << call << " (local address " << *call->getLocalAddress() << " remote address "
+				         << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") is in state "
+				         << Utils::toString(call->getState())
 				         << ", hence it cannot be added to the conference right now";
 				return false;
 				break;
@@ -1284,6 +1289,11 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 					enter();
 				}
 				if (contactAddress && contactAddress->isValid() && !contactAddress->hasParam("isfocus")) {
+					lInfo() << "Call " << call << " (local address " << *call->getLocalAddress() << " remote address "
+					        << (remoteAddress ? remoteAddress->toString() : "Unknown") << " because contact address "
+					        << (contactAddress ? contactAddress->toString() : "Unknown")
+					        << " has not 'isfocus' parameter";
+
 					getCore()->doLater([call, session] {
 						const MediaSessionParams *params = session->getMediaParams();
 						MediaSessionParams *currentParams = params->clone();

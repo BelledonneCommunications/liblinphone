@@ -282,16 +282,6 @@ void MediaSessionPrivate::accepted() {
 
 	const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
 	bool updatingConference = conferenceInfo && (conferenceInfo->getState() == ConferenceInfo::State::Updated);
-
-	std::shared_ptr<MediaConference::Conference> conference = nullptr;
-	if (listener) {
-		conference = listener->getCallSessionConference(q->getSharedFromThis());
-	}
-	// Paused by remote state is not allowed when the call is in a conference. In fact, a conference server is not
-	// allowed to paused a call unilaterally. This assumption also aims at simplifying the management of the
-	// PausedByRemote state as it is simply triggered by SIP messages without really knowing the will of the other party
-	bool pausedByRemoteNotAllowed = ((conference && !isInConference()) || updatingConference);
-
 	// Do not reject media session if the client is trying to update a conference
 	if (rejectMediaSession(rmd, md) && !updatingConference) {
 		lInfo() << "Rejecting media session";
@@ -318,7 +308,7 @@ void MediaSessionPrivate::accepted() {
 					// The call always enters state PausedByRemote if all streams are rejected. This is done to support
 					// some clients who accept to stop the streams by setting the RTP port to 0 If the call is part of a
 					// conference, then it shouldn't be paused if it is just trying to update the conference
-					if (!pausedByRemoteNotAllowed && !localDesc->hasDir(SalStreamInactive) &&
+					if (isPausedByRemoteAllowed() && !localDesc->hasDir(SalStreamInactive) &&
 					    (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
 						nextState = CallSession::State::PausedByRemote;
 						nextStateMsg = "Call paused by remote";
@@ -578,9 +568,9 @@ void MediaSessionPrivate::pausedByRemote() {
 	L_Q();
 	MediaSessionParams newParams(*getParams());
 	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause",
-	                            0))
+	                            0)) {
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
-
+	}
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
 }
 
@@ -659,14 +649,30 @@ void MediaSessionPrivate::terminated() {
 	CallSessionPrivate::terminated();
 }
 
+bool MediaSessionPrivate::isPausedByRemoteAllowed() {
+	L_Q();
+	const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
+	bool updatingConference = conferenceInfo && (conferenceInfo->getState() == ConferenceInfo::State::Updated);
+
+	std::shared_ptr<MediaConference::Conference> conference = nullptr;
+	if (listener) {
+		conference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+
+	std::shared_ptr<Address> remoteContactAddress = Address::create();
+	remoteContactAddress->setImpl(op->getRemoteContactAddress());
+	// Paused by remote state is not allowed when the call is in a conference. In fact, a conference server is not
+	// allowed to paused a call unilaterally. This assumption also aims at simplifying the management of the
+	// PausedByRemote state as it is simply triggered by SIP messages without really knowing the will of the other party
+	return !((conference && !isInConference() && remoteContactAddress && remoteContactAddress->hasParam("isfocus")) ||
+	         updatingConference);
+}
+
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
 void MediaSessionPrivate::updated(bool isUpdate) {
 	L_Q();
 
 	const std::shared_ptr<SalMediaDescription> &rmd = op->getRemoteMediaDescription();
-	std::shared_ptr<Address> remoteContactAddress = Address::create();
-	remoteContactAddress->setImpl(op->getRemoteContactAddress());
-
 	switch (state) {
 		case CallSession::State::PausedByRemote:
 			if (rmd->hasDir(SalStreamSendRecv) || rmd->hasDir(SalStreamRecvOnly)) {
@@ -683,7 +689,7 @@ void MediaSessionPrivate::updated(bool isUpdate) {
 			}
 			BCTBX_NO_BREAK;
 		case CallSession::State::Updating:
-			if (rmd->hasDir(SalStreamSendOnly) || rmd->hasDir(SalStreamInactive)) {
+			if (isPausedByRemoteAllowed() && (rmd->hasDir(SalStreamSendOnly) || rmd->hasDir(SalStreamInactive))) {
 				pausedByRemote();
 				return;
 			}
@@ -1621,7 +1627,6 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 	newStream.type = type;
 
 	bool bundle_enabled = getParams()->rtpBundleEnabled();
-
 	bool success = false;
 	if (dev) {
 		const auto &label = dev->getLabel(sal_stream_type_to_linphone(type));
@@ -1653,14 +1658,25 @@ void MediaSessionPrivate::fillConferenceParticipantStream(SalStreamDescription &
 			// A participant device can only send a video stream if its video direction has the send component (i.e.
 			// SendOnly or SendRecv)
 			if (conference && (participantDevice == dev)) {
+				const auto mediaDirection =
+				    (type == SalVideo) ? getParams()->getVideoDirection() : getParams()->getAudioDirection();
 				// If the core is holding the conference, then the device is the one that is active in the session.
 				// Otherwise it is me
-				dir = (isInLocalConference)
-				          ? SalStreamRecvOnly
-				          : (((getParams()->getPrivate()->getSalVideoDirection() == SalStreamSendOnly) ||
-				              (getParams()->getPrivate()->getSalVideoDirection() == SalStreamSendRecv))
-				                 ? SalStreamSendOnly
-				                 : SalStreamInactive);
+				if (isInLocalConference) {
+					if ((mediaDirection == LinphoneMediaDirectionRecvOnly) ||
+					    (mediaDirection == LinphoneMediaDirectionSendRecv)) {
+						dir = SalStreamRecvOnly;
+					} else {
+						dir = SalStreamInactive;
+					}
+				} else {
+					if ((mediaDirection == LinphoneMediaDirectionSendOnly) ||
+					    (mediaDirection == LinphoneMediaDirectionSendRecv)) {
+						dir = SalStreamSendOnly;
+					} else {
+						dir = SalStreamInactive;
+					}
+				}
 			} else {
 				if (content.compare(MediaSessionPrivate::GridVideoContentAttribute) == 0) {
 					dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
@@ -1969,15 +1985,27 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 						cfg.replacePayloads(l);
 						newStream.name = "Thumbnail " + std::string(sal_stream_type_to_string(type)) + " " +
 						                 participantDevice->getAddress()->toString();
-						const auto mediaDirection = (type == SalVideo)
-						                                ? getParams()->getPrivate()->getSalVideoDirection()
-						                                : getParams()->getPrivate()->getSalAudioDirection();
-						cfg.dir = (add) ? ((isInLocalConference) ? SalStreamRecvOnly
-						                                         : (((mediaDirection == SalStreamSendRecv) ||
-						                                             (mediaDirection == SalStreamSendOnly))
-						                                                ? SalStreamSendOnly
-						                                                : SalStreamInactive))
-						                : SalStreamInactive;
+						const auto mediaDirection =
+						    (type == SalVideo) ? getParams()->getVideoDirection() : getParams()->getAudioDirection();
+						auto dir = SalStreamInactive;
+						if (add) {
+							if (isInLocalConference) {
+								if ((mediaDirection == LinphoneMediaDirectionRecvOnly) ||
+								    (mediaDirection == LinphoneMediaDirectionSendRecv)) {
+									dir = SalStreamRecvOnly;
+								} else {
+									dir = SalStreamInactive;
+								}
+							} else {
+								if ((mediaDirection == LinphoneMediaDirectionSendOnly) ||
+								    (mediaDirection == LinphoneMediaDirectionSendRecv)) {
+									dir = SalStreamSendOnly;
+								} else {
+									dir = SalStreamInactive;
+								}
+							}
+						}
+						cfg.dir = dir;
 						if (type == SalVideo) {
 							validateVideoStreamDirection(cfg);
 						}
@@ -2008,19 +2036,15 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
                                                           const SalStreamType type) {
 	L_Q();
 
-	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	std::shared_ptr<MediaConference::Conference> conference =
 	    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
-	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
-	std::list<OrtpPayloadType *> emptyList;
-	emptyList.clear();
 	if (conference) {
 		const auto &currentConfParams = conference->getCurrentParams();
-		const auto &confSecurityLevel = currentConfParams.getSecurityLevel();
 		bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
 
 		// Add additional video streams if required
 		if (((type == SalVideo) && isVideoConferenceEnabled) || (type == SalAudio)) {
+			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			const auto &confLayout = isInLocalConference ? getRemoteParams()->getConferenceVideoLayout()
 			                                             : getParams()->getConferenceVideoLayout();
 
@@ -2064,6 +2088,7 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 							const auto mid(bundleNameStreamPrefix + devLabel);
 							fillConferenceParticipantStream(newParticipantStream, oldMd, md, dev, pth, encs, type, mid);
 
+							const auto &confSecurityLevel = currentConfParams.getSecurityLevel();
 							if (isConferenceLayoutActiveSpeaker && (type == SalVideo) &&
 							    (confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd)) {
 								std::vector<std::pair<std::string, std::string>> attributes;
@@ -2215,6 +2240,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
                                                     const bool supportsCapabilityNegotiationAttributes,
                                                     const bool offerNegotiatedMediaProtocolOnly,
                                                     const bool forceCryptoKeyGeneration) {
+
 	L_Q();
 	const auto &core = q->getCore()->getCCore();
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
@@ -2375,8 +2401,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 
 		const auto audioStreamIdx = (conference && refMd) ? refMd->findIdxBestStream(SalAudio) : -1;
 		SalStreamDescription &audioStream = addStreamToMd(md, audioStreamIdx, oldMd);
-		SalStreamDir audioDir = SalStreamInactive;
-		audioDir = getParams()->getPrivate()->getSalAudioDirection();
+		SalStreamDir audioDir = getParams()->getPrivate()->getSalAudioDirection();
 		fillLocalStreamDescription(
 		    audioStream, md, getParams()->audioEnabled(), "Audio", SalAudio,
 		    getAudioProto(op ? op->getRemoteMediaDescription() : nullptr, offerNegotiatedMediaProtocolOnly), audioDir,
@@ -2453,7 +2478,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 			if (isInLocalConference) {
 				if (!isVideoConferenceEnabled) {
 					enableVideoStream = false;
-					videoDir = SalStreamInactive;
 				} else if ((deviceState == ParticipantDevice::State::Joining) ||
 				           (deviceState == ParticipantDevice::State::Present) ||
 				           (deviceState == ParticipantDevice::State::OnHold)) {
@@ -2461,19 +2485,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 					// Enable video based on conference capabilities if:
 					// - joining conference
 					// - receiving an offer
-					switch (confLayout) {
-						case ConferenceLayout::ActiveSpeaker:
-							videoDir = (confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd)
-							               ? SalStreamRecvOnly
-							               : SalStreamSendRecv;
-							break;
-						case ConferenceLayout::Grid:
-							videoDir = SalStreamRecvOnly;
-							break;
-					}
-				} else if (deviceState == ParticipantDevice::State::ScheduledForJoining) {
 					videoDir = videoDirInParams;
+				} else if (deviceState == ParticipantDevice::State::ScheduledForJoining) {
 					enableVideoStream = true;
+					videoDir = videoDirInParams;
 				} else {
 					videoDir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(
 					    participantDevice->getStreamCapability(LinphoneStreamTypeVideo));
@@ -2489,8 +2504,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 						               : videoDirInParams;
 						break;
 					case ConferenceLayout::Grid:
-						videoDir = (localIsOfferer) ? ((sendingVideo) ? SalStreamSendOnly : SalStreamInactive)
-						                            : getParams()->getPrivate()->getSalVideoDirection();
+						videoDir = ((sendingVideo) ? SalStreamSendOnly : SalStreamInactive);
 						break;
 				}
 			}
@@ -2564,7 +2578,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 #ifdef HAVE_ADVANCED_IM
 	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc",
 	                                                  "conference_event_log_enabled", TRUE);
-
 	if (conferenceCreated && eventLogEnabled && participantDevice &&
 	    ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) ||
 	     (deviceState == ParticipantDevice::State::OnHold))) {
@@ -3080,6 +3093,9 @@ void MediaSessionPrivate::onIceCompleted(BCTBX_UNUSED(IceService &service)) {
 			case CallSession::State::StreamsRunning:
 			case CallSession::State::Paused:
 			case CallSession::State::PausedByRemote: {
+				lInfo() << "Sending reINVITE for Media session (local address " << *q->getLocalAddress()
+				        << " remote address " << *q->getRemoteAddress()
+				        << ") because ICE negotiation has completed successfully.";
 				MediaSessionParams newParams(*getParams());
 				newParams.getPrivate()->setInternalCallUpdate(true);
 				q->update(&newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
@@ -4825,15 +4841,15 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		const auto preparingStreams = d->getStreamsGroup().prepare();
 		// reINVITE sent after full state must be sent after ICE negotiations are completed if ICE is enabled
 		if (linphone_nat_policy_ice_enabled(d->natPolicy) && preparingStreams) {
-			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress()->toString()
-			        << " remote address " << getRemoteAddress()->toString() << ") update to gather ICE candidates";
+			lInfo() << "Defer CallSession " << this << " (local address " << *getLocalAddress() << " remote address "
+			        << *getRemoteAddress() << ") update to gather ICE candidates";
 			d->queueIceGatheringTask(updateCompletionTask);
 			return 0;
 		} else if (isIceRunning) {
 			// ICE negotiations are ongoing hence the update cannot be send right now
 			lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession "
-			        << this << " (local address " << getLocalAddress()->toString() << " remote address "
-			        << getRemoteAddress()->toString() << ") update until Ice negotiations are completed.";
+			        << this << " (local address " << *getLocalAddress() << " remote address " << *getRemoteAddress()
+			        << ") update until Ice negotiations are completed.";
 			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
 		}

@@ -59,6 +59,7 @@ public:
 	void dtmfReceived(char dtmf);
 	bool failure() override;
 	void pauseForTransfer();
+	bool isPausedByRemoteAllowed();
 	void pausedByRemote();
 	void remoteRinging() override;
 	void replaceOp(SalCallOp *newOp) override;

@@ -691,6 +691,8 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 
 		bctbx_list_t *coresList = NULL;
 
+		LinphoneConferenceLayout layout = LinphoneConferenceLayoutGrid;
+
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(), michelle.getCMgr(),
 		                 berthe.getCMgr()}) {
 			LinphoneVideoActivationPolicy *pol =
@@ -705,7 +707,7 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 			linphone_core_enable_video_display(mgr->lc, TRUE);
 
 			if (mgr != focus.getCMgr()) {
-				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutGrid);
+				linphone_core_set_default_conference_layout(mgr->lc, layout);
 				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionSRTP);
 			}
 
@@ -786,12 +788,14 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 			if (itMembers != members.end()) {
 				members.erase(itMembers);
 			}
+
+			participantList.erase(m);
 		}
 
-		for (auto mgr : members) {
+		for (auto [mgr, role] : participantList) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
-			int no_streams_running = 3;
+			int no_streams_running = (role == LinphoneParticipantRoleSpeaker) ? 3 : 2;
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdating, (no_streams_running - 1),
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, no_streams_running,
@@ -921,7 +925,11 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 						BC_ASSERT_EQUAL((int)linphone_call_get_state(current_call),
 						                (int)LinphoneCallStateStreamsRunning, int, "%0d");
 					}
-					BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
+					LinphoneParticipantRole role =
+					    linphone_participant_get_role(linphone_conference_get_me(pconference));
+					if ((role != LinphoneParticipantRoleListener) && (layout != LinphoneConferenceLayoutGrid)) {
+						BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
+					}
 
 					LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 					bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
@@ -1278,14 +1286,16 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 					bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
 					linphone_video_activation_policy_unref(pol);
 
-					size_t no_streams_audio = 1;
+					size_t no_streams_audio = 0;
 					size_t no_streams_video = (enabled) ? 4 : 0;
-					size_t no_active_streams_video = (enabled) ? no_streams_video : 0;
+					size_t no_active_streams_video = 0;
 					size_t no_streams_text = 0;
 
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
+						no_streams_audio = compute_no_audio_streams(pcall, pconference);
+						no_active_streams_video = compute_no_video_streams(enabled, pcall, pconference);
 						_linphone_call_check_max_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video,
 						                                       no_streams_text);

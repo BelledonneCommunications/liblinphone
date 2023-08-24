@@ -113,6 +113,13 @@ mgr_calling_each_other(LinphoneCoreManager *marie,
 		linphone_call_stats_unref(pauline_stats);
 		pauline_stats = NULL;
 
+		const LinphoneCallParams *params = NULL;
+		params = linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc));
+		LinphoneMediaEncryption pauline_encryption = linphone_call_params_get_media_encryption(params);
+		params = linphone_call_get_current_params(linphone_core_get_current_call(marie->lc));
+		LinphoneMediaEncryption marie_encryption = linphone_call_params_get_media_encryption(params);
+		BC_ASSERT_EQUAL(pauline_encryption, marie_encryption, int, "%d");
+
 		if (callback != nullptr) callback(marie_call, pauline_call);
 
 		end_call(marie, pauline);

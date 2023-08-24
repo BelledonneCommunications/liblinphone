@@ -159,7 +159,8 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 								linphone_call_params_enable_video(
 								    params,
 								    (call->getRemoteParams()->videoEnabled() && videoConferencing) ? TRUE : FALSE);
-								linphone_call_params_set_video_direction(params, LinphoneMediaDirectionInactive);
+								//								linphone_call_params_set_video_direction(params,
+								// LinphoneMediaDirectionInactive);
 								const auto &startTime = conference ? conference->getCurrentParams().getStartTime()
 								                                   : (confInfo ? confInfo->getDateTime() : -1);
 								linphone_call_params_set_start_time(params, startTime);

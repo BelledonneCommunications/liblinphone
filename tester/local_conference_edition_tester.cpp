@@ -469,14 +469,16 @@ static void edit_simple_conference_base(bool_t from_organizer,
 						bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
 						linphone_video_activation_policy_unref(pol);
 
-						size_t no_streams_audio = 1;
+						size_t no_streams_audio = 0;
 						size_t no_streams_video = 3;
-						size_t no_active_streams_video = no_streams_video;
+						size_t no_active_streams_video = 0;
 						size_t no_streams_text = 0;
 
 						LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 						BC_ASSERT_PTR_NOT_NULL(pcall);
 						if (pcall) {
+							no_streams_audio = compute_no_audio_streams(pcall, pconference);
+							no_active_streams_video = compute_no_video_streams(enabled, pcall, pconference);
 							_linphone_call_check_max_nb_streams(pcall, no_streams_audio, no_streams_video,
 							                                    no_streams_text);
 							_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video,
@@ -572,6 +574,13 @@ static void edit_simple_conference_base(bool_t from_organizer,
 		}
 
 		bool_t add = TRUE;
+		std::list<LinphoneCoreManager *> initialParticipants{pauline.getCMgr(), laure.getCMgr(), lise.getCMgr()};
+		bctbx_list_t *initialInfos = NULL;
+		for (const auto &participant : initialParticipants) {
+			LinphoneParticipantInfo *info = linphone_participant_info_new(participant->identity);
+			initialInfos = bctbx_list_append(initialInfos, info);
+		}
+
 		for (int attempt = 0; attempt < 3; attempt++) {
 			ms_message("%s is trying to update conference %s - attempt %0d - %s %s",
 			           linphone_core_get_identity(manager_editing->lc), conference_address_str, attempt,
@@ -579,7 +588,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 
 			stats focus_stat = focus.getStats();
 
-			std::list<LinphoneCoreManager *> participants{pauline.getCMgr(), laure.getCMgr(), lise.getCMgr()};
+			std::list<LinphoneCoreManager *> participants = initialParticipants;
 			LinphoneConferenceInfo *conf_info =
 			    linphone_core_find_conference_information_from_uri(manager_editing->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(conf_info);
@@ -590,10 +599,10 @@ static void edit_simple_conference_base(bool_t from_organizer,
 					linphone_conference_info_add_participant(conf_info, michelle.getCMgr()->identity);
 					participants.push_back(michelle.getCMgr());
 				} else {
-					linphone_conference_info_remove_participant(conf_info, michelle.getCMgr()->identity);
+					linphone_conference_info_set_participant_infos(conf_info, initialInfos);
 				}
 
-				const auto ics_participant_number = ((add) ? 4 : 3) + ((join) ? 1 : 0);
+				const auto ics_participant_number = ((add) ? 4 : 3) + (((attempt == 0) && join) ? 1 : 0);
 				const bctbx_list_t *ics_participants = linphone_conference_info_get_participant_infos(conf_info);
 				BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), ics_participant_number, size_t, "%zu");
 
@@ -854,7 +863,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 						}
 						check_conference_info(mgr, confAddr, marie.getCMgr(),
 						                      ((use_default_account && add) ? 4 : 3) +
-						                          ((join || (mgr == focus.getCMgr())) ? 1 : 0),
+						                          ((((attempt == 0) && join) || (mgr == focus.getCMgr())) ? 1 : 0),
 						                      start_time, duration, exp_subject, exp_description, exp_sequence,
 						                      exp_state, security_level);
 
@@ -894,6 +903,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			}
 			add = !add;
 		}
+		bctbx_list_free_with_data(initialInfos, (void (*)(void *))linphone_participant_info_unref);
 		ms_free(uid);
 		ms_free(conference_address_str);
 		linphone_address_unref(alternative_address);

@@ -74,6 +74,9 @@ public:
 	void setParticipants(const std::list<std::shared_ptr<Address>> &participants);
 	void setParticipants(const participant_list_t &participants);
 
+	void addParticipants(const std::list<std::shared_ptr<Address>> &participants);
+	void addParticipants(const participant_list_t &participants);
+
 	void addParticipant(const std::shared_ptr<const Address> &participant);
 	void addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo);
 

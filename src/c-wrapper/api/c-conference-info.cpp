@@ -78,6 +78,13 @@ void linphone_conference_info_set_participant_infos(LinphoneConferenceInfo *conf
 	ConferenceInfo::toCpp(conference_info)->setParticipants(participantInfos);
 }
 
+void linphone_conference_info_add_participant_infos(LinphoneConferenceInfo *conference_info,
+                                                    const bctbx_list_t *participant_infos) {
+	const std::list<std::shared_ptr<LinphonePrivate::ParticipantInfo>> participantInfos =
+	    ParticipantInfo::getCppListFromCList(participant_infos);
+	ConferenceInfo::toCpp(conference_info)->addParticipants(participantInfos);
+}
+
 void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference_info,
                                               const LinphoneAddress *participant) {
 	ConferenceInfo::toCpp(conference_info)->addParticipant(Address::toCpp(participant)->getSharedFromThis());

@@ -888,6 +888,10 @@ void RemoteConference::onFocusCallStateChanged(LinphoneCallState state) {
 					        << *getConferenceAddress()
 					        << " because the dialog is not available yet to accept this transaction";
 					scheduleUpdate = true;
+				} else {
+					// An update has been successfully sent therefore clear the flag scheduleUpdate to avoid sending it
+					// twice.
+					scheduleUpdate = false;
 				}
 			}
 		}
@@ -1463,7 +1467,9 @@ void RemoteConference::onFullStateReceived() {
 		notifyLocalMutedDevices(session->getPrivate()->getMicrophoneMuted());
 	}
 	if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
-		requestStreams();
+		if (requestStreams() != 0) {
+			scheduleUpdate = true;
+		}
 	} else {
 		lInfo() << "Delaying re-INVITE in order to get streams after joining conference " << *getConferenceAddress()
 		        << " because ICE negotiations didn't end yet";
