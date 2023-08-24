@@ -33,22 +33,17 @@
 using namespace std;
 
 using namespace LinphonePrivate;
-typedef struct _AlertCallbackData {
+struct AlertCallbackData {
 
 	bool marieEnabled;
 	bool paulineEnabled;
 	LinphoneAlertType expectedType;
 	bool networkReachable = true;
-	int width = 800;
-	int height = 600;
 	bool camera_dysfunction = false;
 	int triggerCount = 0;
-	int bandwidthThreshold = 150000;
-	float lossRateThreshold = .5;
 	int stopped = 0;
 	int nack = false;
-
-} AlertCallbackData;
+};
 
 static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy *policy, const char *name) {
 	disable_all_video_codecs_except_one(lc, "VP8");
@@ -85,7 +80,7 @@ static void alert_catch(LinphoneCore *core, LinphoneAlert *alert) {
 	linphone_alert_cbs_unref(alert_cbs);
 }
 
-static void alert_call_base(OrtpNetworkSimulatorParams networkParams, AlertCallbackData data) {
+static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCallbackData data) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -108,6 +103,7 @@ static void alert_call_base(OrtpNetworkSimulatorParams networkParams, AlertCallb
 
 	enable_video_stream(marie->lc, pol, "qvga");
 	enable_video_stream(pauline->lc, pol, "qvga");
+	linphone_video_activation_policy_unref(pol);
 	if (data.nack) {
 		linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
 		linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
@@ -122,9 +118,10 @@ static void alert_call_base(OrtpNetworkSimulatorParams networkParams, AlertCallb
 		    (new SignalInformation(LinphoneSignalTypeWifi, LinphoneSignalStrengthUnitRssi, -80.0f))->toSharedPtr();
 		core->setSignalInformation(info);
 	}
+	/* Always use Outbound mode because it has real-time performance required for bandwidth estimations.*/
+	networkParams.mode = OrtpNetworkSimulatorOutbound;
 	linphone_core_set_network_simulator_params(marie->lc, &networkParams);
 	linphone_core_set_network_simulator_params(pauline->lc, &networkParams);
-	linphone_video_activation_policy_unref(pol);
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	if (data.camera_dysfunction) {
@@ -163,7 +160,7 @@ static void high_loss_rate_test(void) {
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
 	network_params.loss_rate = 25.;
-	network_params.mode = OrtpNetworkSimulatorInbound;
+
 	AlertCallbackData data = {true, true, LinphoneAlertQoSHighLossLateRate};
 	alert_call_base(network_params, data);
 }
@@ -172,7 +169,6 @@ void low_video_bandwidth_test(void) {
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
 	network_params.max_bandwidth = 150000;
-	network_params.mode = OrtpNetworkSimulatorInbound;
 	AlertCallbackData data = {true, true, LinphoneAlertQoSLowQualityReceivedVideo};
 	alert_call_base(network_params, data);
 }
@@ -180,8 +176,7 @@ void low_bandwidth_estimation_test(void) {
 
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
-	network_params.max_bandwidth = 150000;
-	network_params.mode = OrtpNetworkSimulatorInbound;
+	network_params.max_bandwidth = 120000;
 	AlertCallbackData data = {true, true, LinphoneAlertQoSLowDownloadBandwidthEstimation};
 	alert_call_base(network_params, data);
 }
@@ -189,7 +184,6 @@ static void remote_loss_rate_test(void) {
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
 	network_params.loss_rate = 15.;
-	network_params.mode = OrtpNetworkSimulatorOutbound;
 	AlertCallbackData data = {true, false, LinphoneAlertQoSHighRemoteLossRate};
 	alert_call_base(network_params, data);
 }
@@ -203,21 +197,20 @@ static void low_definition_video_sent_test(void) {
 	network_params.max_buffer_size = 100000;
 	network_params.max_bandwidth = 100000;
 	network_params.enabled = TRUE;
-	AlertCallbackData data = {true, false, LinphoneAlertQoSLowQualitySentVideo, true, 319, 219};
+	AlertCallbackData data = {true, false, LinphoneAlertQoSLowQualitySentVideo, true};
 	alert_call_base(network_params, data);
 }
 static void camera_low_framerate_test(void) {
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
 	network_params.loss_rate = 0.;
-	network_params.mode = OrtpNetworkSimulatorOutbound;
 
-	AlertCallbackData data = {true, true, LinphoneAlertQoSCameraLowFramerate, true, 800, 600, true};
+	AlertCallbackData data = {true, true, LinphoneAlertQoSCameraLowFramerate, true, true};
 	alert_call_base(network_params, data);
 }
 static void camera_misfunction_test(void) {
 	OrtpNetworkSimulatorParams network_params = {0};
-	AlertCallbackData data = {true, false, LinphoneAlertQoSCameraMisfunction, true, 800, 600, true};
+	AlertCallbackData data = {true, false, LinphoneAlertQoSCameraMisfunction, true, true};
 	alert_call_base(network_params, data);
 }
 static void burst_occured_test(void) {

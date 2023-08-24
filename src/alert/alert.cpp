@@ -127,11 +127,11 @@ void AlertMonitor::notify(const std::shared_ptr<Dictionary> &properties, Linphon
 	lWarning() << *alert;
 }
 void AlertMonitor::handleAlert(LinphoneAlertType type,
-                               const std::shared_ptr<Dictionary> &properties,
-                               bool triggerCondition) {
+                               bool triggerCondition,
+                               const std::function<std::shared_ptr<Dictionary>()> &getInformationFunction) {
 	if (!mTimers[type].isTimeout()) return;
 	if (!alreadyRunning(type) && triggerCondition) {
-		notify(properties, type);
+		notify(getInformationFunction ? getInformationFunction() : nullptr, type);
 		reset();
 		return;
 	}
@@ -143,7 +143,7 @@ void AlertMonitor::handleAlert(LinphoneAlertType type,
 		return;
 	}
 }
-void AlertMonitor::getTimer(LinphoneAlertType type, string section, string key, int defaultDelay) {
+void AlertMonitor::getTimer(LinphoneAlertType type, const string &section, const string &key, int defaultDelay) {
 	LinphoneConfig *config = linphone_core_get_config(getCore()->getCCore());
 	string completeSection = "alerts"s + "::" + section;
 	int delay = linphone_config_get_int(config, completeSection.c_str(), key.c_str(), defaultDelay);
@@ -163,6 +163,8 @@ VideoQualityAlertMonitor::VideoQualityAlertMonitor(const std::shared_ptr<Core> &
 	getTimer(LinphoneAlertQoSCameraMisfunction, "camera"s, "camera_misfunction_interval"s, 1000);
 	getTimer(LinphoneAlertQoSCameraLowFramerate, "camera"s, "low_framerate_interval"s, 1000);
 	getTimer(LinphoneAlertQoSVideoStalled, "camera"s, "video_stalled_interval"s, 1000);
+	auto config = linphone_core_get_config(getCore()->getCCore());
+	mFpsThreshold = linphone_config_get_float(config, "alerts::camera", "fps_threshold", 10.0);
 }
 void VideoQualityAlertMonitor::check(const VideoControlInterface::VideoStats *sendStats,
                                      const VideoControlInterface::VideoStats *recvStats,
@@ -174,36 +176,42 @@ void VideoQualityAlertMonitor::check(const VideoControlInterface::VideoStats *se
 	checkCameraLowFramerate(fps);
 }
 float VideoQualityAlertMonitor::getFpsThreshold() {
-	auto config = linphone_core_get_config(getCore()->getCCore());
-	return linphone_config_get_float(config, "alerts::camera", "fps_threshold", 10.0);
+	return mFpsThreshold;
 }
 void VideoQualityAlertMonitor::videoStalledCheck(float fps) {
 	mStalled = (fps <= 1.0f);
-	handleAlert(LinphoneAlertQoSVideoStalled, nullptr, mStalled);
+	handleAlert(LinphoneAlertQoSVideoStalled, mStalled);
 }
 void VideoQualityAlertMonitor::checkCameraMisfunction(float fps) {
 	bool condition = (fps == 0);
-	handleAlert(LinphoneAlertQoSCameraMisfunction, nullptr, condition);
+	handleAlert(LinphoneAlertQoSCameraMisfunction, condition);
 }
 void VideoQualityAlertMonitor::checkCameraLowFramerate(float fps) {
 	bool condition = ((fps > 0) && (fps <= getFpsThreshold()));
-	auto properties = (new Dictionary())->toSharedPtr();
-	properties->setProperty("fps", fps);
-	handleAlert(LinphoneAlertQoSCameraLowFramerate, properties, condition);
+	handleAlert(LinphoneAlertQoSCameraLowFramerate, condition, [fps]() {
+		auto properties = (new Dictionary())->toSharedPtr();
+		properties->setProperty("fps", fps);
+		return properties;
+	});
 }
 void VideoQualityAlertMonitor::checkSendingLowQuality(const VideoControlInterface::VideoStats *stats) {
 	bool condition = (stats->width <= 320 && stats->height <= 240);
-	auto properties = (new Dictionary())->toSharedPtr();
-	properties->setProperty("fps", stats->fps);
-	properties->setProperty("width", stats->width);
-	properties->setProperty("height", stats->height);
-	handleAlert(LinphoneAlertQoSLowQualitySentVideo, properties, condition);
+
+	handleAlert(LinphoneAlertQoSLowQualitySentVideo, condition, [stats]() {
+		auto properties = (new Dictionary())->toSharedPtr();
+		properties->setProperty("fps", stats->fps);
+		properties->setProperty("width", stats->width);
+		properties->setProperty("height", stats->height);
+		return properties;
+	});
 }
 
 VideoQualityAlertMonitor::~VideoQualityAlertMonitor() {
 }
 VideoBandwidthAlertMonitor::VideoBandwidthAlertMonitor(const std::shared_ptr<Core> &core) : AlertMonitor(core) {
-	getTimer(LinphoneAlertQoSLowQualityReceivedVideo, "video"s, "low_quality_recieved_interval"s, 1000);
+	auto config = linphone_core_get_config(getCore()->getCCore());
+	mThreshold = linphone_config_get_float(config, "alerts::video", "bandwidth_threshold", 150000.0);
+	getTimer(LinphoneAlertQoSLowQualityReceivedVideo, "video"s, "low_quality_received_interval"s, 1000);
 	getTimer(LinphoneAlertQoSLowDownloadBandwidthEstimation, "video"s, "download_bandwidth_interval"s, 1000);
 }
 void VideoBandwidthAlertMonitor::check(LinphoneCallStats *callStats) {
@@ -211,37 +219,46 @@ void VideoBandwidthAlertMonitor::check(LinphoneCallStats *callStats) {
 	float bandwidth = linphone_call_stats_get_download_bandwidth(callStats);
 	checkVideoBandwidth(bandwidth);
 	float estimatedBandwidth = linphone_call_stats_get_estimated_download_bandwidth(callStats);
-	checkBandwidthEstimation(estimatedBandwidth * 1000.0f);
+	if (estimatedBandwidth != 0) {
+		lInfo() << "Got video bandwidth estimation: " << estimatedBandwidth;
+		checkBandwidthEstimation(estimatedBandwidth);
+	}
 }
 float VideoBandwidthAlertMonitor::getBandwidthThreshold() {
-	auto config = linphone_core_get_config(getCore()->getCCore());
-	return linphone_config_get_float(config, "alerts::video", "bandwidth_threshold", 150000.0);
+	return mThreshold;
 }
 void VideoBandwidthAlertMonitor::checkVideoBandwidth(float bandwidth) {
 	bool condition = (bandwidth > 0) && (bandwidth * 1000.0f <= getBandwidthThreshold());
-	auto properties = (new Dictionary())->toSharedPtr();
-	properties->setProperty("bandwidth", bandwidth);
-	handleAlert(LinphoneAlertQoSLowQualityReceivedVideo, properties, condition);
+
+	handleAlert(LinphoneAlertQoSLowQualityReceivedVideo, condition, [bandwidth]() {
+		auto properties = (new Dictionary())->toSharedPtr();
+		properties->setProperty("bandwidth", bandwidth);
+		return properties;
+	});
 }
 void VideoBandwidthAlertMonitor::checkBandwidthEstimation(float bandwidth) {
-	bool condition = bandwidth <= getBandwidthThreshold();
-	auto properties = (new Dictionary())->toSharedPtr();
-	properties->setProperty("bandwidth", bandwidth);
-	handleAlert(LinphoneAlertQoSLowDownloadBandwidthEstimation, properties, condition);
+	bool condition = bandwidth * 1000.0f <= getBandwidthThreshold();
+
+	handleAlert(LinphoneAlertQoSLowDownloadBandwidthEstimation, condition, [bandwidth]() {
+		auto properties = (new Dictionary())->toSharedPtr();
+		properties->setProperty("bandwidth", bandwidth);
+		return properties;
+	});
 }
-NetworkQualityAlertMonitor::NetworkQualityAlertMonitor(const std::shared_ptr<Core> &core)
-    : AlertMonitor(core), mNackSent(false), mBurstCount(0), mFirstMeasureNonZero(false), mLastNackLoss(0),
-      mLastTotalLoss(0), mNackIndicator(0.0) {
+NetworkQualityAlertMonitor::NetworkQualityAlertMonitor(const std::shared_ptr<Core> &core) : AlertMonitor(core) {
 	getTimer(LinphoneAlertQoSHighLossLateRate, "network"s, "loss_rate_interval"s, 5000);
 	getTimer(LinphoneAlertQoSHighRemoteLossRate, "network"s, "remote_loss_rate_interval"s, 5000);
 	getTimer(LinphoneAlertQoSLostSignal, "network"s, "lost_signal_interval"s, 1000);
 	getTimer(LinphoneAlertQoSBurstOccured, "network"s, "burst_occured_interval"s, 1000);
 	getTimer(LinphoneAlertQoSRetransmissionFailures, "network"s, "nack_check_interval"s, 2000);
 	getTimer(LinphoneAlertQoSLowSignal, "network"s, "low_signal_interval"s, 1000);
+	auto config = linphone_core_get_config(getCore()->getCCore());
+	mLossRateThreshold = linphone_config_get_float(config, "alerts::network", "loss_rate_threshold", 5.0);
+	mNackPerformanceThreshold = linphone_config_get_float(config, "alerts::network", "nack_threshold", 0.5f);
+	mSignalThreshold = linphone_config_get_float(config, "alerts::network", "signal_threshold", -70.0f);
 }
 float NetworkQualityAlertMonitor::getLossRateThreshold() {
-	auto config = linphone_core_get_config(getCore()->getCCore());
-	return linphone_config_get_float(config, "alerts::network", "loss_rate_threshold", 5.0);
+	return mLossRateThreshold;
 }
 void NetworkQualityAlertMonitor::check(LinphoneCallStats *callStats, bool burstOccured) {
 	if (!mAlertsEnabled) return;
@@ -255,24 +272,32 @@ void NetworkQualityAlertMonitor::check(LinphoneCallStats *callStats, bool burstO
 	checkBurstOccurence(burstOccured);
 	checkSignalQuality();
 }
+
 void NetworkQualityAlertMonitor::checkLocalLossRate(float lossRate, float lateRate, LinphoneStreamType streamType) {
 	bool condition = (lossRate >= getLossRateThreshold());
-	auto properties = (new Dictionary())->toSharedPtr();
-	properties->setProperty("loss rate", lossRate);
-	properties->setProperty("late rate", lateRate);
-	properties->setProperty("media type", streamType);
-	handleAlert(LinphoneAlertQoSHighLossLateRate, properties, condition);
+
+	handleAlert(LinphoneAlertQoSHighLossLateRate, condition, [lossRate, lateRate, streamType]() {
+		auto properties = (new Dictionary())->toSharedPtr();
+		properties->setProperty("loss rate", lossRate);
+		properties->setProperty("late rate", lateRate);
+		properties->setProperty("media type", streamType);
+		return properties;
+	});
 }
 
-void NetworkQualityAlertMonitor::checkRemoteLossRate(float recievedLossRate) {
-	bool condition = (recievedLossRate >= getLossRateThreshold());
-	auto properties = (new Dictionary())->toSharedPtr();
-	properties->setProperty("loss rate", recievedLossRate);
-	handleAlert(LinphoneAlertQoSHighRemoteLossRate, properties, condition);
+void NetworkQualityAlertMonitor::checkRemoteLossRate(float receivedLossRate) {
+	bool condition = (receivedLossRate >= getLossRateThreshold());
+
+	handleAlert(LinphoneAlertQoSHighRemoteLossRate, condition, [receivedLossRate]() {
+		auto properties = (new Dictionary())->toSharedPtr();
+		properties->setProperty("loss rate", receivedLossRate);
+		return properties;
+	});
 }
+
 void NetworkQualityAlertMonitor::checkLostSignal() {
 	bool condition = !linphone_core_is_network_reachable(getCore()->getCCore());
-	handleAlert(LinphoneAlertQoSLostSignal, nullptr, condition);
+	handleAlert(LinphoneAlertQoSLostSignal, condition);
 }
 void NetworkQualityAlertMonitor::reset() {
 	mBurstCount = 0;
@@ -280,7 +305,7 @@ void NetworkQualityAlertMonitor::reset() {
 void NetworkQualityAlertMonitor::checkBurstOccurence(const bool burstOccured) {
 	mBurstCount += burstOccured;
 	bool condition = (mBurstCount > 0);
-	handleAlert(LinphoneAlertQoSBurstOccured, nullptr, condition);
+	handleAlert(LinphoneAlertQoSBurstOccured, condition);
 }
 float NetworkQualityAlertMonitor::computeNackIndicator(uint64_t lostBeforeNack, uint64_t cumPacketLoss) {
 	if (cumPacketLoss > lostBeforeNack) return 0.0f;
@@ -299,30 +324,30 @@ void NetworkQualityAlertMonitor::checkNackQuality(RtpSession *session) {
 	}
 	if (mFirstMeasureNonZero && mTimers[LinphoneAlertQoSRetransmissionFailures].isTimeout(false)) {
 		mNackIndicator = computeNackIndicator(currentNackLoss - mLastNackLoss, currentTotalLoss - mLastTotalLoss);
-		auto properties = (new Dictionary())->toSharedPtr();
-		float threshold = linphone_config_get_float(linphone_core_get_config(getCore()->getCCore()), "alerts::network",
-		                                            "nack_threshold", 0.5f);
-		properties->setProperty("nack indicator", mNackIndicator);
 		mLastNackLoss = currentNackLoss;
 		mLastTotalLoss = currentTotalLoss;
-		handleAlert(LinphoneAlertQoSRetransmissionFailures, properties, mNackIndicator <= threshold);
+		handleAlert(LinphoneAlertQoSRetransmissionFailures, mNackIndicator <= mNackPerformanceThreshold, [this]() {
+			auto properties = (new Dictionary())->toSharedPtr();
+			properties->setProperty("nack indicator", mNackIndicator);
+			return properties;
+		});
 	}
 }
 
 void NetworkQualityAlertMonitor::checkSignalQuality() {
 	bool condition = false;
 	float value = 0.0f;
-	auto properties = (new Dictionary())->toSharedPtr();
-	auto threshold = linphone_config_get_float(linphone_core_get_config(getCore()->getCCore()), "alerts::network",
-	                                           "signal_threshold", -70.0f);
 
 	auto information = getCore()->getSignalInformation();
 	if (information) {
 		value = information->getStrength();
-		condition = (value <= threshold);
+		condition = (value <= mSignalThreshold);
 	}
-	properties->setProperty("Rssi value", value);
-	handleAlert(LinphoneAlertQoSLowSignal, properties, condition);
+	handleAlert(LinphoneAlertQoSLowSignal, condition, [value]() {
+		auto properties = (new Dictionary())->toSharedPtr();
+		properties->setProperty("Rssi value", value);
+		return properties;
+	});
 }
 
 LINPHONE_END_NAMESPACE

@@ -81,8 +81,10 @@ public:
 	AlertMonitor(const std::shared_ptr<Core> &core);
 	void notify(const std::shared_ptr<Dictionary> &properties, LinphoneAlertType);
 	bool alreadyRunning(LinphoneAlertType type);
-	void handleAlert(LinphoneAlertType type, const std::shared_ptr<Dictionary> &properties, bool triggerCondition);
-	void getTimer(LinphoneAlertType type, string section, string key, int delay);
+	void handleAlert(LinphoneAlertType type,
+	                 bool triggerCondition,
+	                 const std::function<std::shared_ptr<Dictionary>()> &getInformationFunction = nullptr);
+	void getTimer(LinphoneAlertType type, const string &section, const string &key, int delay);
 	virtual void reset(){};
 	bool getAlertsEnabled();
 
@@ -104,6 +106,7 @@ public:
 	~VideoQualityAlertMonitor();
 
 private:
+	float mFpsThreshold;
 	bool mStalled;
 };
 class VideoBandwidthAlertMonitor : public AlertMonitor {
@@ -114,6 +117,9 @@ public:
 	void check(LinphoneCallStats *callStats);
 	void checkVideoBandwidth(float bandwidth);
 	void checkBandwidthEstimation(float bandwidth);
+
+private:
+	float mThreshold;
 };
 
 class NetworkQualityAlertMonitor : public AlertMonitor {
@@ -121,7 +127,7 @@ class NetworkQualityAlertMonitor : public AlertMonitor {
 public:
 	NetworkQualityAlertMonitor(const std::shared_ptr<Core> &core);
 	float getLossRateThreshold();
-	void checkRemoteLossRate(float);
+	void checkRemoteLossRate(float receivedLossRate);
 	void checkLocalLossRate(float lossRate, float lateRate, LinphoneStreamType streamType);
 	void checkLostSignal();
 	void checkBurstOccurence(const bool burstOccured);
@@ -133,11 +139,14 @@ public:
 	bool mNackSent;
 
 private:
-	int mBurstCount;
-	bool mFirstMeasureNonZero;
-	uint64_t mLastNackLoss;
-	uint64_t mLastTotalLoss;
-	float mNackIndicator;
+	uint64_t mLastNackLoss = 0;
+	uint64_t mLastTotalLoss = 0;
+	int mBurstCount = 0;
+	float mNackIndicator = 0.0f;
+	float mLossRateThreshold = 0.0f;
+	float mNackPerformanceThreshold = 0.0f;
+	float mSignalThreshold = 0.0f;
+	bool mFirstMeasureNonZero = false;
 };
 
 class AlertCbs : public bellesip::HybridObject<LinphoneAlertCbs, AlertCbs>, public Callbacks {

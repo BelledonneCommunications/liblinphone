@@ -624,7 +624,7 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev) {
 	getRecvStats(&recvStats);
 	float fps = video_stream_get_sent_framerate(mStream);
 	mVideoMonitor.check(&sendStats, &recvStats, fps);
-	mBandwidthMonitor.check(this->getStats());
+	mBandwidthMonitor.check(mStats);
 	mNetworkMonitor.checkNackQuality(mStream->ms.sessions.rtp_session);
 }
 

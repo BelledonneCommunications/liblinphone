@@ -645,7 +645,12 @@ typedef struct _LinphoneDictionary LinphoneDictionary;
 // -----------------------------------------------------------------------------
 
 /**
- * @brief Object that represents an alert
+ * @brief Object that represents an alert.
+ * Alerts are raised at run-time when particular conditions are met, for example bad network quality.
+ * The full list of available alert types is described by the #LinphoneAlertTypes enum.
+ * An application is notified of new alerts through the #LinphoneCoreCbs interface.
+ * Once raised, the application may use the #LinphoneAlertCbs interface to get notified
+ * when the alert stops.
  * @ingroup alert
  */
 typedef struct _LinphoneAlert LinphoneAlert;
@@ -704,7 +709,7 @@ typedef enum _LinphoneAlertTypes {
 	 */
 	LinphoneAlertQoSLowDownloadBandwidthEstimation,
 	/** Low quality (bitrate) video received. Information provided: float bitrate in kbit/s, int width, int height
-	 *  @note Use the key "low_quality_recieved_interval" in the section "alerts::video" to set or get the interval at
+	 *  @note Use the key "low_quality_received_interval" in the section "alerts::video" to set or get the interval at
 	 * which the problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSLowQualityReceivedVideo,

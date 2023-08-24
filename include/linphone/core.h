@@ -4797,8 +4797,21 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_on_alert(LinphoneCoreCbs *cbs, Linpho
  * @return The #LinphoneCoreCbsOnAlertCb callback called.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsOnAlertCb linphone_core_cbs_get_on_alert(LinphoneCoreCbs *cbs);
+
+/**
+ * Enable alerts. See #LinphoneAlert for more details.
+ * @param core the #LinphoneCore .
+ * @param enable whether alert reporting is enabled or not.
+ */
 LINPHONE_PUBLIC void linphone_core_enable_alerts(LinphoneCore *core, bool_t enable);
+
+/**
+ * Returns whether alert reporting is enabled. See #LinphoneAlert for more details.
+ * @param core the #LinphoneCore .
+ * @return whether alert reporting is enabled.
+ */
 LINPHONE_PUBLIC bool_t linphone_core_alerts_enabled(const LinphoneCore *core);
+
 /**
  * @}
  */
@@ -7053,15 +7066,16 @@ LINPHONE_PUBLIC void linphone_core_set_zrtp_key_agreement_suites(LinphoneCore *l
 /**
  * Enable the deletion of empty chatrooms (i.e. chatrooms with no participants)
  * @param core A #LinphoneCore object @notnil
- * @param enable A boolean value telling whether to enable or disable the deletion of chat rooms with no participants in (Applicable to servers only)
- * it
+ * @param enable A boolean value telling whether to enable or disable the deletion of chat rooms with no participants in
+ * (Applicable to servers only) it
  */
 LINPHONE_PUBLIC void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether empty chat rooms are deleted or not.
  * @param core A #LinphoneCore object @notnil
- * @return A boolean value telling whether the deletion of empty chatrooms is enabled or not (Applicable to servers only)
+ * @return A boolean value telling whether the deletion of empty chatrooms is enabled or not (Applicable to servers
+ * only)
  */
 LINPHONE_PUBLIC bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core);
 
