@@ -7305,6 +7305,58 @@ static void simple_call_with_display_name(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_received_with_tel_uri(void) {
+	const char *invite = "INVITE sip:49.14.153.62:34247;transport=udp SIP/2.0\r\n"
+	                     "Via: SIP/2.0/UDP 127.0.0.1:80;branch=z9hG4bKd1615h3de26kgeh6k1202gzb4T12045\r\n"
+	                     "Call-ID: asbc16ja7z3sau4j2u2jzdx063zj6zj6336n@10.191.176.18\r\n"
+	                     "From: <tel:+123456789>;tag=sbc0502naux6xjz\r\n"
+	                     "To: <tel:+1234567890>\r\n"
+	                     "CSeq: 1 INVITE\r\n"
+	                     "Allow: UPDATE,INFO,PRACK,NOTIFY,OPTIONS,INVITE,ACK,BYE,CANCEL\r\n"
+	                     "Contact: <sip:127.0.0.1:80;Dpt=eb7a-200>\r\n"
+	                     "Max-Forwards: 66\r\n"
+	                     "Supported: timer,100rel,histinfo,early-session\r\n"
+	                     "Session-Expires: 1800\r\n"
+	                     "Min-SE: 600\r\n"
+	                     "P-Asserted-Identity: <tel:+919599936258>\r\n"
+	                     "P-Called-Party-ID: <tel:+919403993402>\r\n"
+	                     "P-Notification: caller-control\r\n"
+	                     "Content-Length: 229\r\n"
+	                     "Content-Type: application/sdp\r\n"
+	                     "Content-Disposition: session\r\n"
+	                     "\r\n"
+	                     "v=0\r\n"
+	                     "o=- 213464062 213464062 IN IP4 127.0.0.1\r\n"
+	                     "s=SBC call\r\n"
+	                     "c=IN IP4 127.0.0.1\r\n"
+	                     "t=0 0\r\n"
+	                     "m=audio 1023 RTP/AVP 8 96 0\r\n"
+	                     "b=AS:80\r\n"
+	                     "a=rtpmap:8 PCMA/8000\r\n"
+	                     "a=rtpmap:96 telephone-event/8000\r\n"
+	                     "a=ptime:20\r\n"
+	                     "a=maxptime:20\r\n"
+	                     "a=rtpmap:0 PCMU/8000\r\n"
+	                     "\r\n";
+
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(invite, strlen(invite), "127.0.0.1",
+	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
+	linphone_call_accept(linphone_core_get_current_call(laure->lc));
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallStreamsRunning, 1));
+	linphone_call_terminate(linphone_core_get_current_call(laure->lc));
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	linphone_core_manager_destroy(laure);
+}
+
 static test_t call_tests[] = {
     TEST_NO_TAG("Simple double call", simple_double_call),
     TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
@@ -7450,8 +7502,7 @@ static test_t call_not_established_tests[] = {
     TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
     TEST_NO_TAG("Call with malformed from", call_with_maformed_from),
     TEST_NO_TAG("Call rejected with 403", call_rejected_with_403),
-
-};
+    TEST_NO_TAG("Call with tel uri", call_received_with_tel_uri)};
 
 test_suite_t call_test_suite = {"Single Call",
                                 NULL,
@@ -7479,4 +7530,4 @@ test_suite_t call_not_established_test_suite = {"Single Call (Not established)",
                                                 sizeof(call_not_established_tests) /
                                                     sizeof(call_not_established_tests[0]),
                                                 call_not_established_tests,
-                                                0};
+                                                304};

@@ -905,7 +905,7 @@ void ChatRoom::setIsMuted(const bool muted) {
 	}
 }
 
-ChatRoomLogScope::ChatRoomLogScope(const LinphoneChatRoom *cr)
+ChatRoomLogContextualizer::ChatRoomLogContextualizer(const LinphoneChatRoom *cr)
     : CoreLogContextualizer(*L_GET_CPP_PTR_FROM_C_OBJECT(cr)) {
 }
 

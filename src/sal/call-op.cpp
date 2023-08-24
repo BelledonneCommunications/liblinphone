@@ -1649,7 +1649,8 @@ int SalCallOp::setReferrer(SalCallOp *referredCall) {
 
 SalCallOp *SalCallOp::getReplaces() const {
 	if (!mReplaces) return nullptr;
-
+	const char *from_tag = belle_sip_header_replaces_get_from_tag(mReplaces);
+	const char *to_tag = belle_sip_header_replaces_get_to_tag(mReplaces);
 	// rfc3891
 	// 3.  User Agent Server Behavior: Receiving a Replaces Header
 	//
@@ -1662,10 +1663,9 @@ SalCallOp *SalCallOp::getReplaces() const {
 	// is compared to the local tag, and the from-tag parameter is compared
 	// to the remote tag.
 	auto dialog = belle_sip_provider_find_dialog(mRoot->mProvider, belle_sip_header_replaces_get_call_id(mReplaces),
-	                                             belle_sip_header_replaces_get_to_tag(mReplaces),
-	                                             belle_sip_header_replaces_get_from_tag(mReplaces));
+	                                             to_tag, from_tag);
 
-	if (!dialog && strcmp(belle_sip_header_replaces_get_to_tag(mReplaces), "0") == 0) {
+	if (!dialog && (to_tag == NULL || strcmp(belle_sip_header_replaces_get_to_tag(mReplaces), "0") == 0)) {
 		// even if not described in rfc3891, in case of very early network switch at caller side, we might receive a
 		// replace header without to-tag. Give a chance to find the early dialog
 		dialog = belle_sip_provider_find_dialog_with_remote_tag(mRoot->mProvider,

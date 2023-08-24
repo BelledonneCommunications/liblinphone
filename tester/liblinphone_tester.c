@@ -519,7 +519,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&offeranswer_test_suite, 185);
 	liblinphone_tester_add_suite_with_default_time(&call_test_suite, 409);
 	liblinphone_tester_add_suite_with_default_time(&call2_test_suite, 244);
-	liblinphone_tester_add_suite_with_default_time(&call_not_established_test_suite, 214);
+	bc_tester_add_suite(&call_not_established_test_suite);
 	liblinphone_tester_add_suite_with_default_time(&push_incoming_call_test_suite, 40);
 	liblinphone_tester_add_suite_with_default_time(&call_recovery_test_suite, 246);
 	liblinphone_tester_add_suite_with_default_time(&call_with_ice_test_suite, 324);

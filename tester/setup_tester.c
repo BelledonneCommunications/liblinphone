@@ -1970,9 +1970,12 @@ static void search_friend_with_aggregation(void) {
 				it = bctbx_list_next(phone_numbers);
 				const LinphoneFriendPhoneNumber *phone_number2 = (const LinphoneFriendPhoneNumber *)it->data;
 				const char *number2 = linphone_friend_phone_number_get_phone_number(phone_number2);
-				const char *label2 = linphone_friend_phone_number_get_label(phone_number2);
+
 				BC_ASSERT_STRING_EQUAL(number2, "+33901020304");
-				BC_ASSERT_PTR_NULL(label2);
+				const char *label2 = linphone_friend_phone_number_get_label(phone_number2);
+				if (!BC_ASSERT_PTR_NULL(label2)) {
+					ms_error("label was: %s", label2);
+				}
 
 				bctbx_list_free_with_data(phone_numbers, (bctbx_list_free_func)linphone_friend_phone_number_unref);
 			}

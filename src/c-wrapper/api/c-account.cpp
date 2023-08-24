@@ -55,27 +55,27 @@ LinphoneAccount *linphone_account_ref(LinphoneAccount *account) {
 }
 
 void linphone_account_unref(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	Account::toCpp(account)->unref();
 }
 
 int linphone_account_set_params(LinphoneAccount *account, LinphoneAccountParams *params) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->setAccountParams(AccountParams::toCpp(params)->getSharedFromThis());
 }
 
 const LinphoneAccountParams *linphone_account_get_params(const LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getAccountParams()->toC();
 }
 
 void linphone_account_add_custom_param(LinphoneAccount *account, const char *key, const char *value) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	Account::toCpp(account)->addCustomParam(L_C_TO_STRING(key), L_C_TO_STRING(value));
 }
 
 const char *linphone_account_get_custom_param(const LinphoneAccount *account, const char *key) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return L_STRING_TO_C(Account::toCpp(account)->getCustomParam(L_C_TO_STRING(key)));
 }
 
@@ -88,17 +88,17 @@ void *linphone_account_get_user_data(LinphoneAccount *account) {
 }
 
 void linphone_account_set_custom_header(LinphoneAccount *account, const char *header_name, const char *header_value) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	Account::toCpp(account)->setCustomheader(std::string(header_name), std::string(header_value));
 }
 
 const char *linphone_account_get_custom_header(LinphoneAccount *account, const char *header_name) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getCustomHeader(std::string(header_name));
 }
 
 void linphone_account_set_dependency(LinphoneAccount *account, LinphoneAccount *depends_on) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	Account::toCpp(account)->setDependency(depends_on ? Account::toCpp(depends_on)->getSharedFromThis() : nullptr);
 }
 
@@ -115,32 +115,32 @@ LinphoneCore *linphone_account_get_core(LinphoneAccount *account) {
 }
 
 const LinphoneErrorInfo *linphone_account_get_error_info(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getErrorInfo();
 }
 
 LinphoneAddress *linphone_account_get_contact_address(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return (Account::toCpp(account)->getContactAddress()) ? Account::toCpp(account)->getContactAddress()->toC() : NULL;
 }
 
 void linphone_account_set_contact_address(LinphoneAccount *account, const LinphoneAddress *addr) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->setContactAddress(Address::toCpp(addr)->getSharedFromThis());
 }
 
 LinphoneRegistrationState linphone_account_get_state(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getState();
 }
 
 void linphone_account_refresh_register(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	Account::toCpp(account)->refreshRegister();
 }
 
 void linphone_account_pause_register(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	Account::toCpp(account)->pauseRegister();
 }
 
@@ -149,7 +149,7 @@ LinphoneReason linphone_account_get_error(LinphoneAccount *account) {
 }
 
 LinphoneTransportType linphone_account_get_transport(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getTransport();
 }
 
@@ -162,32 +162,32 @@ bool_t linphone_account_avpf_enabled(LinphoneAccount *account) {
 }
 
 const LinphoneAuthInfo *linphone_account_find_auth_info(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->findAuthInfo();
 }
 
 int linphone_account_get_unread_chat_message_count(const LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getUnreadChatMessageCount();
 }
 
 bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(Account::toCpp(account)->getChatRooms());
 }
 
 int linphone_account_get_missed_calls_count(const LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getMissedCallsCount();
 }
 
 void linphone_account_reset_missed_calls_count(LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	Account::toCpp(account)->resetMissedCallsCount();
 }
 
 bctbx_list_t *linphone_account_get_call_logs(const LinphoneAccount *account) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 
 	bctbx_list_t *results = NULL;
 	std::list list = Account::toCpp(account)->getCallLogs();
@@ -202,7 +202,7 @@ bctbx_list_t *linphone_account_get_call_logs(const LinphoneAccount *account) {
 
 bctbx_list_t *linphone_account_get_call_logs_for_address(const LinphoneAccount *account,
                                                          const LinphoneAddress *remote_address) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 
 	bctbx_list_t *results = NULL;
 	const auto remote = Address::toCpp(const_cast<LinphoneAddress *>(remote_address))->getSharedFromThis();
@@ -248,7 +248,7 @@ void _linphone_account_notify_registration_state_changed(LinphoneAccount *accoun
 }
 
 bool_t linphone_account_is_phone_number(const LinphoneAccount *account, const char *username) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	if (!username) return FALSE;
 
 	const char *p;
@@ -291,7 +291,7 @@ static char *replace_icp_with_plus(char *phone, const char *icp) {
 }
 
 char *linphone_account_normalize_phone_number(const LinphoneAccount *account, const char *username) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	char *result = NULL;
 	std::shared_ptr<DialPlan> dialplan;
 	char *nationnal_significant_number = NULL;
@@ -400,7 +400,7 @@ static LinphoneAddress *_destroy_addr_if_not_sip(LinphoneAddress *addr) {
 }
 
 LinphoneAddress *linphone_account_normalize_sip_uri(LinphoneAccount *account, const char *username) {
-	AccountLogScope logContextualizer(account);
+	AccountLogContextualizer logContextualizer(account);
 	enum_lookup_res_t *enumres = NULL;
 	char *enum_domain = NULL;
 	char *tmpurl;

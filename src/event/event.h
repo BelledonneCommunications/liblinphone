@@ -114,9 +114,9 @@ private:
 	mutable LinphoneErrorInfo *mEi = nullptr;
 };
 
-class EventLogScope : public CoreLogContextualizer {
+class EventLogContextualizer : public CoreLogContextualizer {
 public:
-	EventLogScope(const LinphoneEvent *ev) : CoreLogContextualizer(*Event::toCpp(ev)) {
+	EventLogContextualizer(const LinphoneEvent *ev) : CoreLogContextualizer(*Event::toCpp(ev)) {
 	}
 };
 

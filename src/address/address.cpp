@@ -72,10 +72,6 @@ Address::Address(const Address &other) : HybridObject(other) {
 	else mImpl = sal_address_new_empty();
 }
 
-Address::Address(SalAddress *addr) {
-	mImpl = addr;
-}
-
 Address::Address() {
 	mImpl = sal_address_new_empty();
 }
@@ -83,6 +79,18 @@ Address::Address() {
 Address::Address(Address &&other) : bellesip::HybridObject<LinphoneAddress, Address>(std::move(other)) {
 	mImpl = other.mImpl;
 	other.mImpl = nullptr;
+}
+
+Address::Address(SalAddress *addr, bool acquire) {
+	if (acquire) {
+		mImpl = addr;
+	} else {
+		mImpl = sal_address_clone(addr);
+	}
+}
+
+Address::Address(const SalAddress *addr) {
+	mImpl = sal_address_clone(addr);
 }
 
 Address::~Address() {
@@ -121,7 +129,7 @@ bool Address::operator<(const Address &other) const {
 
 Address Address::getUri() const {
 	if (mImpl) {
-		return sal_address_new_uri_only(mImpl);
+		return Address(sal_address_new_uri_only(mImpl), true);
 	}
 	return Address();
 }

@@ -211,9 +211,9 @@ private:
 	LinphoneAccountCbsRegistrationStateChangedCb mRegistrationStateChangedCb = nullptr;
 };
 
-class AccountLogScope : public CoreLogContextualizer {
+class AccountLogContextualizer : public CoreLogContextualizer {
 public:
-	AccountLogScope(const LinphoneAccount *account)
+	AccountLogContextualizer(const LinphoneAccount *account)
 	    : CoreLogContextualizer(account ? Account::toCpp(account) : nullptr) {
 	}
 };

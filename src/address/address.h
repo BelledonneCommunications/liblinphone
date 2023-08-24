@@ -43,7 +43,11 @@ public:
 	Address();
 	Address(Address &&other);
 	Address(const Address &other);
-	Address(SalAddress *addr);
+	// Instanciate an address by copying from a SalAddress.
+	Address(const SalAddress *addr);
+	// Instanciate an address by acquiring a SalAddress if acquire is true. If acquire is false, does the same as
+	// Address(const Address &other);
+	Address(SalAddress *addr, bool acquire);
 	virtual ~Address();
 	virtual Address *clone() const override;
 	virtual std::string toString() const override;

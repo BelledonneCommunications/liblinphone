@@ -83,12 +83,12 @@ const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const Linpho
 
 // Deprecated
 void linphone_chat_room_send_message(LinphoneChatRoom *cr, const char *msg) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(msg)->send();
 }
 
 bool_t linphone_chat_room_is_remote_composing(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->isRemoteComposing();
 }
 
@@ -119,7 +119,7 @@ const LinphoneAddress *linphone_chat_room_get_local_address(LinphoneChatRoom *cr
 }
 
 LinphoneChatMessage *linphone_chat_room_create_empty_message(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage();
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
 	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
@@ -127,7 +127,7 @@ LinphoneChatMessage *linphone_chat_room_create_empty_message(LinphoneChatRoom *c
 }
 
 LinphoneChatMessage *linphone_chat_room_create_message_from_utf8(LinphoneChatRoom *cr, const char *message) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessageFromUtf8(L_C_TO_STRING(message));
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
@@ -137,7 +137,7 @@ LinphoneChatMessage *linphone_chat_room_create_message_from_utf8(LinphoneChatRoo
 
 // Deprecated
 LinphoneChatMessage *linphone_chat_room_create_message(LinphoneChatRoom *cr, const char *message) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(L_C_TO_STRING(message));
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
@@ -147,7 +147,7 @@ LinphoneChatMessage *linphone_chat_room_create_message(LinphoneChatRoom *cr, con
 
 LinphoneChatMessage *linphone_chat_room_create_file_transfer_message(LinphoneChatRoom *cr,
                                                                      LinphoneContent *initial_content) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	LinphoneChatMessage *msg = linphone_chat_room_create_empty_message(cr);
 	linphone_chat_message_add_file_content(msg, initial_content);
 	return msg;
@@ -161,7 +161,7 @@ LinphoneChatMessage *linphone_chat_room_create_message_2(LinphoneChatRoom *cr,
                                                          time_t time,
                                                          BCTBX_UNUSED(bool_t is_read),
                                                          BCTBX_UNUSED(bool_t is_incoming)) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	LinphoneChatMessage *msg = linphone_chat_room_create_message(cr, message);
 
 	linphone_chat_message_set_external_body_url(msg, external_body_url ? ms_strdup(external_body_url) : NULL);
@@ -174,7 +174,7 @@ LinphoneChatMessage *linphone_chat_room_create_message_2(LinphoneChatRoom *cr,
 }
 
 LinphoneChatMessage *linphone_chat_room_create_forward_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createForwardMessage(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
@@ -183,7 +183,7 @@ LinphoneChatMessage *linphone_chat_room_create_forward_message(LinphoneChatRoom 
 }
 
 LinphoneChatMessage *linphone_chat_room_create_reply_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createReplyMessage(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
@@ -193,7 +193,7 @@ LinphoneChatMessage *linphone_chat_room_create_reply_message(LinphoneChatRoom *c
 
 LinphoneChatMessage *linphone_chat_room_create_voice_recording_message(LinphoneChatRoom *cr,
                                                                        LinphoneRecorder *recorder) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	LinphoneChatMessage *chat_message = linphone_chat_room_create_empty_message(cr);
 
 	LinphoneContent *c_content = linphone_recorder_create_content(recorder);
@@ -219,17 +219,17 @@ void linphone_chat_room_receive_chat_message(BCTBX_UNUSED(LinphoneChatRoom *cr),
 }
 
 uint32_t linphone_chat_room_get_char(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getChar();
 }
 
 void linphone_chat_room_compose(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->compose();
 }
 
 LinphoneCall *linphone_chat_room_get_call(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCall();
 	if (call) return call->toC();
 	return nullptr;
@@ -240,73 +240,73 @@ void linphone_chat_room_set_call(LinphoneChatRoom *cr, LinphoneCall *call) {
 }
 
 void linphone_chat_room_mark_as_read(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->markAsRead();
 }
 
 void linphone_chat_room_set_ephemeral_mode(LinphoneChatRoom *cr, LinphoneChatRoomEphemeralMode mode) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setEphemeralMode(
 	    static_cast<LinphonePrivate::AbstractChatRoom::EphemeralMode>(mode), true);
 }
 
 LinphoneChatRoomEphemeralMode linphone_chat_room_get_ephemeral_mode(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return static_cast<LinphoneChatRoomEphemeralMode>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getEphemeralMode());
 }
 
 void linphone_chat_room_enable_ephemeral(LinphoneChatRoom *cr, bool_t ephem) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->enableEphemeral(!!ephem, true);
 }
 
 bool_t linphone_chat_room_ephemeral_enabled(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->ephemeralEnabled();
 }
 
 void linphone_chat_room_set_ephemeral_lifetime(LinphoneChatRoom *cr, long time) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setEphemeralLifetime(time, true);
 }
 
 long linphone_chat_room_get_ephemeral_lifetime(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getEphemeralLifetime();
 }
 
 bool_t linphone_chat_room_ephemeral_supported_by_all_participants(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->ephemeralSupportedByAllParticipants();
 }
 
 int linphone_chat_room_get_unread_messages_count(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getUnreadChatMessageCount();
 }
 
 int linphone_chat_room_get_history_size(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getChatMessageCount();
 }
 
 bool_t linphone_chat_room_is_empty(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->isEmpty();
 }
 
 void linphone_chat_room_delete_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->deleteMessageFromHistory(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
 }
 
 void linphone_chat_room_delete_history(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->deleteHistory();
 }
 
 bctbx_list_t *linphone_chat_room_get_history_range(LinphoneChatRoom *cr, int startm, int endm) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	list<shared_ptr<LinphonePrivate::ChatMessage>> chatMessages;
 	for (auto &event : L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMessageHistoryRange(startm, endm))
 		chatMessages.push_back(
@@ -316,42 +316,42 @@ bctbx_list_t *linphone_chat_room_get_history_range(LinphoneChatRoom *cr, int sta
 }
 
 bctbx_list_t *linphone_chat_room_get_history(LinphoneChatRoom *cr, int nb_message) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return linphone_chat_room_get_history_range(cr, 0, nb_message);
 }
 
 bctbx_list_t *linphone_chat_room_get_unread_history(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getUnreadChatMessages());
 }
 
 bctbx_list_t *linphone_chat_room_get_history_range_message_events(LinphoneChatRoom *cr, int startm, int endm) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMessageHistoryRange(startm, endm));
 }
 
 bctbx_list_t *linphone_chat_room_get_history_message_events(LinphoneChatRoom *cr, int nb_events) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMessageHistory(nb_events));
 }
 
 bctbx_list_t *linphone_chat_room_get_history_events(LinphoneChatRoom *cr, int nb_events) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getHistory(nb_events));
 }
 
 bctbx_list_t *linphone_chat_room_get_history_range_events(LinphoneChatRoom *cr, int begin, int end) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getHistoryRange(begin, end));
 }
 
 int linphone_chat_room_get_history_events_size(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getHistorySize();
 }
 
 LinphoneChatMessage *linphone_chat_room_get_last_message_in_history(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getLastChatMessageInHistory();
 	if (!cppPtr) return nullptr;
 
@@ -359,7 +359,7 @@ LinphoneChatMessage *linphone_chat_room_get_last_message_in_history(LinphoneChat
 }
 
 LinphoneChatMessage *linphone_chat_room_find_message(LinphoneChatRoom *cr, const char *message_id) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findChatMessage(message_id);
 	if (!cppPtr) return nullptr;
 
@@ -367,44 +367,44 @@ LinphoneChatMessage *linphone_chat_room_find_message(LinphoneChatRoom *cr, const
 }
 
 LinphoneChatRoomState linphone_chat_room_get_state(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return linphone_conference_state_to_chat_room_state(
 	    static_cast<LinphoneConferenceState>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getState()));
 }
 
 bool_t linphone_chat_room_has_been_left(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->hasBeenLeft();
 }
 
 bool_t linphone_chat_room_is_read_only(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->isReadOnly();
 }
 
 time_t linphone_chat_room_get_creation_time(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCreationTime();
 }
 
 time_t linphone_chat_room_get_last_update_time(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getLastUpdateTime();
 }
 
 void linphone_chat_room_add_participant(LinphoneChatRoom *cr, LinphoneAddress *addr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipant(LinphonePrivate::Address::toCpp(addr)->getSharedFromThis());
 }
 
 bool_t linphone_chat_room_add_participants(LinphoneChatRoom *cr, const bctbx_list_t *addresses) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(
 	    LinphonePrivate::Utils::bctbxListToCppSharedPtrList<LinphoneAddress, LinphonePrivate::Address>(addresses));
 }
 
 LinphoneParticipant *linphone_chat_room_find_participant(const LinphoneChatRoom *cr, LinphoneAddress *addr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	std::shared_ptr<LinphonePrivate::Participant> participant =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(LinphonePrivate::Address::toCpp(addr)->getSharedFromThis());
 	if (participant) {
@@ -414,22 +414,22 @@ LinphoneParticipant *linphone_chat_room_find_participant(const LinphoneChatRoom 
 }
 
 bool_t linphone_chat_room_can_handle_participants(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->canHandleParticipants();
 }
 
 LinphoneChatRoomCapabilitiesMask linphone_chat_room_get_capabilities(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities();
 }
 
 bool_t linphone_chat_room_has_capability(const LinphoneChatRoom *cr, int mask) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return static_cast<bool_t>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & mask);
 }
 
 const LinphoneAddress *linphone_chat_room_get_conference_address(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	const auto &confAddress = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getConferenceAddress();
 	if (confAddress && confAddress->isValid()) {
 		return confAddress->toC();
@@ -439,7 +439,7 @@ const LinphoneAddress *linphone_chat_room_get_conference_address(const LinphoneC
 }
 
 LinphoneParticipant *linphone_chat_room_get_me(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	std::shared_ptr<LinphonePrivate::Participant> me = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe();
 	if (me) {
 		return me->toC();
@@ -448,38 +448,38 @@ LinphoneParticipant *linphone_chat_room_get_me(const LinphoneChatRoom *cr) {
 }
 
 int linphone_chat_room_get_nb_participants(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getParticipantCount();
 }
 
 bctbx_list_t *linphone_chat_room_get_participants(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return LinphonePrivate::Participant::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getParticipants());
 }
 
 const char *linphone_chat_room_get_subject(const LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getSubject());
 }
 
 LinphoneChatRoomSecurityLevel linphone_chat_room_get_security_level(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	return (LinphoneChatRoomSecurityLevel)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getSecurityLevel();
 }
 
 void linphone_chat_room_leave(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->leave();
 }
 
 void linphone_chat_room_remove_participant(LinphoneChatRoom *cr, LinphoneParticipant *participant) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipant(
 	    LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis());
 }
 
 void linphone_chat_room_remove_participants(LinphoneChatRoom *cr, const bctbx_list_t *participants) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipants(
 	    LinphonePrivate::Participant::getCppListFromCList(participants));
 }
@@ -487,18 +487,18 @@ void linphone_chat_room_remove_participants(LinphoneChatRoom *cr, const bctbx_li
 void linphone_chat_room_set_participant_admin_status(LinphoneChatRoom *cr,
                                                      LinphoneParticipant *participant,
                                                      bool_t isAdmin) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	shared_ptr<LinphonePrivate::Participant> p = LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis();
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setParticipantAdminStatus(p, !!isAdmin);
 }
 
 void linphone_chat_room_set_subject(LinphoneChatRoom *cr, const char *subject) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setSubject(L_C_TO_STRING(subject));
 }
 
 const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	list<shared_ptr<LinphonePrivate::Address>> addresses = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getComposingAddresses();
 	cr->composingAddresses =
 	    LinphonePrivate::Utils::listToCBctbxList<LinphoneAddress, LinphonePrivate::Address>(addresses);
@@ -506,12 +506,12 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom 
 }
 
 bool_t linphone_chat_room_get_muted(const LinphoneChatRoom *chat_room) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(chat_room);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(chat_room);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(chat_room)->getIsMuted();
 }
 
 void linphone_chat_room_set_muted(LinphoneChatRoom *chat_room, bool_t muted) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(chat_room);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(chat_room);
 	L_GET_CPP_PTR_FROM_C_OBJECT(chat_room)->setIsMuted(!!muted);
 }
 
@@ -791,7 +791,7 @@ LinphoneChatRoom *linphone_chat_room_ref(LinphoneChatRoom *cr) {
 }
 
 void linphone_chat_room_unref(LinphoneChatRoom *cr) {
-	LinphonePrivate::ChatRoomLogScope logContextualizer(cr);
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	belle_sip_object_unref(cr);
 }
 

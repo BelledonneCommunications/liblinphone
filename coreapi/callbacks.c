@@ -84,7 +84,7 @@ static void call_received(SalCallOp *h) {
 	/* Look if this INVITE is for a call that has already been notified but broken because of network failure */
 	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->inviteReplacesABrokenCall(h)) return;
 
-	LinphoneAddress *fromAddr = nullptr;
+	std::shared_ptr<Address> from;
 	const char *pAssertedId = sal_custom_header_find(h->getRecvCustomHeaders(), "P-Asserted-Identity");
 	/* In some situation, better to trust the network rather than the UAC */
 	if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "call_logs_use_asserted_id_instead_of_from", 0)) {
@@ -93,7 +93,7 @@ static void call_received(SalCallOp *h) {
 			if (pAssertedIdAddr) {
 				ms_message("Using P-Asserted-Identity [%s] instead of from [%s] for op [%p]", pAssertedId,
 				           h->getFrom().c_str(), h);
-				fromAddr = pAssertedIdAddr;
+				from = Address::toCpp(pAssertedIdAddr)->toSharedPtr();
 			} else {
 				ms_warning("Unsupported P-Asserted-Identity header for op [%p] ", h);
 			}
@@ -103,10 +103,8 @@ static void call_received(SalCallOp *h) {
 		}
 	}
 
-	if (!fromAddr) fromAddr = linphone_address_new(h->getFrom().c_str());
-	LinphoneAddress *toAddr = linphone_address_new(h->getTo().c_str());
-	std::shared_ptr<Address> to = Address::toCpp(toAddr)->toSharedPtr();
-	std::shared_ptr<Address> from = Address::toCpp(fromAddr)->toSharedPtr();
+	if (!from) from = (new Address(h->getFrom()))->toSharedPtr();
+	std::shared_ptr<Address> to = (new Address(h->getTo()))->toSharedPtr();
 
 	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
 #ifdef HAVE_ADVANCED_IM

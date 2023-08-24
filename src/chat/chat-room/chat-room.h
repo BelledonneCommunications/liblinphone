@@ -134,9 +134,9 @@ private:
 	L_DISABLE_COPY(ChatRoom);
 };
 
-class ChatRoomLogScope : CoreLogContextualizer {
+class ChatRoomLogContextualizer : CoreLogContextualizer {
 public:
-	ChatRoomLogScope(const LinphoneChatRoom *cr);
+	ChatRoomLogContextualizer(const LinphoneChatRoom *cr);
 };
 
 LINPHONE_END_NAMESPACE
