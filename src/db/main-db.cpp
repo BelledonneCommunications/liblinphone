@@ -3421,7 +3421,7 @@ void MainDb::init() {
 		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 		           "  imdn_message_id VARCHAR(255) NOT NULL,"
 		           "  call_id VARCHAR(255) NOT NULL,"
-		           "  reaction_to_message_id VARCHAR(255) NOT NULL,"
+		           "  reaction_to_message_id VARCHAR(191) NOT NULL,"
 
 		           // One reaction maximum per user for a given message
 		           "  UNIQUE (from_sip_address_id, reaction_to_message_id),"
