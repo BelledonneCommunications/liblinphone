@@ -268,6 +268,9 @@ static void register_with_custom_headers(void) {
 	value = linphone_proxy_config_get_custom_header(cfg, "Server");
 	BC_ASSERT_PTR_NOT_NULL(value);
 	if (value) BC_ASSERT_PTR_NOT_NULL(strstr(value, "Flexisip"));
+
+	linphone_core_clear_accounts(marie->lc);
+	wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared, 1);
 	linphone_core_manager_destroy(marie);
 }
 

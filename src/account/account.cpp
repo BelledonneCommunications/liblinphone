@@ -199,7 +199,7 @@ bool Account::customContactChanged() {
 	if (mParams->mCustomContact == nullptr && mOldParams->mCustomContact == nullptr) return false;
 	if (mParams->mCustomContact != nullptr && mOldParams->mCustomContact == nullptr) return true;
 	if (mParams->mCustomContact == nullptr && mOldParams->mCustomContact != nullptr) return true;
-	return !((*mOldParams->mCustomContact) != (*mParams->mCustomContact));
+	return ((*mOldParams->mCustomContact) != (*mParams->mCustomContact));
 }
 
 void Account::applyParamsChanges() {
@@ -349,7 +349,7 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 	auto core = getCCore();
 	if (mState != state ||
 	    state == LinphoneRegistrationOk) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
-		const auto identity = (mParams) ? mParams->getIdentity().c_str() : std::string();
+		const auto identity = (mParams) ? mParams->getIdentityAddress()->toString() : std::string();
 		if (!mParams) lWarning() << "AccountParams not set for Account [" << this->toC() << "]";
 		lInfo() << "Account [" << this << "] for identity [" << identity << "] moving from state ["
 		        << linphone_registration_state_to_string(mState) << "] to ["
@@ -618,7 +618,6 @@ std::list<SalAddress *> Account::getOtherContacts() {
 
 void Account::registerAccount() {
 	if (mParams->mRegisterEnabled) {
-
 		std::shared_ptr<Address> proxy = Address::create(mParams->mProxy);
 		if (proxy == nullptr) {
 			lError() << "Can't register LinphoneAccount [" << this << "] without a proxy";
@@ -650,6 +649,7 @@ void Account::registerAccount() {
 		} else {
 			setState(LinphoneRegistrationFailed, "Registration failed");
 		}
+
 		for (auto ct : otherContacts)
 			sal_address_unref(ct);
 	} else {
@@ -1012,8 +1012,8 @@ void Account::apply(LinphoneCore *lc) {
 	if (mDependency != nullptr) {
 		// disable register if master account is not yet registered
 		if (mDependency->mState != LinphoneRegistrationOk) {
-			if (mParams->mRegisterEnabled != FALSE) {
-				mRegisterChanged = TRUE;
+			if (mParams->mRegisterEnabled != false) {
+				mRegisterChanged = true;
 			}
 			// We do not call enableRegister on purpose here
 			// Explicitely disabling register on a dependent config puts it in a disabled state (see

@@ -2749,6 +2749,7 @@ static void check_orphan_nat_policy_section(LinphoneCoreManager *mgr) {
 
 void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 	if (mgr->lc) {
+		int previousNbRegistrationCleared = mgr->stat.number_of_LinphoneRegistrationCleared;
 		const char *record_file = linphone_core_get_record_file(mgr->lc);
 		if (!liblinphone_tester_keep_record_files && record_file && bctbx_file_exist(record_file) == 0) {
 			if ((bc_get_number_of_failures() - mgr->number_of_bcunit_error_at_creation) > 0) {
@@ -2759,6 +2760,8 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 		}
 
 		linphone_core_stop(mgr->lc);
+		wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationCleared,
+		               previousNbRegistrationCleared + 1, 2000);
 		check_orphan_nat_policy_section(mgr);
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;

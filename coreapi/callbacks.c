@@ -513,7 +513,7 @@ static void register_success(SalOp *op, bool_t registered) {
 	}
 
 	// If this register is a refresh sent by belle-sip, then move to the Refreshing register first
-	if (Account::toCpp(account)->getPreviousState() == LinphoneRegistrationOk) {
+	if (registered && Account::toCpp(account)->getPreviousState() == LinphoneRegistrationOk) {
 		Account::toCpp(account)->setState(LinphoneRegistrationRefreshing, "Registration refreshing");
 	}
 
