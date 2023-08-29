@@ -102,6 +102,12 @@ void _linphone_conference_notify_participant_device_state_changed(LinphoneConfer
 	                                  state);
 }
 
+void _linphone_conference_notify_participant_role_changed(LinphoneConference *conference,
+                                                          const LinphoneParticipant *participant) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference),
+	                                  linphone_conference_cbs_get_participant_role_changed, participant);
+}
+
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference,
                                                                   const LinphoneParticipant *participant) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference),

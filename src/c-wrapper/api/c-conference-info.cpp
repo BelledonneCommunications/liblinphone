@@ -147,8 +147,16 @@ void linphone_conference_info_set_subject(LinphoneConferenceInfo *conference_inf
 	ConferenceInfo::toCpp(conference_info)->setSubject(L_C_TO_STRING(subject));
 }
 
+void linphone_conference_info_set_ics_sequence(LinphoneConferenceInfo *conference_info, unsigned int sequence) {
+	ConferenceInfo::toCpp(conference_info)->setIcsSequence(sequence);
+}
+
 unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info) {
 	return ConferenceInfo::toCpp(conference_info)->getIcsSequence();
+}
+
+void linphone_conference_info_set_ics_uid(LinphoneConferenceInfo *conference_info, const char *uid) {
+	return ConferenceInfo::toCpp(conference_info)->setIcsUid(L_C_TO_STRING(uid));
 }
 
 const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info) {
@@ -182,6 +190,9 @@ char *linphone_conference_info_get_icalendar_string(const LinphoneConferenceInfo
 	return NULL;
 }
 
+void linphone_conference_info_set_state(LinphoneConferenceInfo *conference_info, LinphoneConferenceInfoState state) {
+	ConferenceInfo::toCpp(conference_info)->setState(static_cast<ConferenceInfo::State>(state));
+}
 LinphoneConferenceInfoState linphone_conference_info_get_state(const LinphoneConferenceInfo *conference_info) {
 	return (LinphoneConferenceInfoState)ConferenceInfo::toCpp(conference_info)->getState();
 }

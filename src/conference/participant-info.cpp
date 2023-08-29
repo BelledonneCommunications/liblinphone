@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 const std::string ParticipantInfo::sequenceParameter = "X-SEQ";
 const std::string ParticipantInfo::roleParameter = "X-ROLE";
 
-ParticipantInfo::ParticipantInfo(const std::shared_ptr<Address> &address) {
+ParticipantInfo::ParticipantInfo(const std::shared_ptr<const Address> &address) {
 	mAddress = Address::create(address->getUri());
 }
 
@@ -109,6 +109,10 @@ void ParticipantInfo::removeParameter(const std::string &name) {
 	} else {
 		mParameters.erase(it);
 	}
+}
+
+ParticipantInfo::participant_params_t ParticipantInfo::getParameters() const {
+	return mParameters;
 }
 
 ParticipantInfo::participant_params_t ParticipantInfo::getAllParameters() const {

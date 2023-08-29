@@ -30,6 +30,7 @@
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
 #include "conference/conference-params.h"
+#include "conference/participant.h"
 #include "core/core-accessor.h"
 #include "linphone/core.h"
 #include "linphone/types.h"
@@ -143,6 +144,11 @@ public:
 	    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant);
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved(
 	    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant);
+	virtual std::shared_ptr<ConferenceParticipantEvent>
+	notifyParticipantSetRole(time_t creationTime,
+	                         const bool isFullState,
+	                         const std::shared_ptr<Participant> &participant,
+	                         Participant::Role role);
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin(
 	    time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin);
 	virtual std::shared_ptr<ConferenceSubjectEvent>
@@ -203,8 +209,11 @@ public:
 	void clearParticipants();
 
 	void updateSubjectInConferenceInfo(const std::string &subject) const;
-	void updateParticipantsInConferenceInfo(const std::shared_ptr<Address> &participantAddress) const;
+	void updateParticipantInConferenceInfo(const std::shared_ptr<Participant> &participant) const;
+	bool updateParticipantInfoInConferenceInfo(std::shared_ptr<ConferenceInfo> &info,
+	                                           const std::shared_ptr<Participant> &participant) const;
 	void updateSecurityLevelInConferenceInfo(const ConferenceParams::SecurityLevel &level) const;
+	void updateParticipantRoleInConferenceInfo(const std::shared_ptr<Participant> &participant) const;
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
@@ -249,6 +258,7 @@ protected:
 	virtual std::shared_ptr<ConferenceInfo>
 	createConferenceInfoWithCustomParticipantList(const std::shared_ptr<Address> &organizer,
 	                                              const ConferenceInfo::participant_list_t invitedParticipants) const;
+	const std::shared_ptr<ConferenceInfo> getUpdatedConferenceInfo() const;
 
 private:
 	L_DISABLE_COPY(Conference);

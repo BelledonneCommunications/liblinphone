@@ -658,6 +658,14 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb)(L
                                                                                const LinphoneParticipantDevice *device);
 
 /**
+ * Callback used to notify a conference that the role of a participant has been changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant #LinphoneParticipant whose role has changed @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantRoleChangedCb)(LinphoneConference *conference,
+                                                              const LinphoneParticipant *participant);
+
+/**
  * Callback used to notify a conference that the admin status of a participant has been changed.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] participant #LinphoneParticipant whose admin status has changed @notnil

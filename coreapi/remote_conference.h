@@ -139,6 +139,10 @@ public:
 
 	virtual void setParticipantAdminStatus(const std::shared_ptr<LinphonePrivate::Participant> &participant,
 	                                       bool isAdmin) override;
+
+	virtual void onSubjectChanged(const std::shared_ptr<ConferenceSubjectEvent> &event) override;
+	virtual void onParticipantSetRole(const std::shared_ptr<ConferenceParticipantEvent> &event,
+	                                  const std::shared_ptr<Participant> &participant) override;
 	virtual void setSubject(const std::string &subject) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
 

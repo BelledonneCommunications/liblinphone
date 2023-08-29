@@ -20,6 +20,7 @@
 
 #include "participant-device.h"
 #include "chat/encryption/encryption-engine.h"
+#include "conference/conference.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/params/media-session-params.h"
 #include "conference/session/call-session-p.h"

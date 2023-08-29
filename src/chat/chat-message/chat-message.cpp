@@ -152,7 +152,8 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
 	auto me = chatRoom->getMe();
-	auto participant = participantAddress == me->getAddress() ? me : chatRoom->findParticipant(participantAddress);
+	auto participant =
+	    participantAddress->weakEqual(*me->getAddress()) ? me : chatRoom->findParticipant(participantAddress);
 	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
 
 	// Legacy callbacks, deprecated !

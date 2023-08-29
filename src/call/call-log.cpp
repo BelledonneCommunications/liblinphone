@@ -208,9 +208,10 @@ void CallLog::setConferenceInfo(std::shared_ptr<ConferenceInfo> conferenceInfo) 
 	mConferenceInfo = conferenceInfo;
 }
 
-std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo() {
-	if (mConferenceInfo != nullptr) return mConferenceInfo;
-
+std::shared_ptr<ConferenceInfo> &CallLog::getConferenceInfo() {
+	// The conference info stored in the database is always up to date, therefore try to update the cache all the time
+	// if there id is valid Nonetheless, the cache variable is required if the core disables the storage of information
+	// in the database.
 	if (mConferenceInfoId != -1) {
 		setConferenceInfo(L_GET_PRIVATE(getCore())->mainDb->getConferenceInfo(mConferenceInfoId));
 	}

@@ -43,6 +43,12 @@ void NotifyConferenceListener::onParticipantRemoved(
 	_linphone_conference_notify_participant_removed(conf->toC(), participant->toC());
 }
 
+void NotifyConferenceListener::onParticipantSetRole(
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event),
+    const std::shared_ptr<Participant> &participant) {
+	_linphone_conference_notify_participant_role_changed(conf->toC(), participant->toC());
+}
+
 void NotifyConferenceListener::onParticipantSetAdmin(
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event),
     const std::shared_ptr<Participant> &participant) {

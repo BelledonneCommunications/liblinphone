@@ -38,7 +38,7 @@ public:
 	static const std::string sequenceParameter;
 	static const std::string roleParameter;
 
-	ParticipantInfo(const std::shared_ptr<Address> &address);
+	ParticipantInfo(const std::shared_ptr<const Address> &address);
 	virtual ~ParticipantInfo();
 
 	ParticipantInfo(const ParticipantInfo &other);
@@ -60,6 +60,8 @@ public:
 	bool hasParameter(const std::string &name) const;
 	void removeParameter(const std::string &name);
 
+	// getParameters() return only parameters that do not have a dedicated member in the class, i.e. mParameters
+	ParticipantInfo::participant_params_t getParameters() const;
 	ParticipantInfo::participant_params_t getAllParameters() const;
 
 	static const std::string memberParametersToString(const participant_params_t &params);

@@ -29,6 +29,7 @@
 #include "chat/chat-message/is-composing-message.h"
 #include "chat/chat-message/notification-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
+#include "conference/conference.h"
 #include "content/content-manager.h"
 #include "core/core-p.h"
 #include "linphone/utils/algorithm.h"

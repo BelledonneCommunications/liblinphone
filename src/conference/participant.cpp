@@ -22,6 +22,7 @@
 
 #include "participant.h"
 
+#include "conference/conference.h"
 #include "core/core.h"
 #include "params/media-session-params.h"
 #include "participant.h"
@@ -274,6 +275,18 @@ Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> &ig
 }
 
 // -----------------------------------------------------------------------------
+
+std::shared_ptr<Core> Participant::getCore() const {
+	return mConference ? mConference->getCore() : nullptr;
+}
+
+Conference *Participant::getConference() const {
+	return mConference;
+}
+
+void Participant::setConference(Conference *conference) {
+	mConference = conference;
+}
 
 bool Participant::isAdmin() const {
 	return isThisAdmin;

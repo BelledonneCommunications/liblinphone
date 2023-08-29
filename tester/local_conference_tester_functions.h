@@ -385,7 +385,7 @@ void create_conference_base(time_t start_time,
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,
                                  LinphoneCoreManager *focus,
-                                 std::map<LinphoneCoreManager *, LinphoneParticipantRole> members,
+                                 std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> members,
                                  const LinphoneAddress *confAddr,
                                  bool_t enable_video);
 
@@ -408,7 +408,7 @@ void create_conference_with_active_call_base(bool_t dialout);
 LinphoneAddress *
 create_conference_on_server(Focus &focus,
                             ClientConference &organizer,
-                            std::map<LinphoneCoreManager *, LinphoneParticipantRole> requested_participants,
+                            std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> requested_participants,
                             time_t start_time,
                             time_t end_time,
                             const char *subject,
@@ -427,17 +427,47 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 
 size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, LinphoneConference *conference);
 
-void check_conference_info(LinphoneCoreManager *mgr,
-                           LinphoneAddress *confAddr,
-                           LinphoneCoreManager *organizer,
-                           size_t no_members,
-                           long long start_time,
-                           int duration,
-                           const char *subject,
-                           const char *description,
-                           unsigned int sequence,
-                           LinphoneConferenceInfoState state,
-                           LinphoneConferenceSecurityLevel security_level);
+std::map<LinphoneCoreManager *, LinphoneParticipantInfo *>
+fill_memmber_list(std::list<LinphoneCoreManager *> members,
+                  std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList,
+                  LinphoneCoreManager *organizer,
+                  bctbx_list_t *participants_info);
+
+void check_conference_info_against_db(LinphoneCoreManager *mgr,
+                                      LinphoneAddress *confAddr,
+                                      const LinphoneConferenceInfo *info1);
+
+void check_conference_info_in_db(LinphoneCoreManager *mgr,
+                                 const char *uid,
+                                 LinphoneAddress *confAddr,
+                                 LinphoneAddress *organizer,
+                                 bctbx_list_t *participantList,
+                                 long long start_time,
+                                 int duration,
+                                 const char *subject,
+                                 const char *description,
+                                 unsigned int sequence,
+                                 LinphoneConferenceInfoState state,
+                                 LinphoneConferenceSecurityLevel security_level,
+                                 bool_t skip_participant_info);
+
+void check_conference_info_members(const LinphoneConferenceInfo *info,
+                                   const char *uid,
+                                   LinphoneAddress *confAddr,
+                                   LinphoneAddress *organizer,
+                                   bctbx_list_t *participantList,
+                                   long long start_time,
+                                   int duration,
+                                   const char *subject,
+                                   const char *description,
+                                   unsigned int sequence,
+                                   LinphoneConferenceInfoState state,
+                                   LinphoneConferenceSecurityLevel security_level,
+                                   bool_t skip_participant_info);
+
+void compare_conference_infos(const LinphoneConferenceInfo *info1,
+                              const LinphoneConferenceInfo *info2,
+                              bool_t skip_participant_info);
 
 size_t compute_no_audio_streams(LinphoneCall *call, LinphoneConference *conference);
 
@@ -446,6 +476,15 @@ void conference_scheduler_state_changed(LinphoneConferenceScheduler *scheduler, 
 void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler,
                                            const bctbx_list_t *failed_addresses);
 
+void update_sequence_number(bctbx_list_t **participants_info,
+                            const std::list<LinphoneAddress *> new_participants,
+                            int exp_sequence,
+                            int exp_new_participant_sequence);
+int find_matching_participant_info(const LinphoneParticipantInfo *info1, const LinphoneParticipantInfo *info2);
+LinphoneParticipantInfo *add_participant_info_to_list(bctbx_list_t **participants_info,
+                                                      const LinphoneAddress *address,
+                                                      LinphoneParticipantRole role,
+                                                      int sequence);
 } // namespace LinphoneTest
 
 #endif // LOCAL_CONFERENCE_TESTER_FUNCTIONS_H_

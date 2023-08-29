@@ -132,10 +132,14 @@ static void abort_call_to_ice_conference(void) {
 
 		stats focus_stat = focus.getStats();
 
-		std::map<LinphoneCoreManager *, LinphoneParticipantRole> participantList;
+		bctbx_list_t *participant_infos = NULL;
+		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> participantList;
 		LinphoneParticipantRole role = LinphoneParticipantRoleSpeaker;
 		for (auto &p : participants) {
-			participantList.insert(std::make_pair(p, role));
+			LinphoneParticipantInfo *participant_info = linphone_participant_info_new(p->identity);
+			linphone_participant_info_set_role(participant_info, role);
+			participant_infos = bctbx_list_append(participant_infos, participant_info);
+			participantList.insert(std::make_pair(p, participant_info));
 			role = (role == LinphoneParticipantRoleSpeaker) ? LinphoneParticipantRoleListener
 			                                                : LinphoneParticipantRoleSpeaker;
 		}
@@ -447,6 +451,7 @@ static void abort_call_to_ice_conference(void) {
 		// wait bit more to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(2), [] { return false; });
 
+		bctbx_list_free_with_data(participant_infos, (bctbx_list_free_func)linphone_participant_info_unref);
 		linphone_address_unref(confAddr);
 		bctbx_list_free(coresList);
 	}
@@ -475,10 +480,9 @@ static test_t local_conference_scheduled_ice_conference_tests[] = {
     TEST_ONE_TAG("Create simple end-to-end encrypted ICE conference",
                  LinphoneTest::create_simple_end_to_end_encrypted_ice_conference,
                  "ICE"),
-    TEST_TWO_TAGS("Create simple ICE conference by merging calls",
-                  LinphoneTest::create_simple_ice_conference_merging_calls,
-                  "LeaksMemory",
-                  "ICE"), /* because of aborted calls*/
+    TEST_ONE_TAG("Create simple ICE conference by merging calls",
+                 LinphoneTest::create_simple_ice_conference_merging_calls,
+                 "ICE"), /* because of aborted calls*/
     TEST_TWO_TAGS("Abort call to ICE conference",
                   LinphoneTest::abort_call_to_ice_conference,
                   "LeaksMemory",

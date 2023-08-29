@@ -94,7 +94,7 @@ bool Conference::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
 bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
 	shared_ptr<Participant> participant = findParticipant(participantAddress);
 	if (participant) {
-		lWarning() << "Not adding participant '" << participantAddress->toString()
+		lWarning() << "Not adding participant '" << *participantAddress
 		           << "' because it is already a participant of the Conference";
 		return false;
 	}
@@ -523,6 +523,34 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved(
 	return event;
 }
 
+shared_ptr<ConferenceParticipantEvent>
+Conference::notifyParticipantSetRole(time_t creationTime,
+                                     const bool isFullState,
+                                     const std::shared_ptr<Participant> &participant,
+                                     Participant::Role role) {
+	EventLog::Type eventType = EventLog::Type::None;
+	switch (role) {
+		case Participant::Role::Speaker:
+			eventType = EventLog::Type::ConferenceParticipantRoleSpeaker;
+			break;
+		case Participant::Role::Listener:
+			eventType = EventLog::Type::ConferenceParticipantRoleListener;
+			break;
+		case Participant::Role::Unknown:
+			eventType = EventLog::Type::ConferenceParticipantRoleUnknown;
+			break;
+	}
+	shared_ptr<ConferenceParticipantEvent> event =
+	    make_shared<ConferenceParticipantEvent>(eventType, creationTime, conferenceId, participant->getAddress());
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantSetRole(event, participant);
+	}
+	return event;
+}
+
 shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin(
     time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
@@ -718,6 +746,29 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
 	return nullptr;
 }
 
+const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() const {
+	auto conferenceInfo = createOrGetConferenceInfo();
+
+	// Update me only if he/she is already in the list of participants info
+	const auto &meAddress = getMe()->getAddress();
+	const auto &currentParticipants = conferenceInfo->getParticipants();
+	const auto meInfoIt =
+	    std::find_if(currentParticipants.begin(), currentParticipants.end(),
+	                 [&meAddress](const auto &p) { return (meAddress->weakEqual(*p->getAddress())); });
+	if (meInfoIt != currentParticipants.end()) {
+		updateParticipantInfoInConferenceInfo(conferenceInfo, getMe());
+	}
+
+	for (const auto &participant : getParticipants()) {
+		updateParticipantInfoInConferenceInfo(conferenceInfo, participant);
+	}
+
+	conferenceInfo->setSecurityLevel(confParams->getSecurityLevel());
+	conferenceInfo->setSubject(confParams->getSubject());
+
+	return conferenceInfo;
+}
+
 std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomParticipantList(
     const std::shared_ptr<Address> &organizer, const ConferenceInfo::participant_list_t invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
@@ -811,27 +862,34 @@ void Conference::updateSubjectInConferenceInfo(const std::string &subject) const
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void Conference::updateParticipantsInConferenceInfo(const std::shared_ptr<Address> &participantAddress) const {
+void Conference::updateParticipantRoleInConferenceInfo(const std::shared_ptr<Participant> &participant) const {
 #ifdef HAVE_DB_STORAGE
 	if ((getState() == ConferenceInterface::State::CreationPending) ||
 	    (getState() == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
+
 		if (info) {
-			const auto &currentParticipants = info->getParticipants();
-			const auto participantAddressIt = std::find_if(
-			    currentParticipants.begin(), currentParticipants.end(),
-			    [&participantAddress](const auto &p) { return (participantAddress->weakEqual(*p->getAddress())); });
-			if (participantAddressIt == currentParticipants.end()) {
-				info->addParticipant(participantAddress);
+			const auto &address = participant->getAddress();
+			const auto &newRole = participant->getRole();
+			const auto &participantInfo = info->findParticipant(address);
+			if (participantInfo) {
+				auto newParticipantInfo = participantInfo->clone()->toSharedPtr();
+				newParticipantInfo->setRole(newRole);
+
+				info->updateParticipant(newParticipantInfo);
 
 				// Store into DB after the start incoming notification in order to have a valid conference address being
 				// the contact address of the call
 				auto &mainDb = getCore()->getPrivate()->mainDb;
 				if (mainDb) {
 					lInfo() << "Updating conference information of conference " << *getConferenceAddress()
-					        << " because participant " << *participantAddress << " has been added";
+					        << " because the role of participant " << *address << " changed to " << newRole;
 					mainDb->insertConferenceInfo(info);
 				}
+			} else {
+				lError() << "Unable to update role of participant " << *address << " to " << newRole
+				         << " because it cannot be found in the conference info linked to conference "
+				         << *getConferenceAddress();
 			}
 		}
 	}
@@ -840,5 +898,62 @@ void Conference::updateParticipantsInConferenceInfo(const std::shared_ptr<Addres
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
+
+bool Conference::updateParticipantInfoInConferenceInfo(std::shared_ptr<ConferenceInfo> &info,
+                                                       const std::shared_ptr<Participant> &participant) const {
+	bool update = false;
+	const auto &participantAddress = participant->getAddress();
+	const auto &currentParticipants = info->getParticipants();
+	const auto participantInfoIt =
+	    std::find_if(currentParticipants.begin(), currentParticipants.end(), [&participantAddress](const auto &p) {
+		    return (participantAddress->weakEqual(*p->getAddress()));
+	    });
+
+	const auto &participantRole = participant->getRole();
+	if (participantInfoIt == currentParticipants.end()) {
+		auto participantInfo = ParticipantInfo::create(participantAddress);
+		participantInfo->setRole(participantRole);
+		info->addParticipant(participantInfo);
+		update = true;
+	} else {
+		auto participantInfo = (*participantInfoIt)->clone()->toSharedPtr();
+		if (participantInfo->getRole() != participantRole) {
+			participantInfo->setRole(participantRole);
+			info->updateParticipant(participantInfo);
+			update = true;
+		}
+	}
+	return update;
+}
+
+void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Participant> &participant) const {
+	const auto &participantAddress = participant->getAddress();
+	if (!participant) {
+		lError() << "Conference " << *getConferenceAddress()
+		         << " received a request to update the conference info to add participant with address "
+		         << *participantAddress << " but it looks like he/she is not part of this conference";
+		return;
+	}
+
+#ifdef HAVE_DB_STORAGE
+	if ((getState() == ConferenceInterface::State::CreationPending) ||
+	    (getState() == ConferenceInterface::State::Created)) {
+		auto info = createOrGetConferenceInfo();
+		if (info) {
+			bool update = updateParticipantInfoInConferenceInfo(info, participant);
+
+			// Store into DB after the start incoming notification in order to have a valid conference address being
+			// the contact address of the call
+			auto &mainDb = getCore()->getPrivate()->mainDb;
+			if (mainDb && update) {
+				lInfo() << "Updating conference information of conference " << *getConferenceAddress()
+				        << " because participant " << *participantAddress
+				        << " has been added or has modified its informations";
+				mainDb->insertConferenceInfo(info);
+			}
+		}
+	}
+#endif // HAVE_DB_STORAGE
+}
 
 LINPHONE_END_NAMESPACE

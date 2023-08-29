@@ -129,6 +129,23 @@ linphone_conference_cbs_set_participant_device_removed(LinphoneConferenceCbs *cb
                                                        LinphoneConferenceCbsParticipantDeviceRemovedCb cb);
 
 /**
+ * Get the participant role changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant role changed callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantRoleChangedCb
+linphone_conference_cbs_get_participant_role_changed(const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant role changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant role changed callback to be used.
+ */
+LINPHONE_PUBLIC void
+linphone_conference_cbs_set_participant_role_changed(LinphoneConferenceCbs *cbs,
+                                                     LinphoneConferenceCbsParticipantRoleChangedCb cb);
+
+/**
  * Get the participant admin status changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current participant admin status changed callback.

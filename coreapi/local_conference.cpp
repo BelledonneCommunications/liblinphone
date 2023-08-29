@@ -217,18 +217,20 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 			}
 			conferenceInfo->setState(infoState);
 
+			long long conferenceInfoId = -1;
 #ifdef HAVE_DB_STORAGE
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
 				lInfo()
 				    << "Inserting conference information to database in order to be able to recreate the conference "
 				    << *getConferenceAddress() << " in case of restart";
-				mainDb->insertConferenceInfo(conferenceInfo);
+				conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
 			}
 #endif
 			auto callLog = session->getLog();
 			if (callLog) {
 				callLog->setConferenceInfo(conferenceInfo);
+				callLog->setConferenceInfoId(conferenceInfoId);
 			}
 			if (resourceList.isEmpty()) {
 				setState(ConferenceInterface::State::TerminationPending);
@@ -463,6 +465,7 @@ void LocalConference::confirmCreation() {
 		session->startIncomingNotification(false);
 
 		const auto &conferenceInfo = createOrGetConferenceInfo();
+		long long conferenceInfoId = -1;
 #ifdef HAVE_DB_STORAGE
 		/// Method startIncomingNotification can move the conference to the CreationFailed state if the organizer
 		/// doesn't have any of the codecs the server supports
@@ -476,13 +479,14 @@ void LocalConference::confirmCreation() {
 				lInfo()
 				    << "Inserting conference information to database in order to be able to recreate the conference "
 				    << conferenceAddressStr << " in case of restart";
-				mainDb->insertConferenceInfo(conferenceInfo);
+				conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
 			}
 		}
 #endif
 		auto callLog = session->getLog();
 		if (callLog) {
 			callLog->setConferenceInfo(conferenceInfo);
+			callLog->setConferenceInfoId(conferenceInfoId);
 		}
 
 	} else {

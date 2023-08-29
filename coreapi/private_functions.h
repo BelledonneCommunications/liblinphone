@@ -422,6 +422,8 @@ void _linphone_conference_notify_participant_device_added(LinphoneConference *co
                                                           const LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference,
                                                             const LinphoneParticipantDevice *participant_device);
+void _linphone_conference_notify_participant_role_changed(LinphoneConference *conference,
+                                                          const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference,
                                                                   const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_device_media_capability_changed(
@@ -1006,9 +1008,19 @@ bctbx_list_t *linphone_core_get_supported_media_encryptions_at_compile_time();
 LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneChatRoomState state);
 LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConferenceState state);
 
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
+LINPHONE_PUBLIC int linphone_participant_info_get_sequence_number(const LinphoneParticipantInfo *participant_info);
+LINPHONE_PUBLIC void linphone_participant_info_set_sequence_number(LinphoneParticipantInfo *participant_info,
+                                                                   int sequence);
+
+LINPHONE_PUBLIC void linphone_conference_info_set_ics_sequence(LinphoneConferenceInfo *conference_info,
+                                                               unsigned int sequence);
 LINPHONE_PUBLIC unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info);
 LINPHONE_PUBLIC const char *linphone_conference_info_get_utf8_ics_uid(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC void linphone_conference_info_set_ics_uid(LinphoneConferenceInfo *conference_info, const char *uid);
 LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC void linphone_conference_info_set_state(LinphoneConferenceInfo *conference_info,
+                                                        LinphoneConferenceInfoState state);
 
 LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new(void);
 LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new_from_config(LinphoneConfig *config);

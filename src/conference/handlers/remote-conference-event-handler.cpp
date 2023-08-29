@@ -80,6 +80,45 @@ bool RemoteConferenceEventHandler::getInitialSubscriptionUnderWayFlag() const {
 	return initialSubscriptionUnderWay;
 }
 
+void RemoteConferenceEventHandler::fillParticipantAttributes(
+    std::shared_ptr<Participant> &participant,
+    xsd::cxx::tree::optional<LinphonePrivate::Xsd::ConferenceInfo::UserRolesType> &roles,
+    StateType state,
+    bool isFullState,
+    bool notify) const {
+	if (roles) {
+		auto &entry = roles->getEntry();
+
+		time_t creationTime = time(nullptr);
+
+		// Admin
+		bool isAdmin = (find(entry, "admin") != entry.end() ? true : false);
+		if (participant->isAdmin() != isAdmin) {
+			participant->setAdmin(isAdmin);
+			if (!isFullState && notify) {
+				conf->notifyParticipantSetAdmin(creationTime, isFullState, participant, isAdmin);
+			}
+		}
+
+		// Role
+		bool isSpeaker = (find(entry, "speaker") != entry.end() ? true : false);
+		bool isListener = (find(entry, "listener") != entry.end() ? true : false);
+		Participant::Role role = Participant::Role::Unknown;
+		if (isListener) {
+			role = Participant::Role::Listener;
+		} else if (isSpeaker || (state == StateType::full)) {
+			// When a participant is added, then set its role to speaker by default to be backward compatible
+			role = Participant::Role::Speaker;
+		}
+		if (participant->getRole() != role) {
+			participant->setRole(role);
+			if (!isFullState && notify) {
+				conf->notifyParticipantSetRole(creationTime, isFullState, participant, role);
+			}
+		}
+	}
+}
+
 void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xmlBody) {
 	istringstream data(xmlBody);
 	unique_ptr<ConferenceType> confInfo;
@@ -101,7 +140,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 	if (!peerAddress || (*entityAddress != *peerAddress)) {
 		const std::string peerAddressString = peerAddress ? peerAddress->toString() : std::string("<unknown>");
-		lError() << "Unable to process received NOTIFY because the entity address " << entityAddress->toString()
+		lError() << "Unable to process received NOTIFY because the entity address " << *entityAddress
 		         << " doesn't match the peer address " << peerAddressString;
 		return;
 	}
@@ -274,9 +313,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			    return (*address == *currentParticipant->getAddress());
 		    });
 
+		auto &roles = user.getRoles();
 		if (state == StateType::deleted) {
 			if (conf->isMe(address)) {
-				lInfo() << "Participant " << address->toString() << " requested to be deleted is me.";
+				lInfo() << "Participant " << *address << " requested to be deleted is me.";
 				continue;
 			} else if (participant) {
 				conf->participants.remove(participant);
@@ -288,17 +328,19 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 				continue;
 			} else {
-				lWarning() << "Participant " << address->toString() << " removed but not in the list of participants!";
+				lWarning() << "Participant " << *address << " removed but not in the list of participants!";
 			}
 		} else if (state == StateType::full) {
 			if (conf->isMe(address)) {
-				lInfo() << "Participant " << address->toString() << " requested to be added is me.";
+				lInfo() << "Participant " << *address << " requested to be added is me.";
+				fillParticipantAttributes(participant, roles, state, isFullState, false);
 			} else if (participant) {
 				lWarning() << "Participant " << *participant << " added but already in the list of participants!";
 			} else {
 				participant = Participant::create(conf, address);
+				fillParticipantAttributes(participant, roles, state, isFullState, false);
+
 				conf->participants.push_back(participant);
-				conf->updateParticipantsInConferenceInfo(address);
 				lInfo() << "Participant " << *participant << " is successfully added - conference "
 				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
 				if (!isFullState ||
@@ -315,37 +357,14 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		}
 
 		if (!participant) {
-			lDebug() << "Participant " << address->toString()
+			lDebug() << "Participant " << *address
 			         << " is not in the list of participants however it is trying to change the list of devices or "
 			            "change role! Resubscribing to conference "
 			         << conferenceAddressString << " to clear things up.";
 			requestFullState();
 		} else {
 
-			auto &roles = user.getRoles();
-			if (roles) {
-				auto &entry = roles->getEntry();
-
-				// Admin
-				bool isAdmin = (find(entry, "admin") != entry.end() ? true : false);
-				if (participant->isAdmin() != isAdmin) {
-					participant->setAdmin(isAdmin);
-					if (!isFullState) {
-						conf->notifyParticipantSetAdmin(creationTime, isFullState, participant, isAdmin);
-					}
-				}
-
-				// Role
-				bool isSpeaker = (find(entry, "speaker") != entry.end() ? true : false);
-				bool isListener = (find(entry, "listener") != entry.end() ? true : false);
-				if (isListener) {
-					participant->setRole(Participant::Role::Listener);
-				} else if (isSpeaker || (state == StateType::full)) {
-					// When a participant is added, then set its role to speaker by default to be backward compatible
-					participant->setRole(Participant::Role::Speaker);
-				}
-			}
-
+			fillParticipantAttributes(participant, roles, state, isFullState, true);
 			for (const auto &endpoint : user.getEndpoint()) {
 				if (!endpoint.getEntity().present()) continue;
 
@@ -560,7 +579,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					if (conf->isMe(address) && conf->getMainSession()) device->setSession(conf->getMainSession());
 
 					if (state == StateType::full) {
-						lInfo() << "Participant device " << gruu->toString() << " has been successfully added";
+						lInfo() << "Participant device " << *gruu << " has been successfully added";
 						bool sendNotify =
 						    (!oldParticipants.empty() && (pIt == oldParticipants.cend())) && !conf->isMe(address);
 						if (pIt != oldParticipants.cend()) {
@@ -575,7 +594,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							conf->notifyParticipantDeviceAdded(creationTime, isFullState, participant, device);
 						}
 					} else {
-						lInfo() << "Participant device " << gruu->toString() << " has been successfully updated";
+						lInfo() << "Participant device " << *gruu << " has been successfully updated";
 					}
 				} else {
 					lDebug() << "Unable to update media direction of device " << *gruu

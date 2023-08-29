@@ -23,7 +23,9 @@
 #include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
+#include "conference/conference-params.h"
 #include "conference/conference-scheduler.h"
+#include "conference/conference.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/participant-info.h"
 #include "conference/session/media-session.h"
@@ -474,11 +476,12 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&sender](const auto &p) {
 		                               return (sender->weakEqual(*p->getAddress()));
 	                               }) != participants.cend());
+	const auto &conferenceAddress = mConferenceInfo->getUri();
 	const auto organizer = mConferenceInfo->getOrganizerAddress();
 	if (!sender->weakEqual(*organizer) && !participantFound) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Unable to find the address " << *sender
 		           << " sending invitations among the list of participants or the organizer (" << *organizer
-		           << ") of conference " << *mConferenceInfo->getUri();
+		           << ") of conference " << *conferenceAddress;
 		return;
 	}
 
@@ -492,6 +495,14 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 		lWarning() << "[Conference Scheduler] [" << this << "] Given chat room params aren't valid!";
 		return;
 	}
+
+	std::shared_ptr<ConferenceInfo> dbConferenceInfo = nullptr;
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb && conferenceAddress) {
+		dbConferenceInfo = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(conferenceAddress);
+	}
+#endif // HAVE_DB_STORAGE
 
 	std::list<std::shared_ptr<Address>> invitees;
 	for (const auto &participantInfo : participants) {
@@ -521,6 +532,19 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 		const auto &participantInfo = mConferenceInfo->findParticipant(participant);
 		if (participantInfo) {
 			auto newParticipantInfo = participantInfo->clone()->toSharedPtr();
+			if (newParticipantInfo->getRole() == Participant::Role::Unknown) {
+				// Search if the role of the participant info stored in the database is different.
+				// We hit this case, if a client creates an inpromptu conference on a server and sends the ICS
+				// invitation as well. If the network connection is fast enough, it may happen that that the client
+				// already received the NOTIFY full state, therefore the server already took the decision on the
+				// participant role In such a scenario, the participant information stored in the conference scheduler
+				// should stick with it
+				const auto &dbParticipantInfo =
+				    (dbConferenceInfo) ? dbConferenceInfo->findParticipant(newParticipantInfo->getAddress()) : nullptr;
+				if (dbParticipantInfo) {
+					newParticipantInfo->setRole(dbParticipantInfo->getRole());
+				}
+			}
 			const auto &sequence = newParticipantInfo->getSequenceNumber();
 			const auto newSequence = (sequence < 0) ? 0 : sequence + 1;
 			newParticipantInfo->setSequenceNumber(newSequence);
@@ -530,11 +554,14 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 
 	const auto &organizerInfo = mConferenceInfo->getOrganizer();
 	if (organizerInfo) {
-		auto newOrganizerInfo = organizerInfo->clone()->toSharedPtr();
-		const auto &sequence = newOrganizerInfo->getSequenceNumber();
-		const auto newSequence = (sequence < 0) ? 0 : sequence + 1;
-		newOrganizerInfo->setSequenceNumber(newSequence);
-		mConferenceInfo->setOrganizer(newOrganizerInfo);
+		auto organizerAmongParticipants = (mConferenceInfo->findParticipant(organizerInfo->getAddress()) != nullptr);
+		if (!organizerAmongParticipants) {
+			auto newOrganizerInfo = organizerInfo->clone()->toSharedPtr();
+			const auto &sequence = newOrganizerInfo->getSequenceNumber();
+			const auto newSequence = (sequence < 0) ? 0 : sequence + 1;
+			newOrganizerInfo->setSequenceNumber(newSequence);
+			mConferenceInfo->setOrganizer(newOrganizerInfo);
+		}
 	}
 
 	if (!sender->weakEqual(*organizer)) {
@@ -567,8 +594,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 			remoteAddress = participant;
 		}
 		shared_ptr<AbstractChatRoom> chatRoom =
-			getCore()->getPrivate()->searchChatRoom(chatRoomParams, sender, remoteAddress, participantList);
-
+		    getCore()->getPrivate()->searchChatRoom(chatRoomParams, sender, remoteAddress, participantList);
 
 		if (!chatRoom) {
 			lInfo() << "[Conference Scheduler] [" << this << "] Existing chat room between [" << *sender << "] and ["

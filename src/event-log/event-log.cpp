@@ -94,6 +94,15 @@ std::ostream &operator<<(std::ostream &lhs, EventLog::Type e) {
 		case EventLog::Type::ConferenceParticipantRemoved:
 			lhs << "ConferenceParticipantRemoved";
 			break;
+		case EventLog::Type::ConferenceParticipantRoleUnknown:
+			lhs << "ConferenceParticipantRoleUnknown";
+			break;
+		case EventLog::Type::ConferenceParticipantRoleSpeaker:
+			lhs << "ConferenceParticipantRoleSpeaker";
+			break;
+		case EventLog::Type::ConferenceParticipantRoleListener:
+			lhs << "ConferenceParticipantRoleListener";
+			break;
 		case EventLog::Type::ConferenceParticipantSetAdmin:
 			lhs << "ConferenceParticipantSetAdmin";
 			break;

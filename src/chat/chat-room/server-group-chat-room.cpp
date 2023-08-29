@@ -1047,7 +1047,7 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 			csp.addCustomHeader("One-To-One-Chat-Room", "true");
 		if (capabilities & ServerGroupChatRoom::Capabilities::Encrypted)
 			csp.addCustomHeader("End-To-End-Encrypted", "true");
-		if (capabilities & ClientGroupChatRoom::Capabilities::Ephemeral) {
+		if (capabilities & ServerGroupChatRoom::Capabilities::Ephemeral) {
 			csp.addCustomHeader("Ephemerable", "true");
 			csp.addCustomHeader("Ephemeral-Life-Time", to_string(params->getEphemeralLifetime()));
 		}

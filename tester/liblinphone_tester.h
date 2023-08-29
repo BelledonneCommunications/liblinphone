@@ -460,6 +460,7 @@ typedef struct _stats {
 	int tmmbr_received_from_cb;
 
 	int number_of_participants_added;
+	int number_of_participant_role_changed;
 	int number_of_participant_admin_statuses_changed;
 	int number_of_participants_removed;
 	int number_of_subject_changed;

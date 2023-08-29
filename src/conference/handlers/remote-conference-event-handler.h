@@ -95,6 +95,11 @@ private:
 	void unsubscribePrivate();
 	void updateInitialSubcriptionUnderWay(std::shared_ptr<Event> notifyLev);
 	time_t dateTimeToTimeT(const Xsd::XmlSchema::DateTime &xsdTime) const;
+	void fillParticipantAttributes(std::shared_ptr<Participant> &participant,
+	                               xsd::cxx::tree::optional<LinphonePrivate::Xsd::ConferenceInfo::UserRolesType> &roles,
+	                               Xsd::ConferenceInfo::StateType state,
+	                               bool isFullState,
+	                               bool notify) const;
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

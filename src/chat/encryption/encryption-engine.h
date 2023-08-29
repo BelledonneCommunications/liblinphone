@@ -25,7 +25,7 @@
 
 #include <memory>
 
-#include "chat/chat-room/client-group-chat-room.h"
+#include "chat/chat-room/chat-room.h"
 #include "chat/modifier/chat-message-modifier.h"
 #include "core/core-accessor.h"
 #include "linphone/lpconfig.h"

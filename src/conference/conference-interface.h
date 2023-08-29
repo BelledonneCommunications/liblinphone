@@ -350,6 +350,15 @@ public:
 	    onEphemeralLifetimeChanged(BCTBX_UNUSED(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event)){};
 
 	/*
+	 * This fonction is called each time a participant changes its role in the conference after full state notification.
+	 * @param[in] event informations related to the participant new role. @notnil
+	 * @param[in] participant participant whose role changed. @notnil
+	 */
+	virtual void onParticipantSetRole(BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event),
+	                                  BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
+	}
+
+	/*
 	 * This fonction is called each time a new admin is set by the focus after full state notification.
 	 * @param[in] event informations related to the new admin participant. @notnil
 	 * @param[in] participant participant whose admin status changed. @notnil

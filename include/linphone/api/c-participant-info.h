@@ -36,7 +36,7 @@ extern "C" {
  * Create a new #LinphoneParticipantInfo object.
  * @return The newly created #LinphoneParticipantInfo object. @notnil
  */
-LINPHONE_PUBLIC LinphoneParticipantInfo *linphone_participant_info_new(LinphoneAddress *address);
+LINPHONE_PUBLIC LinphoneParticipantInfo *linphone_participant_info_new(const LinphoneAddress *address);
 
 /**
  * Take a reference on a #LinphoneParticipantInfo.

@@ -23,8 +23,8 @@
 
 #include "address/address.h"
 #include "conference/conference-id.h"
-#include "conference/conference.h"
 #include "conference/params/call-session-params.h"
+#include "core/core-accessor.h"
 #include "core/core-listener.h"
 #include "linphone/misc.h"
 #include "object/object.h"
@@ -34,13 +34,18 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class CallLog;
 class CallSessionPrivate;
+class CallSessionListener;
 class Content;
 class Core;
+class Conference;
 
 namespace MediaConference {
 class Conference;
-}
+class RemoteConference;
+class LocalConference;
+} // namespace MediaConference
 
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;

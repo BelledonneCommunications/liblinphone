@@ -111,8 +111,21 @@ void ConferenceInfo::addParticipants(const ConferenceInfo::participant_list_t &p
 
 void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) {
 	const auto &address = participantInfo->getAddress();
-	if (hasParticipant(address)) {
-		mParticipants.push_back(participantInfo->clone()->toSharedPtr());
+	if (!hasParticipant(address)) {
+		std::shared_ptr<ParticipantInfo> newInfo = nullptr;
+		// Check whetner the participant to be added is the organizer
+		if (mOrganizer && (participantInfo->getAddress()->weakEqual(*mOrganizer->getAddress()))) {
+			// Update the organizer role and parameters
+			newInfo = mOrganizer;
+			newInfo->setRole(participantInfo->getRole());
+			newInfo->addParameters(participantInfo->getAllParameters());
+		} else {
+			newInfo = participantInfo->clone()->toSharedPtr();
+		}
+		mParticipants.push_back(newInfo);
+		lInfo() << "Participant with address " << *address << " has been added to conference info " << this
+		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
+		        << ") with role " << newInfo->getRole();
 	} else {
 		lInfo() << "Participant with address " << *address << " is already in the list of conference info " << this
 		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
@@ -134,13 +147,25 @@ void ConferenceInfo::removeParticipant(const std::shared_ptr<const Address> &par
 		lInfo() << "Unable to remove participant with address " << *participant << " in conference info " << this
 		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
 	} else {
+		lInfo() << "Participant with address " << *participant << " has been removed from conference info " << this
+		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
 		mParticipants.erase(it);
 	}
 }
 
 void ConferenceInfo::updateParticipant(const std::shared_ptr<const ParticipantInfo> &participantInfo) {
-	removeParticipant(participantInfo);
-	addParticipant(participantInfo);
+	const auto &address = participantInfo->getAddress();
+	if (hasParticipant(address)) {
+		lInfo() << "Updating participant with address " << *address << " in conference info " << this << " (address "
+		        << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+		removeParticipant(participantInfo);
+		addParticipant(participantInfo);
+	} else {
+		lError() << "Unable to update informations of participant with address " << *participantInfo->getAddress()
+		         << " in conference info " << this << " (address "
+		         << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
+		         << ") because he/she has not been found in the list of participants";
+	}
 }
 
 ConferenceInfo::participant_list_t::const_iterator
@@ -150,7 +175,7 @@ ConferenceInfo::findParticipantIt(const std::shared_ptr<const Address> &address)
 }
 
 bool ConferenceInfo::hasParticipant(const std::shared_ptr<const Address> &address) const {
-	return (findParticipantIt(address) == mParticipants.end());
+	return (findParticipantIt(address) != mParticipants.end());
 }
 
 const std::shared_ptr<ParticipantInfo>

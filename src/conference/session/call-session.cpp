@@ -20,13 +20,12 @@
 
 #include <bctoolbox/defs.h>
 
-#include "linphone/api/c-content.h"
-#include "linphone/core.h"
-
 #include "account/account.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
+#include "call/call-log.h"
 #include "call/call.h"
+#include "conference.h"
 #include "conference/conference-scheduler.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/participant.h"
@@ -34,9 +33,9 @@
 #include "conference/session/call-session.h"
 #include "core/core-p.h"
 #include "factory/factory.h"
+#include "linphone/api/c-content.h"
+#include "linphone/core.h"
 #include "logger/logger.h"
-
-#include "conference.h"
 #include "private.h"
 
 using namespace std;

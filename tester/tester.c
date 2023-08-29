@@ -702,6 +702,13 @@ conference_participant_device_media_capability_changed(LinphoneConference *confe
 	manager->stat.number_of_participant_devices_media_capability_changed++;
 }
 
+static void conference_participant_role_changed(LinphoneConference *conference,
+                                                BCTBX_UNUSED(const LinphoneParticipant *participant)) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participant_role_changed++;
+}
+
 static void conference_participant_admin_status_changed(LinphoneConference *conference,
                                                         BCTBX_UNUSED(const LinphoneParticipant *participant)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
@@ -747,6 +754,7 @@ void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
 		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
 		linphone_conference_cbs_set_available_media_changed(cbs, conference_available_media_changed);
 		linphone_conference_cbs_set_subject_changed(cbs, conference_subject_changed);
+		linphone_conference_cbs_set_participant_role_changed(cbs, conference_participant_role_changed);
 		linphone_conference_cbs_set_participant_admin_status_changed(cbs, conference_participant_admin_status_changed);
 		linphone_conference_cbs_set_participant_device_media_capability_changed(
 		    cbs, conference_participant_device_media_capability_changed);

@@ -550,8 +550,15 @@ ConferenceInfo::participant_list_t Conference::getFullParticipantList() const {
 		});
 		if (pIt == participantList.end()) {
 			auto participantInfo = Factory::get()->createParticipantInfo(pAddress);
+			participantInfo->setRole(p->getRole());
 			participantList.push_back(participantInfo);
 		}
+	}
+	if (isIn()) {
+		auto me = getMe();
+		auto participantInfo = Factory::get()->createParticipantInfo(me->getAddress());
+		participantInfo->setRole(me->getRole());
+		participantList.push_back(participantInfo);
 	}
 	return participantList;
 }

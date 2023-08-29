@@ -149,15 +149,9 @@ public:
 	};
 
 protected:
-	std::shared_ptr<Core> getCore() const {
-		return mConference ? mConference->getCore() : nullptr;
-	}
-	Conference *getConference() const {
-		return mConference;
-	}
-	void setConference(Conference *conference) {
-		mConference = conference;
-	}
+	std::shared_ptr<Core> getCore() const;
+	Conference *getConference() const;
+	void setConference(Conference *conference);
 
 	std::shared_ptr<CallSession> createSession(const Conference &conference,
 	                                           const CallSessionParams *params,

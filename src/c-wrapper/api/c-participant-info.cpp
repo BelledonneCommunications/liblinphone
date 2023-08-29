@@ -28,7 +28,7 @@
 
 using namespace LinphonePrivate;
 
-LinphoneParticipantInfo *linphone_participant_info_new(LinphoneAddress *address) {
+LinphoneParticipantInfo *linphone_participant_info_new(const LinphoneAddress *address) {
 	return ParticipantInfo::createCObject(Address::toCpp(address)->getSharedFromThis());
 }
 
@@ -56,6 +56,14 @@ void linphone_participant_info_set_role(LinphoneParticipantInfo *participant_inf
 
 LinphoneParticipantRole linphone_participant_info_get_role(const LinphoneParticipantInfo *participant_info) {
 	return (LinphoneParticipantRole)ParticipantInfo::toCpp(participant_info)->getRole();
+}
+
+int linphone_participant_info_get_sequence_number(const LinphoneParticipantInfo *participant_info) {
+	return ParticipantInfo::toCpp(participant_info)->getSequenceNumber();
+}
+
+void linphone_participant_info_set_sequence_number(LinphoneParticipantInfo *participant_info, int sequence) {
+	ParticipantInfo::toCpp(participant_info)->setSequenceNumber(sequence);
 }
 
 void linphone_participant_info_add_parameter(LinphoneParticipantInfo *participant_info,
