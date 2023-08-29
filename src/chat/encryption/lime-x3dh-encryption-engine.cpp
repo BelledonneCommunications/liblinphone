@@ -722,12 +722,12 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(cons
 	const auto &contactAddress = account->getContactAddress();
 	if (!contactAddress) {
 		lWarning()
-		    << "[LIME] No contactAddress available, unable to setup identity key for ZRTP auxiliary shared secret";
+		    << "[LIME] No contactAddress available for account " << account << ", unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
+
 	string localDeviceId = contactAddress->asStringUriOnly();
 	vector<uint8_t> Ik;
-
 	try {
 		limeManager->get_selfIdentityKey(localDeviceId, Ik);
 	} catch (const exception &e) {
