@@ -195,6 +195,12 @@ static void group_chat_room_server_deletion(void) {
 			return linphone_chat_room_get_unread_messages_count(pauline2Cr) == 1;
 		}));
 
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageReceived,
+		                             initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
+
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneAggregatedMessagesReceived,
+		                             initialMarieStats.number_of_LinphoneAggregatedMessagesReceived + 1, 3000));
+
 		for (auto chatRoom : focus.getCore().getChatRooms()) {
 			for (auto participant : chatRoom->getParticipants()) {
 				//  force deletion by removing devices
