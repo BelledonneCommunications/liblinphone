@@ -3285,6 +3285,158 @@ static void delete_friend_from_rc(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void friend_list_db_storage_base(bool_t set_friends_db_path) {
+	LinphoneCoreManager *manager = linphone_core_manager_new("marie_rc");
+	LinphoneCore *core = manager->lc;
+	LinphoneConfig *config = linphone_core_get_config(core);
+
+	// Disable legacy friends storage
+	linphone_config_set_int(config, "misc", "store_friends", 0);
+
+	char *friends_db = bc_tester_file("friends.db");
+	unlink(friends_db);
+	if (set_friends_db_path) {
+		linphone_core_set_friends_database_path(core, friends_db);
+	}
+
+	LinphoneFriendList *default_fl = linphone_core_get_default_friend_list(core);
+	BC_ASSERT_PTR_NOT_NULL(default_fl);
+	if (default_fl) {
+		BC_ASSERT_FALSE(linphone_friend_list_database_storage_enabled(default_fl));
+
+		// Add a friend to that friend list that shoudln't be persisted in DB
+		LinphoneFriend *claire_friend = linphone_core_create_friend(core);
+		linphone_friend_set_name(claire_friend, "Claire");
+		linphone_friend_add_phone_number(claire_friend, "+3366666666");
+		LinphoneFriendListStatus status = linphone_friend_list_add_friend(default_fl, claire_friend);
+		BC_ASSERT_EQUAL(status, LinphoneFriendListOK, int, "%d");
+		linphone_friend_unref(claire_friend);
+		ms_message("-> Claire added to default friend list");
+	}
+
+	LinphoneFriendList *db_stored_fl = linphone_core_create_friend_list(core);
+	linphone_friend_list_set_display_name(db_stored_fl, "DB_STORED_FL");
+	BC_ASSERT_FALSE(linphone_friend_list_database_storage_enabled(db_stored_fl));
+	linphone_core_add_friend_list(core, db_stored_fl);
+	BC_ASSERT_FALSE(linphone_friend_list_database_storage_enabled(db_stored_fl));
+
+	// Adding a friend while DB storage is still not enabled
+	LinphoneFriend *pauline_friend = linphone_core_create_friend(core);
+	linphone_friend_set_name(pauline_friend, "Pauline");
+	linphone_friend_add_phone_number(pauline_friend, "+3301020304");
+	LinphoneFriendListStatus status = linphone_friend_list_add_friend(db_stored_fl, pauline_friend);
+	BC_ASSERT_EQUAL(status, LinphoneFriendListOK, int, "%d");
+	linphone_friend_unref(pauline_friend);
+	ms_message("-> Pauline added to db stored friend list");
+
+	linphone_friend_list_enable_database_storage(db_stored_fl, TRUE);
+	if (set_friends_db_path) {
+		BC_ASSERT_TRUE(linphone_friend_list_database_storage_enabled(db_stored_fl));
+	} else {
+		BC_ASSERT_FALSE(linphone_friend_list_database_storage_enabled(db_stored_fl));
+	}
+
+	// Adding a new friend now that DB is enabled
+	LinphoneFriend *marie_friend = linphone_core_create_friend(core);
+	linphone_friend_set_name(marie_friend, "Marie");
+	linphone_friend_add_phone_number(marie_friend, "+3305060708");
+	status = linphone_friend_list_add_friend(db_stored_fl, marie_friend);
+	BC_ASSERT_EQUAL(status, LinphoneFriendListOK, int, "%d");
+	linphone_friend_unref(marie_friend);
+	ms_message("-> Marie added to db stored friend list");
+
+	linphone_friend_list_unref(db_stored_fl);
+
+	// Add a new friend list without DB storage
+	LinphoneFriendList *not_db_stored_fl = linphone_core_create_friend_list(core);
+	linphone_friend_list_set_display_name(not_db_stored_fl, "NOT_DB_STORED_FL");
+	BC_ASSERT_FALSE(linphone_friend_list_database_storage_enabled(not_db_stored_fl));
+	linphone_core_add_friend_list(core, not_db_stored_fl);
+
+	// Add a friend to that friend list that shoudln't be persisted in DB
+	LinphoneFriend *laure_friend = linphone_core_create_friend(core);
+	linphone_friend_set_name(laure_friend, "Laure");
+	linphone_friend_add_phone_number(laure_friend, "+3312345678");
+	status = linphone_friend_list_add_friend(not_db_stored_fl, laure_friend);
+	BC_ASSERT_EQUAL(status, LinphoneFriendListOK, int, "%d");
+	linphone_friend_unref(laure_friend);
+	ms_message("-> Laure added to memory cached friend list");
+
+	linphone_friend_list_unref(not_db_stored_fl);
+
+	// Check that both friends list can be found using display name
+	LinphoneFriendList *found_list = linphone_core_get_friend_list_by_name(core, "DB_STORED_FL");
+	BC_ASSERT_PTR_NOT_NULL(found_list);
+
+	found_list = linphone_core_get_friend_list_by_name(core, "NOT_DB_STORED_FL");
+	BC_ASSERT_PTR_NOT_NULL(found_list);
+
+	// Check that all friends can be found by Core
+	LinphoneFriend *found_friend = linphone_core_find_friend_by_phone_number(core, "+3366666666"); // Claire
+	BC_ASSERT_PTR_NOT_NULL(found_friend);
+	found_friend = linphone_core_find_friend_by_phone_number(core, "+3301020304"); // Pauline
+	BC_ASSERT_PTR_NOT_NULL(found_friend);
+	found_friend = linphone_core_find_friend_by_phone_number(core, "+3305060708"); // Marie
+	BC_ASSERT_PTR_NOT_NULL(found_friend);
+	found_friend = linphone_core_find_friend_by_phone_number(core, "+3312345678"); // Laure
+	BC_ASSERT_PTR_NOT_NULL(found_friend);
+
+	// Now restart the Core
+	ms_message("\n-> Restarting Core\n");
+	linphone_core_manager_reinit(manager);
+	linphone_core_manager_start(manager, TRUE);
+	core = manager->lc;
+	// Don't forget to set the friends DB path again
+	if (set_friends_db_path) {
+		linphone_core_set_friends_database_path(core, friends_db);
+	}
+
+	// Check that only friends list stored in can be found using display name
+	found_list = linphone_core_get_friend_list_by_name(core, "DB_STORED_FL");
+	if (set_friends_db_path) {
+		BC_ASSERT_PTR_NOT_NULL(found_list);
+	} else {
+		BC_ASSERT_PTR_NULL(found_list);
+	}
+
+	found_list = linphone_core_get_friend_list_by_name(core, "NOT_DB_STORED_FL");
+	BC_ASSERT_PTR_NULL(found_list);
+
+	// Check that only friends in lists that were stored in DB can be found by Core
+	found_friend = linphone_core_find_friend_by_phone_number(core, "+3366666666"); // Claire
+	BC_ASSERT_PTR_NULL(found_friend);
+
+	found_friend = linphone_core_find_friend_by_phone_number(core, "+3301020304"); // Pauline
+	if (set_friends_db_path) {
+		BC_ASSERT_PTR_NOT_NULL(found_friend);
+	} else {
+		BC_ASSERT_PTR_NULL(found_list);
+	}
+
+	found_friend = linphone_core_find_friend_by_phone_number(core, "+3305060708"); // Marie
+	if (set_friends_db_path) {
+		BC_ASSERT_PTR_NOT_NULL(found_friend);
+	} else {
+		BC_ASSERT_PTR_NULL(found_list);
+	}
+
+	found_friend = linphone_core_find_friend_by_phone_number(core, "+3312345678"); // Laure
+	BC_ASSERT_PTR_NULL(found_friend);
+
+	unlink(friends_db);
+	bc_free(friends_db);
+
+	linphone_core_manager_destroy(manager);
+}
+
+static void friend_list_db_storage(void) {
+	friend_list_db_storage_base(TRUE);
+}
+
+static void friend_list_db_storage_without_db(void) {
+	friend_list_db_storage_base(FALSE);
+}
+
 static void dial_plan(void) {
 	bctbx_list_t *dial_plans = linphone_dial_plan_get_all_list();
 	bctbx_list_t *it;
@@ -3581,6 +3733,8 @@ test_t setup_tests[] = {
     TEST_ONE_TAG("Ldap features more results", ldap_features_more_results, "MagicSearch"),
     TEST_NO_TAG("Ldap params edition with check", ldap_params_edition_with_check),
     TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
+    TEST_NO_TAG("Store friends list in DB", friend_list_db_storage),
+    TEST_NO_TAG("Store friends list in DB without setting path to db file", friend_list_db_storage_without_db),
     TEST_NO_TAG("Dialplan", dial_plan),
     TEST_NO_TAG("Friend phone number lookup without plus", friend_phone_number_lookup_without_plus),
     TEST_NO_TAG("Audio devices", audio_devices),

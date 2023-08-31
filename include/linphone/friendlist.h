@@ -244,7 +244,7 @@ LINPHONE_PUBLIC void linphone_friend_list_set_uri(LinphoneFriendList *friend_lis
  * @param friend_list #LinphoneFriendList object. @notnil
  * @return Wheter the subscription of the friend list is bodyless or not.
  **/
-LINPHONE_PUBLIC bool_t linphone_friend_list_is_subscription_bodyless(LinphoneFriendList *friend_list);
+LINPHONE_PUBLIC bool_t linphone_friend_list_is_subscription_bodyless(const LinphoneFriendList *friend_list);
 
 /**
  * Set wheter the subscription of the friend list is bodyless or not.
@@ -447,6 +447,20 @@ LINPHONE_PUBLIC void linphone_friend_list_enable_subscriptions(LinphoneFriendLis
  * @return Whether subscriptions are enabled or not
  */
 LINPHONE_PUBLIC bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *friend_list);
+
+/**
+ * Gets whether this friend list and it's friends will be stored in DB or not
+ * @param list the #LinphoneFriendList object @notnil
+ * @return Whether the list and it's friends will be saved in database or not
+ */
+LINPHONE_PUBLIC bool_t linphone_friend_list_database_storage_enabled(const LinphoneFriendList *list);
+
+/**
+ * Sets whether this friend list and it's friends will be stored in DB or not
+ * @param list the #LinphoneFriendList object @notnil
+ * @param enable TRUE to enable this friend list storage in DB, FALSE to disable it.
+ */
+LINPHONE_PUBLIC void linphone_friend_list_enable_database_storage(LinphoneFriendList *list, bool_t enable);
 
 /************ */
 /* DEPRECATED */

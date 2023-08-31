@@ -1124,7 +1124,7 @@ void linphone_friend_done(LinphoneFriend *fr) {
 		}
 	}
 	linphone_friend_apply(fr, fr->lc);
-	linphone_friend_save(fr, fr->lc);
+	if (fr->friend_list) linphone_friend_save(fr, fr->lc);
 }
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
@@ -1212,7 +1212,7 @@ void linphone_friend_set_ref_key(LinphoneFriend *lf, const char *key) {
 	if (key) {
 		lf->refkey = ms_strdup(key);
 	}
-	if (lf->lc) {
+	if (lf->lc && lf->friend_list) {
 		linphone_friend_save(lf, lf->lc);
 	}
 }
@@ -1410,7 +1410,7 @@ void linphone_friend_set_vcard(LinphoneFriend *fr, LinphoneVcard *vcard) {
 
 	if (fr->vcard) linphone_vcard_unref(fr->vcard);
 	if (vcard) fr->vcard = linphone_vcard_ref(vcard);
-	linphone_friend_save(fr, fr->lc);
+	if (fr->friend_list) linphone_friend_save(fr, fr->lc);
 }
 
 bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
@@ -1438,7 +1438,7 @@ bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 		lc = fr->friend_list->lc;
 	}
 	if (lc) {
-		skip = !linphone_config_get_int(fr->lc->config, "misc", "store_friends", 1);
+		skip = !linphone_friend_list_database_storage_enabled(fr->friend_list);
 		linphone_vcard_set_skip_validation(vcard, skip);
 	}
 	linphone_vcard_set_full_name(vcard, name);
@@ -1712,6 +1712,7 @@ static int create_friend_list(void *data, BCTBX_UNUSED(int argc), char **argv, B
 	unsigned int storage_id = (unsigned int)atoi(argv[0]);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(NULL);
 
+	lfl->store_in_db = TRUE; // Obviously
 	lfl->storage_id = storage_id;
 	linphone_friend_list_set_display_name(lfl, argv[1]);
 	linphone_friend_list_set_rls_uri(lfl, argv[2]);
@@ -1806,23 +1807,23 @@ static int linphone_sql_request_friends_list(sqlite3 *db, const char *stmt, bctb
 void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 	if (lc && lc->friends_db) {
 		char *buf;
-		int store_friends = linphone_config_get_int(lc->config, "misc", "store_friends", 1);
 		LinphoneVcard *vcard = NULL;
 		const LinphoneAddress *addr;
 		char *addr_str = NULL;
 
-		if (!store_friends) {
+		if (!lf) {
+			ms_error("Can't store a NULL friend!");
 			return;
 		}
 
-		if (!lf || !lf->friend_list) {
-			ms_warning("Either the friend or the friend list is null, skipping...");
+		if (!lf->friend_list) {
+			ms_warning("Can't store friend [%s], not added to any friend list", linphone_friend_get_name(lf));
 			return;
 		}
 
-		if (linphone_friend_list_is_subscription_bodyless(
-		        lf->friend_list)) // Add friend in DB only if its list bodyless subscription is not enabled.
+		if (!linphone_friend_list_database_storage_enabled(lf->friend_list)) {
 			return;
+		}
 
 		/**
 		 * The friends_list store logic is hidden into the friend store logic
@@ -1862,12 +1863,10 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 }
 
 void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list) {
-	if (lc && lc->friends_db &&
-	    !linphone_friend_list_is_subscription_bodyless(list)) { // Do not store list if bodyless subscription is enabled
+	if (lc && lc->friends_db) {
 		char *buf;
-		int store_friends = linphone_config_get_int(lc->config, "misc", "store_friends", 1);
 
-		if (!store_friends) {
+		if (!linphone_friend_list_database_storage_enabled(list)) {
 			return;
 		}
 
@@ -2040,6 +2039,7 @@ void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path)
 		lc->friends_db_file = NULL;
 	}
 	if (path) {
+		ms_message("Using [%s] file for friends database", path);
 		lc->friends_db_file = ms_strdup(path);
 		linphone_core_friends_storage_init(lc);
 	}

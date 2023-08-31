@@ -156,6 +156,7 @@ struct _LinphoneFriendList {
 	bool_t enable_subscriptions;
 	bool_t bodyless_subscription;
 	LinphoneFriendListType type;
+	bool_t store_in_db;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendList);

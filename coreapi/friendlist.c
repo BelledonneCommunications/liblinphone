@@ -519,6 +519,8 @@ static LinphoneFriendList *linphone_friend_list_new(void) {
 	list->bodyless_subscription = FALSE;
 	list->type = LinphoneFriendListTypeDefault;
 	list->revision = 0;
+	list->storage_id = 0;
+	list->store_in_db = FALSE;
 	return list;
 }
 
@@ -684,13 +686,14 @@ _linphone_friend_list_add_friend(LinphoneFriendList *list, LinphoneFriend *lf, b
 	}
 
 	addr = linphone_friend_get_address(lf);
-	bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers(
-	    lf); // linphone_friend_get_phone_numbers make a copy of phones. We have to delete them later
+	// linphone_friend_get_phone_numbers make a copy of phones. We have to delete them later
+	bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers(lf);
 	if (addr == NULL && linphone_friend_get_vcard(lf) == NULL && phone_numbers == NULL) {
 		ms_error("linphone_friend_list_add_friend(): invalid friend, no vCard, SIP URI or phone number");
 		return status;
 	}
 	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, bctbx_free);
+
 	bool_t present = FALSE;
 	if (lf->refkey) {
 		present = linphone_friend_list_find_friend_by_ref_key(list, lf->refkey) != NULL;
@@ -1442,7 +1445,7 @@ void linphone_friend_list_set_uri(LinphoneFriendList *list, const char *uri) {
 	}
 }
 
-bool_t linphone_friend_list_is_subscription_bodyless(LinphoneFriendList *list) {
+bool_t linphone_friend_list_is_subscription_bodyless(const LinphoneFriendList *list) {
 	return list->bodyless_subscription;
 }
 
@@ -1595,4 +1598,49 @@ void linphone_friend_list_enable_subscriptions(LinphoneFriendList *list, bool_t 
 
 bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *list) {
 	return list->enable_subscriptions;
+}
+
+bool_t linphone_friend_list_database_storage_enabled(const LinphoneFriendList *list) {
+	if (list == NULL) return FALSE;
+
+	if (linphone_friend_list_is_subscription_bodyless(list)) {
+		// Do not store list if bodyless subscription is enabled
+		return FALSE;
+	}
+
+	// Legacy setting
+	int store_friends = linphone_config_get_int(list->lc->config, "misc", "store_friends", 1);
+	return store_friends || list->store_in_db;
+}
+
+void linphone_friend_list_enable_database_storage(LinphoneFriendList *list, bool_t enable) {
+	if (enable && linphone_core_get_friends_database_path(list->lc) == NULL) {
+		ms_error(
+		    "No database path has been set for friends storage, use linphone_core_set_friends_database_path() first!");
+		return;
+	}
+
+	if (enable && linphone_friend_list_is_subscription_bodyless(list)) {
+		ms_warning("Can't store in DB a friend list [%s] with bodyless subscription enabled", list->display_name);
+		return;
+	}
+
+	if (list->store_in_db && !enable) {
+		ms_warning("We are asked to remove database storage for friend list [%s]", list->display_name);
+		list->store_in_db = enable;
+		linphone_core_remove_friends_list_from_db(list->lc, list);
+	} else if (!list->store_in_db && enable) {
+		list->store_in_db = enable;
+		linphone_core_store_friends_list_in_db(list->lc, list);
+
+		const bctbx_list_t *friends = linphone_friend_list_get_friends(list);
+		while (friends != NULL && bctbx_list_get_data(friends) != NULL) {
+			LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(friends);
+			ms_warning("Found existing friend [%s] in list [%s] that was added before the list was configured to be "
+			           "saved in DB, doing it now",
+			           linphone_friend_get_name(lf), list->display_name);
+			linphone_friend_save(lf, list->lc);
+			friends = bctbx_list_next(friends);
+		}
+	}
 }
