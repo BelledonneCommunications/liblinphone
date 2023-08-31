@@ -154,9 +154,12 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 
 	string limeServerUrl = lc ? linphone_config_get_default_string(lc->config, "proxy", "lime_server_url", "") : "";
 	setLimeServerUrl(limeServerUrl);
+
+	string pictureUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "picture_uri", "") : "";
+	setPictureUri(pictureUri);
 }
 
-AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(nullptr) {
+AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullptr) {
 	LpConfig *config = lc->config;
 
 	char key[50];
@@ -257,9 +260,10 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(nullp
 	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
 
 	setLimeServerUrl(linphone_config_get_string(config, key, "lime_server_url", mLimeServerUrl.c_str()));
-	
+	setPictureUri(linphone_config_get_string(config, key, "picture_uri", mPictureUri.c_str()));
+
 	if (lc && lc->push_config) {
-		mPushNotificationConfig->unref();// Coming from constructor
+		mPushNotificationConfig->unref(); // Coming from constructor
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	}
 
@@ -329,6 +333,7 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 		mCustomContact = nullptr;
 	}
 	mLimeServerUrl = other.mLimeServerUrl;
+	mPictureUri = other.mPictureUri;
 }
 
 AccountParams::~AccountParams() {
@@ -751,6 +756,14 @@ const std::string &AccountParams::getLimeServerUrl() const {
 	return mLimeServerUrl;
 }
 
+void AccountParams::setPictureUri(const std::string &uri) {
+	mPictureUri = uri;
+}
+
+const std::string &AccountParams::getPictureUri() const {
+	return mPictureUri;
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> serverAddr) {
@@ -896,6 +909,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	writeCustomParamsToConfigFile(config, key);
 
 	linphone_config_set_string(config, key, "lime_server_url", mLimeServerUrl.c_str());
+	linphone_config_set_string(config, key, "picture_uri", mPictureUri.c_str());
 }
 
 LINPHONE_END_NAMESPACE

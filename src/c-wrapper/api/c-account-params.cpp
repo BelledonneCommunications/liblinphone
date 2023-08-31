@@ -430,3 +430,11 @@ void linphone_account_params_set_lime_server_url(LinphoneAccountParams *params, 
 const char *linphone_account_params_get_lime_server_url(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getLimeServerUrl());
 }
+
+void linphone_account_params_set_picture_uri(LinphoneAccountParams *params, const char *uri) {
+	AccountParams::toCpp(params)->setPictureUri(L_C_TO_STRING(uri));
+}
+
+const char *linphone_account_params_get_picture_uri(const LinphoneAccountParams *params) {
+	return L_STRING_TO_C(AccountParams::toCpp(params)->getPictureUri());
+}

@@ -830,6 +830,20 @@ LINPHONE_PUBLIC void linphone_account_params_set_lime_server_url(LinphoneAccount
 LINPHONE_PUBLIC const char *linphone_account_params_get_lime_server_url(const LinphoneAccountParams *params);
 
 /**
+ * Sets an URI for the account picture.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param uri The account picture URI. @maybenil
+ **/
+LINPHONE_PUBLIC void linphone_account_params_set_picture_uri(LinphoneAccountParams *params, const char *uri);
+
+/**
+ * Gets the account picture URI if set, NULL otherwise.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The account picture URI. @maybenil
+ **/
+LINPHONE_PUBLIC const char *linphone_account_params_get_picture_uri(const LinphoneAccountParams *params);
+
+/**
  * @}
  */
 

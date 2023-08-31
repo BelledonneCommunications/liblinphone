@@ -84,6 +84,7 @@ public:
 	void enableRtpBundleAssumption(bool value);
 	void setCustomContact(const std::shared_ptr<Address> contact);
 	void setLimeServerUrl(const std::string &url);
+	void setPictureUri(const std::string &uri);
 
 	// Getters
 	int getExpires() const;
@@ -128,6 +129,7 @@ public:
 	bool rtpBundleAssumptionEnabled() const;
 	const std::shared_ptr<Address> &getCustomContact() const;
 	const std::string &getLimeServerUrl() const;
+	const std::string &getPictureUri() const;
 
 	// Other
 	LinphoneStatus setServerAddress(const std::shared_ptr<Address> serverAddr);
@@ -176,6 +178,7 @@ private:
 	std::string mFileTransferServer;
 	std::string mLimeServerUrl;
 	std::string mIdentity;
+	std::string mPictureUri;
 
 	std::list<std::shared_ptr<Address>> mRoutes;
 
