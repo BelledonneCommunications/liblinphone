@@ -616,7 +616,7 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev) {
 			linphone_call_stats_set_estimated_download_bandwidth(mStats,
 			                                                     (float)(evd->info.video_bandwidth_available * 1e-3));
 	} else if (evt == ORTP_EVENT_JITTER_UPDATE_FOR_NACK) {
-		mNetworkMonitor.mNackSent = true;
+		mNetworkMonitor.confirmNackSent();
 	}
 
 	VideoStats sendStats, recvStats;

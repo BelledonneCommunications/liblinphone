@@ -377,6 +377,9 @@ public:
 	void addOrUpdatePublishByEtag(SalPublishOp *op, std::shared_ptr<LinphonePrivate::EventPublish>);
 	Core::ETagStatus eTagHandler(SalPublishOp *op, const SalBodyHandler *body);
 
+	void setLabel(const std::string &label);
+	const std::string &getLabel() const;
+
 private:
 	Core();
 

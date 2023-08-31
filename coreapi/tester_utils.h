@@ -322,6 +322,7 @@ LINPHONE_PUBLIC void sal_uninit(Sal *sal);
 LINPHONE_PUBLIC int sal_create_uuid(Sal *ctx, char *uuid, size_t len);
 LINPHONE_PUBLIC char *sal_get_random_token(int size);
 LINPHONE_PUBLIC void sal_set_uuid(Sal *ctx, const char *uuid);
+LINPHONE_PUBLIC const char *sal_get_uuid(const Sal *ctx);
 
 LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal *h, SalOpSDPHandling handling_method);
 LINPHONE_PUBLIC void sal_set_send_error(Sal *sal, int value);

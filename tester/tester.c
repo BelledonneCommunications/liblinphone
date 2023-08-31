@@ -2557,12 +2557,31 @@ void linphone_core_manager_init_shared(LinphoneCoreManager *mgr,
 #pragma GCC diagnostic pop
 #endif
 
+static const char *end_of_uuid(const char *uuid) {
+	size_t size = strlen(uuid);
+	if (size > 4) size -= 4;
+	else size = 0;
+	return uuid + size;
+}
+
 void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_proxies) {
 	LinphoneProxyConfig *proxy;
 	int proxy_count;
 
 	if (linphone_core_start(mgr->lc) == -1) {
 		ms_error("Core [%p] failed to start", mgr->lc);
+	}
+	proxy = linphone_core_get_default_proxy_config(mgr->lc);
+	if (proxy) {
+		const char *label = linphone_core_get_label(mgr->lc);
+		if (label && strchr(label, ';') == NULL) {
+			/* suffix the uuid, that is known from linphone_core_start() was done.*/
+			char *full_label = bctbx_strdup_printf(
+			    "%s;%s", label,
+			    end_of_uuid(linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", "unknown")));
+			linphone_core_set_label(mgr->lc, full_label);
+			bctbx_free(full_label);
+		}
 	}
 
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
@@ -2587,7 +2606,6 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk, old_registration_ok + proxy_count, int, "%d");
 	enable_codec(mgr->lc, "PCMU", 8000);
 
-	proxy = linphone_core_get_default_proxy_config(mgr->lc);
 	if (proxy) {
 		if (mgr->identity) {
 			linphone_address_unref(mgr->identity);

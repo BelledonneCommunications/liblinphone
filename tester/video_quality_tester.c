@@ -609,7 +609,7 @@ static void call_with_retransmissions_on_nack(void) {
 	linphone_core_enable_alerts(pauline->lc, TRUE);
 	linphone_config_set_float(linphone_core_get_config(pauline->lc), "alerts", "alerts::nack_threshold", 1.0f);
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_on_alert(cbs, on_nack_alert);
+	linphone_core_cbs_set_new_alert_triggered(cbs, on_nack_alert);
 	linphone_core_add_callbacks(pauline->lc, cbs);
 	linphone_core_cbs_set_user_data(cbs, &nack_alert_count);
 	linphone_core_cbs_unref(cbs);

@@ -114,6 +114,12 @@ private:
 	mutable LinphoneErrorInfo *mEi = nullptr;
 };
 
+class EventLogScope : public CoreLogContextualizer {
+public:
+	EventLogScope(const LinphoneEvent *ev) : CoreLogContextualizer(*Event::toCpp(ev)) {
+	}
+};
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_EVENT_H_

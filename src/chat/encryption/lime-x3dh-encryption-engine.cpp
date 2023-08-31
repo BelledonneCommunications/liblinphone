@@ -1036,7 +1036,7 @@ void LimeX3dhEncryptionEngine::onAccountRegistrationStateChanged(std::shared_ptr
 	const std::shared_ptr<Address> &identityAddress = account->getContactAddress();
 	string localDeviceId = identityAddress->asStringUriOnly();
 
-	LinphoneCore *lc = account->getCore();
+	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 	lInfo() << "[LIME] Load lime user for device " << localDeviceId << " with server URL [" << accountLimeServerUrl
 	        << "]";
 
@@ -1076,7 +1076,7 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(const std::shared_ptr<Account>
 	}
 	string localDeviceId = contactAddress->asStringUriOnly();
 
-	LinphoneCore *lc = account->getCore();
+	LinphoneCore *lc = L_GET_C_BACK_PTR(account->getCore());
 
 	lInfo() << "[LIME] Trying to update lime user for device " << localDeviceId << " with server URL ["
 	        << accountLimeServerUrl << "]";

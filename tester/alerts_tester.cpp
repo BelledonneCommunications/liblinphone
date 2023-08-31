@@ -74,7 +74,7 @@ static void alert_catch(LinphoneCore *core, LinphoneAlert *alert) {
 	if (type == data->expectedType) {
 		data->triggerCount++;
 	}
-	linphone_alert_cbs_set_on_terminated(alert_cbs, alert_on_terminated);
+	linphone_alert_cbs_set_terminated(alert_cbs, alert_on_terminated);
 	linphone_alert_add_callbacks(alert, alert_cbs);
 	linphone_alert_cbs_set_user_data(alert_cbs, data);
 	linphone_alert_cbs_unref(alert_cbs);
@@ -88,7 +88,7 @@ static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCall
 	pauline = linphone_core_manager_new("pauline_rc");
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_on_alert(cbs, alert_catch);
+	linphone_core_cbs_set_new_alert_triggered(cbs, alert_catch);
 	linphone_core_add_callbacks(marie->lc, cbs);
 	linphone_core_cbs_set_user_data(cbs, &data);
 	linphone_core_cbs_unref(cbs);

@@ -340,6 +340,7 @@ account_manager_check_account(AccountManager *m, LinphoneProxyConfig *cfg, Linph
 		create_account = TRUE;
 		m->accounts = bctbx_list_append(m->accounts, account);
 	}
+
 	// modify the username of the identity of the proxy config
 	linphone_address_set_username(id_addr, linphone_address_get_username(account->modified_identity));
 	linphone_proxy_config_edit(cfg);
@@ -363,6 +364,11 @@ account_manager_check_account(AccountManager *m, LinphoneProxyConfig *cfg, Linph
 			account->uuid = bctbx_strdup(tmp);
 		}
 		sal_set_uuid(linphone_core_get_sal(cm->lc), account->uuid);
+	}
+
+	if (cfg == linphone_core_get_default_proxy_config(cm->lc)) {
+		/* uuid is computed at later time, during linphone_core_start(). */
+		linphone_core_set_label(cm->lc, linphone_address_get_username(account->identity));
 	}
 
 	// remove previous auth info to avoid mismatching

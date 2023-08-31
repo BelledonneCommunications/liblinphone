@@ -41,9 +41,9 @@ void linphone_alert_cbs_set_user_data(LinphoneAlertCbs *cbs, void *ud) {
 	AlertCbs::toCpp(cbs)->setUserData(ud);
 }
 
-void linphone_alert_cbs_set_on_terminated(LinphoneAlertCbs *cbs, LinphoneAlertCbsOnTerminatedCb on_terminated) {
+void linphone_alert_cbs_set_terminated(LinphoneAlertCbs *cbs, LinphoneAlertCbsTerminatedCb on_terminated) {
 	AlertCbs::toCpp(cbs)->setOnTerminated(on_terminated);
 }
-LinphoneAlertCbsOnTerminatedCb linphone_alert_cbs_get_on_terminated(LinphoneAlertCbs *cbs) {
+LinphoneAlertCbsTerminatedCb linphone_alert_cbs_get_terminated(LinphoneAlertCbs *cbs) {
 	return AlertCbs::toCpp(cbs)->getOnTerminated();
 }

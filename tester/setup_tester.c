@@ -1740,10 +1740,11 @@ static void search_friend_in_call_log(void) {
 	linphone_magic_search_unref(magicSearch);
 
 	// Ensure tester call log & zrtp secrets db are correctly removed
-	const char *zrtp_secrets_db_path = linphone_core_get_zrtp_secrets_file(manager->lc);
+	char *zrtp_secrets_db_path = bctbx_strdup(linphone_core_get_zrtp_secrets_file(manager->lc));
 	BC_ASSERT_EQUAL(0, bctbx_file_exist(zrtp_secrets_db_path), int, "%d");
 	linphone_core_manager_destroy(manager);
 	BC_ASSERT_NOT_EQUAL(0, bctbx_file_exist(zrtp_secrets_db_path), int, "%d");
+	bctbx_free(zrtp_secrets_db_path);
 }
 
 static void search_friend_in_call_log_already_exist(void) {

@@ -299,7 +299,7 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsAccountRegistrationStateChangedCb account_registration_state_changed;
 	LinphoneCoreCbsConferenceInfoReceivedCb conference_info_received;
 	LinphoneCoreCbsPushNotificationReceivedCb push_notification_received;
-	LinphoneCoreCbsOnAlertCb on_alert;
+	LinphoneCoreCbsNewAlertTriggeredCb new_alert_triggered;
 	LinphoneCoreCbsPreviewDisplayErrorOccurredCb preview_display_error_occurred;
 	LinphoneCoreCbsNewMessageReactionCb new_message_reaction;
 	LinphoneCoreCbsReactionRemovedCb reaction_removed;
@@ -1438,6 +1438,22 @@ LINPHONE_PUBLIC void linphone_core_enable_conference_ics_in_message_body(Linphon
  * @return TRUE if ICS will be sent in the message body (by default), FALSE if it will be sent as a file attachment.
  */
 LINPHONE_PUBLIC bool_t linphone_core_conference_ics_in_message_body_enabled(const LinphoneCore *core);
+
+/**
+ * Set a label - for logging/troubleshooting purpose - to the core object.
+ * This label is used by the logger to give context. When running an application with several LinphoneCore objects,
+ * (such as a test), it is useful to enhance the log's readability'.
+ * @param core the #LinphoneCore
+ * @param label a developper-friendly label.
+ **/
+LINPHONE_PUBLIC void linphone_core_set_label(LinphoneCore *core, const char *label);
+
+/**
+ * Get the label assigned to the LinphoneCore. The default value is NULL (no label).
+ * @param core the #LinphoneCore
+ * @return the assigned label.
+ **/
+LINPHONE_PUBLIC const char *linphone_core_get_label(const LinphoneCore *core);
 
 /**
  * @}
@@ -4805,13 +4821,14 @@ linphone_core_get_conference_participant_list_type(const LinphoneCore *lc);
  * @param cbs #LinphoneCoreCbs object. @notnil
  * @param alert_cb The #LinphoneCoreCbsOnAlertCb callback to call. @notnil
  */
-LINPHONE_PUBLIC void linphone_core_cbs_set_on_alert(LinphoneCoreCbs *cbs, LinphoneCoreCbsOnAlertCb alert_cb);
+LINPHONE_PUBLIC void linphone_core_cbs_set_new_alert_triggered(LinphoneCoreCbs *cbs,
+                                                               LinphoneCoreCbsNewAlertTriggeredCb alert_cb);
 /**
  * Get the on alert callback.
  * @param cbs #LinphoneCoreCbs object. @notnil
  * @return The #LinphoneCoreCbsOnAlertCb callback called.
  */
-LINPHONE_PUBLIC LinphoneCoreCbsOnAlertCb linphone_core_cbs_get_on_alert(LinphoneCoreCbs *cbs);
+LINPHONE_PUBLIC LinphoneCoreCbsNewAlertTriggeredCb linphone_core_cbs_get_new_alert_triggered(LinphoneCoreCbs *cbs);
 
 /**
  * Enable alerts. See #LinphoneAlert for more details.

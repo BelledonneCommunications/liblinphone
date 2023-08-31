@@ -63,7 +63,8 @@ void ConferenceParams::updateFromAccount(
 			if (m_useDefaultFactoryAddress) {
 				auto core = account->getCore();
 				m_factoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
-				if (m_factoryAddress && (linphone_core_get_global_state(core) != LinphoneGlobalStartup)) {
+				if (m_factoryAddress &&
+				    (linphone_core_get_global_state(L_GET_C_BACK_PTR(core)) != LinphoneGlobalStartup)) {
 					lInfo() << "Update conference parameters from account, factory: " << *m_factoryAddress;
 				}
 			}

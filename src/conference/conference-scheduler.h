@@ -113,6 +113,13 @@ private:
 
 std::ostream &operator<<(std::ostream &lhs, ConferenceScheduler::State s);
 
+class ConferenceSchedulerLogContextualizer : public CoreLogContextualizer {
+public:
+	ConferenceSchedulerLogContextualizer(const LinphoneConferenceScheduler *cs)
+	    : CoreLogContextualizer(*ConferenceScheduler::toCpp(cs)) {
+	}
+};
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CONFERENCE_SCHEDULER_H_

@@ -194,6 +194,9 @@ public:
 	void setUuid(const std::string &value) {
 		mUuid = value;
 	}
+	const std::string &getUuid() const {
+		return mUuid;
+	}
 	std::string createUuid();
 	static std::string generateUuid();
 

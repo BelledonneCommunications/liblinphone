@@ -45,11 +45,12 @@ class EventPublish;
 
 class Account : public bellesip::HybridObject<LinphoneAccount, Account>,
                 public UserDataAccessor,
-                public CallbacksHolder<AccountCbs> {
+                public CallbacksHolder<AccountCbs>,
+                public CoreAccessor {
 public:
 	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params);
 	Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);
-	Account(const Account &other);
+	Account(const Account &other) = delete;
 	virtual ~Account();
 
 	Account *clone() const override;
@@ -65,7 +66,6 @@ public:
 	void setNeedToRegister(bool needToRegister);
 	void setDeletionDate(time_t deletionDate);
 	void setSipEtag(const std::string &sipEtag);
-	void setCore(LinphoneCore *lc);
 	void setErrorInfo(LinphoneErrorInfo *errorInfo);
 	void setContactAddress(const std::shared_ptr<const Address> &contact);
 	void setContactAddressWithoutParams(const std::shared_ptr<const Address> &contact);
@@ -82,7 +82,6 @@ public:
 	bool getRegisterChanged() const;
 	time_t getDeletionDate() const;
 	const std::string &getSipEtag() const;
-	LinphoneCore *getCore() const;
 	const LinphoneErrorInfo *getErrorInfo();
 	const std::shared_ptr<Address> &getContactAddress() const;
 	const std::shared_ptr<Address> &getContactAddressWithoutParams() const;
@@ -131,6 +130,7 @@ public:
 	LinphoneAccountAddressComparisonResult isServerConfigChanged();
 
 private:
+	LinphoneCore *getCCore() const;
 	bool canRegister();
 	bool computePublishParamsHash();
 	int done();
@@ -161,8 +161,6 @@ private:
 	time_t mDeletionDate;
 
 	std::string mSipEtag;
-
-	LinphoneCore *mCore = nullptr;
 
 	LinphoneErrorInfo *mErrorInfo = nullptr;
 
@@ -198,6 +196,13 @@ public:
 
 private:
 	LinphoneAccountCbsRegistrationStateChangedCb mRegistrationStateChangedCb = nullptr;
+};
+
+class AccountLogScope : public CoreLogContextualizer {
+public:
+	AccountLogScope(const LinphoneAccount *account)
+	    : CoreLogContextualizer(account ? Account::toCpp(account) : nullptr) {
+	}
 };
 
 LINPHONE_END_NAMESPACE

@@ -214,6 +214,12 @@ protected:
 	void fillParticipantAttributes(std::shared_ptr<Participant> &p);
 };
 
+class ConferenceLogContextualizer : CoreLogContextualizer {
+public:
+	ConferenceLogContextualizer(const LinphoneConference *conf) : CoreLogContextualizer(*Conference::toCpp(conf)) {
+	}
+};
+
 } // end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE

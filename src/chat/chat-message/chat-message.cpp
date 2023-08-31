@@ -1855,4 +1855,8 @@ std::ostream &operator<<(std::ostream &lhs, ChatMessage::State e) {
 	return lhs;
 }
 
+ChatMessageLogContextualizer::ChatMessageLogContextualizer(const LinphoneChatMessage *msg)
+    : CoreLogContextualizer(*L_GET_CPP_PTR_FROM_C_OBJECT(msg)) {
+}
+
 LINPHONE_END_NAMESPACE

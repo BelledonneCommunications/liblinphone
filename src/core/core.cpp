@@ -2133,4 +2133,14 @@ Core::ETagStatus Core::eTagHandler(SalPublishOp *op, const SalBodyHandler *body)
 	return Core::ETagStatus::None;
 }
 
+void Core::setLabel(const std::string &label) {
+	L_D();
+	d->logLabel = label;
+}
+
+const std::string &Core::getLabel() const {
+	L_D();
+	return d->logLabel;
+}
+
 LINPHONE_END_NAMESPACE

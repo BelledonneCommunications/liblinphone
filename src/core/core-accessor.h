@@ -21,6 +21,7 @@
 #ifndef _L_CORE_ACCESSOR_H_
 #define _L_CORE_ACCESSOR_H_
 
+#include "linphone/api/c-types.h"
 #include "linphone/utils/general.h"
 
 // =============================================================================
@@ -34,17 +35,28 @@ class CoreAccessorPrivate;
 class LINPHONE_PUBLIC CoreAccessor {
 public:
 	CoreAccessor(const std::shared_ptr<Core> &core);
-	virtual ~CoreAccessor() = 0;
+	virtual ~CoreAccessor() = default;
 
 	// Returns a valid core instance. Or throw one std::bad_weak_ptr exception if core is destroyed.
 	std::shared_ptr<Core> getCore() const;
-	void setCore(std::shared_ptr<Core> core);
+	void setCore(const std::shared_ptr<Core> &core);
 
 private:
-	CoreAccessorPrivate *mPrivate = nullptr;
+	std::weak_ptr<Core> mCore;
+};
 
-	L_DISABLE_COPY(CoreAccessor);
-	L_DECLARE_PRIVATE(CoreAccessor);
+class CoreLogContextualizer {
+public:
+	CoreLogContextualizer(const LinphoneCore *core);
+	CoreLogContextualizer(const CoreAccessor &coreAccessor) : CoreLogContextualizer(&coreAccessor) {
+	}
+	CoreLogContextualizer(const CoreAccessor *coreAccessor);
+	~CoreLogContextualizer();
+
+private:
+	void pushTag(const std::string &tag);
+	bool mPushed = false;
+	static constexpr char sTagIdentifier[] = "linphone-core";
 };
 
 LINPHONE_END_NAMESPACE

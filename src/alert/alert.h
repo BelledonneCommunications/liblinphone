@@ -136,7 +136,9 @@ public:
 	void reset() override;
 	float computeNackIndicator(uint64_t lostBeforeNack, uint64_t cumPacketLoss);
 	void checkSignalQuality();
-	bool mNackSent;
+	void confirmNackSent() {
+		mNackSent = true;
+	}
 
 private:
 	uint64_t mLastNackLoss = 0;
@@ -147,19 +149,20 @@ private:
 	float mNackPerformanceThreshold = 0.0f;
 	float mSignalThreshold = 0.0f;
 	bool mFirstMeasureNonZero = false;
+	bool mNackSent = false;
 };
 
 class AlertCbs : public bellesip::HybridObject<LinphoneAlertCbs, AlertCbs>, public Callbacks {
 public:
-	LinphoneAlertCbsOnTerminatedCb getOnTerminated() const {
+	LinphoneAlertCbsTerminatedCb getOnTerminated() const {
 		return mOnTerminated;
 	};
-	void setOnTerminated(LinphoneAlertCbsOnTerminatedCb onTerminated) {
+	void setOnTerminated(LinphoneAlertCbsTerminatedCb onTerminated) {
 		mOnTerminated = onTerminated;
 	};
 
 private:
-	LinphoneAlertCbsOnTerminatedCb mOnTerminated = nullptr;
+	LinphoneAlertCbsTerminatedCb mOnTerminated = nullptr;
 };
 LINPHONE_END_NAMESPACE
 

@@ -78,6 +78,7 @@ bool_t linphone_call_get_all_muted(const LinphoneCall *call) {
 }
 
 void linphone_call_set_ekt(const LinphoneCall *call, const MSEKTParametersSet *ekt_params) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setEkt(ekt_params);
 }
 
@@ -173,6 +174,7 @@ LinphoneCore *linphone_call_get_core(const LinphoneCall *call) {
 }
 
 LinphoneCallState linphone_call_get_state(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return static_cast<LinphoneCallState>(Call::toCpp(call)->getState());
 }
 
@@ -252,91 +254,108 @@ int linphone_call_get_duration(const LinphoneCall *call) {
 }
 
 const LinphoneCallParams *linphone_call_get_current_params(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return L_GET_C_BACK_PTR(Call::toCpp(call)->getCurrentParams());
 }
 
 const LinphoneCallParams *linphone_call_get_remote_params(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	const LinphonePrivate::MediaSessionParams *remoteParams = Call::toCpp(call)->getRemoteParams();
 	return remoteParams ? L_GET_C_BACK_PTR(remoteParams) : nullptr;
 }
 
 void linphone_call_enable_camera(LinphoneCall *call, bool_t enable) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->enableCamera(!!enable);
 }
 
 bool_t linphone_call_camera_enabled(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->cameraEnabled();
 }
 
 LinphoneStatus linphone_call_take_video_snapshot(LinphoneCall *call, const char *file) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->takeVideoSnapshot(L_C_TO_STRING(file));
 }
 
 LinphoneStatus linphone_call_take_preview_snapshot(LinphoneCall *call, const char *file) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->takePreviewSnapshot(L_C_TO_STRING(file));
 }
 
 LinphoneReason linphone_call_get_reason(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getReason();
 }
 
 const LinphoneErrorInfo *linphone_call_get_error_info(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getErrorInfo();
 }
 
 const char *linphone_call_get_remote_user_agent(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return L_STRING_TO_C(Call::toCpp(call)->getRemoteUserAgent());
 }
 
 const char *linphone_call_get_remote_contact(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return L_STRING_TO_C(Call::toCpp(call)->getRemoteContact());
 }
 
 const char *linphone_call_get_authentication_token(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return L_STRING_TO_C(Call::toCpp(call)->getAuthenticationToken());
 }
 
 bool_t linphone_call_get_authentication_token_verified(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getAuthenticationTokenVerified();
 }
 
 void linphone_call_set_authentication_token_verified(LinphoneCall *call, bool_t verified) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setAuthenticationTokenVerified(!!verified);
 }
 
 void linphone_call_send_vfu_request(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->sendVfuRequest();
 }
 
 void linphone_call_set_next_video_frame_decoded_callback(LinphoneCall *call, LinphoneCallCbFunc cb, void *ud) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setNextVideoFrameDecodedCallback(cb, ud);
 }
 
 void linphone_call_request_notify_next_video_frame_decoded(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->requestNotifyNextVideoFrameDecoded();
 }
 
 LinphoneCallState linphone_call_get_transfer_state(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return static_cast<LinphoneCallState>(Call::toCpp(call)->getTransferState());
 }
 
 void linphone_call_zoom_video(LinphoneCall *call, float zoom_factor, float *cx, float *cy) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->zoomVideo(zoom_factor, cx, cy);
 }
 
 void linphone_call_zoom(LinphoneCall *call, float zoom_factor, float cx, float cy) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->zoomVideo(zoom_factor, cx, cy);
 }
 
 LinphoneStatus linphone_call_send_dtmf(LinphoneCall *call, char dtmf) {
-	if (!call) {
-		ms_warning("linphone_call_send_dtmf(): invalid call, canceling DTMF");
-		return -1;
-	}
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->sendDtmf(dtmf);
 }
 
 LinphoneStatus linphone_call_send_dtmfs(LinphoneCall *call, const char *dtmfs) {
+	CallLogContextualizer logContextualizer(call);
 	if (!call) {
 		ms_warning("linphone_call_send_dtmfs(): invalid call, canceling DTMF sequence");
 		return -1;
@@ -345,11 +364,13 @@ LinphoneStatus linphone_call_send_dtmfs(LinphoneCall *call, const char *dtmfs) {
 }
 
 void linphone_call_cancel_dtmfs(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	if (!call) return;
 	Call::toCpp(call)->cancelDtmfs();
 }
 
 bool_t linphone_call_is_in_conference(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return !!Call::toCpp(call)->isInConference();
 }
 
@@ -375,94 +396,117 @@ RtpTransport *linphone_call_get_meta_rtcp_transport(const LinphoneCall *call, in
 }
 
 LinphoneStatus linphone_call_pause(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->pause();
 }
 
 LinphoneStatus linphone_call_resume(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->resume();
 }
 
 LinphoneStatus linphone_call_terminate(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->terminate();
 }
 
 LinphoneStatus linphone_call_terminate_with_error_info(LinphoneCall *call, const LinphoneErrorInfo *ei) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->terminate(ei);
 }
 
 LinphoneStatus linphone_call_redirect(LinphoneCall *call, const char *redirect_uri) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->redirect(redirect_uri);
 }
 
 LinphoneStatus linphone_call_redirect_to(LinphoneCall *call, LinphoneAddress *redirect_address) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->redirect(Address::toCpp(redirect_address)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_call_decline(LinphoneCall *call, LinphoneReason reason) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->decline(reason);
 }
 
 LinphoneStatus linphone_call_decline_with_error_info(LinphoneCall *call, const LinphoneErrorInfo *ei) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->decline(ei);
 }
 
 LinphoneStatus linphone_call_accept(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->accept(nullptr);
 }
 
 LinphoneStatus linphone_call_accept_with_params(LinphoneCall *call, const LinphoneCallParams *params) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->accept(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_accept_early_media(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->acceptEarlyMedia();
 }
 
 LinphoneStatus linphone_call_accept_early_media_with_params(LinphoneCall *call, const LinphoneCallParams *params) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->acceptEarlyMedia(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_update(LinphoneCall *call, const LinphoneCallParams *params) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->update(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_defer_update(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->deferUpdate();
 }
 
 LinphoneStatus linphone_call_accept_update(LinphoneCall *call, const LinphoneCallParams *params) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->acceptUpdate(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_transfer(LinphoneCall *call, const char *referTo) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->transfer(referTo);
 }
 
 LinphoneStatus linphone_call_transfer_to(LinphoneCall *call, LinphoneAddress *referTo) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->transfer(Address::toCpp(referTo)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_call_transfer_to_another(LinphoneCall *call, LinphoneCall *dest) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->transfer(Call::toCpp(dest)->getSharedFromThis());
 }
 
 void *linphone_call_get_native_video_window_id(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getNativeVideoWindowId();
 }
 
 void *linphone_call_create_native_video_window_id(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->createNativeVideoWindowId();
 }
 
 void linphone_call_set_native_video_window_id(LinphoneCall *call, void *id) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setNativeVideoWindowId(id);
 }
 
 void linphone_call_enable_echo_cancellation(LinphoneCall *call, bool_t enable) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->enableEchoCancellation(!!enable);
 }
 
 bool_t linphone_call_echo_cancellation_enabled(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->echoCancellationEnabled();
 }
 
@@ -475,64 +519,79 @@ bool_t linphone_call_echo_limiter_enabled(const LinphoneCall *call) {
 }
 
 LinphoneChatRoom *linphone_call_get_chat_room(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> acr = Call::toCpp(call)->getChatRoom();
 	if (acr) return L_GET_C_BACK_PTR(acr);
 	return nullptr;
 }
 
 float linphone_call_get_play_volume(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getPlayVolume();
 }
 
 float linphone_call_get_record_volume(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getRecordVolume();
 }
 
 float linphone_call_get_speaker_volume_gain(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getSpeakerVolumeGain();
 }
 
 void linphone_call_set_speaker_volume_gain(LinphoneCall *call, float volume) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setSpeakerVolumeGain(volume);
 }
 
 float linphone_call_get_microphone_volume_gain(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getMicrophoneVolumeGain();
 }
 
 void linphone_call_set_microphone_volume_gain(LinphoneCall *call, float volume) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setMicrophoneVolumeGain(volume);
 }
 
 bool_t linphone_call_get_speaker_muted(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getSpeakerMuted();
 }
 
 void linphone_call_set_speaker_muted(LinphoneCall *call, bool_t muted) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setSpeakerMuted(!!muted);
 }
 
 bool_t linphone_call_get_microphone_muted(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getMicrophoneMuted();
 }
 
 void linphone_call_set_microphone_muted(LinphoneCall *call, bool_t muted) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setMicrophoneMuted(!!muted);
 }
 
 float linphone_call_get_current_quality(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getCurrentQuality();
 }
 
 float linphone_call_get_average_quality(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getAverageQuality();
 }
 
 void linphone_call_start_recording(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->startRecording();
 }
 
 void linphone_call_stop_recording(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->stopRecording();
 }
 
@@ -545,14 +604,17 @@ LinphonePlayer *linphone_call_get_player(LinphoneCall *call) {
 }
 
 bool_t linphone_call_media_in_progress(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->mediaInProgress();
 }
 
 void linphone_call_ogl_render(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->oglRender();
 }
 
 LinphoneStatus linphone_call_send_info_message(LinphoneCall *call, const LinphoneInfoMessage *info) {
+	CallLogContextualizer logContextualizer(call);
 	SalBodyHandler *body_handler = sal_body_handler_from_content(linphone_info_message_get_content(info));
 	linphone_call_get_op(call)->setSentCustomHeaders(linphone_info_message_get_headers(info));
 	return linphone_call_get_op(call)->sendInfo(body_handler);
@@ -575,10 +637,12 @@ LinphoneCallStats *linphone_call_get_text_stats(LinphoneCall *call) {
 }
 
 void linphone_call_add_callbacks(LinphoneCall *call, LinphoneCallCbs *cbs) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->addCallbacks(CallCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 void linphone_call_remove_callbacks(LinphoneCall *call, LinphoneCallCbs *cbs) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->removeCallbacks(CallCbs::toCpp(cbs)->getSharedFromThis());
 }
 
@@ -587,14 +651,17 @@ LinphoneCallCbs *linphone_call_get_current_callbacks(const LinphoneCall *call) {
 }
 
 const bctbx_list_t *linphone_call_get_callbacks_list(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getCCallbacksList();
 }
 
 void linphone_call_set_params(LinphoneCall *call, const LinphoneCallParams *params) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setParams(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 }
 
 const LinphoneCallParams *linphone_call_get_params(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	return L_GET_C_BACK_PTR(Call::toCpp(call)->getParams());
 }
 
@@ -608,6 +675,7 @@ LinphoneCall *linphone_call_ref(LinphoneCall *call) {
 }
 
 void linphone_call_unref(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->unref();
 }
 
@@ -669,18 +737,21 @@ bool_t linphone_call_is_op_configured(const LinphoneCall *call) {
 }
 
 void linphone_call_set_input_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
+	CallLogContextualizer logContextualizer(call);
 	if (audio_device) {
 		Call::toCpp(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
+	CallLogContextualizer logContextualizer(call);
 	if (audio_device) {
 		Call::toCpp(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 const LinphoneAudioDevice *linphone_call_get_input_audio_device(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	auto audioDevice = Call::toCpp(call)->getInputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
@@ -688,6 +759,7 @@ const LinphoneAudioDevice *linphone_call_get_input_audio_device(const LinphoneCa
 	return NULL;
 }
 const LinphoneAudioDevice *linphone_call_get_output_audio_device(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	auto audioDevice = Call::toCpp(call)->getOutputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
@@ -696,15 +768,18 @@ const LinphoneAudioDevice *linphone_call_get_output_audio_device(const LinphoneC
 }
 
 void linphone_call_set_video_source(LinphoneCall *call, const LinphoneVideoSourceDescriptor *descriptor) {
+	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->setVideoSource(VideoSourceDescriptor::toCpp(descriptor)->getSharedFromThis());
 }
 
 const LinphoneVideoSourceDescriptor *linphone_call_get_video_source(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 	auto descriptor = Call::toCpp(call)->getVideoSource();
 	return descriptor == nullptr ? NULL : descriptor->toC();
 }
 
 void linphone_call_confirm_go_clear(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
 #ifdef HAVE_GOCLEAR
 	Call::toCpp(call)->confirmGoClear();
 #else // HAVE_GOCLEAR

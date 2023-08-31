@@ -343,6 +343,14 @@ private:
 	void configureSoundCardsFromCore(const MediaSessionParams *msp);
 };
 
+class CallLogContextualizer : protected CoreLogContextualizer {
+public:
+	CallLogContextualizer(const Call &call) : CoreLogContextualizer(call) {
+	}
+	CallLogContextualizer(const LinphoneCall *call) : CoreLogContextualizer(*Call::toCpp(call)) {
+	}
+};
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CALL_CALL_H_

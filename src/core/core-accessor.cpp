@@ -19,6 +19,7 @@
  */
 
 #include "core-accessor.h"
+#include "core.h"
 
 #include "logger/logger.h"
 
@@ -28,37 +29,46 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CoreAccessorPrivate {
-public:
-	weak_ptr<Core> core;
-};
-
 // -----------------------------------------------------------------------------
 
-CoreAccessor::CoreAccessor(const shared_ptr<Core> &core) {
-	mPrivate = new CoreAccessorPrivate();
-	if (core) mPrivate->core = core;
-}
-
-CoreAccessor::~CoreAccessor() {
-	delete mPrivate;
+CoreAccessor::CoreAccessor(const shared_ptr<Core> &core) : mCore(core) {
 }
 
 shared_ptr<Core> CoreAccessor::getCore() const {
-	L_D();
-
-	shared_ptr<Core> core = d->core.lock();
+	shared_ptr<Core> core = mCore.lock();
 	if (!core) {
 		lWarning() << "Unable to get valid core instance.";
 		throw bad_weak_ptr();
 	}
-
 	return core;
 }
 
-void CoreAccessor::setCore(std::shared_ptr<Core> core) {
-	L_D();
-	d->core = core;
+void CoreAccessor::setCore(const std::shared_ptr<Core> &core) {
+	mCore = core;
+}
+
+CoreLogContextualizer::CoreLogContextualizer(const LinphoneCore *core) {
+	pushTag(core ? L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLabel() : "");
+}
+
+CoreLogContextualizer::CoreLogContextualizer(const CoreAccessor *coreAccessor) {
+	if (!coreAccessor) return;
+	try {
+		auto core = coreAccessor->getCore();
+		if (core) pushTag(core->getLabel());
+	} catch (...) {
+	}
+}
+
+void CoreLogContextualizer::pushTag(const std::string &tag) {
+	if (!tag.empty()) {
+		mPushed = true;
+		bctbx_push_log_tag(sTagIdentifier, tag.c_str());
+	}
+}
+
+CoreLogContextualizer::~CoreLogContextualizer() {
+	if (mPushed) bctbx_pop_log_tag(sTagIdentifier);
 }
 
 LINPHONE_END_NAMESPACE

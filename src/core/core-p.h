@@ -227,6 +227,7 @@ private:
 	ExtraBackgroundTask bgTask{"Stop core async end"};
 
 	std::list<std::shared_ptr<Ldap>> mLdapServers; // Persistent list of LDAP servers
+	std::string logLabel;
 
 	L_DECLARE_PUBLIC(Core);
 };

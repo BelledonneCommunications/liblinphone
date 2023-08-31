@@ -887,4 +887,8 @@ const string &ChatRoom::getUtf8Subject() const {
 	return getConference()->getUtf8Subject();
 }
 
+ChatRoomLogScope::ChatRoomLogScope(const LinphoneChatRoom *cr)
+    : CoreLogContextualizer(*L_GET_CPP_PTR_FROM_C_OBJECT(cr)) {
+}
+
 LINPHONE_END_NAMESPACE

@@ -150,6 +150,7 @@ LinphoneCore *linphone_conference_get_core(const LinphoneConference *conference)
 }
 
 void linphone_conference_set_conference_address(LinphoneConference *conference, LinphoneAddress *address) {
+	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
 	std::shared_ptr<LinphonePrivate::MediaConference::RemoteConference> remoteConference =
 	    dynamic_pointer_cast<LinphonePrivate::MediaConference::RemoteConference>(
 	        MediaConference::Conference::toCpp(conference)->getSharedFromThis());
@@ -160,6 +161,7 @@ void linphone_conference_set_conference_address(LinphoneConference *conference, 
 }
 
 const LinphoneAddress *linphone_conference_get_conference_address(const LinphoneConference *conference) {
+	// 	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
 	const auto &address = MediaConference::Conference::toCpp(conference)->getConferenceAddress();
 	return address && address->isValid() ? address->toC() : nullptr;
 }

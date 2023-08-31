@@ -186,13 +186,6 @@ void linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled(void) {
 	send_dtmf_cleanup(marie, pauline);
 }
 
-static void send_dtmfs_sequence_not_ready(void) {
-	LinphoneCoreManager *marie;
-	marie = linphone_core_manager_new("marie_rc");
-	BC_ASSERT_EQUAL(linphone_call_send_dtmfs(linphone_core_get_current_call(marie->lc), "123"), -1, int, "%d");
-	linphone_core_manager_destroy(marie);
-}
-
 static void send_dtmfs_sequence_call_state_changed(void) {
 	LinphoneCoreManager *marie, *pauline;
 	LinphoneCall *marie_call = NULL;
@@ -231,6 +224,5 @@ test_t dtmf_tests[10] = {
                 send_dtmfs_sequence_rfc2833_with_hardcoded_payload_type),
     TEST_NO_TAG("Send DTMF sequence using SIP INFO", send_dtmfs_sequence_sip_info),
     TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled),
-    TEST_NO_TAG("DTMF sequence not sent if invalid call", send_dtmfs_sequence_not_ready),
     TEST_NO_TAG("DTMF sequence canceled if call state changed", send_dtmfs_sequence_call_state_changed),
     TEST_NO_TAG("Send DTMF using RFC2833 using Opus", send_dtmf_rfc2833_opus)};

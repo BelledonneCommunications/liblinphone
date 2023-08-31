@@ -36,6 +36,7 @@ LinphoneConferenceScheduler *linphone_conference_scheduler_ref(LinphoneConferenc
 }
 
 void linphone_conference_scheduler_unref(LinphoneConferenceScheduler *conference_scheduler) {
+	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
 	ConferenceScheduler::toCpp(conference_scheduler)->unref();
 }
 
@@ -45,6 +46,7 @@ LinphoneCore *linphone_conference_scheduler_get_core(const LinphoneConferenceSch
 
 void linphone_conference_scheduler_set_account(LinphoneConferenceScheduler *conference_scheduler,
                                                LinphoneAccount *account) {
+	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
 	ConferenceScheduler::toCpp(conference_scheduler)
 	    ->setAccount(LinphonePrivate::Account::toCpp(account)->getSharedFromThis());
 }
@@ -56,23 +58,27 @@ LinphoneAccount *linphone_conference_scheduler_get_account(const LinphoneConfere
 
 const LinphoneConferenceInfo *
 linphone_conference_scheduler_get_info(const LinphoneConferenceScheduler *conference_scheduler) {
+	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
 	return ConferenceScheduler::toCpp(conference_scheduler)->getInfo()->toC();
 }
 
 void linphone_conference_scheduler_set_info(LinphoneConferenceScheduler *conference_scheduler,
                                             LinphoneConferenceInfo *conference_info) {
+	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
 	ConferenceScheduler::toCpp(conference_scheduler)
 	    ->setInfo(ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
 }
 
 void linphone_conference_scheduler_cancel_conference(LinphoneConferenceScheduler *conference_scheduler,
                                                      LinphoneConferenceInfo *conference_info) {
+	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
 	ConferenceScheduler::toCpp(conference_scheduler)
 	    ->cancelConference(ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
 }
 
 void linphone_conference_scheduler_send_invitations(LinphoneConferenceScheduler *conference_scheduler,
                                                     LinphoneChatRoomParams *chat_room_params) {
+	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
 	ConferenceScheduler::toCpp(conference_scheduler)
 	    ->sendInvitations(ChatRoomParams::toCpp(chat_room_params)->getSharedFromThis());
 }

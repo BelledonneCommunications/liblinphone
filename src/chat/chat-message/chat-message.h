@@ -178,6 +178,11 @@ private:
 
 std::ostream &operator<<(std::ostream &lhs, ChatMessage::State e);
 
+class ChatMessageLogContextualizer : CoreLogContextualizer {
+public:
+	ChatMessageLogContextualizer(const LinphoneChatMessage *msg);
+};
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CHAT_MESSAGE_H_

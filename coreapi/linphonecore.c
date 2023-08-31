@@ -725,11 +725,11 @@ void linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *c
                                                               LinphoneCoreCbsAccountRegistrationStateChangedCb cb) {
 	cbs->vtable->account_registration_state_changed = cb;
 }
-void linphone_core_cbs_set_on_alert(LinphoneCoreCbs *cbs, LinphoneCoreCbsOnAlertCb alert_cb) {
-	cbs->vtable->on_alert = alert_cb;
+void linphone_core_cbs_set_new_alert_triggered(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewAlertTriggeredCb alert_cb) {
+	cbs->vtable->new_alert_triggered = alert_cb;
 }
-LinphoneCoreCbsOnAlertCb linphone_core_cbs_get_on_alert(LinphoneCoreCbs *cbs) {
-	return cbs->vtable->on_alert;
+LinphoneCoreCbsNewAlertTriggeredCb linphone_core_cbs_get_new_alert_triggered(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->new_alert_triggered;
 }
 void lc_callback_obj_init(LCCallbackObj *obj, LinphoneCoreCbFunc func, void *ud) {
 	obj->_func = func;
@@ -3319,6 +3319,7 @@ static void linphone_core_init(LinphoneCore *lc,
 }
 
 LinphoneStatus linphone_core_start(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	try {
 		if (lc->state == LinphoneGlobalShutdown) {
 			// Force change of status to LinphoneGlobalOff, otherwise restarting it will fail
@@ -3551,6 +3552,7 @@ const bctbx_list_t *linphone_core_get_text_codecs(const LinphoneCore *lc) {
 }
 
 LinphoneStatus linphone_core_set_primary_contact(LinphoneCore *lc, const char *contact) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneAddress *ctt;
 
 	if (lc->sip_conf.contact != NULL && strcmp(lc->sip_conf.contact, contact) == 0) {
@@ -3607,6 +3609,7 @@ it won't work. But we prefer to return something in all cases. It at least shows
 }
 
 const char *linphone_core_get_primary_contact(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	char *identity;
 
 	if (lc->sip_conf.guess_hostname) {
@@ -3637,6 +3640,7 @@ LinphoneAddress *linphone_core_create_primary_contact_parsed(LinphoneCore *lc) {
 }
 
 LinphoneStatus linphone_core_set_audio_codecs(LinphoneCore *lc, bctbx_list_t *codecs) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->codecs_conf.audio_codecs != NULL) bctbx_list_free(lc->codecs_conf.audio_codecs);
 	lc->codecs_conf.audio_codecs = codecs;
 	_linphone_core_codec_config_write(lc);
@@ -3645,6 +3649,7 @@ LinphoneStatus linphone_core_set_audio_codecs(LinphoneCore *lc, bctbx_list_t *co
 }
 
 LinphoneStatus linphone_core_set_video_codecs(LinphoneCore *lc, bctbx_list_t *codecs) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->codecs_conf.video_codecs != NULL) bctbx_list_free(lc->codecs_conf.video_codecs);
 	lc->codecs_conf.video_codecs = codecs;
 	_linphone_core_codec_config_write(lc);
@@ -3652,6 +3657,7 @@ LinphoneStatus linphone_core_set_video_codecs(LinphoneCore *lc, bctbx_list_t *co
 }
 
 LinphoneStatus linphone_core_set_text_codecs(LinphoneCore *lc, bctbx_list_t *codecs) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->codecs_conf.text_codecs != NULL) bctbx_list_free(lc->codecs_conf.text_codecs);
 
 	lc->codecs_conf.text_codecs = codecs;
@@ -3718,6 +3724,7 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 }
 
 void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	bctbx_list_t *copy = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
 	for (auto it = copy; it; it = bctbx_list_next(it)) {
 		LinphoneFriendList *friends = (LinphoneFriendList *)bctbx_list_get_data(it);
@@ -3728,6 +3735,7 @@ void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
 }
 
 void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!list->lc) {
 		list->lc = lc;
 	}
@@ -3737,6 +3745,7 @@ void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 }
 
 const bctbx_list_t *linphone_core_find_contacts_by_char(LinphoneCore *core, const char *filter, bool_t sip_only) {
+	CoreLogContextualizer logContextualizer(core);
 	// Get sipuri from filter if possible
 	bctbx_list_t *list = NULL, *_list = NULL;
 	LinphoneAddress *addr = linphone_core_interpret_url(core, (sip_only) ? filter : "");
@@ -3941,6 +3950,7 @@ static char _ua_name[64] = "Linphone";
 static char _ua_version[64] = LIBLINPHONE_VERSION;
 
 void linphone_core_set_user_agent(LinphoneCore *lc, const char *name, const char *ver) {
+	CoreLogContextualizer logContextualizer(lc);
 	ostringstream ua_string;
 	ua_string << (name ? name : "");
 	if (ver) ua_string << "/" << ver;
@@ -4183,6 +4193,7 @@ bool_t linphone_core_ipv6_enabled(LinphoneCore *lc) {
 }
 
 void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->sip_conf.ipv6_enabled != val) {
 		lc->sip_conf.ipv6_enabled = val;
 		if (lc->sal) {
@@ -4332,6 +4343,7 @@ static void linphone_core_do_plugin_tasks(LinphoneCore *lc) {
 }
 
 void linphone_core_iterate(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	uint64_t curtime_ms = ms_get_cur_time_ms(); /*monotonic time*/
 	time_t current_real_time = ms_time(NULL);
 	int64_t diff_time;
@@ -4434,10 +4446,12 @@ void linphone_core_iterate(LinphoneCore *lc) {
 }
 
 LinphoneAddress *linphone_core_interpret_url(LinphoneCore *lc, const char *url) {
+	CoreLogContextualizer logContextualizer(lc);
 	return linphone_core_interpret_url_2(lc, url, TRUE);
 }
 
 LinphoneAddress *linphone_core_interpret_url_2(LinphoneCore *lc, const char *url, bool_t apply_international_prefix) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!url) return NULL;
 	LinphoneAccount *account = linphone_core_get_default_account(lc);
 	LinphoneAddress *result = NULL;
@@ -4458,6 +4472,7 @@ LinphoneAddress *linphone_core_interpret_url_2(LinphoneCore *lc, const char *url
 }
 
 const char *linphone_core_get_identity(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
 	const char *from;
 	if (proxy != NULL) {
@@ -4467,6 +4482,7 @@ const char *linphone_core_get_identity(LinphoneCore *lc) {
 }
 
 const char *linphone_core_get_route(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
 	const char *route = NULL;
 	if (proxy != NULL) {
@@ -4580,6 +4596,7 @@ LinphoneProxyConfig *linphone_core_lookup_proxy_by_identity_strict(LinphoneCore 
  * returns default proxy config if none is found
  */
 LinphoneProxyConfig *linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneProxyConfig *found_cfg = linphone_core_lookup_proxy_by_identity_strict(lc, uri);
 	if (!found_cfg) found_cfg = lc->default_proxy;
 	return found_cfg;
@@ -4660,12 +4677,14 @@ LinphoneAccount *linphone_core_lookup_account_by_identity_strict(LinphoneCore *l
  * returns default account if none is found
  */
 LinphoneAccount *linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneAccount *found_acc = linphone_core_lookup_account_by_identity_strict(lc, uri);
 	if (!found_acc) found_acc = lc->default_account;
 	return found_acc;
 }
 
 LinphoneProxyConfig *linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneAccount *account = linphone_core_lookup_known_account(lc, uri);
 	return account ? Account::toCpp(account)->getConfig() : nullptr;
 }
@@ -4677,6 +4696,7 @@ linphone_core_lookup_known_proxy_2(LinphoneCore *lc, const LinphoneAddress *uri,
 }
 
 LinphoneAccount *linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri) {
+	CoreLogContextualizer logContextualizer(lc);
 	return linphone_core_lookup_known_account_2(lc, uri, TRUE);
 }
 
@@ -4734,6 +4754,7 @@ end:
 }
 
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneProxyConfig *cfg = linphone_core_lookup_known_proxy(lc, to);
 	if (cfg != NULL) {
 		return linphone_proxy_config_get_identity(cfg);
@@ -4742,6 +4763,7 @@ const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAdd
 }
 
 LinphoneCall *linphone_core_invite(LinphoneCore *lc, const char *url) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call;
 	LinphoneCallParams *p = linphone_core_create_call_params(lc, NULL);
 	linphone_call_params_enable_video(p, linphone_call_params_video_enabled(p) &&
@@ -4752,6 +4774,7 @@ LinphoneCall *linphone_core_invite(LinphoneCore *lc, const char *url) {
 }
 
 LinphoneCall *linphone_core_invite_with_params(LinphoneCore *lc, const char *url, const LinphoneCallParams *p) {
+	CoreLogContextualizer logContextualizer(lc);
 	bool_t apply_prefix = TRUE;
 	LinphoneAccount *account = linphone_core_get_default_account(lc);
 	if (account) {
@@ -4768,6 +4791,7 @@ LinphoneCall *linphone_core_invite_with_params(LinphoneCore *lc, const char *url
 }
 
 LinphoneCall *linphone_core_invite_address(LinphoneCore *lc, const LinphoneAddress *addr) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call;
 	LinphoneCallParams *p = linphone_core_create_call_params(lc, NULL);
 	linphone_call_params_enable_video(p, linphone_call_params_video_enabled(p) &&
@@ -4904,6 +4928,7 @@ bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const Linpho
 LinphoneCall *linphone_core_invite_address_with_params(LinphoneCore *lc,
                                                        const LinphoneAddress *addr,
                                                        const LinphoneCallParams *params) {
+	CoreLogContextualizer logContextualizer(lc);
 	return linphone_core_invite_address_with_params_2(lc, addr, params, NULL, NULL);
 }
 
@@ -4912,6 +4937,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
                                                          const LinphoneCallParams *params,
                                                          const char *subject,
                                                          const LinphoneContent *content) {
+	CoreLogContextualizer logContextualizer(lc);
 	const char *from = NULL;
 	LinphoneProxyConfig *proxy = NULL;
 	LinphoneAddress *parsed_url2 = NULL;
@@ -5094,6 +5120,7 @@ LinphoneStatus linphone_core_terminate_call(LinphoneCore *lc, LinphoneCall *call
 }
 
 LinphoneStatus linphone_core_terminate_all_calls(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->terminateAllCalls();
 }
 
@@ -5102,6 +5129,7 @@ LinphoneStatus linphone_core_decline_call(BCTBX_UNUSED(LinphoneCore *lc), Linpho
 }
 
 const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->callsCache) {
 		bctbx_list_free(lc->callsCache);
 		lc->callsCache = NULL;
@@ -5120,6 +5148,7 @@ bool_t linphone_core_in_call(const LinphoneCore *lc) {
 }
 
 LinphoneCall *linphone_core_get_current_call(const LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCurrentCall();
 	return call ? call->toC() : NULL;
 }
@@ -5129,6 +5158,7 @@ LinphoneStatus linphone_core_pause_call(BCTBX_UNUSED(LinphoneCore *lc), Linphone
 }
 
 LinphoneStatus linphone_core_pause_all_calls(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pauseAllCalls();
 }
 
@@ -5173,6 +5203,7 @@ LinphoneStatus linphone_core_resume_call(BCTBX_UNUSED(LinphoneCore *lc), Linphon
 }
 
 LinphoneCall *linphone_core_get_call_by_remote_address(const LinphoneCore *lc, const char *remote_address) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call = NULL;
 	LinphoneAddress *raddr = linphone_address_new(remote_address);
 	if (raddr) {
@@ -5183,16 +5214,19 @@ LinphoneCall *linphone_core_get_call_by_remote_address(const LinphoneCore *lc, c
 }
 
 LinphoneCall *linphone_core_find_call_from_uri(const LinphoneCore *lc, const char *remote_address) {
+	CoreLogContextualizer logContextualizer(lc);
 	return linphone_core_get_call_by_remote_address(lc, remote_address);
 }
 
 LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *raddr) {
+	CoreLogContextualizer logContextualizer(lc);
 	const auto remote_addr = LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(raddr))->getSharedFromThis();
 	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByRemoteAddress(remote_addr);
 	return call ? call->toC() : NULL;
 }
 
 int linphone_core_send_publish(LinphoneCore *lc, LinphonePresenceModel *presence) {
+	CoreLogContextualizer logContextualizer(lc);
 	const bctbx_list_t *elem;
 	for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneAccount *acc = (LinphoneAccount *)elem->data;
@@ -5331,6 +5365,7 @@ void linphone_core_enable_auto_send_ringing(LinphoneCore *lc, bool_t enable) {
 }
 
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphonePresenceModel *presence = NULL;
 	LinphonePresenceActivity *activity = NULL;
 	const char *description = NULL;
@@ -5395,11 +5430,13 @@ end:
 }
 
 void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presence) {
+	CoreLogContextualizer logContextualizer(lc);
 	linphone_core_notify_all_friends(lc, presence);
 	linphone_core_send_publish(lc, presence);
 }
 
 void linphone_core_set_presence_model(LinphoneCore *lc, LinphonePresenceModel *presence) {
+	CoreLogContextualizer logContextualizer(lc);
 	linphone_core_send_presence(lc, presence);
 	if (lc->presence_model != NULL) {
 		linphone_presence_model_unref(lc->presence_model);
@@ -5553,6 +5590,7 @@ void linphone_core_set_ring_level(LinphoneCore *lc, int level) {
 }
 
 void linphone_core_set_mic_gain_db(LinphoneCore *lc, float gaindb) {
+	CoreLogContextualizer logContextualizer(lc);
 	float gain = gaindb;
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	AudioStream *st;
@@ -5587,6 +5625,7 @@ float linphone_core_get_mic_gain_db(LinphoneCore *lc) {
 }
 
 void linphone_core_set_playback_gain_db(LinphoneCore *lc, float gaindb) {
+	CoreLogContextualizer logContextualizer(lc);
 	float gain = gaindb;
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	AudioStream *st;
@@ -5779,6 +5818,7 @@ void linphone_core_set_default_sound_devices(LinphoneCore *lc) {
 }
 
 void linphone_core_reload_sound_devices(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	const char *ringer;
 	const char *playback;
 	const char *capture;
@@ -5841,6 +5881,7 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc) {
 }
 
 void linphone_core_reload_video_devices(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	char *devid_copy = NULL;
 	const char *devid = linphone_core_get_video_device(lc);
 	if (devid != NULL) {
@@ -5873,6 +5914,7 @@ void linphone_core_set_sound_source(LinphoneCore *lc, char source) {
 }
 
 LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneRecorderParams *params = linphone_recorder_params_new();
 	const LinphoneAudioDevice *device = linphone_core_get_default_input_audio_device(lc);
 	linphone_recorder_params_set_audio_device(params, device);
@@ -5880,6 +5922,7 @@ LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore 
 }
 
 LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, LinphoneRecorderParams *params) {
+	CoreLogContextualizer logContextualizer(lc);
 	return linphone_recorder_new(lc, params);
 }
 
@@ -5902,6 +5945,7 @@ void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable)
 }
 
 void linphone_core_enable_native_ringing(LinphoneCore *core, bool_t enable) {
+	CoreLogContextualizer logContextualizer(core);
 	core->native_ringing_enabled = enable;
 	linphone_config_set_int(core->config, "sound", "use_native_ringing", enable);
 	if (enable == FALSE && linphone_core_get_ring(core) == NULL) {
@@ -6045,6 +6089,7 @@ bool_t linphone_core_is_mic_muted(LinphoneCore *lc) {
 }
 
 void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call;
 	const bctbx_list_t *list;
 	const bctbx_list_t *elem;
@@ -6070,6 +6115,7 @@ bool_t linphone_core_mic_enabled(LinphoneCore *lc) {
 }
 
 bool_t linphone_core_is_rtp_muted(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (call == NULL) {
 		ms_warning("linphone_core_is_rtp_muted(): No current call !");
@@ -6201,6 +6247,7 @@ LinphoneFirewallPolicy linphone_core_get_firewall_policy(const LinphoneCore *lc)
 }
 
 void linphone_core_set_nat_policy(LinphoneCore *lc, LinphoneNatPolicy *policy) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (policy != NULL)
 		policy = linphone_nat_policy_ref(policy); /* Prevent object destruction if the same policy is used */
 	else {
@@ -6234,6 +6281,7 @@ LinphoneNatPolicy *linphone_core_get_nat_policy(const LinphoneCore *lc) {
  ******************************************************************************/
 
 void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *path) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!linphone_core_conference_server_enabled(lc)) {
 		auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 		if (mainDb) {
@@ -6252,10 +6300,12 @@ const char *linphone_core_get_call_logs_database_path(BCTBX_UNUSED(LinphoneCore 
 }
 
 const bctbx_list_t *linphone_core_get_call_logs(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	return linphone_core_get_call_history(lc);
 }
 
 void linphone_core_clear_call_logs(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifdef HAVE_DB_STORAGE
 	linphone_core_delete_call_history(lc);
 #else
@@ -6274,6 +6324,7 @@ void linphone_core_reset_missed_calls_count(LinphoneCore *lc) {
 }
 
 void linphone_core_remove_call_log(LinphoneCore *lc, LinphoneCallLog *cl) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifdef HAVE_DB_STORAGE
 	linphone_core_delete_call_log(lc, cl);
 #else
@@ -6407,6 +6458,7 @@ static void video_filter_callback(void *userdata, BCTBX_UNUSED(MSFilter *f), uns
 #endif
 
 LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char *file) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 
 	if (!file) return -1;
@@ -6525,6 +6577,7 @@ static void reapply_network_bandwidth_settings(LinphoneCore *lc) {
 }
 
 void linphone_core_enable_video_capture(LinphoneCore *lc, bool_t enable) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifndef VIDEO_ENABLED
 	if (enable == TRUE) {
 		ms_warning("Cannot enable video capture, this version of linphone was built without video support.");
@@ -6539,6 +6592,7 @@ void linphone_core_enable_video_capture(LinphoneCore *lc, bool_t enable) {
 }
 
 void linphone_core_enable_video_display(LinphoneCore *lc, bool_t enable) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifndef VIDEO_ENABLED
 	if (enable == TRUE) {
 		ms_warning("Cannot enable video display, this version of linphone was built without video support.");
@@ -6553,6 +6607,7 @@ void linphone_core_enable_video_display(LinphoneCore *lc, bool_t enable) {
 }
 
 void linphone_core_enable_video_source_reuse(LinphoneCore *lc, bool_t enable) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifndef VIDEO_ENABLED
 	if (enable == TRUE) {
 		ms_warning("Cannot enable video display, this version of linphone was built without video support.");
@@ -6857,6 +6912,7 @@ float linphone_core_get_static_picture_fps(LinphoneCore *lc) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void *linphone_core_create_native_video_window_id(const LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (call) {
@@ -6871,6 +6927,7 @@ void *linphone_core_create_native_video_window_id(const LinphoneCore *lc) {
 #endif // _MSC_VER
 
 void *linphone_core_get_native_video_window_id(const LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->video_window_id) {
 		/* case where the video id was previously set by the app*/
 		return lc->video_window_id;
@@ -6907,6 +6964,7 @@ void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (call) {
@@ -6925,6 +6983,7 @@ void *linphone_core_create_native_preview_window_id(LinphoneCore *lc) {
 #endif // _MSC_VER
 
 void *linphone_core_get_native_preview_window_id(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->preview_window_id) {
 		/*case where the id was set by the app previously*/
 		return lc->preview_window_id;
@@ -6998,6 +7057,7 @@ int linphone_core_get_device_rotation(LinphoneCore *lc) {
 }
 
 void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (rotation == lc->device_rotation) return;
 
 	ms_message("%s : rotation=%d\n", __FUNCTION__, rotation);
@@ -7028,6 +7088,7 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 int linphone_core_get_camera_sensor_rotation(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 #ifdef VIDEO_ENABLED
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (call) {
@@ -7104,6 +7165,7 @@ static bool_t video_definition_supported(const LinphoneVideoDefinition *vdef) {
 }
 
 void linphone_core_set_preferred_video_definition(LinphoneCore *lc, LinphoneVideoDefinition *vdef) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!linphone_video_definition_is_undefined(vdef) && video_definition_supported(vdef)) {
 		LinphoneVideoDefinition *oldvdef = lc->video_conf.vdef;
 		lc->video_conf.vdef = linphone_video_definition_ref(vdef);
@@ -7131,6 +7193,7 @@ void linphone_core_set_preferred_video_size(LinphoneCore *lc, MSVideoSize vsize)
 }
 
 void linphone_core_set_preview_video_definition(LinphoneCore *lc, LinphoneVideoDefinition *vdef) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!vdef || linphone_video_definition_is_undefined(vdef)) {
 		/* Reset the forced preview video definition mode */
 		if (lc->video_conf.preview_vdef != NULL) linphone_video_definition_unref(lc->video_conf.preview_vdef);
@@ -7583,10 +7646,12 @@ void linphone_core_set_record_file(LinphoneCore *lc, const char *file) {
 }
 
 void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms) {
+	CoreLogContextualizer logContextualizer(lc);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playDtmf(dtmf, duration_ms);
 }
 
 LinphoneStatus linphone_core_play_local(LinphoneCore *lc, const char *audiofile) {
+	CoreLogContextualizer logContextualizer(lc);
 	return L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playLocal(audiofile);
 }
 
@@ -7607,6 +7672,7 @@ int linphone_core_get_mtu(const LinphoneCore *lc) {
 }
 
 void linphone_core_set_mtu(LinphoneCore *lc, int mtu) {
+	CoreLogContextualizer logContextualizer(lc);
 	lc->net_conf.mtu = mtu;
 	if (mtu > 0) {
 		if (mtu < 500) {
@@ -7917,10 +7983,12 @@ static void _linphone_core_stop(LinphoneCore *lc) {
 }
 
 void linphone_core_stop(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	_linphone_core_stop(lc);
 }
 
 void linphone_core_stop_async(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	_linphone_core_stop_async_start(lc);
 }
 
@@ -8017,6 +8085,7 @@ static void set_media_network_reachable(LinphoneCore *lc, bool_t is_media_reacha
 }
 
 void linphone_core_refresh_registers(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	const bctbx_list_t *elem;
 	if (!lc->sip_network_state.global_state) {
 		ms_warning("Refresh register operation not available (network unreachable)");
@@ -8040,6 +8109,7 @@ void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_re
 }
 
 void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) {
+	CoreLogContextualizer logContextualizer(lc);
 	bool_t reachable = is_reachable;
 
 	lc->sip_network_state.user_state = is_reachable;
@@ -8053,6 +8123,7 @@ void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) 
 }
 
 void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reachable) {
+	CoreLogContextualizer logContextualizer(lc);
 	bool_t reachable = is_reachable;
 
 	lc->media_network_state.user_state = is_reachable;
@@ -8064,6 +8135,7 @@ void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reach
 }
 
 void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachable) {
+	CoreLogContextualizer logContextualizer(lc);
 	bool_t reachable = is_reachable;
 
 	lc->sip_network_state.user_state = is_reachable;
@@ -8084,6 +8156,7 @@ ortp_socket_t linphone_core_get_sip_socket(BCTBX_UNUSED(LinphoneCore *lc)) {
 }
 
 void linphone_core_destroy(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	linphone_core_unref(lc);
 }
 
@@ -8115,6 +8188,7 @@ bool_t linphone_core_callkit_enabled(const LinphoneCore *core) {
 }
 
 bool_t linphone_core_local_permission_enabled(const LinphoneCore *core) {
+	CoreLogContextualizer logContextualizer(core);
 	if (getPlatformHelpers(core)->getNetworkType() != PlatformHelpers::NetworkType::Wifi) {
 		lInfo() << "IceService::hasLocalNetworkPermission() assuming true when network is not wifi";
 		return TRUE;
@@ -8166,6 +8240,7 @@ OrtpPayloadType *linphone_core_find_payload_type(LinphoneCore *lc, const char *t
 }
 
 LinphonePayloadType *linphone_core_get_payload_type(LinphoneCore *lc, const char *type, int rate, int channels) {
+	CoreLogContextualizer logContextualizer(lc);
 	OrtpPayloadType *pt = _linphone_core_find_payload_type(lc, type, rate, channels);
 	return pt ? linphone_payload_type_new(lc, pt) : NULL;
 }
@@ -8206,6 +8281,7 @@ LinphoneGlobalState linphone_core_get_global_state(const LinphoneCore *lc) {
 }
 
 LinphoneCallParams *linphone_core_create_call_params(LinphoneCore *lc, LinphoneCall *call) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!call) return linphone_call_params_new(lc);
 	if (linphone_call_get_params(call)) {
 		return _linphone_call_params_copy(linphone_call_get_params(call));
@@ -8221,6 +8297,7 @@ const char *linphone_error_to_string(LinphoneReason err) {
 }
 
 void linphone_core_enable_keep_alive(LinphoneCore *lc, bool_t enable) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (enable > 0) {
 		lc->sal->useTcpTlsKeepAlive(!!lc->sip_conf.tcp_tls_keepalive);
 		lc->sal->setKeepAlivePeriod(lc->sip_conf.keepalive_period);
@@ -8234,19 +8311,23 @@ bool_t linphone_core_keep_alive_enabled(LinphoneCore *lc) {
 }
 
 void linphone_core_start_dtmf_stream(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalShutdown)
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().startDtmfStream();
 }
 
 void linphone_core_stop_ringing(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().freeAudioResources();
 }
 
 void linphone_core_stop_dtmf_stream(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().stopDtmfStream();
 }
 
 void linphone_core_stop_tone_manager(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().freeAudioResources();
 }
 
@@ -8517,6 +8598,7 @@ bool_t linphone_core_media_encryption_supported(LinphoneCore *lc, LinphoneMediaE
 }
 
 LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *lc, LinphoneMediaEncryption menc) {
+	CoreLogContextualizer logContextualizer(lc);
 	const char *type = "none";
 	int ret = -1;
 
@@ -8761,6 +8843,7 @@ int linphone_core_get_video_dscp(const LinphoneCore *lc) {
 }
 
 void linphone_core_set_chat_database_path(LinphoneCore *lc, const char *path) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!linphone_core_conference_server_enabled(lc)) {
 		auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 		if (mainDb) {
@@ -8907,6 +8990,7 @@ void linphone_core_set_avpf_rr_interval(LinphoneCore *lc, int interval) {
 }
 
 LinphoneStatus linphone_core_set_audio_multicast_addr(LinphoneCore *lc, const char *ip) {
+	CoreLogContextualizer logContextualizer(lc);
 	char *new_value;
 	if (ip && !ms_is_multicast(ip)) {
 		ms_error("Cannot set multicast audio addr to core [%p] because [%s] is not multicast", lc, ip);
@@ -8920,6 +9004,7 @@ LinphoneStatus linphone_core_set_audio_multicast_addr(LinphoneCore *lc, const ch
 }
 
 LinphoneStatus linphone_core_set_video_multicast_addr(LinphoneCore *lc, const char *ip) {
+	CoreLogContextualizer logContextualizer(lc);
 	char *new_value;
 	if (ip && !ms_is_multicast(ip)) {
 		ms_error("Cannot set multicast video addr to core [%p] because [%s] is not multicast", lc, ip);
@@ -9038,6 +9123,7 @@ void linphone_core_realtime_text_set_keepalive_interval(LinphoneCore *lc, unsign
 }
 
 void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host) {
+	CoreLogContextualizer logContextualizer(lc);
 	linphone_config_set_string(lc->config, "sip", "http_proxy_host", host);
 	if (lc->sal) {
 		lc->sal->setHttpProxyHost(host);
@@ -9049,6 +9135,7 @@ void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host) {
 }
 
 void linphone_core_set_http_proxy_port(LinphoneCore *lc, int port) {
+	CoreLogContextualizer logContextualizer(lc);
 	linphone_config_set_int(lc->config, "sip", "http_proxy_port", port);
 	if (lc->sal) lc->sal->setHttpProxyPort(port);
 	if (lc->tunnel) {
@@ -9123,6 +9210,7 @@ static void linphone_core_set_conference(LinphoneCore *lc, LinphoneConference *c
 
 LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc,
                                                                 const LinphoneConferenceParams *params) {
+	CoreLogContextualizer logContextualizer(lc);
 	const char *conf_method_name;
 	LinphoneConference *conf = nullptr;
 	bool serverMode = params && !linphone_conference_params_local_participant_enabled(params);
@@ -9214,6 +9302,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 }
 
 LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneCore *core) {
+	CoreLogContextualizer logContextualizer(core);
 	return LinphonePrivate::ConferenceScheduler::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core));
 }
 
@@ -9222,6 +9311,7 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
                                                     const LinphoneAddress *localAddr,
                                                     const LinphoneAddress *remoteAddr,
                                                     const bctbx_list_t *participants) {
+	CoreLogContextualizer logContextualizer(lc);
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams =
 	    params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	list<std::shared_ptr<LinphonePrivate::Address>> participantsList;
@@ -9246,6 +9336,7 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
 }
 
 LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *lc, const LinphoneAddress *conferenceAddr) {
+	CoreLogContextualizer logContextualizer(lc);
 	const auto conferenceAddress =
 	    conferenceAddr
 	        ? LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(conferenceAddr))->getSharedFromThis()
@@ -9260,6 +9351,7 @@ LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *lc, co
 }
 
 LinphoneConferenceParams *linphone_core_create_conference_params_2(LinphoneCore *lc, LinphoneConference *conference) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (!conference) return linphone_conference_params_new(lc);
 	if (linphone_conference_get_current_params(conference)) {
 		return linphone_conference_params_clone(linphone_conference_get_current_params(conference));
@@ -9275,6 +9367,7 @@ LinphoneConferenceParams *linphone_core_create_conference_params(LinphoneCore *l
 }
 
 LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *call) {
+	CoreLogContextualizer logContextualizer(lc);
 	LinphoneConference *conference = linphone_core_get_conference(lc);
 	if (conference == NULL) {
 		LinphoneConferenceParams *params = linphone_conference_params_new(lc);
@@ -9301,6 +9394,7 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 }
 
 LinphoneStatus linphone_core_add_all_to_conference(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	for (const auto &call : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls()) {
 		if (!linphone_call_get_conference(
 		        call->toC())) // Prevent the call to the conference server from being added to the conference
@@ -9321,6 +9415,7 @@ LinphoneStatus linphone_core_remove_from_conference(LinphoneCore *lc, LinphoneCa
 }
 
 int linphone_core_terminate_conference(LinphoneCore *lc) {
+	CoreLogContextualizer logContextualizer(lc);
 	if (lc->conf_ctx == NULL) {
 		ms_error("Could not terminate conference: no conference context");
 		return -1;
@@ -9533,6 +9628,7 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
 LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
+	CoreLogContextualizer logContextualizer(core);
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	const auto uri_addr = uri ? LinphonePrivate::Address::toCpp(uri)->getSharedFromThis() : nullptr;
@@ -9589,6 +9685,7 @@ bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneC
 }
 
 void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info) {
+	CoreLogContextualizer logContextualizer(core);
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	mainDb->deleteConferenceInfo(LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
@@ -9604,6 +9701,7 @@ bool_t linphone_core_ldap_available(BCTBX_UNUSED(LinphoneCore *core)) {
 }
 
 LinphoneStatus linphone_core_config_sync(LinphoneCore *core) {
+	CoreLogContextualizer logContextualizer(core);
 #if TARGET_OS_IPHONE
 	auto helper = getPlatformHelpers(core)->getSharedCoreHelpers();
 	SharedCoreState state = helper->getSharedCoreState();
@@ -9626,6 +9724,7 @@ void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t en
 
 LinphoneAccount *linphone_core_find_account_by_identity_address(const LinphoneCore *core,
                                                                 const LinphoneAddress *identity_address) {
+	CoreLogContextualizer logContextualizer(core);
 	LinphoneAccount *found = NULL;
 	if (identity_address == NULL) return found;
 
@@ -9666,4 +9765,12 @@ void linphone_core_set_register_only_when_network_is_up(LinphoneCore *core, bool
 
 bool_t linphone_core_get_register_only_when_network_is_up(const LinphoneCore *core) {
 	return core->sip_conf.register_only_when_network_is_up;
+}
+
+void linphone_core_set_label(LinphoneCore *core, const char *label) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->setLabel(L_C_TO_STRING(label));
+}
+
+const char *linphone_core_get_label(const LinphoneCore *core) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLabel());
 }

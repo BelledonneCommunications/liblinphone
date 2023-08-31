@@ -976,6 +976,10 @@ LINPHONE_PUBLIC void sal_set_uuid(Sal *ctx, const char *uuid) {
 	ctx->setUuid(L_C_TO_STRING(uuid));
 }
 
+LINPHONE_PUBLIC const char *sal_get_uuid(const Sal *ctx) {
+	return ctx->getUuid().c_str();
+}
+
 LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal *h, SalOpSDPHandling sdpHandlingMethod) {
 	h->setDefaultSdpHandling(sdpHandlingMethod);
 }

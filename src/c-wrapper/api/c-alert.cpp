@@ -66,5 +66,5 @@ void linphone_alert_remove_callbacks(LinphoneAlert *alert, LinphoneAlertCbs *cbs
 	Alert::toCpp(alert)->removeCallbacks(AlertCbs::toCpp(cbs)->getSharedFromThis());
 }
 void linphone_alert_notify_on_terminated(LinphoneAlert *alert) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(Alert, Alert::toCpp(alert), linphone_alert_cbs_get_on_terminated);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(Alert, Alert::toCpp(alert), linphone_alert_cbs_get_terminated);
 }

@@ -58,12 +58,12 @@ typedef void (*LinphoneAccountCbsRegistrationStateChangedCb)(LinphoneAccount *ac
  * @param core #LinphoneCore object @notnil
  * @param alert #LinphoneAlert to notify @notnil
  */
-typedef void (*LinphoneCoreCbsOnAlertCb)(LinphoneCore *core, LinphoneAlert *alert);
+typedef void (*LinphoneCoreCbsNewAlertTriggeredCb)(LinphoneCore *core, LinphoneAlert *alert);
 /**
  * Callback to know if an alert stops
  * @param alert the alert that stops @notnil
  */
-typedef void (*LinphoneAlertCbsOnTerminatedCb)(LinphoneAlert *alert);
+typedef void (*LinphoneAlertCbsTerminatedCb)(LinphoneAlert *alert);
 /**
  * @}
  */
