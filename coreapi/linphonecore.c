@@ -376,6 +376,14 @@ void linphone_core_cbs_set_new_message_reaction(LinphoneCoreCbs *cbs, LinphoneCo
 	cbs->vtable->new_message_reaction = cb;
 }
 
+LinphoneCoreCbsReactionRemovedCb linphone_core_cbs_get_reaction_removed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->reaction_removed;
+}
+
+void linphone_core_cbs_set_reaction_removed(LinphoneCoreCbs *cbs, LinphoneCoreCbsReactionRemovedCb cb) {
+	cbs->vtable->reaction_removed = cb;
+}
+
 LinphoneCoreCbsMessagesReceivedCb linphone_core_cbs_get_messages_received(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->messages_received;
 }

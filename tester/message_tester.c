@@ -422,25 +422,24 @@ void check_reactions(LinphoneChatMessage *message,
 	BC_ASSERT_PTR_NOT_NULL(reactions);
 
 	if (reactions_it) {
-		BC_ASSERT_EQUAL(bctbx_list_size(reactions), expected_reactions_count, size_t, "%zu");
-		if (bctbx_list_size(reactions) == expected_reactions_count) {
-			for (size_t i = 0; i < expected_reactions_count; i++) {
-				const LinphoneChatMessageReaction *reaction =
-				    (const LinphoneChatMessageReaction *)bctbx_list_get_data(reactions_it);
-				reactions_it = bctbx_list_next(reactions_it);
+		size_t count = bctbx_list_size(reactions);
+		BC_ASSERT_EQUAL(count, expected_reactions_count, size_t, "%zu");
+		for (size_t i = 0; i < count; i++) {
+			const LinphoneChatMessageReaction *reaction =
+			    (const LinphoneChatMessageReaction *)bctbx_list_get_data(reactions_it);
+			reactions_it = bctbx_list_next(reactions_it);
 
-				const char *expected_reaction = (const char *)bctbx_list_get_data(expected_reactions_it);
-				expected_reactions_it = bctbx_list_next(expected_reactions_it);
+			const char *expected_reaction = (const char *)bctbx_list_get_data(expected_reactions_it);
+			expected_reactions_it = bctbx_list_next(expected_reactions_it);
 
-				const char *expected_reaction_from = (const char *)bctbx_list_get_data(expected_reactions_from_it);
-				expected_reactions_from_it = bctbx_list_next(expected_reactions_from_it);
+			const char *expected_reaction_from = (const char *)bctbx_list_get_data(expected_reactions_from_it);
+			expected_reactions_from_it = bctbx_list_next(expected_reactions_from_it);
 
-				const char *reaction_body = linphone_chat_message_reaction_get_body(reaction);
-				BC_ASSERT_STRING_EQUAL(reaction_body, expected_reaction);
+			const char *reaction_body = linphone_chat_message_reaction_get_body(reaction);
+			BC_ASSERT_STRING_EQUAL(reaction_body, expected_reaction);
 
-				const LinphoneAddress *from = linphone_chat_message_reaction_get_from_address(reaction);
-				BC_ASSERT_STRING_EQUAL(linphone_address_as_string_uri_only(from), expected_reaction_from);
-			}
+			const LinphoneAddress *from = linphone_chat_message_reaction_get_from_address(reaction);
+			BC_ASSERT_STRING_EQUAL(linphone_address_as_string_uri_only(from), expected_reaction_from);
 		}
 	}
 	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
@@ -4101,4 +4100,3 @@ test_suite_t rtt_message_test_suite = {"RTT Message",
                                        sizeof(rtt_message_tests) / sizeof(rtt_message_tests[0]),
                                        rtt_message_tests,
                                        0};
-

@@ -152,6 +152,10 @@ void _linphone_chat_message_notify_new_message_reaction(LinphoneChatMessage *msg
 	NOTIFY_IF_EXIST(NewMessageReaction, new_message_reaction, msg, reaction);
 }
 
+void _linphone_chat_message_notify_reaction_removed(LinphoneChatMessage *msg, const LinphoneAddress *address) {
+	NOTIFY_IF_EXIST(ReactionRemoved, reaction_removed, msg, address);
+}
+
 void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage *msg,
                                                                   const LinphoneParticipantImdnState *state) {
 	NOTIFY_IF_EXIST(ParticipantImdnStateChanged, participant_imdn_state_changed, msg, state);

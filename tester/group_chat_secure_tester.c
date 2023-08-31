@@ -1621,6 +1621,49 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 			check_reactions(marieSentMessage, 3, expected_reactions, expected_reactions_from);
 			check_reactions(paulineReceivedMessage, 3, expected_reactions, expected_reactions_from);
 		}
+	} else {
+		// Marie is sending an empty reaction to remove it's previous reaction
+		LinphoneChatMessageReaction *marieEmptyReaction = linphone_chat_message_create_reaction(marieSentMessage, "");
+		linphone_chat_message_reaction_send(marieEmptyReaction);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneReactionRemoved,
+		                             initialMarieStats.number_of_LinphoneReactionRemoved + 1, 5000));
+		linphone_chat_message_reaction_unref(marieEmptyReaction);
+
+		expected_reactions = bctbx_list_remove(expected_reactions, bctbx_list_last_elem(expected_reactions));
+		expected_reactions_from =
+		    bctbx_list_remove(expected_reactions_from, bctbx_list_last_elem(expected_reactions_from));
+		check_reactions(marieSentMessage, 2, expected_reactions, expected_reactions_from);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneReactionRemoved,
+		                             initialLaureStats.number_of_LinphoneReactionRemoved + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneReactionRemoved,
+		                             initialPaulineStats.number_of_LinphoneReactionRemoved + 1, 5000));
+
+		check_reactions(laureReceivedMessage, 2, expected_reactions, expected_reactions_from);
+		check_reactions(paulineReceivedMessage, 2, expected_reactions, expected_reactions_from);
+
+		// Laure is sending an empty reaction to remove it's previous reaction
+		LinphoneChatMessageReaction *laureEmptyReaction =
+		    linphone_chat_message_create_reaction(laureReceivedMessage, "");
+		linphone_chat_message_reaction_send(laureEmptyReaction);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneReactionRemoved,
+		                             initialMarieStats.number_of_LinphoneReactionRemoved + 2, 5000));
+		linphone_chat_message_reaction_unref(laureEmptyReaction);
+
+		expected_reactions = bctbx_list_remove(expected_reactions, bctbx_list_last_elem(expected_reactions));
+		expected_reactions_from =
+		    bctbx_list_remove(expected_reactions_from, bctbx_list_last_elem(expected_reactions_from));
+		check_reactions(laureReceivedMessage, 1, expected_reactions, expected_reactions_from);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneReactionRemoved,
+		                             initialLaureStats.number_of_LinphoneReactionRemoved + 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneReactionRemoved,
+		                             initialPaulineStats.number_of_LinphoneReactionRemoved + 2, 5000));
+
+		check_reactions(marieSentMessage, 1, expected_reactions, expected_reactions_from);
+		check_reactions(paulineReceivedMessage, 1, expected_reactions, expected_reactions_from);
 	}
 
 end:

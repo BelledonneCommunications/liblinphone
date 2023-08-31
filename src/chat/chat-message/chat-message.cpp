@@ -886,7 +886,6 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	if (q->isReaction()) {
 		markAsRead();
-		storeInDb();
 
 		auto messageId = q->getReactionToMessageId();
 		auto originalMessage = q->getReactionToMessage();
@@ -896,12 +895,32 @@ LinphoneReason ChatMessagePrivate::receive() {
 			return reason;
 		}
 
+		shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
+		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
+
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
+
+		const string &reactionBody = getUtf8Text();
+		if (reactionBody.empty()) {
+			auto fromAddress = q->getFromAddress();
+			lInfo() << "Reaction body for message ID [" << messageId << "] is empty, removing existing reaction from ["
+			        << fromAddress->asStringUriOnly() << "] if any";
+			unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
+			mainDb->removeConferenceChatMessageReactionEvent(messageId, fromAddress);
+
+			const LinphoneAddress *address = q->getFromAddress()->toC();
+			_linphone_chat_message_notify_reaction_removed(msg, address);
+			linphone_core_notify_message_reaction_removed(q->getCore()->getCCore(), cr, msg, address);
+
+			return reason;
+		}
+
+		storeInDb();
+
 		LinphoneChatMessageReaction *reaction =
 		    ChatMessageReaction::createCObject(messageId, getUtf8Text(), q->getFromAddress());
 		_linphone_chat_message_notify_new_message_reaction(msg, reaction);
 
-		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
 		linphone_core_notify_new_message_reaction(q->getCore()->getCCore(), cr, msg, reaction);
 
 		linphone_chat_message_reaction_unref(reaction);

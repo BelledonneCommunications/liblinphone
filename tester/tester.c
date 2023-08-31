@@ -2477,6 +2477,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_call_state_changed(mgr->cbs, call_state_changed);
 	linphone_core_cbs_set_message_received(mgr->cbs, message_received);
 	linphone_core_cbs_set_new_message_reaction(mgr->cbs, reaction_received);
+	linphone_core_cbs_set_reaction_removed(mgr->cbs, reaction_removed);
 	linphone_core_cbs_set_messages_received(mgr->cbs, messages_received);
 	linphone_core_cbs_set_is_composing_received(mgr->cbs, is_composing_received);
 	linphone_core_cbs_set_new_subscription_requested(mgr->cbs, new_subscription_requested);
@@ -3216,6 +3217,17 @@ void reaction_received(LinphoneCore *lc,
 
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneReactionSentOrReceived++;
+}
+
+void reaction_removed(LinphoneCore *lc,
+                      BCTBX_UNUSED(LinphoneChatRoom *room),
+                      LinphoneChatMessage *msg,
+                      const LinphoneAddress *address) {
+	char *from = linphone_address_as_string(address);
+	const char *text = linphone_chat_message_get_text(msg);
+	ms_message("Reaction sent by [%s] for message [%s] has been removed", from, text);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneReactionRemoved++;
 }
 
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room) {

@@ -21,6 +21,8 @@
 #include "chat-message-reaction.h"
 #include "chat-message-p.h"
 #include "chat/chat-room/abstract-chat-room.h"
+#include "core/core-p.h"
+#include "db/main-db-p.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
 
@@ -71,11 +73,24 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 		}
 
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
-		LinphoneChatMessageReaction *reaction = getSharedFromThis()->toC();
-		_linphone_chat_message_notify_new_message_reaction(msg, reaction);
-
+		const string &messageId = originalMessage->getImdnMessageId();
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(message->getChatRoom());
-		linphone_core_notify_new_message_reaction(message->getCore()->getCCore(), cr, msg, reaction);
+
+		if (reaction.empty()) {
+			lInfo() << "[Chat Message Reaction] Sending empty reaction to chat message ID [" << messageId
+			        << "] to remove any previously existing reaction";
+			const LinphoneAddress *address = fromAddress->toC();
+			unique_ptr<MainDb> &mainDb = message->getChatRoom()->getCore()->getPrivate()->mainDb;
+			mainDb->removeConferenceChatMessageReactionEvent(messageId, fromAddress);
+
+			_linphone_chat_message_notify_reaction_removed(msg, address);
+			linphone_core_notify_message_reaction_removed(message->getCore()->getCCore(), cr, msg, address);
+		} else {
+			LinphoneChatMessageReaction *reaction = getSharedFromThis()->toC();
+			_linphone_chat_message_notify_new_message_reaction(msg, reaction);
+
+			linphone_core_notify_new_message_reaction(message->getCore()->getCCore(), cr, msg, reaction);
+		}
 
 		message->removeListener(getSharedFromThis());
 	} else if (state == ChatMessage::State::NotDelivered) {

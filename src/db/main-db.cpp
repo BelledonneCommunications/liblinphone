@@ -4575,6 +4575,10 @@ list<shared_ptr<ChatMessageReaction>> MainDb::getChatMessageReactions(const shar
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(messageId));
 		for (const auto &row : rows) {
 			string body = row.get<string>(0);
+			if (body.empty()) {
+				lDebug() << "Found empty reaction for message [" << chatMessage << "], skipping";
+				continue;
+			}
 			shared_ptr<Address> fromAddress = make_shared<Address>(row.get<string>(1));
 			shared_ptr<ChatMessageReaction> reaction = ChatMessageReaction::create(messageId, body, fromAddress);
 			reactions.push_back(reaction);
@@ -4582,6 +4586,23 @@ list<shared_ptr<ChatMessageReaction>> MainDb::getChatMessageReactions(const shar
 	};
 #endif
 	return reactions;
+}
+
+void MainDb::removeConferenceChatMessageReactionEvent(const string &messageId,
+                                                      const std::shared_ptr<const Address> &from) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		const long long &fromSipAddressId = d->selectSipAddressId(from->toStringUriOnlyOrdered());
+
+		*d->dbSession.getBackendSession()
+		    << "DELETE FROM conference_chat_message_reaction_event WHERE"
+		       " from_sip_address_id = :from_sip_address_id AND reaction_to_message_id = :messageId",
+		    soci::use(fromSipAddressId), soci::use(messageId);
+		tr.commit();
+	};
+#endif
 }
 
 // -----------------------------------------------------------------------------

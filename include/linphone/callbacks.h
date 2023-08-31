@@ -254,6 +254,19 @@ typedef void (*LinphoneCoreCbsNewMessageReactionCb)(LinphoneCore *core,
                                                     const LinphoneChatMessageReaction *reaction);
 
 /**
+ * Chat message removed reaction callback prototype.
+ * @param core #LinphoneCore object @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be created by the framework in case the
+ * From-URI is not present in any chat room. @notnil
+ * @param message the #LinphoneChatMessage to which a reaction has been removed from @notnil
+ * @param address the #LinphoneAddress of the person that removed it's reaction @notnil
+ */
+typedef void (*LinphoneCoreCbsReactionRemovedCb)(LinphoneCore *core,
+                                                 LinphoneChatRoom *chat_room,
+                                                 LinphoneChatMessage *message,
+                                                 const LinphoneAddress *address);
+
+/**
  * Chat messages callback prototype.
  * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using
  * linphone_core_set_chat_messages_aggregation_enabled()), it replaces the single message received callback.

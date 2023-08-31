@@ -61,6 +61,7 @@ class ConferenceParams;
 class CorePrivate;
 class EncryptionEngine;
 class ChatMessage;
+class ChatMessageReaction;
 class ChatRoom;
 class Ldap;
 class PushNotificationMessage;
@@ -83,6 +84,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class CallSession;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
+	friend class ChatMessageReaction;
 	friend class ChatRoom;
 	friend class ChatRoomPrivate;
 	friend class Conference;

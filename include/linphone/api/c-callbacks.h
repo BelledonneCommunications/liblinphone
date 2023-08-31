@@ -231,6 +231,13 @@ typedef void (*LinphoneChatMessageCbsNewMessageReactionCb)(LinphoneChatMessage *
                                                            const LinphoneChatMessageReaction *reaction);
 
 /**
+ * Callback used to notify a reaction has been removed from a given message
+ * @param message #LinphoneChatMessage object @notnil
+ * @param address the #LinphoneAddress of the person that removed it's reaction @notnil
+ */
+typedef void (*LinphoneChatMessageCbsReactionRemovedCb)(LinphoneChatMessage *message, const LinphoneAddress *address);
+
+/**
  * Call back used to notify participant IMDN state
  * @param message #LinphoneChatMessage object @notnil
  * @param state #LinphoneParticipantImdnState @notnil

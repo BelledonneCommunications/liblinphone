@@ -341,6 +341,7 @@ typedef struct _stats {
 	int progress_of_LinphoneFileTransfer;
 	int number_of_LinphoneFileTransfer;
 	int number_of_LinphoneReactionSentOrReceived;
+	int number_of_LinphoneReactionRemoved;
 
 	int number_of_LinphoneChatRoomConferenceJoined;
 	int number_of_LinphoneChatRoomEphemeralLifetimeChanged;
@@ -636,6 +637,10 @@ void reaction_received(LinphoneCore *lc,
                        LinphoneChatRoom *room,
                        LinphoneChatMessage *msg,
                        const LinphoneChatMessageReaction *reaction);
+void reaction_removed(LinphoneCore *lc,
+                      LinphoneChatRoom *room,
+                      LinphoneChatMessage *msg,
+                      const LinphoneAddress *address);
 void file_transfer_received(LinphoneChatMessage *message, LinphoneContent *content, const LinphoneBuffer *buffer);
 LinphoneBuffer *
 tester_file_transfer_send(LinphoneChatMessage *message, LinphoneContent *content, size_t offset, size_t size);

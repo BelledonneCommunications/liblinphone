@@ -97,6 +97,22 @@ LINPHONE_PUBLIC void linphone_chat_message_cbs_set_new_message_reaction(Linphone
                                                                         LinphoneChatMessageCbsNewMessageReactionCb cb);
 
 /**
+ * Get the removed reaction callback.
+ * @param cbs #LinphoneChatMessageCbs object. @notnil
+ * @return The current new reaction callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsReactionRemovedCb
+linphone_chat_message_cbs_get_reaction_removed(const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the removed reaction callback.
+ * @param cbs LinphoneChatMessageCbs object. @notnil
+ * @param cb The new reaction callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_reaction_removed(LinphoneChatMessageCbs *cbs,
+                                                                    LinphoneChatMessageCbsReactionRemovedCb cb);
+
+/**
  * Get the file transfer receive callback.
  * @param cbs LinphoneChatMessageCbs object. @notnil
  * @return The current file transfer receive callback.
