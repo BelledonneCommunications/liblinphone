@@ -1468,9 +1468,7 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 		            ? dbState
 		            : state);
 		const int markedAsReadInt = markedAsRead ? 1 : 0;
-		*session << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = "
-		            ":imdnMessageId, marked_as_read = :markedAsRead"
-		            " WHERE event_id = :eventId",
+		*session << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = :imdnMessageId, marked_as_read = :markedAsRead WHERE event_id = :eventId",
 		    soci::use(stateInt), soci::use(imdnMessageId), soci::use(markedAsReadInt), soci::use(eventId);
 	}
 
@@ -3659,7 +3657,6 @@ void MainDb::initCleanup() {
 
 bool MainDb::addEvent(const shared_ptr<EventLog> &eventLog) {
 #ifdef HAVE_DB_STORAGE
-
 	if (!isInitialized()) {
 		lWarning() << "Database has not been initialized";
 		return false;

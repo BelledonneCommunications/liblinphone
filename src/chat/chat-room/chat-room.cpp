@@ -95,9 +95,12 @@ void ChatRoomPrivate::sendIsComposingNotification() {
 void ChatRoomPrivate::addEvent(const shared_ptr<EventLog> &eventLog) {
 	L_Q();
 
-	q->getCore()->getPrivate()->mainDb->addEvent(eventLog);
-
 	EventLog::Type type = eventLog->getType();
+
+	if (!q->getCore()->getPrivate()->mainDb->addEvent(eventLog)) {
+		lWarning() << "Failed to add event of type " << type << " to the database";
+	}
+
 	if (type == EventLog::Type::ConferenceParticipantDeviceAdded ||
 	    type == EventLog::Type::ConferenceParticipantDeviceRemoved ||
 	    type == EventLog::Type::ConferenceParticipantDeviceStatusChanged) {

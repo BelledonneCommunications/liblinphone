@@ -1165,7 +1165,7 @@ void ServerGroupChatRoomPrivate::queueMessage(const shared_ptr<Message> &msg) {
 	for (const auto &participant : q->getParticipants()) {
 		for (const auto &device : participant->getDevices()) {
 			// Queue the message for all devices except the one that sent it
-			if (!msg->fromAddr->weakEqual(*device->getAddress())) {
+			if (*msg->fromAddr != *device->getAddress()) {
 				queueMessage(msg, device->getAddress());
 			}
 		}
