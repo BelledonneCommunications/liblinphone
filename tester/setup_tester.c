@@ -1717,6 +1717,19 @@ static void search_friend_in_call_log(void) {
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 
+	linphone_magic_search_reset_search_cache(magicSearch);
+
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "", "", LinphoneMagicSearchSourceCallLogs,
+	                                                     LinphoneMagicSearchAggregationFriend);
+
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
+		_check_friend_result_list(manager->lc, resultList, 0, benjaminSipUri, NULL);
+		_check_friend_result_list(manager->lc, resultList, 1, charlesSipUri, NULL);
+		_check_friend_result_list(manager->lc, resultList, 2, chloeSipUri, NULL);
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+
 	_remove_friends_from_list(lfl, sFriends, sSizeFriend);
 
 	if (chloeAddress) linphone_address_unref(chloeAddress);

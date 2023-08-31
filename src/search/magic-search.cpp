@@ -34,7 +34,7 @@
 #include "private.h"
 #include "search-async-data.h"
 
-//#include "linphone/belle-sip/object.h"
+// #include "linphone/belle-sip/object.h"
 
 #ifdef LDAP_ENABLED
 #include "ldap/ldap-contact-provider.h"
@@ -300,7 +300,13 @@ static void sortResultsByFriendInList(std::shared_ptr<list<std::shared_ptr<Searc
 	lDebug() << "[Magic Search] Sorting " << resultList->size() << " results by Friend";
 	resultList->sort([](const std::shared_ptr<SearchResult> &lsr, const std::shared_ptr<SearchResult> &rsr) {
 		const char *name1 = linphone_friend_get_name(lsr->getFriend());
+		if (name1 == nullptr) {
+			name1 = linphone_address_get_username(lsr->getAddress());
+		}
 		const char *name2 = linphone_friend_get_name(rsr->getFriend());
+		if (name2 == nullptr) {
+			name2 = linphone_address_get_username(rsr->getAddress());
+		}
 		int nameComp = compareStringItems(name1, name2);
 		return nameComp < 0;
 	});
@@ -313,10 +319,13 @@ MagicSearch::processResults(std::shared_ptr<list<std::shared_ptr<SearchResult>>>
 	if (d->mAsyncData.mSearchRequest.getAggregation() == LinphoneMagicSearchAggregationFriend) {
 		sortResultsByFriendInList(pResultList);
 		uniqueFriendsInList(pResultList);
+	} else {
+		sortResultsList(pResultList);
+		uniqueItemsList(pResultList);
 	}
+	lInfo() << "[Magic Search] Found " << pResultList->size()
+	        << " results after sorting, aggregation & removing duplicates";
 
-	sortResultsList(pResultList);
-	uniqueItemsList(pResultList);
 	setSearchCache(pResultList);
 
 	return getLastSearch();
@@ -326,8 +335,7 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 	L_D();
 	list<std::shared_ptr<SearchResult>> returnList;
 	auto cache = getSearchCache();
-	if(cache)
-		returnList = *cache;
+	if (cache) returnList = *cache;
 	LinphoneProxyConfig *proxy = nullptr;
 	if (getLimitedSearch() && returnList.size() > getSearchLimit()) {
 		auto limitIterator = returnList.begin();
@@ -492,7 +500,8 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromGroupChatRoomPart
 void MagicSearch::getAddressFromLDAPServerStartAsync(const string &filter,
                                                      const string &withDomain,
                                                      SearchAsyncData *asyncData) const {
-	std::vector<std::shared_ptr<LdapContactProvider>> providers = LdapContactProvider::create(this->getCore(), (int)getSearchLimit());
+	std::vector<std::shared_ptr<LdapContactProvider>> providers =
+	    LdapContactProvider::create(this->getCore(), (int)getSearchLimit());
 	// Requests
 	for (size_t i = 0; i < providers.size(); ++i) {
 		std::shared_ptr<LdapCbData> data = std::make_shared<LdapCbData>();
@@ -893,20 +902,24 @@ void MagicSearch::addResultsToResultsList(std::list<std::shared_ptr<SearchResult
 	}
 }
 
+static bool compareResults(const std::shared_ptr<SearchResult> &lsr, const std::shared_ptr<SearchResult> &rsr) {
+	bool sip_addresses = false;
+	const LinphoneAddress *left = lsr->getAddress();
+	const LinphoneAddress *right = rsr->getAddress();
+	if (left == nullptr && right == nullptr) {
+		sip_addresses = true;
+	} else if (left != nullptr && right != nullptr) {
+		sip_addresses = linphone_address_weak_equal(left, right);
+	}
+	return sip_addresses && lsr->getCapabilities() == rsr->getCapabilities() &&
+	       lsr->getPhoneNumber() == rsr->getPhoneNumber() &&
+	       (compareStringItems(lsr->getDisplayName(), rsr->getDisplayName()) == 0);
+}
+
 void MagicSearch::uniqueItemsList(std::shared_ptr<list<std::shared_ptr<SearchResult>>> list) const {
 	lDebug() << "[Magic Search] List size before unique = " << list->size();
 	list->unique([](const std::shared_ptr<SearchResult> &lsr, const std::shared_ptr<SearchResult> &rsr) {
-		bool sip_addresses = false;
-		const LinphoneAddress *left = lsr->getAddress();
-		const LinphoneAddress *right = rsr->getAddress();
-		if (left == nullptr && right == nullptr) {
-			sip_addresses = true;
-		} else if (left != nullptr && right != nullptr) {
-			sip_addresses = linphone_address_weak_equal(left, right);
-		}
-		return sip_addresses && lsr->getCapabilities() == rsr->getCapabilities() &&
-		       lsr->getPhoneNumber() == rsr->getPhoneNumber() &&
-		       (compareStringItems(lsr->getDisplayName(), rsr->getDisplayName()) == 0);
+		return compareResults(lsr, rsr);
 	});
 	lDebug() << "[Magic Search] List size after unique = " << list->size();
 }
@@ -914,7 +927,13 @@ void MagicSearch::uniqueItemsList(std::shared_ptr<list<std::shared_ptr<SearchRes
 void MagicSearch::uniqueFriendsInList(std::shared_ptr<list<std::shared_ptr<SearchResult>>> list) const {
 	lDebug() << "[Magic Search] List size before friend unique = " << list->size();
 	list->unique([](const std::shared_ptr<SearchResult> &lsr, const std::shared_ptr<SearchResult> &rsr) {
-		return lsr->getFriend() == rsr->getFriend();
+		auto leftFriend = lsr->getFriend();
+		auto rightFriend = rsr->getFriend();
+		if (leftFriend == nullptr && rightFriend == nullptr) {
+			// Fall back to generic unique
+			return compareResults(lsr, rsr);
+		}
+		return leftFriend == rightFriend;
 	});
 	lDebug() << "[Magic Search] List size after friend unique = " << list->size();
 }
