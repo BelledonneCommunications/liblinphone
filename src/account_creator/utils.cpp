@@ -82,8 +82,7 @@ char *_get_identity(const LinphoneAccountCreator *creator) {
 		if (addr_domain == nullptr || (creator_domain != nullptr && strcmp(addr_domain, creator_domain) != 0)) {
 			if (creator_domain != nullptr) {
 				char *url = ms_strdup_printf("sip:%s", creator_domain);
-				if(addr)
-					linphone_address_unref(addr);
+				if (addr) linphone_address_unref(addr);
 				addr = linphone_address_new(url);
 				ms_free(url);
 
@@ -99,8 +98,7 @@ char *_get_identity(const LinphoneAccountCreator *creator) {
 
 		identity = linphone_address_as_string(addr);
 	end:
-		if(addr)
-			linphone_address_unref(addr);
+		if (addr) linphone_address_unref(addr);
 		linphone_proxy_config_unref(proxy);
 	}
 	return identity;
@@ -131,7 +129,7 @@ void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
 }
 
 static char generated_password_possible_characters[] =
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.:/+=?!#%$£€@&{}[]";
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.:+=?!#%@&{}[]";
 
 char *generate_random_password(void) {
 	char password[12];
