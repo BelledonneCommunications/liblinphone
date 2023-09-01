@@ -126,7 +126,7 @@ void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
 }
 
 static char generated_password_possible_characters[] =
-	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.:/+=?!#%$£€@&{}[]";
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.:+=?!#%@&{}[]";
 
 char *generate_random_password(void) {
 	char password[12];
