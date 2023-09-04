@@ -867,6 +867,8 @@ namespace Linphone
 			IEnumerable<{{{list_type}}}> returnVal = MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{{c_args}}}), {{takeRef}});
 			{{/is_class_list}}
 			{{#clean_string_list_ptrs}}CleanStringArrayPtrs();{{/clean_string_list_ptrs}}
+			{{#gc_keepalive}}{{{keep_alive}}}
+			{{/gc_keepalive}}
 			{{#hasReturn}}return returnVal;{{/hasReturn}}
 		}
 		{{/impl}}

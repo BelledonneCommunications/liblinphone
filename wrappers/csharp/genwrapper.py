@@ -117,6 +117,7 @@ class CsharpTranslator:
 			methodDict['takeRef'] = 'false' if method.returnAllocatedObject else 'true'
 			methodDict['impl']['args'] = ''
 			methodDict['impl']['c_args'] = ''
+			methodDict['impl']['gc_keepalive'] = []
 			methodDict['impl']['clean_string_list_ptrs'] = False
 			for arg in method.args:
 				if arg is not method.args[0]:
@@ -125,6 +126,9 @@ class CsharpTranslator:
 				if self.is_linphone_type(arg.type, False, False):
 					if isinstance(arg.type, AbsApi.ClassType):
 						argname = arg.name.translate(self.nameTranslator)
+						keepAlive = {}
+						keepAlive['keep_alive'] = f'GC.KeepAlive({argname});'
+						methodDict['impl']['gc_keepalive'].append(keepAlive)
 						methodDict['impl']['c_args'] += argname + " != null ? " + argname + ".nativePtr : IntPtr.Zero"
 					else:
 						methodDict['impl']['c_args'] += '(int)' + arg.name.translate(self.nameTranslator)
@@ -207,7 +211,6 @@ class CsharpTranslator:
 		methodDict = self.translate_property_getter(getter, name, static=static)
 		methodDictSet = self.translate_property_setter(setter, name, static)
 
-		protoElems = {}
 		methodDict["prototype"] = methodDict['prototype']
 		methodDict["has_second_prototype"] = True
 		methodDict["second_prototype"] = methodDictSet['prototype']
