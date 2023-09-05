@@ -96,7 +96,7 @@ public:
 	std::shared_ptr<Account> getDependency();
 
 	int getUnreadChatMessageCount() const;
-	const std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms() const;
+	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms() const;
 
 	int getMissedCallsCount() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogs() const;

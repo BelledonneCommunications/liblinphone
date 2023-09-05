@@ -3760,7 +3760,7 @@ void im_encryption_engine_b64_async(void) {
 	im_encryption_engine_b64_base(TRUE);
 }
 
-void unread_message_count(void) {
+void unread_message_count_base(bool_t mute_chat_room) {
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
@@ -3774,15 +3774,41 @@ void unread_message_count(void) {
 	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
 	if (marie->stat.last_received_chat_message != NULL) {
 		LinphoneChatRoom *marie_room = linphone_chat_message_get_chat_room(marie->stat.last_received_chat_message);
+		BC_ASSERT_FALSE(linphone_chat_room_get_muted(marie_room));
+		if (mute_chat_room) {
+			linphone_chat_room_set_muted(marie_room, TRUE);
+			BC_ASSERT_TRUE(linphone_chat_room_get_muted(marie_room));
+		}
+
 		BC_ASSERT_FALSE(linphone_chat_room_is_empty(marie_room));
+		if (mute_chat_room) {
+			BC_ASSERT_EQUAL(
+			    linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(marie->lc)), 0, int,
+			    "%d");
+		} else {
+			BC_ASSERT_EQUAL(
+			    linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(marie->lc)), 1, int,
+			    "%d");
+		}
 		BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marie_room), 1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(marie->lc), 1, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(marie->lc), 1, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(
-		                    marie->lc, linphone_chat_room_get_local_address(marie_room)),
-		                1, int, "%d");
+		if (mute_chat_room) {
+			BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(marie->lc), 0, int, "%d");
+			BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(
+			                    marie->lc, linphone_chat_room_get_local_address(marie_room)),
+			                0, int, "%d");
+		} else {
+			BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(marie->lc), 1, int, "%d");
+			BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(
+			                    marie->lc, linphone_chat_room_get_local_address(marie_room)),
+			                1, int, "%d");
+		}
+
 		linphone_chat_room_mark_as_read(marie_room);
+
 		BC_ASSERT_FALSE(linphone_chat_room_is_empty(marie_room));
+		BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(marie->lc)), 0,
+		                int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marie_room), 0, int, "%d");
 		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(marie->lc), 0, int, "%d");
 		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(marie->lc), 0, int, "%d");
@@ -3793,6 +3819,14 @@ void unread_message_count(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+void unread_message_count(void) {
+	unread_message_count_base(FALSE);
+}
+
+void unread_message_count_when_muted(void) {
+	unread_message_count_base(TRUE);
 }
 
 static void message_received_callback(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
@@ -4012,6 +4046,7 @@ test_t message_tests[] = {
     TEST_NO_TAG("Aggregated IMDNs", aggregated_imdns),
 #endif
     TEST_NO_TAG("Unread message count", unread_message_count),
+    TEST_NO_TAG("Unread message count with muted chat room", unread_message_count_when_muted),
     TEST_NO_TAG("Unread message count in callback", unread_message_count_callback),
     TEST_NO_TAG("Transfer not sent if invalid url", file_transfer_not_sent_if_invalid_url),
     TEST_NO_TAG("Transfer not sent if host not found", file_transfer_not_sent_if_host_not_found),

@@ -821,7 +821,7 @@ int Account::getUnreadChatMessageCount() const {
 	return getCore()->getUnreadChatMessageCount(mParams->mIdentityAddress);
 }
 
-const list<shared_ptr<AbstractChatRoom>> Account::getChatRooms() const {
+list<shared_ptr<AbstractChatRoom>> Account::getChatRooms() const {
 	list<shared_ptr<AbstractChatRoom>> results;
 	if (!mParams) {
 		lWarning() << "getChatRooms is called but no AccountParams is set on Account [" << this->toC() << "]";

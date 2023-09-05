@@ -141,6 +141,10 @@ void ChatRoomPrivate::setIsEmpty(const bool empty) {
 	isEmpty = empty;
 }
 
+void ChatRoomPrivate::setIsMuted(const bool muted) {
+	isMuted = muted;
+}
+
 void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<Call> &call) {
 	L_Q();
 
@@ -885,6 +889,20 @@ const string &ChatRoom::getSubject() const {
 
 const string &ChatRoom::getUtf8Subject() const {
 	return getConference()->getUtf8Subject();
+}
+
+bool ChatRoom::getIsMuted() const {
+	L_D();
+	return d->isMuted;
+}
+
+void ChatRoom::setIsMuted(const bool muted) {
+	L_D();
+
+	if (muted != d->isMuted) {
+		d->setIsMuted(muted);
+		getCore()->getPrivate()->mainDb->updateChatRoomMutedState(getConferenceId(), muted);
+	}
 }
 
 ChatRoomLogScope::ChatRoomLogScope(const LinphoneChatRoom *cr)

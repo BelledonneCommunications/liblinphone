@@ -145,6 +145,9 @@ public:
 	uint32_t getChar() override;
 	std::shared_ptr<Call> getCall() const override;
 
+	bool getIsMuted() const override;
+	void setIsMuted(const bool muted) override;
+
 protected:
 	ProxyChatRoom(ProxyChatRoomPrivate &p, const std::shared_ptr<ChatRoom> &chatRoom);
 

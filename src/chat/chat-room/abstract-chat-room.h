@@ -172,6 +172,9 @@ public:
 
 	virtual bool isMe(const std::shared_ptr<Address> &address) const = 0;
 
+	virtual bool getIsMuted() const = 0;
+	virtual void setIsMuted(const bool muted) = 0;
+
 protected:
 	explicit AbstractChatRoom(AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
 

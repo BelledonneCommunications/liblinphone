@@ -619,6 +619,22 @@ linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *chat
  **/
 LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const LinphoneChatRoom *chat_room);
 
+/**
+ * Gets if a chat room has been flagged as muted (not by default).
+ * A muted chat room isn't used to compute unread messages total count.
+ * @param chat_room the #LinphoneChatRoom object @notnil
+ * @return TRUE if the chat room is muted, FALSE otherwise.
+ **/
+LINPHONE_PUBLIC bool_t linphone_chat_room_get_muted(const LinphoneChatRoom *chat_room);
+
+/**
+ * Sets if a chat room should be considered as muted or not.
+ * A muted chat room isn't used to compute unread messages total count.
+ * @param chat_room the #LinphoneChatRoom object @notnil
+ * @param muted TRUE to flag it as muted, FALSE to un-mute it.
+ **/
+LINPHONE_PUBLIC void linphone_chat_room_set_muted(LinphoneChatRoom *chat_room, bool_t muted);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

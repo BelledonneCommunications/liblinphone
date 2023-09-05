@@ -69,6 +69,7 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages() override;
 
 	void setIsEmpty(const bool empty) override;
+	void setIsMuted(const bool muted) override;
 
 	virtual bool isSubscriptionUnderWay() const override;
 	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
@@ -134,6 +135,7 @@ private:
 
 	bool isComposing = false;
 	bool isEmpty = true;
+	bool isMuted = false;
 
 	std::string callId;
 	size_t readCharacterIndex = 0;

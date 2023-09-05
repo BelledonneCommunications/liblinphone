@@ -74,6 +74,10 @@ public:
 		chatRoom->getPrivate()->setIsEmpty(empty);
 	}
 
+	inline void setIsMuted(const bool muted) override {
+		chatRoom->getPrivate()->setIsMuted(muted);
+	}
+
 	inline void sendDeliveryNotifications(const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->sendDeliveryNotifications(chatMessage);
 	}

@@ -175,6 +175,7 @@ public:
 	void updateNotifyId(const std::shared_ptr<AbstractChatRoom> &chatRoom, const unsigned int lastNotify);
 	void updateChatRoomConferenceId(const ConferenceId oldConferenceId, const ConferenceId &newConferenceId);
 	void updateChatRoomLastUpdatedTime(const ConferenceId &conferenceId, time_t lastUpdatedTime);
+	void updateChatRoomMutedState(const ConferenceId &conferenceId, bool isMuted);
 	long long addConferenceParticipantEventToDb(const std::shared_ptr<EventLog> &eventLog,
 	                                            long long *chatRoomId = nullptr);
 

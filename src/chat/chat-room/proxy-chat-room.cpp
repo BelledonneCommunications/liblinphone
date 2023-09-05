@@ -445,4 +445,14 @@ bool ProxyChatRoom::isMe(const std::shared_ptr<Address> &address) const {
 	return d->chatRoom->isMe(address);
 };
 
+bool ProxyChatRoom::getIsMuted() const {
+	L_D();
+	return d->chatRoom->getIsMuted();
+}
+
+void ProxyChatRoom::setIsMuted(const bool muted) {
+	L_D();
+	d->chatRoom->setIsMuted(muted);
+}
+
 LINPHONE_END_NAMESPACE

@@ -505,6 +505,16 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom 
 	return cr->composingAddresses;
 }
 
+bool_t linphone_chat_room_get_muted(const LinphoneChatRoom *chat_room) {
+	LinphonePrivate::ChatRoomLogScope logContextualizer(chat_room);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(chat_room)->getIsMuted();
+}
+
+void linphone_chat_room_set_muted(LinphoneChatRoom *chat_room, bool_t muted) {
+	LinphonePrivate::ChatRoomLogScope logContextualizer(chat_room);
+	L_GET_CPP_PTR_FROM_C_OBJECT(chat_room)->setIsMuted(!!muted);
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

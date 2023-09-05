@@ -118,6 +118,9 @@ public:
 	const std::string &getSubject() const override;
 	const std::string &getUtf8Subject() const override;
 
+	virtual bool getIsMuted() const override;
+	virtual void setIsMuted(const bool muted) override;
+
 protected:
 	explicit ChatRoom(ChatRoomPrivate &p,
 	                  const std::shared_ptr<Core> &core,

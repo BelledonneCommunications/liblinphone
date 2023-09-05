@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 22);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 23);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2387,6 +2387,10 @@ void MainDbPrivate::updateSchema() {
 		*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
 	}
 
+	if (version < makeVersion(1, 0, 23)) {
+		*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
+	}
+
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 
@@ -4650,7 +4654,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 	    "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
 	    " creation_time, last_update_time, capabilities, subject, last_notify_id, flags, last_message_id,"
 	    " ephemeral_enabled, ephemeral_messages_lifetime,"
-	    " unread_messages_count.message_count"
+	    " unread_messages_count.message_count, muted"
 	    " FROM chat_room"
 	    " LEFT JOIN (SELECT conference_event.chat_room_id, count(*) as message_count"
 	    " FROM conference_chat_message_event, conference_event"
@@ -4710,6 +4714,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			int capabilities = row.get<int>(5);
 			string subject = row.get<string>(6, "");
 			const long long &lastMessageId = d->dbSession.resolveId(row, 9);
+			bool muted = !!row.get<int>(13);
 
 			shared_ptr<ChatRoomParams> params = ChatRoomParams::fromCapabilities(capabilities);
 			if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Basic)) {
@@ -4822,6 +4827,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			dChatRoom->setCreationTime(creationTime);
 			dChatRoom->setLastUpdateTime(lastUpdateTime);
 			dChatRoom->setIsEmpty(lastMessageId == 0);
+			dChatRoom->setIsMuted(muted);
 
 			lDebug() << "Found chat room in DB: (peer=" << conferenceId.getPeerAddress()->toStringUriOnlyOrdered()
 			         << ", local=" << conferenceId.getLocalAddress()->toStringUriOnlyOrdered() << ").";
@@ -4946,6 +4952,22 @@ void MainDb::updateChatRoomLastUpdatedTime(const ConferenceId &conferenceId, tim
 		*d->dbSession.getBackendSession() << "UPDATE chat_room SET last_update_time = :lastUpdateTime"
 		                                     " WHERE id = :chatRoomId",
 		    soci::use(lastUpdateTimeTm.first, lastUpdateTimeTm.second), soci::use(dbChatRoomId);
+
+		tr.commit();
+	};
+#endif
+}
+
+void MainDb::updateChatRoomMutedState(const ConferenceId &conferenceId, bool isMuted) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		int muted = isMuted ? 1 : 0;
+
+		*d->dbSession.getBackendSession() << "UPDATE chat_room SET muted = :muted"
+		                                     " WHERE id = :chatRoomId",
+		    soci::use(muted), soci::use(dbChatRoomId);
 
 		tr.commit();
 	};

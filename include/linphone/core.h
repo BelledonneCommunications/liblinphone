@@ -3523,13 +3523,6 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_call_logs(LinphoneCore *co
 
 /**
  * Get the list of call logs (past calls).
- * @param core #LinphoneCore object @notnil
- * @return A list of #LinphoneCallLog. \bctbx_list{LinphoneCallLog} @maybenil
- **/
-LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_call_logs(LinphoneCore *core);
-
-/**
- * Get the list of call logs (past calls).
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once
  * you are done using it. Requires ENABLE_DB_STORAGE to work.
  * @param core #LinphoneCore object. @notnil
@@ -3578,14 +3571,12 @@ LINPHONE_PUBLIC void linphone_core_clear_call_logs(LinphoneCore *core);
  * Once checked, this counter can be reset with linphone_core_reset_missed_calls_count().
  * @param core #LinphoneCore object. @notnil
  * @return The number of missed calls.
- * @deprecated 05/09/2023 Use linphone_account_get_missed_calls_count() instead.
  **/
 LINPHONE_PUBLIC int linphone_core_get_missed_calls_count(LinphoneCore *core);
 
 /**
  * Reset the counter of missed calls.
  * @param core #LinphoneCore object. @notnil
- * @deprecated 05/09/2023 Use linphone_account_reset_missed_calls_count() instead.
  **/
 LINPHONE_PUBLIC void linphone_core_reset_missed_calls_count(LinphoneCore *core);
 

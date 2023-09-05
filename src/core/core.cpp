@@ -1400,7 +1400,11 @@ int Core::getUnreadChatMessageCount(const std::shared_ptr<Address> &localAddress
 	int count = 0;
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
-		if (localAddress->weakEqual(*chatRoom->getLocalAddress())) count += chatRoom->getUnreadChatMessageCount();
+		if (localAddress->weakEqual(*chatRoom->getLocalAddress())) {
+			if (!chatRoom->getIsMuted()) {
+				count += chatRoom->getUnreadChatMessageCount();
+			}
+		}
 	}
 	return count;
 }
@@ -1415,7 +1419,9 @@ int Core::getUnreadChatMessageCountFromActiveLocals() const {
 			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
 			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
 			if (Address::toCpp(identityAddr)->weakEqual(*chatRoom->getLocalAddress())) {
-				count += chatRoom->getUnreadChatMessageCount();
+				if (!chatRoom->getIsMuted()) {
+					count += chatRoom->getUnreadChatMessageCount();
+				}
 			}
 		}
 	}
