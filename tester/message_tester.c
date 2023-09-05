@@ -2161,8 +2161,10 @@ static void file_transfer_2_messages_simultaneously(void) {
 		msg2 = _create_message_from_sintel_trailer(pauline_room, TRUE, "sounds/sintel_trailer_opus_h264.mkv",
 		                                           "sintel_trailer_opus_h264.mkv");
 
-		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 0, unsigned int, "%u");
-		if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) == 0) {
+		bctbx_list_t *chat_rooms = linphone_account_get_chat_rooms(linphone_core_get_default_account(marie->lc));
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(chat_rooms), 0, unsigned int, "%u");
+		if (bctbx_list_size(chat_rooms) == 0) {
+			bctbx_list_free(chat_rooms);
 			linphone_chat_message_send(msg);
 			linphone_chat_message_send(msg2);
 			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
@@ -2170,13 +2172,13 @@ static void file_transfer_2_messages_simultaneously(void) {
 				LinphoneChatMessage *recvMsg;
 				LinphoneChatMessage *recvMsg2;
 				bctbx_list_t *history;
-				const bctbx_list_t *chatrooms = linphone_core_get_chat_rooms(marie->lc);
+				chat_rooms = linphone_account_get_chat_rooms(linphone_core_get_default_account(marie->lc));
 				LinphoneChatRoom *cr;
 
-				BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(chatrooms), 1, unsigned int, "%u");
-				if (bctbx_list_size(chatrooms) != 1) {
-					char *buf = ms_strdup_printf("Found %d rooms instead of 1: ", (int)bctbx_list_size(chatrooms));
-					const bctbx_list_t *it = chatrooms;
+				BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(chat_rooms), 1, unsigned int, "%u");
+				if (bctbx_list_size(chat_rooms) != 1) {
+					char *buf = ms_strdup_printf("Found %d rooms instead of 1: ", (int)bctbx_list_size(chat_rooms));
+					const bctbx_list_t *it = chat_rooms;
 					while (it) {
 						const LinphoneAddress *peer = linphone_chat_room_get_peer_address(it->data);
 						buf = ms_strcat_printf(buf, "%s, ", linphone_address_get_username(peer));
@@ -2186,7 +2188,7 @@ static void file_transfer_2_messages_simultaneously(void) {
 					ms_free(buf);
 				}
 
-				cr = chatrooms ? (LinphoneChatRoom *)chatrooms->data : NULL;
+				cr = chat_rooms ? (LinphoneChatRoom *)chat_rooms->data : NULL;
 				if (BC_ASSERT_PTR_NOT_NULL(cr)) {
 					history = linphone_chat_room_get_history(cr, -1);
 					BC_ASSERT_TRUE(bctbx_list_size(history) == 2);
@@ -2228,6 +2230,7 @@ static void file_transfer_2_messages_simultaneously(void) {
 				}
 			}
 		}
+		bctbx_list_free_with_data(chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 		linphone_chat_message_unref(msg);
 		linphone_chat_message_unref(msg2);
 		linphone_core_manager_destroy(pauline);

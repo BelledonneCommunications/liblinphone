@@ -1807,6 +1807,14 @@ static void cancelled_ringing_call(void) {
 	const bctbx_list_t *call_history;
 	LinphoneCall *out_call;
 
+	BC_ASSERT_EQUAL(linphone_core_get_missed_calls_count(pauline->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_missed_calls_count(linphone_core_get_default_account(pauline->lc)), 0, int,
+	                "%d");
+
+	BC_ASSERT_EQUAL(linphone_core_get_missed_calls_count(marie->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_missed_calls_count(linphone_core_get_default_account(marie->lc)), 0, int,
+	                "%d");
+
 	out_call = linphone_core_invite_address(pauline->lc, marie->identity);
 	linphone_call_ref(out_call);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1));
@@ -1838,6 +1846,20 @@ static void cancelled_ringing_call(void) {
 		// Make sure the call log duration is 0 as the call wasn't connected
 		BC_ASSERT_EQUAL(linphone_call_log_get_duration(call_log), 0, int, "%d");
 	}
+
+	BC_ASSERT_EQUAL(linphone_core_get_missed_calls_count(pauline->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_missed_calls_count(linphone_core_get_default_account(pauline->lc)), 0, int,
+	                "%d");
+
+	BC_ASSERT_EQUAL(linphone_core_get_missed_calls_count(marie->lc), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_missed_calls_count(linphone_core_get_default_account(marie->lc)), 1, int,
+	                "%d");
+
+	linphone_account_reset_missed_calls_count(linphone_core_get_default_account(marie->lc));
+
+	BC_ASSERT_EQUAL(linphone_core_get_missed_calls_count(marie->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_missed_calls_count(linphone_core_get_default_account(marie->lc)), 0, int,
+	                "%d");
 
 	linphone_call_unref(out_call);
 	linphone_core_manager_destroy(marie);
@@ -6109,7 +6131,9 @@ static void call_logs_sqlite_storage(void) {
 	LinphoneAddress *laure = NULL;
 	time_t start_time = 0;
 
-	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 0);
+	bctbx_list_t *call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(marie->lc));
+	BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 0);
+	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	wait_for_until(marie->lc, pauline->lc, NULL, 5, 500);
@@ -6117,20 +6141,25 @@ static void call_logs_sqlite_storage(void) {
 	start_time = linphone_call_log_get_start_date(call_log);
 	linphone_call_log_set_ref_key(call_log, "ref_key");
 	end_call(marie, pauline);
-	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 1);
 
-	logs = linphone_core_get_call_history_for_address(
-	    marie->lc, linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc)));
+	call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(marie->lc));
+	BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 1);
+	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
+
+	logs = linphone_account_get_call_logs_for_address(
+	    linphone_core_get_default_account(marie->lc),
+	    linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc)));
 	BC_ASSERT_TRUE(bctbx_list_size(logs) == 1);
 	bctbx_list_free_with_data(logs, (void (*)(void *))linphone_call_log_unref);
 
 	laure = linphone_address_new("\"Laure\" <sip:laure@sip.example.org>");
-	logs = linphone_core_get_call_history_for_address(marie->lc, laure);
+	logs = linphone_account_get_call_logs_for_address(linphone_core_get_default_account(marie->lc), laure);
 	BC_ASSERT_TRUE(bctbx_list_size(logs) == 0);
 	linphone_address_unref(laure);
 
-	logs = linphone_core_get_call_history_for_address(
-	    marie->lc, linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc)));
+	logs = linphone_account_get_call_logs_for_address(
+	    linphone_core_get_default_account(marie->lc),
+	    linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc)));
 	if (BC_ASSERT_TRUE(bctbx_list_size(logs) == 1)) {
 		const char *call_id;
 		const char *ref_key;
@@ -6168,7 +6197,10 @@ static void call_logs_sqlite_storage(void) {
 
 	linphone_core_delete_call_log(marie->lc, (LinphoneCallLog *)bctbx_list_nth_data(logs, 0));
 	bctbx_list_free_with_data(logs, (void (*)(void *))linphone_call_log_unref);
-	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 0);
+
+	call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(marie->lc));
+	BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 0);
+	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
@@ -6183,10 +6215,15 @@ static void call_logs_sqlite_storage(void) {
 	linphone_core_reset_tone_manager_stats(pauline->lc);
 	BC_ASSERT_TRUE(call(marie, pauline));
 	end_call(marie, pauline);
-	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 2);
 
-	linphone_core_delete_call_history(marie->lc);
-	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 0);
+	call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(marie->lc));
+	BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 2);
+	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
+
+	linphone_account_clear_call_logs(linphone_core_get_default_account(marie->lc));
+	call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(marie->lc));
+	BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 0);
+	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -7316,8 +7353,7 @@ static test_t call_tests[] = {
     TEST_NO_TAG("Call with file player", call_with_file_player),
     TEST_NO_TAG("Call with mkv file player", call_with_mkv_file_player),
     TEST_NO_TAG("Call with privacy", call_with_privacy),
-    TEST_NO_TAG("Call with privacy 2", call_with_privacy2)
-};
+    TEST_NO_TAG("Call with privacy 2", call_with_privacy2)};
 
 static test_t call2_tests[] = {
     TEST_NO_TAG("Call with custom headers", call_with_custom_headers),
@@ -7427,13 +7463,13 @@ test_suite_t call_test_suite = {"Single Call",
                                 0};
 
 test_suite_t call2_test_suite = {"Single Call2",
-                                NULL,
-                                NULL,
-                                liblinphone_tester_before_each,
-                                liblinphone_tester_after_each,
-                                sizeof(call2_tests) / sizeof(call2_tests[0]),
-                                call2_tests,
-                                0};
+                                 NULL,
+                                 NULL,
+                                 liblinphone_tester_before_each,
+                                 liblinphone_tester_after_each,
+                                 sizeof(call2_tests) / sizeof(call2_tests[0]),
+                                 call2_tests,
+                                 0};
 
 test_suite_t call_not_established_test_suite = {"Single Call (Not established)",
                                                 NULL,
@@ -7444,4 +7480,3 @@ test_suite_t call_not_established_test_suite = {"Single Call (Not established)",
                                                     sizeof(call_not_established_tests[0]),
                                                 call_not_established_tests,
                                                 0};
-

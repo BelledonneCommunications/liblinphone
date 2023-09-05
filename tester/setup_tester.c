@@ -1911,10 +1911,17 @@ static void search_friend_with_aggregation(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
 	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
+	// Enable database storage to have belcard validate vCards items, otherwise validation is skipped
+	char *friends_db = bc_tester_file("friends.db");
+	unlink(friends_db);
+	linphone_core_set_friends_database_path(manager->lc, friends_db);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
+	BC_ASSERT_PTR_NOT_NULL(lfl);
+	linphone_friend_list_enable_database_storage(lfl, TRUE);
 
 	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
 	linphone_friend_set_name(stephanieFriend, "Stephanie de Monaco");
+
 	LinphoneFriendPhoneNumber *stephaniePhoneNumber =
 	    linphone_factory_create_friend_phone_number(linphone_factory_get(), "+33952636505", "work cell");
 	linphone_friend_add_phone_number_with_label(stephanieFriend, stephaniePhoneNumber);
@@ -1927,7 +1934,8 @@ static void search_friend_with_aggregation(void) {
 	    linphone_factory_create_address(linphone_factory_get(), "sip:stephanie@sip.example.org");
 	linphone_friend_add_address(stephanieFriend, stephanieAddress);
 	linphone_address_unref(stephanieAddress);
-	linphone_friend_list_add_local_friend(lfl, stephanieFriend);
+
+	linphone_friend_list_add_friend(lfl, stephanieFriend);
 	linphone_friend_unref(stephanieFriend);
 
 	magicSearch = linphone_magic_search_new(manager->lc);
@@ -1974,6 +1982,7 @@ static void search_friend_with_aggregation(void) {
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
+	unlink(friends_db);
 }
 
 static void search_friend_with_name_with_uppercase(void) {

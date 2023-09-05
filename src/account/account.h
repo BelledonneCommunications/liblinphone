@@ -26,6 +26,7 @@
 #include "account-params.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "call/call-log.h"
 #include "linphone/api/c-types.h"
 #include "sal/register-op.h"
 
@@ -94,10 +95,20 @@ public:
 	std::shared_ptr<EventPublish> getPresencePublishEvent() const;
 	std::shared_ptr<Account> getDependency();
 
+	int getUnreadChatMessageCount() const;
+	const std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms() const;
+
+	int getMissedCallsCount() const;
+	std::list<std::shared_ptr<CallLog>> getCallLogs() const;
+	std::list<std::shared_ptr<CallLog>> getCallLogsForAddress(const std::shared_ptr<Address>) const;
+
 	// Other
+	void resetMissedCallsCount();
+	void setMissedCallsCount(int count);
+	void deleteCallLogs() const;
+
 	bool check();
 	bool isAvpfEnabled() const;
-	int getUnreadChatMessageCount() const;
 	void setPresenceModel(LinphonePresenceModel *presence);
 	int sendPublish();
 	void apply(LinphoneCore *lc);
@@ -187,6 +198,8 @@ private:
 	// api to be usable at the same time. This should be removed as soon as
 	// proxy configs can be replaced.
 	LinphoneProxyConfig *mConfig = nullptr;
+
+	int mMissedCalls;
 };
 
 class AccountCbs : public bellesip::HybridObject<LinphoneAccountCbs, AccountCbs>, public Callbacks {

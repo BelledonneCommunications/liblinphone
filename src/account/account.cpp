@@ -33,6 +33,8 @@
 #endif // HAVE_ADVANCED_IM
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "core/core-p.h"
+#include "db/main-db-p.h"
 #include "event/event-publish.h"
 #include "linphone/core.h"
 #include "private.h"
@@ -47,6 +49,7 @@ LINPHONE_BEGIN_NAMESPACE
 Account::Account(LinphoneCore *lc, std::shared_ptr<AccountParams> params)
     : CoreAccessor(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr) {
 	mParams = params;
+	mMissedCalls = 0;
 	applyParamsChanges();
 	bctbx_message("LinphoneAccount[%p] created with params", toC());
 }
@@ -816,6 +819,70 @@ int Account::getUnreadChatMessageCount() const {
 	}
 
 	return getCore()->getUnreadChatMessageCount(mParams->mIdentityAddress);
+}
+
+const list<shared_ptr<AbstractChatRoom>> Account::getChatRooms() const {
+	list<shared_ptr<AbstractChatRoom>> results;
+	if (!mParams) {
+		lWarning() << "getChatRooms is called but no AccountParams is set on Account [" << this->toC() << "]";
+		return results;
+	}
+
+	auto localAddress = mParams->mIdentityAddress;
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = getCore()->getChatRooms();
+	for (auto chatRoom : chatRooms) {
+		if (localAddress->weakEqual(*chatRoom->getLocalAddress())) {
+			results.push_back(chatRoom);
+		}
+	}
+	return results;
+}
+
+int Account::getMissedCallsCount() const {
+	return mMissedCalls;
+}
+
+void Account::resetMissedCallsCount() {
+	mMissedCalls = 0;
+}
+
+void Account::setMissedCallsCount(int count) {
+	mMissedCalls = count;
+}
+
+list<shared_ptr<CallLog>> Account::getCallLogs() const {
+	if (!mParams) {
+		lWarning() << "getCallLogs is called but no AccountParams is set on Account [" << this->toC() << "]";
+		list<shared_ptr<CallLog>> callLogs;
+		return callLogs;
+	}
+
+	auto localAddress = mParams->mIdentityAddress;
+	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
+	return mainDb->getCallHistoryForLocalAddress(localAddress, 0);
+}
+
+list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<Address> remoteAddress) const {
+	if (!mParams) {
+		lWarning() << "getCallLogsForAddress is called but no AccountParams is set on Account [" << this->toC() << "]";
+		list<shared_ptr<CallLog>> callLogs;
+		return callLogs;
+	}
+
+	auto localAddress = mParams->mIdentityAddress;
+	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
+	return mainDb->getCallHistory(remoteAddress, localAddress, 0);
+}
+
+void Account::deleteCallLogs() const {
+	if (!mParams) {
+		lWarning() << "deleteCallLogs is called but no AccountParams is set on Account [" << this->toC() << "]";
+		return;
+	}
+
+	auto localAddress = mParams->mIdentityAddress;
+	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
+	mainDb->deleteCallHistoryForLocalAddress(localAddress);
 }
 
 void Account::writeToConfigFile(int index) {

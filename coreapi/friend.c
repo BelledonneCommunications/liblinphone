@@ -702,7 +702,9 @@ void linphone_friend_remove_phone_number_with_label(LinphoneFriend *lf, const Li
 
 LinphoneStatus linphone_friend_set_name(LinphoneFriend *lf, const char *name) {
 	if (linphone_core_vcard_supported()) {
-		if (!lf->vcard) linphone_friend_create_vcard(lf, name);
+		if (!lf->vcard) {
+			linphone_friend_create_vcard(lf, name);
+		}
 		linphone_vcard_set_full_name(lf->vcard, name);
 	} else {
 		if (!lf->uri) {
@@ -1413,10 +1415,24 @@ void linphone_friend_set_vcard(LinphoneFriend *fr, LinphoneVcard *vcard) {
 	if (fr->friend_list) linphone_friend_save(fr, fr->lc);
 }
 
+static void linphone_friend_update_vcard_validation(LinphoneFriend *fr) {
+	if (fr->lc) {
+		bool_t skip = linphone_core_get_friends_database_path(fr->lc) == NULL;
+		if (skip != linphone_vcard_get_skip_validation(fr->vcard)) {
+			if (skip) {
+				ms_warning("Skipping vCard validation");
+			} else {
+				ms_message("vCard validation is enabled");
+			}
+			linphone_vcard_set_skip_validation(fr->vcard, skip);
+		}
+	} else {
+		ms_warning("Friend does not have a Core access");
+	}
+}
+
 bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 	LinphoneVcard *vcard = NULL;
-	LinphoneCore *lc = NULL;
-	bool_t skip = FALSE;
 
 	if (!fr || !name) {
 		ms_error("Can't create vCard for friend [%p] with name [%s]", fr, name);
@@ -1433,14 +1449,7 @@ bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 
 	vcard = linphone_factory_create_vcard(linphone_factory_get());
 
-	lc = fr->lc;
-	if (!lc && fr->friend_list) {
-		lc = fr->friend_list->lc;
-	}
-	if (lc) {
-		skip = !linphone_friend_list_database_storage_enabled(fr->friend_list);
-		linphone_vcard_set_skip_validation(vcard, skip);
-	}
+	linphone_friend_update_vcard_validation(fr);
 	linphone_vcard_set_full_name(vcard, name);
 	linphone_friend_set_vcard(fr, vcard);
 	linphone_vcard_unref(vcard);

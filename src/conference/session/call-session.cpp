@@ -1023,7 +1023,14 @@ void CallSessionPrivate::completeLog() {
 	int duration = log->getConnectedTime() == 0 ? 0 : computeDuration(); /* Store duration since connected */
 	log->setDuration(duration);
 	log->setErrorInfo(linphone_error_info_ref(ei));
-	if (log->getStatus() == LinphoneCallMissed) q->getCore()->getCCore()->missed_calls++;
+	if (log->getStatus() == LinphoneCallMissed) {
+		auto account = getDestAccount();
+		if (account) {
+			account->setMissedCallsCount(account->getMissedCallsCount() + 1);
+		} else {
+			q->getCore()->getCCore()->missed_calls++;
+		}
+	}
 	q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, log, nullptr);
 }
 

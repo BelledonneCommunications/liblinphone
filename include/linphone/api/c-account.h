@@ -251,11 +251,55 @@ LINPHONE_PUBLIC bool_t linphone_account_avpf_enabled(LinphoneAccount *account);
 LINPHONE_PUBLIC const LinphoneAuthInfo *linphone_account_find_auth_info(LinphoneAccount *account);
 
 /**
- * Return the unread chat message count for a given account.
+ * Returns the unread chat message count for a given account.
  * @param account The #LinphoneAccount object. @notnil
  * @return The unread chat message count.
- */
-LINPHONE_PUBLIC int linphone_account_get_unread_chat_message_count(LinphoneAccount *account);
+ **/
+LINPHONE_PUBLIC int linphone_account_get_unread_chat_message_count(const LinphoneAccount *account);
+
+/**
+ * Returns the list of chat rooms for a given account.
+ * @param account The #LinphoneAccount object. @notnil
+ * @return The list of chat rooms \bctbx_list{LinphoneChatRoom}. @tobefreed @maybenil
+ **/
+LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *account);
+
+/**
+ * Returns the missed calls count for a given account.
+ * @param account The #LinphoneAccount object. @notnil
+ * @return The missed calls count.
+ **/
+LINPHONE_PUBLIC int linphone_account_get_missed_calls_count(const LinphoneAccount *account);
+
+/**
+ * Re-sets the number of missed calls for this account to 0.
+ * @param account The #LinphoneAccount object. @notnil
+ **/
+LINPHONE_PUBLIC void linphone_account_reset_missed_calls_count(LinphoneAccount *account);
+
+/**
+ * Returns the list of call logs for a given account.
+ * This list must be freed after use.
+ * @param account The #LinphoneAccount object. @notnil
+ * @return The list of call logs \bctbx_list{LinphoneCallLog}. @tobefreed @maybenil
+ **/
+LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_call_logs(const LinphoneAccount *account);
+
+/**
+ * Returns the list of call logs for a given account.
+ * This list must be freed after use.
+ * @param account The #LinphoneAccount object. @notnil
+ * @param remote_address the #LinphoneAddress object to filter call logs. @notnil
+ * @return The list of filtered call logs \bctbx_list{LinphoneCallLog}. @tobefreed @maybenil
+ **/
+LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_call_logs_for_address(const LinphoneAccount *account,
+                                                                         const LinphoneAddress *remote_address);
+
+/**
+ * Deletes all the call logs related to this account from the database.
+ * @param account The #LinphoneAccount object. @notnil
+ **/
+LINPHONE_PUBLIC void linphone_account_clear_call_logs(const LinphoneAccount *account);
 
 /**
  * Detect if the given input is a phone number or not.

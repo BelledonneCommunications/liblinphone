@@ -1601,7 +1601,9 @@ bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *list) {
 }
 
 bool_t linphone_friend_list_database_storage_enabled(const LinphoneFriendList *list) {
-	if (list == NULL) return FALSE;
+	if (list == NULL) {
+		return FALSE;
+	}
 
 	if (linphone_friend_list_is_subscription_bodyless(list)) {
 		// Do not store list if bodyless subscription is enabled

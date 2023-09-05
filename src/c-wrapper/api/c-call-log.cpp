@@ -356,30 +356,6 @@ int linphone_core_get_call_history_size(LinphoneCore *lc) {
 #endif
 }
 
-bctbx_list_t *linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr) {
-	if (!lc || addr == NULL) return NULL;
-
-#ifdef HAVE_DB_STORAGE
-	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
-	if (!mainDb) return NULL;
-
-	const auto cppAddr = Address::toCpp(const_cast<LinphoneAddress *>(addr))->getSharedFromThis();
-	auto list = mainDb->getCallHistory(cppAddr);
-
-	bctbx_list_t *results = NULL;
-	if (!list.empty()) {
-		for (auto &log : list) {
-			results = bctbx_list_append(results, linphone_call_log_ref(log->toC()));
-		}
-	}
-
-	return results;
-#else
-	bctbx_fatal("This function requires ENABLE_DB_STORAGE in order to work!");
-	return NULL;
-#endif
-}
-
 bctbx_list_t *linphone_core_get_call_history_2(LinphoneCore *lc,
                                                const LinphoneAddress *peer_addr,
                                                const LinphoneAddress *local_addr) {

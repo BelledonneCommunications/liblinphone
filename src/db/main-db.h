@@ -223,11 +223,13 @@ public:
 	std::shared_ptr<CallLog> getCallLog(const std::string &callId, int limit);
 
 	std::list<std::shared_ptr<CallLog>> getCallHistory(int limit = -1);
-	std::list<std::shared_ptr<CallLog>> getCallHistory(const std::shared_ptr<Address> &address, int limit = -1);
+	std::list<std::shared_ptr<CallLog>> getCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress,
+	                                                                  int limit = -1);
 	std::list<std::shared_ptr<CallLog>>
 	getCallHistory(const std::shared_ptr<Address> &peer, const std::shared_ptr<Address> &local, int limit = -1);
 	std::shared_ptr<CallLog> getLastOutgoingCall();
 	void deleteCallHistory();
+	void deleteCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress);
 
 	int getCallHistorySize();
 

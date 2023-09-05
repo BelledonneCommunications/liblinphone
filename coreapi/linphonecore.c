@@ -6316,11 +6316,25 @@ void linphone_core_clear_call_logs(LinphoneCore *lc) {
 }
 
 int linphone_core_get_missed_calls_count(LinphoneCore *lc) {
-	return lc->missed_calls;
+	int missed_calls = lc->missed_calls;
+
+	bctbx_list_t *accounts = (bctbx_list_t *)linphone_core_get_account_list(lc);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		missed_calls += linphone_account_get_missed_calls_count(account);
+	}
+
+	return missed_calls;
 }
 
 void linphone_core_reset_missed_calls_count(LinphoneCore *lc) {
 	lc->missed_calls = 0;
+
+	bctbx_list_t *accounts = (bctbx_list_t *)linphone_core_get_account_list(lc);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		linphone_account_reset_missed_calls_count(account);
+	}
 }
 
 void linphone_core_remove_call_log(LinphoneCore *lc, LinphoneCallLog *cl) {

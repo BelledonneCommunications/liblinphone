@@ -166,9 +166,58 @@ const LinphoneAuthInfo *linphone_account_find_auth_info(LinphoneAccount *account
 	return Account::toCpp(account)->findAuthInfo();
 }
 
-int linphone_account_get_unread_chat_message_count(LinphoneAccount *account) {
+int linphone_account_get_unread_chat_message_count(const LinphoneAccount *account) {
 	AccountLogScope logContextualizer(account);
 	return Account::toCpp(account)->getUnreadChatMessageCount();
+}
+
+bctbx_list_t *linphone_account_get_chat_rooms(const LinphoneAccount *account) {
+	AccountLogScope logContextualizer(account);
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(Account::toCpp(account)->getChatRooms());
+}
+
+int linphone_account_get_missed_calls_count(const LinphoneAccount *account) {
+	AccountLogScope logContextualizer(account);
+	return Account::toCpp(account)->getMissedCallsCount();
+}
+
+void linphone_account_reset_missed_calls_count(LinphoneAccount *account) {
+	AccountLogScope logContextualizer(account);
+	Account::toCpp(account)->resetMissedCallsCount();
+}
+
+bctbx_list_t *linphone_account_get_call_logs(const LinphoneAccount *account) {
+	AccountLogScope logContextualizer(account);
+
+	bctbx_list_t *results = NULL;
+	std::list list = Account::toCpp(account)->getCallLogs();
+	if (!list.empty()) {
+		for (auto &log : list) {
+			results = bctbx_list_append(results, linphone_call_log_ref(log->toC()));
+		}
+	}
+
+	return results;
+}
+
+bctbx_list_t *linphone_account_get_call_logs_for_address(const LinphoneAccount *account,
+                                                         const LinphoneAddress *remote_address) {
+	AccountLogScope logContextualizer(account);
+
+	bctbx_list_t *results = NULL;
+	const auto remote = Address::toCpp(const_cast<LinphoneAddress *>(remote_address))->getSharedFromThis();
+	std::list list = Account::toCpp(account)->getCallLogsForAddress(remote);
+	if (!list.empty()) {
+		for (auto &log : list) {
+			results = bctbx_list_append(results, linphone_call_log_ref(log->toC()));
+		}
+	}
+
+	return results;
+}
+
+void linphone_account_clear_call_logs(const LinphoneAccount *account) {
+	Account::toCpp(account)->deleteCallLogs();
 }
 
 void linphone_account_add_callbacks(LinphoneAccount *account, LinphoneAccountCbs *cbs) {

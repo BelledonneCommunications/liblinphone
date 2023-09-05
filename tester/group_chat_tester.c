@@ -3957,7 +3957,6 @@ static void group_chat_room_migrate_from_basic_chat_room(void) {
 		                             liblinphone_tester_sip_timeout));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 4, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 4, int, "%d");
-
 		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 1, int, "%d");
 		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_chat_rooms(pauline->lc)), 1, int, "%d");
 	}
@@ -7868,7 +7867,7 @@ static void group_chat_loss_of_client_context(void) {
 		_send_message(paulineCr, "Salut");
 	}
 	wait_for_list(coresList, NULL, 0, 2000);
-	BC_ASSERT_TRUE(linphone_core_get_chat_rooms(laure->lc) == NULL);
+	BC_ASSERT_TRUE(linphone_core_get_chat_rooms(marie->lc) == NULL);
 
 	// Now restarts Laure with good db in order to clean the chatroom properly.
 	// Restore old db to Laure and restart it.

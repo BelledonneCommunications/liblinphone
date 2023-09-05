@@ -5442,7 +5442,8 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(int limit) {
 #endif
 }
 
-std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const std::shared_ptr<Address> &address, int limit) {
+std::list<std::shared_ptr<CallLog>> MainDb::getCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress,
+                                                                          int limit) {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, "
 	               "to_sip_address.value, to_sip_address.display_name,"
@@ -5451,12 +5452,12 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory(const std::shared_ptr
 	               " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 	               " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
 	               "conference_call.to_sip_address_id = to_sip_address.id"
-	               "  AND (from_sip_address.value LIKE '%%" +
-	               address->toStringUriOnlyOrdered() +
-	               "%%'"
-	               "  OR to_sip_address.value LIKE '%%" +
-	               address->toStringUriOnlyOrdered() +
-	               "%%')"
+	               "  AND ((from_sip_address.value LIKE '%%" +
+	               localAddress->toStringUriOnlyOrdered() +
+	               "%%' AND direction = 0) OR" // 0 == outgoing
+	               "  (to_sip_address.value LIKE '%%" +
+	               localAddress->toStringUriOnlyOrdered() +
+	               "%%' AND direction = 1))" // 1 == incoming
 	               " ORDER BY conference_call.id DESC";
 
 	if (limit > 0) query += " LIMIT " + to_string(limit);
@@ -5498,10 +5499,10 @@ MainDb::getCallHistory(const std::shared_ptr<Address> &peer, const std::shared_p
 	    "conference_call.to_sip_address_id = to_sip_address.id"
 	    "  AND ((from_sip_address.value LIKE '%%" +
 	    local->toStringUriOnlyOrdered() + "%%' AND to_sip_address.value LIKE '%%" + peer->toStringUriOnlyOrdered() +
-	    "%%' AND direction = 0) OR"
+	    "%%' AND direction = 0) OR" // 0 == outgoing
 	    "  (from_sip_address.value LIKE '%%" +
 	    peer->toStringUriOnlyOrdered() + "%%' AND to_sip_address.value LIKE '%%" + local->toStringUriOnlyOrdered() +
-	    "%%' AND DIRECTION = 1))"
+	    "%%' AND direction = 1))" // 1 == incoming
 	    " ORDER BY conference_call.id DESC";
 
 	if (limit > 0) query += " LIMIT " + to_string(limit);
@@ -5539,7 +5540,7 @@ std::shared_ptr<CallLog> MainDb::getLastOutgoingCall() {
 	                            " FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 	                            " WHERE conference_call.from_sip_address_id = from_sip_address.id AND "
 	                            "conference_call.to_sip_address_id = to_sip_address.id"
-	                            "  AND direction = 0 AND conference_info_id IS NULL"
+	                            "  AND direction = 0 AND conference_info_id IS NULL" // 0 == outgoing
 	                            " ORDER BY conference_call.id DESC LIMIT 1";
 
 	DurationLogger durationLogger("Get last outgoing call.");
@@ -5575,6 +5576,25 @@ void MainDb::deleteCallHistory() {
 		soci::session *session = d->dbSession.getBackendSession();
 
 		*session << "DELETE FROM conference_call";
+
+		tr.commit();
+	};
+#endif
+}
+
+void MainDb::deleteCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		const long long &sipAddressId = d->selectSipAddressId(localAddress->toStringUriOnlyOrdered());
+
+		*session << "DELETE FROM conference_call WHERE"
+		            " ((from_sip_address_id = :sipAddressId  AND direction = 0) OR" // 0 == outgoing
+		            " (to_sip_address_id = :sipAddressId AND direction = 1))",      // 1 == incoming
+		    soci::use(sipAddressId);
 
 		tr.commit();
 	};

@@ -610,6 +610,8 @@ static void lime_x3dh_message_test(bool_t with_composing, bool_t with_response, 
 	BC_ASSERT_TRUE(linphone_chat_room_is_empty(paulineCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 0, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(pauline->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(pauline->lc)), 0,
+	                int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(pauline->lc), 0, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(
 	                    pauline->lc, linphone_chat_room_get_local_address(paulineCr)),
@@ -628,6 +630,8 @@ static void lime_x3dh_message_test(bool_t with_composing, bool_t with_response, 
 	BC_ASSERT_FALSE(linphone_chat_room_is_empty(paulineCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(pauline->lc), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(pauline->lc)), 1,
+	                int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(pauline->lc), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(
 	                    pauline->lc, linphone_chat_room_get_local_address(paulineCr)),
@@ -797,8 +801,12 @@ static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const int 
 	BC_ASSERT_FALSE(linphone_chat_room_is_empty(paulineOneToOneCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marieOneToOneCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(marie->lc), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(marie->lc)), 0,
+	                int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(laureOneToOneCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(laure->lc), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(laure->lc)), 0,
+	                int, "%d");
 
 	sal_set_send_error(linphone_core_get_sal(pauline->lc), -1);
 	// Pauline is offline and tries to send a chat message
