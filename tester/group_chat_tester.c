@@ -7867,7 +7867,7 @@ static void group_chat_loss_of_client_context(void) {
 		_send_message(paulineCr, "Salut");
 	}
 	wait_for_list(coresList, NULL, 0, 2000);
-	BC_ASSERT_TRUE(linphone_core_get_chat_rooms(marie->lc) == NULL);
+	BC_ASSERT_TRUE(linphone_core_get_chat_rooms(laure->lc) == NULL);
 
 	// Now restarts Laure with good db in order to clean the chatroom properly.
 	// Restore old db to Laure and restart it.

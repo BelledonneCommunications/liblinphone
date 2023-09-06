@@ -801,11 +801,11 @@ static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const int 
 	BC_ASSERT_FALSE(linphone_chat_room_is_empty(paulineOneToOneCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marieOneToOneCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(marie->lc), 1, int, "%d");
-	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(marie->lc)), 0,
+	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(marie->lc)), 1,
 	                int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(laureOneToOneCr), 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(laure->lc), 1, int, "%d");
-	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(laure->lc)), 0,
+	BC_ASSERT_EQUAL(linphone_account_get_unread_chat_message_count(linphone_core_get_default_account(laure->lc)), 1,
 	                int, "%d");
 
 	sal_set_send_error(linphone_core_get_sal(pauline->lc), -1);
