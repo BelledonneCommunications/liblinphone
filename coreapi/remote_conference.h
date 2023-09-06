@@ -61,6 +61,7 @@ public:
 	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) override;
 	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) override;
+	virtual bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
@@ -171,6 +172,7 @@ protected:
 private:
 	virtual const std::shared_ptr<CallSession> getMainSession() const override;
 	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const override;
+	void updateAndSaveConferenceInformations();
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();

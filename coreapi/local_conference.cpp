@@ -1353,6 +1353,13 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 }
 
 bool LocalConference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
+	auto participantInfo = Factory::get()->createParticipantInfo(participantAddress);
+	// Participants invited after the start of a conference through the address can only listen to it
+	participantInfo->setRole(Participant::Role::Listener);
+	return addParticipant(participantInfo);
+}
+
+bool LocalConference::addParticipant(const std::shared_ptr<ParticipantInfo> &info) {
 #if 0
 	if (!isConferenceEnded() && isConferenceStarted()) {
 #endif
@@ -1361,14 +1368,14 @@ bool LocalConference::addParticipant(const std::shared_ptr<Address> &participant
 	    (initialState == ConferenceInterface::State::Created)) {
 
 		const auto allowedAddresses = getAllowedAddresses();
+		const auto &participantAddress = info->getAddress();
 		auto p =
 		    std::find_if(allowedAddresses.begin(), allowedAddresses.end(), [&participantAddress](const auto &address) {
 			    return (participantAddress->weakEqual(*address));
 		    });
 		if (p == allowedAddresses.end()) {
-			// Participants invited after the start of a conference can only listen to it
-			auto participantInfo = Factory::get()->createParticipantInfo(participantAddress);
-			participantInfo->setRole(Participant::Role::Listener);
+			auto participantInfo = info->clone()->toSharedPtr();
+			participantInfo->setSequenceNumber(-1);
 			mInvitedParticipants.push_back(participantInfo);
 		}
 

@@ -231,6 +231,19 @@ void Conference::fillParticipantAttributes(std::shared_ptr<Participant> &p) {
 			           "therefoe participant "
 			        << *pAddress << " is given the role of " << p->getRole();
 		} else {
+			const bool isThereAListener =
+			    std::find_if(mInvitedParticipants.cbegin(), mInvitedParticipants.cend(), [](const auto &info) {
+				    return (info->getRole() == Participant::Role::Listener);
+			    }) != mInvitedParticipants.cend();
+
+			Participant::Role role = Participant::Role::Unknown;
+			if (isThereAListener) {
+				role = Participant::Role::Listener;
+			} else {
+				role = Participant::Role::Speaker;
+			}
+			p->setRole(role);
+
 			lInfo() << "Unable to find participant " << *pAddress
 			        << " in the list of invited participants. Assuming its role to be " << p->getRole()
 			        << " in conference " << this << " (address " << conferenceAddressStr << ")";
@@ -246,6 +259,11 @@ void Conference::fillParticipantAttributes(std::shared_ptr<Participant> &p) {
 			p->setRole(role);
 		}
 	}
+}
+
+bool Conference::addParticipant(BCTBX_UNUSED(const std::shared_ptr<ParticipantInfo> &info)) {
+	lError() << "Conference class does not handle addParticipant() generically";
+	return false;
 }
 
 bool Conference::addParticipant(const std::shared_ptr<Address> &participantAddress) {

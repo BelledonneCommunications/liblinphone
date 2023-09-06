@@ -54,6 +54,7 @@ public:
 	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
+	virtual bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
 	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;

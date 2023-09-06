@@ -100,6 +100,7 @@ public:
 	                            const LinphoneCallParams *params) = 0;
 	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) = 0;
 	virtual bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
+	virtual bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 

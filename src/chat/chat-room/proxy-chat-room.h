@@ -134,6 +134,7 @@ public:
 
 	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
 	bool addParticipant(std::shared_ptr<Call> call) override;
+	bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override;
 	bool addParticipants(const std::list<std::shared_ptr<Address>> &addresses) override;
 	bool isMe(const std::shared_ptr<Address> &address) const override;
 

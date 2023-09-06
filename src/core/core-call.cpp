@@ -342,7 +342,6 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
                                      std::shared_ptr<CallLog> &callLog,
                                      std::shared_ptr<ConferenceInfo> confInfo) {
 	std::shared_ptr<Address> to = callLog->getToAddress() ? callLog->getToAddress() : nullptr;
-	// TODO: This is a workaround that has to be removed ASAP
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
@@ -354,6 +353,7 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 	}
 #endif
 
+	// TODO: This is a workaround that has to be removed ASAP
 	// Add all calls that have been into a conference to the call logs of the core. The if below is required for calls
 	// that have been merged in a conference. In fact, in such a scenario, the client that merges calls to put them in a
 	// conference will call the conference factory or the audio video conference factory directly but still its call

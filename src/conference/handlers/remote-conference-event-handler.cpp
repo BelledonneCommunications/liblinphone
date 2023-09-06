@@ -274,7 +274,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				auto securityLevelString = cryptoSecurityLevel.getLevel();
 				auto securityLevel = ConferenceParams::getSecurityLevelFromAttribute(securityLevelString);
 				conf->confParams->setSecurityLevel(securityLevel);
-				conf->updateSecurityLevelInConferenceInfo(securityLevel);
 			}
 		}
 	}

@@ -380,7 +380,8 @@ void create_conference_base(time_t start_time,
                             bool_t do_not_use_proxy,
                             LinphoneMediaDirection video_direction,
                             bool_t network_restart,
-                            LinphoneConferenceSecurityLevel security_level);
+                            LinphoneConferenceSecurityLevel security_level,
+                            bool_t all_speakers);
 
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,

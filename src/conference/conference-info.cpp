@@ -123,9 +123,9 @@ void ConferenceInfo::addParticipant(const std::shared_ptr<const ParticipantInfo>
 			newInfo = participantInfo->clone()->toSharedPtr();
 		}
 		mParticipants.push_back(newInfo);
-		lInfo() << "Participant with address " << *address << " has been added to conference info " << this
-		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
-		        << ") with role " << newInfo->getRole();
+		lDebug() << "Participant with address " << *address << "has been added to conference info " << this
+		         << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>"))
+		         << ") with role " << newInfo->getRole();
 	} else {
 		lInfo() << "Participant with address " << *address << " is already in the list of conference info " << this
 		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
@@ -144,8 +144,8 @@ void ConferenceInfo::removeParticipant(const std::shared_ptr<const ParticipantIn
 void ConferenceInfo::removeParticipant(const std::shared_ptr<const Address> &participant) {
 	auto it = findParticipantIt(participant);
 	if (it == mParticipants.cend()) {
-		lInfo() << "Unable to remove participant with address " << *participant << " in conference info " << this
-		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
+		lDebug() << "Unable to remove participant with address " << *participant << " in conference info " << this
+		         << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";
 	} else {
 		lInfo() << "Participant with address " << *participant << " has been removed from conference info " << this
 		        << " (address " << (getUri() ? getUri()->toString() : std::string("<unknown address>")) << ")";

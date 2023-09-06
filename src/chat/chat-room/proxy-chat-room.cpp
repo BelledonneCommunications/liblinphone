@@ -313,6 +313,11 @@ bool ProxyChatRoom::canHandleMultipart() const {
 	return d->chatRoom->canHandleMultipart();
 }
 
+bool ProxyChatRoom::addParticipant(const std::shared_ptr<ParticipantInfo> &info) {
+	L_D();
+	return d->chatRoom->addParticipant(info);
+};
+
 bool ProxyChatRoom::addParticipant(std::shared_ptr<Call> call) {
 	L_D();
 	return d->chatRoom->addParticipant(call);

@@ -1108,8 +1108,9 @@ static void refer_received(SalOp *op, const SalAddress *refer_to) {
 					}
 				} else {
 					if (!participant) {
-						bool ret = static_pointer_cast<MediaConference::LocalConference>(conference)
-						               ->addParticipant(referAddr);
+						auto participantInfo = Factory::get()->createParticipantInfo(referAddr);
+						participantInfo->setRole(Participant::Role::Speaker);
+						bool ret = conference->addParticipant(participantInfo);
 						static_cast<SalReferOp *>(op)->reply(ret ? SalReasonNone : SalReasonNotAcceptable);
 						return;
 					}

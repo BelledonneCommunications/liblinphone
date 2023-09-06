@@ -165,10 +165,18 @@ public:
 	/*
 	 * Same as function addParticipant(const std::shared_ptr<Address> &participantAddress), except that call to add is
 	 * passed by the user application.
-	 * @param[in] call to be added tot he conference.
+	 * @param[in] call to be added to the conference.
 	 * @return True if everything is OK, False otherwise
 	 */
 	virtual bool addParticipant(std::shared_ptr<Call> call) = 0;
+
+	/*
+	 * Same as function addParticipant(const std::shared_ptr<Address> &participantAddress), except the participant
+	 * information to add is passed by the user application.
+	 * @param[in] participant information to be added to the conference.
+	 * @return True if everything is OK, False otherwise
+	 */
+	virtual bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) = 0;
 
 	/*
 	 * Add several participants at once.

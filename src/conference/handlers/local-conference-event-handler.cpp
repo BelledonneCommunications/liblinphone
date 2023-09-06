@@ -1197,7 +1197,9 @@ void LocalConferenceEventHandler::onParticipantSetAdmin(const std::shared_ptr<Co
 void LocalConferenceEventHandler::onSubjectChanged(const std::shared_ptr<ConferenceSubjectEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(makeContent(createNotifySubjectChanged(event->getSubject())));
+		const auto &subject = event->getSubject();
+		conf->updateSubjectInConferenceInfo(subject);
+		notifyAll(makeContent(createNotifySubjectChanged(subject)));
 		if (conf) {
 			shared_ptr<Core> core = conf->getCore();
 			std::shared_ptr<Address> conferenceAddress = conf->getConferenceAddress();

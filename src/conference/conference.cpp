@@ -86,6 +86,11 @@ void Conference::clearParticipants() {
 
 // -----------------------------------------------------------------------------
 
+bool Conference::addParticipant(BCTBX_UNUSED(const std::shared_ptr<ParticipantInfo> &info)) {
+	lError() << "Conference class does not handle addParticipant() generically";
+	return false;
+}
+
 bool Conference::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
 	lError() << "Conference class does not handle addParticipant() generically";
 	return false;
@@ -282,7 +287,6 @@ void Conference::setUtf8Subject(const string &subject) {
 
 void Conference::setSubject(const string &subject) {
 	confParams->setSubject(subject);
-	updateSubjectInConferenceInfo(subject);
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent>

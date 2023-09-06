@@ -69,6 +69,10 @@ public:
 	int getHistorySize() const override;
 
 	bool addParticipant(const std::shared_ptr<Address> &participantAddress) override;
+	bool addParticipant(const std::shared_ptr<ParticipantInfo> &info) override {
+		return getConference()->addParticipant(info);
+	};
+
 	bool addParticipant(std::shared_ptr<Call> call) override {
 		return getConference()->addParticipant(call);
 	};

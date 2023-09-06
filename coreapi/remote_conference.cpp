@@ -165,6 +165,28 @@ void RemoteConference::finalizeCreation() {
 	}
 }
 
+void RemoteConference::updateAndSaveConferenceInformations() {
+	const auto conferenceInfo = getUpdatedConferenceInfo();
+	long long conferenceInfoId = -1;
+
+#ifdef HAVE_DB_STORAGE
+	// Store into DB after the start incoming notification in order to have a valid conference address being the contact
+	// address of the call
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		lInfo() << "Inserting or updating conference information to database related to conference "
+		        << *getConferenceAddress();
+		conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
+	}
+#endif // HAVE_DB_STORAGE
+
+	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
+	if (callLog) {
+		callLog->setConferenceInfo(conferenceInfo);
+		callLog->setConferenceInfoId(conferenceInfoId);
+	}
+}
+
 std::shared_ptr<ConferenceInfo> RemoteConference::createConferenceInfo() const {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
@@ -376,6 +398,11 @@ bool RemoteConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Cal
 	}
 
 	return success;
+}
+
+bool RemoteConference::addParticipant(BCTBX_UNUSED(const std::shared_ptr<ParticipantInfo> &info)) {
+	lError() << "addParticipant() with a participant info is not allowed on a RemoteConference";
+	return false;
 }
 
 bool RemoteConference::addParticipant(const std::shared_ptr<Address> &participantAddress) {
@@ -1271,22 +1298,12 @@ void RemoteConference::onParticipantAdded(const shared_ptr<ConferenceParticipant
                                           const std::shared_ptr<Participant> &participant) {
 	const std::shared_ptr<Address> &pAddr = event->getParticipantAddress();
 
+	lInfo() << "Updating conference information of conference " << *getConferenceAddress()
+	        << " because the core has been notified that participat " << *participant->getAddress()
+	        << " has been added";
 	// When receiving a participant added notification, we must recreate the conference informations in order to get the
 	// participant list up to date
-	const auto conferenceInfo = getUpdatedConferenceInfo();
-	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
-	if (callLog) {
-		callLog->setConferenceInfo(conferenceInfo);
-	}
-
-#ifdef HAVE_DB_STORAGE
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	if (mainDb) {
-		lInfo() << "Updating conference information of conference " << *getConferenceAddress()
-		        << " because participant " << *pAddr << " has been added to the conference";
-		mainDb->insertConferenceInfo(conferenceInfo);
-	}
-#endif // HAVE_DB_STORAGE
+	updateAndSaveConferenceInformations();
 
 	if (isMe(pAddr)) {
 		if (getState() == ConferenceInterface::State::CreationPending) {
@@ -1319,36 +1336,22 @@ void RemoteConference::onParticipantAdded(const shared_ptr<ConferenceParticipant
 }
 
 void RemoteConference::onSubjectChanged(BCTBX_UNUSED(const std::shared_ptr<ConferenceSubjectEvent> &event)) {
-	const auto conferenceInfo = createOrGetConferenceInfo();
-	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
-	if (callLog) {
-		callLog->setConferenceInfo(conferenceInfo);
-	}
+	lInfo() << "Updating conference information of conference " << *getConferenceAddress()
+	        << " because the core has been notified that the subject has been changed to " << getSubject();
+	updateAndSaveConferenceInformations();
 }
 
 void RemoteConference::onParticipantSetRole(BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantEvent> &event),
-                                            BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
-
-	updateParticipantRoleInConferenceInfo(participant);
-	const auto conferenceInfo = createOrGetConferenceInfo();
-	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
-	if (callLog) {
-		callLog->setConferenceInfo(conferenceInfo);
-	}
+                                            const std::shared_ptr<Participant> &participant) {
+	lInfo() << "Updating conference information of conference " << *getConferenceAddress()
+	        << " because the core has been notified that participat " << *participant->getAddress()
+	        << " has changed its role to " << participant->getRole();
+	updateAndSaveConferenceInformations();
 }
 
 void RemoteConference::onParticipantRemoved(const shared_ptr<ConferenceParticipantEvent> &event,
                                             BCTBX_UNUSED(const std::shared_ptr<Participant> &participant)) {
 	const std::shared_ptr<Address> &pAddr = event->getParticipantAddress();
-
-	// When receiving a participant removed notification, we must recreate the conference informations in order to get
-	// the security level and the participant list up to date
-	const auto conferenceInfo = createOrGetConferenceInfo();
-	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
-	if (callLog) {
-		callLog->setConferenceInfo(conferenceInfo);
-	}
-
 	if (isMe(pAddr)) {
 		lInfo() << "Unsubscribing all devices of me (address " << *pAddr << ") from conference "
 		        << *getConferenceAddress();
@@ -1477,24 +1480,7 @@ void RemoteConference::onParticipantDeviceMediaAvailabilityChanged(
 void RemoteConference::onFullStateReceived() {
 	// When receiving a full state, we must recreate the conference informations in order to get the security level and
 	// the participant list up to date
-	const auto conferenceInfo = getUpdatedConferenceInfo();
-	long long conferenceInfoId = -1;
-
-#ifdef HAVE_DB_STORAGE
-	// Store into DB after the start incoming notification in order to have a valid conference address being the contact
-	// address of the call
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	if (mainDb) {
-		lInfo() << "Inserting conference information to database related to conference " << *getConferenceAddress();
-		conferenceInfoId = mainDb->insertConferenceInfo(conferenceInfo);
-	}
-#endif // HAVE_DB_STORAGE
-
-	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
-	if (callLog) {
-		callLog->setConferenceInfo(conferenceInfo);
-		callLog->setConferenceInfoId(conferenceInfoId);
-	}
+	updateAndSaveConferenceInformations();
 
 	auto requestStreams = [this]() -> LinphoneStatus {
 		lInfo() << "Sending re-INVITE in order to get streams after joining conference " << *getConferenceAddress();

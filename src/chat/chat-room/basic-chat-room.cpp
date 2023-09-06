@@ -105,6 +105,11 @@ const std::shared_ptr<Address> &BasicChatRoom::getConferenceAddress() const {
 	return Utils::getEmptyConstRefObject<std::shared_ptr<Address>>();
 }
 
+bool BasicChatRoom::addParticipant(BCTBX_UNUSED(const std::shared_ptr<ParticipantInfo> &info)) {
+	lError() << "addParticipant() is not allowed on a BasicChatRoom";
+	return false;
+}
+
 bool BasicChatRoom::addParticipant(BCTBX_UNUSED(std::shared_ptr<Call> call)) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
 	return false;
