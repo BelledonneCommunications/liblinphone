@@ -65,7 +65,8 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode,
 		LinphoneCall *pauline_call, *marie_call;
 		LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(pauline->lc);
 		LinphoneAddress *server_addr = linphone_address_new(linphone_proxy_config_get_server_addr(proxy));
-		LinphoneAddress *route = linphone_address_new(linphone_proxy_config_get_route(proxy));
+		const char *route_str = linphone_proxy_config_get_route(proxy);
+		LinphoneAddress *route = linphone_address_new(route_str);
 		LinphoneTunnel *tunnel = NULL;
 		char tunnel_ip[64];
 		char *public_ip = NULL, *public_ip2 = NULL;

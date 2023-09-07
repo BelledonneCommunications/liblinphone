@@ -318,7 +318,9 @@ static void _simple_call_transfer(bool_t transferee_is_default_account) {
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneTransferCallConnected, 1, 2000));
 
-	BC_ASSERT_STRING_EQUAL(linphone_call_get_remote_address_as_string(laure_call), marie_identity);
+	char *remote_address_str = linphone_call_get_remote_address_as_string(laure_call);
+	BC_ASSERT_STRING_EQUAL(remote_address_str, marie_identity);
+	ms_free(remote_address_str);
 
 	// terminate marie to pauline call
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 2000));
@@ -702,14 +704,13 @@ void stop_ringing_when_accepting_call_while_holding_another(bool_t activate_ice)
 	core_list = bctbx_list_append(core_list, laure->lc);
 
 	// Enable ICE
-	enable_stun_in_core(marie, TRUE, activate_ice);
-	enable_stun_in_core(pauline, TRUE, activate_ice);
-	enable_stun_in_core(laure, TRUE, activate_ice);
-	if (activate_ice) {
-		linphone_core_manager_wait_for_stun_resolution(marie);
-		linphone_core_manager_wait_for_stun_resolution(pauline);
-		linphone_core_manager_wait_for_stun_resolution(laure);
-	}
+	// TODO: allow disabling ice or STUN at the core level and enabling in the account
+	// enable_stun_in_mgr(marie, TRUE, activate_ice, TRUE, TRUE);
+	// enable_stun_in_mgr(pauline, TRUE, activate_ice, TRUE, TRUE);
+	// enable_stun_in_mgr(laure, TRUE, activate_ice, TRUE, TRUE);
+	enable_stun_in_mgr(marie, TRUE, activate_ice, TRUE, activate_ice);
+	enable_stun_in_mgr(pauline, TRUE, activate_ice, TRUE, activate_ice);
+	enable_stun_in_mgr(laure, TRUE, activate_ice, TRUE, activate_ice);
 
 	// Marie calls Pauline
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc, pauline->identity, marie_params));

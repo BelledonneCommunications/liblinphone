@@ -708,24 +708,21 @@ AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel(const
 	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
 }
 
-list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters() {
-	// Get proxy config
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(getCore()->getCCore());
-	if (!proxy) {
-		lWarning() << "[LIME] No proxy config available, unable to setup identity key for ZRTP auxiliary shared secret";
+list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(const std::shared_ptr<Account> &account) {
+	// Sanity checks on the account
+	if (!account) {
+		lWarning() << "[LIME] No account available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 
 	// Get local device Id from local contact address
-	const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
+	const auto &contactAddress = account->getContactAddress();
 	if (!contactAddress) {
 		lWarning()
 		    << "[LIME] No contactAddress available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
-	std::shared_ptr<Address> identityAddress =
-	    Address::toCpp(const_cast<LinphoneAddress *>(contactAddress))->getSharedFromThis();
-	string localDeviceId = identityAddress->asStringUriOnly();
+	string localDeviceId = contactAddress->asStringUriOnly();
 	vector<uint8_t> Ik;
 
 	try {

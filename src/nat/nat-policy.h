@@ -34,6 +34,8 @@ public:
 	NatPolicy(const NatPolicy &other);
 	~NatPolicy();
 
+	virtual NatPolicy *clone() const override;
+
 	void setStunServer(const std::string &stunServer);
 	const std::string &getStunServer() const;
 

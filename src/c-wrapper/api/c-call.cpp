@@ -299,6 +299,12 @@ const char *linphone_call_get_remote_user_agent(LinphoneCall *call) {
 	return L_STRING_TO_C(Call::toCpp(call)->getRemoteUserAgent());
 }
 
+const LinphoneAddress *linphone_call_get_remote_contact_address(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
+	const auto &remoteContactAddress = Call::toCpp(call)->getRemoteContactAddress();
+	return remoteContactAddress ? remoteContactAddress->toC() : nullptr;
+}
+
 const char *linphone_call_get_remote_contact(LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	return L_STRING_TO_C(Call::toCpp(call)->getRemoteContact());
@@ -695,10 +701,10 @@ LinphoneCall *linphone_call_new_outgoing(LinphoneCore *lc,
                                          const LinphoneAddress *from,
                                          const LinphoneAddress *to,
                                          const LinphoneCallParams *params,
-                                         LinphoneProxyConfig *cfg) {
+                                         LinphoneAccount *account) {
 	LinphoneCall *lcall = Call::createCObject(
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing, Address::toCpp(from)->getSharedFromThis(),
-	    Address::toCpp(to)->getSharedFromThis(), cfg ? Account::toCpp(cfg->account)->getSharedFromThis() : nullptr,
+	    Address::toCpp(to)->getSharedFromThis(), account ? Account::toCpp(account)->getSharedFromThis() : nullptr,
 	    nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
 
 	return lcall;

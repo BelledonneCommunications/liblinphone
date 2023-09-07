@@ -868,8 +868,9 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionSRTP);
 			}
 
-			enable_stun_in_core(mgr, TRUE, TRUE);
-			linphone_core_manager_wait_for_stun_resolution(mgr);
+			// TODO: allow disabling ice or STUN at the core level and enabling in the account
+			// enable_stun_in_mgr(mgr, TRUE, TRUE, TRUE, FALSE);
+			enable_stun_in_mgr(mgr, TRUE, TRUE, TRUE, TRUE);
 
 			if ((organizer_codec_mismatch && (mgr == marie.getCMgr())) ||
 			    (!organizer_codec_mismatch && (mgr == michelle.getCMgr()))) {
@@ -2076,8 +2077,7 @@ static void change_active_speaker(void) {
 				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
 			}
 
-			enable_stun_in_core(mgr, TRUE, FALSE);
-			linphone_core_manager_wait_for_stun_resolution(mgr);
+			enable_stun_in_mgr(mgr, TRUE, FALSE, TRUE, FALSE);
 
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}

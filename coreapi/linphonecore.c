@@ -4481,16 +4481,6 @@ const char *linphone_core_get_identity(LinphoneCore *lc) {
 	return from;
 }
 
-const char *linphone_core_get_route(LinphoneCore *lc) {
-	CoreLogContextualizer logContextualizer(lc);
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
-	const char *route = NULL;
-	if (proxy != NULL) {
-		route = linphone_proxy_config_get_route(proxy);
-	}
-	return route;
-}
-
 LinphoneCall *
 linphone_core_start_refered_call(BCTBX_UNUSED(LinphoneCore *lc), LinphoneCall *call, const LinphoneCallParams *params) {
 	shared_ptr<LinphonePrivate::Call> referredCall =
@@ -4528,7 +4518,6 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		}
 		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
-	bctbx_list_free_with_data((bctbx_list_t *)proxy_routes, (bctbx_list_free_func)bctbx_free);
 	if (srv_route) {
 		const auto srv_route_addr = LinphonePrivate::Address::toCpp(srv_route)->getSharedFromThis();
 		ret = bctbx_list_append(ret, sal_address_clone(srv_route_addr->getImpl()));
@@ -4706,30 +4695,41 @@ linphone_core_lookup_known_account_2(LinphoneCore *lc, const LinphoneAddress *ur
 	LinphoneAccount *found_acc = NULL;
 	LinphoneAccount *found_reg_acc = NULL;
 	LinphoneAccount *found_noreg_acc = NULL;
+	LinphoneAccount *found_acc_domain_match = NULL;
+	LinphoneAccount *found_reg_acc_domain_match = NULL;
+	LinphoneAccount *found_noreg_acc_domain_match = NULL;
 	LinphoneAccount *default_acc = lc->default_account;
 
 	if (!uri) {
 		ms_error("Cannot look for account for NULL uri, returning default");
 		return default_acc;
 	}
-	if (linphone_address_get_domain(uri) == NULL) {
+	const char *uri_domain = linphone_address_get_domain(uri);
+	if (uri_domain == NULL) {
 		ms_message("Cannot look for account for uri [%p] that has no domain set, returning default", uri);
 		return default_acc;
 	}
+
 	/*return default account if it is matching the destination uri*/
 	if (default_acc) {
-		const char *domain = linphone_account_params_get_domain(linphone_account_get_params(default_acc));
-		if (domain && !strcmp(domain, linphone_address_get_domain(uri))) {
+		const LinphoneAddress *identity_address =
+		    linphone_account_params_get_identity_address(linphone_account_get_params(default_acc));
+		if (linphone_address_weak_equal(identity_address, uri)) {
 			found_acc = default_acc;
 			goto end;
+		}
+		const char *domain = linphone_account_params_get_domain(linphone_account_get_params(default_acc));
+		if (domain && !strcmp(domain, uri_domain)) {
+			found_acc_domain_match = default_acc;
 		}
 	}
 
 	/*otherwise return first registered, then first registering matching, otherwise first matching */
 	for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = elem->next) {
 		LinphoneAccount *acc = (LinphoneAccount *)elem->data;
-		const char *domain = linphone_account_params_get_domain(linphone_account_get_params(acc));
-		if (domain != NULL && strcmp(domain, linphone_address_get_domain(uri)) == 0) {
+		const LinphoneAddress *identity_address =
+		    linphone_account_params_get_identity_address(linphone_account_get_params(acc));
+		if (linphone_address_weak_equal(identity_address, uri)) {
 			if (linphone_account_get_state(acc) == LinphoneRegistrationOk) {
 				found_acc = acc;
 				break;
@@ -4740,16 +4740,38 @@ linphone_core_lookup_known_account_2(LinphoneCore *lc, const LinphoneAddress *ur
 				found_noreg_acc = acc;
 			}
 		}
+		const char *domain = linphone_account_params_get_domain(linphone_account_get_params(acc));
+		if (domain && !strcmp(domain, uri_domain)) {
+			if (!found_acc_domain_match && linphone_account_get_state(acc) == LinphoneRegistrationOk) {
+				found_acc_domain_match = acc;
+			} else if (!found_reg_acc_domain_match &&
+			           linphone_account_params_get_register_enabled(linphone_account_get_params(acc))) {
+				found_reg_acc_domain_match = acc;
+			} else if (!found_noreg_acc_domain_match) {
+				found_noreg_acc_domain_match = acc;
+			}
+		}
 	}
 end:
+	// ============ Choose the the most appropriate account =====================
+	// Check first if there is an account whose identity address matches the uri passed as argument to this function.
+	// Then try to guess an account based on the same domain as the address passed as argument to this function
+
+	// Account matched by identity address comparison
 	if (!found_acc && found_reg_acc) found_acc = found_reg_acc;
 	else if (!found_acc && found_noreg_acc) found_acc = found_noreg_acc;
 
+	// Default account fallback
 	if (found_acc && found_acc != default_acc) {
 		ms_debug("Overriding default account setting for this call/message/subscribe operation.");
 	} else if (fallback_to_default && !found_acc) {
 		found_acc = default_acc; /*when no matching account is found, use the default account*/
 	}
+
+	// Account matched by identity address domain comparison
+	if (!found_acc && found_acc_domain_match) found_acc = found_acc_domain_match;
+	else if (!found_acc && found_reg_acc_domain_match) found_acc = found_reg_acc_domain_match;
+	else if (!found_acc && found_noreg_acc_domain_match) found_acc = found_noreg_acc_domain_match;
 	return found_acc;
 }
 
@@ -4939,7 +4961,8 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
                                                          const LinphoneContent *content) {
 	CoreLogContextualizer logContextualizer(lc);
 	const char *from = NULL;
-	LinphoneProxyConfig *proxy = NULL;
+	LinphoneAccount *account = NULL;
+	LinphoneAddress *temp_url = NULL;
 	LinphoneAddress *parsed_url2 = NULL;
 	LinphoneCall *call;
 	LinphoneCallParams *cp;
@@ -4964,15 +4987,49 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall()) return NULL;
 
-	proxy = linphone_call_params_get_proxy_config(params);
-	if (proxy == NULL) proxy = linphone_core_lookup_known_proxy(lc, addr);
+	// ============= ACCOUNT ====================
+	// Try to retrieve the account from the call params
+	account = linphone_call_params_get_account(params);
+
+	// ============= FROM ====================
+	// Try to retrieve the from header from the call params
+	from = linphone_call_params_get_from_header(params);
+
+	// If no account is found, then look up for one either using either the from or the to address
+	if (account == NULL) {
+		temp_url = from ? linphone_address_new(from) : linphone_address_clone(addr);
+		account = linphone_core_lookup_known_account(lc, temp_url);
+		if (account && !from) {
+			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+			from = linphone_account_params_get_identity(account_params);
+		}
+		linphone_address_unref(temp_url);
+	}
+
+	// If variable is still NULL, then the SDK has to make a decision because one is dependent from
+	// the other one. In such a scenario, it is assumed that the application wishes to use the default account
+	if (account == NULL) account = linphone_core_get_default_account(lc);
+
+	// If an account has been found earlier on either because it has been set in the call params or it is the default
+	// one or it has been deduced thanks to the from or to addresses, then get the from address if not already set in
+	// the call params
+	if ((from == NULL) && (account != NULL)) {
+		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+		from = linphone_account_params_get_identity(account_params);
+	}
+
+	/* if no account or no identity defined for this account, default to primary contact*/
+	if (from == NULL) from = linphone_core_get_primary_contact(lc);
+
+	parsed_url2 = linphone_address_new(from);
 
 	cp = _linphone_call_params_copy(params);
 	if (!linphone_call_params_has_avpf_enabled_been_set(cp)) {
-		if (proxy != NULL) {
-			linphone_call_params_enable_avpf(cp, linphone_proxy_config_avpf_enabled(proxy));
+		if (account != NULL) {
+			linphone_call_params_enable_avpf(cp, linphone_account_is_avpf_enabled(account));
+			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 			linphone_call_params_set_avpf_rr_interval(
-			    cp, (uint16_t)(linphone_proxy_config_get_avpf_rr_interval(proxy) * 1000));
+			    cp, (uint16_t)(linphone_account_params_get_avpf_rr_interval(account_params) * 1000));
 		} else {
 			linphone_call_params_enable_avpf(cp, linphone_core_get_avpf_mode(lc) == LinphoneAVPFEnabled);
 			if (linphone_call_params_avpf_enabled(cp))
@@ -4981,15 +5038,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 		}
 	}
 
-	// first check if the call params holds a from
-	from = linphone_call_params_get_from_header(params);
-
-	if ((from == NULL) && (proxy != NULL)) from = linphone_proxy_config_get_identity(proxy);
-	/* if no proxy or no identity defined for this proxy, default to primary contact*/
-	if (from == NULL) from = linphone_core_get_primary_contact(lc);
-
-	parsed_url2 = linphone_address_new(from);
-	call = linphone_call_new_outgoing(lc, parsed_url2, addr, cp, proxy);
+	call = linphone_call_new_outgoing(lc, parsed_url2, addr, cp, account);
 	linphone_address_unref(parsed_url2);
 
 	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->addCall(Call::toCpp(call)->getSharedFromThis()) != 0) {
@@ -5220,7 +5269,7 @@ LinphoneCall *linphone_core_find_call_from_uri(const LinphoneCore *lc, const cha
 
 LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *raddr) {
 	CoreLogContextualizer logContextualizer(lc);
-	const auto remote_addr = LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(raddr))->getSharedFromThis();
+	const auto remote_addr = LinphonePrivate::Address::toCpp(raddr)->getSharedFromThis();
 	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByRemoteAddress(remote_addr);
 	return call ? call->toC() : NULL;
 }

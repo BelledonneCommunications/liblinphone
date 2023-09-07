@@ -131,7 +131,8 @@ public:
 	getSecurityLevel(BCTBX_UNUSED(const std::list<std::string> &deviceIds)) const {
 		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
-	virtual std::list<EncryptionParameter> getEncryptionParameters() {
+	virtual std::list<EncryptionParameter>
+	getEncryptionParameters(BCTBX_UNUSED(const std::shared_ptr<Account> &account)) {
 		return std::list<EncryptionParameter>();
 	}
 

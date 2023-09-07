@@ -268,6 +268,13 @@ LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_call_get_error_info(const Linp
 LINPHONE_PUBLIC const char *linphone_call_get_remote_user_agent(LinphoneCall *call);
 
 /**
+ * Returns the far end's sip contact as an address, if available.
+ * @param call #LinphoneCall object. @notnil
+ * @return the remote contact as a #LinphoneAddress or NULL. @maybenil
+ **/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_remote_contact_address(LinphoneCall *call);
+
+/**
  * Returns the far end's sip contact as a string, if available.
  * @param call #LinphoneCall object. @notnil
  * @return the remote contact or NULL. @maybenil

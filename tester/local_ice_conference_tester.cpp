@@ -121,8 +121,12 @@ static void abort_call_to_ice_conference(void) {
 				linphone_core_set_default_conference_layout(mgr->lc, layout);
 			}
 
-			enable_stun_in_core(mgr, TRUE, TRUE);
-			linphone_core_manager_wait_for_stun_resolution(mgr);
+			const bctbx_list_t *accounts = linphone_core_get_account_list(mgr->lc);
+			for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+				LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+				enable_stun_in_account(mgr, account, TRUE, TRUE);
+			}
+			enable_stun_in_mgr(mgr, TRUE, TRUE, TRUE, TRUE);
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
 

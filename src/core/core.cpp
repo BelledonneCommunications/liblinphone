@@ -1787,23 +1787,19 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	std::shared_ptr<Address> meCleanedAddress = Address::create(localAddr->getUriWithoutGruu());
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
 	const auto destAccount = session->getPrivate()->getDestAccount();
-	const LinphoneNatPolicy *natPolicy = nullptr;
+	std::shared_ptr<NatPolicy> natPolicy = nullptr;
 	if (destAccount) {
 		const auto accountParams = destAccount->getAccountParams();
-		const auto &cppNatPolicy = accountParams->getNatPolicy();
-		if (cppNatPolicy) {
-			natPolicy = cppNatPolicy->toC();
-		}
+		natPolicy = accountParams->getNatPolicy();
 	}
 	if (!natPolicy) {
-		natPolicy = linphone_core_get_nat_policy(getCCore());
+		natPolicy = NatPolicy::toCpp(linphone_core_get_nat_policy(getCCore()))->getSharedFromThis();
 	}
 	if (natPolicy) {
-		LinphoneNatPolicy *newNatPolicy = linphone_nat_policy_clone(natPolicy);
+		auto newNatPolicy = natPolicy->clone()->toSharedPtr();
 		// remove stun server asynchronous gathering, we don't actually need it and it looses some time.
-		linphone_nat_policy_enable_stun(newNatPolicy, false);
+		newNatPolicy->enableStun(false);
 		session->setNatPolicy(newNatPolicy);
-		linphone_nat_policy_unref(newNatPolicy);
 	}
 	session->initiateOutgoing();
 	session->startInvite(nullptr, confParams->getSubject(), nullptr);

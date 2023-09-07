@@ -68,7 +68,7 @@ LinphoneCall *linphone_call_new_outgoing(struct _LinphoneCore *lc,
                                          const LinphoneAddress *from,
                                          const LinphoneAddress *to,
                                          const LinphoneCallParams *params,
-                                         LinphoneProxyConfig *cfg);
+                                         LinphoneAccount *account);
 LinphoneCall *linphone_call_new_incoming(struct _LinphoneCore *lc,
                                          const LinphoneAddress *from,
                                          const LinphoneAddress *to,

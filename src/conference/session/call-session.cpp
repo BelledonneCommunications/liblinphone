@@ -1326,23 +1326,7 @@ void CallSession::configure(LinphoneCallDir direction,
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 	}
 
-	d->setDestAccount(account);
-	if (!d->getDestAccount()) {
-		/* Try to define the destination account if it has not already been done to have a correct contact field in the
-		 * SIP messages */
-		const LinphoneAddress *toAddr = to->toC();
-		auto cAccount = (direction == LinphoneCallIncoming)
-		                    ? linphone_core_lookup_account_by_identity_strict(core, toAddr)
-		                    : linphone_core_lookup_account_by_identity(core, toAddr);
-		if (!cAccount && linphone_core_conference_server_enabled(core)) {
-			// In the case of a server, clients may call the conference factory in order to create a conference
-			cAccount = linphone_core_lookup_account_by_conference_factory_strict(core, toAddr);
-		}
-		if (cAccount) {
-			const auto account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
-			d->setDestAccount(account);
-		}
-	}
+	assignAccount(account);
 }
 
 void CallSession::configure(LinphoneCallDir direction, const string &callid) {
@@ -1353,6 +1337,30 @@ void CallSession::configure(LinphoneCallDir direction, const string &callid) {
 	const auto anonymous = Address::create("Anonymous <sip:anonymous@anonymous.invalid>");
 	d->log = CallLog::create(getCore(), direction, anonymous, anonymous);
 	d->log->setCallId(callid);
+}
+
+void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
+	L_D();
+	d->setDestAccount(account);
+	if (!d->getDestAccount()) {
+		/* Try to define the destination account if it has not already been done to have a correct contact field in the
+		 * SIP messages */
+		const LinphoneAddress *toAddr = d->log->getToAddress()->toC();
+		const LinphoneAddress *fromAddr = d->log->getFromAddress()->toC();
+		const auto &core = getCore()->getCCore();
+		const auto &direction = d->log->getDirection();
+		auto cAccount = (direction == LinphoneCallIncoming)
+		                    ? linphone_core_lookup_account_by_identity_strict(core, toAddr)
+		                    : linphone_core_lookup_account_by_identity(core, fromAddr);
+		if (!cAccount && linphone_core_conference_server_enabled(core)) {
+			// In the case of a server, clients may call the conference factory in order to create a conference
+			cAccount = linphone_core_lookup_account_by_conference_factory_strict(core, toAddr);
+		}
+		if (cAccount) {
+			const auto account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
+			d->setDestAccount(account);
+		}
+	}
 }
 
 bool CallSession::isOpConfigured() {
@@ -1775,7 +1783,7 @@ const string &CallSession::getReferTo() const {
 	return Utils::getEmptyConstRefObject<string>();
 }
 
-const std::shared_ptr<Address> &CallSession::getReferToAddress() const {
+const std::shared_ptr<Address> CallSession::getReferToAddress() const {
 	L_D();
 	return d->referToAddress;
 }
@@ -1798,15 +1806,18 @@ const std::shared_ptr<Address> CallSession::getRemoteContactAddress() const {
 	L_D();
 	auto op = d->op;
 	if (!op) {
-		return nullptr;
+		d->mRemoteContactAddress = nullptr;
+		return d->mRemoteContactAddress;
 	}
 	auto salRemoteContactAddress = op->getRemoteContactAddress();
 	if (!salRemoteContactAddress) {
-		return nullptr;
+		d->mRemoteContactAddress = nullptr;
+		return d->mRemoteContactAddress;
 	}
 	std::shared_ptr<Address> remoteContactAddress = Address::create();
 	remoteContactAddress->setImpl(salRemoteContactAddress);
-	return remoteContactAddress;
+	d->mRemoteContactAddress = remoteContactAddress;
+	return d->mRemoteContactAddress;
 }
 
 const CallSessionParams *CallSession::getRemoteParams() {

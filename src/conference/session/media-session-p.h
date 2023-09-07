@@ -115,7 +115,7 @@ public:
 	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys() const;
 
 	const LinphoneStreamInternalStats *getStreamInternalStats(LinphoneStreamType type) const;
-	LinphoneNatPolicy *getNatPolicy() const {
+	const std::shared_ptr<NatPolicy> getNatPolicy() const {
 		return natPolicy;
 	}
 
@@ -360,7 +360,7 @@ private:
 
 	mutable LinphoneMediaEncryption negotiatedEncryption = LinphoneMediaEncryptionNone;
 
-	LinphoneNatPolicy *natPolicy = nullptr;
+	std::shared_ptr<NatPolicy> natPolicy = nullptr;
 	std::unique_ptr<StunClient> stunClient;
 
 	std::queue<std::function<LinphoneStatus()>> iceDeferedGatheringTasks;

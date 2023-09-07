@@ -256,7 +256,7 @@ void MediaSessionPrivate::accepted() {
 				 * is complicated and confusing from a signaling standpoint, ICE we will skip the STUN gathering by not
 				 * giving enough time for the gathering step. Only local candidates will be answered in the ACK.
 				 */
-				if (linphone_nat_policy_ice_enabled(natPolicy)) {
+				if (natPolicy && natPolicy->iceEnabled()) {
 					if (getStreamsGroup().prepare()) {
 						lWarning() << "Some gathering is needed for ICE, however since a defered sending of ACK is not "
 						              "supported"
@@ -875,6 +875,9 @@ void MediaSessionPrivate::setCurrentParams(MediaSessionParams *msp) {
 void MediaSessionPrivate::setParams(MediaSessionParams *msp) {
 	if (params) delete params;
 	params = msp;
+	// Pass the account used for the call to the local parameters.
+	// It has been chosen at the start and it should not be changed anymore
+	params->setAccount(getDestAccount());
 }
 
 void MediaSessionPrivate::setRemoteParams(MediaSessionParams *msp) {
@@ -1292,32 +1295,33 @@ int MediaSessionPrivate::portFromStreamIndex(int index) {
  */
 void MediaSessionPrivate::runStunTestsIfNeeded() {
 	L_Q();
-	if (linphone_nat_policy_stun_enabled(natPolicy) &&
-	    !(linphone_nat_policy_ice_enabled(natPolicy) || linphone_nat_policy_turn_enabled(natPolicy))) {
-		stunClient = makeUnique<StunClient>(q->getCore());
+	if (natPolicy && natPolicy->stunEnabled() && !(natPolicy->iceEnabled() || natPolicy->turnEnabled()) && op) {
 		const std::shared_ptr<SalMediaDescription> &md = localIsOfferer ? localDesc : op->getRemoteMediaDescription();
-		const auto audioStreamIndex = md->findIdxBestStream(SalAudio);
-		int audioPort = portFromStreamIndex(audioStreamIndex);
+		if (md) {
+			const auto audioStreamIndex = md->findIdxBestStream(SalAudio);
+			int audioPort = portFromStreamIndex(audioStreamIndex);
 
-		std::shared_ptr<MediaConference::Conference> conference =
-		    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
-		bool isConferenceLayoutActiveSpeaker = false;
-		if (conference) {
-			bool isInLocalConference = getParams()->getPrivate()->getInConference();
-			const auto &confLayout = isInLocalConference ? getRemoteParams()->getConferenceVideoLayout()
-			                                             : getParams()->getConferenceVideoLayout();
-			isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+			std::shared_ptr<MediaConference::Conference> conference =
+			    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
+			bool isConferenceLayoutActiveSpeaker = false;
+			if (conference) {
+				bool isInLocalConference = getParams()->getPrivate()->getInConference();
+				const auto &confLayout = isInLocalConference ? getRemoteParams()->getConferenceVideoLayout()
+				                                             : getParams()->getConferenceVideoLayout();
+				isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+			}
+			const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker
+			                                     ? MediaSessionPrivate::ActiveSpeakerVideoContentAttribute
+			                                     : MediaSessionPrivate::GridVideoContentAttribute;
+			const auto videoStreamIndex =
+			    conference ? md->findIdxStreamWithContent(mainStreamAttrValue) : md->findIdxBestStream(SalVideo);
+			int videoPort = portFromStreamIndex(videoStreamIndex);
+			const auto textStreamIndex = md->findIdxBestStream(SalText);
+			int textPort = portFromStreamIndex(textStreamIndex);
+			stunClient = makeUnique<StunClient>(q->getCore());
+			int ret = stunClient->run(audioPort, videoPort, textPort);
+			if (ret >= 0) pingTime = ret;
 		}
-		const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker
-		                                     ? MediaSessionPrivate::ActiveSpeakerVideoContentAttribute
-		                                     : MediaSessionPrivate::GridVideoContentAttribute;
-		const auto videoStreamIndex =
-		    conference ? md->findIdxStreamWithContent(mainStreamAttrValue) : md->findIdxBestStream(SalVideo);
-		int videoPort = portFromStreamIndex(videoStreamIndex);
-		const auto textStreamIndex = md->findIdxBestStream(SalText);
-		int textPort = portFromStreamIndex(textStreamIndex);
-		int ret = stunClient->run(audioPort, videoPort, textPort);
-		if (ret >= 0) pingTime = ret;
 	}
 }
 
@@ -2726,7 +2730,7 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters(std::shared_ptr<SalM
 	auto encryptionEngine = q->getCore()->getEncryptionEngine();
 	if (!encryptionEngine) return;
 
-	list<EncryptionParameter> paramList = encryptionEngine->getEncryptionParameters();
+	list<EncryptionParameter> paramList = encryptionEngine->getEncryptionParameters(getDestAccount());
 
 	// Loop over IM Encryption Engine parameters and append them to the SDP
 	for (const auto &[name, value] : paramList) {
@@ -3885,7 +3889,7 @@ LinphoneStatus MediaSessionPrivate::accept(const MediaSessionParams *msp, BCTBX_
 		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
 		return startAccept();
 	};
-	if (linphone_nat_policy_ice_enabled(natPolicy) && getStreamsGroup().prepare()) {
+	if (natPolicy && natPolicy->iceEnabled() && getStreamsGroup().prepare()) {
 		queueIceGatheringTask(acceptCompletionTask);
 		return 0; /* Deferred until completion of ICE gathering */
 	}
@@ -3932,7 +3936,7 @@ MediaSessionPrivate::acceptUpdate(const CallSessionParams *csp, CallSession::Sta
 		return 0;
 	};
 
-	if (linphone_nat_policy_ice_enabled(natPolicy) && getStreamsGroup().prepare()) {
+	if (natPolicy && natPolicy->iceEnabled() && getStreamsGroup().prepare()) {
 		lInfo() << "Acceptance of incoming reINVITE is deferred to ICE gathering completion.";
 		queueIceGatheringTask(acceptCompletionTask);
 		return 0; /* Deferred until completion of ICE gathering */
@@ -4043,11 +4047,11 @@ void MediaSessionPrivate::stunAuthRequestedCb(const char *realm,
 		}
 	}
 	if (!stunAccount) return;
-	const char *user = nullptr;
+	const char *user = NULL;
 	const auto &accountParams = stunAccount->getAccountParams();
 	const auto &proxyNatPolicy = accountParams->getNatPolicy();
 	if (proxyNatPolicy) user = L_STRING_TO_C(proxyNatPolicy->getStunServerUsername());
-	else if (natPolicy) user = linphone_nat_policy_get_stun_server_username(natPolicy);
+	else if (natPolicy) user = L_STRING_TO_C(natPolicy->getStunServerUsername());
 	if (!user) {
 		/* If the username has not been found in the nat_policy, take the username from the currently used proxy config
 		 */
@@ -4100,7 +4104,6 @@ MediaSession::~MediaSession() {
 	L_D();
 	cancelDtmfs();
 	d->freeResources();
-	if (d->natPolicy) linphone_nat_policy_unref(d->natPolicy);
 }
 
 // -----------------------------------------------------------------------------
@@ -4192,14 +4195,8 @@ void MediaSession::cancelDtmfs() {
 	d->dtmfSequence.clear();
 }
 
-void MediaSession::setNatPolicy(LinphoneNatPolicy *pol) {
+void MediaSession::setNatPolicy(const std::shared_ptr<NatPolicy> &pol) {
 	L_D();
-	if (pol) {
-		linphone_nat_policy_ref(pol);
-	}
-	if (d->natPolicy) {
-		linphone_nat_policy_unref(d->natPolicy);
-	}
 	d->natPolicy = pol;
 }
 
@@ -4219,32 +4216,10 @@ void MediaSession::configure(LinphoneCallDir direction,
 
 	CallSession::configure(direction, account, op, from, to);
 
-	const auto &accountParams = account ? account->getAccountParams() : nullptr;
-	if (!d->natPolicy) {
-		if (accountParams) {
-			const auto accountNatPolicy = accountParams->getNatPolicy();
-			if (accountNatPolicy) {
-				d->natPolicy = accountNatPolicy->toC();
-			}
-		}
-		if (!d->natPolicy) d->natPolicy = linphone_core_get_nat_policy(getCore()->getCCore());
-		linphone_nat_policy_ref(d->natPolicy);
-	}
-
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
 		isOfferer = makeLocalDescription = !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		remote = to->clone()->toSharedPtr();
-		/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
-		 * Then the value is stored and later updated into MediaSessionParams. */
-		bool rtpBundleEnabled = false;
-		if (accountParams) {
-			rtpBundleEnabled = accountParams->rtpBundleEnabled();
-		} else {
-			lInfo() << "No account set for this call, using rtp bundle enablement from LinphoneCore.";
-			rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
-		}
-		d->getParams()->enableRtpBundle(rtpBundleEnabled);
 	} else if (direction == LinphoneCallIncoming) {
 		d->selectIncomingIpVersion();
 		/* Note that the choice of IP version for streams is later refined by setCompatibleIncomingCallParams() when
@@ -4260,15 +4235,45 @@ void MediaSession::configure(LinphoneCallDir direction,
 		 * in fixCallParams() */
 	}
 
+	assignAccount(account);
+	// At this point, the account is set if found
+	const auto &selectedAccount = d->params->getAccount();
+	const auto &accountParams = selectedAccount ? selectedAccount->getAccountParams() : nullptr;
+
+	if (direction == LinphoneCallOutgoing) {
+		/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
+		 * Then the value is stored and later updated into MediaSessionParams. */
+		bool rtpBundleEnabled = false;
+		if (accountParams) {
+			rtpBundleEnabled = accountParams->rtpBundleEnabled();
+		} else {
+			lInfo() << "No account set for this call, using rtp bundle enablement from LinphoneCore.";
+			rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
+		}
+		d->getParams()->enableRtpBundle(rtpBundleEnabled);
+	}
+
 	lInfo() << "Rtp bundle is " << (d->getParams()->rtpBundleEnabled() ? "enabled." : "disabled.");
+
+	if (!d->natPolicy) {
+		if (accountParams) {
+			const auto accountNatPolicy = accountParams->getNatPolicy();
+			if (accountNatPolicy) {
+				d->natPolicy = accountNatPolicy;
+			}
+		}
+		if (!d->natPolicy) {
+			d->natPolicy = NatPolicy::toCpp(linphone_core_get_nat_policy(getCore()->getCCore()))->getSharedFromThis();
+		}
+	}
+
+	if (d->natPolicy) d->runStunTestsIfNeeded();
+	d->discoverMtu(remote);
 
 	if (makeLocalDescription) {
 		/* Do not make a local media description when sending an empty INVITE. */
 		d->makeLocalMediaDescription(isOfferer, isCapabilityNegotiationEnabled(), false);
 	}
-
-	if (d->natPolicy) d->runStunTestsIfNeeded();
-	d->discoverMtu(remote);
 }
 
 LinphoneStatus MediaSession::deferUpdate() {
@@ -4290,27 +4295,25 @@ void MediaSession::initiateIncoming() {
 	L_D();
 	CallSession::initiateIncoming();
 
-	if (d->natPolicy) {
-		if (linphone_nat_policy_ice_enabled(d->natPolicy)) {
-			d->deferIncomingNotification = d->getStreamsGroup().prepare();
-			/*
-			 * If ICE gathering is done, we can update the local media description immediately.
-			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
-			 */
-			if (d->deferIncomingNotification) {
-				auto incomingNotificationTask = [d]() {
-					/* There is risk that the call can be terminated before this task is executed, for example if
-					 * offer/answer fails.*/
-					if (d->state != State::Idle && d->state != State::PushIncomingReceived) return 0;
-					d->deferIncomingNotification = false;
-					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-					d->startIncomingNotification();
-					return 0;
-				};
-				d->queueIceGatheringTask(incomingNotificationTask);
-			} else {
+	if (d->natPolicy && d->natPolicy->iceEnabled()) {
+		d->deferIncomingNotification = d->getStreamsGroup().prepare();
+		/*
+		 * If ICE gathering is done, we can update the local media description immediately.
+		 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
+		 */
+		if (d->deferIncomingNotification) {
+			auto incomingNotificationTask = [d]() {
+				/* There is risk that the call can be terminated before this task is executed, for example if
+				 * offer/answer fails.*/
+				if (d->state != State::Idle && d->state != State::PushIncomingReceived) return 0;
+				d->deferIncomingNotification = false;
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-			}
+				d->startIncomingNotification();
+				return 0;
+			};
+			d->queueIceGatheringTask(incomingNotificationTask);
+		} else {
+			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 		}
 	}
 }
@@ -4319,7 +4322,7 @@ bool MediaSession::initiateOutgoing(const string &subject, const Content *conten
 	L_D();
 	bool defer = CallSession::initiateOutgoing(subject, content);
 
-	if (linphone_nat_policy_ice_enabled(d->natPolicy)) {
+	if (d->natPolicy && d->natPolicy->iceEnabled()) {
 		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
 			lWarning() << "ICE is not supported when sending INVITE without SDP";
 		else {
@@ -4461,7 +4464,7 @@ LinphoneStatus MediaSession::resume() {
 		};
 
 		const auto preparingStreams = d->getStreamsGroup().prepare();
-		if (linphone_nat_policy_ice_enabled(d->natPolicy) && preparingStreams) {
+		if (d->natPolicy && d->natPolicy->iceEnabled() && preparingStreams) {
 			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress()->toString()
 			        << " remote address " << getRemoteAddress()->toString() << ") resume to gather ICE candidates";
 			d->queueIceGatheringTask(updateCompletionTask);
@@ -4840,7 +4843,7 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 
 		const auto preparingStreams = d->getStreamsGroup().prepare();
 		// reINVITE sent after full state must be sent after ICE negotiations are completed if ICE is enabled
-		if (linphone_nat_policy_ice_enabled(d->natPolicy) && preparingStreams) {
+		if (d->natPolicy && d->natPolicy->iceEnabled() && preparingStreams) {
 			lInfo() << "Defer CallSession " << this << " (local address " << *getLocalAddress() << " remote address "
 			        << *getRemoteAddress() << ") update to gather ICE candidates";
 			d->queueIceGatheringTask(updateCompletionTask);

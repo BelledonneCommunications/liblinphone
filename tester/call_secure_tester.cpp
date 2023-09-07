@@ -1659,15 +1659,8 @@ static void _dtls_srtp_audio_call_with_rtcp_mux(bool_t rtcp_mux_not_accepted) {
 	setup_dtls_srtp(marie, pauline);
 	{
 		/*enable ICE on both ends*/
-		LinphoneNatPolicy *pol;
-		pol = linphone_core_get_nat_policy(marie->lc);
-		linphone_nat_policy_enable_ice(pol, TRUE);
-		linphone_nat_policy_enable_stun(pol, TRUE);
-		linphone_core_set_nat_policy(marie->lc, pol);
-		pol = linphone_core_get_nat_policy(pauline->lc);
-		linphone_nat_policy_enable_ice(pol, TRUE);
-		linphone_nat_policy_enable_stun(pol, TRUE);
-		linphone_core_set_nat_policy(pauline->lc, pol);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+		enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 	}
 
 	BC_ASSERT_TRUE(call(marie, pauline));

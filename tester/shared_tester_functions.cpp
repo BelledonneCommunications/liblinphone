@@ -39,6 +39,41 @@ using namespace std;
 
 using namespace LinphonePrivate;
 
+void check_lime_ik(LinphoneCoreManager *mgr, LinphoneCall *call) {
+
+	if (!linphone_core_lime_x3dh_enabled(mgr->lc)) {
+		return;
+	}
+
+	// Do not check Ik if database is encrypted
+	if (is_filepath_encrypted(mgr->lime_database_path)) {
+		return;
+	}
+	const LinphoneCallParams *call_parameters = linphone_call_get_params(call);
+	LinphoneAccount *call_account = linphone_call_params_get_account(call_parameters);
+	BC_ASSERT_PTR_NOT_NULL(call_account);
+	char *refIk = NULL;
+	if (call_account) {
+		const LinphoneAccountParams *call_account_params = linphone_account_get_params(call_account);
+		const char *lime_server_url = linphone_account_params_get_lime_server_url(call_account_params);
+		bool_t lime_server_found = (lime_server_url != NULL);
+		if (!lime_server_found) return;
+		const LinphoneAddress *call_account_contact = linphone_account_get_contact_address(call_account);
+		char *call_account_contact_str = linphone_address_as_string_uri_only(call_account_contact);
+		refIk = lime_get_userIk(mgr, call_account_contact_str);
+		BC_ASSERT_PTR_NOT_NULL(refIk);
+		ms_free(call_account_contact_str);
+
+		SalMediaDescription *desc = _linphone_call_get_local_desc(call);
+		belle_sdp_session_description_t *sdp = desc->toSdp();
+		const char *ik = belle_sdp_session_description_get_attribute_value(sdp, "Ik");
+		BC_ASSERT_PTR_NOT_NULL(ik);
+		BC_ASSERT_PTR_NOT_NULL(refIk);
+		if (refIk && ik) BC_ASSERT_STRING_EQUAL(refIk, ik);
+		if (refIk) ms_free(refIk);
+	}
+}
+
 static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStreamType stream_type) {
 	MediaStream *ms;
 	LinphoneCallStats *stats;

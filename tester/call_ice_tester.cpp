@@ -103,12 +103,12 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	enable_stun_in_core(pauline, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(pauline);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 
 	if (callee_has_ice) {
-		enable_stun_in_core(marie, TRUE, TRUE);
-		linphone_core_manager_wait_for_stun_resolution(marie);
+		// TODO: allow disabling ice or STUN at the core level and enabling in the account
+		// enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
 	}
 
 	pauline_call = linphone_core_invite_address(pauline->lc, marie->identity);
@@ -178,10 +178,8 @@ static void audio_call_with_ice_no_matching_audio_codecs(void) {
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1),
 	                                  TRUE); /* Enable PCMA */
 
-	enable_stun_in_core(marie, TRUE, TRUE);
-	enable_stun_in_core(pauline, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(marie);
-	linphone_core_manager_wait_for_stun_resolution(pauline);
+	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, FALSE, FALSE);
 
 	out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	linphone_call_ref(out_call);
@@ -331,11 +329,12 @@ static void _call_with_ice_with_default_candidate(bool_t dont_default_to_stun_ca
 	                        dont_default_to_stun_candidates);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", (int)with_ipv6_prefered);
 
-	enable_stun_in_core(marie, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(marie);
+	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 
-	enable_stun_in_core(pauline, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(pauline);
+	// TODO: allow disabling ice or STUN at the core level and enabling in the account
+	// enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
+	// enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, FALSE);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
@@ -422,20 +421,45 @@ static void call_with_ice_stun_not_responding(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
+	bctbx_list_t *mgrList = NULL;
+	mgrList = bctbx_list_append(mgrList, marie);
+	mgrList = bctbx_list_append(mgrList, pauline);
+
+	for (const bctbx_list_t *mgr_it = mgrList; mgr_it != NULL; mgr_it = mgr_it->next) {
+		LinphoneCoreManager *mgr = (LinphoneCoreManager *)(bctbx_list_get_data(mgr_it));
+		linphone_core_set_stun_server(mgr->lc, NULL);
+		const bctbx_list_t *accounts = linphone_core_get_account_list(mgr->lc);
+		for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+			LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+			LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+			linphone_account_params_set_nat_policy(new_account_params, NULL); // Force to use core policy
+			linphone_account_set_params(account, new_account_params);
+			linphone_account_params_unref(new_account_params);
+		}
+	}
+
+	const char *stun_server = "belledonne-communications.com:443";
+
 	/*set dummy stun servers*/
-	linphone_core_set_stun_server(marie->lc, "belledonne-communications.com:443");
-	linphone_core_set_stun_server(pauline->lc, "belledonne-communications.com:443");
+	linphone_core_set_stun_server(marie->lc, stun_server);
+	linphone_core_set_stun_server(pauline->lc, stun_server);
+
 	/*we expect ICE to continue without stun candidates*/
 	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, FALSE);
 
 	/*retry but with nat policy instead of core */
-	linphone_core_set_stun_server(marie->lc, NULL);
-	linphone_core_set_stun_server(pauline->lc, NULL);
-	linphone_nat_policy_set_stun_server(linphone_core_get_nat_policy(marie->lc), "belledonne-communications.com:443");
-	linphone_nat_policy_set_stun_server(linphone_core_get_nat_policy(pauline->lc), "belledonne-communications.com:443");
+	for (const bctbx_list_t *mgr_it = mgrList; mgr_it != NULL; mgr_it = mgr_it->next) {
+		LinphoneCoreManager *mgr = (LinphoneCoreManager *)(bctbx_list_get_data(mgr_it));
+		linphone_core_set_stun_server(mgr->lc, NULL);
+		linphone_nat_policy_set_stun_server(linphone_core_get_nat_policy(mgr->lc), "belledonne-communications.com:443");
+	}
+
 	/*we expect ICE to continue without stun candidates*/
 	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, FALSE);
 	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, TRUE);
+
+	bctbx_list_free(mgrList);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -535,11 +559,8 @@ static void call_with_ice_no_sdp(void) {
 
 	linphone_core_enable_sdp_200_ack(pauline->lc, TRUE);
 
-	enable_stun_in_core(marie, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(marie);
-
-	enable_stun_in_core(pauline, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(pauline);
+	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, FALSE);
 
 	BC_ASSERT_TRUE(call(pauline, marie));
 
@@ -583,11 +604,8 @@ static void ice_added_by_reinvite(void) {
 	liblinphone_tester_check_rtcp(marie, pauline);
 
 	/*enable ICE on both ends*/
-	enable_stun_in_core(marie, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(marie);
-
-	enable_stun_in_core(pauline, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(pauline);
+	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 
 	c = linphone_core_get_current_call(marie->lc);
 	params = linphone_core_create_call_params(marie->lc, c);
@@ -762,11 +780,8 @@ static void call_terminated_during_ice_reinvite(void) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *pauline_call, *marie_call;
 
-	enable_stun_in_core(marie, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(marie);
-
-	enable_stun_in_core(pauline, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(pauline);
+	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
@@ -805,19 +820,27 @@ static void call_with_ice_and_dual_stack_stun_server(void) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bctbx_list_t *local_addresses = linphone_fetch_local_addresses();
 	LinphoneCall *pauline_call, *marie_call;
-	LinphoneNatPolicy *pol;
 
-	pol = linphone_core_get_nat_policy(marie->lc);
+	LinphoneNatPolicy *pol = linphone_core_get_nat_policy(marie->lc);
 	pol = linphone_nat_policy_clone(pol);
 	linphone_nat_policy_set_stun_server(pol, "sip.example.org"); /* this host has ipv4 and ipv6 address.*/
 	linphone_nat_policy_enable_stun(pol, TRUE);
 	linphone_nat_policy_enable_ice(pol, TRUE);
 	linphone_core_set_nat_policy(marie->lc, pol);
 	linphone_nat_policy_unref(pol);
+
+	const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
+	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+		LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+		linphone_account_params_set_nat_policy(new_account_params, NULL);
+		linphone_account_set_params(account, new_account_params);
+		linphone_account_params_unref(new_account_params);
+	}
 	linphone_core_manager_wait_for_stun_resolution(marie);
 
-	enable_stun_in_core(pauline, TRUE, TRUE);
-	linphone_core_manager_wait_for_stun_resolution(pauline);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
@@ -879,8 +902,28 @@ static void srtp_ice_call_to_no_encryption(void) {
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 
+	// Marie and Pauline use the Nat Policy stored in the core
+	const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
+	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+		LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+		linphone_account_params_set_nat_policy(new_account_params, NULL);
+		linphone_account_set_params(account, new_account_params);
+		linphone_account_params_unref(new_account_params);
+	}
 	enable_stun_in_core(marie, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
+
+	accounts = linphone_core_get_account_list(pauline->lc);
+	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+		LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+		linphone_account_params_set_nat_policy(new_account_params, NULL);
+		linphone_account_set_params(account, new_account_params);
+		linphone_account_params_unref(new_account_params);
+	}
 	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 

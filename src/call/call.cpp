@@ -1142,7 +1142,7 @@ const string &Call::getReferTo() const {
 	return getActiveSession()->getReferTo();
 }
 
-const std::shared_ptr<Address> &Call::getReferToAddress() const {
+const std::shared_ptr<Address> Call::getReferToAddress() const {
 	return getActiveSession()->getReferToAddress();
 }
 

@@ -18,19 +18,36 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <array>
 #include <exception>
 #include <string>
+#include <vector>
 
+#include <bctoolbox/crypto.h>
 #include <bctoolbox/utils.hh>
+#include <bctoolbox/vfs_encrypted.hh>
 #include <belr/grammarbuilder.h>
 
 #ifdef HAVE_SOCI
-#include <soci/backend-loader.h>
 #include <soci/soci.h>
-#endif
+#endif // HAVE_SOCI
 
 #include "liblinphone_tester.h"
 #include "logger/logger.h"
+
+#ifdef HAVE_LIME_X3DH
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
+#endif // HAVE_LIME_X3DH
+
+bool is_filepath_encrypted(const char *filepath) {
+	bool ret = false;
+	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filepath, "r");
+	if (fp != NULL) {
+		ret = (bctbx_file_is_encrypted(fp) == TRUE);
+		bctbx_file_close(fp);
+	}
+	return ret;
+}
 
 /* */
 #ifndef _MSC_VER
@@ -44,7 +61,7 @@ void lime_delete_DRSessions(const char *limedb) {
 		// Delete all sessions from the DR_sessions table
 		sql << "DELETE FROM DR_sessions;";
 	} catch (std::exception &e) { // swallow any error on DB
-		lWarning() << "Cannot delete DRSessions in base " << limedb << ". Error is " << e.what();
+		lWarning() << "Cannot delete DRSessions in database " << limedb << ". Error is " << e.what();
 	}
 #endif
 }
@@ -56,7 +73,8 @@ void lime_setback_usersUpdateTs(const char *limedb, int days) {
 		// Set back in time the users updateTs by the given number of days
 		sql << "UPDATE Lime_LocalUsers SET updateTs = date (updateTs, '-" << days << " day');";
 	} catch (std::exception &e) { // swallow any error on DB
-		lWarning() << "Cannot setback in time the lime users update ts on base " << limedb << ". Error is " << e.what();
+		lWarning() << "Cannot setback in time the lime users update ts on database " << limedb << ". Error is "
+		           << e.what();
 	}
 #endif
 }
@@ -68,8 +86,38 @@ uint64_t lime_get_userUpdateTs(const char *limedb) {
 		// get the users updateTs in unixepoch form - we may have more than one, just return the first one
 		sql << "SELECT strftime('%s', updateTs) as t FROM Lime_LocalUsers LIMIT 1;", soci::into(ret);
 	} catch (std::exception &e) { // swallow any error on DB
-		lWarning() << "Cannot fetch the lime users update ts on base " << limedb << ". Error is " << e.what();
+		lWarning() << "Cannot fetch the lime users update ts on database " << limedb << ". Error is " << e.what();
 	}
+#endif
+	return ret;
+}
+
+char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu) {
+	char *ret = NULL;
+#ifdef HAVE_SOCI
+#ifdef HAVE_LIME_X3DH
+	const char *limedb = mgr->lime_database_path;
+	try {
+		soci::session sql("sqlite3", limedb); // open the DB
+		soci::blob ik_blob(sql);
+		const std::string userGruu(gruu);
+		sql << "SELECT Ik FROM Lime_LocalUsers WHERE UserId = :UserId LIMIT 1;", soci::into(ik_blob),
+		    soci::use(userGruu);
+		if (sql.got_data()) { // Found it, it is stored in one buffer Public || Private
+			std::array<unsigned char, BCTBX_EDDSA_448_PUBLIC_SIZE> ikRaw;
+			const size_t public_key_size = ik_blob.get_len() / 2;
+			ik_blob.read(0, (char *)(ikRaw.data()), public_key_size); // Read the public key
+			std::vector<uint8_t> ik(ikRaw.cbegin(), ikRaw.cbegin() + public_key_size);
+			std::string ikStr = LinphonePrivate::encodeBase64(ik);
+			if (!ikStr.empty()) {
+				ret = ms_strdup(ikStr.c_str());
+			}
+		}
+	} catch (std::exception &e) { // swallow any error on DB
+		lWarning() << "Cannot fetch the lime users to get the Identity Key value on database " << limedb
+		           << ". Error is " << e.what();
+	}
+#endif // HAVE_LIME_X3DH
 #endif
 	return ret;
 }

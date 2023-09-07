@@ -246,7 +246,7 @@ bool Core::areSoundResourcesLocked() const {
 	return false;
 }
 
-shared_ptr<Call> Core::getCallByRemoteAddress(const std::shared_ptr<Address> &addr) const {
+shared_ptr<Call> Core::getCallByRemoteAddress(const std::shared_ptr<const Address> &addr) const {
 	L_D();
 	for (const auto &call : d->calls) {
 		if (call->getRemoteAddress()->weakEqual(*addr)) return call;

@@ -133,7 +133,7 @@ public:
 	AbstractChatRoom::SecurityLevel getSecurityLevel(const std::string &deviceId) const override;
 	AbstractChatRoom::SecurityLevel getSecurityLevel(const std::list<std::string> &deviceIds) const override;
 	EncryptionEngine::EngineType getEngineType() override;
-	std::list<EncryptionParameter> getEncryptionParameters() override;
+	std::list<EncryptionParameter> getEncryptionParameters(const std::shared_ptr<Account> &account) override;
 	void cleanDb() override;
 
 	// CoreListener overrides

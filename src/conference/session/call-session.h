@@ -162,7 +162,7 @@ public:
 	LinphoneReason getReason() const;
 	std::shared_ptr<CallSession> getReferer() const;
 	const std::string &getReferTo() const;
-	const std::shared_ptr<Address> &getReferToAddress() const;
+	const std::shared_ptr<Address> getReferToAddress() const;
 	const std::shared_ptr<Address> getRemoteAddress() const;
 	const std::string &getRemoteContact() const;
 	const std::shared_ptr<Address> getRemoteContactAddress() const;
@@ -195,6 +195,7 @@ protected:
 	CallSession::State getPreviousState() const;
 	CallSession::State getLastStableState() const;
 	void updateContactAddress(Address &contactAddress) const;
+	void assignAccount(const std::shared_ptr<Account> &account);
 
 private:
 	// bool mIsDeclining = false;

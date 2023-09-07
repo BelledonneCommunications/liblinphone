@@ -119,6 +119,7 @@ public:
 	const std::string getDomain() const;
 	const std::list<std::shared_ptr<Address>> &getRoutes() const;
 	const std::list<std::string> getRoutesString() const;
+	const bctbx_list_t *getRoutesCString() const;
 	LinphonePrivacyMask getPrivacy() const;
 	const std::shared_ptr<Address> &getIdentityAddress() const;
 	LinphoneAVPFMode getAvpfMode() const;
@@ -144,7 +145,9 @@ public:
 	void writeToConfigFile(LinphoneConfig *config, int index);
 
 private:
+	void updateRoutesCString();
 	void setCustomContact(const std::string &contact);
+
 	int mExpires;
 	int mQualityReportingInterval;
 	int mPublishExpires;
@@ -181,6 +184,7 @@ private:
 	std::string mPictureUri;
 
 	std::list<std::shared_ptr<Address>> mRoutes;
+	bctbx_list_t *mRoutesCString = nullptr;
 
 	LinphonePrivacyMask mPrivacy;
 

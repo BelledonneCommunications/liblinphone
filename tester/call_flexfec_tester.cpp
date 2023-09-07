@@ -96,8 +96,8 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
 
 	if (params.ice) {
-		enable_stun_in_core(marie, TRUE, TRUE);
-		enable_stun_in_core(pauline, TRUE, TRUE);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+		enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 	}
 	enable_rtp_bundle(marie->lc, TRUE);
 	enable_rtp_bundle(pauline->lc, TRUE);

@@ -267,16 +267,20 @@ static void single_route(void) {
 	BC_ASSERT_PTR_NOT_NULL(routes);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(routes), 1, int, "%d");
 	const char *route = (const char *)bctbx_list_get_data(routes);
-	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "<sip:sip.example.org;transport=tcp>");
+	const char *marie_route = linphone_proxy_config_get_route(marie_cfg);
+	BC_ASSERT_STRING_EQUAL(marie_route, "<sip:sip.example.org;transport=tcp>");
 	BC_ASSERT_STRING_EQUAL(route, "<sip:sip.example.org;transport=tcp>");
+	routes = NULL;
 
 	linphone_proxy_config_set_route(marie_cfg, "sip.linphone.org");
 	routes = linphone_proxy_config_get_routes(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(routes);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(routes), 1, int, "%d");
 	route = (const char *)bctbx_list_get_data(routes);
-	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "sip:sip.linphone.org");
+	marie_route = linphone_proxy_config_get_route(marie_cfg);
+	BC_ASSERT_STRING_EQUAL(marie_route, "sip:sip.linphone.org");
 	BC_ASSERT_STRING_EQUAL(route, "sip:sip.linphone.org");
+	routes = NULL;
 
 	linphone_core_manager_destroy(marie);
 }
@@ -289,6 +293,7 @@ static void multiple_route(void) {
 	linphone_proxy_config_set_routes(marie_cfg, NULL); // Clear routes
 	const bctbx_list_t *empty_routes = linphone_proxy_config_get_routes(marie_cfg);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(empty_routes), 0, int, "%d");
+	empty_routes = NULL;
 
 	bctbx_list_t *new_routes = NULL;
 	new_routes = bctbx_list_append(new_routes, ms_strdup("<sip:sip.example.org;transport=tcp>"));
@@ -305,10 +310,12 @@ static void multiple_route(void) {
 	BC_ASSERT_EQUAL((int)bctbx_list_size(routes), 2, int, "%d"); // 2 are good, 2 are bad
 
 	const char *route = (const char *)bctbx_list_get_data(routes);
-	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "<sip:sip.example.org;transport=tcp>");
+	const char *marie_route = linphone_proxy_config_get_route(marie_cfg);
+	BC_ASSERT_STRING_EQUAL(marie_route, "<sip:sip.example.org;transport=tcp>");
 	BC_ASSERT_STRING_EQUAL(route, "<sip:sip.example.org;transport=tcp>");
 	route = (const char *)bctbx_list_get_data(bctbx_list_next(routes));
 	BC_ASSERT_STRING_EQUAL(route, "sip:sip.linphone.org");
+	routes = NULL;
 
 	linphone_core_manager_destroy(marie);
 }

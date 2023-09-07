@@ -76,8 +76,8 @@ bool IceService::iceFoundInMediaDescription(const std::shared_ptr<SalMediaDescri
 }
 
 void IceService::checkSession(IceRole role, bool preferIpv6DefaultCandidates) {
-	LinphoneNatPolicy *natPolicy = getMediaSessionPrivate().getNatPolicy();
-	if (!natPolicy || !linphone_nat_policy_ice_enabled(natPolicy)) {
+	const auto natPolicy = getMediaSessionPrivate().getNatPolicy();
+	if (!natPolicy || !natPolicy->iceEnabled()) {
 		return;
 	}
 
@@ -291,7 +291,7 @@ int IceService::gatherLocalCandidates() {
 	return 0;
 }
 
-void IceService::addPredefinedSflrxCandidates(const NatPolicy *natPolicy) {
+void IceService::addPredefinedSflrxCandidates(const std::shared_ptr<NatPolicy> &natPolicy) {
 	if (!natPolicy) return;
 	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
 	const string &ipv4 = natPolicy->getNatV4Address();
@@ -337,8 +337,7 @@ int IceService::gatherIceCandidates() {
 	const struct addrinfo *ai = nullptr;
 	int err = 0;
 
-	LinphoneNatPolicy *cNatPolicy = getMediaSessionPrivate().getNatPolicy();
-	NatPolicy *natPolicy = cNatPolicy ? NatPolicy::toCpp(cNatPolicy) : nullptr;
+	const auto &natPolicy = getMediaSessionPrivate().getNatPolicy();
 	if (natPolicy && natPolicy->stunServerActivated()) {
 		ai = natPolicy->getStunServerAddrinfo();
 		if (ai) ai = getIcePreferredStunServerAddrinfo(ai);
@@ -847,8 +846,7 @@ void IceService::handleIceEvent(const OrtpEvent *ev) {
 			break;
 		case ORTP_EVENT_ICE_GATHERING_FINISHED:
 			if (!evd->info.ice_processing_successful)
-				lWarning() << "No STUN answer from ["
-				           << linphone_nat_policy_get_stun_server(getMediaSessionPrivate().getNatPolicy())
+				lWarning() << "No STUN answer from [" << getMediaSessionPrivate().getNatPolicy()->getStunServer()
 				           << "], continuing without STUN";
 			mStreamsGroup.finishPrepare();
 			if (mListener) mListener->onGatheringFinished(*this);

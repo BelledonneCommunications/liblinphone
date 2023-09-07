@@ -81,6 +81,10 @@ NatPolicy::~NatPolicy() {
 	clearResolverContexts();
 }
 
+NatPolicy *NatPolicy::clone() const {
+	return new NatPolicy(*this);
+}
+
 void NatPolicy::clearResolverContexts() {
 	if (mStunResolverContext) {
 		belle_sip_resolver_context_cancel(mStunResolverContext);

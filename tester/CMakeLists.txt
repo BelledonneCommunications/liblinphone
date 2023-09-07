@@ -363,10 +363,6 @@ if(APPLE)
 	endif()
 endif()
 
-set(GROUP_CHAT_BENCHMARK_SOURCE_CXX
-	shared_tester_functions.cpp
-)
-
 set(GROUP_CHAT_BENCHMARK_SOURCE_C
 	accountmanager.c
 	tester.c
@@ -376,6 +372,7 @@ set(GROUP_CHAT_BENCHMARK_SOURCE_C
 
 set(GROUP_CHAT_BENCHMARK_SOURCE_CXX
 	shared_tester_functions.cpp
+	tester.cpp
 )
 
 set(GROUP_CHAT_BENCHMARK_HEADERS

@@ -183,15 +183,8 @@ static void audio_video_call(const params_t *params) {
 
 	if (params->with_ice) {
 		/*enable ICE on both ends*/
-		LinphoneNatPolicy *pol;
-		pol = linphone_core_get_nat_policy(marie->lc);
-		linphone_nat_policy_enable_ice(pol, TRUE);
-		linphone_nat_policy_enable_stun(pol, TRUE);
-		linphone_core_set_nat_policy(marie->lc, pol);
-		pol = linphone_core_get_nat_policy(pauline->lc);
-		linphone_nat_policy_enable_ice(pol, TRUE);
-		linphone_nat_policy_enable_stun(pol, TRUE);
-		linphone_core_set_nat_policy(pauline->lc, pol);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+		enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 	}
 
 	if (params->with_dtls_srtp) {
@@ -389,28 +382,30 @@ static void call_with_mandatory_bundle(void) {
 }
 
 static void simple_audio_video_call_with_bundle_enabled_by_reinvite(void) {
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
 	LinphoneCall *pauline_call, *marie_call;
 	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
-	
-	marie = linphone_core_manager_new( "marie_rc");
+
+	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	{
 		LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
-		LinphoneAccountParams *marie_account_params = linphone_account_params_clone(linphone_account_get_params(marie_account));
+		LinphoneAccountParams *marie_account_params =
+		    linphone_account_params_clone(linphone_account_get_params(marie_account));
 		linphone_account_params_enable_rtp_bundle(marie_account_params, TRUE);
 		linphone_account_set_params(marie_account, marie_account_params);
 		linphone_account_params_unref(marie_account_params);
 
 		LinphoneAccount *pauline_account = linphone_core_get_default_account(pauline->lc);
-		LinphoneAccountParams *pauline_account_params = linphone_account_params_clone(linphone_account_get_params(pauline_account));
+		LinphoneAccountParams *pauline_account_params =
+		    linphone_account_params_clone(linphone_account_get_params(pauline_account));
 		linphone_account_params_enable_rtp_bundle(pauline_account_params, TRUE);
 		linphone_account_set_params(pauline_account, pauline_account_params);
 		linphone_account_params_unref(pauline_account_params);
 	}
-	
+
 	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
 	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
 
@@ -418,24 +413,24 @@ static void simple_audio_video_call_with_bundle_enabled_by_reinvite(void) {
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
-	
+
 	linphone_core_set_preferred_video_definition_by_name(marie->lc, "QVGA");
 	linphone_core_set_preferred_video_definition_by_name(pauline->lc, "QVGA");
 
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
-	
+
 	linphone_core_set_video_activation_policy(marie->lc, vpol);
 	linphone_core_set_video_activation_policy(pauline->lc, vpol);
 	linphone_video_activation_policy_unref(vpol);
 
 	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
-	linphone_call_params_enable_video(marie_params,FALSE);
+	linphone_call_params_enable_video(marie_params, FALSE);
 	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
-	linphone_call_params_enable_rtp_bundle(pauline_params,FALSE);
-	linphone_call_params_enable_video(pauline_params,FALSE);
+	linphone_call_params_enable_rtp_bundle(pauline_params, FALSE);
+	linphone_call_params_enable_video(pauline_params, FALSE);
 
-	BC_ASSERT_TRUE(call_with_params(marie,pauline,marie_params,pauline_params));
+	BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_params, pauline_params));
 
 	linphone_call_params_unref(marie_params);
 	linphone_call_params_unref(pauline_params);
@@ -458,17 +453,21 @@ static void simple_audio_video_call_with_bundle_enabled_by_reinvite(void) {
 	stats initial_marie_stat = marie->stat;
 	stats initial_pauline_stat = pauline->stat;
 
-	LinphoneCallParams * new_params = linphone_core_create_call_params(pauline->lc, pauline_call);
-	linphone_call_params_enable_video (new_params, TRUE);
+	LinphoneCallParams *new_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_video(new_params, TRUE);
 	/* This method is deprecated, but we still use to test that disablement of bundle is working. */
 	linphone_call_params_enable_rtp_bundle(new_params, TRUE);
 	linphone_call_update(pauline_call, new_params);
-	linphone_call_params_unref (new_params);
+	linphone_call_params_unref(new_params);
 
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating, initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote,
+	                        initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating,
+	                        initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
 
 	check_rtp_bundle(pauline_call, TRUE, TRUE);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
@@ -478,39 +477,42 @@ static void simple_audio_video_call_with_bundle_enabled_by_reinvite(void) {
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
 	BC_ASSERT_TRUE(linphone_call_params_rtp_bundle_enabled(linphone_call_get_current_params(marie_call)));
 
-	liblinphone_tester_check_rtcp(marie,pauline);
+	liblinphone_tester_check_rtcp(marie, pauline);
 	liblinphone_tester_set_next_video_frame_decoded_cb(pauline_call);
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_IframeDecoded,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_IframeDecoded, 1));
 	liblinphone_tester_set_next_video_frame_decoded_cb(marie_call);
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_IframeDecoded, 1));
 
-	//make sure receive frame rate computation is done with a significant number of frame
-	wait_for_until(marie->lc,pauline->lc,NULL,0,2000);
+	// make sure receive frame rate computation is done with a significant number of frame
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
 
-	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(pauline_call)), 8.0, float, "%f");
-	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(marie_call)), 8.0, float, "%f");
+	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(pauline_call)), 8.0,
+	                  float, "%f");
+	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(marie_call)), 8.0,
+	                  float, "%f");
 
-	//Wait to see any undesirable side effect
-	wait_for_until(marie->lc,pauline->lc,NULL,0,1000);
+	// Wait to see any undesirable side effect
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 
-	end_call(marie,pauline);
-	
+	end_call(marie, pauline);
+
 end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
 
 static test_t call_with_rtp_bundle_tests[] = {
-	TEST_NO_TAG("Simple audio call", simple_audio_call),
-	TEST_NO_TAG("Simple audio call with DTLS-SRTP", simple_audio_call_with_srtp_dtls),
-	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
-	TEST_NO_TAG("Simple audio-video call with bundle refused", simple_audio_video_call_bundle_refused),
-	TEST_NO_TAG("Simple audio-video call with bundle disable", simple_audio_video_call_with_bundle_disable),
-	TEST_NO_TAG("Simple audio-video call with bundle enabled by reINVITE", simple_audio_video_call_with_bundle_enabled_by_reinvite),
-	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice),
-	TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp),
-	TEST_NO_TAG("Mandatory bundle", call_with_mandatory_bundle),
-	TEST_NO_TAG("Audio-video call with forced media relay", audio_video_call_with_forced_media_relay),
+    TEST_NO_TAG("Simple audio call", simple_audio_call),
+    TEST_NO_TAG("Simple audio call with DTLS-SRTP", simple_audio_call_with_srtp_dtls),
+    TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
+    TEST_NO_TAG("Simple audio-video call with bundle refused", simple_audio_video_call_bundle_refused),
+    TEST_NO_TAG("Simple audio-video call with bundle disable", simple_audio_video_call_with_bundle_disable),
+    TEST_NO_TAG("Simple audio-video call with bundle enabled by reINVITE",
+                simple_audio_video_call_with_bundle_enabled_by_reinvite),
+    TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice),
+    TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp),
+    TEST_NO_TAG("Mandatory bundle", call_with_mandatory_bundle),
+    TEST_NO_TAG("Audio-video call with forced media relay", audio_video_call_with_forced_media_relay),
 };
 
 test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle",
@@ -522,4 +524,3 @@ test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle",
                                                     sizeof(call_with_rtp_bundle_tests[0]),
                                                 call_with_rtp_bundle_tests,
                                                 0};
-

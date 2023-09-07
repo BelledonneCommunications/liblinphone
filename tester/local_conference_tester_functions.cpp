@@ -2697,8 +2697,10 @@ void create_conference_base(time_t start_time,
 				linphone_core_set_default_proxy_config(mgr->lc, NULL);
 			}
 
-			enable_stun_in_core(mgr, enable_stun, enable_ice);
-			linphone_core_manager_wait_for_stun_resolution(mgr);
+			// TODO: allow disabling ice or STUN at the core level and enabling in the account
+			// Enable ICE at the account level but not at the core level
+			// enable_stun_in_mgr(mgr, enable_stun, enable_ice, FALSE, FALSE);
+			enable_stun_in_mgr(mgr, enable_stun, enable_ice, enable_stun, enable_ice);
 
 			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
 			linphone_config_set_int(linphone_core_get_config(mgr->lc), "sip",
@@ -6540,8 +6542,7 @@ void create_one_participant_conference_toggle_video_base(LinphoneConferenceLayou
 				linphone_core_set_default_conference_layout(mgr->lc, layout);
 			}
 
-			enable_stun_in_core(mgr, enable_stun, enable_ice);
-			linphone_core_manager_wait_for_stun_resolution(mgr);
+			enable_stun_in_mgr(mgr, enable_stun, enable_ice, enable_stun, enable_ice);
 
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
@@ -7861,7 +7862,7 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 		BC_ASSERT_TRUE(call(marie.getCMgr(), pauline.getCMgr()));
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
-			enable_stun_in_core(mgr, enable_ice, enable_ice);
+			enable_stun_in_mgr(mgr, enable_ice, enable_ice, enable_ice, enable_ice);
 		}
 
 		LinphoneCall *marie_call_pauline = linphone_core_get_current_call(marie.getLc());

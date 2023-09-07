@@ -214,8 +214,10 @@ LinphoneCoreManager *create_core_mgr_with_capability_negotiation_setup(const cha
 	}
 
 	if (enable_ice) {
-		enable_stun_in_core(mgr, TRUE, enable_ice);
-		linphone_core_manager_wait_for_stun_resolution(mgr);
+		// TODO: allow disabling ice or STUN at the core level and enabling in the account
+		// Enable ICE at the account level but not at the core level
+		// enable_stun_in_mgr(mgr, TRUE, enable_ice, FALSE, FALSE);
+		enable_stun_in_mgr(mgr, TRUE, enable_ice, TRUE, enable_ice);
 	}
 
 	return mgr;
@@ -304,9 +306,9 @@ void encrypted_call_with_params_base(LinphoneCoreManager *caller,
 			potentialConfigurationChosen = false;
 		}
 
-		LinphoneNatPolicy *caller_nat_policy = linphone_core_get_nat_policy(caller->lc);
+		LinphoneNatPolicy *caller_nat_policy = get_nat_policy_for_call(caller, callerCall);
 		const bool_t caller_ice_enabled = linphone_nat_policy_ice_enabled(caller_nat_policy);
-		LinphoneNatPolicy *callee_nat_policy = linphone_core_get_nat_policy(callee->lc);
+		LinphoneNatPolicy *callee_nat_policy = get_nat_policy_for_call(callee, calleeCall);
 		const bool_t callee_ice_enabled = linphone_nat_policy_ice_enabled(callee_nat_policy);
 
 		const bool_t capabilityNegotiationReinviteEnabled =
@@ -666,9 +668,9 @@ void call_with_update_and_incompatible_encs_in_call_params_base(const bool_t ena
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote,
 	                        (marie_stat.number_of_LinphoneCallUpdatedByRemote + 1)));
 
-	LinphoneNatPolicy *marie_nat_policy = linphone_core_get_nat_policy(marie->lc);
+	LinphoneNatPolicy *marie_nat_policy = get_nat_policy_for_call(marie, marieCall);
 	const bool_t marie_ice_enabled = linphone_nat_policy_ice_enabled(marie_nat_policy);
-	LinphoneNatPolicy *pauline_nat_policy = linphone_core_get_nat_policy(pauline->lc);
+	LinphoneNatPolicy *pauline_nat_policy = get_nat_policy_for_call(pauline, paulineCall);
 	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
 	const int expectedStreamsRunning = 1 + ((pauline_ice_enabled && marie_ice_enabled) ? 1 : 0);
 
@@ -1565,9 +1567,9 @@ static void call_with_no_sdp_on_update_base(const bool_t caller_cap_neg,
 
 	liblinphone_tester_check_rtcp(marie, pauline);
 
-	LinphoneNatPolicy *marie_nat_policy = linphone_core_get_nat_policy(marie->lc);
+	LinphoneNatPolicy *marie_nat_policy = get_nat_policy_for_call(marie, marieCall);
 	const bool_t marie_ice_enabled = linphone_nat_policy_ice_enabled(marie_nat_policy);
-	LinphoneNatPolicy *pauline_nat_policy = linphone_core_get_nat_policy(pauline->lc);
+	LinphoneNatPolicy *pauline_nat_policy = get_nat_policy_for_call(pauline, paulineCall);
 	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
 
 	bool potentialConfigurationChosen = (caller_cap_neg && callee_cap_neg);
@@ -1956,9 +1958,9 @@ static void call_changes_enc_on_update_base(const bool_t caller_cap_neg,
 
 	liblinphone_tester_check_rtcp(marie, pauline);
 
-	LinphoneNatPolicy *marie_nat_policy = linphone_core_get_nat_policy(marie->lc);
+	LinphoneNatPolicy *marie_nat_policy = get_nat_policy_for_call(marie, marieCall);
 	const bool_t marie_ice_enabled = linphone_nat_policy_ice_enabled(marie_nat_policy);
-	LinphoneNatPolicy *pauline_nat_policy = linphone_core_get_nat_policy(pauline->lc);
+	LinphoneNatPolicy *pauline_nat_policy = get_nat_policy_for_call(pauline, paulineCall);
 	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
 
 	bool capabilityNegotiationReinviteEnabled =
@@ -3536,4 +3538,3 @@ test_suite_t capability_negotiation_no_sdp_test_suite = {"Capability Negotiation
                                                              sizeof(capability_negotiation_tests_no_sdp[0]),
                                                          capability_negotiation_tests_no_sdp,
                                                          0};
-

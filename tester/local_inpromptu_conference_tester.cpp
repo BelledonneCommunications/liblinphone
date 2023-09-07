@@ -76,8 +76,7 @@ static void create_conference_dial_out_base(bool_t send_ics,
 				linphone_core_set_default_conference_layout(mgr->lc, layout);
 			}
 
-			enable_stun_in_core(mgr, enable_stun, enable_ice);
-			linphone_core_manager_wait_for_stun_resolution(mgr);
+			enable_stun_in_mgr(mgr, enable_stun, enable_ice, enable_stun, enable_ice);
 
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}
@@ -1038,8 +1037,7 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base(Linp
 				linphone_core_set_default_conference_layout(mgr->lc, LinphoneConferenceLayoutActiveSpeaker);
 			}
 
-			enable_stun_in_core(mgr, TRUE, TRUE);
-			linphone_core_manager_wait_for_stun_resolution(mgr);
+			enable_stun_in_mgr(mgr, TRUE, TRUE, FALSE, TRUE);
 
 			coresList = bctbx_list_append(coresList, mgr->lc);
 		}

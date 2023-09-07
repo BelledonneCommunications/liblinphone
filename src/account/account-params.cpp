@@ -56,7 +56,8 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	mProxyAddress = Address::create(mProxy);
 	string route = lc ? linphone_config_get_default_string(lc->config, "proxy", "reg_route", "") : "";
 	if (!route.empty()) {
-		mRoutes.emplace_back(Address::create(route));
+		const std::list<std::shared_ptr<Address>> routes{Address::create(route)};
+		setRoutes(routes);
 	}
 	mRealm = lc ? linphone_config_get_default_string(lc->config, "proxy", "realm", "") : "";
 	mQualityReportingEnabled =
@@ -306,7 +307,7 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 
 	mFileTransferServer = other.mFileTransferServer;
 
-	mRoutes = other.mRoutes;
+	setRoutes(other.mRoutes);
 	mPrivacy = other.mPrivacy;
 	mIdentity = other.mIdentity;
 	if (other.mIdentityAddress) {
@@ -338,6 +339,9 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 
 AccountParams::~AccountParams() {
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
+	if (mRoutesCString) {
+		bctbx_list_free_with_data(mRoutesCString, (bctbx_list_free_func)bctbx_free);
+	}
 }
 
 AccountParams *AccountParams::clone() const {
@@ -394,6 +398,7 @@ void AccountParams::setOutboundProxyEnabled(bool enable) {
 	} else {
 		mRoutes.clear();
 	}
+	updateRoutesCString();
 }
 
 void AccountParams::setPushNotificationAllowed(bool allow) {
@@ -475,12 +480,14 @@ void AccountParams::setFileTranferServer(const std::string &fileTransferServer) 
 
 LinphoneStatus AccountParams::setRoutes(const std::list<std::shared_ptr<Address>> &routes) {
 	mRoutes = routes;
+	updateRoutesCString();
 	return 0;
 }
 
 LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes) {
 	mRoutes.clear();
 	bctbx_list_t *iterator = (bctbx_list_t *)routes;
+	bool error = false;
 	while (iterator != nullptr) {
 		char *route = (char *)bctbx_list_get_data(iterator);
 		if (route != NULL && route[0] != '\0') {
@@ -496,13 +503,13 @@ LinphoneStatus AccountParams::setRoutesFromStringList(const bctbx_list_t *routes
 				sal_address_unref(addr);
 				mRoutes.emplace_back(Address::create(tmp.c_str()));
 			} else {
-				return -1;
+				error = true;
 			}
 		}
 		iterator = bctbx_list_next(iterator);
 	}
-
-	return 0;
+	updateRoutesCString();
+	return (error) ? -1 : 0;
 }
 
 void AccountParams::setPrivacy(LinphonePrivacyMask privacy) {
@@ -705,11 +712,26 @@ const std::list<std::shared_ptr<Address>> &AccountParams::getRoutes() const {
 }
 
 const std::list<std::string> AccountParams::getRoutesString() const {
-	std::list<std::string> routes;
+	std::list<std::string> routesString;
 	for (const auto &r : mRoutes) {
-		routes.push_back(r->toString());
+		routesString.push_back(r->toString());
 	}
-	return routes;
+	return routesString;
+}
+
+void AccountParams::updateRoutesCString() {
+	if (mRoutesCString) {
+		bctbx_list_free_with_data(mRoutesCString, (bctbx_list_free_func)bctbx_free);
+		mRoutesCString = nullptr;
+	}
+	const auto routeString = getRoutesString();
+	if (!routeString.empty()) {
+		mRoutesCString = L_GET_C_LIST_FROM_CPP_LIST(routeString);
+	}
+}
+
+const bctbx_list_t *AccountParams::getRoutesCString() const {
+	return mRoutesCString;
 }
 
 LinphonePrivacyMask AccountParams::getPrivacy() const {
@@ -844,9 +866,8 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 		linphone_config_set_string(config, key, "reg_proxy", mProxy.c_str());
 	}
 	if (!mRoutes.empty()) {
-		auto routesString = L_GET_C_LIST_FROM_CPP_LIST(getRoutesString());
+		auto routesString = getRoutesCString();
 		linphone_config_set_string_list(config, key, "reg_route", routesString);
-		bctbx_list_free_with_data(routesString, (bctbx_list_free_func)bctbx_free);
 	} else {
 		linphone_config_clean_entry(config, key, "reg_route");
 	}

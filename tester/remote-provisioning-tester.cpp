@@ -102,7 +102,8 @@ static void remote_provisioning_default_values(void) {
 	BC_ASSERT_TRUE(linphone_proxy_config_register_enabled(lpc));
 	BC_ASSERT_EQUAL(linphone_proxy_config_get_expires(lpc), 604800, int, "%d");
 	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_server_addr(lpc), "<sip:sip.linphone.org:5223;transport=tls>");
-	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(lpc), "<sip:sip.linphone.org:5223;transport=tls>");
+	const char *route = linphone_proxy_config_get_route(lpc);
+	BC_ASSERT_STRING_EQUAL(route, "<sip:sip.linphone.org:5223;transport=tls>");
 	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_identity(lpc), "sip:?@sip.linphone.org");
 	{
 		LpConfig *lp = linphone_core_get_config(marie->lc);

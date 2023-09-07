@@ -768,7 +768,8 @@ static void call_outbound_with_multiple_proxy(void) {
 	linphone_proxy_config_set_identity_address(registered_lpc, identity_address);
 	linphone_address_unref(identity_address);
 	linphone_proxy_config_set_server_addr(registered_lpc, linphone_proxy_config_get_addr(lpc));
-	linphone_proxy_config_set_route(registered_lpc, linphone_proxy_config_get_route(lpc));
+	const char *route = linphone_proxy_config_get_route(lpc);
+	linphone_proxy_config_set_route(registered_lpc, route);
 	linphone_proxy_config_enable_register(registered_lpc, TRUE);
 
 	linphone_core_add_proxy_config(marie->lc, registered_lpc);
@@ -789,6 +790,79 @@ static void call_outbound_with_multiple_proxy(void) {
 	BC_ASSERT_TRUE(call(marie, pauline));
 
 	end_call(marie, pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_outbound_using_secondary_account(void) {
+	// Caller
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dual_proxy_rc");
+	set_lime_server_and_curve(25519, marie);
+	linphone_core_manager_start(marie, TRUE);
+
+	// Callee
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	set_lime_server_and_curve(25519, pauline);
+	linphone_core_manager_start(pauline, TRUE);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_X3dhUserCreationSuccess, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_X3dhUserCreationSuccess, 2));
+
+	LinphoneAccount *secondary_account = NULL;
+	const LinphoneAccount *default_account = linphone_core_get_default_account(marie->lc);
+	const bctbx_list_t *accounts = linphone_core_get_account_list(marie->lc);
+	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)account_it->data;
+		if (account != default_account) {
+			secondary_account = account;
+		}
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(secondary_account);
+	if (!secondary_account) {
+		goto end;
+	}
+
+	const LinphoneAccountParams *secondary_account_params = linphone_account_get_params(secondary_account);
+	const LinphoneAddress *secondary_account_identity =
+	    linphone_account_params_get_identity_address(secondary_account_params);
+
+	const LinphoneAccountParams *default_account_params = linphone_account_get_params(default_account);
+	const LinphoneAddress *default_account_identity =
+	    linphone_account_params_get_identity_address(default_account_params);
+
+	BC_ASSERT_FALSE(linphone_address_weak_equal(default_account_identity, secondary_account_identity));
+
+	LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, NULL);
+	char *secondary_account_identity_str = linphone_address_as_string(secondary_account_identity);
+	linphone_call_params_set_from_header(params, secondary_account_identity_str);
+	ms_free(secondary_account_identity_str);
+
+	BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, params));
+	linphone_call_params_unref(params);
+
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (marie_call) {
+		const LinphoneCallParams *marie_call_parameters = linphone_call_get_params(marie_call);
+		const LinphoneAccount *marie_call_account = linphone_call_params_get_account(marie_call_parameters);
+		const LinphoneAccountParams *marie_call_account_params = linphone_account_get_params(marie_call_account);
+		const LinphoneAddress *marie_call_account_identity =
+		    linphone_account_params_get_identity_address(marie_call_account_params);
+		BC_ASSERT_TRUE(linphone_address_weak_equal(marie_call_account_identity, secondary_account_identity));
+	}
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if (pauline_call) {
+		const LinphoneAddress *pauline_call_remote_contact_address =
+		    linphone_call_get_remote_contact_address(pauline_call);
+		BC_ASSERT_TRUE(linphone_address_weak_equal(pauline_call_remote_contact_address, secondary_account_identity));
+	}
+	end_call(marie, pauline);
+
+end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -824,14 +898,14 @@ static void call_outbound_using_different_proxies(void) {
 						BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
 						                              &pauline->stat.number_of_LinphoneCallIncomingReceived, call_count,
 						                              10000));
-						LinphoneCall *callee = linphone_core_get_current_call(pauline->lc);
-						BC_ASSERT_PTR_NOT_NULL(callee);
-						if (callee) {
-							const LinphoneAddress *remoteAddress = linphone_call_get_remote_address(callee);
-							BC_ASSERT_TRUE(linphone_address_weak_equal(
-							    remoteAddress,
-							    marieProxyAddress)); // Main test : callee get a call from the selected proxy of caller
-						}
+					}
+					LinphoneCall *callee = linphone_core_get_current_call(pauline->lc);
+					BC_ASSERT_PTR_NOT_NULL(callee);
+					if (callee) {
+						const LinphoneAddress *remoteAddress = linphone_call_get_remote_address(callee);
+						BC_ASSERT_TRUE(linphone_address_weak_equal(
+						    remoteAddress,
+						    marieProxyAddress)); // Main test : callee get a call from the selected proxy of caller
 					}
 				}
 			}
@@ -2303,12 +2377,10 @@ void _call_with_ice_base(LinphoneCoreManager *pauline,
 	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
 	if (callee_with_ice) {
-		enable_stun_in_core(marie, TRUE, TRUE);
-		linphone_core_manager_wait_for_stun_resolution(marie);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
 	}
 	if (caller_with_ice) {
-		enable_stun_in_core(pauline, TRUE, TRUE);
-		linphone_core_manager_wait_for_stun_resolution(pauline);
+		enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 	}
 
 	if (random_ports) {
@@ -3928,10 +4000,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode,
 		}
 
 		if (policy == LinphonePolicyUseIce) {
-			enable_stun_in_core(marie, TRUE, TRUE);
-			linphone_core_manager_wait_for_stun_resolution(marie);
-			enable_stun_in_core(pauline, TRUE, TRUE);
-			linphone_core_manager_wait_for_stun_resolution(pauline);
+			enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+			enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 		}
 
 		BC_ASSERT_TRUE((call_ok = call(pauline, marie)));
@@ -5220,8 +5290,7 @@ void early_media_without_sdp_in_200_base(bool_t use_video, bool_t use_ice) {
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	if (use_ice) {
-		enable_stun_in_core(marie, TRUE, TRUE);
-		linphone_core_manager_wait_for_stun_resolution(marie);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
 		/* We need RTP symmetric because ICE will put the STUN address in the C line, and no relay is made in this
 		 * scenario.*/
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
@@ -6320,11 +6389,8 @@ void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t 
 		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
 		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
-		enable_stun_in_core(marie, TRUE, TRUE);
-		linphone_core_manager_wait_for_stun_resolution(marie);
-
-		enable_stun_in_core(pauline, TRUE, TRUE);
-		linphone_core_manager_wait_for_stun_resolution(pauline);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+		enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 	}
 	if (!with_ice_reinvite) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed", 0);
@@ -7376,6 +7442,7 @@ static test_t call_tests[] = {
     TEST_NO_TAG("IPv6 call over NAT64", v6_call_over_nat_64),
     TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),
     TEST_NO_TAG("Outbound call using different proxies", call_outbound_using_different_proxies),
+    TEST_ONE_TAG("Outbound call using secondary account", call_outbound_using_secondary_account, "LimeX3DH"),
     TEST_NO_TAG("Audio call recording", audio_call_recording_test),
     TEST_NO_TAG("Multiple answers to a call", multiple_answers_call),
     TEST_NO_TAG("Multiple answers to a call with media relay", multiple_answers_call_with_media_relay),
@@ -7391,7 +7458,7 @@ static test_t call_tests[] = {
     TEST_NO_TAG("Early-media call with updated codec", early_media_call_with_codec_update),
     TEST_NO_TAG("Call terminated by caller", call_terminated_by_caller),
     TEST_NO_TAG("Call without SDP", call_with_no_sdp),
-    TEST_NO_TAG("Call without SDP to a lime X3DH enabled device", call_with_no_sdp_lime),
+    TEST_ONE_TAG("Call without SDP to a lime X3DH enabled device", call_with_no_sdp_lime, "LimeX3DH"),
     TEST_NO_TAG("Call without SDP and ACK without SDP", call_with_no_sdp_ack_without_sdp),
     TEST_NO_TAG("Call paused with RTP port to 0", call_paused_with_rtp_port_to_zero),
     TEST_NO_TAG("Call paused resumed", call_paused_resumed),

@@ -29,6 +29,7 @@ extern "C" {
 
 bool_t check_ice(LinphoneCoreManager *caller, LinphoneCoreManager *callee, LinphoneIceState state);
 bool_t check_ice_sdp(LinphoneCall *call);
+void check_lime_ik(LinphoneCoreManager *mgr, LinphoneCall *call);
 
 typedef enum _TesterIceCandidateType {
 	TesterIceCandidateHost,

@@ -261,8 +261,8 @@ static void audio_call_loss_resilience(const char *codec_name,
 				linphone_payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
 				for (int loopIndex = 0; loopIndex < 2; ++loopIndex) {
 					recordFileName = useinbandfec[inbandIndex] + "_" + std::to_string(lossRates[lossRateIndex]) + "_" +
-					                 std::to_string(lossRates[loopIndex]) + "_" +
-					                 packetLossPercentage[packetLossIndex] + "_out_" + recordFileNameRoot;
+					                 std::to_string(loopIndex) + "_" + packetLossPercentage[packetLossIndex] + "_out_" +
+					                 recordFileNameRoot;
 					bc_free(recordPath);
 					recordPath = bc_tester_file(recordFileName.c_str());
 					linphone_core_set_record_file(pauline->lc, recordPath);

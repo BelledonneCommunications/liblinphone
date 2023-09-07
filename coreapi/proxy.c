@@ -540,7 +540,8 @@ void _linphone_proxy_config_unpublish(LinphoneProxyConfig *obj) {
 const char *linphone_proxy_config_get_route(const LinphoneProxyConfig *cfg) {
 	const bctbx_list_t *list = linphone_proxy_config_get_routes(cfg);
 	if (list != NULL) {
-		return (const char *)bctbx_list_get_data(list);
+		const char *route = (const char *)bctbx_list_get_data(list);
+		return route;
 	}
 
 	return NULL;
@@ -548,7 +549,7 @@ const char *linphone_proxy_config_get_route(const LinphoneProxyConfig *cfg) {
 
 const bctbx_list_t *linphone_proxy_config_get_routes(const LinphoneProxyConfig *cfg) {
 	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
-	return L_GET_C_LIST_FROM_CPP_LIST(AccountParams::toCpp(params)->getRoutesString());
+	return AccountParams::toCpp(params)->getRoutesCString();
 }
 
 const LinphoneAddress *linphone_proxy_config_get_identity_address(const LinphoneProxyConfig *cfg) {

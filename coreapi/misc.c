@@ -148,8 +148,7 @@ bool_t lp_spawn_command_line_sync(const char *command, char **result, int *comma
 		}
 		(*result)[err] = 0;
 		err = pclose(f);
-		if (command_ret != NULL)
-			*command_ret = err;
+		if (command_ret != NULL) *command_ret = err;
 		return TRUE;
 	}
 #endif // ENABLE_MICROSOFT_STORE_APP
@@ -195,8 +194,7 @@ int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, sock
 		ms_error("getaddrinfo() failed for %s:%s : %s", host, port, gai_strerror(ret));
 		return -1;
 	}
-	if (!res)
-		return -1;
+	if (!res) return -1;
 	memcpy(ss, res->ai_addr, (size_t)res->ai_addrlen);
 	*socklen = (socklen_t)res->ai_addrlen;
 	freeaddrinfo(res);
@@ -205,9 +203,16 @@ int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, sock
 
 /* this functions runs a simple stun test and return the number of milliseconds to complete the tests, or -1 if the test
  * were failed.*/
-int linphone_run_stun_tests(LinphoneCore *lc, int audioPort, int videoPort, int textPort, char *audioCandidateAddr,
-							int *audioCandidatePort, char *videoCandidateAddr, int *videoCandidatePort,
-							char *textCandidateAddr, int *textCandidatePort) {
+int linphone_run_stun_tests(LinphoneCore *lc,
+                            int audioPort,
+                            int videoPort,
+                            int textPort,
+                            char *audioCandidateAddr,
+                            int *audioCandidatePort,
+                            char *videoCandidateAddr,
+                            int *videoCandidatePort,
+                            char *textCandidateAddr,
+                            int *textCandidatePort) {
 	LinphonePrivate::StunClient *client = new LinphonePrivate::StunClient(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
 	int ret = client->run(audioPort, videoPort, textPort);
 	strncpy(audioCandidateAddr, client->getAudioCandidate().address.c_str(), LINPHONE_IPADDR_SIZE);
@@ -282,8 +287,7 @@ const char *linphone_ice_state_to_string(LinphoneIceState state) {
 bool_t linphone_core_media_description_contains_video_stream(const LinphonePrivate::SalMediaDescription *md) {
 
 	for (const auto &stream : md->streams) {
-		if (stream.type == SalVideo && stream.rtp_port != 0)
-			return TRUE;
+		if (stream.type == SalVideo && stream.rtp_port != 0) return TRUE;
 	}
 	return FALSE;
 }
@@ -503,28 +507,28 @@ LinphoneReason linphone_reason_from_sal(SalReason r) {
 
 LinphoneStreamType sal_stream_type_to_linphone(SalStreamType type) {
 	switch (type) {
-	case SalAudio:
-		return LinphoneStreamTypeAudio;
-	case SalVideo:
-		return LinphoneStreamTypeVideo;
-	case SalText:
-		return LinphoneStreamTypeText;
-	case SalOther:
-		return LinphoneStreamTypeUnknown;
+		case SalAudio:
+			return LinphoneStreamTypeAudio;
+		case SalVideo:
+			return LinphoneStreamTypeVideo;
+		case SalText:
+			return LinphoneStreamTypeText;
+		case SalOther:
+			return LinphoneStreamTypeUnknown;
 	}
 	return LinphoneStreamTypeUnknown;
 }
 
 SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type) {
 	switch (type) {
-	case LinphoneStreamTypeAudio:
-		return SalAudio;
-	case LinphoneStreamTypeVideo:
-		return SalVideo;
-	case LinphoneStreamTypeText:
-		return SalText;
-	case LinphoneStreamTypeUnknown:
-		return SalOther;
+		case LinphoneStreamTypeAudio:
+			return SalAudio;
+		case LinphoneStreamTypeVideo:
+			return SalVideo;
+		case LinphoneStreamTypeText:
+			return SalText;
+		case LinphoneStreamTypeUnknown:
+			return SalOther;
 	}
 	return SalOther;
 }
@@ -601,8 +605,7 @@ static void linphone_core_migrate_proxy_config(LinphoneCore *lc, LinphoneTranspo
 		LinphoneAddress *proxy_addr = linphone_address_new(proxy);
 		LinphoneAddress *route_addr = NULL;
 		char *tmp;
-		if (route)
-			route_addr = linphone_address_new(route);
+		if (route) route_addr = linphone_address_new(route);
 		if (proxy_addr) {
 			linphone_address_set_transport(proxy_addr, type);
 			tmp = linphone_address_as_string(proxy_addr);
@@ -626,8 +629,7 @@ LinphoneStatus linphone_core_migrate_to_multi_transport(LinphoneCore *lc) {
 		int port;
 		if (get_unique_transport(lc, &tpt, &port) == 0) {
 			LinphoneSipTransports newtp = {0};
-			if (linphone_config_get_int(lc->config, "sip", "sip_random_port", 0))
-				port = -1;
+			if (linphone_config_get_int(lc->config, "sip", "sip_random_port", 0)) port = -1;
 			ms_message("Core is using a single SIP transport, migrating proxy config and enabling multi-transport.");
 			linphone_core_migrate_proxy_config(lc, tpt);
 			newtp.udp_port = port;
@@ -650,8 +652,7 @@ LinphoneToneDescription *linphone_tone_description_new(LinphoneToneID id, const 
 }
 
 void linphone_tone_description_destroy(LinphoneToneDescription *obj) {
-	if (obj->audiofile)
-		ms_free(obj->audiofile);
+	if (obj->audiofile) ms_free(obj->audiofile);
 	ms_free(obj);
 }
 
@@ -732,12 +733,9 @@ const MSCryptoSuite *linphone_core_get_all_supported_srtp_crypto_suites(Linphone
 static char *seperate_string_list(char **str) {
 	char *ret;
 
-	if (str == NULL)
-		return NULL;
-	if (*str == NULL)
-		return NULL;
-	if (**str == '\0')
-		return NULL;
+	if (str == NULL) return NULL;
+	if (*str == NULL) return NULL;
+	if (**str == '\0') return NULL;
 
 	ret = *str;
 	for (; **str != '\0' && **str != ' ' && **str != ','; (*str)++)
@@ -1043,8 +1041,7 @@ bctbx_list_t *linphone_core_get_supported_file_formats_list(const LinphoneCore *
 bool_t linphone_core_file_format_supported(LinphoneCore *lc, const char *fmt) {
 	const char **formats = linphone_core_get_supported_file_formats(lc);
 	for (; *formats != NULL; ++formats) {
-		if (strcasecmp(*formats, fmt) == 0)
-			return TRUE;
+		if (strcasecmp(*formats, fmt) == 0) return TRUE;
 	}
 	return FALSE;
 }
@@ -1057,8 +1054,7 @@ bool_t linphone_core_symmetric_rtp_enabled(LinphoneCore *lc) {
 }
 
 LinphoneStatus linphone_core_set_network_simulator_params(LinphoneCore *lc, const OrtpNetworkSimulatorParams *params) {
-	if (params != &lc->net_conf.netsim_params)
-		lc->net_conf.netsim_params = *params;
+	if (params != &lc->net_conf.netsim_params) lc->net_conf.netsim_params = *params;
 
 	/* update all running streams. */
 	for (const auto &call : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls()) {

@@ -27,16 +27,6 @@
 #include <fstream>
 #include <iostream>
 
-static bool is_encrypted(const char *filepath) {
-	bool ret = false;
-	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filepath, "r");
-	if (fp != NULL) {
-		ret = (bctbx_file_is_encrypted(fp) == TRUE);
-		bctbx_file_close(fp);
-	}
-	return ret;
-}
-
 static void enable_encryption(const uint16_t encryptionModule, const bool encryptDbJournal = true) {
 	// enable encryption. The call to linphone_factory_set_vfs_encryption will set the VfsEncryption class callback
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
@@ -126,15 +116,15 @@ static void register_user(const uint16_t encryptionModule, const char *random_id
 
 	// check the linphone dbs and local_rc are encrypted or not
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(linphone_db));
-		BC_ASSERT_FALSE(is_encrypted(lime_db));
-		BC_ASSERT_FALSE(is_encrypted(zrtp_secrets_db));
-		BC_ASSERT_FALSE(is_encrypted(localRc));
+		BC_ASSERT_FALSE(is_filepath_encrypted(linphone_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(lime_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(zrtp_secrets_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(localRc));
 	} else {
-		BC_ASSERT_TRUE(is_encrypted(linphone_db));
-		BC_ASSERT_TRUE(is_encrypted(lime_db));
-		BC_ASSERT_TRUE(is_encrypted(zrtp_secrets_db));
-		BC_ASSERT_TRUE(is_encrypted(localRc));
+		BC_ASSERT_TRUE(is_filepath_encrypted(linphone_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(lime_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(zrtp_secrets_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(localRc));
 	}
 
 	if (createUsers == false) {
@@ -267,11 +257,11 @@ static void zrtp_call(const uint16_t encryptionModule,
 	end_call(marie, pauline);
 
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(marie_zidCache));
-		BC_ASSERT_FALSE(is_encrypted(pauline_zidCache));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_zidCache));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_zidCache));
 	} else {
-		BC_ASSERT_TRUE(is_encrypted(marie_zidCache));
-		BC_ASSERT_TRUE(is_encrypted(pauline_zidCache));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_zidCache));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_zidCache));
 	}
 
 	// cleaning
@@ -284,23 +274,23 @@ static void zrtp_call(const uint16_t encryptionModule,
 
 	// check the linphone dbs and local_rc are encrypted or not
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(marie_linphone_db));
-		BC_ASSERT_FALSE(is_encrypted(marie_lime_db));
-		BC_ASSERT_FALSE(is_encrypted(marie_zrtp_secrets_db));
-		BC_ASSERT_FALSE(is_encrypted(marie_rc));
-		BC_ASSERT_FALSE(is_encrypted(pauline_linphone_db));
-		BC_ASSERT_FALSE(is_encrypted(pauline_lime_db));
-		BC_ASSERT_FALSE(is_encrypted(pauline_zrtp_secrets_db));
-		BC_ASSERT_FALSE(is_encrypted(pauline_rc));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_linphone_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_lime_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_zrtp_secrets_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_rc));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_linphone_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_lime_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_zrtp_secrets_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_rc));
 	} else {
-		BC_ASSERT_TRUE(is_encrypted(marie_linphone_db));
-		BC_ASSERT_TRUE(is_encrypted(marie_lime_db));
-		BC_ASSERT_TRUE(is_encrypted(marie_zrtp_secrets_db));
-		BC_ASSERT_TRUE(is_encrypted(marie_rc));
-		BC_ASSERT_TRUE(is_encrypted(pauline_linphone_db));
-		BC_ASSERT_TRUE(is_encrypted(pauline_lime_db));
-		BC_ASSERT_TRUE(is_encrypted(pauline_zrtp_secrets_db));
-		BC_ASSERT_TRUE(is_encrypted(pauline_rc));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_linphone_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_lime_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_zrtp_secrets_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_rc));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_linphone_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_lime_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_zrtp_secrets_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_rc));
 	}
 
 	if (createUsers == false) { // we reused users, now clean the local files
@@ -493,12 +483,12 @@ static void file_transfer_test(const uint16_t encryptionModule,
 
 	// It shall be encrypted
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(receivePaulineFilepath));
+		BC_ASSERT_FALSE(is_filepath_encrypted(receivePaulineFilepath));
 	} else {
-		BC_ASSERT_TRUE(is_encrypted(receivePaulineFilepath));
+		BC_ASSERT_TRUE(is_filepath_encrypted(receivePaulineFilepath));
 	}
 	// but not the original file sent
-	BC_ASSERT_FALSE(is_encrypted(sendFilepath));
+	BC_ASSERT_FALSE(is_filepath_encrypted(sendFilepath));
 
 	// Get the file using the linphone content API
 	msg = pauline->stat.last_received_chat_message;
@@ -518,7 +508,7 @@ static void file_transfer_test(const uint16_t encryptionModule,
 		// get a plain version of the file
 		plainFilePath = linphone_content_export_plain_file(content);
 		// check it is plain and match the sent one
-		BC_ASSERT_FALSE(is_encrypted(plainFilePath));
+		BC_ASSERT_FALSE(is_filepath_encrypted(plainFilePath));
 		compare_files(plainFilePath, sendFilepath);
 		plainFilePath2 = linphone_content_export_plain_file(content);
 		// Make sure the second path returned is different from the first one as the file already exists
@@ -560,23 +550,23 @@ end:
 
 	// check the linphone dbs and local_rc are encrypted or not
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(marie_linphone_db));
-		BC_ASSERT_FALSE(is_encrypted(marie_lime_db));
-		BC_ASSERT_FALSE(is_encrypted(marie_zrtp_secrets_db));
-		BC_ASSERT_FALSE(is_encrypted(marie_rc));
-		BC_ASSERT_FALSE(is_encrypted(pauline_linphone_db));
-		BC_ASSERT_FALSE(is_encrypted(pauline_lime_db));
-		BC_ASSERT_FALSE(is_encrypted(pauline_zrtp_secrets_db));
-		BC_ASSERT_FALSE(is_encrypted(pauline_rc));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_linphone_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_lime_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_zrtp_secrets_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(marie_rc));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_linphone_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_lime_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_zrtp_secrets_db));
+		BC_ASSERT_FALSE(is_filepath_encrypted(pauline_rc));
 	} else {
-		BC_ASSERT_TRUE(is_encrypted(marie_linphone_db));
-		BC_ASSERT_TRUE(is_encrypted(marie_lime_db));
-		BC_ASSERT_TRUE(is_encrypted(marie_zrtp_secrets_db));
-		BC_ASSERT_TRUE(is_encrypted(marie_rc));
-		BC_ASSERT_TRUE(is_encrypted(pauline_linphone_db));
-		BC_ASSERT_TRUE(is_encrypted(pauline_lime_db));
-		BC_ASSERT_TRUE(is_encrypted(pauline_zrtp_secrets_db));
-		BC_ASSERT_TRUE(is_encrypted(pauline_rc));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_linphone_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_lime_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_zrtp_secrets_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(marie_rc));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_linphone_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_lime_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_zrtp_secrets_db));
+		BC_ASSERT_TRUE(is_filepath_encrypted(pauline_rc));
 	}
 
 	if (createUsers == false) { // we reused users, now clean the local files

@@ -2845,13 +2845,24 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	linphone_core_manager_uninit2(mgr, TRUE, TRUE);
 }
 
-void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
-	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(mgr->lc);
+static void linphone_nat_policy_wait_for_stun_resolution(LinphoneCoreManager *mgr, LinphoneNatPolicy *nat_policy) {
 	if ((nat_policy != NULL) && (linphone_nat_policy_get_stun_server(nat_policy) != NULL) &&
 	    (linphone_nat_policy_stun_enabled(nat_policy) || linphone_nat_policy_turn_enabled(nat_policy)) &&
 	    (linphone_nat_policy_ice_enabled(nat_policy))) {
 		/*before we go, ensure that the stun server is resolved, otherwise all ice related test will fail*/
 		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
+	}
+}
+
+void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
+	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(mgr->lc);
+	linphone_nat_policy_wait_for_stun_resolution(mgr, nat_policy);
+	const bctbx_list_t *accounts = linphone_core_get_account_list(mgr->lc);
+	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+		LinphoneNatPolicy *account_nat_policy = linphone_account_params_get_nat_policy(account_params);
+		linphone_nat_policy_wait_for_stun_resolution(mgr, account_nat_policy);
 	}
 }
 
@@ -4317,13 +4328,23 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call_remote_address(
 		    callee_mgr->lc)); /*only relevant if one call, otherwise, not always set*/
 
-	callee_call = linphone_core_get_call_by_remote_address2(callee_mgr->lc, caller_mgr->identity);
+	LinphoneAddress *callee_from = NULL;
+	if (caller_params) {
+		const char *callee_from_str = linphone_call_params_get_from_header(caller_params);
+		if (callee_from_str) {
+			callee_from = linphone_address_new(callee_from_str);
+		}
+	}
+	if (!callee_from) {
+		callee_from = linphone_address_clone(caller_mgr->identity);
+	}
+
+	callee_call = linphone_core_get_call_by_remote_address2(callee_mgr->lc, callee_from);
 
 	if (!linphone_core_get_current_call(caller_mgr->lc) ||
 	    (!callee_call && !linphone_core_get_current_call(callee_mgr->lc)) /*for privacy case*/) {
 		return 0;
 	} else if (caller_mgr->identity) {
-		LinphoneAddress *callee_from = linphone_address_clone(caller_mgr->identity);
 		linphone_address_set_port(callee_from, 0); /*remove port because port is never present in from header*/
 
 		if (linphone_call_params_get_privacy(linphone_call_get_current_params(
@@ -4332,14 +4353,17 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 			if (!linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip",
 			                             "call_logs_use_asserted_id_instead_of_from", 0)) {
 				BC_ASSERT_PTR_NOT_NULL(callee_call);
-				BC_ASSERT_TRUE(linphone_address_weak_equal(callee_from, linphone_call_get_remote_address(callee_call)));
+				if (callee_call) {
+					BC_ASSERT_TRUE(
+					    linphone_address_weak_equal(callee_from, linphone_call_get_remote_address(callee_call)));
+				}
 			}
 		} else {
 			BC_ASSERT_FALSE(linphone_address_weak_equal(
 			    callee_from, linphone_call_get_remote_address(linphone_core_get_current_call(callee_mgr->lc))));
 		}
-		linphone_address_unref(callee_from);
 	}
+	linphone_address_unref(callee_from);
 
 	if (callee_stats->number_of_startRingbackTone == callee_stats->number_of_stopRingbackTone) {
 		if (callee_should_ring) {
@@ -4479,10 +4503,13 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 		BC_ASSERT_PTR_NOT_NULL(caller_call);
 		const LinphoneCallParams *caller_call_param = linphone_call_get_current_params(caller_call);
 		const LinphoneMediaEncryption caller_enc = linphone_call_params_get_media_encryption(caller_call_param);
+		check_lime_ik(caller_mgr, caller_call);
+
 		callee_call = linphone_core_get_current_call(callee_mgr->lc);
 		BC_ASSERT_PTR_NOT_NULL(callee_call);
 		const LinphoneCallParams *callee_call_param = linphone_call_get_current_params(callee_call);
 		const LinphoneMediaEncryption callee_enc = linphone_call_params_get_media_encryption(callee_call_param);
+		check_lime_ik(callee_mgr, callee_call);
 
 		// Ensure that encryption on both sides is the same
 		BC_ASSERT_EQUAL(caller_enc, matched_enc, int, "%d");
@@ -4511,8 +4538,8 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 		const bool_t callerSendIceReInviteWithDtls = linphone_config_get_int(
 		    linphone_core_get_config(caller_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE);
 
-		LinphoneNatPolicy *caller_policy = linphone_core_get_nat_policy(caller_mgr->lc);
-		LinphoneNatPolicy *callee_policy = linphone_core_get_nat_policy(callee_mgr->lc);
+		LinphoneNatPolicy *caller_policy = get_nat_policy_for_call(caller_mgr, caller_call);
+		LinphoneNatPolicy *callee_policy = get_nat_policy_for_call(callee_mgr, callee_call);
 		bool_t capability_negotiation_reinvite_enabled = linphone_core_sdp_200_ack_enabled(caller_mgr->lc)
 		                                                     ? callee_capability_negotiation_reinvite_enabled
 		                                                     : caller_capability_negotiation_reinvite_enabled;
@@ -5254,6 +5281,78 @@ void set_lime_server_and_curve_list_tls(const int curveId,
 
 void set_lime_server_and_curve_list(const int curveId, bctbx_list_t *managerList) {
 	set_lime_server_and_curve_list_tls(curveId, managerList, FALSE, FALSE);
+}
+
+LinphoneNatPolicy *get_nat_policy_for_call(LinphoneCoreManager *mgr, LinphoneCall *call) {
+	const LinphoneCallParams *call_params = linphone_call_get_params(call);
+	const LinphoneAccount *account = linphone_call_params_get_account(call_params);
+	const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+	LinphoneNatPolicy *account_nat_policy = linphone_account_params_get_nat_policy(account_params);
+	LinphoneNatPolicy *core_nat_policy = linphone_core_get_nat_policy(mgr->lc);
+	return (account_nat_policy) ? account_nat_policy : core_nat_policy;
+}
+
+void enable_stun_in_mgr(LinphoneCoreManager *mgr,
+                        const bool_t account_enable_stun,
+                        const bool_t account_enable_ice,
+                        const bool_t core_enable_stun,
+                        const bool_t core_enable_ice) {
+	const bctbx_list_t *accounts = linphone_core_get_account_list(mgr->lc);
+	for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+		LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+		enable_stun_in_account(mgr, account, account_enable_stun, account_enable_ice);
+	}
+	enable_stun_in_core(mgr, core_enable_stun, core_enable_ice);
+	linphone_core_manager_wait_for_stun_resolution(mgr);
+}
+
+void enable_stun_in_account(LinphoneCoreManager *mgr,
+                            LinphoneAccount *account,
+                            const bool_t enable_stun,
+                            const bool_t enable_ice) {
+	LinphoneCore *lc = mgr->lc;
+	LinphoneNatPolicy *nat_policy = NULL;
+	LinphoneNatPolicy *core_nat_policy = linphone_core_get_nat_policy(lc);
+	const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+	LinphoneNatPolicy *account_nat_policy = linphone_account_params_get_nat_policy(account_params);
+	char *stun_server = NULL;
+	char *stun_server_username = NULL;
+
+	if (account_nat_policy != NULL) {
+		nat_policy = linphone_nat_policy_ref(account_nat_policy);
+	} else if (core_nat_policy != NULL) {
+		nat_policy = linphone_nat_policy_ref(core_nat_policy);
+	}
+
+	if (nat_policy) {
+		stun_server = ms_strdup(linphone_nat_policy_get_stun_server(nat_policy));
+		stun_server_username = ms_strdup(linphone_nat_policy_get_stun_server_username(nat_policy));
+		linphone_nat_policy_clear(nat_policy);
+	} else {
+		nat_policy = linphone_core_create_nat_policy(lc);
+		stun_server = ms_strdup(linphone_core_get_stun_server(lc));
+	}
+
+	linphone_nat_policy_enable_stun(nat_policy, enable_stun);
+
+	if (enable_ice) {
+		linphone_nat_policy_enable_ice(nat_policy, TRUE);
+	}
+
+	if (stun_server_username != NULL) {
+		linphone_nat_policy_set_stun_server_username(nat_policy, stun_server_username);
+		ms_free(stun_server_username);
+	}
+	if (stun_server != NULL) {
+		linphone_nat_policy_set_stun_server(nat_policy, stun_server);
+		ms_free(stun_server);
+	}
+
+	LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
+	linphone_account_params_set_nat_policy(new_account_params, nat_policy);
+	linphone_account_set_params(account, new_account_params);
+	linphone_account_params_unref(new_account_params);
+	linphone_nat_policy_unref(nat_policy);
 }
 
 void enable_stun_in_core(LinphoneCoreManager *mgr, const bool_t enable_stun, const bool_t enable_ice) {

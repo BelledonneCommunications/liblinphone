@@ -35,6 +35,7 @@ class IceAgent;
 class MediaSessionPrivate;
 class Participant;
 class StreamsGroup;
+class NatPolicy;
 
 namespace MediaConference {
 class Conference;
@@ -66,7 +67,7 @@ public:
 	LinphoneStatus acceptEarlyMedia(const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptUpdate(const MediaSessionParams *msp);
 	void cancelDtmfs();
-	void setNatPolicy(LinphoneNatPolicy *pol);
+	void setNatPolicy(const std::shared_ptr<NatPolicy> &pol);
 	void setSubject(const std::string &subject);
 	bool toneIndicationsEnabled() const;
 	void configure(LinphoneCallDir direction,

@@ -147,7 +147,7 @@ private:
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);
 	int gatherIceCandidates();
 	int gatherLocalCandidates();
-	void addPredefinedSflrxCandidates(const NatPolicy *natPolicy);
+	void addPredefinedSflrxCandidates(const std::shared_ptr<NatPolicy> &natPolicy);
 	bool hasRelayCandidates(const SalMediaDescription &md) const;
 	void chooseDefaultCandidates(const OfferAnswerContext &ctx);
 	StreamsGroup &mStreamsGroup;

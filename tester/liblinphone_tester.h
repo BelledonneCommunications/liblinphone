@@ -21,6 +21,8 @@
 #ifndef LIBLINPHONE_TESTER_H_
 #define LIBLINPHONE_TESTER_H_
 
+#include <stdbool.h>
+
 #include "linphone/core.h"
 #include <bctoolbox/tester.h>
 #include <mediastreamer2/msutils.h>
@@ -967,6 +969,16 @@ LinphoneAddress *linphone_core_manager_resolve(LinphoneCoreManager *mgr, const L
 FILE *sip_start(const char *senario, const char *dest_username, const char *passwd, LinphoneAddress *dest_addres);
 
 void early_media_without_sdp_in_200_base(bool_t use_video, bool_t use_ice);
+LinphoneNatPolicy *get_nat_policy_for_call(LinphoneCoreManager *mgr, LinphoneCall *call);
+void enable_stun_in_mgr(LinphoneCoreManager *mgr,
+                        const bool_t account_enable_stun,
+                        const bool_t account_enable_ice,
+                        const bool_t core_enable_stun,
+                        const bool_t core_enable_ice);
+void enable_stun_in_account(LinphoneCoreManager *mgr,
+                            LinphoneAccount *account,
+                            const bool_t enable_stun,
+                            const bool_t enable_ice);
 void enable_stun_in_core(LinphoneCoreManager *mgr, const bool_t enable_stun, const bool_t enable_ice);
 void linphone_conf_event_notify(LinphoneEvent *lev);
 void _check_friend_result_list(
@@ -1017,6 +1029,7 @@ void set_lime_server_and_curve_list_tls(const int curveId,
                                         bool_t tls_auth_server,
                                         bool_t required);
 
+bool is_filepath_encrypted(const char *filepath);
 typedef struct _LinphoneAccountCreatorStats {
 	int cb_done;
 } LinphoneAccountCreatorStats;
@@ -1028,6 +1041,7 @@ void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 void lime_delete_DRSessions(const char *limedb);
 void lime_setback_usersUpdateTs(const char *limedb, int days);
 uint64_t lime_get_userUpdateTs(const char *limedb);
+char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu);
 
 void liblinphone_tester_simulate_mire_defunct(
     MSFilter *filter,
