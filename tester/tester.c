@@ -2930,6 +2930,22 @@ int liblinphone_tester_ipv4_available(void) {
 	return FALSE;
 }
 
+char *liblinphone_tester_make_unique_file_path(const char *name, const char *extension) {
+	char token[10] = {0};
+	char *filename;
+	char *path;
+	char *ret;
+
+	belle_sip_random_token(token, sizeof(token));
+
+	filename = bctbx_strdup_printf("%s-%s.%s", name, token, extension);
+	path = bc_tester_file(filename);
+	ret = bctbx_strdup(path);
+	bctbx_free(filename);
+	bc_free(path);
+	return ret;
+}
+
 void liblinphone_tester_keep_accounts(int keep) {
 	liblinphone_tester_keep_accounts_flag = keep;
 }

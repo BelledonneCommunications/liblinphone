@@ -596,7 +596,7 @@ bool_t _linphone_friend_has_phone_number(const LinphoneFriend *lf,
 			ms_free(normalized_value);
 		}
 	}
-	bctbx_list_free(numbers);
+	bctbx_list_free_with_data(numbers, bctbx_free);
 
 	return found;
 }

@@ -1042,6 +1042,10 @@ void liblinphone_tester_add_grammar_loader_path(const char *path);
 void liblinphone_tester_add_soci_search_path(const char *path);
 #endif
 
+/* Returns a unique path, useful for tests that need temporary files, so that they can have unique path
+ * to be robust to parallel execution*/
+char *liblinphone_tester_make_unique_file_path(const char *name, const char *extension);
+
 #ifdef __cplusplus
 };
 #endif

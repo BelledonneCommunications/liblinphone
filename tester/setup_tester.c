@@ -3305,8 +3305,8 @@ static void friend_list_db_storage_base(bool_t set_friends_db_path) {
 	// Disable legacy friends storage
 	linphone_config_set_int(config, "misc", "store_friends", 0);
 
-	char *friends_db = bc_tester_file("friends.db");
-	unlink(friends_db);
+	char *friends_db = liblinphone_tester_make_unique_file_path("friends", "db");
+
 	if (set_friends_db_path) {
 		linphone_core_set_friends_database_path(core, friends_db);
 	}
@@ -3436,7 +3436,7 @@ static void friend_list_db_storage_base(bool_t set_friends_db_path) {
 	BC_ASSERT_PTR_NULL(found_friend);
 
 	unlink(friends_db);
-	bc_free(friends_db);
+	bctbx_free(friends_db);
 
 	linphone_core_manager_destroy(manager);
 }
