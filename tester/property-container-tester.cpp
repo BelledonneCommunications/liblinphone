@@ -78,7 +78,7 @@ static void to_stream_property(void) {
 	{
 		std::stringstream actual, expected;
 		properties.toStream(actual);
-		expected << "pi : 3.14159" << std::endl << "universe : 42" << std::endl << "Hello : world!" << std::endl;
+		expected << "Hello : world!" << std::endl << "pi : 3.14159" << std::endl << "universe : 42" << std::endl;
 		auto actual_str = actual.str();
 		auto expected_str = expected.str();
 		BC_ASSERT_STRING_EQUAL(actual_str.c_str(), expected_str.c_str());

@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <unordered_map>
+#include <map>
 
 #include "bctoolbox/utils.hh"
 #include "property-container.h"
@@ -33,7 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class PropertyContainerPrivate {
 public:
-	unordered_map<string, Variant> properties;
+	map<string, Variant> properties;
 };
 
 // -----------------------------------------------------------------------------
