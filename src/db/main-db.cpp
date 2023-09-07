@@ -1492,8 +1492,15 @@ long long MainDbPrivate::insertConferenceChatMessageReactionEvent(const shared_p
 	if (eventId < 0) return -1;
 
 	shared_ptr<ChatMessage> chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage();
-	const long long &fromSipAddressId = insertSipAddress(chatMessage->getFromAddress());
-	const long long &toSipAddressId = insertSipAddress(chatMessage->getToAddress());
+
+	// Need to remove the GRUU to prevent multiple reactions from the same SIP identity
+	std::shared_ptr<Address> from = chatMessage->getFromAddress()->clone()->toSharedPtr();
+	from->clean();
+	const long long &fromSipAddressId = insertSipAddress(from);
+	std::shared_ptr<Address> to = chatMessage->getToAddress()->clone()->toSharedPtr();
+	to->clean();
+	const long long &toSipAddressId = insertSipAddress(to);
+
 	const tm &time = Utils::getTimeTAsTm(chatMessage->getTime());
 	const string &imdnMessageId = chatMessage->getImdnMessageId();
 	const string &callId = chatMessage->getPrivate()->getCallId();
@@ -4602,12 +4609,15 @@ list<shared_ptr<ChatMessageReaction>> MainDb::getChatMessageReactions(const shar
 }
 
 void MainDb::removeConferenceChatMessageReactionEvent(const string &messageId,
-                                                      const std::shared_ptr<const Address> &from) {
+                                                      const std::shared_ptr<const Address> &fromAddress) {
 #ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &fromSipAddressId = d->selectSipAddressId(from->toStringUriOnlyOrdered());
+		// Same as insertion, we have to remove the gruu
+		std::shared_ptr<Address> from = fromAddress->clone()->toSharedPtr();
+		from->clean();
+		const long long &fromSipAddressId = d->selectSipAddressId(from);
 
 		*d->dbSession.getBackendSession()
 		    << "DELETE FROM conference_chat_message_reaction_event WHERE"

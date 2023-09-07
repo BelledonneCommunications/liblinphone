@@ -139,6 +139,7 @@ public:
 	const std::string &getReactionToMessageId() const;
 	std::shared_ptr<ChatMessage> getReactionToMessage() const;
 	const std::list<std::shared_ptr<ChatMessageReaction>> getReactions() const;
+	const std::shared_ptr<ChatMessageReaction> getOwnReaction() const;
 
 	// TODO: Return a cpp reference.
 	const LinphoneErrorInfo *getErrorInfo() const;

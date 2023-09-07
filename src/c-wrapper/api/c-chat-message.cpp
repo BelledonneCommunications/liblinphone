@@ -634,6 +634,16 @@ bctbx_list_t *linphone_chat_message_get_reactions(const LinphoneChatMessage *msg
 	return LinphonePrivate::ChatMessageReaction::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReactions());
 }
 
+const LinphoneChatMessageReaction *linphone_chat_message_get_own_reaction(const LinphoneChatMessage *msg) {
+	LinphoneChatMessageReaction *reaction = nullptr;
+	const shared_ptr<LinphonePrivate::ChatMessageReaction> &cppReaction =
+	    L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getOwnReaction();
+	if (cppReaction != nullptr) {
+		reaction = cppReaction->toC();
+	}
+	return reaction;
+}
+
 LinphoneChatMessageReaction *linphone_chat_message_create_reaction(LinphoneChatMessage *message,
                                                                    const char *utf8_reaction) {
 	const std::string &messageId = L_GET_CPP_PTR_FROM_C_OBJECT(message)->getImdnMessageId();

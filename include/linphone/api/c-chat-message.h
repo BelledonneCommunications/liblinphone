@@ -471,6 +471,14 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChat
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_reactions(const LinphoneChatMessage *msg);
 
 /**
+ * Returns our own reaction for a given chat message, if any.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return Our own #LinphoneChatMessageReaction for that message if any, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneChatMessageReaction *
+linphone_chat_message_get_own_reaction(const LinphoneChatMessage *msg);
+
+/**
  * Returns wether the chat message has a conference invitation content or not.
  * @param message #LinphoneChatMessage object. @notnil
  * @return TRUE if it has one, FALSE otherwise.

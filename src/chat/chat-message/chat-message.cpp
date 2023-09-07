@@ -1555,6 +1555,21 @@ const list<shared_ptr<ChatMessageReaction>> ChatMessage::getReactions() const {
 	return d->reactions;
 }
 
+const shared_ptr<ChatMessageReaction> ChatMessage::getOwnReaction() const {
+	L_D();
+	d->reactions = getChatRoom()->getCore()->getPrivate()->mainDb->getChatMessageReactions(
+	    const_pointer_cast<ChatMessage>(getSharedFromThis()));
+
+	shared_ptr<ChatMessageReaction> ourReaction = nullptr;
+	for (auto reaction : d->reactions) {
+		if (reaction->getFromAddress()->weakEqual(*(getChatRoom()->getLocalAddress()))) {
+			ourReaction = reaction;
+			break;
+		}
+	}
+	return ourReaction;
+}
+
 void ChatMessagePrivate::enableEphemeralWithTime(long time) {
 	isEphemeral = true;
 	ephemeralLifetime = time;

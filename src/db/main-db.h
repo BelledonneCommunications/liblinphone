@@ -160,7 +160,7 @@ public:
 	std::list<std::shared_ptr<ChatMessageReaction>>
 	getChatMessageReactions(const std::shared_ptr<ChatMessage> &chatMessage);
 	void removeConferenceChatMessageReactionEvent(const std::string &messageId,
-	                                              const std::shared_ptr<const Address> &from);
+	                                              const std::shared_ptr<const Address> &fromAddress);
 
 	void disableDeliveryNotificationRequired(const std::shared_ptr<const EventLog> &eventLog);
 	void disableDisplayNotificationRequired(const std::shared_ptr<const EventLog> &eventLog);
