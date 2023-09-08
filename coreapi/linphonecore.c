@@ -5424,6 +5424,7 @@ static MSSndCard *get_card_from_string_id(const char *devid, unsigned int cap, M
 				cap == MS_SND_CARD_CAP_CAPTURE ? "capture" : "playback");
 			sndcard = NULL;
 		}
+		if (sndcard == NULL) ms_warning("Can't find sound device with id %s", devid);
 	}
 	if (sndcard == NULL) {
 		if ((cap & MS_SND_CARD_CAP_CAPTURE) && (cap & MS_SND_CARD_CAP_PLAYBACK)) {
@@ -5438,8 +5439,9 @@ static MSSndCard *get_card_from_string_id(const char *devid, unsigned int cap, M
 			if (elem) sndcard = (MSSndCard*)elem->data;
 		}
 	}
-	if (sndcard == NULL)
+	if (sndcard == NULL){
 		ms_error("Could not find a suitable soundcard with capabilities : %d", cap);
+	}
 	return sndcard;
 }
 
