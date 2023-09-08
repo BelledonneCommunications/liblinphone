@@ -303,8 +303,8 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 	enableRecordAware(linphone_core_is_record_aware_enabled(cCore));
 
 	d->micEnabled = true; /* always enabled by default. This switch is unrelated to the Core's mic enablement.*/
-	setInputAudioDevice(core->getDefaultInputAudioDevice());
-	setOutputAudioDevice(core->getDefaultOutputAudioDevice());
+	/* DO NOT SET input and output audio devices: default values exist at Call level already, and may be updated
+	 * at call startup when for example the sound device list is reloaded.*/
 }
 
 // -----------------------------------------------------------------------------
@@ -322,8 +322,6 @@ bool MediaSessionParams::audioMulticastEnabled() const {
 void MediaSessionParams::enableAudio(bool value) {
 	L_D();
 	d->audioEnabled = value;
-	// if (d->audioEnabled && (getAudioDirection() == LinphoneMediaDirectionInactive))
-	//	setAudioDirection(LinphoneMediaDirectionSendRecv);
 }
 
 void MediaSessionParams::enableAudioMulticast(bool value) {
@@ -371,8 +369,6 @@ void MediaSessionParams::setAudioDirection(LinphoneMediaDirection direction) {
 void MediaSessionParams::enableVideo(bool value) {
 	L_D();
 	d->videoEnabled = value;
-	// if (d->videoEnabled && (getVideoDirection() == LinphoneMediaDirectionInactive))
-	//	setVideoDirection(LinphoneMediaDirectionSendRecv);
 }
 
 void MediaSessionParams::enableVideoMulticast(bool value) {

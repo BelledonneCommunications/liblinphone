@@ -274,6 +274,7 @@ bool Call::setInputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audioD
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return false;
 	}
+	lInfo() << "Call's input audio device is " << audioDevice->getDeviceName();
 
 	return static_pointer_cast<MediaSession>(getActiveSession())->setInputAudioDevice(audioDevice);
 }
@@ -819,29 +820,32 @@ Call::~Call() {
 }
 
 void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
+	shared_ptr<AudioDevice> inputAudioDevice;
+	shared_ptr<AudioDevice> outputAudioDevice;
 	if (ms_snd_card_manager_reload_requested(ms_factory_get_snd_card_manager(getCore()->getCCore()->factory))) {
 		linphone_core_reload_sound_devices(getCore()->getCCore());
 	}
 	if (msp) {
 		setMicrophoneMuted(!msp->isMicEnabled());
-		setInputAudioDevicePrivate(msp->getInputAudioDevice());
-		setOutputAudioDevicePrivate(msp->getOutputAudioDevice());
-		return;
+		inputAudioDevice = msp->getInputAudioDevice();
+		outputAudioDevice = msp->getOutputAudioDevice();
 	}
-	auto outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
-	if (outputAudioDevice) {
-		setOutputAudioDevicePrivate(outputAudioDevice);
-	} else if (!getCore()->getCCore()->use_files) {
-		lWarning() << "Failed to find audio device matching default output sound card ["
-		           << getCore()->getCCore()->sound_conf.play_sndcard << "]";
+	if (!outputAudioDevice) {
+		outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
+		if (!outputAudioDevice && !getCore()->getCCore()->use_files) {
+			lWarning() << "Failed to find audio device matching default output sound card ["
+			           << getCore()->getCCore()->sound_conf.play_sndcard << "]";
+		}
 	}
-	auto inputAudioDevice = getCore()->getDefaultInputAudioDevice();
-	if (inputAudioDevice) {
-		setInputAudioDevicePrivate(inputAudioDevice);
-	} else if (!getCore()->getCCore()->use_files) {
-		lWarning() << "Failed to find audio device matching default input sound card ["
-		           << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
+	if (!inputAudioDevice) {
+		inputAudioDevice = getCore()->getDefaultInputAudioDevice();
+		if (!inputAudioDevice && !getCore()->getCCore()->use_files) {
+			lWarning() << "Failed to find audio device matching default input sound card ["
+			           << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
+		}
 	}
+	if (outputAudioDevice) setOutputAudioDevicePrivate(outputAudioDevice);
+	if (inputAudioDevice) setInputAudioDevicePrivate(inputAudioDevice);
 }
 
 void Call::configure(LinphoneCallDir direction,
