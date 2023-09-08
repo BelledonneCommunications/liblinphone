@@ -1653,7 +1653,6 @@ static void group_chat_room_with_creator_without_groupchat_capability(void) {
 		    linphone_core_create_chat_room_6(marie.getLc(), params, NULL, participantsAddresses);
 		linphone_chat_room_params_unref(params);
 		BC_ASSERT_PTR_NOT_NULL(chatRoom);
-
 		// linphone_core_create_chat_room_6 takes a ref to the chatroom
 		if (chatRoom) linphone_chat_room_unref(chatRoom);
 
@@ -2624,12 +2623,8 @@ static test_t local_conference_chat_tests[] = {
 };
 
 static test_t local_conference_chat_error_tests[] = {
-    TEST_ONE_TAG("Group chat with INVITE session error",
-                 LinphoneTest::group_chat_room_with_invite_error,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Group chat with SUBSCRIBE session error",
-                 LinphoneTest::group_chat_room_with_subscribe_error,
-                 "LeaksMemory"), /* because of network up and down */
+    TEST_NO_TAG("Group chat with INVITE session error", LinphoneTest::group_chat_room_with_invite_error),
+    TEST_NO_TAG("Group chat with SUBSCRIBE session error", LinphoneTest::group_chat_room_with_subscribe_error),
     TEST_NO_TAG("Group chat Add participant with invalid address",
                 LinphoneTest::group_chat_room_add_participant_with_invalid_address),
     TEST_NO_TAG("Group chat Only participant with invalid address",

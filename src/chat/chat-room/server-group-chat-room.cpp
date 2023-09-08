@@ -1070,7 +1070,7 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 void ServerGroupChatRoomPrivate::inviteDevice(const shared_ptr<ParticipantDevice> &device) {
 	L_Q();
 
-	lInfo() << q << ": Inviting device '" << device->getAddress()->toString() << "'";
+	lInfo() << q << ": Inviting device '" << *device->getAddress() << "'";
 	shared_ptr<Participant> participant =
 	    const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	shared_ptr<CallSession> session = makeSession(device);
@@ -1157,7 +1157,7 @@ void ServerGroupChatRoomPrivate::queueMessage(const shared_ptr<Message> &msg) {
 	for (const auto &participant : q->getParticipants()) {
 		for (const auto &device : participant->getDevices()) {
 			// Queue the message for all devices except the one that sent it
-			if (msg->fromAddr != device->getAddress()) {
+			if (*msg->fromAddr != *device->getAddress()) {
 				queueMessage(msg, device->getAddress());
 			}
 		}

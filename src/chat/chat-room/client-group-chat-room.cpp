@@ -349,7 +349,8 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged(const shared_ptr<Call
 			// If there are chat message pending chat room creation, set state to NotDelivered and remove them from
 			// queue.
 			for (const auto &message : pendingCreationMessages) {
-				message->getPrivate()->setState(ChatMessage::State::NotDelivered);
+				message->getPrivate()->setParticipantState(q->getMe()->getAddress(), ChatMessage::State::NotDelivered,
+				                                           ::ms_time(nullptr));
 			}
 			pendingCreationMessages.clear();
 			if (reason == LinphoneReasonForbidden) {

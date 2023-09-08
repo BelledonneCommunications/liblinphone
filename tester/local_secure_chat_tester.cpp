@@ -362,12 +362,9 @@ static test_t local_conference_secure_chat_tests[] = {
     TEST_ONE_TAG("Secure Group chat with client restart",
                  LinphoneTest::secure_group_chat_room_with_client_restart,
                  "LeaksMemory"), /* beacause of coreMgr restart*/
-    TEST_ONE_TAG("Secure group chat with INVITE session error",
-                 LinphoneTest::secure_group_chat_room_with_invite_error,
-                 "LeaksMemory"), /* because of network up and down */
-    TEST_ONE_TAG("Secure group chat with SUBSCRIBE session error",
-                 LinphoneTest::secure_group_chat_room_with_subscribe_error,
-                 "LeaksMemory"), /* because of network up and down */
+    TEST_NO_TAG("Secure group chat with INVITE session error", LinphoneTest::secure_group_chat_room_with_invite_error),
+    TEST_NO_TAG("Secure group chat with SUBSCRIBE session error",
+                LinphoneTest::secure_group_chat_room_with_subscribe_error),
     TEST_ONE_TAG("Secure group chat with chat room deleted before server restart",
                  LinphoneTest::secure_group_chat_room_with_chat_room_deleted_before_server_restart,
                  "LeaksMemory"), /* because of network up and down */

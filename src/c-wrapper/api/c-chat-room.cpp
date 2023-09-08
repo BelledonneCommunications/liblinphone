@@ -168,7 +168,8 @@ LinphoneChatMessage *linphone_chat_room_create_message_2(LinphoneChatRoom *cr,
 
 	LinphonePrivate::ChatMessagePrivate *dMsg = L_GET_PRIVATE_FROM_C_OBJECT(msg);
 	dMsg->setTime(time);
-	dMsg->setState(static_cast<LinphonePrivate::ChatMessage::State>(state));
+	dMsg->setParticipantState(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe()->getAddress(),
+	                          static_cast<LinphonePrivate::ChatMessage::State>(state), ::ms_time(NULL));
 
 	return msg;
 }

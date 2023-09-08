@@ -1685,11 +1685,11 @@ static void message_with_voice_recording_base(bool_t create_message_from_recorde
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
-	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
+	LinphoneChatMessage *marie_msg = marie->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(marie_msg);
 
-	if (marie->stat.last_received_chat_message != NULL) {
-		LinphoneContent *content =
-		    (LinphoneContent *)(linphone_chat_message_get_contents(marie->stat.last_received_chat_message)->data);
+	if (marie_msg != NULL) {
+		LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(marie_msg)->data);
 		BC_ASSERT_EQUAL(linphone_content_get_file_duration(content), duration, int, "%d");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "audio");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "wav");

@@ -36,7 +36,9 @@ ConferenceParticipantEvent::ConferenceParticipantEvent(Type type,
     : ConferenceNotifiedEvent(*new ConferenceParticipantEventPrivate, type, creationTime, conferenceId) {
 	L_D();
 	L_ASSERT(type == Type::ConferenceParticipantAdded || type == Type::ConferenceParticipantRemoved ||
-	         type == Type::ConferenceParticipantSetAdmin || type == Type::ConferenceParticipantUnsetAdmin);
+	         type == Type::ConferenceParticipantSetAdmin || type == Type::ConferenceParticipantUnsetAdmin ||
+	         type == Type::ConferenceParticipantRoleUnknown || type == Type::ConferenceParticipantRoleListener ||
+	         type == Type::ConferenceParticipantRoleSpeaker);
 	d->participantAddress = participantAddress;
 }
 

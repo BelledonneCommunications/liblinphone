@@ -617,10 +617,14 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 
 static void chat_room_participant_added_sip_error(LinphoneChatRoom *cr,
                                                   BCTBX_UNUSED(const LinphoneEventLog *event_log)) {
-	if (bctbx_list_size(linphone_chat_room_get_participants(cr)) == 2) {
+	bctbx_list_t *participants = linphone_chat_room_get_participants(cr);
+	if (bctbx_list_size(participants) == 2) {
 		LinphoneCoreManager *initiator = (LinphoneCoreManager *)linphone_chat_room_get_user_data(cr);
 		ms_message("Turning off network for core %s", linphone_core_get_identity(initiator->lc));
 		linphone_core_set_network_reachable(initiator->lc, FALSE);
+	}
+	if (participants) {
+		bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
 	}
 }
 
@@ -717,6 +721,22 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 		initialMarieStats = marie.getStats();
 		initialBertheStats = berthe.getStats();
 
+		std::list<LinphoneCoreManager *> shutdownNetworkClients;
+		std::list<stats> initialStatsList;
+		if (invite_error) {
+			shutdownNetworkClients.push_back(michelle2.getCMgr());
+			initialStatsList.push_back(michelle2.getStats());
+			shutdownNetworkClients.push_back(berthe.getCMgr());
+			initialStatsList.push_back(berthe.getStats());
+		} else if (subscribe_error) {
+			shutdownNetworkClients.push_back(marie.getCMgr());
+			initialStatsList.push_back(marie.getStats());
+			shutdownNetworkClients.push_back(michelle2.getCMgr());
+			initialStatsList.push_back(michelle2.getStats());
+			shutdownNetworkClients.push_back(berthe.getCMgr());
+			initialStatsList.push_back(berthe.getStats());
+		}
+
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(michelle);
 		focus.registerAsParticipantDevice(michelle2);
@@ -727,6 +747,7 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 			linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed_sip_error);
 			linphone_core_add_callbacks(focus.getLc(), cbs);
+			linphone_core_cbs_unref(cbs);
 		}
 
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
@@ -758,6 +779,7 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 		LinphoneChatRoom *marieCr =
 		    linphone_core_create_chat_room_2(marie.getLc(), params, initialSubject, participantsAddresses);
 		linphone_chat_room_params_unref(params);
+		if (marieCr) linphone_chat_room_unref(marieCr);
 
 		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, michelle, michelle2, laure, berthe}).wait([&focus] {
 			return focus.getCore().getChatRooms().size() == 1;
@@ -767,43 +789,18 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			linphone_chat_room_set_user_data(L_GET_C_BACK_PTR(chatRoom), marie.getCMgr());
 		}
 
-		if (invite_error) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated,
-			                             initialMichelle2Stats.number_of_LinphoneConferenceStateCreated + 1,
+		for (const auto &client : shutdownNetworkClients) {
+			stats &initialStats = initialStatsList.front();
+			BC_ASSERT_TRUE(wait_for_list(coresList, &client->stat.number_of_LinphoneConferenceStateCreated,
+			                             initialStats.number_of_LinphoneConferenceStateCreated + 1,
 			                             liblinphone_tester_sip_timeout));
-			ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(michelle2.getLc()),
-			           linphone_address_as_string(linphone_proxy_config_get_contact(
-			               linphone_core_get_default_proxy_config(michelle2.getLc()))));
-			linphone_core_set_network_reachable(michelle2.getLc(), FALSE);
-			BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_LinphoneConferenceStateCreated,
-			                             initialBertheStats.number_of_LinphoneConferenceStateCreated + 1,
-			                             liblinphone_tester_sip_timeout));
-			ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(berthe.getLc()),
-			           linphone_address_as_string(
-			               linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(berthe.getLc()))));
-			linphone_core_set_network_reachable(berthe.getLc(), FALSE);
-		} else if (subscribe_error) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionActive,
-			                             initialMarieStats.number_of_LinphoneSubscriptionActive + 1,
-			                             liblinphone_tester_sip_timeout));
-			ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(marie.getLc()),
-			           linphone_address_as_string(
-			               linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie.getLc()))));
-			linphone_core_set_network_reachable(marie.getLc(), FALSE);
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneSubscriptionActive,
-			                             initialMichelle2Stats.number_of_LinphoneSubscriptionActive + 1,
-			                             liblinphone_tester_sip_timeout));
-			ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(michelle2.getLc()),
-			           linphone_address_as_string(linphone_proxy_config_get_contact(
-			               linphone_core_get_default_proxy_config(michelle2.getLc()))));
-			linphone_core_set_network_reachable(michelle2.getLc(), FALSE);
-			BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_LinphoneSubscriptionActive,
-			                             initialBertheStats.number_of_LinphoneSubscriptionActive + 1,
-			                             liblinphone_tester_sip_timeout));
-			ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(berthe.getLc()),
-			           linphone_address_as_string(
-			               linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(berthe.getLc()))));
-			linphone_core_set_network_reachable(berthe.getLc(), FALSE);
+			char *proxy_contact_str = linphone_address_as_string(
+			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(client->lc)));
+			ms_message("Disabling network of core %s (contact %s)", linphone_core_get_identity(client->lc),
+			           proxy_contact_str);
+			ms_free(proxy_contact_str);
+			linphone_core_set_network_reachable(client->lc, FALSE);
+			initialStatsList.pop_front();
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
@@ -862,9 +859,11 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 		                              initialMichelleStats.number_of_LinphoneMessageDisplayed + 1, 3000));
 
 		if (invite_error || subscribe_error) {
+			char *marie_proxy_contact_str = linphone_address_as_string(
+			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie.getLc())));
 			ms_message("Enabling network of core %s (contact %s)", linphone_core_get_identity(marie.getLc()),
-			           linphone_address_as_string(
-			               linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie.getLc()))));
+			           marie_proxy_contact_str);
+			ms_free(marie_proxy_contact_str);
 			linphone_core_set_network_reachable(marie.getLc(), TRUE);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneRegistrationOk,
 			                             initialMarieStats.number_of_LinphoneRegistrationOk + 1,
@@ -934,10 +933,11 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 		                              initialLaureStats.number_of_LinphoneMessageDisplayed + 1, 3000));
 
 		if (invite_error || subscribe_error) {
+			char *michelle2_proxy_contact_str = linphone_address_as_string(
+			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(michelle2.getLc())));
 			ms_message("Enabling network of core %s (contact %s)", linphone_core_get_identity(michelle2.getLc()),
-			           linphone_address_as_string(linphone_proxy_config_get_contact(
-			               linphone_core_get_default_proxy_config(michelle2.getLc()))));
-
+			           michelle2_proxy_contact_str);
+			ms_free(michelle2_proxy_contact_str);
 			linphone_core_set_network_reachable(michelle2.getLc(), TRUE);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneRegistrationOk,
 			                             initialMichelle2Stats.number_of_LinphoneRegistrationOk + 1,
@@ -945,9 +945,11 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 			michelle2Cr = check_creation_chat_room_client_side(coresList, michelle2.getCMgr(), &initialMichelle2Stats,
 			                                                   confAddr, initialSubject, 4, FALSE);
 
+			char *berthe_proxy_contact_str = linphone_address_as_string(
+			    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(berthe.getLc())));
 			ms_message("Enabling network of core %s (contact %s)", linphone_core_get_identity(berthe.getLc()),
-			           linphone_address_as_string(
-			               linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(berthe.getLc()))));
+			           berthe_proxy_contact_str);
+			ms_free(berthe_proxy_contact_str);
 			linphone_core_set_network_reachable(berthe.getLc(), TRUE);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_LinphoneRegistrationOk,
 			                             initialBertheStats.number_of_LinphoneRegistrationOk + 1,

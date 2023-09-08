@@ -423,7 +423,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				    }
 			    } else {
 				    lError() << "[LIME] operation failed: " << errorMessage;
-				    message->getPrivate()->setState(ChatMessage::State::NotDelivered);
+				    message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
+				                                               ChatMessage::State::NotDelivered, ::ms_time(nullptr));
 				    *result = ChatMessageModifier::Result::Error;
 			    }
 		    },

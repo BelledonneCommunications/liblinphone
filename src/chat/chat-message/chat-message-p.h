@@ -70,9 +70,9 @@ public:
 
 	void setParticipantState(const std::shared_ptr<Address> &participantAddress,
 	                         ChatMessage::State newState,
-	                         time_t stateChangeTime);
+	                         time_t stateChangeTime,
+	                         LinphoneReason reason = LinphoneReasonNone);
 
-	virtual void setState(ChatMessage::State newState);
 	void forceState(ChatMessage::State newState) {
 		state = newState;
 	}
@@ -244,15 +244,14 @@ public:
 	void updateInDb();
 
 	static bool isValidStateTransition(ChatMessage::State currentState, ChatMessage::State newState);
+	static bool isImdnControlledState(ChatMessage::State state);
 
 	void restoreFileTransferContentAsFileContent();
 
-private:
-	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
-	virtual ~ChatMessagePrivate();
-
-public:
 	long long storageId = -1;
+
+	// It should be private if we do so, but it must be called in message_delivery_update to avoid a memory leak
+	virtual void setState(ChatMessage::State newState);
 
 protected:
 	bool displayNotificationRequired = true;
@@ -262,6 +261,9 @@ protected:
 	std::string contentEncoding;
 
 private:
+	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
+	virtual ~ChatMessagePrivate();
+
 	// TODO: Clean attributes.
 	time_t time = ::ms_time(0); // TODO: Change me in all files.
 	std::string imdnId;

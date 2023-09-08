@@ -121,39 +121,80 @@ bool ChatMessagePrivate::isMarkedAsRead() const {
 
 void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &participantAddress,
                                              ChatMessage::State newState,
-                                             time_t stateChangeTime) {
+                                             time_t stateChangeTime,
+                                             LinphoneReason reason) {
 	L_Q();
 
 	const auto &chatRoom = q->getChatRoom();
 
-	if (!q->isValid() || !chatRoom) return;
+	if (!chatRoom) return;
 
-	if (chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
-		// Basic Chat Room doesn't support participant state
+	const shared_ptr<ChatMessage> &sharedMessage = q->getSharedFromThis();
+	const bool isBasicChatRoom = chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic);
+	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
+	ChatMessage::State currentState = ChatMessage::State::Idle;
+	if (isBasicChatRoom) {
+		currentState = q->getState();
+	} else if (eventLog) {
+		currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
+	}
+
+	if (!isValidStateTransition(currentState, newState)) {
+		if (isBasicChatRoom) {
+			const auto &conferenceAddress = chatRoom->getConferenceAddress();
+			const auto conferenceAddressStr =
+			    conferenceAddress ? conferenceAddress->toString() : std::string("<unknown-conference-address>");
+			lWarning() << "Chat message " << sharedMessage << ": Invalid transaction of basic chat room "
+			           << conferenceAddressStr << " from state " << Utils::toString(currentState) << " to state "
+			           << Utils::toString(newState);
+		} else {
+			lWarning() << "Chat message " << sharedMessage << ": Invalid transaction of participant "
+			           << *participantAddress << " from state " << Utils::toString(currentState) << " to state "
+			           << Utils::toString(newState);
+		}
+		return;
+	}
+
+	auto me = chatRoom->getMe();
+	const auto isMe = participantAddress->weakEqual(*me->getAddress());
+
+	// Send IMDN if the participant whose state changes is me
+	if (isMe) {
+		switch (newState) {
+			case ChatMessage::State::Displayed:
+				static_cast<ChatRoomPrivate *>(chatRoom->getPrivate())->sendDisplayNotification(sharedMessage);
+				break;
+			case ChatMessage::State::DeliveredToUser:
+				static_cast<ChatRoomPrivate *>(chatRoom->getPrivate())->sendDeliveryNotification(sharedMessage);
+				break;
+			case ChatMessage::State::NotDelivered:
+				if (reason != LinphoneReasonNone) {
+					static_cast<ChatRoomPrivate *>(chatRoom->getPrivate())
+					    ->sendDeliveryErrorNotification(sharedMessage, reason);
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	if (!q->isValid()) {
+		if (newState == ChatMessage::State::NotDelivered) {
+			setState(newState);
+		}
+		return;
+	}
+
+	// Participant states are not supported
+	if (isBasicChatRoom) {
 		setState(newState);
 		return;
 	}
 
-	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
-	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
-	ChatMessage::State currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
-
-	if (!isValidStateTransition(currentState, newState)) {
-		lWarning() << "Chat message " << q->getSharedFromThis() << ": Invalid transaction of participant "
-		           << *participantAddress << " from state " << Utils::toString(currentState) << " to state "
-		           << Utils::toString(newState);
-		return;
-	}
-
-	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving participant '" << *participantAddress
-	        << "' state to " << Utils::toString(newState);
-	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
-
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
-	auto me = chatRoom->getMe();
-	auto participant =
-	    participantAddress->weakEqual(*me->getAddress()) ? me : chatRoom->findParticipant(participantAddress);
+	auto participant = isMe ? me : chatRoom->findParticipant(participantAddress);
 	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
 
 	// Legacy callbacks, deprecated !
@@ -173,40 +214,64 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		return;
 	}
 
-	const auto states = q->getParticipantsState();
+	lInfo() << "Chat message " << sharedMessage << ": moving participant '" << *participantAddress << "' state to "
+	        << Utils::toString(newState);
+	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
+
+	// Update chat message state if it doesn't depend on IMDN
+	if (isMe && !isImdnControlledState(newState)) {
+		setState(newState);
+	}
+
+	const auto imdnStates = q->getParticipantsState();
+	size_t nbRecipients = 0;
 	size_t nbDisplayedStates = 0;
 	size_t nbDeliveredToUserStates = 0;
 	size_t nbNotDeliveredStates = 0;
-	for (const auto &state : states) {
-		switch (state.getState()) {
-			case ChatMessage::State::Displayed:
-				nbDisplayedStates++;
-				break;
-			case ChatMessage::State::DeliveredToUser:
-				nbDeliveredToUserStates++;
-				break;
-			case ChatMessage::State::NotDelivered:
+	for (const auto &imdnState : imdnStates) {
+		const auto &participantState = imdnState.getState();
+		const auto &imdnParticipant = imdnState.getParticipant();
+		if (fromAddress->weakEqual(*(imdnParticipant->getAddress()))) {
+			if (participantState == ChatMessage::State::NotDelivered) {
 				nbNotDeliveredStates++;
-				break;
-			default:
-				break;
+			}
+		} else {
+			nbRecipients++;
+			switch (participantState) {
+				case ChatMessage::State::Displayed:
+					nbDisplayedStates++;
+					break;
+				case ChatMessage::State::DeliveredToUser:
+					nbDeliveredToUserStates++;
+					break;
+				case ChatMessage::State::NotDelivered:
+					nbNotDeliveredStates++;
+					break;
+				default:
+					break;
+			}
 		}
 	}
 
 	if (nbNotDeliveredStates > 0) {
 		setState(ChatMessage::State::NotDelivered);
-	} else if ((states.size() > 0) && (nbDisplayedStates == states.size())) {
+	} else if ((nbRecipients > 0) && (nbDisplayedStates == nbRecipients)) {
 		setState(ChatMessage::State::Displayed);
-	} else if ((states.size() > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == states.size())) {
+	} else if ((nbRecipients > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
 		setState(ChatMessage::State::DeliveredToUser);
 	}
 
 	// When we already marked an incoming message as displayed, start ephemeral countdown when all other recipients have
 	// displayed it as well
-	if (isEphemeral && state == ChatMessage::State::Displayed) {
-		if (direction == ChatMessage::Direction::Incoming &&
-		    nbDisplayedStates == states.size()) { // -1 is for ourselves, our own display state isn't stored in db
-			startEphemeralCountDown();
+	if (isEphemeral && state == ChatMessage::State::Displayed && direction == ChatMessage::Direction::Incoming) {
+		startEphemeralCountDown();
+	}
+
+	if (isMe) {
+		// Set me participant state to displayed if we are the sender, set the message as Displayed as soon as we
+		// received the 202 Accepted response
+		if (fromAddress->weakEqual(*participantAddress) && (newState == ChatMessage::State::DeliveredToUser)) {
+			setParticipantState(participantAddress, ChatMessage::State::Displayed, ::ms_time(nullptr));
 		}
 	}
 }
@@ -226,7 +291,6 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 	        << " to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
 	state = newState;
-	setParticipantState(chatRoom->getMe()->getAddress(), state, ::ms_time(nullptr));
 
 	if (state == ChatMessage::State::NotDelivered) {
 		if (salOp) {
@@ -239,7 +303,10 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 	if (direction == ChatMessage::Direction::Outgoing) {
 		// Delivered state isn't triggered by IMDN, so participants state won't be set unless we manually do so here
 		if (state == ChatMessage::State::Delivered) {
-			for (auto participant : chatRoom->getParticipants()) {
+			// Use list of participants the client is sure have received the message and not the actual list of
+			// participants being part of the chatroom
+			for (const auto &imdnState : q->getParticipantsState()) {
+				const auto &participant = imdnState.getParticipant();
 				setParticipantState(participant->getAddress(), state, q->getTime());
 			}
 		}
@@ -268,16 +335,14 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 		listeners.clear();
 	}
 
-	// 3. Specific case, change to displayed once all file transfers haven been downloaded, and only if chat message has
-	// been marked as read.
+	// 3. Specific case, upon reception do not attempt to store in db before asking the user if he wants to do so or not
 	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
 		if (!hasFileTransferContent() && isMarkedAsRead()) {
-			setState(ChatMessage::State::Displayed);
+			setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Displayed, ::ms_time(nullptr));
 			return;
 		}
 	}
 
-	// 4. Specific case, upon reception do not attempt to store in db before asking the user if he wants to do so or not
 	if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle &&
 	    direction == ChatMessage::Direction::Incoming && !q->isValid()) {
 		// If we're here it's because message is because we're in the middle of the receive() method and
@@ -287,47 +352,13 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 		return;
 	}
 
-	// 5. Send notification
-	if ((state == ChatMessage::State::Displayed) && direction == ChatMessage::Direction::Incoming) {
-		// Wait until all files are downloaded before sending displayed IMDN
-		static_cast<ChatRoomPrivate *>(chatRoom->getPrivate())->sendDisplayNotification(sharedMessage);
-	}
-
-	// 6. update in database for ephemeral message if necessary.
+	// 4. update in database for ephemeral message if necessary.
 	if (isEphemeral && state == ChatMessage::State::Displayed) {
-		bool allParticipantsAreInDisplayedState = false;
-		if (chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::OneToOne)) {
-			allParticipantsAreInDisplayedState = true;
-		} else {
-			if (direction == ChatMessage::Direction::Incoming) {
-				const auto states = q->getParticipantsState();
-				size_t nbDisplayedStates = 0;
-				for (const auto &state : states) {
-					switch (state.getState()) {
-						case ChatMessage::State::Displayed:
-							nbDisplayedStates++;
-							break;
-						default:
-							break;
-					}
-				}
-
-				allParticipantsAreInDisplayedState =
-				    nbDisplayedStates ==
-				    states.size() - 1; // -1 is for ourselves, our own display state isn't stored in db
-			} else {
-				// For outgoing messages state is never displayed until all participants are in display state
-				allParticipantsAreInDisplayedState = true;
-			}
-		}
-
-		if (allParticipantsAreInDisplayedState) {
-			lInfo() << "All participants are in displayed state, starting ephemeral countdown";
-			startEphemeralCountDown();
-		}
+		lInfo() << "All participants are in displayed state, starting ephemeral countdown";
+		startEphemeralCountDown();
 	}
 
-	// 7. Update in database if necessary.
+	// 5. Update in database if necessary.
 	if (state != ChatMessage::State::InProgress && state != ChatMessage::State::FileTransferError &&
 	    state != ChatMessage::State::FileTransferInProgress) {
 		updateInDb();
@@ -754,8 +785,8 @@ LinphoneReason ChatMessagePrivate::receive() {
 			chatRoom->getPrivate()->notifyUndecryptableChatMessageReceived(q->getSharedFromThis());
 			reason = linphone_error_code_to_reason(errorCode);
 			if (!chatRoom) return reason;
-			static_cast<ChatRoomPrivate *>(chatRoom->getPrivate())
-			    ->sendDeliveryErrorNotification(q->getSharedFromThis(), reason);
+			setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::NotDelivered, ::ms_time(nullptr),
+			                    reason);
 			return reason;
 		}
 
@@ -844,7 +875,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 	// a modifier)
 	currentRecvStep = ChatMessagePrivate::Step::None;
 
-	setState(ChatMessage::State::Delivered);
+	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(nullptr));
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference &&
@@ -880,8 +911,8 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	if (chatRoom && (errorCode > 0)) {
 		reason = linphone_error_code_to_reason(errorCode);
-		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())
-		    ->sendDeliveryErrorNotification(q->getSharedFromThis(), reason);
+		setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::NotDelivered, ::ms_time(nullptr),
+		                    reason);
 		return reason;
 	}
 
@@ -1007,7 +1038,10 @@ void ChatMessagePrivate::handleAutoDownload() {
 
 	chatRoom->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 	setAutoFileTransferDownloadInProgress(false);
-	setState(ChatMessage::State::Delivered);
+	// The message is set to delivered here because this code is hit if the attachment cannot be downloaded or the
+	// download is aborted The delivered state will be set again message_delivery_update upon reception of 200 Ok or 202
+	// Accepted when a message is sent
+	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(NULL));
 	chatRoom->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 
 	for (Content *c : contents) {
@@ -1113,14 +1147,16 @@ void ChatMessagePrivate::send() {
 	} else {
 		ChatMessageModifier::Result result = fileTransferChatMessageModifier.encode(q->getSharedFromThis(), errorCode);
 		if (result == ChatMessageModifier::Result::Error) {
-			setState(ChatMessage::State::NotDelivered);
+			setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::NotDelivered, ::ms_time(nullptr),
+			                    linphone_error_code_to_reason(errorCode));
 			// Remove current step so we go through all modifiers if message is re-sent
 			currentSendStep = ChatMessagePrivate::Step::None;
 			return;
 		}
 
 		if (result == ChatMessageModifier::Result::Suspended) {
-			setState(ChatMessage::State::FileTransferInProgress);
+			setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::FileTransferInProgress,
+			                    ::ms_time(nullptr));
 			return;
 		}
 		currentSendStep |= ChatMessagePrivate::Step::FileUpload;
@@ -1213,8 +1249,8 @@ void ChatMessagePrivate::send() {
 					// Remove current step so we go through all modifiers if message is re-sent
 					currentSendStep = ChatMessagePrivate::Step::None;
 					restoreFileTransferContentAsFileContent();
-					setState(
-					    ChatMessage::State::NotDelivered); // Do it after the restore to have the correct message in db
+					setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::NotDelivered,
+					                    ::ms_time(nullptr), linphone_error_code_to_reason(errorCode));
 					chatRoom->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
@@ -1289,9 +1325,14 @@ void ChatMessagePrivate::send() {
 		// If it is a resend, reset participant states to Idle.
 		// Not doing so, it will lead to the message being incorrectly marked as not delivered when at least one
 		// participant hasn't received it yet.
-		for (auto participant : chatRoom->getParticipants()) {
+		// Use list of participants the client is sure have received the message and not the actual list of participants
+		// being part of the chatroom
+		for (const auto &imdnState : q->getParticipantsState()) {
+			const auto &participant = imdnState.getParticipant();
 			setParticipantState(participant->getAddress(), ChatMessage::State::Idle, q->getTime());
 		}
+		// Update message in DB to store the new IMDN message ID
+		updateInDb();
 	} else if (toBeStored) {
 		// Composing messages and IMDN aren't stored in DB so do not try, it will log an error message Invalid db key
 		// for nothing.
@@ -1307,7 +1348,7 @@ void ChatMessagePrivate::send() {
 	/* If operation failed, we should not change message state */
 	if (direction == ChatMessage::Direction::Outgoing) {
 		setIsReadOnly(true);
-		setState(ChatMessage::State::InProgress);
+		setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::InProgress, ::ms_time(nullptr));
 	}
 
 	if (q->isReaction()) {
@@ -1343,8 +1384,6 @@ void ChatMessagePrivate::storeInDb() {
 	dChatRoom->addEvent(eventLog); // From this point forward the chat message will have a valid dbKey
 	if (!chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
 		setParticipantState(chatRoom->getMe()->getAddress(), state, ::ms_time(nullptr));
-		setParticipantState(Address::create(q->getFromAddress()->getUriWithoutGruu()), ChatMessage::State::Displayed,
-		                    ::ms_time(nullptr));
 	}
 
 	if (direction == ChatMessage::Direction::Incoming) {
@@ -1396,6 +1435,11 @@ void ChatMessagePrivate::updateInDb() {
 }
 
 // -----------------------------------------------------------------------------
+
+bool ChatMessagePrivate::isImdnControlledState(ChatMessage::State state) {
+	return (state == ChatMessage::State::Displayed || state == ChatMessage::State::DeliveredToUser ||
+	        state == ChatMessage::State::NotDelivered);
+}
 
 bool ChatMessagePrivate::isValidStateTransition(ChatMessage::State currentState, ChatMessage::State newState) {
 	if (newState == currentState) return false;
@@ -1659,13 +1703,11 @@ list<ParticipantImdnState> ChatMessage::getParticipantsState() const {
 	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, getStorageId());
 	list<MainDb::ParticipantState> dbResults = mainDb->getChatMessageParticipantStates(eventLog);
-	auto sender = chatRoom->findParticipant(getFromAddress());
-	auto meIsSender = chatRoom->isMe(getFromAddress());
 	for (const auto &dbResult : dbResults) {
 		auto isMe = chatRoom->isMe(dbResult.address);
 		auto participant = isMe ? chatRoom->getMe() : chatRoom->findParticipant(dbResult.address);
 		// Do not add myself to the result list if I am the sender.
-		if (participant && ((participant != sender) || !meIsSender)) {
+		if (participant) {
 			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
 		}
 	}
@@ -1769,13 +1811,14 @@ void ChatMessage::cancelFileTransfer() {
 		lInfo() << "File transfer on message [" << getSharedFromThis() << "] has been cancelled";
 
 		if (d->state == State::FileTransferInProgress) {
+			auto chatRoom = getChatRoom();
 			lInfo() << "File transfer on message [" << getSharedFromThis() << "] was in progress, updating state";
 			// For auto download messages, set the state back to Delivered
 			if (d->isAutoFileTransferDownloadInProgress()) {
-				d->setState(State::Delivered);
-				getChatRoom()->getPrivate()->removeTransientChatMessage(getSharedFromThis());
+				d->setParticipantState(chatRoom->getMe()->getAddress(), State::Delivered, ::ms_time(nullptr));
+				chatRoom->getPrivate()->removeTransientChatMessage(getSharedFromThis());
 			} else {
-				d->setState(State::NotDelivered);
+				d->setParticipantState(chatRoom->getMe()->getAddress(), State::NotDelivered, ::ms_time(nullptr));
 			}
 		}
 	} else {

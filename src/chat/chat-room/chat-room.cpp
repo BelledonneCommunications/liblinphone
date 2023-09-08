@@ -169,7 +169,8 @@ void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<
 			pendingMessage->addContent(content);
 
 			bctbx_debug("New line received, forge a message with content [%s]", content->getBodyAsString().c_str());
-			pendingMessage->getPrivate()->setState(ChatMessage::State::Delivered);
+			pendingMessage->getPrivate()->setParticipantState(q->getMe()->getAddress(), ChatMessage::State::Delivered,
+			                                                  ::ms_time(nullptr));
 			pendingMessage->getPrivate()->setTime(::ms_time(0));
 
 			if (linphone_config_get_int(linphone_core_get_config(cCore), "misc", "store_rtt_messages", 1) == 1) {
@@ -474,7 +475,8 @@ void ChatRoomPrivate::notifyAggregatedChatMessages() {
 
 	// Notify delivery
 	for (auto &chatMessage : aggregatedMessages) {
-		sendDeliveryNotification(chatMessage);
+		chatMessage->getPrivate()->setParticipantState(q->getMe()->getAddress(), ChatMessage::State::DeliveredToUser,
+		                                               ::ms_time(nullptr));
 	}
 
 	bctbx_list_free_with_data(cMessages, (bctbx_list_free_func)linphone_chat_message_unref);
@@ -771,7 +773,8 @@ void ChatRoom::markAsRead() {
 		chatMessage->getPrivate()->markAsRead();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
-			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
+			chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Displayed,
+			                                               ::ms_time(nullptr));
 		}
 	}
 
@@ -780,7 +783,8 @@ void ChatRoom::markAsRead() {
 		chatMessage->getPrivate()->markAsRead();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
-			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
+			chatMessage->getPrivate()->setParticipantState(getMe()->getAddress(), ChatMessage::State::Displayed,
+			                                               ::ms_time(nullptr));
 		}
 	}
 

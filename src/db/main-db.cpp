@@ -1532,6 +1532,7 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
+	soci::session *session = dbSession.getBackendSession();
 
 	// 1. Get current chat message state and database state.
 	const ChatMessage::State state = chatMessage->getState();
@@ -1540,8 +1541,7 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 	{
 		int intState;
 		int intMarkedAsRead;
-		*dbSession.getBackendSession()
-		    << "SELECT state, marked_as_read FROM conference_chat_message_event WHERE event_id = :eventId",
+		*session << "SELECT state, marked_as_read FROM conference_chat_message_event WHERE event_id = :eventId",
 		    soci::into(intState), soci::into(intMarkedAsRead), soci::use(eventId);
 		dbState = ChatMessage::State(intState);
 		dbMarkedAsRead = intMarkedAsRead == 1;
@@ -1550,7 +1550,7 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 
 	// 2. Update unread chat message count if necessary.
 	const bool isOutgoing = chatMessage->getDirection() == ChatMessage::Direction::Outgoing;
-	shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
+	shared_ptr<AbstractChatRoom> chatRoom = chatMessage->getChatRoom();
 	if (!isOutgoing && markedAsRead) {
 		int *count = unreadChatMessageCountCache[chatRoom->getConferenceId()];
 		if (count && !dbMarkedAsRead) {
@@ -1570,9 +1570,9 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 		            ? dbState
 		            : state);
 		const int markedAsReadInt = markedAsRead ? 1 : 0;
-		*dbSession.getBackendSession() << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = "
-		                                  ":imdnMessageId, marked_as_read = :markedAsRead"
-		                                  " WHERE event_id = :eventId",
+		*session << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = "
+		            ":imdnMessageId, marked_as_read = :markedAsRead"
+		            " WHERE event_id = :eventId",
 		    soci::use(stateInt), soci::use(imdnMessageId), soci::use(markedAsReadInt), soci::use(eventId);
 	}
 
@@ -1582,9 +1582,21 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 		insertContent(eventId, *content);
 
 	// 5. Update participants.
-	if (isOutgoing && (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered))
-		for (const auto &participant : chatRoom->getParticipants())
-			setChatMessageParticipantState(eventLog, participant->getAddress(), state, std::time(nullptr));
+	if (isOutgoing && (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered) &&
+	    (chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Conference) && chatMessage->isValid()) {
+		static const string query = "SELECT sip_address.value"
+		                            " FROM sip_address"
+		                            " WHERE event_id = :eventId"
+		                            " AND sip_address.id = chat_message_participant.participant_sip_address_id";
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(chatMessage->getStorageId()));
+
+		// Use list of participants the client is sure have received the message and not the actual list of participants
+		// being part of the chatroom
+		for (const auto &row : rows) {
+			const auto address = Address::create(row.get<string>(0));
+			setChatMessageParticipantState(eventLog, address, state, std::time(nullptr));
+		}
+	}
 #endif
 }
 
