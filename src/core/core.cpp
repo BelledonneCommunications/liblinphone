@@ -996,6 +996,7 @@ list<shared_ptr<AudioDevice>> Core::getAudioDevices() const {
 	bool micFound = false, speakerFound = false, earpieceFound = false;
 	bool bluetoothMicFound = false, bluetoothSpeakerFound = false;
 	bool headsetMicFound = false, headsetSpeakerFound = false;
+	bool hearingAidFound = false;
 
 	for (const auto &audioDevice : getExtendedAudioDevices()) {
 		switch (audioDevice->getType()) {
@@ -1057,13 +1058,16 @@ list<shared_ptr<AudioDevice>> Core::getAudioDevices() const {
 					    (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
 				break;
 			case AudioDevice::Type::HearingAid:
-				lAudioDevices.push_back(audioDevice);
+				if (!hearingAidFound) {
+					hearingAidFound = true;
+					lAudioDevices.push_back(audioDevice);
+				}
 				break;
 			default:
 				break;
 		}
 		if (micFound && speakerFound && earpieceFound && bluetoothMicFound && bluetoothSpeakerFound &&
-		    headsetMicFound && headsetSpeakerFound)
+		    headsetMicFound && headsetSpeakerFound && hearingAidFound)
 			break;
 	}
 	return lAudioDevices;
