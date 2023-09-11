@@ -139,10 +139,6 @@ public class CoreManager {
             mAudioHelper = new AudioHelper(mContext);
         } else {
             Log.w("[Core Manager] Do you have a dependency on androidx.media:media:1.2.0 or newer?");
-            if (core.isNativeRingingEnabled()) {
-                Log.e("[Core Manager] Native ringing was enabled but condition isn't met (androidx.media:media dependency), disabling it.");
-                core.setNativeRingingEnabled(false);
-            }
         }
         mBluetoothHelper = new BluetoothHelper(mContext);
 
@@ -245,6 +241,11 @@ public class CoreManager {
 
     public void onLinphoneCoreStart() {
         Log.i("[Core Manager] Starting");
+
+        if (!isAndroidXMediaAvailable() && mCore.isNativeRingingEnabled()) {
+            Log.e("[Core Manager] Native ringing was enabled but condition isn't met (androidx.media:media dependency), disabling it.");
+            mCore.setNativeRingingEnabled(false);
+        }
 
         if (mCore.isAutoIterateEnabled()) {
             // Force the core.iterate() scheduling to a low value to ensure the Core will be ready as quickly as possible
