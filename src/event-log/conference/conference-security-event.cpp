@@ -60,7 +60,7 @@ ConferenceSecurityEvent::SecurityEventType ConferenceSecurityEvent::getSecurityE
 	return d->securityEventType;
 }
 
-const std::shared_ptr<Address> &ConferenceSecurityEvent::getFaultyDeviceAddress() const {
+std::shared_ptr<const Address> ConferenceSecurityEvent::getFaultyDeviceAddress() const {
 	L_D();
 	return d->faultyDevice;
 }

@@ -61,7 +61,7 @@ public:
 	ConferenceSecurityEvent(time_t creationTime, const ConferenceId &conferenceId, SecurityEventType securityEventType);
 
 	SecurityEventType getSecurityEventType() const;
-	const std::shared_ptr<Address> &getFaultyDeviceAddress() const;
+	std::shared_ptr<const Address> getFaultyDeviceAddress() const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceSecurityEvent);

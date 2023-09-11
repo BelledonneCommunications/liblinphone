@@ -325,7 +325,7 @@ linphone_event_log_get_security_event_type(const LinphoneEventLog *event_log) {
 	return static_cast<LinphoneSecurityEventType>(securityEvent->getSecurityEventType());
 }
 
-LINPHONE_PUBLIC LinphoneAddress *
+LINPHONE_PUBLIC const LinphoneAddress *
 linphone_event_log_get_security_event_faulty_device_address(const LinphoneEventLog *event_log) {
 	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log))) return nullptr;
 

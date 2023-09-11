@@ -55,9 +55,9 @@ void PushNotificationMessage::init(const std::string &callId,
 	mIsText = isText;
 	mTextContent = textContent;
 	mSubject = subject;
-	mFromAddr = fromAddr;
-	mLocalAddr = localAddr;
-	mPeerAddr = peerAddr;
+	mFromAddr = (new Address(fromAddr))->toSharedPtr();
+	mLocalAddr = (new Address(localAddr))->toSharedPtr();
+	mPeerAddr = (new Address(peerAddr))->toSharedPtr();
 	mIsIcalendar = isIcalendar;
 	mIsConferenceInvitationNew = isConferenceInvitationNew;
 	mIsConferenceInvitationUpdate = isConferenceInvitationUpdate;
@@ -80,15 +80,15 @@ const string &PushNotificationMessage::getSubject() const {
 	return mSubject;
 }
 
-shared_ptr<Address> PushNotificationMessage::getFromAddr() const {
-	return make_shared<Address>(mFromAddr);
+shared_ptr<const Address> PushNotificationMessage::getFromAddr() const {
+	return mFromAddr;
 }
-shared_ptr<Address> PushNotificationMessage::getLocalAddr() const {
-	return make_shared<Address>(mLocalAddr);
+shared_ptr<const Address> PushNotificationMessage::getLocalAddr() const {
+	return mLocalAddr;
 }
 
-shared_ptr<Address> PushNotificationMessage::getPeerAddr() const {
-	return make_shared<Address>(mPeerAddr);
+shared_ptr<const Address> PushNotificationMessage::getPeerAddr() const {
+	return mPeerAddr;
 }
 
 bool PushNotificationMessage::isIcalendar() const {

@@ -57,9 +57,9 @@ public:
 	bool isText() const;
 	const std::string &getTextContent() const;
 	const std::string &getSubject() const;
-	std::shared_ptr<Address> getFromAddr() const;
-	std::shared_ptr<Address> getLocalAddr() const;
-	std::shared_ptr<Address> getPeerAddr() const;
+	std::shared_ptr<const Address> getFromAddr() const;
+	std::shared_ptr<const Address> getLocalAddr() const;
+	std::shared_ptr<const Address> getPeerAddr() const;
 	bool isIcalendar() const;
 	bool isConferenceInvitationNew() const;
 	bool isConferenceInvitationUpdate() const;
@@ -69,16 +69,16 @@ public:
 
 private:
 	std::string mCallId;
-	bool mIsText;
+	bool mIsText = false;
 	std::string mTextContent;
 	std::string mSubject;
-	std::string mFromAddr;
-	std::string mLocalAddr;
-	std::string mPeerAddr;
-	bool mIsIcalendar;
-	bool mIsConferenceInvitationNew;
-	bool mIsConferenceInvitationUpdate;
-	bool mIsConferenceInvitationCancellation;
+	std::shared_ptr<Address> mFromAddr;
+	std::shared_ptr<Address> mLocalAddr;
+	std::shared_ptr<Address> mPeerAddr;
+	bool mIsIcalendar = false;
+	bool mIsConferenceInvitationNew = false;
+	bool mIsConferenceInvitationUpdate = false;
+	bool mIsConferenceInvitationCancellation = false;
 };
 
 LINPHONE_END_NAMESPACE
