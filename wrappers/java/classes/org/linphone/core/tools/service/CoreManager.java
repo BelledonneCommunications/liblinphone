@@ -425,7 +425,7 @@ public class CoreManager {
     }
 
     private void startAutoIterate(int schedule) {
-        if (schedule == mIterateSchedule) {
+        if (mTimer != null && schedule == mIterateSchedule) {
             Log.i("[Core Manager] core.iterate() is already scheduled every " + schedule + " ms");
             return;
         }
@@ -463,6 +463,7 @@ public class CoreManager {
             mTimer.cancel();
             mTimer.purge();
             mTimer = null;
+            Log.i("[Core Manager] core.iterate() scheduler stopped");
         } else {
             Log.w("[Core Manager] core.iterate() scheduling wasn't started or already stopped");
         }
