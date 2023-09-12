@@ -700,6 +700,75 @@ static void test_presence_list_without_compression(void) {
 	test_presence_list_base(FALSE);
 }
 
+static void test_presence_list_same_friend_two_addresses(void) {
+	LinphoneCoreManager *laure = linphone_core_presence_manager_new("laure_tcp_rc");
+	linphone_core_set_user_agent(laure->lc, "bypass", NULL);
+	LinphoneCoreManager *marie = linphone_core_presence_manager_new("marie_rc");
+	linphone_core_set_user_agent(marie->lc, "bypass", NULL);
+	LinphoneCoreManager *pauline =
+	    linphone_core_presence_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_user_agent(pauline->lc, "bypass", NULL);
+	const char *rls_uri = "sip:rls@sip.example.org";
+	LinphoneFriendList *lfl;
+	LinphoneFriend *lf;
+	const char *marie_identity;
+	bctbx_list_t *lcs = NULL;
+
+	marie_identity = get_identity(marie);
+
+	enable_publish_verified(marie, TRUE);
+	enable_publish_verified(pauline, TRUE);
+	enable_publish_verified(laure, TRUE);
+
+	lcs = bctbx_list_append(lcs, laure->lc);
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	linphone_core_set_consolidated_presence(marie->lc, LinphoneConsolidatedPresenceBusy);
+	linphone_core_set_consolidated_presence(pauline->lc, LinphoneConsolidatedPresenceOnline);
+
+	lfl = linphone_core_create_friend_list(laure->lc);
+	linphone_friend_list_set_rls_uri(lfl, rls_uri);
+	lf = linphone_core_create_friend_with_address(laure->lc, marie_identity);
+	linphone_friend_add_address(lf, pauline->identity);
+	linphone_friend_list_add_friend(lfl, lf);
+	linphone_core_remove_friend_list(laure->lc, linphone_core_get_default_friend_list(laure->lc));
+	linphone_core_add_friend_list(laure->lc, lfl);
+	linphone_friend_unref(lf);
+
+	linphone_friend_list_update_subscriptions(lfl);
+
+	wait_for_list(lcs, &laure->stat.number_of_NotifyPresenceReceived, 6,
+	              4000); // one event by known friend by notify, 4 if test is started independently in
+	BC_ASSERT_GREATER(laure->stat.number_of_NotifyPresenceReceived, 3, int, "%d");
+	BC_ASSERT_LOWER(laure->stat.number_of_NotifyPresenceReceived, 6, int, "%d");
+	BC_ASSERT_GREATER(
+	    linphone_friend_list_get_expected_notification_version(linphone_core_get_default_friend_list(laure->lc)), 1,
+	    int, "%d");
+	BC_ASSERT_LOWER(
+	    linphone_friend_list_get_expected_notification_version(linphone_core_get_default_friend_list(laure->lc)), 2,
+	    int, "%d");
+	lf = linphone_friend_list_find_friend_by_address(linphone_core_get_default_friend_list(laure->lc),
+	                                                 get_identity_address(marie));
+	if (!BC_ASSERT_PTR_NOT_NULL(lf)) goto end;
+	BC_ASSERT_EQUAL(linphone_friend_get_consolidated_presence(lf), LinphoneConsolidatedPresenceOnline, int, "%d");
+	if (!BC_ASSERT_TRUE(linphone_friend_is_presence_received(lf))) goto end;
+
+	const LinphonePresenceModel *marie_presence_model =
+	    linphone_friend_get_presence_model_for_uri_or_tel(lf, marie_identity);
+	BC_ASSERT_PTR_NOT_NULL(marie_presence_model);
+	LinphoneConsolidatedPresence marie_presence =
+	    linphone_presence_model_get_consolidated_presence(marie_presence_model);
+	BC_ASSERT_EQUAL(marie_presence, LinphoneConsolidatedPresenceBusy, int, "%d");
+
+end:
+	linphone_friend_list_unref(lfl);
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 #if 0
 static void test_presence_list_subscribe_before_publish(void) {
 	LinphoneCoreManager *laure = linphone_core_manager_new("laure_tcp_rc");
@@ -1703,6 +1772,7 @@ static void publish_with_dual_identity(void) {
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphonePublishOk, 4, int, "%i");
 	linphone_core_manager_destroy(pauline);
 }
+
 static void publish_with_network_state_changes(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
@@ -2547,6 +2617,7 @@ test_t presence_server_tests[] = {
     TEST_NO_TAG("Disabled presence", subscribe_presence_disabled),
     TEST_NO_TAG("Presence list", test_presence_list),
     TEST_NO_TAG("Presence list without compression", test_presence_list_without_compression),
+    TEST_NO_TAG("Presence list with two SIP addresses for same friend", test_presence_list_same_friend_two_addresses),
     TEST_NO_TAG("Presence list, subscription expiration for unknown contact",
                 test_presence_list_subscription_expire_for_unknown),
     TEST_NO_TAG("Presence list, silent subscription expiration", presence_list_subscribe_dialog_expire),

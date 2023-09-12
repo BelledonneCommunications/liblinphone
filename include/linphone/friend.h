@@ -199,7 +199,8 @@ LINPHONE_PUBLIC void linphone_friend_done(LinphoneFriend *linphone_friend);
 LINPHONE_PUBLIC LinphoneSubscriptionState linphone_friend_get_subscription_state(const LinphoneFriend *linphone_friend);
 
 /**
- * Get the presence model of a friend
+ * Get the presence model of a friend. If a friend has more than one SIP address and phone number,
+ * this method will return the most recent presence model using linphone_presence_model_get_timestamp().
  * @param linphone_friend A #LinphoneFriend object @notnil
  * @return A #LinphonePresenceModel object, or NULL if the friend do not have presence information (in which case he is
  * considered offline). @maybenil
@@ -208,6 +209,7 @@ LINPHONE_PUBLIC const LinphonePresenceModel *linphone_friend_get_presence_model(
 
 /**
  * Get the consolidated presence of a friend.
+ * It will return the "most open" presence found if more than one presence model are found.
  * @param linphone_friend #LinphoneFriend object @notnil
  * @return The #LinphoneConsolidatedPresence of the friend
  */

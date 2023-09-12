@@ -955,7 +955,46 @@ LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf) {
 }
 
 const LinphonePresenceModel *linphone_friend_get_presence_model(const LinphoneFriend *lf) {
-	const LinphonePresenceModel *presence = NULL;
+	const LinphonePresenceModel *result = NULL;
+	LinphoneFriend *const_lf = (LinphoneFriend *)lf;
+	const bctbx_list_t *addrs = linphone_friend_get_addresses(const_lf);
+	bctbx_list_t *phones = NULL;
+	bctbx_list_t *it;
+	time_t presence_model_latest_timestamp = 0;
+
+	for (it = (bctbx_list_t *)addrs; it != NULL; it = it->next) {
+		LinphoneAddress *addr = (LinphoneAddress *)it->data;
+		char *uri = linphone_address_as_string_uri_only(addr);
+		const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(const_lf, uri);
+		if (presence) {
+			time_t timestamp = linphone_presence_model_get_timestamp(presence);
+			if (result == NULL || timestamp > presence_model_latest_timestamp) {
+				presence_model_latest_timestamp = timestamp;
+				result = presence;
+			}
+		}
+		ms_free(uri);
+	}
+
+	phones = linphone_friend_get_phone_numbers(const_lf);
+	for (it = phones; it != NULL; it = it->next) {
+		const char *phone_number = static_cast<const char *>(it->data);
+		const LinphonePresenceModel *presence =
+		    linphone_friend_get_presence_model_for_uri_or_tel(const_lf, phone_number);
+		if (presence) {
+			time_t timestamp = linphone_presence_model_get_timestamp(presence);
+			if (result == NULL || timestamp > presence_model_latest_timestamp) {
+				presence_model_latest_timestamp = timestamp;
+				result = presence;
+			}
+		}
+	}
+	bctbx_list_free_with_data(phones, bctbx_free);
+	return result;
+}
+
+LinphoneConsolidatedPresence linphone_friend_get_consolidated_presence(const LinphoneFriend *lf) {
+	LinphoneConsolidatedPresence result = LinphoneConsolidatedPresenceOffline;
 	LinphoneFriend *const_lf = (LinphoneFriend *)lf;
 	const bctbx_list_t *addrs = linphone_friend_get_addresses(const_lf);
 	bctbx_list_t *phones = NULL;
@@ -964,25 +1003,39 @@ const LinphonePresenceModel *linphone_friend_get_presence_model(const LinphoneFr
 	for (it = (bctbx_list_t *)addrs; it != NULL; it = it->next) {
 		LinphoneAddress *addr = (LinphoneAddress *)it->data;
 		char *uri = linphone_address_as_string_uri_only(addr);
-		presence = linphone_friend_get_presence_model_for_uri_or_tel(const_lf, uri);
+		const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(const_lf, uri);
 		ms_free(uri);
-		if (presence) break;
+		if (presence) {
+			LinphoneConsolidatedPresence consolidated = linphone_presence_model_get_consolidated_presence(presence);
+			if (consolidated != LinphoneConsolidatedPresenceOffline) {
+				result = consolidated;
+				if (result == LinphoneConsolidatedPresenceOnline) {
+					break;
+				}
+			}
+		}
 	}
-	if (presence) return presence;
+	if (result == LinphoneConsolidatedPresenceOnline) {
+		return result;
+	}
 
 	phones = linphone_friend_get_phone_numbers(const_lf);
 	for (it = phones; it != NULL; it = it->next) {
-		presence = linphone_friend_get_presence_model_for_uri_or_tel(const_lf, static_cast<const char *>(it->data));
-		if (presence) break;
+		const char *phone_number = static_cast<const char *>(it->data);
+		const LinphonePresenceModel *presence =
+		    linphone_friend_get_presence_model_for_uri_or_tel(const_lf, phone_number);
+		if (presence) {
+			LinphoneConsolidatedPresence consolidated = linphone_presence_model_get_consolidated_presence(presence);
+			if (consolidated != LinphoneConsolidatedPresenceOffline) {
+				result = consolidated;
+				if (result == LinphoneConsolidatedPresenceOnline) {
+					break;
+				}
+			}
+		}
 	}
 	bctbx_list_free_with_data(phones, bctbx_free);
-	return presence;
-}
-
-LinphoneConsolidatedPresence linphone_friend_get_consolidated_presence(const LinphoneFriend *lf) {
-	const LinphonePresenceModel *model = linphone_friend_get_presence_model(lf);
-	if (!model) return LinphoneConsolidatedPresenceOffline;
-	return linphone_presence_model_get_consolidated_presence(model);
+	return result;
 }
 
 const LinphonePresenceModel *linphone_friend_get_presence_model_for_uri_or_tel(const LinphoneFriend *lf,

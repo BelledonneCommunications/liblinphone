@@ -771,7 +771,7 @@ _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf
 
 #if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
 
-	if (lf && lf->lc && lf->lc->friends_db) {
+	if (lf && lf->lc && linphone_friend_list_database_storage_enabled(list)) {
 		linphone_core_remove_friend_from_db(lf->lc, lf);
 	}
 
