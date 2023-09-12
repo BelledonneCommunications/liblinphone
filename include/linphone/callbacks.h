@@ -963,6 +963,21 @@ typedef void (*LinphoneCoreCbsChatRoomExhumedCb)(LinphoneCore *core, LinphoneCha
  **/
 typedef void (*LinphonePlayerCbsEofReachedCb)(LinphonePlayer *player);
 
+/**
+ * @}
+ **/
+
+/************ */
+/* PRIVATE */
+/* ********** */
+
+// Private: do not document or wrap
+typedef void (*LinphoneCoreCbsReactionRemovedPrivateCb)(LinphoneCore *core,
+                                                        LinphoneChatRoom *chat_room,
+                                                        LinphoneChatMessage *message,
+                                                        const LinphoneAddress *address,
+                                                        const char *callId);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -995,9 +1010,5 @@ typedef void (*LinphoneCoreAuthInfoRequestedCb)(LinphoneCore *core,
                                                 const char *realm,
                                                 const char *username,
                                                 const char *domain);
-
-/**
- * @}
- **/
 
 #endif /* LINPHONE_CALLBACKS_H_ */

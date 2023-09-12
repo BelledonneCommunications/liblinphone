@@ -951,6 +951,9 @@ LinphoneReason ChatMessagePrivate::receive() {
 			_linphone_chat_message_notify_reaction_removed(msg, address);
 			linphone_core_notify_message_reaction_removed(q->getCore()->getCCore(), cr, msg, address);
 
+			const char *call_id = getCallId().c_str();
+			linphone_core_notify_message_reaction_removed_private(q->getCore()->getCCore(), cr, msg, address, call_id);
+
 			return reason;
 		}
 
@@ -958,6 +961,8 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 		LinphoneChatMessageReaction *reaction =
 		    ChatMessageReaction::createCObject(messageId, getUtf8Text(), q->getFromAddress());
+		ChatMessageReaction::toCpp(reaction)->setCallId(getCallId().c_str());
+
 		_linphone_chat_message_notify_new_message_reaction(msg, reaction);
 
 		linphone_core_notify_new_message_reaction(q->getCore()->getCCore(), cr, msg, reaction);

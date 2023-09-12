@@ -384,6 +384,14 @@ void linphone_core_cbs_set_reaction_removed(LinphoneCoreCbs *cbs, LinphoneCoreCb
 	cbs->vtable->reaction_removed = cb;
 }
 
+void linphone_core_cbs_set_reaction_removed_private(LinphoneCoreCbs *cbs, LinphoneCoreCbsReactionRemovedPrivateCb cb) {
+	cbs->vtable->reaction_removed_private = cb;
+}
+
+LinphoneCoreCbsReactionRemovedPrivateCb linphone_core_cbs_get_reaction_removed_private(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->reaction_removed_private;
+}
+
 LinphoneCoreCbsMessagesReceivedCb linphone_core_cbs_get_messages_received(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->messages_received;
 }

@@ -49,3 +49,7 @@ void linphone_chat_message_reaction_unref(LinphoneChatMessageReaction *reaction)
 void linphone_chat_message_reaction_send(LinphoneChatMessageReaction *reaction) {
 	ChatMessageReaction::toCpp(reaction)->send();
 }
+
+const char *linphone_chat_message_reaction_get_call_id(const LinphoneChatMessageReaction *reaction) {
+	return L_STRING_TO_C(ChatMessageReaction::toCpp(reaction)->getCallId());
+}

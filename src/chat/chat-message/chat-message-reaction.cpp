@@ -72,6 +72,8 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 			return;
 		}
 
+		setCallId(message->getPrivate()->getCallId());
+
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
 		const string &messageId = originalMessage->getImdnMessageId();
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(message->getChatRoom());
@@ -85,6 +87,8 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 
 			_linphone_chat_message_notify_reaction_removed(msg, address);
 			linphone_core_notify_message_reaction_removed(message->getCore()->getCCore(), cr, msg, address);
+			linphone_core_notify_message_reaction_removed_private(message->getCore()->getCCore(), cr, msg, address,
+			                                                      message->getPrivate()->getCallId().c_str());
 		} else {
 			LinphoneChatMessageReaction *reaction = getSharedFromThis()->toC();
 			_linphone_chat_message_notify_new_message_reaction(msg, reaction);

@@ -860,6 +860,11 @@ void linphone_core_notify_message_reaction_removed(LinphoneCore *lc,
                                                    LinphoneChatRoom *room,
                                                    LinphoneChatMessage *message,
                                                    const LinphoneAddress *address);
+void linphone_core_notify_message_reaction_removed_private(LinphoneCore *lc,
+                                                           LinphoneChatRoom *room,
+                                                           LinphoneChatMessage *message,
+                                                           const LinphoneAddress *address,
+                                                           const char *callId);
 void linphone_core_notify_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages);
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_message_received_unable_decrypt(LinphoneCore *lc,

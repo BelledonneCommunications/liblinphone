@@ -303,6 +303,7 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsPreviewDisplayErrorOccurredCb preview_display_error_occurred;
 	LinphoneCoreCbsNewMessageReactionCb new_message_reaction;
 	LinphoneCoreCbsReactionRemovedCb reaction_removed;
+	LinphoneCoreCbsReactionRemovedPrivateCb reaction_removed_private;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 

@@ -67,6 +67,13 @@ LINPHONE_PUBLIC void linphone_chat_message_reaction_unref(LinphoneChatMessageRea
 LINPHONE_PUBLIC void linphone_chat_message_reaction_send(LinphoneChatMessageReaction *reaction);
 
 /**
+ * Allows to get the Call ID associated with a #LinphoneChatMessageReaction.
+ * @param reaction the #LinphoneChatMessageReaction. @notnil
+ * @return the Call ID associated with this reaction.
+ */
+LINPHONE_PUBLIC const char *linphone_chat_message_reaction_get_call_id(const LinphoneChatMessageReaction *reaction);
+
+/**
  * @}
  */
 

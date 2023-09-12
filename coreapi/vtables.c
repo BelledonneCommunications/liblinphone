@@ -260,6 +260,15 @@ void linphone_core_notify_message_reaction_removed(LinphoneCore *lc,
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_message_reaction_removed_private(LinphoneCore *lc,
+                                                           LinphoneChatRoom *room,
+                                                           LinphoneChatMessage *message,
+                                                           const LinphoneAddress *address,
+                                                           const char *callId) {
+	NOTIFY_IF_EXIST(reaction_removed_private, lc, room, message, address, callId);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages) {
 	NOTIFY_IF_EXIST(messages_received, lc, room, messages);
 	cleanup_dead_vtable_refs(lc);

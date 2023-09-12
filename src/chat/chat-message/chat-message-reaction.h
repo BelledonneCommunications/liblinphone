@@ -55,6 +55,14 @@ public:
 	std::shared_ptr<const Address> getFromAddress() const;
 	void send();
 
+	void setCallId(const std::string &id) {
+		callId = id;
+	}
+
+	const std::string &getCallId() const {
+		return callId;
+	}
+
 	void setChatRoom(std::shared_ptr<AbstractChatRoom> cr) {
 		chatRoom = cr;
 	}
@@ -65,6 +73,7 @@ public:
 private:
 	std::string messageId;
 	std::string reaction;
+	std::string callId;
 	std::shared_ptr<const Address> fromAddress;
 	std::shared_ptr<ChatMessage> reactionMessage;
 	std::shared_ptr<AbstractChatRoom> chatRoom;
