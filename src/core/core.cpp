@@ -280,9 +280,7 @@ bool CorePrivate::isShutdownDone() {
 	bctbx_list_t *elem = NULL;
 	for (elem = q->getCCore()->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-		if (list->event) {
-			return false;
-		}
+		if (linphone_friend_list_get_event(list)) return false;
 	}
 
 	// Sometimes (bad network for example), backgrounds for chat message (imdn, delivery ...) take too much time.
@@ -1597,7 +1595,7 @@ std::shared_ptr<Address> Core::interpretUrl(const std::string &url, bool chatOrC
 	LinphoneAddress *cAddress = linphone_core_interpret_url_2(getCCore(), url.c_str(), applyPrefix);
 	if (!cAddress) return nullptr;
 
-	std::shared_ptr<Address> address = Address::toCpp(cAddress)->getSharedFromThis();
+	std::shared_ptr<Address> address = Address::getSharedFromThis(cAddress);
 	linphone_address_unref(cAddress);
 
 	return address;
@@ -1850,7 +1848,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 		natPolicy = accountParams->getNatPolicy();
 	}
 	if (!natPolicy) {
-		natPolicy = NatPolicy::toCpp(linphone_core_get_nat_policy(getCCore()))->getSharedFromThis();
+		natPolicy = NatPolicy::getSharedFromThis(linphone_core_get_nat_policy(getCCore()));
 	}
 	if (natPolicy) {
 		auto newNatPolicy = natPolicy->clone()->toSharedPtr();
@@ -1888,7 +1886,7 @@ Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
 	if (!account) {
 		lWarning() << "No account found for local address: [" << *localAddress << "]";
 		return nullptr;
-	} else return getAudioVideoConferenceFactoryAddress(core, Account::toCpp(account)->getSharedFromThis());
+	} else return getAudioVideoConferenceFactoryAddress(core, Account::getSharedFromThis(account));
 }
 
 const std::shared_ptr<Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,

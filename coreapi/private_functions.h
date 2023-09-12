@@ -202,7 +202,6 @@ LinphonePrivate::SalRegisterOp *linphone_proxy_config_get_op(const LinphoneProxy
 /* Returns as a LinphoneAddress the Contact header sent in a register, fixed thanks to nat helper.*/
 LINPHONE_PUBLIC LinphoneAddress *linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg);
 
-void linphone_friend_list_invalidate_subscriptions(LinphoneFriendList *list);
 void linphone_friend_list_notify_presence_received(LinphoneFriendList *list,
                                                    LinphoneEvent *lev,
                                                    const LinphoneContent *body);
@@ -210,38 +209,18 @@ void linphone_friend_list_subscription_state_changed(LinphoneCore *lc,
                                                      LinphoneEvent *lev,
                                                      LinphoneSubscriptionState state);
 void linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
-LinphoneFriend *_linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list,
-                                                                  const LinphoneAccount *account,
-                                                                  const char *normalized_phone_number);
+LinphoneEvent *linphone_friend_list_get_event(const LinphoneFriendList *list);
+int create_friend_list_from_db(void *data, int argc, char **argv, char **colName);
+void linphone_friend_list_set_friends(LinphoneFriendList *list, const bctbx_list_t *bctbxFriends);
 
 /**
  * Removes all bodyless friend lists.
  * @param[in] lc #LinphoneCore object
  */
 void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc);
-void _linphone_friend_list_release(LinphoneFriendList *list);
-/*get rls either from list or core if any*/
-LinphoneAddress *_linphone_friend_list_get_rls_address(const LinphoneFriendList *list);
 
-LINPHONE_PUBLIC void linphone_friend_invalidate_subscription(LinphoneFriend *lf);
-void linphone_friend_close_subscriptions(LinphoneFriend *lf);
-void _linphone_friend_release(LinphoneFriend *lf);
-LINPHONE_PUBLIC void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_registered);
-void linphone_friend_notify(LinphoneFriend *lf, LinphonePresenceModel *presence);
-void linphone_friend_apply(LinphoneFriend *fr, LinphoneCore *lc);
-void linphone_friend_add_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
-void linphone_friend_remove_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
-const char *linphone_friend_phone_number_to_sip_uri(LinphoneFriend *lf, const char *phone_number);
-const char *linphone_friend_sip_uri_to_phone_number(LinphoneFriend *lf, const char *uri);
-void linphone_friend_clear_presence_models(LinphoneFriend *lf);
-void linphone_presence_service_set_timestamp(LinphonePresenceService *service, time_t timestamp);
-LinphoneFriend *linphone_friend_list_find_friend_by_inc_subscribe(const LinphoneFriendList *list,
-                                                                  LinphonePrivate::SalOp *op);
-LinphoneFriend *linphone_friend_list_find_friend_by_out_subscribe(const LinphoneFriendList *list,
-                                                                  LinphonePrivate::SalOp *op);
 LinphoneFriend *linphone_core_find_friend_by_out_subscribe(const LinphoneCore *lc, LinphonePrivate::SalOp *op);
 LinphoneFriend *linphone_core_find_friend_by_inc_subscribe(const LinphoneCore *lc, LinphonePrivate::SalOp *op);
-MSList *linphone_find_friend_by_address(MSList *fl, const LinphoneAddress *addr, LinphoneFriend **lf);
 bool_t linphone_core_should_subscribe_friends_only_when_registered(const LinphoneCore *lc);
 void linphone_core_update_friends_subscriptions(LinphoneCore *lc);
 void _linphone_friend_list_update_subscriptions(LinphoneFriendList *list,
@@ -254,19 +233,29 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf);
 void linphone_core_remove_friend_from_db(LinphoneCore *lc, LinphoneFriend *lf);
 void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list);
 void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendList *list);
-LINPHONE_PUBLIC MSList *linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
-LINPHONE_PUBLIC MSList *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
 LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list,
                                                                             LinphoneFriend *lf,
                                                                             bool_t synchronize);
 LinphoneFriendCbs *linphone_friend_cbs_new(void);
 LinphoneFriendListCbs *linphone_friend_list_cbs_new(void);
 void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
-void linphone_friend_add_addresses_and_numbers_into_maps(LinphoneFriend *lf, LinphoneFriendList *list);
 void linphone_friend_notify_presence_received(LinphoneFriend *lf);
-bool_t _linphone_friend_has_phone_number(const LinphoneFriend *lf,
-                                         const LinphoneAccount *account,
-                                         const char *normalized_phone_number);
+
+// TODO: To remove when possible
+void linphone_friend_add_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
+LinphonePrivate::SalPresenceOp *linphone_friend_get_outsub(const LinphoneFriend *lf);
+LinphoneAddress *linphone_friend_get_uri(const LinphoneFriend *lf);
+void linphone_friend_release(LinphoneFriend *lf);
+void linphone_friend_remove_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
+void linphone_friend_set_inc_subscribe_pending(LinphoneFriend *lf, bool_t pending);
+void linphone_friend_set_info(LinphoneFriend *lf, BuddyInfo *info);
+void linphone_friend_set_outsub(LinphoneFriend *lf, LinphonePrivate::SalPresenceOp *outsub);
+void linphone_friend_set_out_sub_state(LinphoneFriend *lf, LinphoneSubscriptionState state);
+void linphone_friend_set_presence_received(LinphoneFriend *lf, bool_t received);
+void linphone_friend_set_storage_id(LinphoneFriend *lf, unsigned int id);
+void linphone_friend_set_subscribe(LinphoneFriend *lf, bool_t subscribe);
+void linphone_friend_set_subscribe_active(LinphoneFriend *lf, bool_t active);
 
 int linphone_parse_host_port(const char *input, char *host, size_t hostlen, int *port);
 int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, socklen_t *socklen, int default_port);
@@ -753,25 +742,6 @@ LinphonePlayer *linphone_player_new(LinphoneCore *core);
 void _linphone_player_destroy(LinphonePlayer *player);
 void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
 
-/*****************************************************************************
- * XML UTILITY FUNCTIONS                                                     *
- ****************************************************************************/
-
-#ifdef HAVE_XML2
-xmlparsing_context_t *linphone_xmlparsing_context_new(void);
-void linphone_xmlparsing_context_destroy(xmlparsing_context_t *ctx);
-void linphone_xmlparsing_genericxml_error(void *ctx, const char *fmt, ...);
-int linphone_create_xml_xpath_context(xmlparsing_context_t *xml_ctx);
-void linphone_xml_xpath_context_set_node(xmlparsing_context_t *xml_ctx, xmlNodePtr node);
-char *linphone_get_xml_text_content(xmlparsing_context_t *xml_ctx, const char *xpath_expression);
-char *linphone_get_xml_attribute_text_content(xmlparsing_context_t *xml_ctx,
-                                              const char *xpath_expression,
-                                              const char *attribute_name);
-void linphone_free_xml_text_content(char *text);
-xmlXPathObjectPtr linphone_get_xml_xpath_object_for_node_list(xmlparsing_context_t *xml_ctx,
-                                                              const char *xpath_expression);
-void linphone_xml_xpath_context_init_carddav_ns(xmlparsing_context_t *xml_ctx);
-#endif
 /*****************************************************************************
  * OTHER UTILITY FUNCTIONS                                                   *
  ****************************************************************************/

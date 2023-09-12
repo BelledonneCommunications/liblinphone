@@ -70,13 +70,11 @@
 #include "core/platform-helpers/platform-helpers.h"
 #endif
 
-#include "carddav.h"
 #include "linphone/player.h"
 #include "linphone/ringtoneplayer.h"
 #include "linphone/sipsetup.h"
 #include "quality_reporting.h"
 #include "tester_utils.h"
-#include "vcard_private.h"
 
 #include "bctoolbox/map.h"
 #include "bctoolbox/port.h"

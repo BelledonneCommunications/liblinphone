@@ -33,7 +33,6 @@ typedef struct _sqlite3 sqlite3;
 #include "linphone/tunnel.h"
 #include "mediastreamer2/msmire.h"
 #include "quality_reporting.h"
-#include "vcard_private.h"
 
 #ifndef __cplusplus
 typedef struct _Sal Sal;
@@ -89,6 +88,11 @@ typedef struct _LinphoneStreamInternalStats {
 typedef void (*LinphoneChatRoomCbsSessionStateChangedCb)(LinphoneChatRoom *chat_room,
                                                          LinphoneCallState state,
                                                          const char *message);
+
+/**
+ * The LinphoneVcardContext object.
+ */
+typedef struct _LinphoneVcardContext LinphoneVcardContext;
 
 #ifdef __cplusplus
 extern "C" {
@@ -187,15 +191,14 @@ LINPHONE_PUBLIC bool_t linphone_call_check_rtp_sessions(LinphoneCall *call);
 LINPHONE_PUBLIC void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, bool_t enable);
 LINPHONE_PUBLIC int _linphone_chat_room_get_transient_message_count(const LinphoneChatRoom *cr);
 LINPHONE_PUBLIC LinphoneChatMessage *_linphone_chat_room_get_first_transient_message(const LinphoneChatRoom *cr);
-LINPHONE_PUBLIC MSList *linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
 LINPHONE_PUBLIC MSList *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_friend_invalidate_subscription(LinphoneFriend *lf);
 LINPHONE_PUBLIC void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_registered);
-LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_get_insubs(const LinphoneFriend *fr);
+LINPHONE_PUBLIC bctbx_list_t *linphone_friend_get_insubs(const LinphoneFriend *fr);
 LINPHONE_PUBLIC int linphone_friend_list_get_expected_notification_version(const LinphoneFriendList *list);
 LINPHONE_PUBLIC unsigned int linphone_friend_list_get_storage_id(const LinphoneFriendList *list);
 LINPHONE_PUBLIC unsigned int linphone_friend_get_storage_id(const LinphoneFriend *lf);
-LINPHONE_PUBLIC void linphone_friend_set_core(LinphoneFriend *lf, LinphoneCore *lc);
 LINPHONE_PUBLIC LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf);
 LINPHONE_PUBLIC bctbx_list_t **linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl);
@@ -286,6 +289,14 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_session_state_changed(LinphoneCh
 LINPHONE_PUBLIC LinphoneChatRoomCbsSessionStateChangedCb
 linphone_chat_room_cbs_get_session_state_changed(const LinphoneChatRoomCbs *cbs);
 
+/**
+ * Uses belcard to parse the content of a buffer and returns one vCard if possible, or NULL otherwise.
+ * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
+ * @param[in] buffer the buffer to parse
+ * @return a LinphoneVcard if one could be parsed, or NULL otherwise
+ */
+LINPHONE_PUBLIC LinphoneVcard *linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext *context,
+                                                                            const char *buffer);
 /**
  * Set the force LIME X3DH decryption failure flag
  * @param[in] lc LinphoneCore object

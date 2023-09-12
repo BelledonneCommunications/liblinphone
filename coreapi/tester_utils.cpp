@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-tools.h"
 #ifdef WIN32
 #pragma push_macro("_WINSOCKAPI_")
 #ifndef _WINSOCKAPI_
@@ -37,6 +38,8 @@
 #include "conference/session/media-session-p.h"
 #include "core/core-p.h"
 #include "event-log/conference/conference-chat-message-event.h"
+#include "friend/friend-list.h"
+#include "friend/friend.h"
 #include "mediastreamer2/msanalysedisplay.h"
 
 using namespace std;
@@ -83,40 +86,37 @@ reporting_session_report_t **linphone_quality_reporting_get_reports(LinphoneQual
 	return &qreporting->reports[0];
 }
 
-const bctbx_list_t *linphone_friend_get_insubs(const LinphoneFriend *fr) {
-	return fr->insubs;
+bctbx_list_t *linphone_friend_get_insubs(const LinphoneFriend *lf) {
+	return L_GET_C_LIST_FROM_CPP_LIST(Friend::toCpp(lf)->mInSubs);
 }
 
 int linphone_friend_list_get_expected_notification_version(const LinphoneFriendList *list) {
-	return list->expected_notification_version;
+	return FriendList::toCpp(list)->mExpectedNotificationVersion;
 }
 
 unsigned int linphone_friend_list_get_storage_id(const LinphoneFriendList *list) {
-	return list->storage_id;
+	return FriendList::toCpp(list)->mStorageId;
 }
 
 unsigned int linphone_friend_get_storage_id(const LinphoneFriend *lf) {
-	return lf->storage_id;
-}
-
-void linphone_friend_set_core(LinphoneFriend *lf, LinphoneCore *lc) {
-	lf->lc = lc;
+	return Friend::toCpp(lf)->mStorageId;
 }
 
 LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf) {
-	return lf->friend_list;
+	FriendList *friendList = Friend::toCpp(lf)->mFriendList;
+	return friendList ? friendList->toC() : nullptr;
 }
 
 bctbx_list_t **linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl) {
-	return &lfl->friends;
+	return &FriendList::toCpp(lfl)->mBctbxFriends;
 }
 
 const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl) {
-	return lfl->dirty_friends_to_update;
+	return FriendList::toCpp(lfl)->mBctbxDirtyFriendsToUpdate;
 }
 
 int linphone_friend_list_get_revision(const LinphoneFriendList *lfl) {
-	return lfl->revision;
+	return FriendList::toCpp(lfl)->mRevision;
 }
 
 unsigned int _linphone_call_get_nb_audio_starts(const LinphoneCall *call) {

@@ -78,6 +78,7 @@ public:
 	static const ContentType ImIsComposing;
 	static const ContentType LimeKey;
 	static const ContentType Multipart;
+	static const ContentType MultipartRelated;
 	static const ContentType OctetStream;
 	static const ContentType PlainText;
 	static const ContentType ResourceLists;

@@ -37,6 +37,7 @@
 #include "db/main-db-p.h"
 #include "event/event-publish.h"
 #include "linphone/core.h"
+#include "presence/presence-service.h"
 #include "private.h"
 #include "utils/custom-params.h"
 
@@ -1142,7 +1143,7 @@ int Account::sendPublish() {
 			if (nbServices > 0) {
 				LinphonePresenceService *latest_service =
 				    linphone_presence_model_get_nth_service(mPresenceModel, nbServices - 1);
-				linphone_presence_service_set_timestamp(latest_service, ms_time(NULL));
+				PresenceService::toCpp(latest_service)->setTimestamp(ms_time(nullptr));
 			}
 		}
 
@@ -1158,7 +1159,7 @@ int Account::sendPublish() {
 		if (!linphone_address_equal(currentPresentity, identityAddress->toC())) {
 			lInfo() << "Presentity for model [" << mPresenceModel << "] differs account [" << this->toC()
 			        << "], using account " << *identityAddress;
-			presentityAddress = Address::toCpp(currentPresentity)->getSharedFromThis(); /*saved, just in case*/
+			presentityAddress = Address::getSharedFromThis(currentPresentity); /*saved, just in case*/
 			if (linphone_presence_model_get_contact(mPresenceModel)) {
 				contact = bctbx_strdup(linphone_presence_model_get_contact(mPresenceModel));
 			}

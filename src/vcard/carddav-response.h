@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -18,9 +18,26 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINPHONE_LINPHONEFRIEND_H_
-#define LINPHONE_LINPHONEFRIEND_H_
+#ifndef _L_CARDDAV_RESPONSE_H_
+#define _L_CARDDAV_RESPONSE_H_
 
-#include <linphone/friend.h>
+#include "c-wrapper/c-wrapper.h"
 
-#endif /* LINPHONE_LINPHONEFRIEND_H_ */
+// =============================================================================
+
+LINPHONE_BEGIN_NAMESPACE
+
+class CardDAVResponse : public UserDataAccessor {
+public:
+	CardDAVResponse() = default;
+	CardDAVResponse(const CardDAVResponse &other) = default;
+	virtual ~CardDAVResponse() = default;
+
+	std::string mEtag;
+	std::string mUrl;
+	std::string mVcard;
+};
+
+LINPHONE_END_NAMESPACE
+
+#endif // ifndef _L_CARDDAV_RESPONSE_H_

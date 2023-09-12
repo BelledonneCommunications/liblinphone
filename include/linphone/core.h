@@ -46,7 +46,6 @@
 #include "linphone/conference.h"
 #include "linphone/error_info.h"
 #include "linphone/factory.h"
-#include "linphone/friend.h"
 #include "linphone/friendlist.h"
 #include "linphone/headers.h"
 #include "linphone/im_encryption_engine.h"
@@ -6140,6 +6139,15 @@ LINPHONE_PUBLIC LinphoneFriend *linphone_core_create_friend(LinphoneCore *core);
  * @return The created #LinphoneFriend object. @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriend *linphone_core_create_friend_with_address(LinphoneCore *core, const char *address);
+
+/**
+ * Create a #LinphoneFriend from ai #LinphoneVcard.
+ * @param core #LinphoneCore object @notnil
+ * @param vcard a #LinphoneVcard object @notnil
+ * @return A new #LinphoneFriend object which has its vCard attribute initialized from the given vCard, accessible using
+ * linphone_friend_get_vcard(). @maybenil
+ */
+LINPHONE_PUBLIC LinphoneFriend *linphone_core_create_friend_from_vcard(LinphoneCore *core, LinphoneVcard *vcard);
 
 /**
  * Set my presence model

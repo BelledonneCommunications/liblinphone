@@ -2318,6 +2318,10 @@ static void search_friend_get_capabilities(void) {
 	linphone_friend_unref(lime_fr);
 	linphone_friend_unref(ephemeral_fr);
 
+	bctbx_list_free_with_data(ephemeral_descriptions, (bctbx_list_free_func)bctbx_free);
+	bctbx_list_free_with_data(lime_descriptions, (bctbx_list_free_func)bctbx_free);
+	bctbx_list_free_with_data(group_chat_descriptions, (bctbx_list_free_func)bctbx_free);
+
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
 }
@@ -3299,7 +3303,7 @@ static void delete_friend_from_rc(void) {
 		}
 	}
 
-	LinphoneFriend *friend = linphone_friend_new_with_address("sip:pauline@sip.linphone.org");
+	LinphoneFriend *friend = linphone_core_create_friend_with_address(core, "sip:pauline@sip.linphone.org");
 	BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), -1, int, "%i");
 	linphone_friend_list_add_friend(friend_list, friend);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 4, int, "%i");

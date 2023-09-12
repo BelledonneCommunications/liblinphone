@@ -426,7 +426,9 @@ static void subscribe_presence_expired(void) {
 	lf = linphone_core_find_friend(pauline1->lc, marie->identity);
 	BC_ASSERT_PTR_NOT_NULL(lf);
 	if (lf) {
-		BC_ASSERT_PTR_NOT_NULL(linphone_friend_get_insubs(lf));
+		bctbx_list_t *insubs = linphone_friend_get_insubs(lf);
+		BC_ASSERT_PTR_NOT_NULL(insubs);
+		if (insubs) bctbx_list_free(insubs);
 
 		/*marie comes offline suddenly*/
 		linphone_core_set_network_reachable(marie->lc, FALSE);
@@ -482,7 +484,6 @@ test_t presence_tests[] = {
     TEST_NO_TAG("Presence SUBSCRIBE forked", subscribe_presence_forked),
     TEST_NO_TAG("Presence SUBSCRIBE expired", subscribe_presence_expired),
 };
-
 
 test_suite_t presence_test_suite = {"Presence",
                                     NULL,

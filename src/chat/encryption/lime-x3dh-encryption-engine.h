@@ -23,7 +23,6 @@
 
 #include "belle-sip/belle-sip.h"
 #include "belle-sip/http-listener.h"
-#include "carddav.h"
 #include "core/core-listener.h"
 #include "encryption-engine.h"
 #include "lime-x3dh-server-engine.h"

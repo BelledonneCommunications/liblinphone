@@ -20,7 +20,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 	bellesip_sal/sal_impl.h
-	carddav.h
 	conference.h
 	conference-cbs.h
 	local_conference.h
@@ -32,7 +31,6 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 	private.h
 	quality_reporting.h
 	sqlite3_bctbx_vfs.h
-	vcard_private.h
 	xml2lpc.h
 )
 
@@ -50,8 +48,6 @@ set(LINPHONE_SOURCE_FILES_C
 	echo-tester.c
 	enum.c
 	error_info.c
-	friend.c
-	friendlist.c
 	im_notif_policy.c
 	info.c
 	im_encryption_engine.c
@@ -65,7 +61,6 @@ set(LINPHONE_SOURCE_FILES_C
 	lsd.c
 	misc.c
 	player.c
-	presence.c
 	proxy.c
 	quality_reporting.c
 	remote_provisioning.c
@@ -96,7 +91,7 @@ if (IOS)
 endif()
 
 if(ENABLE_XML2)
-	list(APPEND LINPHONE_SOURCE_FILES_C lpc2xml.c xml2lpc.c xml.c)
+	list(APPEND LINPHONE_SOURCE_FILES_C lpc2xml.c xml2lpc.c)
 endif()
 
 if(ENABLE_SQLITE)
@@ -111,13 +106,6 @@ if(ENABLE_TUNNEL)
 	add_definitions(-DTUNNEL_ENABLED)
 else()
 	list(APPEND LINPHONE_SOURCE_FILES_C linphone_tunnel_stubs.c)
-endif()
-
-if(BelCard_FOUND)
-	list(APPEND LINPHONE_SOURCE_FILES_CXX vcard.cc)
-	list(APPEND LINPHONE_SOURCE_FILES_C carddav.c)
-else()
-	list(APPEND LINPHONE_SOURCE_FILES_C vcard_stubs.c)
 endif()
 
 

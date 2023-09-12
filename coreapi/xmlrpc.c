@@ -31,6 +31,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-auth-info.h"
+#include "xml/xml-parsing-context.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -227,35 +228,30 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 
 #ifdef HAVE_XML2
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
-	xmlparsing_context_t *xml_ctx = linphone_xmlparsing_context_new();
-	xmlSetGenericErrorFunc(xml_ctx, linphone_xmlparsing_genericxml_error);
+	LinphonePrivate::XmlParsingContext xmlCtx(L_C_TO_STRING(response_body));
 	request->status = LinphoneXmlRpcStatusFailed;
-	xml_ctx->doc = xmlReadDoc((const unsigned char *)response_body, 0, NULL, 0);
-	if (xml_ctx->doc != NULL) {
-		char *response_str = NULL;
-		if (linphone_create_xml_xpath_context(xml_ctx) < 0) goto end;
+	if (xmlCtx.isValid()) {
+		std::string responseStr;
 		switch (request->response.type) {
 			case LinphoneXmlRpcArgInt:
-				response_str = linphone_get_xml_text_content(xml_ctx, "/methodResponse/params/param/value/int");
-				if (response_str != NULL) {
-					request->response.data.i = atoi(response_str);
+				responseStr = xmlCtx.getTextContent("/methodResponse/params/param/value/int");
+				if (!responseStr.empty()) {
+					request->response.data.i = atoi(responseStr.c_str());
 					request->status = LinphoneXmlRpcStatusOk;
 				}
 				break;
 			case LinphoneXmlRpcArgString:
-				response_str = linphone_get_xml_text_content(xml_ctx, "/methodResponse/params/param/value/string");
-				if (response_str != NULL) {
-					request->response.data.s = belle_sip_strdup(response_str);
+				responseStr = xmlCtx.getTextContent("/methodResponse/params/param/value/string");
+				if (!responseStr.empty()) {
+					request->response.data.s = belle_sip_strdup(responseStr.c_str());
 					request->status = LinphoneXmlRpcStatusOk;
 				}
 				break;
 			case LinphoneXmlRpcArgStringStruct: {
-				response_str = linphone_get_xml_text_content(xml_ctx, "/methodResponse/params/param/value/string");
-				if (response_str != NULL) {
-					request->response.data.s = belle_sip_strdup(response_str);
-				} else {
-					xmlXPathObjectPtr responses = linphone_get_xml_xpath_object_for_node_list(
-					    xml_ctx, "/methodResponse/params/param/value/struct/member");
+				responseStr = xmlCtx.getTextContent("/methodResponse/params/param/value/string");
+				if (responseStr.empty()) {
+					xmlXPathObjectPtr responses =
+					    xmlCtx.getXpathObjectForNodeList("/methodResponse/params/param/value/struct/member");
 					if (responses != NULL && responses->nodesetval != NULL) {
 						// request->response.data.m = bctbx_mmap_cchar_new();
 						request->response.data.l = NULL;
@@ -266,37 +262,31 @@ static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const c
 							int i;
 							for (i = 0; i < responses_nodes->nodeNr; i++) {
 								xmlNodePtr response_node = responses_nodes->nodeTab[i];
-								xml_ctx->xpath_ctx->node = response_node;
-								{
-									char *name = linphone_get_xml_text_content(xml_ctx, "name");
-									char *value = linphone_get_xml_text_content(xml_ctx, "value/string");
-									ms_message("Found pair with key=[%s] and value=[%s]", name, value);
-									request->response.data.l =
-									    bctbx_list_append(request->response.data.l, bctbx_strdup(value));
+								xmlCtx.setXpathContextNode(response_node);
+								std::string name = xmlCtx.getTextContent("name");
+								std::string value = xmlCtx.getTextContent("value/string");
+								ms_message("Found pair with key=[%s] and value=[%s]", name.c_str(), value.c_str());
+								request->response.data.l =
+								    bctbx_list_append(request->response.data.l, bctbx_strdup(value.c_str()));
 
-									/*bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(name, (void
-									*)bctbx_strdup(value)); bctbx_map_cchar_insert_and_delete(request->response.data.m,
-									pair);*/
-
-									linphone_free_xml_text_content(name);
-									linphone_free_xml_text_content(value);
-								}
+								/*bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(name, (void
+								*)bctbx_strdup(value)); bctbx_map_cchar_insert_and_delete(request->response.data.m,
+								pair);*/
 							}
 						}
 						xmlXPathFreeObject(responses);
 					}
+				} else {
+					request->response.data.s = belle_sip_strdup(responseStr.c_str());
 				}
 				break;
 			}
 			default:
 				break;
 		}
-		if (response_str) linphone_free_xml_text_content(response_str);
 	} else {
-		ms_warning("Wrongly formatted XML-RPC response: %s", xml_ctx->errorBuffer);
+		ms_warning("Wrongly formatted XML-RPC response: %s", xmlCtx.getError().c_str());
 	}
-end:
-	linphone_xmlparsing_context_destroy(xml_ctx);
 	if (request->callbacks->response != NULL) {
 		request->callbacks->response(request);
 	}

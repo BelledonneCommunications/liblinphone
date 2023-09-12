@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/types.h"
 #include <math.h>
 #include <sstream>
 #include <sys/stat.h>
@@ -96,7 +97,9 @@
 #include "content/content-type.h"
 #include "core/core-p.h"
 #include "event/event-publish.h"
+#include "friend/friend-list.h"
 #include "sal/sal.h"
+#include "vcard/vcard-context.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #include "gitversion.h"
@@ -2799,14 +2802,14 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 	if (strcmp(notified_event, "Presence") == 0) {
 		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
 			LinphoneFriendList *list = reinterpret_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
-			if (list->event != lev) continue;
+			if (linphone_friend_list_get_event(list) != lev) continue;
 
 			ms_message("Notify presence for list %p", list);
 			linphone_friend_list_notify_presence_received(list, lev, body);
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 #ifdef HAVE_ADVANCED_IM
-		const auto ev = Event::toCpp(lev)->getSharedFromThis();
+		const auto ev = Event::getSharedFromThis(lev);
 		const auto resourceAddr = ev->getResource();
 		const auto resourceAddrUri = resourceAddr->asStringUriOnly();
 		const bctbx_list_t *elem;
@@ -2864,19 +2867,19 @@ _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *le
 	if (body && linphone_event_get_custom_header(lev, "Content-Disposition") &&
 	    strcasecmp(linphone_event_get_custom_header(lev, "Content-Disposition"), "recipient-list") == 0) {
 		// List subscription
-		auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
+		auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::getSharedFromThis(lev));
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->localListEventHandler->subscribeReceived(evSub, body);
 		return;
 	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	const std::shared_ptr<Address> conferenceAddress =
-	    Address::toCpp(const_cast<LinphoneAddress *>(resource))->getSharedFromThis();
+	    Address::getSharedFromThis(const_cast<LinphoneAddress *>(resource));
 	LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(conferenceAddress, conferenceAddress);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 	shared_ptr<MediaConference::Conference> audioVideoConference =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
-	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
+	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::getSharedFromThis(lev));
 	if (chatRoom) static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(evSub);
 	else if (audioVideoConference)
 		static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscribeReceived(evSub);
@@ -2907,7 +2910,7 @@ static void _linphone_core_conference_subscription_state_changed(LinphoneCore *l
                                                                  LinphoneEvent *lev,
                                                                  LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
-	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(lev)->getSharedFromThis());
+	auto evSub = dynamic_pointer_cast<EventSubscribe>(Event::getSharedFromThis(lev));
 	if (!linphone_core_conference_server_enabled(lc)) {
 		/* Liblinphone in a client application. */
 		auto handler = evSub->getProperty("event-handler-private").getValue<RemoteConferenceEventHandler *>();
@@ -3353,7 +3356,7 @@ static void linphone_core_init(LinphoneCore *lc,
 	lc->qrcode_rect.x = 0;
 	lc->qrcode_rect.y = 0;
 
-	lc->vcard_context = linphone_vcard_context_new();
+	lc->vcard_context = VcardContext::createCObject();
 	linphone_core_initialize_supported_content_types(lc);
 	lc->bw_controller = ms_bandwidth_controller_new();
 
@@ -3733,9 +3736,7 @@ const bctbx_list_t *linphone_core_get_friend_list(const LinphoneCore *lc) {
 	bctbx_list_t *lists = lc->friends_lists;
 	if (lists) {
 		LinphoneFriendList *list = (LinphoneFriendList *)lists->data;
-		if (list) {
-			return list->friends;
-		}
+		if (list) return linphone_friend_list_get_friends(list);
 	}
 	return NULL;
 }
@@ -3774,7 +3775,6 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 	if (elem == NULL) return;
 	linphone_core_remove_friends_list_from_db(lc, list);
 	linphone_core_notify_friend_list_removed(lc, list);
-	list->lc = NULL;
 	linphone_friend_list_unref(list);
 	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
 }
@@ -3792,9 +3792,6 @@ void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
 
 void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	CoreLogContextualizer logContextualizer(lc);
-	if (!list->lc) {
-		list->lc = lc;
-	}
 	lc->friends_lists = bctbx_list_append(lc->friends_lists, linphone_friend_list_ref(list));
 	linphone_core_store_friends_list_in_db(lc, list);
 	linphone_core_notify_friend_list_created(lc, list);
@@ -4332,7 +4329,7 @@ static void proxy_update(LinphoneCore *lc) {
 static void assign_buddy_info(LinphoneCore *lc, BuddyInfo *info) {
 	LinphoneFriend *lf = linphone_core_get_friend_by_address(lc, info->sip_uri);
 	if (lf != NULL) {
-		lf->info = info;
+		linphone_friend_set_info(lf, info);
 		ms_message("%s has a BuddyInfo assigned with image %p", info->sip_uri, info->image_data);
 		linphone_core_notify_buddy_info_updated(lc, lf);
 	} else {
@@ -4367,11 +4364,11 @@ static void linphone_core_grab_buddy_infos(LinphoneCore *lc, LinphoneProxyConfig
 	SipSetupContext *ctx = linphone_proxy_config_get_sip_setup_context(cfg);
 	for (elem = linphone_core_get_friend_list(lc); elem != NULL; elem = elem->next) {
 		LinphoneFriend *lf = (LinphoneFriend *)elem->data;
-		if (lf->info == NULL) {
-			if (linphone_core_lookup_known_proxy(lc, lf->uri) == cfg) {
-				if (linphone_address_get_username(lf->uri) != NULL) {
+		if (linphone_friend_get_info(lf) == NULL) {
+			if (linphone_core_lookup_known_proxy(lc, linphone_friend_get_uri(lf)) == cfg) {
+				if (linphone_address_get_username(linphone_friend_get_uri(lf)) != NULL) {
 					BuddyLookupRequest *req;
-					char *tmp = linphone_address_as_string_uri_only(lf->uri);
+					char *tmp = linphone_address_as_string_uri_only(linphone_friend_get_uri(lf));
 					req = sip_setup_context_create_buddy_lookup_request(ctx);
 					buddy_lookup_request_set_key(req, tmp);
 					buddy_lookup_request_set_max_results(req, 1);
@@ -4482,9 +4479,9 @@ void linphone_core_iterate(LinphoneCore *lc) {
 		}
 		for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-			if (list->dirty_friends_to_update && list->type == LinphoneFriendListTypeCardDAV) {
-				linphone_friend_list_update_dirty_friends(list);
-			}
+			std::shared_ptr<FriendList> friendList = FriendList::getSharedFromThis(list);
+			if (!friendList->mDirtyFriendsToUpdate.empty() && (friendList->mType == LinphoneFriendListTypeCardDAV))
+				friendList->updateDirtyFriends();
 		}
 	}
 
@@ -4575,7 +4572,7 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
 	if (srv_route) {
-		const auto srv_route_addr = LinphonePrivate::Address::toCpp(srv_route)->getSharedFromThis();
+		const auto srv_route_addr = LinphonePrivate::Address::getSharedFromThis(srv_route);
 		ret = bctbx_list_append(ret, sal_address_clone(srv_route_addr->getImpl()));
 	}
 	if (ret == NULL) {
@@ -4919,7 +4916,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc,
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
 		SalAddress *salAddress = nullptr;
 		if (contact) {
-			const auto contact_addr = LinphonePrivate::Address::toCpp(contact)->getSharedFromThis();
+			const auto contact_addr = LinphonePrivate::Address::getSharedFromThis(contact);
 			salAddress = sal_address_clone(contact_addr->getImpl());
 		}
 		op->setContactAddress(salAddress);
@@ -4960,7 +4957,7 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 		const LinphoneAddress *contact = linphone_account_get_contact_address(account);
 		SalAddress *salAddress = nullptr;
 		if (contact) {
-			const auto contact_addr = LinphonePrivate::Address::toCpp(contact)->getSharedFromThis();
+			const auto contact_addr = LinphonePrivate::Address::getSharedFromThis(contact);
 			salAddress = sal_address_clone(contact_addr->getImpl());
 		}
 		op->setContactAddress(salAddress);
@@ -5097,7 +5094,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 	call = linphone_call_new_outgoing(lc, parsed_url2, addr, cp, account);
 	linphone_address_unref(parsed_url2);
 
-	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->addCall(Call::toCpp(call)->getSharedFromThis()) != 0) {
+	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->addCall(Call::getSharedFromThis(call)) != 0) {
 		ms_warning("we had a problem in adding the call into the invite ... weird");
 		linphone_call_unref(call);
 		linphone_call_params_unref(cp);
@@ -5116,7 +5113,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 
 	/* Unless this call is for a conference, it becomes now the current one*/
 	if (linphone_call_params_get_local_conference_mode(params) == FALSE)
-		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::getSharedFromThis(call));
 	bool defer = Call::toCpp(call)->initiateOutgoing(L_C_TO_STRING(subject),
 	                                                 content ? Content::toCpp(content)->getSharedFromThis() : nullptr);
 	if (!defer) {
@@ -5289,7 +5286,7 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc) {
 			return 0;
 		}
 
-		shared_ptr<LinphonePrivate::Call> cpp_call = Call::toCpp(current_call)->getSharedFromThis();
+		shared_ptr<LinphonePrivate::Call> cpp_call = Call::getSharedFromThis(current_call);
 		auto ms = static_pointer_cast<LinphonePrivate::MediaSession>(cpp_call->getActiveSession());
 		if (ms && L_GET_PRIVATE(ms)->getResultDesc() && L_GET_PRIVATE(ms)->getResultDesc()->hasDir(SalStreamSendOnly)) {
 			ms_error("Trying to empty resources of a call whose SAL media direction is SendOnly - If you wish to do "
@@ -5325,7 +5322,7 @@ LinphoneCall *linphone_core_find_call_from_uri(const LinphoneCore *lc, const cha
 
 LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *raddr) {
 	CoreLogContextualizer logContextualizer(lc);
-	const auto remote_addr = LinphonePrivate::Address::toCpp(raddr)->getSharedFromThis();
+	const auto remote_addr = LinphonePrivate::Address::getSharedFromThis(raddr);
 	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByRemoteAddress(remote_addr);
 	return call ? call->toC() : NULL;
 }
@@ -7443,8 +7440,8 @@ void sip_config_uninit(LinphoneCore *lc) {
 	lc->default_proxy = NULL;
 
 	if (lc->vcard_context) {
-		linphone_vcard_context_destroy(lc->vcard_context);
-		lc->vcard_context = NULL;
+		VcardContext::toCpp(lc->vcard_context)->unref();
+		lc->vcard_context = nullptr;
 	}
 
 	lc->sal->resetTransports();
@@ -7873,9 +7870,9 @@ static void codecs_config_uninit(LinphoneCore *lc) {
 
 void friends_config_uninit(LinphoneCore *lc) {
 	ms_message("Destroying friends.");
-	lc->friends_lists = bctbx_list_free_with_data(lc->friends_lists, (void (*)(void *))_linphone_friend_list_release);
+	lc->friends_lists = bctbx_list_free_with_data(lc->friends_lists, (void (*)(void *))linphone_friend_list_unref);
 	if (lc->subscribers) {
-		lc->subscribers = bctbx_list_free_with_data(lc->subscribers, (void (*)(void *))_linphone_friend_release);
+		lc->subscribers = bctbx_list_free_with_data(lc->subscribers, (void (*)(void *))linphone_friend_release);
 	}
 	if (lc->presence_model) {
 		linphone_presence_model_unref(lc->presence_model);
@@ -9441,10 +9438,10 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
 		        participants);
 	}
 	shared_ptr<const LinphonePrivate::Address> identityAddress =
-	    localAddr ? LinphonePrivate::Address::toCpp(localAddr)->getSharedFromThis()
+	    localAddr ? LinphonePrivate::Address::getSharedFromThis(localAddr)
 	              : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
 	shared_ptr<const LinphonePrivate::Address> remoteAddress =
-	    remoteAddr ? LinphonePrivate::Address::toCpp(remoteAddr)->getSharedFromThis() : nullptr;
+	    remoteAddr ? LinphonePrivate::Address::getSharedFromThis(remoteAddr) : nullptr;
 	shared_ptr<LinphonePrivate::MediaConference::Conference> conf =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceParams, identityAddress, remoteAddress,
 	                                                                participantsList);
@@ -9458,9 +9455,8 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,
 LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *lc, const LinphoneAddress *conferenceAddr) {
 	CoreLogContextualizer logContextualizer(lc);
 	const auto conferenceAddress =
-	    conferenceAddr
-	        ? LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(conferenceAddr))->getSharedFromThis()
-	        : nullptr;
+	    conferenceAddr ? LinphonePrivate::Address::getSharedFromThis(const_cast<LinphoneAddress *>(conferenceAddr))
+	                   : nullptr;
 	shared_ptr<LinphonePrivate::MediaConference::Conference> conf =
 	    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceAddress);
 	LinphoneConference *c_conference = NULL;
@@ -9732,7 +9728,7 @@ int linphone_core_get_unread_chat_message_count(const LinphoneCore *lc) {
 }
 
 int linphone_core_get_unread_chat_message_count_from_local(const LinphoneCore *lc, const LinphoneAddress *address) {
-	const auto addr = LinphonePrivate::Address::toCpp(const_cast<LinphoneAddress *>(address))->getSharedFromThis();
+	const auto addr = LinphonePrivate::Address::getSharedFromThis(const_cast<LinphoneAddress *>(address));
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount(addr);
 }
 
@@ -9767,7 +9763,7 @@ LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(Linph
 	CoreLogContextualizer logContextualizer(core);
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	const auto uri_addr = uri ? LinphonePrivate::Address::toCpp(uri)->getSharedFromThis() : nullptr;
+	const auto uri_addr = uri ? LinphonePrivate::Address::getSharedFromThis(uri) : nullptr;
 	auto confInfo = mainDb->getConferenceInfoFromURI(uri_addr);
 
 	if (confInfo != nullptr) {
@@ -9826,7 +9822,7 @@ void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneCon
 	CoreLogContextualizer logContextualizer(core);
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	mainDb->deleteConferenceInfo(LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
+	mainDb->deleteConferenceInfo(LinphonePrivate::ConferenceInfo::getSharedFromThis(conference_info));
 #endif
 }
 

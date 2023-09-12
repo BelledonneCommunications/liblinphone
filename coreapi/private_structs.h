@@ -36,13 +36,11 @@
 typedef struct _sqlite3 sqlite3;
 #endif
 
-#include "carddav.h"
 #include "event/event-publish.h"
 #include "linphone/core_utils.h"
 #include "linphone/sipsetup.h"
 #include "sal/event-op.h"
 #include "sal/register-op.h"
-#include "vcard_private.h"
 
 struct _CallCallbackObj {
 	LinphoneCallCbFunc _func;
@@ -68,98 +66,6 @@ struct _LinphoneProxyConfig {
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneProxyConfig);
-
-struct _LinphoneFriendPresence {
-	char *uri_or_tel;
-	LinphonePresenceModel *presence;
-};
-
-struct _LinphoneFriendPhoneNumberSipUri {
-	char *number;
-	char *uri;
-};
-
-struct _LinphoneFriendCbs {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneFriendCbsPresenceReceivedCb presence_received_cb;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendCbs);
-
-struct _LinphoneFriend {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneAddress *uri;
-	MSList *insubs; /*list of SalOp. There can be multiple instances of a same Friend that subscribe to our presence*/
-	LinphonePrivate::SalPresenceOp *outsub;
-	LinphoneSubscribePolicy pol;
-	MSList *presence_models; /* list of LinphoneFriendPresence. It associates SIP URIs and phone numbers with their
-	                            respective presence models. */
-	MSList *phone_number_sip_uri_map; /* list of LinphoneFriendPhoneNumberSipUri. It associates phone numbers with their
-	                                     corresponding SIP URIs. */
-	struct _LinphoneCore *lc;
-	BuddyInfo *info;
-	char *refkey;
-	bool_t subscribe;
-	bool_t subscribe_active;
-	bool_t inc_subscribe_pending;
-	bool_t commit;
-	bool_t initial_subscribes_sent; /*used to know if initial subscribe message was sent or not*/
-	bool_t presence_received;
-	LinphoneVcard *vcard;
-	unsigned int storage_id;
-	LinphoneFriendList *friend_list;
-	LinphoneSubscriptionState out_sub_state;
-	int capabilities;
-	int rc_index;
-	bool_t is_starred;
-	char *native_uri;
-	bctbx_list_t *callbacks;
-	_LinphoneFriendCbs *currentCbs;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriend);
-
-struct _LinphoneFriendListCbs {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneFriendListCbsContactCreatedCb contact_created_cb;
-	LinphoneFriendListCbsContactDeletedCb contact_deleted_cb;
-	LinphoneFriendListCbsContactUpdatedCb contact_updated_cb;
-	LinphoneFriendListCbsSyncStateChangedCb sync_state_changed_cb;
-	LinphoneFriendListCbsPresenceReceivedCb presence_received_cb;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendListCbs);
-
-struct _LinphoneFriendList {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneCore *lc;
-	LinphoneEvent *event;
-	char *display_name;
-	char *rls_uri; /*this field is take in sync with rls_addr*/
-	LinphoneAddress *rls_addr;
-	MSList *friends;
-	bctbx_map_t *friends_map;
-	bctbx_map_t *friends_map_uri;
-	unsigned char *content_digest;
-	int expected_notification_version;
-	unsigned int storage_id;
-	char *uri;
-	MSList *dirty_friends_to_update;
-	int revision;
-	LinphoneFriendListCbs *cbs; // Deprecated, use a list of Cbs instead
-	bctbx_list_t *callbacks;
-	LinphoneFriendListCbs *currentCbs;
-	bool_t enable_subscriptions;
-	bool_t bodyless_subscription;
-	LinphoneFriendListType type;
-	bool_t store_in_db;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendList);
 
 struct sip_config {
 	char *contact;
@@ -438,38 +344,6 @@ struct _LinphoneXmlRpcSession {
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneXmlRpcSession);
 
 /*****************************************************************************
- * CardDAV interface                                                         *
- ****************************************************************************/
-
-struct _LinphoneCardDavContext {
-	LinphoneFriendList *friend_list;
-	int ctag;
-	void *user_data;
-	LinphoneCardDavContactCreatedCb contact_created_cb;
-	LinphoneCardDavContactUpdatedCb contact_updated_cb;
-	LinphoneCardDavContactRemovedCb contact_removed_cb;
-	LinphoneCardDavSynchronizationDoneCb sync_done_cb;
-};
-
-struct _LinphoneCardDavQuery {
-	LinphoneCardDavContext *context;
-	char *url;
-	const char *method;
-	char *body;
-	const char *depth;
-	const char *ifmatch;
-	belle_http_request_listener_t *http_request_listener;
-	void *user_data;
-	LinphoneCardDavQueryType type;
-};
-
-struct _LinphoneCardDavResponse {
-	char *etag;
-	char *url;
-	char *vcard;
-};
-
-/*****************************************************************************
  * Player interface                                                          *
  ****************************************************************************/
 
@@ -506,23 +380,6 @@ struct _LinphonePlayer {
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);
-
-/*****************************************************************************
- * XML UTILITY FUNCTIONS                                                     *
- ****************************************************************************/
-#ifdef HAVE_XML2
-
-#define XMLPARSING_BUFFER_LEN 2048
-#define MAX_XPATH_LENGTH 256
-
-struct _xmlparsing_context {
-	xmlDoc *doc;
-	xmlXPathContextPtr xpath_ctx;
-	char errorBuffer[XMLPARSING_BUFFER_LEN];
-	char warningBuffer[XMLPARSING_BUFFER_LEN];
-};
-
-#endif
 
 /*****************************************************************************
  * OTHER UTILITY FUNCTIONS                                                     *

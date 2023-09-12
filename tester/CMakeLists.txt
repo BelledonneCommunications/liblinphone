@@ -276,7 +276,6 @@ set(SOURCE_FILES_C
 	shared_core_tester.c
 	stun_tester.c
 	tunnel_tester.c
-	vcard_tester.c
 	video_quality_tester.c
 	local_chat_tester_functions.cpp
 	local_conference_tester_functions.cpp
@@ -325,6 +324,7 @@ set(SOURCE_FILES_CXX
 	potential_configuration_tester.cpp
 	conference-info-tester.cpp
 	alerts_tester.cpp
+	vcard_tester.cpp
 )
 
 if(ENABLE_FLEXIAPI)

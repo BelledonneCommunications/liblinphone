@@ -232,6 +232,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/event-log.h
 	event-log/events.h
 	factory/factory.h
+	friend/friend.h
+	friend/friend-list.h
 	friend/friend_phone_number.h
 	hacks/hacks.h
 	ldap/ldap.h
@@ -253,6 +255,11 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/property-container.h
 	object/singleton.h
 	payload-type/payload-type.h
+	presence/presence-activity.h
+	presence/presence-model.h
+	presence/presence-note.h
+	presence/presence-person.h
+	presence/presence-service.h
 	push-notification-message/push-notification-message.h
 	push-notification/push-notification-config.h
 	recorder/recorder.h
@@ -278,6 +285,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	utils/if-addrs.h
 	variant/variant.h
 	variant/variant-impl.h
+	vcard/vcard.h
+	vcard/vcard-context.h
 )
 
 if(ENABLE_ADVANCED_IM)
@@ -320,6 +329,18 @@ if(ENABLE_DB_STORAGE)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 		db/internal/db-transaction.h
 		db/session/db-session.h
+	)
+endif()
+
+if(LibXml2_FOUND)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES xml/xml-parsing-context.h)
+endif()
+
+if(ENABLE_VCARD)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
+		vcard/carddav-context.h
+		vcard/carddav-query.h
+		vcard/carddav-response.h
 	)
 endif()
 
@@ -368,6 +389,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-event.cpp
 	c-wrapper/api/c-factory.cpp
+	c-wrapper/api/c-friend.cpp
+	c-wrapper/api/c-friend-list.cpp
 	c-wrapper/api/c-friend-phone-number.cpp
 	c-wrapper/api/c-ldap.cpp
 	c-wrapper/api/c-ldap-params.cpp
@@ -381,6 +404,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-payload-type.cpp
+	c-wrapper/api/c-presence.cpp
 	c-wrapper/api/c-push-notification-message.cpp
 	c-wrapper/api/c-push-notification-config.cpp
 	c-wrapper/api/c-recorder.cpp
@@ -389,6 +413,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-signal-information.cpp
 	c-wrapper/api/c-video-source-descriptor.cpp
 	c-wrapper/api/c-nat-policy.cpp
+	c-wrapper/api/c-vcard.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	call/call-log.cpp
@@ -475,6 +500,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-ephemeral-message-event.cpp
 	event-log/event-log.cpp
 	factory/factory.cpp
+	friend/friend.cpp
+	friend/friend-list.cpp
 	friend/friend_phone_number.cpp
 	hacks/hacks.cpp
 	ldap/ldap.cpp
@@ -489,6 +516,11 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/object.cpp
 	object/property-container.cpp
 	payload-type/payload-type.cpp
+	presence/presence-activity.cpp
+	presence/presence-model.cpp
+	presence/presence-note.cpp
+	presence/presence-person.cpp
+	presence/presence-service.cpp
 	push-notification-message/push-notification-message.cpp
 	push-notification/push-notification-config.cpp
 	recorder/recorder.cpp
@@ -521,6 +553,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/utils.cpp
 	utils/if-addrs.cpp
 	utils/version.cpp
+	vcard/vcard.cpp
+	vcard/vcard-context.cpp
 )
 
 if(ENABLE_LDAP)
@@ -536,6 +570,17 @@ if (ENABLE_FLEXIAPI)
 		account_creator/connector_flexiapi.cpp
 		account_creator/flexi-api-client.cpp
 	)
+endif()
+
+if(ENABLE_VCARD)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		vcard/carddav-context.cpp
+		vcard/carddav-query.cpp
+	)
+endif()
+
+if(LibXml2_FOUND)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES xml/xml-parsing-context.cpp)
 endif()
 
 if(ENABLE_VIDEO)

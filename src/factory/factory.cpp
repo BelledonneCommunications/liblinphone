@@ -63,6 +63,7 @@
 #include "logger/logger.h"
 #include "payload-type/payload-type.h"
 #include "signal-information/signal-information.h"
+#include "vcard/vcard.h"
 
 #ifdef HAVE_SQLITE
 #include "sqlite3_bctbx_vfs.h"
@@ -329,7 +330,7 @@ LinphoneSignalInformation *Factory::createSignalInformation() const {
 	return SignalInformation::createCObject();
 }
 LinphoneVcard *Factory::createVcard() const {
-	return _linphone_vcard_new();
+	return Vcard::createCObject();
 }
 
 LinphoneVideoDefinition *Factory::createVideoDefinition(unsigned int width, unsigned int height) const {

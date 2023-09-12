@@ -27,8 +27,6 @@ typedef struct StunCandidate StunCandidate;
 
 typedef struct _PortConfig PortConfig;
 
-typedef struct _LinphoneFriendPresence LinphoneFriendPresence;
-
 typedef struct _LinphoneFriendPhoneNumberSipUri LinphoneFriendPhoneNumberSipUri;
 
 typedef struct sip_config sip_config_t;
@@ -58,8 +56,6 @@ typedef struct _LinphoneTaskList LinphoneTaskList;
 typedef struct _LCCallbackObj LCCallbackObj;
 
 typedef struct _EcCalibrator EcCalibrator;
-
-typedef struct _xmlparsing_context xmlparsing_context_t;
 
 typedef struct _VTableReference VTableReference;
 

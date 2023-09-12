@@ -64,7 +64,6 @@ set(ROOT_HEADER_FILES
 	linphone_tunnel.h
 	linphonecore_utils.h
 	linphonecore.h
-	linphonefriend.h
 	linphonepresence.h
 )
 
@@ -96,15 +95,19 @@ set(C_API_HEADER_FILES
 	c-conference-scheduler.h
 	c-dial-plan.h
 	c-dictionary.h
+	c-digest-authentication-policy.h
 	c-event-cbs.h
 	c-event-log.h
 	c-event.h
 	c-factory.h
+	c-friend.h
+	c-friend-list.h
 	c-friend-phone-number.h
 	c-ldap.h
 	c-ldap-params.h
 	c-magic-search.h
 	c-magic-search-cbs.h
+	c-nat-policy.h
 	c-participant.h
 	c-participant-info.h
 	c-participant-device.h
@@ -112,16 +115,16 @@ set(C_API_HEADER_FILES
 	c-participant-device-identity.h
 	c-participant-imdn-state.h
 	c-payload-type.h
+	c-presence.h
 	c-push-notification-message.h
 	c-push-notification-config.h
 	c-recorder.h
 	c-recorder-params.h
 	c-search-result.h
 	c-signal-information.h
-	c-digest-authentication-policy.h
 	c-types.h
 	c-video-source-descriptor.h
-	c-nat-policy.h
+	c-vcard.h
 )
 
 set(ENUMS_HEADER_FILES

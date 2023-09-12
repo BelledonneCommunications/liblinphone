@@ -26,6 +26,8 @@
 #include "../ldap/ldap.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "friend/friend-list.h"
+#include "friend/friend.h"
 #include "linphone/core.h"
 #include "linphone/types.h"
 #include "linphone/utils/utils.h"
@@ -636,11 +638,11 @@ void MagicSearch::beginNewSearchAsync(const SearchRequest &request, SearchAsyncD
 		for (const bctbx_list_t *fl = friend_lists; fl != nullptr; fl = bctbx_list_next(fl)) {
 			LinphoneFriendList *fList = static_cast<LinphoneFriendList *>(fl->data);
 			// For all friends or when we reach the search limit
-			for (bctbx_list_t *f = fList->friends; f != nullptr; f = bctbx_list_next(f)) {
-				LinphoneFriend *lFriend = static_cast<LinphoneFriend *>(f->data);
-				if (checkFriends || linphone_friend_get_starred(lFriend)) {
+			const std::list<std::shared_ptr<Friend>> friends = FriendList::toCpp(fList)->getFriends();
+			for (const auto &lFriend : friends) {
+				if (checkFriends || lFriend->getStarred()) {
 					list<std::shared_ptr<SearchResult>> fResults =
-					    searchInFriend(lFriend, request.getFilter(), request.getWithDomain());
+					    searchInFriend(lFriend->toC(), request.getFilter(), request.getWithDomain());
 					addResultsToResultsList(fResults, friendsList);
 				}
 			}
@@ -689,10 +691,10 @@ MagicSearch::beginNewSearch(const string &filter, const string &withDomain, int 
 		for (const bctbx_list_t *fl = friend_lists; fl != nullptr; fl = bctbx_list_next(fl)) {
 			LinphoneFriendList *fList = static_cast<LinphoneFriendList *>(fl->data);
 			// For all friends or when we reach the search limit
-			for (bctbx_list_t *f = fList->friends; f != nullptr; f = bctbx_list_next(f)) {
-				LinphoneFriend *lFriend = static_cast<LinphoneFriend *>(f->data);
-				if (checkFriends || linphone_friend_get_starred(lFriend)) {
-					list<std::shared_ptr<SearchResult>> fResults = searchInFriend(lFriend, filter, withDomain);
+			const std::list<std::shared_ptr<Friend>> friends = FriendList::toCpp(fList)->getFriends();
+			for (const auto &lFriend : friends) {
+				if (checkFriends || lFriend->getStarred()) {
+					list<std::shared_ptr<SearchResult>> fResults = searchInFriend(lFriend->toC(), filter, withDomain);
 					addResultsToResultsList(fResults, *resultList);
 				}
 			}

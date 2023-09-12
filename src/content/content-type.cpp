@@ -49,6 +49,7 @@ const ContentType ContentType::Imdn("message/imdn+xml");
 const ContentType ContentType::ImIsComposing("application/im-iscomposing+xml");
 const ContentType ContentType::LimeKey("application/lime");
 const ContentType ContentType::Multipart("multipart/mixed");
+const ContentType ContentType::MultipartRelated("multipart/related");
 const ContentType ContentType::OctetStream("application/octet-stream");
 const ContentType ContentType::PlainText("text/plain");
 const ContentType ContentType::ResourceLists("application/resource-lists+xml");
