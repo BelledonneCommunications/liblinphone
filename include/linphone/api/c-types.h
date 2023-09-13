@@ -647,10 +647,12 @@ typedef struct _LinphoneDictionary LinphoneDictionary;
 /**
  * @brief Object that represents an alert.
  * Alerts are raised at run-time when particular conditions are met, for example bad network quality.
- * The full list of available alert types is described by the #LinphoneAlertTypes enum.
+ * The full list of available alert types is described by the #LinphoneAlertType enum.
  * An application is notified of new alerts through the #LinphoneCoreCbs interface.
  * Once raised, the application may use the #LinphoneAlertCbs interface to get notified
  * when the alert stops.
+ * For each kind of alert, a #LinphoneDictionary is filled with relevant informations, returned by
+ * linphone_alert_get_informations(). The keys available are documented per-type in #LinphoneAlertType enum.
  * @ingroup alert
  */
 typedef struct _LinphoneAlert LinphoneAlert;
@@ -681,14 +683,14 @@ typedef enum _LinphoneAlertTypes {
 	 */
 	LinphoneAlertQoSVideoStalled,
 	/** A received media stream suffers from high loss or late rate. Information provided is:
-	- float loss_rate
-	- float late_rate
-	- string media_type {audio, video, text}
+	 * - loss-rate (float)
+	 * - late-rate (float)
+	 * - media-type (string) with values {audio, video, text}
 	 *  @note Use the key "loss_rate_interval" in the section "alerts::network" to set or get the interval at which
 	the problem is checked in a #LinphoneConfig.
 	*/
 	LinphoneAlertQoSHighLossLateRate,
-	/** A report of high loss rate is received from remote party. Information provided: float loss_rate.
+	/** A report of high loss rate is received from remote party. Information provided: loss-rate (float).
 	 *  @note Use the key "remote_loss_rate_interval" in the section "alerts::network" to set or get the interval at
 	 * which the problem is checked in a #LinphoneConfig.
 	 */
@@ -698,33 +700,38 @@ typedef enum _LinphoneAlertTypes {
 	 * the problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSBurstOccured,
-	/** Loss rate is significant but retransmissions fail to arrive on time
+	/** Loss rate is significant but retransmissions fail to arrive on time.
+	 * Information provided: nack-performance (float) the fraction of lost packets recovered thanks to nack-triggered
+	 * retransmissions.
 	 *  @note Use the key "nack_check_interval" in the section "alerts::network" to set or get the interval at which the
 	 * problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSRetransmissionFailures,
-	/** Low bandwidth detected. Information provided: float bandwidth; in kbit/s.
+	/** Low bandwidth detected. Information provided: bandwidth (float) in kbit/s.
 	 *  @note Use the key "download_bandwidth_interval" in the section "alerts::video" to set or get the interval at
 	 * which the problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSLowDownloadBandwidthEstimation,
-	/** Low quality (bitrate) video received. Information provided: float bitrate in kbit/s, int width, int height
+	/** Low quality (bitrate) video received. Information provided: bitrate (float) in kbit/s, width (integer), int
+	 * height (integer).
 	 *  @note Use the key "low_quality_received_interval" in the section "alerts::video" to set or get the interval at
 	 * which the problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSLowQualityReceivedVideo,
-	/** Low quality video is being sent. Information provided: float bitrate in kbit/s, int width, int height
-	 *  @note Use the key "quality_sent_interval" in the section "alerts::camera" to set or get the interval at which
+	/** Low quality video is being sent. Information provided: bitrate (float)in kbit/s, width (integer), height
+	 * (integer).
+	 * @note Use the key "quality_sent_interval" in the section "alerts::camera" to set or get the interval at which
 	 * the problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSLowQualitySentVideo,
 	/** The operating system reports a low radio signal (wifi or mobile)
-	 *  @note Use the key "low_signal_interval" in the section "alerts::network" to set or get the interval at which the
+	 * @note Use the key "low_signal_interval" in the section "alerts::network" to set or get the interval at which the
 	 * problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSLowSignal,
-	/** The operating system reports a loss of radio signal (wifi or mobile)
-	 *  @note Use the key "lost_signal_interval" in the section "alerts::network" to set or get the interval at which
+	/** The operating system reports a loss of radio signal (wifi or mobile).
+	 * Information provided: rssi-value (float), signal-type (string) with values {"wifi", "mobile", "other"}.
+	 * @note Use the key "lost_signal_interval" in the section "alerts::network" to set or get the interval at which
 	 * the problem is checked in a #LinphoneConfig.
 	 */
 	LinphoneAlertQoSLostSignal

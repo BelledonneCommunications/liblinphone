@@ -61,4 +61,17 @@ void SignalInformation::setDetails(const std::string &details) {
 std::string SignalInformation::getDetails() {
 	return mDetails;
 }
+
+const char *SignalInformation::signalTypeToString(LinphoneSignalType type) {
+	switch (type) {
+		case LinphoneSignalTypeWifi:
+			return "wifi";
+		case LinphoneSignalTypeMobile:
+			return "mobile";
+		case LinphoneSignalTypeOther:
+			return "other";
+	}
+	return "invalid";
+}
+
 LINPHONE_END_NAMESPACE

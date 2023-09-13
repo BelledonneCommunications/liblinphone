@@ -46,6 +46,8 @@ public:
 	void setDetails(const std::string &details);
 	std::string getDetails();
 
+	static const char *signalTypeToString(LinphoneSignalType type);
+
 private:
 	LinphoneSignalType mType;
 	LinphoneSignalStrengthUnit mUnit;

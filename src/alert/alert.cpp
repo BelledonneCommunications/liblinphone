@@ -278,9 +278,9 @@ void NetworkQualityAlertMonitor::checkLocalLossRate(float lossRate, float lateRa
 
 	handleAlert(LinphoneAlertQoSHighLossLateRate, condition, [lossRate, lateRate, streamType]() {
 		auto properties = (new Dictionary())->toSharedPtr();
-		properties->setProperty("loss rate", lossRate);
-		properties->setProperty("late rate", lateRate);
-		properties->setProperty("media type", streamType);
+		properties->setProperty("loss-rate", lossRate);
+		properties->setProperty("late-rate", lateRate);
+		properties->setProperty("media-type", streamType);
 		return properties;
 	});
 }
@@ -290,7 +290,7 @@ void NetworkQualityAlertMonitor::checkRemoteLossRate(float receivedLossRate) {
 
 	handleAlert(LinphoneAlertQoSHighRemoteLossRate, condition, [receivedLossRate]() {
 		auto properties = (new Dictionary())->toSharedPtr();
-		properties->setProperty("loss rate", receivedLossRate);
+		properties->setProperty("loss-rate", receivedLossRate);
 		return properties;
 	});
 }
@@ -328,7 +328,7 @@ void NetworkQualityAlertMonitor::checkNackQuality(RtpSession *session) {
 		mLastTotalLoss = currentTotalLoss;
 		handleAlert(LinphoneAlertQoSRetransmissionFailures, mNackIndicator <= mNackPerformanceThreshold, [this]() {
 			auto properties = (new Dictionary())->toSharedPtr();
-			properties->setProperty("nack indicator", mNackIndicator);
+			properties->setProperty("nack-performance", mNackIndicator);
 			return properties;
 		});
 	}
@@ -343,9 +343,10 @@ void NetworkQualityAlertMonitor::checkSignalQuality() {
 		value = information->getStrength();
 		condition = (value <= mSignalThreshold);
 	}
-	handleAlert(LinphoneAlertQoSLowSignal, condition, [value]() {
+	handleAlert(LinphoneAlertQoSLowSignal, condition, [value, information]() {
 		auto properties = (new Dictionary())->toSharedPtr();
-		properties->setProperty("Rssi value", value);
+		properties->setProperty("rssi-value", value);
+		properties->setProperty("network-type", SignalInformation::signalTypeToString(information->getSignalType()));
 		return properties;
 	});
 }
