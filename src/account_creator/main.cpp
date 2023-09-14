@@ -127,7 +127,7 @@ LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(Linph
 		return LinphoneAccountCreatorUsernameStatusInvalid;
 	} else if (regex && !bctbx_is_matching_regex(username, regex)) {
 		return LinphoneAccountCreatorUsernameStatusInvalidCharacters;
-	} else if (validate_uri(username, NULL, NULL) != 0) {
+	} else if (validate_uri(creator->core, username, NULL, NULL) != 0) {
 		return LinphoneAccountCreatorUsernameStatusInvalid;
 	}
 
@@ -311,7 +311,7 @@ const char *linphone_account_creator_get_language(const LinphoneAccountCreator *
 
 LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_display_name(LinphoneAccountCreator *creator,
                                                                                const char *display_name) {
-	if (validate_uri(NULL, display_name, NULL) != 0) {
+	if (validate_uri(creator->core, NULL, display_name, NULL) != 0) {
 		return LinphoneAccountCreatorUsernameStatusInvalid;
 	}
 	set_string(&creator->display_name, display_name, FALSE);
@@ -340,7 +340,7 @@ const char *linphone_account_creator_get_email(const LinphoneAccountCreator *cre
 
 LinphoneAccountCreatorDomainStatus linphone_account_creator_set_domain(LinphoneAccountCreator *creator,
                                                                        const char *domain) {
-	if (domain && validate_uri(NULL, domain, NULL) != 0) {
+	if (domain && validate_uri(creator->core, NULL, domain, NULL) != 0) {
 		return LinphoneAccountCreatorDomainInvalid;
 	}
 

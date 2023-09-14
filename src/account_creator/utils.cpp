@@ -37,10 +37,10 @@ const char *_get_domain(LinphoneAccountCreator *creator) {
 	return NULL;
 }
 
-unsigned int validate_uri(const char *username, const char *domain, const char *display_name) {
+unsigned int validate_uri(LinphoneCore *lc, const char *username, const char *domain, const char *display_name) {
 	LinphoneAddress *addr;
 	unsigned int status = 0;
-	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(NULL);
+	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(lc);
 	addr = linphone_address_new("sip:?@domain.com");
 	linphone_proxy_config_set_identity_address(proxy, addr);
 	if (addr) linphone_address_unref(addr);
