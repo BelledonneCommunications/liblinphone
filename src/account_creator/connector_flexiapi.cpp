@@ -234,13 +234,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_fle
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_flexiapi(LinphoneAccountCreator *creator) {
+	fill_domain_and_algorithm_if_needed(creator);
 	if (!creator->username || !creator->domain) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments,
 		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
-
-	fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
