@@ -288,7 +288,7 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 	if (!currentFileContentToTransfer->getFilePath().empty()) {
 		belle_sip_user_body_handler_t *body_handler = (belle_sip_user_body_handler_t *)first_part_bh;
 		// No need to add again the callback for progression, otherwise it will be called twice
-		first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(currentFileContentToTransfer->getFilePathSys().c_str(), nullptr, this, BELLE_SIP_BODY_HANDLER_SEND);
+		first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(currentFileContentToTransfer->getFilePathSys().c_str(), nullptr, this, BELLE_SIP_DIRECTION_SEND);
 		belle_sip_file_body_handler_set_user_body_handler((belle_sip_file_body_handler_t *)first_part_bh, body_handler);
 		// Ensure the file size has been set to the correct value
 		currentFileTransferContent->setFileSize(belle_sip_file_body_handler_get_file_size((belle_sip_file_body_handler_t *)first_part_bh));
@@ -823,7 +823,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 				nullptr, _chat_message_on_recv_body,
 				nullptr, _chat_message_on_recv_end, this);
 
-			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(currentFileContentToTransfer->getFilePathSys().c_str(), 16, _chat_message_file_transfer_on_progress, this, BELLE_SIP_BODY_HANDLER_RECV);
+			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(currentFileContentToTransfer->getFilePathSys().c_str(), 16, _chat_message_file_transfer_on_progress, this, BELLE_SIP_DIRECTION_RECV);
 			if (belle_sip_body_handler_get_size((belle_sip_body_handler_t *)body_handler) == 0) {
 				// If the size of the body has not been initialized from the file stat, use the one from the
 				// file_transfer_information.
