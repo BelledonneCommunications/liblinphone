@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 24);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 25);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2435,6 +2435,39 @@ void MainDbPrivate::updateSchema() {
 		                ") " +
 		                charset;
 		*session << "INSERT INTO conference_info_participant SELECT * FROM conference_info_participant_clone";
+	}
+
+	if (version < makeVersion(1, 0, 25)) {
+		*session << "CREATE TABLE chat_room_participant_device_clone AS SELECT * FROM chat_room_participant_device";
+		*session << "DROP TABLE chat_room_participant_device";
+
+		*session << "CREATE TABLE IF NOT EXISTS chat_room_participant_device ("
+		            "  chat_room_participant_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                ","
+		                "  participant_device_sip_address_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                ","
+
+		                " state TINYINT UNSIGNED DEFAULT 0,"
+		                " name VARCHAR(255),"
+		                " joining_method TINYINT UNSIGNED DEFAULT 0,"
+		                " joining_time" +
+		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() +
+		                ","
+
+		                "  PRIMARY KEY (chat_room_participant_id, participant_device_sip_address_id),"
+
+		                "  FOREIGN KEY (chat_room_participant_id)"
+		                "    REFERENCES chat_room_participant(id)"
+		                "    ON DELETE CASCADE,"
+		                "  FOREIGN KEY (participant_device_sip_address_id)"
+		                "    REFERENCES sip_address(id)"
+		                "    ON DELETE CASCADE"
+		                ") " +
+		                charset;
+
+		*session << "INSERT INTO chat_room_participant_device SELECT * FROM chat_room_participant_device_clone";
 	}
 
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable

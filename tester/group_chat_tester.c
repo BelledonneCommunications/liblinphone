@@ -911,6 +911,115 @@ static void group_chat_room_params(void) {
 	linphone_core_manager_destroy(chloe);
 }
 
+static void group_chat_room_creation_core_restart(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
+	int dummy = 0;
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	LinphoneAddress *confAddr = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, laure);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+
+	start_core_for_conference(coresManagerList);
+
+	participantsAddresses =
+	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	participantsAddresses =
+	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	stats initialLaureStats = laure->stat;
+
+	// Marie creates a new group chat room
+	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(marie->lc);
+	LinphoneAddress *marieAddr = linphone_address_new(linphone_proxy_config_get_identity(proxy));
+	const char *initialSubject = "Colleagues";
+
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie->lc);
+	linphone_chat_room_params_enable_encryption(params, FALSE);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+	linphone_chat_room_params_enable_group(params, TRUE);
+	LinphoneChatRoom *marieCr =
+	    linphone_core_create_chat_room_2(marie->lc, params, initialSubject, participantsAddresses);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	if (!marieCr) goto end;
+
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated,
+	                             initialMarieStats.number_of_LinphoneConferenceStateCreated + 1,
+	                             liblinphone_tester_sip_timeout));
+
+	const LinphoneAddress *localAddr = linphone_chat_room_get_local_address(marieCr);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(localAddr, marieAddr));
+
+	confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
+
+	// now with simulate foregound/backgroud switch to get a remote event handler list instead of a simple remote
+	// event handler
+	linphone_core_enter_background(marie->lc);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "conference_event_package_force_full_state",
+	                         TRUE);
+	wait_for_list(coresList, &dummy, 1, 1000);
+
+	// Restart Marie
+	char *uuid = NULL;
+	if (linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "uuid", NULL)) {
+		uuid = bctbx_strdup(linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "uuid", NULL));
+	}
+
+	initialMarieStats = marie->stat;
+	coresList = bctbx_list_remove(coresList, marie->lc);
+	linphone_core_manager_reinit(marie);
+	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
+	bctbx_list_free(init_core_for_conference(tmpCoresManagerList));
+	bctbx_list_free(tmpCoresManagerList);
+	// Make sure gruu is preserved
+	linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "uuid", uuid);
+	linphone_core_manager_start(marie, TRUE);
+	coresList = bctbx_list_append(coresList, marie->lc);
+
+	if (uuid) {
+		bctbx_free(uuid);
+	}
+
+	char *marieDeviceIdentity = linphone_core_get_device_identity(marie->lc);
+	LinphoneAddress *marieLocalAddr = linphone_address_new(marieDeviceIdentity);
+	bctbx_free(marieDeviceIdentity);
+	marieCr = linphone_core_search_chat_room(marie->lc, NULL, marieLocalAddr, confAddr, NULL);
+	linphone_address_unref(marieLocalAddr);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+
+	// Clean db from chat room
+	if (marieCr) {
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	}
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats,
+	                                                                   confAddr, initialSubject, 2, FALSE);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+	// Check that the chat room is correctly created on Laure's side and that the participants are added
+	LinphoneChatRoom *laureCr =
+	    check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
+	BC_ASSERT_PTR_NOT_NULL(laureCr);
+
+end:
+	if (marieAddr) linphone_address_unref(marieAddr);
+	if (confAddr) linphone_address_unref(confAddr);
+	linphone_chat_room_params_unref(params);
+
+	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+}
+
 static void group_chat_room_creation_with_given_identity(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dual_proxy_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -8868,6 +8977,7 @@ static void group_chat_room_message_sync_between_devices_with_same_identity(void
 
 test_t group_chat_tests[] = {
     TEST_NO_TAG("Chat room params", group_chat_room_params),
+    TEST_NO_TAG("Core restarts as soon as chat room is created", group_chat_room_creation_core_restart),
     TEST_NO_TAG("Chat room with forced local identity", group_chat_room_creation_with_given_identity),
     TEST_NO_TAG("Group chat room creation server", group_chat_room_creation_server),
     TEST_NO_TAG("Network down while creating group chat room", group_chat_room_creation_server_network_down),
