@@ -237,7 +237,8 @@ class {{interfaceName}}Manager
 {{#classes}}
 {{#_class}}
 
-{{#doc}}{{#lines}}/// {{{line}}}{{/lines}}{{/doc}}{{#detailedDoc}}{{#lines}}
+{{#doc}}{{#lines}}
+/// {{{line}}}{{/lines}}{{/doc}}{{#detailedDoc}}{{#lines}}
 /// {{{line}}}{{/lines}}{{/detailedDoc}}
 public class {{className}} : LinphoneObject
 {

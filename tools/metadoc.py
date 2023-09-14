@@ -621,7 +621,7 @@ class SwiftDocTranslator(Translator):
 		super().__init__('Swift')
 
 	def translate_class_reference(self, ref, **kargs):
-		return '`{0}`'.format(super().translate_reference(ref))
+		return '``{0}``'.format(super().translate_reference(ref))
 
 	def translate_function_reference(self, ref, **kargs):
 		return super().translate_reference(ref) + '()'

@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (c) 2010-2022 Belledonne Communications SARL.
+# Copyright (c) 2010-2023 Belledonne Communications SARL.
 #
 ############################################################################
 #
@@ -48,42 +48,34 @@ add_custom_command(OUTPUT LinphoneWrapper.swift
 
 # When ENABLE_SWIFT_WRAPPER=YES and ENABLE_SWIFT_WRAPPER_COMPILATION=NO, we use the swift file directly, which is recommended.
 # Because there is a compatibility problem with Swift Version when installing the framework in the application.
-# However, we need the framework to generate documentation by jazzy but not zip it into linphone-sdk (See cmake/IOS/Lipo.cmake).
-if (NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
+# However, we need the framework to generate documentation but not zip it into linphone-sdk.
+if(NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
 	add_custom_target(linphoneswsource ALL DEPENDS LinphoneWrapper.swift)
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift"
-		DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonesw/")
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonesw/"
+	)
 endif()
 
-if (ENABLE_JAZZY_DOC)
-	# Remove everything after the last point in LINPHONE_VERSION (4.5.0 --> 4.5) to create STRIPPED_LINPHONE_VERSION
-	string(REGEX REPLACE "\\.[^.]*$" "" STRIPPED_LINPHONE_VERSION ${LINPHONE_VERSION})
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.cmake ${CMAKE_CURRENT_BINARY_DIR}/README)
-endif()
-
-if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
+if(ENABLE_SWIFT_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 	set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
 	enable_language(Swift)
 
-	add_library(linphonesw SHARED
-		${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift
-	)
-
+	add_library(linphonesw SHARED ${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift)
 	target_link_libraries(linphonesw PRIVATE ${BCToolbox_TARGET} ${BelleSIP_TARGET} liblinphone)
 
-	if (NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
-	# LinphoneWrapper.swift is attached to multiple targets: linphonesw linphoneswsource
-	# but none of these is a common dependency of the other(s).  This is not
-	# allowed by the Xcode "new build system".
+	if(NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
+		# LinphoneWrapper.swift is attached to multiple targets: linphonesw linphoneswsource
+		# but none of these is a common dependency of the other(s).  This is not
+		# allowed by the Xcode "new build system".
 		add_dependencies(linphonesw linphoneswsource)
 	endif()
 	if(CMAKE_GENERATOR STREQUAL Xcode)
 		set_target_properties(linphonesw PROPERTIES
-					FRAMEWORK TRUE
-					LINKER_LANGUAGE SWIFT
-					MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonesw
-					MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
-					)
+			FRAMEWORK TRUE
+			LINKER_LANGUAGE SWIFT
+			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonesw
+			MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
+		)
 
 		install(TARGETS linphonesw EXPORT ${PROJECT_NAME}Targets
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -91,7 +83,7 @@ if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			FRAMEWORK DESTINATION Frameworks
 			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-			)
+		)
 	else()
 		add_custom_command(OUTPUT linphonesw.framework
 			COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw"
@@ -106,10 +98,11 @@ if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 			DEPENDS linphonesw.framework
 		)
 
-		#Add -target and -sdk options to switfc command line otherwise you'll get obscure errors.
+		# Add -target and -sdk options to switfc command line otherwise you'll get obscure errors.
 		target_compile_options(linphonesw PRIVATE -emit-objc-header -target ${CMAKE_OSX_ARCHITECTURES}-apple-ios10 -sdk ${CMAKE_OSX_SYSROOT})
 
-		install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/linphonesw.framework DESTINATION Frameworks
+		install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/linphonesw.framework
+			DESTINATION Frameworks
 			USE_SOURCE_PERMISSIONS
 		)
 	endif()

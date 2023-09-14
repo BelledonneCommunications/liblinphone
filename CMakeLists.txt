@@ -48,7 +48,7 @@ option(ENABLE_FLEXIAPI "Enable the FlexiAPI support for Liblinphone." YES)
 option(ENABLE_SWIFT_WRAPPER "Build the swift wrapper sources for Liblinphone." OFF)
 option(ENABLE_SWIFT_WRAPPER_COMPILATION "Compile and package the swift wrapper framework from the built sources." OFF)
 mark_as_advanced(ENABLE_SWIFT_WRAPPER_COMPILATION) # To depreciate the option
-option(ENABLE_JAZZY_DOC "Build the jazzy doc for swift module of Liblinphone." OFF)
+option(ENABLE_SWIFT_DOC "Build the doc for swift module of Liblinphone." OFF)
 option(ENABLE_DAEMON "Enable the linphone daemon interface." YES)
 option(ENABLE_DATE "Use build date in internal version number." NO)
 option(ENABLE_DEBUG_LOGS "Turn on or off debug level logs." NO)
