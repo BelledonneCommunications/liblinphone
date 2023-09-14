@@ -445,8 +445,7 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 }
 
 void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
-	L_ASSERT(chatRoom->getState() == ConferenceInterface::State::Created);
-	if (mainDb->isInitialized()) mainDb->insertChatRoom(chatRoom, notifyId);
+	if (mainDb->isInitialized() && (chatRoom->getState() == ConferenceInterface::State::Created)) mainDb->insertChatRoom(chatRoom, notifyId);
 }
 
 void CorePrivate::loadChatRooms () {
