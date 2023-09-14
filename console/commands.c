@@ -1548,13 +1548,12 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 }
 
 static void linphonec_proxy_display(LinphoneProxyConfig *cfg) {
-	char *route = linphone_proxy_config_get_route(cfg);
+	const char *route = linphone_proxy_config_get_route(cfg);
 	char *identity = linphone_address_as_string(linphone_proxy_config_get_identity_address(cfg));
 	linphonec_out("sip address: %s\nroute: %s\nidentity: %s\nregister: %s\nexpires: %i\nregistered: %s\n",
 	              linphone_proxy_config_get_addr(cfg), (route != NULL) ? route : "", (identity != NULL) ? identity : "",
 	              linphone_proxy_config_register_enabled(cfg) ? "yes" : "no", linphone_proxy_config_get_expires(cfg),
 	              linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk ? "yes" : "no");
-	bctbx_free(route);
 	ms_free(identity);
 }
 
