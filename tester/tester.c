@@ -198,6 +198,7 @@ static void auth_info_requested(LinphoneCore *lc, const char *realm, const char 
 
 void reset_counters( stats* counters) {
 	if (counters->last_received_chat_message) linphone_chat_message_unref(counters->last_received_chat_message);
+	if (counters->last_fail_to_decrypt_received_chat_message) linphone_chat_message_unref(counters->last_fail_to_decrypt_received_chat_message);
 	if (counters->last_received_info_message) linphone_info_message_unref(counters->last_received_info_message);
 	if (counters->dtmf_list_received) bctbx_free(counters->dtmf_list_received);
 
@@ -2045,6 +2046,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_call_created(mgr->cbs, call_created);
 	linphone_core_cbs_set_call_state_changed(mgr->cbs, call_state_changed);
 	linphone_core_cbs_set_message_received(mgr->cbs, message_received);
+	linphone_core_cbs_set_message_received_unable_decrypt(mgr->cbs, message_received_fail_to_decrypt);
 	linphone_core_cbs_set_messages_received(mgr->cbs, messages_received);
 	linphone_core_cbs_set_is_composing_received(mgr->cbs, is_composing_received);
 	linphone_core_cbs_set_new_subscription_requested(mgr->cbs, new_subscription_requested);
@@ -2689,6 +2691,21 @@ void message_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), Li
 	if (linphone_config_get_bool(linphone_core_get_config(lc), "net", "bad_net", 0)) {
 		sal_set_send_error(linphone_core_get_sal(lc), 1500);
 	}
+}
+
+void message_received_fail_to_decrypt(LinphoneCore *lc,
+                                      BCTBX_UNUSED(LinphoneChatRoom *room),
+                                      LinphoneChatMessage *msg) {
+	char *from = linphone_address_as_string(linphone_chat_message_get_from_address(msg));
+	stats *counters;
+	ms_message("Failed to decrypt message from [%s]", from ? from : "");
+	ms_free(from);
+	counters = get_stats(lc);
+	counters->number_of_LinphoneMessageReceivedFailedToDecrypt++;
+	if (counters->last_fail_to_decrypt_received_chat_message) {
+		linphone_chat_message_unref(counters->last_fail_to_decrypt_received_chat_message);
+	}
+	counters->last_fail_to_decrypt_received_chat_message = linphone_chat_message_ref(msg);
 }
 
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room) {

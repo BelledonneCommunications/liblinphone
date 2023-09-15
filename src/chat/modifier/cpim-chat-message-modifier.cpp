@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,9 +26,10 @@
 #include "address/address.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/cpim/cpim.h"
-#include "content/content.h"
 #include "content/content-disposition.h"
+#include "content/content-manager.h"
 #include "content/content-type.h"
+#include "content/content.h"
 #include "logger/logger.h"
 
 #include "cpim-chat-message-modifier.h"
@@ -52,23 +53,19 @@ const string imdnMessageIdHeader = "Message-ID";
 const string imdnForwardInfoHeader = "Forward-Info";
 const string imdnDispositionNotificationHeader = "Disposition-Notification";
 
-ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, BCTBX_UNUSED(int &errorCode)) {
+ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<ChatMessage> &message,
+															BCTBX_UNUSED(int &errorCode)) {
 	Cpim::Message cpimMessage;
 
-	cpimMessage.addMessageHeader(
-		Cpim::FromHeader(cpimAddressUri(message->getFromAddress().asAddress()), cpimAddressDisplayName(message->getFromAddress().asAddress()))
-	);
-	cpimMessage.addMessageHeader(
-		Cpim::ToHeader(cpimAddressUri(message->getToAddress().asAddress()), cpimAddressDisplayName(message->getToAddress().asAddress()))
-	);
-	cpimMessage.addMessageHeader(
-		Cpim::DateTimeHeader(message->getTime())
-	);
+	cpimMessage.addMessageHeader(Cpim::FromHeader(cpimAddressUri(message->getFromAddress().asAddress()),
+												  cpimAddressDisplayName(message->getFromAddress().asAddress())));
+	cpimMessage.addMessageHeader(Cpim::ToHeader(cpimAddressUri(message->getToAddress().asAddress()),
+												cpimAddressDisplayName(message->getToAddress().asAddress())));
+	cpimMessage.addMessageHeader(Cpim::DateTimeHeader(message->getTime()));
 
-	if (message->getPrivate()->getPositiveDeliveryNotificationRequired()
-		|| message->getPrivate()->getNegativeDeliveryNotificationRequired()
-		|| message->getPrivate()->getDisplayNotificationRequired()
-	) {
+	if (message->getPrivate()->getPositiveDeliveryNotificationRequired() ||
+		message->getPrivate()->getNegativeDeliveryNotificationRequired() ||
+		message->getPrivate()->getDisplayNotificationRequired()) {
 		if (message->isEphemeral()) {
 			long time = message->getEphemeralLifetime();
 			const string &buf = Utils::toString(time);
@@ -82,21 +79,15 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		if (previousToken.empty()) {
 			char token[13];
 			belle_sip_random_token(token, sizeof(token));
-			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, token)
-			);
+			cpimMessage.addMessageHeader(Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, token));
 			message->getPrivate()->setImdnMessageId(token);
 		} else {
-			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, previousToken)
-			);
+			cpimMessage.addMessageHeader(Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, previousToken));
 		}
-		
+
 		const string &forwardInfo = message->getForwardInfo();
 		if (!forwardInfo.empty()) {
-			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader(imdnNamespace + "." + imdnForwardInfoHeader, forwardInfo)
-			);
+			cpimMessage.addMessageHeader(Cpim::GenericHeader(imdnNamespace + "." + imdnForwardInfoHeader, forwardInfo));
 		}
 
 		const string &replyToMessageId = message->getReplyToMessageId();
@@ -105,13 +96,11 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 				cpimMessage.addMessageHeader(Cpim::NsHeader(linphoneNamespaceTag, linphoneNamespace));
 			}
 			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageIdHeader, replyToMessageId)
-			);
-			const IdentityAddress& senderAddress = message->getReplyToSenderAddress();
+				Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageIdHeader, replyToMessageId));
+			const IdentityAddress &senderAddress = message->getReplyToSenderAddress();
 			string address = senderAddress.asString();
 			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageSenderHeader, address)
-			);
+				Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageSenderHeader, address));
 		}
 
 		vector<string> dispositionNotificationValues;
@@ -121,12 +110,8 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 			dispositionNotificationValues.emplace_back("negative-delivery");
 		if (message->getPrivate()->getDisplayNotificationRequired())
 			dispositionNotificationValues.emplace_back("display");
-		cpimMessage.addMessageHeader(
-			Cpim::GenericHeader(
-				imdnNamespace + "." + imdnDispositionNotificationHeader,
-				Utils::join(dispositionNotificationValues, ", ")
-			)
-		);
+		cpimMessage.addMessageHeader(Cpim::GenericHeader(imdnNamespace + "." + imdnDispositionNotificationHeader,
+														 Utils::join(dispositionNotificationValues, ", ")));
 	}
 
 	const Content *content;
@@ -143,15 +128,10 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 	const string contentBody = content->getBodyAsUtf8String();
 	if (content->getContentDisposition().isValid()) {
 		cpimMessage.addContentHeader(
-			Cpim::GenericHeader("Content-Disposition", content->getContentDisposition().asString())
-		);
+			Cpim::GenericHeader("Content-Disposition", content->getContentDisposition().asString()));
 	}
-	cpimMessage.addContentHeader(
-		Cpim::GenericHeader("Content-Type", content->getContentType().getMediaType())
-	);
-	cpimMessage.addContentHeader(
-		Cpim::GenericHeader("Content-Length", Utils::toString(contentBody.size()))
-	);
+	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Type", content->getContentType().getMediaType()));
+	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Length", Utils::toString(contentBody.size())));
 	cpimMessage.setContent(contentBody);
 
 	Content newContent;
@@ -162,7 +142,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 	return ChatMessageModifier::Result::Done;
 }
 
-ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, int &errorCode) {
+ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<ChatMessage> &message, int &errorCode) {
 	const Content *content = nullptr;
 	if (!message->getInternalContent().isEmpty())
 		content = &(message->getInternalContent());
@@ -229,15 +209,18 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	if (dateTimeHeader)
 		message->getPrivate()->setTime(dateTimeHeader->getTime());
 
-	auto messageIdHeader = cpimMessage->getMessageHeader(imdnMessageIdHeader); // TODO: For compatibility when imdn namespace wasn't set, to remove
+	auto messageIdHeader = cpimMessage->getMessageHeader(
+		imdnMessageIdHeader); // TODO: For compatibility when imdn namespace wasn't set, to remove
 	if (!imdnNsName.empty()) {
 		if (!messageIdHeader)
 			messageIdHeader = cpimMessage->getMessageHeader(imdnMessageIdHeader, imdnNsName);
-		auto dispositionNotificationHeader = cpimMessage->getMessageHeader(imdnDispositionNotificationHeader, imdnNsName);
+		auto dispositionNotificationHeader =
+			cpimMessage->getMessageHeader(imdnDispositionNotificationHeader, imdnNsName);
 		if (dispositionNotificationHeader) {
 			vector<string> values = bctoolbox::Utils::split(dispositionNotificationHeader->getValue(), ", ");
 			for (const auto &value : values) {
-				string trimmedValue = Utils::trim(value); // Might be better to have a Disposition-Notification parser from the CPIM parser
+				string trimmedValue = Utils::trim(
+					value); // Might be better to have a Disposition-Notification parser from the CPIM parser
 				if (trimmedValue == "positive-delivery")
 					message->getPrivate()->setPositiveDeliveryNotificationRequired(true);
 				else if (trimmedValue == "negative-delivery")
@@ -264,7 +247,8 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 		auto replyToMessageIdHeader = cpimMessage->getMessageHeader(linphoneReplyingToMessageIdHeader, linphoneNsName);
 		auto replyToSenderHeader = cpimMessage->getMessageHeader(linphoneReplyingToMessageSenderHeader, linphoneNsName);
 		if (replyToMessageIdHeader && replyToSenderHeader) {
-			message->getPrivate()->setReplyToMessageIdAndSenderAddress(replyToMessageIdHeader->getValue(), IdentityAddress(replyToSenderHeader->getValue()));
+			message->getPrivate()->setReplyToMessageIdAndSenderAddress(
+				replyToMessageIdHeader->getValue(), IdentityAddress(replyToSenderHeader->getValue()));
 		}
 	}
 
@@ -290,22 +274,24 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	return ChatMessageModifier::Result::Done;
 }
 
-string CpimChatMessageModifier::cpimAddressDisplayName (const Address &addr) const {
+string CpimChatMessageModifier::cpimAddressDisplayName(const Address &addr) const {
 	return addr.getDisplayName();
 }
 
-string CpimChatMessageModifier::cpimAddressUri (const Address &addr) const {
+string CpimChatMessageModifier::cpimAddressUri(const Address &addr) const {
 	return addr.asStringUriOnly();
 }
 
-Content* CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
+Content *CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 
 	Cpim::Message cpimMessage;
-	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress().asAddress())));
+	cpimMessage.addMessageHeader(
+		Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress().asAddress())));
 	cpimMessage.addMessageHeader(Cpim::NsHeader(imdnNamespaceUrn, imdnNamespace));
-	cpimMessage.addMessageHeader(Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, message->getImdnMessageId()));
+	cpimMessage.addMessageHeader(
+		Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, message->getImdnMessageId()));
 	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Type", ContentType::PlainText.getMediaType()));
 
 	Content *cpimContent = new Content();
@@ -315,12 +301,34 @@ Content* CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const s
 	return cpimContent;
 }
 
-std::string CpimChatMessageModifier::parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message, const Content& content) const {
-	if (content.getContentType() != ContentType::Cpim) {
-		lError() << "[CPIM] Content is not CPIM but " << content.getContentType();
-		return "";
-	}
+std::shared_ptr<LinphonePrivate::Address>
+CpimChatMessageModifier::parseFromHeaderCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message) const {
+	const Content *content = nullptr;
+	if (!message->getInternalContent().isEmpty())
+		content = &(message->getInternalContent());
+	else if (message->getContents().size() > 0)
+		content = message->getContents().front();
 
+	if (content == nullptr) {
+		return nullptr;
+	}
+	list<Content> contentList = ContentManager::multipartToContentList(*content);
+
+	for (const auto &content : contentList) {
+		if (content.getContentType() != ContentType::Cpim)
+			continue;
+		const string contentBody = content.getBodyAsString();
+		const shared_ptr<const Cpim::Message> cpimMessage = Cpim::Message::createFromString(contentBody);
+		if (cpimMessage && cpimMessage->getMessageHeader("From")) {
+			return std::make_shared<Address>(
+				static_pointer_cast<const Cpim::FromHeader>(cpimMessage->getMessageHeader("From"))->getValue());
+		}
+	}
+	return nullptr;
+}
+
+std::string CpimChatMessageModifier::parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message,
+																		  const Content &content) const {
 	const string contentBody = content.getBodyAsString();
 	const shared_ptr<const Cpim::Message> cpimMessage = Cpim::Message::createFromString(contentBody);
 	if (!cpimMessage || !cpimMessage->getMessageHeader("From")) {

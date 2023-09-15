@@ -411,6 +411,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 			IdentityAddress tmpIdentityAddress(senderDeviceId);
 			senderDeviceId = tmpIdentityAddress.asString();
 			cpimFound = true;
+			break;
 		}
 	}
 
