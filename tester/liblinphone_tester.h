@@ -324,6 +324,7 @@ typedef struct _stats {
 
 	int number_of_LinphoneMessageReceived;
 	int number_of_LinphoneMessageReceivedWithFile;
+	int number_of_LinphoneMessageReceivedFailedToDecrypt;
 	int number_of_LinphoneAggregatedMessagesReceived;
 	int number_of_LinphoneMessageExtBodyReceived;
 	int number_of_LinphoneMessageInProgress;
@@ -433,6 +434,7 @@ typedef struct _stats {
 	int number_of_NetworkReachableFalse;
 	int number_of_player_eof;
 	LinphoneChatMessage *last_received_chat_message;
+	LinphoneChatMessage *last_fail_to_decrypt_received_chat_message;
 
 	char *dtmf_list_received;
 	int dtmf_count;
@@ -636,6 +638,7 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc,
                                              const LinphonePresenceModel *presence);
 void messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages);
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+void message_received_fail_to_decrypt(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void reaction_received(LinphoneCore *lc,
                        LinphoneChatRoom *room,
                        LinphoneChatMessage *msg,
@@ -1038,7 +1041,7 @@ LinphoneAccountCreatorStats *new_linphone_account_creator_stats(void);
 void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs);
 void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 
-void lime_delete_DRSessions(const char *limedb);
+void lime_delete_DRSessions(const char *limedb, const char *requestOption);
 void lime_setback_usersUpdateTs(const char *limedb, int days);
 uint64_t lime_get_userUpdateTs(const char *limedb);
 char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu);

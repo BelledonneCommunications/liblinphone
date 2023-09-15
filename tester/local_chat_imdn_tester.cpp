@@ -775,7 +775,7 @@ static void group_chat_room_lime_session_corrupted(void) {
 
 			// Corrupt Pauline sessions in lime database: WARNING: if SOCI is not found, this call does nothing and the
 			// test fails
-			lime_delete_DRSessions(pauline.getCMgr()->lime_database_path);
+			lime_delete_DRSessions(pauline.getCMgr()->lime_database_path, NULL);
 			// Trick to force the reloading of the lime engine so the session in cache is cleared
 			linphone_core_enable_lime_x3dh(pauline.getLc(), FALSE);
 			linphone_core_enable_lime_x3dh(pauline.getLc(), TRUE);

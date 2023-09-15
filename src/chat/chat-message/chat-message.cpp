@@ -782,6 +782,13 @@ LinphoneReason ChatMessagePrivate::receive() {
 		ChatMessageModifier::Result result = ecmm.decode(q->getSharedFromThis(), errorCode);
 		if (result == ChatMessageModifier::Result::Error) {
 			/* Unable to decrypt message */
+#ifdef HAVE_ADVANCED_IM
+			CpimChatMessageModifier ccmm;
+			auto from = ccmm.parseFromHeaderCpimContentInLimeMessage(q->getSharedFromThis());
+			if (from != nullptr) {
+				q->getPrivate()->forceFromAddress(from);
+			}
+#endif
 			chatRoom->getPrivate()->notifyUndecryptableChatMessageReceived(q->getSharedFromThis());
 			reason = linphone_error_code_to_reason(errorCode);
 			if (!chatRoom) return reason;

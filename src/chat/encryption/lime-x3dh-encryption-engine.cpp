@@ -479,6 +479,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 			const Address tmpIdentityAddress(senderDeviceId);
 			senderDeviceId = tmpIdentityAddress.asStringUriOnly();
 			cpimFound = true;
+			break;
 		}
 	}
 

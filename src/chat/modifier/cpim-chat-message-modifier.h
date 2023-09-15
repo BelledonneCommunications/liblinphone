@@ -36,6 +36,8 @@ public:
 	Content *createMinimalCpimContentForLimeMessage(const std::shared_ptr<ChatMessage> &message) const;
 	std::string parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message,
 	                                                 const Content &cpimContent) const;
+	std::shared_ptr<LinphonePrivate::Address>
+	parseFromHeaderCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message) const;
 
 private:
 	std::string cpimAddressDisplayName(const std::shared_ptr<Address> &addr) const;

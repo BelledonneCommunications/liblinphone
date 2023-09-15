@@ -5230,7 +5230,6 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(laureLastMsg)));
-	linphone_address_unref(marieAddr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser,
 	                             initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 1,
 	                             10000)); // make sure the IMDN is back to marie
@@ -5244,7 +5243,10 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint
 	coresList = bctbx_list_remove(coresList, pauline->lc);
 	// Corrupt Pauline sessions in lime database: WARNING: if SOCI is not found, this call does nothing and the test
 	// fails
-	lime_delete_DRSessions(pauline->lime_database_path);
+	lime_delete_DRSessions(
+	    pauline->lime_database_path,
+	    " WHERE Did = (SELECT Did FROM lime_PeerDevices WHERE DeviceId LIKE 'sip:marie%')"); // Delete only the session
+	                                                                                         // linked to Marie
 	linphone_core_manager_reinit(pauline);
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
 	set_lime_server_and_curve_list(curveId, tmpCoresManagerList);
@@ -5279,7 +5281,9 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived,
 	                             initialLaureStats.number_of_LinphoneMessageReceived + 1,
 	                             10000)); // the message is correctly received by Laure
-
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceivedFailedToDecrypt,
+	                             initialLaureStats.number_of_LinphoneMessageReceivedFailedToDecrypt + 1,
+	                             10000));        // Pauline fails to decrypt
 	if (paulineImdnPolicy == NO_DELIVERY_IMDN) { // Pauline shall not send any IMDN, wait 5 seconds to be sure
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,
 		                              initialMarieStats.number_of_LinphoneMessageNotDelivered + 1,
@@ -5292,12 +5296,16 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	linphone_chat_message_unref(marieMessage);
+
+	/* pauline failed to decrypt the message, but we should have it stored */
+	paulineLastMsg = pauline->stat.last_fail_to_decrypt_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg)) goto end;
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+
 	laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg)) goto end;
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieTextMessage2);
-	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(laureLastMsg)));
-	linphone_address_unref(marieAddr);
 
 	// Try again, it shall work this time (unless Pauline's policy is to no deliver any IMDN)
 	const char *marieTextMessage3 = "Hello again";
@@ -5310,7 +5318,6 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint
 	                             initialMarieStats.number_of_LinphoneMessageDelivered + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived,
 	                             initialLaureStats.number_of_LinphoneMessageReceived + 1, 10000));
-	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	if (paulineImdnPolicy == NO_DELIVERY_IMDN) { // Pauline setting is to deliver no imdn -> lime recovery cannot work
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,
 		                              initialMarieStats.number_of_LinphoneMessageNotDelivered + 1,

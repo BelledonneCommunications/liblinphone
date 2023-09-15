@@ -28,6 +28,7 @@
 #include "chat/chat-room/chat-room.h"
 #include "chat/cpim/cpim.h"
 #include "content/content-disposition.h"
+#include "content/content-manager.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "logger/logger.h"
@@ -316,13 +317,30 @@ Content *CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const s
 	return cpimContent;
 }
 
+std::shared_ptr<LinphonePrivate::Address>
+CpimChatMessageModifier::parseFromHeaderCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message) const {
+	const Content *content = nullptr;
+	if (!message->getInternalContent().isEmpty()) content = &(message->getInternalContent());
+	else if (message->getContents().size() > 0) content = message->getContents().front();
+
+	if (content == nullptr) {
+		return nullptr;
+	}
+	list<Content> contentList = ContentManager::multipartToContentList(*content);
+
+	for (const auto &content : contentList) {
+		if (content.getContentType() != ContentType::Cpim) continue;
+		const string contentBody = content.getBodyAsString();
+		const shared_ptr<const Cpim::Message> cpimMessage = Cpim::Message::createFromString(contentBody);
+		if (cpimMessage && cpimMessage->getMessageHeader("From")) {
+			return Address::create(
+			    static_pointer_cast<const Cpim::FromHeader>(cpimMessage->getMessageHeader("From"))->getValue());
+		}
+	}
+	return nullptr;
+}
 std::string CpimChatMessageModifier::parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message,
                                                                           const Content &content) const {
-	if (content.getContentType() != ContentType::Cpim) {
-		lError() << "[CPIM] Content is not CPIM but " << content.getContentType();
-		return "";
-	}
-
 	const string contentBody = content.getBodyAsString();
 	const shared_ptr<const Cpim::Message> cpimMessage = Cpim::Message::createFromString(contentBody);
 	if (!cpimMessage || !cpimMessage->getMessageHeader("From")) {

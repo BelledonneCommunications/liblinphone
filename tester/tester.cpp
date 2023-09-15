@@ -54,12 +54,16 @@ bool is_filepath_encrypted(const char *filepath) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-void lime_delete_DRSessions(const char *limedb) {
+void lime_delete_DRSessions(const char *limedb, const char *requestOption) {
 #ifdef HAVE_SOCI
 	try {
 		soci::session sql("sqlite3", limedb); // open the DB
-		// Delete all sessions from the DR_sessions table
-		sql << "DELETE FROM DR_sessions;";
+		if (requestOption != NULL) {
+			sql << "DELETE FROM DR_sessions " << std::string(requestOption) << ";";
+		} else {
+			// Delete all sessions from the DR_sessions table
+			sql << "DELETE FROM DR_sessions;";
+		}
 	} catch (std::exception &e) { // swallow any error on DB
 		lWarning() << "Cannot delete DRSessions in database " << limedb << ". Error is " << e.what();
 	}
