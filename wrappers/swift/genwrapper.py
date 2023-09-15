@@ -407,8 +407,15 @@ class SwiftTranslator:
         methodDict['static'] = 'static ' if static else ''
         methodDict['isNotConst'] = not prop.returnType.isconst
         methodDict['isFlag'] = methodDict['is_enum'] and prop.returnType.desc.isFlag
-        methodDict['maybenil'] = prop.maybenil and not methodDict['is_string_list'] and not ['is_class_list']
 
+        methodDict['maybenil'] = prop.maybenil
+        # Swift wrapper handles nullable lists itself, so the wrapped method never returns null but an empty list instead
+        if methodDict['is_string_list']:
+            methodDict['maybenil'] = False
+        if methodDict['is_class_list']:
+            methodDict['maybenil'] = False
+
+        methodDict['return_default'] = ""
         if (methodDict['is_class'] and name != "get") or methodDict['is_void'] or methodDict['maybenil']:
             methodDict['return_default'] = "?"
 
