@@ -99,7 +99,7 @@ const list<shared_ptr<DialPlan>> DialPlan::sDialPlans = {
     DialPlan::create("Kyrgyzstan", "KG", "996", 9, "00"), DialPlan::create("Laos", "LA", "856", 10, "00"),
     DialPlan::create("Latvia", "LV", "371", 8, "00"), DialPlan::create("Lebanon", "LB", "961", 8, "00"),
     DialPlan::create("Lesotho", "LS", "266", 8, "00"), DialPlan::create("Liberia", "LR", "231", 8, "00"),
-    DialPlan::create("Libya", "LY", "218", 8, "00"), DialPlan::create("Liechtenstein", "LI", "423", 7, "00"),
+    DialPlan::create("Libya", "LY", "218", 9, "00"), DialPlan::create("Liechtenstein", "LI", "423", 7, "00"),
     DialPlan::create("Lithuania", "LT", "370", 8, "00"), DialPlan::create("Luxembourg", "LU", "352", 9, "00"),
     DialPlan::create("Macau", "MO", "853", 8, "00"), DialPlan::create("Macedonia", "MK", "389", 8, "00"),
     DialPlan::create("Madagascar", "MG", "261", 9, "00"), DialPlan::create("Malawi", "MW", "265", 9, "00"),
