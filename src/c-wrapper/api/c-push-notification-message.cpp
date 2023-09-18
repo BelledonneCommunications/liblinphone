@@ -31,13 +31,14 @@ LinphonePushNotificationMessage *linphone_push_notification_message_new(const ch
                                                                         const char *from_addr,
                                                                         const char *local_addr,
                                                                         const char *peer_addr,
+                                                                        const char *reaction_content,
                                                                         bool_t is_icalendar,
                                                                         bool_t is_conference_invitation_new,
                                                                         bool_t is_conference_invitation_update,
                                                                         bool_t is_conference_invitation_cancellation) {
 	return PushNotificationMessage::createCObject(
-	    call_id ? call_id : "", is_text, text_content ? text_content : "", subject ? subject : "",
-	    from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "", is_icalendar,
+	    L_C_TO_STRING(call_id), is_text, L_C_TO_STRING(text_content), L_C_TO_STRING(subject), L_C_TO_STRING(from_addr),
+	    L_C_TO_STRING(local_addr), L_C_TO_STRING(peer_addr), L_C_TO_STRING(reaction_content), is_icalendar,
 	    is_conference_invitation_new, is_conference_invitation_update, is_conference_invitation_cancellation);
 }
 
@@ -56,8 +57,7 @@ void linphone_push_notification_message_unref(LinphonePushNotificationMessage *m
 }
 
 const char *linphone_push_notification_message_get_call_id(const LinphonePushNotificationMessage *msg) {
-	const char *call_id = PushNotificationMessage::toCpp(msg)->getCallId().c_str();
-	return strlen(call_id) != 0 ? call_id : NULL;
+	return L_STRING_TO_C(PushNotificationMessage::toCpp(msg)->getCallId());
 }
 
 bool_t linphone_push_notification_message_is_text(const LinphonePushNotificationMessage *msg) {
@@ -65,13 +65,12 @@ bool_t linphone_push_notification_message_is_text(const LinphonePushNotification
 }
 
 const char *linphone_push_notification_message_get_text_content(const LinphonePushNotificationMessage *msg) {
-	const char *text = PushNotificationMessage::toCpp(msg)->getTextContent().c_str();
-	return strlen(text) != 0 ? text : NULL;
+	return L_STRING_TO_C(PushNotificationMessage::toCpp(msg)->getTextContent());
 }
 
 const char *linphone_push_notification_message_get_subject(const LinphonePushNotificationMessage *msg) {
-	const char *subject = PushNotificationMessage::toCpp(msg)->getSubject().c_str();
-	return strlen(subject) != 0 ? subject : NULL;
+
+	return L_STRING_TO_C(PushNotificationMessage::toCpp(msg)->getSubject());
 }
 
 const LinphoneAddress *linphone_push_notification_message_get_from_addr(const LinphonePushNotificationMessage *msg) {
@@ -84,6 +83,10 @@ const LinphoneAddress *linphone_push_notification_message_get_local_addr(const L
 
 const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *msg) {
 	return PushNotificationMessage::toCpp(msg)->getPeerAddr()->toC();
+}
+
+const char *linphone_push_notification_message_get_reaction_content(const LinphonePushNotificationMessage *msg) {
+	return L_STRING_TO_C(PushNotificationMessage::toCpp(msg)->getReactionContent());
 }
 
 bool_t linphone_push_notification_message_is_icalendar(const LinphonePushNotificationMessage *msg) {

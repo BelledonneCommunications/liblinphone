@@ -438,7 +438,7 @@ void check_reactions(LinphoneChatMessage *message,
 			const char *reaction_body = linphone_chat_message_reaction_get_body(reaction);
 			BC_ASSERT_STRING_EQUAL(reaction_body, expected_reaction);
 
-			const char *reaction_call_id = linphone_chat_message_get_call_id(reaction);
+			const char *reaction_call_id = linphone_chat_message_reaction_get_call_id(reaction);
 			BC_ASSERT_PTR_NOT_NULL(reaction_call_id);
 
 			const LinphoneAddress *from = linphone_chat_message_reaction_get_from_address(reaction);

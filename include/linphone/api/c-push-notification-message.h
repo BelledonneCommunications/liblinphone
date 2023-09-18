@@ -115,6 +115,14 @@ LINPHONE_PUBLIC const LinphoneAddress *
 linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *message);
 
 /**
+ * Gets the reaction content.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return The reaction content or NULL. @maybenil
+ */
+LINPHONE_PUBLIC const char *
+linphone_push_notification_message_get_reaction_content(const LinphonePushNotificationMessage *message);
+
+/**
  * Tells whether or not this message contains an icalendar by checking it's content type.
  * @param message The #LinphonePushNotificationMessage object @notnil
  * @return TRUE if this content type is 'text/calendar;conference-event=yes', FALSE otherwise.

@@ -36,6 +36,7 @@ public:
 	                        const std::string &fromAddr,
 	                        const std::string &localAddr,
 	                        const std::string &peerAddr,
+	                        const std::string &reactionContent,
 	                        bool isIcalendar,
 	                        bool isConferenceInvitationNew,
 	                        bool isConferenceInvitationUpdate,
@@ -48,6 +49,7 @@ public:
 	          const std::string &fromAddr,
 	          const std::string &localAddr,
 	          const std::string &peerAddr,
+	          const std::string &reactionContent,
 	          bool isIcalendar,
 	          bool isConferenceInvitationNew,
 	          bool isConferenceInvitationUpdate,
@@ -60,6 +62,7 @@ public:
 	std::shared_ptr<const Address> getFromAddr() const;
 	std::shared_ptr<const Address> getLocalAddr() const;
 	std::shared_ptr<const Address> getPeerAddr() const;
+	const std::string &getReactionContent() const;
 	bool isIcalendar() const;
 	bool isConferenceInvitationNew() const;
 	bool isConferenceInvitationUpdate() const;
@@ -75,6 +78,7 @@ private:
 	std::shared_ptr<Address> mFromAddr;
 	std::shared_ptr<Address> mLocalAddr;
 	std::shared_ptr<Address> mPeerAddr;
+	std::string mReactionContent;
 	bool mIsIcalendar = false;
 	bool mIsConferenceInvitationNew = false;
 	bool mIsConferenceInvitationUpdate = false;

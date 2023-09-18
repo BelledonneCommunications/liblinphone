@@ -595,6 +595,8 @@ LINPHONE_PUBLIC LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_r
 LINPHONE_PUBLIC void linphone_core_cbs_set_new_message_reaction(LinphoneCoreCbs *cbs,
                                                                 LinphoneCoreCbsNewMessageReactionCb cb);
 
+void linphone_core_cbs_set_reaction_removed_private(LinphoneCoreCbs *cbs, LinphoneCoreCbsReactionRemovedPrivateCb cb);
+
 /**
  * Get the #LinphoneCoreCbsNewMessageReactionCb callback.
  * @param cbs A #LinphoneCoreCbs. @notnil

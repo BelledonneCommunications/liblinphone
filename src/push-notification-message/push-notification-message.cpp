@@ -31,12 +31,13 @@ PushNotificationMessage::PushNotificationMessage(const std::string &callId,
                                                  const std::string &fromAddr,
                                                  const std::string &localAddr,
                                                  const std::string &peerAddr,
+                                                 const std::string &reactionContent,
                                                  bool isIcalendar,
                                                  bool isConferenceInvitationNew,
                                                  bool isConferenceInvitationUpdate,
                                                  bool isConferenceInvitationCancellation) {
-	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr, peerAddr, isIcalendar,
-	                              isConferenceInvitationNew, isConferenceInvitationUpdate,
+	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr, peerAddr, reactionContent,
+	                              isIcalendar, isConferenceInvitationNew, isConferenceInvitationUpdate,
 	                              isConferenceInvitationCancellation);
 }
 
@@ -47,6 +48,7 @@ void PushNotificationMessage::init(const std::string &callId,
                                    const std::string &fromAddr,
                                    const std::string &localAddr,
                                    const std::string &peerAddr,
+                                   const std::string &reactionContent,
                                    bool isIcalendar,
                                    bool isConferenceInvitationNew,
                                    bool isConferenceInvitationUpdate,
@@ -58,6 +60,7 @@ void PushNotificationMessage::init(const std::string &callId,
 	mFromAddr = (new Address(fromAddr))->toSharedPtr();
 	mLocalAddr = (new Address(localAddr))->toSharedPtr();
 	mPeerAddr = (new Address(peerAddr))->toSharedPtr();
+	mReactionContent = reactionContent;
 	mIsIcalendar = isIcalendar;
 	mIsConferenceInvitationNew = isConferenceInvitationNew;
 	mIsConferenceInvitationUpdate = isConferenceInvitationUpdate;
@@ -91,6 +94,10 @@ shared_ptr<const Address> PushNotificationMessage::getPeerAddr() const {
 	return mPeerAddr;
 }
 
+const string &PushNotificationMessage::getReactionContent() const {
+	return mReactionContent;
+}
+
 bool PushNotificationMessage::isIcalendar() const {
 	return mIsIcalendar;
 }
@@ -117,6 +124,7 @@ std::string PushNotificationMessage::toString() const {
 	ss << "fromAddr[" << mFromAddr << "] ";
 	ss << "localAddr[" << mLocalAddr << "] ";
 	ss << "peerAddr[" << mPeerAddr << "] ";
+	ss << "reactionContent[" << mReactionContent << "] ";
 	ss << "isIcalendar[" << mIsIcalendar << "] ";
 	ss << "isConferenceInvitationUpdate[" << mIsConferenceInvitationUpdate << "] ";
 	ss << "isConferenceInvitationCancellation[" << mIsConferenceInvitationCancellation << "] ";
