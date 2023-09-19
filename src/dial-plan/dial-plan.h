@@ -36,7 +36,8 @@ public:
 	         const std::string &isoCountryCode = "",
 	         const std::string &ccc = "",
 	         int nnl = 0,
-	         const std::string &icp = "");
+	         const std::string &icp = "",
+	         const std::string &flag = "");
 	DialPlan(const DialPlan &other);
 
 	DialPlan *clone() const override {
@@ -51,6 +52,7 @@ public:
 	void setCountryCallingCode(const std::string &ccc);
 	int getNationalNumberLength() const;
 	const std::string &getInternationalCallPrefix() const;
+	const std::string &getFlag() const;
 	bool isGeneric() const;
 
 	static const std::shared_ptr<DialPlan> MostCommon;
@@ -67,6 +69,7 @@ private:
 	std::string countryCallingCode;      // Country calling code.
 	int nationalNumberLength = 0;        // Maximum national number length.
 	std::string internationalCallPrefix; // International call prefix, ex: 00 in europe.
+	std::string flag;
 
 	static const std::list<std::shared_ptr<DialPlan>> sDialPlans;
 };

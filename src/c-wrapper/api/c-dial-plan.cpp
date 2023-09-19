@@ -58,6 +58,10 @@ const char *linphone_dial_plan_get_international_call_prefix(const LinphoneDialP
 	return L_STRING_TO_C(DialPlan::toCpp(dp)->getInternationalCallPrefix());
 }
 
+const char *linphone_dial_plan_get_flag(const LinphoneDialPlan *dp) {
+	return L_STRING_TO_C(DialPlan::toCpp(dp)->getFlag());
+}
+
 int linphone_dial_plan_lookup_ccc_from_e164(const char *e164) {
 	return DialPlan::lookupCccFromE164(L_C_TO_STRING(e164));
 }

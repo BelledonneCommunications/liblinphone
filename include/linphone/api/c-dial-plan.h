@@ -83,6 +83,13 @@ LINPHONE_PUBLIC int linphone_dial_plan_get_national_number_length(const Linphone
 LINPHONE_PUBLIC const char *linphone_dial_plan_get_international_call_prefix(const LinphoneDialPlan *dial_plan);
 
 /**
+ * Returns the flag of the teritory as unicode characters
+ * @param dial_plan the #LinphoneDialPlan object @notnil
+ * @return the flag as unicode characters @notnil
+ */
+LINPHONE_PUBLIC const char *linphone_dial_plan_get_flag(const LinphoneDialPlan *dial_plan);
+
+/**
  * Function to get  call country code from  ISO 3166-1 alpha-2 code, ex: FR returns 33
  * @param iso country code alpha2 @notnil
  * @return call country code or -1 if not found
