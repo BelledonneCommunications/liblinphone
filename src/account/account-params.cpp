@@ -171,6 +171,9 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(nullp
 		mPushNotificationConfig->readPushParamsFromString(pushParameters);
 	} else if (!mContactUriParameters.empty()){
 		mPushNotificationConfig->readPushParamsFromString(mContactUriParameters);
+	} else if (lc && lc->push_config) {
+		mPushNotificationConfig->unref();// Coming from constructor
+		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	}
 	
 	mExpires = linphone_config_get_int(config, key, "reg_expires", mExpires);
@@ -227,11 +230,6 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(nullp
 	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
 
 	setLimeServerUrl(linphone_config_get_string(config, key, "lime_server_url", mLimeServerUrl.c_str()));
-	
-	if (lc && lc->push_config) {
-		mPushNotificationConfig->unref();// Coming from constructor
-		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
-	}
 
 	readCustomParamsFromConfigFile (config, key);
 }
