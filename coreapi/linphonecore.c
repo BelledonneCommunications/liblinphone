@@ -876,7 +876,7 @@ linphone_core_log_collection_handler(const char *domain, OrtpLogLevel level, con
 #endif
 	}
 
-	ortp_gettimeofday(&tp, NULL);
+	bctbx_gettimeofday(&tp, NULL);
 	tt = (time_t)tp.tv_sec;
 	lt = localtime((const time_t *)&tt);
 

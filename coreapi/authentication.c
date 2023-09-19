@@ -359,11 +359,15 @@ void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, 
  * @param[in]		username	Used only when auth mode is TLS to get a matching client certificate. If empty, look for
  * any certificate matching domain nane
  * @param[in]		domain		Used only when auth mode is TLS to get a matching client certificate.
+ * @return true if authentication could be processed, false otherwise.
+ * @note It is not possible to know whether the TLS server requested a client certificate: true is always returned for
+ * TLS authentication.
  */
-void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
+bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
                                              belle_sip_auth_event *event,
                                              const char *username,
                                              const char *domain) {
+	bool done = false;
 	switch (belle_sip_auth_event_get_mode(event)) {
 		case BELLE_SIP_AUTH_MODE_HTTP_DIGEST: {
 			const char *realm = belle_sip_auth_event_get_realm(event);
@@ -373,7 +377,10 @@ void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 
 			const LinphoneAuthInfo *auth_info =
 			    _linphone_core_find_auth_info(lc, realm, username, domain, algorithm, TRUE);
-			linphone_auth_info_fill_belle_sip_event(auth_info, event);
+			if (auth_info) {
+				linphone_auth_info_fill_belle_sip_event(auth_info, event);
+				done = true;
+			}
 		} break;
 		case BELLE_SIP_AUTH_MODE_TLS: {
 			/* extract username and domain from the GRUU stored in userData->username */
@@ -419,7 +426,7 @@ void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 					belle_sip_auth_event_set_client_certificates_chain(event, bs_cert_chain);
 				}
 			} else {
-				lInfo() << "Could not retrieve any client certificate upon server's request";
+				lInfo() << "No TLS client certificate to propose.";
 				// To enable callback:
 				//  - create an AuthInfo object with username and domain
 				//  - call linphone_core_notify_authentication_requested on it to give the app a chance to fill the
@@ -427,13 +434,15 @@ void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 				//  - call again _linphone_core_find_indexed_tls_auth_info to retrieve the auth_info set by the
 				//  callback. Not done as we assume that authentication on flexisip server was performed before so the
 				//  application layer already got a chance to set the correct auth_info in the core
-				return;
 			}
+			done = true; // since we can't know if server requested a client certificate, assume all is good.'
 		} break;
 		default:
 			lError() << "Connection gets an auth event of unexpected type";
+			done = false;
 			break;
 	}
+	return done;
 }
 
 void linphone_core_set_digest_authentication_policy(LinphoneCore *core, LinphoneDigestAuthenticationPolicy *policy) {

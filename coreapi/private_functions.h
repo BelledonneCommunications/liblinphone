@@ -179,7 +179,7 @@ const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc,
 LinphoneAccount *linphone_core_find_account_by_identity_address(const LinphoneCore *core,
                                                                 const LinphoneAddress *identity_address);
 void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event);
-void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
+bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
                                              belle_sip_auth_event *event,
                                              const char *username,
                                              const char *domain);

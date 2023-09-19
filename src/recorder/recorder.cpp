@@ -82,7 +82,7 @@ const std::string &Recorder::getFile() const {
 }
 
 LinphoneStatus Recorder::start() {
-	ortp_gettimeofday(&mStartTime, nullptr);
+	bctbx_gettimeofday(&mStartTime, nullptr);
 	getPlatformHelpers(getCore()->getCCore())->onRecordingStarted();
 	return ms_media_recorder_start(mRecorder) ? 0 : -1;
 }
@@ -90,7 +90,7 @@ LinphoneStatus Recorder::start() {
 LinphoneStatus Recorder::pause() {
 	if (getState() == LinphoneRecorderRunning) {
 		ms_media_recorder_pause(mRecorder);
-		ortp_gettimeofday(&mEndTime, nullptr);
+		bctbx_gettimeofday(&mEndTime, nullptr);
 		getPlatformHelpers(getCore()->getCCore())->onRecordingPaused();
 		return 0;
 	} else return -1;
@@ -111,7 +111,7 @@ LinphoneRecorderState Recorder::getState() const {
 int Recorder::getDuration() const {
 	if (getState() == LinphoneRecorderRunning) {
 		struct timeval cur;
-		ortp_gettimeofday(&cur, nullptr);
+		bctbx_gettimeofday(&cur, nullptr);
 		double elapsed = static_cast<double>(cur.tv_sec - mStartTime.tv_sec) * 1000 +
 		                 static_cast<double>(cur.tv_usec - mStartTime.tv_usec) / 1000;
 		return (int)elapsed;

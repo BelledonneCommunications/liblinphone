@@ -157,7 +157,7 @@ static time_t get_current_time(void) {
 	struct tm tmbuf;
 #endif
 	time_t tt;
-	ortp_gettimeofday(&tp, NULL);
+	bctbx_gettimeofday(&tp, NULL);
 	tt = (time_t)tp.tv_sec;
 
 #ifdef _WIN32

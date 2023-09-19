@@ -68,7 +68,7 @@ int StunClient::run(int audioPort, int videoPort, int textPort) {
 	bool coneText = false;
 	double elapsed;
 	struct timeval init;
-	ortp_gettimeofday(&init, nullptr);
+	bctbx_gettimeofday(&init, nullptr);
 
 	do {
 		int id;
@@ -106,7 +106,7 @@ int StunClient::run(int audioPort, int videoPort, int textPort) {
 			gotText = true;
 		}
 		struct timeval cur;
-		ortp_gettimeofday(&cur, nullptr);
+		bctbx_gettimeofday(&cur, nullptr);
 		elapsed = static_cast<double>(cur.tv_sec - init.tv_sec) * 1000 +
 		          static_cast<double>(cur.tv_usec - init.tv_usec) / 1000;
 		if (elapsed > 2000.) {

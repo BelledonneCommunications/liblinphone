@@ -105,9 +105,11 @@ static void update_check_process_timeout(void *ctx, BCTBX_UNUSED(const belle_sip
 	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
 
-static void update_check_process_auth_requested(void *ctx, BCTBX_UNUSED(belle_sip_auth_event_t *event)) {
+static void update_check_process_auth_requested(void *ctx, belle_sip_auth_event_t *event) {
 	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
-	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
+	if (!linphone_core_fill_belle_sip_auth_event(update->lc, event, nullptr, nullptr)) {
+		update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
+	}
 }
 
 void linphone_core_check_for_update(LinphoneCore *lc, const char *current_version) {
