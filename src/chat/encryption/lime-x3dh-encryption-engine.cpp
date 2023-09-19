@@ -158,7 +158,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
 	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(
 	    BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
 	try {
-		limeManager = std::make_unique<LimeManager>(dbAccessWithParam, prov, core);
+		limeManager = std::make_shared<LimeManager>(dbAccessWithParam, prov, core);
 	} catch (const BctbxException &e) {
 		lInfo() << "[LIME] exception at Encryption engine instanciation" << e.what();
 	}
