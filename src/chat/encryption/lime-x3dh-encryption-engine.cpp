@@ -712,6 +712,12 @@ AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel(const
 }
 
 list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(const std::shared_ptr<Account> &account) {
+	// Sanity checks on the lime manager
+	if (!limeManager) {
+		lWarning() << "[LIME] Lime manager has not been created for encryption engine " << this << ", unable to setup identity key for ZRTP auxiliary shared secret";
+		return {};
+	}
+
 	// Sanity checks on the account
 	if (!account) {
 		lWarning() << "[LIME] No account available, unable to setup identity key for ZRTP auxiliary shared secret";
