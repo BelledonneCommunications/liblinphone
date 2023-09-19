@@ -830,7 +830,6 @@ static void edit_simple_conference_base(bool_t from_organizer,
 							}
 						}
 
-						ms_message("%s - END mgr %s", __func__, linphone_core_get_identity(mgr->lc));
 						bool is_focus = (mgr == focus.getCMgr());
 						bctbx_list_t *participants_info2 = bctbx_list_copy_with_data(
 						    participants_info, (bctbx_list_copy_func)linphone_participant_info_clone);
@@ -915,6 +914,7 @@ static void edit_simple_conference_base(bool_t from_organizer,
 			}
 			add = !add;
 		}
+		bctbx_list_free(initialInfos);
 		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
 		ms_free(uid);
 		ms_free(conference_address_str);

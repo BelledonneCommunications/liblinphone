@@ -69,15 +69,23 @@ private:
 	                                     const std::string &deviceName);
 	void
 	insertChatMessageParticipant(long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime);
+	ParticipantInfo::participant_params_t selectConferenceInfoParticipantParams(const long long participantId) const;
+	ParticipantInfo::participant_params_t
+	migrateConferenceInfoParticipantParams(const ParticipantInfo::participant_params_t &unprocessedParticipantParams,
+	                                       const long long participantId) const;
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
 	                               const std::shared_ptr<ConferenceInfo> &oldConferenceInfo);
 	long long insertOrUpdateConferenceInfoParticipant(long long conferenceInfoId,
 	                                                  long long participantSipAddressId,
 	                                                  bool deleted,
-	                                                  const ParticipantInfo::participant_params_t params);
+	                                                  const ParticipantInfo::participant_params_t params,
+	                                                  bool isOrganizer);
 	long long insertOrUpdateConferenceInfoOrganizer(long long conferenceInfoId,
 	                                                long long organizerSipAddressId,
 	                                                const ParticipantInfo::participant_params_t params);
+	void insertOrUpdateConferenceInfoParticipantParams(long long conferenceInfoParticipantId,
+	                                                   const ParticipantInfo::participant_params_t params);
+
 	long long insertOrUpdateConferenceCall(const std::shared_ptr<CallLog> &callLog,
 	                                       const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 
@@ -89,8 +97,9 @@ private:
 	long long selectChatRoomParticipantId(long long chatRoomId, long long participantSipAddressId) const;
 	long long selectOneToOneChatRoomId(long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const;
 	long long selectConferenceInfoId(long long uriSipAddressId);
-	long long selectConferenceInfoParticipantId(long long conferenceInfoId, long long participantSipAddressId) const;
-	long long selectConferenceInfoOrganizerId(long long conferenceInfoId) const;
+	long long selectConferenceInfoParticipantId(long long conferenceInfoId,
+	                                            long long participantSipAddressId,
+	                                            bool isOrganizer) const;
 	long long selectConferenceCallId(const std::string &callId);
 
 	void deleteContents(long long chatMessageId);
@@ -123,8 +132,6 @@ private:
 
 	std::shared_ptr<EventLog>
 	selectConferenceEvent(const ConferenceId &conferenceId, EventLog::Type type, const soci::row &row) const;
-
-	std::shared_ptr<EventLog> selectConferenceCallEvent(const soci::row &row) const;
 
 	std::shared_ptr<EventLog> selectConferenceChatMessageEvent(const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	                                                           EventLog::Type type,
