@@ -311,11 +311,13 @@ LinphoneProxyConfig * linphone_core_lookup_known_proxy_2(LinphoneCore *lc, const
 
 LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_conference_factory_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC LinphoneAccount * linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri);
 
 LinphoneAccount * linphone_core_lookup_known_account_2(LinphoneCore *lc, const LinphoneAddress *uri, bool_t fallback_to_default);
+LinphoneAccount *linphone_core_lookup_account_by_conference_factory_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 
 LinphoneAccount * linphone_core_lookup_account_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);

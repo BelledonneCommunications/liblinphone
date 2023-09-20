@@ -4493,6 +4493,50 @@ LinphoneAccount * linphone_core_lookup_account_by_identity_strict(LinphoneCore *
 /*
  * Returns an account matching the given identity address
  * Prefers registered, then first registering matching, otherwise first matching
+ * returns NULL if none is found
+ */
+LinphoneAccount *linphone_core_lookup_account_by_conference_factory_strict(LinphoneCore *lc,
+                                                                           const LinphoneAddress *uri) {
+	LinphoneAccount *found_acc = NULL;
+	LinphoneAccount *found_reg_acc = NULL;
+	LinphoneAccount *found_noreg_acc = NULL;
+	const bctbx_list_t *elem;
+
+	for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = elem->next) {
+		LinphoneAccount *acc = (LinphoneAccount *)elem->data;
+		const LinphoneAccountParams *params = linphone_account_get_params(acc);
+		const LinphoneAddress *audio_video_conference_factory =
+		    linphone_account_params_get_audio_video_conference_factory_address(params);
+		const char *conference_factory_str = linphone_account_params_get_conference_factory_uri(params);
+		LinphoneAddress *conference_factory = linphone_address_new(conference_factory_str);
+		if ((audio_video_conference_factory && linphone_address_weak_equal(uri, audio_video_conference_factory)) ||
+		    (conference_factory && linphone_address_weak_equal(uri, conference_factory))) {
+			if (linphone_account_get_state(acc) == LinphoneRegistrationOk) {
+				found_acc = acc;
+				break;
+			} else if (!found_reg_acc && linphone_account_params_get_register_enabled(params)) {
+				found_reg_acc = acc;
+			} else if (!found_noreg_acc) {
+				found_noreg_acc = acc;
+			}
+		}
+		if (conference_factory) {
+			linphone_address_unref(conference_factory);
+		}
+	}
+	if (!found_acc && found_reg_acc) found_acc = found_reg_acc;
+	else if (!found_acc && found_noreg_acc) found_acc = found_noreg_acc;
+	return found_acc;
+}
+
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_conference_factory_strict(LinphoneCore *lc, const LinphoneAddress *uri) {
+	LinphoneAccount *account = linphone_core_lookup_account_by_conference_factory_strict(lc, uri);
+	return account ? Account::toCpp(account)->getConfig() : nullptr;
+}
+
+/*
+ * Returns an account matching the given identity address
+ * Prefers registered, then first registering matching, otherwise first matching
  * returns default account if none is found
  */
 LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){

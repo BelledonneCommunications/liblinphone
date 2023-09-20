@@ -1270,15 +1270,22 @@ LinphoneProxyConfig * CallSession::getDestProxy (){
 void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) {
 	L_D();
 	d->direction = direction;
-	d->setDestProxy(cfg);
+	LinphoneProxyConfig *chosenCfg = cfg;
 	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
 
 	const auto & core = getCore()->getCCore();
-	if (!d->destProxy) {
+	if (!chosenCfg) {
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
-		d->setDestProxy( linphone_core_lookup_known_proxy_2(core, toAddr, direction == LinphoneCallIncoming ? FALSE : TRUE) );
+		chosenCfg = linphone_core_lookup_known_proxy_2(core, toAddr, direction == LinphoneCallIncoming ? FALSE : TRUE);
 	}
+
+	if (!chosenCfg && linphone_core_conference_server_enabled(core)) {
+		// In the case of a server, clients may call the conference factory in order to create a conference
+		chosenCfg = linphone_core_lookup_proxy_by_conference_factory_strict(core, toAddr);
+	}
+
+	d->setDestProxy(chosenCfg);
 
 	d->log = CallLog::create(getCore(), direction, fromAddr, toAddr);
 
