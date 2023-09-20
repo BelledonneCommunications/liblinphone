@@ -1007,9 +1007,10 @@ void ClientGroupChatRoom::onConferenceCreated(const std::shared_ptr<Address> &ad
 	lInfo() << "Conference [" << conference->getConferenceId() << "] has been created";
 
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setConferenceAddress(addr);
-	static_pointer_cast<RemoteConference>(getConference())->focus->setAddress(addr);
-	static_pointer_cast<RemoteConference>(getConference())->focus->clearDevices();
-	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(addr);
+	auto focus = static_pointer_cast<RemoteConference>(getConference())->focus;
+	focus->setAddress(addr);
+	focus->clearDevices();
+	focus->addDevice(addr);
 
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 	setState(ConferenceInterface::State::Created);
