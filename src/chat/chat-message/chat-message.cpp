@@ -960,8 +960,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 		storeInDb();
 
 		LinphoneChatMessageReaction *reaction =
-		    ChatMessageReaction::createCObject(messageId, getUtf8Text(), q->getFromAddress());
-		ChatMessageReaction::toCpp(reaction)->setCallId(getCallId().c_str());
+		    ChatMessageReaction::createCObject(messageId, getUtf8Text(), q->getFromAddress(), getCallId());
 
 		_linphone_chat_message_notify_new_message_reaction(msg, reaction);
 
@@ -1332,6 +1331,7 @@ void ChatMessagePrivate::send() {
 	if (imdnId.empty()) {
 		setImdnMessageId(op->getCallId()); /* must be known at that time */
 	}
+	setCallId(op->getCallId());
 
 	if (isResend) {
 		// If it is a resend, reset participant states to Idle.

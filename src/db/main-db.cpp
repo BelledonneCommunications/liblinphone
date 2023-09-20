@@ -4641,7 +4641,7 @@ list<shared_ptr<ChatMessageReaction>> MainDb::getChatMessageReactions(const shar
 		const string &messageId = chatMessage->getImdnMessageId();
 
 		static const string query =
-		    "SELECT body, from_sip_address.value"
+		    "SELECT body, from_sip_address.value, call_id"
 		    " FROM conference_chat_message_reaction_event"
 		    " LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 		    " WHERE reaction_to_message_id = :messageId"
@@ -4654,7 +4654,9 @@ list<shared_ptr<ChatMessageReaction>> MainDb::getChatMessageReactions(const shar
 				continue;
 			}
 			shared_ptr<Address> fromAddress = make_shared<Address>(row.get<string>(1));
-			shared_ptr<ChatMessageReaction> reaction = ChatMessageReaction::create(messageId, body, fromAddress);
+			string callId = row.get<string>(2);
+			shared_ptr<ChatMessageReaction> reaction =
+			    ChatMessageReaction::create(messageId, body, fromAddress, callId);
 			reactions.push_back(reaction);
 		}
 	};

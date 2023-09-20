@@ -650,7 +650,7 @@ LinphoneChatMessageReaction *linphone_chat_message_create_reaction(LinphoneChatM
 	auto chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_chat_message_get_chat_room(message));
 	auto fromAddress = chatRoom->getLocalAddress();
 	LinphoneChatMessageReaction *reaction =
-	    LinphonePrivate::ChatMessageReaction::createCObject(messageId, L_C_TO_STRING(utf8_reaction), fromAddress);
+	    LinphonePrivate::ChatMessageReaction::createCObject(messageId, L_C_TO_STRING(utf8_reaction), fromAddress, "");
 
 	LinphonePrivate::ChatMessageReaction::toCpp(reaction)->setChatRoom(chatRoom);
 

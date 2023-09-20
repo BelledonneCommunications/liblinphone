@@ -35,7 +35,10 @@ class LINPHONE_PUBLIC ChatMessageReaction
     : public bellesip::HybridObject<LinphoneChatMessageReaction, ChatMessageReaction>,
       public ChatMessageListener {
 public:
-	ChatMessageReaction(const std::string &messageId, const std::string &emoji, std::shared_ptr<const Address> from);
+	ChatMessageReaction(const std::string &messageId,
+	                    const std::string &emoji,
+	                    std::shared_ptr<const Address> from,
+	                    const std::string &messageCallId);
 	~ChatMessageReaction();
 	ChatMessageReaction(const ChatMessageReaction &other);
 

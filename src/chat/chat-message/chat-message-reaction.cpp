@@ -32,8 +32,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 ChatMessageReaction::ChatMessageReaction(const string &messageId,
                                          const string &emoji,
-                                         std::shared_ptr<const Address> from)
-    : messageId(messageId), fromAddress(from) {
+                                         std::shared_ptr<const Address> from,
+                                         const string &messageCallId)
+    : messageId(messageId), callId(messageCallId), fromAddress(from) {
 	string toUtf8 = Utils::localeToUtf8(emoji);
 	reaction = toUtf8;
 }
@@ -47,6 +48,7 @@ ChatMessageReaction::ChatMessageReaction(const ChatMessageReaction &other) : Hyb
 	reactionMessage = other.reactionMessage;
 	reaction = other.getBody();
 	fromAddress = other.getFromAddress();
+	callId = other.getCallId();
 }
 
 const string &ChatMessageReaction::getBody() const {
@@ -73,9 +75,10 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 		}
 
 		setCallId(message->getPrivate()->getCallId());
+		// Now that reaction was went and Call ID is known, store it in DB
+		message->getPrivate()->storeInDb();
 
 		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
-		const string &messageId = originalMessage->getImdnMessageId();
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(message->getChatRoom());
 
 		if (reaction.empty()) {
@@ -88,7 +91,7 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 			_linphone_chat_message_notify_reaction_removed(msg, address);
 			linphone_core_notify_message_reaction_removed(message->getCore()->getCCore(), cr, msg, address);
 			linphone_core_notify_message_reaction_removed_private(message->getCore()->getCCore(), cr, msg, address,
-			                                                      message->getPrivate()->getCallId().c_str());
+			                                                      getCallId().c_str());
 		} else {
 			LinphoneChatMessageReaction *reaction = getSharedFromThis()->toC();
 			_linphone_chat_message_notify_new_message_reaction(msg, reaction);
@@ -119,6 +122,9 @@ void ChatMessageReaction::send() {
 	content->setContentType(ContentType::PlainText);
 	content->setBodyFromUtf8(reaction);
 	reactionMessage->addContent(content);
+
+	// Do not store the reaction in DB for now, won't know Call ID at this time, wait for above callback
+	reactionMessage->setToBeStored(false);
 
 	lInfo() << "[Chat Message Reaction] Sending reaction [" << reaction << "] for message ID [" << messageId << "]";
 	reactionMessage->send();
