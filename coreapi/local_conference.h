@@ -158,6 +158,7 @@ public:
 
 	virtual void notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
 
+	void initWithOp(SalCallOp *op);
 	void confirmCreation();
 	void updateConferenceInformation(SalCallOp *op);
 	virtual std::shared_ptr<Call> getCall() const override;
@@ -195,6 +196,8 @@ private:
 
 	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const override;
 	bool tryAddMeDevice();
+
+	void createEventHandler();
 };
 
 } // end of namespace MediaConference

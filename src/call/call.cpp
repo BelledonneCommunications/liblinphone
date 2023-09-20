@@ -549,10 +549,10 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 
 			const std::shared_ptr<Address> confAddr = conferenceInfo->getUri();
 			const ConferenceId confId(confAddr, session->getLocalAddress());
-			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(
-			    new MediaConference::RemoteConference(getCore(), session, confAddr, confId, invitees, nullptr,
-			                                          confParams),
-			    [](MediaConference::RemoteConference *c) { c->unref(); });
+			remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
+			    (new MediaConference::RemoteConference(getCore(), confId.getLocalAddress(), nullptr, confParams))
+			        ->toSharedPtr());
+			remoteConference->initWithInvitees(confAddr, confAddr, session, invitees, confId);
 #ifdef HAVE_ADVANCED_IM
 		} else if (!resourceList.isEmpty() || !sipfrag.isEmpty()) {
 			const auto &remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
@@ -562,20 +562,22 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			const auto organizer = Utils::getSipFragAddress(sipfrag);
 			auto organizerInfo = Factory::get()->createParticipantInfo(Address::create(organizer));
 			invitees.push_back(organizerInfo);
-			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(
-			    new MediaConference::RemoteConference(getCore(), session, remoteContactAddress, conferenceId, invitees,
-			                                          nullptr, confParams),
-			    [](MediaConference::RemoteConference *c) { c->unref(); });
+			remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
+			    (new MediaConference::RemoteConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))
+			        ->toSharedPtr());
+			remoteConference->initWithInvitees(remoteContactAddress, remoteContactAddress, session, invitees,
+			                                   conferenceId);
 #endif // HAVE_ADVANCED_IM
 		} else {
 			const auto &remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
 			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
 			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
+			ConferenceInfo::participant_list_t invitees;
 			// It is expected that the core of the remote conference is the participant one
-			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(
-			    new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr,
-			                                          confParams),
-			    [](MediaConference::RemoteConference *c) { c->unref(); });
+			remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
+			    (new MediaConference::RemoteConference(getCore(), conferenceId.getLocalAddress(), nullptr, confParams))
+			        ->toSharedPtr());
+			remoteConference->initWithInvitees(getSharedFromThis(), invitees, conferenceId);
 		}
 	}
 

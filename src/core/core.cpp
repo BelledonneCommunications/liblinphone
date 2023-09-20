@@ -1602,7 +1602,7 @@ std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference(cons
 	return nullptr;
 }
 
-void Core::insertAudioVideoConference(const shared_ptr<MediaConference::Conference> &audioVideoConference) {
+void Core::insertAudioVideoConference(const shared_ptr<MediaConference::Conference> audioVideoConference) {
 	L_ASSERT(audioVideoConference);
 
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
@@ -1615,7 +1615,7 @@ void Core::insertAudioVideoConference(const shared_ptr<MediaConference::Conferen
 	if (conf == nullptr) {
 		lInfo() << "Insert audio video conference " << audioVideoConference << " in RAM with conference ID "
 		        << conferenceId << ".";
-		audioVideoConferenceById[prunedConferenceId] = audioVideoConference;
+		audioVideoConferenceById.insert(std::make_pair(prunedConferenceId, audioVideoConference));
 	}
 }
 

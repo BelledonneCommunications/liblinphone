@@ -42,16 +42,76 @@ LINPHONE_BEGIN_NAMESPACE
 namespace MediaConference {
 
 RemoteConference::RemoteConference(const shared_ptr<Core> &core,
-                                   const std::shared_ptr<LinphonePrivate::CallSession> &focusSession,
-                                   const std::shared_ptr<Address> &confAddr,
+                                   const std::shared_ptr<Address> &meAddr,
+                                   CallSessionListener *listener,
+                                   const std::shared_ptr<LinphonePrivate::ConferenceParams> params)
+    : Conference(core, meAddr, listener, params) {
+}
+
+RemoteConference::RemoteConference(const shared_ptr<Core> &core,
+                                   const std::shared_ptr<Address> &focusAddr,
                                    const ConferenceId &conferenceId,
-                                   const ConferenceInfo::participant_list_t &invitees,
                                    CallSessionListener *listener,
                                    const std::shared_ptr<LinphonePrivate::ConferenceParams> params)
     : Conference(core, conferenceId.getLocalAddress(), listener, params) {
 
-	focus = Participant::create(this, confAddr, focusSession);
-	lInfo() << "Create focus '" << *focus->getAddress() << "' from address : " << *confAddr;
+	createFocus(focusAddr);
+	pendingSubject = confParams->getSubject();
+
+	getMe()->setAdmin(true);
+
+	confParams->enableLocalParticipant(false);
+
+	// Store conference ID to retrieve later the local address when the focus call goes to StreamsRunning state
+	this->conferenceId = conferenceId;
+
+	setState(ConferenceInterface::State::Instantiated);
+}
+
+RemoteConference::~RemoteConference() {
+	terminate();
+#ifdef HAVE_ADVANCED_IM
+	eventHandler.reset();
+#endif // HAVE_ADVANCED_IM
+}
+
+void RemoteConference::createFocus(const std::shared_ptr<Address> focusAddr,
+                                   const std::shared_ptr<LinphonePrivate::CallSession> focusSession) {
+	focus = Participant::create(this, focusAddr, focusSession);
+	lInfo() << "Create focus '" << *focus->getAddress() << "' from address : " << *focusAddr;
+}
+
+void RemoteConference::initWithInvitees(const std::shared_ptr<LinphonePrivate::Call> &focusCall,
+                                        const ConferenceInfo::participant_list_t &invitees,
+                                        const ConferenceId &conferenceId) {
+	const auto &focusSession = focusCall->getActiveSession();
+	const auto &conferenceAddress = focusSession->getRemoteContactAddress();
+	createFocus(conferenceAddress, focusSession);
+	pendingSubject = confParams->getSubject();
+	setConferenceId(conferenceId);
+
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		const auto &confInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
+		// me is admin if the organizer is the same as me
+		getMe()->setAdmin((confInfo && (confInfo->getOrganizerAddress()->weakEqual(*getMe()->getAddress()))));
+	}
+#endif
+	mInvitedParticipants = invitees;
+
+	setState(ConferenceInterface::State::Instantiated);
+
+	setConferenceAddress(conferenceAddress);
+	finalizeCreation();
+}
+
+void RemoteConference::initWithInvitees(const std::shared_ptr<Address> confAddr,
+                                        const std::shared_ptr<Address> focusAddr,
+                                        const std::shared_ptr<LinphonePrivate::CallSession> focusSession,
+                                        const ConferenceInfo::participant_list_t &invitees,
+                                        const ConferenceId &conferenceId) {
+	createFocus(focusAddr, focusSession);
 	confParams->enableLocalParticipant(false);
 	pendingSubject = confParams->getSubject();
 
@@ -76,64 +136,6 @@ RemoteConference::RemoteConference(const shared_ptr<Core> &core,
 	setConferenceAddress(confAddr);
 	finalizeCreation();
 }
-
-RemoteConference::RemoteConference(const shared_ptr<Core> &core,
-                                   const std::shared_ptr<Address> &focusAddr,
-                                   const ConferenceId &conferenceId,
-                                   CallSessionListener *listener,
-                                   const std::shared_ptr<LinphonePrivate::ConferenceParams> params)
-    : Conference(core, conferenceId.getLocalAddress(), listener, params) {
-
-	focus = Participant::create(this, focusAddr);
-	lInfo() << "Create focus '" << focus->getAddress() << "' from address : " << focusAddr;
-	pendingSubject = confParams->getSubject();
-
-	getMe()->setAdmin(true);
-
-	confParams->enableLocalParticipant(false);
-
-	// Store conference ID to retrieve later the local address when the focus call goes to StreamsRunning state
-	this->conferenceId = conferenceId;
-
-	setState(ConferenceInterface::State::Instantiated);
-}
-
-RemoteConference::RemoteConference(const shared_ptr<Core> &core,
-                                   const std::shared_ptr<LinphonePrivate::Call> &focusCall,
-                                   const ConferenceId &conferenceId,
-                                   CallSessionListener *listener,
-                                   const std::shared_ptr<LinphonePrivate::ConferenceParams> params)
-    : Conference(core, conferenceId.getLocalAddress(), listener, params) {
-
-	focus = Participant::create(this, focusCall->getRemoteContactAddress(), focusCall->getActiveSession());
-	lInfo() << "Create focus '" << *focus->getAddress() << "' from address : " << focusCall->getRemoteContact();
-	pendingSubject = confParams->getSubject();
-	setConferenceId(conferenceId);
-
-	const auto &conferenceAddress = focus->getSession()->getRemoteContactAddress();
-
-#ifdef HAVE_DB_STORAGE
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	if (mainDb) {
-		const auto &confInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
-		// me is admin if the organizer is the same as me
-		getMe()->setAdmin((confInfo && (confInfo->getOrganizerAddress()->weakEqual(*getMe()->getAddress()))));
-	}
-#endif
-
-	setState(ConferenceInterface::State::Instantiated);
-
-	setConferenceAddress(conferenceAddress);
-	finalizeCreation();
-}
-
-RemoteConference::~RemoteConference() {
-	terminate();
-#ifdef HAVE_ADVANCED_IM
-	eventHandler.reset();
-#endif // HAVE_ADVANCED_IM
-}
-
 void RemoteConference::finalizeCreation() {
 
 	if (getState() == ConferenceInterface::State::CreationPending) {

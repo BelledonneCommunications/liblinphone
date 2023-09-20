@@ -223,6 +223,7 @@ static void call_received(SalCallOp *h) {
 				endTime = times.front().second;
 			}
 
+			std::shared_ptr<MediaConference::LocalConference> localConference = nullptr;
 			if (!conference) {
 #ifdef HAVE_DB_STORAGE
 				std::shared_ptr<ConferenceInfo> confInfo =
@@ -230,9 +231,9 @@ static void call_received(SalCallOp *h) {
 				        ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(to)
 				        : nullptr;
 				if (confInfo) {
-					std::shared_ptr<MediaConference::LocalConference>(
-					    new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h),
-					    [](MediaConference::LocalConference *c) { c->unref(); });
+					localConference = dynamic_pointer_cast<MediaConference::LocalConference>(
+					    (new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h))->toSharedPtr());
+					localConference->initWithOp(h);
 				} else
 #endif // HAVE_DB_STORAGE
 				{
@@ -251,16 +252,16 @@ static void call_received(SalCallOp *h) {
 						return;
 					} else {
 
-						auto localConference = std::shared_ptr<MediaConference::LocalConference>(
-						    new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h),
-						    [](MediaConference::LocalConference *c) { c->unref(); });
+						localConference = dynamic_pointer_cast<MediaConference::LocalConference>(
+						    (new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h))->toSharedPtr());
+						localConference->initWithOp(h);
 						localConference->confirmCreation();
 						return;
 					}
 				}
 			} else if ((startTime != -1) || (endTime != -1)) {
 				// If start time or end time is not -1, then the client wants to update the conference
-				auto localConference = static_pointer_cast<MediaConference::LocalConference>(conference);
+				localConference = static_pointer_cast<MediaConference::LocalConference>(conference);
 				localConference->updateConferenceInformation(h);
 			}
 		}

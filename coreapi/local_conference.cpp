@@ -101,9 +101,21 @@ LocalConference::LocalConference(const shared_ptr<Core> &core,
 
 LocalConference::LocalConference(const std::shared_ptr<Core> &core, SalCallOp *op)
     : Conference(core, Address::create(op->getTo()), nullptr, ConferenceParams::create(core->getCCore())) {
+}
 
+LocalConference::~LocalConference() {
+	if ((state != ConferenceInterface::State::Terminated) && (state != ConferenceInterface::State::Deleted)) {
+		terminate();
+	}
 #ifdef HAVE_ADVANCED_IM
-	LinphoneCore *lc = core->getCCore();
+	eventHandler.reset();
+#endif // HAVE_ADVANCED_IM
+	mMixerSession.reset();
+}
+
+void LocalConference::createEventHandler() {
+#ifdef HAVE_ADVANCED_IM
+	LinphoneCore *lc = getCore()->getCCore();
 	bool_t eventLogEnabled =
 	    linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE);
 	if (eventLogEnabled) {
@@ -116,22 +128,13 @@ LocalConference::LocalConference(const std::shared_ptr<Core> &core, SalCallOp *o
 #ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
-
-	mMixerSession.reset(new MixerSession(*core.get()));
-
-	setState(ConferenceInterface::State::Instantiated);
-
-	configure(op);
 }
 
-LocalConference::~LocalConference() {
-	if ((state != ConferenceInterface::State::Terminated) && (state != ConferenceInterface::State::Deleted)) {
-		terminate();
-	}
-#ifdef HAVE_ADVANCED_IM
-	eventHandler.reset();
-#endif // HAVE_ADVANCED_IM
-	mMixerSession.reset();
+void LocalConference::initWithOp(SalCallOp *op) {
+	mMixerSession.reset(new MixerSession(*getCore().get()));
+	setState(ConferenceInterface::State::Instantiated);
+	createEventHandler();
+	configure(op);
 }
 
 void LocalConference::updateConferenceInformation(SalCallOp *op) {

@@ -45,19 +45,19 @@ public:
 	                 CallSessionListener *listener,
 	                 const std::shared_ptr<ConferenceParams> params);
 	RemoteConference(const std::shared_ptr<Core> &core,
-	                 const std::shared_ptr<LinphonePrivate::Call> &focusCall,
-	                 const ConferenceId &conferenceId,
-	                 CallSessionListener *listener,
-	                 const std::shared_ptr<ConferenceParams> params);
-	RemoteConference(const std::shared_ptr<Core> &core,
-	                 const std::shared_ptr<LinphonePrivate::CallSession> &focusSession,
-	                 const std::shared_ptr<Address> &confAddr,
-	                 const ConferenceId &conferenceId,
-	                 const ConferenceInfo::participant_list_t &invitees,
+	                 const std::shared_ptr<Address> &meAddr,
 	                 CallSessionListener *listener,
 	                 const std::shared_ptr<LinphonePrivate::ConferenceParams> params);
 	virtual ~RemoteConference();
 
+	void initWithInvitees(const std::shared_ptr<LinphonePrivate::Call> &focusCall,
+	                      const ConferenceInfo::participant_list_t &invitees,
+	                      const ConferenceId &conferenceId);
+	void initWithInvitees(const std::shared_ptr<Address> confAddr,
+	                      const std::shared_ptr<Address> focusAddr,
+	                      const std::shared_ptr<LinphonePrivate::CallSession> focusSession,
+	                      const ConferenceInfo::participant_list_t &invitees,
+	                      const ConferenceId &conferenceId);
 	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
 	                            const LinphoneCallParams *params) override;
 	virtual bool dialOutAddresses(const std::list<std::shared_ptr<Address>> &addressList) override;
@@ -183,6 +183,8 @@ private:
 	void onTransferingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> transfered,
 	                                   LinphoneCallState newCallState);
 	std::list<std::shared_ptr<Address>> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
+	void createFocus(const std::shared_ptr<Address> focusAddr,
+	                 const std::shared_ptr<LinphonePrivate::CallSession> focusSession = nullptr);
 
 	bool finalized = false;
 	bool scheduleUpdate = false;
