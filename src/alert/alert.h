@@ -75,8 +75,8 @@ private:
 	uint64_t mDelay;
 	uint64_t mLastCheck;
 };
-class AlertMonitor : public CoreAccessor {
 
+class AlertMonitor : public CoreAccessor {
 public:
 	AlertMonitor(const std::shared_ptr<Core> &core);
 	void notify(const std::shared_ptr<Dictionary> &properties, LinphoneAlertType);
@@ -89,9 +89,9 @@ public:
 	bool getAlertsEnabled();
 
 protected:
-	bool mAlertsEnabled;
 	std::unordered_map<LinphoneAlertType, AlertTimer> mTimers;
 	std::unordered_map<LinphoneAlertType, std::shared_ptr<Alert>> mRunningAlerts;
+	bool mAlertsEnabled;
 };
 
 class VideoQualityAlertMonitor : public AlertMonitor {

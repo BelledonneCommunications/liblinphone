@@ -30,13 +30,12 @@ LINPHONE_BEGIN_NAMESPACE
 NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionMethod method, const std::string &value)
     : CoreAccessor(core) {
 	LpConfig *config = linphone_core_get_config(core->getCCore());
+	char ref[17] = {0};
+	belle_sip_random_token(ref, 16);
+	mRef = ref;
+
 	if (method == ConstructionMethod::Default) {
-		mRef = value;
-		if (mRef.empty()) {
-			char ref[17] = {0};
-			belle_sip_random_token(ref, 16);
-			mRef = ref;
-		}
+
 	} else if (method == ConstructionMethod::FromSectionName) {
 		initFromSection(config, value.c_str());
 	} else if (method == ConstructionMethod::FromRefName) {
@@ -265,7 +264,8 @@ const struct addrinfo *NatPolicy::getStunServerAddrinfo() {
 }
 
 void NatPolicy::initFromSection(const LinphoneConfig *config, const char *section) {
-	mRef = linphone_config_get_string(config, section, "ref", "");
+	const char *ref = linphone_config_get_string(config, section, "ref", nullptr);
+	if (ref != nullptr) mRef = ref;
 	mStunServer = linphone_config_get_string(config, section, "stun_server", "");
 	mStunServerUsername = linphone_config_get_string(config, section, "stun_server_username", "");
 	mTurnUdpEnabled = !!linphone_config_get_bool(config, section, "turn_enable_udp", TRUE);

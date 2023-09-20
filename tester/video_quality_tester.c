@@ -217,7 +217,7 @@ static void video_call_with_high_bandwidth_available(void) {
 	pol.automatically_initiate = TRUE;
 	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_policy(pauline->lc, &pol);
-
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "QVGA");
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
 	simparams.max_bandwidth = 1000000;
@@ -232,8 +232,8 @@ static void video_call_with_high_bandwidth_available(void) {
 		/*wait a little in order to have traffic*/
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 5, 50000));
 
-		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 810000.f, float, "%f");
-		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 1150000.f, float, "%f");
+		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 750000.f, float, "%f");
+		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 1000000.f, float, "%f");
 
 		end_call(marie, pauline);
 	}
@@ -242,7 +242,7 @@ static void video_call_with_high_bandwidth_available(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int fps, const char *resolution) {
+static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int expected_fps, const char *resolution) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	LinphoneVideoPolicy pol = {0};
@@ -284,14 +284,14 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int f
 				BC_ASSERT_TRUE(
 				    wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000));
 
-				if ((int)vstream->configured_fps == fps) {
+				if ((int)vstream->configured_fps == expected_fps) {
 					break;
 				} else {
 					/*target fps not reached yet, wait more time*/
 					wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
 				}
 			}
-			BC_ASSERT_EQUAL((int)vstream->configured_fps, fps, int, "%d");
+			BC_ASSERT_EQUAL((int)vstream->configured_fps, expected_fps, int, "%d");
 			end_call(marie, pauline);
 		}
 	} else {
@@ -310,11 +310,7 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int f
  *
  **/
 static void video_call_expected_fps_for_low_bandwidth(void) {
-#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
-	video_call_expected_fps_for_specified_bandwidth(100000, 10, "qvga");
-#else
-	video_call_expected_fps_for_specified_bandwidth(350000, 15, "vga");
-#endif
+	video_call_expected_fps_for_specified_bandwidth(350000, 18, "vga");
 }
 
 /*
@@ -325,11 +321,7 @@ static void video_call_expected_fps_for_low_bandwidth(void) {
  *
  **/
 static void video_call_expected_fps_for_regular_bandwidth(void) {
-#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
-	video_call_expected_fps_for_specified_bandwidth(500000, 12, "vga");
-#else
-	video_call_expected_fps_for_specified_bandwidth(450000, 25, "vga");
-#endif
+	video_call_expected_fps_for_specified_bandwidth(500000, 25, "vga");
 }
 
 /*
@@ -340,11 +332,7 @@ static void video_call_expected_fps_for_regular_bandwidth(void) {
  *
  **/
 static void video_call_expected_fps_for_high_bandwidth(void) {
-#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
-	video_call_expected_fps_for_specified_bandwidth(400000, 12, "qcif");
-#else
 	video_call_expected_fps_for_specified_bandwidth(5000000, 30, "vga");
-#endif
 }
 
 static void video_call_expected_size_for_specified_bandwidth_with_congestion(
@@ -564,7 +552,7 @@ static void on_nack_alert(LinphoneCore *core, LinphoneAlert *alert) {
 	if (type == LinphoneAlertQoSRetransmissionFailures) {
 		(*count)++;
 		const LinphoneDictionary *props = linphone_alert_get_informations(alert);
-		float indicator = linphone_dictionary_get_float(props, "nack indicator");
+		float indicator = linphone_dictionary_get_float(props, "nack-performance");
 		BC_ASSERT_TRUE(indicator > 0.0f);
 	}
 }

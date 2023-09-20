@@ -172,10 +172,9 @@ LinphoneStatus linphone_proxy_config_set_route(LinphoneProxyConfig *cfg, const c
 		}
 		tmp.append(route);
 
-		SalAddress *addr = sal_address_new(tmp.c_str());
+		auto *addr = linphone_address_new(tmp.c_str());
 		if (addr != NULL) {
-			sal_address_unref(addr);
-			list = bctbx_list_append(list, linphone_address_new(tmp.c_str()));
+			list = bctbx_list_append(list, addr);
 		}
 	}
 
