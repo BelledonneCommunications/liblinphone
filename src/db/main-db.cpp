@@ -669,15 +669,15 @@ void MainDbPrivate::insertOrUpdateConferenceInfoParticipantParams(long long conf
 	ParticipantInfo::participant_params_t paramsCopy = params;
 
 	static const string organizerParamsQuery =
-	    "SELECT id, key FROM conference_info_participant_params WHERE conference_info_participant_id = :participantId ";
+	    "SELECT id, name FROM conference_info_participant_params WHERE conference_info_participant_id = :participantId ";
 	soci::rowset<soci::row> organizerParamsRows =
 	    (session->prepare << organizerParamsQuery, soci::use(conferenceInfoParticipantId));
 
 	// Update existing keys
 	for (const auto &organizerParamsRow : organizerParamsRows) {
 		const long long &id = dbSession.resolveId(organizerParamsRow, 0);
-		const auto key = organizerParamsRow.get<string>(1);
-		if (auto el = paramsCopy.find(key); el != paramsCopy.end()) {
+		const auto name = organizerParamsRow.get<string>(1);
+		if (auto el = paramsCopy.find(name); el != paramsCopy.end()) {
 			*session << "UPDATE conference_info_participant_params SET  value = :value WHERE id = :id",
 			    soci::use(el->second), soci::use(id);
 			paramsCopy.erase(el);
@@ -686,11 +686,11 @@ void MainDbPrivate::insertOrUpdateConferenceInfoParticipantParams(long long conf
 		}
 	}
 
-	// Add new key values pairs
-	for (const auto &[key, value] : paramsCopy) {
-		*session << "INSERT INTO conference_info_participant_params (conference_info_participant_id, key, value)  "
-		            "VALUES ( :participantId, :key, :value)",
-		    soci::use(conferenceInfoParticipantId), soci::use(key), soci::use(value);
+	// Add new name values pairs
+	for (const auto &[name, value] : paramsCopy) {
+		*session << "INSERT INTO conference_info_participant_params (conference_info_participant_id, name, value)  "
+		            "VALUES ( :participantId, :name, :value)",
+		    soci::use(conferenceInfoParticipantId), soci::use(name), soci::use(value);
 	}
 #endif
 }
@@ -1820,14 +1820,14 @@ MainDbPrivate::selectConferenceInfoParticipantParams(BCTBX_UNUSED(const long lon
 	ParticipantInfo::participant_params_t participantParams;
 #ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
-	static const string participantParamsQuery = "SELECT key, value FROM conference_info_participant_params WHERE "
+	static const string participantParamsQuery = "SELECT name, value FROM conference_info_participant_params WHERE "
 	                                             "conference_info_participant_id = :participantId";
 	soci::rowset<soci::row> participantParamsRows =
 	    (session->prepare << participantParamsQuery, soci::use(participantId));
 	for (const auto &participantParamsRow : participantParamsRows) {
-		const auto key = participantParamsRow.get<string>(0);
+		const auto name = participantParamsRow.get<string>(0);
 		const auto value = participantParamsRow.get<string>(1);
-		participantParams.insert(std::make_pair(key, value));
+		participantParams.insert(std::make_pair(name, value));
 	}
 #endif // HAVE_DB_STORAGE
 	return participantParams;
@@ -1840,20 +1840,20 @@ ParticipantInfo::participant_params_t MainDbPrivate::migrateConferenceInfoPartic
 #ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 	// Migrate participant parameters to the new table
-	for (const auto &[key, value] : unprocessedParticipantParams) {
+	for (const auto &[name, value] : unprocessedParticipantParams) {
 		std::string actualValue = value;
 		// To keep the backward compatibility, switch role from Unknown to Speaker during the migration
-		if (key.compare(ParticipantInfo::roleParameter) == 0) {
+		if (name.compare(ParticipantInfo::roleParameter) == 0) {
 			const auto roleEnum = Participant::textToRole(value);
 			if (roleEnum == Participant::Role::Unknown) {
 				actualValue = Participant::roleToText(Participant::Role::Speaker);
 			}
 		}
-		participantParams.insert(std::make_pair(key, actualValue));
+		participantParams.insert(std::make_pair(name, actualValue));
 
-		*session << "INSERT INTO conference_info_participant_params (conference_info_participant_id, key, value)  "
-		            "VALUES ( :participantId, :key, :value )",
-		    soci::use(participantId), soci::use(key), soci::use(actualValue);
+		*session << "INSERT INTO conference_info_participant_params (conference_info_participant_id, name, value)  "
+		            "VALUES ( :participantId, :name, :value )",
+		    soci::use(participantId), soci::use(name), soci::use(actualValue);
 	}
 #endif // HAVE_DB_STORAGE
 	return participantParams;
@@ -2379,12 +2379,12 @@ void MainDbPrivate::updateSchema() {
 	if (version < makeVersion(1, 0, 19)) {
 		*session << "ALTER TABLE conference_info ADD COLUMN state TINYINT UNSIGNED NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_info ADD COLUMN ics_sequence INT UNSIGNED DEFAULT 0";
-		*session << "ALTER TABLE conference_info ADD COLUMN ics_uid VARCHAR(2048) DEFAULT ''";
+		*session << "ALTER TABLE conference_info ADD COLUMN ics_uid VARCHAR(255) DEFAULT ''";
 	}
 
 	if (version < makeVersion(1, 0, 20)) {
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT 0";
-		*session << "ALTER TABLE conference_info_participant ADD COLUMN params VARCHAR(2048) DEFAULT ''";
+		*session << "ALTER TABLE conference_info_participant ADD COLUMN params VARCHAR(255) DEFAULT ''";
 	}
 
 	if (version < makeVersion(1, 0, 21)) {
@@ -2444,7 +2444,7 @@ void MainDbPrivate::updateSchema() {
 		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
 		                " NOT NULL,"
 		                " deleted BOOLEAN NOT NULL DEFAULT 0,"
-		                " params VARCHAR(2048) DEFAULT '',"
+		                " params VARCHAR(255) DEFAULT '',"
 		                " is_organizer BOOLEAN NOT NULL DEFAULT 0,"
 
 		                "  UNIQUE (conference_info_id, participant_sip_address_id, is_organizer),"
@@ -3497,10 +3497,11 @@ void MainDb::init() {
 		                "  conference_info_participant_id" +
 		                primaryKeyRefStr("BIGINT UNSIGNED") +
 		                " NOT NULL,"
-		                "  key VARCHAR(2048) DEFAULT '',"
-		                "  value VARCHAR(2048) DEFAULT '',"
+		                "  name VARCHAR(191) NOT NULL DEFAULT '',"
+		                "  value VARCHAR(191) DEFAULT '',"
 
-		                "  UNIQUE (conference_info_participant_id, key),"
+		                "  UNIQUE (conference_info_participant_id, name),"
+
 		                "  FOREIGN KEY (conference_info_participant_id)"
 		                "    REFERENCES conference_info_participant(id)"
 		                "    ON DELETE CASCADE"
