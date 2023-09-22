@@ -523,7 +523,10 @@ static void create_conference_dial_out_base(bool_t send_ics,
 					bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
 
 					if (mgr != focus.getCMgr()) {
-						check_conference_ssrc(fconference, pconference);
+						BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+						                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+							                   return check_conference_ssrc(fconference, pconference);
+						                   }));
 					}
 
 					LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
@@ -1368,7 +1371,10 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base(Linp
 				bctbx_list_free_with_data(participants_list, (void (*)(void *))linphone_participant_unref);
 
 				if (mgr != focus.getCMgr()) {
-					check_conference_ssrc(fconference, pconference);
+					BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+					                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+						                   return check_conference_ssrc(fconference, pconference);
+					                   }));
 				}
 
 				bctbx_list_t *devices = linphone_conference_get_participant_device_list(pconference);
@@ -1850,12 +1856,14 @@ static void simple_dial_out_conference_with_no_payloads(void) {
 
 } // namespace LinphoneTest
 
-static test_t local_conference_inpromptu_conference_tests[] = {
-    TEST_NO_TAG("Create simple dial out conference", LinphoneTest::create_simple_conference_dial_out),
+static test_t local_conference_encrypted_inpromptu_conference_tests[] = {
     TEST_NO_TAG("Create simple point-to-point encrypted dial out conference",
                 LinphoneTest::create_simple_point_to_point_encrypted_conference_dial_out),
     TEST_NO_TAG("Create simple end-to-end encrypted dial out conference",
-                LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out),
+                LinphoneTest::create_simple_end_to_end_encrypted_conference_dial_out)};
+
+static test_t local_conference_inpromptu_conference_tests[] = {
+    TEST_NO_TAG("Create simple dial out conference", LinphoneTest::create_simple_conference_dial_out),
     TEST_NO_TAG("Create simple dial out conference and ICS sent",
                 LinphoneTest::create_simple_conference_dial_out_and_ics),
     TEST_NO_TAG("Create simple dial out conference with late participant addition",
@@ -1889,6 +1897,19 @@ static test_t local_conference_inpromptu_mismatch_conference_tests[] = {
     TEST_NO_TAG("Simple dial out conference with no payloads",
                 LinphoneTest::simple_dial_out_conference_with_no_payloads)};
 
+test_suite_t local_conference_test_suite_encrypted_inpromptu_conference = {
+    "Local conference tester (Inpromptu Encrypted Conference)",
+    NULL,
+    NULL,
+    liblinphone_tester_before_each,
+    liblinphone_tester_after_each,
+    sizeof(local_conference_encrypted_inpromptu_conference_tests) /
+        sizeof(local_conference_encrypted_inpromptu_conference_tests[0]),
+    local_conference_encrypted_inpromptu_conference_tests,
+    0,
+    8 /*cpu_weight : video encnrypted conference uses more resources */
+};
+
 test_suite_t local_conference_test_suite_inpromptu_conference = {
     "Local conference tester (Inpromptu Conference)",
     NULL,
@@ -1910,4 +1931,5 @@ test_suite_t local_conference_test_suite_inpromptu_mismatch_conference = {
     sizeof(local_conference_inpromptu_mismatch_conference_tests) /
         sizeof(local_conference_inpromptu_mismatch_conference_tests[0]),
     local_conference_inpromptu_mismatch_conference_tests,
-    0};
+    0,
+    4};

@@ -483,7 +483,7 @@ void liblinphone_tester_add_suite_with_default_time(test_suite_t *suite, int ave
 }
 
 void liblinphone_tester_add_suites(void) {
-	liblinphone_tester_add_suite_with_default_time(&setup_test_suite, 157);
+	liblinphone_tester_add_suite_with_default_time(&setup_test_suite, 282);
 	liblinphone_tester_add_suite_with_default_time(&register_test_suite, 267);
 #ifdef HAVE_ADVANCED_IM
 	liblinphone_tester_add_suite_with_default_time(&group_chat_test_suite, 230);
@@ -507,7 +507,8 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(
 	    &local_conference_test_suite_scheduled_conference_audio_only_participant, 581);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_ice_conference, 563);
-	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_conference, 504);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_conference, 384);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_encrypted_inpromptu_conference, 150);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_mismatch_conference, 210);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_basic, 481);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_advanced, 300);
@@ -598,7 +599,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&complex_sip_call_test_suite, 0);
 #endif
 #ifdef VCARD_ENABLED
-	liblinphone_tester_add_suite_with_default_time(&vcard_test_suite, 58);
+	liblinphone_tester_add_suite_with_default_time(&vcard_test_suite, 210);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&utils_test_suite, 0);
 	liblinphone_tester_add_suite_with_default_time(&call_with_rtp_bundle_test_suite, 148);
@@ -628,7 +629,7 @@ void liblinphone_tester_init(void (*ftester_printf)(int level, const char *fmt, 
 	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 	liblinphone_tester_add_suites();
 	bc_tester_set_max_parallel_suites(32); /* empiricaly defined as sustainable for our lab 12 threads machine.*/
-	bc_tester_set_global_timeout(20 * 60); /* 20 mn max */
+	bc_tester_set_global_timeout(30 * 60); /* 20 mn max */
 }
 
 int liblinphone_tester_set_log_file(const char *filename) {

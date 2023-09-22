@@ -537,8 +537,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 					        if (lastMsg) {
 						        bctbx_list_t *displayed_list = linphone_chat_message_get_participants_by_imdn_state(
 						            lastMsg, LinphoneChatMessageStateDisplayed);
-						        const size_t expected_displayed_number =
-						            ((client->lc == pauline.getLc()) ? 2 : 1) + (add_participant ? 1 : 0);
+						        size_t expected_displayed_number = 2 + (add_participant ? 1 : 0);
 						        ret &= (bctbx_list_size(displayed_list) == expected_displayed_number);
 						        bctbx_list_free_with_data(displayed_list,
 						                                  (bctbx_list_free_func)linphone_participant_imdn_state_unref);
@@ -601,7 +600,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 		                          laure.getCMgr(), pauline.getCMgr()}) {
 			BC_ASSERT_TRUE(
 			    CoreManagerAssert({focus, marie, michelle, michelle2, berthe, laure, pauline})
-			        .wait([client, &berthe, &pauline, &add_participant, &confAddr] {
+			        .wait([client, &berthe, &add_participant, &confAddr] {
 				        const LinphoneAddress *deviceAddr =
 				            linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(client->lc));
 				        LinphoneChatRoom *cr =
@@ -615,8 +614,7 @@ group_chat_room_with_client_idmn_after_restart_base(bool_t encrypted, bool_t add
 					        if (lastMsg) {
 						        bctbx_list_t *displayed_list = linphone_chat_message_get_participants_by_imdn_state(
 						            lastMsg, LinphoneChatMessageStateDisplayed);
-						        size_t expected_displayed_number =
-						            ((client->lc == pauline.getLc()) ? 3 : 2) + (add_participant ? 1 : 0);
+						        size_t expected_displayed_number = 3 + (add_participant ? 1 : 0);
 						        ret &= (bctbx_list_size(displayed_list) == expected_displayed_number);
 						        bctbx_list_free_with_data(displayed_list,
 						                                  (bctbx_list_free_func)linphone_participant_imdn_state_unref);

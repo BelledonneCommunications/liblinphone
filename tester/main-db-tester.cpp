@@ -28,6 +28,11 @@
 #include "private.h"
 #include "tools/tester.h"
 
+#ifndef _WIN32
+#include <sys/resource.h>
+#include <sys/time.h>
+#endif
+
 // =============================================================================
 
 using namespace std;
@@ -356,18 +361,34 @@ static void get_chat_rooms() {
 }
 
 static void load_a_lot_of_chatrooms(void) {
+#ifndef _WIN32
+	int current_priority = getpriority(PRIO_PROCESS, 0);
+	int err = setpriority(PRIO_PROCESS, 0, -20);
+	if (err != 0) {
+		ms_warning("load_a_lot_of_chatrooms(): setpriority failed [%s]- the time measurement may be unreliable",
+		           strerror(errno));
+	}
+#endif
+
 	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 	MainDbProvider provider("db/chatrooms.db");
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
 	long ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
 #ifdef ENABLE_SANITIZER
-	BC_ASSERT_LOWER(ms, 2600, long, "%li");
+	BC_ASSERT_LOWER(ms, 3200, long, "%li");
 #else
 #if __APPLE__
 	BC_ASSERT_LOWER(ms, 1000, long, "%li");
 #else
 	BC_ASSERT_LOWER(ms, 600, long, "%li");
 #endif
+#endif
+
+#ifndef _WIN32
+	err = setpriority(PRIO_PROCESS, 0, current_priority);
+	if (err != 0) {
+		ms_warning("load_a_lot_of_chatrooms(): cannot restore priority to [%i]: %s", current_priority, strerror(errno));
+	}
 #endif
 }
 

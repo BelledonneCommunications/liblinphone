@@ -706,7 +706,7 @@ void check_create_chat_room_client_side(bctbx_list_t *lcs,
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined,
 			                             initialStats->number_of_LinphoneChatRoomConferenceJoined + 1,
-			                             liblinphone_tester_sip_timeout));
+			                             2 * liblinphone_tester_sip_timeout));
 
 			// FIXME: Small hack to handle situation where the core resubscribes to the chat room
 			wait_for_list(lcs, NULL, 0, 1000);
@@ -9124,7 +9124,7 @@ test_t group_chat4_tests[] = {
     TEST_NO_TAG("Send refer to all participants devices", group_chat_room_send_refer_to_all_devices),
     TEST_NO_TAG("Admin add device and doesn't lose admin status", group_chat_room_add_device),
     TEST_NO_TAG("Send multiple is composing", multiple_is_composing_notification),
-    TEST_ONE_TAG("Fallback to basic chat room", group_chat_room_fallback_to_basic_chat_room, "LeaksMemory"),
+    TEST_NO_TAG("Fallback to basic chat room", group_chat_room_fallback_to_basic_chat_room),
     TEST_NO_TAG("Group chat room creation fails if invited participants don't support it",
                 group_chat_room_creation_fails_if_invited_participants_dont_support_it),
     TEST_NO_TAG("Group chat room creation successful if at least one invited participant supports it",

@@ -536,7 +536,10 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 				bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
 
 				if (mgr != focus.getCMgr()) {
-					check_conference_ssrc(fconference, pconference);
+					BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, berthe})
+					                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+						                   return check_conference_ssrc(fconference, pconference);
+					                   }));
 				}
 			}
 		}
@@ -683,7 +686,10 @@ static void create_conference_with_audio_only_participants_base(LinphoneConferen
 				bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
 
 				if (mgr != focus.getCMgr()) {
-					check_conference_ssrc(fconference, pconference);
+					BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, berthe})
+					                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+						                   return check_conference_ssrc(fconference, pconference);
+					                   }));
 				}
 			}
 		}
@@ -1140,7 +1146,10 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 				bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
 
 				if (mgr != focus.getCMgr()) {
-					check_conference_ssrc(fconference, pconference);
+					BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe})
+					                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+						                   return check_conference_ssrc(fconference, pconference);
+					                   }));
 				}
 			}
 		}
@@ -1488,7 +1497,10 @@ static void create_conference_with_server_restart_base(bool_t organizer_first) {
 				bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
 
 				if (mgr != focus.getCMgr()) {
-					check_conference_ssrc(fconference, pconference);
+					BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure})
+					                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+						                   return check_conference_ssrc(fconference, pconference);
+					                   }));
 				}
 			}
 		}
@@ -1778,7 +1790,10 @@ static void create_simple_conference_with_update_deferred(void) {
 				bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
 
 				if (mgr != focus.getCMgr()) {
-					check_conference_ssrc(fconference, pconference);
+					BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure, michelle})
+					                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+						                   return check_conference_ssrc(fconference, pconference);
+					                   }));
 				}
 			}
 		}
@@ -2242,7 +2257,10 @@ static void change_active_speaker(void) {
 				bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
 
 				if (mgr != focus.getCMgr()) {
-					check_conference_ssrc(fconference, pconference);
+					BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure})
+					                   .waitUntil(chrono::seconds(10), [&fconference, &pconference] {
+						                   return check_conference_ssrc(fconference, pconference);
+					                   }));
 				}
 			}
 		}

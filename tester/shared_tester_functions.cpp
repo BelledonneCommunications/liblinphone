@@ -836,3 +836,56 @@ bool_t check_custom_m_line(LinphoneCall *call, const char *m_line) {
 	             remote_stream_type_ok;
 	return ret;
 }
+
+bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConference *remote_conference) {
+	bool ret = true;
+	if (!local_conference) ret = false;
+	if (!remote_conference) ret = false;
+	if (local_conference && remote_conference) {
+		bctbx_list_t *local_conference_participants = linphone_conference_get_participant_list(local_conference);
+
+		LinphoneParticipant *remote_conference_me = linphone_conference_get_me(remote_conference);
+		const LinphoneAddress *remote_me_address = linphone_participant_get_address(remote_conference_me);
+		for (bctbx_list_t *itp = local_conference_participants; itp; itp = bctbx_list_next(itp)) {
+			LinphoneParticipant *p = (LinphoneParticipant *)bctbx_list_get_data(itp);
+			const LinphoneAddress *p_address = linphone_participant_get_address(p);
+			bctbx_list_t *local_devices = NULL;
+			LinphoneParticipant *remote_participant =
+			    (linphone_address_equal(p_address, remote_me_address))
+			        ? linphone_conference_get_me(remote_conference)
+			        : linphone_conference_find_participant(remote_conference, p_address);
+			if (!remote_participant) ret = false;
+			if (remote_participant) {
+				local_devices = linphone_participant_get_devices(p);
+				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
+					LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+					LinphoneParticipantDevice *remote_device = linphone_participant_find_device(
+					    remote_participant, linphone_participant_device_get_address(d));
+					if (!remote_device) ret = false;
+					if (remote_device) {
+						for (const auto type :
+						     {LinphoneStreamTypeAudio, LinphoneStreamTypeVideo, LinphoneStreamTypeText}) {
+							for (const auto device : {d, remote_device}) {
+								if (linphone_participant_device_get_stream_capability(device, type) !=
+								    LinphoneMediaDirectionInactive) {
+									if (linphone_participant_device_get_ssrc(device, type) == 0) {
+										ret = false;
+									}
+								} else {
+									if (linphone_participant_device_get_ssrc(device, type) != 0) {
+										ret = false;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (local_devices) {
+				bctbx_list_free_with_data(local_devices, (void (*)(void *))linphone_participant_device_unref);
+			}
+		}
+		bctbx_list_free_with_data(local_conference_participants, (void (*)(void *))linphone_participant_unref);
+	}
+	return ret;
+}

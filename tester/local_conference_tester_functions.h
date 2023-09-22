@@ -183,8 +183,10 @@ public:
 			        << " is sending message with text " << text;
 			msg = linphone_chat_room_create_message_from_utf8(cr, text.c_str());
 			BC_ASSERT_PTR_NOT_NULL(msg);
-			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+			LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+			linphone_chat_message_add_callbacks(msg, cbs);
+			linphone_chat_message_cbs_unref(cbs);
 			linphone_chat_message_send(msg);
 		}
 		return msg;

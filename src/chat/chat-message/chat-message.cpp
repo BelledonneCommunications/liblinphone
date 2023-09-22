@@ -1732,9 +1732,11 @@ list<ParticipantImdnState> ChatMessage::getParticipantsByImdnState(ChatMessage::
 	unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, getStorageId());
 	list<MainDb::ParticipantState> dbResults = mainDb->getChatMessageParticipantsByImdnState(eventLog, state);
-	auto sender = chatRoom->findParticipant(getFromAddress());
+	const auto &from = getFromAddress();
+	auto sender = chatRoom->isMe(from) ? chatRoom->getMe() : chatRoom->findParticipant(from);
 	for (const auto &dbResult : dbResults) {
-		auto participant = chatRoom->findParticipant(dbResult.address);
+		const auto &pAddress = dbResult.address;
+		auto participant = chatRoom->isMe(pAddress) ? chatRoom->getMe() : chatRoom->findParticipant(pAddress);
 		if (participant && (participant != sender))
 			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
 	}

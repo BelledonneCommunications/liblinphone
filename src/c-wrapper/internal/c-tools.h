@@ -367,6 +367,11 @@ public:
 		WrappedBaseObject<CppType> *wrappedObject = reinterpret_cast<WrappedBaseObject<CppType> *>(cObject);
 		std::shared_ptr<CppType> oldCppObject;
 
+		// Keep the pointer to the memory address of the old C pointer in order to free it should it be needed
+		void *value = cppObject->getCBackPtr();
+		if (value && static_cast<WrappedBaseObject<CppType> *>(value)->owner == WrappedObjectOwner::Internal)
+			belle_sip_object_unref(value);
+
 		if (wrappedObject->owner == WrappedObjectOwner::Internal) {
 			oldCppObject = wrappedObject->weakCppPtr.lock();
 			wrappedObject->weakCppPtr = cppObject;
@@ -394,6 +399,11 @@ public:
 
 		if (reinterpret_cast<WrappedClonableObject<CppType> *>(cObject)->owner == WrappedObjectOwner::External)
 			delete *cppObjectAddr;
+
+		// Keep the pointer to the memory address of the old C pointer in order to free it should it be needed
+		void *value = cppObject->getCBackPtr();
+		if (value && static_cast<WrappedBaseObject<CppType> *>(value)->owner == WrappedObjectOwner::Internal)
+			belle_sip_object_unref(value);
 
 		*cppObjectAddr = cppObject;
 		(*cppObjectAddr)->setCBackPtr(cObject);

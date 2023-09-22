@@ -1566,16 +1566,14 @@ ServerGroupChatRoom::ServerGroupChatRoom(const shared_ptr<Core> &core,
 
 ServerGroupChatRoom::~ServerGroupChatRoom() {
 	lInfo() << this << " destroyed.";
-	if (getConference()->getConferenceId().isValid()) {
-		try {
-			if (getCore()->getPrivate()->localListEventHandler) {
-				getCore()->getPrivate()->localListEventHandler->removeHandler(
-				    static_pointer_cast<LocalConference>(getConference())->eventHandler.get());
-			}
-			getCore()->getPrivate()->unregisterListener(this);
-		} catch (const bad_weak_ptr &) {
-			// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	try {
+		if (getCore()->getPrivate()->localListEventHandler) {
+			getCore()->getPrivate()->localListEventHandler->removeHandler(
+			    static_pointer_cast<LocalConference>(getConference())->eventHandler.get());
 		}
+		getCore()->getPrivate()->unregisterListener(this);
+	} catch (const bad_weak_ptr &) {
+		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 	}
 };
 

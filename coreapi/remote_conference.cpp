@@ -966,9 +966,11 @@ void RemoteConference::onFocusCallStateChanged(LinphoneCallState state) {
 	}
 
 	const auto &confState = ref->getState();
-	// Do not send updates if the conference is ending or about to end
+	auto ms = static_pointer_cast<MediaSession>(session);
+	// Do not send updates if the conference is ending or about to end or the call is in temporary state
 	if ((confState != ConferenceInterface::State::Terminated) &&
-	    (confState != ConferenceInterface::State::TerminationPending) && scheduleUpdate) {
+	    (confState != ConferenceInterface::State::TerminationPending) && scheduleUpdate &&
+	    ms->getPrivate()->canSoundResourcesBeFreed()) {
 		lInfo() << "Executing scheduled update of the focus session of conference "
 		        << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<address-not-defined>"));
 		if (updateMainSession() == 0) {
@@ -1372,6 +1374,7 @@ void RemoteConference::onParticipantDeviceRemoved(
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams *params = session->getMediaParams();
 
+	const auto &deviceAddress = device->getAddress();
 	const auto &confSecurityLevel = confParams->getSecurityLevel();
 	const auto &audioAvailable = device->getStreamAvailability(LinphoneStreamTypeAudio);
 	const auto audioNeedsReInvite = ((confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd) &&
@@ -1380,13 +1383,13 @@ void RemoteConference::onParticipantDeviceRemoved(
 	const auto videoNeedsReInvite = (confParams->videoEnabled() && params->videoEnabled());
 
 	if ((audioNeedsReInvite || videoNeedsReInvite) && (getState() == ConferenceInterface::State::Created) &&
-	    !isMe(device->getAddress()) && (device->getTimeOfJoining() >= 0)) {
-		auto updateSession = [this, device]() -> LinphoneStatus {
-			lInfo() << "Sending re-INVITE in order to update streams because participant device "
-			        << *device->getAddress() << " has been removed from conference " << *getConferenceAddress();
+	    !isMe(deviceAddress) && (device->getTimeOfJoining() >= 0)) {
+		auto updateSession = [this, deviceAddress]() -> LinphoneStatus {
+			lInfo() << "Sending re-INVITE in order to update streams because participant device " << *deviceAddress
+			        << " has been removed from conference " << *getConferenceAddress();
 			auto ret = updateMainSession();
 			if (ret != 0) {
-				lInfo() << "re-INVITE to update streams because participant device " << *device->getAddress()
+				lInfo() << "re-INVITE to update streams because participant device " << *deviceAddress
 				        << " has been removed from conference " << *getConferenceAddress()
 				        << " cannot be sent right now";
 			}

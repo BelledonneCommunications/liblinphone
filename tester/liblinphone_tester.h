@@ -147,6 +147,7 @@ extern test_suite_t local_conference_test_suite_scheduled_conference_advanced;
 extern test_suite_t local_conference_test_suite_scheduled_conference_audio_only_participant;
 extern test_suite_t local_conference_test_suite_scheduled_ice_conference;
 extern test_suite_t local_conference_test_suite_inpromptu_conference;
+extern test_suite_t local_conference_test_suite_encrypted_inpromptu_conference;
 extern test_suite_t local_conference_test_suite_inpromptu_mismatch_conference;
 extern test_suite_t external_domain_test_suite;
 extern test_suite_t potential_configuration_graph_test_suite;
@@ -937,7 +938,7 @@ create_mgr_for_conference(const char *rc_file, bool_t check_for_proxies, const c
 void setup_mgr_for_conference(LinphoneCoreManager *mgr, const char *conference_version);
 void setup_conference_info_cbs(LinphoneCoreManager *mgr);
 void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
-void check_conference_ssrc(LinphoneConference *local_conference, LinphoneConference *remote_conference);
+bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConference *remote_conference);
 void check_conference_medias(LinphoneConference *local_conference, LinphoneConference *remote_conference);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs,
                                                                   LinphoneCoreManager *conf_mgr,

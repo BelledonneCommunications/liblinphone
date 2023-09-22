@@ -551,20 +551,26 @@ void IceService::updateFromRemoteMediaDescription(const std::shared_ptr<SalMedia
 
 	// Create ICE check lists if needed and parse ICE attributes.
 	createIceCheckListsAndParseIceAttributes(remoteDesc, iceRestarted);
-	for (size_t i = 0; i < remoteDesc->streams.size(); i++) {
-		const auto &remoteDescStream = remoteDesc->streams[i];
+	size_t i;
+	for (i = 0; i < mStreamsGroup.getStreams().size(); i++) {
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
 		if (!cl) continue;
-		if (!remoteDescStream.enabled() || (remoteDescStream.getRtpPort() == 0) ||
-		    (remoteDescStream.getDirection() == SalStreamInactive)) {
-			/*
-			 * rtp_port == 0 is true when it is a secondary stream part of bundle.
-			 */
-			ice_session_remove_check_list_from_idx(mIceSession, static_cast<unsigned int>(i));
-			auto stream = mStreamsGroup.getStream(i);
-			stream->setIceCheckList(nullptr);
-			stream->iceStateChanged();
+		if (i < remoteDesc->streams.size()) {
+			const auto &remoteDescStream = remoteDesc->streams[i];
+			if (remoteDescStream.enabled() && remoteDescStream.getRtpPort() != 0 &&
+			    remoteDescStream.getDirection() != SalStreamInactive) {
+				/*
+				 * rtp_port == 0 is true when it is a secondary stream part of bundle.
+				 */
+				/* Stream still needs ICE */
+				continue;
+			}
 		}
+		/* This stream is unused or no longer needs ICE, remove its check list */
+		ice_session_remove_check_list_from_idx(mIceSession, static_cast<unsigned int>(i));
+		auto stream = mStreamsGroup.getStream(i);
+		stream->setIceCheckList(nullptr);
+		stream->iceStateChanged();
 	}
 	clearUnusedIceCandidates(localDesc, remoteDesc, !isOffer);
 	ice_session_check_mismatch(mIceSession);

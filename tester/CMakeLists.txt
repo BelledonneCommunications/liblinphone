@@ -278,6 +278,7 @@ set(SOURCE_FILES_C
 	tunnel_tester.c
 	vcard_tester.c
 	video_quality_tester.c
+	local_chat_tester_functions.cpp
 	local_conference_tester_functions.cpp
 	local_scheduled_conference_tester.cpp
 	local_ice_conference_tester.cpp

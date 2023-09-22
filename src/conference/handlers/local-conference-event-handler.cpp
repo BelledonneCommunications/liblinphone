@@ -1021,11 +1021,11 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 			oldEv->terminate();
 		}
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
-			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress()
+			lInfo() << "Sending initial notify of conference [" << conferenceAddressString
 			        << "] to: " << *device->getAddress() << " with last notif set to " << conf->getLastNotify();
 			if (deviceState == ParticipantDevice::State::Present) {
 				lInfo() << "Device " << *device->getAddress() << " is already part of conference ["
-				        << conf->getConferenceAddress()
+				        << conferenceAddressString
 				        << "] hence send full state to be sure the client and the server are on the same page";
 			} else {
 				conf->setLastNotify(lastNotify + 1);
@@ -1042,7 +1042,7 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 			}
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for conference ["
-			        << conf->getConferenceAddress() << "] to: " << *participant->getAddress();
+			        << conferenceAddressString << "] to: " << *participant->getAddress();
 
 			const int fullStateTrigger =
 			    linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
@@ -1059,7 +1059,7 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 			}
 		} else if (evLastNotify > lastNotify) {
 			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference ["
-			           << conf->getConferenceAddress() << "] should not be higher than last notify sent by server ["
+			           << conferenceAddressString << "] should not be higher than last notify sent by server ["
 			           << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
 			notifyFullState(createNotifyFullState(ev), device);
 		} else {
