@@ -49,9 +49,6 @@ typedef struct SalIceRemoteCandidate {
 	int port = 0;
 } SalIceRemoteCandidate;
 
-/*sufficient for 256bit keys encoded in base 64*/
-#define SAL_SRTP_KEY_SIZE 128
-
 typedef struct SalSrtpCryptoAlgo {
 	unsigned int tag = 0;
 	MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;

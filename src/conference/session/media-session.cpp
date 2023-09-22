@@ -20,6 +20,7 @@
 
 // #include <iomanip>
 // #include <math.h>
+
 #include <algorithm>
 
 #include "account/account.h"
@@ -44,7 +45,7 @@
 
 #include "linphone/core.h"
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include <mediastreamer2/mediastream.h>
 #include <mediastreamer2/msequalizer.h>
@@ -53,7 +54,6 @@
 
 #include <mediastreamer2/msrtt4103.h>
 #include <mediastreamer2/msvolume.h>
-#include <ortp/b64.h>
 
 #include "conference.h"
 #include "private.h"
@@ -1464,36 +1464,12 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState(std::shared_ptr<SalMed
 	}
 }
 
-bool MediaSessionPrivate::generateB64CryptoKey(size_t keyLength, std::string &keyOut, size_t keyOutSize) const {
-	uint8_t *tmp = (uint8_t *)ms_malloc0(keyLength);
-	if (!sal_get_random_bytes(tmp, keyLength)) {
-		lError() << "Failed to generate random key";
-		ms_free(tmp);
+bool MediaSessionPrivate::generateB64CryptoKey(size_t keyLength, std::string &keyOut) {
+	vector<uint8_t> src = mRng.randomize(keyLength);
+	keyOut = bctoolbox::encodeBase64(src);
+	if (keyOut.empty()) {
 		return false;
 	}
-	size_t b64Size = b64::b64_encode((const char *)tmp, keyLength, nullptr, 0);
-	if (b64Size == 0) {
-		lError() << "Failed to get b64 result size";
-		ms_free(tmp);
-		return false;
-	}
-	if (b64Size >= keyOutSize) {
-		lError() << "Insufficient room for writing base64 SRTP key";
-		ms_free(tmp);
-		return false;
-	}
-	// Initialize characters with \0
-	char *key = new char[keyOutSize]{'\0'};
-	b64Size = b64::b64_encode((const char *)tmp, keyLength, key, keyOutSize);
-	if (b64Size == 0) {
-		lError() << "Failed to b64 encode key";
-		ms_free(tmp);
-		delete[] key;
-		return false;
-	}
-	keyOut.assign(key);
-	delete[] key;
-	ms_free(tmp);
 	return true;
 }
 
@@ -2639,7 +2615,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	if (op) op->setLocalMediaDescription(localDesc);
 }
 
-int MediaSessionPrivate::setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoSuite suite, unsigned int tag) const {
+int MediaSessionPrivate::setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoSuite suite, unsigned int tag) {
 	crypto.tag = tag;
 	crypto.algo = suite;
 	size_t keylen = 0;
@@ -2667,7 +2643,7 @@ int MediaSessionPrivate::setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoS
 		case MS_CRYPTO_SUITE_INVALID:
 			break;
 	}
-	if ((keylen == 0) || !generateB64CryptoKey(keylen, crypto.master_key, SAL_SRTP_KEY_SIZE)) {
+	if ((keylen == 0) || !generateB64CryptoKey(keylen, crypto.master_key)) {
 		lError() << "Could not generate SRTP key";
 		crypto.algo = MS_CRYPTO_SUITE_INVALID;
 		return -1;
@@ -2936,7 +2912,7 @@ static LinphoneSrtpSuite MSCryptoSuite2LinphoneSrtpSuite(const MSCryptoSuite sui
 	}
 }
 
-std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() const {
+std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() {
 	L_Q();
 	std::vector<SalSrtpCryptoAlgo> cryptos;
 	const bool doNotUseParams = (direction == LinphoneCallIncoming) && (state == CallSession::State::Idle);

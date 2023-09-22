@@ -25,6 +25,8 @@
 #include <queue>
 #include <vector>
 
+#include "bctoolbox/crypto.hh"
+
 #include "call-session-p.h"
 #include "ms2-streams.h"
 
@@ -111,8 +113,8 @@ public:
 		return streamsGroup->getCurrentOfferAnswerContext().remoteMediaDescription;
 	}
 
-	int setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoSuite suite, unsigned int tag) const;
-	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys() const;
+	int setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoSuite suite, unsigned int tag);
+	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys();
 
 	const LinphoneStreamInternalStats *getStreamInternalStats(LinphoneStreamType type) const;
 	const std::shared_ptr<NatPolicy> getNatPolicy() const {
@@ -223,7 +225,7 @@ private:
 	void selectOutgoingIpVersion();
 
 	void forceStreamsDirAccordingToState(std::shared_ptr<SalMediaDescription> &md);
-	bool generateB64CryptoKey(size_t keyLength, std::string &keyOut, size_t keyOutSize) const;
+	bool generateB64CryptoKey(size_t keyLength, std::string &keyOut);
 	void makeLocalMediaDescription(bool localIsOfferer,
 	                               const bool supportsCapabilityNegotiationAttributes,
 	                               const bool offerNegotiatedMediaProtocolOnly,
@@ -401,6 +403,8 @@ private:
 	std::shared_ptr<AudioDevice> currentInputAudioDevice = nullptr;
 
 	SalMediaRecord lastRemoteRecordingState = SalMediaRecordOff;
+
+	bctoolbox::RNG mRng; // Used to the generation of crypto keys
 
 	L_DECLARE_PUBLIC(MediaSession);
 };

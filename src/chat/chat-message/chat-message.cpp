@@ -50,15 +50,11 @@
 #include "logger/logger.h"
 #include "sip-tools/sip-headers.h"
 
-#include "ortp/b64.h"
-
 #include "db/main-db-key-p.h"
 #include "db/main-db-p.h"
 // =============================================================================
 
 using namespace std;
-
-using namespace B64_NAMESPACE;
 
 LINPHONE_BEGIN_NAMESPACE
 

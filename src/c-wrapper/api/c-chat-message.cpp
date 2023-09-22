@@ -23,8 +23,6 @@
 #include "linphone/utils/utils.h"
 #include "linphone/wrapper_utils.h"
 
-#include "ortp/b64.h"
-
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"

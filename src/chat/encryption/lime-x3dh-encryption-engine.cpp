@@ -19,8 +19,9 @@
  */
 
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/crypto.hh"
+#include "bctoolbox/defs.h"
 #include "bctoolbox/exception.hh"
-#include <bctoolbox/defs.h>
 
 #include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
@@ -375,7 +376,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				    // ---------------------------------------------- HEADERS
 
 				    for (const lime::RecipientData &recipient : filteredRecipients) {
-					    string cipherHeaderB64 = encodeBase64(recipient.DRmessage);
+					    string cipherHeaderB64 = bctoolbox::encodeBase64(recipient.DRmessage);
 					    Content *cipherHeader = new Content();
 					    cipherHeader->setBodyFromLocale(cipherHeaderB64);
 					    cipherHeader->setContentType(ContentType::LimeKey);
@@ -388,7 +389,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				    // ---------------------------------------------- MESSAGE
 
 				    const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
-				    string cipherMessageB64 = encodeBase64(*binaryCipherMessage);
+				    string cipherMessageB64 = bctoolbox::encodeBase64(*binaryCipherMessage);
 				    Content *cipherMessage = new Content();
 				    cipherMessage->setBodyFromLocale(cipherMessageB64);
 				    cipherMessage->setContentType(ContentType::OctetStream);
@@ -544,8 +545,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 		return ChatMessageModifier::Result::Error;
 	}
 
-	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
-	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
+	vector<uint8_t> decodedCipherHeader = bctoolbox::decodeBase64(cipherHeader);
+	vector<uint8_t> decodedCipherMessage = bctoolbox::decodeBase64(cipherMessage);
 	vector<uint8_t> plainMessage{};
 
 	try {
@@ -741,7 +742,7 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(cons
 
 	// Encode to base64 and append to the parameter list
 	list<pair<string, string>> paramList;
-	string IkB64 = encodeBase64(Ik);
+	string IkB64 = bctoolbox::encodeBase64(Ik);
 	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
 	// Switch here to lime-Ik to start publishing lime-Ik instead of Ik
 	paramList.push_back(make_pair("Ik", IkB64));
@@ -794,8 +795,8 @@ void LimeX3dhEncryptionEngine::mutualAuthentication(MSZrtpContext *zrtpContext,
 	}
 
 	// Convert to vectors and decode base64
-	vector<uint8_t> localIk = decodeBase64(LocalIkB64);
-	vector<uint8_t> remoteIk = decodeBase64(RemoteIkB64);
+	vector<uint8_t> localIk = bctoolbox::decodeBase64(LocalIkB64);
+	vector<uint8_t> remoteIk = bctoolbox::decodeBase64(RemoteIkB64);
 
 	// Concatenate identity keys in the right order
 	vector<uint8_t> vectorAuxSharedSecret;
@@ -841,7 +842,7 @@ void LimeX3dhEncryptionEngine::authenticationVerified(
 		}
 	}
 
-	vector<uint8_t> remoteIk = decodeBase64(remoteIkB64);
+	vector<uint8_t> remoteIk = bctoolbox::decodeBase64(remoteIkB64);
 	const std::shared_ptr<Address> peerDeviceAddr = Address::create(peerDeviceId);
 
 	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 2 /*BZRTP_AUXSECRET_UNSET*/) {

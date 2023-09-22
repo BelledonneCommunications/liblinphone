@@ -33,30 +33,6 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-inline std::string encodeBase64(const std::vector<uint8_t> &input) {
-	const unsigned char *inputBuffer = input.data();
-	size_t inputLength = input.size();
-	size_t encodedLength = 0;
-	bctbx_base64_encode(NULL, &encodedLength, inputBuffer, inputLength); // set encodedLength to the correct value
-	unsigned char *encodedBuffer = new unsigned char[encodedLength];     // allocate encoded buffer with correct length
-	bctbx_base64_encode(encodedBuffer, &encodedLength, inputBuffer, inputLength); // real encoding
-	std::string output((char *)encodedBuffer);
-	delete[] encodedBuffer;
-	return output;
-}
-
-inline std::vector<uint8_t> decodeBase64(const std::string &input) {
-	const unsigned char *inputBuffer = (const unsigned char *)input.data();
-	size_t inputLength = input.size();
-	size_t decodedLength = 0;
-	bctbx_base64_decode(NULL, &decodedLength, inputBuffer, inputLength); // set decodedLength to the correct value
-	unsigned char *decodedBuffer = new unsigned char[decodedLength];     // allocate decoded buffer with correct length
-	bctbx_base64_decode(decodedBuffer, &decodedLength, inputBuffer, inputLength); // real decoding
-	std::vector<uint8_t> output(decodedBuffer, decodedBuffer + decodedLength);
-	delete[] decodedBuffer;
-	return output;
-}
-
 class LimeManager : public lime::LimeManager {
 public:
 	LimeManager(const std::string &db_access,

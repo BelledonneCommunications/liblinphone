@@ -18,11 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "belle-sip/belle-sip.h"
-
-#include "ortp/b64.h"
 
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"

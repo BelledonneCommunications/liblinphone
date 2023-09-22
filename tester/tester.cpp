@@ -36,7 +36,7 @@
 #include "logger/logger.h"
 
 #ifdef HAVE_LIME_X3DH
-#include "chat/encryption/lime-x3dh-encryption-engine.h"
+#include "bctoolbox/crypto.hh"
 #endif // HAVE_LIME_X3DH
 
 bool is_filepath_encrypted(const char *filepath) {
@@ -112,7 +112,7 @@ char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu) {
 			const size_t public_key_size = ik_blob.get_len() / 2;
 			ik_blob.read(0, (char *)(ikRaw.data()), public_key_size); // Read the public key
 			std::vector<uint8_t> ik(ikRaw.cbegin(), ikRaw.cbegin() + public_key_size);
-			std::string ikStr = LinphonePrivate::encodeBase64(ik);
+			std::string ikStr = bctoolbox::encodeBase64(ik);
 			if (!ikStr.empty()) {
 				ret = ms_strdup(ikStr.c_str());
 			}
