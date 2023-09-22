@@ -127,7 +127,7 @@ class CsharpTranslator:
 					if isinstance(arg.type, AbsApi.ClassType):
 						argname = arg.name.translate(self.nameTranslator)
 						keepAlive = {}
-						keepAlive['keep_alive'] = f'GC.KeepAlive({argname});'
+						keepAlive['keep_alive'] = f"GC.KeepAlive({argname});"
 						methodDict['impl']['gc_keepalive'].append(keepAlive)
 						methodDict['impl']['c_args'] += argname + " != null ? " + argname + ".nativePtr : IntPtr.Zero"
 					else:
