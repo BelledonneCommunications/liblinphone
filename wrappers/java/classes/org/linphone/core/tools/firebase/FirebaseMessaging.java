@@ -74,21 +74,31 @@ public class FirebaseMessaging extends FirebaseMessagingService {
             storePushRemoteMessage(remoteMessage);
             notifyAppPushReceivedWithoutCoreAvailable();
         } else {
-            Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
-            if (CoreManager.instance() != null) {
-                Core core = CoreManager.instance().getCore();
-                if (core != null) {
-                    Map<String, String> data = remoteMessage.getData();
-                    String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");                    
-                    String payload = new JSONObject(data).toString();
-                    Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
-                    CoreManager.instance().processPushNotification(callId, payload, false);
-                } else {
-                    Log.w("[Push Notification] No Core found, notifying application directly");
-                    storePushRemoteMessage(remoteMessage);
-                    notifyAppPushReceivedWithoutCoreAvailable();
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
+                    Core core = CoreManager.instance().getCore();
+                    if (core != null) {
+                        Map<String, String> data = remoteMessage.getData();
+                        String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");                    
+                        String payload = new JSONObject(data).toString();
+                        Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
+                        CoreManager.instance().processPushNotification(callId, payload, false);
+                    } else {
+                        Log.w("[Push Notification] No Core found, notifying application directly");
+                        Runnable pushRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                storePushRemoteMessage(remoteMessage);
+                                notifyAppPushReceivedWithoutCoreAvailable();
+                            }
+                        };
+                        AndroidDispatcher.dispatchOnUIThread(pushRunnable);
+                    }
                 }
-            }
+            };                
+            CoreManager.instance().dispatchOnCoreThread(runnable);
         }
     }
 

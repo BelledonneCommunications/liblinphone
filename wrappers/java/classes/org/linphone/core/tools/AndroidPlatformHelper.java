@@ -36,6 +36,7 @@ import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Surface;
@@ -85,7 +86,7 @@ public class AndroidPlatformHelper {
     private boolean mWifiOnly;
     private boolean mUsingHttpProxy;
     private NetworkManagerInterface mNetworkManager;
-    private Handler mMainHandler;
+    private Handler mHandler;
     private boolean mMonitoringEnabled;
     private InteractivityReceiver mInteractivityReceiver;
     private String[] mDnsServers;
@@ -120,7 +121,7 @@ public class AndroidPlatformHelper {
         mWifiOnly = wifiOnly;
         mDnsServers = null;
         mResources = mContext.getResources();
-        mMainHandler = new Handler(mContext.getMainLooper());
+        mHandler = new Handler(Looper.myLooper());
 
         MediastreamerAndroidContext.setContext(mContext);
 
@@ -193,7 +194,7 @@ public class AndroidPlatformHelper {
         }
 
         mNativePtr = 0;
-        mMainHandler.removeCallbacksAndMessages(null);
+        mHandler.removeCallbacksAndMessages(null);
         stopNetworkMonitoring();
     }
 
@@ -667,7 +668,7 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized Handler getHandler() {
-        return mMainHandler;
+        return mHandler;
     }
 
     public synchronized boolean isInBackground() {

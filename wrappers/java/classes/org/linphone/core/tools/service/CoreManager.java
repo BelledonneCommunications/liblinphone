@@ -66,7 +66,6 @@ public class CoreManager {
     private static CoreManager sInstance;
     private static final int AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED = 20; // 20ms
     private static final int AUTO_ITERATE_TIMER_RESET_AFTER = 20000; // 20s
-    private static final int DELAY_BEFORE_UPDATING_DISPLAY_ORIENTATION = 500; // 500ms
 
     public static boolean isReady() {
         return sInstance != null;
@@ -119,6 +118,16 @@ public class CoreManager {
         mTimer = null;
         mForcedIterateTimer = null;
 
+        Looper myLooper = Looper.myLooper();
+        mHandler = new Handler(myLooper);
+        Thread thread = myLooper.getThread();
+        boolean isMainThread = myLooper == Looper.getMainLooper();
+        if (isMainThread) {
+            Log.i("[Core Manager] Linphone SDK Android classes will use main thread: [", thread.getName(), "], id=", thread.getId());
+        } else {
+            Log.i("[Core Manager] Linphone SDK Android classes won't use main thread: [", thread.getName(), "], id=", thread.getId());
+        }
+
         // DO NOT ADD A LISTENER ON THE CORE HERE!
         // Wait for onLinphoneCoreStart()
 
@@ -151,12 +160,7 @@ public class CoreManager {
             @Override
             public void onDisplayChanged(int displayId) {
                 Log.i("[Core Manager] Display changed: ", displayId);
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateOrientation(displayId);
-                    }
-                }, DELAY_BEFORE_UPDATING_DISPLAY_ORIENTATION);
+                updateOrientation(displayId);
             }
 
             @Override
@@ -165,7 +169,6 @@ public class CoreManager {
             }
         };
         mDisplayManager = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
-        mHandler = new Handler(Looper.getMainLooper());
         mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
 
         IntentFilter shutdownIntentFilter = new IntentFilter(Intent.ACTION_SHUTDOWN);
@@ -179,6 +182,16 @@ public class CoreManager {
         if (mServiceClass == null) mServiceClass = CoreService.class;
 
         Log.i("[Core Manager] Ready");
+    }
+
+    // Core thread may be the same as UI thread id Core was created from UI thread
+    public void dispatchOnCoreThread(Runnable r) {
+        mHandler.post(r);
+    }
+
+    // Core thread may be the same as UI thread id Core was created from UI thread
+    public void dispatchOnCoreThreadAfter(Runnable r, long after) {
+        mHandler.postDelayed(r, after);
     }
 
     public void destroy() {
@@ -414,7 +427,7 @@ public class CoreManager {
             new TimerTask() {
                 @Override
                 public void run() {
-                    AndroidDispatcher.dispatchOnUIThread(new Runnable() {
+                    dispatchOnCoreThread(new Runnable() {
                         @Override
                         public void run() {
                             Log.i("[Core Manager] Resetting core.iterate() schedule depending on background/foreground state");
@@ -453,7 +466,7 @@ public class CoreManager {
             new TimerTask() {
                 @Override
                 public void run() {
-                    AndroidDispatcher.dispatchOnUIThread(mIterateRunnable);
+                    dispatchOnCoreThread(mIterateRunnable);
                 }
             };
 
@@ -564,35 +577,41 @@ public class CoreManager {
     }
 
     public void onBackgroundMode() {
-        Log.i("[Core Manager] App has entered background mode");
-        if (mCore != null) {
-            enterBackground(mCore.getNativePointer());
-            if (mCore.isAutoIterateEnabled()) {
-                stopTimerToResetAutoIterateSchedule();
-                Log.i("[Core Manager] Restarting core.iterate() schedule with background timer");
-                startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
+        Runnable backgroundRunnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.i("[Core Manager] App has entered background mode");
+                if (mCore != null) {
+                    enterBackground(mCore.getNativePointer());
+                    if (mCore.isAutoIterateEnabled()) {
+                        stopTimerToResetAutoIterateSchedule();
+                        Log.i("[Core Manager] Restarting core.iterate() schedule with background timer");
+                        startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
+                    }
+                }
             }
-        }
+        };
+        dispatchOnCoreThread(backgroundRunnable);
     }
 
     public void onForegroundMode() {
-        Log.i("[Core Manager] App has left background mode");
-        if (mCore != null) {
-            enterForeground(mCore.getNativePointer());
+        Runnable foregroundRunnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.i("[Core Manager] App has left background mode");
+                if (mCore != null) {
+                    enterForeground(mCore.getNativePointer());
+                    updateOrientation(Display.DEFAULT_DISPLAY);
 
-            mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateOrientation(Display.DEFAULT_DISPLAY);
+                    if (mCore.isAutoIterateEnabled()) {
+                        stopTimerToResetAutoIterateSchedule();
+                        Log.i("[Core Manager] Restarting core.iterate() schedule with foreground timer");
+                        startAutoIterate(mCore.getAutoIterateForegroundSchedule());
                     }
-                }, DELAY_BEFORE_UPDATING_DISPLAY_ORIENTATION);
-
-            if (mCore.isAutoIterateEnabled()) {
-                stopTimerToResetAutoIterateSchedule();
-                Log.i("[Core Manager] Restarting core.iterate() schedule with foreground timer");
-                startAutoIterate(mCore.getAutoIterateForegroundSchedule());
+                }
             }
-        }
+        };
+        dispatchOnCoreThread(foregroundRunnable);
     }
 
     public void setPushToken(String token) {
