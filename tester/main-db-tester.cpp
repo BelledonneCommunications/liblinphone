@@ -50,6 +50,7 @@ public:
 		bc_free(roDbPath);
 		bc_free(rwDbPath);
 		linphone_core_manager_start(mCoreManager, false);
+		BC_ASSERT_TRUE(getMainDb().isInitialized());
 	}
 
 	void reStart(bool check_for_proxies = TRUE) {
@@ -78,247 +79,279 @@ private:
 static void get_events_count(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	BC_ASSERT_EQUAL(mainDb.getEventCount(), 5175, int, "%d");
-	BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::ConferenceCallFilter), 0, int, "%d");
-	BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::ConferenceInfoFilter), 18, int, "%d");
-	BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::ConferenceChatMessageFilter), 5157, int, "%d");
-	BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::NoFilter), 5175, int, "%d");
+	if (mainDb.isInitialized()) {
+		BC_ASSERT_EQUAL(mainDb.getEventCount(), 5175, int, "%d");
+		BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::ConferenceCallFilter), 0, int, "%d");
+		BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::ConferenceInfoFilter), 18, int, "%d");
+		BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::ConferenceChatMessageFilter), 5157, int, "%d");
+		BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::NoFilter), 5175, int, "%d");
+	} else {
+		BC_FAIL("Database not initialized");
+	}
 }
 
 static void get_messages_count(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	BC_ASSERT_EQUAL(mainDb.getChatMessageCount(), 5157, int, "%d");
-	BC_ASSERT_EQUAL(
-	    mainDb.getChatMessageCount(ConferenceId(Address::create("sip:test-3@sip.linphone.org")->getSharedFromThis(),
-	                                            Address::create("sip:test-1@sip.linphone.org"))),
-	    861, int, "%d");
+	if (mainDb.isInitialized()) {
+		BC_ASSERT_EQUAL(mainDb.getChatMessageCount(), 5157, int, "%d");
+		BC_ASSERT_EQUAL(
+		    mainDb.getChatMessageCount(ConferenceId(Address::create("sip:test-3@sip.linphone.org")->getSharedFromThis(),
+		                                            Address::create("sip:test-1@sip.linphone.org"))),
+		    861, int, "%d");
+	} else {
+		BC_FAIL("Database not initialized");
+	}
 }
 
 static void get_unread_messages_count(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(), 2, int, "%d");
-	BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(
-	                    ConferenceId(Address::create("sip:test-3@sip.linphone.org")->getSharedFromThis(),
-	                                 Address::create("sip:test-1@sip.linphone.org"))),
-	                0, int, "%d");
+	if (mainDb.isInitialized()) {
+		BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(), 2, int, "%d");
+		BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(
+		                    ConferenceId(Address::create("sip:test-3@sip.linphone.org")->getSharedFromThis(),
+		                                 Address::create("sip:test-1@sip.linphone.org"))),
+		                0, int, "%d");
+	} else {
+		BC_FAIL("Database not initialized");
+	}
 }
 
 static void get_history(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	BC_ASSERT_EQUAL(
-	    (int)mainDb
-	        .getHistoryRange(ConferenceId(Address::create("sip:test-4@sip.linphone.org")->getSharedFromThis(),
-	                                      Address::create("sip:test-1@sip.linphone.org")),
-	                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
-	        .size(),
-	    54, int, "%d");
-	BC_ASSERT_EQUAL(
-	    (int)mainDb
-	        .getHistoryRange(ConferenceId(Address::create("sip:test-7@sip.linphone.org")->getSharedFromThis(),
-	                                      Address::create("sip:test-7@sip.linphone.org")),
-	                         0, -1, MainDb::Filter::ConferenceCallFilter)
-	        .size(),
-	    0, int, "%d");
-	BC_ASSERT_EQUAL(
-	    (int)mainDb
-	        .getHistoryRange(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
-	                                      Address::create("sip:test-1@sip.linphone.org")),
-	                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
-	        .size(),
-	    804, int, "%d");
-	BC_ASSERT_EQUAL((int)mainDb
-	                    .getHistory(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
-	                                             Address::create("sip:test-1@sip.linphone.org")),
-	                                100, MainDb::Filter::ConferenceChatMessageFilter)
-	                    .size(),
-	                100, int, "%d");
+	if (mainDb.isInitialized()) {
+		BC_ASSERT_EQUAL(
+		    (int)mainDb
+		        .getHistoryRange(ConferenceId(Address::create("sip:test-4@sip.linphone.org")->getSharedFromThis(),
+		                                      Address::create("sip:test-1@sip.linphone.org")),
+		                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
+		        .size(),
+		    54, int, "%d");
+		BC_ASSERT_EQUAL(
+		    (int)mainDb
+		        .getHistoryRange(ConferenceId(Address::create("sip:test-7@sip.linphone.org")->getSharedFromThis(),
+		                                      Address::create("sip:test-7@sip.linphone.org")),
+		                         0, -1, MainDb::Filter::ConferenceCallFilter)
+		        .size(),
+		    0, int, "%d");
+		BC_ASSERT_EQUAL(
+		    (int)mainDb
+		        .getHistoryRange(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
+		                                      Address::create("sip:test-1@sip.linphone.org")),
+		                         0, -1, MainDb::Filter::ConferenceChatMessageFilter)
+		        .size(),
+		    804, int, "%d");
+		BC_ASSERT_EQUAL(
+		    (int)mainDb
+		        .getHistory(ConferenceId(Address::create("sip:test-1@sip.linphone.org")->getSharedFromThis(),
+		                                 Address::create("sip:test-1@sip.linphone.org")),
+		                    100, MainDb::Filter::ConferenceChatMessageFilter)
+		        .size(),
+		    100, int, "%d");
+	} else {
+		BC_FAIL("Database not initialized");
+	}
 }
 
 static void get_conference_notified_events(void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	list<shared_ptr<EventLog>> events = mainDb.getConferenceNotifiedEvents(
-	    ConferenceId(Address::create("sip:test-44@sip.linphone.org")->getSharedFromThis(),
-	                 Address::create("sip:test-1@sip.linphone.org")),
-	    1);
-	BC_ASSERT_EQUAL((int)events.size(), 3, int, "%d");
-	if (events.size() != 3) return;
+	if (mainDb.isInitialized()) {
+		list<shared_ptr<EventLog>> events = mainDb.getConferenceNotifiedEvents(
+		    ConferenceId(Address::create("sip:test-44@sip.linphone.org")->getSharedFromThis(),
+		                 Address::create("sip:test-1@sip.linphone.org")),
+		    1);
+		BC_ASSERT_EQUAL((int)events.size(), 3, int, "%d");
+		if (events.size() != 3) return;
 
-	shared_ptr<EventLog> event;
-	auto it = events.cbegin();
+		shared_ptr<EventLog> event;
+		auto it = events.cbegin();
 
-	event = *it;
-	if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantRemoved)) return;
-	{
-		shared_ptr<ConferenceParticipantEvent> participantEvent =
-		    static_pointer_cast<ConferenceParticipantEvent>(event);
-		BC_ASSERT_TRUE(participantEvent->getConferenceId().getPeerAddress()->toString() ==
-		               "sip:test-44@sip.linphone.org");
-		BC_ASSERT_TRUE(participantEvent->getParticipantAddress()->toString() == "sip:test-11@sip.linphone.org");
-		BC_ASSERT_TRUE(participantEvent->getNotifyId() == 2);
-	}
+		event = *it;
+		if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantRemoved)) return;
+		{
+			shared_ptr<ConferenceParticipantEvent> participantEvent =
+			    static_pointer_cast<ConferenceParticipantEvent>(event);
+			BC_ASSERT_TRUE(participantEvent->getConferenceId().getPeerAddress()->toString() ==
+			               "sip:test-44@sip.linphone.org");
+			BC_ASSERT_TRUE(participantEvent->getParticipantAddress()->toString() == "sip:test-11@sip.linphone.org");
+			BC_ASSERT_TRUE(participantEvent->getNotifyId() == 2);
+		}
 
-	event = *++it;
-	if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantDeviceAdded)) return;
-	{
-		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent =
-		    static_pointer_cast<ConferenceParticipantDeviceEvent>(event);
-		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress()->toString() == "sip:test-44@sip.linphone.org");
-		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress()->toString() == "sip:test-11@sip.linphone.org");
-		BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 3);
-		BC_ASSERT_TRUE(deviceEvent->getDeviceAddress()->toString() == "sip:test-47@sip.linphone.org");
-	}
+		event = *++it;
+		if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantDeviceAdded)) return;
+		{
+			shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent =
+			    static_pointer_cast<ConferenceParticipantDeviceEvent>(event);
+			BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress()->toString() ==
+			               "sip:test-44@sip.linphone.org");
+			BC_ASSERT_TRUE(deviceEvent->getParticipantAddress()->toString() == "sip:test-11@sip.linphone.org");
+			BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 3);
+			BC_ASSERT_TRUE(deviceEvent->getDeviceAddress()->toString() == "sip:test-47@sip.linphone.org");
+		}
 
-	event = *++it;
-	if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantDeviceRemoved)) return;
-	{
-		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent =
-		    static_pointer_cast<ConferenceParticipantDeviceEvent>(event);
-		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress()->toString() == "sip:test-44@sip.linphone.org");
-		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress()->toString() == "sip:test-11@sip.linphone.org");
-		BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 4);
-		BC_ASSERT_TRUE(deviceEvent->getDeviceAddress()->toString() == "sip:test-47@sip.linphone.org");
+		event = *++it;
+		if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantDeviceRemoved)) return;
+		{
+			shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent =
+			    static_pointer_cast<ConferenceParticipantDeviceEvent>(event);
+			BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress()->toString() ==
+			               "sip:test-44@sip.linphone.org");
+			BC_ASSERT_TRUE(deviceEvent->getParticipantAddress()->toString() == "sip:test-11@sip.linphone.org");
+			BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 4);
+			BC_ASSERT_TRUE(deviceEvent->getDeviceAddress()->toString() == "sip:test-47@sip.linphone.org");
+		}
+	} else {
+		BC_FAIL("Database not initialized");
 	}
 }
 
 static void set_get_conference_info() {
 	MainDbProvider provider;
 	MainDb &mainDb = provider.getMainDb();
-	auto confAddr = Address::create("sip:test-1@sip.linphone.org;conf-id=abaaa");
-	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
-	info->setOrganizer(Address::create("sip:test-47@sip.linphone.org"));
-	info->addParticipant(Address::create("sip:test-11@sip.linphone.org"));
-	info->addParticipant(Address::create("sip:test-44@sip.linphone.org"));
-	info->setUri(confAddr);
-	info->setDateTime(1682770620);
-	info->setDuration(0);
-	mainDb.insertConferenceInfo(info);
+	if (mainDb.isInitialized()) {
+		auto confAddr = Address::create("sip:test-1@sip.linphone.org;conf-id=abaaa");
+		std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
+		info->setOrganizer(Address::create("sip:test-47@sip.linphone.org"));
+		info->addParticipant(Address::create("sip:test-11@sip.linphone.org"));
+		info->addParticipant(Address::create("sip:test-44@sip.linphone.org"));
+		info->setUri(confAddr);
+		info->setDateTime(1682770620);
+		info->setDuration(0);
+		mainDb.insertConferenceInfo(info);
 
-	auto confAddr2 = Address::create("sip:test-1@sip.linphone.org;conf-id=abbbb");
-	std::shared_ptr<ConferenceInfo> info2 = ConferenceInfo::create();
-	info2->setOrganizer(Address::create("sip:test-47@sip.linphone.org"));
-	info2->addParticipant(Address::create("sip:test-11@sip.linphone.org"));
-	info2->addParticipant(Address::create("sip:test-44@sip.linphone.org"));
-	info2->setUri(confAddr2);
-	info2->setDateTime(0);
-	info2->setDuration(0);
-	mainDb.insertConferenceInfo(info2);
+		auto confAddr2 = Address::create("sip:test-1@sip.linphone.org;conf-id=abbbb");
+		std::shared_ptr<ConferenceInfo> info2 = ConferenceInfo::create();
+		info2->setOrganizer(Address::create("sip:test-47@sip.linphone.org"));
+		info2->addParticipant(Address::create("sip:test-11@sip.linphone.org"));
+		info2->addParticipant(Address::create("sip:test-44@sip.linphone.org"));
+		info2->setUri(confAddr2);
+		info2->setDateTime(0);
+		info2->setDuration(0);
+		mainDb.insertConferenceInfo(info2);
 
-	provider.reStart();
-	MainDb &mainDb2 = provider.getMainDb();
+		provider.reStart();
+		MainDb &mainDb2 = provider.getMainDb();
 
-	std::shared_ptr<ConferenceInfo> retrievedInfo = mainDb2.getConferenceInfoFromURI(confAddr);
-	BC_ASSERT_PTR_NOT_NULL(retrievedInfo);
-	if (retrievedInfo) {
-		BC_ASSERT_EQUAL(1682770620, (long long)retrievedInfo->getDateTime(), long long, "%lld");
-		BC_ASSERT_EQUAL((long long)info->getDateTime(), (long long)retrievedInfo->getDateTime(), long long, "%lld");
-	}
+		std::shared_ptr<ConferenceInfo> retrievedInfo = mainDb2.getConferenceInfoFromURI(confAddr);
+		BC_ASSERT_PTR_NOT_NULL(retrievedInfo);
+		if (retrievedInfo) {
+			BC_ASSERT_EQUAL(1682770620, (long long)retrievedInfo->getDateTime(), long long, "%lld");
+			BC_ASSERT_EQUAL((long long)info->getDateTime(), (long long)retrievedInfo->getDateTime(), long long, "%lld");
+		}
 
-	std::shared_ptr<ConferenceInfo> retrievedInfo2 = mainDb2.getConferenceInfoFromURI(confAddr2);
-	BC_ASSERT_PTR_NOT_NULL(retrievedInfo2);
-	if (retrievedInfo2) {
-		BC_ASSERT_EQUAL((long long)info2->getDateTime(), (long long)retrievedInfo2->getDateTime(), long long, "%lld");
-		BC_ASSERT_EQUAL(0, (long long)retrievedInfo2->getDateTime(), long long, "%lld");
-	}
+		std::shared_ptr<ConferenceInfo> retrievedInfo2 = mainDb2.getConferenceInfoFromURI(confAddr2);
+		BC_ASSERT_PTR_NOT_NULL(retrievedInfo2);
+		if (retrievedInfo2) {
+			BC_ASSERT_EQUAL((long long)info2->getDateTime(), (long long)retrievedInfo2->getDateTime(), long long,
+			                "%lld");
+			BC_ASSERT_EQUAL(0, (long long)retrievedInfo2->getDateTime(), long long, "%lld");
+		}
 
-	auto confAddr3 = Address::create("sip:test-1@sip.linphone.org;conf-id=abcd");
-	std::shared_ptr<ConferenceInfo> retrievedInfo3 = mainDb2.getConferenceInfoFromURI(confAddr3);
-	BC_ASSERT_PTR_NOT_NULL(retrievedInfo3);
-	if (retrievedInfo3) {
-		BC_ASSERT_EQUAL(1682770620, (long long)retrievedInfo3->getDateTime(), long long, "%lld");
-	}
+		auto confAddr3 = Address::create("sip:test-1@sip.linphone.org;conf-id=abcd");
+		std::shared_ptr<ConferenceInfo> retrievedInfo3 = mainDb2.getConferenceInfoFromURI(confAddr3);
+		BC_ASSERT_PTR_NOT_NULL(retrievedInfo3);
+		if (retrievedInfo3) {
+			BC_ASSERT_EQUAL(1682770620, (long long)retrievedInfo3->getDateTime(), long long, "%lld");
+		}
 
-	auto confAddr4 = Address::create("sip:test-1@sip.linphone.org;conf-id=efgh");
-	std::shared_ptr<ConferenceInfo> retrievedInfo4 = mainDb2.getConferenceInfoFromURI(confAddr4);
-	BC_ASSERT_PTR_NOT_NULL(retrievedInfo4);
-	if (retrievedInfo4) {
-		BC_ASSERT_EQUAL(0, (long long)retrievedInfo4->getDateTime(), long long, "%lld");
+		auto confAddr4 = Address::create("sip:test-1@sip.linphone.org;conf-id=efgh");
+		std::shared_ptr<ConferenceInfo> retrievedInfo4 = mainDb2.getConferenceInfoFromURI(confAddr4);
+		BC_ASSERT_PTR_NOT_NULL(retrievedInfo4);
+		if (retrievedInfo4) {
+			BC_ASSERT_EQUAL(0, (long long)retrievedInfo4->getDateTime(), long long, "%lld");
+		}
+	} else {
+		BC_FAIL("Database not initialized");
 	}
 }
 
 static void get_chat_rooms() {
 	MainDbProvider provider;
 	MainDb &mainDb = provider.getMainDb();
-	std::string utf8Txt = "Héllo world ! Welcome to ベルドンヌ通信.";
-	list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
-	BC_ASSERT_EQUAL((int)chatRooms.size(), 86, int, "%d");
+	if (mainDb.isInitialized()) {
+		std::string utf8Txt = "Héllo world ! Welcome to ベルドンヌ通信.";
+		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
+		BC_ASSERT_EQUAL((int)chatRooms.size(), 86, int, "%d");
 
-	list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
-	shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
-	shared_ptr<AbstractChatRoom> oneMessageRoom = nullptr;
-	shared_ptr<AbstractChatRoom> multiMessageRoom = nullptr;
-	for (const auto &chatRoom : chatRooms) {
-		if (emptyMessageRoom == nullptr && chatRoom->getMessageHistorySize() == 0) {
-			emptyMessageRoom = chatRoom;
-		}
-		if (oneMessageRoom == nullptr && chatRoom->getMessageHistorySize() == 1) {
-			oneMessageRoom = chatRoom;
-		}
-		if (multiMessageRoom == nullptr && chatRoom->getMessageHistorySize() > 1) {
-			multiMessageRoom = chatRoom;
-		}
+		list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
+		shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
+		shared_ptr<AbstractChatRoom> oneMessageRoom = nullptr;
+		shared_ptr<AbstractChatRoom> multiMessageRoom = nullptr;
+		for (const auto &chatRoom : chatRooms) {
+			if (emptyMessageRoom == nullptr && chatRoom->getMessageHistorySize() == 0) {
+				emptyMessageRoom = chatRoom;
+			}
+			if (oneMessageRoom == nullptr && chatRoom->getMessageHistorySize() == 1) {
+				oneMessageRoom = chatRoom;
+			}
+			if (multiMessageRoom == nullptr && chatRoom->getMessageHistorySize() > 1) {
+				multiMessageRoom = chatRoom;
+			}
 
-		shared_ptr<ChatMessage> lastMessage = chatRoom->getLastChatMessageInHistory();
-		if (chatRoom->isEmpty()) {
-			emptyChatRooms.push_back(chatRoom);
+			shared_ptr<ChatMessage> lastMessage = chatRoom->getLastChatMessageInHistory();
+			if (chatRoom->isEmpty()) {
+				emptyChatRooms.push_back(chatRoom);
+				BC_ASSERT_PTR_NULL(lastMessage);
+			} else {
+				BC_ASSERT_PTR_NOT_NULL(lastMessage);
+			}
+		}
+		BC_ASSERT_EQUAL((int)emptyChatRooms.size(), 4, int, "%d");
+
+		// Check an empty chat room last_message_id is updated after adding a message into it
+		BC_ASSERT_PTR_NOT_NULL(emptyMessageRoom);
+		if (emptyMessageRoom != nullptr) {
+			shared_ptr<ChatMessage> lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
 			BC_ASSERT_PTR_NULL(lastMessage);
-		} else {
+			shared_ptr<ChatMessage> newMessage = emptyMessageRoom->createChatMessageFromUtf8(utf8Txt);
+			newMessage->send();
+			lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
 			BC_ASSERT_PTR_NOT_NULL(lastMessage);
+			BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
+			mainDb.loadChatMessageContents(lastMessage); // Force read Database
+			for (const Content *content : lastMessage->getContents()) {
+				BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
+			}
 		}
-	}
-	BC_ASSERT_EQUAL((int)emptyChatRooms.size(), 4, int, "%d");
 
-	// Check an empty chat room last_message_id is updated after adding a message into it
-	BC_ASSERT_PTR_NOT_NULL(emptyMessageRoom);
-	if (emptyMessageRoom != nullptr) {
-		shared_ptr<ChatMessage> lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
-		BC_ASSERT_PTR_NULL(lastMessage);
-		shared_ptr<ChatMessage> newMessage = emptyMessageRoom->createChatMessageFromUtf8(utf8Txt);
-		newMessage->send();
-		lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
-		BC_ASSERT_PTR_NOT_NULL(lastMessage);
-		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
-		mainDb.loadChatMessageContents(lastMessage); // Force read Database
-		for (const Content *content : lastMessage->getContents()) {
-			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
+		// Check last_message_id is updated to 0 if we remove the last message from a chat room with exactly 1 message
+		BC_ASSERT_PTR_NOT_NULL(oneMessageRoom);
+		if (oneMessageRoom != nullptr) {
+			shared_ptr<ChatMessage> lastMessage = oneMessageRoom->getLastChatMessageInHistory();
+			BC_ASSERT_PTR_NOT_NULL(lastMessage);
+			oneMessageRoom->deleteHistory();
+			lastMessage = oneMessageRoom->getLastChatMessageInHistory();
+			BC_ASSERT_PTR_NULL(lastMessage);
 		}
-	}
 
-	// Check last_message_id is updated to 0 if we remove the last message from a chat room with exactly 1 message
-	BC_ASSERT_PTR_NOT_NULL(oneMessageRoom);
-	if (oneMessageRoom != nullptr) {
-		shared_ptr<ChatMessage> lastMessage = oneMessageRoom->getLastChatMessageInHistory();
-		BC_ASSERT_PTR_NOT_NULL(lastMessage);
-		oneMessageRoom->deleteHistory();
-		lastMessage = oneMessageRoom->getLastChatMessageInHistory();
-		BC_ASSERT_PTR_NULL(lastMessage);
-	}
+		// Check last_message_id is updated to previous message id if we remove the last message from a chat room with
+		// more than 1 message
+		BC_ASSERT_PTR_NOT_NULL(multiMessageRoom);
+		if (multiMessageRoom != nullptr) {
+			shared_ptr<ChatMessage> lastMessage = multiMessageRoom->getLastChatMessageInHistory();
+			BC_ASSERT_PTR_NOT_NULL(lastMessage);
+			multiMessageRoom->deleteMessageFromHistory(lastMessage);
+			shared_ptr<ChatMessage> lastMessage2 = multiMessageRoom->getLastChatMessageInHistory();
+			BC_ASSERT_PTR_NOT_NULL(lastMessage2);
+			BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
 
-	// Check last_message_id is updated to previous message id if we remove the last message from a chat room with more
-	// than 1 message
-	BC_ASSERT_PTR_NOT_NULL(multiMessageRoom);
-	if (multiMessageRoom != nullptr) {
-		shared_ptr<ChatMessage> lastMessage = multiMessageRoom->getLastChatMessageInHistory();
-		BC_ASSERT_PTR_NOT_NULL(lastMessage);
-		multiMessageRoom->deleteMessageFromHistory(lastMessage);
-		shared_ptr<ChatMessage> lastMessage2 = multiMessageRoom->getLastChatMessageInHistory();
-		BC_ASSERT_PTR_NOT_NULL(lastMessage2);
-		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
-
-		// Check a non empty chat room last_message_id is updated after adding a message into it
-		shared_ptr<ChatMessage> newMessage = multiMessageRoom->createChatMessageFromUtf8(utf8Txt);
-		newMessage->send();
-		lastMessage = multiMessageRoom->getLastChatMessageInHistory();
-		BC_ASSERT_PTR_NOT_NULL(lastMessage);
-		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
-		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
-		mainDb.loadChatMessageContents(lastMessage); // Force read Database
-		for (const Content *content : lastMessage->getContents()) {
-			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
+			// Check a non empty chat room last_message_id is updated after adding a message into it
+			shared_ptr<ChatMessage> newMessage = multiMessageRoom->createChatMessageFromUtf8(utf8Txt);
+			newMessage->send();
+			lastMessage = multiMessageRoom->getLastChatMessageInHistory();
+			BC_ASSERT_PTR_NOT_NULL(lastMessage);
+			BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
+			BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
+			mainDb.loadChatMessageContents(lastMessage); // Force read Database
+			for (const Content *content : lastMessage->getContents()) {
+				BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
+			}
 		}
+	} else {
+		BC_FAIL("Database not initialized");
 	}
 }
 static void load_a_lot_of_chatrooms(void) {
