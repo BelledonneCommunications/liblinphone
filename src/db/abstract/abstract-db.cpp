@@ -94,10 +94,17 @@ bool AbstractDb::connect (Backend backend, const string &nameParams) {
 	if (d->dbSession) {
 		try {
 			d->safeInit();
+		} catch (const soci::soci_error &e) {
+			const auto &errorCategory = e.get_error_category();
+			if ((errorCategory == soci::soci_error::invalid_statement) ||
+			    (errorCategory == soci::soci_error::constraint_violation)) {
+				// Reset session if the database is malformed.
+				d->dbSession = DbSession();
+			}
 		} catch (const exception &e) {
 			lError() << "Unable to init database: " << e.what();
 
-			// Reset session.
+			// Reset session if there was any uncatched exception.
 			d->dbSession = DbSession();
 		}
 	}
@@ -138,8 +145,8 @@ bool AbstractDb::forceReconnect () {
 				lInfo() << "Database reconnection successful!";
 				return true;
 			} catch (const soci::soci_error &e) {
-				if (e.get_error_category() != soci::soci_error::connection_error)
-				throw e;
+				lError() << "Exception while forcing reconnection to database's schema : " << e.what();
+				if (e.get_error_category() != soci::soci_error::connection_error) throw e;
 			}
 		}
 	} catch (const exception &e) {

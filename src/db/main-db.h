@@ -265,6 +265,8 @@ protected:
 private:
 	L_DECLARE_PRIVATE(MainDb);
 	L_DISABLE_COPY(MainDb);
+
+	void initCleanup();
 };
 
 LINPHONE_END_NAMESPACE
