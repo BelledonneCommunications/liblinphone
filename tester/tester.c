@@ -374,16 +374,16 @@ bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeo
 	else return TRUE;
 }
 
-bool_t wait_for_stun_resolution(LinphoneCoreManager *m) {
+static bool_t wait_for_stun_resolution(LinphoneCoreManager *m, LinphoneNatPolicy *nat_policy) {
 	MSTimeSpec start;
 	int timeout_ms = 10000;
 	liblinphone_tester_clock_start(&start);
-	while (linphone_core_get_stun_server_addrinfo(m->lc) == NULL &&
+	while (linphone_nat_policy_get_stun_server_addrinfo(nat_policy) == NULL &&
 	       !liblinphone_tester_clock_elapsed(&start, timeout_ms)) {
 		linphone_core_iterate(m->lc);
 		ms_usleep(20000);
 	}
-	return linphone_core_get_stun_server_addrinfo(m->lc) != NULL;
+	return linphone_nat_policy_get_stun_server_addrinfo(nat_policy) != NULL;
 }
 
 static void enable_codec(LinphoneCore *lc, const char *type, int rate) {
@@ -2853,7 +2853,7 @@ static void linphone_nat_policy_wait_for_stun_resolution(LinphoneCoreManager *mg
 	    (linphone_nat_policy_stun_enabled(nat_policy) || linphone_nat_policy_turn_enabled(nat_policy)) &&
 	    (linphone_nat_policy_ice_enabled(nat_policy))) {
 		/*before we go, ensure that the stun server is resolved, otherwise all ice related test will fail*/
-		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
+		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr, nat_policy));
 	}
 }
 
@@ -5337,9 +5337,9 @@ void enable_stun_in_account(LinphoneCoreManager *mgr,
 	char *stun_server_username = NULL;
 
 	if (account_nat_policy != NULL) {
-		nat_policy = linphone_nat_policy_ref(account_nat_policy);
+		nat_policy = linphone_nat_policy_clone(account_nat_policy);
 	} else if (core_nat_policy != NULL) {
-		nat_policy = linphone_nat_policy_ref(core_nat_policy);
+		nat_policy = linphone_nat_policy_clone(core_nat_policy);
 	}
 
 	if (nat_policy) {
@@ -5352,10 +5352,7 @@ void enable_stun_in_account(LinphoneCoreManager *mgr,
 	}
 
 	linphone_nat_policy_enable_stun(nat_policy, enable_stun);
-
-	if (enable_ice) {
-		linphone_nat_policy_enable_ice(nat_policy, TRUE);
-	}
+	linphone_nat_policy_enable_ice(nat_policy, enable_ice);
 
 	if (stun_server_username != NULL) {
 		linphone_nat_policy_set_stun_server_username(nat_policy, stun_server_username);

@@ -214,10 +214,8 @@ LinphoneCoreManager *create_core_mgr_with_capability_negotiation_setup(const cha
 	}
 
 	if (enable_ice) {
-		// TODO: allow disabling ice or STUN at the core level and enabling in the account
 		// Enable ICE at the account level but not at the core level
-		// enable_stun_in_mgr(mgr, TRUE, enable_ice, FALSE, FALSE);
-		enable_stun_in_mgr(mgr, TRUE, enable_ice, TRUE, enable_ice);
+		enable_stun_in_mgr(mgr, TRUE, enable_ice, FALSE, FALSE);
 	}
 
 	return mgr;

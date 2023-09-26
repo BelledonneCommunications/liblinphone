@@ -106,9 +106,7 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
 
 	if (callee_has_ice) {
-		// TODO: allow disabling ice or STUN at the core level and enabling in the account
-		// enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
-		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
 	}
 
 	pauline_call = linphone_core_invite_address(pauline->lc, marie->identity);
@@ -326,15 +324,11 @@ static void _call_with_ice_with_default_candidate(bool_t dont_default_to_stun_ca
 	LinphoneCall *pauline_call, *marie_call;
 
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates",
-	                        dont_default_to_stun_candidates);
+	                        (int)dont_default_to_stun_candidates);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", (int)with_ipv6_prefered);
 
-	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
-	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
-
-	// TODO: allow disabling ice or STUN at the core level and enabling in the account
-	// enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
-	// enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, FALSE);
+	enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, FALSE);
+	enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, FALSE);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));

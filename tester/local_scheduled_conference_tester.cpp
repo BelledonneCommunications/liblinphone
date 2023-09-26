@@ -868,9 +868,7 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionSRTP);
 			}
 
-			// TODO: allow disabling ice or STUN at the core level and enabling in the account
-			// enable_stun_in_mgr(mgr, TRUE, TRUE, TRUE, FALSE);
-			enable_stun_in_mgr(mgr, TRUE, TRUE, TRUE, TRUE);
+			enable_stun_in_mgr(mgr, TRUE, TRUE, TRUE, FALSE);
 
 			if ((organizer_codec_mismatch && (mgr == marie.getCMgr())) ||
 			    (!organizer_codec_mismatch && (mgr == michelle.getCMgr()))) {

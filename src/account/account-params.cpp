@@ -102,18 +102,18 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 
 	string natPolicyRef = lc ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
 	if (!natPolicyRef.empty()) {
-		NatPolicy *policy = nullptr;
+		std::shared_ptr<NatPolicy> policy = nullptr;
 		if (linphone_config_has_section(lc->config, natPolicyRef.c_str())) {
 			/* Odd method - to be deprecated, inconsistent */
-			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromSectionName,
-			                       natPolicyRef);
+			policy = NatPolicy::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromSectionName,
+			                           natPolicyRef);
 		} else {
 			/* Usual method */
-			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromRefName,
-			                       natPolicyRef);
+			policy = NatPolicy::create(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromRefName,
+			                           natPolicyRef);
 		}
 		if (policy) {
-			setNatPolicy(policy->toSharedPtr());
+			mNatPolicy = policy;
 		} else {
 			lError() << "Cannot create default nat policy with ref [" << natPolicyRef << "] for account [" << this
 			         << "]";
@@ -557,7 +557,7 @@ void AccountParams::setAvpfMode(LinphoneAVPFMode avpfMode) {
 }
 
 void AccountParams::setNatPolicy(const shared_ptr<NatPolicy> &natPolicy) {
-	mNatPolicy = natPolicy;
+	mNatPolicy = natPolicy ? natPolicy->clone()->toSharedPtr() : nullptr;
 }
 
 void AccountParams::setPushNotificationConfig(PushNotificationConfig *pushNotificationConfig) {

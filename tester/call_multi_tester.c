@@ -704,13 +704,9 @@ void stop_ringing_when_accepting_call_while_holding_another(bool_t activate_ice)
 	core_list = bctbx_list_append(core_list, laure->lc);
 
 	// Enable ICE
-	// TODO: allow disabling ice or STUN at the core level and enabling in the account
-	// enable_stun_in_mgr(marie, TRUE, activate_ice, TRUE, TRUE);
-	// enable_stun_in_mgr(pauline, TRUE, activate_ice, TRUE, TRUE);
-	// enable_stun_in_mgr(laure, TRUE, activate_ice, TRUE, TRUE);
-	enable_stun_in_mgr(marie, TRUE, activate_ice, TRUE, activate_ice);
-	enable_stun_in_mgr(pauline, TRUE, activate_ice, TRUE, activate_ice);
-	enable_stun_in_mgr(laure, TRUE, activate_ice, TRUE, activate_ice);
+	enable_stun_in_mgr(marie, TRUE, activate_ice, TRUE, TRUE);
+	enable_stun_in_mgr(pauline, TRUE, activate_ice, TRUE, TRUE);
+	enable_stun_in_mgr(laure, TRUE, activate_ice, TRUE, TRUE);
 
 	// Marie calls Pauline
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc, pauline->identity, marie_params));
