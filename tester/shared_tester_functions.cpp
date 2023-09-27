@@ -793,3 +793,46 @@ void linphone_conference_info_check_organizer(const LinphoneConferenceInfo *conf
 	const auto &organizer = LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getOrganizer();
 	linphone_conference_info_check_participant_info(organizer, sequence_number);
 }
+
+bool_t check_custom_m_line(LinphoneCall *call, const char *m_line) {
+	SalStreamType type = SalOther;
+	const std::string m_line_str(m_line);
+	SalMediaDescription *result_desc = _linphone_call_get_result_desc(call);
+	const SalStreamDescription &result_stream = result_desc->findBestStream(type);
+	bool_t result_stream_found = (result_stream == Utils::getEmptyConstRefObject<SalStreamDescription>());
+	BC_ASSERT_TRUE(result_stream_found);
+	std::string result_stream_type_string;
+	if (result_stream_found) {
+		result_stream_type_string = result_stream.getTypeAsString();
+	}
+	bool_t result_stream_type_ok =
+	    (!result_stream_type_string.empty() || (result_stream_type_string.compare(m_line_str) == 0));
+	BC_ASSERT_TRUE(result_stream_type_ok);
+
+	SalMediaDescription *local_desc = _linphone_call_get_local_desc(call);
+	const SalStreamDescription &local_stream = local_desc->findBestStream(type);
+	bool_t local_stream_found = (local_stream == Utils::getEmptyConstRefObject<SalStreamDescription>());
+	BC_ASSERT_TRUE(local_stream_found);
+	std::string local_stream_type_string;
+	if (local_stream_found) {
+		local_stream_type_string = local_stream.getTypeAsString();
+	}
+	bool_t local_stream_type_ok =
+	    (!local_stream_type_string.empty() || (local_stream_type_string.compare(m_line_str) == 0));
+	BC_ASSERT_TRUE(local_stream_type_ok);
+
+	SalMediaDescription *remote_desc = _linphone_call_get_remote_desc(call);
+	const SalStreamDescription &remote_stream = remote_desc->findBestStream(type);
+	bool_t remote_stream_found = (remote_stream == Utils::getEmptyConstRefObject<SalStreamDescription>());
+	std::string remote_stream_type_string;
+	if (remote_stream_found) {
+		remote_stream_type_string = remote_stream.getTypeAsString();
+	}
+	bool_t remote_stream_type_ok = (!remote_stream_found || !remote_stream_type_string.empty() ||
+	                                (remote_stream_type_string.compare(m_line_str) == 0));
+	BC_ASSERT_TRUE(remote_stream_type_ok);
+
+	bool_t ret = result_stream_found && result_stream_type_ok && local_stream_found && local_stream_type_ok &&
+	             remote_stream_type_ok;
+	return ret;
+}

@@ -87,6 +87,7 @@ void linphone_conference_info_check_participant(const LinphoneConferenceInfo *co
                                                 int sequence_number);
 void linphone_conference_info_check_organizer(const LinphoneConferenceInfo *conference_info, int sequence_number);
 
+bool_t check_custom_m_line(LinphoneCall *call, const char *m_line);
 #ifdef __cplusplus
 }
 #endif
