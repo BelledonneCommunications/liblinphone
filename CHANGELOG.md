@@ -17,6 +17,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - TLS Client certificate request authentication callback removed (due to mbedtls update).
   Application using TLS client certificate must provide it before any TLS connexion needing it.
 - Refactoring of LinphoneAddress object implementation, leading to greater internal simplicity and performance.
+- LinphoneFriendList's PresenceReceived callback is now only called for full-state NOTIFYs.
 
 
 ## [5.2.0] 2022-11-14

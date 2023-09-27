@@ -454,12 +454,14 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 				}
 			}
 			// Notify list with all friends for which we received presence information
-			if (bctbx_list_size(list_friends_presence_received) > 0) {
-				if (list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
-					linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
-				}
+			if (list_friends_presence_received) {
+				if (full_state) {
+					if (list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
+						linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
+					}
 
-				NOTIFY_IF_EXIST(PresenceReceived, presence_received, list, list_friends_presence_received)
+					NOTIFY_IF_EXIST(PresenceReceived, presence_received, list, list_friends_presence_received)
+				}
 			}
 			bctbx_list_free(list_friends_presence_received);
 		}
