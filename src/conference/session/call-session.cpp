@@ -1118,6 +1118,7 @@ void CallSessionPrivate::repairByInviteWithReplaces() {
 
 void CallSessionPrivate::refreshContactAddress() {
 	L_Q();
+	if (!op) return;
 	Address contactAddress;
 	const auto &account = getDestAccount();
 	if (account) {
