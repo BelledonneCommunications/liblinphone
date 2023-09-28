@@ -1082,6 +1082,7 @@ void CallSessionPrivate::repairByInviteWithReplaces () {
 
 void CallSessionPrivate::refreshContactAddress() {
 	L_Q();
+	if (!op) return;
 	char * contactAddressStr = nullptr;
 	if (destProxy) {
 		if (linphone_proxy_config_get_op(destProxy)) {
@@ -1091,19 +1092,19 @@ void CallSessionPrivate::refreshContactAddress() {
 		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore()) && linphone_proxy_config_get_contact(destProxy)) {
 			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(destProxy));
 		}
-	} else {
-		op->setContactAddress(nullptr);
 	}
 
-	if (contactAddressStr) {
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
+	Address contactAddress(L_C_TO_STRING(contactAddressStr));
+	if (contactAddressStr && contactAddress.isValid()) {
 		q->updateContactAddress(contactAddress);
 		op->setContactAddress(contactAddress.getInternalAddress());
 	} else {
 		op->setContactAddress(nullptr);
 	}
 
+	if (contactAddressStr) {
+		ms_free(contactAddressStr);
+	}
 }
 
 void CallSessionPrivate::repairIfBroken () {
