@@ -172,6 +172,8 @@ class SwiftTranslator:
         except metadoc.TranslationError as e:
             logging.error(e.msg())
         listenerDict['delegate']['cb_name'] = method.name.translate(self.nameTranslator)
+        listenerDict['delegate']['cb_publisher_name'] = listenerDict['delegate']['cb_name'][0].upper() + listenerDict['delegate']['cb_name'][1:] + "Publisher"
+        listenerDict['delegate']['cb_publisher_name_var'] = listenerDict['delegate']['cb_publisher_name'][0].lower() + listenerDict['delegate']['cb_publisher_name'][1:]
         listenerDict['delegate']['interfaceClassName'] = listenedClass.name.translate(self.nameTranslator)
 
         listenerDict['delegate']['type'] = method.returnType.translate(self.langTranslator)
@@ -229,7 +231,11 @@ class SwiftTranslator:
             listenerDict['delegate']['params_public'] += argName + ": " + normalType
             listenerDict['delegate']['params_private'] += argName
             listenerDict['delegate']['params_stub'] += normalType
-
+            if len(method.args) == 1:
+                listenerDict['delegate']['params_template'] = normalType
+		
+        if len(method.args) > 1:
+            listenerDict['delegate']['params_template'] = listenerDict['delegate']['params_public']
         listenerDict['delegate']["c_name_setter"] = c_name_setter
         return listenerDict
 
@@ -298,6 +304,7 @@ class SwiftTranslator:
 
         classDict = {}
         classDict['className'] = _class.name.translate(self.nameTranslator)
+        classDict['className_var'] = _class.name.translate(self.nameTranslator)[0].lower() + _class.name.translate(self.nameTranslator)[1:]
         classDict['classDelegateName'] = classDict['className'] + "Delegate"
         classDict['isLinphoneFactory'] = classDict['className'] == "Factory"
         classDict['isLinphoneCall'] = _class.name.to_camel_case() == "Call"
@@ -355,6 +362,8 @@ class SwiftTranslator:
 
         interfaceDict = {}
         interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
+        interfaceDict['interfaceBaseName'] = interfaceDict['interfaceName'][0:-8] #Remove "Delegate" keyword
+        interfaceDict['interfaceBaseNameVar'] = interfaceDict['interfaceBaseName'][0].lower() + interfaceDict['interfaceBaseName'][1:]
         interfaceDict['create_user_data_name'] = 'linphone_factory_create' + interface.listenedClass.name.to_snake_case(fullName=True).lstrip('linphone') + '_cbs'
 
         interfaceDict['methods'] = []
