@@ -20,7 +20,7 @@ Liblinphone is dual licensed, and is available either :
 # Documentation
 
 -   Supported features and RFCs : https://www.linphone.org/technical-corner/liblinphone/features
--   Multi-language API documentation : https://www.linphone.org/snapshots/docs/liblinphone/multilang/
+-   API documentation, for each supported language: https://www.linphone.org/releases/docs/liblinphone/
 -   Liblinphone developer guide on Linphone public wiki: https://wiki.linphone.org/xwiki/wiki/public/view/Lib/
 
 
