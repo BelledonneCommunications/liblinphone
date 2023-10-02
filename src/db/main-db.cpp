@@ -1483,7 +1483,7 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 	if (isOutgoing && (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered) &&
 	    (chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Conference) && chatMessage->isValid()) {
 		static const string query = "SELECT sip_address.value"
-		                            " FROM sip_address"
+		                            " FROM sip_address, chat_message_participant"
 		                            " WHERE event_id = :eventId"
 		                            " AND sip_address.id = chat_message_participant.participant_sip_address_id";
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(chatMessage->getStorageId()));
