@@ -147,14 +147,8 @@ public class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
-
-        if (CoreManager.isReady()) {
-            Core core = CoreManager.instance().getCore();
-            if (core != null) {
-                Log.i("[Core Service] Core Manager found, removing our listener");
-                core.removeListener(mListener);
-            }
-            CoreManager.instance().setServiceRunningAsForeground(false);
+        if (mIsListenerAdded) {
+            removeCoreListener();
         }
         
         super.onDestroy();
@@ -165,33 +159,69 @@ public class CoreService extends Service {
         return null;
     }
 
-    private void addCoreListener() {
-        Log.i("[Core Service] Trying to add the Service's CoreListener to the Core...");
+    private void removeCoreListener() {
+        Runnable coreListenerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (CoreManager.isReady()) {
+                    Core core = CoreManager.instance().getCore();
+                    if (core != null) {
+                        Log.i("[Core Service] Core Manager found, removing our listener");
+                        core.removeListener(mListener);
+                    }
+                    CoreManager.instance().setServiceRunningAsForeground(false);
+                } else {
+                    Log.w("[Core Service] CoreManager isn't available anymore...");
+                }
+            }
+        };
+
+        Log.i("[Core Service] Trying to remove the Service's CoreListener from the Core...");
         if (CoreManager.isReady()) {
-            Core core = CoreManager.instance().getCore();
-            if (core != null) {
-                Log.i("[Core Service] Core Manager found, adding our listener");
-                core.addListener(mListener);
-                mIsListenerAdded = true;
-                Log.i("[Core Service] CoreListener succesfully added to the Core");
+            CoreManager.instance().dispatchOnCoreThread(coreListenerRunnable);
+        } else {
+            Log.w("[Core Service] CoreManager isn't available anymore...");
+        }
+    }
 
-                if (core.getCallsNb() > 0) {
-                    Log.w("[Core Service] Core listener added while at least one call active !");
-                    startForeground();
+    private void addCoreListener() {
+        Runnable coreListenerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (CoreManager.isReady()) {
+                    Core core = CoreManager.instance().getCore();
+                    if (core != null) {
+                        Log.i("[Core Service] Core Manager found, adding our listener");
+                        core.addListener(mListener);
+                        mIsListenerAdded = true;
+                        Log.i("[Core Service] CoreListener succesfully added to the Core");
 
-                    Call call = core.getCurrentCall();
-                    if (call != null) {
-                        // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
-                        if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
-                            vibrate(call.getRemoteAddress());
+                        if (core.getCallsNb() > 0) {
+                            Log.w("[Core Service] Core listener added while at least one call active !");
+                            startForeground();
+
+                            Call call = core.getCurrentCall();
+                            if (call != null) {
+                                // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
+                                if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
+                                    vibrate(call.getRemoteAddress());
+                                }
+                            } else {
+                                Log.w("[Core Service] Couldn't find current call...");
+                            }
                         }
                     } else {
-                        Log.w("[Core Service] Couldn't find current call...");
+                        Log.e("[Core Service] CoreManager instance found but Core is null!");
                     }
+                } else {
+                    Log.w("[Core Service] CoreManager isn't ready yet...");
                 }
-            } else {
-                Log.e("[Core Service] CoreManager instance found but Core is null!");
             }
+        };
+
+        Log.i("[Core Service] Trying to add the Service's CoreListener to the Core...");
+        if (CoreManager.isReady()) {
+            CoreManager.instance().dispatchOnCoreThread(coreListenerRunnable);
         } else {
             Log.w("[Core Service] CoreManager isn't ready yet...");
         }
