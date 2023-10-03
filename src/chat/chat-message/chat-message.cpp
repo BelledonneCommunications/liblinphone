@@ -219,42 +219,44 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		setState(newState);
 	}
 
-	const auto imdnStates = q->getParticipantsState();
-	size_t nbRecipients = 0;
-	size_t nbDisplayedStates = 0;
-	size_t nbDeliveredToUserStates = 0;
-	size_t nbNotDeliveredStates = 0;
-	for (const auto &imdnState : imdnStates) {
-		const auto &participantState = imdnState.getState();
-		const auto &imdnParticipant = imdnState.getParticipant();
-		if (fromAddress->weakEqual(*(imdnParticipant->getAddress()))) {
-			if (participantState == ChatMessage::State::NotDelivered) {
-				nbNotDeliveredStates++;
-			}
-		} else {
-			nbRecipients++;
-			switch (participantState) {
-				case ChatMessage::State::Displayed:
-					nbDisplayedStates++;
-					break;
-				case ChatMessage::State::DeliveredToUser:
-					nbDeliveredToUserStates++;
-					break;
-				case ChatMessage::State::NotDelivered:
+	if (isImdnControlledState(newState)) {
+		const auto imdnStates = q->getParticipantsState();
+		size_t nbRecipients = 0;
+		size_t nbDisplayedStates = 0;
+		size_t nbDeliveredToUserStates = 0;
+		size_t nbNotDeliveredStates = 0;
+		for (const auto &imdnState : imdnStates) {
+			const auto &participantState = imdnState.getState();
+			const auto &imdnParticipant = imdnState.getParticipant();
+			if (fromAddress->weakEqual(*(imdnParticipant->getAddress()))) {
+				if (participantState == ChatMessage::State::NotDelivered) {
 					nbNotDeliveredStates++;
-					break;
-				default:
-					break;
+				}
+			} else {
+				nbRecipients++;
+				switch (participantState) {
+					case ChatMessage::State::Displayed:
+						nbDisplayedStates++;
+						break;
+					case ChatMessage::State::DeliveredToUser:
+						nbDeliveredToUserStates++;
+						break;
+					case ChatMessage::State::NotDelivered:
+						nbNotDeliveredStates++;
+						break;
+					default:
+						break;
+				}
 			}
 		}
-	}
 
-	if (nbNotDeliveredStates > 0) {
-		setState(ChatMessage::State::NotDelivered);
-	} else if ((nbRecipients > 0) && (nbDisplayedStates == nbRecipients)) {
-		setState(ChatMessage::State::Displayed);
-	} else if ((nbRecipients > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
-		setState(ChatMessage::State::DeliveredToUser);
+		if (nbNotDeliveredStates > 0) {
+			setState(ChatMessage::State::NotDelivered);
+		} else if ((nbRecipients > 0) && (nbDisplayedStates == nbRecipients)) {
+			setState(ChatMessage::State::Displayed);
+		} else if ((nbRecipients > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
+			setState(ChatMessage::State::DeliveredToUser);
+		}
 	}
 
 	// When we already marked an incoming message as displayed, start ephemeral countdown when all other recipients have
@@ -993,6 +995,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 		displayNotificationRequired = false;
 	}
 
+	chatRoom->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 	handleAutoDownload();
 
 	return reason;
@@ -1049,7 +1052,6 @@ void ChatMessagePrivate::handleAutoDownload() {
 	// download is aborted The delivered state will be set again message_delivery_update upon reception of 200 Ok or 202
 	// Accepted when a message is sent
 	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(NULL));
-	chatRoom->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 
 	for (Content *c : contents) {
 		ContentType contentType = c->getContentType();

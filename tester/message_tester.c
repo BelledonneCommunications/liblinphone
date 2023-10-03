@@ -411,61 +411,6 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 	linphone_chat_message_unref(msg);
 }
 
-void check_reactions(LinphoneChatMessage *message,
-                     size_t expected_reactions_count,
-                     const bctbx_list_t *expected_reactions,
-                     const bctbx_list_t *expected_reactions_from) {
-	bctbx_list_t *reactions = linphone_chat_message_get_reactions(message);
-	bctbx_list_t *reactions_it = reactions;
-	bctbx_list_t *expected_reactions_it = (bctbx_list_t *)expected_reactions;
-	bctbx_list_t *expected_reactions_from_it = (bctbx_list_t *)expected_reactions_from;
-	BC_ASSERT_PTR_NOT_NULL(reactions);
-
-	if (reactions_it) {
-		size_t count = bctbx_list_size(reactions);
-		BC_ASSERT_EQUAL(count, expected_reactions_count, size_t, "%zu");
-		for (size_t i = 0; i < count; i++) {
-			const LinphoneChatMessageReaction *reaction =
-			    (const LinphoneChatMessageReaction *)bctbx_list_get_data(reactions_it);
-			reactions_it = bctbx_list_next(reactions_it);
-
-			const char *expected_reaction = (const char *)bctbx_list_get_data(expected_reactions_it);
-			expected_reactions_it = bctbx_list_next(expected_reactions_it);
-
-			const char *expected_reaction_from = (const char *)bctbx_list_get_data(expected_reactions_from_it);
-			expected_reactions_from_it = bctbx_list_next(expected_reactions_from_it);
-
-			const char *reaction_body = linphone_chat_message_reaction_get_body(reaction);
-			BC_ASSERT_STRING_EQUAL(reaction_body, expected_reaction);
-
-			const char *reaction_call_id = linphone_chat_message_reaction_get_call_id(reaction);
-			BC_ASSERT_PTR_NOT_NULL(reaction_call_id);
-
-			const LinphoneAddress *from = linphone_chat_message_reaction_get_from_address(reaction);
-			BC_ASSERT_STRING_EQUAL(linphone_address_as_string_uri_only(from), expected_reaction_from);
-		}
-	}
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
-}
-
-void liblinphone_tester_chat_message_reaction_received(LinphoneChatMessage *msg,
-                                                       const LinphoneChatMessageReaction *reaction) {
-	BC_ASSERT_PTR_NOT_NULL(msg);
-	BC_ASSERT_PTR_NOT_NULL(reaction);
-
-	const LinphoneAddress *address = linphone_chat_message_reaction_get_from_address(reaction);
-	BC_ASSERT_PTR_NOT_NULL(address);
-	const char *body = linphone_chat_message_reaction_get_body(reaction);
-	BC_ASSERT_STRING_EQUAL(body, "👍");
-
-	bctbx_list_t *expected_reaction = bctbx_list_append(NULL, "👍");
-	bctbx_list_t *expected_reaction_from =
-	    bctbx_list_append(NULL, ms_strdup(linphone_address_as_string_uri_only(address)));
-	check_reactions(msg, 1, expected_reaction, expected_reaction_from);
-	bctbx_list_free(expected_reaction);
-	bctbx_list_free_with_data(expected_reaction_from, (bctbx_list_free_func)ms_free);
-}
-
 void text_message_base_with_text(LinphoneCoreManager *marie,
                                  LinphoneCoreManager *pauline,
                                  const char *text,
@@ -1116,7 +1061,6 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 
 	LinphoneChatRoom *chat_room;
 	LinphoneChatMessage *msg;
-	LinphoneChatMessageCbs *cbs;
 	int file_transfer_size;
 	bctbx_list_t *msg_list = NULL;
 
@@ -1267,7 +1211,7 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 					BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 2, int, "%d");
 				}
 
-				cbs = linphone_chat_message_get_callbacks(recv_msg);
+				LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(recv_msg);
 				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
@@ -1692,6 +1636,7 @@ static void message_with_voice_recording_base(bool_t create_message_from_recorde
 	BC_ASSERT_PTR_NOT_NULL(marie_msg);
 
 	if (marie_msg != NULL) {
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageDelivered, 1));
 		LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(marie_msg)->data);
 		BC_ASSERT_EQUAL(linphone_content_get_file_duration(content), duration, int, "%d");
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "audio");
@@ -1777,8 +1722,11 @@ static void transfer_message_auto_download_existing_file(void) {
 	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000));
 	BC_ASSERT_PTR_NULL(first_received_file_name);
 
-	if (marie->stat.last_received_chat_message) {
-		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie->stat.last_received_chat_message);
+	LinphoneChatMessage *marie_msg = marie->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(marie_msg);
+	if (marie_msg) {
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageDelivered, 1));
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie_msg);
 		BC_ASSERT_PTR_NOT_NULL(contents);
 		BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
 		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
@@ -1787,9 +1735,9 @@ static void transfer_message_auto_download_existing_file(void) {
 		first_received_file_name = bctbx_strdup(linphone_content_get_file_path(content));
 	}
 
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageInProgress, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageFileTransferDone, 1));
 	BC_ASSERT_PTR_NOT_NULL(first_received_file_name);
 
 	linphone_chat_message_unref(msg);
@@ -1798,8 +1746,11 @@ static void transfer_message_auto_download_existing_file(void) {
 
 	BC_ASSERT_TRUE(
 	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 2, 60000));
-	if (marie->stat.last_received_chat_message) {
-		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie->stat.last_received_chat_message);
+	marie_msg = marie->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(marie_msg);
+	if (marie_msg) {
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageDelivered, 2));
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie_msg);
 		BC_ASSERT_PTR_NOT_NULL(contents);
 		BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
 		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
@@ -1872,6 +1823,9 @@ static void transfer_message_auto_download_two_files_same_name_same_time(void) {
 	if (marie_chat_room) {
 		bctbx_list_t *history = linphone_chat_room_get_history(marie_chat_room, 0);
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(history), 2, int, "%d");
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageDelivered,
+		                              (int)bctbx_list_size(history), 5000));
+
 		bctbx_list_t *it = history;
 
 		msg = (LinphoneChatMessage *)bctbx_list_get_data(it);
@@ -2002,17 +1956,17 @@ static void transfer_message_download_cancelled(void) {
 	BC_ASSERT_TRUE(
 	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000));
 
-	if (marie->stat.last_received_chat_message) { /* get last msg and use it to download file */
-		LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+	LinphoneChatMessage *marie_msg = marie->stat.last_received_chat_message;
+	if (marie_msg) { /* get last msg and use it to download file */
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(marie_msg);
 		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-		linphone_chat_message_add_callbacks(marie->stat.last_received_chat_message, cbs);
-		linphone_chat_message_cbs_unref(cbs);
-		linphone_chat_message_start_file_download(marie->stat.last_received_chat_message,
-		                                          liblinphone_tester_chat_message_state_change, marie->lc);
+		// State changed callback is already set by linphone_chat_message_start_file_download
+		linphone_chat_message_cbs_set_msg_state_changed(cbs, NULL);
+		linphone_chat_message_start_file_download(marie_msg, liblinphone_tester_chat_message_state_change, marie->lc);
 		/* wait for file to be 50% downloaded */
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.progress_of_LinphoneFileTransfer, 50));
 		/* and cancel the transfer */
-		linphone_chat_message_cancel_file_transfer(marie->stat.last_received_chat_message);
+		linphone_chat_message_cancel_file_transfer(marie_msg);
 	}
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
@@ -2049,8 +2003,12 @@ static void transfer_message_auto_download_aborted(void) {
 
 	/* wait for marie to receive pauline's msg */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
-	BC_ASSERT_FALSE(
-	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+	BC_ASSERT_TRUE(
+	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 5000));
+	LinphoneChatMessage *marie_msg = marie->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(marie_msg);
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageDelivered, 1, 1000));
+
 	// We auto download using random file name, so we expect above file to not exist yet
 	BC_ASSERT_EQUAL(bctbx_file_exist(path), -1, int, "%d");
 
@@ -2066,7 +2024,7 @@ static void transfer_message_auto_download_aborted(void) {
 	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
 
 	LinphoneChatRoom *marie_cr = linphone_core_get_chat_room(marie->lc, pauline->identity);
-	LinphoneChatMessage *marie_msg = linphone_chat_room_get_last_message_in_history(marie_cr);
+	marie_msg = linphone_chat_room_get_last_message_in_history(marie_cr);
 	BC_ASSERT_PTR_NOT_NULL(marie_msg);
 	if (marie_msg) {
 		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie_msg);
@@ -2264,8 +2222,8 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 	BC_ASSERT_TRUE(
 	    wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000));
 
-	LinphoneChatMessage *recv_msg = NULL;
-	if (pauline->stat.last_received_chat_message) {
+	LinphoneChatMessage *recv_msg = pauline->stat.last_received_chat_message;
+	if (recv_msg) {
 		recv_msg = pauline->stat.last_received_chat_message;
 		cbs = linphone_chat_message_get_callbacks(recv_msg);
 		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
@@ -2288,9 +2246,9 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
 			                              &pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 55000));
 		}
+		remove(linphone_chat_message_get_file_transfer_filepath(recv_msg));
 	}
 
-	if (recv_msg) remove(linphone_chat_message_get_file_transfer_filepath(recv_msg));
 	bc_free(receive_filepath);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
