@@ -551,12 +551,15 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 			bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundary);
 		else if (size > 2){
 			size_t startIndex = 2, index;
-			while(startIndex < size && (buffer[startIndex] != '-' || buffer[startIndex-1] != '-' // Take accout of first "--"
-					|| (startIndex > 2 && buffer[startIndex-2] != '\n') ))	// Must be at the beginning of the line
+			while(startIndex < size && (buffer[startIndex-1] != '-' // Take accout of first "--"
+					|| (startIndex == 2 && buffer[0] != '-') || (startIndex > 2 && (buffer[startIndex] != '-' || buffer[startIndex-2] != '\n')) ))	// Must be at the beginning of the line
+			{
 				++startIndex;
+			}
 			index = startIndex;
-			while(index < size && buffer[index] != '\n' && buffer[index] != '\r')
+			while(index < size && buffer[index] != '\n' && buffer[index] != '\r') {
 				++index;
+			}
 			if( startIndex != index){
 				char * boundaryStr = bctbx_strndup(buffer+startIndex, (int)(index-startIndex));
 				bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundaryStr);
@@ -578,8 +581,9 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 	sal_body_handler_set_type(bodyHandler, contentType.getType().c_str());
 	sal_body_handler_set_subtype(bodyHandler, contentType.getSubType().c_str());
 	sal_body_handler_set_size(bodyHandler, linphone_content_get_size(content));
-	for (const auto &param : contentType.getParameters())
+	for (const auto &param : contentType.getParameters()) {
 		sal_body_handler_set_content_type_parameter(bodyHandler, param.getName().c_str(), param.getValue().c_str());
+	}
 
 	if (linphone_content_get_encoding(content))
 		sal_body_handler_set_encoding(bodyHandler, linphone_content_get_encoding(content));
