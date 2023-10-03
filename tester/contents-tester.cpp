@@ -52,7 +52,7 @@ static const char *contentdesc3 = "Key for Laure";
 static const char *contentdesc4 = "Encrypted message";
 
 static const char *source_multipart =
-    "-----------------------------14737809831466499882746641449\r\n"
+    "--14737809831466499882746641449\r\n"
     "Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n"
     "Content-Id: sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b\r\n"
     "Content-Description: Key for Marie\r\n\r\n"
@@ -68,7 +68,7 @@ static const char *source_multipart =
     "		<instance cid=\"P2WAj~Y@sip.linphone.org\" id=\"1\" state=\"active\"/>"
     "	</resource>"
     "</list>"
-    "-----------------------------14737809831466499882746641449\r\n"
+    "--14737809831466499882746641449\r\n"
     "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
     "Content-Id: sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n"
     "Content-Description: Key for Pauline\r\n\r\n"
@@ -88,7 +88,7 @@ static const char *source_multipart =
     "		</p2:activities>"
     "	</p1:person>"
     "</presence>"
-    "-----------------------------14737809831466499882746641449\r\n"
+    "--14737809831466499882746641449\r\n"
     "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
     "Content-Id: sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n"
     "Content-Description: Key for Laure\r\n"
@@ -109,7 +109,7 @@ static const char *source_multipart =
     "		</p2:activities>"
     "	</p1:person>"
     "</presence>"
-    "-----------------------------14737809831466499882746641449\r\n"
+    "--14737809831466499882746641449\r\n"
     "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
     "Content-Description: Encrypted message\r\n"
     "Content-Id: toto;param1=value1;param2;param3=value3\r\n"
@@ -131,7 +131,7 @@ static const char *source_multipart =
     "		</p2:activities>"
     "	</p1:person>"
     "</presence>"
-    "-----------------------------14737809831466499882746641449--\r\n";
+    "--14737809831466499882746641449--\r\n";
 
 static const char *generated_multipart =
     "-----------------------------14737809831466499882746641449\r\n"
@@ -285,6 +285,75 @@ static const char *part4 =
     "		</p2:activities>"
     "	</p1:person>"
     "</presence>";
+
+static const char *source_multipart2 =
+    "\r\n"
+    "--UniqueBroadWorksBoundary\r\n"
+    "\r\n"
+    "Content-Type:application/rlmi+xml\r\n"
+    "Content-Length:154\r\n"
+    "Content-ID:<AFqAMY@broadworks>\r\n"
+    "\r\n"
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
+    "uri=\"sip:441473283472@ngnine.dom\" version=\"0\" fullState=\"true\">\r\n"
+    "\r\n"
+    "</list>\r\n"
+    "\r\n"
+    "\r\n"
+    "\r\n"
+    "--UniqueBroadWorksBoundary--\r\n";
+
+static const char *part21 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><list xmlns=\"urn:ietf:params:xml:ns:rlmi\" "
+                            "uri=\"sip:441473283472@ngnine.dom\" version=\"0\" fullState=\"true\"></list>";
+
+void multipart_parsing() {
+	Content multipartContent;
+	multipartContent.setBodyFromLocale(source_multipart2);
+	ContentType contentType = ContentType("multipart", "related");
+	contentType.addParameter("type", "application/rlmi+xml");
+	contentType.addParameter("boundary", "UniqueBroadWorksBoundary");
+	multipartContent.setContentType(contentType);
+
+	list<Content> contents = ContentManager::multipartToContentList(multipartContent);
+	BC_ASSERT_EQUAL((int)contents.size(), 1, int, "%d");
+
+	// check body
+	Content content1 = contents.front();
+	contents.pop_front();
+	string originalStr1(part21);
+	originalStr1.erase(std::remove(originalStr1.begin(), originalStr1.end(), ' '), originalStr1.end());
+	originalStr1.erase(std::remove(originalStr1.begin(), originalStr1.end(), '\t'), originalStr1.end());
+	originalStr1.erase(std::remove(originalStr1.begin(), originalStr1.end(), '\r'), originalStr1.end());
+	originalStr1.erase(std::remove(originalStr1.begin(), originalStr1.end(), '\n'), originalStr1.end());
+	string generatedStr1 = content1.getBodyAsString();
+	generatedStr1.erase(std::remove(generatedStr1.begin(), generatedStr1.end(), ' '), generatedStr1.end());
+	generatedStr1.erase(std::remove(generatedStr1.begin(), generatedStr1.end(), '\t'), generatedStr1.end());
+	generatedStr1.erase(std::remove(generatedStr1.begin(), generatedStr1.end(), '\r'), generatedStr1.end());
+	generatedStr1.erase(std::remove(generatedStr1.begin(), generatedStr1.end(), '\n'), generatedStr1.end());
+	ms_message("\n\n----- Generated part 1 -----");
+	ms_message("%s", generatedStr1.c_str());
+	ms_message("\n\n----- Original part 1 -----");
+	ms_message("%s", originalStr1.c_str());
+	BC_ASSERT_TRUE(originalStr1 == generatedStr1);
+
+	// check content type
+	string originalType1("application");
+	string originalSubType1("rlmi+xml");
+	string generatedType1 = content1.getContentType().getType();
+	string generatedSubType1 = content1.getContentType().getSubType();
+	ms_message("\n\nOriginal type 1 = %s", originalType1.c_str());
+	ms_message("Generated type 1 = %s", generatedType1.c_str());
+	ms_message("\n\nOriginal subtype 1 = %s", originalSubType1.c_str());
+	ms_message("Generated subtype 1 = %s", generatedSubType1.c_str());
+	BC_ASSERT_TRUE(originalType1 == generatedType1);
+	BC_ASSERT_TRUE(originalSubType1 == generatedSubType1);
+
+	// check custom headers
+	string originalContentId1("<AFqAMY@broadworks>");
+	string generatedContentId1 = content1.getHeader("Content-ID").getValueWithParams();
+
+	BC_ASSERT_TRUE(originalContentId1 == generatedContentId1);
+}
 
 void multipart_to_list() {
 	Content multipartContent;
@@ -543,6 +612,17 @@ static void content_type_parsing(void) {
 	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
 	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
 
+	type = "multipart/related;type=\"application/rlmi+xml\";boundary=UniqueBroadWorksBoundary";
+	contentType = ContentType(type);
+	BC_ASSERT_STRING_EQUAL("multipart", contentType.getType().c_str());
+	BC_ASSERT_STRING_EQUAL("related", contentType.getSubType().c_str());
+	BC_ASSERT_STRING_EQUAL("UniqueBroadWorksBoundary", contentType.getParameter("boundary").getValue().c_str());
+	BC_ASSERT_STRING_EQUAL("\"application/rlmi+xml\"", contentType.getParameter("type").getValue().c_str());
+	BC_ASSERT_EQUAL(2, (int)contentType.getParameters().size(), int, "%d");
+	lInfo() << "Content-Type is " << contentType;
+	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
+	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
+
 	type = "plain/text";
 	contentType = ContentType(type);
 	BC_ASSERT_STRING_EQUAL("plain", contentType.getType().c_str());
@@ -601,6 +681,7 @@ static void content_public_api(void) {
 }
 
 test_t contents_tests[] = {TEST_NO_TAG("Multipart to list", multipart_to_list),
+                           TEST_NO_TAG("Multipart parsing", multipart_parsing),
                            TEST_NO_TAG("List to multipart", list_to_multipart),
                            TEST_NO_TAG("Content type parsing", content_type_parsing),
                            TEST_NO_TAG("Content header parsing", content_header_parsing),
