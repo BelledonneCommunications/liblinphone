@@ -325,7 +325,7 @@ Variant Content::getUserData() const {
 SalBodyHandler *Content::getBodyHandlerFromContent(const Content &content, bool parseMultipart) {
 	if (!content.mIsDirty && content.mBodyHandler != nullptr) return sal_body_handler_ref(content.mBodyHandler);
 
-	SalBodyHandler *bodyHandler;
+	SalBodyHandler *bodyHandler = nullptr;
 	ContentType contentType = content.mContentType;
 	if (contentType.isMultipart() && parseMultipart) {
 		size_t size = content.getSize();
@@ -334,11 +334,14 @@ SalBodyHandler *Content::getBodyHandlerFromContent(const Content &content, bool 
 		belle_sip_multipart_body_handler_t *bh = nullptr;
 		if (boundary) bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundary);
 		else if (size > 2) {
-			size_t startIndex = 2, index;
+			size_t startIndex = 2, index = 0;
 			while (startIndex < size &&
-			       (buffer[startIndex] != '-' || buffer[startIndex - 1] != '-' // Take accout of first "--"
-			        || (startIndex > 2 && buffer[startIndex - 2] != '\n')))    // Must be at the beginning of the line
+			       (buffer[startIndex - 1] != '-' // Take accout of first "--"
+			        || (startIndex == 2 && buffer[0] != '-') ||
+			        (startIndex > 2 && (buffer[startIndex] != '-' ||
+			                            buffer[startIndex - 2] != '\n')))) { // Must be at the beginning of the line
 				++startIndex;
+			}
 			index = startIndex;
 			while (index < size && buffer[index] != '\n' && buffer[index] != '\r')
 				++index;
