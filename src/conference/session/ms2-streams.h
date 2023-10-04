@@ -86,9 +86,10 @@ public:
 protected:
 	virtual void handleEvent(const OrtpEvent *ev) = 0;
 	virtual void zrtpStarted(Stream *mainZrtpStream) override;
+	virtual void runAlertMonitors(); // called from a timer each second.
 	MS2Stream(StreamsGroup &sm, const OfferAnswerContext &params);
-	void startEventHandling();
-	void stopEventHandling();
+	void startTimers();
+	void stopTimers();
 	std::string getBindIp();
 	int getBindPort();
 	void initializeSessions(MediaStream *stream);
@@ -149,16 +150,18 @@ private:
 	bool encryptionFound(const SalStreamDescription::tcap_map_t &caps, const LinphoneMediaEncryption encEnum) const;
 	void startDtls();
 	belle_sip_source_t *mTimer = nullptr;
+	belle_sip_source_t *mMonitorTimer = nullptr;
 	IceCheckList *mIceCheckList = nullptr;
 	RtpBundle *mRtpBundle = nullptr;
 	MS2Stream *mBundleOwner = nullptr;
-	bool mOwnsBundle = false;
-	bool mStunAllowed = true;
 	ZrtpState mZrtpState = ZrtpState::Off;
-	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
-	static constexpr const int sEventPollIntervalMs = 20;
 	std::string mSendMasterKey;
 	std::string mReceiveMasterKey;
+	bool mOwnsBundle = false;
+	bool mStunAllowed = true;
+	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
+	static constexpr const int sEventPollIntervalMs = 20;
+	static constexpr const int sMonitorRunIntervalMs = 1000;
 };
 
 class BandwithControllerService : public SharedService {
@@ -343,6 +346,7 @@ protected:
 	AudioStream *getPeerAudioStream();
 	virtual void onSnapshotTaken(const std::string &filepath) override;
 	virtual void zrtpStarted(Stream *mainZrtpStream) override;
+	virtual void runAlertMonitors() override;
 
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;

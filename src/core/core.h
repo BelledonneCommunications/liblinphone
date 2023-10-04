@@ -339,8 +339,7 @@ public:
 
 	/*
 	 * Run supplied std::function as a timer. It should return true if repeated, false otherwise.
-	 * The returned belle_sip_source_t must be unrefed (with belle_sip_object_unref() ).
-	 * It may be unrefed before expiration, if this timer never needs to be cancelled.
+	 * The returned belle_sip_source_t must be destroyed with Core::destroyTimer().
 	 */
 	belle_sip_source_t *
 	createTimer(const std::function<bool()> &something, unsigned int millisecond, const std::string &name);

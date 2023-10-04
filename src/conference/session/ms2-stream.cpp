@@ -730,7 +730,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		default:
 			break;
 	}
-	startEventHandling();
+	startTimers();
 	initRtpBundle(params);
 	setIceCheckList(mIceCheckList); // do it after enabling bundles
 	Stream::render(params, targetState);
@@ -1078,33 +1078,46 @@ bool MS2Stream::canIgnorePtimeChange(const OfferAnswerContext &params) {
 	return false;
 }
 
-void MS2Stream::startEventHandling() {
-	if (mTimer) return;
-	mTimer = getCore().createTimer(
-	    [this]() {
-		    handleEvents();
-		    return true;
-	    },
-	    sEventPollIntervalMs, "Stream event processing timer");
+void MS2Stream::startTimers() {
+	if (!mTimer) {
+		mTimer = getCore().createTimer(
+		    [this]() {
+			    handleEvents();
+			    return true;
+		    },
+		    sEventPollIntervalMs, "Stream event processing timer");
+	}
+	if (!mMonitorTimer) {
+		mMonitorTimer = getCore().createTimer(
+		    [this]() {
+			    runAlertMonitors();
+			    return true;
+		    },
+		    sMonitorRunIntervalMs, "Stream monitor check");
+	}
 }
 
-void MS2Stream::stopEventHandling() {
+void MS2Stream::stopTimers() {
 	if (mTimer) {
 		getCore().destroyTimer(mTimer);
 		mTimer = nullptr;
+	}
+	if (mMonitorTimer) {
+		getCore().destroyTimer(mMonitorTimer);
+		mMonitorTimer = nullptr;
 	}
 }
 
 bool MS2Stream::prepare() {
 	setIceCheckList(mIceCheckList);
-	startEventHandling();
+	startTimers();
 	Stream::prepare();
 	return false;
 }
 
 void MS2Stream::finishPrepare() {
 	Stream::finishPrepare();
-	stopEventHandling();
+	stopTimers();
 }
 
 int MS2Stream::getIdealAudioBandwidth(const std::shared_ptr<SalMediaDescription> &md,
@@ -1241,7 +1254,7 @@ void MS2Stream::stop() {
 	}
 	updateStats();
 	handleEvents();
-	stopEventHandling();
+	stopTimers();
 	media_stream_reclaim_sessions(getMediaStream(), &mSessions);
 	rtp_session_set_profile(mSessions.rtp_session, &av_profile);
 	Stream::stop();
@@ -1347,6 +1360,10 @@ void MS2Stream::encryptionChanged() {
 	getGroup().propagateEncryptionChanged();
 }
 
+void MS2Stream::runAlertMonitors() {
+	mNetworkMonitor.check(getStats(), false);
+}
+
 void MS2Stream::handleEvents() {
 	MediaStream *ms = getMediaStream();
 	if (ms) {
@@ -1450,10 +1467,7 @@ void MS2Stream::handleEvents() {
 		handleEvent(ev);
 		ortp_event_destroy(ev);
 	}
-	if (ms->type == MSAudio) {
-		LinphoneCallStats *stats = this->getStats();
-		mNetworkMonitor.check(stats, burstOccured);
-	}
+	if (burstOccured) mNetworkMonitor.check(getStats(), burstOccured);
 }
 
 bool MS2Stream::isEncrypted() const {

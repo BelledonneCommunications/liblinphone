@@ -147,7 +147,8 @@ static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCall
 	// TODO : remove this if to make this assert true
 	if (data.expectedType != LinphoneAlertQoSBurstOccured && data.expectedType != LinphoneAlertQoSCameraLowFramerate &&
 	    data.expectedType != LinphoneAlertQoSLowQualitySentVideo) {
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, marie->lc, &data.stopped, 1, 10000));
+		/* the new bandwidth estimate might take up to 10 seconds to happen*/
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, marie->lc, &data.stopped, 1, 15000));
 	}
 
 	end_call(marie, pauline);

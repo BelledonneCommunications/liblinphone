@@ -275,6 +275,17 @@ MSVideoDisplayMode stringToVideoDisplayMode(const string &mode) {
 	return MSVideoDisplayHybrid;
 }
 
+void MS2VideoStream::runAlertMonitors() {
+	VideoStats sendStats, recvStats;
+	getSendStats(&sendStats);
+	getRecvStats(&recvStats);
+	float fps = mCameraEnabled ? video_stream_get_sent_framerate(mStream) : -1;
+	mVideoMonitor.check(&sendStats, &recvStats, fps);
+	mBandwidthMonitor.check(mStats);
+	mNetworkMonitor.checkNackQuality(mStream->ms.sessions.rtp_session);
+	MS2Stream::runAlertMonitors();
+}
+
 void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State targetState) {
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
@@ -623,14 +634,6 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev) {
 	} else if (evt == ORTP_EVENT_JITTER_UPDATE_FOR_NACK) {
 		mNetworkMonitor.confirmNackSent();
 	}
-
-	VideoStats sendStats, recvStats;
-	getSendStats(&sendStats);
-	getRecvStats(&recvStats);
-	float fps = video_stream_get_sent_framerate(mStream);
-	mVideoMonitor.check(&sendStats, &recvStats, fps);
-	mBandwidthMonitor.check(mStats);
-	mNetworkMonitor.checkNackQuality(mStream->ms.sessions.rtp_session);
 }
 
 void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream) {
