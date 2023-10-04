@@ -157,6 +157,8 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 
 	// Send IMDN if the participant whose state changes is me
 	if (isMe) {
+		lInfo() << __func__ << " DEBUG DEBUG me message " << q << " state changed to " << Utils::toString(newState)
+		        << " is valid " << q->isValid() << " is reaction " << q->isReaction() << " to be stored " << toBeStored;
 		switch (newState) {
 			case ChatMessage::State::Displayed:
 				static_cast<ChatRoomPrivate *>(chatRoom->getPrivate())->sendDisplayNotification(sharedMessage);
@@ -175,7 +177,7 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		}
 	}
 
-	if (!q->isValid()) {
+	if (!q->isValid() && (eventLog || (newState == ChatMessage::State::NotDelivered))) {
 		if (newState == ChatMessage::State::NotDelivered) {
 			setState(newState);
 		}
@@ -212,7 +214,9 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 
 	lInfo() << "Chat message " << sharedMessage << ": moving participant '" << *participantAddress << "' state to "
 	        << Utils::toString(newState);
-	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
+	if (eventLog) {
+		mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
+	}
 
 	// Update chat message state if it doesn't depend on IMDN
 	if (isMe && !isImdnControlledState(newState)) {
@@ -305,7 +309,13 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 			// participants being part of the chatroom
 			for (const auto &imdnState : q->getParticipantsState()) {
 				const auto &participant = imdnState.getParticipant();
-				setParticipantState(participant->getAddress(), state, q->getTime());
+				const auto &participantAddress = participant->getAddress();
+				auto me = chatRoom->getMe();
+				const auto isMe = participantAddress->weakEqual(*me->getAddress());
+				// me participant was already set to Delivered by function message_delivery_update
+				if (!isMe) {
+					setParticipantState(participantAddress, state, q->getTime());
+				}
 			}
 		}
 
@@ -1358,7 +1368,6 @@ void ChatMessagePrivate::send() {
 	/* If operation failed, we should not change message state */
 	if (direction == ChatMessage::Direction::Outgoing) {
 		setIsReadOnly(true);
-		setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::InProgress, ::ms_time(nullptr));
 	}
 
 	if (q->isReaction()) {

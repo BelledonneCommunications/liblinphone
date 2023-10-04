@@ -812,12 +812,9 @@ static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) 
 	auto chatRoom = msg->getChatRoom();
 	// Check that the message does not belong to an already destroyed chat room - if so, do not invoke callbacks
 	if (chatRoom) {
-		// It would be better to call setParticipantState but doing so, it causes a memory leak
-		L_GET_PRIVATE(msg)->setState((LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(status));
-		/*L_GET_PRIVATE(msg)->setParticipantState(chatRoom->getMe()->getAddress(),
+		L_GET_PRIVATE(msg)->setParticipantState(chatRoom->getMe()->getAddress(),
 		                                        (LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(status),
 		                                        ::ms_time(NULL));
-		*/
 	}
 }
 

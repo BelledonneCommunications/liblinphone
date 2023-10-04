@@ -250,9 +250,6 @@ public:
 
 	long long storageId = -1;
 
-	// It should be private if we do so, but it must be called in message_delivery_update to avoid a memory leak
-	virtual void setState(ChatMessage::State newState);
-
 protected:
 	bool displayNotificationRequired = true;
 	bool negativeDeliveryNotificationRequired = true;
@@ -261,6 +258,9 @@ protected:
 	std::string contentEncoding;
 
 private:
+	// Keep setState private as the chat message state must only be set through setParticipantState
+	virtual void setState(ChatMessage::State newState);
+
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
 	virtual ~ChatMessagePrivate();
 
