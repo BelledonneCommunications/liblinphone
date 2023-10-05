@@ -343,6 +343,10 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 }
 
 AccountParams::~AccountParams() {
+	if (mConferenceFactoryAddressCstr) {
+		ms_free(mConferenceFactoryAddressCstr);
+		mConferenceFactoryAddressCstr = nullptr;
+	}
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 	if (mRoutesCString) {
 		bctbx_list_free_with_data(mRoutesCString, (bctbx_list_free_func)bctbx_free);

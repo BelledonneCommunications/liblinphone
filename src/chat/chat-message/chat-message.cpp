@@ -157,8 +157,6 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 
 	// Send IMDN if the participant whose state changes is me
 	if (isMe) {
-		lInfo() << __func__ << " DEBUG DEBUG me message " << q << " state changed to " << Utils::toString(newState)
-		        << " is valid " << q->isValid() << " is reaction " << q->isReaction() << " to be stored " << toBeStored;
 		switch (newState) {
 			case ChatMessage::State::Displayed:
 				static_cast<ChatRoomPrivate *>(chatRoom->getPrivate())->sendDisplayNotification(sharedMessage);
