@@ -34,7 +34,7 @@ void AudioCodecToggleCommand::exec(Daemon *app, const string &args) {
 		app->sendResponse(Response("Missing parameter.", Response::Error));
 	} else {
 		string mime_type;
-		PayloadType *pt = NULL;
+		LinphonePayloadType *pt = NULL;
 		ist >> mime_type;
 		PayloadTypeParser parser(app->getCore(), mime_type, true);
 		if (!parser.successful()) {
@@ -44,20 +44,21 @@ void AudioCodecToggleCommand::exec(Daemon *app, const string &args) {
 		if (!parser.all()) pt = parser.getPayloadType();
 
 		int index = 0;
-		for (const bctbx_list_t *node = linphone_core_get_audio_codecs(app->getCore()); node != NULL;
-		     node = bctbx_list_next(node)) {
-			PayloadType *payload = reinterpret_cast<PayloadType *>(node->data);
+		bctbx_list_t *l = linphone_core_get_audio_payload_types(app->getCore());
+		for (const bctbx_list_t *node = l; node != NULL; node = bctbx_list_next(node)) {
+			LinphonePayloadType *payload = static_cast<LinphonePayloadType *>(node->data);
 			if (parser.all()) {
-				linphone_core_enable_payload_type(app->getCore(), payload, mEnable);
+				linphone_payload_type_enable(payload, mEnable);
 			} else {
-				if (pt == payload) {
-					linphone_core_enable_payload_type(app->getCore(), payload, mEnable);
+				if (linphone_payload_type_weak_equals(payload, pt)) {
+					linphone_payload_type_enable(payload, mEnable);
 					app->sendResponse(PayloadTypeResponse(app->getCore(), payload, index));
 					return;
 				}
 			}
 			++index;
 		}
+		bctbx_list_free_with_data(l, (bctbx_list_free_func)linphone_payload_type_unref);
 		if (parser.all()) {
 			AudioCodecGetCommand getCommand;
 			getCommand.exec(app, "");

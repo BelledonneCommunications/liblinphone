@@ -537,7 +537,7 @@ public:
 	Core &getCore() const;
 
 protected:
-	int updateAllocatedAudioBandwidth(const PayloadType *pt, int maxbw);
+	int updateAllocatedAudioBandwidth(const OrtpPayloadType *pt, int maxbw);
 	int getVideoBandwidth(const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &desc);
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();

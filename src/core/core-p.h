@@ -187,6 +187,8 @@ public:
 
 	/* centralized method to write down all NatPolicy used by Accounts or Core */
 	void writeNatPolicyConfigurations();
+	void reorderVideoCodecList();
+	int getCodecPriority(const OrtpPayloadType *pt) const;
 	static const Utils::Version conferenceProtocolVersion;
 	static const Utils::Version groupChatProtocolVersion;
 	static const Utils::Version ephemeralProtocolVersion;
@@ -228,6 +230,7 @@ private:
 
 	std::list<std::shared_ptr<Ldap>> mLdapServers; // Persistent list of LDAP servers
 	std::string logLabel;
+	LinphoneCodecPriorityPolicy videoCodecPriorityPolicy = LinphoneCodecPriorityPolicyAuto;
 
 	L_DECLARE_PUBLIC(Core);
 };

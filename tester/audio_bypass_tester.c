@@ -487,9 +487,8 @@ static void audio_bypass(void) {
 	BC_ASSERT_TRUE(call_ok);
 	if (!call_ok) goto end;
 
-	BC_ASSERT_STRING_EQUAL(linphone_call_params_get_used_audio_codec(
-	                           linphone_call_get_current_params(linphone_core_get_current_call(marie_lc)))
-	                           ->mime_type,
+	BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_mime_type(linphone_call_params_get_used_audio_payload_type(
+	                           linphone_call_get_current_params(linphone_core_get_current_call(marie_lc)))),
 	                       "L16");
 
 	wait_for_until(pauline_lc, marie_lc, NULL, 0, 5000); // hello44100.wav is 4 seconds long

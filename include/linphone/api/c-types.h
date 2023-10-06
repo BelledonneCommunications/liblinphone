@@ -661,107 +661,15 @@ typedef struct _LinphoneAlert LinphoneAlert;
  * @ingroup alert
  */
 typedef struct _LinphoneAlertCbs LinphoneAlertCbs;
-/**
- * @brief All kinds of alerts
- * @ingroup alert
- */
-typedef enum _LinphoneAlertTypes {
 
-	/** Camera is not working. No other information
-	 * @note Use the key "camera_misfunction_interval" in the section "alerts::camera" to set the interval
-	 * at which the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSCameraMisfunction,
-	/** Camera is capturing low framerate. Information supplied : float framerate;
-	 *  @note Use the key "low_framerate_interval" in the section "alerts::camera" to set or get the interval at which
-	 * the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSCameraLowFramerate,
-	/** Video decoding has stopped for a given period (10 s by default). No other information.
-	 *  @note Use the key "video_stalled_interval" in the section "alerts::camera" to set or get the interval at which
-	 * the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSVideoStalled,
-	/** A received media stream suffers from high loss or late rate. Information provided is:
-	 * - loss-rate (float)
-	 * - late-rate (float)
-	 * - media-type (string) with values {audio, video, text}
-	 *  @note Use the key "loss_rate_interval" in the section "alerts::network" to set or get the interval at which
-	the problem is checked in a #LinphoneConfig.
-	*/
-	LinphoneAlertQoSHighLossLateRate,
-	/** A report of high loss rate is received from remote party. Information provided: loss-rate (float).
-	 *  @note Use the key "remote_loss_rate_interval" in the section "alerts::network" to set or get the interval at
-	 * which the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSHighRemoteLossRate,
-	/** Packet Burst phenomenon
-	 *  @note Use the key "burst_occured_interval" in the section "alerts::network" to set or get the interval at which
-	 * the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSBurstOccured,
-	/** Loss rate is significant but retransmissions fail to arrive on time.
-	 * Information provided: nack-performance (float) the fraction of lost packets recovered thanks to nack-triggered
-	 * retransmissions.
-	 *  @note Use the key "nack_check_interval" in the section "alerts::network" to set or get the interval at which the
-	 * problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSRetransmissionFailures,
-	/** Low bandwidth detected. Information provided: bandwidth (float) in kbit/s.
-	 *  @note Use the key "download_bandwidth_interval" in the section "alerts::video" to set or get the interval at
-	 * which the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSLowDownloadBandwidthEstimation,
-	/** Low quality (bitrate) video received. Information provided: bitrate (float) in kbit/s, width (integer), int
-	 * height (integer).
-	 *  @note Use the key "low_quality_received_interval" in the section "alerts::video" to set or get the interval at
-	 * which the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSLowQualityReceivedVideo,
-	/** Low quality video is being sent. Information provided: bitrate (float)in kbit/s, width (integer), height
-	 * (integer).
-	 * @note Use the key "quality_sent_interval" in the section "alerts::camera" to set or get the interval at which
-	 * the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSLowQualitySentVideo,
-	/** The operating system reports a low radio signal (wifi or mobile)
-	 * @note Use the key "low_signal_interval" in the section "alerts::network" to set or get the interval at which the
-	 * problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSLowSignal,
-	/** The operating system reports a loss of radio signal (wifi or mobile).
-	 * Information provided: rssi-value (float), signal-type (string) with values {"wifi", "mobile", "other"}.
-	 * @note Use the key "lost_signal_interval" in the section "alerts::network" to set or get the interval at which
-	 * the problem is checked in a #LinphoneConfig.
-	 */
-	LinphoneAlertQoSLostSignal
-
-} LinphoneAlertType;
 // -----------------------------------------------------------------------------
 // SignalInformation
 // -----------------------------------------------------------------------------
 /**
  * @brief Object to get signal (wifi/4G etc...) informations.
- * @ingroup signalInformation
+ * @ingroup alert
  */
 typedef struct _LinphoneSignalInformation LinphoneSignalInformation;
-/**
- * All signal types that a device can use.
- * @ingroup signalInformation
- */
-typedef enum _LinphoneSignalType {
-	LinphoneSignalTypeWifi = 0,
-	LinphoneSignalTypeMobile = 1,
-	LinphoneSignalTypeOther = 2
-} LinphoneSignalType;
-/**
- * All signal units that a device can use.
- * @ingroup signalInformation
- */
-typedef enum _LinphoneSignalStrengthUnit {
-	LinphoneSignalStrengthUnitRssi = 0,
-	LinphoneSignalStrengthUnitDbm = 1,
-} LinphoneSignalStrengthUnit;
 
 #ifdef __cplusplus
 }

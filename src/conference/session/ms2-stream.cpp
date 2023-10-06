@@ -1068,10 +1068,10 @@ void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
 
 bool MS2Stream::canIgnorePtimeChange(const OfferAnswerContext &params) {
 	const auto &resultStreamDesc = params.getResultStreamDescription();
-	const PayloadType *pt = getMediaSessionPrivate().getCurrentParams()->getUsedAudioCodec();
-	if (pt != nullptr && pt->send_fmtp != NULL) {
+	auto pt = getMediaSessionPrivate().getCurrentParams()->getUsedAudioPayloadType();
+	if (pt && !pt->getSendFmtp().empty()) {
 		char tmp[30];
-		if (fmtp_get_value(pt->send_fmtp, "ptime", tmp, sizeof(tmp))) {
+		if (fmtp_get_value(pt->getSendFmtp().c_str(), "ptime", tmp, sizeof(tmp))) {
 			return resultStreamDesc.getChosenConfiguration().ptime == atoi(tmp);
 		}
 	}

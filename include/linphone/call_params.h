@@ -331,7 +331,7 @@ LINPHONE_PUBLIC const char *linphone_call_params_get_session_name(const Linphone
  * @return The selected #LinphonePayloadType. NULL is returned if no audio payload type has been selected by the call.
  *@maybenil
  **/
-LINPHONE_PUBLIC LinphonePayloadType *
+LINPHONE_PUBLIC const LinphonePayloadType *
 linphone_call_params_get_used_audio_payload_type(const LinphoneCallParams *call_params);
 
 /**
@@ -340,17 +340,16 @@ linphone_call_params_get_used_audio_payload_type(const LinphoneCallParams *call_
  * @return The selected #LinphonePayloadType. NULL is returned if no video payload type has been selected by the call.
  *@maybenil
  **/
-LINPHONE_PUBLIC LinphonePayloadType *
+LINPHONE_PUBLIC const LinphonePayloadType *
 linphone_call_params_get_used_video_payload_type(const LinphoneCallParams *call_params);
 
-LINPHONE_PUBLIC const OrtpPayloadType *linphone_call_params_get_used_fec_codec(const LinphoneCallParams *call_params);
 /**
  * Get the text payload type that has been selected by a call.
  * @param call_params The #LinphoneCallParams object. @notnil
  * @return The selected #LinphonePayloadType. NULL is returned if no text payload type has been selected by the call.
  *@maybenil
  **/
-LINPHONE_PUBLIC LinphonePayloadType *
+LINPHONE_PUBLIC const LinphonePayloadType *
 linphone_call_params_get_used_text_payload_type(const LinphoneCallParams *call_params);
 
 /**
@@ -834,36 +833,6 @@ linphone_call_params_get_received_video_size(const LinphoneCallParams *call_para
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED MSVideoSize
 linphone_call_params_get_sent_video_size(const LinphoneCallParams *call_params);
-
-/**
- * Get the audio payload type that has been selected by a call.
- * @param call_params The #LinphoneCallParams object. @notnil
- * @return The selected payload type. NULL is returned if no audio payload type has been seleced by the call.
- * @deprecated 31/03/2017 Use linphone_call_params_get_used_audio_payload_type() instead.
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const OrtpPayloadType *
-linphone_call_params_get_used_audio_codec(const LinphoneCallParams *call_params);
-
-/**
- * Get the video payload type that has been selected by a call.
- * @param call_params The #LinphoneCallParams object. @notnil
- * @return The selected payload type. NULL is returned if no video payload type has been seleced by the call.
- * @deprecated 31/03/2017 Use linphone_call_params_get_used_video_payload_type() instead.
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const OrtpPayloadType *
-linphone_call_params_get_used_video_codec(const LinphoneCallParams *call_params);
-
-/**
- * Get the text payload type that has been selected by a call.
- * @param call_params The #LinphoneCallParams object. @notnil
- * @return The selected payload type. NULL is returned if no text payload type has been seleced by the call.
- * @deprecated 31/03/2017 Use linphone_call_params_get_used_text_payload_type() instead.
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const OrtpPayloadType *
-linphone_call_params_get_used_text_codec(const LinphoneCallParams *call_params);
 
 /**
  * Set the #LinphoneProxyConfig to use for the call

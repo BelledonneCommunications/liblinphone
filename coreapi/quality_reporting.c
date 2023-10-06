@@ -547,8 +547,8 @@ void linphone_reporting_update_ip(LinphoneCall *call) {
 
 void linphone_reporting_update_media_info(LinphoneCall *call, int stats_type) {
 	MediaStream *stream = NULL;
-	const ::PayloadType *local_payload = NULL;
-	const ::PayloadType *remote_payload = NULL;
+	const LinphonePayloadType *local_payload = NULL;
+	const LinphonePayloadType *remote_payload = NULL;
 	const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
 	std::shared_ptr<CallLog> log = Call::toCpp(call)->getLog();
 	reporting_session_report_t *report = log->getQualityReporting()->reports[stats_type];
@@ -595,15 +595,15 @@ void linphone_reporting_update_media_info(LinphoneCall *call, int stats_type) {
 	/*yet we use the same payload config for local and remote, since this is the largest use case*/
 	if (stats_type == LINPHONE_CALL_STATS_AUDIO && Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio)) {
 		stream = Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio);
-		local_payload = linphone_call_params_get_used_audio_codec(current_params);
+		local_payload = linphone_call_params_get_used_audio_payload_type(current_params);
 		remote_payload = local_payload;
 	} else if (stats_type == LINPHONE_CALL_STATS_VIDEO && Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo)) {
 		stream = Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo);
-		local_payload = linphone_call_params_get_used_video_codec(current_params);
+		local_payload = linphone_call_params_get_used_video_payload_type(current_params);
 		remote_payload = local_payload;
 	} else if (stats_type == LINPHONE_CALL_STATS_TEXT && Call::toCpp(call)->getMediaStream(LinphoneStreamTypeText)) {
 		stream = Call::toCpp(call)->getMediaStream(LinphoneStreamTypeText);
-		local_payload = linphone_call_params_get_used_text_codec(current_params);
+		local_payload = linphone_call_params_get_used_text_payload_type(current_params);
 		remote_payload = local_payload;
 	}
 
@@ -628,19 +628,22 @@ void linphone_reporting_update_media_info(LinphoneCall *call, int stats_type) {
 	STR_REASSIGN(report->dialog_id, ms_strdup_printf("%s;%u", dialogId.c_str(), report->info.local_addr.ssrc));
 
 	if (local_payload != NULL) {
-		report->local_metrics.session_description.payload_type = local_payload->type;
-		if (local_payload->mime_type != NULL)
-			STR_REASSIGN(report->local_metrics.session_description.payload_desc, ms_strdup(local_payload->mime_type));
-		report->local_metrics.session_description.sample_rate = local_payload->clock_rate;
-		if (local_payload->recv_fmtp != NULL)
-			STR_REASSIGN(report->local_metrics.session_description.fmtp, ms_strdup(local_payload->recv_fmtp));
+		report->local_metrics.session_description.payload_type = linphone_payload_type_get_type(local_payload);
+		STR_REASSIGN(report->local_metrics.session_description.payload_desc,
+		             ms_strdup(linphone_payload_type_get_mime_type(local_payload)));
+		report->local_metrics.session_description.sample_rate = linphone_payload_type_get_clock_rate(local_payload);
+		if (linphone_payload_type_get_recv_fmtp(local_payload) != NULL)
+			STR_REASSIGN(report->local_metrics.session_description.fmtp,
+			             ms_strdup(linphone_payload_type_get_recv_fmtp(local_payload)));
 	}
 
 	if (remote_payload != NULL) {
-		report->remote_metrics.session_description.payload_type = remote_payload->type;
-		STR_REASSIGN(report->remote_metrics.session_description.payload_desc, ms_strdup(remote_payload->mime_type));
-		report->remote_metrics.session_description.sample_rate = remote_payload->clock_rate;
-		STR_REASSIGN(report->remote_metrics.session_description.fmtp, ms_strdup(remote_payload->recv_fmtp));
+		report->remote_metrics.session_description.payload_type = linphone_payload_type_get_type(remote_payload);
+		STR_REASSIGN(report->remote_metrics.session_description.payload_desc,
+		             ms_strdup(linphone_payload_type_get_mime_type(remote_payload)));
+		report->remote_metrics.session_description.sample_rate = linphone_payload_type_get_clock_rate(remote_payload);
+		STR_REASSIGN(report->remote_metrics.session_description.fmtp,
+		             ms_strdup(linphone_payload_type_get_recv_fmtp(remote_payload)));
 	}
 }
 

@@ -1746,18 +1746,20 @@ void update_sequence_number(bctbx_list_t **participants_info,
 
 static bool have_common_audio_payload(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2) {
 	bool found = false;
-	const bctbx_list_t *elem = linphone_core_get_audio_codecs(mgr1->lc);
-	for (; elem != NULL; elem = elem->next) {
-		PayloadType *pt1 = (PayloadType *)elem->data;
-		if (linphone_core_payload_type_enabled(mgr1->lc, pt1) == TRUE) {
-			LinphonePayloadType *pt2 =
-			    linphone_core_get_payload_type(mgr2->lc, pt1->mime_type, pt1->clock_rate, pt1->channels);
+	bctbx_list_t *codecs = linphone_core_get_audio_payload_types(mgr1->lc);
+	for (bctbx_list_t *elem = codecs; elem != NULL; elem = elem->next) {
+		LinphonePayloadType *pt1 = (LinphonePayloadType *)elem->data;
+		if (linphone_payload_type_enabled(pt1) == TRUE) {
+			LinphonePayloadType *pt2 = linphone_core_get_payload_type(
+			    mgr2->lc, linphone_payload_type_get_mime_type(pt1), linphone_payload_type_get_clock_rate(pt1),
+			    linphone_payload_type_get_channels(pt1));
 			if (pt2 && linphone_payload_type_enabled(pt2)) {
 				found = true;
 			}
 			linphone_payload_type_unref(pt2);
 		}
 	}
+	bctbx_list_free_with_data(codecs, (bctbx_list_free_func)linphone_payload_type_unref);
 	return found;
 }
 

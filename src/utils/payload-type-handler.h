@@ -32,6 +32,7 @@
 #define PAYLOAD_TYPE_ENABLED PAYLOAD_TYPE_USER_FLAG_0
 #define PAYLOAD_TYPE_BITRATE_OVERRIDE PAYLOAD_TYPE_USER_FLAG_3
 #define PAYLOAD_TYPE_FROZEN_NUMBER PAYLOAD_TYPE_USER_FLAG_4
+#define PAYLOAD_TYPE_PRIORITY_BONUS PAYLOAD_TYPE_USER_FLAG_5 // Used for codec sorting and offer-answer.
 
 // =============================================================================
 

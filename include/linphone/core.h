@@ -66,6 +66,8 @@
 // For migration purpose.
 #include "linphone/api/c-api.h"
 
+#include "linphone/enums/c-enums.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -2044,7 +2046,8 @@ LINPHONE_PUBLIC void linphone_core_set_upload_ptime(LinphoneCore *core, int ptim
 LINPHONE_PUBLIC int linphone_core_get_upload_ptime(LinphoneCore *core);
 
 /**
- * Set the SIP transport timeout.
+ * Set the SIP transport timeout, which represents the maximum time permitted to establish a
+ * connection to a SIP server.
  * @param core #LinphoneCore object. @notnil
  * @param timeout_ms The SIP transport timeout in milliseconds.
  * @ingroup media_parameters
@@ -2052,7 +2055,8 @@ LINPHONE_PUBLIC int linphone_core_get_upload_ptime(LinphoneCore *core);
 LINPHONE_PUBLIC void linphone_core_set_sip_transport_timeout(LinphoneCore *core, int timeout_ms);
 
 /**
- * Get the SIP transport timeout.
+ * Get the SIP transport timeout, which represents the maximum time permitted to establish a
+ * connection to a SIP server.
  * @param core #LinphoneCore object. @notnil
  * @return The SIP transport timeout in milliseconds.
  * @ingroup media_parameters
@@ -2123,8 +2127,7 @@ LINPHONE_PUBLIC void linphone_core_set_dns_servers(LinphoneCore *core, const bct
 /**
  * Return the list of the available audio payload types.
  * @param core The core. @notnil
- * @return A freshly allocated list of the available payload types. The list
- * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref.
+ * @return A freshly allocated list of the available payload types.
  * @bctbx_list{LinphonePayloadType} @maybenil @tobefreed
  * @ingroup media_parameters
  */
@@ -2142,21 +2145,46 @@ LINPHONE_PUBLIC void linphone_core_set_audio_payload_types(LinphoneCore *core, c
 /**
  * Return the list of the available video payload types.
  * @param core The core. @notnil
- * @return A freshly allocated list of the available payload types. The list
- * must be destroyed with bctbx_list_free() after usage. The elements of the
- * list haven't to be unref. @bctbx_list{LinphonePayloadType} @maybenil
+ * @return A freshly allocated list of the available payload types.  @bctbx_list{LinphonePayloadType} @maybenil
+ * @tobefreed
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_video_payload_types(LinphoneCore *core);
 
 /**
  * Redefine the list of the available video payload types.
+ * Calling this function if the video codec priority policy is LinphoneCodecPriorityPolicyAuto
+ * turns video codec priority policy to basic scheme, since application is not supposed to control
+ * the order of video codecs when LinphoneCodecPriorityPolicyAuto is selected, by definition.
+ * (see linphone_core_set_video_codec_priority_policy() )
  * @param core The core. @notnil
  * @param payload_types The new list of codecs. The core does not take
  * ownership on it. \bctbx_list{LinphonePayloadType} @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_video_payload_types(LinphoneCore *core, const bctbx_list_t *payload_types);
+
+/**
+ * Set the priority policy for video codecs (payload types).
+ * Since version 5.3, the default value is #LinphoneCodecPriorityPolicyAuto unless the core's
+ * configuration file describes a list of video payload type to use.
+ * This is to preserve backward compatibility for upgrading applications.
+ * See #LinphoneCodecPriorityPolicy for more details.
+ * @param core, the core @notnil
+ * @param policy the #LinphoneCodecPriorityPolicy to apply
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_video_codec_priority_policy(LinphoneCore *core,
+                                                                   LinphoneCodecPriorityPolicy policy);
+
+/**
+ * Get the current priority policy for video codecs (payload types).
+ *
+ * See #LinphoneCodecPriorityPolicy for more details.
+ * @param core, the core @notnil
+ * @return the current #LinphoneCodecPriorityPolicy
+ **/
+LINPHONE_PUBLIC LinphoneCodecPriorityPolicy linphone_core_get_video_codec_priority_policy(const LinphoneCore *core);
 
 /**
  * Return the list of the available text payload types.
@@ -2206,9 +2234,7 @@ LINPHONE_PUBLIC bool_t linphone_core_generic_comfort_noise_enabled(const Linphon
  * @param rate can be #LINPHONE_FIND_PAYLOAD_IGNORE_RATE
  * @param channels  number of channels, can be #LINPHONE_FIND_PAYLOAD_IGNORE_CHANNELS
  * @return Returns NULL if not found. If a #LinphonePayloadType is returned, it must be released with
- * linphone_payload_type_unref() after using it. @maybenil
- * @warning The returned payload type is allocated as a floating reference i.e. the reference counter is initialized to
- * 0.
+ * linphone_payload_type_unref() after using it. @maybenil @tobefreed
  */
 LINPHONE_PUBLIC LinphonePayloadType *
 linphone_core_get_payload_type(LinphoneCore *core, const char *type, int rate, int channels);

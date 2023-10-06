@@ -68,7 +68,7 @@ void AudioCodecMoveCommand::exec(Daemon *app, const string &args) {
 		app->sendResponse(Response("Incorrect mime type format.", Response::Error));
 		return;
 	}
-	PayloadType *selected_payload = NULL;
+	LinphonePayloadType *selected_payload = NULL;
 	selected_payload = parser.getPayloadType();
 
 	if (selected_payload == NULL) {
@@ -84,24 +84,26 @@ void AudioCodecMoveCommand::exec(Daemon *app, const string &args) {
 	}
 
 	int i = 0;
-	bctbx_list_t *mslist = NULL;
-	for (const bctbx_list_t *node = linphone_core_get_audio_codecs(app->getCore()); node != NULL;
-	     node = bctbx_list_next(node)) {
-		PayloadType *payload = reinterpret_cast<PayloadType *>(node->data);
+	bctbx_list_t *orig_list = linphone_core_get_audio_payload_types(app->getCore());
+	bctbx_list_t *new_list = NULL;
+	for (bctbx_list_t *node = orig_list; node != NULL; node = bctbx_list_next(node)) {
+		LinphonePayloadType *payload = reinterpret_cast<LinphonePayloadType *>(node->data);
 		if (i == index) {
-			mslist = bctbx_list_append(mslist, selected_payload);
+			new_list = bctbx_list_append(new_list, linphone_payload_type_ref(selected_payload));
 			++i;
 		}
-		if (selected_payload != payload) {
-			mslist = bctbx_list_append(mslist, payload);
+		if (!linphone_payload_type_weak_equals(selected_payload, linphone_payload_type_ref(payload))) {
+			new_list = bctbx_list_append(new_list, payload);
 			++i;
 		}
 	}
 	if (i <= index) {
 		index = i;
-		mslist = bctbx_list_append(mslist, selected_payload);
+		new_list = bctbx_list_append(new_list, linphone_payload_type_ref(selected_payload));
 	}
-	linphone_core_set_audio_codecs(app->getCore(), mslist);
+	linphone_core_set_audio_payload_types(app->getCore(), new_list);
+	bctbx_list_free_with_data(orig_list, (bctbx_list_free_func)linphone_payload_type_unref);
+	bctbx_list_free_with_data(new_list, (bctbx_list_free_func)linphone_payload_type_unref);
 
 	app->sendResponse(PayloadTypeResponse(app->getCore(), selected_payload, index));
 }

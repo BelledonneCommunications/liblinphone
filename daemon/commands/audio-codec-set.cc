@@ -67,16 +67,20 @@ AudioCodecSetCommand::AudioCodecSetCommand()
 	                                                                                   "Enabled: false"));
 }
 
-static PayloadType *findPayload(LinphoneCore *lc, int payload_type, int *index) {
+static LinphonePayloadType *findPayload(LinphoneCore *lc, int payload_type, int *index) {
+	bctbx_list_t *payloadTypes = linphone_core_get_audio_payload_types(lc);
+	LinphonePayloadType *ret = nullptr;
 	if (index) *index = 0;
-	for (const bctbx_list_t *node = linphone_core_get_audio_codecs(lc); node != NULL; node = bctbx_list_next(node)) {
-		PayloadType *payload = reinterpret_cast<PayloadType *>(node->data);
+	for (const bctbx_list_t *node = payloadTypes; node != NULL; node = bctbx_list_next(node)) {
+		LinphonePayloadType *payload = static_cast<LinphonePayloadType *>(node->data);
 		if (index) (*index)++;
-		if (payload_type == payload_type_get_number(payload)) {
-			return payload;
+		if (payload_type == linphone_payload_type_get_number(payload)) {
+			ret = linphone_payload_type_ref(payload);
+			break;
 		}
 	}
-	return NULL;
+	bctbx_list_free_with_data(payloadTypes, (bctbx_list_free_func)linphone_payload_type_unref);
+	return ret;
 }
 
 void AudioCodecSetCommand::exec(Daemon *app, const string &args) {
@@ -104,37 +108,46 @@ void AudioCodecSetCommand::exec(Daemon *app, const string &args) {
 	ist >> value;
 	if (value.length() > 255) value.resize(255);
 
-	PayloadType *payload = parser.getPayloadType();
+	LinphonePayloadType *payload = nullptr;
+	if (parser.getPayloadType()) {
+		payload =
+		    linphone_core_get_payload_type(app->getCore(), linphone_payload_type_get_mime_type(parser.getPayloadType()),
+		                                   linphone_payload_type_get_clock_rate(parser.getPayloadType()),
+		                                   linphone_payload_type_get_channels(parser.getPayloadType()));
+	}
 	if (payload) {
 		bool handled = false;
 		if (param.compare("clock_rate") == 0) {
 			if (value.length() > 0) {
-				payload->clock_rate = atoi(value.c_str());
-				handled = true;
+				// setting the clock rate is not supported by liblinphone. What's the purpose of doing this ?'
+				// linphone_payload_type_set_clock_rate(payload, atoi(value.c_str()));
+				handled = false;
 			}
 		} else if (param.compare("recv_fmtp") == 0) {
-			payload_type_set_recv_fmtp(payload, value.c_str());
+			linphone_payload_type_set_recv_fmtp(payload, value.c_str());
 			handled = true;
 		} else if (param.compare("send_fmtp") == 0) {
-			payload_type_set_send_fmtp(payload, value.c_str());
+			linphone_payload_type_set_send_fmtp(payload, value.c_str());
 			handled = true;
 		} else if (param.compare("number") == 0) {
 			if (value.length() > 0) {
 				int idx = atoi(value.c_str());
-				PayloadType *conflict = NULL;
+				LinphonePayloadType *conflict = NULL;
 				if (idx != -1) {
 					conflict = findPayload(app->getCore(), atoi(value.c_str()), NULL);
 				}
 				if (conflict) {
 					app->sendResponse(Response("New payload type number is already used.", Response::Error));
+					linphone_payload_type_unref(conflict);
 				} else {
-					payload_type_set_number(payload, idx);
+					linphone_payload_type_set_number(payload, idx);
 					app->sendResponse(PayloadTypeResponse(app->getCore(), payload, parser.getPosition()));
 				}
+				linphone_payload_type_unref(payload);
 				return;
 			}
 		} else if (param.compare("bitrate") == 0) {
-			linphone_core_set_payload_type_bitrate(app->getCore(), payload, atoi(value.c_str()));
+			linphone_payload_type_set_normal_bitrate(payload, atoi(value.c_str()));
 			handled = true;
 		}
 		if (handled) {
@@ -142,6 +155,7 @@ void AudioCodecSetCommand::exec(Daemon *app, const string &args) {
 		} else {
 			app->sendResponse(Response("Invalid codec parameter.", Response::Error));
 		}
+		linphone_payload_type_unref(payload);
 		return;
 	}
 	app->sendResponse(Response("Audio codec not found.", Response::Error));

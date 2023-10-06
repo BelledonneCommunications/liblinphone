@@ -181,6 +181,16 @@ LINPHONE_PUBLIC bool_t linphone_payload_type_is_vbr(const LinphonePayloadType *p
  */
 LINPHONE_PUBLIC bool_t linphone_payload_type_is_usable(const LinphonePayloadType *payload_type);
 
+/**
+ * Compare two payload types, and returns true if they are equal.
+ * Parameters (fmtp strings) are not compared, hence the name 'weak equals'.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @param other_payload_type another #LinphonePayloadType object @notnil
+ * @return TRUE if the payload types are "almost" equals.
+ */
+LINPHONE_PUBLIC bool_t linphone_payload_type_weak_equals(const LinphonePayloadType *payload_type,
+                                                         const LinphonePayloadType *other_payload_type);
+
 #ifdef __cplusplus
 }
 #endif

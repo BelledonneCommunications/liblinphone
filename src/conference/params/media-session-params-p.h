@@ -25,6 +25,8 @@
 
 #include "media-session-params.h"
 
+#include "payload-type/payload-type.h"
+
 // =============================================================================
 
 extern LinphoneCallParams *linphone_call_params_new_for_wrapper(void);
@@ -96,16 +98,16 @@ public:
 	}
 	void setSentVideoDefinition(LinphoneVideoDefinition *value);
 	void setUsedAudioCodec(OrtpPayloadType *pt) {
-		usedAudioCodec = pt;
+		usedAudioCodec = PayloadType::create(nullptr, pt);
 	}
 	void setUsedVideoCodec(OrtpPayloadType *pt) {
-		usedVideoCodec = pt;
+		usedVideoCodec = PayloadType::create(nullptr, pt);
 	}
 	void setUsedRealtimeTextCodec(OrtpPayloadType *pt) {
-		usedRealtimeTextCodec = pt;
+		usedRealtimeTextCodec = PayloadType::create(nullptr, pt);
 	}
 	void setUsedFecCodec(OrtpPayloadType *pt) {
-		usedFecCodec = pt;
+		usedFecCodec = PayloadType::create(nullptr, pt);
 	}
 	SalCustomSdpAttribute *getCustomSdpAttributes() const;
 	void setCustomSdpAttributes(const SalCustomSdpAttribute *csa);
@@ -117,22 +119,22 @@ public:
 	int audioBandwidthLimit = 0;
 	LinphoneMediaDirection audioDirection = LinphoneMediaDirectionSendRecv;
 	bool audioMulticastEnabled = false;
-	::PayloadType *usedAudioCodec = nullptr;
+	std::shared_ptr<PayloadType> usedAudioCodec;
 
 	bool videoEnabled = false;
 	LinphoneMediaDirection videoDirection = LinphoneMediaDirectionSendRecv;
 	bool videoMulticastEnabled = false;
-	::PayloadType *usedVideoCodec = nullptr;
+	std::shared_ptr<PayloadType> usedVideoCodec;
 	float receivedFps = 0.f;
 	LinphoneVideoDefinition *receivedVideoDefinition = nullptr;
 	float sentFps = 0.f;
 	LinphoneVideoDefinition *sentVideoDefinition = nullptr;
 
 	bool fecEnabled = false;
-	::PayloadType *usedFecCodec = nullptr;
+	std::shared_ptr<PayloadType> usedFecCodec;
 
 	unsigned int realtimeTextKeepaliveInterval = 25000;
-	::PayloadType *usedRealtimeTextCodec = nullptr;
+	std::shared_ptr<PayloadType> usedRealtimeTextCodec;
 	int videoDownloadBandwidth = 0;
 
 	bool realtimeTextEnabled = false;

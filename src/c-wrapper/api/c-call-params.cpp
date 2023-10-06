@@ -344,43 +344,28 @@ const char *linphone_call_params_get_session_name(const LinphoneCallParams *para
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(params)->getSessionName());
 }
 
-LinphonePayloadType *linphone_call_params_get_used_audio_payload_type(const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedAudioPayloadType();
+const LinphonePayloadType *linphone_call_params_get_used_audio_payload_type(const LinphoneCallParams *params) {
+	return bellesip::toC(L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedAudioPayloadType());
 }
 
-LinphonePayloadType *linphone_call_params_get_used_video_payload_type(const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedVideoPayloadType();
+const LinphonePayloadType *linphone_call_params_get_used_video_payload_type(const LinphoneCallParams *params) {
+	return bellesip::toC(L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedVideoPayloadType());
 }
 
-LinphonePayloadType *linphone_call_params_get_used_text_payload_type(const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedRealtimeTextPayloadType();
-}
-
-const OrtpPayloadType *linphone_call_params_get_used_audio_codec(const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedAudioCodec();
+const LinphonePayloadType *linphone_call_params_get_used_text_payload_type(const LinphoneCallParams *params) {
+	return bellesip::toC(L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedRealtimeTextPayloadType());
 }
 
 void linphone_call_params_set_used_audio_codec(LinphoneCallParams *params, OrtpPayloadType *codec) {
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setUsedAudioCodec(codec);
 }
 
-const OrtpPayloadType *linphone_call_params_get_used_video_codec(const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedVideoCodec();
-}
-
 void linphone_call_params_set_used_video_codec(LinphoneCallParams *params, OrtpPayloadType *codec) {
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setUsedVideoCodec(codec);
 }
 
-const OrtpPayloadType *linphone_call_params_get_used_fec_codec(const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedFecCodec();
-}
 void linphone_call_params_set_used_fec_codec(LinphoneCallParams *params, OrtpPayloadType *codec) {
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setUsedFecCodec(codec);
-}
-
-const OrtpPayloadType *linphone_call_params_get_used_text_codec(const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedRealtimeTextCodec();
 }
 
 void linphone_call_params_set_used_text_codec(LinphoneCallParams *params, OrtpPayloadType *codec) {

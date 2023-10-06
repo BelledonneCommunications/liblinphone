@@ -339,14 +339,9 @@ LinphoneMediaDirection MediaSessionParams::getAudioDirection() const {
 	return d->audioDirection;
 }
 
-const OrtpPayloadType *MediaSessionParams::getUsedAudioCodec() const {
+std::shared_ptr<const PayloadType> MediaSessionParams::getUsedAudioPayloadType() const {
 	L_D();
 	return d->usedAudioCodec;
-}
-
-LinphonePayloadType *MediaSessionParams::getUsedAudioPayloadType() const {
-	L_D();
-	return d->usedAudioCodec ? linphone_payload_type_new(nullptr, d->usedAudioCodec) : nullptr;
 }
 
 void MediaSessionParams::setAudioBandwidthLimit(int value) {
@@ -396,14 +391,9 @@ LinphoneVideoDefinition *MediaSessionParams::getSentVideoDefinition() const {
 	return d->sentVideoDefinition;
 }
 
-const OrtpPayloadType *MediaSessionParams::getUsedVideoCodec() const {
+std::shared_ptr<const PayloadType> MediaSessionParams::getUsedVideoPayloadType() const {
 	L_D();
 	return d->usedVideoCodec;
-}
-
-LinphonePayloadType *MediaSessionParams::getUsedVideoPayloadType() const {
-	L_D();
-	return d->usedVideoCodec ? linphone_payload_type_new(nullptr, d->usedVideoCodec) : nullptr;
 }
 
 LinphoneMediaDirection MediaSessionParams::getVideoDirection() const {
@@ -441,7 +431,8 @@ bool MediaSessionParams::fecEnabled() const {
 	L_D();
 	return d->fecEnabled;
 }
-const OrtpPayloadType *MediaSessionParams::getUsedFecCodec() const {
+
+std::shared_ptr<const PayloadType> MediaSessionParams::getUsedFecCodec() const {
 	L_D();
 	return d->usedFecCodec;
 }
@@ -457,14 +448,9 @@ void MediaSessionParams::setRealtimeTextKeepaliveInterval(unsigned int interval)
 	d->realtimeTextKeepaliveInterval = interval;
 }
 
-const OrtpPayloadType *MediaSessionParams::getUsedRealtimeTextCodec() const {
+std::shared_ptr<const PayloadType> MediaSessionParams::getUsedRealtimeTextPayloadType() const {
 	L_D();
 	return d->usedRealtimeTextCodec;
-}
-
-LinphonePayloadType *MediaSessionParams::getUsedRealtimeTextPayloadType() const {
-	L_D();
-	return d->usedRealtimeTextCodec ? linphone_payload_type_new(nullptr, d->usedRealtimeTextCodec) : nullptr;
 }
 
 bool MediaSessionParams::realtimeTextEnabled() const {

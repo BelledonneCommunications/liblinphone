@@ -295,7 +295,7 @@ MediaSessionPrivate &StreamsGroup::getMediaSessionPrivate() const {
 	return *getMediaSession().getPrivate();
 }
 
-int StreamsGroup::updateAllocatedAudioBandwidth(const PayloadType *pt, int maxbw) {
+int StreamsGroup::updateAllocatedAudioBandwidth(const OrtpPayloadType *pt, int maxbw) {
 	mAudioBandwidth = PayloadTypeHandler::getAudioPayloadTypeBandwidth(pt, maxbw);
 	lInfo() << "Audio bandwidth for StreamsGroup [" << this << "] is " << mAudioBandwidth;
 	return mAudioBandwidth;

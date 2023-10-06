@@ -129,10 +129,10 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 		belle_generic_uri_t *uri;
 		char *version_check_url;
 		LinphoneUpdateCheck *update;
-		MSList *item;
-		MSList *platform_tags = ms_factory_get_platform_tags(linphone_core_get_ms_factory(lc));
+		bctbx_list_t *item;
+		bctbx_list_t *platform_tags = ms_factory_get_platform_tags(linphone_core_get_ms_factory(lc));
 
-		for (item = platform_tags; item != NULL; item = ms_list_next(item)) {
+		for (item = platform_tags; item != NULL; item = item->next) {
 			const char *tag = (const char *)item->data;
 			if (strcmp(tag, "win32") == 0) platform = "windows";
 			else if (strcmp(tag, "apple") == 0) platform = "macosx";

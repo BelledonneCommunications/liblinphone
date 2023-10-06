@@ -240,6 +240,11 @@ void PayloadType::setSendFmtp(const string &sendFmtp) {
 	payload_type_set_send_fmtp(mPt, send_fmtp_c);
 }
 
+void PayloadType::setPriorityBonus(bool value) {
+	if (value) payload_type_set_flag(mPt, PAYLOAD_TYPE_PRIORITY_BONUS);
+	else payload_type_unset_flag(mPt, PAYLOAD_TYPE_PRIORITY_BONUS);
+}
+
 int PayloadType::getType() const {
 	return mPt->type;
 }
@@ -350,6 +355,12 @@ bool PayloadType::isUsable() const {
 	int maxbw = LinphonePrivate::PayloadTypeHandler::getMinBandwidth(linphone_core_get_download_bandwidth(cCore),
 	                                                                 linphone_core_get_upload_bandwidth(cCore));
 	return linphone_core_is_payload_type_usable_for_bandwidth(cCore, mPt, maxbw);
+}
+
+bool PayloadType::weakEquals(const PayloadType &other) const {
+	if (mPt == nullptr || other.mPt == nullptr) return false;
+	return mPt->type == other.mPt->type && mPt->clock_rate == other.mPt->clock_rate &&
+	       strcasecmp(mPt->mime_type, other.mPt->mime_type) == 0 && mPt->channels == other.mPt->channels;
 }
 
 LINPHONE_END_NAMESPACE

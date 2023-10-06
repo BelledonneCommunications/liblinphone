@@ -65,16 +65,16 @@ static void start_with_no_config(void) {
 static void check_payload_type_numbers(LinphoneCall *call1, LinphoneCall *call2, int expected_number) {
 	const LinphoneCallParams *params = linphone_call_get_current_params(call1);
 	if (!BC_ASSERT_PTR_NOT_NULL(params)) return;
-	const PayloadType *pt = linphone_call_params_get_used_audio_codec(params);
+	const LinphonePayloadType *pt = linphone_call_params_get_used_audio_payload_type(params);
 	BC_ASSERT_PTR_NOT_NULL(pt);
 	if (pt) {
-		BC_ASSERT_EQUAL(payload_type_get_number(pt), expected_number, int, "%d");
+		BC_ASSERT_EQUAL(linphone_payload_type_get_number(pt), expected_number, int, "%d");
 	}
 	params = linphone_call_get_current_params(call2);
-	pt = linphone_call_params_get_used_audio_codec(params);
+	pt = linphone_call_params_get_used_audio_payload_type(params);
 	BC_ASSERT_PTR_NOT_NULL(pt);
 	if (pt) {
-		BC_ASSERT_EQUAL(payload_type_get_number(pt), expected_number, int, "%d");
+		BC_ASSERT_EQUAL(linphone_payload_type_get_number(pt), expected_number, int, "%d");
 	}
 }
 
@@ -144,13 +144,13 @@ static void simple_call_with_fmtps(void) {
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
-		LinphonePayloadType *pt =
+		const LinphonePayloadType *pt =
 		    linphone_call_params_get_used_audio_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_send_fmtp(pt), "parles-plus-fort=1");
 		}
-		linphone_payload_type_unref(pt);
+
 		pt = linphone_call_params_get_used_audio_payload_type(
 		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
@@ -159,7 +159,6 @@ static void simple_call_with_fmtps(void) {
 			           linphone_payload_type_get_recv_fmtp(pt));
 			BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_recv_fmtp(pt), "parles-plus-fort=1");
 		}
-		linphone_payload_type_unref(pt);
 	}
 
 	end_call(marie, pauline);
@@ -228,13 +227,12 @@ static void h264_call_with_fmtps(void) {
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
-		LinphonePayloadType *pt =
+		const LinphonePayloadType *pt =
 		    linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 		}
-		linphone_payload_type_unref(pt);
 		pt = linphone_call_params_get_used_video_payload_type(
 		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
@@ -244,7 +242,6 @@ static void h264_call_with_fmtps(void) {
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 		}
-		linphone_payload_type_unref(pt);
 	}
 
 	end_call(marie, pauline);
@@ -377,7 +374,7 @@ static void h264_call_receiver_with_no_h264_support(void) {
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
-		LinphonePayloadType *pt =
+		const LinphonePayloadType *pt =
 		    linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NULL(pt);
 		pt = linphone_call_params_get_used_video_payload_type(
@@ -427,13 +424,12 @@ static void h264_call_without_packetization_mode(void) {
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
-		LinphonePayloadType *pt =
+		const LinphonePayloadType *pt =
 		    linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 		}
-		linphone_payload_type_unref(pt);
 		pt = linphone_call_params_get_used_video_payload_type(
 		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
@@ -443,7 +439,6 @@ static void h264_call_without_packetization_mode(void) {
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 		}
-		linphone_payload_type_unref(pt);
 	}
 
 	end_call(marie, pauline);
@@ -1090,6 +1085,134 @@ static void call_with_unknown_stream_accepted_2(void) {
 	_call_with_unknown_stream(TRUE, TRUE);
 }
 
+static void activate_video_and_ice(LinphoneCoreManager *m) {
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	LinphoneNatPolicy *nat_policy;
+	LinphoneAccountParams *account_params;
+	LinphoneAccount *account;
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_core_set_video_activation_policy(m->lc, pol);
+	linphone_video_activation_policy_unref(pol);
+
+	linphone_core_enable_video_capture(m->lc, TRUE);
+	linphone_core_enable_video_display(m->lc, TRUE);
+
+	nat_policy = linphone_core_create_nat_policy(m->lc);
+	linphone_nat_policy_enable_ice(nat_policy, TRUE);
+
+	account = linphone_core_get_default_account(m->lc);
+	account_params = linphone_account_params_clone(linphone_account_get_params(account));
+	linphone_account_params_set_nat_policy(account_params, nat_policy);
+	linphone_account_set_params(account, account_params);
+	linphone_account_params_unref(account_params);
+	linphone_nat_policy_unref(nat_policy);
+
+	linphone_core_set_video_device(m->lc, liblinphone_tester_static_image_id);
+}
+
+static bool_t codec_appears_first(LinphoneCore *lc, const char *codec) {
+	bctbx_list_t *codec_list = linphone_core_get_video_payload_types(lc);
+	LinphonePayloadType *pt = (LinphonePayloadType *)codec_list->data;
+	bool_t ret = strcasecmp(codec, linphone_payload_type_get_mime_type(pt)) == 0;
+	bctbx_list_free_with_data(codec_list, (bctbx_list_free_func)linphone_payload_type_unref);
+	return ret;
+}
+
+static const char *call_selected_codec(LinphoneCall *call) {
+	const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
+	const LinphonePayloadType *pt = linphone_call_params_get_used_video_payload_type(current_params);
+	if (BC_ASSERT_PTR_NOT_NULL(pt)) {
+		return linphone_payload_type_get_mime_type(pt);
+	}
+	return "";
+}
+
+static void check_linphonerc_config(const char *rcfile) {
+	char *path = bc_tester_res(rcfile);
+	if (BC_ASSERT_PTR_NOT_NULL(path)) {
+		LinphoneConfig *config = linphone_factory_create_config(linphone_factory_get(), path);
+		if (BC_ASSERT_PTR_NOT_NULL(config)) {
+			BC_ASSERT_STRING_EQUAL(linphone_config_get_string(config, "video", "codec_priority_policy", "unset"),
+			                       "unset");
+			linphone_config_unref(config);
+		}
+		bc_free(path);
+	}
+}
+
+static void call_with_video_codec_priority_policy(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphonePayloadType *vp8, *av1;
+	LinphoneCall *marie_call, *pauline_call;
+
+	vp8 = linphone_core_get_payload_type(pauline->lc, "VP8", 90000, -1);
+	av1 = linphone_core_get_payload_type(pauline->lc, "AV1", 90000, -1);
+
+	if (!vp8 || !av1) {
+		ms_warning("This test requires both VP8 and AV1 video codecs, skipped.");
+		goto end;
+	}
+	activate_video_and_ice(marie);
+	activate_video_and_ice(pauline);
+
+	/* Make sure that configuration files do not mention codec_priority_policy.*/
+	check_linphonerc_config("rcfiles/marie_rc");
+	check_linphonerc_config("rcfiles/pauline_tcp_rc");
+
+	/* PolicyAuto is the default one. However Marie has a video codec list defined, so in absence of
+	 [video]video_priority_policy item written in its configuration file, we must assume it is using the basic policy.
+   */
+	BC_ASSERT_TRUE(linphone_core_get_video_codec_priority_policy(marie->lc) == LinphoneCodecPriorityPolicyBasic);
+	BC_ASSERT_TRUE(linphone_core_get_video_codec_priority_policy(pauline->lc) == LinphoneCodecPriorityPolicyAuto);
+
+	BC_ASSERT_TRUE(codec_appears_first(marie->lc, "AV1"));
+	BC_ASSERT_TRUE(codec_appears_first(pauline->lc, "AV1"));
+
+	/* this is to force to re-compute the codec list order: */
+	linphone_core_set_video_codec_priority_policy(pauline->lc, LinphoneCodecPriorityPolicyBasic);
+	/* AV1 is before VP8 by default. Give an artificial bonus to VP8. Normally this is done at startup*/
+	linphone_payload_type_set_priority_bonus(vp8, TRUE); // this function is not public, apps should not do this.
+
+	linphone_core_set_video_codec_priority_policy(pauline->lc, LinphoneCodecPriorityPolicyAuto);
+	/* now vp8 shall appear first */
+	BC_ASSERT_TRUE(codec_appears_first(pauline->lc, "VP8"));
+
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
+	linphone_call_accept(pauline_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_STRING_EQUAL(call_selected_codec(marie_call), "VP8");
+	BC_ASSERT_STRING_EQUAL(call_selected_codec(pauline_call), "VP8");
+	/* Now comes the ICE re-INVITE */
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+	/* Assert that the ICE re-invite did not change the selected codec */
+	BC_ASSERT_STRING_EQUAL(call_selected_codec(marie_call), "VP8");
+	BC_ASSERT_STRING_EQUAL(call_selected_codec(pauline_call), "VP8");
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
+
+	linphone_call_terminate(pauline_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	/* Assert the priority policy for pauline is now set */
+	BC_ASSERT_STRING_EQUAL(
+	    linphone_config_get_string(linphone_core_get_config(pauline->lc), "video", "codec_priority_policy", "unset"),
+	    "1");
+
+end:
+	if (av1) linphone_payload_type_unref(av1);
+	if (vp8) linphone_payload_type_unref(vp8);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 #endif
 
 static test_t offeranswer_tests[] = {
@@ -1163,7 +1286,8 @@ static test_t offeranswer_tests[] = {
     TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream),
     TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted),
     TEST_NO_TAG("Call with unknown stream, accepted 2", call_with_unknown_stream_accepted_2),
-    TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams)
+    TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams),
+    TEST_NO_TAG("Call with video codec priority policy auto", call_with_video_codec_priority_policy)
 #endif
 };
 

@@ -72,6 +72,8 @@ public:
 	bool isEnabled() const;
 	bool isVbr() const;
 	bool isUsable() const;
+	void setPriorityBonus(bool value);
+	bool weakEquals(const PayloadType &other) const;
 
 private:
 	OrtpPayloadType *mPt;

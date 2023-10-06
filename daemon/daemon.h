@@ -203,7 +203,7 @@ public:
 class PayloadTypeResponse : public Response {
 public:
 	PayloadTypeResponse(LinphoneCore *core,
-	                    const PayloadType *payloadType,
+	                    const LinphonePayloadType *payloadType,
 	                    int index = -1,
 	                    const std::string &prefix = std::string(),
 	                    bool enabled_status = true);
@@ -212,13 +212,16 @@ public:
 class PayloadTypeParser {
 public:
 	PayloadTypeParser(LinphoneCore *core, const std::string &mime_type, bool accept_all = false);
+	~PayloadTypeParser() {
+		if (mPayloadType) linphone_payload_type_unref(mPayloadType);
+	}
 	inline bool all() {
 		return mAll;
 	}
 	inline bool successful() {
 		return mSuccesful;
 	}
-	inline PayloadType *getPayloadType() const {
+	inline LinphonePayloadType *getPayloadType() const {
 		return mPayloadType;
 	}
 	inline int getPosition() const {
@@ -228,7 +231,7 @@ public:
 private:
 	bool mAll;
 	bool mSuccesful;
-	PayloadType *mPayloadType;
+	LinphonePayloadType *mPayloadType;
 	int mPosition;
 };
 

@@ -96,7 +96,7 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg) {
 RtpProfile *MS2VideoMixer::sMakeDummyProfile() {
 	RtpProfile *prof = rtp_profile_new("dummy video");
 	LinphonePayloadType *pt = linphone_core_get_payload_type(mSession.getCCore(), "VP8", 90000, -1);
-	PayloadType *ortp_pt = payload_type_clone(linphone_payload_type_get_ortp_pt(pt));
+	OrtpPayloadType *ortp_pt = payload_type_clone(linphone_payload_type_get_ortp_pt(pt));
 	rtp_profile_set_payload(prof, sVP8PayloadTypeNumber, ortp_pt);
 	linphone_payload_type_unref(pt);
 	return prof;
@@ -122,7 +122,7 @@ void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 	if (!mLocalDummyProfile) mLocalDummyProfile = sMakeDummyProfile();
 	MSMediaStreamIO io;
 	int outputBandwidth = getOutputBandwidth() * 1000;
-	PayloadType *pt;
+	OrtpPayloadType *pt;
 
 	memset(&io, 0, sizeof(io));
 

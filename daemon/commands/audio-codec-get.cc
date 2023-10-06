@@ -56,7 +56,7 @@ void AudioCodecGetCommand::exec(Daemon *app, const string &args) {
 	bool found = false;
 	istringstream ist(args);
 	ostringstream ost;
-	PayloadType *pt = NULL;
+	LinphonePayloadType *pt = NULL;
 
 	if (ist.peek() == EOF) {
 		found = list = true;
@@ -68,26 +68,28 @@ void AudioCodecGetCommand::exec(Daemon *app, const string &args) {
 			app->sendResponse(Response("Incorrect mime type format.", Response::Error));
 			return;
 		}
-		pt = parser.getPayloadType();
+		if (parser.getPayloadType()) pt = linphone_payload_type_ref(parser.getPayloadType());
 	}
 
 	int index = 0;
-	for (const bctbx_list_t *node = linphone_core_get_audio_codecs(app->getCore()); node != NULL;
-	     node = bctbx_list_next(node)) {
-		PayloadType *payload = reinterpret_cast<PayloadType *>(node->data);
+	bctbx_list_t *payloadTypes = linphone_core_get_audio_payload_types(app->getCore());
+	for (const bctbx_list_t *node = payloadTypes; node != NULL; node = bctbx_list_next(node)) {
+		LinphonePayloadType *payload = static_cast<LinphonePayloadType *>(node->data);
 		if (list) {
 			ost << PayloadTypeResponse(app->getCore(), payload, index).getBody() << "\n";
-		} else if (pt == payload) {
+		} else if (pt && linphone_payload_type_weak_equals(pt, payload)) {
 			ost << PayloadTypeResponse(app->getCore(), payload, index).getBody();
 			found = true;
 			break;
 		}
 		++index;
 	}
+	bctbx_list_free_with_data(payloadTypes, (bctbx_list_free_func)linphone_payload_type_unref);
 
 	if (!found) {
 		app->sendResponse(Response("Audio codec not found.", Response::Error));
 	} else {
 		app->sendResponse(Response(ost.str(), Response::Ok));
 	}
+	if (pt) linphone_payload_type_unref(pt);
 }

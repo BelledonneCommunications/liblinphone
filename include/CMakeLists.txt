@@ -125,6 +125,7 @@ set(C_API_HEADER_FILES
 )
 
 set(ENUMS_HEADER_FILES
+	c-enums.h
 	call-enums.h
 	chat-message-enums.h
 	chat-room-enums.h

@@ -305,6 +305,15 @@ std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(MSFactory *factory
 			payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FROZEN_NUMBER);
 			res.push_back(cloned_p1);
 		}
+	} else {
+		/* case of generating an answer */
+		/* resort result list to put high-priority codecs first */
+		res.sort([](const PayloadType *p1, const PayloadType *p2) -> bool {
+			if (p1->flags & PAYLOAD_TYPE_PRIORITY_BONUS && !(p2->flags & PAYLOAD_TYPE_PRIORITY_BONUS)) {
+				return true;
+			}
+			return false;
+		});
 	}
 	return res;
 }

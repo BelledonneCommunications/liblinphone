@@ -381,6 +381,9 @@ public:
 	void setLabel(const std::string &label);
 	const std::string &getLabel() const;
 
+	void setVideoCodecPriorityPolicy(LinphoneCodecPriorityPolicy policy);
+	LinphoneCodecPriorityPolicy getVideoCodecPriorityPolicy() const;
+
 private:
 	Core();
 

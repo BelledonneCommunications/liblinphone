@@ -21,6 +21,7 @@
 #define SIGNAL_INFORMATION_H
 
 #include "linphone/api/c-types.h"
+#include "linphone/enums/c-enums.h"
 #include <belle-sip/object++.hh>
 
 using namespace std;

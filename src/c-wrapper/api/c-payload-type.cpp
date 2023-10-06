@@ -112,3 +112,13 @@ bool_t linphone_payload_type_is_vbr(const LinphonePayloadType *payload_type) {
 bool_t linphone_payload_type_is_usable(const LinphonePayloadType *payload_type) {
 	return LinphonePrivate::PayloadType::toCpp(payload_type)->isUsable();
 }
+
+bool_t linphone_payload_type_weak_equals(const LinphonePayloadType *payload_type,
+                                         const LinphonePayloadType *other_payload_type) {
+	return LinphonePrivate::PayloadType::toCpp(payload_type)
+	    ->weakEquals(*LinphonePrivate::PayloadType::toCpp(other_payload_type));
+}
+
+void linphone_payload_type_set_priority_bonus(LinphonePayloadType *payload_type, bool_t value) {
+	return LinphonePrivate::PayloadType::toCpp(payload_type)->setPriorityBonus(value);
+}

@@ -190,10 +190,10 @@ CallStatsEvent::CallStatsEvent(Daemon *daemon, LinphoneCall *call, const Linphon
 	printCallStatsHelper(ostr, stats, prefix);
 
 	if (linphone_call_stats_get_type(stats) == LINPHONE_CALL_STATS_AUDIO) {
-		const PayloadType *audioCodec = linphone_call_params_get_used_audio_codec(callParams);
+		const LinphonePayloadType *audioCodec = linphone_call_params_get_used_audio_payload_type(callParams);
 		ostr << PayloadTypeResponse(linphone_call_get_core(call), audioCodec, -1, prefix, false).getBody() << "\n";
 	} else {
-		const PayloadType *videoCodec = linphone_call_params_get_used_video_codec(callParams);
+		const LinphonePayloadType *videoCodec = linphone_call_params_get_used_video_payload_type(callParams);
 		ostr << PayloadTypeResponse(linphone_call_get_core(call), videoCodec, -1, prefix, false).getBody() << "\n";
 	}
 
@@ -227,21 +227,25 @@ CallPlayingStatsEvent::CallPlayingStatsEvent(BCTBX_UNUSED(Daemon *daemon), int i
 	setBody(ostr.str());
 }
 
-PayloadTypeResponse::PayloadTypeResponse(
-    LinphoneCore *core, const PayloadType *payloadType, int index, const string &prefix, bool enabled_status) {
+PayloadTypeResponse::PayloadTypeResponse(BCTBX_UNUSED(LinphoneCore *core),
+                                         const LinphonePayloadType *payloadType,
+                                         int index,
+                                         const string &prefix,
+                                         bool enabled_status) {
 	ostringstream ostr;
 	if (payloadType != NULL) {
 		if (index >= 0) ostr << prefix << "Index: " << index << "\n";
-		ostr << prefix << "Payload-type-number: " << payload_type_get_number(payloadType) << "\n";
-		ostr << prefix << "Clock-rate: " << payloadType->clock_rate << "\n";
-		ostr << prefix << "Bitrate: " << payloadType->normal_bitrate << "\n";
-		ostr << prefix << "Mime: " << payloadType->mime_type << "\n";
-		ostr << prefix << "Channels: " << payloadType->channels << "\n";
-		ostr << prefix << "Recv-fmtp: " << ((payloadType->recv_fmtp) ? payloadType->recv_fmtp : "") << "\n";
-		ostr << prefix << "Send-fmtp: " << ((payloadType->send_fmtp) ? payloadType->send_fmtp : "") << "\n";
+		const char *recv_fmtp = linphone_payload_type_get_recv_fmtp(payloadType);
+		const char *send_fmtp = linphone_payload_type_get_send_fmtp(payloadType);
+		ostr << prefix << "Payload-type-number: " << linphone_payload_type_get_number(payloadType) << "\n";
+		ostr << prefix << "Clock-rate: " << linphone_payload_type_get_clock_rate(payloadType) << "\n";
+		ostr << prefix << "Bitrate: " << linphone_payload_type_get_normal_bitrate(payloadType) << "\n";
+		ostr << prefix << "Mime: " << linphone_payload_type_get_mime_type(payloadType) << "\n";
+		ostr << prefix << "Channels: " << linphone_payload_type_get_channels(payloadType) << "\n";
+		ostr << prefix << "Recv-fmtp: " << (recv_fmtp ? recv_fmtp : "") << "\n";
+		ostr << prefix << "Send-fmtp: " << (send_fmtp ? send_fmtp : "") << "\n";
 		if (enabled_status)
-			ostr << prefix
-			     << "Enabled: " << (linphone_core_payload_type_enabled(core, payloadType) == TRUE ? "true" : "false")
+			ostr << prefix << "Enabled: " << (linphone_payload_type_enabled(payloadType) == TRUE ? "true" : "false")
 			     << "\n";
 		setBody(ostr.str().c_str());
 	}
@@ -263,16 +267,29 @@ PayloadTypeParser::PayloadTypeParser(LinphoneCore *core, const string &mime_type
 			mSuccesful = false;
 			return;
 		}
-		mPayloadType = linphone_core_find_payload_type(core, type, rate, channels);
-		if (mPayloadType) mPosition = bctbx_list_index(linphone_core_get_audio_codecs(core), mPayloadType);
+		mPayloadType = linphone_core_get_payload_type(core, type, rate, channels);
+		if (mPayloadType) {
+			bctbx_list_t *codecs = linphone_core_get_audio_payload_types(core);
+			bctbx_list_t *elem;
+			int index = 0;
+			for (elem = codecs; elem != NULL; elem = elem->next, ++index) {
+				if (linphone_payload_type_weak_equals((LinphonePayloadType *)elem->data, mPayloadType)) {
+					mPosition = index;
+					break;
+				}
+			}
+			bctbx_list_free_with_data(codecs, (bctbx_list_free_func)linphone_payload_type_unref);
+		}
 	} else if (number != -1) {
-		const bctbx_list_t *elem;
-		for (elem = linphone_core_get_audio_codecs(core); elem != NULL; elem = elem->next) {
-			if (number == payload_type_get_number((PayloadType *)elem->data)) {
-				mPayloadType = (PayloadType *)elem->data;
+		bctbx_list_t *codecs = linphone_core_get_audio_payload_types(core);
+		bctbx_list_t *elem;
+		for (elem = codecs; elem != NULL; elem = elem->next) {
+			if (number == linphone_payload_type_get_number((LinphonePayloadType *)elem->data)) {
+				mPayloadType = linphone_payload_type_ref((LinphonePayloadType *)elem->data);
 				break;
 			}
 		}
+		bctbx_list_free_with_data(codecs, (bctbx_list_free_func)linphone_payload_type_unref);
 	}
 }
 

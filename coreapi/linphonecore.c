@@ -1943,7 +1943,10 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sal->useDates(!!linphone_config_get_int(lc->config, "sip", "put_date", 0));
 	lc->sal->enableSipUpdateMethod(!!linphone_config_get_int(lc->config, "sip", "sip_update", 1));
 	lc->sip_conf.vfu_with_info = !!linphone_config_get_int(lc->config, "sip", "vfu_with_info", 1);
-	linphone_core_set_sip_transport_timeout(lc, linphone_config_get_int(lc->config, "sip", "transport_timeout", 63000));
+	/* The linux kernel TCP connection timeout is 63 seconds, which is fairly long.
+	 * We decide that 15 seconds is long enough to connect to a single node, given that we want
+	 * to switch to alternate nodes provided in the SRV records within a reasonnable timeframe.*/
+	linphone_core_set_sip_transport_timeout(lc, linphone_config_get_int(lc->config, "sip", "transport_timeout", 15000));
 	lc->sal->setSupportedTags(
 	    linphone_config_get_string(lc->config, "sip", "supported", "replaces, outbound, gruu, path"));
 	LinphoneSupportLevel level_100rel = linphone_core_get_tag_100rel_support_level(lc);
@@ -2038,14 +2041,14 @@ static void rtp_config_read(LinphoneCore *lc) {
 		linphone_core_enable_video_multicast(lc, !!tmp_int);
 }
 
-static PayloadType *find_payload(
+static OrtpPayloadType *find_payload(
     const bctbx_list_t *default_list, const char *mime_type, int clock_rate, int channels, const char *recv_fmtp) {
-	PayloadType *candidate = NULL;
-	PayloadType *it;
+	OrtpPayloadType *candidate = NULL;
+	OrtpPayloadType *it;
 	const bctbx_list_t *elem;
 
 	for (elem = default_list; elem != NULL; elem = elem->next) {
-		it = (PayloadType *)elem->data;
+		it = (OrtpPayloadType *)elem->data;
 		if (it != NULL && strcasecmp(mime_type, it->mime_type) == 0 &&
 		    (clock_rate == it->clock_rate || clock_rate <= 0) && (channels == it->channels || channels <= 0)) {
 			if ((recv_fmtp && it->recv_fmtp && strstr(recv_fmtp, it->recv_fmtp) != NULL) ||
@@ -2066,10 +2069,11 @@ static PayloadType *find_payload(
 	return candidate;
 }
 
-static PayloadType *find_payload_type_from_list(const char *type, int rate, int channels, const bctbx_list_t *from) {
+static OrtpPayloadType *
+find_payload_type_from_list(const char *type, int rate, int channels, const bctbx_list_t *from) {
 	const bctbx_list_t *elem;
 	for (elem = from; elem != NULL; elem = elem->next) {
-		PayloadType *pt = (PayloadType *)elem->data;
+		OrtpPayloadType *pt = (OrtpPayloadType *)elem->data;
 		if ((strcasecmp(type, payload_type_get_mime(pt)) == 0) &&
 		    (rate == LINPHONE_FIND_PAYLOAD_IGNORE_RATE || rate == pt->clock_rate) &&
 		    (channels == LINPHONE_FIND_PAYLOAD_IGNORE_CHANNELS || channels == pt->channels)) {
@@ -2098,11 +2102,11 @@ static bool_t linphone_core_codec_supported(LinphoneCore *lc, SalStreamType type
 	return ms_factory_codec_supported(lc->factory, mime);
 }
 
-static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, PayloadType **ret) {
+static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, OrtpPayloadType **ret) {
 	char codeckey[50];
 	const char *mime, *fmtp;
 	int rate, channels, enabled, bitrate;
-	PayloadType *pt;
+	OrtpPayloadType *pt;
 	LpConfig *config = lc->config;
 
 	*ret = NULL;
@@ -2151,7 +2155,7 @@ static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, Payload
 	return TRUE;
 }
 
-static SalStreamType payload_type_get_stream_type(const PayloadType *pt) {
+static SalStreamType payload_type_get_stream_type(const OrtpPayloadType *pt) {
 	switch (pt->type) {
 		case PAYLOAD_AUDIO_PACKETIZED:
 		case PAYLOAD_AUDIO_CONTINUOUS:
@@ -2172,12 +2176,12 @@ static SalStreamType payload_type_get_stream_type(const PayloadType *pt) {
  * the supported codecs are added automatically. This 'l' list is entirely rewritten.*/
 static bctbx_list_t *add_missing_supported_codecs(LinphoneCore *lc, const bctbx_list_t *default_list, bctbx_list_t *l) {
 	const bctbx_list_t *elem;
-	::PayloadType *last_seen = NULL;
+	OrtpPayloadType *last_seen = NULL;
 
 	for (elem = default_list; elem != NULL; elem = elem->next) {
 		bctbx_list_t *elem2 = bctbx_list_find(l, elem->data);
 		if (!elem2) {
-			PayloadType *pt = (PayloadType *)elem->data;
+			OrtpPayloadType *pt = (OrtpPayloadType *)elem->data;
 			/*this codec from default list should be inserted in the list, with respect to the default_list order*/
 
 			if (!linphone_core_codec_supported(lc, payload_type_get_stream_type(pt), pt->mime_type)) continue;
@@ -2191,7 +2195,7 @@ static bctbx_list_t *add_missing_supported_codecs(LinphoneCore *lc, const bctbx_
 			ms_message("Supported codec %s/%i fmtp=%s automatically added to codec list.", pt->mime_type,
 			           pt->clock_rate, pt->recv_fmtp ? pt->recv_fmtp : "");
 		} else {
-			last_seen = (PayloadType *)elem2->data;
+			last_seen = (OrtpPayloadType *)elem2->data;
 		}
 	}
 	return l;
@@ -2223,10 +2227,10 @@ handle_missing_codecs(LinphoneCore *lc, const bctbx_list_t *default_list, bctbx_
 	return l;
 }
 
-static bctbx_list_t *codec_append_if_new(bctbx_list_t *l, PayloadType *pt) {
+static bctbx_list_t *codec_append_if_new(bctbx_list_t *l, OrtpPayloadType *pt) {
 	bctbx_list_t *elem;
 	for (elem = l; elem != NULL; elem = elem->next) {
-		PayloadType *ept = (PayloadType *)elem->data;
+		OrtpPayloadType *ept = (OrtpPayloadType *)elem->data;
 		if (pt == ept) return l;
 	}
 	l = bctbx_list_append(l, pt);
@@ -2235,10 +2239,12 @@ static bctbx_list_t *codec_append_if_new(bctbx_list_t *l, PayloadType *pt) {
 
 static void codecs_config_read(LinphoneCore *lc) {
 	int i;
-	PayloadType *pt;
+	OrtpPayloadType *pt;
 	bctbx_list_t *audio_codecs = NULL;
 	bctbx_list_t *video_codecs = NULL;
 	bctbx_list_t *text_codecs = NULL;
+	int videoCodecsPriorityPolicy =
+	    linphone_config_get_int(linphone_core_get_config(lc), "video", "codec_priority_policy", -1);
 
 	lc->codecs_conf.dyn_pt = 96;
 
@@ -2261,6 +2267,17 @@ static void codecs_config_read(LinphoneCore *lc) {
 			video_codecs = codec_append_if_new(video_codecs, pt);
 		}
 	}
+	if (videoCodecsPriorityPolicy == -1) {
+		if (video_codecs != NULL) {
+			/* videoCodecsPriorityPolicy is unset, but there are video codecs listed in the configuration.
+			 * For backward compatibility, then force the priority policy to be LinphoneCodecPriorityPolicyBasic.
+			 */
+			videoCodecsPriorityPolicy = LinphoneCodecPriorityPolicyBasic;
+		} else {
+			/* Otherwise, the default is LinphoneCodecPriorityPolicyAuto */
+			videoCodecsPriorityPolicy = LinphoneCodecPriorityPolicyAuto;
+		}
+	}
 
 	video_codecs = handle_missing_codecs(lc, lc->default_video_codecs, video_codecs, MSVideo);
 
@@ -2275,6 +2292,7 @@ static void codecs_config_read(LinphoneCore *lc) {
 	linphone_core_set_video_codecs(lc, video_codecs);
 	linphone_core_set_text_codecs(lc, text_codecs);
 	linphone_core_update_allocated_audio_bandwidth(lc);
+	linphone_core_set_video_codec_priority_policy(lc, (LinphoneCodecPriorityPolicy)videoCodecsPriorityPolicy);
 }
 
 static void build_video_devices_table(LinphoneCore *lc) {
@@ -2485,13 +2503,13 @@ const char *linphone_core_get_version(void) {
 }
 
 static void linphone_core_register_payload_type(LinphoneCore *lc,
-                                                const PayloadType *const_pt,
+                                                const OrtpPayloadType *const_pt,
                                                 const char *recv_fmtp,
                                                 bool_t enabled) {
 	bctbx_list_t **codec_list = const_pt->type == PAYLOAD_VIDEO  ? &lc->default_video_codecs
 	                            : const_pt->type == PAYLOAD_TEXT ? &lc->default_text_codecs
 	                                                             : &lc->default_audio_codecs;
-	PayloadType *pt = payload_type_clone(const_pt);
+	OrtpPayloadType *pt = payload_type_clone(const_pt);
 	int number = -1;
 	payload_type_set_enable(pt, enabled);
 	if (recv_fmtp != NULL) payload_type_set_recv_fmtp(pt, recv_fmtp);
@@ -2509,7 +2527,7 @@ static void linphone_core_register_static_payloads(LinphoneCore *lc) {
 	RtpProfile *prof = &av_profile;
 	int i;
 	for (i = 0; i < RTP_PROFILE_MAX_PAYLOADS; ++i) {
-		PayloadType *pt = rtp_profile_get_payload(prof, i);
+		OrtpPayloadType *pt = rtp_profile_get_payload(prof, i);
 		if (pt) {
 #ifndef VIDEO_ENABLED
 			if (pt->type == PAYLOAD_VIDEO) continue;
@@ -7772,43 +7790,47 @@ int linphone_core_get_current_call_stats(LinphoneCore *lc, rtp_stats_t *local, r
 }
 
 void _linphone_core_codec_config_write(LinphoneCore *lc) {
-	if (linphone_core_ready(lc)) {
-		PayloadType *pt;
-		codecs_config_t *config = &lc->codecs_conf;
-		bctbx_list_t *node;
-		char key[50];
-		int index;
-		index = 0;
-		for (node = config->audio_codecs; node != NULL; node = bctbx_list_next(node)) {
-			pt = (PayloadType *)(node->data);
-			sprintf(key, "audio_codec_%i", index);
-			linphone_config_set_string(lc->config, key, "mime", pt->mime_type);
-			linphone_config_set_int(lc->config, key, "rate", pt->clock_rate);
-			if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE)
-				linphone_config_set_int(lc->config, key, "bitrate", pt->normal_bitrate);
-			linphone_config_set_int(lc->config, key, "channels", pt->channels);
-			linphone_config_set_int(lc->config, key, "enabled", payload_type_enabled(pt));
-			linphone_config_set_string(lc->config, key, "recv_fmtp", pt->recv_fmtp);
-			index++;
-		}
-		sprintf(key, "audio_codec_%i", index);
-		linphone_config_clean_section(lc->config, key);
+	OrtpPayloadType *pt;
+	codecs_config_t *config = &lc->codecs_conf;
+	bctbx_list_t *node;
+	char key[50];
+	int index;
 
-		index = 0;
-		for (node = config->video_codecs; node != NULL; node = bctbx_list_next(node)) {
-			pt = (PayloadType *)(node->data);
-			sprintf(key, "video_codec_%i", index);
-			linphone_config_set_string(lc->config, key, "mime", pt->mime_type);
-			linphone_config_set_int(lc->config, key, "rate", pt->clock_rate);
-			if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE)
-				linphone_config_set_int(lc->config, key, "bitrate", pt->normal_bitrate);
-			linphone_config_set_int(lc->config, key, "enabled", payload_type_enabled(pt));
-			linphone_config_set_string(lc->config, key, "recv_fmtp", pt->recv_fmtp);
-			index++;
-		}
-		sprintf(key, "video_codec_%i", index);
-		linphone_config_clean_section(lc->config, key);
+	if (!linphone_core_ready(lc)) return;
+
+	linphone_config_set_int(lc->config, "video", "codec_priority_policy",
+	                        linphone_core_get_video_codec_priority_policy(lc));
+
+	index = 0;
+	for (node = config->audio_codecs; node != NULL; node = bctbx_list_next(node)) {
+		pt = (OrtpPayloadType *)(node->data);
+		sprintf(key, "audio_codec_%i", index);
+		linphone_config_set_string(lc->config, key, "mime", pt->mime_type);
+		linphone_config_set_int(lc->config, key, "rate", pt->clock_rate);
+		if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE)
+			linphone_config_set_int(lc->config, key, "bitrate", pt->normal_bitrate);
+		linphone_config_set_int(lc->config, key, "channels", pt->channels);
+		linphone_config_set_int(lc->config, key, "enabled", payload_type_enabled(pt));
+		linphone_config_set_string(lc->config, key, "recv_fmtp", pt->recv_fmtp);
+		index++;
 	}
+	sprintf(key, "audio_codec_%i", index);
+	linphone_config_clean_section(lc->config, key);
+
+	index = 0;
+	for (node = config->video_codecs; node != NULL; node = bctbx_list_next(node)) {
+		pt = (OrtpPayloadType *)(node->data);
+		sprintf(key, "video_codec_%i", index);
+		linphone_config_set_string(lc->config, key, "mime", pt->mime_type);
+		linphone_config_set_int(lc->config, key, "rate", pt->clock_rate);
+		if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE)
+			linphone_config_set_int(lc->config, key, "bitrate", pt->normal_bitrate);
+		linphone_config_set_int(lc->config, key, "enabled", payload_type_enabled(pt));
+		linphone_config_set_string(lc->config, key, "recv_fmtp", pt->recv_fmtp);
+		index++;
+	}
+	sprintf(key, "video_codec_%i", index);
+	linphone_config_clean_section(lc->config, key);
 }
 
 static void codecs_config_uninit(LinphoneCore *lc) {

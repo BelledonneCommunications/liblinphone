@@ -21,10 +21,9 @@
 #ifndef _L_MEDIA_SESSION_PARAMS_H_
 #define _L_MEDIA_SESSION_PARAMS_H_
 
-#include <ortp/payloadtype.h>
-
 #include "call-session-params.h"
 #include "call/audio-device/audio-device.h"
+#include "payload-type/payload-type.h"
 #include "utils/general-internal.h"
 
 // =============================================================================
@@ -71,8 +70,7 @@ public:
 	void enableAudioMulticast(bool value);
 	int getAudioBandwidthLimit() const;
 	LinphoneMediaDirection getAudioDirection() const;
-	const OrtpPayloadType *getUsedAudioCodec() const;
-	LinphonePayloadType *getUsedAudioPayloadType() const;
+	std::shared_ptr<const PayloadType> getUsedAudioPayloadType() const;
 	void setAudioBandwidthLimit(int value);
 	void setAudioDirection(SalStreamDir direction);
 	void setAudioDirection(LinphoneMediaDirection direction);
@@ -83,8 +81,7 @@ public:
 	LinphoneVideoDefinition *getReceivedVideoDefinition() const;
 	float getSentFps() const;
 	LinphoneVideoDefinition *getSentVideoDefinition() const;
-	const OrtpPayloadType *getUsedVideoCodec() const;
-	LinphonePayloadType *getUsedVideoPayloadType() const;
+	std::shared_ptr<const PayloadType> getUsedVideoPayloadType() const;
 	LinphoneMediaDirection getVideoDirection() const;
 	void setVideoDirection(SalStreamDir direction);
 	void setVideoDirection(LinphoneMediaDirection direction);
@@ -93,12 +90,11 @@ public:
 
 	void enableFec(bool value);
 	bool fecEnabled() const;
-	const OrtpPayloadType *getUsedFecCodec() const;
+	std::shared_ptr<const PayloadType> getUsedFecCodec() const;
 
 	void enableRealtimeText(bool value);
 	void setRealtimeTextKeepaliveInterval(unsigned int interval);
-	const OrtpPayloadType *getUsedRealtimeTextCodec() const;
-	LinphonePayloadType *getUsedRealtimeTextPayloadType() const;
+	std::shared_ptr<const PayloadType> getUsedRealtimeTextPayloadType() const;
 	bool realtimeTextEnabled() const;
 	unsigned int realtimeTextKeepaliveInterval() const;
 

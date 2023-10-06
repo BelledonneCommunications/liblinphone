@@ -81,6 +81,7 @@
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 #include "private.h"
+#include <utils/payload-type-handler.h>
 
 #define LINPHONE_DB "linphone.db"
 #define LINPHONE_CALL_HISTORY_DB "call-history.db"
@@ -627,6 +628,55 @@ void CorePrivate::updateVideoDevice() {
 		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
 		VideoControlInterface *i = conf->getVideoControlInterface();
 		if (i) i->parametersChanged();
+	}
+}
+
+int CorePrivate::getCodecPriority(const OrtpPayloadType *pt) const {
+	static constexpr int priorityBonusScore = 50;
+	static const std::map<string, int> priorityMap = {{"AV1", 50}, {"H265", 40}, {"H264", 30}, {"VP8", 20}};
+	auto it = priorityMap.find(pt->mime_type);
+
+	if (it != priorityMap.end()) {
+		// lInfo() << pt->mime_type << " has priority " << it->second << " with bonus: " << ((pt->flags &
+		// PAYLOAD_TYPE_PRIORITY_BONUS) ? "yes" : "no");
+		return it->second + ((pt->flags & PAYLOAD_TYPE_PRIORITY_BONUS) ? priorityBonusScore : 0);
+	}
+	return 1000; // return highest priority for unknown codecs, for convenience for whose who want to write plugins.
+}
+
+void CorePrivate::reorderVideoCodecList() {
+	bctbx_list_t *videoCodecList = getCCore()->codecs_conf.video_codecs;
+	bctbx_list_t *elem;
+	std::list<OrtpPayloadType *> newList;
+
+	for (elem = videoCodecList; elem != nullptr; elem = elem->next) {
+		OrtpPayloadType *pt = (OrtpPayloadType *)elem->data;
+		if (videoCodecPriorityPolicy == LinphoneCodecPriorityPolicyAuto) {
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+			MSFilterDesc *encoderDesc = ms_factory_get_encoder(getCCore()->factory, pt->mime_type);
+			if (encoderDesc && (encoderDesc->flags & MS_FILTER_IS_HW_ACCELERATED)) {
+				payload_type_set_flag(pt, PAYLOAD_TYPE_PRIORITY_BONUS);
+			} else {
+				payload_type_unset_flag(pt, PAYLOAD_TYPE_PRIORITY_BONUS);
+			}
+#endif
+			newList.push_back(pt);
+		} else
+			payload_type_unset_flag(
+			    pt, PAYLOAD_TYPE_PRIORITY_BONUS); // no notion of bonus in LinphoneCodecPriorityPolicyBasic.
+	}
+	if (videoCodecPriorityPolicy == LinphoneCodecPriorityPolicyAuto) {
+		lInfo() << "Sorting video codec list, new list is:";
+		newList.sort([this](const OrtpPayloadType *pt1, const OrtpPayloadType *pt2) -> bool {
+			return getCodecPriority(pt1) > getCodecPriority(pt2);
+		});
+		bctbx_list_free(videoCodecList);
+		videoCodecList = nullptr;
+		for (auto pt : newList) {
+			lInfo() << pt->mime_type;
+			videoCodecList = bctbx_list_append(videoCodecList, pt);
+		}
+		getCCore()->codecs_conf.video_codecs = videoCodecList;
 	}
 }
 
@@ -2146,6 +2196,21 @@ void Core::setLabel(const std::string &label) {
 const std::string &Core::getLabel() const {
 	L_D();
 	return d->logLabel;
+}
+
+void Core::setVideoCodecPriorityPolicy(LinphoneCodecPriorityPolicy policy) {
+	L_D();
+	if (linphone_core_ready(getCCore())) {
+		linphone_config_set_int(linphone_core_get_config(getCCore()), "video", "codec_priority_policy", (int)policy);
+	}
+	bool changed = policy != d->videoCodecPriorityPolicy;
+	d->videoCodecPriorityPolicy = policy;
+	if (changed) d->reorderVideoCodecList();
+}
+
+LinphoneCodecPriorityPolicy Core::getVideoCodecPriorityPolicy() const {
+	L_D();
+	return d->videoCodecPriorityPolicy;
 }
 
 LINPHONE_END_NAMESPACE

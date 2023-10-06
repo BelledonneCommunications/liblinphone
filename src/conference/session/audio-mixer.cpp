@@ -94,7 +94,7 @@ void MS2AudioMixer::disconnectEndpoint(BCTBX_UNUSED(Stream *as), MSAudioEndpoint
 
 RtpProfile *MS2AudioMixer::sMakeDummyProfile(int samplerate) {
 	RtpProfile *prof = rtp_profile_new("dummy");
-	PayloadType *pt = payload_type_clone(&payload_type_l16_mono);
+	OrtpPayloadType *pt = payload_type_clone(&payload_type_l16_mono);
 	pt->clock_rate = samplerate;
 	rtp_profile_set_payload(prof, 0, pt);
 	return prof;
@@ -153,7 +153,8 @@ void MS2AudioMixer::enableMic(bool value) {
 	if (mLocalEndpoint) {
 		bool coreMicrophoneEnabled = !!linphone_core_mic_enabled(mSession.getCore().getCCore());
 		if (!coreMicrophoneEnabled) {
-			lWarning() << "Microphone of the local participant of conference will be muted because the microphone is disabled in the core settings";
+			lWarning() << "Microphone of the local participant of conference will be muted because the microphone is "
+			              "disabled in the core settings";
 		}
 		bool enabled = (value && coreMicrophoneEnabled);
 		bctbx_message("AudioMixer[%p]: mic of local participnt is [%s].", this, enabled ? "enabled" : "disabled");

@@ -21,6 +21,7 @@
 #define _L_C_SIGNAL_INFORMATION_H_
 
 #include "linphone/api/c-types.h"
+#include "linphone/enums/c-enums.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -616,10 +616,10 @@ static void session_timer_interval_smaller(void) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
-	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(
+	BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_mime_type(linphone_call_params_get_used_audio_payload_type(
 	                           linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))),
 	                       "PCMA");
-	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(
+	BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_mime_type(linphone_call_params_get_used_audio_payload_type(
 	                           linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))),
 	                       "PCMA");
 	wait_for_until(pauline->lc, marie->lc, &dummy, 1, 5000);

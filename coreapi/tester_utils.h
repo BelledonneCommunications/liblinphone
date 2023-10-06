@@ -391,6 +391,8 @@ LINPHONE_PUBLIC bool_t linphone_tunnel_is_tunnel_rtp_transport(const LinphoneTun
 LINPHONE_PUBLIC void linphone_config_simulate_crash_during_sync(LinphoneConfig *lpconfig, bool_t value);
 LINPHONE_PUBLIC void linphone_config_simulate_read_failure(bool_t value);
 
+LINPHONE_PUBLIC void linphone_payload_type_set_priority_bonus(LinphonePayloadType *pt, bool_t value);
+
 #ifdef __cplusplus
 }
 #endif
