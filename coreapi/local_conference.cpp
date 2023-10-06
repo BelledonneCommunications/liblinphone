@@ -1951,7 +1951,7 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 						if (device) {
 							const auto deviceAddr = device->getAddress();
 							const std::shared_ptr<Address> newDeviceAddress = remoteContactAddress;
-							if (*deviceAddr != *newDeviceAddress) {
+							if (deviceAddr->toStringOrdered() != newDeviceAddress->toStringOrdered()) {
 								// The remote contact address of the device changed during the call. This may be caused
 								// by a call that started before the registration was completed
 								lInfo() << "Updating address of participant device " << device << " with session "
@@ -1960,7 +1960,7 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 								auto otherDevice = participant->findDevice(newDeviceAddress);
 								// If a device with the same address has been found, then remove it from the participant
 								// list and copy subscription event. Otherwise, notify that it has been added
-								if (otherDevice) {
+								if (otherDevice && (otherDevice != device)) {
 									time_t creationTime = time(nullptr);
 									device->setTimeOfDisconnection(creationTime);
 									device->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Booted);

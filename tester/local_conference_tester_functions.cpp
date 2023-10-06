@@ -2204,17 +2204,17 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 
 			bool video_check = false;
 			bool participant_check = false;
-			bool device_present = false;
-			bool call_ok = true;
-			bool audio_direction_ok = true;
+			bool device_check = false;
+			bool call_check = true;
+			bool audio_direction_check = true;
 
 			if (mgr == focus) {
 				for (const auto &m : members) {
 					LinphoneCoreManager *mMgr = m.first;
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mMgr->lc, confAddr);
-					call_ok &= (pcall != nullptr);
+					call_check &= (pcall != nullptr);
 					LinphoneCall *call = linphone_core_get_call_by_remote_address2(mgr->lc, mMgr->identity);
-					call_ok &= (call != nullptr);
+					call_check &= (call != nullptr);
 					if (call) {
 						calls.push_back(call);
 					} else {
@@ -2223,24 +2223,24 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 				}
 			} else {
 				LinphoneCall *call = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
-				call_ok &= (call != nullptr);
+				call_check &= (call != nullptr);
 				if (call) {
 					calls.push_back(call);
 				} else {
 					calls.push_back(nullptr);
 				}
 			}
-			call_ok &= (calls.size() > 0);
+			call_check &= (calls.size() > 0);
 			LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
 			for (auto call : calls) {
 				if (call) {
 					size_t nb_audio_streams = compute_no_audio_streams(call, conference);
 					size_t nb_video_streams = compute_no_video_streams(enable_video, call, conference);
 					const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
-					call_ok &= ((call_result_desc->nbActiveStreamsOfType(SalAudio) == nb_audio_streams) &&
-					            (call_result_desc->nbActiveStreamsOfType(SalVideo) == nb_video_streams) &&
-					            (call_result_desc->nbActiveStreamsOfType(SalText) == nb_text_streams) &&
-					            (linphone_call_get_state(call) == LinphoneCallStateStreamsRunning));
+					call_check &= ((call_result_desc->nbActiveStreamsOfType(SalAudio) == nb_audio_streams) &&
+					               (call_result_desc->nbActiveStreamsOfType(SalVideo) == nb_video_streams) &&
+					               (call_result_desc->nbActiveStreamsOfType(SalText) == nb_text_streams) &&
+					               (linphone_call_get_state(call) == LinphoneCallStateStreamsRunning));
 				}
 			}
 
@@ -2248,12 +2248,17 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 				bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
 				video_check = (bctbx_list_size(devices) > 0);
 				participant_check = (bctbx_list_size(devices) > 0);
-				device_present = (bctbx_list_size(devices) > 0);
+				device_check = (bctbx_list_size(devices) > 0);
 				LinphoneCall *call = NULL;
 				for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
 					LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
 					bool_t found = FALSE;
 					const LinphoneAddress *device_address = linphone_participant_device_get_address(d);
+					if (device_address) {
+						device_check |= !!linphone_address_has_uri_param(device_address, "gr");
+					} else {
+						device_check = false;
+					}
 					for (const auto &m : members) {
 						LinphoneCoreManager *mMgr = m.first;
 						found |= linphone_address_weak_equal(mMgr->identity, device_address);
@@ -2277,7 +2282,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 						                                              : LinphoneMediaDirectionRecvOnly);
 						LinphoneMediaDirection audio_dir =
 						    linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeAudio);
-						audio_direction_ok &= (audio_dir == expected_audio_direction);
+						audio_direction_check &= (audio_dir == expected_audio_direction);
 						if (role == LinphoneParticipantRoleListener) {
 							LinphoneMediaDirection video_dir =
 							    linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo);
@@ -2285,7 +2290,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 							                (video_dir == LinphoneMediaDirectionInactive));
 						}
 					} else {
-						audio_direction_ok = false;
+						audio_direction_check = false;
 						video_check = false;
 					}
 
@@ -2295,13 +2300,13 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 					} else {
 						expected_state = LinphoneParticipantDeviceStateLeft;
 					}
-					device_present &= (linphone_participant_device_get_state(d) == expected_state);
+					device_check &= (linphone_participant_device_get_state(d) == expected_state);
 					if (call) {
 						if (is_me) {
 							const LinphoneCallParams *call_current_params = linphone_call_get_current_params(call);
 							LinphoneMediaDirection call_audio_direction =
 							    linphone_call_params_get_audio_direction(call_current_params);
-							audio_direction_ok &= (call_audio_direction == expected_audio_direction);
+							audio_direction_check &= (call_audio_direction == expected_audio_direction);
 						}
 
 						const LinphoneCallParams *call_params = linphone_call_get_params(call);
@@ -2330,12 +2335,18 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 					                             : linphone_conference_find_participant(conference, mMgr->identity);
 					participant_check &= (p != nullptr);
 					if (p) {
+						const LinphoneAddress *participant_address = linphone_participant_get_address(p);
+						if (participant_address) {
+							participant_check |= !linphone_address_has_uri_param(participant_address, "gr");
+						} else {
+							participant_check = false;
+						}
 						participant_check &=
 						    (linphone_participant_get_role(p) == linphone_participant_info_get_role(info));
 					}
 				}
 			}
-			return audio_direction_ok && video_check && device_present && call_ok && participant_check;
+			return audio_direction_check && video_check && device_check && call_check && participant_check;
 		}));
 	}
 }
