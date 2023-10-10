@@ -890,6 +890,18 @@ void Account::deleteCallLogs() const {
 	mainDb->deleteCallHistoryForLocalAddress(localAddress);
 }
 
+list<shared_ptr<ConferenceInfo>> Account::getConferenceInfos() const {
+	if (!mParams) {
+		lWarning() << "getConferenceInfos is called but no AccountParams is set on Account [" << this->toC() << "]";
+		list<shared_ptr<ConferenceInfo>> conferences;
+		return conferences;
+	}
+
+	auto localAddress = mParams->mIdentityAddress;
+	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
+	return mainDb->getConferenceInfosForLocalAddress(localAddress);
+}
+
 void Account::writeToConfigFile(int index) {
 	if (!mParams) {
 		lWarning() << "writeToConfigFile is called but no AccountParams is set on Account [" << this->toC() << "]";

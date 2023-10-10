@@ -27,6 +27,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "call/call-log.h"
+#include "conference/conference-info.h"
 #include "linphone/api/c-types.h"
 #include "sal/register-op.h"
 
@@ -101,6 +102,7 @@ public:
 	int getMissedCallsCount() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogs() const;
 	std::list<std::shared_ptr<CallLog>> getCallLogsForAddress(const std::shared_ptr<Address>) const;
+	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos() const;
 
 	// Other
 	void resetMissedCallsCount();

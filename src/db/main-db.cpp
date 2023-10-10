@@ -5448,6 +5448,47 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos(time_t aft
 #endif
 }
 
+std::list<std::shared_ptr<ConferenceInfo>>
+MainDb::getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress) const {
+#ifdef HAVE_DB_STORAGE
+	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+	               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
+	               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
+	               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id"
+	               " AND conference_info.uri_sip_address_id = uri_sip_address.id"
+	               " AND (conference_info.organizer_sip_address_id = :sipAddressId"
+	               " OR :sipAddressId IN ("
+	               " SELECT participant_sip_address_id FROM conference_info_participant WHERE"
+	               " conference_info_id = conference_info.id"
+	               " ))";
+	query += " ORDER BY start_time";
+
+	DurationLogger durationLogger("Get conference infos for account.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		list<shared_ptr<ConferenceInfo>> conferenceInfos;
+
+		const long long &sipAddressId = d->selectSipAddressId(localAddress->toStringUriOnlyOrdered());
+
+		soci::session *session = d->dbSession.getBackendSession();
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(sipAddressId));
+
+		for (const auto &row : rows) {
+			auto confInfo = d->selectConferenceInfo(row);
+			conferenceInfos.push_back(confInfo);
+		}
+
+		tr.commit();
+
+		return conferenceInfos;
+	};
+#else
+	return list<shared_ptr<ConferenceInfo>>();
+#endif
+}
+
 std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceInfoId) const {
 #ifdef HAVE_DB_STORAGE
 	static const string query =

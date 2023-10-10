@@ -220,6 +220,20 @@ void linphone_account_clear_call_logs(const LinphoneAccount *account) {
 	Account::toCpp(account)->deleteCallLogs();
 }
 
+bctbx_list_t *linphone_account_get_conference_information_list(const LinphoneAccount *account) {
+	AccountLogContextualizer logContextualizer(account);
+
+	bctbx_list_t *results = NULL;
+	std::list list = Account::toCpp(account)->getConferenceInfos();
+	if (!list.empty()) {
+		for (auto &confInfo : list) {
+			results = bctbx_list_append(results, linphone_conference_info_ref(confInfo->toC()));
+		}
+	}
+
+	return results;
+}
+
 void linphone_account_add_callbacks(LinphoneAccount *account, LinphoneAccountCbs *cbs) {
 	Account::toCpp(account)->addCallbacks(AccountCbs::toCpp(cbs)->getSharedFromThis());
 }

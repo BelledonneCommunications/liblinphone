@@ -302,6 +302,14 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_call_logs_for_address(const L
 LINPHONE_PUBLIC void linphone_account_clear_call_logs(const LinphoneAccount *account);
 
 /**
+ * Returns the list of conference information for a given account.
+ * This list must be freed after use.
+ * @param account The #LinphoneAccount object. @notnil
+ * @return The list of call logs \bctbx_list{LinphoneConferenceInfo}. @tobefreed @maybenil
+ **/
+LINPHONE_PUBLIC bctbx_list_t *linphone_account_get_conference_information_list(const LinphoneAccount *account);
+
+/**
  * Detect if the given input is a phone number or not.
  * @param account The #LinphoneAccount object, unused yet but may contain useful data. Can be NULL. @maybenil
  * @param username The string to parse. @notnil

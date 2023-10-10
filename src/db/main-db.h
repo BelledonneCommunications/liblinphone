@@ -209,6 +209,8 @@ public:
 	// ---------------------------------------------------------------------------
 
 	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos(time_t afterThisTime = -1) const;
+	std::list<std::shared_ptr<ConferenceInfo>>
+	getConferenceInfosForLocalAddress(const std::shared_ptr<Address> &localAddress) const;
 	std::shared_ptr<ConferenceInfo> getConferenceInfo(long long conferenceInfoId) const;
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI(const std::shared_ptr<Address> &uri) const;
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo);
