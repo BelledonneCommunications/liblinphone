@@ -203,6 +203,19 @@ private:
 	                                        const std::string &withDomain,
 	                                        const std::list<std::shared_ptr<SearchResult>> &currentList) const;
 
+	/**
+	 * Get all addresses from conferences info participants & organizer
+	 * @param[in] filter word we search
+	 * @param[in] withDomain domain which we want to search only
+	 * @param[in] currentList current list where we will check if address already exist
+	 * @return all addresses from conferences info organizer and participants which match in a SearchResult list
+	 * @private
+	 **/
+	std::list<std::shared_ptr<SearchResult>>
+	getAddressFromConferencesInfo(const std::string &filter,
+	                              const std::string &withDomain,
+	                              const std::list<std::shared_ptr<SearchResult>> &currentList) const;
+
 #ifdef LDAP_ENABLED
 	/**
 	 * Get all addresses from LDAP Server

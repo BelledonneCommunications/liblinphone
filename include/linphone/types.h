@@ -1397,6 +1397,7 @@ typedef enum _LinphoneMagicSearchSource {
 	LinphoneMagicSearchSourceRequest =
 	    1 << 4, /**< Search from request : it is usually an address built from the request */
 	LinphoneMagicSearchSourceFavoriteFriends = 1 << 5, /**< Search in "starred" friends only */
+	LinphoneMagicSearchSourceConferencesInfo = 1 << 6, /**< Search in conferences info (organizer and participants) */
 	LinphoneMagicSearchSourceAll = -1                  /**< Search in all sources */
 } LinphoneMagicSearchSource;
 

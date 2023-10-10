@@ -9724,6 +9724,8 @@ LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(Linph
 static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t t) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
+	if (mainDb == NULL) return NULL;
+
 	auto list = mainDb->getConferenceInfos(t);
 
 	bctbx_list_t *results = NULL;

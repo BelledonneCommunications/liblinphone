@@ -496,6 +496,70 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromGroupChatRoomPart
 	return resultList;
 }
 
+list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromConferencesInfo(
+    const string &filter, const string &withDomain, const list<std::shared_ptr<SearchResult>> &currentList) const {
+	list<std::shared_ptr<SearchResult>> resultList;
+
+	const bctbx_list_t *conferencesInfo = linphone_core_get_conference_information_list(this->getCore()->getCCore());
+	for (const bctbx_list_t *f = conferencesInfo; f != nullptr; f = bctbx_list_next(f)) {
+		LinphoneConferenceInfo *info = static_cast<LinphoneConferenceInfo *>(f->data);
+		const LinphoneAddress *organizer = linphone_conference_info_get_organizer(info);
+		if (organizer) {
+			LinphoneAddress *addr = linphone_address_clone(organizer);
+			if (filter.empty() && withDomain.empty()) {
+				if (findAddress(currentList, addr)) {
+					linphone_address_unref(addr);
+					continue;
+				}
+				resultList.push_back(
+				    SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
+			} else {
+				unsigned int weight = searchInAddress(addr, filter, withDomain);
+				if (weight > getMinWeight()) {
+					if (findAddress(currentList, addr)) {
+						linphone_address_unref(addr);
+						continue;
+					}
+					resultList.push_back(
+					    SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
+				}
+			}
+			linphone_address_unref(addr);
+		}
+
+		const bctbx_list_t *participants = linphone_conference_info_get_participant_infos(info);
+		for (const bctbx_list_t *p = participants; p != nullptr; p = bctbx_list_next(p)) {
+			LinphoneParticipantInfo *participantInfo = static_cast<LinphoneParticipantInfo *>(p->data);
+			const LinphoneAddress *addr =
+			    linphone_address_clone(linphone_participant_info_get_address(participantInfo));
+			if (filter.empty() && withDomain.empty()) {
+				if (findAddress(currentList, addr)) {
+					linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+					continue;
+				}
+				resultList.push_back(
+				    SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
+			} else {
+				unsigned int weight = searchInAddress(addr, filter, withDomain);
+				if (weight > getMinWeight()) {
+					if (findAddress(currentList, addr)) {
+						linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+						continue;
+					}
+					resultList.push_back(
+					    SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceConferencesInfo));
+				}
+			}
+			if (addr) {
+				linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+			}
+		}
+	}
+
+	lInfo() << "[Magic Search] Found " << resultList.size() << " results in conferences info";
+	return resultList;
+}
+
 #ifdef LDAP_ENABLED
 void MagicSearch::getAddressFromLDAPServerStartAsync(const string &filter,
                                                      const string &withDomain,
@@ -595,6 +659,10 @@ void MagicSearch::beginNewSearchAsync(const SearchRequest &request, SearchAsyncD
 	if ((request.getSourceFlags() & LinphoneMagicSearchSourceChatRooms) == LinphoneMagicSearchSourceChatRooms)
 		asyncData->createResult(getAddressFromGroupChatRoomParticipants(request.getFilter(), request.getWithDomain(),
 		                                                                list<std::shared_ptr<SearchResult>>()));
+	if ((request.getSourceFlags() & LinphoneMagicSearchSourceConferencesInfo) ==
+	    LinphoneMagicSearchSourceConferencesInfo)
+		asyncData->createResult(getAddressFromConferencesInfo(request.getFilter(), request.getWithDomain(),
+		                                                      list<std::shared_ptr<SearchResult>>()));
 }
 
 void MagicSearch::mergeResults(const SearchRequest &request, SearchAsyncData *asyncData) {
@@ -644,6 +712,10 @@ MagicSearch::beginNewSearch(const string &filter, const string &withDomain, int 
 	}
 	if ((sourceFlags & LinphoneMagicSearchSourceChatRooms) == LinphoneMagicSearchSourceChatRooms) {
 		crResults = getAddressFromGroupChatRoomParticipants(filter, withDomain, *resultList);
+		addResultsToResultsList(crResults, *resultList);
+	}
+	if ((sourceFlags & LinphoneMagicSearchSourceConferencesInfo) == LinphoneMagicSearchSourceConferencesInfo) {
+		crResults = getAddressFromConferencesInfo(filter, withDomain, *resultList);
 		addResultsToResultsList(crResults, *resultList);
 	}
 
