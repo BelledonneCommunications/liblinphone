@@ -18,19 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// TODO: Remove me later.
-#include "linphone/core.h"
-
-#include "factory/factory.h"
-#include "linphone/utils/algorithm.h"
-#include "linphone/utils/utils.h"
-
-#include "content-p.h"
-#include "content-type.h"
-#include "header/header.h"
+#include "content.h"
 
 #include "bctoolbox/port.h"
 #include "bctoolbox/vfs_encrypted.hh"
+
+#include "factory/factory.h"
+#include "header/header-param.h"
+#include "linphone/utils/algorithm.h"
 #include "logger/logger.h"
 
 // =============================================================================
@@ -41,166 +36,220 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-Content::Content() : ClonableObject(*new ContentPrivate) {
+Content::Content(const SalBodyHandler *bodyHandler, bool parseMultipart) {
+	if (bodyHandler == nullptr) return;
+
+	mBodyHandler = sal_body_handler_ref((SalBodyHandler *)bodyHandler);
+
+	mContentType.setType(sal_body_handler_get_type(bodyHandler));
+	mContentType.setSubType(sal_body_handler_get_subtype(bodyHandler));
+	for (const belle_sip_list_t *params = sal_body_handler_get_content_type_parameters_names(bodyHandler); params;
+	     params = params->next) {
+		const char *paramName = reinterpret_cast<const char *>(params->data);
+		const char *paramValue = sal_body_handler_get_content_type_parameter(bodyHandler, paramName);
+		mContentType.addParameter(paramName, paramValue);
+	}
+
+	if (mContentType.isMultipart() && parseMultipart) {
+		belle_sip_multipart_body_handler_t *mpbh = BELLE_SIP_MULTIPART_BODY_HANDLER(bodyHandler);
+		char *body = belle_sip_object_to_string(mpbh);
+		setBodyFromUtf8(body);
+		belle_sip_free(body);
+	} else {
+		setBodyFromUtf8(reinterpret_cast<char *>(sal_body_handler_get_data(bodyHandler)));
+	}
+
+	auto headers = reinterpret_cast<const belle_sip_list_t *>(sal_body_handler_get_headers(bodyHandler));
+	while (headers) {
+		belle_sip_header_t *cHeader = BELLE_SIP_HEADER(headers->data);
+		Header header = Header(belle_sip_header_get_name(cHeader), belle_sip_header_get_unparsed_value(cHeader));
+		addHeader(header);
+		headers = headers->next;
+	}
+
+	if (sal_body_handler_get_encoding(bodyHandler)) mContentEncoding = sal_body_handler_get_encoding(bodyHandler);
+
+	const char *disposition = sal_body_handler_get_content_disposition(bodyHandler);
+	if (disposition) mContentDisposition = ContentDisposition(disposition);
 }
 
-Content::Content(const Content &other) : ClonableObject(*new ContentPrivate), AppDataContainer(other) {
+Content::Content(const Content &other) : HybridObject(other), PropertyContainer(other) {
 	copy(other);
 }
 
-Content::Content(Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(std::move(other)) {
-	L_D();
-	ContentPrivate *dOther = other.getPrivate();
-	d->body = std::move(dOther->body);
-	d->contentType = std::move(dOther->contentType);
-	d->contentDisposition = std::move(dOther->contentDisposition);
-	d->contentEncoding = std::move(dOther->contentEncoding);
-	d->headers = std::move(dOther->headers);
-}
-
-Content::Content(ContentPrivate &p) : ClonableObject(p) {
+Content::Content(Content &&other) noexcept : HybridObject(std::move(other)) {
+	mBody = std::move(other.mBody);
+	mContentType = std::move(other.mContentType);
+	mContentDisposition = std::move(other.mContentDisposition);
+	mContentEncoding = std::move(other.mContentEncoding);
+	mHeaders = std::move(other.mHeaders);
+	mCryptoContext = std::move(other.mCryptoContext);
+	other.mCryptoContext = nullptr;
+	mSize = std::move(other.mSize);
+	mIsDirty = std::move(other.mIsDirty);
+	mBodyHandler = std::move(other.mBodyHandler);
+	other.mBodyHandler = nullptr;
 }
 
 Content::~Content() {
-	L_D();
 	/*
 	 * Fills the body with zeros before releasing since it may contain
 	 * private data like cipher keys or decoded messages.
 	 */
-	d->body.assign(d->body.size(), 0);
+	mBody.assign(mBody.size(), 0);
+	if (mBodyHandler != nullptr) sal_body_handler_unref(mBodyHandler);
 }
 
 Content &Content::operator=(const Content &other) {
 	if (this != &other) {
-		AppDataContainer::operator=(other);
+		PropertyContainer::operator=(other);
 		copy(other);
 	}
 	return *this;
 }
 
-Content &Content::operator=(Content &&other) {
-	L_D();
-	AppDataContainer::operator=(std::move(other));
-	ContentPrivate *dOther = other.getPrivate();
-	d->body = std::move(dOther->body);
-	d->contentType = std::move(dOther->contentType);
-	d->contentDisposition = std::move(dOther->contentDisposition);
-	d->contentEncoding = std::move(dOther->contentEncoding);
-	d->headers = std::move(dOther->headers);
+Content &Content::operator=(Content &&other) noexcept {
+	mBody = std::move(other.mBody);
+	mContentType = std::move(other.mContentType);
+	mContentDisposition = std::move(other.mContentDisposition);
+	mContentEncoding = std::move(other.mContentEncoding);
+	mHeaders = std::move(other.mHeaders);
+	mCryptoContext = std::move(other.mCryptoContext);
+	other.mCryptoContext = nullptr;
+	mSize = std::move(other.mSize);
+	mIsDirty = std::move(other.mIsDirty);
+	mBodyHandler = std::move(other.mBodyHandler);
+	other.mBodyHandler = nullptr;
 	return *this;
 }
 
 bool Content::operator==(const Content &other) const {
-	L_D();
-	return d->contentType == other.getContentType() && d->body == other.getBody() &&
-	       d->contentDisposition == other.getContentDisposition() && d->contentEncoding == other.getContentEncoding() &&
-	       d->headers == other.getHeaders();
+	return mContentType == other.getContentType() && mBody == other.getBody() &&
+	       mContentDisposition == other.getContentDisposition() && mContentEncoding == other.getContentEncoding() &&
+	       mHeaders == other.getHeaders();
 }
 
 void Content::copy(const Content &other) {
-	L_D();
-	d->body = other.getBody();
-	d->contentType = other.getContentType();
-	d->contentDisposition = other.getContentDisposition();
-	d->contentEncoding = other.getContentEncoding();
-	d->headers = other.getHeaders();
+	mBody = other.getBody();
+	mContentType = other.getContentType();
+	mContentDisposition = other.getContentDisposition();
+	mContentEncoding = other.getContentEncoding();
+	mHeaders = other.getHeaders();
+	mSize = other.mSize;
+	mCache = other.mCache;
+	if (!mIsDirty && mBodyHandler != nullptr) mBodyHandler = sal_body_handler_ref(other.mBodyHandler);
 }
 
 const ContentType &Content::getContentType() const {
-	L_D();
-	return d->contentType;
+	return mContentType;
 }
 
 ContentType &Content::getContentType() {
-	L_D();
-	return d->contentType;
+	return mContentType;
 }
 
 void Content::setContentType(const ContentType &contentType) {
-	L_D();
-	d->contentType = contentType;
+	mContentType = contentType;
 }
 
 const ContentDisposition &Content::getContentDisposition() const {
-	L_D();
-	return d->contentDisposition;
+	return mContentDisposition;
 }
 
 void Content::setContentDisposition(const ContentDisposition &contentDisposition) {
-	L_D();
-	d->contentDisposition = contentDisposition;
+	mContentDisposition = contentDisposition;
 }
 
 const string &Content::getContentEncoding() const {
-	L_D();
-	return d->contentEncoding;
+	return mContentEncoding;
 }
 
 void Content::setContentEncoding(const string &contentEncoding) {
-	L_D();
-	d->contentEncoding = contentEncoding;
+	mContentEncoding = contentEncoding;
 }
 
 const vector<char> &Content::getBody() const {
-	L_D();
-	return d->body;
+	return mBody;
 }
 
 string Content::getBodyAsString() const {
-	L_D();
-	return Utils::utf8ToLocale(string(d->body.begin(), d->body.end()));
+	return Utils::utf8ToLocale(string(mBody.begin(), mBody.end()));
 }
 
-string Content::getBodyAsUtf8String() const {
-	L_D();
-	return string(d->body.begin(), d->body.end());
+const string &Content::getBodyAsUtf8String() const {
+	mCache.buffer = string(mBody.begin(), mBody.end());
+	return mCache.buffer;
 }
 
 void Content::setBody(const vector<char> &body) {
-	L_D();
-	d->body = body;
+	mBody = body;
 }
 
 void Content::setBody(vector<char> &&body) {
-	L_D();
-	d->body = std::move(body);
+	mBody = std::move(body);
 }
 
 void Content::setBodyFromLocale(const string &body) {
-	L_D();
 	string toUtf8 = Utils::localeToUtf8(body);
-	d->body = vector<char>(toUtf8.cbegin(), toUtf8.cend());
+	mBody = vector<char>(toUtf8.cbegin(), toUtf8.cend());
 }
 
 void Content::setBody(const void *buffer, size_t size) {
-	L_D();
+	mIsDirty = true;
+
 	const char *start = static_cast<const char *>(buffer);
-	if (start != nullptr) d->body = vector<char>(start, start + size);
-	else d->body.clear();
+	if (start != nullptr) mBody = vector<char>(start, start + size);
+	else mBody.clear();
 }
 
 void Content::setBodyFromUtf8(const string &body) {
-	L_D();
-	d->body = vector<char>(body.cbegin(), body.cend());
+	mIsDirty = true;
+
+	mBody = vector<char>(body.cbegin(), body.cend());
+}
+
+const std::string &Content::getName() const {
+	return mCache.name;
+}
+
+void Content::setName(const std::string &name) {
+	mCache.name = name;
 }
 
 size_t Content::getSize() const {
-	L_D();
-	return d->body.size();
+	return mBody.empty() ? mSize : mBody.size();
+}
+
+void Content::setSize(size_t size) {
+	mSize = size;
+}
+
+SalBodyHandler *Content::getBodyHandler() const {
+	return mBodyHandler;
+}
+
+void Content::setBodyHandler(SalBodyHandler *bodyHandler) {
+	mBodyHandler = bodyHandler;
+}
+
+void **Content::getCryptoContextAddress() {
+	return &mCryptoContext;
 }
 
 bool Content::isEmpty() const {
 	return getSize() == 0;
 }
 
+bool Content::isDirty() const {
+	return mIsDirty;
+}
+
 bool Content::isMultipart() const {
-	L_D();
-	return d->contentType.isValid() && d->contentType == ContentType::Multipart;
+	return mContentType.isValid() && mContentType == ContentType::Multipart;
 }
 
 bool Content::isValid() const {
-	L_D();
-	return d->contentType.isValid() || (d->contentType.isEmpty() && d->body.empty());
+	return mContentType.isValid() || (mContentType.isEmpty() && mBody.empty());
 }
 
 bool Content::isFile() const {
@@ -211,42 +260,58 @@ bool Content::isFileTransfer() const {
 	return false;
 }
 
+const std::string &Content::getFilePath() const {
+	return mCache.filePath;
+}
+
+void Content::setFilePath(const std::string &path) {
+	mCache.filePath = path;
+}
+
 void Content::addHeader(const string &headerName, const string &headerValue) {
-	L_D();
 	removeHeader(headerName);
 	Header header = Header(headerName, headerValue);
-	d->headers.push_back(header);
+	mHeaders.push_back(header);
 }
 
 void Content::addHeader(const Header &header) {
-	L_D();
 	removeHeader(header.getName());
-	d->headers.push_back(header);
+	mHeaders.push_back(header);
 }
 
 const list<Header> &Content::getHeaders() const {
-	L_D();
-	return d->headers;
+	return mHeaders;
 }
 
 const Header &Content::getHeader(const string &headerName) const {
-	L_D();
-	list<Header>::const_iterator it = findHeader(headerName);
-	if (it != d->headers.cend()) {
+	auto it = findHeader(headerName);
+	if (it != mHeaders.cend()) {
 		return *it;
 	}
 	return Utils::getEmptyConstRefObject<Header>();
 }
 
 void Content::removeHeader(const string &headerName) {
-	L_D();
 	auto it = findHeader(headerName);
-	if (it != d->headers.cend()) d->headers.remove(*it);
+	if (it != mHeaders.cend()) mHeaders.remove(*it);
 }
 
 list<Header>::const_iterator Content::findHeader(const string &headerName) const {
-	L_D();
-	return findIf(d->headers, [&headerName](const Header &header) { return header.getName() == headerName; });
+	return findIf(mHeaders, [&headerName](const Header &header) { return header.getName() == headerName; });
+}
+
+const std::string &Content::getCustomHeader(const std::string &headerName) const {
+	SalBodyHandler *bodyHandler;
+
+	if (!mIsDirty && mBodyHandler != nullptr) {
+		bodyHandler = sal_body_handler_ref(mBodyHandler);
+	} else {
+		bodyHandler = getBodyHandlerFromContent(*this);
+	}
+
+	mCache.headerValue = L_C_TO_STRING(sal_body_handler_get_header(bodyHandler, headerName.c_str()));
+	sal_body_handler_unref(bodyHandler);
+	return mCache.headerValue;
 }
 
 void Content::setUserData(const Variant &userData) {
@@ -255,6 +320,58 @@ void Content::setUserData(const Variant &userData) {
 
 Variant Content::getUserData() const {
 	return getProperty("LinphonePrivate::Content::userData");
+}
+
+SalBodyHandler *Content::getBodyHandlerFromContent(const Content &content, bool parseMultipart) {
+	if (!content.mIsDirty && content.mBodyHandler != nullptr) return sal_body_handler_ref(content.mBodyHandler);
+
+	SalBodyHandler *bodyHandler;
+	ContentType contentType = content.mContentType;
+	if (contentType.isMultipart() && parseMultipart) {
+		size_t size = content.getSize();
+		char *buffer = bctbx_strdup(content.getBodyAsUtf8String().c_str());
+		const char *boundary = L_STRING_TO_C(contentType.getParameter("boundary").getValue());
+		belle_sip_multipart_body_handler_t *bh = nullptr;
+		if (boundary) bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundary);
+		else if (size > 2) {
+			size_t startIndex = 2, index;
+			while (startIndex < size &&
+			       (buffer[startIndex] != '-' || buffer[startIndex - 1] != '-' // Take accout of first "--"
+			        || (startIndex > 2 && buffer[startIndex - 2] != '\n')))    // Must be at the beginning of the line
+				++startIndex;
+			index = startIndex;
+			while (index < size && buffer[index] != '\n' && buffer[index] != '\r')
+				++index;
+			if (startIndex != index) {
+				char *boundaryStr = bctbx_strndup(buffer + startIndex, (int)(index - startIndex));
+				bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundaryStr);
+				bctbx_free(boundaryStr);
+			}
+		}
+
+		bodyHandler = reinterpret_cast<SalBodyHandler *>(BELLE_SIP_BODY_HANDLER(bh));
+		bctbx_free(buffer);
+	} else {
+		bodyHandler = sal_body_handler_new();
+		sal_body_handler_set_data(bodyHandler, belle_sip_strdup(content.getBodyAsUtf8String().c_str()));
+	}
+
+	for (const auto &header : content.getHeaders()) {
+		sal_body_handler_add_header(bodyHandler, header.getName().c_str(), header.getValueWithParams().c_str());
+	}
+
+	sal_body_handler_set_type(bodyHandler, contentType.getType().c_str());
+	sal_body_handler_set_subtype(bodyHandler, contentType.getSubType().c_str());
+	sal_body_handler_set_size(bodyHandler, content.getSize());
+	for (const auto &param : contentType.getParameters())
+		sal_body_handler_set_content_type_parameter(bodyHandler, param.getName().c_str(), param.getValue().c_str());
+
+	if (!content.mContentEncoding.empty()) sal_body_handler_set_encoding(bodyHandler, content.mContentEncoding.c_str());
+
+	const ContentDisposition &disposition = content.getContentDisposition();
+	if (disposition.isValid()) sal_body_handler_set_content_disposition(bodyHandler, disposition.asString().c_str());
+
+	return bodyHandler;
 }
 
 bool Content::isFileEncrypted(const string &filePath) const {
@@ -287,7 +404,7 @@ const string Content::exportPlainFileFromEncryptedFile(const string &filePath) c
 		return filePath;
 	}
 
-	// plain files are stored in a "evfs" subdirectory of the cache directory
+	// plain files are stored in an "evfs" subdirectory of the cache directory
 	std::string cacheDir(Factory::get()->getCacheDir(nullptr) + "/evfs/");
 
 	// Create the directory if it is not present

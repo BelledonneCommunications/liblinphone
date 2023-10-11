@@ -150,9 +150,9 @@ public:
 	bool getToBeStored() const;
 	virtual void setToBeStored(bool value);
 
-	const std::list<Content *> &getContents() const;
-	void addContent(Content *content);
-	void removeContent(Content *content);
+	const std::list<std::shared_ptr<Content>> &getContents() const;
+	void addContent(std::shared_ptr<Content> content);
+	void removeContent(std::shared_ptr<Content> content);
 
 	std::list<ParticipantImdnState> getParticipantsByImdnState(State state) const;
 	std::list<ParticipantImdnState> getParticipantsState() const;
@@ -160,7 +160,7 @@ public:
 	const Content &getInternalContent() const;
 	void setInternalContent(const Content &content);
 
-	bool downloadFile(FileTransferContent *content);
+	bool downloadFile(std::shared_ptr<FileTransferContent> content);
 	bool isFileTransferInProgress() const;
 	void fileUploadEndBackgroundTask();
 

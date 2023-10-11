@@ -65,14 +65,6 @@ ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &
 }
 
 ChatMessagePrivate::~ChatMessagePrivate() {
-	for (Content *content : contents) {
-		if (content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			delete fileTransferContent->getFileContent();
-		}
-		delete content;
-	}
-
 	if (salOp) {
 		salOp->setUserPointer(nullptr);
 		salOp->unref();
@@ -466,7 +458,7 @@ string ChatMessagePrivate::getSalCustomHeaderValue(const string &name) const {
 // -----------------------------------------------------------------------------
 
 bool ChatMessagePrivate::hasTextContent() const {
-	for (const Content *c : getContents()) {
+	for (const auto &c : getContents()) {
 		if (c->getContentType() == ContentType::PlainText) {
 			return true;
 		}
@@ -474,17 +466,17 @@ bool ChatMessagePrivate::hasTextContent() const {
 	return false;
 }
 
-const Content *ChatMessagePrivate::getTextContent() const {
-	for (const Content *c : getContents()) {
+const std::shared_ptr<Content> ChatMessagePrivate::getTextContent() const {
+	for (const auto &c : getContents()) {
 		if (c->getContentType() == ContentType::PlainText) {
 			return c;
 		}
 	}
-	return &Utils::getEmptyConstRefObject<Content>();
+	return nullptr;
 }
 
 bool ChatMessagePrivate::hasConferenceInvitationContent() const {
-	for (const Content *c : getContents()) {
+	for (const auto &c : getContents()) {
 		if (c->getContentType().strongEqual(ContentType::Icalendar)) {
 			return true;
 		}
@@ -493,7 +485,7 @@ bool ChatMessagePrivate::hasConferenceInvitationContent() const {
 }
 
 bool ChatMessagePrivate::hasFileTransferContent() const {
-	for (const Content *c : contents) {
+	for (const auto &c : contents) {
 		if (c->isFileTransfer()) {
 			return true;
 		}
@@ -501,13 +493,13 @@ bool ChatMessagePrivate::hasFileTransferContent() const {
 	return false;
 }
 
-const Content *ChatMessagePrivate::getFileTransferContent() const {
-	for (const Content *c : contents) {
+const std::shared_ptr<Content> ChatMessagePrivate::getFileTransferContent() const {
+	for (const auto &c : contents) {
 		if (c->isFileTransfer()) {
 			return c;
 		}
 	}
-	return &Utils::getEmptyConstRefObject<Content>();
+	return nullptr;
 }
 
 const string &ChatMessagePrivate::getFileTransferFilepath() const {
@@ -523,9 +515,10 @@ void ChatMessagePrivate::setEphemeralExpireTime(time_t expireTime) {
 }
 
 const string &ChatMessagePrivate::getAppdata() const {
-	for (const Content *c : getContents()) {
-		if (!c->getAppData("legacy").empty()) {
-			return c->getAppData("legacy");
+	for (const auto &c : getContents()) {
+		const auto &legacy = c->getProperty("legacy");
+		if (legacy.isValid() && !legacy.getValue<string>().empty()) {
+			return legacy.getValue<string>();
 		}
 	}
 	return Utils::getEmptyConstRefObject<string>();
@@ -533,8 +526,8 @@ const string &ChatMessagePrivate::getAppdata() const {
 
 void ChatMessagePrivate::setAppdata(const string &data) {
 	bool contentFound = false;
-	for (Content *c : getContents()) {
-		c->setAppData("legacy", data);
+	for (auto &c : getContents()) {
+		c->setProperty("legacy", Variant{data});
 		contentFound = true;
 		break;
 	}
@@ -548,7 +541,7 @@ const string &ChatMessagePrivate::getExternalBodyUrl() const {
 		return externalBodyUrl;
 	}
 	if (hasFileTransferContent()) {
-		FileTransferContent *content = (FileTransferContent *)getFileTransferContent();
+		const auto &content = static_pointer_cast<FileTransferContent>(getFileTransferContent());
 		return content->getFileUrl();
 	}
 	return Utils::getEmptyConstRefObject<string>();
@@ -562,7 +555,7 @@ const ContentType &ChatMessagePrivate::getContentType() const {
 	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (!contents.empty()) {
-			Content *content = contents.front();
+			auto &content = contents.front();
 			cContentType = content->getContentType();
 		} else {
 			cContentType = internalContent.getContentType();
@@ -572,7 +565,7 @@ const ContentType &ChatMessagePrivate::getContentType() const {
 			cContentType = internalContent.getContentType();
 		} else {
 			if (!contents.empty()) {
-				Content *content = contents.front();
+				auto &content = contents.front();
 				cContentType = content->getContentType();
 			}
 		}
@@ -599,7 +592,7 @@ const string &ChatMessagePrivate::getText() const {
 		if (hasTextContent()) {
 			cText = getTextContent()->getBodyAsString();
 		} else if (!contents.empty()) {
-			Content *content = contents.front();
+			auto &content = contents.front();
 			cText = content->getBodyAsString();
 		} else {
 			cText = internalContent.getBodyAsString();
@@ -609,7 +602,7 @@ const string &ChatMessagePrivate::getText() const {
 			cText = internalContent.getBodyAsString();
 		} else {
 			if (!contents.empty()) {
-				Content *content = contents.front();
+				auto &content = contents.front();
 				cText = content->getBodyAsString();
 			}
 		}
@@ -636,7 +629,7 @@ const string &ChatMessagePrivate::getUtf8Text() const {
 		if (hasTextContent()) {
 			cText = getTextContent()->getBodyAsUtf8String();
 		} else if (!contents.empty()) {
-			Content *content = contents.front();
+			auto &content = contents.front();
 			cText = content->getBodyAsUtf8String();
 		} else {
 			cText = internalContent.getBodyAsUtf8String();
@@ -646,7 +639,7 @@ const string &ChatMessagePrivate::getUtf8Text() const {
 			cText = internalContent.getBodyAsUtf8String();
 		} else {
 			if (!contents.empty()) {
-				Content *content = contents.front();
+				auto &content = contents.front();
 				cText = content->getBodyAsUtf8String();
 			}
 		}
@@ -671,14 +664,13 @@ void ChatMessagePrivate::setUtf8Text(const string &text) {
 	}
 }
 
-const Content *ChatMessagePrivate::getFileTransferInformation() const {
+const std::shared_ptr<Content> ChatMessagePrivate::getFileTransferInformation() const {
 	if (hasFileTransferContent()) {
 		return getFileTransferContent();
 	}
-	for (const Content *c : getContents()) {
+	for (const auto &c : getContents()) {
 		if (c->isFile()) {
-			FileContent *fileContent = (FileContent *)c;
-			return fileContent;
+			return c;
 		}
 	}
 	return nullptr;
@@ -688,23 +680,24 @@ bool ChatMessagePrivate::downloadFile() {
 	L_Q();
 
 	for (auto &content : getContents())
-		if (content->isFileTransfer()) return q->downloadFile(static_cast<FileTransferContent *>(content));
+		if (content->isFileTransfer()) return q->downloadFile(static_pointer_cast<FileTransferContent>(content));
 
 	return false;
 }
 
-void ChatMessagePrivate::addContent(Content *content) {
+void ChatMessagePrivate::addContent(std::shared_ptr<Content> content) {
 	getContents().push_back(content);
 }
 
-void ChatMessagePrivate::removeContent(Content *content) {
+void ChatMessagePrivate::removeContent(std::shared_ptr<Content> content) {
 	getContents().remove(content);
 }
 
-void ChatMessagePrivate::replaceContent(Content *contentToRemove, Content *contentToAdd) {
-	list<Content *>::iterator it = contents.begin();
+void ChatMessagePrivate::replaceContent(std::shared_ptr<Content> contentToRemove,
+                                        std::shared_ptr<Content> contentToAdd) {
+	list<std::shared_ptr<Content>>::iterator it = contents.begin();
 	while (it != contents.end()) {
-		Content *content = *it;
+		auto &content = *it;
 		if (content == contentToRemove) {
 			it = contents.erase(it);
 			it = contents.insert(it, contentToAdd);
@@ -870,7 +863,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	if (contents.empty()) {
 		// All previous modifiers only altered the internal content, let's fill the content list
-		contents.push_back(new Content(internalContent));
+		contents.push_back(Content::create(internalContent));
 	}
 
 	for (auto &content : contents) {
@@ -904,7 +897,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	if (errorCode <= 0) {
 		bool foundSupportContentType = false;
-		for (Content *c : contents) {
+		for (auto &c : contents) {
 			ContentType ct(c->getContentType());
 			ct.cleanParameters();
 			string contenttype = ct.getType() + "/" + ct.getSubType();
@@ -1019,9 +1012,9 @@ void ChatMessagePrivate::handleAutoDownload() {
 		bool_t autoDownloadVoiceRecordings =
 		    linphone_core_is_auto_download_voice_recordings_enabled(q->getCore()->getCCore());
 		bool_t autoDownloadIcalendars = linphone_core_is_auto_download_icalendars_enabled(q->getCore()->getCCore());
-		for (Content *c : contents) {
+		for (auto &c : contents) {
 			if (c->isFileTransfer()) {
-				FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
+				auto ftc = static_pointer_cast<FileTransferContent>(c);
 				ContentType fileContentType = ftc->getFileContentType();
 
 				if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize)) ||
@@ -1061,12 +1054,12 @@ void ChatMessagePrivate::handleAutoDownload() {
 	// Accepted when a message is sent
 	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(NULL));
 
-	for (Content *c : contents) {
+	for (auto &c : contents) {
 		ContentType contentType = c->getContentType();
 
 		if (contentType.strongEqual(ContentType::Icalendar)) {
-			LinphoneConferenceInfo *cConfInfo = linphone_factory_create_conference_info_from_icalendar_content(
-			    linphone_factory_get(), L_GET_C_BACK_PTR(c));
+			LinphoneConferenceInfo *cConfInfo =
+			    linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), c->toC());
 
 			if (cConfInfo != nullptr) {
 				auto confInfo = ConferenceInfo::toCpp(cConfInfo)->getSharedFromThis();
@@ -1090,16 +1083,15 @@ void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
 	}
 
 	// Restore FileContents and remove FileTransferContents
-	list<Content *>::iterator it = contents.begin();
+	list<std::shared_ptr<Content>>::iterator it = contents.begin();
 	while (it != contents.end()) {
-		Content *content = *it;
+		auto &content = *it;
 		if (content && content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			FileContent *fileContent = fileTransferContent->getFileContent();
+			auto fileTransferContent = static_pointer_cast<FileTransferContent>(content);
+			auto fileContent = fileTransferContent->getFileContent();
 			if (fileContent) {
 				it = contents.erase(it);
 				it = contents.insert(it, fileContent);
-				delete fileTransferContent;
 			} else {
 				lWarning() << "Found FileTransferContent but no associated FileContent";
 				it++;
@@ -1293,7 +1285,7 @@ void ChatMessagePrivate::send() {
 
 	if (internalContent.isEmpty()) {
 		if (!contents.empty()) {
-			internalContent = *(contents.front());
+			internalContent = Content(*contents.front());
 		} else if (externalBodyUrl.empty()) { // When using external body url, there is no content
 			lError() << "Trying to send a message without any content !";
 			return;
@@ -1764,17 +1756,17 @@ bool ChatMessage::isReadOnly() const {
 	return d->isReadOnly;
 }
 
-const list<Content *> &ChatMessage::getContents() const {
+const list<std::shared_ptr<Content>> &ChatMessage::getContents() const {
 	L_D();
 	return d->getContents();
 }
 
-void ChatMessage::addContent(Content *content) {
+void ChatMessage::addContent(std::shared_ptr<Content> content) {
 	L_D();
 	if (!d->isReadOnly) d->addContent(content);
 }
 
-void ChatMessage::removeContent(Content *content) {
+void ChatMessage::removeContent(std::shared_ptr<Content> content) {
 	L_D();
 	if (!d->isReadOnly) d->removeContent(content);
 }
@@ -1810,7 +1802,7 @@ void ChatMessage::send() {
 	getChatRoom()->getPrivate()->sendChatMessage(getSharedFromThis());
 }
 
-bool ChatMessage::downloadFile(FileTransferContent *fileTransferContent) {
+bool ChatMessage::downloadFile(std::shared_ptr<FileTransferContent> fileTransferContent) {
 	L_D();
 	return d->fileTransferChatMessageModifier.downloadFile(getSharedFromThis(), fileTransferContent);
 }

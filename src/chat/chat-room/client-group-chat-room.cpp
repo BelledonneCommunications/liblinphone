@@ -725,14 +725,14 @@ bool ClientGroupChatRoom::addParticipants(const list<std::shared_ptr<Address>> &
 
 void ClientGroupChatRoom::sendInvite(std::shared_ptr<CallSession> &session,
                                      const list<std::shared_ptr<Address>> &addressList) {
-	Content content;
-	content.setBodyFromUtf8(Utils::getResourceLists(addressList));
-	content.setContentType(ContentType::ResourceLists);
-	content.setContentDisposition(ContentDisposition::RecipientList);
+	auto content = Content::create();
+	content->setBodyFromUtf8(Utils::getResourceLists(addressList));
+	content->setContentType(ContentType::ResourceLists);
+	content->setContentDisposition(ContentDisposition::RecipientList);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-		content.setContentEncoding("deflate");
+		content->setContentEncoding("deflate");
 	}
-	session->startInvite(nullptr, getUtf8Subject(), &content);
+	session->startInvite(nullptr, getUtf8Subject(), content);
 }
 
 bool ClientGroupChatRoom::removeParticipant(const shared_ptr<Participant> &participant) {
@@ -862,20 +862,20 @@ void ClientGroupChatRoom::exhume() {
 	        << "]";
 	d->localExhumePending = true;
 
-	Content content;
+	auto content = Content::create();
 	list<std::shared_ptr<Address>> addresses;
 	addresses.push_front(remoteParticipant);
-	content.setBodyFromUtf8(Utils::getResourceLists(addresses));
-	content.setContentType(ContentType::ResourceLists);
-	content.setContentDisposition(ContentDisposition::RecipientList);
+	content->setBodyFromUtf8(Utils::getResourceLists(addresses));
+	content->setContentType(ContentType::ResourceLists);
+	content->setContentDisposition(ContentDisposition::RecipientList);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-		content.setContentEncoding("deflate");
+		content->setContentEncoding("deflate");
 	}
 
 	const auto &conferenceFactoryAddress =
 	    Core::getConferenceFactoryAddress(getCore(), getConferenceId().getLocalAddress());
 	auto session = d->createSessionTo(conferenceFactoryAddress);
-	session->startInvite(nullptr, getUtf8Subject(), &content);
+	session->startInvite(nullptr, getUtf8Subject(), content);
 	setState(ConferenceInterface::State::CreationPending);
 }
 

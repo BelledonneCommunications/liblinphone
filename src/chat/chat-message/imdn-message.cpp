@@ -79,7 +79,7 @@ ImdnMessage::ImdnMessage(const Context &context) : NotificationMessage(*new Imdn
 			continue;
 		}
 
-		Content *content = new Content();
+		auto content = Content::create();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
 		content->setBodyFromUtf8(
@@ -94,7 +94,7 @@ ImdnMessage::ImdnMessage(const Context &context) : NotificationMessage(*new Imdn
 			continue;
 		}
 
-		Content *content = new Content();
+		auto content = Content::create();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
 		content->setBodyFromUtf8(
@@ -109,7 +109,7 @@ ImdnMessage::ImdnMessage(const Context &context) : NotificationMessage(*new Imdn
 			continue;
 		}
 
-		Content *content = new Content();
+		auto content = Content::create();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
 		content->setBodyFromUtf8(

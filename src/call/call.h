@@ -213,7 +213,7 @@ public:
 	// -----------------------------------------------------------------------------
 	void createPlayer() const;
 	void initiateIncoming();
-	bool initiateOutgoing(const std::string &subject = "", const Content *content = nullptr);
+	bool initiateOutgoing(const std::string &subject = "", const std::shared_ptr<const Content> content = nullptr);
 	void iterate(time_t currentRealTime, bool oneSecondElapsed);
 	void notifyRinging();
 	void startIncomingNotification();
@@ -222,7 +222,7 @@ public:
 	void pauseForTransfer();
 	int startInvite(const std::shared_ptr<Address> &destination,
 	                const std::string subject = std::string(),
-	                const Content *content = nullptr);
+	                const std::shared_ptr<const Content> content = nullptr);
 	std::shared_ptr<Call> startReferredCall(const MediaSessionParams *params);
 
 	// -----------------------------------------------------------------------------

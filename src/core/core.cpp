@@ -344,8 +344,11 @@ void CorePrivate::shutdown() {
 void CorePrivate::uninit() {
 	L_Q();
 
-	if (q->limeX3dhEnabled()) {
-		q->enableLimeX3dh(false);
+	// If we have an encryption engine, destroy it.
+	if (imee != nullptr) {
+		auto listener = dynamic_cast<CoreListener *>(q->getEncryptionEngine());
+		if (listener) unregisterListener(listener);
+		imee.reset();
 	}
 
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
@@ -1804,12 +1807,12 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	addressesList.unique();
 
 	if (!addressesList.empty()) {
-		Content content;
-		content.setBodyFromUtf8(Utils::getResourceLists(addressesList));
-		content.setContentType(ContentType::ResourceLists);
-		content.setContentDisposition(ContentDisposition::RecipientList);
+		auto content = Content::create();
+		content->setBodyFromUtf8(Utils::getResourceLists(addressesList));
+		content->setContentType(ContentType::ResourceLists);
+		content->setContentDisposition(ContentDisposition::RecipientList);
 		if (linphone_core_content_encoding_supported(lc, "deflate")) {
-			content.setContentEncoding("deflate");
+			content->setContentEncoding("deflate");
 		}
 
 		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContent(content);

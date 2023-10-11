@@ -286,7 +286,7 @@ static void cpim_chat_message_modifier_base(bool useMultipart) {
 	shared_ptr<ChatMessage> marieMessage = marieRoom->createChatMessageFromUtf8("Hello CPIM");
 	if (useMultipart) {
 		marieRoom->allowMultipart(true);
-		Content *content = new Content();
+		auto content = Content::create();
 		content->setContentType(ContentType::PlainText);
 		content->setBodyFromUtf8("Hello Part 2");
 		marieMessage->addContent(content);

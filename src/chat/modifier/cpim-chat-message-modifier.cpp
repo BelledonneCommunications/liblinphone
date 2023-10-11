@@ -138,7 +138,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 		// We're the first ChatMessageModifier to be called, we'll create the private content from the public one
 		// We take the first one because if there is more of them, the multipart modifier should have been called first
 		// So we should not be in this block
-		content = message->getContents().front();
+		content = message->getContents().front().get();
 	}
 
 	const string contentBody = content->getBodyAsUtf8String();
@@ -163,7 +163,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<ChatMessage> &message, int &errorCode) {
 	const Content *content = nullptr;
 	if (!message->getInternalContent().isEmpty()) content = &(message->getInternalContent());
-	else if (message->getContents().size() > 0) content = message->getContents().front();
+	else if (message->getContents().size() > 0) content = message->getContents().front().get();
 
 	if (content == nullptr) {
 		lError() << "[CPIM] Couldn't find a valid content in the message";
@@ -299,7 +299,8 @@ string CpimChatMessageModifier::cpimAddressUri(const std::shared_ptr<Address> &a
 	return addr->asStringUriOnly();
 }
 
-Content *CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
+std::shared_ptr<Content>
+CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
 
@@ -310,7 +311,7 @@ Content *CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const s
 	    Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, message->getImdnMessageId()));
 	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Type", ContentType::PlainText.getMediaType()));
 
-	Content *cpimContent = new Content();
+	auto cpimContent = Content::create();
 	cpimContent->setContentType(ContentType::Cpim);
 	cpimContent->setBodyFromLocale(cpimMessage.asString());
 
@@ -321,16 +322,16 @@ std::shared_ptr<LinphonePrivate::Address>
 CpimChatMessageModifier::parseFromHeaderCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message) const {
 	const Content *content = nullptr;
 	if (!message->getInternalContent().isEmpty()) content = &(message->getInternalContent());
-	else if (message->getContents().size() > 0) content = message->getContents().front();
+	else if (message->getContents().size() > 0) content = message->getContents().front().get();
 
 	if (content == nullptr) {
 		return nullptr;
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(*content);
 
-	for (const auto &content : contentList) {
-		if (content.getContentType() != ContentType::Cpim) continue;
-		const string contentBody = content.getBodyAsString();
+	for (const auto &c : contentList) {
+		if (c.getContentType() != ContentType::Cpim) continue;
+		const string contentBody = c.getBodyAsString();
 		const shared_ptr<const Cpim::Message> cpimMessage = Cpim::Message::createFromString(contentBody);
 		if (cpimMessage && cpimMessage->getMessageHeader("From")) {
 			return Address::create(

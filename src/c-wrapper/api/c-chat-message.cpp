@@ -381,8 +381,8 @@ LinphoneStatus linphone_chat_message_put_char(LinphoneChatMessage *msg, uint32_t
 
 void linphone_chat_message_add_file_content(LinphoneChatMessage *msg, LinphoneContent *c_content) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	LinphonePrivate::FileContent *fileContent = new LinphonePrivate::FileContent();
-	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
+	auto fileContent = LinphonePrivate::FileContent::create<LinphonePrivate::FileContent>();
+	auto content = LinphonePrivate::Content::toCpp(c_content);
 
 	fileContent->setContentType(content->getContentType());
 	// If content type hasn't been set, use application/octet-stream
@@ -413,7 +413,7 @@ void linphone_chat_message_add_file_content(LinphoneChatMessage *msg, LinphoneCo
 
 void linphone_chat_message_add_text_content(LinphoneChatMessage *msg, const char *text) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	LinphonePrivate::Content *content = new LinphonePrivate::Content();
+	auto content = LinphonePrivate::Content::create();
 	LinphonePrivate::ContentType contentType = LinphonePrivate::ContentType::PlainText;
 	content->setContentType(contentType);
 	content->setBodyFromLocale(L_C_TO_STRING(text));
@@ -422,7 +422,7 @@ void linphone_chat_message_add_text_content(LinphoneChatMessage *msg, const char
 
 void linphone_chat_message_add_utf8_text_content(LinphoneChatMessage *msg, const char *text) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	LinphonePrivate::Content *content = new LinphonePrivate::Content();
+	auto content = LinphonePrivate::Content::create();
 	LinphonePrivate::ContentType contentType = LinphonePrivate::ContentType::PlainText;
 	content->setContentType(contentType);
 	content->setBodyFromUtf8(L_C_TO_STRING(text));
@@ -432,13 +432,12 @@ void linphone_chat_message_add_utf8_text_content(LinphoneChatMessage *msg, const
 void linphone_chat_message_add_content(LinphoneChatMessage *msg, LinphoneContent *c_content) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
 	if (linphone_content_is_voice_recording(c_content)) {
-		linphone_content_ref(c_content);
-		LinphonePrivate::Content *content =
-		    static_cast<LinphonePrivate::FileContent *>(L_GET_CPP_PTR_FROM_C_OBJECT(c_content));
+		auto content = dynamic_pointer_cast<LinphonePrivate::FileContent>(
+		    LinphonePrivate::Content::toCpp(c_content)->getSharedFromThis());
 		L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
 	} else {
-		LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
-		LinphonePrivate::Content *cppContent = new LinphonePrivate::Content();
+		auto content = LinphonePrivate::Content::toCpp(c_content);
+		auto cppContent = LinphonePrivate::Content::create();
 		cppContent->setContentType(content->getContentType());
 		cppContent->setBody(content->getBody());
 		cppContent->setUserData(content->getUserData());
@@ -448,13 +447,14 @@ void linphone_chat_message_add_content(LinphoneChatMessage *msg, LinphoneContent
 
 void linphone_chat_message_remove_content(LinphoneChatMessage *msg, LinphoneContent *content) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->removeContent(L_GET_CPP_PTR_FROM_C_OBJECT(content));
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->removeContent(LinphonePrivate::Content::toCpp(content)->toSharedPtr());
 }
 
 const bctbx_list_t *linphone_chat_message_get_contents(const LinphoneChatMessage *msg) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
 	if (msg->cache.contents) bctbx_free(msg->cache.contents);
-	msg->cache.contents = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getContents());
+	msg->cache.contents =
+	    LinphonePrivate::Content::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getContents(), false);
 	return msg->cache.contents;
 }
 
@@ -465,7 +465,7 @@ bool_t linphone_chat_message_has_text_content(const LinphoneChatMessage *msg) {
 
 const char *linphone_chat_message_get_text_content(const LinphoneChatMessage *msg) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	const LinphonePrivate::Content *content = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getTextContent();
+	const auto content = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getTextContent();
 	if (content->isEmpty()) return nullptr;
 	msg->cache.textContentBody = content->getBodyAsString();
 	return L_STRING_TO_C(msg->cache.textContentBody);
@@ -490,7 +490,7 @@ bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state(const Linphon
 
 bool_t linphone_chat_message_download_content(LinphoneChatMessage *msg, LinphoneContent *c_content) {
 	LinphonePrivate::ChatMessageLogContextualizer logContextualizer(msg);
-	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
+	auto content = LinphonePrivate::Content::toCpp(c_content)->getSharedFromThis();
 	if (!content->isFileTransfer()) {
 		if (content->isFile()) {
 			lError() << "LinphoneContent [" << content
@@ -500,8 +500,7 @@ bool_t linphone_chat_message_download_content(LinphoneChatMessage *msg, Linphone
 		}
 		return false;
 	}
-	LinphonePrivate::FileTransferContent *fileTransferContent =
-	    static_cast<LinphonePrivate::FileTransferContent *>(content);
+	auto fileTransferContent = dynamic_pointer_cast<LinphonePrivate::FileTransferContent>(content);
 	return !!L_GET_CPP_PTR_FROM_C_OBJECT(msg)->downloadFile(fileTransferContent);
 }
 
@@ -558,8 +557,8 @@ int linphone_chat_message_set_utf8_text(LinphoneChatMessage *msg, const char *te
 }
 
 LinphoneContent *linphone_chat_message_get_file_transfer_information(const LinphoneChatMessage *msg) {
-	const LinphonePrivate::Content *content = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferInformation();
-	if (content) return L_GET_C_BACK_PTR(content);
+	const auto &content = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferInformation();
+	if (content) return content->toC();
 	return NULL;
 }
 

@@ -23,6 +23,8 @@
 
 #include <vector>
 
+#include "bctoolbox/crypto.h"
+
 #include "content.h"
 
 // =============================================================================
@@ -30,7 +32,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class FileContent;
-class FileTransferContentPrivate;
+class ContentType;
 
 class LINPHONE_PUBLIC FileTransferContent : public Content {
 public:
@@ -59,8 +61,8 @@ public:
 	void setFileUrl(const std::string &url);
 	const std::string &getFileUrl() const;
 
-	void setFilePath(const std::string &path); // App Locale
-	const std::string &getFilePath() const;
+	void setFilePath(const std::string &path) override; // App Locale
+	const std::string &getFilePath() const override;
 
 	void setFilePathSys(const std::string &path); // System Locale
 	std::string getFilePathSys() const;
@@ -68,8 +70,8 @@ public:
 	void setFilePathUtf8(const std::string &path); // UTF8
 	std::string getFilePathUtf8() const;
 
-	void setFileContent(FileContent *content);
-	FileContent *getFileContent() const;
+	void setFileContent(std::shared_ptr<FileContent> content);
+	std::shared_ptr<FileContent> getFileContent() const;
 
 	void setFileSize(size_t size);
 	size_t getFileSize() const;
@@ -94,8 +96,23 @@ public:
 	bool isEncrypted() const;
 	const std::string exportPlainFile() const;
 
+protected:
+	~FileTransferContent() {
+		if (!mFileKey.empty()) {
+			bctbx_clean(mFileKey.data(), mFileKey.size());
+		}
+	};
+
 private:
-	L_DECLARE_PRIVATE(FileTransferContent);
+	std::string mFileName;
+	std::string mFileUrl;
+	std::string mFilePath;
+	std::shared_ptr<FileContent> mFileContent = nullptr;
+	size_t mFileSize = 0;
+	int mFileDuration = 0;
+	std::vector<char> mFileKey;
+	std::vector<char> mFileAuthTag;
+	ContentType mFileContentType;
 };
 
 LINPHONE_END_NAMESPACE

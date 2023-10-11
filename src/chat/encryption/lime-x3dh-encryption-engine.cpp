@@ -356,19 +356,19 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 					    }
 				    }
 
-				    list<Content *> contents;
+				    list<shared_ptr<Content>> contents;
 
 				    // ---------------------------------------------- CPIM
 
 				    // Replaces SIPFRAG since version 4.4.0
 				    CpimChatMessageModifier ccmm;
-				    Content *cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
+				    auto cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
 				    contents.push_back(std::move(cpimContent));
 
 				    // ---------------------------------------------- SIPFRAG
 
 				    // For backward compatibility only since 4.4.0
-				    Content *sipfrag = new Content();
+				    auto sipfrag = Content::create();
 				    sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
 				    sipfrag->setContentType(ContentType::SipFrag);
 				    contents.push_back(std::move(sipfrag));
@@ -377,7 +377,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 				    for (const lime::RecipientData &recipient : filteredRecipients) {
 					    string cipherHeaderB64 = bctoolbox::encodeBase64(recipient.DRmessage);
-					    Content *cipherHeader = new Content();
+					    auto cipherHeader = Content::create();
 					    cipherHeader->setBodyFromLocale(cipherHeaderB64);
 					    cipherHeader->setContentType(ContentType::LimeKey);
 					    cipherHeader->addHeader("Content-Id", recipient.deviceId);
@@ -390,13 +390,13 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 				    const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
 				    string cipherMessageB64 = bctoolbox::encodeBase64(*binaryCipherMessage);
-				    Content *cipherMessage = new Content();
-				    cipherMessage->setBodyFromLocale(cipherMessageB64);
-				    cipherMessage->setContentType(ContentType::OctetStream);
-				    cipherMessage->addHeader("Content-Description", "Encrypted message");
-				    contents.push_back(std::move(cipherMessage));
+				    auto cipherMessageC = Content::create();
+				    cipherMessageC->setBodyFromLocale(cipherMessageB64);
+				    cipherMessageC->setContentType(ContentType::OctetStream);
+				    cipherMessageC->addHeader("Content-Description", "Encrypted message");
+				    contents.push_back(std::move(cipherMessageC));
 
-				    Content finalContent = ContentManager::contentListToMultipart(contents, true);
+				    auto finalContent = ContentManager::contentListToMultipart(contents, true);
 
 				    /* Septembre 2022 note:
 				     * Because of a scandalous ancient bug in belle-sip, we are forced to set
@@ -418,10 +418,6 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				    message->getPrivate()->send();
 				    *result = ChatMessageModifier::Result::Done;
 
-				    // TODO can be improved
-				    for (const auto &content : contents) {
-					    delete content;
-				    }
 			    } else {
 				    lError() << "[LIME] operation failed: " << errorMessage;
 				    message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
@@ -454,10 +450,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 
 	const Content *internalContent;
 	if (!message->getInternalContent().isEmpty()) internalContent = &(message->getInternalContent());
-	else internalContent = message->getContents().front();
+	else internalContent = message->getContents().front().get();
 
 	// Check if the message is encrypted and unwrap the multipart
-	if (!isMessageEncrypted(internalContent)) {
+	if (!isMessageEncrypted(*internalContent)) {
 		lError() << "[LIME] unexpected content-type: " << internalContent->getContentType();
 		// Set unencrypted content warning flag because incoming message type is unexpected
 		message->getPrivate()->setUnencryptedContentWarning(true);
@@ -590,9 +586,10 @@ bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer(const shared_p
 #define FILE_TRANSFER_AUTH_TAG_SIZE 16
 #define FILE_TRANSFER_KEY_SIZE 32
 
-void LimeX3dhEncryptionEngine::generateFileTransferKey(BCTBX_UNUSED(const shared_ptr<AbstractChatRoom> &chatRoom),
-                                                       BCTBX_UNUSED(const shared_ptr<ChatMessage> &message),
-                                                       FileTransferContent *fileTransferContent) {
+void LimeX3dhEncryptionEngine::generateFileTransferKey(
+    BCTBX_UNUSED(const shared_ptr<AbstractChatRoom> &chatRoom),
+    BCTBX_UNUSED(const shared_ptr<ChatMessage> &message),
+    const std::shared_ptr<FileTransferContent> &fileTransferContent) {
 	char keyBuffer[FILE_TRANSFER_KEY_SIZE]; // temporary storage of generated key: 192 bits of key + 64 bits of initial
 	                                        // vector
 	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key
@@ -607,18 +604,18 @@ int LimeX3dhEncryptionEngine::downloadingFile(BCTBX_UNUSED(const shared_ptr<Chat
                                               const uint8_t *buffer,
                                               size_t size,
                                               uint8_t *decrypted_buffer,
-                                              FileTransferContent *fileTransferContent) {
+                                              const std::shared_ptr<FileTransferContent> &fileTransferContent) {
 	if (fileTransferContent == nullptr) return -1;
 
-	Content *content = static_cast<Content *>(fileTransferContent);
+	auto content = static_pointer_cast<Content>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
 	if (!fileKey) return -1;
 
 	if (!buffer) {
 		// get the authentication tag
 		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of decryption
-		int ret = bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL,
-		                                    FILE_TRANSFER_AUTH_TAG_SIZE, authTag, NULL);
+		int ret = bctbx_aes_gcm_decryptFile(content->getCryptoContextAddress(), NULL, FILE_TRANSFER_AUTH_TAG_SIZE,
+		                                    authTag, NULL);
 		if (ret < 0) return ret;
 		// compare auth tag if we have one
 		const size_t fileAuthTagSize = fileTransferContent->getFileAuthTagSize();
@@ -636,8 +633,8 @@ int LimeX3dhEncryptionEngine::downloadingFile(BCTBX_UNUSED(const shared_ptr<Chat
 		}
 	}
 
-	return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
-	                                 (unsigned char *)fileKey, size, (char *)decrypted_buffer, (char *)buffer);
+	return bctbx_aes_gcm_decryptFile(content->getCryptoContextAddress(), (unsigned char *)fileKey, size,
+	                                 (char *)decrypted_buffer, (char *)buffer);
 }
 
 int LimeX3dhEncryptionEngine::uploadingFile(BCTBX_UNUSED(const shared_ptr<ChatMessage> &message),
@@ -645,10 +642,10 @@ int LimeX3dhEncryptionEngine::uploadingFile(BCTBX_UNUSED(const shared_ptr<ChatMe
                                             const uint8_t *buffer,
                                             size_t *size,
                                             uint8_t *encrypted_buffer,
-                                            FileTransferContent *fileTransferContent) {
+                                            const std::shared_ptr<FileTransferContent> &fileTransferContent) {
 	if (fileTransferContent == nullptr) return -1;
 
-	Content *content = static_cast<Content *>(fileTransferContent);
+	auto content = static_pointer_cast<Content>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
 	if (!fileKey) return -1;
 
@@ -656,8 +653,8 @@ int LimeX3dhEncryptionEngine::uploadingFile(BCTBX_UNUSED(const shared_ptr<ChatMe
 	if (!buffer || *size == 0) {
 		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of encryption,
 		                                           // size is fixed at 16 bytes
-		int ret = bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL,
-		                                    FILE_TRANSFER_AUTH_TAG_SIZE, NULL, authTag);
+		int ret = bctbx_aes_gcm_encryptFile(content->getCryptoContextAddress(), NULL, FILE_TRANSFER_AUTH_TAG_SIZE, NULL,
+		                                    authTag);
 		fileTransferContent->setFileAuthTag(authTag, 16);
 		return ret;
 	}
@@ -670,18 +667,16 @@ int LimeX3dhEncryptionEngine::uploadingFile(BCTBX_UNUSED(const shared_ptr<ChatMe
 		*size -= (*size % 16);
 	}
 
-	return bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
-	                                 (unsigned char *)fileKey, *size, (char *)buffer, (char *)encrypted_buffer);
+	return bctbx_aes_gcm_encryptFile(content->getCryptoContextAddress(), (unsigned char *)fileKey, *size,
+	                                 (char *)buffer, (char *)encrypted_buffer);
 
 	return 0;
 }
 
-int LimeX3dhEncryptionEngine::cancelFileTransfer(FileTransferContent *fileTransferContent) {
-	Content *content = static_cast<Content *>(fileTransferContent);
+int LimeX3dhEncryptionEngine::cancelFileTransfer(const std::shared_ptr<FileTransferContent> &fileTransferContent) {
 	// calling decrypt with no data and no buffer to write the tag will simply release the encryption context and delete
 	// it
-	return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0,
-	                                 NULL, NULL);
+	return bctbx_aes_gcm_decryptFile(fileTransferContent->getCryptoContextAddress(), NULL, 0, NULL, NULL);
 }
 
 EncryptionEngine::EngineType LimeX3dhEncryptionEngine::getEngineType() {

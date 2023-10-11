@@ -77,7 +77,8 @@ public:
 	               const std::shared_ptr<const Address> &to) override;
 	LinphoneStatus deferUpdate() override;
 	void initiateIncoming() override;
-	bool initiateOutgoing(const std::string &subject = "", const Content *content = nullptr) override;
+	bool initiateOutgoing(const std::string &subject = "",
+	                      const std::shared_ptr<const Content> content = nullptr) override;
 	void iterate(time_t currentRealTime, bool oneSecondElapsed) override;
 	LinphoneStatus pauseFromConference();
 	LinphoneStatus pause();
@@ -89,7 +90,7 @@ public:
 	void startIncomingNotification(bool notifyRinging = true) override;
 	int startInvite(const std::shared_ptr<Address> &destination,
 	                const std::string &subject = "",
-	                const Content *content = nullptr) override;
+	                const std::shared_ptr<const Content> content = nullptr) override;
 	bool startRecording();
 	void stopRecording();
 	bool isRecording();

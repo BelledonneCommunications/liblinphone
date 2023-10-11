@@ -131,7 +131,8 @@ public:
 	bool isCapabilityNegotiationEnabled() const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 	virtual void initiateIncoming();
-	virtual bool initiateOutgoing(const std::string &subject = "", const Content *content = nullptr);
+	virtual bool initiateOutgoing(const std::string &subject = "",
+	                              const std::shared_ptr<const Content> content = nullptr);
 	virtual void iterate(time_t currentRealTime, bool oneSecondElapsed);
 	LinphoneStatus redirect(const std::string &redirectUri);
 	LinphoneStatus redirect(const Address &redirectAddr);
@@ -140,7 +141,7 @@ public:
 	void startPushIncomingNotification();
 	virtual int startInvite(const std::shared_ptr<Address> &destination,
 	                        const std::string &subject = "",
-	                        const Content *content = nullptr);
+	                        const std::shared_ptr<const Content> content = nullptr);
 	LinphoneStatus terminate(const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer(const std::shared_ptr<CallSession> &dest);
 	LinphoneStatus transfer(const std::shared_ptr<Address> &dest);
@@ -148,7 +149,7 @@ public:
 	LinphoneStatus update(const CallSessionParams *csp,
 	                      const UpdateMethod method = UpdateMethod::Default,
 	                      const std::string &subject = "",
-	                      const Content *content = nullptr);
+	                      const std::shared_ptr<Content> content = nullptr);
 
 	CallSessionParams *getCurrentParams() const;
 	LinphoneCallDir getDirection() const;

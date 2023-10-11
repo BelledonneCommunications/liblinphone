@@ -120,12 +120,12 @@ public:
 
 	void loadContentsFromDatabase() const;
 
-	std::list<Content *> &getContents() {
+	std::list<std::shared_ptr<Content>> &getContents() {
 		loadContentsFromDatabase();
 		return contents;
 	}
 
-	const std::list<Content *> &getContents() const {
+	const std::list<std::shared_ptr<Content>> &getContents() const {
 		loadContentsFromDatabase();
 		return contents;
 	}
@@ -224,16 +224,16 @@ public:
 	void setCallId(const std::string &id);
 
 	bool hasTextContent() const;
-	const Content *getTextContent() const;
+	const std::shared_ptr<Content> getTextContent() const;
 	bool hasConferenceInvitationContent() const;
 
 	bool hasFileTransferContent() const;
-	const Content *getFileTransferContent() const;
-	const Content *getFileTransferInformation() const;
+	const std::shared_ptr<Content> getFileTransferContent() const;
+	const std::shared_ptr<Content> getFileTransferInformation() const;
 
-	void addContent(Content *content);
-	void removeContent(Content *content);
-	void replaceContent(Content *contentToRemove, Content *contentToAdd);
+	void addContent(std::shared_ptr<Content> content);
+	void removeContent(std::shared_ptr<Content> content);
+	void replaceContent(std::shared_ptr<Content> contentToRemove, std::shared_ptr<Content> contentToAdd);
 
 	bool downloadFile();
 
@@ -312,7 +312,7 @@ private:
 	long ephemeralLifetime = 0;
 	time_t ephemeralExpireTime = 0;
 
-	std::list<Content *> contents;
+	std::list<std::shared_ptr<Content>> contents;
 	mutable std::list<std::shared_ptr<ChatMessageReaction>> reactions;
 
 	bool encryptionPrevented = false;

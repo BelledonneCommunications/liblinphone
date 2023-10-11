@@ -60,7 +60,9 @@ bool Utils::iequals(const string &a, const string &b) {
 
 #ifndef __ANDROID__
 #define TO_STRING_IMPL(TYPE)                                                                                           \
-	string Utils::toString(TYPE val) { return to_string(val); }
+	string Utils::toString(TYPE val) {                                                                                 \
+		return to_string(val);                                                                                         \
+	}
 #else
 #define TO_STRING_IMPL(TYPE)                                                                                           \
 	string Utils::toString(TYPE val) {                                                                                 \
@@ -91,7 +93,9 @@ string Utils::toString(const void *val) {
 // -----------------------------------------------------------------------------
 
 #define STRING_TO_NUMBER_IMPL(TYPE, SUFFIX)                                                                            \
-	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx, int base) { return sto##SUFFIX(str.c_str(), idx, base); }  \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx, int base) {                                                \
+		return sto##SUFFIX(str.c_str(), idx, base);                                                                    \
+	}                                                                                                                  \
 	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx, int base) {                                                  \
 		char *p;                                                                                                       \
 		TYPE v = strto##SUFFIX(str, &p, base);                                                                         \
@@ -100,7 +104,9 @@ string Utils::toString(const void *val) {
 	}
 
 #define STRING_TO_NUMBER_IMPL_BASE_LESS(TYPE, SUFFIX)                                                                  \
-	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx) { return sto##SUFFIX(str.c_str(), idx); }                  \
+	TYPE Utils::sto##SUFFIX(const string &str, size_t *idx) {                                                          \
+		return sto##SUFFIX(str.c_str(), idx);                                                                          \
+	}                                                                                                                  \
 	TYPE Utils::sto##SUFFIX(const char *str, size_t *idx) {                                                            \
 		char *p;                                                                                                       \
 		TYPE v = strto##SUFFIX(str, &p);                                                                               \

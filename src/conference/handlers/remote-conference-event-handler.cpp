@@ -805,8 +805,8 @@ void RemoteConferenceEventHandler::multipartNotifyReceived(std::shared_ptr<Event
 
 void RemoteConferenceEventHandler::multipartNotifyReceived(const Content &content) {
 	lInfo() << "multipart NOTIFY received for conference: " << getConferenceId();
-	for (const auto &content : ContentManager::multipartToContentList(content)) {
-		notifyReceived(content);
+	for (const auto &c : ContentManager::multipartToContentList(content)) {
+		notifyReceived(c);
 	}
 }
 

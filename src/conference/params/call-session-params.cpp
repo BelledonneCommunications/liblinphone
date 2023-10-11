@@ -301,12 +301,12 @@ std::string CallSessionParams::getCustomContactParameter(const std::string &para
 
 // -----------------------------------------------------------------------------
 
-void CallSessionParams::addCustomContent(const Content &content) {
+void CallSessionParams::addCustomContent(const std::shared_ptr<Content> &content) {
 	L_D();
 	d->customContents.push_back(std::move(content));
 }
 
-const list<Content> &CallSessionParams::getCustomContents() const {
+const list<std::shared_ptr<Content>> &CallSessionParams::getCustomContents() const {
 	L_D();
 	return d->customContents;
 }

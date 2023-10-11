@@ -411,60 +411,6 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager *marie,
 	linphone_chat_message_unref(msg);
 }
 
-void check_reactions(LinphoneChatMessage *message,
-                     size_t expected_reactions_count,
-                     const bctbx_list_t *expected_reactions,
-                     const bctbx_list_t *expected_reactions_from) {
-	bctbx_list_t *reactions = linphone_chat_message_get_reactions(message);
-	bctbx_list_t *reactions_it = reactions;
-	bctbx_list_t *expected_reactions_it = (bctbx_list_t *)expected_reactions;
-	bctbx_list_t *expected_reactions_from_it = (bctbx_list_t *)expected_reactions_from;
-	BC_ASSERT_PTR_NOT_NULL(reactions);
-
-	if (reactions_it) {
-		size_t count = bctbx_list_size(reactions);
-		BC_ASSERT_EQUAL(count, expected_reactions_count, size_t, "%zu");
-		for (size_t i = 0; i < count; i++) {
-			const LinphoneChatMessageReaction *reaction =
-			    (const LinphoneChatMessageReaction *)bctbx_list_get_data(reactions_it);
-			reactions_it = bctbx_list_next(reactions_it);
-
-			const char *expected_reaction = (const char *)bctbx_list_get_data(expected_reactions_it);
-			expected_reactions_it = bctbx_list_next(expected_reactions_it);
-
-			const char *expected_reaction_from = (const char *)bctbx_list_get_data(expected_reactions_from_it);
-			expected_reactions_from_it = bctbx_list_next(expected_reactions_from_it);
-
-			const char *reaction_body = linphone_chat_message_reaction_get_body(reaction);
-			BC_ASSERT_STRING_EQUAL(reaction_body, expected_reaction);
-
-			const LinphoneAddress *from = linphone_chat_message_reaction_get_from_address(reaction);
-			char *address_as_string = linphone_address_as_string_uri_only(from);
-			BC_ASSERT_STRING_EQUAL(address_as_string, expected_reaction_from);
-			bctbx_free(address_as_string);
-		}
-	}
-	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
-}
-
-void liblinphone_tester_chat_message_reaction_received(LinphoneChatMessage *msg,
-                                                       const LinphoneChatMessageReaction *reaction) {
-	BC_ASSERT_PTR_NOT_NULL(msg);
-	BC_ASSERT_PTR_NOT_NULL(reaction);
-
-	const LinphoneAddress *address = linphone_chat_message_reaction_get_from_address(reaction);
-	BC_ASSERT_PTR_NOT_NULL(address);
-	const char *body = linphone_chat_message_reaction_get_body(reaction);
-	BC_ASSERT_STRING_EQUAL(body, "👍");
-
-	bctbx_list_t *expected_reaction = bctbx_list_append(NULL, "👍");
-	bctbx_list_t *expected_reaction_from =
-	    bctbx_list_append(NULL, ms_strdup(linphone_address_as_string_uri_only(address)));
-	check_reactions(msg, 1, expected_reaction, expected_reaction_from);
-	bctbx_list_free(expected_reaction);
-	bctbx_list_free_with_data(expected_reaction_from, (bctbx_list_free_func)ms_free);
-}
-
 void text_message_base_with_text(LinphoneCoreManager *marie,
                                  LinphoneCoreManager *pauline,
                                  const char *text,

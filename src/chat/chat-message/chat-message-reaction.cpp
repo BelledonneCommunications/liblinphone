@@ -118,7 +118,7 @@ void ChatMessageReaction::send() {
 	reactionMessage->addListener(getSharedFromThis());
 	reactionMessage->getPrivate()->setReactionToMessageId(messageId);
 
-	Content *content = new Content();
+	auto content = Content::create();
 	content->setContentType(ContentType::PlainText);
 	content->setBodyFromUtf8(reaction);
 	reactionMessage->addContent(content);

@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LimeX3dhUtils {
 public:
-	static bool isMessageEncrypted(const Content *internalContent);
+	static bool isMessageEncrypted(const Content &internalContent);
 };
 
 class LimeX3dhEncryptionServerEngine : public EncryptionEngine, public CoreListener, private LimeX3dhUtils {

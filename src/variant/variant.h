@@ -75,7 +75,7 @@ public:
 		return bctoolbox::Utils::getEmptyConstRefObject<T>();
 	}
 
-	bool isValid() {
+	bool isValid() const {
 		return mImplBase != nullptr;
 	}
 	std::ostream &toStream(std::ostream &stream) const {

@@ -249,7 +249,7 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 
 void LocalConference::fillInvitedParticipantList(SalCallOp *op, bool cancelling) {
 	mInvitedParticipants.clear();
-	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
+	const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
 	if (!resourceList.isEmpty()) {
 		auto invitees = Utils::parseResourceLists(resourceList);
 		mInvitedParticipants = invitees;
@@ -968,21 +968,21 @@ bool LocalConference::dialOutAddresses(const std::list<std::shared_ptr<Address>>
 		}
 	}
 
-	Content resourceList;
-	resourceList.setBodyFromUtf8(Utils::getResourceLists(addresses));
-	resourceList.setContentType(ContentType::ResourceLists);
-	resourceList.setContentDisposition(ContentDisposition::RecipientList);
+	auto resourceList = Content::create();
+	resourceList->setBodyFromUtf8(Utils::getResourceLists(addresses));
+	resourceList->setContentType(ContentType::ResourceLists);
+	resourceList->setContentDisposition(ContentDisposition::RecipientList);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-		resourceList.setContentEncoding("deflate");
+		resourceList->setContentEncoding("deflate");
 	}
-	if (!resourceList.isEmpty()) {
+	if (!resourceList->isEmpty()) {
 		L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
 	}
 
-	Content sipfrag;
+	auto sipfrag = Content::create();
 	const auto organizerUri = organizer->getUri();
-	sipfrag.setBodyFromLocale("From: <" + organizerUri.toString() + ">");
-	sipfrag.setContentType(ContentType::SipFrag);
+	sipfrag->setBodyFromLocale("From: <" + organizerUri.toString() + ">");
+	sipfrag->setContentType(ContentType::SipFrag);
 	L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(sipfrag);
 	auto success = (inviteAddresses(addressList, new_params) == 0);
 	linphone_call_params_unref(new_params);
@@ -1332,7 +1332,7 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 		auto op = session->getPrivate()->getOp();
 		const auto resourceList = op ? op->getContentInRemote(ContentType::ResourceLists) : Content();
 
-		// If no resource list is provided in the INVITE, there is not need to call participants
+		// If no resource list is provided in the INVITE, there is no need to call participants
 		if ((initialState == ConferenceInterface::State::CreationPending) && dialout && !resourceList.isEmpty()) {
 			list<std::shared_ptr<Address>> addresses;
 			for (auto &participant : mInvitedParticipants) {

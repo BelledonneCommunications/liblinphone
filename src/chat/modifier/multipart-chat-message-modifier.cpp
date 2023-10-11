@@ -41,7 +41,7 @@ ChatMessageModifier::Result MultipartChatMessageModifier::encode(const shared_pt
                                                                  BCTBX_UNUSED(int &errorCode)) {
 	if (message->getContents().size() <= 1) return ChatMessageModifier::Result::Skipped;
 
-	Content content = ContentManager::contentListToMultipart(message->getContents());
+	auto content = ContentManager::contentListToMultipart(message->getContents());
 	message->setInternalContent(content);
 
 	return ChatMessageModifier::Result::Done;
@@ -50,10 +50,10 @@ ChatMessageModifier::Result MultipartChatMessageModifier::encode(const shared_pt
 ChatMessageModifier::Result MultipartChatMessageModifier::decode(const shared_ptr<ChatMessage> &message,
                                                                  BCTBX_UNUSED(int &errorCode)) {
 	if (message->getInternalContent().getContentType().isMultipart()) {
-		for (Content &c : ContentManager::multipartToContentList(message->getInternalContent())) {
-			Content *content;
+		for (auto &c : ContentManager::multipartToContentList(message->getInternalContent())) {
+			std::shared_ptr<Content> content;
 			if (c.getContentType() == ContentType::FileTransfer) {
-				content = new FileTransferContent();
+				content = FileTransferContent::create<FileTransferContent>();
 				content->setContentType(c.getContentType());
 				content->setContentDisposition(c.getContentDisposition());
 				content->setContentEncoding(c.getContentEncoding());
@@ -62,7 +62,7 @@ ChatMessageModifier::Result MultipartChatMessageModifier::decode(const shared_pt
 				}
 				content->setBody(c.getBody());
 			} else {
-				content = new Content(c);
+				content = Content::create(c);
 			}
 			message->addContent(content);
 		}

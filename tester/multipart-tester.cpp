@@ -155,14 +155,14 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer,
 	shared_ptr<ChatMessage> marieMessage = marieRoom->createChatMessage();
 	if (first_file_transfer) {
 		char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
-		FileContent *content = new FileContent();
+		auto content = FileContent::create<FileContent>();
 		content->setContentType(ContentType("video/mkv"));
 		content->setFilePath(send_filepath);
 		content->setFileName("sintel_trailer_opus_h264.mkv");
 		marieMessage->addContent(content);
 		bc_free(send_filepath);
 	} else {
-		Content *content = new Content();
+		auto content = Content::create();
 		content->setContentType(ContentType::PlainText);
 		content->setBodyFromUtf8("Hello part 1");
 		marieMessage->addContent(content);
@@ -170,21 +170,21 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer,
 
 	if (second_file_transfer) {
 		char *send_filepath = bc_tester_res("vcards/vcards.vcf");
-		FileContent *content = new FileContent();
+		auto content = FileContent::create<FileContent>();
 		content->setContentType(ContentType("file/vcf"));
 		content->setFilePath(send_filepath);
 		content->setFileName("vcards.vcf");
 		marieMessage->addContent(content);
 		bc_free(send_filepath);
 	} else {
-		Content *content = new Content();
+		auto content = Content::create();
 		content->setContentType(ContentType::PlainText);
 		content->setBodyFromUtf8("Hello part 2");
 		marieMessage->addContent(content);
 	}
 
 	if (third_content) {
-		Content *content = new Content();
+		auto content = Content::create();
 		content->setContentType(ContentType::PlainText);
 		content->setBodyFromUtf8("Hello part 3");
 		marieMessage->addContent(content);

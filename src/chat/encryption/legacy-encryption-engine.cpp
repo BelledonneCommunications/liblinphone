@@ -96,9 +96,10 @@ bool LegacyEncryptionEngine::isEncryptionEnabledForFileTransfer(const shared_ptr
 	return false;
 }
 
-void LegacyEncryptionEngine::generateFileTransferKey(const shared_ptr<AbstractChatRoom> &chatRoom,
-                                                     const shared_ptr<ChatMessage> &message,
-                                                     BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+void LegacyEncryptionEngine::generateFileTransferKey(
+    const shared_ptr<AbstractChatRoom> &chatRoom,
+    const shared_ptr<ChatMessage> &message,
+    BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
 	LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key_cb =
@@ -108,12 +109,13 @@ void LegacyEncryptionEngine::generateFileTransferKey(const shared_ptr<AbstractCh
 	}
 }
 
-int LegacyEncryptionEngine::downloadingFile(const shared_ptr<ChatMessage> &message,
-                                            size_t offset,
-                                            const uint8_t *buffer,
-                                            size_t size,
-                                            uint8_t *decryptedBuffer,
-                                            BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+int LegacyEncryptionEngine::downloadingFile(
+    const shared_ptr<ChatMessage> &message,
+    size_t offset,
+    const uint8_t *buffer,
+    size_t size,
+    uint8_t *decryptedBuffer,
+    BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
@@ -125,12 +127,13 @@ int LegacyEncryptionEngine::downloadingFile(const shared_ptr<ChatMessage> &messa
 	return -1;
 }
 
-int LegacyEncryptionEngine::uploadingFile(const shared_ptr<ChatMessage> &message,
-                                          size_t offset,
-                                          const uint8_t *buffer,
-                                          size_t *size,
-                                          uint8_t *encryptedBuffer,
-                                          BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+int LegacyEncryptionEngine::uploadingFile(
+    const shared_ptr<ChatMessage> &message,
+    size_t offset,
+    const uint8_t *buffer,
+    size_t *size,
+    uint8_t *encryptedBuffer,
+    BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
@@ -142,7 +145,8 @@ int LegacyEncryptionEngine::uploadingFile(const shared_ptr<ChatMessage> &message
 	return -1;
 }
 
-int LegacyEncryptionEngine::cancelFileTransfer(BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+int LegacyEncryptionEngine::cancelFileTransfer(
+    BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 	return 0;
 }
 

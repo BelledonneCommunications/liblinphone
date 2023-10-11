@@ -27,13 +27,11 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class FileContentPrivate;
-
 class LINPHONE_PUBLIC FileContent : public Content {
 public:
-	FileContent();
+	FileContent() = default;
 	FileContent(const FileContent &other);
-	FileContent(FileContent &&other);
+	FileContent(FileContent &&other) noexcept;
 
 	FileContent *clone() const override {
 		return new FileContent(*this);
@@ -56,8 +54,8 @@ public:
 	void setFileNameUtf8(const std::string &name); // UTF8
 	std::string getFileNameUtf8() const;
 
-	void setFilePath(const std::string &path); // App Locale
-	const std::string &getFilePath() const;
+	void setFilePath(const std::string &path) override; // App Locale
+	const std::string &getFilePath() const override;
 
 	void setFilePathSys(const std::string &path); // System Locale
 	std::string getFilePathSys() const;
@@ -80,7 +78,10 @@ public:
 	const std::string exportPlainFile() const;
 
 private:
-	L_DECLARE_PRIVATE(FileContent);
+	std::string mFileName;
+	std::string mFilePath;
+	size_t mFileSize = 0;
+	int mFileDuration = 0;
 };
 
 LINPHONE_END_NAMESPACE

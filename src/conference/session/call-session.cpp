@@ -1108,13 +1108,13 @@ void CallSessionPrivate::repairByInviteWithReplaces() {
 	string fromTag = op->getLocalTag();
 	string toTag = op->getRemoteTag();
 	// Restore INVITE body if any, for example while creating a chat room
-	Content content = Content(op->getLocalBody());
+	auto content = Content::create(op->getLocalBody());
 
 	op->killDialog();
 	createOp();
 	op->setReplaces(callId.c_str(), fromTag,
 	                toTag.empty() ? "0" : toTag); // empty tag is set to 0 as defined by rfc3891
-	q->startInvite(nullptr, subject, &content);   // Don't forget to set subject from call-session (and not from OP)
+	q->startInvite(nullptr, subject, content);    // Don't forget to set subject from call-session (and not from OP)
 }
 
 void CallSessionPrivate::refreshContactAddress() {
@@ -1474,7 +1474,8 @@ bool CallSession::hasTransferPending() {
 void CallSession::initiateIncoming() {
 }
 
-bool CallSession::initiateOutgoing(BCTBX_UNUSED(const string &subject), BCTBX_UNUSED(const Content *content)) {
+bool CallSession::initiateOutgoing(BCTBX_UNUSED(const string &subject),
+                                   BCTBX_UNUSED(const std::shared_ptr<const Content> content)) {
 	L_D();
 	bool defer = false;
 	d->setState(CallSession::State::OutgoingInit, "Starting outgoing call");
@@ -1573,7 +1574,7 @@ void CallSession::startPushIncomingNotification() {
 
 int CallSession::startInvite(const std::shared_ptr<Address> &destination,
                              const string &subject,
-                             const Content *content) {
+                             const std::shared_ptr<const Content> content) {
 	L_D();
 	d->subject = subject;
 	/* Try to be best-effort in giving real local or routable contact address */
@@ -1590,8 +1591,8 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 	}
 
 	// If a custom Content has been set in the call params, create a multipart body for the INVITE
-	for (auto &content : d->params->getCustomContents()) {
-		d->op->addAdditionalLocalBody(content);
+	for (auto &c : d->params->getCustomContents()) {
+		d->op->addAdditionalLocalBody(*c);
 	}
 
 	int result = d->op->call(d->log->getFromAddress()->toString().c_str(), destinationStr, subject);
@@ -1673,7 +1674,7 @@ LinphoneStatus CallSession::transfer(const string &dest) {
 LinphoneStatus CallSession::update(const CallSessionParams *csp,
                                    const UpdateMethod method,
                                    const string &subject,
-                                   const Content *content) {
+                                   const std::shared_ptr<Content> content) {
 	L_D();
 	CallSession::State nextState;
 	CallSession::State initialState = d->state;
@@ -1834,7 +1835,7 @@ const CallSessionParams *CallSession::getRemoteParams() {
 
 		const list<Content> additionnalContents = d->op->getAdditionalRemoteBodies();
 		for (auto &content : additionnalContents)
-			d->remoteParams->addCustomContent(content);
+			d->remoteParams->addCustomContent(Content::create(content));
 
 		return d->remoteParams;
 	}

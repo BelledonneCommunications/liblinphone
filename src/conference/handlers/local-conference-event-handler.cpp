@@ -60,11 +60,12 @@ LocalConferenceEventHandler::LocalConferenceEventHandler(Conference *conference,
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandler::notifyFullState(const Content &notify, const shared_ptr<ParticipantDevice> &device) {
+void LocalConferenceEventHandler::notifyFullState(const std::shared_ptr<Content> &notify,
+                                                  const shared_ptr<ParticipantDevice> &device) {
 	notifyParticipantDevice(notify, device);
 }
 
-void LocalConferenceEventHandler::notifyAllExceptDevice(const Content &notify,
+void LocalConferenceEventHandler::notifyAllExceptDevice(const std::shared_ptr<Content> &notify,
                                                         const shared_ptr<ParticipantDevice> &exceptDevice) {
 	for (const auto &participant : conf->getParticipants()) {
 		for (const auto &device : participant->getDevices()) {
@@ -76,7 +77,7 @@ void LocalConferenceEventHandler::notifyAllExceptDevice(const Content &notify,
 	}
 }
 
-void LocalConferenceEventHandler::notifyAllExcept(const Content &notify,
+void LocalConferenceEventHandler::notifyAllExcept(const std::shared_ptr<Content> &notify,
                                                   const shared_ptr<Participant> &exceptParticipant) {
 	for (const auto &participant : conf->getParticipants()) {
 		if (participant != exceptParticipant) {
@@ -85,13 +86,13 @@ void LocalConferenceEventHandler::notifyAllExcept(const Content &notify,
 	}
 }
 
-void LocalConferenceEventHandler::notifyAll(const Content &notify) {
+void LocalConferenceEventHandler::notifyAll(const std::shared_ptr<Content> &notify) {
 	for (const auto &participant : conf->getParticipants()) {
 		notifyParticipant(notify, participant);
 	}
 }
 
-Content LocalConferenceEventHandler::createNotifyFullState(const shared_ptr<EventSubscribe> &ev) {
+std::shared_ptr<Content> LocalConferenceEventHandler::createNotifyFullState(const shared_ptr<EventSubscribe> &ev) {
 	vector<string> acceptedContents = vector<string>();
 	if (ev) {
 		const auto message = (belle_sip_message_t *)ev->getOp()->getRecvCustomHeaders();
@@ -399,12 +400,12 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	endpoint.getMedia().push_back(text);
 }
 
-Content LocalConferenceEventHandler::createNotifyMultipart(int notifyId) {
+std::shared_ptr<Content> LocalConferenceEventHandler::createNotifyMultipart(int notifyId) {
 
 	list<shared_ptr<EventLog>> events = conf->getCore()->getPrivate()->mainDb->getConferenceNotifiedEvents(
 	    ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress()), static_cast<unsigned int>(notifyId));
 
-	list<Content> contents;
+	list<shared_ptr<Content>> contents;
 	for (const auto &eventLog : events) {
 		string body;
 		shared_ptr<ConferenceNotifiedEvent> notifiedEvent = static_pointer_cast<ConferenceNotifiedEvent>(eventLog);
@@ -493,15 +494,12 @@ Content LocalConferenceEventHandler::createNotifyMultipart(int notifyId) {
 		contents.emplace_back(makeContent(body));
 	}
 
-	if (contents.empty()) return Content();
+	if (contents.empty()) return Content::create();
 
-	list<Content *> contentPtrs;
-	for (auto &content : contents)
-		contentPtrs.push_back(&content);
-	Content multipart = ContentManager::contentListToMultipart(contentPtrs);
+	Content multipart = ContentManager::contentListToMultipart(contents);
 	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
 		multipart.setContentEncoding("deflate");
-	return multipart;
+	return Content::create(multipart);
 }
 
 string LocalConferenceEventHandler::createNotifyParticipantAdded(const std::shared_ptr<Address> &pAddress) {
@@ -949,7 +947,8 @@ string LocalConferenceEventHandler::createNotifyAvailableMediaChanged(
 	return createNotify(confInfo);
 }
 
-void LocalConferenceEventHandler::notifyParticipant(const Content &notify, const shared_ptr<Participant> &participant) {
+void LocalConferenceEventHandler::notifyParticipant(const std::shared_ptr<Content> &notify,
+                                                    const shared_ptr<Participant> &participant) {
 	for (const auto &device : participant->getDevices()) {
 		/* Only notify to device that are present in the conference. */
 		switch (device->getState()) {
@@ -969,7 +968,7 @@ void LocalConferenceEventHandler::notifyParticipant(const Content &notify, const
 	}
 }
 
-void LocalConferenceEventHandler::notifyParticipantDevice(const Content &notify,
+void LocalConferenceEventHandler::notifyParticipantDevice(const shared_ptr<Content> &notify,
                                                           const shared_ptr<ParticipantDevice> &device) {
 	if (!device->isSubscribedToConferenceEventPackage()) return;
 
@@ -979,7 +978,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice(const Content &notify,
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
 
-	LinphoneContent *cContent = notify.isEmpty() ? nullptr : L_GET_C_BACK_PTR(&notify);
+	LinphoneContent *cContent = notify->isEmpty() ? nullptr : notify->toC();
 	ev->notify(cContent);
 	linphone_core_notify_notify_sent(conf->getCore()->getCCore(), ev->toC(), cContent);
 }
@@ -1064,7 +1063,7 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 			           << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
 			notifyFullState(createNotifyFullState(ev), device);
 		} else {
-			notifyParticipantDevice(Content(), device);
+			notifyParticipantDevice(Content::create(), device);
 		}
 	}
 
@@ -1088,7 +1087,8 @@ void LocalConferenceEventHandler::subscriptionStateChanged(const shared_ptr<Even
 	}
 }
 
-Content LocalConferenceEventHandler::getNotifyForId(int notifyId, const shared_ptr<EventSubscribe> &ev) {
+std::shared_ptr<Content> LocalConferenceEventHandler::getNotifyForId(int notifyId,
+                                                                     const shared_ptr<EventSubscribe> &ev) {
 	unsigned int lastNotify = conf->getLastNotify();
 
 	const int fullStateTrigger = linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
@@ -1097,25 +1097,23 @@ Content LocalConferenceEventHandler::getNotifyForId(int notifyId, const shared_p
 	    (notifyId > static_cast<int>(lastNotify)) || (static_cast<int>(lastNotify) - notifyId) > fullStateTrigger;
 	if ((notifyId == 0) || forceFullState) {
 		auto content = createNotifyFullState(ev);
-		list<Content *> contentPtrs;
-		contentPtrs.push_back(&content);
-		auto multipart = ContentManager::contentListToMultipart(contentPtrs);
-		return multipart;
+		auto multipart = ContentManager::contentListToMultipart({content});
+		return Content::create(multipart);
 	} else if (notifyId < static_cast<int>(lastNotify)) {
 		return createNotifyMultipart(notifyId);
 	}
 
-	return Content();
+	return Content::create();
 }
 
-Content LocalConferenceEventHandler::makeContent(const std::string &xml) {
-	Content content;
-	content.setContentType(ContentType::ConferenceInfo);
+std::shared_ptr<Content> LocalConferenceEventHandler::makeContent(const std::string &xml) {
+	auto content = Content::create();
+	content->setContentType(ContentType::ConferenceInfo);
 	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate")) {
-		content.setContentEncoding("deflate");
+		content->setContentEncoding("deflate");
 	}
 	if (!xml.empty()) {
-		content.setBodyFromUtf8(xml);
+		content->setBodyFromUtf8(xml);
 	}
 	return content;
 }

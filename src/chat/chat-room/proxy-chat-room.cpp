@@ -216,7 +216,7 @@ shared_ptr<ChatMessage> ProxyChatRoom::createChatMessageFromUtf8(const string &t
 	L_D();
 	return d->chatRoom->createChatMessageFromUtf8(text);
 }
-shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage(FileContent *content) {
+shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage(const std::shared_ptr<FileContent> &content) {
 	L_D();
 	return d->chatRoom->createFileTransferMessage(content);
 }

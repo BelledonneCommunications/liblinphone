@@ -182,7 +182,7 @@ void Call::initiateIncoming() {
 	getActiveSession()->initiateIncoming();
 }
 
-bool Call::initiateOutgoing(const string &subject, const Content *content) {
+bool Call::initiateOutgoing(const string &subject, const std::shared_ptr<const Content> content) {
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing(subject, content);
 	session->getPrivate()->createOp();
@@ -215,7 +215,9 @@ void Call::pauseForTransfer() {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->pauseForTransfer();
 }
 
-int Call::startInvite(const std::shared_ptr<Address> &destination, const std::string subject, const Content *content) {
+int Call::startInvite(const std::shared_ptr<Address> &destination,
+                      const std::string subject,
+                      const std::shared_ptr<const Content> content) {
 	return getActiveSession()->startInvite(destination, subject, content);
 }
 

@@ -18,10 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <map>
+#include "property-container.h"
 
 #include "bctoolbox/utils.hh"
-#include "property-container.h"
 
 // =============================================================================
 
@@ -74,6 +73,11 @@ void PropertyContainer::setProperty(const string &name, Variant &&value) {
 	mPrivate->properties[name] = std::move(value);
 }
 
+const std::map<std::string, Variant> &PropertyContainer::getProperties() const {
+	if (!mPrivate) return bctoolbox::Utils::getEmptyConstRefObject<std::map<std::string, Variant>>();
+	return mPrivate->properties;
+}
+
 int PropertyContainer::remove(const std::string &name) const {
 	if (mPrivate) {
 		auto it = mPrivate->properties.find(name);
@@ -96,6 +100,7 @@ bool PropertyContainer::hasKey(const std::string &name) const {
 	}
 	return false;
 }
+
 std::ostream &PropertyContainer::toStream(std::ostream &stream) const {
 	for (const auto &p : mPrivate->properties) {
 		stream << p.first << " : ";
@@ -104,4 +109,5 @@ std::ostream &PropertyContainer::toStream(std::ostream &stream) const {
 	}
 	return stream;
 }
+
 LINPHONE_END_NAMESPACE

@@ -1180,7 +1180,7 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 		} else if (code == 200) { /* The file has been uploaded correctly, get the server reply */
 			const char *body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
 			FileTransferChatMessageModifier fileTransferModifier = FileTransferChatMessageModifier(NULL);
-			FileTransferContent *content = new FileTransferContent();
+			auto content = FileTransferContent::create<FileTransferContent>();
 			fileTransferModifier.parseFileTransferXmlIntoContent(body, content);
 			string fileUrl = content->getFileUrl();
 
@@ -1190,7 +1190,6 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 				    core, LinphoneCoreLogCollectionUploadStateDelivered, url);
 			}
 
-			delete content;
 			clean_log_collection_upload_context(core);
 		} else {
 			ms_error("Unexpected HTTP response code %i during log collection upload to %s", code,
@@ -2789,7 +2788,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 			const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
 			if (factoryUri && (strcmp(resourceAddrUri.c_str(), factoryUri) == 0)) {
 				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(
-				    ev, body ? L_GET_CPP_PTR_FROM_C_OBJECT(body) : nullptr);
+				    ev, body ? Content::toCpp(body)->getSharedFromThis() : nullptr);
 				return;
 			}
 		}
@@ -2800,7 +2799,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 		shared_ptr<MediaConference::Conference> audioVideoConference =
 		    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
 
-		Content content = body ? *L_GET_CPP_PTR_FROM_C_OBJECT(body) : Content();
+		Content content = body ? *Content::toCpp(body) : Content();
 		if (chatRoom) {
 			shared_ptr<ClientGroupChatRoom> cgcr;
 			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
@@ -4990,16 +4989,16 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
                                                          const char *subject,
                                                          const LinphoneContent *content) {
 	CoreLogContextualizer logContextualizer(lc);
-	const char *from = NULL;
-	LinphoneAccount *account = NULL;
-	LinphoneAddress *temp_url = NULL;
-	LinphoneAddress *parsed_url2 = NULL;
+	const char *from = nullptr;
+	LinphoneAccount *account = nullptr;
+	LinphoneAddress *temp_url = nullptr;
+	LinphoneAddress *parsed_url2 = nullptr;
 	LinphoneCall *call;
 	LinphoneCallParams *cp;
 
 	if (!addr) {
 		ms_error("Can't invite a NULL address");
-		return NULL;
+		return nullptr;
 	}
 
 	// Check that sound resources can be freed before moving on
@@ -5011,7 +5010,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 		     !Call::toCpp(current_call)->canSoundResourcesBeFreed())) {
 			ms_error("linphone_core_invite_address_with_params(): sound are locked by another call and they cannot be "
 			         "freed. Call attempt is rejected.");
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -5026,7 +5025,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 	from = linphone_call_params_get_from_header(params);
 
 	// If no account is found, then look up for one either using either the from or the to address
-	if (account == NULL) {
+	if (account == nullptr) {
 		temp_url = from ? linphone_address_new(from) : linphone_address_clone(addr);
 		account = linphone_core_lookup_known_account(lc, temp_url);
 		if (account && !from) {
@@ -5038,24 +5037,24 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 
 	// If variable is still NULL, then the SDK has to make a decision because one is dependent from
 	// the other one. In such a scenario, it is assumed that the application wishes to use the default account
-	if (account == NULL) account = linphone_core_get_default_account(lc);
+	if (account == nullptr) account = linphone_core_get_default_account(lc);
 
 	// If an account has been found earlier on either because it has been set in the call params or it is the default
 	// one or it has been deduced thanks to the from or to addresses, then get the from address if not already set in
 	// the call params
-	if ((from == NULL) && (account != NULL)) {
+	if ((from == nullptr) && (account != nullptr)) {
 		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 		from = linphone_account_params_get_identity(account_params);
 	}
 
 	/* if no account or no identity defined for this account, default to primary contact*/
-	if (from == NULL) from = linphone_core_get_primary_contact(lc);
+	if (from == nullptr) from = linphone_core_get_primary_contact(lc);
 
 	parsed_url2 = linphone_address_new(from);
 
 	cp = _linphone_call_params_copy(params);
 	if (!linphone_call_params_has_avpf_enabled_been_set(cp)) {
-		if (account != NULL) {
+		if (account != nullptr) {
 			linphone_call_params_enable_avpf(cp, linphone_account_is_avpf_enabled(account));
 			const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 			linphone_call_params_set_avpf_rr_interval(
@@ -5075,7 +5074,7 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 		ms_warning("we had a problem in adding the call into the invite ... weird");
 		linphone_call_unref(call);
 		linphone_call_params_unref(cp);
-		return NULL;
+		return nullptr;
 	}
 
 	// Try to free up resources after adding it to the call list.
@@ -5085,17 +5084,17 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is "
 		         "already locking the sound resource. The call is automatically terminated.");
 		linphone_call_terminate(call);
-		return NULL;
+		return nullptr;
 	}
 
 	/* Unless this call is for a conference, it becomes now the current one*/
 	if (linphone_call_params_get_local_conference_mode(params) == FALSE)
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
 	bool defer = Call::toCpp(call)->initiateOutgoing(L_C_TO_STRING(subject),
-	                                                 content ? L_GET_CPP_PTR_FROM_C_OBJECT(content) : NULL);
+	                                                 content ? Content::toCpp(content)->getSharedFromThis() : nullptr);
 	if (!defer) {
-		if (Call::toCpp(call)->startInvite(NULL, L_C_TO_STRING(subject),
-		                                   content ? L_GET_CPP_PTR_FROM_C_OBJECT(content) : NULL) != 0) {
+		if (Call::toCpp(call)->startInvite(nullptr, L_C_TO_STRING(subject),
+		                                   content ? Content::toCpp(content)->getSharedFromThis() : nullptr) != 0) {
 			/* The call has already gone to error and released state, so do not return it */
 			call = nullptr;
 		}
@@ -9560,7 +9559,23 @@ LinphoneConference *linphone_core_get_conference(LinphoneCore *lc) {
 }
 
 void linphone_core_enable_conference_server(LinphoneCore *lc, bool_t enable) {
+#ifdef HAVE_LIME_X3DH
+	// We need to change the encryption engine if it has been instanciated before.
+	auto core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	bool enabled = core->limeX3dhEnabled();
+
+	if (enabled) {
+		core->enableLimeX3dh(false);
+	}
+#endif
+
 	linphone_config_set_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", enable);
+
+#ifdef HAVE_LIME_X3DH
+	if (enabled) {
+		core->enableLimeX3dh(true);
+	}
+#endif
 }
 
 void linphone_core_enable_fec(LinphoneCore *lc, bool_t enable) {

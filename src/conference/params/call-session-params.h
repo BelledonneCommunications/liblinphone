@@ -85,8 +85,8 @@ public:
 	void clearCustomContactParameters();
 	std::string getCustomContactParameter(const std::string &paramName) const;
 
-	void addCustomContent(const Content &content);
-	const std::list<Content> &getCustomContents() const;
+	void addCustomContent(const std::shared_ptr<Content> &content);
+	const std::list<std::shared_ptr<Content>> &getCustomContents() const;
 
 	std::shared_ptr<Account> getAccount() const;
 	void setAccount(std::shared_ptr<Account> account);

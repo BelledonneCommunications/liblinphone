@@ -1106,13 +1106,13 @@ void ServerGroupChatRoomPrivate::inviteDevice(const shared_ptr<ParticipantDevice
 		return;
 	}
 
-	Content content;
-	content.setBodyFromUtf8(Utils::getResourceLists(addressesList));
-	content.setContentType(ContentType::ResourceLists);
-	content.setContentDisposition(ContentDisposition::RecipientListHistory);
+	auto content = Content::create();
+	content->setBodyFromUtf8(Utils::getResourceLists(addressesList));
+	content->setContentType(ContentType::ResourceLists);
+	content->setContentDisposition(ContentDisposition::RecipientListHistory);
 	if (linphone_core_content_encoding_supported(q->getCore()->getCCore(), "deflate"))
-		content.setContentEncoding("deflate");
-	session->startInvite(nullptr, q->getUtf8Subject(), &content);
+		content->setContentEncoding("deflate");
+	session->startInvite(nullptr, q->getUtf8Subject(), content);
 }
 
 void ServerGroupChatRoomPrivate::byeDevice(const std::shared_ptr<ParticipantDevice> &device) {

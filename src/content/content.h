@@ -24,33 +24,33 @@
 #include <list>
 #include <vector>
 
-#include "object/app-data-container.h"
-#include "object/clonable-object.h"
+#include "belle-sip/object++.hh"
+
+#include "c-wrapper/internal/c-sal.h"
+#include "content-disposition.h"
+#include "content-type.h"
+#include "header/header.h"
+#include "linphone/api/c-types.h"
+#include "object/property-container.h"
 
 // =============================================================================
 
-L_DECL_C_STRUCT(LinphoneContent);
-
 LINPHONE_BEGIN_NAMESPACE
 
-class ContentDisposition;
-class ContentType;
-class ContentPrivate;
-class Header;
-
-class LINPHONE_PUBLIC Content : public ClonableObject, public AppDataContainer {
+class LINPHONE_PUBLIC Content : public bellesip::HybridObject<LinphoneContent, Content>, public PropertyContainer {
 public:
-	Content();
+	Content() = default;
+	explicit Content(const SalBodyHandler *bodyHandler, bool parseMultipart = true);
 	Content(const Content &other);
-	Content(Content &&other);
-	~Content();
+	Content(Content &&other) noexcept;
+	virtual ~Content();
 
 	Content *clone() const override {
 		return new Content(*this);
 	}
 
 	Content &operator=(const Content &other);
-	Content &operator=(Content &&other);
+	Content &operator=(Content &&other) noexcept;
 
 	bool operator==(const Content &other) const;
 
@@ -70,7 +70,7 @@ public:
 
 	const std::vector<char> &getBody() const;
 	std::string getBodyAsString() const;
-	std::string getBodyAsUtf8String() const;
+	const std::string &getBodyAsUtf8String() const;
 
 	void setBody(const std::vector<char> &body);
 	void setBody(std::vector<char> &&body);
@@ -78,14 +78,27 @@ public:
 	void setBody(const void *buffer, size_t size);
 	void setBodyFromUtf8(const std::string &body);
 
+	const std::string &getName() const;
+	void setName(const std::string &name);
+
 	size_t getSize() const;
+	void setSize(size_t size);
+
+	SalBodyHandler *getBodyHandler() const;
+	void setBodyHandler(SalBodyHandler *bodyHandler);
+
+	void **getCryptoContextAddress();
 
 	bool isValid() const;
 	bool isMultipart() const;
 	bool isEmpty() const;
+	bool isDirty() const;
 
 	virtual bool isFile() const;
 	virtual bool isFileTransfer() const;
+
+	virtual const std::string &getFilePath() const;
+	virtual void setFilePath(const std::string &path);
 
 	const std::list<Header> &getHeaders() const;
 	const Header &getHeader(const std::string &headerName) const;
@@ -93,18 +106,35 @@ public:
 	void addHeader(const Header &header);
 	void removeHeader(const std::string &headerName);
 	std::list<Header>::const_iterator findHeader(const std::string &headerName) const;
+	const std::string &getCustomHeader(const std::string &headerName) const;
 
 	void setUserData(const Variant &userData);
 	Variant getUserData() const;
 
-protected:
-	explicit Content(ContentPrivate &p);
+	static SalBodyHandler *getBodyHandlerFromContent(const Content &content, bool parseMultipart = true);
 
+protected:
 	bool isFileEncrypted(const std::string &filePath) const;
 	const std::string exportPlainFileFromEncryptedFile(const std::string &filePath) const;
 
 private:
-	L_DECLARE_PRIVATE(Content);
+	std::vector<char> mBody;
+	ContentType mContentType;
+	ContentDisposition mContentDisposition;
+	std::string mContentEncoding;
+	std::list<Header> mHeaders;
+
+	void *mCryptoContext = nullptr; // Used to encrypt file for RCS file transfer.
+	bool mIsDirty = false;
+	SalBodyHandler *mBodyHandler = nullptr;
+
+	struct Cache {
+		std::string name;
+		std::string buffer;
+		std::string filePath;
+		std::string headerValue;
+	} mutable mCache;
+	mutable size_t mSize = 0;
 };
 
 LINPHONE_END_NAMESPACE

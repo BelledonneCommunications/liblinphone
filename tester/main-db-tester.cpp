@@ -312,7 +312,7 @@ static void get_chat_rooms() {
 			BC_ASSERT_PTR_NOT_NULL(lastMessage);
 			BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
 			mainDb.loadChatMessageContents(lastMessage); // Force read Database
-			for (const Content *content : lastMessage->getContents()) {
+			for (const auto &content : lastMessage->getContents()) {
 				BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
 			}
 		}
@@ -346,7 +346,7 @@ static void get_chat_rooms() {
 			BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
 			BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
 			mainDb.loadChatMessageContents(lastMessage); // Force read Database
-			for (const Content *content : lastMessage->getContents()) {
+			for (const auto &content : lastMessage->getContents()) {
 				BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt), 0, int, "%d");
 			}
 		}

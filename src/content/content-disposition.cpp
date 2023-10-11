@@ -35,7 +35,8 @@ class ContentDispositionPrivate : public ClonableObjectPrivate {
 public:
 	string disposition;
 	string parameter;
-	mutable string fullDisposition; // Introduced to be able to extract a C pointer from the string returned by asString for the c-wrapper function
+	mutable string fullDisposition; // Introduced to be able to extract a C pointer from the string returned by asString
+	                                // for the c-wrapper function
 };
 
 // -----------------------------------------------------------------------------
@@ -98,12 +99,11 @@ void ContentDisposition::setParameter(const string &parameter) {
 	d->parameter = parameter;
 }
 
-const string &ContentDisposition::asString () const{
+const string &ContentDisposition::asString() const {
 	L_D();
 	if (isValid()) {
 		d->fullDisposition = d->disposition;
-		if (!d->parameter.empty())
-			d->fullDisposition += ";" + d->parameter;
+		if (!d->parameter.empty()) d->fullDisposition += ";" + d->parameter;
 	} else {
 		d->fullDisposition.clear();
 	}

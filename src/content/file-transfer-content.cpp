@@ -18,16 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// TODO: Remove me later.
-#include "linphone/core.h"
-#include "linphone/utils/utils.h"
-
-#include "bctoolbox/charconv.h"
-#include "bctoolbox/crypto.h"
-#include "content-p.h"
 #include "file-transfer-content.h"
 
 #include <algorithm>
+
+#include "bctoolbox/charconv.h"
+
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 
@@ -37,107 +34,80 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class FileTransferContentPrivate : public ContentPrivate {
-public:
-	string fileName;
-	string fileUrl;
-	string filePath;
-	FileContent *fileContent = nullptr;
-	size_t fileSize = 0;
-	int fileDuration = 0;
-	std::vector<char> fileKey;
-	std::vector<char> fileAuthTag;
-	ContentType fileContentType;
-	~FileTransferContentPrivate() {
-		if (!fileKey.empty()) {
-			bctbx_clean(fileKey.data(), fileKey.size());
-		}
-	};
-};
-
-// -----------------------------------------------------------------------------
-
-FileTransferContent::FileTransferContent() : Content(*new FileTransferContentPrivate) {
+FileTransferContent::FileTransferContent() {
 	setContentType(ContentType::FileTransfer);
 }
 
-FileTransferContent::FileTransferContent(const FileTransferContent &other) : Content(*new FileTransferContentPrivate) {
-	L_D();
+FileTransferContent::FileTransferContent(const FileTransferContent &other) : Content(other) {
 	Content::copy(other);
 	setFileName(other.getFileName());
 	setFilePath(other.getFilePath());
-	d->fileUrl = other.getFileUrl();
-	d->fileContent = other.getFileContent();
-	d->fileSize = other.getFileSize();
-	d->fileKey = other.getFileKey();
-	d->fileAuthTag = other.getFileAuthTag();
-	d->fileContentType = other.getFileContentType();
-	d->fileDuration = other.getFileDuration();
+	mFileUrl = other.getFileUrl();
+	mFileContent = other.getFileContent();
+	mFileSize = other.getFileSize();
+	mFileKey = other.getFileKey();
+	mFileAuthTag = other.getFileAuthTag();
+	mFileContentType = other.getFileContentType();
+	mFileDuration = other.getFileDuration();
 }
 
-FileTransferContent::FileTransferContent(FileTransferContent &&other) : Content(*new FileTransferContentPrivate) {
-	L_D();
+FileTransferContent::FileTransferContent(FileTransferContent &&other) : Content(other) {
 	Content::copy(other);
-	d->fileName = std::move(other.getPrivate()->fileName);
-	d->fileUrl = std::move(other.getPrivate()->fileUrl);
-	d->filePath = std::move(other.getPrivate()->filePath);
-	d->fileContent = std::move(other.getPrivate()->fileContent);
-	d->fileSize = std::move(other.getPrivate()->fileSize);
-	d->fileKey = std::move(other.getPrivate()->fileKey);
-	d->fileAuthTag = std::move(other.getPrivate()->fileAuthTag);
-	d->fileContentType = std::move(other.getPrivate()->fileContentType);
-	d->fileDuration = std::move(other.getPrivate()->fileDuration);
+	mFileName = std::move(other.mFileName);
+	mFileUrl = std::move(other.mFileUrl);
+	mFilePath = std::move(other.mFilePath);
+	mFileContent = std::move(other.mFileContent);
+	mFileSize = std::move(other.mFileSize);
+	mFileKey = std::move(other.mFileKey);
+	mFileAuthTag = std::move(other.mFileAuthTag);
+	mFileContentType = std::move(other.mFileContentType);
+	mFileDuration = std::move(other.mFileDuration);
 }
 
 FileTransferContent &FileTransferContent::operator=(const FileTransferContent &other) {
-	L_D();
 	if (this != &other) {
 		Content::operator=(other);
 		setFileName(other.getFileName());
 		setFilePath(other.getFilePath());
-		d->fileUrl = other.getFileUrl();
-		d->fileContent = other.getFileContent();
-		d->fileSize = other.getFileSize();
-		d->fileKey = other.getFileKey();
-		d->fileAuthTag = other.getFileAuthTag();
-		d->fileContentType = other.getFileContentType();
-		d->fileDuration = other.getFileDuration();
+		mFileUrl = other.getFileUrl();
+		mFileContent = other.getFileContent();
+		mFileSize = other.getFileSize();
+		mFileKey = other.getFileKey();
+		mFileAuthTag = other.getFileAuthTag();
+		mFileContentType = other.getFileContentType();
+		mFileDuration = other.getFileDuration();
 	}
 
 	return *this;
 }
 
 FileTransferContent &FileTransferContent::operator=(FileTransferContent &&other) {
-	L_D();
 	Content::operator=(std::move(other));
-	d->fileName = std::move(other.getPrivate()->fileName);
-	d->fileUrl = std::move(other.getPrivate()->fileUrl);
-	d->filePath = std::move(other.getPrivate()->filePath);
-	d->fileContent = std::move(other.getPrivate()->fileContent);
-	d->fileSize = std::move(other.getPrivate()->fileSize);
-	d->fileKey = std::move(other.getPrivate()->fileKey);
-	d->fileAuthTag = std::move(other.getPrivate()->fileAuthTag);
-	d->fileContentType = std::move(other.getPrivate()->fileContentType);
-	d->fileDuration = std::move(other.getPrivate()->fileDuration);
+	mFileName = std::move(other.mFileName);
+	mFileUrl = std::move(other.mFileUrl);
+	mFilePath = std::move(other.mFilePath);
+	mFileContent = std::move(other.mFileContent);
+	mFileSize = std::move(other.mFileSize);
+	mFileKey = std::move(other.mFileKey);
+	mFileAuthTag = std::move(other.mFileAuthTag);
+	mFileContentType = std::move(other.mFileContentType);
+	mFileDuration = std::move(other.mFileDuration);
 
 	return *this;
 }
 
 bool FileTransferContent::operator==(const FileTransferContent &other) const {
-	L_D();
-	return Content::operator==(other) && getFileName() == other.getFileName() && d->fileUrl == other.getFileUrl() &&
-	       getFilePath() == other.getFilePath() && d->fileSize == other.getFileSize() &&
-	       d->fileContentType == other.getFileContentType() && d->fileDuration == other.getFileDuration();
+	return Content::operator==(other) && getFileName() == other.getFileName() && mFileUrl == other.getFileUrl() &&
+	       getFilePath() == other.getFilePath() && mFileSize == other.getFileSize() &&
+	       mFileContentType == other.getFileContentType() && mFileDuration == other.getFileDuration();
 }
 
 void FileTransferContent::setFileName(const string &name) {
-	L_D();
-	d->fileName = Utils::normalizeFilename(name);
+	mFileName = Utils::normalizeFilename(name);
 }
 
 const string &FileTransferContent::getFileName() const {
-	L_D();
-	return d->fileName;
+	return mFileName;
 }
 
 void FileTransferContent::setFileNameSys(const string &name) {
@@ -157,23 +127,19 @@ string FileTransferContent::getFileNameUtf8() const {
 }
 
 void FileTransferContent::setFileUrl(const string &url) {
-	L_D();
-	d->fileUrl = url;
+	mFileUrl = url;
 }
 
 const string &FileTransferContent::getFileUrl() const {
-	L_D();
-	return d->fileUrl;
+	return mFileUrl;
 }
 
 void FileTransferContent::setFilePath(const string &path) {
-	L_D();
-	d->filePath = path;
+	mFilePath = path;
 }
 
 const string &FileTransferContent::getFilePath() const {
-	L_D();
-	return d->filePath;
+	return mFilePath;
 }
 
 void FileTransferContent::setFilePathSys(const string &path) {
@@ -192,74 +158,60 @@ string FileTransferContent::getFilePathUtf8() const {
 	return Utils::localeToUtf8(getFilePath());
 }
 
-void FileTransferContent::setFileContent(FileContent *content) {
-	L_D();
-	d->fileContent = content;
+void FileTransferContent::setFileContent(std::shared_ptr<FileContent> content) {
+	mFileContent = content;
 }
 
-FileContent *FileTransferContent::getFileContent() const {
-	L_D();
-	return d->fileContent;
+std::shared_ptr<FileContent> FileTransferContent::getFileContent() const {
+	return mFileContent;
 }
 
 void FileTransferContent::setFileSize(size_t size) {
-	L_D();
-	d->fileSize = size;
+	mFileSize = size;
 }
 
 size_t FileTransferContent::getFileSize() const {
-	L_D();
-	return d->fileSize;
+	return mFileSize;
 }
 
 void FileTransferContent::setFileDuration(int durationInSeconds) {
-	L_D();
-	d->fileDuration = durationInSeconds;
+	mFileDuration = durationInSeconds;
 }
 
 int FileTransferContent::getFileDuration() const {
-	L_D();
-	return d->fileDuration;
+	return mFileDuration;
 }
 
 void FileTransferContent::setFileKey(const char *key, size_t size) {
-	L_D();
-	d->fileKey = vector<char>(key, key + size);
+	mFileKey = vector<char>(key, key + size);
 }
 
 const vector<char> &FileTransferContent::getFileKey() const {
-	L_D();
-	return d->fileKey;
+	return mFileKey;
 }
 
 size_t FileTransferContent::getFileKeySize() const {
-	L_D();
-	return d->fileKey.size();
+	return mFileKey.size();
 }
 
 void FileTransferContent::setFileAuthTag(const char *tag, size_t size) {
-	L_D();
-	d->fileAuthTag = vector<char>(tag, tag + size);
+	mFileAuthTag = vector<char>(tag, tag + size);
 }
 
 const vector<char> &FileTransferContent::getFileAuthTag() const {
-	L_D();
-	return d->fileAuthTag;
+	return mFileAuthTag;
 }
 
 size_t FileTransferContent::getFileAuthTagSize() const {
-	L_D();
-	return d->fileAuthTag.size();
+	return mFileAuthTag.size();
 }
 
 void FileTransferContent::setFileContentType(const ContentType &contentType) {
-	L_D();
-	d->fileContentType = contentType;
+	mFileContentType = contentType;
 }
 
 const ContentType &FileTransferContent::getFileContentType() const {
-	L_D();
-	return d->fileContentType;
+	return mFileContentType;
 }
 
 bool FileTransferContent::isFile() const {

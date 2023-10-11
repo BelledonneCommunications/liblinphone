@@ -33,7 +33,7 @@ public:
 
 	Result encode(const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	Result decode(const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	Content *createMinimalCpimContentForLimeMessage(const std::shared_ptr<ChatMessage> &message) const;
+	std::shared_ptr<Content> createMinimalCpimContentForLimeMessage(const std::shared_ptr<ChatMessage> &message) const;
 	std::string parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message,
 	                                                 const Content &cpimContent) const;
 	std::shared_ptr<LinphonePrivate::Address>

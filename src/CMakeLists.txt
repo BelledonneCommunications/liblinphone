@@ -188,7 +188,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	containers/lru-cache.h
 	content/content-disposition.h
 	content/content-manager.h
-	content/content-p.h
 	content/content-type.h
 	content/content.h
 	content/file-content.h
@@ -242,7 +241,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	nat/ice-service.h
 	nat/stun-client.h
 	nat/nat-policy.h
-	object/app-data-container.h
 	object/base-object-p.h
 	object/base-object.h
 	object/clonable-object-p.h
@@ -486,7 +484,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	nat/ice-service.cpp
 	nat/stun-client.cpp
 	nat/nat-policy.cpp
-	object/app-data-container.cpp
 	object/base-object.cpp
 	object/clonable-object.cpp
 	object/object.cpp

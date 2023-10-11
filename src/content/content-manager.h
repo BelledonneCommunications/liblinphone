@@ -36,9 +36,14 @@ LINPHONE_PUBLIC std::list<Content> multipartToContentList(const Content &content
 LINPHONE_PUBLIC Content contentListToMultipart(const std::list<Content *> &contents,
                                                const std::string &boundary,
                                                bool encrypted);
+LINPHONE_PUBLIC Content contentListToMultipart(const std::list<std::shared_ptr<Content>> &contents,
+                                               const std::string &boundary,
+                                               bool encrypted);
 /* There is no reason to set the boundary, prefer this form of the encode method: */
 LINPHONE_PUBLIC Content contentListToMultipart(const std::list<Content *> &contents, bool encrypted);
+LINPHONE_PUBLIC Content contentListToMultipart(const std::list<std::shared_ptr<Content>> &contents, bool encrypted);
 LINPHONE_PUBLIC Content contentListToMultipart(const std::list<Content *> &contents);
+LINPHONE_PUBLIC Content contentListToMultipart(const std::list<std::shared_ptr<Content>> &contents);
 } // namespace ContentManager
 
 LINPHONE_END_NAMESPACE

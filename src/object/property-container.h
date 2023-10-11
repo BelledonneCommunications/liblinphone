@@ -21,6 +21,8 @@
 #ifndef _L_PROPERTY_CONTAINER_H_
 #define _L_PROPERTY_CONTAINER_H_
 
+#include <map>
+
 #include "variant/variant.h"
 
 // =============================================================================
@@ -40,6 +42,8 @@ public:
 	const Variant &getProperty(const std::string &name) const;
 	void setProperty(const std::string &name, const Variant &value);
 	void setProperty(const std::string &name, Variant &&value);
+
+	const std::map<std::string, Variant> &getProperties() const;
 
 	int remove(const std::string &name) const;
 

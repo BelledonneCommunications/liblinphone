@@ -126,14 +126,14 @@ float Recorder::getCaptureVolume() const {
 	return ms_media_recorder_get_capture_volume(mRecorder);
 }
 
-FileContent *Recorder::createContent() const {
+std::shared_ptr<FileContent> Recorder::createContent() const {
 	LinphoneRecorderState currentState = getState();
 	if (currentState != LinphoneRecorderClosed) {
 		lError() << "Cannot create Content from Recorder that isn't in Closed state, current state is " << currentState;
 		return nullptr;
 	}
 
-	FileContent *fileContent = new FileContent();
+	auto fileContent = FileContent::create<FileContent>();
 	fileContent->setFilePath(mFilePath);
 	fileContent->setContentType(ContentType::VoiceRecording);
 	fileContent->setFileDuration(getDuration());

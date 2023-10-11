@@ -573,10 +573,10 @@ LinphoneContent *Factory::createContent() const {
 
 LinphoneContent *Factory::createContentFromFile(const std::string &file_path) const {
 	std::string file_name = file_path.substr(file_path.find_last_of("/\\") + 1);
-	FileContent *content = new FileContent();
-	content->setFilePath(file_path);
-	content->setFileName(file_name);
-	return L_GET_C_BACK_PTR(dynamic_cast<Content *>(content));
+	auto content = FileContent::createCObject<FileContent>();
+	linphone_content_set_file_path(content, file_path.c_str());
+	linphone_content_set_name(content, file_name.c_str());
+	return content;
 }
 
 LinphoneBuffer *Factory::createBuffer() const {
@@ -774,7 +774,7 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfo() const {
 #endif // _MSC_VER
 std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarContent(LinphoneContent *content) const {
 #ifdef HAVE_ADVANCED_IM
-	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
+	LinphonePrivate::ContentType contentType = Content::toCpp(content)->getContentType();
 	if (!contentType.strongEqual(ContentType::Icalendar)) return nullptr;
 
 	std::string filepath = "";

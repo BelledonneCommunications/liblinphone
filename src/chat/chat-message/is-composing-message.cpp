@@ -35,7 +35,7 @@ IsComposingMessage::IsComposingMessage(const shared_ptr<AbstractChatRoom> &chatR
                                        bool isComposing)
     : NotificationMessage(*new NotificationMessagePrivate(chatRoom, ChatMessage::Direction::Outgoing)) {
 	L_D();
-	Content *content = new Content();
+	auto content = Content::create();
 	content->setContentType(ContentType::ImIsComposing);
 	content->setBodyFromUtf8(isComposingHandler.createXml(isComposing));
 	addContent(content);

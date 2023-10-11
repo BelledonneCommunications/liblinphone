@@ -65,15 +65,16 @@ public:
 	LinphoneStatus subscribeReceived(const std::shared_ptr<EventSubscribe> &ev);
 	void subscriptionStateChanged(const std::shared_ptr<EventSubscribe> &ev, LinphoneSubscriptionState state);
 
-	Content getNotifyForId(int notifyId, const std::shared_ptr<EventSubscribe> &ev);
+	std::shared_ptr<Content> getNotifyForId(int notifyId, const std::shared_ptr<EventSubscribe> &ev);
 
 	// protected:
-	void notifyFullState(const Content &notify, const std::shared_ptr<ParticipantDevice> &device);
-	void notifyAllExcept(const Content &notify, const std::shared_ptr<Participant> &exceptParticipant);
-	void notifyAllExceptDevice(const Content &notify, const std::shared_ptr<ParticipantDevice> &exceptDevice);
-	void notifyAll(const Content &notify);
-	Content createNotifyFullState(const std::shared_ptr<EventSubscribe> &ev);
-	Content createNotifyMultipart(int notifyId);
+	void notifyFullState(const std::shared_ptr<Content> &notify, const std::shared_ptr<ParticipantDevice> &device);
+	void notifyAllExcept(const std::shared_ptr<Content> &notify, const std::shared_ptr<Participant> &exceptParticipant);
+	void notifyAllExceptDevice(const std::shared_ptr<Content> &notify,
+	                           const std::shared_ptr<ParticipantDevice> &exceptDevice);
+	void notifyAll(const std::shared_ptr<Content> &notify);
+	std::shared_ptr<Content> createNotifyFullState(const std::shared_ptr<EventSubscribe> &ev);
+	std::shared_ptr<Content> createNotifyMultipart(int notifyId);
 
 	// Conference
 	std::string createNotifyAvailableMediaChanged(const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
@@ -216,9 +217,10 @@ private:
 	std::string createNotifySubjectChanged(const std::string &subject);
 	std::string createNotifyEphemeralLifetime(const long &lifetime);
 	std::string createNotifyEphemeralMode(const EventLog::Type &type);
-	Content makeContent(const std::string &xml);
-	void notifyParticipant(const Content &notify, const std::shared_ptr<Participant> &participant);
-	void notifyParticipantDevice(const Content &notify, const std::shared_ptr<ParticipantDevice> &device);
+	std::shared_ptr<Content> makeContent(const std::string &xml);
+	void notifyParticipant(const std::shared_ptr<Content> &notify, const std::shared_ptr<Participant> &participant);
+	void notifyParticipantDevice(const std::shared_ptr<Content> &notify,
+	                             const std::shared_ptr<ParticipantDevice> &device);
 
 	std::shared_ptr<Participant> getConferenceParticipant(const std::shared_ptr<Address> &address) const;
 

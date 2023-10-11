@@ -82,8 +82,8 @@ void RemoteConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 
 	if (handlers.empty()) return;
 
-	Content content;
-	content.setContentType(ContentType::ResourceLists);
+	auto content = Content::create();
+	content->setContentType(ContentType::ResourceLists);
 
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
@@ -117,7 +117,7 @@ void RemoteConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 	Xsd::XmlSchema::NamespaceInfomap map;
 	stringstream xmlBody;
 	serializeResourceLists(xmlBody, rl, map);
-	content.setBodyFromUtf8(xmlBody.str());
+	content->setBodyFromUtf8(xmlBody.str());
 
 	if (account->getState() != LinphoneRegistrationOk) return;
 
@@ -138,11 +138,11 @@ void RemoteConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 	evSub->addCustomHeader("Content-Disposition", "recipient-list");
 	LinphoneCore *lc = getCore()->getCCore();
 	if (linphone_core_content_encoding_supported(lc, "deflate")) {
-		content.setContentEncoding("deflate");
+		content->setContentEncoding("deflate");
 		evSub->addCustomHeader("Accept-Encoding", "deflate");
 	}
 	evSub->setProperty("event-handler-private", this);
-	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
+	LinphoneContent *cContent = content->toC();
 	evSub->send(cContent);
 
 	levs.push_back(evSub);
@@ -176,7 +176,8 @@ bool RemoteConferenceListEventHandler::getInitialSubscriptionUnderWayFlag(const 
 	return (handler) ? handler->getInitialSubscriptionUnderWayFlag() : false;
 }
 
-void RemoteConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> notifyLev, const Content *notifyContent) {
+void RemoteConferenceListEventHandler::notifyReceived(std::shared_ptr<Event> notifyLev,
+                                                      const std::shared_ptr<const Content> &notifyContent) {
 	const auto &from = notifyLev->getFrom();
 	auto it = std::find_if(levs.begin(), levs.end(),
 	                       [&from](const auto &lev) { return (*Address::create(lev->getOp()->getFrom()) == *from); });

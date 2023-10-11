@@ -39,16 +39,12 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 
 list<Content> ContentManager::multipartToContentList(const Content &content) {
-	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
-	SalBodyHandler *sbh = sal_body_handler_from_content(cContent);
+	SalBodyHandler *sbh = Content::getBodyHandlerFromContent(content);
 
 	list<Content> contents;
 	for (const belle_sip_list_t *parts = sal_body_handler_get_parts(sbh); parts; parts = parts->next) {
-		SalBodyHandler *part = (SalBodyHandler *)parts->data;
-		LinphoneContent *cContent = linphone_content_from_sal_body_handler(part, false);
-		Content *cppContent = L_GET_CPP_PTR_FROM_C_OBJECT(cContent);
-		contents.push_back(*cppContent);
-		linphone_content_unref(cContent);
+		auto part = (SalBodyHandler *)parts->data;
+		contents.emplace_back(part, false);
 	}
 
 	sal_body_handler_unref(sbh);
@@ -61,31 +57,45 @@ ContentManager::contentListToMultipart(const list<Content *> &contents, const st
 	    belle_sip_multipart_body_handler_new(nullptr, nullptr, nullptr, boundary.empty() ? nullptr : boundary.c_str());
 	mpbh = (belle_sip_multipart_body_handler_t *)belle_sip_object_ref(mpbh);
 
-	for (Content *content : contents) {
-		LinphoneContent *cContent = L_GET_C_BACK_PTR(content);
-		SalBodyHandler *sbh = sal_body_handler_from_content(cContent, false);
+	for (auto &content : contents) {
+		SalBodyHandler *sbh = Content::getBodyHandlerFromContent(*content, false);
 		belle_sip_multipart_body_handler_add_part(mpbh, BELLE_SIP_BODY_HANDLER(sbh));
 	}
 
-	SalBodyHandler *sbh = (SalBodyHandler *)mpbh;
+	auto sbh = (SalBodyHandler *)mpbh;
 	sal_body_handler_set_type(sbh, ContentType::Multipart.getType().c_str());
 	sal_body_handler_set_subtype(sbh, encrypted ? ContentType::Encrypted.getSubType().c_str()
 	                                            : ContentType::Multipart.getSubType().c_str());
 	sal_body_handler_set_content_type_parameter(sbh, "boundary", belle_sip_multipart_body_handler_get_boundary(mpbh));
 
-	LinphoneContent *cContent = linphone_content_from_sal_body_handler(sbh);
+	auto content = Content(sbh);
 	belle_sip_object_unref(mpbh);
 
-	Content content = *L_GET_CPP_PTR_FROM_C_OBJECT(cContent);
-	linphone_content_unref(cContent);
 	return content;
+}
+
+Content ContentManager::contentListToMultipart(const list<shared_ptr<Content>> &contents,
+                                               const string &boundary,
+                                               bool encrypted) {
+	list<Content *> contentsPtrs;
+	for (const auto &c : contents)
+		contentsPtrs.push_back(c.get());
+	return contentListToMultipart(contentsPtrs, boundary, encrypted);
 }
 
 Content ContentManager::contentListToMultipart(const std::list<Content *> &contents, bool encrypted) {
 	return contentListToMultipart(contents, "", encrypted);
 }
 
+Content ContentManager::contentListToMultipart(const list<shared_ptr<Content>> &contents, bool encrypted) {
+	return contentListToMultipart(contents, "", encrypted);
+}
+
 Content ContentManager::contentListToMultipart(const std::list<Content *> &contents) {
+	return contentListToMultipart(contents, "", false);
+}
+
+Content ContentManager::contentListToMultipart(const list<shared_ptr<Content>> &contents) {
 	return contentListToMultipart(contents, "", false);
 }
 

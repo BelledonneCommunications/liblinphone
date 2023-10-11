@@ -69,10 +69,10 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	}
 
 	if (!message->getInternalContent().isEmpty()) internalContent = &(message->getInternalContent());
-	else internalContent = message->getContents().front();
+	else internalContent = message->getContents().front().get();
 
 	// Check if the message is encrypted
-	if (!internalContent || !isMessageEncrypted(internalContent)) {
+	if (!internalContent || !isMessageEncrypted(*internalContent)) {
 		return ChatMessageModifier::Result::Skipped;
 	}
 
@@ -112,8 +112,8 @@ EncryptionEngine::EngineType LimeX3dhEncryptionServerEngine::getEngineType() {
 	return engineType;
 }
 
-bool LimeX3dhUtils::isMessageEncrypted(const Content *internalContent) {
-	const ContentType &incomingContentType = internalContent->getContentType();
+bool LimeX3dhUtils::isMessageEncrypted(const Content &internalContent) {
+	const ContentType &incomingContentType = internalContent.getContentType();
 	ContentType expectedContentType = ContentType::Encrypted;
 
 	if (incomingContentType == expectedContentType) {

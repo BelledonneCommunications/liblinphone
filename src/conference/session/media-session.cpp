@@ -4293,7 +4293,7 @@ void MediaSession::initiateIncoming() {
 	}
 }
 
-bool MediaSession::initiateOutgoing(const string &subject, const Content *content) {
+bool MediaSession::initiateOutgoing(const string &subject, const std::shared_ptr<const Content> content) {
 	L_D();
 	bool defer = CallSession::initiateOutgoing(subject, content);
 
@@ -4633,7 +4633,7 @@ int MediaSession::getRandomRtpPort(const SalStreamDescription &stream) const {
 
 int MediaSession::startInvite(const std::shared_ptr<Address> &destination,
                               const string &subject,
-                              const Content *content) {
+                              const std::shared_ptr<const Content> content) {
 	L_D();
 
 	if (d->getOp() == nullptr) d->createOp();
@@ -5215,7 +5215,7 @@ const MediaSessionParams *MediaSession::getRemoteParams() {
 		const list<Content> &additionnalContents = d->op->getAdditionalRemoteBodies();
 		for (auto &content : additionnalContents) {
 			if (!params) params = new MediaSessionParams();
-			params->addCustomContent(content);
+			params->addCustomContent(Content::create(content));
 		}
 		d->setRemoteParams(params);
 		if (!params) {

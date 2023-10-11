@@ -144,15 +144,15 @@ void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<Ev
 			int notifyId = (notifyIdStr.empty() || device->getState() == ParticipantDevice::State::Joining)
 			                   ? 0
 			                   : Utils::stoi(notifyIdStr);
-			Content content = handler->getNotifyForId(notifyId, device->getConferenceSubscribeEvent());
-			if (content.isEmpty()) continue;
+			auto content = handler->getNotifyForId(notifyId, device->getConferenceSubscribeEvent());
+			if (content->isEmpty()) continue;
 
 			noContent = false;
 			char token[17];
 			belle_sip_random_token(token, sizeof(token));
-			content.addHeader("Content-Id", token);
-			content.addHeader("Content-Length", Utils::toString(content.getSize()));
-			contents.push_back(std::move(content));
+			content->addHeader("Content-Id", token);
+			content->addHeader("Content-Length", Utils::toString(content->getSize()));
+			contents.push_back(std::move(*content));
 
 			// Add entry into the Rlmi content of the notify body
 			Xsd::Rlmi::Resource resource(addr->asStringUriOnly());
@@ -185,7 +185,7 @@ void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<Ev
 	Content multipart = ContentManager::contentListToMultipart(contentsAsPtr);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
 		multipart.setContentEncoding("deflate");
-	LinphoneContent *cContent = L_GET_C_BACK_PTR(&multipart);
+	LinphoneContent *cContent = Content::createCObject(multipart);
 	shared_ptr<EventCbs> cbs = EventCbs::create();
 	cbs->setUserData(this);
 	cbs->notifyResponseCb = notifyResponseCb;

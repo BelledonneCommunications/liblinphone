@@ -18,14 +18,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// TODO: Remove me later.
-#include "linphone/core.h"
-#include "linphone/utils/utils.h"
+#include "file-content.h"
+
+#include <algorithm>
 
 #include "bctoolbox/charconv.h"
-#include "content-p.h"
-#include "file-content.h"
-#include <algorithm>
+
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 
@@ -35,81 +34,59 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class FileContentPrivate : public ContentPrivate {
-public:
-	string fileName;
-	string filePath;
-	size_t fileSize = 0;
-	int fileDuration = 0;
-};
-
-// -----------------------------------------------------------------------------
-
-FileContent::FileContent() : Content(*new FileContentPrivate) {
-}
-
-FileContent::FileContent(const FileContent &other) : Content(*new FileContentPrivate) {
-	L_D();
+FileContent::FileContent(const FileContent &other) : Content(other) {
 	Content::copy(other);
 	setFileName(other.getFileName());
 	setFilePath(other.getFilePath());
-	d->fileSize = other.getFileSize();
-	d->fileDuration = other.getFileDuration();
+	mFileSize = other.getFileSize();
+	mFileDuration = other.getFileDuration();
 }
 
-FileContent::FileContent(FileContent &&other) : Content(*new FileContentPrivate) {
-	L_D();
+FileContent::FileContent(FileContent &&other) noexcept : Content(other) {
 	Content::copy(other);
-	d->fileName = std::move(other.getPrivate()->fileName);
-	d->filePath = std::move(other.getPrivate()->filePath);
-	d->fileSize = std::move(other.getPrivate()->fileSize);
-	d->fileDuration = std::move(other.getPrivate()->fileDuration);
+	mFileName = std::move(other.mFileName);
+	mFilePath = std::move(other.mFilePath);
+	mFileSize = std::move(other.mFileSize);
+	mFileDuration = std::move(other.mFileDuration);
 }
 
 FileContent &FileContent::operator=(const FileContent &other) {
-	L_D();
 	Content::operator=(other);
 	setFileName(other.getFileName());
 	setFilePath(other.getFilePath());
-	d->fileSize = other.getFileSize();
-	d->fileDuration = other.getFileDuration();
+	mFileSize = other.getFileSize();
+	mFileDuration = other.getFileDuration();
 	return *this;
 }
 
 FileContent &FileContent::operator=(FileContent &&other) {
-	L_D();
 	Content::operator=(std::move(other));
-	d->fileName = std::move(other.getPrivate()->fileName);
-	d->filePath = std::move(other.getPrivate()->filePath);
-	d->fileSize = std::move(other.getPrivate()->fileSize);
-	d->fileDuration = std::move(other.getPrivate()->fileDuration);
+	mFileName = std::move(other.mFileName);
+	mFilePath = std::move(other.mFilePath);
+	mFileSize = std::move(other.mFileSize);
+	mFileDuration = std::move(other.mFileDuration);
 	return *this;
 }
 
 bool FileContent::operator==(const FileContent &other) const {
-	L_D();
 	return Content::operator==(other) && getFileName() == other.getFileName() && getFilePath() == other.getFilePath() &&
-	       d->fileSize == other.getFileSize() && d->fileDuration == other.getFileDuration();
+	       mFileSize == other.getFileSize() && mFileDuration == other.getFileDuration();
 }
 
 void FileContent::setFileSize(size_t size) {
-	L_D();
-	d->fileSize = size;
+	mFileSize = size;
 }
 
 size_t FileContent::getFileSize() const {
-	L_D();
-	return d->fileSize;
+	return mFileSize;
 }
 
 void FileContent::setFileName(const string &name) {
-	L_D();
-	d->fileName = Utils::normalizeFilename(name);
+	mFileName = Utils::normalizeFilename(name);
 }
 
 const string &FileContent::getFileName() const {
-	L_D();
-	return d->fileName;
+	return mFileName;
 }
 
 void FileContent::setFileNameSys(const string &name) {
@@ -129,13 +106,11 @@ string FileContent::getFileNameUtf8() const {
 }
 
 void FileContent::setFilePath(const string &path) {
-	L_D();
-	d->filePath = path;
+	mFilePath = path;
 }
 
 const string &FileContent::getFilePath() const {
-	L_D();
-	return d->filePath;
+	return mFilePath;
 }
 
 void FileContent::setFilePathSys(const string &path) {
@@ -155,13 +130,11 @@ string FileContent::getFilePathUtf8() const {
 }
 
 void FileContent::setFileDuration(int durationInSeconds) {
-	L_D();
-	d->fileDuration = durationInSeconds;
+	mFileDuration = durationInSeconds;
 }
 
 int FileContent::getFileDuration() const {
-	L_D();
-	return d->fileDuration;
+	return mFileDuration;
 }
 
 bool FileContent::isFile() const {

@@ -135,7 +135,7 @@ public:
 	virtual std::shared_ptr<ChatMessage> createChatMessage(const std::string &text) = 0;
 	virtual std::shared_ptr<ChatMessage> createChatMessageFromUtf8(const std::string &text) = 0;
 
-	virtual std::shared_ptr<ChatMessage> createFileTransferMessage(FileContent *content) = 0;
+	virtual std::shared_ptr<ChatMessage> createFileTransferMessage(const std::shared_ptr<FileContent> &content) = 0;
 	virtual std::shared_ptr<ChatMessage> createForwardMessage(const std::shared_ptr<ChatMessage> &msg) = 0;
 	virtual std::shared_ptr<ChatMessage> createReplyMessage(const std::shared_ptr<ChatMessage> &msg) = 0;
 

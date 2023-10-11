@@ -64,9 +64,10 @@ public:
 		return false;
 	}
 
-	virtual void generateFileTransferKey(BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &ChatRoom),
-	                                     BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message),
-	                                     BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+	virtual void
+	generateFileTransferKey(BCTBX_UNUSED(const std::shared_ptr<AbstractChatRoom> &ChatRoom),
+	                        BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message),
+	                        BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 	}
 
 	virtual int downloadingFile(BCTBX_UNUSED(const std::shared_ptr<ChatMessage> &message),
@@ -74,7 +75,7 @@ public:
 	                            BCTBX_UNUSED(const uint8_t *buffer),
 	                            BCTBX_UNUSED(size_t size),
 	                            BCTBX_UNUSED(uint8_t *decryptedBuffer),
-	                            BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+	                            BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 		return 0;
 	}
 
@@ -83,11 +84,11 @@ public:
 	                          BCTBX_UNUSED(const uint8_t *buffer),
 	                          BCTBX_UNUSED(size_t *size),
 	                          BCTBX_UNUSED(uint8_t *encryptedBuffer),
-	                          BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+	                          BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 		return 0;
 	}
 
-	virtual int cancelFileTransfer(BCTBX_UNUSED(FileTransferContent *fileTransferContent)) {
+	virtual int cancelFileTransfer(BCTBX_UNUSED(const std::shared_ptr<FileTransferContent> &fileTransferContent)) {
 		return 0;
 	}
 

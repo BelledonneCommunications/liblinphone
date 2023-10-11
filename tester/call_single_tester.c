@@ -4883,7 +4883,7 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 	LinphoneCallParams *marieParams = NULL;
 	LinphoneCallParams *paulineParams = NULL;
 	LinphoneCall *callInst = NULL;
-	const char **formats, *format;
+	const char **formats, *file_format;
 	char *filepath;
 	int dummy = 0, i;
 	bool_t call_succeeded = FALSE;
@@ -4932,8 +4932,8 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 
 	formats = linphone_core_get_supported_file_formats(marie->lc);
 
-	for (i = 0, format = formats[0]; format != NULL; i++, format = formats[i]) {
-		char *totalname = ms_strdup_printf("%s.%s", filename, format);
+	for (i = 0, file_format = formats[0]; file_format != NULL; i++, file_format = formats[i]) {
+		char *totalname = ms_strdup_printf("%s.%s", filename, file_format);
 		filepath = bc_tester_file(totalname);
 		ms_free(totalname);
 		remove(filepath);
@@ -4946,7 +4946,7 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 				ms_message("call_recording(): start recording into %s", filepath);
 				linphone_call_start_recording(callInst);
 			}
-			if (strcmp(format, "mkv") == 0 && enableVideo) {
+			if (strcmp(file_format, "mkv") == 0 && enableVideo) {
 				VideoStream *pauline_vstream =
 				    (VideoStream *)linphone_call_get_stream(pauline_call, LinphoneStreamTypeVideo);
 				/* make sure that Pauline receives a RTCP FIR (Full Intra Request) requested by Marie's recorder.*/

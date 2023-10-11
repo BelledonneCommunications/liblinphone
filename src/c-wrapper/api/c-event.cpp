@@ -514,18 +514,20 @@ LinphoneEvent *linphone_event_new_subscribe_with_op(LinphoneCore *lc,
                                                     SalSubscribeOp *op,
                                                     LinphoneSubscriptionDir dir,
                                                     const char *name) {
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name), false))->toC();
+	return EventSubscribe::createCObject<EventSubscribe>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name),
+	                                                     false);
 }
 
 LinphoneEvent *linphone_event_new_subscribe_with_out_of_dialog_op(LinphoneCore *lc,
                                                                   SalSubscribeOp *op,
                                                                   LinphoneSubscriptionDir dir,
                                                                   const char *name) {
-	return (new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name), true))->toC();
+	return EventSubscribe::createCObject<EventSubscribe>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, dir, L_C_TO_STRING(name),
+	                                                     true);
 }
 
 LinphoneEvent *linphone_event_new_publish_with_op(LinphoneCore *lc, SalPublishOp *op, const char *name) {
-	return (new EventPublish(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, L_C_TO_STRING(name)))->toC();
+	return EventPublish::createCObject<EventPublish>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), op, L_C_TO_STRING(name));
 }
 
 #endif /* LINPHONE_EVENT_H_ */

@@ -350,10 +350,11 @@ void MainDbPrivate::insertContent(long long chatMessageId, const Content &conten
 		    soci::use(chatMessageContentId), soci::use(name), soci::use(size), soci::use(path), soci::use(duration);
 	}
 
-	for (const auto &appData : content.getAppDataMap())
+	for (const auto &property : content.getProperties()) {
 		*session << "INSERT INTO chat_message_content_app_data (chat_message_content_id, name, data) VALUES"
 		            " (:chatMessageContentId, :name, :data)",
-		    soci::use(chatMessageContentId), soci::use(appData.first), soci::use(appData.second);
+		    soci::use(chatMessageContentId), soci::use(property.first), soci::use(property.second.getValue<string>());
+	}
 #endif
 }
 
@@ -1386,7 +1387,7 @@ long long MainDbPrivate::insertConferenceChatMessageEvent(const shared_ptr<Event
 		    soci::use(eventId), soci::use(ephemeralLifetime), soci::use(expireTime.first);
 	}
 
-	for (const Content *content : chatMessage->getContents())
+	for (const auto &content : chatMessage->getContents())
 		insertContent(eventId, *content);
 
 	shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
@@ -2783,7 +2784,7 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 
 			const string &text = getValueFromRow<string>(message, LegacyMessageColText, isNull);
 
-			unique_ptr<Content> content;
+			shared_ptr<Content> content;
 			if (contentType == ContentType::FileTransfer) {
 				const string appData = getValueFromRow<string>(message, LegacyMessageColAppData, isNull);
 				if (isNull) {
@@ -2797,12 +2798,12 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 					continue;
 				}
 				ContentType fileContentType(contentTypeString);
-				content.reset(new FileContent());
+				content = FileContent::create<FileContent>();
 				content->setContentType(fileContentType);
-				content->setAppData("legacy", appData);
+				content->setProperty("legacy", Variant{appData});
 				content->setBodyFromLocale(text);
 			} else {
-				content.reset(new Content());
+				content = Content::create();
 				content->setContentType(contentType);
 				if (contentType == ContentType::PlainText) {
 					if (isNull) {
@@ -4747,7 +4748,7 @@ static void fetchContentAppData(soci::session *session, Content &content, long l
 	soci::statement statement = (session->prepare << query, soci::use(contentId), soci::into(name), soci::into(data));
 	statement.execute();
 	while (statement.fetch())
-		content.setAppData(name, blobToString(data));
+		content.setProperty(name, Variant{blobToString(data)});
 }
 #endif
 
@@ -4771,14 +4772,14 @@ void MainDb::loadChatMessageContents(const shared_ptr<ChatMessage> &chatMessage)
 		for (const auto &row : rows) {
 			ContentType contentType(row.get<string>(2));
 			const long long &contentId = d->dbSession.resolveId(row, 0);
-			Content *content;
+			shared_ptr<Content> content;
 			int bodyEncodingType = row.get<int>(4);
 
 			if (contentType == ContentType::FileTransfer) {
 				hasFileTransferContent = true;
-				content = new FileTransferContent();
+				content = FileTransferContent::create<FileTransferContent>();
 			} else {
-				// 1.1 - Fetch contents' file informations if they exist
+				// 1.1 - Fetch contents' file information if they exist
 				string name;
 				int size;
 				string path;
@@ -4788,14 +4789,14 @@ void MainDb::loadChatMessageContents(const shared_ptr<ChatMessage> &chatMessage)
 				            " WHERE chat_message_content_id = :contentId",
 				    soci::into(name), soci::into(size), soci::into(path), soci::into(duration), soci::use(contentId);
 				if (session->got_data()) {
-					FileContent *fileContent = new FileContent();
+					auto fileContent = FileContent::create<FileContent>();
 					fileContent->setFileName(name);
 					fileContent->setFileSize(size_t(size));
 					fileContent->setFilePath(path);
 					fileContent->setFileDuration(duration);
 					content = fileContent;
 				} else {
-					content = new Content();
+					content = Content::create();
 				}
 			}
 

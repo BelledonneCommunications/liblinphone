@@ -126,7 +126,7 @@ private:
 	std::unordered_map<std::string, std::string> customContactParameters;
 	std::shared_ptr<CallSession>
 	    referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
-	std::list<Content> customContents;
+	std::list<std::shared_ptr<Content>> customContents;
 	std::list<LinphoneSrtpSuite> srtpSuites{};
 
 	time_t startTime = (time_t)-1;

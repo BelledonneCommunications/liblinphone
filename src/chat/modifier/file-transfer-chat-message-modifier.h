@@ -63,19 +63,22 @@ public:
 	void processIoErrorDownload(const belle_sip_io_error_event_t *event);
 	void processResponseFromGetFile(const belle_http_response_event_t *event);
 
-	bool downloadFile(const std::shared_ptr<ChatMessage> &message, FileTransferContent *fileTransferContent);
+	bool downloadFile(const std::shared_ptr<ChatMessage> &message,
+	                  std::shared_ptr<FileTransferContent> &fileTransferContent);
 	void cancelFileTransfer();
 	bool isFileTransferInProgressAndValid() const;
 	std::string createFakeFileTransferFromUrl(const std::string &url);
 	void fileUploadEndBackgroundTask();
 
-	void parseFileTransferXmlIntoContent(const char *xml, FileTransferContent *fileTransferContent) const;
-	std::string dumpFileTransferContentAsXmlString(const FileTransferContent *parsedXmlFileTransferContent,
-	                                               const unsigned char *contentKey,
-	                                               size_t contentKeySize,
-	                                               const unsigned char *contentAuthTag,
-	                                               size_t contentAuthTagSize,
-	                                               const std::string &realFileName) const;
+	void parseFileTransferXmlIntoContent(const char *xml,
+	                                     std::shared_ptr<FileTransferContent> &fileTransferContent) const;
+	std::string
+	dumpFileTransferContentAsXmlString(const std::shared_ptr<FileTransferContent> &parsedXmlFileTransferContent,
+	                                   const unsigned char *contentKey,
+	                                   size_t contentKeySize,
+	                                   const unsigned char *contentAuthTag,
+	                                   size_t contentAuthTagSize,
+	                                   const std::string &realFileName) const;
 
 private:
 	// Body handler is optional, but if set this method takes owneship of it, even in error cases.
@@ -95,8 +98,8 @@ private:
 	std::string unEscapeFileName(const std::string &fileName) const;
 
 	std::weak_ptr<ChatMessage> chatMessage;
-	FileContent *currentFileContentToTransfer = nullptr;
-	FileTransferContent *currentFileTransferContent = nullptr;
+	std::shared_ptr<FileContent> currentFileContentToTransfer = nullptr;
+	std::shared_ptr<FileTransferContent> currentFileTransferContent = nullptr;
 
 	belle_http_request_t *httpRequest = nullptr;
 	belle_http_request_listener_t *httpListener = nullptr;

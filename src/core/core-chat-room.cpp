@@ -700,10 +700,10 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms() const {
 		}
 
 		if (hideChatRoomsFromRemovedProxyConfig) {
-			const bctbx_list_t *it;
+			const bctbx_list_t *it2;
 			bool found = false;
-			for (it = linphone_core_get_proxy_config_list(lc); it != NULL; it = it->next) {
-				LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
+			for (it2 = linphone_core_get_proxy_config_list(lc); it2 != nullptr; it2 = it2->next) {
+				auto cfg = (LinphoneProxyConfig *)it2->data;
 				const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
 				auto localAddress = Address::toCpp(const_cast<LinphoneAddress *>(identityAddr))->getSharedFromThis();
 				if (localAddress->weakEqual(*chatRoom->getLocalAddress())) {

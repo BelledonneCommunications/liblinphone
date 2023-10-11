@@ -166,7 +166,7 @@ void ChatRoomPrivate::realtimeTextReceived(uint32_t character, const shared_ptr<
 
 			shared_ptr<ChatMessage> pendingMessage = q->createChatMessage();
 			pendingMessage->getPrivate()->setDirection(ChatMessage::Direction::Incoming);
-			Content *content = new Content();
+			auto content = Content::create();
 			content->setContentType(ContentType::PlainText);
 			content->setBodyFromUtf8(completeText);
 			pendingMessage->addContent(content);
@@ -699,7 +699,7 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage() {
 // Deprecated
 shared_ptr<ChatMessage> ChatRoom::createChatMessage(const string &text) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
-	Content *content = new Content();
+	auto content = Content::create();
 	content->setContentType(ContentType::PlainText);
 	content->setBodyFromLocale(text);
 	chatMessage->addContent(content);
@@ -708,14 +708,14 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage(const string &text) {
 
 shared_ptr<ChatMessage> ChatRoom::createChatMessageFromUtf8(const string &text) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
-	Content *content = new Content();
+	auto content = Content::create();
 	content->setContentType(ContentType::PlainText);
 	content->setBodyFromUtf8(text);
 	chatMessage->addContent(content);
 	return chatMessage;
 }
 
-shared_ptr<ChatMessage> ChatRoom::createFileTransferMessage(FileContent *content) {
+shared_ptr<ChatMessage> ChatRoom::createFileTransferMessage(const std::shared_ptr<FileContent> &content) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
 	chatMessage->addContent(content);
 	return chatMessage;
@@ -723,8 +723,8 @@ shared_ptr<ChatMessage> ChatRoom::createFileTransferMessage(FileContent *content
 
 shared_ptr<ChatMessage> ChatRoom::createForwardMessage(const shared_ptr<ChatMessage> &msg) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
-	for (const Content *c : msg->getContents()) {
-		chatMessage->addContent(c->clone());
+	for (const auto &c : msg->getContents()) {
+		chatMessage->addContent(c->clone()->toSharedPtr());
 	}
 
 	// set forward info

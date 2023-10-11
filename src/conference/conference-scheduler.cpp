@@ -369,12 +369,12 @@ void ConferenceScheduler::onCallSessionSetTerminated(const shared_ptr<CallSessio
 			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
 
 			if (!addressesList.empty()) {
-				Content content;
-				content.setBodyFromUtf8(Utils::getResourceLists(addressesList));
-				content.setContentType(ContentType::ResourceLists);
-				content.setContentDisposition(ContentDisposition::RecipientList);
+				auto content = Content::create();
+				content->setBodyFromUtf8(Utils::getResourceLists(addressesList));
+				content->setContentType(ContentType::ResourceLists);
+				content->setContentDisposition(ContentDisposition::RecipientList);
 				if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-					content.setContentEncoding("deflate");
+					content->setContentEncoding("deflate");
 				}
 
 				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(content);
@@ -435,7 +435,7 @@ shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_
 		message = chatRoom->createChatMessageFromUtf8(mConferenceInfo->toIcsString(cancel, sequence));
 		message->getPrivate()->setContentType(ContentType::Icalendar);
 	} else {
-		FileContent *content = new FileContent(); // content will be deleted by ChatMessage
+		auto content = FileContent::create<FileContent>(); // content will be deleted by ChatMessage
 		content->setContentType(ContentType::Icalendar);
 		content->setFileName("conference.ics");
 		content->setBodyFromUtf8(mConferenceInfo->toIcsString(cancel, sequence));

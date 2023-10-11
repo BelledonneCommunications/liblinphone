@@ -53,7 +53,7 @@ public:
 	void unsubscribe() override;
 	void unsubscribe(const std::shared_ptr<Account> &account);
 	void invalidateSubscription() override;
-	void notifyReceived(std::shared_ptr<Event> notifyLev, const Content *notifyContent);
+	void notifyReceived(std::shared_ptr<Event> notifyLev, const std::shared_ptr<const Content> &notifyContent);
 	void addHandler(RemoteConferenceEventHandler *handler);
 	void removeHandler(RemoteConferenceEventHandler *handler);
 	void clearHandlers();

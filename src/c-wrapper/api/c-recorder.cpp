@@ -76,9 +76,10 @@ float linphone_recorder_get_capture_volume(const LinphoneRecorder *recorder) {
 }
 
 LinphoneContent *linphone_recorder_create_content(LinphoneRecorder *recorder) {
-	LinphonePrivate::Content *fileContent = Recorder::toCpp(recorder)->createContent();
+	auto fileContent = Recorder::toCpp(recorder)->createContent();
 	if (fileContent != nullptr) {
-		return L_GET_C_BACK_PTR(fileContent);
+		fileContent->ref();
+		return fileContent->toC();
 	}
 	return nullptr;
 }
