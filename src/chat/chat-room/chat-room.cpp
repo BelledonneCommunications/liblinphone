@@ -789,6 +789,7 @@ void ChatRoom::markAsRead() {
 	}
 
 	dCore->mainDb->markChatMessagesAsRead(getConferenceId());
+	_linphone_chat_room_notify_chat_room_read(d->getCChatRoom());
 	linphone_core_notify_chat_room_read(getCore()->getCCore(), d->getCChatRoom());
 }
 

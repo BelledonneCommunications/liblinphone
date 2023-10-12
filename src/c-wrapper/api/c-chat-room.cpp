@@ -782,6 +782,10 @@ void _linphone_chat_room_notify_chat_message_participant_imdn_state_changed(Linp
 	                state);
 }
 
+void _linphone_chat_room_notify_chat_room_read(LinphoneChatRoom *cr) {
+	NOTIFY_IF_EXIST(ChatRoomRead, chat_room_read, cr);
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================

@@ -59,6 +59,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb chatMessageParticipantImdnStateChangedCb;
 	LinphoneChatRoomCbsNewEventCb newEventCb;
 	LinphoneChatRoomCbsNewEventsCb newEventsCb;
+	LinphoneChatRoomCbsChatRoomReadCb chatRoomReadCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -378,4 +379,12 @@ linphone_chat_room_cbs_get_chat_message_participant_imdn_state_changed(LinphoneC
 void linphone_chat_room_cbs_set_chat_message_participant_imdn_state_changed(
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb cb) {
 	cbs->chatMessageParticipantImdnStateChangedCb = cb;
+}
+
+LinphoneChatRoomCbsChatRoomReadCb linphone_chat_room_cbs_get_chat_room_read(const LinphoneChatRoomCbs *cbs) {
+	return cbs->chatRoomReadCb;
+}
+
+void linphone_chat_room_cbs_set_chat_room_read(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatRoomReadCb cb) {
+	cbs->chatRoomReadCb = cb;
 }

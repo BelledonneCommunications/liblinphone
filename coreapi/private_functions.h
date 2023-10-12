@@ -530,6 +530,7 @@ void _linphone_chat_room_notify_chat_message_should_be_stored(LinphoneChatRoom *
 void _linphone_chat_room_notify_chat_message_participant_imdn_state_changed(LinphoneChatRoom *cr,
                                                                             LinphoneChatMessage *msg,
                                                                             const LinphoneParticipantImdnState *state);
+void _linphone_chat_room_notify_chat_room_read(LinphoneChatRoom *cr);
 void _linphone_chat_room_clear_callbacks(LinphoneChatRoom *cr);
 
 void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state);

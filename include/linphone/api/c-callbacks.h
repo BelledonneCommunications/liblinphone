@@ -546,6 +546,12 @@ typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb)(Linp
                                                                             const LinphoneParticipantImdnState *state);
 
 /**
+ * Callback used to notify a chat room was "marked as read".
+ * @param chat_room The #LinphoneChatRoom object that was marked as read @notnil
+ */
+typedef void (*LinphoneChatRoomCbsChatRoomReadCb)(LinphoneChatRoom *chat_room);
+
+/**
  * @}
  **/
 

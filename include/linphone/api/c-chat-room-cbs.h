@@ -564,6 +564,22 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_participant_imdn_st
     LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb cb);
 
 /**
+ * Get the "marked as read" callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The marked as read callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsChatRoomReadCb
+linphone_chat_room_cbs_get_chat_room_read(const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the "marked as read" callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The marked as read callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_room_read(LinphoneChatRoomCbs *cbs,
+                                                               LinphoneChatRoomCbsChatRoomReadCb cb);
+
+/**
  * @}
  */
 
