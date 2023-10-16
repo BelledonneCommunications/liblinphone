@@ -62,6 +62,7 @@ void CallSessionParamsPrivate::clone(const CallSessionParamsPrivate *src) {
 	referer = src->referer;
 	customContents = src->customContents;
 	account = src->account;
+	reuseProhibited = src->reuseProhibited;
 }
 
 // -----------------------------------------------------------------------------
@@ -351,5 +352,20 @@ const ConferenceLayout &CallSessionParams::getConferenceVideoLayout() const {
 	L_D();
 	return d->conferenceVideoLayout;
 };
+
+void CallSessionParams::prohibitReuse() {
+	L_D();
+	d->reuseProhibited = true;
+}
+
+void CallSessionParams::assertNoReuse() const {
+	L_D();
+	if (d->reuseProhibited) {
+		lFatal() << "LinphoneCallParams object taken from "
+		            "linphone_call_get_current_params()/linphone_call_get_params()/linphone_call_get_remote_params() "
+		            "must not be re-used. This is a programming mistake, please use exclusively "
+		            "linphone_core_create_call_params() to create a new LinphoneCallParams object.";
+	}
+}
 
 LINPHONE_END_NAMESPACE

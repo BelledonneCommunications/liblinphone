@@ -93,6 +93,8 @@ public:
 
 	void setConferenceVideoLayout(const ConferenceLayout l);
 	const ConferenceLayout &getConferenceVideoLayout() const;
+	void prohibitReuse();
+	void assertNoReuse() const;
 
 protected:
 	explicit CallSessionParams(CallSessionParamsPrivate &p);

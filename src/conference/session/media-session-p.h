@@ -89,12 +89,14 @@ public:
 	void setMicrophoneMuted(bool muted);
 
 	MediaSessionParams *getCurrentParams() const {
+		if (currentParams) currentParams->prohibitReuse();
 		return static_cast<MediaSessionParams *>(currentParams);
 	}
 	MediaSessionParams *getParams() const {
 		return static_cast<MediaSessionParams *>(params);
 	}
 	MediaSessionParams *getRemoteParams() const {
+		if (remoteParams) remoteParams->prohibitReuse();
 		return static_cast<MediaSessionParams *>(remoteParams);
 	}
 	void setCurrentParams(MediaSessionParams *msp);

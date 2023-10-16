@@ -133,6 +133,9 @@ private:
 	time_t endTime = (time_t)-1;
 
 	bool conferenceCreation = false;
+	bool reuseProhibited =
+	    false; // Set for CallParams returned by
+	           // linphone_call_get_remote_params()/linphone_call_get_params()/linphone_call_get_current_params().
 
 	L_DECLARE_PUBLIC(CallSessionParams);
 };

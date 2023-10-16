@@ -361,6 +361,7 @@ bool CallSessionPrivate::startPing() {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::setParams(CallSessionParams *csp) {
+	if (csp) csp->assertNoReuse();
 	if (params) delete params;
 	params = csp;
 }

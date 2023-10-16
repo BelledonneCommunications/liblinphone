@@ -873,11 +873,10 @@ void MediaSessionPrivate::setCurrentParams(MediaSessionParams *msp) {
 }
 
 void MediaSessionPrivate::setParams(MediaSessionParams *msp) {
-	if (params) delete params;
-	params = msp;
 	// Pass the account used for the call to the local parameters.
 	// It has been chosen at the start and it should not be changed anymore
-	params->setAccount(getDestAccount());
+	if (msp) msp->setAccount(getDestAccount());
+	CallSessionPrivate::setParams(msp);
 }
 
 void MediaSessionPrivate::setRemoteParams(MediaSessionParams *msp) {
