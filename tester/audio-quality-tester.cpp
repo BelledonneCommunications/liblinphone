@@ -69,20 +69,21 @@ static void completion_cb(BCTBX_UNUSED(void *user_data), int percentage) {
 }
 #endif
 
-static void audio_call_stereo_call(const char *codec_name, int clock_rate, int bitrate_override, bool_t stereo) {
+static void
+audio_call_stereo_call(const char *codec_name, int clock_rate, int bitrate_override, bool_t stereo, bool_t plc) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 	LinphonePayloadType *pt;
 	char *stereo_file = bc_tester_res("sounds/vrroom.wav");
 	char *recordpath = bc_tester_file("stereo-record.wav");
 	bool_t audio_cmp_failed = FALSE;
-
+	OrtpNetworkSimulatorParams simparams = {0};
 	unlink(recordpath);
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
-	/*make sure we have opus*/
+	/*make sure we have the requested codec */
 	pt = linphone_core_get_payload_type(marie->lc, codec_name, clock_rate, 2);
 	if (!pt) {
 		ms_warning("%s not available, stereo with %s not tested.", codec_name, codec_name);
@@ -110,6 +111,16 @@ static void audio_call_stereo_call(const char *codec_name, int clock_rate, int b
 	/*stereo is supported only without volume control, echo canceller...*/
 	linphone_config_set_string(linphone_core_get_config(marie->lc), "sound", "features", "REMOTE_PLAYING");
 	linphone_config_set_string(linphone_core_get_config(pauline->lc), "sound", "features", "REMOTE_PLAYING");
+	if (plc) {
+		linphone_config_set_string(linphone_core_get_config(marie->lc), "sound", "features", "PLC");
+		linphone_config_set_string(linphone_core_get_config(pauline->lc), "sound", "features", "PLC");
+		// When PLC is enabled, for a 50% loss
+		simparams.mode = OrtpNetworkSimulatorOutbound;
+		simparams.enabled = TRUE;
+		simparams.consecutive_loss_probability = 0.000001f; // Ensure to have fec in n+1 packets
+		simparams.loss_rate = 50;
+		linphone_core_set_network_simulator_params(marie->lc, &simparams);
+	}
 
 	if (!BC_ASSERT_TRUE(call(pauline, marie))) goto end;
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 6000);
@@ -146,16 +157,19 @@ end:
 }
 
 static void audio_stereo_call_l16(void) {
-	audio_call_stereo_call("L16", 44100, 0, TRUE);
+	audio_call_stereo_call("L16", 44100, 0, TRUE, FALSE);
+}
+static void audio_stereo_call_l16_plc(void) {
+	audio_call_stereo_call("L16", 44100, 0, TRUE, TRUE);
 }
 
 static void audio_stereo_call_opus(void) {
-	audio_call_stereo_call("opus", 48000, 150, TRUE);
+	audio_call_stereo_call("opus", 48000, 150, TRUE, FALSE);
 }
 
 static void audio_mono_call_opus(void) {
 	/*actually a call where input/output is made with stereo but opus transmits everything as mono*/
-	audio_call_stereo_call("opus", 48000, 150, FALSE);
+	audio_call_stereo_call("opus", 48000, 150, FALSE, FALSE);
 }
 
 #ifndef _MSC_VER
@@ -174,7 +188,6 @@ static void audio_call_loss_resilience(const char *codec_name,
 	((void)(threshold));
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	LinphoneCoreManager *marie = nullptr, *pauline = nullptr;
-	char *recordPath = nullptr;
 	char *playFile = bc_tester_res("sounds/continuous_48000_stereo.wav");
 	char *referenceFile = nullptr;
 	double similarity = 0.0;
@@ -183,7 +196,7 @@ static void audio_call_loss_resilience(const char *codec_name,
 	OrtpNetworkSimulatorParams simparams = {0};
 	LinphonePayloadType *mariePt = NULL, *paulinePt = NULL;
 	int sampleLength = 6000;
-	std::string recordFileNameRoot = "loss-record.wav", recordFileName, refRecordFileName;
+	std::string recordFileNameRoot = "loss-record.wav", refRecordFileName;
 	FmtpManager marieFmtp, paulineFmtp;
 	std::vector<std::string> useinbandfec = {"1"};
 	std::vector<float> lossRates = {50.0f};
@@ -214,7 +227,6 @@ static void audio_call_loss_resilience(const char *codec_name,
 	linphone_core_set_use_files(marie->lc, TRUE);
 	linphone_core_set_play_file(marie->lc, playFile);
 	linphone_core_set_use_files(pauline->lc, TRUE);
-	linphone_core_set_record_file(pauline->lc, recordPath);
 	/*stereo is supported only without volume control, echo canceller...*/
 	linphone_config_set_string(linphone_core_get_config(marie->lc), "sound", "features", "REMOTE_PLAYING");
 	linphone_config_set_string(linphone_core_get_config(pauline->lc), "sound", "features", "REMOTE_PLAYING");
@@ -233,11 +245,11 @@ static void audio_call_loss_resilience(const char *codec_name,
 	marieFmtp.setFmtp("packetlosspercentage", "1");
 	refRecordFileName = "result_ref_" + recordFileNameRoot;
 	referenceFile = bc_tester_file(refRecordFileName.c_str());
+	unlink(referenceFile);
 	linphone_core_set_record_file(pauline->lc, referenceFile);
 	paulineFmtp = marieFmtp;
 	linphone_payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
 	linphone_payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
-	unlink(referenceFile);
 	if (BC_ASSERT_TRUE(call(pauline, marie))) {
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength + jitterBufferMs);
 		end_call(pauline, marie);
@@ -260,13 +272,13 @@ static void audio_call_loss_resilience(const char *codec_name,
 				linphone_payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
 				linphone_payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
 				for (int loopIndex = 0; loopIndex < 2; ++loopIndex) {
-					recordFileName = useinbandfec[inbandIndex] + "_" + std::to_string(lossRates[lossRateIndex]) + "_" +
-					                 std::to_string(loopIndex) + "_" + packetLossPercentage[packetLossIndex] + "_out_" +
-					                 recordFileNameRoot;
-					bc_free(recordPath);
-					recordPath = bc_tester_file(recordFileName.c_str());
-					linphone_core_set_record_file(pauline->lc, recordPath);
+					std::string recordFileName = useinbandfec[inbandIndex] + "_" +
+					                             std::to_string(lossRates[lossRateIndex]) + "_" +
+					                             std::to_string(loopIndex) + "_" +
+					                             packetLossPercentage[packetLossIndex] + "_out_" + recordFileNameRoot;
+					char *recordPath = bc_tester_file(recordFileName.c_str());
 					unlink(recordPath);
+					linphone_core_set_record_file(pauline->lc, recordPath);
 					if (BC_ASSERT_TRUE(call(pauline, marie))) {
 						wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength + jitterBufferMs);
 						end_call(pauline, marie);
@@ -276,11 +288,12 @@ static void audio_call_loss_resilience(const char *codec_name,
 					}
 					similarityMin = min(similarityMin, similarity);
 					similarityMax = max(similarityMax, similarity);
+					unlink(recordPath);
+					bc_free(recordPath);
 				}
 				BC_ASSERT_GREATER(similarityMax, similarityRef, double, "%g");
 				similarityRef = similarityMin; // Min is used if we want to test more than 1 packetLossPercentage
 			}
-			unlink(recordFileName.c_str());
 		}
 	}
 	unlink(referenceFile);
@@ -290,7 +303,6 @@ end:
 	linphone_payload_type_unref(paulinePt);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	bc_free(recordPath);
 	bc_free(referenceFile);
 	bc_free(playFile);
 #else
@@ -472,6 +484,7 @@ static void audio_bandwidth_estimation_on_secure_call() {
 test_t audio_quality_tests[] = {
     TEST_NO_TAG("Audio loss rate resilience opus", audio_call_loss_resilience_opus),
     TEST_NO_TAG("Simple stereo call with L16", audio_stereo_call_l16),
+    TEST_NO_TAG("Simple stereo call with L16 (PLC)", audio_stereo_call_l16_plc),
     TEST_NO_TAG("Simple stereo call with opus", audio_stereo_call_opus),
     TEST_NO_TAG("Simple mono call with opus", audio_mono_call_opus),
     TEST_NO_TAG("Audio bandwidth estimation", audio_bandwidth_estimation),
