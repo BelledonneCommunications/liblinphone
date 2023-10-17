@@ -53,8 +53,8 @@ public:
 	const std::shared_ptr<Address> &getPeerAddress() const;
 	const std::shared_ptr<Address> &getLocalAddress() const;
 
-	void setPeerAddress(const std::shared_ptr<Address> &addr);
-	void setLocalAddress(const std::shared_ptr<Address> &addr);
+	void setPeerAddress(const std::shared_ptr<const Address> &addr);
+	void setLocalAddress(const std::shared_ptr<const Address> &addr);
 
 	bool isValid() const;
 

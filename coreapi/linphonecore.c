@@ -3617,7 +3617,7 @@ static void update_primary_contact(LinphoneCore *lc) {
 	url = linphone_address_new(lc->sip_conf.contact);
 	if (!url) {
 		ms_error("Could not parse identity contact !");
-		url = linphone_address_new("sip:unknown@unkwownhost");
+		url = linphone_address_new("sip:unknown@unknownhost");
 	}
 	linphone_core_get_local_ip(lc, AF_UNSPEC, NULL, tmp);
 	if (strcmp(tmp, "127.0.0.1") == 0 || strcmp(tmp, "::1") == 0) {

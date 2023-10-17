@@ -30,20 +30,19 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceId::ConferenceId() {
 }
 
-ConferenceId::ConferenceId(Address &&peerAddress, Address &&localAddress) {
-	this->peerAddress = Address::create(std::move(peerAddress));
-	this->localAddress = Address::create(std::move(localAddress));
+ConferenceId::ConferenceId(Address &&pAddress, Address &&lAddress) {
+	peerAddress = Address::create(std::move(pAddress));
+	localAddress = Address::create(std::move(lAddress));
 }
 
-ConferenceId::ConferenceId(const std::shared_ptr<Address> &peerAddress,
-                           const std::shared_ptr<const Address> &localAddress) {
-	this->peerAddress = (peerAddress) ? Address::create(peerAddress->getUri()) : nullptr;
-	this->localAddress = (localAddress) ? Address::create(localAddress->getUri()) : nullptr;
+ConferenceId::ConferenceId(const std::shared_ptr<Address> &pAddress, const std::shared_ptr<const Address> &lAddress) {
+	setPeerAddress(pAddress);
+	setLocalAddress(lAddress);
 }
 
-ConferenceId::ConferenceId(const std::shared_ptr<Address> &peerAddress, const std::shared_ptr<Address> &localAddress) {
-	this->peerAddress = (peerAddress) ? Address::create(peerAddress->getUri()) : nullptr;
-	this->localAddress = (localAddress) ? Address::create(localAddress->getUri()) : nullptr;
+ConferenceId::ConferenceId(const std::shared_ptr<Address> &pAddress, const std::shared_ptr<Address> &lAddress) {
+	setPeerAddress(pAddress);
+	setLocalAddress(lAddress);
 }
 
 ConferenceId::ConferenceId(const ConferenceId &other)
@@ -51,8 +50,8 @@ ConferenceId::ConferenceId(const ConferenceId &other)
 }
 
 ConferenceId &ConferenceId::operator=(const ConferenceId &other) {
-	this->peerAddress = other.peerAddress;
-	this->localAddress = other.localAddress;
+	peerAddress = other.peerAddress;
+	localAddress = other.localAddress;
 	return *this;
 }
 
@@ -70,12 +69,12 @@ bool ConferenceId::operator<(const ConferenceId &other) const {
 	       (*peerAddress == *(other.peerAddress) && *localAddress < *(other.localAddress));
 }
 
-void ConferenceId::setPeerAddress(const std::shared_ptr<Address> &addr) {
-	peerAddress = addr;
+void ConferenceId::setPeerAddress(const std::shared_ptr<const Address> &addr) {
+	peerAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
 }
 
-void ConferenceId::setLocalAddress(const std::shared_ptr<Address> &addr) {
-	localAddress = addr;
+void ConferenceId::setLocalAddress(const std::shared_ptr<const Address> &addr) {
+	localAddress = (addr) ? Address::create(addr->getUri()) : Address::create();
 }
 
 const std::shared_ptr<Address> &ConferenceId::getPeerAddress() const {

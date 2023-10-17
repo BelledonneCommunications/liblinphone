@@ -97,10 +97,10 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo(const std::s
 
 shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession() {
 	L_Q();
-	const std::shared_ptr<Address> &peerAddress(q->getConferenceId().getPeerAddress());
+	const std::shared_ptr<Address> &conferenceAddress = q->getConferenceAddress();
 	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
 	const std::shared_ptr<Address> sessionTo =
-	    (peerAddress && peerAddress->isValid()) ? peerAddress : focus->getAddress();
+	    (conferenceAddress && conferenceAddress->isValid()) ? conferenceAddress : focus->getAddress();
 	return createSessionTo(sessionTo);
 }
 

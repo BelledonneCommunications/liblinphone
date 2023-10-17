@@ -1005,7 +1005,10 @@ void SalCallOp::processRequestEventCb(void *userCtx, const belle_sip_request_eve
 				op->callTerminated(serverTransaction, 200, request);
 				// Call end not notified by dialog deletion because transaction can end before dialog
 			} else if ((method == "INVITE") || (isUpdate = (method == "UPDATE"))) {
-				if (isUpdate && !belle_sip_message_get_body(BELLE_SIP_MESSAGE(request))) {
+				if ((op->mState == State::Terminated) || (op->mState == State::Terminating)) {
+					// A BYE has already been sent therefore we cannot accept reINVITEs or UPDATEs anymore
+					response = op->createResponseFromRequest(request, 481);
+				} else if (isUpdate && !belle_sip_message_get_body(BELLE_SIP_MESSAGE(request))) {
 					response = op->createResponseFromRequest(request, 200);
 
 					if (op->mRoot->mSessionExpiresEnabled) {

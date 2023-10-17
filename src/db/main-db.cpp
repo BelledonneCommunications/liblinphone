@@ -2477,7 +2477,28 @@ void MainDbPrivate::updateSchema() {
 		                " joining_time" +
 		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() + ") " + charset;
 
-		*session << "INSERT INTO chat_room_participant_device_clone SELECT * FROM chat_room_participant_device";
+		int idx = 0;
+		//		*session << "INSERT INTO chat_room_participant_device_clone SELECT * FROM chat_room_participant_device";
+		soci::rowset<soci::row> originalParticipantDeviceRows =
+		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
+		                         "joining_method, joining_time FROM chat_room_participant_device");
+		for (const auto &row : originalParticipantDeviceRows) {
+			lInfo() << __func__ << " DEBUG DEBUG clone idx " << idx;
+			idx++;
+			const auto participantId = dbSession.resolveId(row, 0);
+			const auto deviceId = dbSession.resolveId(row, 1);
+			const auto state = row.get<int>(2);
+			const auto name = row.get<string>(3, "");
+			const auto joiningMethod = row.get<int>(4);
+			const auto joiningTime = dbSession.getTime(row, 5);
+			auto joiningTimeDb = dbSession.getTimeWithSociIndicator(joiningTime);
+			*session << "INSERT INTO chat_room_participant_device_clone (chat_room_participant_id, "
+			            "participant_device_sip_address_id, state, name, joining_method, joining_time)"
+			            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceState, "
+			            ":participantDeviceName, :participantDeviceJoiningMethod, :participantDeviceJoiningTime)",
+			    soci::use(participantId), soci::use(deviceId), soci::use(state), soci::use(name),
+			    soci::use(joiningMethod), soci::use(joiningTimeDb.first, joiningTimeDb.second);
+		}
 
 		*session << "DROP TABLE IF EXISTS chat_room_participant_device";
 
@@ -2507,10 +2528,13 @@ void MainDbPrivate::updateSchema() {
 		                ") " +
 		                charset;
 
+		int idx2 = 0;
 		soci::rowset<soci::row> participantDeviceRows =
 		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
 		                         "joining_method, joining_time FROM chat_room_participant_device_clone");
 		for (const auto &row : participantDeviceRows) {
+			lInfo() << __func__ << " DEBUG DEBUG copy from clone idx " << idx2;
+			idx2++;
 			const auto participantId = dbSession.resolveId(row, 0);
 			const auto deviceId = dbSession.resolveId(row, 1);
 			const auto state = row.get<int>(2);
@@ -2876,6 +2900,8 @@ void MainDb::init() {
 	 * It is enabled only for sqlite3 backend, which is the one used for liblinphone clients.
 	 * The mysql backend (used server-side) doesn't support this PRAGMA.
 	 */
+
+	initCleanup();
 
 	session->begin();
 

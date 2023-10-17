@@ -295,7 +295,7 @@ bool Address::clean() {
 }
 
 char *Address::toStringCstr() const {
-	return isValid() ? sal_address_as_string(mImpl) : nullptr;
+	return isValid() ? sal_address_as_string(mImpl) : ms_strdup("");
 }
 
 std::string Address::toString() const {
@@ -349,7 +349,7 @@ string Address::toStringOrdered() const {
 }
 
 char *Address::asStringUriOnlyCstr() const {
-	return isValid() ? sal_address_as_string_uri_only(mImpl) : nullptr;
+	return isValid() ? sal_address_as_string_uri_only(mImpl) : ms_strdup("");
 }
 
 std::string Address::asStringUriOnly() const {

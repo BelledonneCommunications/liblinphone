@@ -102,7 +102,7 @@ LinphoneCore *linphone_chat_room_get_core(const LinphoneChatRoom *cr) {
 
 const LinphoneAddress *linphone_chat_room_get_peer_address(LinphoneChatRoom *cr) {
 	const auto &address = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getPeerAddress();
-	if (address && address->isValid()) {
+	if (address) {
 		return address->toC();
 	} else {
 		return NULL;
@@ -111,7 +111,7 @@ const LinphoneAddress *linphone_chat_room_get_peer_address(LinphoneChatRoom *cr)
 
 const LinphoneAddress *linphone_chat_room_get_local_address(LinphoneChatRoom *cr) {
 	const auto &address = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getLocalAddress();
-	if (address && address->isValid()) {
+	if (address) {
 		return address->toC();
 	} else {
 		return NULL;
