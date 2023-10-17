@@ -208,8 +208,8 @@ ekt_call(MSEKTCipherType ekt_cipher, MSCryptoSuite crypto_suite, bool unmatching
 	    marie, pauline,
 	    ([marie, pauline, ekt_cipher, crypto_suite, unmatching_ekt, update_ekt](LinphoneCall *marieCall,
 	                                                                            LinphoneCall *paulineCall) {
-		    BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80,
-		                                         MSSrtpKeySourceSDES)); // Default crypto suite is MS_AES_128_SHA1_80
+		    BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AEAD_AES_128_GCM,
+		                                         MSSrtpKeySourceSDES)); // Default crypto suite is MS_AEAD_AES_128_GCM
 
 		    MSEKTParametersSet ekt_params;
 		    generate_ekt(&ekt_params, ekt_cipher, crypto_suite, 0x1234);
@@ -326,8 +326,8 @@ static void srtp_call(void) {
 
 	mgr_calling_each_other(
 	    marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall *paulineCall) {
-		    // Default is MS_AES_128_SHA1_80, we use SDES
-		    BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES));
+		    // Default is MS_AES_128_GCM, we use SDES
+		    BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AEAD_AES_128_GCM, MSSrtpKeySourceSDES));
 	    }));
 
 	// Test differents crypto suites : AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80,
@@ -389,7 +389,7 @@ static void srtp_call_with_different_crypto_suite(void) {
 	// same test using mgr_calling_each_other so we can check during the call that the correct suite are used
 	LinphoneCoreManager *marie =
 	    linphone_core_manager_new("marie_rc"); // marie_rc does not specify any srtp crypto suite, propose all
-	                                           // availables, default is AES128_SHA1-80
+	                                           // availables, default is AES128_GCM
 	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionSRTP);
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -1110,25 +1110,31 @@ static void zrtp_authtag_call(void) {
 	ZrtpAlgoString paulineAlgo;
 	ZrtpAlgoRes res;
 
-	// Default is HS80
+	// Default is GCM
 	//  - this is a linphone internal default setting: SRTP crypto suite default is
-	//      AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32.
-	//      So the default auth tag set by the audio-stream is HS80, HS32
-	//  - default in bzrtp is HS32, HS80
+	//      AEAD_AES_128_GCM, AES_CM_128_HMAC_SHA1_80, AEAD_AES_256_GCM, AES_256_CM_HMAC_SHA1_80
+	//      So the default auth tag set by the audio-stream is GCM
+	//  - default in bzrtp is GCM, HS32, HS80
 	marieAlgo.auth_tag_algo = NULL;
 	paulineAlgo.auth_tag_algo = NULL;
-	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS80};
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_GCM};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call using GCM
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_GCM";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_GCM";
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_GCM};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
 	// Call using HS80
-	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32";
-	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32";
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_GCM";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_GCM";
 	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS80};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
 	// Call using HS32
-	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80";
-	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80";
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_GCM";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_GCM";
 	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS32};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 

@@ -9708,9 +9708,9 @@ void linphone_core_set_srtp_crypto_suites(LinphoneCore *core, const char *suites
 }
 
 const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
-	return linphone_config_get_string(core->config, "sip", "srtp_crypto_suites",
-	                                  "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, "
-	                                  "AES_256_CM_HMAC_SHA1_32, AEAD_AES_128_GCM, AEAD_AES_256_GCM");
+	return linphone_config_get_string(
+	    core->config, "sip", "srtp_crypto_suites",
+	    "AEAD_AES_128_GCM, AES_CM_128_HMAC_SHA1_80, AEAD_AES_256_GCM, AES_256_CM_HMAC_SHA1_80");
 }
 
 #ifndef _MSC_VER

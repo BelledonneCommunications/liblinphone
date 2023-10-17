@@ -133,42 +133,62 @@ void MS2AudioStream::initZrtp() {
 void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
 	const MSCryptoSuite *srtpSuites = linphone_core_get_srtp_crypto_suites_array(getCCore());
 	if (srtpSuites) {
+		bool aes1 = false;
+		bool aes3 = false;
+		bool hs32 = false;
+		bool hs80 = false;
+		bool gcm = false;
 		for (int i = 0; (srtpSuites[i] != MS_CRYPTO_SUITE_INVALID) && (i < MS_MAX_ZRTP_CRYPTO_TYPES); i++) {
 			switch (srtpSuites[i]) {
 				case MS_AES_128_SHA1_32:
-					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
-					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
+					if (!aes1) params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					if (!hs32) params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
+					aes1 = true;
+					hs32 = true;
 					break;
 				case MS_AES_128_SHA1_80_NO_AUTH:
 				case MS_AES_128_SHA1_32_NO_AUTH:
-					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					if (!aes1) params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					aes1 = true;
 					break;
 				case MS_AES_128_SHA1_80_SRTP_NO_CIPHER:
 				case MS_AES_128_SHA1_80_SRTCP_NO_CIPHER:
 				case MS_AES_128_SHA1_80_NO_CIPHER:
-					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					if (!hs80) params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					hs80 = true;
 					break;
 				case MS_AES_128_SHA1_80:
-					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
-					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					if (!aes1) params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					if (!hs80) params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					hs80 = true;
+					aes1 = true;
 					break;
 				case MS_AES_CM_256_SHA1_80:
 					lWarning() << "Deprecated crypto suite MS_AES_CM_256_SHA1_80, use MS_AES_256_SHA1_80 instead";
 					BCTBX_NO_BREAK;
 				case MS_AES_256_SHA1_80:
-					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
-					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					if (!aes3) params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
+					if (!hs80) params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					hs80 = true;
+					aes3 = true;
 					break;
 				case MS_AES_256_SHA1_32:
-					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
-					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
+					if (!aes3) params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
+					if (!hs80) params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
+					hs32 = true;
+					aes3 = true;
 					break;
-				/* AEAD GCM suite not supported by ZRTP for now, just force the cipher setting according to key size */
 				case MS_AEAD_AES_128_GCM:
-					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					if (!aes1) params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					if (!gcm) params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_GCM;
+					gcm = true;
+					aes1 = true;
 					break;
 				case MS_AEAD_AES_256_GCM:
-					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
+					if (!aes3) params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
+					if (!gcm) params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_GCM;
+					gcm = true;
+					aes1 = true;
 					break;
 				case MS_CRYPTO_SUITE_INVALID:
 					break;
