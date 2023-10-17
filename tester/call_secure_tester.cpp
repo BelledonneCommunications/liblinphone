@@ -784,25 +784,31 @@ static void zrtp_authtag_call(void) {
 	ZrtpAlgoString paulineAlgo;
 	ZrtpAlgoRes res;
 
-	// Default is HS80
+	// Default is GCM
 	//  - this is a linphone internal default setting: SRTP crypto suite default is
-	//      AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32.
-	//      So the default auth tag set by the audio-stream is HS80, HS32
-	//  - default in bzrtp is HS32, HS80
+	//      AEAD_AES_128_GCM, AES_CM_128_HMAC_SHA1_80, AEAD_AES_256_GCM, AES_256_CM_HMAC_SHA1_80
+	//      So the default auth tag set by the audio-stream is GCM
+	//  - default in bzrtp is GCM, HS32, HS80
 	marieAlgo.auth_tag_algo = NULL;
 	paulineAlgo.auth_tag_algo = NULL;
-	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS80};
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_GCM};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call using GCM
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_GCM";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_GCM";
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_GCM};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
 	// Call using HS80
-	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32";
-	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32";
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_GCM";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_GCM";
 	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS80};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
 	// Call using HS32
-	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80";
-	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80";
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_GCM";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_GCM";
 	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS32};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
