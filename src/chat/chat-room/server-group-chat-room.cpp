@@ -769,7 +769,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const std::shared_ptr<
 		lError() << q << " participant devices updated for unknown participant, ignored.";
 		return;
 	}
-	lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << participantAddress->toString();
+	lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << *participantAddress;
 
 	// Remove devices that are in the chatroom but no longer in the given list
 	list<shared_ptr<ParticipantDevice>> devicesToRemove;

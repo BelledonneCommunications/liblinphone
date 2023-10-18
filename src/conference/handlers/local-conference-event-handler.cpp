@@ -1023,9 +1023,9 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 		}
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress()
-			        << "] to: " << device->getAddress() << " with last notif set to " << conf->getLastNotify();
+			        << "] to: " << *device->getAddress() << " with last notif set to " << conf->getLastNotify();
 			if (deviceState == ParticipantDevice::State::Present) {
-				lInfo() << "Participant " << device->getAddress() << " is already part of conference ["
+				lInfo() << "Device " << *device->getAddress() << " is already part of conference ["
 				        << conf->getConferenceAddress()
 				        << "] hence send full state to be sure the client and the server are on the same page";
 			} else {
@@ -1043,7 +1043,7 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 			}
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify << "] for conference ["
-			        << conf->getConferenceAddress() << "] to: " << participant->getAddress();
+			        << conf->getConferenceAddress() << "] to: " << *participant->getAddress();
 
 			const int fullStateTrigger =
 			    linphone_config_get_int(linphone_core_get_config(conf->getCore()->getCCore()), "misc",
@@ -1081,7 +1081,7 @@ void LocalConferenceEventHandler::subscriptionStateChanged(const shared_ptr<Even
 		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		if (!device) return;
 		if (ev == device->getConferenceSubscribeEvent()) {
-			lInfo() << "End of subscription for device [" << device->getAddress() << "] of conference ["
+			lInfo() << "End of subscription for device [" << *device->getAddress() << "] of conference ["
 			        << conf->getConferenceAddress() << "]";
 			device->setConferenceSubscribeEvent(nullptr);
 		}
@@ -1142,7 +1142,7 @@ void LocalConferenceEventHandler::onParticipantAdded(const std::shared_ptr<Confe
 			}
 		}
 	} else {
-		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress()
+		lWarning() << __func__ << ": Not sending notification of participant " << *participant->getAddress()
 		           << " being added because pointer to conference is null";
 	}
 }
@@ -1165,7 +1165,7 @@ void LocalConferenceEventHandler::onParticipantRemoved(const std::shared_ptr<Con
 			}
 		}
 	} else {
-		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress()
+		lWarning() << __func__ << ": Not sending notification of participant " << *participant->getAddress()
 		           << " being removed because pointer to conference is null";
 	}
 }
@@ -1189,7 +1189,7 @@ void LocalConferenceEventHandler::onParticipantSetAdmin(const std::shared_ptr<Co
 			}
 		}
 	} else {
-		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress()
+		lWarning() << __func__ << ": Not sending notification of participant " << *participant->getAddress()
 		           << " admin status changed because pointer to conference is null";
 	}
 }

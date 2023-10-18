@@ -251,6 +251,8 @@ private:
 	L_DISABLE_COPY(MainDb);
 
 	void initCleanup();
+	void addChatroomToList(std::list<std::shared_ptr<AbstractChatRoom>> &chatRooms,
+	                       const std::shared_ptr<AbstractChatRoom> chatRoom) const;
 };
 
 LINPHONE_END_NAMESPACE

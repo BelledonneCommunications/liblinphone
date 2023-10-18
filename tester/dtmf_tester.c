@@ -109,6 +109,11 @@ void send_dtmf_cleanup(LinphoneCoreManager *marie, LinphoneCoreManager *pauline)
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
 	}
+
+	linphone_core_play_dtmf(marie->lc, '#', 900);
+	/*wait a few time to ensure that DTMF is sent*/
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 500);
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
