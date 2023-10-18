@@ -82,12 +82,12 @@ LdapContactProvider::~LdapContactProvider(){
 		belle_sip_object_unref(mSalContext);
 		mSalContext = NULL;
 	}
-	if(mConnected==1)// We have been bind. Clean the exit
-		ldap_unbind_ext_s(mLd, NULL, NULL);
 	if(mAwaitingMessageId > 0){//There is currently a request that has not been processed. Abandon it.
 			ldap_abandon_ext(mLd, mAwaitingMessageId, NULL, NULL );
 			mAwaitingMessageId = 0;
 	}
+	if(mConnected==1)// We have been bind. Clean the exit
+		ldap_unbind_ext_s(mLd, NULL, NULL);
 	if( mServerUri){
 		belle_sip_object_unref(mServerUri);
 		mServerUri = NULL;
