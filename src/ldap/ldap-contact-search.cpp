@@ -56,17 +56,14 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider *parent,
 
 	// Replace space characters into wild characters
 	std::replace(predicate.begin(), predicate.end(), ' ', '*');
-	// Apply predicate into requested filter
-	char temp[FILTER_MAX_SIZE];
-	snprintf(temp, FILTER_MAX_SIZE - 1, parent->configValueToStr("filter").c_str(), predicate.c_str());
-	temp[FILTER_MAX_SIZE - 1] = '\0';
+	mFilter = parent->configValueToStr("filter");
+	bctoolbox::Utils::replace(mFilter, "%s", predicate, false);
 
 	// Replace all '**' by '*' in filter.
-	mFilter = temp;
 	bctoolbox::Utils::replace(mFilter, "**", "*", false); // Do not step as replacement can still contain double stars.
 
-	if(!mFilter.empty() && mFilter[0] != '(') {
-		mFilter.insert(0,1, '(');
+	if (!mFilter.empty() && mFilter[0] != '(') {
+		mFilter.insert(0, 1, '(');
 		mFilter.push_back(')');
 	}
 }

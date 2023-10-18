@@ -84,14 +84,14 @@ void LdapContactProvider::cleanLdap(){
 		belle_sip_object_unref(mSalContext);
 		mSalContext = NULL;
 	}
-	if (mLd) // We have been bind. Clean the exit
-		ldap_unbind_ext_s(mLd, NULL, NULL);
-	mConnected = false;
-	mLd = nullptr;
 	if (mAwaitingMessageId > 0) { // There is currently a request that has not been processed. Abandon it.
 		ldap_abandon_ext(mLd, mAwaitingMessageId, NULL, NULL);
 		mAwaitingMessageId = 0;
 	}
+	if (mLd) // We have been bind. Clean the exit
+		ldap_unbind_ext_s(mLd, NULL, NULL);
+	mConnected = false;
+	mLd = nullptr;
 }
 
 std::vector<std::shared_ptr<LdapContactProvider>> LdapContactProvider::create(const std::shared_ptr<Core> &core, int maxResults) {

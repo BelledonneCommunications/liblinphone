@@ -2907,6 +2907,23 @@ static void ldap_search(void) {
 	} else BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 0, int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 
+
+	if (linphone_core_ldap_available(manager->lc)) {
+		// Test on complex filters
+		LinphoneLdapParams *params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
+		linphone_ldap_params_set_filter(params, "(|(sn=*%s*)(cn=*%s*))");
+		linphone_ldap_set_params(ldap, params);
+		linphone_ldap_params_unref(params);
+	}
+
+	linphone_magic_search_get_contacts_list_async(magicSearch, "", "", LinphoneMagicSearchSourceLdapServers,
+	                                              LinphoneMagicSearchAggregationNone);
+	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
+	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+	resultList = linphone_magic_search_get_last_search(magicSearch);
+	check_results(manager, resultList, LinphoneMagicSearchSourceLdapServers);
+	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	
 	//------------------------------------------------------------------------
 	linphone_magic_search_cbs_unref(searchHandler);
 	linphone_magic_search_unref(magicSearch);
