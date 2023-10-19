@@ -41,6 +41,10 @@
 
 bool is_filepath_encrypted(const char *filepath) {
 	bool ret = false;
+	// if encryption openCallback is not set, file cannot be encrypted
+	if (bctoolbox::VfsEncryption::openCallbackGet() == nullptr) {
+		return false;
+	}
 	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filepath, "r");
 	if (fp != NULL) {
 		ret = (bctbx_file_is_encrypted(fp) == TRUE);
