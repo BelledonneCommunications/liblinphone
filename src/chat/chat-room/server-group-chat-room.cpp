@@ -549,6 +549,12 @@ void ServerGroupChatRoomPrivate::setEphemeralLifetime(long lifetime, const share
  */
 bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(const std::list<IdentityAddress> &identAddresses, bool newInvited){
 	L_Q();
+	LinphoneGlobalState gs = linphone_core_get_global_state(q->getCore()->getCCore());
+	if (gs != LinphoneGlobalOn) {
+		lError() << __func__ << "The core is currently in state " << std::string(linphone_global_state_to_string(gs)) << " but registration subscriptions can only be set up when the core is in statez GlobalOn";
+		return false;
+	}
+
 	std::list<IdentityAddress> requestedAddresses;
 	bool subscriptionsPending = false;
 
@@ -1436,6 +1442,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	, nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	L_D();
 
+	getCore()->getPrivate()->registerListener(this);
 	getConference()->setUtf8Subject(op->getSubject());
 
 	getConference()->setConferenceId(ConferenceId());
@@ -1476,6 +1483,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 ) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	L_D();
 	cachedParticipants = std::move(participants);
+	getCore()->getPrivate()->registerListener(this);
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));
 	getConference()->confParams->setConferenceAddress(peerAddress);
@@ -1489,8 +1497,10 @@ ServerGroupChatRoom::~ServerGroupChatRoom () {
 	lInfo() << this << " destroyed.";
 	if (getConference()->getConferenceId().isValid()){
 		try {
-			if (getCore()->getPrivate()->localListEventHandler)
+			if (getCore()->getPrivate()->localListEventHandler) {
 				getCore()->getPrivate()->localListEventHandler->removeHandler(static_pointer_cast<LocalConference>(getConference())->eventHandler.get());
+			}
+			getCore()->getPrivate()->unregisterListener(this);
 		} catch (const bad_weak_ptr &) {
 			// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 		}
@@ -1763,6 +1773,20 @@ void ServerGroupChatRoom::subscribeReceived (LinphoneEvent *event) {
 	getCore()->getPrivate()->mainDb->insertChatRoom(getSharedFromThis(), getConference()->getLastNotify());
 }
 
+void ServerGroupChatRoom::onGlobalStateChanged(LinphoneGlobalState state) {
+	L_D();
+	if (state == LinphoneGlobalOn) {
+		// Try to subscribe again to cached participants when the core goes to GlobalOn state because the first time around (when the chat room goes into state Created) the core might have still being initializing.
+		// We must do be sure that the core is initialized because if one or more participants are in another domain that the chatroom. In such a scenarion, in fact, the server might be sending out SIP SUBSCRIBE and therefore the channel should not be destroyed by network changes that occur during startup
+		lInfo() << "The core has reached the GlobalOn state, therefore try to subscribe participants of chatroom " << getConference()->getConferenceAddress().asAddress();
+		list<IdentityAddress> participantAddresses;
+		for (const auto &participant : cachedParticipants) {
+			participantAddresses.emplace_back(participant->getAddress());
+		}
+		// Subscribe to the registration events from the proxy
+		d->subscribeRegistrationForParticipants(participantAddresses, false);
+	}
+}
 // -----------------------------------------------------------------------------
 
 ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
