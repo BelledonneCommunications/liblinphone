@@ -433,12 +433,6 @@ if(ANDROID OR IOS)
 	target_link_libraries(linphonetester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
 	if(IOS)
-		if(IOS)
-			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
-		else()
-			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
-		endif()
-
 		set_target_properties(linphonetester PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER com.belledonne-communications.linphonetester

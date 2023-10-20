@@ -14,9 +14,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>${MACOSX_FRAMEWORK_IDENTIFIER}</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>${MIN_OS}</string>
+	<string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
 	<key>MinimumOSVersion</key>
-	<string>${MIN_OS}</string>
+	<string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleLongVersionString</key>

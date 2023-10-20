@@ -711,12 +711,6 @@ if(BUILD_SHARED_LIBS)
 	endif()
 	target_compile_definitions(liblinphone PRIVATE "-DLINPHONE_EXPORTS")
 	if(APPLE)
-		if(IOS)
-			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
-		else()
-			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
-		endif()
-
 		set_source_files_properties(${LINPHONE_ROOT_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/")
 		set_source_files_properties(${LINPHONE_C_API_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/api")
 		set_source_files_properties(${LINPHONE_ENUMS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/enums")
@@ -730,7 +724,6 @@ if(BUILD_SHARED_LIBS)
 			PUBLIC_HEADER "${one_header_file}"
 		)
 	endif()
-
 	if(WIN32)
 		# Export Xerces and Soci symbols.
 		if(ENABLE_DB_STORAGE)
