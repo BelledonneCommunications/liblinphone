@@ -2478,7 +2478,6 @@ void MainDbPrivate::updateSchema() {
 		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() + ") " + charset;
 
 		int idx = 0;
-		//		*session << "INSERT INTO chat_room_participant_device_clone SELECT * FROM chat_room_participant_device";
 		soci::rowset<soci::row> originalParticipantDeviceRows =
 		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
 		                         "joining_method, joining_time FROM chat_room_participant_device");

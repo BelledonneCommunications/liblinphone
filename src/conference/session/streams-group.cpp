@@ -193,24 +193,36 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	 */
 	mPostRenderHooks.clear();
 
-	for (auto &stream : mStreams) {
+	const size_t resultMediaDescriptionStreamNb =
+	    (params.resultMediaDescription) ? params.resultMediaDescription->streams.size() : 0;
+	for (size_t index = 0; index < mStreams.size(); ++index) {
+		auto &stream = mStreams[index];
 		if (!stream) continue;
 		Stream *streamPtr = stream.get();
-		lInfo() << "StreamsGroup " << this << " rendering " << *stream;
-		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
+		if (index >= resultMediaDescriptionStreamNb) {
+			lInfo() << "StreamsGroup " << this << " deleting " << *stream
+			        << " because the negotiated media description has no stream at index " << index << " (it has only "
+			        << resultMediaDescriptionStreamNb << " streams)";
+			streamPtr->stop();
+			mStreams[index].reset(nullptr);
+		} else {
+			lInfo() << "StreamsGroup " << this << " rendering " << *stream;
+			params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
 
-		if (params.localStreamDescriptionChanges) {
-			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
-			lInfo() << "Local stream description has changed: " << differences;
-		}
-		if (params.resultStreamDescriptionChanges) {
-			const std::string differences =
-			    SalMediaDescription::printDifferences(params.resultStreamDescriptionChanges);
-			lInfo() << "Result stream description has changed: " << differences;
-		}
-		if (streamPtr->getState() == Stream::Preparing) streamPtr->finishPrepare();
+			if (params.localStreamDescriptionChanges) {
+				const std::string differences =
+				    SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
+				lInfo() << "Local stream description has changed: " << differences;
+			}
+			if (params.resultStreamDescriptionChanges) {
+				const std::string differences =
+				    SalMediaDescription::printDifferences(params.resultStreamDescriptionChanges);
+				lInfo() << "Result stream description has changed: " << differences;
+			}
+			if (streamPtr->getState() == Stream::Preparing) streamPtr->finishPrepare();
 
-		streamPtr->render(params, targetState);
+			streamPtr->render(params, targetState);
+		}
 	}
 	if (!mBandwidthReportTimer) {
 		mBandwidthReportTimer = getCore().createTimer(
