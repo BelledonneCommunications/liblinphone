@@ -31,7 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalCallOp;
 class ServerGroupChatRoomPrivate;
 
-class ServerGroupChatRoom : public ChatRoom, public ConferenceListener {
+class ServerGroupChatRoom : public ChatRoom, public ConferenceListener, public CoreListener {
 public:
 	ServerGroupChatRoom(const std::shared_ptr<Core> &core, SalCallOp *op);
 
@@ -102,10 +102,10 @@ public:
 	void setState(ConferenceInterface::State state) override;
 	void subscribeReceived(const std::shared_ptr<EventSubscribe> &event);
 
+	void onGlobalStateChanged(LinphoneGlobalState state) override;
 private:
-	std::list<std::shared_ptr<Participant>>
-	    cachedParticipants; /*list of participant that have been added to the chat room. It includes participants that
-	                           are currently active in the chat room as well as past participants.*/
+	// list of participant that have been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.
+	std::list<std::shared_ptr<Participant>> cachedParticipants;
 
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);

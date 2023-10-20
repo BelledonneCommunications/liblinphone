@@ -2383,6 +2383,16 @@ static void multidomain_group_chat_room(void) {
 
 		linphone_chat_message_unref(msg);
 
+		ms_message("%s is restarting its core", linphone_core_get_identity(focusAuth1DotExampleDotOrg.getLc()));
+		coresList = bctbx_list_remove(coresList, focusAuth1DotExampleDotOrg.getLc());
+		// Restart flexisip
+		focusAuth1DotExampleDotOrg.reStart();
+		coresList = bctbx_list_append(coresList, focusAuth1DotExampleDotOrg.getLc());
+
+		for (auto chatRoom : focusAuth1DotExampleDotOrg.getCore().getChatRooms()) {
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(L_GET_C_BACK_PTR(chatRoom)), 4, int, "%d");
+		}
+
 		linphone_address_unref(marieDeviceAddr);
 		bctbx_list_free(coresList);
 	}
