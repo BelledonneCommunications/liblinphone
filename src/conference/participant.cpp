@@ -244,6 +244,10 @@ void Participant::removeDevice(const std::shared_ptr<Address> &gruu) {
 
 // -----------------------------------------------------------------------------
 
+void Participant::setAddress(const std::shared_ptr<Address> &newAddr) {
+	addr = Address::create(newAddr->getUriWithoutGruu());
+}
+
 const std::shared_ptr<Address> &Participant::getAddress() const {
 	return addr;
 }

@@ -1304,6 +1304,12 @@ static void group_chat_room_with_client_removed_while_stopped_base(bool_t use_re
 			LinphoneAccountParams *new_account_params = linphone_account_params_clone(account_params);
 			linphone_account_params_set_conference_factory_address(new_account_params,
 			                                                       focus.getConferenceFactoryAddress().toC());
+			LinphoneAddress *audio_video_conference_factory = linphone_address_new("sip:fakefactory@sip.example.org");
+			linphone_address_set_domain(audio_video_conference_factory,
+			                            linphone_address_get_domain(focus.getConferenceFactoryAddress().toC()));
+			linphone_account_params_set_audio_video_conference_factory_address(new_account_params,
+			                                                                   audio_video_conference_factory);
+			linphone_address_unref(audio_video_conference_factory);
 			linphone_account_set_params(account, new_account_params);
 			linphone_account_params_unref(new_account_params);
 		}
@@ -1466,7 +1472,7 @@ static void group_chat_room_with_client_removed_while_stopped_remote_list_event_
 }
 
 static void group_chat_room_with_client_removed_while_stopped_no_remote_list_event_handler(void) {
-	group_chat_room_with_client_removed_while_stopped_base(TRUE);
+	group_chat_room_with_client_removed_while_stopped_base(FALSE);
 }
 
 static void group_chat_room_with_creator_without_groupchat_capability_in_register(void) {

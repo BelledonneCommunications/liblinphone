@@ -173,9 +173,7 @@ protected:
 	inline void removeSession() {
 		session.reset();
 	}
-	inline void setAddress(const std::shared_ptr<Address> &addr) {
-		this->addr = addr;
-	}
+	void setAddress(const std::shared_ptr<Address> &addr);
 
 	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<ParticipantDevice> &device);
 	std::shared_ptr<ParticipantDevice> addDevice(const std::shared_ptr<LinphonePrivate::CallSession> &session,
