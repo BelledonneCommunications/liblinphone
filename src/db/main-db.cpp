@@ -2336,7 +2336,24 @@ void MainDbPrivate::updateSchema () {
 		                " joining_time" +
 		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() + ") " + charset;
 
-		*session << "INSERT INTO chat_room_participant_device_clone SELECT * FROM chat_room_participant_device";
+		soci::rowset<soci::row> originalParticipantDeviceRows =
+		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
+		                         "joining_method, joining_time FROM chat_room_participant_device");
+		for (const auto &row : originalParticipantDeviceRows) {
+			const auto participantId = dbSession.resolveId(row, 0);
+			const auto deviceId = dbSession.resolveId(row, 1);
+			const auto state = row.get<int>(2);
+			const auto name = row.get<string>(3, "");
+			const auto joiningMethod = row.get<int>(4);
+			const auto joiningTime = dbSession.getTime(row, 5);
+			auto joiningTimeDb = dbSession.getTimeWithSociIndicator(joiningTime);
+			*session << "INSERT INTO chat_room_participant_device_clone (chat_room_participant_id, "
+			            "participant_device_sip_address_id, state, name, joining_method, joining_time)"
+			            " VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceState, "
+			            ":participantDeviceName, :participantDeviceJoiningMethod, :participantDeviceJoiningTime)",
+			    soci::use(participantId), soci::use(deviceId), soci::use(state), soci::use(name),
+			    soci::use(joiningMethod), soci::use(joiningTimeDb.first, joiningTimeDb.second);
+		}
 
 		*session << "DROP TABLE IF EXISTS chat_room_participant_device";
 
@@ -2348,11 +2365,11 @@ void MainDbPrivate::updateSchema () {
 		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
 		                ","
 
-		               " state TINYINT UNSIGNED DEFAULT 0,"
-		               " name VARCHAR(255),"
-		               " joining_method TINYINT UNSIGNED DEFAULT 0,"
-		               " joining_time" + dbSession.timestampType() +
-		                " DEFAULT " + dbSession.currentTimestamp() +
+		                " state TINYINT UNSIGNED DEFAULT 0,"
+		                " name VARCHAR(255),"
+		                " joining_method TINYINT UNSIGNED DEFAULT 0,"
+		                " joining_time" +
+		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() +
 		                ","
 
 		                "  PRIMARY KEY (chat_room_participant_id, participant_device_sip_address_id),"
@@ -2735,16 +2752,18 @@ void MainDb::init () {
 	auto timestampType = bind(&DbSession::timestampType, &d->dbSession);
 	auto varcharPrimaryKeyStr = bind(&DbSession::varcharPrimaryKeyStr, &d->dbSession, _1);
 
-	/* Enable secure delete - so that erased chat messages are really erased and not just marked as unused.
-	 * See https://sqlite.org/pragma.html#pragma_secure_delete
-	 * This setting is global for the database.
-	 * It is enabled only for sqlite3 backend, which is the one used for liblinphone clients.
-	 * The mysql backend (used server-side) doesn't support this PRAGMA.
-	 */
+	initCleanup();
 
 	session->begin();
 
 	try{
+
+		/* Enable secure delete - so that erased chat messages are really erased and not just marked as unused.
+		 * See https://sqlite.org/pragma.html#pragma_secure_delete
+		 * This setting is global for the database.
+		 * It is enabled only for sqlite3 backend, which is the one used for liblinphone clients.
+		 * The mysql backend (used server-side) doesn't support this PRAGMA.
+		 */
 		if (backend == Sqlite3) *session << string("PRAGMA secure_delete = ON");
 
 		//Charset set to ascii for mysql/mariadb to allow creation of indexed collumns of size > 191. We assume that for the given fields ascii will not cause any display issue.
