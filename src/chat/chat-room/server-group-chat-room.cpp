@@ -102,6 +102,7 @@ ParticipantDeviceIdentity::~ParticipantDeviceIdentity() {
 	do {                                                                                                               \
 		bctbx_list_t *callbacksCopy = bctbx_list_copy_with_data(linphone_chat_room_get_callbacks_list(cr),             \
 		                                                        (bctbx_list_copy_func)belle_sip_object_ref);           \
+		linphone_chat_room_ref(cr);                                                                                    \
 		for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {                                         \
 			LinphoneChatRoomCbs *cbs = static_cast<LinphoneChatRoomCbs *>(bctbx_list_get_data(it));                    \
 			linphone_chat_room_set_current_callbacks(cr, cbs);                                                         \
@@ -109,6 +110,7 @@ ParticipantDeviceIdentity::~ParticipantDeviceIdentity() {
 			if (cb) cb(__VA_ARGS__);                                                                                   \
 		}                                                                                                              \
 		linphone_chat_room_set_current_callbacks(cr, nullptr);                                                         \
+		linphone_chat_room_unref(cr);                                                                                  \
 		bctbx_list_free_with_data(callbacksCopy, (bctbx_list_free_func)belle_sip_object_unref);                        \
 	} while (0)
 
@@ -597,6 +599,7 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(
 	// Subscribe to the registration events from the proxy
 	for (const auto &addr : identAddresses) {
 		const auto cleanedAddr = addr->getUri();
+		lInfo() << __func__ << " DEBUG DEBUG addr " << *addr << " cleanedAddr " << cleanedAddr;
 		if (registrationSubscriptions.find(cleanedAddr.toString()) == registrationSubscriptions.end()) {
 			requestedAddresses.emplace_back(cleanedAddr);
 			if (newInvited) invitedParticipants.emplace_back(cleanedAddr);
@@ -608,6 +611,7 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(
 	for (const auto &addr : requestedAddresses) {
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 		const auto laddr = addr.toC();
+		lInfo() << __func__ << " DEBUG DEBUG requested addr " << addr << " lAddr " << laddr;
 		registrationSubscriptions[addr.toString()].context =
 		    nullptr; // we 'll put here later a context pointer returned by the callback.
 		CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationSubscriptionRequested,
