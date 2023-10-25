@@ -599,7 +599,6 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(
 	// Subscribe to the registration events from the proxy
 	for (const auto &addr : identAddresses) {
 		const auto cleanedAddr = addr->getUri();
-		lInfo() << __func__ << " DEBUG DEBUG addr " << *addr << " cleanedAddr " << cleanedAddr;
 		if (registrationSubscriptions.find(cleanedAddr.toString()) == registrationSubscriptions.end()) {
 			requestedAddresses.emplace_back(cleanedAddr);
 			if (newInvited) invitedParticipants.emplace_back(cleanedAddr);
@@ -611,7 +610,6 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(
 	for (const auto &addr : requestedAddresses) {
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 		const auto laddr = addr.toC();
-		lInfo() << __func__ << " DEBUG DEBUG requested addr " << addr << " lAddr " << laddr;
 		registrationSubscriptions[addr.toString()].context =
 		    nullptr; // we 'll put here later a context pointer returned by the callback.
 		CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationSubscriptionRequested,

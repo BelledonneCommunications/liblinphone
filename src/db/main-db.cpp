@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 25);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 26);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -668,8 +668,8 @@ void MainDbPrivate::insertOrUpdateConferenceInfoParticipantParams(long long conf
 	soci::session *session = dbSession.getBackendSession();
 	ParticipantInfo::participant_params_t paramsCopy = params;
 
-	static const string organizerParamsQuery =
-	    "SELECT id, name FROM conference_info_participant_params WHERE conference_info_participant_id = :participantId ";
+	static const string organizerParamsQuery = "SELECT id, name FROM conference_info_participant_params WHERE "
+	                                           "conference_info_participant_id = :participantId ";
 	soci::rowset<soci::row> organizerParamsRows =
 	    (session->prepare << organizerParamsQuery, soci::use(conferenceInfoParticipantId));
 
@@ -1468,7 +1468,8 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 		            ? dbState
 		            : state);
 		const int markedAsReadInt = markedAsRead ? 1 : 0;
-		*session << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = :imdnMessageId, marked_as_read = :markedAsRead WHERE event_id = :eventId",
+		*session << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = :imdnMessageId, "
+		            "marked_as_read = :markedAsRead WHERE event_id = :eventId",
 		    soci::use(stateInt), soci::use(imdnMessageId), soci::use(markedAsReadInt), soci::use(eventId);
 	}
 
@@ -2475,13 +2476,10 @@ void MainDbPrivate::updateSchema() {
 		                " joining_time" +
 		                dbSession.timestampType() + " DEFAULT " + dbSession.currentTimestamp() + ") " + charset;
 
-		int idx = 0;
 		soci::rowset<soci::row> originalParticipantDeviceRows =
 		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
 		                         "joining_method, joining_time FROM chat_room_participant_device");
 		for (const auto &row : originalParticipantDeviceRows) {
-			lInfo() << __func__ << " DEBUG DEBUG clone idx " << idx;
-			idx++;
 			const auto participantId = dbSession.resolveId(row, 0);
 			const auto deviceId = dbSession.resolveId(row, 1);
 			const auto state = row.get<int>(2);
@@ -2525,13 +2523,10 @@ void MainDbPrivate::updateSchema() {
 		                ") " +
 		                charset;
 
-		int idx2 = 0;
 		soci::rowset<soci::row> participantDeviceRows =
 		    (session->prepare << "SELECT chat_room_participant_id, participant_device_sip_address_id, state, name, "
 		                         "joining_method, joining_time FROM chat_room_participant_device_clone");
 		for (const auto &row : participantDeviceRows) {
-			lInfo() << __func__ << " DEBUG DEBUG copy from clone idx " << idx2;
-			idx2++;
 			const auto participantId = dbSession.resolveId(row, 0);
 			const auto deviceId = dbSession.resolveId(row, 1);
 			const auto state = row.get<int>(2);
@@ -2548,6 +2543,16 @@ void MainDbPrivate::updateSchema() {
 		}
 	}
 
+	if (version < makeVersion(1, 0, 26)) {
+		try {
+			*session << "ALTER TABLE conference_info_participant_params RENAME COLUMN \"key\" TO name";
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Column 'key' does not exists in table 'conference_info_participant_params' therefore it "
+			            "cannot be renames as 'name'";
+		}
+		// Sanity check
+		*session << "SELECT name FROM conference_info_participant_params";
+	}
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 
