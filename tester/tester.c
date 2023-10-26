@@ -2605,10 +2605,32 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	}
 
 	if (proxy_count) {
+		const bctbx_list_t *accounts = linphone_core_get_account_list(mgr->lc);
+		int lime_enabled = 0;
+		for (const bctbx_list_t *account_it = accounts; account_it != NULL; account_it = account_it->next) {
+			LinphoneAccount *account = (LinphoneAccount *)(bctbx_list_get_data(account_it));
+			if (linphone_account_lime_enabled(account)) {
+				lime_enabled++;
+			}
+		}
+		if (lime_enabled != 0 && !mgr->skip_lime_user_creation_asserts) {
+			// Wait for lime users to be created on X3DH server
+			if (mgr->lime_failure) {
+				BC_ASSERT_TRUE(wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_X3dhUserCreationFailure,
+				                              mgr->stat.number_of_X3dhUserCreationFailure + 1,
+				                              x3dhServer_creationTimeout));
+			} else {
+				BC_ASSERT_TRUE(wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_X3dhUserCreationSuccess,
+				                              mgr->stat.number_of_X3dhUserCreationSuccess + lime_enabled,
+				                              x3dhServer_creationTimeout));
+			}
+			// At most the number of accounts that don't have lime enabled were able to register
+			BC_ASSERT_LOWER(mgr->stat.number_of_LinphoneRegistrationOk,
+			                old_registration_ok + (proxy_count - lime_enabled), int, "%d");
+		}
 #define REGISTER_TIMEOUT 20 /* seconds */
 		int success = wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk,
-		                             mgr->stat.number_of_LinphoneRegistrationOk + proxy_count,
-		                             (REGISTER_TIMEOUT * 1000 * proxy_count));
+		                             old_registration_ok + proxy_count, (REGISTER_TIMEOUT * 1000 * proxy_count));
 		if (!success) {
 			ms_error("Did not register after %d seconds for %d proxies", REGISTER_TIMEOUT, proxy_count);
 		}
@@ -2725,6 +2747,14 @@ LinphoneCoreManager *linphone_core_manager_create_shared(const char *rc_file,
 	manager->main_core = main_core;
 	linphone_core_manager_init_shared(manager, rc_file, NULL, mgr_to_copy);
 	return manager;
+}
+
+void linphone_core_manager_skip_lime_user_creation_asserts(LinphoneCoreManager *mgr, bool_t value) {
+	mgr->skip_lime_user_creation_asserts = value;
+}
+
+void linphone_core_manager_expect_lime_failure(LinphoneCoreManager *mgr, bool_t value) {
+	mgr->lime_failure = value;
 }
 
 static void check_orphan_nat_policy_section(LinphoneCoreManager *mgr) {

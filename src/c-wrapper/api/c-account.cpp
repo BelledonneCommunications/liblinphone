@@ -36,6 +36,21 @@
 
 using namespace LinphonePrivate;
 
+bool_t linphone_account_lime_enabled(LinphoneAccount *account) {
+	auto cppAccount = Account::toCpp(account);
+	auto params = cppAccount->getAccountParams();
+	if (params) {
+		if (params->getLimeServerUrl().empty()) {
+			return FALSE;
+		}
+	} else {
+		return FALSE;
+	}
+	return (Account::toCpp(account)->getLimeUserAccountStatus() != LimeUserAccountStatus::LimeUserAccountNone &&
+	        Account::toCpp(account)->getLimeUserAccountStatus() !=
+	            LimeUserAccountStatus::LimeUserAccountCreationSkiped);
+}
+
 LinphoneAccount *linphone_account_new(LinphoneCore *lc, LinphoneAccountParams *params) {
 	return Account::createCObject(lc, AccountParams::toCpp(params)->getSharedFromThis());
 }

@@ -41,6 +41,14 @@ typedef enum _LinphoneAccountAddressComparisonResult {
 	LinphoneAccountAddressWeakEqual
 } LinphoneAccountAddressComparisonResult;
 
+enum class LimeUserAccountStatus {
+	LimeUserAccountNone,
+	LimeUserAccountNeedCreation,
+	LimeUserAccountIsCreating,
+	LimeUserAccountCreated,
+	LimeUserAccountCreationSkiped // To send the register even if Lime user creation failed
+};
+
 class AccountCbs;
 class Address;
 class EventPublish;
@@ -78,6 +86,7 @@ public:
 	void setCustomheader(const std::string &headerName, const std::string &headerValue);
 	void setPresencePublishEvent(const std::shared_ptr<EventPublish> &presencePublishEvent);
 	void setDependency(std::shared_ptr<Account> dependency);
+	void setLimeUserAccountStatus(LimeUserAccountStatus status);
 
 	// Getters
 	int getAuthFailure() const;
@@ -95,6 +104,7 @@ public:
 	const char *getCustomHeader(const std::string &headerName) const;
 	std::shared_ptr<EventPublish> getPresencePublishEvent() const;
 	std::shared_ptr<Account> getDependency();
+	LimeUserAccountStatus getLimeUserAccountStatus() const;
 
 	int getUnreadChatMessageCount() const;
 	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms() const;
@@ -167,6 +177,7 @@ private:
 
 	int mAuthFailure;
 
+	LimeUserAccountStatus mLimeUserAccountStatus = LimeUserAccountStatus::LimeUserAccountNone;
 	bool mNeedToRegister = false;
 	bool mRegisterChanged = false;
 	bool mSendPublish = false;

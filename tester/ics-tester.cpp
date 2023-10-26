@@ -279,18 +279,6 @@ static void send_conference_invitations(bool_t enable_encryption,
 	start_core_for_conference(coresManagerList);
 	setup_conference_info_cbs(marie);
 
-	stats initialMarieStats = marie->stat;
-	stats initialPaulineStats = pauline->stat;
-	stats initialLaureStats = laure->stat;
-
-	// Wait for lime users to be created on x3dh server
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess,
-	                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1, 15000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess,
-	                             initialPaulineStats.number_of_X3dhUserCreationSuccess + 1, 15000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_X3dhUserCreationSuccess,
-	                             initialLaureStats.number_of_X3dhUserCreationSuccess + 1, 15000));
-
 	// Check encryption status for all participants
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));

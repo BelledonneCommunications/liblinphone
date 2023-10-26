@@ -299,18 +299,6 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		stats initialLaureStats = laure.getStats();
 
 		if (encrypted) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialMichelleStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialBertheStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialLaureStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(berthe.getLc()));
@@ -381,9 +369,6 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		stats initialMichelle2Stats = michelle2.getStats();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 		if (encrypted) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialMichelle2Stats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
 		}
 
@@ -672,25 +657,6 @@ void group_chat_room_with_sip_errors_base(bool invite_error, bool subscribe_erro
 		coresList = bctbx_list_append(coresList, berthe.getLc());
 
 		if (encrypted) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialPaulineStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialMichelleStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialMichelle2Stats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialLaureStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &berthe.getStats().number_of_X3dhUserCreationSuccess,
-			                             initialBertheStats.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));
@@ -1271,14 +1237,6 @@ void group_chat_room_lime_server_message(bool encrypted) {
 		if (encrypted) {
 			auto rawEncryptionSuccess = 0;
 
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess,
-			                             marie_stat.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_X3dhUserCreationSuccess,
-			                             laure_stat.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_X3dhUserCreationSuccess,
-			                             pauline_stat.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));
@@ -1413,12 +1371,6 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 		coresList = bctbx_list_append(coresList, pauline.getLc());
 
 		if (encrypted) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess,
-			                             marie_stat.number_of_X3dhUserCreationSuccess + 1, x3dhServer_creationTimeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_X3dhUserCreationSuccess,
-			                             pauline_stat.number_of_X3dhUserCreationSuccess + 1,
-			                             x3dhServer_creationTimeout));
-
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 		}

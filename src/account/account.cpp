@@ -256,6 +256,18 @@ void Account::setSendPublish(bool sendPublish) {
 
 void Account::setNeedToRegister(bool needToRegister) {
 	mNeedToRegister = needToRegister;
+	if (mNeedToRegister) {
+		try {
+			auto engine = getCore()->getEncryptionEngine();
+			if (engine && mParams) {
+				if (!mParams->getLimeServerUrl().empty() || !getCore()->getX3dhServerUrl().empty()) {
+					mLimeUserAccountStatus = LimeUserAccountStatus::LimeUserAccountNeedCreation;
+				}
+			}
+		} catch (const bad_weak_ptr &) {
+			// Core pointer is null
+		}
+	}
 }
 
 void Account::setDeletionDate(time_t deletionDate) {
@@ -417,6 +429,10 @@ void Account::setDependency(std::shared_ptr<Account> dependency) {
 	}
 }
 
+void Account::setLimeUserAccountStatus(LimeUserAccountStatus status) {
+	mLimeUserAccountStatus = status;
+}
+
 // -----------------------------------------------------------------------------
 
 int Account::getAuthFailure() const {
@@ -491,6 +507,10 @@ std::shared_ptr<EventPublish> Account::getPresencePublishEvent() const {
 
 std::shared_ptr<Account> Account::getDependency() {
 	return mDependency;
+}
+
+LimeUserAccountStatus Account::getLimeUserAccountStatus() const {
+	return mLimeUserAccountStatus;
 }
 
 // -----------------------------------------------------------------------------
@@ -951,10 +971,30 @@ int Account::done() {
 			}
 		}
 		mNeedToRegister = true;
+		try {
+			auto engine = getCore()->getEncryptionEngine();
+			if (engine && mParams) {
+				if (!mParams->getLimeServerUrl().empty() || !getCore()->getX3dhServerUrl().empty()) {
+					mLimeUserAccountStatus = LimeUserAccountStatus::LimeUserAccountNeedCreation;
+				}
+			}
+		} catch (const bad_weak_ptr &) {
+			// Core pointer is null
+		}
 	}
 
 	if (mRegisterChanged) {
 		mNeedToRegister = true;
+		try {
+			auto engine = getCore()->getEncryptionEngine();
+			if (engine && mParams) {
+				if (!mParams->getLimeServerUrl().empty() || !getCore()->getX3dhServerUrl().empty()) {
+					mLimeUserAccountStatus = LimeUserAccountStatus::LimeUserAccountNeedCreation;
+				}
+			}
+		} catch (const bad_weak_ptr &) {
+			// Core pointer is null
+		}
 		mRegisterChanged = false;
 	}
 
@@ -989,18 +1029,39 @@ LinphoneCore *Account::getCCore() const {
 }
 
 void Account::update() {
-	if (mNeedToRegister) {
-		if (canRegister()) {
-			registerAccount();
-			mNeedToRegister = false;
+	auto engine = getCore()->getEncryptionEngine();
+	if (engine && (!mParams->getLimeServerUrl().empty() || !getCore()->getX3dhServerUrl().empty()) &&
+	    mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountNeedCreation) {
+		shared_ptr<Address> addr = mContactAddress;
+		if (!addr) {
+			shared_ptr<Address> sip = getAccountParams()->getIdentityAddress();
+			if (sip) {
+				auto gr = getCCore()->sal->getUuid();
+				if (gr.empty()) return;
+				addr = sip->clone()->toSharedPtr();
+				addr->setUriParam("gr", "urn:uuid:" + gr);
+			}
 		}
-	}
-	if (mSendPublish && (mState == LinphoneRegistrationOk || mState == LinphoneRegistrationCleared)) {
-		if (mPresenceModel == nullptr) {
-			setPresenceModel(getCCore()->presence_model);
+		auto account = this->getSharedFromThis();
+		if (addr) engine->createLimeUser(account, addr->asStringUriOnly());
+	} else if (!engine || (engine && (mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountCreated ||
+	                                  mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountCreationSkiped ||
+	                                  mLimeUserAccountStatus == LimeUserAccountStatus::LimeUserAccountNone))) {
+		/* Either lime isn't enabled
+		 * Or lime is enabled, and the Lime User Creation succeed or failed (so skip it and register) */
+		if (mNeedToRegister) {
+			if (canRegister()) {
+				registerAccount();
+				mNeedToRegister = false;
+			}
 		}
-		sendPublish();
-		mSendPublish = false;
+		if (mSendPublish && (mState == LinphoneRegistrationOk || mState == LinphoneRegistrationCleared)) {
+			if (mPresenceModel == nullptr) {
+				setPresenceModel(getCCore()->presence_model);
+			}
+			sendPublish();
+			mSendPublish = false;
+		}
 	}
 }
 
@@ -1361,7 +1422,8 @@ void Account::onLimeServerUrlChanged(const std::string &limeServerUrl) {
 	// If the lime server URL has changed, then propagate the change to the encryption engine
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine && (encryptionEngine->getEngineType() == EncryptionEngine::EngineType::LimeX3dh)) {
-		encryptionEngine->onServerUrlChanged(getSharedFromThis(), limeServerUrl);
+		auto account = this->getSharedFromThis();
+		encryptionEngine->onServerUrlChanged(account, limeServerUrl);
 	}
 
 #else

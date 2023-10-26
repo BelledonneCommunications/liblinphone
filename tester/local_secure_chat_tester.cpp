@@ -56,19 +56,6 @@ static void secure_group_chat_room_with_chat_room_deleted_before_server_restart(
 		coresList = bctbx_list_append(coresList, michelle.getLc());
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess,
-		                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1,
-		                             x3dhServer_creationTimeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie2.getStats().number_of_X3dhUserCreationSuccess,
-		                             initialMarie2Stats.number_of_X3dhUserCreationSuccess + 1,
-		                             x3dhServer_creationTimeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_X3dhUserCreationSuccess,
-		                             initialMichelleStats.number_of_X3dhUserCreationSuccess + 1,
-		                             x3dhServer_creationTimeout));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_X3dhUserCreationSuccess,
-		                             initialMichelle2Stats.number_of_X3dhUserCreationSuccess + 1,
-		                             x3dhServer_creationTimeout));
-
 		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie2.getLc()));
 		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle.getLc()));

@@ -55,7 +55,8 @@ public:
 
 	std::shared_ptr<LimeManager> getLimeManager();
 	lime::limeCallback setLimeCallback(std::string operation);
-	lime::limeCallback setLimeUserCreationCallback(LinphoneCore *lc, const std::string localDeviceId);
+	lime::limeCallback
+	setLimeUserCreationCallback(LinphoneCore *lc, const std::string localDeviceId, std::shared_ptr<Account> &account);
 	lime::CurveId getCurveId() const;
 
 	// EncryptionEngine overrides
@@ -120,7 +121,7 @@ public:
 	                                       LinphoneRegistrationState state,
 	                                       const std::string &message) override;
 
-	void onServerUrlChanged(const std::shared_ptr<Account> &account, const std::string &limeServerUrl) override;
+	void onServerUrlChanged(std::shared_ptr<Account> &account, const std::string &limeServerUrl) override;
 
 	void staleSession(const std::string localDeviceId, const std::string peerDeviceId) override;
 
@@ -139,6 +140,8 @@ public:
 	                const std::vector<uint8_t> &associatedData,
 	                const std::vector<uint8_t> &cipherText,
 	                std::vector<uint8_t> &plainText) const override;
+
+	void createLimeUser(std::shared_ptr<Account> &account, const std::string &gruu) override;
 
 private:
 	void update(const std::string localDeviceId);

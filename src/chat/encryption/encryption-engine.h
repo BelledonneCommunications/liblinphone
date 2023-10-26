@@ -142,7 +142,7 @@ public:
 	virtual void setTestForceDecryptionFailureFlag(BCTBX_UNUSED(bool flag)) {
 	}
 
-	virtual void onServerUrlChanged(BCTBX_UNUSED(const std::shared_ptr<Account> &account),
+	virtual void onServerUrlChanged(BCTBX_UNUSED(std::shared_ptr<Account> &account),
 	                                BCTBX_UNUSED(const std::string &limeServerUrl)) {
 	}
 
@@ -162,6 +162,9 @@ public:
 	                        BCTBX_UNUSED(std::vector<uint8_t> &plainText)) const {
 		return false;
 	}
+
+	virtual void createLimeUser(BCTBX_UNUSED(std::shared_ptr<Account> &account),
+	                            BCTBX_UNUSED(const std::string &gruu)){};
 
 protected:
 	EncryptionEngine(const std::shared_ptr<Core> &core) : CoreAccessor(core) {

@@ -181,17 +181,16 @@ static void TLS_mandatory_two_users(void) {
 // code readability, use name which means something instead of a list of true and false in the args
 constexpr bool tls_mandatory = true;
 constexpr bool tls_optional = false;
-constexpr bool expect_success = true;
-constexpr bool expect_failure = false;
 
 static void create_user_sip_client_cert_chain(const int curveId,
                                               const bool use_tls,
                                               const certProvider method,
                                               const std::string &cert,
                                               const std::string &key,
-                                              const bool expected_outcome,
+                                              const bool expectFailure,
                                               const std::string &username = "user_1") {
 	LinphoneCoreManager *lcm = linphone_core_manager_create(NULL);
+	linphone_core_manager_expect_lime_failure(lcm, expectFailure);
 	const std::string realm{"sip.example.org"};
 	const std::string identity = std::string("sip:").append(username).append("@").append(realm);
 
@@ -205,22 +204,10 @@ static void create_user_sip_client_cert_chain(const int curveId,
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, lcm);
 	set_lime_server_and_curve_list_tls(curveId, coresManagerList, TRUE, use_tls);
-	stats initialMarieStats = lcm->stat;
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
-
-	// Wait for lime user to be created on X3DH server
-	if (expected_outcome == expect_success) {
-		BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationSuccess,
-		                             initialMarieStats.number_of_X3dhUserCreationSuccess + 1,
-		                             x3dhServer_creationTimeout));
-	} else {
-		BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_X3dhUserCreationFailure,
-		                             initialMarieStats.number_of_X3dhUserCreationFailure + 1,
-		                             x3dhServer_creationTimeout));
-	}
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -234,8 +221,8 @@ static void identity_in_altName_one_DNS_entry(void) {
 	const std::string cert_path{"certificates/client/user1_cert.pem"};
 	const std::string key_path{"certificates/client/user1_key.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_success);
-		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_success);
+		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, false);
+		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, false);
 	}
 }
 
@@ -246,9 +233,8 @@ static void identity_in_subject_CN(void) {
 	const std::string cert_path{"certificates/client/user2_CN_cert.pem"};
 	const std::string key_path{"certificates/client/user2_CN_key.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_success,
-		                                  "user_2");
-		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_success, "user_2");
+		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, false, "user_2");
+		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, false, "user_2");
 	}
 }
 
@@ -260,8 +246,8 @@ static void identity_in_altName_multiple_DNS_entry(void) {
 	const std::string cert_path{"certificates/client/user1_multiple_aliases_cert.pem"};
 	const std::string key_path{"certificates/client/user1_multiple_aliases_key.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_success);
-		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_success);
+		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, false);
+		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, false);
 	}
 }
 
@@ -272,9 +258,8 @@ static void revoked_certificate(void) {
 	const std::string cert_path{"certificates/client/user2_revoked_cert.pem"};
 	const std::string key_path{"certificates/client/user2_revoked_key.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_failure,
-		                                  "user_2");
-		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_failure, "user_2");
+		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, true, "user_2");
+		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, true, "user_2");
 	}
 }
 
@@ -286,8 +271,8 @@ static void TLS_mandatory_CN_UserId_mismatch(void) {
 	const std::string cert_path{"certificates/client/cert2.pem"};
 	const std::string key_path{"certificates/client/key2.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, expect_failure);
-		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, expect_failure);
+		create_user_sip_client_cert_chain(25519, tls_mandatory, certProv, cert_path, key_path, true);
+		create_user_sip_client_cert_chain(448, tls_mandatory, certProv, cert_path, key_path, true);
 	}
 }
 
@@ -299,8 +284,8 @@ static void TLS_optional_CN_UserId_mismatch(void) {
 	const std::string cert_path{"certificates/client/cert2.pem"};
 	const std::string key_path{"certificates/client/key2.pem"};
 	for (const auto &certProv : availCertProv) {
-		create_user_sip_client_cert_chain(25519, tls_optional, certProv, cert_path, key_path, expect_failure);
-		create_user_sip_client_cert_chain(448, tls_optional, certProv, cert_path, key_path, expect_failure);
+		create_user_sip_client_cert_chain(25519, tls_optional, certProv, cert_path, key_path, true);
+		create_user_sip_client_cert_chain(448, tls_optional, certProv, cert_path, key_path, true);
 	}
 }
 
@@ -310,8 +295,8 @@ static void TLS_optional_CN_UserId_mismatch(void) {
 static void TLS_optional_No_certificate(void) {
 	const std::string empty{};
 	/* just use the config_sip method, each method shall actually just do nothing when given an empty certificate */
-	create_user_sip_client_cert_chain(25519, tls_optional, certProvider::config_sip, empty, empty, expect_success);
-	create_user_sip_client_cert_chain(448, tls_optional, certProvider::config_sip, empty, empty, expect_success);
+	create_user_sip_client_cert_chain(25519, tls_optional, certProvider::config_sip, empty, empty, false);
+	create_user_sip_client_cert_chain(448, tls_optional, certProvider::config_sip, empty, empty, false);
 }
 
 /**
@@ -320,8 +305,8 @@ static void TLS_optional_No_certificate(void) {
 static void TLS_mandatory_No_certificate(void) {
 	const std::string empty{};
 	/* just use the config_sip method, each method shall actually just do nothing when given an empty certificate */
-	create_user_sip_client_cert_chain(25519, tls_mandatory, certProvider::config_sip, empty, empty, expect_failure);
-	create_user_sip_client_cert_chain(448, tls_mandatory, certProvider::config_sip, empty, empty, expect_failure);
+	create_user_sip_client_cert_chain(25519, tls_mandatory, certProvider::config_sip, empty, empty, true);
+	create_user_sip_client_cert_chain(448, tls_mandatory, certProvider::config_sip, empty, empty, true);
 }
 
 static void local_set_lime_server_and_curve(LinphoneCoreManager *manager, const char *curve, const char *server) {
@@ -438,6 +423,7 @@ const char *wrong_lime_server = "https://lime.wildcard8.linphone.org:8443/lime-s
 
 static void invalid_lime_server_in_account_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	linphone_core_manager_skip_lime_user_creation_asserts(marie, TRUE);
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 

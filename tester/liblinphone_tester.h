@@ -553,6 +553,8 @@ typedef struct _LinphoneCoreManager {
 	char *app_group_id;
 	void *user_info;
 	bool_t main_core;
+	bool_t skip_lime_user_creation_asserts;
+	bool_t lime_failure;
 	LinphoneCoreManagerSubscribePolicy subscribe_policy;
 	LinphoneCoreManagerPublishPolicy publish_policy;
 } LinphoneCoreManager;
@@ -602,6 +604,8 @@ LinphoneCoreManager *linphone_core_manager_create_shared(const char *rc_file,
                                                          const char *app_group_id,
                                                          bool_t main_core,
                                                          LinphoneCoreManager *mgr_to_copy);
+void linphone_core_manager_skip_lime_user_creation_asserts(LinphoneCoreManager *mgr, bool_t value);
+void linphone_core_manager_expect_lime_failure(LinphoneCoreManager *mgr, bool_t value);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr);
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr);

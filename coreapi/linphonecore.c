@@ -2555,6 +2555,8 @@ static void linphone_core_free_payload_types(LinphoneCore *lc) {
 }
 
 void linphone_core_set_state(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+	ms_message("Switching LinphoneCore [%p] from state %s to %s", lc, linphone_global_state_to_string(lc->state),
+	           linphone_global_state_to_string(gstate));
 	lc->state = gstate;
 	linphone_core_notify_global_state_changed(lc, gstate, message);
 }

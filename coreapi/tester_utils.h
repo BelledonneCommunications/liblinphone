@@ -393,6 +393,8 @@ LINPHONE_PUBLIC void linphone_config_simulate_read_failure(bool_t value);
 
 LINPHONE_PUBLIC void linphone_payload_type_set_priority_bonus(LinphonePayloadType *pt, bool_t value);
 
+LINPHONE_PUBLIC bool_t linphone_account_lime_enabled(LinphoneAccount *account);
+
 #ifdef __cplusplus
 }
 #endif
