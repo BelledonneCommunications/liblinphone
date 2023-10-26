@@ -413,8 +413,9 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 	bool ok = true;
 	if (isMain()) {
+		OrtpPayloadType *pt = rtp_profile_get_payload(audioProfile, usedPt);
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(
-		    rtp_profile_get_payload(audioProfile, usedPt));
+		    pt ? PayloadType::create(getCore().getSharedFromThis(), pt) : nullptr);
 	}
 
 	if (stream.getDirection() == SalStreamSendOnly) media_stream_set_direction(&mStream->ms, MediaStreamSendOnly);

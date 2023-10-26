@@ -143,10 +143,6 @@ void linphone_call_params_set_sent_video_definition(LinphoneCallParams *params, 
 void linphone_call_params_set_received_video_definition(LinphoneCallParams *params, LinphoneVideoDefinition *vdef);
 void linphone_call_params_set_sent_fps(LinphoneCallParams *params, float value);
 void linphone_call_params_set_received_fps(LinphoneCallParams *params, float value);
-void linphone_call_params_set_used_audio_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
-void linphone_call_params_set_used_video_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
-void linphone_call_params_set_used_fec_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
-void linphone_call_params_set_used_text_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
 bool_t linphone_call_params_get_no_user_consent(const LinphoneCallParams *params);
 time_t linphone_call_params_get_start_time(const LinphoneCallParams *params);
 time_t linphone_call_params_get_end_time(const LinphoneCallParams *params);

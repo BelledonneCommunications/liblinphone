@@ -94,8 +94,9 @@ void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State t
 		stop();
 		return;
 	}
+	OrtpPayloadType *pt = rtp_profile_get_payload(textProfile, usedPt);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(
-	    rtp_profile_get_payload(textProfile, usedPt));
+	    pt ? PayloadType::create(getCore().getSharedFromThis(), pt) : nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableRealtimeText(true);
 
 	unsigned int interval = getMediaSessionPrivate().getParams()->realtimeTextKeepaliveInterval();

@@ -97,17 +97,17 @@ public:
 		sentFps = value;
 	}
 	void setSentVideoDefinition(LinphoneVideoDefinition *value);
-	void setUsedAudioCodec(OrtpPayloadType *pt) {
-		usedAudioCodec = pt ? PayloadType::create(nullptr, pt) : nullptr;
+	void setUsedAudioCodec(std::shared_ptr<PayloadType> pt) {
+		usedAudioCodec = pt;
 	}
-	void setUsedVideoCodec(OrtpPayloadType *pt) {
-		usedVideoCodec = pt ? PayloadType::create(nullptr, pt) : nullptr;
+	void setUsedVideoCodec(std::shared_ptr<PayloadType> pt) {
+		usedVideoCodec = pt;
 	}
-	void setUsedRealtimeTextCodec(OrtpPayloadType *pt) {
-		usedRealtimeTextCodec = pt ? PayloadType::create(nullptr, pt) : nullptr;
+	void setUsedRealtimeTextCodec(std::shared_ptr<PayloadType> pt) {
+		usedRealtimeTextCodec = pt;
 	}
-	void setUsedFecCodec(OrtpPayloadType *pt) {
-		usedFecCodec = pt ? PayloadType::create(nullptr, pt) : nullptr;
+	void setUsedFecCodec(std::shared_ptr<PayloadType> pt) {
+		usedFecCodec = pt;
 	}
 	SalCustomSdpAttribute *getCustomSdpAttributes() const;
 	void setCustomSdpAttributes(const SalCustomSdpAttribute *csa);

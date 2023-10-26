@@ -378,8 +378,9 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	video_stream_set_display_callback(mStream, sVideoStreamDisplayCb, this);
 	video_stream_set_camera_not_working_callback(mStream, sCameraNotWorkingCb, this);
 	if (isMain()) {
+		OrtpPayloadType *pt = rtp_profile_get_payload(videoProfile, usedPt);
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(
-		    rtp_profile_get_payload(videoProfile, usedPt));
+		    pt ? PayloadType::create(getCore().getSharedFromThis(), pt) : nullptr);
 	}
 
 	if (getCCore()->video_conf.preview_vsize.width != 0)
