@@ -139,10 +139,6 @@ void Vcard::setPhoto(const std::string &picture) {
 	}
 }
 
-void Vcard::setSkipValidation(bool skip) {
-	mBelCard->setSkipFieldValidation(skip);
-}
-
 void Vcard::setUid(const std::string &uid) {
 	if (uid.empty()) return;
 	std::shared_ptr<belcard::BelCardUniqueId> uniqueId = belcard::BelCardGeneric::create<belcard::BelCardUniqueId>();
@@ -221,10 +217,6 @@ const std::list<std::shared_ptr<Address>> &Vcard::getSipAddresses() const {
 		}
 	}
 	return mSipAddressesCache;
-}
-
-bool Vcard::getSkipValidation() const {
-	return mBelCard->getSkipFieldValidation();
 }
 
 const std::string &Vcard::getUid() const {
@@ -430,9 +422,6 @@ void Vcard::setGivenName(BCTBX_UNUSED(const std::string &name)) {
 void Vcard::setPhoto(BCTBX_UNUSED(const std::string &picture)) {
 }
 
-void Vcard::setSkipValidation(BCTBX_UNUSED(bool skip)) {
-}
-
 void Vcard::setUid(BCTBX_UNUSED(const std::string &uid)) {
 }
 
@@ -483,10 +472,6 @@ const std::string &Vcard::getPhoto() const {
 
 const std::list<std::shared_ptr<Address>> &Vcard::getSipAddresses() const {
 	return mSipAddressesCache;
-}
-
-bool Vcard::getSkipValidation() const {
-	return false;
 }
 
 const std::string &Vcard::getUid() const {

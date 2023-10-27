@@ -21,12 +21,14 @@
 #include <bctoolbox/defs.h>
 
 #include "bctoolbox/list.h"
+#include "core/core-p.h"
 #include "friend-list.h"
 #include "friend.h"
 
 #include "c-wrapper/internal/c-tools.h"
 #include "content/content.h"
 #include "core/core.h"
+#include "db/main-db.h"
 #include "event/event.h"
 #include "presence/presence-model.h"
 #include "vcard/carddav-context.h"
@@ -70,12 +72,7 @@ FriendList *FriendList::clone() const {
 
 void FriendList::setDisplayName(const std::string &displayName) {
 	mDisplayName = displayName;
-	if (!mDisplayName.empty()) {
-		try {
-			linphone_core_store_friends_list_in_db(getCore()->getCCore(), toC());
-		} catch (std::bad_weak_ptr &) {
-		}
-	}
+	if (!mDisplayName.empty()) saveInDb();
 }
 
 void FriendList::setRlsAddress(const std::shared_ptr<const Address> &rlsAddr) {
@@ -83,10 +80,7 @@ void FriendList::setRlsAddress(const std::shared_ptr<const Address> &rlsAddr) {
 	if (mRlsAddr) {
 		mRlsAddr->unref();
 		mRlsUri = mRlsAddr->asString();
-		try {
-			linphone_core_store_friends_list_in_db(getCore()->getCCore(), toC());
-		} catch (std::bad_weak_ptr &) {
-		}
+		saveInDb();
 	}
 }
 
@@ -109,12 +103,7 @@ void FriendList::setType(LinphoneFriendListType type) {
 
 void FriendList::setUri(const std::string &uri) {
 	mUri = uri;
-	if (!mUri.empty()) {
-		try {
-			linphone_core_store_friends_list_in_db(getCore()->getCCore(), toC());
-		} catch (std::bad_weak_ptr &) {
-		}
-	}
+	if (!mUri.empty()) saveInDb();
 }
 
 // -----------------------------------------------------------------------------
@@ -166,11 +155,6 @@ bool FriendList::databaseStorageEnabled() const {
 }
 
 void FriendList::enableDatabaseStorage(bool enable) {
-	if (enable && !linphone_core_get_friends_database_path(getCore()->getCCore())) {
-		ms_error(
-		    "No database path has been set for friends storage, use linphone_core_set_friends_database_path() first!");
-		return;
-	}
 	if (enable && isSubscriptionBodyless()) {
 		lWarning() << "Can't store in DB a friend list [" << mDisplayName << "] with bodyless subscription enabled";
 		return;
@@ -179,14 +163,14 @@ void FriendList::enableDatabaseStorage(bool enable) {
 	if (mStoreInDb && !enable) {
 		lWarning() << "We are asked to remove database storage for friend list [" << mDisplayName << "]";
 		mStoreInDb = enable;
-		linphone_core_remove_friends_list_from_db(getCore()->getCCore(), toC());
+		removeFromDb();
 	} else if (!mStoreInDb && enable) {
 		mStoreInDb = enable;
-		linphone_core_store_friends_list_in_db(getCore()->getCCore(), toC());
+		saveInDb();
 		for (const auto &f : mFriends) {
 			lWarning() << "Found existing friend [" << f->getName() << "] in list [" << mDisplayName
 			           << "] that was added before the list was configured to be saved in DB, doing it now";
-			f->save();
+			f->saveInDb();
 		}
 	}
 }
@@ -320,20 +304,11 @@ bool FriendList::subscriptionsEnabled() const {
 	return mSubscriptionsEnabled;
 }
 
-#if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
-
-static int linphone_sql_request_generic(sqlite3 *db, const char *stmt) {
-	char *errmsg = nullptr;
-	int ret = sqlite3_exec(db, stmt, nullptr, nullptr, &errmsg);
-	if (ret != SQLITE_OK) {
-		ms_error("linphone_sql_request: statement %s -> error sqlite3_exec(): %s.", stmt, errmsg);
-		sqlite3_free(errmsg);
-	}
-	return ret;
-}
+#ifdef VCARD_ENABLED
 
 void FriendList::synchronizeFriendsFromServer() {
 	LinphoneCore *lc = getCore()->getCCore();
+
 	// Vcard4.0 list synchronisation
 	if (mType == LinphoneFriendListTypeVCard4) {
 		const std::string contactsVcardListUri =
@@ -355,38 +330,18 @@ void FriendList::synchronizeFriendsFromServer() {
 			LinphoneCore *lc = friendList->getCore()->getCCore();
 			const char *body = belle_sip_message_get_body(BELLE_SIP_MESSAGE(event->response));
 			if (body) {
-				const char *url = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", nullptr);
-				/**
-				 * We directly remove from the SQLite database the friends, then the friends_lists
-				 * - Because we doesn't have a foreign key between the two tables
-				 * - Because removing friends can only be done using FriendList::removeFriend and requires
-				 * a loop
-				 * - Because the primary key is id (autoincrement) we can have several friends_lists that have the
-				 * same display_name
-				 * - Because doing the following lines using the current C API would require to load the full
-				 * friends_lists table in memory and do the where manually, then delete one by one each linked
-				 * friends
-				 */
-				char *buf =
-				    sqlite3_mprintf("delete from friends where friend_list_id in (select id from friends_lists where "
-				                    "display_name = %Q)",
-				                    url);
-				linphone_sql_request_generic(lc->friends_db, buf);
-				sqlite3_free(buf);
-				buf = sqlite3_mprintf("delete from friends_lists where display_name = %Q", url);
-				linphone_sql_request_generic(lc->friends_db, buf);
-				sqlite3_free(buf);
+				const std::string url =
+				    L_C_TO_STRING(linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", nullptr));
+				auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 
-				/**
-				 * And then we clean, clear and resync the complete database in memory
-				 */
+				// Remove any existing friend list with this url
+				mainDb->deleteFriendList(url);
+
+				// Then clean, clear and resync the complete database in memory
 				linphone_core_friends_storage_resync_friends_lists(lc);
 
-				/**
-				 * And then we save the received friendlist
-				 * Each of the following lines is calling linphone_core_store_friends_list_in_db
-				 * So we do 4 SQL requests
-				 */
+				// And then we save the received friendlist. Each of the following lines is calling saveInDb(), so we
+				// perform several SQL queries
 				friendList->setUri(url);
 				friendList->setDisplayName(url);
 				friendList->importFriendsFromVcard4Buffer(body);
@@ -408,9 +363,7 @@ void FriendList::synchronizeFriendsFromServer() {
 			                                  LinphoneFriendListSyncFailure, "Timeout reached");
 		};
 
-		/**
-		 * We free-up the existing listeners if the previous request was not cancelled properly
-		 */
+		// We free-up the existing listeners if the previous request was not cancelled properly
 		if (lc->base_contacts_list_http_listener) {
 			belle_sip_object_unref(lc->base_contacts_list_http_listener);
 			lc->base_contacts_list_http_listener = nullptr;
@@ -468,11 +421,11 @@ void FriendList::updateDirtyFriends() {
 	lWarning() << "FriendList::updateDirtyFriends(): stubbed.";
 }
 
-#endif /* defined(HAVE_SQLITE) && defined(VCARD_ENABLED) */
+#endif /* VCARD_ENABLED */
 
 void FriendList::updateRevision(int revision) {
 	mRevision = revision;
-	linphone_core_store_friends_list_in_db(getCore()->getCCore(), toC());
+	saveInDb();
 }
 
 // -----------------------------------------------------------------------------
@@ -505,7 +458,7 @@ LinphoneFriendListStatus FriendList::addFriend(const std::shared_ptr<Friend> &lf
 		           << "], ignored.";
 	} else {
 		status = importFriend(lf, synchronize);
-		lf->save();
+		lf->saveInDb();
 	}
 
 	if (mRlsUri.empty()) // Mimic the behaviour of linphone_core_add_friend() when a resource list server is not in use
@@ -657,10 +610,10 @@ LinphoneStatus FriendList::importFriendsFromVcard4(const std::list<std::shared_p
 	for (const auto &vcard : vcards) {
 		std::shared_ptr<Friend> f = Friend::create(getCore()->getCCore(), vcard);
 		if (importFriend(f, true) == LinphoneFriendListOK) {
-			f->save(), count++;
+			f->saveInDb(), count++;
 		}
 	}
-	linphone_core_store_friends_list_in_db(getCore()->getCCore(), toC());
+	saveInDb();
 	return count;
 }
 
@@ -870,8 +823,8 @@ LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> 
 	const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(), [&](const auto &f) { return f == lf; });
 	if (it == mFriends.cend()) return LinphoneFriendListNonExistentFriend;
 
-#if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
-	if (lf && databaseStorageEnabled()) linphone_core_remove_friend_from_db(lf->getCore()->getCCore(), lf->toC());
+#ifdef VCARD_ENABLED
+	if (lf && databaseStorageEnabled()) lf->removeFromDb();
 	if (removeFromServer) {
 		std::shared_ptr<Vcard> vcard = lf->getVcard();
 		if (vcard && !vcard->getUid().empty()) {
@@ -913,6 +866,26 @@ LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> 
 
 	lf->mFriendList = nullptr;
 	return LinphoneFriendListOK;
+}
+
+void FriendList::removeFromDb() {
+#ifdef HAVE_DB_STORAGE
+	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->mainDb;
+	if (mainDb) mainDb->deleteFriendList(getSharedFromThis());
+#endif
+	mStorageId = -1;
+}
+
+void FriendList::saveInDb() {
+#ifdef HAVE_DB_STORAGE
+	try {
+		if (getCore() && databaseStorageEnabled()) {
+			std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->mainDb;
+			if (mainDb) mStorageId = mainDb->insertFriendList(getSharedFromThis());
+		}
+	} catch (std::bad_weak_ptr &) {
+	}
+#endif
 }
 
 void FriendList::sendListSubscription() {
@@ -989,6 +962,10 @@ void FriendList::sendListSubscriptionWithoutBody(const std::shared_ptr<Address> 
 	mEvent->setUserData(this);
 }
 
+void FriendList::setFriends(const std::list<std::shared_ptr<Friend>> &friends) {
+	mFriends = friends;
+}
+
 void FriendList::syncBctbxFriends() const {
 	if (mBctbxFriends) {
 		bctbx_list_free(mBctbxFriends), mBctbxFriends = nullptr;
@@ -1056,7 +1033,7 @@ void FriendList::subscriptionStateChanged(LinphoneCore *lc,
 	}
 }
 
-#if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
+#ifdef VCARD_ENABLED
 
 void FriendList::carddavCreated(const CardDAVContext *context, const std::shared_ptr<Friend> &f) {
 	context->mFriendList->importFriend(f, false);
@@ -1083,12 +1060,13 @@ void FriendList::carddavUpdated(const CardDAVContext *context,
 	auto it = std::find_if(context->mFriendList->mFriends.begin(), context->mFriendList->mFriends.end(),
 	                       [&](const auto &elem) { return elem == oldFriend; });
 	if (it != context->mFriendList->mFriends.end()) *it = newFriend;
-	linphone_core_store_friend_in_db(newFriend->getCore()->getCCore(), newFriend->toC());
+	newFriend->saveInDb();
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, context->mFriendList, linphone_friend_list_cbs_get_contact_updated,
 	                                  newFriend->toC(), oldFriend->toC());
 }
 
-#endif
+#endif /* VCARD_ENABLED */
+
 // -----------------------------------------------------------------------------
 
 LinphoneFriendListCbsContactCreatedCb FriendListCbs::getContactCreated() const {

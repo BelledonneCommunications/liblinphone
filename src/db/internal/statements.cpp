@@ -137,6 +137,12 @@ constexpr const char *select[SelectCount] = {
 			SELECT id
 			FROM conference_call
 			WHERE call_id = :1
+		)",
+
+    /* SelectSipAddressFromId */ R"(
+			SELECT value
+			FROM sip_address
+			WHERE id = :1
 		)"};
 
 // ---------------------------------------------------------------------------

@@ -3372,11 +3372,7 @@ static void friend_list_db_storage_base(bool_t set_friends_db_path) {
 	ms_message("-> Pauline added to db stored friend list");
 
 	linphone_friend_list_enable_database_storage(db_stored_fl, TRUE);
-	if (set_friends_db_path) {
-		BC_ASSERT_TRUE(linphone_friend_list_database_storage_enabled(db_stored_fl));
-	} else {
-		BC_ASSERT_FALSE(linphone_friend_list_database_storage_enabled(db_stored_fl));
-	}
+	BC_ASSERT_TRUE(linphone_friend_list_database_storage_enabled(db_stored_fl));
 
 	// Adding a new friend now that DB is enabled
 	LinphoneFriend *marie_friend = linphone_core_create_friend(core);

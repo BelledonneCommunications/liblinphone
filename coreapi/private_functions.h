@@ -211,7 +211,6 @@ void linphone_friend_list_subscription_state_changed(LinphoneCore *lc,
 void linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
 LinphoneEvent *linphone_friend_list_get_event(const LinphoneFriendList *list);
 int create_friend_list_from_db(void *data, int argc, char **argv, char **colName);
-void linphone_friend_list_set_friends(LinphoneFriendList *list, const bctbx_list_t *bctbxFriends);
 
 /**
  * Removes all bodyless friend lists.
@@ -226,14 +225,7 @@ void linphone_core_update_friends_subscriptions(LinphoneCore *lc);
 void _linphone_friend_list_update_subscriptions(LinphoneFriendList *list,
                                                 LinphoneProxyConfig *cfg,
                                                 bool_t only_when_registered);
-void linphone_core_friends_storage_init(LinphoneCore *lc);
 LINPHONE_PUBLIC int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc);
-void linphone_core_friends_storage_close(LinphoneCore *lc);
-void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf);
-void linphone_core_remove_friend_from_db(LinphoneCore *lc, LinphoneFriend *lf);
-void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list);
-void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendList *list);
-LINPHONE_PUBLIC bctbx_list_t *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
 LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list,
                                                                             LinphoneFriend *lf,
                                                                             bool_t synchronize);

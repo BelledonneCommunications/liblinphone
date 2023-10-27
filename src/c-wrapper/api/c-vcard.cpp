@@ -66,16 +66,6 @@ const char *linphone_vcard_get_full_name(const LinphoneVcard *vCard) {
 	return L_STRING_TO_C(Vcard::toCpp(vCard)->getFullName());
 }
 
-void linphone_vcard_set_skip_validation(LinphoneVcard *vCard, bool_t skip) {
-	if (!vCard) return;
-	Vcard::toCpp(vCard)->setSkipValidation(skip);
-}
-
-bool_t linphone_vcard_get_skip_validation(const LinphoneVcard *vCard) {
-	if (!vCard) return FALSE;
-	return Vcard::toCpp(vCard)->getSkipValidation();
-}
-
 void linphone_vcard_set_family_name(LinphoneVcard *vCard, const char *name) {
 	if (!vCard || !name) return;
 	Vcard::toCpp(vCard)->setFamilyName(L_C_TO_STRING(name));

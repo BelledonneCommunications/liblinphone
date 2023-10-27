@@ -39,6 +39,7 @@ enum Select {
 	SelectConferenceInfoParticipantId,
 	SelectConferenceInfoOrganizerId,
 	SelectConferenceCall,
+	SelectSipAddressFromId,
 	SelectCount
 };
 

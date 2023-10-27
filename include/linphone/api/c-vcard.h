@@ -74,20 +74,6 @@ LINPHONE_PUBLIC void linphone_vcard_set_full_name(LinphoneVcard *vCard, const ch
 LINPHONE_PUBLIC const char *linphone_vcard_get_full_name(const LinphoneVcard *vCard);
 
 /**
- * Sets the skipFieldValidation property of the vcard
- * @param vCard the #LinphoneVcard @notnil
- * @param skip skipFieldValidation property of the vcard
- */
-LINPHONE_PUBLIC void linphone_vcard_set_skip_validation(LinphoneVcard *vCard, bool_t skip);
-
-/**
- * Returns the skipFieldValidation property of the vcard.
- * @param vCard the #LinphoneVcard @notnil
- * @return the skipFieldValidation property of the vcard
- */
-LINPHONE_PUBLIC bool_t linphone_vcard_get_skip_validation(const LinphoneVcard *vCard);
-
-/**
  * Sets the family name in the N attribute of the vCard.
  * @param vCard the #LinphoneVcard @notnil
  * @param name the family name to set for the vCard @maybenil

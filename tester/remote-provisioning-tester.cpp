@@ -392,12 +392,11 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	                   liblinphone_tester_sip_timeout)); // Init for 2 lists : Default and 'contacts-vcard-list'
 
 	// Resync the friends lists from the DB
-	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int,
-	                "%i"); // No friend list in DB
+	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 1, int,
+	                "%i"); // One friend list in DB
 	friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NOT_NULL(friendList3);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int,
-	                "%i"); // No Friend in DB but have subscribed in RAM.
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int, "%i");
 
 	linphone_core_remove_friend_list(marie->lc, friendList3);
 
@@ -405,7 +404,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	BC_ASSERT_PTR_NULL(friendList4);
 
 	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int,
-	                "%i"); // Still no friend list in DB
+	                "%i"); // No longer have friend list in DB
 	friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NULL(friendList4); // No change after resync
 

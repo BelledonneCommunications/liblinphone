@@ -343,15 +343,3 @@ LinphoneEvent *linphone_friend_list_get_event(const LinphoneFriendList *list) {
 	std::shared_ptr<Event> event = FriendList::toCpp(list)->mEvent;
 	return event ? event->toC() : nullptr;
 }
-
-void linphone_friend_list_set_friends(LinphoneFriendList *list, const bctbx_list_t *bctbxFriends) {
-	std::list<std::shared_ptr<Friend>> friends;
-	for (const bctbx_list_t *elem = bctbxFriends; elem != nullptr; elem = bctbx_list_next(elem)) {
-		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
-		friends.push_back(Friend::getSharedFromThis(lf));
-	}
-	std::shared_ptr<FriendList> friendList = FriendList::getSharedFromThis(list);
-	friendList->mFriends = friends;
-	if (friendList->mBctbxFriends) bctbx_list_free(friendList->mBctbxFriends);
-	friendList->mBctbxFriends = bctbx_list_copy(bctbxFriends);
-}

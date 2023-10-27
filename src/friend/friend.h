@@ -35,6 +35,8 @@ class CardDAVContext;
 class FriendCbs;
 class FriendList;
 class FriendPhoneNumber;
+class MainDb;
+class MainDbPrivate;
 class PresenceModel;
 class PresenceService;
 class Vcard;
@@ -56,26 +58,26 @@ public:
 	// Friends
 	friend CardDAVContext;
 	friend FriendList;
+	friend MainDb;
+	friend MainDbPrivate;
 	friend PresenceModel;
 	friend PresenceService;
 
 	// TODO: Remove these friend declarations if possible
-	friend bctbx_list_t * ::linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
-	friend void ::linphone_core_remove_friend(BCTBX_UNUSED(LinphoneCore *lc), LinphoneFriend *lf);
-	friend void ::linphone_core_remove_friend_from_db(LinphoneCore *lc, LinphoneFriend *lf);
-	friend void ::linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf);
+	friend void ::linphone_core_remove_friend(LinphoneCore *lc, LinphoneFriend *lf);
 	friend void ::linphone_friend_add_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
 	friend const bctbx_list_t * ::linphone_friend_get_addresses(const LinphoneFriend *lf);
 	friend LinphoneFriendList * ::linphone_friend_get_friend_list(const LinphoneFriend *lf);
 	friend bctbx_list_t * ::linphone_friend_get_insubs(const LinphoneFriend *lf);
 	friend SalPresenceOp * ::linphone_friend_get_outsub(const LinphoneFriend *lf);
 	friend int ::linphone_friend_get_rc_index(const LinphoneFriend *lf);
-	friend unsigned int ::linphone_friend_get_storage_id(const LinphoneFriend *lf);
+	friend long long ::linphone_friend_get_storage_id(const LinphoneFriend *lf);
 	friend LinphoneAddress * ::linphone_friend_get_uri(const LinphoneFriend *lf);
 	friend void ::linphone_friend_invalidate_subscription(LinphoneFriend *lf);
 	friend LinphoneFriend * ::linphone_friend_new_from_config_file(LinphoneCore *lc, int index);
 	friend void ::linphone_friend_release(LinphoneFriend *lf);
 	friend void ::linphone_friend_remove_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
+	friend void ::linphone_friend_save(LinphoneFriend *lf, LinphoneCore *lc);
 	friend void ::linphone_friend_set_inc_subscribe_pending(LinphoneFriend *lf, bool_t pending);
 	friend void ::linphone_friend_set_info(LinphoneFriend *lf, BuddyInfo *info);
 	friend void ::linphone_friend_set_outsub(LinphoneFriend *lf, LinphonePrivate::SalPresenceOp *outsub);
@@ -140,7 +142,6 @@ public:
 	void removeAddress(const std::shared_ptr<const Address> &address);
 	void removePhoneNumber(const std::string &phoneNumber);
 	void removePhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumber> &phoneNumber);
-	void save();
 	bool subscribesEnabled() const;
 
 private:
@@ -162,12 +163,13 @@ private:
 	                      const std::shared_ptr<PresenceModel> &model);
 	void releaseOps();
 	void removeFriendFromListMapIfAlreadyInIt(const std::string &uri);
+	void removeFromDb();
 	void removeIncomingSubscription(SalOp *op);
+	void saveInDb();
 	const std::string &sipUriToPhoneNumber(const std::string &uri) const;
 	void syncBctbxAddresses() const;
 	void unsubscribe();
 	void updateSubscribes(bool onlyWhenRegistered);
-	void updateVcardValidation();
 
 	static std::string capabilityToName(const LinphoneFriendCapability capability);
 	static LinphoneFriendCapability nameToCapability(const std::string &name);
@@ -184,7 +186,7 @@ private:
 	std::shared_ptr<Address> mUri = nullptr;
 	std::string mNativeUri;
 	std::string mRefKey;
-	unsigned int mStorageId = 0;
+	long long mStorageId = -1;
 	int mRcIndex = -1;
 
 	SalPresenceOp *mOutSub = nullptr;

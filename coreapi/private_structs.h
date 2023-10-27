@@ -558,7 +558,6 @@ class Core;
 	int max_calls;                                                                                                     \
 	LinphoneTunnel *tunnel;                                                                                            \
 	char *device_id;                                                                                                   \
-	char *friends_db_file;                                                                                             \
 	belle_http_provider_t *http_provider;                                                                              \
 	belle_tls_crypto_config_t *http_crypto_config;                                                                     \
 	belle_http_request_listener_t *provisioning_http_listener;                                                         \
@@ -602,7 +601,6 @@ class Core;
 	LINPHONE_CORE_STRUCT_BASE_FIELDS                                                                                   \
 	sqlite3 *zrtp_cache_db;                                                                                            \
 	bctbx_mutex_t zrtp_cache_db_mutex;                                                                                 \
-	sqlite3 *friends_db;                                                                                               \
 	bool_t debug_storage;                                                                                              \
 	void *system_context;                                                                                              \
 	bool_t is_unreffing;                                                                                               \

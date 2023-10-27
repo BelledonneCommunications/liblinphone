@@ -94,11 +94,11 @@ int linphone_friend_list_get_expected_notification_version(const LinphoneFriendL
 	return FriendList::toCpp(list)->mExpectedNotificationVersion;
 }
 
-unsigned int linphone_friend_list_get_storage_id(const LinphoneFriendList *list) {
+long long linphone_friend_list_get_storage_id(const LinphoneFriendList *list) {
 	return FriendList::toCpp(list)->mStorageId;
 }
 
-unsigned int linphone_friend_get_storage_id(const LinphoneFriend *lf) {
+long long linphone_friend_get_storage_id(const LinphoneFriend *lf) {
 	return Friend::toCpp(lf)->mStorageId;
 }
 
@@ -108,6 +108,7 @@ LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf) {
 }
 
 bctbx_list_t **linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl) {
+	FriendList::toCpp(lfl)->getFriends();
 	return &FriendList::toCpp(lfl)->mBctbxFriends;
 }
 

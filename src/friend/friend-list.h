@@ -34,6 +34,8 @@ class CardDAVContext;
 class Event;
 class Friend;
 class FriendListCbs;
+class MainDb;
+class MainDbPrivate;
 class PresenceModel;
 class Vcard;
 
@@ -49,12 +51,14 @@ public:
 	FriendList *clone() const override;
 
 	// Friends
-	friend Friend;
 #if VCARD_ENABLED
 	friend CardDAVContext;
 #endif
+	friend Friend;
+	friend MainDb;
+	friend MainDbPrivate;
 	// TODO: To remove when possible
-	friend bctbx_list_t * ::linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
+	friend void ::linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list);
 	friend LinphoneFriend * ::linphone_core_find_friend_by_inc_subscribe(const LinphoneCore *lc,
 	                                                                     LinphonePrivate::SalOp *op);
 	friend LinphoneFriend * ::linphone_core_find_friend_by_out_subscribe(const LinphoneCore *lc,
@@ -63,21 +67,18 @@ public:
 	                                                                    const char *phoneNumber);
 	friend void ::linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 	friend void ::linphone_core_iterate(LinphoneCore *lc);
-	friend void ::linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendList *list);
-	friend void ::linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf);
-	friend void ::linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list);
+	friend void ::linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list);
 	friend const bctbx_list_t * ::linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl);
 	friend LinphoneEvent * ::linphone_friend_list_get_event(const LinphoneFriendList *list);
 	friend int ::linphone_friend_list_get_expected_notification_version(const LinphoneFriendList *list);
 	friend const bctbx_list_t * ::linphone_friend_list_get_friends(const LinphoneFriendList *list);
 	friend bctbx_list_t ** ::linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl);
 	friend int ::linphone_friend_list_get_revision(const LinphoneFriendList *lfl);
-	friend unsigned int ::linphone_friend_list_get_storage_id(const LinphoneFriendList *list);
+	friend long long ::linphone_friend_list_get_storage_id(const LinphoneFriendList *list);
 	friend void ::linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
 	friend void ::linphone_friend_list_notify_presence_received(LinphoneFriendList *list,
 	                                                            LinphoneEvent *lev,
 	                                                            const LinphoneContent *body);
-	friend void ::linphone_friend_list_set_friends(LinphoneFriendList *list, const bctbx_list_t *bctbxFriends);
 	friend void ::linphone_friend_list_subscription_state_changed(LinphoneCore *lc,
 	                                                              LinphoneEvent *lev,
 	                                                              LinphoneSubscriptionState state);
@@ -140,15 +141,18 @@ private:
 	void notifyPresenceReceived(const std::shared_ptr<const Content> &content);
 	void parseMultipartRelatedBody(const std::shared_ptr<const Content> &content, const std::string &firstPartBody);
 	LinphoneFriendListStatus removeFriend(const std::shared_ptr<Friend> &lf, bool removeFromServer);
+	void removeFromDb();
+	void saveInDb();
 	void sendListSubscription();
 	void sendListSubscriptionWithBody(const std::shared_ptr<Address> &address);
 	void sendListSubscriptionWithoutBody(const std::shared_ptr<Address> &address);
+	void setFriends(const std::list<std::shared_ptr<Friend>> &friends);
 	void syncBctbxFriends() const;
 	void updateSubscriptions();
 
 	static void
 	subscriptionStateChanged(LinphoneCore *lc, const std::shared_ptr<Event> event, LinphoneSubscriptionState state);
-#if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
+#ifdef VCARD_ENABLED
 	static void carddavCreated(const CardDAVContext *context, const std::shared_ptr<Friend> &f);
 	static void carddavDone(const CardDAVContext *context, bool success, const std::string &msg);
 	static void carddavRemoved(const CardDAVContext *context, const std::shared_ptr<Friend> &f);
@@ -167,7 +171,7 @@ private:
 	std::multimap<std::string, std::shared_ptr<Friend>> mFriendsMapByUri;
 	std::array<unsigned char, 16> *mContentDigest = nullptr;
 	int mExpectedNotificationVersion;
-	unsigned int mStorageId = 0;
+	long long mStorageId = -1;
 	std::string mUri;
 	std::list<std::shared_ptr<Friend>> mDirtyFriendsToUpdate;
 	bctbx_list_t *mBctbxDirtyFriendsToUpdate = nullptr; // This field must be kept in sync with mDirtyFriendsToUpdate

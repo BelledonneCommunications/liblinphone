@@ -2403,12 +2403,8 @@ static void read_friends_from_rc(LinphoneCore *lc) {
 }
 
 static void ui_config_read(LinphoneCore *lc) {
-	if (!lc->friends_db) {
-		read_friends_from_rc(lc);
-	}
-#ifndef HAVE_DB_STORAGE
+	read_friends_from_rc(lc);
 	lc->call_logs = linphone_core_read_call_logs_from_config_file(lc);
-#endif
 }
 
 bool_t linphone_core_tunnel_available(void) {
@@ -3210,6 +3206,9 @@ static void linphone_core_init(LinphoneCore *lc,
 
 	ms_message("Initializing LinphoneCore %s", linphone_core_get_version());
 
+	// Needed so that mainDb does not exist during the init phase when the core has been stopped and then restarted
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb = nullptr;
+
 	lc->is_unreffing = FALSE;
 	lc->supported_encryptions = NULL;
 	lc->config = linphone_config_ref(config);
@@ -3773,7 +3772,7 @@ LinphoneFriendList *linphone_core_get_friend_list_by_name(const LinphoneCore *lc
 void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	bctbx_list_t *elem = bctbx_list_find(lc->friends_lists, list);
 	if (elem == NULL) return;
-	linphone_core_remove_friends_list_from_db(lc, list);
+	FriendList::toCpp(list)->removeFromDb();
 	linphone_core_notify_friend_list_removed(lc, list);
 	linphone_friend_list_unref(list);
 	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
@@ -3793,7 +3792,7 @@ void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
 void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	CoreLogContextualizer logContextualizer(lc);
 	lc->friends_lists = bctbx_list_append(lc->friends_lists, linphone_friend_list_ref(list));
-	linphone_core_store_friends_list_in_db(lc, list);
+	FriendList::toCpp(list)->saveInDb();
 	linphone_core_notify_friend_list_created(lc, list);
 }
 
@@ -8020,10 +8019,6 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 		ms_free(lc->rec_file);
 		lc->rec_file = NULL;
 	}
-	if (lc->friends_db_file) {
-		ms_free(lc->friends_db_file);
-		lc->friends_db_file = NULL;
-	}
 	if (lc->tls_key) {
 		ms_free(lc->tls_key);
 		lc->tls_key = NULL;
@@ -8048,7 +8043,6 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	linphone_core_free_payload_types(lc);
 	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
 	lc->supported_formats = NULL;
-	linphone_core_friends_storage_close(lc);
 	linphone_core_zrtp_cache_close(lc);
 	ms_bandwidth_controller_destroy(lc->bw_controller);
 	lc->bw_controller = NULL;

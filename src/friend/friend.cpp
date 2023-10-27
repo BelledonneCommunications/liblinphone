@@ -21,6 +21,8 @@
 #include <bctoolbox/defs.h>
 
 #include "address/address.h"
+#include "core/core-p.h"
+#include "db/main-db.h"
 #include "friend-list.h"
 #include "friend.h"
 #include "friend_phone_number.h"
@@ -171,7 +173,7 @@ void Friend::setPresenceModelForUriOrTel(const std::string &uriOrTel, const std:
 
 void Friend::setRefKey(const std::string &key) {
 	mRefKey = key;
-	if (mFriendList) save();
+	if (mFriendList) saveInDb();
 }
 
 void Friend::setStarred(bool starred) {
@@ -188,7 +190,7 @@ void Friend::setVcard(const std::shared_ptr<Vcard> &vcard) {
 	}
 
 	mVcard = vcard;
-	if (mFriendList) save();
+	if (mFriendList) saveInDb();
 }
 
 // -----------------------------------------------------------------------------
@@ -461,7 +463,6 @@ bool Friend::createVcard(const std::string &name) {
 	}
 
 	std::shared_ptr<Vcard> vcard = Vcard::create();
-	updateVcardValidation();
 	vcard->setFullName(name);
 	setVcard(vcard);
 	lDebug() << "VCard created for friend [" << toC() << "]";
@@ -481,7 +482,7 @@ void Friend::done() {
 		}
 	}
 	apply();
-	if (mFriendList) save();
+	if (mFriendList) saveInDb();
 }
 
 void Friend::edit() {
@@ -616,11 +617,6 @@ void Friend::removePhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneN
 	if (linphone_core_vcard_supported() && mVcard) {
 		mVcard->removePhoneNumberWithLabel(phoneNumber);
 	}
-}
-
-void Friend::save() {
-	LinphoneCore *lc = getCore()->getCCore();
-	if (lc->friends_db_file) linphone_core_store_friend_in_db(lc, toC());
 }
 
 bool Friend::subscribesEnabled() const {
@@ -874,6 +870,14 @@ void Friend::releaseOps() {
 	}
 }
 
+void Friend::removeFromDb() {
+#ifdef HAVE_DB_STORAGE
+	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->mainDb;
+	if (mainDb) mainDb->deleteFriend(getSharedFromThis());
+#endif
+	mStorageId = -1;
+}
+
 void Friend::removeFriendFromListMapIfAlreadyInIt(const std::string &uri) {
 	if (!mFriendList || uri.empty()) return;
 	for (auto [it, rangeEnd] = mFriendList->mFriendsMapByUri.equal_range(uri); it != rangeEnd;) {
@@ -889,6 +893,22 @@ void Friend::removeIncomingSubscription(SalOp *op) {
 		op->release();
 		mInSubs.erase(it);
 	}
+}
+
+void Friend::saveInDb() {
+	if (!mFriendList->databaseStorageEnabled()) return;
+	// The friend list store logic is hidden into the friend store logic
+	if (mFriendList->mStorageId < 0) {
+		lWarning() << "Trying to add a friend in db, but friend list isn't, let's do that first";
+		mFriendList->saveInDb();
+	}
+#ifdef HAVE_DB_STORAGE
+	try {
+		std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->mainDb;
+		if (mainDb) mStorageId = mainDb->insertFriend(getSharedFromThis());
+	} catch (std::bad_weak_ptr &) {
+	}
+#endif
 }
 
 const std::string &Friend::sipUriToPhoneNumber(const std::string &uri) const {
@@ -943,16 +963,6 @@ void Friend::updateSubscribes(bool onlyWhenRegistered) {
 	} else if (!canSubscribe && mOutSub) {
 		mSubscribeActive = false;
 		mOutSub->stopRefreshing();
-	}
-}
-
-void Friend::updateVcardValidation() {
-	if (!mVcard) return;
-	bool skip = linphone_core_get_friends_database_path(getCore()->getCCore()) == nullptr;
-	if (skip != mVcard->getSkipValidation()) {
-		if (skip) ms_warning("Skipping vCard validation");
-		else ms_message("vCard validation is enabled");
-		mVcard->setSkipValidation(skip);
 	}
 }
 

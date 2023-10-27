@@ -48,8 +48,12 @@
 #include "core/core-p.h"
 #include "event-log/event-log-p.h"
 #include "event-log/events.h"
+#include "friend/friend-list.h"
+#include "friend/friend.h"
 #include "main-db-key-p.h"
 #include "main-db-p.h"
+#include "vcard/vcard-context.h"
+#include "vcard/vcard.h"
 
 #ifdef HAVE_DB_STORAGE
 #include "internal/db-transaction.h"
@@ -72,7 +76,7 @@ LINPHONE_BEGIN_NAMESPACE
 #ifdef HAVE_DB_STORAGE
 namespace {
 constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 27);
-constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
+constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 1);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyCallLogsImport = makeVersion(1, 0, 0);
@@ -836,6 +840,96 @@ long long MainDbPrivate::insertOrUpdateConferenceCall(const std::shared_ptr<Call
 #endif
 }
 
+long long MainDbPrivate::insertOrUpdateFriend(const std::shared_ptr<Friend> &f) {
+#ifdef HAVE_DB_STORAGE
+	std::shared_ptr<Vcard> vcard = nullptr;
+	if (linphone_core_vcard_supported()) vcard = f->getVcard();
+
+	long long friendId = f->mStorageId;
+	long long friendListId = f->mFriendList->mStorageId;
+	int subscribePolicy = f->getIncSubscribePolicy();
+	int sendSubscribe = f->subscribesEnabled() ? 1 : 0;
+	std::string refKey = f->getRefKey();
+	std::string vcardStr = vcard ? vcard->asVcard4String() : "";
+	std::string vcardEtag = vcard ? vcard->getEtag() : "";
+	std::string vcardUrl = vcard ? vcard->getUrl() : "";
+	int presenceReceived = f->isPresenceReceived() ? 1 : 0;
+
+	std::shared_ptr<Address> addr = f->getAddress();
+	long long sipAddressId = -1;
+	soci::indicator sipAddressIndicator = soci::i_null;
+	if (addr) {
+		sipAddressId = insertSipAddress(addr);
+		sipAddressIndicator = soci::i_ok;
+	}
+
+	if (friendId > 0) {
+		lInfo() << "Update friend in database: " << f->getName();
+
+		*dbSession.getBackendSession()
+		    << "UPDATE friend SET "
+		       "friends_list_id = :friendListId, sip_address_id = :sipAddressId, subscribe_policy = :subscribePolicy, "
+		       "send_subscribe = :sendSubscribe, ref_key = :refKey, v_card = :vcardStr, v_card_etag = :vcardEtag, "
+		       "v_card_sync_uri = :vcardUrl, presence_received = :presenceReceived "
+		       "WHERE id = :friendId",
+		    soci::use(friendListId), soci::use(sipAddressId, sipAddressIndicator), soci::use(subscribePolicy),
+		    soci::use(sendSubscribe), soci::use(refKey), soci::use(vcardStr), soci::use(vcardEtag), soci::use(vcardUrl),
+		    soci::use(presenceReceived), soci::use(friendId);
+	} else {
+		lInfo() << "Insert new friend in database: " << f->getName();
+
+		*dbSession.getBackendSession() << "INSERT INTO friend ("
+		                                  "friends_list_id, sip_address_id, subscribe_policy, send_subscribe, ref_key, "
+		                                  "v_card, v_card_etag, v_card_sync_uri, presence_received"
+		                                  ") VALUES ("
+		                                  ":friendListId, :sipAddressId, :subscribePolicy, :sendSubscribe, :refKey, "
+		                                  ":vcardStr, :vcardEtag, :vcardUrl, :presenceReceived"
+		                                  ")",
+		    soci::use(friendListId), soci::use(sipAddressId, sipAddressIndicator), soci::use(subscribePolicy),
+		    soci::use(sendSubscribe), soci::use(refKey), soci::use(vcardStr), soci::use(vcardEtag), soci::use(vcardUrl),
+		    soci::use(presenceReceived);
+
+		friendId = dbSession.getLastInsertId();
+	}
+
+	return friendId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::insertOrUpdateFriendList(const std::shared_ptr<FriendList> &list) {
+#ifdef HAVE_DB_STORAGE
+	long long friendListId = list->mStorageId;
+	std::string name = list->getDisplayName();
+	std::string rlsUri = list->getRlsUri();
+	std::string syncUri = list->getUri();
+	int revision = list->mRevision;
+
+	if (friendListId > 0) {
+		*dbSession.getBackendSession() << "UPDATE friends_list SET "
+		                                  "name = :name, rls_uri = :rlsUri, sync_uri = :syncUri, revision = :revision "
+		                                  "WHERE id = :friendListId",
+		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(friendListId);
+	} else {
+		lInfo() << "Insert new friend list in database: " << name;
+
+		*dbSession.getBackendSession() << "INSERT INTO friends_list ("
+		                                  "name, rls_uri, sync_uri, revision"
+		                                  ") VALUES ("
+		                                  ":name, :rlsUri, :syncUri, :revision"
+		                                  ")",
+		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision);
+
+		friendListId = dbSession.getLastInsertId();
+	}
+
+	return friendListId;
+#else
+	return -1;
+#endif
+}
+
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::selectSipAddressId(const std::shared_ptr<Address> &address) const {
@@ -858,6 +952,19 @@ long long MainDbPrivate::selectSipAddressId(const string &sipAddress) const {
 	return session->got_data() ? sipAddressId : -1;
 #else
 	return -1;
+#endif
+}
+
+std::string MainDbPrivate::selectSipAddressFromId(long long sipAddressId) const {
+#ifdef HAVE_DB_STORAGE
+	std::string sipAddress;
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << Statements::get(Statements::SelectSipAddressFromId), soci::use(sipAddressId), soci::into(sipAddress);
+
+	return session->got_data() ? sipAddress : std::string();
+#else
+	return std::string();
 #endif
 }
 
@@ -2021,6 +2128,84 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 }
 #endif
 
+// ---------------------------------------------------------------------------
+// Friend API.
+// ---------------------------------------------------------------------------
+
+#ifdef HAVE_DB_STORAGE
+std::list<std::shared_ptr<Friend>> MainDbPrivate::getFriends(const std::shared_ptr<FriendList> &list) {
+	std::list<std::shared_ptr<Friend>> clList;
+	long long dbFriendListId = list->mStorageId;
+
+	soci::session *session = dbSession.getBackendSession();
+
+	soci::rowset<soci::row> rows =
+	    (session->prepare
+	         << "SELECT id, sip_address_id, subscribe_policy, send_subscribe, ref_key, v_card, v_card_etag, "
+	            "v_card_sync_uri, presence_received "
+	            "FROM friend "
+	            "WHERE friends_list_id = :dbFriendListId "
+	            "ORDER BY id",
+	     soci::use(dbFriendListId));
+	for (const auto &row : rows) {
+		auto f = selectFriend(row);
+		f->mFriendList = list.get();
+		f->addAddressesAndNumbersIntoMaps(list);
+		clList.push_back(f);
+	}
+
+	return clList;
+}
+
+std::shared_ptr<Friend> MainDbPrivate::selectFriend(const soci::row &row) const {
+	L_Q();
+
+	LinphoneCore *lc = q->getCore()->getCCore();
+	const long long &dbFriendId = dbSession.resolveId(row, 0);
+
+	std::shared_ptr<Friend> f;
+	const std::shared_ptr<Vcard> vcard = VcardContext::toCpp(lc->vcard_context)->getVcardFromBuffer(row.get<string>(5));
+	if (vcard) {
+		vcard->setEtag(row.get<string>(6));
+		vcard->setUrl(row.get<string>(7));
+		f = Friend::create(lc, vcard);
+	} else {
+		f = Friend::create(lc);
+		switch (row.get_indicator(1)) {
+			case soci::i_ok: {
+				long long addrId = dbSession.resolveId(row, 1);
+				std::shared_ptr<Address> addr = Address::create(selectSipAddressFromId(addrId));
+				if (addr) f->setAddress(addr);
+			} break;
+			case soci::i_null:
+			default:
+				break;
+		}
+	}
+
+	f->setIncSubscribePolicy(static_cast<LinphoneSubscribePolicy>(row.get<int>(2)));
+	f->enableSubscribes(!!row.get<int>(3));
+	f->setRefKey(row.get<string>(4));
+	f->mPresenceReceived = !!row.get<int>(8);
+	f->mStorageId = dbFriendId;
+
+	return f;
+}
+
+std::shared_ptr<FriendList> MainDbPrivate::selectFriendList(const soci::row &row) const {
+	const long long &dbFriendListId = dbSession.resolveId(row, 0);
+	std::shared_ptr<FriendList> friendList = FriendList::create(nullptr);
+	friendList->mStoreInDb = true; // Obviously
+	friendList->mStorageId = dbFriendListId;
+	friendList->setDisplayName(row.get<string>(1));
+	friendList->setRlsUri(row.get<string>(2));
+	friendList->setUri(row.get<string>(3));
+	friendList->mRevision = row.get<int>(4);
+
+	return friendList;
+}
+#endif
+
 // -----------------------------------------------------------------------------
 // Cache API.
 // -----------------------------------------------------------------------------
@@ -2604,6 +2789,43 @@ void MainDbPrivate::updateSchema() {
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 
+	if (getModuleVersion("friends") < makeVersion(1, 0, 1)) {
+		// The sip_address_id field needs to be nullable.
+		// Do not try to copy data from the old table because it was not used before this version (use of an other
+		// database external to the mainDb)
+		*session << "DROP TABLE IF EXISTS friend";
+
+		*session << "CREATE TABLE IF NOT EXISTS friend ("
+		            "  id" +
+		                dbSession.primaryKeyStr("INT UNSIGNED") +
+		                ","
+
+		                "  sip_address_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NULL,"
+		                "  friends_list_id" +
+		                dbSession.primaryKeyRefStr("INT UNSIGNED") +
+		                " NOT NULL,"
+
+		                "  subscribe_policy TINYINT UNSIGNED NOT NULL,"
+		                "  send_subscribe BOOLEAN NOT NULL,"
+		                "  presence_received BOOLEAN NOT NULL,"
+		                "  ref_key VARCHAR(255),"
+
+		                "  v_card MEDIUMTEXT,"
+		                "  v_card_etag VARCHAR(255),"
+		                "  v_card_sync_uri VARCHAR(2047),"
+
+		                "  FOREIGN KEY (sip_address_id)"
+		                "    REFERENCES sip_address(id)"
+		                "    ON DELETE CASCADE,"
+		                "  FOREIGN KEY (friends_list_id)"
+		                "    REFERENCES friends_list(id)"
+		                "    ON DELETE CASCADE"
+		                ") " +
+		                charset;
+	}
+
 #endif
 }
 
@@ -2673,31 +2895,31 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 				friendsListId = it->second;
 			}
 
+			long long sipAddressId = -1;
+			soci::indicator sipAddressIndicator = soci::i_null;
 			const auto legacyFriendAddress = Address::create(friendInfo.get<string>(LegacyFriendColSipAddress, ""));
-			const long long &sipAddressId = insertSipAddress(legacyFriendAddress);
+			if (legacyFriendAddress) {
+				sipAddressId = insertSipAddress(legacyFriendAddress);
+				sipAddressIndicator = soci::i_ok;
+			}
 			const int &subscribePolicy = friendInfo.get<int>(LegacyFriendColSubscribePolicy, LinphoneSPAccept);
 			const int &sendSubscribe = friendInfo.get<int>(LegacyFriendColSendSubscribe, 1);
+			const string &refKey = friendInfo.get<string>(LegacyFriendColRefKey, "");
 			const string &vCard = friendInfo.get<string>(LegacyFriendColVCard, "");
 			const string &vCardEtag = friendInfo.get<string>(LegacyFriendColVCardEtag, "");
 			const string &vCardSyncUri = friendInfo.get<string>(LegacyFriendColVCardSyncUri, "");
 			const int &presenceReveived = friendInfo.get<int>(LegacyFriendColPresenceReceived, 0);
 
 			*session << "INSERT INTO friend ("
-			            "  sip_address_id, friends_list_id, subscribe_policy, send_subscribe,"
+			            "  sip_address_id, friends_list_id, subscribe_policy, send_subscribe, ref_key,"
 			            "  presence_received, v_card, v_card_etag, v_card_sync_uri"
 			            ") VALUES ("
-			            "  :sipAddressId, :friendsListId, :subscribePolicy, :sendSubscribe,"
+			            "  :sipAddressId, :friendsListId, :subscribePolicy, :sendSubscribe, :refKey,"
 			            "  :presenceReceived, :vCard, :vCardEtag, :vCardSyncUri"
 			            ")",
-			    soci::use(sipAddressId), soci::use(friendsListId), soci::use(subscribePolicy), soci::use(sendSubscribe),
-			    soci::use(presenceReveived), soci::use(vCard), soci::use(vCardEtag), soci::use(vCardSyncUri);
-
-			bool isNull;
-			const string &data = getValueFromRow<string>(friendInfo, LegacyFriendColRefKey, isNull);
-			if (!isNull)
-				*session << "INSERT INTO friend_app_data (friend_id, name, data) VALUES"
-				            " (:friendId, 'legacy', :data)",
-				    soci::use(dbSession.getLastInsertId()), soci::use(data);
+			    soci::use(sipAddressId, sipAddressIndicator), soci::use(friendsListId), soci::use(subscribePolicy),
+			    soci::use(sendSubscribe), soci::use(refKey), soci::use(presenceReveived), soci::use(vCard),
+			    soci::use(vCardEtag), soci::use(vCardSyncUri);
 		}
 		tr.commit();
 		lInfo() << "Successful import of legacy friends.";
@@ -6041,6 +6263,135 @@ int MainDb::getCallHistorySize() {
 
 // -----------------------------------------------------------------------------
 
+long long MainDb::insertFriend(const std::shared_ptr<Friend> &f) {
+#ifdef HAVE_DB_STORAGE
+	return L_DB_TRANSACTION {
+		L_D();
+
+		long long id = d->insertOrUpdateFriend(f);
+		tr.commit();
+
+		return id;
+	};
+#else
+	return -1;
+#endif
+}
+
+long long MainDb::insertFriendList(const std::shared_ptr<FriendList> &list) {
+#ifdef HAVE_DB_STORAGE
+	return L_DB_TRANSACTION {
+		L_D();
+
+		long long id = d->insertOrUpdateFriendList(list);
+		tr.commit();
+
+		return id;
+	};
+#else
+	return -1;
+#endif
+}
+
+void MainDb::deleteFriend(const std::shared_ptr<Friend> &f) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		long long dbFriendId = f->mStorageId;
+		*d->dbSession.getBackendSession() << "DELETE FROM friend WHERE id = :dbFriendId", soci::use(dbFriendId);
+		tr.commit();
+	};
+#endif
+}
+
+void MainDb::deleteFriendList(const std::shared_ptr<FriendList> &list) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		long long dbFriendListId = list->mStorageId;
+		*d->dbSession.getBackendSession() << "DELETE FROM friends_list WHERE id = :dbFriendListId",
+		    soci::use(dbFriendListId);
+		tr.commit();
+	};
+#endif
+}
+
+void MainDb::deleteFriendList(const std::string &name) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		*d->dbSession.getBackendSession() << "DELETE FROM friends_list WHERE name = :name", soci::use(name);
+		tr.commit();
+	};
+#endif
+}
+
+void MainDb::deleteOrphanFriends() {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		*d->dbSession.getBackendSession()
+		    << "DELETE FROM friend WHERE friends_list_id NOT IN (SELECT id from friends_list)";
+		tr.commit();
+	};
+#endif
+}
+
+std::list<std::shared_ptr<Friend>> MainDb::getFriends(const std::shared_ptr<FriendList> &list) {
+#ifdef HAVE_DB_STORAGE
+	DurationLogger durationLogger("Get friends.");
+
+	if (list->mStorageId < 0) return std::list<std::shared_ptr<Friend>>();
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		std::list<std::shared_ptr<Friend>> clList = d->getFriends(list);
+		tr.commit();
+
+		return clList;
+	};
+#else
+	return std::list<std::shared_ptr<Friend>>();
+#endif
+}
+
+std::list<std::shared_ptr<FriendList>> MainDb::getFriendLists() {
+#ifdef HAVE_DB_STORAGE
+	DurationLogger durationLogger("Get friend lists.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		std::list<std::shared_ptr<FriendList>> clList;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows =
+		    (session->prepare << "SELECT id, name, rls_uri, sync_uri, revision FROM friends_list ORDER BY id");
+		for (const auto &row : rows) {
+			auto list = d->selectFriendList(row);
+			list->setCore(getCore());
+			auto friends = d->getFriends(list);
+			list->setFriends(friends);
+			clList.push_back(list);
+		}
+
+		tr.commit();
+
+		return clList;
+	};
+#else
+	return std::list<std::shared_ptr<FriendList>>();
+#endif
+}
+
+// -----------------------------------------------------------------------------
+
 bool MainDb::import(Backend, const string &parameters) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
@@ -6054,9 +6405,7 @@ bool MainDb::import(Backend, const string &parameters) {
 		return false;
 	}
 
-	// TODO: Remove condition after cpp migration in friends/friends list.
-	if (false) d->importLegacyFriends(inDbSession);
-
+	d->importLegacyFriends(inDbSession);
 	d->importLegacyHistory(inDbSession);
 	d->importLegacyCallLogs(inDbSession);
 

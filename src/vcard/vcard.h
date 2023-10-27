@@ -61,7 +61,6 @@ public:
 	void setJobTitle(const std::string &jobTitle);
 	void setOrganization(const std::string &organization);
 	void setPhoto(const std::string &picture);
-	void setSkipValidation(bool skip);
 	void setUid(const std::string &uid);
 	void setUrl(const std::string &url);
 
@@ -77,7 +76,6 @@ public:
 	std::list<std::shared_ptr<FriendPhoneNumber>> getPhoneNumbersWithLabel() const;
 	const std::string &getPhoto() const;
 	const std::list<std::shared_ptr<Address>> &getSipAddresses() const;
-	bool getSkipValidation() const;
 	const std::string &getUid() const;
 	const std::string &getUrl() const;
 

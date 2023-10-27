@@ -44,6 +44,8 @@ class AbstractChatRoom;
 class ChatMessage;
 class Core;
 class EventLog;
+class Friend;
+class FriendList;
 class MainDbKey;
 class MainDbPrivate;
 class ParticipantDevice;
@@ -236,6 +238,18 @@ public:
 	void deleteCallHistoryForLocalAddress(const std::shared_ptr<Address> &localAddress);
 
 	int getCallHistorySize();
+
+	// ---------------------------------------------------------------------------
+	// Friend & FriendList.
+	// ---------------------------------------------------------------------------
+	long long insertFriend(const std::shared_ptr<Friend> &f);
+	long long insertFriendList(const std::shared_ptr<FriendList> &list);
+	void deleteFriend(const std::shared_ptr<Friend> &f);
+	void deleteFriendList(const std::shared_ptr<FriendList> &list);
+	void deleteFriendList(const std::string &name);
+	void deleteOrphanFriends();
+	std::list<std::shared_ptr<Friend>> getFriends(const std::shared_ptr<FriendList> &list);
+	std::list<std::shared_ptr<FriendList>> getFriendLists();
 
 	// ---------------------------------------------------------------------------
 	// Other.

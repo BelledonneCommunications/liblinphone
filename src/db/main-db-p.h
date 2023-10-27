@@ -95,9 +95,12 @@ private:
 
 	long long insertOrUpdateConferenceCall(const std::shared_ptr<CallLog> &callLog,
 	                                       const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
+	long long insertOrUpdateFriend(const std::shared_ptr<Friend> &f);
+	long long insertOrUpdateFriendList(const std::shared_ptr<FriendList> &list);
 
 	long long selectSipAddressId(const std::string &sipAddress) const;
 	long long selectSipAddressId(const std::shared_ptr<Address> &address) const;
+	std::string selectSipAddressFromId(long long sipAddressId) const;
 	long long selectChatRoomId(long long peerSipAddressId, long long localSipAddressId) const;
 	long long selectChatRoomId(const ConferenceId &conferenceId) const;
 	ConferenceId selectConferenceId(const long long chatRoomId) const;
@@ -202,6 +205,16 @@ private:
 
 #ifdef HAVE_DB_STORAGE
 	std::shared_ptr<ConferenceInfo> selectConferenceInfo(const soci::row &row);
+#endif
+
+	// ---------------------------------------------------------------------------
+	// Friend API.
+	// ---------------------------------------------------------------------------
+
+#ifdef HAVE_DB_STORAGE
+	std::list<std::shared_ptr<Friend>> getFriends(const std::shared_ptr<FriendList> &list);
+	std::shared_ptr<Friend> selectFriend(const soci::row &row) const;
+	std::shared_ptr<FriendList> selectFriendList(const soci::row &row) const;
 #endif
 
 	// ---------------------------------------------------------------------------

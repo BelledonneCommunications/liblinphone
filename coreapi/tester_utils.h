@@ -192,13 +192,13 @@ LINPHONE_PUBLIC void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, 
 LINPHONE_PUBLIC int _linphone_chat_room_get_transient_message_count(const LinphoneChatRoom *cr);
 LINPHONE_PUBLIC LinphoneChatMessage *_linphone_chat_room_get_first_transient_message(const LinphoneChatRoom *cr);
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
-LINPHONE_PUBLIC MSList *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_friend_invalidate_subscription(LinphoneFriend *lf);
 LINPHONE_PUBLIC void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_registered);
 LINPHONE_PUBLIC bctbx_list_t *linphone_friend_get_insubs(const LinphoneFriend *fr);
 LINPHONE_PUBLIC int linphone_friend_list_get_expected_notification_version(const LinphoneFriendList *list);
-LINPHONE_PUBLIC unsigned int linphone_friend_list_get_storage_id(const LinphoneFriendList *list);
-LINPHONE_PUBLIC unsigned int linphone_friend_get_storage_id(const LinphoneFriend *lf);
+LINPHONE_PUBLIC long long linphone_friend_list_get_storage_id(const LinphoneFriendList *list);
+LINPHONE_PUBLIC long long linphone_friend_get_storage_id(const LinphoneFriend *lf);
 LINPHONE_PUBLIC LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf);
 LINPHONE_PUBLIC bctbx_list_t **linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl);
