@@ -1800,7 +1800,7 @@ static void call_accepting_all_encryptions(void) {
 }
 
 test_t call_secure_tests[] = {
-    TEST_NO_TAG("SRTP call", srtp_call),
+    TEST_ONE_TAG("SRTP call", srtp_call, "CRYPTO"),
     TEST_NO_TAG("SRTP call with non zero crypto suite tag", srtp_call_non_zero_tag),
 #ifdef VIDEO_ENABLED
     TEST_NO_TAG("SRTP call with several video switches", srtp_call_with_several_video_switches),
@@ -1818,7 +1818,7 @@ test_t call_secure_tests[] = {
                 srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_3),
     TEST_NO_TAG("SRTP call with crypto suite parameters and mandatory encryption 4",
                 srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_4),
-    TEST_NO_TAG("ZRTP call", zrtp_call),
+    TEST_ONE_TAG("ZRTP call", zrtp_call, "CRYPTO"),
 #ifdef VIDEO_ENABLED
     TEST_NO_TAG("ZRTP call with several video switches", zrtp_call_with_several_video_switches),
     TEST_NO_TAG("ZRTP to none call with several video switches", zrtp_to_none_call_with_several_video_switches),
@@ -1826,12 +1826,12 @@ test_t call_secure_tests[] = {
 #endif // VIDEO_ENABLED
     TEST_NO_TAG("ZRTP silent call", zrtp_silent_call),
     TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
-    TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
-    TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
+    TEST_ONE_TAG("ZRTP Cipher call", zrtp_cipher_call, "CRYPTO"),
+    TEST_ONE_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call, "CRYPTO"),
     TEST_NO_TAG("ZRTP Post Quantum Key Agreement call", zrtp_post_quantum_key_agreement_call),
     TEST_NO_TAG("ZRTP Hash call", zrtp_hash_call),
-    TEST_NO_TAG("ZRTP Authentication tag call", zrtp_authtag_call),
-    TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
+    TEST_ONE_TAG("ZRTP Authentication tag call", zrtp_authtag_call, "CRYPTO"),
+    TEST_TWO_TAGS("DTLS SRTP call", dtls_srtp_call, "DTLS", "CRYPTO"),
 #ifdef VIDEO_ENABLED
     TEST_ONE_TAG("DTLS SRTP call with several video switches", dtls_srtp_call_with_several_video_switches, "DTLS"),
     TEST_ONE_TAG("DTLS SRTP to none call with several video switches",
@@ -1861,7 +1861,7 @@ test_t call_secure_tests[] = {
     TEST_ONE_TAG("DTLS-SRTP call with rtcp-mux", dtls_srtp_audio_call_with_rtcp_mux, "DTLS"),
     TEST_ONE_TAG("DTLS-SRTP call with rtcp-mux not accepted", dtls_srtp_audio_call_with_rtcp_mux_not_accepted, "DTLS"),
     TEST_NO_TAG("Call accepting all encryptions", call_accepting_all_encryptions),
-    TEST_NO_TAG("EKT call", ekt_call),
+    TEST_ONE_TAG("EKT call", ekt_call, "CRYPTO"),
     TEST_NO_TAG("EKT call with unmatching keys", unmatching_ekt_call),
     TEST_NO_TAG("EKT call with EKT key update", updating_ekt_call)};
 

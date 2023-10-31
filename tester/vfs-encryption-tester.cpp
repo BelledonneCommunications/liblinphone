@@ -607,9 +607,9 @@ static void file_transfer_test() {
 	file_transfer_test(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, false, "evfs_file_transfer");
 	bctbx_free(id);
 }
-test_t vfs_encryption_tests[] = {TEST_NO_TAG("Register user", register_user_test),
-                                 TEST_NO_TAG("ZRTP call", zrtp_call_test), TEST_NO_TAG("Migration", migration_test),
-                                 TEST_NO_TAG("File transfer", file_transfer_test)};
+test_t vfs_encryption_tests[] = {
+    TEST_ONE_TAG("Register user", register_user_test, "CRYPTO"), TEST_ONE_TAG("ZRTP call", zrtp_call_test, "CRYPTO"),
+    TEST_ONE_TAG("Migration", migration_test, "CRYPTO"), TEST_ONE_TAG("File transfer", file_transfer_test, "CRYPTO")};
 
 test_suite_t vfs_encryption_test_suite = {"VFS encryption",
                                           NULL,

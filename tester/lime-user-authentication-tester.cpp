@@ -464,19 +464,23 @@ static void invalid_lime_server_in_account(void) {
 }
 
 test_t lime_server_auth_tests[] = {
-    TEST_ONE_TAG("Invalid LIME server in account parameters", invalid_lime_server_in_account, "LimeX3DH"),
-    TEST_ONE_TAG("sip:uri in altname DNS", identity_in_altName_one_DNS_entry, "LimeX3DH"),
-    TEST_ONE_TAG("sip:uri in subject CN", identity_in_subject_CN, "LimeX3DH"),
-    TEST_ONE_TAG("sip:uri in altname DNS with multiple entries", identity_in_altName_multiple_DNS_entry, "LimeX3DH"),
-    TEST_ONE_TAG("Try to use a revoked certificate", revoked_certificate, "LimeX3DH"),
-    TEST_ONE_TAG("TLS optional server log using digest auth", TLS_optional_No_certificate, "LimeX3DH"),
-    TEST_ONE_TAG("TLS mandatory, no certificate", TLS_mandatory_No_certificate, "LimeX3DH"),
-    TEST_ONE_TAG("CN and From mismatch on TLS mandatory server", TLS_mandatory_CN_UserId_mismatch, "LimeX3DH"),
-    TEST_ONE_TAG("CN and From mismatch on TLS optional server", TLS_optional_CN_UserId_mismatch, "LimeX3DH"),
-    TEST_ONE_TAG(
-        "Connect two users with client certificate to TLS mandatory server", TLS_mandatory_two_users, "LimeX3DH"),
-    TEST_ONE_TAG("Digest Auth - multiple domains", Digest_Auth_multidomains, "LimeX3DH"),
-    TEST_ONE_TAG("Digest Auth - multiple servers", Digest_Auth_multiservers, "LimeX3DH"),
+    TEST_TWO_TAGS("Invalid LIME server in account parameters", invalid_lime_server_in_account, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("sip:uri in altname DNS", identity_in_altName_one_DNS_entry, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("sip:uri in subject CN", identity_in_subject_CN, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS(
+        "sip:uri in altname DNS with multiple entries", identity_in_altName_multiple_DNS_entry, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("Try to use a revoked certificate", revoked_certificate, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("TLS optional server log using digest auth", TLS_optional_No_certificate, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("TLS mandatory, no certificate", TLS_mandatory_No_certificate, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS(
+        "CN and From mismatch on TLS mandatory server", TLS_mandatory_CN_UserId_mismatch, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("CN and From mismatch on TLS optional server", TLS_optional_CN_UserId_mismatch, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("Connect two users with client certificate to TLS mandatory server",
+                  TLS_mandatory_two_users,
+                  "LimeX3DH",
+                  "CRYPTO"),
+    TEST_TWO_TAGS("Digest Auth - multiple domains", Digest_Auth_multidomains, "LimeX3DH", "CRYPTO"),
+    TEST_TWO_TAGS("Digest Auth - multiple servers", Digest_Auth_multiservers, "LimeX3DH", "CRYPTO"),
 };
 
 test_suite_t lime_server_auth_test_suite = {"Lime server user authentication",

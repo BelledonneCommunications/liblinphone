@@ -5383,7 +5383,7 @@ static void group_chat_lime_x3dh_session_corrupted_no_imdn(void) {
 test_t secure_group_chat_tests[] = {
     TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
     TEST_ONE_TAG("LIME X3DH change server url", group_chat_lime_x3dh_change_server_url, "LimeX3DH"),
-    TEST_ONE_TAG("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH"),
+    TEST_TWO_TAGS("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH", "CRYPTO"),
     TEST_ONE_TAG("LIME X3DH encrypted chatrooms, Lime server URL set at core level(legacy)",
                  group_chat_lime_x3dh_encrypted_chatrooms_corelevel_lime_server_url,
                  "LimeX3DH"),
@@ -5444,7 +5444,7 @@ test_t secure_message_tests[] = {
     TEST_ONE_TAG("LIME X3DH message to devices with and without keys on server",
                  group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys,
                  "LimeX3DH"),
-    TEST_ONE_TAG("LIME X3DH send encrypted file", group_chat_lime_x3dh_send_encrypted_file, "LimeX3DH"),
+    TEST_TWO_TAGS("LIME X3DH send encrypted file", group_chat_lime_x3dh_send_encrypted_file, "LimeX3DH", "CRYPTO"),
     TEST_TWO_TAGS("LIME X3DH send encrypted file with core restart",
                   group_chat_lime_x3dh_send_encrypted_file_with_core_restart,
                   "LimeX3DH",
