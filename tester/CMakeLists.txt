@@ -129,6 +129,7 @@ set(DB_FILES
 	db/linphone.db
 	db/messages.db
 	db/chatrooms.db
+	db/chatroom_conference.db
 )
 
 set(RC_FILES

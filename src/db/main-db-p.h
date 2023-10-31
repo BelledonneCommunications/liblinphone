@@ -76,15 +76,22 @@ private:
 	long long insertConferenceInfo(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
 	                               const std::shared_ptr<ConferenceInfo> &oldConferenceInfo);
 	long long insertOrUpdateConferenceInfoParticipant(long long conferenceInfoId,
+	                                                  const std::shared_ptr<ParticipantInfo> &participantInfo,
+	                                                  bool deleted,
+	                                                  bool isOrganizer,
+	                                                  bool isParticipant);
+	long long insertOrUpdateConferenceInfoParticipant(long long conferenceInfoId,
 	                                                  long long participantSipAddressId,
 	                                                  bool deleted,
 	                                                  const ParticipantInfo::participant_params_t params,
-	                                                  bool isOrganizer);
+	                                                  bool isOrganizer,
+	                                                  bool isParticipant);
 	long long insertOrUpdateConferenceInfoOrganizer(long long conferenceInfoId,
 	                                                long long organizerSipAddressId,
-	                                                const ParticipantInfo::participant_params_t params);
+	                                                const ParticipantInfo::participant_params_t params,
+	                                                bool isParticipant);
 	void insertOrUpdateConferenceInfoParticipantParams(long long conferenceInfoParticipantId,
-	                                                   const ParticipantInfo::participant_params_t params);
+	                                                   const ParticipantInfo::participant_params_t params) const;
 
 	long long insertOrUpdateConferenceCall(const std::shared_ptr<CallLog> &callLog,
 	                                       const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
@@ -97,9 +104,7 @@ private:
 	long long selectChatRoomParticipantId(long long chatRoomId, long long participantSipAddressId) const;
 	long long selectOneToOneChatRoomId(long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const;
 	long long selectConferenceInfoId(long long uriSipAddressId);
-	long long selectConferenceInfoParticipantId(long long conferenceInfoId,
-	                                            long long participantSipAddressId,
-	                                            bool isOrganizer) const;
+	long long selectConferenceInfoParticipantId(long long conferenceInfoId, long long participantSipAddressId) const;
 	long long selectConferenceCallId(const std::string &callId);
 
 	void deleteContents(long long chatMessageId);
@@ -196,7 +201,7 @@ private:
 	// ---------------------------------------------------------------------------
 
 #ifdef HAVE_DB_STORAGE
-	std::shared_ptr<ConferenceInfo> selectConferenceInfo(const soci::row &row) const;
+	std::shared_ptr<ConferenceInfo> selectConferenceInfo(const soci::row &row);
 #endif
 
 	// ---------------------------------------------------------------------------

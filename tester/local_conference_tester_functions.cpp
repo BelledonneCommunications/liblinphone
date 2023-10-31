@@ -1690,7 +1690,6 @@ void compare_conference_infos(const LinphoneConferenceInfo *info1,
 
 		const int duration1_m = linphone_conference_info_get_duration(info1);
 		const int duration2_m = linphone_conference_info_get_duration(info2);
-		//		BC_ASSERT_EQUAL(duration_m, ((duration < 0) ? 0 : duration), int, "%d");
 		BC_ASSERT_EQUAL(duration1_m, duration2_m, int, "%d");
 
 		const char *subject1 = linphone_conference_info_get_subject(info1);

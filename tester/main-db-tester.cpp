@@ -274,7 +274,7 @@ static void get_chat_rooms() {
 	if (mainDb.isInitialized()) {
 		std::string utf8Txt = "Héllo world ! Welcome to ベルドンヌ通信.";
 		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
-		BC_ASSERT_EQUAL((int)chatRooms.size(), 86, int, "%d");
+		BC_ASSERT_EQUAL(chatRooms.size(), 86, size_t, "%zu");
 
 		list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
 		shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
@@ -354,6 +354,7 @@ static void get_chat_rooms() {
 		BC_FAIL("Database not initialized");
 	}
 }
+
 static void load_a_lot_of_chatrooms(void) {
 	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 	MainDbProvider provider("db/chatrooms.db");
@@ -366,6 +367,20 @@ static void load_a_lot_of_chatrooms(void) {
 #endif
 }
 
+static void load_chatroom_conference(void) {
+	MainDbProvider provider("db/chatroom_conference.db");
+	MainDb &mainDb = provider.getMainDb();
+	if (mainDb.isInitialized()) {
+		list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
+		BC_ASSERT_EQUAL(chatRooms.size(), 1, size_t, "%zu");
+
+		list<shared_ptr<ConferenceInfo>> conferenceInfos = mainDb.getConferenceInfos();
+		BC_ASSERT_EQUAL(conferenceInfos.size(), 1, size_t, "%zu");
+	} else {
+		BC_FAIL("Database not initialized");
+	}
+}
+
 test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
                           TEST_NO_TAG("Get messages count", get_messages_count),
                           TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
@@ -373,7 +388,8 @@ test_t main_db_tests[] = {TEST_NO_TAG("Get events count", get_events_count),
                           TEST_NO_TAG("Get conference events", get_conference_notified_events),
                           TEST_NO_TAG("Get chat rooms", get_chat_rooms),
                           TEST_NO_TAG("Set/get conference info", set_get_conference_info),
-                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)};
+                          TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms),
+                          TEST_NO_TAG("Load chatroom and conference", load_chatroom_conference)};
 
 test_suite_t main_db_test_suite = {"MainDb",
                                    NULL,
