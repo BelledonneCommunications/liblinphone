@@ -195,34 +195,24 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 
 	const size_t resultMediaDescriptionStreamNb =
 	    (params.resultMediaDescription) ? params.resultMediaDescription->streams.size() : 0;
-	for (size_t index = 0; index < mStreams.size(); ++index) {
+	for (size_t index = 0; index < mStreams.size() && index < resultMediaDescriptionStreamNb; ++index) {
 		auto &stream = mStreams[index];
 		if (!stream) continue;
-		Stream *streamPtr = stream.get();
-		if (index >= resultMediaDescriptionStreamNb) {
-			lInfo() << "StreamsGroup " << this << " deleting " << *stream
-			        << " because the negotiated media description has no stream at index " << index << " (it has only "
-			        << resultMediaDescriptionStreamNb << " streams)";
-			streamPtr->stop();
-			mStreams[index].reset(nullptr);
-		} else {
-			lInfo() << "StreamsGroup " << this << " rendering " << *stream;
-			params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
+		lInfo() << "StreamsGroup " << this << " rendering " << *stream;
+		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
 
-			if (params.localStreamDescriptionChanges) {
-				const std::string differences =
-				    SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
-				lInfo() << "Local stream description has changed: " << differences;
-			}
-			if (params.resultStreamDescriptionChanges) {
-				const std::string differences =
-				    SalMediaDescription::printDifferences(params.resultStreamDescriptionChanges);
-				lInfo() << "Result stream description has changed: " << differences;
-			}
-			if (streamPtr->getState() == Stream::Preparing) streamPtr->finishPrepare();
-
-			streamPtr->render(params, targetState);
+		if (params.localStreamDescriptionChanges) {
+			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
+			lInfo() << "Local stream description has changed: " << differences;
 		}
+		if (params.resultStreamDescriptionChanges) {
+			const std::string differences =
+			    SalMediaDescription::printDifferences(params.resultStreamDescriptionChanges);
+			lInfo() << "Result stream description has changed: " << differences;
+		}
+		if (stream->getState() == Stream::Preparing) stream->finishPrepare();
+
+		stream->render(params, targetState);
 	}
 	if (!mBandwidthReportTimer) {
 		mBandwidthReportTimer = getCore().createTimer(
@@ -249,6 +239,17 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 			stream->startDtls(params);
 		}
 	}
+
+	for (size_t index = resultMediaDescriptionStreamNb; index < mStreams.size(); ++index) {
+		auto &stream = mStreams[index];
+		if (!stream) continue;
+		lInfo() << "StreamsGroup " << this << " deleting " << *stream
+		        << " because the negotiated media description has no stream at index " << index << " (it has only "
+		        << resultMediaDescriptionStreamNb << " streams)";
+		stream->stop();
+		stream.reset(nullptr);
+	}
+
 	/* Save the state of the offer-answer, so that we are later able to monitor differences in next render() calls. */
 	mCurrentOfferAnswerState.dupFrom(params);
 	mCurrentSessionState = targetState;
