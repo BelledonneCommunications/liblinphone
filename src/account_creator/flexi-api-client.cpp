@@ -22,7 +22,7 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
-#include "linphone/FlexiAPIClient.hh"
+#include "linphone/flexi-api-client.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
@@ -30,6 +30,7 @@
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
 
+#include "core_private.h"
 #include "private.h"
 
 #include <algorithm>
@@ -37,8 +38,9 @@
 #include <json/json.h>
 #include <string>
 
-using namespace LinphonePrivate;
 using namespace std;
+
+LINPHONE_BEGIN_NAMESPACE
 
 Json::Value FlexiAPIClient::Response::json() {
 	JSONCPP_STRING err;
@@ -551,3 +553,5 @@ string FlexiAPIClient::urlEncode(const string &value) {
 
 	return escaped.str();
 }
+
+LINPHONE_END_NAMESPACE

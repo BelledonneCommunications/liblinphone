@@ -24,7 +24,6 @@
 #include <functional>
 #include <json/json.h>
 
-using namespace LinphonePrivate;
 using namespace std;
 
 struct belle_http_response_event;
@@ -32,6 +31,8 @@ struct belle_sip_auth_event;
 
 typedef struct belle_http_response_event belle_http_response_event_t;
 typedef struct belle_sip_auth_event belle_sip_auth_event_t;
+
+LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
 public:
@@ -162,3 +163,5 @@ private:
 	static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept;
 	string urlEncode(const string &value);
 };
+
+LINPHONE_END_NAMESPACE

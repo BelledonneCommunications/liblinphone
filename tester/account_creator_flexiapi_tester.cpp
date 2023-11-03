@@ -20,7 +20,7 @@
 
 #include "bctoolbox/defs.h"
 
-#include "linphone/FlexiAPIClient.hh"
+#include "linphone/flexi-api-client.h"
 
 #include "account/account-params.h"
 #include "core/core.h"
@@ -67,7 +67,7 @@ static void account_delete_on_api(LinphoneCore *core, string username, string pa
 	    linphone_factory_create_auth_info(linphone_factory_get(), username.c_str(), "", password.c_str(), "", "", "");
 	linphone_core_add_auth_info(core, authInfo);
 
-	auto flexiAPIClient = make_shared<FlexiAPIClient>(core);
+	auto flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(core);
 	flexiAPIClient->accountDelete();
 
 	linphone_address_unref(addr);
@@ -176,7 +176,7 @@ static void server_account_delete(void) {
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator),
 	                                               (void *)LinphoneAccountCreatorStatusRequestOk);
 
-	// The following parameters are useless for the FlexiAPI endpoint
+	// The following parameters are useless for the LinphonePrivate::FlexiAPI endpoint
 	linphone_account_creator_set_username(creator, linphone_address_get_username(marie->identity));
 	linphone_account_creator_set_email(creator, "user_2@linphone.org");
 	linphone_account_creator_set_password(creator, "password");
@@ -317,7 +317,7 @@ static void server_account_created_with_email(void) {
 }
 
 static string obtain_auth_token(LinphoneCoreManager *mgr) {
-	auto flexiAPIClient = make_shared<FlexiAPIClient>(mgr->lc);
+	auto flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(mgr->lc);
 	flexiAPIClient->useTestAdminAccount(true);
 
 	int code = 0;
@@ -325,11 +325,12 @@ static string obtain_auth_token(LinphoneCoreManager *mgr) {
 	string token;
 
 	// Create the account
-	flexiAPIClient->sendAccountCreationToken()->then([&code, &fetched, &token](FlexiAPIClient::Response response) {
-		code = response.code;
-		fetched = 1;
-		token = response.json()["token"].asString();
-	});
+	flexiAPIClient->sendAccountCreationToken()->then(
+	    [&code, &fetched, &token](LinphonePrivate::FlexiAPIClient::Response response) {
+		    code = response.code;
+		    fetched = 1;
+		    token = response.json()["token"].asString();
+	    });
 
 	wait_for_until(mgr->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 201, int, "%d");
@@ -410,4 +411,3 @@ test_suite_t account_creator_flexiapi_test_suite = {"Account creator FlexiAPI",
                                                         sizeof(account_creator_flexiapi_tests[0]),
                                                     account_creator_flexiapi_tests,
                                                     0};
-

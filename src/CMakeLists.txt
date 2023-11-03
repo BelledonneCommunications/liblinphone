@@ -537,7 +537,7 @@ endif()
 if (ENABLE_FLEXIAPI)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
 		account_creator/connector_flexiapi.cpp
-		FlexiAPIClient.cc
+		account_creator/flexi-api-client.cpp
 	)
 endif()
 

@@ -21,7 +21,7 @@
 #include "object/clonable-object-p.h"
 #include "object/clonable-object.h"
 
-#include "linphone/FlexiAPIClient.hh"
+#include "linphone/flexi-api-client.h"
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -33,17 +33,18 @@ using namespace Json;
 static void flexiapiPing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
-	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	auto flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
 
 	string resolvedContent;
 	int code = 0;
 	int fetched = 0;
 
-	flexiAPIClient->ping()->then([&resolvedContent, &code, &fetched](FlexiAPIClient::Response response) {
-		resolvedContent = response.body;
-		code = response.code;
-		fetched = 1;
-	});
+	flexiAPIClient->ping()->then(
+	    [&resolvedContent, &code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
+		    resolvedContent = response.body;
+		    code = response.code;
+		    fetched = 1;
+	    });
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 
@@ -56,14 +57,14 @@ static void flexiapiPing() {
 static void flexiapiAccounts() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
-	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	auto flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
 
 	int code = 0;
 	int fetched = 0;
 	string resolvedDomain;
 
 	// Unauthenticated
-	flexiAPIClient->me()->then([&code, &fetched](FlexiAPIClient::Response response) {
+	flexiAPIClient->me()->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
 		code = response.code;
 		fetched = 1;
 	});
@@ -78,7 +79,7 @@ static void flexiapiAccounts() {
 	fetched = 0;
 
 	// Authenticated
-	flexiAPIClient->me()->then([&code, &fetched, &resolvedDomain](FlexiAPIClient::Response response) {
+	flexiAPIClient->me()->then([&code, &fetched, &resolvedDomain](LinphonePrivate::FlexiAPIClient::Response response) {
 		code = response.code;
 		resolvedDomain = response.json()["domain"].asString();
 		fetched = 1;
@@ -94,7 +95,7 @@ static void flexiapiAccounts() {
 static void flexiapiChangeEmail() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 
-	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	auto flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
 
 	int code = 0;
 	int fetched = 0;
@@ -102,7 +103,7 @@ static void flexiapiChangeEmail() {
 
 	flexiAPIClient
 		->accountEmailChangeRequest("changed@test.com")
-		->then([&code, &fetched](FlexiAPIClient::Response response) {
+		->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
 		});
@@ -120,7 +121,7 @@ static void flexiapiChangeEmail() {
 static void flexiapiCreateAccount() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 
-	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	auto flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
 	flexiAPIClient->useTestAdminAccount(true);
 
 	int code = 0;
@@ -132,7 +133,7 @@ static void flexiapiCreateAccount() {
 
 	// Create the account
 	flexiAPIClient->adminAccountCreate(username, "test", "MD5", activated)
-	    ->then([&code, &fetched, &id](FlexiAPIClient::Response response) {
+	    ->then([&code, &fetched, &id](LinphonePrivate::FlexiAPIClient::Response response) {
 		    code = response.code;
 		    fetched = 1;
 		    id = response.json()["id"].asInt();
@@ -148,7 +149,7 @@ static void flexiapiCreateAccount() {
 
 	// Request it
 	flexiAPIClient->adminAccount(id)->then(
-	    [&code, &fetched, &resolvedUsername, &resolvedActivated](FlexiAPIClient::Response response) {
+	    [&code, &fetched, &resolvedUsername, &resolvedActivated](LinphonePrivate::FlexiAPIClient::Response response) {
 		    code = response.code;
 		    fetched = 1;
 		    resolvedUsername = response.json()["username"].asString();
@@ -164,7 +165,7 @@ static void flexiapiCreateAccount() {
 	fetched = 0;
 
 	// Destroy it
-	flexiAPIClient->adminAccountDelete(id)->then([&code, &fetched](FlexiAPIClient::Response response) {
+	flexiAPIClient->adminAccountDelete(id)->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
 		code = response.code;
 		fetched = 1;
 	});
@@ -187,14 +188,14 @@ static void flexiapiChangePassword() {
 	const char *password = linphone_auth_info_get_password(authInfo);
 	BC_ASSERT_PTR_NOT_NULL(password);
 
-	auto flexiAPIClient = make_shared<FlexiAPIClient>(pauline->lc);
+	auto flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(pauline->lc);
 
 	int code = 0;
 	int fetched = 0;
 	string resolvedDomain;
 
 	flexiAPIClient->accountPasswordChange("MD5", "new_password", password)
-	    ->then([&code, &fetched](FlexiAPIClient::Response response) {
+	    ->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
 		    code = response.code;
 		    fetched = 1;
 	    });

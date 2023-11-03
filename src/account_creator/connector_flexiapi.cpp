@@ -24,7 +24,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
-#include "linphone/FlexiAPIClient.hh"
+#include "linphone/flexi-api-client.h"
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
@@ -32,6 +32,8 @@
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
+
+using namespace LinphonePrivate;
 
 /**
  * Unsecure endpoint
