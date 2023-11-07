@@ -825,7 +825,6 @@ class CParser:
 		try:
 			name = metaname.InterfaceName()
 			name.from_camel_case(cclass.name, namespace=self.namespace.name)
-			name.words[-1] = 'listener'
 			
 			listener = Interface(name)
 			listener.briefDescription = cclass.briefDoc

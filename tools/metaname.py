@@ -158,13 +158,6 @@ class ClassName(Name):
 
 
 class InterfaceName(ClassName):
-	def to_c(self, addBrackets=False):
-		return ClassName.to_c(self)[:-8] + 'Cbs'
-
-	def from_c(self, **kargs):
-		ClassName.from_c(self, **kargs)
-		self.words[-1] = 'listener'
-
 	def translate(self, translator, **params):
 		return translator.translate_interface_name(self, **params)
 
@@ -284,6 +277,7 @@ class JavaTranslator(Translator):
 		self.keyWordEscapes = {}
 		self.lowerMethodNames = True
 		self.lowerNamespaceNames = True
+		self.callbackInterfaceSuffix = 'Listener'
 
 	@property
 	def classMemberSep(self):
@@ -301,7 +295,10 @@ class JavaTranslator(Translator):
 			return name.prev.translate(self, **params) + self._get_separator(name.prev) + name.to_camel_case()
 	
 	def translate_interface_name(self, name, **params):
-		return self.translate_class_name(name, **params)
+		translatedName = self.translate_class_name(name, **params)
+		if translatedName.endswith('Cbs'):
+			translatedName = translatedName[:-len('Cbs')] + self.callbackInterfaceSuffix
+		return translatedName
 	
 	def translate_enum_name(self, name, **params):
 		return self.translate_class_name(name, **params)
@@ -313,6 +310,8 @@ class JavaTranslator(Translator):
 		translatedName = name.to_camel_case(lower=self.lowerMethodNames)
 		translatedName = self._escape_keyword(translatedName)
 		
+		if translatedName.endswith('Callbacks'):
+			translatedName = translatedName[:-len('Callbacks')] + self.callbackInterfaceSuffix
 		if name.prev is None or not recursive or name.prev is topAncestor:
 			return translatedName
 		else:
@@ -354,6 +353,7 @@ class SwiftTranslator(JavaTranslator):
 		JavaTranslator.__init__(self)
 		self.nsSep = '.'
 		self.keyWordEscapes = {'protocol' : 'proto'}
+		self.callbackInterfaceSuffix = 'Delegate'
 
 	def translate_enum_name(self, name, recursive=False, topAncestor=None):
 		camelCaseName = name.to_camel_case()
@@ -367,10 +367,6 @@ class SwiftTranslator(JavaTranslator):
 			params = {'recursive': recursive, 'topAncestor': topAncestor}
 			enumName = name.prev.translate(self, **params) + self.nsSep + camelCaseName
 		return enumName
-
-	def translate_interface_name(self, name, **params):
-		name = self.translate_class_name(name, **params)
-		return name[0:len(name)-8] + "Delegate"
 
 	def translate_class_name(self, name, recursive=False, topAncestor=None):
 		return name.to_camel_case()
@@ -396,5 +392,12 @@ class CSharpTranslator(JavaTranslator):
 		self.lowerMethodNames = False
 		self.lowerNamespaceNames = False
 	
+	def translate_method_name(self, name, recursive=False, topAncestor=None):
+		translatedName = JavaTranslator.translate_method_name(self, name, recursive, topAncestor)
+		subnResult = re.subn('(\.AddCallbacks|\.RemoveCallbacks)', '.SetListener' , translatedName)
+		if subnResult[1] > 0:
+			return subnResult[0]
+		return translatedName
+		
 	def translate_property_name(self, name):
 		return name.to_camel_case()

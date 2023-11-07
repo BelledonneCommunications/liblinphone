@@ -105,7 +105,7 @@ class CppTranslator:
 				if method.returnType.cDecl == 'void':
 					classDict['wrapperCbs'].append(self._generate_wrapper_callback(_class, method))
 			classDict['parentClassName'] = 'MultiListenableObject'
-			classDict['listenerCreator'] = 'linphone_factory_create_' + _class.listenerInterface.name.to_snake_case()[:-len('_listener')] + '_cbs'
+			classDict['listenerCreator'] = 'linphone_factory_create_' + _class.listenerInterface.name.to_snake_case()
 			classDict['callbacksAdder'] = _class.name.to_snake_case(fullName=True)+ '_add_callbacks'
 			classDict['callbacksRemover'] = _class.name.to_snake_case(fullName=True)+ '_remove_callbacks'
 			classDict['userDataSetter'] = _class.listenerInterface.name.to_snake_case(fullName=True)[:-len('_listener')] + '_cbs_set_user_data'
@@ -354,9 +354,13 @@ class ClassHeader:
 		else:
 			self._class = translator.translate_interface(_class)
 		
+		nameTranslator = metaname.Translator.get('Cpp')
+		interfaceName = metaname.InterfaceName()
+		interfaceName.from_camel_case(_class.name.translate(nameTranslator))
+
 		self.rootNs = translator.rootNs
-		self.define = '_{0}_HH'.format(_class.name.to_snake_case(upper=True, fullName=True))
-		self.filename = '{0}.hh'.format(_class.name.to_snake_case())
+		self.define = '_{0}_HH'.format(interfaceName.to_snake_case(upper=True, fullName=True))
+		self.filename = '{0}.hh'.format(interfaceName.to_snake_case())
 		self.priorDeclarations = []
 		self.private_type = _class.name.to_camel_case(fullName=True)
 		self.includes = {'internal': [], 'external': []}
@@ -508,8 +512,7 @@ class GenWrapper:
 	def render_header(self, _class):
 		if _class is not None:
 			header = ClassHeader(_class, self.translator)
-			headerName = _class.name.to_snake_case() + '.hh'
-			self.mainHeader.add_include(headerName)
+			self.mainHeader.add_include(header.filename)
 			self.render(header, self.includedir + '/' + header.filename)
 			
 			if type(_class) is not AbsApi.Interface:

@@ -162,7 +162,7 @@ class ClassReference(Reference):
 		return docTranslator.translate_class_reference(self, **kargs)
 
 	def resolve(self, api):
-		for index in api.enumsIndex, api.enumeratorsIndex, api.classesIndex:
+		for index in api.enumsIndex, api.enumeratorsIndex, api.classesIndex, api.interfacesIndex:
 			if self.cname in index:
 				self.relatedObject = index[self.cname]
 				break

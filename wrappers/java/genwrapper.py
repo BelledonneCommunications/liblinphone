@@ -651,9 +651,10 @@ class JniInterface:
 
 class JavaInterface:
     def __init__(self, package, _interface, translator):
+        javaNameTranslator = metaname.Translator.get('Java')
         self._class = translator.translate_interface(_interface)
         self.packageName = package
-        self.className = _interface.name.to_camel_case()
+        self.className = _interface.name.translate(javaNameTranslator)
         self.filename = self.className + ".java"
         self.cPrefix = 'linphone_' + _interface.name.to_snake_case()
         self.imports = []
