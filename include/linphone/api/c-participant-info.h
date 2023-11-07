@@ -62,7 +62,7 @@ LINPHONE_PUBLIC void linphone_participant_info_unref(LinphoneParticipantInfo *pa
 /**
  * Get the address of the object #LinphoneParticipantInfo.
  * @param participant_info The #LinphoneParticipantInfo object. @notnil
- * @return the #LiphoneAddress of the #LinphoneParticipantInfo object. @notnil
+ * @return the #LinphoneAddress of the #LinphoneParticipantInfo object. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *
 linphone_participant_info_get_address(const LinphoneParticipantInfo *participant_info);
@@ -70,7 +70,7 @@ linphone_participant_info_get_address(const LinphoneParticipantInfo *participant
 /**
  * Set the role of the object #LinphoneParticipantInfo.
  * @param participant_info The #LinphoneParticipantInfo object. @notnil
- * @param role the #LiphoneParticipantRole of the #LinphoneParticipantInfo object. @notnil
+ * @param role the #LinphoneParticipantRole of the #LinphoneParticipantInfo object. @notnil
  */
 LINPHONE_PUBLIC void linphone_participant_info_set_role(LinphoneParticipantInfo *participant_info,
                                                         LinphoneParticipantRole role);
@@ -78,7 +78,7 @@ LINPHONE_PUBLIC void linphone_participant_info_set_role(LinphoneParticipantInfo 
 /**
  * Get the role of the object #LinphoneParticipantInfo.
  * @param participant_info The #LinphoneParticipantInfo object. @notnil
- * @return the #LiphoneParticipantRole of the #LinphoneParticipantInfo object. @notnil
+ * @return the #LinphoneParticipantRole of the #LinphoneParticipantInfo object. @notnil
  */
 LINPHONE_PUBLIC LinphoneParticipantRole
 linphone_participant_info_get_role(const LinphoneParticipantInfo *participant_info);
