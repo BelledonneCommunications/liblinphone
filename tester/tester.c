@@ -3500,7 +3500,7 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc,
 
 void _check_friend_result_list(
     LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char *uri, const char *phone) {
-	_check_friend_result_list_2(lc, resultList, index, uri, phone, LinphoneMagicSearchSourceAll);
+	_check_friend_result_list_2(lc, resultList, index, uri, phone, NULL, LinphoneMagicSearchSourceAll);
 }
 
 void _check_friend_result_list_2(LinphoneCore *lc,
@@ -3508,7 +3508,9 @@ void _check_friend_result_list_2(LinphoneCore *lc,
                                  const unsigned int index,
                                  const char *uri,
                                  const char *phone,
+                                 const char *name,
                                  int expected_flags) {
+	bool assertError = true;
 	if (index >= (unsigned int)bctbx_list_size(resultList)) {
 		ms_error("Attempt to access result to an outbound index");
 		return;
@@ -3529,19 +3531,24 @@ void _check_friend_result_list_2(LinphoneCore *lc,
 				char *fa = linphone_address_as_string_uri_only(la);
 				BC_ASSERT_STRING_EQUAL(fa, uri);
 				free(fa);
-				return;
+				assertError = false;
 			} else if (phone) {
 				const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, phone);
 				if (BC_ASSERT_PTR_NOT_NULL(presence)) {
 					char *contact = linphone_presence_model_get_contact(presence);
 					BC_ASSERT_STRING_EQUAL(contact, uri);
 					free(contact);
-					return;
+					assertError = false;
 				}
 			}
 		} else if (phone) { // Check on phone number
 			BC_ASSERT_STRING_EQUAL(linphone_search_result_get_phone_number(sr), phone);
-			return;
+			assertError = false;
+		}
+		if (name) {
+			const char *display_name = linphone_address_get_display_name(la);
+			BC_ASSERT_STRING_EQUAL(display_name, name);
+			assertError = false;
 		}
 	} else {
 		const bctbx_list_t *callLog = linphone_core_get_call_logs(lc);
@@ -3561,8 +3568,19 @@ void _check_friend_result_list_2(LinphoneCore *lc,
 			}
 		}
 	}
-	BC_ASSERT(FALSE);
-	ms_error("Address NULL and Presence NULL");
+	if (assertError) {
+		BC_ASSERT(FALSE);
+		ms_error("Address NULL and Presence NULL");
+	}
+}
+
+void _check_friend_result_list_3(LinphoneCore *lc,
+                                 const bctbx_list_t *resultList,
+                                 const unsigned int index,
+                                 const char *uri,
+                                 const char *phone,
+                                 const char *name) {
+	_check_friend_result_list_2(lc, resultList, index, uri, phone, name, LinphoneMagicSearchSourceAll);
 }
 
 void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {

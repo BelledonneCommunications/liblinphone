@@ -37,8 +37,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 LdapParams::LdapParams() {
-	auto config  = LdapConfigKeys::loadConfig();
-	for(auto it = config.begin() ; it != config.end() ; ++it){
+	auto config = LdapConfigKeys::loadConfig();
+	for (auto it = config.begin(); it != config.end(); ++it) {
 		mConfig[it->first] = LdapConfigKeys::join(it->first, it->second);
 	}
 }
@@ -109,11 +109,11 @@ void LdapParams::setFilter(const std::string &filter) {
 }
 
 void LdapParams::setNameAttribute(const std::string &nameAttribute) {
-	setCustomValue("name_attribute", nameAttribute);
+	setCustomValue("name_attribute", Utils::stringToLower(nameAttribute));
 }
 
 void LdapParams::setSipAttribute(const std::string &sipAttribute) {
-	setCustomValue("sip_attribute", sipAttribute);
+	setCustomValue("sip_attribute", Utils::stringToLower(sipAttribute));
 }
 
 void LdapParams::setSipDomain(const std::string &sipDomain) {
@@ -151,12 +151,11 @@ std::string &LdapParams::getCustomValue(const std::string &key) {
 	else return itValue->second;
 }
 
-const std::string &LdapParams::getCustomValue(const std::string &key) const{
+const std::string &LdapParams::getCustomValue(const std::string &key) const {
 	auto itValue = mConfig.find(key);
 	if (itValue == mConfig.end()) return mDummyTxt;
 	else return itValue->second;
 }
-
 
 const std::string &LdapParams::getServer() const {
 	return getCustomValue("server");
@@ -236,7 +235,7 @@ LinphoneLdapCertVerificationMode LdapParams::getServerCertificatesVerificationMo
 
 std::map<std::string, std::vector<std::string>> LdapParams::getConfig() const {
 	std::map<std::string, std::vector<std::string>> result;
-	for(auto it = mConfig.begin() ; it != mConfig.end() ; ++it){
+	for (auto it = mConfig.begin(); it != mConfig.end(); ++it) {
 		result[it->first] = LdapConfigKeys::split(it->first, it->second);
 	}
 	return result;
@@ -256,7 +255,7 @@ int LdapParams::checkServer() const {
 	auto servers = LdapConfigKeys::split("server", getServer());
 	if (servers.size() == 0) checkResult |= LinphoneLdapCheckServerEmpty;
 	else {
-		for(size_t i = 0 ; i < servers.size() ; ++i){
+		for (size_t i = 0; i < servers.size(); ++i) {
 			SalAddress *addr = sal_address_new(servers[i].c_str());
 			if (!addr) checkResult |= LinphoneLdapCheckServerNotUrl;
 			else {

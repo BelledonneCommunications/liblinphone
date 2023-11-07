@@ -34,8 +34,8 @@
 #include <string>
 #include <vector>
 
-#include "../search/search-request.h"
 #include "../search/magic-search.h"
+#include "../search/search-request.h"
 #include "ldap.h" // Linphone
 #include <ldap.h> // OpenLDAP
 
@@ -72,7 +72,6 @@ public:
 
 	LdapContactProvider(const std::shared_ptr<Core> &core, std::shared_ptr<Ldap> ldap, int maxResults);
 
-
 	virtual ~LdapContactProvider();
 
 	/**
@@ -91,13 +90,13 @@ public:
 	void initializeLdap();
 
 	//	CONFIGURATION
-	
+
 	/**
 	 * @brief configValueToInt get the first value of key and convert it to integer.
 	 * @return the first value
 	 */
 	int configValueToInt(const std::string &key) const;
-	
+
 	/**
 	 * @brief configValueToString get the first value of key.
 	 * @return the first string
@@ -156,16 +155,13 @@ public:
 	LdapContactSearch *requestSearch(int msgid);
 
 	/**
-	 * @brief completeContact Fill LdapContactFields with the attribute. This function has to be call for each
-	 * attributes. The function use 'sip_domain' to complete the SIP attribute (attr_value@domain). These options can be
-	 * empty to avoid this behaviour.
+	 * @brief buildContact Fill LdapContactFields with the attributes. The function use 'sip_domain' to complete the SIP
+	 * attribute (attr_value@domain). These options can be empty to avoid this behaviour.
 	 * @param lf the contact to fill
-	 * @param attr_name The attribute name from LDAP.
-	 * @param attr_value The value from LDAP.
+	 * @param attributes the vector of attributes/values froml LDAP
 	 * @return 1 if all contact's fields are filled. 0 if some fields are missing.
 	 */
-	int completeContact(LdapContactFields *lf, const char *attr_name, const char *attr_value);
-
+	int buildContact(LdapContactFields *contact, const std::vector<std::pair<std::string, std::string>> &attributes);
 	//	ASYNC PROCESSING
 
 	/**
@@ -183,9 +179,8 @@ public:
 	static void ldapServerResolved(void *data, belle_sip_resolver_results_t *results);
 
 private:
-
 	void cleanLdap();
-	
+
 	/**
 	 * @brief handleSearchResult Parse the LDAPMessage to get contacts and fill Search entries.
 	 * @param message LDAPMessage to parse
@@ -206,7 +201,7 @@ private:
 	 * @brief computeLastRequestTime Compute the last request time on LDAP servers, from a list of request.
 	 */
 	void computeLastRequestTime(const std::list<SearchRequest> &requestHistory);
-	
+
 	/**
 	 * @brief fallbackToNextServerUrl Increment server Url and change action
 	 */
@@ -220,7 +215,7 @@ private:
 	int mMaxResults;
 
 	int mAwaitingMessageId;                    // Waiting Message for ldap_abandon_ext on bind
-	bool mConnected;                         // If we are connected to server (bind)
+	bool mConnected;                           // If we are connected to server (bind)
 	int mCurrentAction;                        // Iteration action
 	belle_sip_source_t *mIteration;            // Iteration loop
 	belle_sip_resolver_context_t *mSalContext; // Sal Context for DNS
@@ -232,7 +227,8 @@ private:
 	int mTlsConnectionId = -1; // Used for getting async results from a start_tls
 	time_t mTlsConnectionTimeout;
 
-	uint64_t mLastRequestTime; // Store bctbx_get_cur_time_ms and use it as reference to make a delay between LDAP requests.
+	uint64_t
+	    mLastRequestTime; // Store bctbx_get_cur_time_ms and use it as reference to make a delay between LDAP requests.
 };
 
 LINPHONE_END_NAMESPACE

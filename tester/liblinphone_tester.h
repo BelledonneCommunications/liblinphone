@@ -992,7 +992,14 @@ void _check_friend_result_list_2(LinphoneCore *lc,
                                  const unsigned int index,
                                  const char *uri,
                                  const char *phone,
+                                 const char *name,
                                  int expected_flags);
+void _check_friend_result_list_3(LinphoneCore *lc,
+                                 const bctbx_list_t *resultList,
+                                 const unsigned int index,
+                                 const char *uri,
+                                 const char *phone,
+                                 const char *name);
 
 /*Convenience function providing the path to the "empty_rc" config file*/
 const char *liblinphone_tester_get_empty_rc(void);

@@ -7260,8 +7260,8 @@ static void search_friend_chat_room_participants(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
-		_check_friend_result_list_2(pauline->lc, resultList, 0, laureI, NULL, LinphoneMagicSearchSourceChatRooms);
-		_check_friend_result_list_2(pauline->lc, resultList, 1, marieI, NULL, LinphoneMagicSearchSourceChatRooms);
+		_check_friend_result_list_2(pauline->lc, resultList, 0, laureI, NULL, NULL, LinphoneMagicSearchSourceChatRooms);
+		_check_friend_result_list_2(pauline->lc, resultList, 1, marieI, NULL, NULL, LinphoneMagicSearchSourceChatRooms);
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
