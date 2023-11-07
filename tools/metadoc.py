@@ -624,7 +624,11 @@ class SwiftDocTranslator(Translator):
 		return '``{0}``'.format(super().translate_reference(ref))
 
 	def translate_function_reference(self, ref, **kargs):
-		return super().translate_reference(ref) + '()'
+		params = []
+		for arg in ref.relatedObject.args:
+			argName = arg.name.translate(self.refNameTranslator)
+			params.append(argName + ':')
+		return '``{0}({1})``'.format(super().translate_reference(ref), ''.join(params)).replace('.', '/')
 
 	def _translate_section(self, section):
 		if section.kind == 'return':
