@@ -1467,11 +1467,11 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 	LinphoneChatRoom *laureCr =
 	    check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 
-	const char *paulineContact = linphone_address_as_string_uri_only(linphone_account_params_get_identity_address(
+	char *paulineContact = linphone_address_as_string_uri_only(linphone_account_params_get_identity_address(
 	    linphone_account_get_params(linphone_core_get_default_account(pauline->lc))));
-	const char *marieContact = linphone_address_as_string_uri_only(linphone_account_params_get_identity_address(
+	char *marieContact = linphone_address_as_string_uri_only(linphone_account_params_get_identity_address(
 	    linphone_account_get_params(linphone_core_get_default_account(marie->lc))));
-	const char *laureContact = linphone_address_as_string_uri_only(linphone_account_params_get_identity_address(
+	char *laureContact = linphone_address_as_string_uri_only(linphone_account_params_get_identity_address(
 	    linphone_account_get_params(linphone_core_get_default_account(laure->lc))));
 
 	// Marie sends a message
@@ -1718,6 +1718,10 @@ end:
 	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(laure->lc));
+
+	bctbx_free(marieContact);
+	bctbx_free(paulineContact);
+	bctbx_free(laureContact);
 
 	linphone_address_unref(confAddr);
 	bctbx_list_free(coresList);

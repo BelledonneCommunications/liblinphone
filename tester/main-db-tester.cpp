@@ -360,10 +360,14 @@ static void load_a_lot_of_chatrooms(void) {
 	MainDbProvider provider("db/chatrooms.db");
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
 	long ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
+#ifdef ENABLE_SANITIZER
+	BC_ASSERT_LOWER(ms, 2600, long, "%li");
+#else
 #if __APPLE__
 	BC_ASSERT_LOWER(ms, 1000, long, "%li");
 #else
 	BC_ASSERT_LOWER(ms, 600, long, "%li");
+#endif
 #endif
 }
 

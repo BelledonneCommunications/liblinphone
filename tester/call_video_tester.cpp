@@ -2828,6 +2828,7 @@ static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	linphone_core_set_video_policy(marie->lc, &marie_policy);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
+	disable_all_video_codecs_except_one(marie->lc, "VP8");
 
 	// Set Marie to shared media resources so that she can have two calls without pause
 	linphone_core_set_media_resource_mode(marie->lc, LinphoneSharedMediaResources);
@@ -2837,6 +2838,7 @@ static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
+	disable_all_video_codecs_except_one(pauline->lc, "VP8");
 
 	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
@@ -2845,6 +2847,7 @@ static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	linphone_core_set_video_policy(laure->lc, &laure_policy);
 	linphone_core_enable_video_capture(laure->lc, TRUE);
 	linphone_core_enable_video_display(laure->lc, TRUE);
+	disable_all_video_codecs_except_one(laure->lc, "VP8");
 
 	// Make first a call from marie to pauline
 	if (BC_ASSERT_TRUE(call(marie, pauline))) {

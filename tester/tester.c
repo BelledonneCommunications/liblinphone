@@ -1195,8 +1195,8 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs,
 		}
 	}
 
-	int *subscription_count = ((int *)(conf_mgr->user_info));
-	BC_ASSERT_TRUE(wait_for_list(lcs, subscription_count, expected_subscriptions, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(
+	    wait_for_list(lcs, &conf_mgr->subscription_received, expected_subscriptions, liblinphone_tester_sip_timeout));
 	if (conf_event_log_enabled) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &conf_mgr->stat.number_of_LinphoneSubscriptionActive, expected_subscriptions,
 		                             liblinphone_tester_sip_timeout));
@@ -3334,6 +3334,7 @@ void reaction_removed(LinphoneCore *lc,
 	char *from = linphone_address_as_string(address);
 	const char *text = linphone_chat_message_get_text(msg);
 	ms_message("Reaction sent by [%s] for message [%s] has been removed", from, text);
+	bctbx_free(from);
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneReactionRemoved++;
 }
@@ -4251,7 +4252,9 @@ void check_reactions(LinphoneChatMessage *message,
 			BC_ASSERT_PTR_NOT_NULL(reaction_call_id);
 
 			const LinphoneAddress *from = linphone_chat_message_reaction_get_from_address(reaction);
-			BC_ASSERT_STRING_EQUAL(linphone_address_as_string_uri_only(from), expected_reaction_from);
+			char *from_address = linphone_address_as_string_uri_only(from);
+			BC_ASSERT_STRING_EQUAL(from_address, expected_reaction_from);
+			bctbx_free(from_address);
 		}
 	}
 	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
@@ -4864,8 +4867,7 @@ static void linphone_subscribe_received_internal(LinphoneCore *lc,
                                                  BCTBX_UNUSED(LinphoneEvent *lev),
                                                  BCTBX_UNUSED(const char *eventname),
                                                  BCTBX_UNUSED(const LinphoneContent *content)) {
-	int *subscription_received = (int *)(((LinphoneCoreManager *)linphone_core_get_user_data(lc))->user_info);
-	*subscription_received += 1;
+	((LinphoneCoreManager *)linphone_core_get_user_data(lc))->subscription_received++;
 }
 
 static void linphone_notify_received_internal(LinphoneCore *lc,
@@ -4904,6 +4906,7 @@ LinphoneConferenceServer *linphone_conference_server_new(const char *rc_file, bo
 		linphone_proxy_config_done(proxy);
 	}
 	linphone_core_add_callbacks(lm->lc, conf_srv->cbs);
+	setup_mgr_for_conference(lm, NULL);
 	linphone_core_manager_start(lm, do_registration);
 	return conf_srv;
 }
@@ -4926,9 +4929,7 @@ void setup_mgr_for_conference(LinphoneCoreManager *mgr, const char *conference_v
 
 	linphone_core_set_user_data(mgr->lc, mgr);
 
-	int *subscription_received = (int *)ms_new0(int, 1);
-	*subscription_received = 0;
-	mgr->user_info = subscription_received;
+	mgr->subscription_received = 0;
 
 	configure_core_for_conference(mgr->lc, NULL, NULL, FALSE);
 
@@ -4949,9 +4950,13 @@ create_mgr_for_conference(const char *rc_file, bool_t check_for_proxies, const c
 	return mgr;
 }
 
+void destroy_mgr_in_conference(LinphoneCoreManager *mgr) {
+	linphone_core_manager_destroy(mgr);
+}
+
 void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv) {
 	linphone_core_cbs_unref(conf_srv->cbs);
-	linphone_core_manager_destroy((LinphoneCoreManager *)conf_srv);
+	destroy_mgr_in_conference((LinphoneCoreManager *)conf_srv);
 }
 
 const char *liblinphone_tester_get_empty_rc(void) {

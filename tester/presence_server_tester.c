@@ -298,6 +298,7 @@ static void subscribe_with_late_publish(void) {
 	pauline_lp = linphone_core_get_config(pauline->lc);
 	lf_identity = linphone_address_as_string_uri_only(marie->identity);
 	lf = linphone_core_create_friend_with_address(pauline->lc, lf_identity);
+	bctbx_free(lf_identity);
 
 	linphone_config_set_int(pauline_lp, "sip", "subscribe_expires", 10);
 
@@ -397,6 +398,7 @@ static void test_forked_subscribe_notify_publish(void) {
 	pauline_lp = linphone_core_get_config(pauline->lc);
 	lf_identity = linphone_address_as_string_uri_only(marie->identity);
 	lf = linphone_core_create_friend_with_address(pauline->lc, lf_identity);
+	bctbx_free(lf_identity);
 
 	linphone_config_set_int(pauline_lp, "sip", "subscribe_expires", 5);
 
@@ -437,6 +439,7 @@ static void test_forked_subscribe_notify_publish(void) {
 	/*wait for new status*/
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePresenceActivityMeeting, 1, 3000));
 
+	bctbx_list_free(lcs);
 	linphone_friend_unref(lf);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
@@ -941,6 +944,7 @@ static void test_presence_list_subscribe_with_error(bool_t io_error) {
 	lf = linphone_friend_list_find_friend_by_uri(linphone_core_get_default_friend_list(laure->lc), pauline_identity);
 	BC_ASSERT_EQUAL(linphone_friend_get_status(lf), LinphoneStatusAway, int, "%d");
 
+	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
 }
@@ -1041,6 +1045,7 @@ static void presence_list_subscribe_network_changes(void) {
 	lf = linphone_friend_list_find_friend_by_uri(linphone_core_get_default_friend_list(laure->lc), pauline_identity);
 	BC_ASSERT_EQUAL(linphone_friend_get_status(lf), LinphoneStatusAway, int, "%d");
 
+	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
 }
@@ -1177,8 +1182,9 @@ static void long_term_presence_list(void) {
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(f1, e164_phone_number);
 
 		if (BC_ASSERT_PTR_NOT_NULL(presence)) {
-			BC_ASSERT_STRING_EQUAL(linphone_presence_model_get_contact(presence),
-			                       "sip:liblinphone_tester@sip.example.org");
+			char *contact = linphone_presence_model_get_contact(presence);
+			BC_ASSERT_STRING_EQUAL(contact, "sip:liblinphone_tester@sip.example.org");
+			bctbx_free(contact);
 		}
 		BC_ASSERT_TRUE(linphone_friend_is_presence_received(f1));
 
@@ -1672,6 +1678,7 @@ static void publish_with_expire_timestamp_refresh_base(bool_t refresh_timestamps
 
 		char *pauline_identity = linphone_address_as_string(pauline->identity);
 		LinphoneFriend *marie_pauline_friend = linphone_core_create_friend_with_address(marie->lc, pauline_identity);
+		bctbx_free(pauline_identity);
 
 		linphone_friend_list_add_friend(marie_lfl, marie_pauline_friend);
 		linphone_friend_list_update_subscriptions(marie_lfl);
@@ -2314,6 +2321,7 @@ static void notify_friend_capabilities_after_publish(void) {
 	specs = bctbx_list_append(specs, "groupchat/1.1");
 	specs = bctbx_list_append(specs, "lime/1.5");
 	linphone_core_set_linphone_specs_list(pauline->lc, specs);
+	bctbx_list_free(specs);
 
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
@@ -2453,6 +2461,7 @@ static void notify_friend_capabilities_with_alias(void) {
 		specs = bctbx_list_append(specs, "groupchat/1.1");
 		specs = bctbx_list_append(specs, "lime/1.5");
 		linphone_core_set_linphone_specs_list(marie->lc, specs);
+		bctbx_list_free(specs);
 		linphone_core_manager_start(marie, TRUE);
 
 		laure = linphone_core_manager_create2("marie_rc", e164Laure);
@@ -2544,6 +2553,7 @@ static void notify_search_result_capabilities_with_alias(void) {
 		specs = bctbx_list_append(specs, "groupchat/1.1");
 		specs = bctbx_list_append(specs, "lime/1.5");
 		linphone_core_set_linphone_specs_list(marie->lc, specs);
+		bctbx_list_free(specs);
 		linphone_core_manager_start(marie, TRUE);
 
 		LinphoneCoreManager *pauline =

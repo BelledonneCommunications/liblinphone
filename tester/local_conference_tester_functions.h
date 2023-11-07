@@ -87,7 +87,7 @@ public:
 		start(true);
 	}
 
-	void reStart(bool check_for_proxies = true) {
+	virtual void reStart(bool check_for_proxies = true) {
 		linphone_core_manager_reinit(mMgr.get());
 		mPreStart();
 		start(check_for_proxies);
@@ -159,6 +159,10 @@ public:
 	      mFocus(nullptr) {
 	}
 
+	void reStart(bool check_for_proxies = true) override {
+		ConfCoreManager::reStart(check_for_proxies);
+	}
+
 	void deleteChatRoomSync(AbstractChatRoom &chatroom) {
 		linphone_core_delete_chat_room(getLc(), L_GET_C_BACK_PTR(&chatroom));
 		CoreManagerAssert({*mFocus, *this}).wait([&chatroom] {
@@ -169,9 +173,6 @@ public:
 	~ClientConference() {
 		for (auto chatRoom : getCore().getChatRooms()) {
 			deleteChatRoomSync(*chatRoom);
-		}
-		if (mMgr->user_info) {
-			ms_free(mMgr->user_info);
 		}
 	}
 

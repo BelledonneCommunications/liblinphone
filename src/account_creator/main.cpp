@@ -55,7 +55,9 @@ LinphoneProxyConfig *linphone_account_creator_create_proxy_config(const Linphone
 		LinphoneAddress *proxy_addr = linphone_address_new(url);
 		if (proxy_addr) {
 			linphone_address_set_transport(proxy_addr, creator->transport);
-			linphone_proxy_config_set_server_addr(cfg, linphone_address_as_string_uri_only(proxy_addr));
+			char *proxy_addr_str = linphone_address_as_string_uri_only(proxy_addr);
+			linphone_proxy_config_set_server_addr(cfg, proxy_addr_str);
+			bctbx_free(proxy_addr_str);
 			linphone_address_unref(proxy_addr);
 		} else {
 			linphone_proxy_config_set_server_addr(cfg, creator->domain);
@@ -471,6 +473,10 @@ void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
 	reset_field(&creator->domain);
 	reset_field(&creator->route);
 	reset_field(&creator->algorithm);
+	reset_field(&creator->token);
+	reset_field(&creator->pn_prid);
+	reset_field(&creator->pn_param);
+	reset_field(&creator->pn_provider);
 
 	if (creator->proxy_cfg) {
 		linphone_proxy_config_unref(creator->proxy_cfg);

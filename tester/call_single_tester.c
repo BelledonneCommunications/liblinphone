@@ -5834,6 +5834,7 @@ static void rtptm_on_schedule(RtpTransportModifier *rtptm) {
 		}
 
 		meta_rtp_transport_modifier_inject_packet_to_send(rtptm->transport, rtptm, msg, 0);
+		freemsg(msg);
 	}
 
 	msg = NULL;
@@ -6068,10 +6069,14 @@ static void custom_rtp_modifier(bool_t pauseResumeTest, bool_t recordTest) {
 end:
 	// Since we didn't free the resources of our RTP transport modifier in the rtptm_destroy callback, we'll do it here
 	if (data_pauline) {
+		ms_queue_flush(&data_pauline->to_send);
+		ms_queue_flush(&data_pauline->to_recv);
 		ms_free(data_pauline);
 	}
 	ms_free(rtptm_pauline);
 	if (data_marie) {
+		ms_queue_flush(&data_marie->to_send);
+		ms_queue_flush(&data_marie->to_recv);
 		ms_free(data_marie);
 	}
 	ms_free(rtptm_marie);

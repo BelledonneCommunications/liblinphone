@@ -557,6 +557,7 @@ typedef struct _LinphoneCoreManager {
 	bool_t lime_failure;
 	LinphoneCoreManagerSubscribePolicy subscribe_policy;
 	LinphoneCoreManagerPublishPolicy publish_policy;
+	int subscription_received;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {

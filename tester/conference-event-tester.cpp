@@ -1249,7 +1249,7 @@ void participant_not_added_parsing() {
 	linphone_address_unref(aliceAddr);
 	linphone_address_unref(frankAddr);
 	tester = nullptr;
-	linphone_core_manager_destroy(marie);
+	destroy_mgr_in_conference(marie);
 }
 
 void participant_deleted_parsing() {
@@ -1668,7 +1668,7 @@ add_participant_to_conference_through_call(bctbx_list_t **mgrs,
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
-	int init_subscription_count = *((int *)(conf_mgr->user_info));
+	int init_subscription_count = conf_mgr->subscription_received;
 
 	stats *other_participants_initial_stats = NULL;
 	bctbx_list_t *other_participants = NULL;
@@ -1759,8 +1759,7 @@ add_participant_to_conference_through_call(bctbx_list_t **mgrs,
 	BC_ASSERT_TRUE(wait_for_list(lcs, &conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,
 	                             (initial_conf_stats.number_of_LinphoneSubscriptionIncomingReceived + 1), 5000));
 
-	int *subscription_count = ((int *)(conf_mgr->user_info));
-	BC_ASSERT_TRUE(wait_for_list(lcs, subscription_count, (init_subscription_count + 1), 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &conf_mgr->subscription_received, (init_subscription_count + 1), 5000));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_NotifyFullStateReceived,
 	                             (initial_participant_stats.number_of_NotifyFullStateReceived + 1), 5000));

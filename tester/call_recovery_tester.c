@@ -118,6 +118,8 @@ static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager 
 	/*to make sure the call is only "repaired one time"*/
 	BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
 
+	bctbx_free(repared_callid);
+
 	linphone_call_terminate(incoming_call);
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallReleased, 1));

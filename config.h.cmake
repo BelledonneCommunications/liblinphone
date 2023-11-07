@@ -65,3 +65,4 @@
 #cmakedefine HAVE_GETIFADDRS
 #cmakedefine HAVE_GOCLEAR
 #cmakedefine HAVE_DLOPEN 1
+#cmakedefine ENABLE_SANITIZER

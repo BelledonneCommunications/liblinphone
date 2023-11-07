@@ -429,6 +429,7 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		ms_message("%s is adding participant %s", linphone_core_get_identity(focus.getLc()),
 		           linphone_core_get_identity(laure.getLc()));
 		linphone_chat_room_add_participants(marieCr, participantsAddresses);
+		bctbx_list_free(participantsAddresses);
 
 		LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure.getCMgr(), &initialLaureStats,
 		                                                                 confAddr, newSubject, 3, FALSE);
@@ -513,7 +514,6 @@ void group_chat_room_with_client_restart_base(bool encrypted) {
 		coresList = bctbx_list_remove(coresList, michelle2.getLc());
 		// Restart michelle
 		michelle2.reStart();
-		michelle2.setupMgrForConference();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated, 1,
@@ -1414,7 +1414,6 @@ void one_to_one_group_chat_room_deletion_by_server_client_base(bool encrypted) {
 			// Restart pauline so that she has to send an INVITE and BYE it to exit the chatroom
 			coresList = bctbx_list_remove(coresList, pauline.getLc());
 			pauline.reStart();
-			setup_mgr_for_conference(pauline.getCMgr(), NULL);
 			coresList = bctbx_list_append(coresList, pauline.getLc());
 			paulineCr = linphone_core_search_chat_room(pauline.getLc(), NULL, localAddr, peerAddr, NULL);
 			BC_ASSERT_PTR_NOT_NULL(paulineCr);

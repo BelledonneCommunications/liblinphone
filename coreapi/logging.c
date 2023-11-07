@@ -183,6 +183,7 @@ void linphone_logging_service_unref(LinphoneLoggingService *service) {
 
 static void _linphone_logging_service_uninit(LinphoneLoggingService *log_service) {
 	if (log_service->log_handler) bctbx_remove_log_handler(log_service->log_handler);
+	if (log_service->domain) bctbx_free(log_service->domain);
 	_linphone_logging_service_clear_callbacks(log_service);
 	linphone_logging_service_cbs_unref(log_service->cbs);
 }

@@ -32,7 +32,9 @@ static size_t test_stun_encode(char **buffer) {
 	UInt96 tr_id = ms_stun_message_get_tr_id(req);
 	tr_id.octet[0] = 11;
 	ms_stun_message_set_tr_id(req, tr_id);
-	return ms_stun_message_encode(req, buffer);
+	size_t size = ms_stun_message_encode(req, buffer);
+	ms_stun_message_destroy(req);
+	return size;
 }
 
 static void linphone_stun_test_encode(void) {

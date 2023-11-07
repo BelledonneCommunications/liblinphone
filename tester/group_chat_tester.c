@@ -413,6 +413,7 @@ static void fill_content_buffer(LinphoneContent *content, const char *sendFilePa
 
 	BC_ASSERT_EQUAL((int)read, (int)file_size, int, "%d");
 	linphone_content_set_buffer(content, buf, file_size);
+	ms_free(buf);
 	linphone_content_set_size(content, file_size); /*total size to be transfered*/
 	fclose(file_to_send);
 }
@@ -550,6 +551,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 				compare_files(sendFilepath2, downloaded_file);
 			}
 		}
+		if (use_buffer && downloaded_file) bctbx_free((char *)downloaded_file);
 	}
 }
 
@@ -2395,7 +2397,8 @@ static void group_chat_room_remove_participant_base(bool_t restart) {
 		coresList = bctbx_list_remove(coresList, marie->lc);
 		linphone_core_manager_restart(marie, TRUE);
 		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
-		init_core_for_conference(tmpCoresManagerList);
+		bctbx_list_t *tmpInitList = init_core_for_conference(tmpCoresManagerList);
+		bctbx_list_free(tmpInitList);
 		bctbx_list_free(tmpCoresManagerList);
 		coresList = bctbx_list_append(coresList, marie->lc);
 
@@ -2636,6 +2639,7 @@ static void group_chat_room_delete_twice(void) {
 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
 
 	// Reset db
+	if (laure->database_path) bc_free(laure->database_path);
 	laure->database_path = uriCopy;
 	coresList = bctbx_list_remove(coresList, laure->lc);
 	linphone_core_manager_reinit(laure);
@@ -2988,8 +2992,9 @@ static void group_chat_room_reinvited_after_removed_base(bool_t offline_when_rem
 		bctbx_list_free(tmpCoresManagerList);
 		coresList = bctbx_list_concat(coresList, tmpCoresList);
 		linphone_core_manager_start(laure, TRUE);
-		laureIdentity = linphone_core_get_device_identity(laure->lc);
-		laureAddr = linphone_address_new(laureIdentity);
+		laureDeviceIdentity = linphone_core_get_device_identity(laure->lc);
+		laureAddr = linphone_address_new(laureDeviceIdentity);
+		bctbx_free(laureDeviceIdentity);
 		newLaureCr = linphone_core_find_chat_room(laure->lc, confAddr, laureAddr);
 		linphone_address_unref(laureAddr);
 		wait_for_list(coresList, 0, 1, 2000);
@@ -3349,8 +3354,7 @@ static void group_chat_room_notify_after_core_restart(void) {
 	// Now paulines stops it's Core
 	coresList = bctbx_list_remove(coresList, pauline->lc);
 	// Make sure gruu is preserved
-	const char *uuid =
-	    bctbx_strdup(linphone_config_get_string(linphone_core_get_config(pauline->lc), "misc", "uuid", NULL));
+	char *uuid = bctbx_strdup(linphone_config_get_string(linphone_core_get_config(pauline->lc), "misc", "uuid", NULL));
 	linphone_core_set_network_reachable(pauline->lc, FALSE); // to avoid unregister
 	linphone_core_manager_stop(pauline);
 
@@ -3377,7 +3381,8 @@ static void group_chat_room_notify_after_core_restart(void) {
 	linphone_config_set_string(linphone_core_get_config(pauline->lc), "misc", "uuid", uuid);
 
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
-	init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_t *tmpInitList = init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_free(tmpInitList);
 	bctbx_list_free(tmpCoresManagerList);
 
 	// Paulines starts it's Core again
@@ -3402,6 +3407,7 @@ static void group_chat_room_notify_after_core_restart(void) {
 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
+	bctbx_free(uuid);
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
@@ -6415,7 +6421,8 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				linphone_proxy_config_set_conference_factory_uri(lpc, sFactoryUri);
 				linphone_proxy_config_done(lpc);
 				bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
-				init_core_for_conference(tmpCoresManagerList);
+				bctbx_list_t *tmpInitList = init_core_for_conference(tmpCoresManagerList);
+				bctbx_list_free(tmpInitList);
 				bctbx_list_free(tmpCoresManagerList);
 				LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 				linphone_core_cbs_set_chat_room_exhumed(cbs, linphone_tester_chat_room_exhumed);
@@ -7422,6 +7429,8 @@ static void group_chat_room_participant_devices_name(void) {
 	participantsAddresses = NULL;
 	participantsAddresses = bctbx_list_append(participantsAddresses, chloeAddress);
 	linphone_chat_room_add_participants(marieCr, participantsAddresses);
+	bctbx_list_free(participantsAddresses);
+	participantsAddresses = NULL;
 
 	// Check that the chat room is correctly created on Chloe's side and that she was added everywhere
 	LinphoneChatRoom *chloeCr =
@@ -7527,7 +7536,8 @@ static void group_chat_room_participant_devices_name(void) {
 	// Chloe adds a new device
 	coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, chloe3);
-	init_core_for_conference(coresManagerList);
+	bctbx_list_t *tmpInitList = init_core_for_conference(coresManagerList);
+	bctbx_list_free(tmpInitList);
 	coresList = bctbx_list_append(coresList, chloe3->lc);
 	linphone_core_set_user_agent(chloe3->lc, "blabla (Chloe device 3) blibli/blublu (bloblo)", NULL);
 	start_core_for_conference(coresManagerList);
@@ -7962,6 +7972,7 @@ static void group_chat_loss_of_client_context(void) {
 	BC_ASSERT_FALSE(liblinphone_tester_copy_file(uri, uriCopyAfter));
 
 	// Restore old db to Laure and restart it.
+	if (laure->database_path) bc_free(laure->database_path);
 	laure->database_path = uriCopy;
 	coresList = bctbx_list_remove(coresList, laure->lc);
 	linphone_core_manager_reinit(laure);
@@ -7980,6 +7991,7 @@ static void group_chat_loss_of_client_context(void) {
 
 	// Now restarts Laure with good db in order to clean the chatroom properly.
 	// Restore old db to Laure and restart it.
+	if (laure->database_path) bc_free(laure->database_path);
 	laure->database_path = uriCopyAfter;
 	coresList = bctbx_list_remove(coresList, laure->lc);
 	linphone_core_manager_reinit(laure);
@@ -8262,6 +8274,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	                             liblinphone_tester_sip_timeout));
 
 	// Reset db at pauline side
+	if (pauline->database_path) bc_free(pauline->database_path);
 	pauline->database_path = uriCopy;
 	coresList = bctbx_list_remove(coresList, pauline->lc);
 	memset(&initialPaulineStats, 0, sizeof(initialPaulineStats));
@@ -8284,7 +8297,9 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	    check_has_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	LinphoneAddress *marieAddress = linphone_address_new(linphone_core_get_identity(marie2->lc));
 	LinphoneParticipant *marieParticipant = linphone_chat_room_find_participant(paulineCr, marieAddress);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_participant_get_devices(marieParticipant)), 1, int, "%i");
+	bctbx_list_t *marieDevices = linphone_participant_get_devices(marieParticipant);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(marieDevices), 1, int, "%i");
+	bctbx_list_free(marieDevices);
 
 	// recheck after restart
 	coresList = bctbx_list_remove(coresList, pauline->lc);
@@ -8304,7 +8319,9 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	paulineCr =
 	    check_has_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	marieParticipant = linphone_chat_room_find_participant(paulineCr, marieAddress);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_participant_get_devices(marieParticipant)), 1, int, "%i");
+	marieDevices = linphone_participant_get_devices(marieParticipant);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(marieDevices), 1, int, "%i");
+	bctbx_list_free(marieDevices);
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_events_size(paulineCr), initialPaulineEvent, int, "%i");
 
 	// check if we can still communicate
@@ -9114,10 +9131,9 @@ test_t group_chat4_tests[] = {
                 group_chat_room_creation_successful_if_at_least_one_invited_participant_supports_it),
     TEST_ONE_TAG(
         "Migrate basic chat room to client group chat room", group_chat_room_migrate_from_basic_chat_room, "Migration"),
-    TEST_TWO_TAGS("Migrate basic chat room to client group chat room failure",
-                  group_chat_room_migrate_from_basic_to_client_fail,
-                  "LeaksMemory",
-                  "Migration"),
+    TEST_ONE_TAG("Migrate basic chat room to client group chat room failure",
+                 group_chat_room_migrate_from_basic_to_client_fail,
+                 "Migration"),
     TEST_ONE_TAG("Migrate basic chat room to client group chat room not needed",
                  group_chat_donot_room_migrate_from_basic_chat_room,
                  "Migration"),

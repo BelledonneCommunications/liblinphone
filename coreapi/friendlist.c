@@ -363,6 +363,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 					linphone_friend_set_name(lf, name);
 					linphone_free_xml_text_content(name);
 				}
+				linphone_free_xml_text_content(uri);
 			}
 		}
 		if (name_object) xmlXPathFreeObject(name_object);

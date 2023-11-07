@@ -275,8 +275,9 @@ static void group_chat_hfts(bool_t encryption,
 	}
 
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, manager_to_restart);
-	init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_t *tmpList = init_core_for_conference(tmpCoresManagerList);
 	bctbx_list_free(tmpCoresManagerList);
+	bctbx_list_free(tmpList);
 
 	linphone_core_manager_start(manager_to_restart, TRUE);
 

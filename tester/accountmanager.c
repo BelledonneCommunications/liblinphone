@@ -60,6 +60,7 @@ static Account *account_new(LinphoneAddress *identity, const char *unique_id) {
 
 void account_destroy(Account *obj) {
 	if (obj->uuid) bctbx_free(obj->uuid);
+	if (obj->phone_alias) bctbx_free(obj->phone_alias);
 	linphone_address_unref(obj->identity);
 	linphone_address_unref(obj->modified_identity);
 	ms_free(obj->password);

@@ -268,7 +268,9 @@ bool PotentialCfgGraph::processMediaPcfg(const unsigned int &idx, const belle_sd
 		auto attr_configs = createPConfigFromAttribute(lAttribute, mediaAcap, mediaTcap);
 		if (attr_configs.acap.empty() && attr_configs.tcap.empty()) {
 			lInfo() << "Unable to build a potential config for id " << id;
-			unparsed_config[id] = belle_sip_object_to_string(lAttribute);
+			char *attrString = belle_sip_object_to_string(lAttribute);
+			unparsed_config[id] = attrString;
+			belle_sip_free(attrString);
 		} else {
 			config[id] = attr_configs;
 		}

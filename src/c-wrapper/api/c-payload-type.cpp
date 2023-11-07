@@ -53,12 +53,12 @@ bool_t linphone_payload_type_enabled(const LinphonePayloadType *payload_type) {
 	return LinphonePrivate::PayloadType::toCpp(payload_type)->isEnabled();
 }
 
-char *linphone_payload_type_get_description(const LinphonePayloadType *payload_type) {
-	return bctbx_strdup(LinphonePrivate::PayloadType::toCpp(payload_type)->getDescription().c_str());
+const char *linphone_payload_type_get_description(const LinphonePayloadType *payload_type) {
+	return L_STRING_TO_C(LinphonePrivate::PayloadType::toCpp(payload_type)->getDescription());
 }
 
 const char *linphone_payload_type_get_encoder_description(const LinphonePayloadType *payload_type) {
-	return bctbx_strdup(LinphonePrivate::PayloadType::toCpp(payload_type)->getEncoderDescription().c_str());
+	return L_STRING_TO_C(LinphonePrivate::PayloadType::toCpp(payload_type)->getEncoderDescription());
 }
 
 int linphone_payload_type_get_normal_bitrate(const LinphonePayloadType *payload_type) {

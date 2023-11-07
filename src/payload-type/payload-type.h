@@ -54,8 +54,8 @@ public:
 	void setSendFmtp(const std::string &sendFmtp);
 
 	int getType() const;
-	std::string getDescription() const;
-	std::string getEncoderDescription() const;
+	const std::string &getDescription() const;
+	const std::string &getEncoderDescription() const;
 	int getNormalBitrate() const;
 	std::string getMimeType() const;
 	int getChannels() const;
@@ -78,6 +78,9 @@ public:
 private:
 	OrtpPayloadType *mPt;
 	bool mOwnOrtpPayloadType = false;
+
+	mutable std::string mDescription;
+	mutable std::string mEncoderDescription;
 };
 
 LINPHONE_END_NAMESPACE

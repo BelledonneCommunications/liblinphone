@@ -249,26 +249,27 @@ int PayloadType::getType() const {
 	return mPt->type;
 }
 
-string PayloadType::getDescription() const {
+const string &PayloadType::getDescription() const {
 	char *desc = _payload_type_get_description(mPt);
-	string strDesc = string(desc);
+	mDescription = desc;
 	bctbx_free(desc);
-	return strDesc;
+	return mDescription;
 }
 
-string PayloadType::getEncoderDescription() const {
+const string &PayloadType::getEncoderDescription() const {
 	auto core = getCore();
 	if (!core) {
 		string desc = PayloadType::getDescription();
 		lError() << "cannot get codec description for '" << desc << "' payload type: no associated core";
-		return string();
+		return bctoolbox::Utils::getEmptyConstRefObject<string>();
 	}
 	auto coreFactory = linphone_core_get_ms_factory(core->getCCore());
 	if (ms_factory_codec_supported(coreFactory, mPt->mime_type)) {
 		MSFilterDesc *desc = ms_factory_get_encoder(coreFactory, mPt->mime_type);
-		return L_C_TO_STRING(desc->text);
+		mEncoderDescription = desc->text;
+		return mEncoderDescription;
 	}
-	return string();
+	return bctoolbox::Utils::getEmptyConstRefObject<string>();
 }
 
 int PayloadType::getNormalBitrate() const {

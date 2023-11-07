@@ -120,7 +120,6 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		marie.setupMgrForConference();
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 
@@ -322,7 +321,6 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		marie.setupMgrForConference();
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 
@@ -449,7 +447,6 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		marie.setupMgrForConference();
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 

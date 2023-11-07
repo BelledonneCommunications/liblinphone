@@ -697,6 +697,8 @@ static void call_forking_with_push_notification_multiple(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallReleased, 1, 5000));
 	}
+
+	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
@@ -1338,6 +1340,8 @@ static void test_list_subscribe(void) {
 	ms_free(subscribe_content);
 	linphone_address_unref(list_name);
 	linphone_content_unref(content);
+
+	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);

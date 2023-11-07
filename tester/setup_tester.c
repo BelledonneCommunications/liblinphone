@@ -579,6 +579,7 @@ static void linphone_config_safety_test(void) {
 	unlink(file);
 	bc_free(res);
 	bc_free(file);
+	bctbx_free(tmpfile);
 }
 
 static void linphone_lpconfig_from_buffer(void) {
@@ -1986,6 +1987,7 @@ static void search_friend_with_aggregation(void) {
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
 	unlink(friends_db);
+	bctbx_free(friends_db);
 }
 
 static void search_friend_with_name_with_uppercase(void) {
@@ -2232,7 +2234,7 @@ static void search_friend_get_capabilities(void) {
 	addr = "sip:groupchat@sip.linphone.org";
 	group_chat_fr = linphone_core_create_friend_with_address(manager->lc, addr);
 	group_chat_service = linphone_presence_service_new(NULL, LinphonePresenceBasicStatusOpen, NULL);
-	group_chat_descriptions = bctbx_list_append(group_chat_descriptions, "groupchat");
+	group_chat_descriptions = bctbx_list_append(group_chat_descriptions, bctbx_strdup("groupchat"));
 	linphone_presence_service_set_service_descriptions(group_chat_service, group_chat_descriptions);
 	linphone_presence_model_add_service(group_chat_model, group_chat_service);
 	linphone_friend_set_presence_model_for_uri_or_tel(group_chat_fr, addr, group_chat_model);
@@ -2241,8 +2243,8 @@ static void search_friend_get_capabilities(void) {
 	addr = "sip:lime@sip.linphone.org";
 	lime_fr = linphone_core_create_friend_with_address(manager->lc, addr);
 	lime_service = linphone_presence_service_new(NULL, LinphonePresenceBasicStatusOpen, NULL);
-	lime_descriptions = bctbx_list_append(lime_descriptions, "groupchat");
-	lime_descriptions = bctbx_list_append(lime_descriptions, "lime");
+	lime_descriptions = bctbx_list_append(lime_descriptions, bctbx_strdup("groupchat"));
+	lime_descriptions = bctbx_list_append(lime_descriptions, bctbx_strdup("lime"));
 	linphone_presence_service_set_service_descriptions(lime_service, lime_descriptions);
 	linphone_presence_model_add_service(lime_model, lime_service);
 	linphone_friend_set_presence_model_for_uri_or_tel(lime_fr, addr, lime_model);
@@ -2251,9 +2253,9 @@ static void search_friend_get_capabilities(void) {
 	addr = "sip:ephemeral@sip.linphone.org";
 	ephemeral_fr = linphone_core_create_friend_with_address(manager->lc, addr);
 	ephemeral_service = linphone_presence_service_new(NULL, LinphonePresenceBasicStatusOpen, NULL);
-	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, "groupchat");
-	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, "lime");
-	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, "ephemeral");
+	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, bctbx_strdup("groupchat"));
+	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, bctbx_strdup("lime"));
+	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, bctbx_strdup("ephemeral"));
 	linphone_presence_service_set_service_descriptions(ephemeral_service, ephemeral_descriptions);
 	linphone_presence_model_add_service(ephemeral_model, ephemeral_service);
 	linphone_friend_set_presence_model_for_uri_or_tel(ephemeral_fr, addr, ephemeral_model);
@@ -2302,10 +2304,6 @@ static void search_friend_get_capabilities(void) {
 		BC_ASSERT_TRUE(ephemeralFound);
 		bctbx_list_free_with_data(copy, (bctbx_list_free_func)linphone_search_result_unref);
 	}
-
-	bctbx_list_free(group_chat_descriptions);
-	bctbx_list_free(lime_descriptions);
-	bctbx_list_free(ephemeral_descriptions);
 
 	linphone_presence_service_unref(group_chat_service);
 	linphone_presence_service_unref(lime_service);
@@ -3532,7 +3530,7 @@ static void audio_devices(void) {
 	bctbx_list_t *sound_devices = linphone_core_get_sound_devices_list(core);
 	int sound_devices_count = (int)bctbx_list_size(sound_devices);
 	BC_ASSERT_GREATER_STRICT(sound_devices_count, 0, int, "%d");
-	bctbx_list_free(sound_devices);
+	bctbx_list_free_with_data(sound_devices, (bctbx_list_free_func)bctbx_free);
 
 	// Check extended audio devices list matches legacy sound devices list
 	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(core);

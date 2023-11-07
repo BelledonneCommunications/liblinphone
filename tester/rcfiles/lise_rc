@@ -1,5 +1,3 @@
-## DO NOT USE FOR TESTS OTHER THAN SETUP !
-
 [sip]
 sip_port=-1
 sip_tcp_port=-1
@@ -7,6 +5,18 @@ sip_tls_port=-1
 default_proxy=0
 ping_with_options=0
 composing_idle_timeout=1
+verify_server_certs=1
+verify_server_cn=1
+contact=sip:mickael@unknown-host
+auto_send_ringing=1
+media_encryption=none
+register_only_when_network_is_up=1
+supported=replaces, outbound, gruu, path
+guess_hostname=1
+inc_timeout=30
+in_call_timeout=0
+delayed_timeout=4
+register_only_when_upnp_is_ok=1
 
 [auth_info_0]
 username=lise
@@ -27,6 +37,12 @@ dial_escape_plus=0
 [rtp]
 audio_rtp_port=18070-28000
 video_rtp_port=49072-59000
+text_rtp_port=-1
+audio_jitt_comp=60
+video_jitt_comp=60
+nortp_timeout=30
+audio_adaptive_jitt_comp_enabled=1
+video_adaptive_jitt_comp_enabled=1
 
 [video]
 display=0
@@ -38,12 +54,23 @@ self_view=0
 automatically_initiate=0
 automatically_accept=0
 device=StaticImage: Static picture
+codec_priority_policy=1
 
 [sound]
 echocancellation=0 #to not overload cpu in case of VG
+playback_dev_id=PulseAudio Unknown: Comet Lake PCH cAVS HDMI / DisplayPort 3 Output
+ringer_dev_id=PulseAudio Unknown: Comet Lake PCH cAVS HDMI / DisplayPort 3 Output
+capture_dev_id=PulseAudio Unknown: Comet Lake PCH cAVS Headset Mono Microphone + Headphones Stereo Microphone
+media_dev_id=PulseAudio Unknown: Comet Lake PCH cAVS HDMI / DisplayPort 3 Output
+remote_ring=/home/mickael/Projets/linphone-sdk-support/build/sanitizer/linphone-sdk/desktop/share/sounds/linphone/ringback.wav
+playback_gain_db=0.000000
+mic_gain_db=0.000000
+disable_record_on_mute=0
 
 [net]
 stun_server=stun.example.org
+nat_policy_ref=VgttJBx038GLs0N
+mtu=1300
 
 [storage]
 #this will explicitely request to not use database. We need this for a few tests where multiple cores are instanciated, so that they don't 
@@ -54,3 +81,98 @@ zrtp_secrets_db_uri=null
 
 [tester]
 test_env=1
+
+[misc]
+empty_chat_room_deletion=1
+uuid=4744d4b9-9df1-00f4-9993-4ba94cb3f8be
+
+[app]
+auto_download_incoming_files_max_size=-1
+auto_download_incoming_voice_recordings=1
+auto_download_incoming_icalendars=1
+sender_name_hidden_in_forward_message=0
+record_aware=0
+
+[lime]
+enabled=0
+
+[audio_codec_0]
+mime=opus
+rate=48000
+channels=2
+enabled=1
+recv_fmtp=useinbandfec=1
+
+[audio_codec_1]
+mime=speex
+rate=16000
+channels=1
+enabled=1
+recv_fmtp=vbr=on
+
+[audio_codec_2]
+mime=speex
+rate=8000
+channels=1
+enabled=1
+recv_fmtp=vbr=on
+
+[audio_codec_3]
+mime=PCMU
+rate=8000
+channels=1
+enabled=1
+
+[audio_codec_4]
+mime=PCMA
+rate=8000
+channels=1
+enabled=1
+
+[audio_codec_5]
+mime=GSM
+rate=8000
+channels=1
+enabled=0
+
+[audio_codec_6]
+mime=G722
+rate=8000
+channels=1
+enabled=0
+
+[audio_codec_7]
+mime=speex
+rate=32000
+channels=1
+enabled=0
+recv_fmtp=vbr=on
+
+[audio_codec_8]
+mime=BV16
+rate=8000
+channels=1
+enabled=0
+
+[audio_codec_9]
+mime=L16
+rate=44100
+channels=2
+enabled=0
+
+[audio_codec_10]
+mime=L16
+rate=44100
+channels=1
+enabled=0
+
+[video_codec_0]
+mime=AV1
+rate=90000
+enabled=1
+
+[video_codec_1]
+mime=VP8
+rate=90000
+enabled=1
+

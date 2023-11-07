@@ -63,6 +63,7 @@ static void _linphone_chat_room_constructor(BCTBX_UNUSED(LinphoneChatRoom *cr)) 
 
 static void _linphone_chat_room_destructor(LinphoneChatRoom *cr) {
 	_linphone_chat_room_clear_callbacks(cr);
+	if (cr->composingAddresses) bctbx_list_free(cr->composingAddresses);
 }
 
 void linphone_chat_room_allow_multipart(LinphoneChatRoom *room) {
@@ -501,6 +502,7 @@ void linphone_chat_room_set_subject(LinphoneChatRoom *cr, const char *subject) {
 const bctbx_list_t *linphone_chat_room_get_composing_addresses(LinphoneChatRoom *cr) {
 	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	list<shared_ptr<LinphonePrivate::Address>> addresses = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getComposingAddresses();
+	if (cr->composingAddresses) bctbx_list_free(cr->composingAddresses);
 	cr->composingAddresses =
 	    LinphonePrivate::Utils::listToCBctbxList<LinphoneAddress, LinphonePrivate::Address>(addresses);
 	return cr->composingAddresses;

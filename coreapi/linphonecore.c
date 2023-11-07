@@ -1721,9 +1721,10 @@ static void bodyless_config_read(LinphoneCore *lc) {
 	linphone_core_clear_bodyless_friend_lists(lc);
 
 	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
-	while (bodyless_lists) {
-		char *name = (char *)bctbx_list_get_data(bodyless_lists);
-		bodyless_lists = bctbx_list_next(bodyless_lists);
+	bctbx_list_t *it = bodyless_lists;
+	while (it) {
+		char *name = (char *)bctbx_list_get_data(it);
+		it = bctbx_list_next(it);
 		LinphoneAddress *addr = linphone_address_new(name);
 		if (!addr) {
 			bctbx_free(name);
@@ -1747,6 +1748,7 @@ static void bodyless_config_read(LinphoneCore *lc) {
 		linphone_core_add_friend_list(lc, friendList);
 		linphone_friend_list_unref(friendList);
 	}
+	if (bodyless_lists) bctbx_list_free(bodyless_lists);
 }
 
 void linphone_core_invalidate_friends_maps(LinphoneCore *lc) {

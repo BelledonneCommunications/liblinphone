@@ -17,12 +17,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <functional>
+#include <json/json.h>
+
+#include <belle-sip/listener.h>
+
 #include "linphone/account_creator.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
-
-#include <functional>
-#include <json/json.h>
 
 using namespace std;
 
@@ -34,7 +36,7 @@ typedef struct belle_sip_auth_event belle_sip_auth_event_t;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
+class LINPHONE_PUBLIC FlexiAPIClient {
 public:
 	class LINPHONE_PUBLIC Response {
 	public:
@@ -69,7 +71,6 @@ public:
 		function<void(const Response &)> success;
 		function<void(const Response &)> error;
 		LinphoneCore *core;
-		shared_ptr<FlexiAPIClient> mSelf;
 	};
 
 	FlexiAPIClient(LinphoneCore *lc);
@@ -147,12 +148,12 @@ public:
 	FlexiAPIClient *useTestAdminAccount(bool test);
 
 	// Callbacks handlers
-	FlexiAPIClient *then(function<void(Response)> success);
-	FlexiAPIClient *error(function<void(Response)> error);
+	FlexiAPIClient *then(const function<void(Response)> &success);
+	FlexiAPIClient *error(const function<void(Response)> &error);
 
 private:
 	LinphoneCore *mCore;
-	Callbacks mRequestCallbacks;
+	shared_ptr<Callbacks> mRequestCallbacks;
 	const char *mApiKey;
 	bool mUseTestAdminAccount;
 
@@ -160,6 +161,8 @@ private:
 	void prepareAndSendRequest(string path, string type);
 	void prepareAndSendRequest(string path, string type, JsonParams params);
 	static void processResponse(void *ctx, const belle_http_response_event_t *event) noexcept;
+	static void processIoError(void *ctx, const belle_sip_io_error_event_t *event) noexcept;
+	static void processTimeout(void *ctx, const belle_sip_timeout_event_t *event) noexcept;
 	static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept;
 	string urlEncode(const string &value);
 };

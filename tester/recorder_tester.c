@@ -64,7 +64,7 @@ static void record_file(const char *filename,
                         BCTBX_UNUSED(bool_t supported_format),
                         BCTBX_UNUSED(const char *audio_mime),
                         const char *video_mime,
-                        LinphoneRecorderFileFormat format,
+                        LinphoneRecorderFileFormat file_format,
                         bool_t use_evfs) {
 
 	uint8_t evfs_key[32] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
@@ -94,7 +94,7 @@ static void record_file(const char *filename,
 
 	LinphoneRecorderParams *params = linphone_core_create_recorder_params(lc_manager->lc);
 	linphone_recorder_params_set_webcam_name(params, linphone_core_get_video_device(lc_manager->lc));
-	linphone_recorder_params_set_file_format(params, format);
+	linphone_recorder_params_set_file_format(params, file_format);
 	linphone_recorder_params_set_video_codec(params, video_mime);
 	recorder = linphone_core_create_recorder(lc_manager->lc, params);
 	linphone_recorder_params_unref(params);

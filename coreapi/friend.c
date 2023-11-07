@@ -1832,7 +1832,7 @@ static int create_friend(void *data, BCTBX_UNUSED(int argc), char **argv, BCTBX_
 	}
 	linphone_friend_set_inc_subscribe_policy(lf, static_cast<LinphoneSubscribePolicy>(atoi(argv[3])));
 	linphone_friend_send_subscribe(lf, !!atoi(argv[4]));
-	linphone_friend_set_ref_key(lf, ms_strdup(argv[5]));
+	linphone_friend_set_ref_key(lf, argv[5]);
 	lf->presence_received = !!atoi(argv[9]);
 	lf->storage_id = storage_id;
 
@@ -2127,7 +2127,7 @@ const char *linphone_friend_phone_number_to_sip_uri(LinphoneFriend *lf, const ch
 		if (strcmp(lfpnsu->number, phone_number) == 0) {
 			/*force sip uri computation because proxy config may have changed, specially, ccc could have been added
 			 * since last computation*/
-			// free_phone_number_sip_uri(lfpnsu);
+			free_phone_number_sip_uri(lfpnsu);
 			if (lf->phone_number_sip_uri_map == iterator) {
 				/*change list head if head is removed*/
 				iterator = lf->phone_number_sip_uri_map = bctbx_list_erase_link(lf->phone_number_sip_uri_map, iterator);
@@ -2193,7 +2193,7 @@ int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
 		if (!presence) continue;
 		capabilities |= linphone_presence_model_get_capabilities(presence);
 	}
-	bctbx_list_free_with_data(phones, bctbx_free);
+	bctbx_list_free_with_data(phones, (bctbx_list_free_func)bctbx_free);
 
 	return capabilities;
 }
@@ -2226,7 +2226,8 @@ bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *lf,
 		if (!presence) continue;
 		if (linphone_presence_model_has_capability_with_version(presence, capability, version)) result = TRUE;
 	}
-	bctbx_list_free_with_data(phones, bctbx_free);
+
+	bctbx_list_free_with_data(phones, (bctbx_list_free_func)bctbx_free);
 
 	return result;
 }

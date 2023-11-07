@@ -158,7 +158,9 @@ static void flexiapi_remote_provisioning_flow(void) {
 	string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
 
 	// Create a test account
-	string username = string("test_").append(sal_get_random_token_lowercase(12));
+	char *token = sal_get_random_token_lowercase(12);
+	string username = string("test_").append(token);
+	bctbx_free(token);
 	bool activated = false; // Required to get a confirmation key
 	string confirmationKey;
 	int id;
@@ -225,8 +227,12 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	unlink(friends_db);
 
 	// Create a test account
-	string usernameContact1 = string("test_").append(sal_get_random_token_lowercase(12));
-	string usernameContact2 = string("test_").append(sal_get_random_token_lowercase(12));
+	char *token = sal_get_random_token_lowercase(12);
+	string usernameContact1 = string("test_").append(token);
+	bctbx_free(token);
+	token = sal_get_random_token_lowercase(12);
+	string usernameContact2 = string("test_").append(token);
+	bctbx_free(token);
 	int contactId0;
 	int contactId1;
 	int contactId2;
@@ -241,6 +247,8 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 		    fetched = 1;
 		    contactId0 = response.json()["id"].asInt();
 	    });
+
+	bctbx_free(addr);
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 
@@ -274,7 +282,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	// Link the contacts
 	flexiAPIClient->adminAccountContactAdd(contactId0, contactId1);
 	flexiAPIClient->adminAccountContactAdd(contactId0, contactId2)
-	    ->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
+	    ->then([&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
 		    code = response.code;
 		    fetched = 1;
 	    });
@@ -326,15 +334,19 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 		string fullName = string(linphone_vcard_get_full_name(vcard)).substr(0, usernameContact2.length());
 		BC_ASSERT_STRING_EQUAL(fullName.c_str(), usernameContact2.c_str());
-		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
-		                           vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
-		                       "rfc2833");
+
+		bctbx_list_t *extended_properties =
+		    linphone_vcard_get_extended_properties_values_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
+		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(extended_properties), "rfc2833");
+		bctbx_list_free_with_data(extended_properties, (bctbx_list_free_func)bctbx_free);
 
 		linphone_vcard_remove_extented_properties_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
 		linphone_vcard_add_extended_property(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL", "test");
-		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
-		                           vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
-		                       "test");
+
+		extended_properties =
+		    linphone_vcard_get_extended_properties_values_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
+		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(extended_properties), "test");
+		bctbx_list_free_with_data(extended_properties, (bctbx_list_free_func)bctbx_free);
 	}
 
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_friends_lists(marie->lc)), 2, int, "%i");
@@ -349,7 +361,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	flexiAPIClient->useTestAdminAccount(true);
 
 	flexiAPIClient->adminAccountContactDelete(contactId0, contactId2)
-	    ->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
+	    ->then([&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
 		    code = response.code;
 		    fetched = 1;
 	    });
@@ -402,7 +414,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 	flexiAPIClient->adminAccountDelete(contactId1);
 	flexiAPIClient->adminAccountDelete(contactId2)
-	    ->then([&code, &fetched](LinphonePrivate::FlexiAPIClient::Response response) {
+	    ->then([&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
 		    code = response.code;
 		    fetched = 1;
 	    });
@@ -412,6 +424,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 	linphone_core_cbs_unref(cbs);
 	ms_free(stats);
+	ms_free(friends_db);
 	linphone_core_manager_destroy(marie);
 }
 

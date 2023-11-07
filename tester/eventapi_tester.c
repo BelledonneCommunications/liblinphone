@@ -238,8 +238,10 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 	                           "udp");
 	belle_sip_header_via_t *via =
 	    BELLE_SIP_HEADER_VIA(belle_sip_header_create("Via", linphone_event_get_custom_header(lev, "Via")));
-	BC_ASSERT_STRING_EQUAL(belle_sip_header_via_get_transport_lowercase(via),
-	                       linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)));
+	if (BC_ASSERT_PTR_NOT_NULL(via)) {
+		BC_ASSERT_STRING_EQUAL(belle_sip_header_via_get_transport_lowercase(via),
+		                       linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)));
+	}
 
 	if (pauline->stat.number_of_LinphoneSubscriptionIncomingReceived == 1) {
 		/*check good receipt of custom headers*/
@@ -625,6 +627,7 @@ static void publish_expired(void) {
 	linphone_event_unref(lev);
 	linphone_core_manager_stop(marie);
 	linphone_core_manager_uninit(marie);
+	bctbx_free(marie);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishCleared, 1, 5000));
 

@@ -463,7 +463,6 @@ static void group_chat_room_with_client_removed_added(void) {
 		linphone_address_unref(michelle2Contact);
 		coresList = bctbx_list_remove(coresList, michelle2.getLc());
 		michelle2.reStart();
-		michelle2.setupMgrForConference();
 		coresList = bctbx_list_append(coresList, michelle2.getLc());
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated, 1,
@@ -2294,7 +2293,6 @@ static void multidomain_group_chat_room(void) {
 		// great, now I want to see what happened if marie restart.
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		marie.setupMgrForConference();
 		coresList = bctbx_list_append(coresList, marie.getLc());
 
 		// Retrieve chat room

@@ -35,14 +35,6 @@
 #define unlink _unlink
 #endif
 
-void destroy_mgr_in_conference(LinphoneCoreManager *mgr) {
-	if (mgr->user_info) {
-		ms_free((int *)mgr->user_info);
-	}
-
-	linphone_core_manager_destroy(mgr);
-}
-
 static void set_video_in_call(LinphoneCoreManager *m1,
                               LinphoneCoreManager *m2,
                               bool_t enable_video,
@@ -2212,7 +2204,6 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
                                                        const LinphoneMediaEncryption encryption) {
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LinphoneCoreManager *focus_mgr = ((LinphoneCoreManager *)focus);
-	setup_mgr_for_conference(focus_mgr, NULL);
 	linphone_core_enable_conference_server(focus_mgr->lc, TRUE);
 
 	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE, NULL);
@@ -3401,8 +3392,7 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionIncomingReceived, 3, 5000));
 
-		int *subscription_count = ((int *)(marie->user_info));
-		BC_ASSERT_TRUE(wait_for_list(lcs, subscription_count, 3, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->subscription_received, 3, 5000));
 
 		// make sure that the two calls from Marie's standpoint are in conference
 		marie_calls = linphone_core_get_calls(marie->lc);
@@ -3680,8 +3670,7 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionIncomingReceived, 2, 5000));
 
-		int *subscription_count = ((int *)(marie->user_info));
-		BC_ASSERT_TRUE(wait_for_list(lcs, subscription_count, 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->subscription_received, 2, 5000));
 
 		// make sure that the two calls from Marie's standpoint are in conference
 		marie_calls = linphone_core_get_calls(marie->lc);

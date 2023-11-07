@@ -61,8 +61,9 @@ FlexiAPIClient::FlexiAPIClient(LinphoneCore *lc) {
 	mApiKey = nullptr;
 	mUseTestAdminAccount = false;
 
+	mRequestCallbacks = make_shared<Callbacks>();
 	// Assign the core there as well to keep it in the callback contexts
-	mRequestCallbacks.core = lc;
+	mRequestCallbacks->core = lc;
 }
 
 /**
@@ -414,13 +415,13 @@ FlexiAPIClient *FlexiAPIClient::useTestAdminAccount(bool test) {
  * Callback requests
  */
 
-FlexiAPIClient *FlexiAPIClient::then(function<void(FlexiAPIClient::Response)> success) {
-	mRequestCallbacks.success = success;
+FlexiAPIClient *FlexiAPIClient::then(const function<void(FlexiAPIClient::Response)> &success) {
+	mRequestCallbacks->success = success;
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::error(function<void(FlexiAPIClient::Response)> error) {
-	mRequestCallbacks.error = error;
+FlexiAPIClient *FlexiAPIClient::error(const function<void(FlexiAPIClient::Response)> &error) {
+	mRequestCallbacks->error = error;
 	return this;
 }
 
@@ -435,7 +436,7 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type) {
 }
 
 void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams params) {
-	mRequestCallbacks.mSelf = shared_from_this();
+	auto cb = make_unique<shared_ptr<Callbacks>>(mRequestCallbacks);
 	belle_http_request_listener_callbacks_t internalCallbacks = {};
 	belle_http_request_listener_t *listener;
 	belle_http_request_t *req;
@@ -479,8 +480,11 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), BELLE_SIP_HEADER(userAgentHeader));
 
 	internalCallbacks.process_response = processResponse;
+	internalCallbacks.process_io_error = processIoError;
+	internalCallbacks.process_timeout = processTimeout;
 	internalCallbacks.process_auth_requested = processAuthRequested;
-	listener = belle_http_request_listener_create_from_callbacks(&internalCallbacks, &mRequestCallbacks);
+
+	listener = belle_http_request_listener_create_from_callbacks(&internalCallbacks, cb.release());
 
 	belle_http_provider_send_request(mCore->http_provider, req, listener);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
@@ -488,9 +492,7 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 }
 
 void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_t *event) noexcept {
-	auto cb = static_cast<Callbacks *>(ctx);
-	auto self = cb->mSelf; // Keep an instance of self.
-	cb->mSelf = nullptr;   // Allow callbacks to reset cb if needed.
+	auto cb = unique_ptr<shared_ptr<Callbacks>>(static_cast<shared_ptr<Callbacks> *>(ctx));
 
 	try {
 		FlexiAPIClient::Response response;
@@ -499,17 +501,18 @@ void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_
 			int code = belle_http_response_get_status_code(event->response);
 			response.code = code;
 
+			auto cbo = *cb;
 			if (code >= 200 && code < 300) {
 				belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(event->response));
 				char *content = belle_sip_object_to_string(body);
 				response.body = content;
 				ms_free(content);
 
-				if (cb->success) {
-					cb->success(response);
+				if (cbo->success) {
+					cbo->success(response);
 				}
-			} else if (cb->error) {
-				cb->error(response);
+			} else if (cbo->error) {
+				cbo->error(response);
 			}
 		}
 
@@ -518,14 +521,22 @@ void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_
 	}
 }
 
+void FlexiAPIClient::processIoError(void *ctx, [[maybe_unused]] const belle_sip_io_error_event_t *event) noexcept {
+	auto cb = unique_ptr<shared_ptr<Callbacks>>(static_cast<shared_ptr<Callbacks> *>(ctx));
+}
+
+void FlexiAPIClient::processTimeout(void *ctx, [[maybe_unused]] const belle_sip_timeout_event_t *event) noexcept {
+	auto cb = unique_ptr<shared_ptr<Callbacks>>(static_cast<shared_ptr<Callbacks> *>(ctx));
+}
+
 void FlexiAPIClient::processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept {
-	auto cb = static_cast<Callbacks *>(ctx);
+	auto cb = static_cast<shared_ptr<Callbacks> *>(ctx);
 
 	try {
 		const char *username = belle_sip_auth_event_get_username(event);
 		const char *domain = belle_sip_auth_event_get_domain(event);
 
-		linphone_core_fill_belle_sip_auth_event(cb->core, event, username, domain);
+		linphone_core_fill_belle_sip_auth_event((*cb)->core, event, username, domain);
 	} catch (const std::exception &e) {
 		lError() << e.what();
 	}

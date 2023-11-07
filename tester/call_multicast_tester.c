@@ -246,7 +246,7 @@ static void early_media_with_multicast_base(bool_t video) {
 		}
 		end_call(marie, pauline);
 	}
-	ms_free(lcs);
+	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(pauline2);
