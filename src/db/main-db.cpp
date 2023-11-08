@@ -2572,7 +2572,8 @@ void MainDbPrivate::updateSchema() {
 		try {
 			*session << "ALTER TABLE conference_info_participant_params RENAME COLUMN \"key\" TO name";
 		} catch (const soci::soci_error &e) {
-			lDebug() << "Column 'key' does not exists in table 'conference_info_participant_params' therefore it "
+			lDebug() << "Caught exception " << e.what()
+			         << ": Column 'key' does not exists in table 'conference_info_participant_params' therefore it "
 			            "cannot be renames as 'name'";
 		}
 		// Sanity check
@@ -2583,7 +2584,8 @@ void MainDbPrivate::updateSchema() {
 		try {
 			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
 		} catch (const soci::soci_error &e) {
-			lDebug() << "Column 'security_level' already exists in table 'conference_info'";
+			lDebug() << "Caught exception " << e.what()
+			         << ": Column 'security_level' already exists in table 'conference_info'";
 		}
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN is_participant BOOLEAN NOT NULL DEFAULT 1";
 	}
