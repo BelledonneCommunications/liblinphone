@@ -4909,91 +4909,74 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 // - set the creation time to the earliest one
 // - assign all events preceeding the latest creation time to the kept chatroom
 // - destroy the deleted chatroom from DB
-void MainDb::addChatroomToList(list<shared_ptr<AbstractChatRoom>> &chatRooms,
-                               const shared_ptr<AbstractChatRoom> chatRoom) const {
+void MainDb::addChatroomToList(
+    std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> &chatRoomsMap,
+    const shared_ptr<AbstractChatRoom> chatRoom) const {
+#ifdef HAVE_DB_STORAGE
+	const auto chatRoomConferenceId = chatRoom->getConferenceId();
+	shared_ptr<AbstractChatRoom> chatRoomToAdd = nullptr;
+	try {
+		auto storedChatRoom = chatRoomsMap.at(chatRoomConferenceId);
+		chatRoomToAdd = mergeChatRooms(chatRoom, storedChatRoom);
+	} catch (std::out_of_range &) {
+		chatRoomToAdd = chatRoom;
+	}
+	chatRoomsMap.insert_or_assign(chatRoomConferenceId, chatRoomToAdd);
+#endif
+}
+
+shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractChatRoom> chatRoom1,
+                                                    const shared_ptr<AbstractChatRoom> chatRoom2) const {
 #ifdef HAVE_DB_STORAGE
 	L_D();
-	const auto chatRoomConferenceId = chatRoom->getConferenceId();
-	const auto chatRoomIt =
-	    std::find_if(chatRooms.cbegin(), chatRooms.cend(), [&chatRoomConferenceId](const auto &storedChatRoom) {
-		    const auto &storedChatRoomConferenceId = storedChatRoom->getConferenceId();
-
-		    const auto storedChatRoomConferenceIdPeerAddress = storedChatRoomConferenceId.getPeerAddress();
-		    const auto storedChatRoomConferenceIdPeerAddressWithoutGruu =
-		        (storedChatRoomConferenceIdPeerAddress && storedChatRoomConferenceIdPeerAddress->isValid())
-		            ? storedChatRoomConferenceId.getPeerAddress()->getUriWithoutGruu()
-		            : Address();
-		    const auto chatRoomConferenceIdPeerAddress = chatRoomConferenceId.getPeerAddress();
-		    const auto chatRoomConferenceIdPeerAddressWithoutGruu =
-		        (chatRoomConferenceIdPeerAddress && chatRoomConferenceIdPeerAddress->isValid())
-		            ? chatRoomConferenceId.getPeerAddress()->getUriWithoutGruu()
-		            : Address();
-
-		    const auto storedChatRoomConferenceIdLocalAddress = storedChatRoomConferenceId.getLocalAddress();
-		    const auto storedChatRoomConferenceIdLocalAddressWithoutGruu =
-		        (storedChatRoomConferenceIdLocalAddress && storedChatRoomConferenceIdLocalAddress->isValid())
-		            ? storedChatRoomConferenceId.getLocalAddress()->getUriWithoutGruu()
-		            : Address();
-		    const auto chatRoomConferenceIdLocalAddress = chatRoomConferenceId.getLocalAddress();
-		    const auto chatRoomConferenceIdLocalAddressWithoutGruu =
-		        (chatRoomConferenceIdLocalAddress && chatRoomConferenceIdLocalAddress->isValid())
-		            ? chatRoomConferenceId.getLocalAddress()->getUriWithoutGruu()
-		            : Address();
-
-		    return (storedChatRoomConferenceIdLocalAddressWithoutGruu == chatRoomConferenceIdLocalAddressWithoutGruu) &&
-		           (storedChatRoomConferenceIdPeerAddressWithoutGruu == chatRoomConferenceIdPeerAddressWithoutGruu);
-	    });
 	shared_ptr<AbstractChatRoom> chatRoomToAdd = nullptr;
-	if (chatRoomIt == chatRooms.cend()) {
-		chatRoomToAdd = chatRoom;
+	const auto chatRoom1ConferenceId = chatRoom1->getConferenceId();
+	const auto chatRoom1CreationTime = chatRoom1->getCreationTime();
+	const auto chatRoom2ConferenceId = chatRoom2->getConferenceId();
+	const auto chatRoom2CreationTime = chatRoom2->getCreationTime();
+	lInfo() << "Chat rooms with conference id " << chatRoom1ConferenceId << " and " << chatRoom2ConferenceId
+	        << " will be merged as they have the same peer address";
+	ConferenceId conferenceIdToAdd;
+	ConferenceId conferenceIdToRemove;
+	time_t creationTime = 0;
+	time_t creationTimeToDelete = 0;
+	// Update chatroom with the largest creation time and update its creation time with the lowest value.
+	if (chatRoom2CreationTime < chatRoom1CreationTime) {
+		chatRoomToAdd = chatRoom1;
+		creationTime = chatRoom2CreationTime;
+		creationTimeToDelete = chatRoom1CreationTime;
+		conferenceIdToAdd = chatRoom1ConferenceId;
+		conferenceIdToRemove = chatRoom2ConferenceId;
 	} else {
-		auto storedChatRoom = (*chatRoomIt);
-		const auto storedChatRoomConferenceId = storedChatRoom->getConferenceId();
-		const auto storedChatRoomCreationTime = storedChatRoom->getCreationTime();
-		const auto chatRoomCreationTime = chatRoom->getCreationTime();
-		lInfo() << "Chat rooms with conference id " << chatRoomConferenceId << " and " << storedChatRoomConferenceId
-		        << " will be merged as they have the same peer address";
-		chatRooms.erase(chatRoomIt);
-		ConferenceId conferenceIdToAdd;
-		ConferenceId conferenceIdToRemove;
-		time_t creationTime = 0;
-		time_t creationTimeToDelete = 0;
-		// Update chatroom with the largest creation time and update its creation time with the lowest value.
-		if (storedChatRoomCreationTime < chatRoomCreationTime) {
-			chatRoomToAdd = chatRoom;
-			creationTime = storedChatRoomCreationTime;
-			creationTimeToDelete = chatRoomCreationTime;
-			conferenceIdToAdd = chatRoomConferenceId;
-			conferenceIdToRemove = storedChatRoomConferenceId;
-		} else {
-			chatRoomToAdd = storedChatRoom;
-			creationTime = chatRoomCreationTime;
-			creationTimeToDelete = storedChatRoomCreationTime;
-			conferenceIdToAdd = storedChatRoomConferenceId;
-			conferenceIdToRemove = chatRoomConferenceId;
-		}
-		chatRoomToAdd->getPrivate()->setCreationTime(creationTime);
-		d->unreadChatMessageCountCache.insert(conferenceIdToAdd,
-		                                      *d->unreadChatMessageCountCache[conferenceIdToAdd] +
-		                                          *d->unreadChatMessageCountCache[conferenceIdToRemove]);
-		d->unreadChatMessageCountCache.insert(conferenceIdToRemove, 0);
+		chatRoomToAdd = chatRoom2;
+		creationTime = chatRoom1CreationTime;
+		creationTimeToDelete = chatRoom2CreationTime;
+		conferenceIdToAdd = chatRoom2ConferenceId;
+		conferenceIdToRemove = chatRoom1ConferenceId;
+	}
+	chatRoomToAdd->getPrivate()->setCreationTime(creationTime);
+	d->unreadChatMessageCountCache.insert(conferenceIdToAdd, *d->unreadChatMessageCountCache[conferenceIdToAdd] +
+	                                                             *d->unreadChatMessageCountCache[conferenceIdToRemove]);
+	d->unreadChatMessageCountCache.insert(conferenceIdToRemove, 0);
 
-		const long long &dbChatRoomToAddId = d->selectChatRoomId(conferenceIdToAdd);
-		const long long &dbChatRoomToRemoveId = d->selectChatRoomId(conferenceIdToRemove);
+	const long long &dbChatRoomToAddId = d->selectChatRoomId(conferenceIdToAdd);
+	const long long &dbChatRoomToRemoveId = d->selectChatRoomId(conferenceIdToRemove);
 
-		auto creationTimeToDeleteSoci = d->dbSession.getTimeWithSociIndicator(creationTimeToDelete);
-		soci::session *session = d->dbSession.getBackendSession();
-		// Move conference event that occurred before the latest chatroom was created.
-		// Events such as chat messages are already stored in both chat rooms
-		*session << "UPDATE conference_event SET chat_room_id = :newChatRoomid WHERE event_id IN (SELECT "
-		            "conference_event.event_id FROM conference_event, event WHERE event.id = conference_event.event_id "
-		            "AND conference_event.chat_room_id = :chatRoomId AND event.creation_time < :creationTime)",
-		    soci::use(dbChatRoomToAddId), soci::use(dbChatRoomToRemoveId),
-		    soci::use(creationTimeToDeleteSoci.first, creationTimeToDeleteSoci.second);
+	auto creationTimeToDeleteSoci = d->dbSession.getTimeWithSociIndicator(creationTimeToDelete);
+	soci::session *session = d->dbSession.getBackendSession();
+	// Move conference event that occurred before the latest chatroom was created.
+	// Events such as chat messages are already stored in both chat rooms
+	*session << "UPDATE conference_event SET chat_room_id = :newChatRoomid WHERE event_id IN (SELECT "
+	            "conference_event.event_id FROM conference_event, event WHERE event.id = conference_event.event_id "
+	            "AND conference_event.chat_room_id = :chatRoomId AND event.creation_time < :creationTime)",
+	    soci::use(dbChatRoomToAddId), soci::use(dbChatRoomToRemoveId),
+	    soci::use(creationTimeToDeleteSoci.first, creationTimeToDeleteSoci.second);
+	if (dbChatRoomToRemoveId != -1) {
 		*session << "DELETE FROM chat_room WHERE id = :chatRoomId", soci::use(dbChatRoomToRemoveId);
 	}
-
-	chatRooms.push_back(chatRoomToAdd);
+	return chatRoomToAdd;
+#else
+	return nullptr;
 #endif
 }
 
@@ -5021,7 +5004,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 	return L_DB_TRANSACTION {
 		L_D();
 
-		list<shared_ptr<AbstractChatRoom>> chatRooms;
+		std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> chatRoomsMap;
+
 		shared_ptr<Core> core = getCore();
 		bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
 
@@ -5047,7 +5031,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
-				chatRooms.push_back(chatRoom);
+				chatRoomsMap.insert(std::make_pair(conferenceId, chatRoom));
 				continue;
 			}
 
@@ -5181,10 +5165,15 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			lDebug() << "Found chat room in DB: (peer=" << conferenceId.getPeerAddress()->toStringUriOnlyOrdered()
 			         << ", local=" << conferenceId.getLocalAddress()->toStringUriOnlyOrdered() << ").";
 
-			addChatroomToList(chatRooms, chatRoom);
+			addChatroomToList(chatRoomsMap, chatRoom);
 		}
 
 		tr.commit();
+
+		std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
+		for (const auto &[conferenceId, chatRoom] : chatRoomsMap) {
+			chatRooms.push_back(chatRoom);
+		}
 
 		return chatRooms;
 	};

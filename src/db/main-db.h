@@ -33,6 +33,7 @@
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-id.h"
 #include "conference/conference-info.h"
+#include "conference/conference.h"
 #include "core/core-accessor.h"
 
 // =============================================================================
@@ -251,8 +252,11 @@ private:
 	L_DISABLE_COPY(MainDb);
 
 	void initCleanup();
-	void addChatroomToList(std::list<std::shared_ptr<AbstractChatRoom>> &chatRooms,
-	                       const std::shared_ptr<AbstractChatRoom> chatRoom) const;
+	void addChatroomToList(
+	    std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> &chatRoomsMap,
+	    const std::shared_ptr<AbstractChatRoom> chatRoom) const;
+	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> chatRoom1,
+	                                                 const std::shared_ptr<AbstractChatRoom> chatRoom2) const;
 };
 
 LINPHONE_END_NAMESPACE

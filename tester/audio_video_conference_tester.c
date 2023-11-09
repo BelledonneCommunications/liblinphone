@@ -590,8 +590,39 @@ static void simple_conference_base(LinphoneCoreManager *marie,
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning,
 	                             initial_marie_stat.number_of_LinphoneCallStreamsRunning + 2, 3000));
 
+	bool_t marie_event_log_enabled =
+	    linphone_config_get_bool(linphone_core_get_config(marie->lc), "misc", "conference_event_log_enabled", TRUE);
+	if (marie_event_log_enabled) {
+		bool_t marie_conference_server = linphone_core_conference_server_enabled(marie->lc);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive,
+		                             (initial_marie_stat.number_of_LinphoneSubscriptionActive + 1), 5000));
+		if (!marie_conference_server) {
+			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyFullStateReceived,
+			                             (initial_marie_stat.number_of_NotifyFullStateReceived + 1),
+			                             liblinphone_tester_sip_timeout));
+		}
+	}
+	bool_t laure_event_log_enabled =
+	    linphone_config_get_bool(linphone_core_get_config(laure->lc), "misc", "conference_event_log_enabled", TRUE);
+	if (laure_event_log_enabled && marie_event_log_enabled) {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneSubscriptionActive,
+		                             (initial_laure_stat.number_of_LinphoneSubscriptionActive + 1), 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_NotifyFullStateReceived,
+		                             (initial_laure_stat.number_of_NotifyFullStateReceived + 1),
+		                             liblinphone_tester_sip_timeout));
+	}
+	bool_t pauline_event_log_enabled =
+	    linphone_config_get_bool(linphone_core_get_config(pauline->lc), "misc", "conference_event_log_enabled", TRUE);
+	if (pauline_event_log_enabled && marie_event_log_enabled) {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive,
+		                             (initial_pauline_stat.number_of_LinphoneSubscriptionActive + 1), 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_NotifyFullStateReceived,
+		                             (initial_pauline_stat.number_of_NotifyFullStateReceived + 1),
+		                             liblinphone_tester_sip_timeout));
+	}
+
 	// wait a bit to ensure that should NOTIFYs be sent, they reach their destination
-	wait_for_list(lcs, NULL, 0, 3000);
+	wait_for_list(lcs, NULL, 0, liblinphone_tester_sip_timeout);
 
 	// Check that laure received volumes from other participant's devices
 	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);

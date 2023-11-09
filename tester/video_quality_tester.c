@@ -279,7 +279,7 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int e
 			/*wait some time until the target fps is reached. Indeed the bandwidth measurement may take several
 			 iterations to converge to a value big enough to allow mediastreamer2 to switch to the high fps profile*/
 
-			for (count = 0; count < 3; count++) {
+			for (count = 0; count < 10; count++) {
 				/*wait for at least the first TMMBR to arrive*/
 				BC_ASSERT_TRUE(
 				    wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000));

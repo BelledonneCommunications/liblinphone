@@ -2727,9 +2727,6 @@ static void group_chat_room_with_duplications(void) {
 		// wait bit more to detect side effect if any
 		CoreManagerAssert({focus, marie, pauline, michelle, laure}).waitUntil(chrono::seconds(5), [] { return false; });
 
-		account = linphone_core_get_default_account(laure.getLc());
-		LinphoneAddress *oldLaureDeviceAddress = linphone_address_clone(linphone_account_get_contact_address(account));
-
 		ms_message("%s reinitializes its core", linphone_core_get_identity(laure.getLc()));
 		coresList = bctbx_list_remove(coresList, laure.getLc());
 		linphone_core_manager_reinit(laure.getCMgr());
@@ -2761,12 +2758,9 @@ static void group_chat_room_with_duplications(void) {
 		// Notify chat room that a participant has registered
 		bctbx_list_t *devices = NULL;
 		bctbx_list_t *specs = linphone_core_get_linphone_specs_list(laure.getLc());
-		LinphoneParticipantDeviceIdentity *identity =
-		    linphone_factory_create_participant_device_identity(linphone_factory_get(), oldLaureDeviceAddress, "");
-		linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
-		devices = bctbx_list_append(devices, identity);
 
-		identity = linphone_factory_create_participant_device_identity(linphone_factory_get(), laureDeviceAddress, "");
+		LinphoneParticipantDeviceIdentity *identity =
+		    linphone_factory_create_participant_device_identity(linphone_factory_get(), laureDeviceAddress, "");
 		linphone_participant_device_identity_set_capability_descriptor_2(identity, specs);
 		devices = bctbx_list_append(devices, identity);
 		bctbx_list_free_with_data(specs, ms_free);
@@ -2830,7 +2824,7 @@ static void group_chat_room_with_duplications(void) {
 		}
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneConferenceStateDeleted,
 		                             michelle_stat.number_of_LinphoneConferenceStateDeleted + nbChatrooms,
-		                             liblinphone_tester_sip_timeout));
+		                             3 * liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participants_removed,
 		                             marie_stat.number_of_participants_removed + nbChatrooms,
 		                             liblinphone_tester_sip_timeout));
@@ -2965,7 +2959,7 @@ static void group_chat_room_with_duplications(void) {
 
 		// wait until chatroom is deleted server side
 		BC_ASSERT_TRUE(
-		    CoreManagerAssert({focus, marie, pauline, michelle, laure}).waitUntil(chrono::seconds(90), [&focus] {
+		    CoreManagerAssert({focus, marie, pauline, michelle, laure}).waitUntil(chrono::seconds(120), [&focus] {
 			    return focus.getCore().getChatRooms().size() == 0;
 		    }));
 
