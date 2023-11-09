@@ -228,6 +228,9 @@ void reset_counters(stats *counters) {
 }
 
 static void setup_dns(LinphoneCore *lc, const char *path) {
+	belle_sip_stack_set_dns_engine(
+	    sal_get_stack_impl(linphone_core_get_sal(lc)),
+	    BELLE_SIP_DNS_DNS_C); // Make sure we are not using Apple DNS Service during liblinphone tests
 	if (flexisip_tester_dns_ip_addresses) {
 		linphone_core_set_dns_servers(lc, flexisip_tester_dns_ip_addresses);
 	} else if (strcmp(userhostsfile, "none") != 0) {
@@ -246,10 +249,6 @@ void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
 	linphone_core_set_user_data(lc, user_data);
 
 	sal_enable_test_features(linphone_core_get_sal(lc), TRUE);
-
-	belle_sip_stack_set_dns_engine(
-	    sal_get_stack_impl(linphone_core_get_sal(lc)),
-	    BELLE_SIP_DNS_DNS_C); // Make sure we are not using Apple DNS Service during liblinphone tests
 	setup_dns(lc, path);
 }
 

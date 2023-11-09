@@ -34,6 +34,8 @@
 #define ME_VCF_2 "/baikal/html/card.php/addressbooks/tester/default/me.vcf"
 #define CARDDAV_SYNC_TIMEOUT 15000
 
+const char *vcard_friends_db_file = "vcard-friends.db";
+
 static void linphone_vcard_import_export_friends_test(void) {
 	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
@@ -269,7 +271,7 @@ static void friends_sqlite_storage(void) {
 	const bctbx_list_t *friends = NULL;
 	bctbx_list_t *friends_from_db = NULL;
 	bctbx_list_t *friends_lists_from_db = NULL;
-	char *friends_db = bc_tester_file("friends.db");
+	char *friends_db = bc_tester_file(vcard_friends_db_file);
 	LinphoneFriendListStats *stats = (LinphoneFriendListStats *)ms_new0(LinphoneFriendListStats, 1);
 	const LinphoneAddress *laddress = NULL, *laddress2 = NULL;
 	char *address = NULL, *address2 = NULL;
@@ -381,7 +383,7 @@ static void friends_sqlite_store_lot_of_friends(void) {
 	char *errmsg = NULL;
 	int ret;
 	char *buf;
-	char *friends_db = bc_tester_file("friends.db");
+	char *friends_db = bc_tester_file(vcard_friends_db_file);
 
 	unlink(friends_db);
 	ret = sqlite3_open(friends_db, &db);
@@ -443,7 +445,7 @@ static void friends_sqlite_find_friend_in_lot_of_friends(void) {
 	char *buf;
 	bctoolboxTimeSpec t1;
 	bctoolboxTimeSpec t2;
-	char *friends_db = bc_tester_file("friends.db");
+	char *friends_db = bc_tester_file(vcard_friends_db_file);
 
 	unlink(friends_db);
 	ret = sqlite3_open(friends_db, &db);
@@ -575,7 +577,7 @@ static void carddav_sync_2(void) {
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
 	LinphoneFriend *lf =
 	    linphone_core_create_friend_with_address(manager->lc, "\"Sylvain\" <sip:sylvain@sip.linphone.org>");
-	char *friends_db = bc_tester_file("friends.db");
+	char *friends_db = bc_tester_file(vcard_friends_db_file);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneCardDavContext *c = NULL;
 
@@ -621,7 +623,7 @@ static void carddav_sync_3(void) {
 	    "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nFN:Sylvain "
 	    "Berfini\r\nIMPP;TYPE=work:sip:sylvain@sip.linphone.org\r\nEND:VCARD\r\n");
 	LinphoneFriend *lf = linphone_friend_new_from_vcard(lvc);
-	char *friends_db = bc_tester_file("friends.db");
+	char *friends_db = bc_tester_file(vcard_friends_db_file);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneCardDavContext *c = NULL;
 

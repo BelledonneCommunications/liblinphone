@@ -3485,6 +3485,10 @@ LINPHONE_PUBLIC bool_t linphone_core_echo_cancellation_enabled(const LinphoneCor
 
 /**
  * Enables or disable echo limiter.
+ * "Echo limiter" refers to an algorithm that creates half-duplex conversation in order to
+ * suppress echo. It is experimental and shall be used only in rare cases where
+ * echo cancellation cannot perform because of non-linear speaker/mic coupling.
+ * You shall not expected good audio quality with the echo limiter.
  * @param core #LinphoneCore object. @notnil
  * @param enable TRUE to enable echo limiter, FALSE to disable it.
  * @ingroup media_parameters
@@ -3493,15 +3497,35 @@ LINPHONE_PUBLIC void linphone_core_enable_echo_limiter(LinphoneCore *core, bool_
 
 /**
  * Tells whether echo limiter is enabled.
+ * Enables or disable echo limiter.
+ * "Echo limiter" refers to an algorithm that creates half-duplex conversation in order to
+ * suppress echo. It is experimental and shall be used only in rare cases where
+ * echo cancellation cannot perform because of non-linear speaker/mic coupling.
+ * You shall not expected good audio quality with the echo limiter.
  * @param core #LinphoneCore object. @notnil
  * @return TRUE if the echo limiter is enabled, FALSE otherwise.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC bool_t linphone_core_echo_limiter_enabled(const LinphoneCore *core);
 
-void linphone_core_enable_agc(LinphoneCore *core, bool_t val);
+/**
+ * Enable the experimental software Automatic Gain Control.
+ * This algorithm is very experimental, not usable in its current state.
+ * Automatic Gain Control is usally provided by sound devices, typically on iOS and Android.
+ * @param core #LinphoneCore object. @notnil
+ * @param val a boolean value
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_agc(LinphoneCore *core, bool_t val);
 
-bool_t linphone_core_agc_enabled(const LinphoneCore *core);
+/**
+ * Tells whether the experimental software Automatic Gain Control is activated.
+ * This algorithm is very experimental, not usable in its current state.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if the AGC is enabled, FALSE otherwise.
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_agc_enabled(const LinphoneCore *core);
 
 /**
  * Enable or disable the microphone.
