@@ -566,7 +566,7 @@ class DoxygenTranslator(Translator):
 			if self.displaySelfParam or not paramDesc.is_self_parameter():
 				desc = self._translate_description(paramDesc.desc)
 				desc = desc[0] if len(desc) > 0 else ''
-				text = ('@param {0} {1}'.format(paramDesc.name.translate(self.nameTranslator), desc))
+				text += ('@param {0} {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
 		return text
 
 
