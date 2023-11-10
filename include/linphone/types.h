@@ -481,7 +481,7 @@ typedef enum _LinphoneRegistrationState {
  *
  * To be able to receive events from the network, you must schedule a call linphone_core_iterate() often, like every
  * 20ms. On Android & iOS linphone_core_is_auto_iterate_enabled() is enabled by default so you don't have to worry about
- * that unless you disable it using linphone_core_set_auto_iterate_enabled() or by setting in the [misc] section of your
+ * that unless you disable it using linphone_core_enable_auto_iterate() or by setting in the [misc] section of your
  * configuration auto_iterate=0.
  * @warning Our API isn't thread-safe but also isn't blocking, so it is strongly recommend to always call our methods
  * from the main thread.
