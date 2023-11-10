@@ -164,6 +164,13 @@ class CppTranslator:
 			'isListener'      : True,
 			'methods'         : []
 		}
+
+		try:
+			intDict['briefDoc'] = interface.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+			intDict['detailedDoc'] = interface.detailedDescription.translate(self.docTranslator)
+		except metadoc.TranslationError as e:
+			logging.error(e.msg())
+		
 		for method in interface.instanceMethods:
 			methodDict = self.translate_method(method, genImpl=False)
 			intDict['methods'].append(methodDict)
