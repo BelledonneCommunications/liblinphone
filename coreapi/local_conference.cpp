@@ -939,7 +939,6 @@ int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<Linphone
 
 int LocalConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	MS2AudioMixer *mixer = dynamic_cast<MS2AudioMixer *>(mMixerSession->getMixerByType(SalAudio));
-
 	if (mixer) {
 		MSAudioConference *conf = mixer->getAudioConference();
 		return ms_audio_conference_get_participant_volume(conf, device->getSsrc(LinphoneStreamTypeAudio));

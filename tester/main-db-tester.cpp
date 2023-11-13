@@ -376,6 +376,10 @@ static void load_chatroom_conference(void) {
 
 		list<shared_ptr<ConferenceInfo>> conferenceInfos = mainDb.getConferenceInfos();
 		BC_ASSERT_EQUAL(conferenceInfos.size(), 1, size_t, "%zu");
+
+		for (const auto &conferenceInfo : conferenceInfos) {
+			BC_ASSERT_PTR_NOT_NULL(mainDb.getConferenceInfoFromURI(conferenceInfo->getUri()));
+		}
 	} else {
 		BC_FAIL("Database not initialized");
 	}

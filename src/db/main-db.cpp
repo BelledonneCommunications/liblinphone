@@ -1896,8 +1896,18 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	}
 
 	conferenceInfo = ConferenceInfo::create();
-	std::shared_ptr<Address> uri = Address::create(row.get<string>(2));
+	const std::string uriString = row.get<string>(2);
+	std::shared_ptr<Address> uri = Address::create(uriString);
 	conferenceInfo->setUri(uri);
+	const auto &uriStringOrdered = uri->toStringUriOnlyOrdered();
+	if (uriStringOrdered != uriString) {
+		// Update conference address to ensure that a conference info can be successfully searched by its address
+		const long long &uriSipAddressId = insertSipAddress(uri);
+		*dbSession.getBackendSession()
+		    << "UPDATE conference_info SET uri_sip_address_id = :uriSipAddressId WHERE id = :conferenceInfoId",
+		    soci::use(uriSipAddressId), soci::use(dbConferenceInfoId);
+	}
+
 	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
 	conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 4, 0));
 	conferenceInfo->setUtf8Subject(row.get<string>(5));

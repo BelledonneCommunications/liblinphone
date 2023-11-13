@@ -421,27 +421,24 @@ static void check_conference_volumes(LinphoneCall *call) {
 
 			for (bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
 				LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)it_d->data;
+				uint32_t audioSsrc = linphone_participant_device_get_ssrc(d, LinphoneStreamTypeAudio);
 				if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeAudio) ==
 				    LinphoneMediaDirectionInactive) {
-					BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeAudio), 0,
-					                unsigned long, "%0lu");
+					BC_ASSERT_EQUAL((unsigned long)audioSsrc, 0, unsigned long, "%0lu");
 				} else {
-					BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeAudio),
-					                    0, unsigned long, "%0lu");
+					BC_ASSERT_NOT_EQUAL((unsigned long)audioSsrc, 0, unsigned long, "%0lu");
 					if (linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeAudio)) {
-						BC_ASSERT_NOT_EQUAL(linphone_conference_get_participant_device_volume(conference, d),
-						                    AUDIOSTREAMVOLUMES_NOT_FOUND, int, "%d");
-						BC_ASSERT_GREATER(linphone_conference_get_participant_device_volume(conference, d),
-						                  MS_VOLUME_DB_LOWEST, int, "%d");
+						const int volume = linphone_conference_get_participant_device_volume(conference, d);
+						BC_ASSERT_NOT_EQUAL(volume, AUDIOSTREAMVOLUMES_NOT_FOUND, int, "%d");
+						BC_ASSERT_GREATER(volume, MS_VOLUME_DB_LOWEST, int, "%d");
 					}
 				}
+				uint32_t videoSsrc = linphone_participant_device_get_ssrc(d, LinphoneStreamTypeVideo);
 				if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) ==
 				    LinphoneMediaDirectionInactive) {
-					BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeVideo), 0,
-					                unsigned long, "%0lu");
+					BC_ASSERT_EQUAL((unsigned long)videoSsrc, 0, unsigned long, "%0lu");
 				} else {
-					BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeVideo),
-					                    0, unsigned long, "%0lu");
+					BC_ASSERT_NOT_EQUAL((unsigned long)videoSsrc, 0, unsigned long, "%0lu");
 				}
 			}
 			bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
@@ -461,6 +458,8 @@ static void simple_conference_base(LinphoneCoreManager *marie,
 	stats initial_marie_stat;
 	stats initial_pauline_stat;
 	stats initial_laure_stat;
+
+	char *filepath = bc_tester_res("sounds/vrroom.wav");
 
 	LinphoneCall *marie_call_pauline = NULL;
 	LinphoneCall *pauline_called_by_marie = NULL;
@@ -621,8 +620,21 @@ static void simple_conference_base(LinphoneCoreManager *marie,
 		                             liblinphone_tester_sip_timeout));
 	}
 
+	linphone_core_enable_mic(pauline->lc, FALSE);
+	linphone_core_enable_mic(laure->lc, FALSE);
+	linphone_core_enable_mic(marie->lc, FALSE);
 	// wait a bit to ensure that should NOTIFYs be sent, they reach their destination
 	wait_for_list(lcs, NULL, 0, liblinphone_tester_sip_timeout);
+
+	// Let all participant to speak simultaneously to send their volumes
+	int talking_time = 4000;
+	linphone_core_enable_mic(pauline->lc, TRUE);
+	linphone_core_enable_mic(laure->lc, TRUE);
+	linphone_core_enable_mic(marie->lc, TRUE);
+	linphone_core_set_play_file(pauline->lc, filepath);
+	linphone_core_set_play_file(marie->lc, filepath);
+	linphone_core_set_play_file(laure->lc, filepath);
+	wait_for_list(lcs, NULL, 0, talking_time);
 
 	// Check that laure received volumes from other participant's devices
 	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
@@ -862,6 +874,7 @@ static void simple_conference_base(LinphoneCoreManager *marie,
 		    wait_for_list(lcs, &focus->stat.number_of_LinphoneCallReleased, 3, liblinphone_tester_sip_timeout));
 
 end:
+	if (filepath) bctbx_free(filepath);
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(laure->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");

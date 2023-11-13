@@ -355,7 +355,6 @@ void RemoteConference::setLocalParticipantStreamCapability(const LinphoneMediaDi
 
 int RemoteConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	AudioStream *as = getAudioStream();
-
 	if (as != nullptr) {
 		return audio_stream_get_participant_volume(as, device->getSsrc(LinphoneStreamTypeAudio));
 	}
