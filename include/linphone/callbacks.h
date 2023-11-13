@@ -107,7 +107,7 @@ typedef void (*LinphoneCoreCbsCallReceiveMasterKeyChangedCb)(LinphoneCore *core,
  * @param core the #LinphoneCore @notnil
  * @param call the #LinphoneCall on which encryption is changed. @notnil
  * @param media_encryption_enabled whether encryption is activated.
- * @param authentication_token an authentication_token, currently set for ZRTP kind of encryption only. @maybenil
+ * @param authentication_token an authentication token, currently set for ZRTP kind of encryption only. @maybenil
  */
 typedef void (*LinphoneCoreCbsCallEncryptionChangedCb)(LinphoneCore *core,
                                                        LinphoneCall *call,
@@ -280,7 +280,7 @@ typedef void (*LinphoneCoreCbsMessagesReceivedCb)(LinphoneCore *core,
                                                   const bctbx_list_t *messages);
 
 /**
- * Called after the #send method of the #LinphoneChatMessage was called.
+ * Called after the #linphone_chat_message_send() was called.
  * The message will be in state InProgress.
  * In case of resend this callback won't be called.
  * @param core #LinphoneCore object @notnil
@@ -431,8 +431,8 @@ typedef LinphoneCoreCbsTransferStateChangedCb LinphoneCoreTransferStateChangedCb
 /**
  * Callback for receiving quality statistics for calls.
  * @param core the #LinphoneCore @notnil
- * @param call the call @notnil
- * @param call_stats the call statistics. @notnil
+ * @param call the #LinphoneCall @notnil
+ * @param call_stats the #LinphoneCallStats statistics. @notnil
  */
 typedef void (*LinphoneCoreCbsCallStatsUpdatedCb)(LinphoneCore *core,
                                                   LinphoneCall *call,
@@ -612,7 +612,7 @@ typedef void (*LinphoneCoreCbsQrcodeFoundCb)(LinphoneCore *core, const char *res
 typedef void (*LinphoneCoreCbsFirstCallStartedCb)(LinphoneCore *core);
 
 /**
- * Callback prototype telling the last call has ended (#LinphoneCore.get_calls_nb() returns 0)
+ * Callback prototype telling the last call has ended (#linphone_core_get_calls_nb() returns 0)
  * @param core #LinphoneCore object @notnil
  */
 typedef void (*LinphoneCoreCbsLastCallEndedCb)(LinphoneCore *core);
@@ -636,7 +636,7 @@ typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *core);
  * Callback notifying that a #LinphoneAccount has its registration state changed.
  * @param core The #LinphoneCore object. @notnil
  * @param account The #LinphoneAccount object which has its registration changed. @notnil
- * @param state The new state for this account.
+ * @param state The new #LinphoneRegistrationState for this account.
  * @param message a non NULL informational message about the state @notnil
  */
 typedef void (*LinphoneCoreCbsAccountRegistrationStateChangedCb)(LinphoneCore *core,
@@ -837,7 +837,7 @@ typedef void (*LinphoneFriendCbsPresenceReceivedCb)(LinphoneFriend *linphone_fri
  */
 
 /**
- * @brief Function prototype used by #linphone_core_cbs_set_ec_calibrator_result().
+ * @brief Function prototype used by #linphone_core_cbs_set_ec_calibration_result().
  * @param core The #LinphoneCore. @notnil
  * @param status The #LinphoneEcCalibratorStatus of the calibrator.
  * @param delay_ms The measured delay if available.
@@ -847,13 +847,13 @@ typedef void (*LinphoneCoreCbsEcCalibrationResultCb)(LinphoneCore *core,
                                                      int delay_ms);
 
 /**
- * @brief Function prototype used by #linphone_core_cbs_set_ec_calibrator_audio_init().
+ * @brief Function prototype used by #linphone_core_cbs_set_ec_calibration_audio_init().
  * @param core The #LinphoneCore. @notnil
  */
 typedef void (*LinphoneCoreCbsEcCalibrationAudioInitCb)(LinphoneCore *core);
 
 /**
- * @brief Function prototype used by #linphone_core_cbs_set_ec_calibrator_audio_uninit().
+ * @brief Function prototype used by #linphone_core_cbs_set_ec_calibration_audio_uninit().
  * @param core The #LinphoneCore. @notnil
  */
 typedef void (*LinphoneCoreCbsEcCalibrationAudioUninitCb)(LinphoneCore *core);
