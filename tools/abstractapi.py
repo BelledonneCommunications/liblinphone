@@ -675,6 +675,8 @@ class CParser:
 	def _fix_all_docs(self):
 		for _class in self.classesIndex.values():
 			self._fix_doc(_class)
+		for interface in self.interfacesIndex.values():
+			self._fix_doc(interface)
 		for enum in self.enumsIndex.values():
 			self._fix_doc(enum)
 			for enumerator in enum.enumerators:
@@ -872,6 +874,7 @@ class CParser:
 		method.briefDescription = event.briefDoc
 		method.detailedDescription = event.detailedDoc
 		
+		self.methodsIndex[property.name] = method
 		return method
 	
 	def parse_method(self, cfunction, namespace, type=Method.Type.Instance):
