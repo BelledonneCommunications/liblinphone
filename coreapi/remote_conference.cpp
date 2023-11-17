@@ -1412,6 +1412,7 @@ void RemoteConference::onParticipantDeviceStateChanged(
 		return (*devAddr == contactAddress);
 	});
 
+	const auto &deviceAddress = device->getAddress();
 	const auto &audioAvailable = device->getStreamAvailability(LinphoneStreamTypeAudio);
 	const auto &confSecurityLevel = confParams->getSecurityLevel();
 	const auto audioNeedsReInvite = ((confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd) &&
@@ -1419,13 +1420,14 @@ void RemoteConference::onParticipantDeviceStateChanged(
 	const auto &videoAvailable = device->getStreamAvailability(LinphoneStreamTypeVideo);
 	const auto videoNeedsReInvite = (confParams->videoEnabled() && params->videoEnabled() && videoAvailable);
 	if ((getState() == ConferenceInterface::State::Created) && (callIt == m_pendingCalls.cend()) && isIn() &&
-	    (device->getState() == ParticipantDevice::State::Present) && ((videoNeedsReInvite || audioNeedsReInvite))) {
-		auto updateSession = [this, device]() -> LinphoneStatus {
-			lInfo() << "Sending re-INVITE in order to get streams for participant device " << *device->getAddress()
+	    (device->getState() == ParticipantDevice::State::Present) && ((videoNeedsReInvite || audioNeedsReInvite)) &&
+	    !isMe(deviceAddress)) {
+		auto updateSession = [this, deviceAddress]() -> LinphoneStatus {
+			lInfo() << "Sending re-INVITE in order to get streams for participant device " << *deviceAddress
 			        << " that joined recently the conference " << *getConferenceAddress();
 			auto ret = updateMainSession();
 			if (ret != 0) {
-				lInfo() << "re-INVITE to get streams for participant device " << *device->getAddress()
+				lInfo() << "re-INVITE to get streams for participant device " << *deviceAddress
 				        << " that recently joined the conference " << *getConferenceAddress()
 				        << " cannot be sent right now";
 			}

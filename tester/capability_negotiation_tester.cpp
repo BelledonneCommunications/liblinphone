@@ -418,6 +418,14 @@ void encrypted_call_with_params_base(LinphoneCoreManager *caller,
 			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(calleeCall)));
 			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callerCall)));
 
+			if ((expectedEncryption == LinphoneMediaEncryptionDTLS) ||
+			    (expectedEncryption == LinphoneMediaEncryptionZRTP)) {
+				BC_ASSERT_TRUE(wait_for_until(callee->lc, caller->lc, &caller->stat.number_of_LinphoneCallEncryptedOn,
+				                              caller_stat.number_of_LinphoneCallEncryptedOn + 1, 10000));
+				BC_ASSERT_TRUE(wait_for_until(callee->lc, caller->lc, &callee->stat.number_of_LinphoneCallEncryptedOn,
+				                              callee_stat.number_of_LinphoneCallEncryptedOn + 1, 10000));
+			}
+
 			int dummy = 0;
 			wait_for_until(caller->lc, callee->lc, &dummy, 1, 3000); /*just to sleep while iterating 1s*/
 
@@ -1795,7 +1803,12 @@ static void call_with_no_sdp_on_update_base(const bool_t caller_cap_neg,
 
 	liblinphone_tester_check_rtcp(marie, pauline);
 
-	wait_for_until(marie->lc, pauline->lc, NULL, 5, 2000);
+	if ((expectedEncryption == LinphoneMediaEncryptionZRTP) || (expectedEncryption == LinphoneMediaEncryptionDTLS)) {
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallEncryptedOn,
+		                        (marie_stat.number_of_LinphoneCallEncryptedOn + 1)));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallEncryptedOn,
+		                        (pauline_stat.number_of_LinphoneCallEncryptedOn + 1)));
+	}
 
 	// Check that encryption has not changed after sending update
 	BC_ASSERT_EQUAL(expectedEncryption, encryptionAfterUpdate, int, "%i");

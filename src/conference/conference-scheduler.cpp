@@ -525,7 +525,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 		if (!sender->weakEqual(*participant)) {
 			mInvitationsToSend.push_back(participant);
 		} else {
-			lInfo() << "[Conference Scheduler] [" << this << "] Removed conference participant [" << participant
+			lInfo() << "[Conference Scheduler] [" << this << "] Removed conference participant [" << *participant
 			        << "] from chat room participants as it is ourselves";
 		}
 
@@ -568,7 +568,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 		const bool organizerFound =
 		    (std::find(mInvitationsToSend.cbegin(), mInvitationsToSend.cend(), organizer) != mInvitationsToSend.cend());
 		if (!organizerFound) {
-			lInfo() << "[Conference Scheduler] [" << this << "] Organizer [" << organizer
+			lInfo() << "[Conference Scheduler] [" << this << "] Organizer [" << *organizer
 			        << "] not found in conference participants, adding it to chat room participants";
 			mInvitationsToSend.push_back(organizer);
 		}
@@ -583,7 +583,7 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 	mInvitationsSent = 0;
 
 	// Sending the ICS once for each participant in a separated chat room each time.
-	for (auto participant : invitees) {
+	for (auto participant : mInvitationsToSend) {
 		list<std::shared_ptr<Address>> chatRoomParticipantList;
 		chatRoomParticipantList.push_back(participant);
 		list<std::shared_ptr<Address>> participantList;

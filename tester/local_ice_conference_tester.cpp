@@ -132,7 +132,11 @@ static void abort_call_to_ice_conference(void) {
 
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 
+		std::list<LinphoneCoreManager *> conferenceMgrs{focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(),
+		                                                laure.getCMgr()};
 		std::list<LinphoneCoreManager *> participants{pauline.getCMgr(), laure.getCMgr()};
+		auto members = participants;
+		members.push_back(marie.getCMgr());
 
 		time_t start_time = ms_time(NULL);
 		int duration = -1;
@@ -158,6 +162,7 @@ static void abort_call_to_ice_conference(void) {
 		                                                        initialSubject, description, TRUE, security_level);
 
 		BC_ASSERT_PTR_NOT_NULL(confAddr);
+		char *confAddrStr = (confAddr) ? linphone_address_as_string(confAddr) : NULL;
 
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2,
@@ -165,6 +170,7 @@ static void abort_call_to_ice_conference(void) {
 
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
+			ms_message("%s calls conference %s", linphone_core_get_identity(mgr->lc), confAddrStr);
 			LinphoneCall *call =
 			    linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
 			BC_ASSERT_PTR_NOT_NULL(call);
@@ -191,6 +197,7 @@ static void abort_call_to_ice_conference(void) {
 
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			reset_counters(&mgr->stat);
+			ms_message("%s calls again conference %s", linphone_core_get_identity(mgr->lc), confAddrStr);
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
 			linphone_call_params_unref(new_params);
@@ -199,7 +206,7 @@ static void abort_call_to_ice_conference(void) {
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
-			int no_streams_running = 3;
+			int no_streams_running = 2;
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdating, (no_streams_running - 1),
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, no_streams_running,
@@ -217,7 +224,7 @@ static void abort_call_to_ice_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived,
 		                             focus_stat.number_of_LinphoneCallIncomingReceived + 3,
 		                             liblinphone_tester_sip_timeout));
-		int focus_no_streams_running = 9;
+		int focus_no_streams_running = 6;
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallUpdatedByRemote,
 		                             focus_stat.number_of_LinphoneCallUpdatedByRemote + (focus_no_streams_running - 3),
 		                             liblinphone_tester_sip_timeout));
@@ -242,6 +249,11 @@ static void abort_call_to_ice_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_joined,
 		                             focus_stat.number_of_participant_devices_joined + 3,
 		                             liblinphone_tester_sip_timeout));
+
+		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
+		    fill_memmber_list(members, participantList, marie.getCMgr(), participant_infos);
+		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), memberList,
+		                            confAddr, FALSE);
 
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(fconference);
@@ -463,6 +475,7 @@ static void abort_call_to_ice_conference(void) {
 		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(2), [] { return false; });
 
 		bctbx_list_free_with_data(participant_infos, (bctbx_list_free_func)linphone_participant_info_unref);
+		if (confAddrStr) ms_free(confAddrStr);
 		linphone_address_unref(confAddr);
 		bctbx_list_free(coresList);
 	}

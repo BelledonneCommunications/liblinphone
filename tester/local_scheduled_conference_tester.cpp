@@ -966,8 +966,7 @@ static void create_conference_with_codec_mismatch_base(bool_t organizer_codec_mi
 		for (auto [mgr, info] : participantList) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1,
 			                             liblinphone_tester_sip_timeout));
-			int no_streams_running =
-			    (linphone_participant_info_get_role(info) == LinphoneParticipantRoleSpeaker) ? 3 : 2;
+			int no_streams_running = 2;
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdating, (no_streams_running - 1),
 			                             liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, no_streams_running,

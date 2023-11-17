@@ -1989,6 +1989,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	    "conference_info_participant.is_participant = 1";
 
 	soci::rowset<soci::row> participantRows = (session->prepare << participantQuery, soci::use(dbConferenceInfoId));
+	std::string emptyString;
 	for (const auto &participantRow : participantRows) {
 		int deleted = participantRow.get<int>(1);
 		if (deleted == 0) {
@@ -2006,7 +2007,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 				// Set parameter string to an empty string
 				*session << "UPDATE conference_info_participant SET params = :paramsStr  WHERE conference_info_id  = "
 				            ":conferenceInfoId",
-				    soci::use(std::string()), soci::use(dbConferenceInfoId);
+				    soci::use(emptyString), soci::use(dbConferenceInfoId);
 			}
 			participantInfo->setParameters(participantParams);
 			conferenceInfo->addParticipant(participantInfo);
