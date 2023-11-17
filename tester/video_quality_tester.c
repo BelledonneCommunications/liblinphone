@@ -415,8 +415,11 @@ static void video_call_expected_size_for_specified_bandwidth(
 		if (available_cpu >= 8) {
 			ms_factory_set_cpu_count(linphone_core_get_ms_factory(marie->lc), 8);
 		} else {
-			bctbx_error("Cannot execute this test with only [%i], requires 8", available_cpu);
+			bctbx_error("Cannot execute this test with only [%i] cpus, requires 8", available_cpu);
 			BC_PASS("Test requires at least an octo core");
+			linphone_core_manager_destroy(marie);
+			linphone_core_manager_destroy(pauline);
+			return;
 		}
 	}
 
@@ -447,23 +450,37 @@ static void video_call_expected_size_for_specified_bandwidth(
 			if (BC_ASSERT_TRUE(call(marie, pauline))) {
 				LinphoneCall *call = linphone_core_get_current_call(marie->lc);
 				VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
-				MSVideoConfiguration vconf;
+				MSVideoConfiguration vconf = {0};
 				LinphoneCallStats *stats;
+				uint64_t start_time = bctbx_get_cur_time_ms();
+				uint64_t elapsed;
+				uint64_t max_time = 30000;
 
-				wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 50000);
-
-				marie->stat.last_tmmbr_value_received = 0;
-				/* Wait until the last TMMBR was reached 10 second ago. */
-				while (wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000)) {
-					marie->stat.last_tmmbr_value_received = 0;
+				while ((elapsed = bctbx_get_cur_time_ms() - start_time) < max_time) {
+					wait_for_until(marie->lc, pauline->lc, NULL, 1, 1000);
+					stats = linphone_call_get_video_stats(call);
+					/* wait for target video size to be reached, no matter the number of TMMBR received */
+					ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
+					if (vconf.vsize.width * vconf.vsize.height >= width * height &&
+					    marie->stat.last_tmmbr_value_received >= 1 &&
+					    linphone_call_stats_get_upload_bandwidth(stats) >= 250) {
+						linphone_call_stats_unref(stats);
+						break;
+					}
+					linphone_call_stats_unref(stats);
 				}
-				stats = linphone_call_get_video_stats(call);
-				BC_ASSERT_GREATER((int)linphone_call_stats_get_upload_bandwidth(stats), 250, int, "%i");
-				linphone_call_stats_unref(stats);
-				ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
 
+				/*assert that the size is the expected one*/
 				BC_ASSERT_EQUAL(vconf.vsize.width * vconf.vsize.height, width * height, int, "%d");
+				/* we should have reached it before expiration of max_time */
+				BC_ASSERT_LOWER((unsigned int)elapsed, (unsigned int)max_time, int, "%u");
+				stats = linphone_call_get_video_stats(call);
+				/* Upload bandwidth should be above 250 kbit/s all the time */
+				BC_ASSERT_GREATER((int)linphone_call_stats_get_upload_bandwidth(stats), 250, int, "%i");
+				/* At least a TMMBR should have been received, but possibly more */
+				BC_ASSERT_GREATER((int)marie->stat.last_tmmbr_value_received, 1, int, "%i");
 
+				linphone_call_stats_unref(stats);
 				end_call(marie, pauline);
 			}
 		} else {
@@ -482,7 +499,7 @@ static void video_call_expected_size_for_low_bandwith_vp8(void) {
 }
 
 static void video_call_expected_size_for_regular_bandwith_vp8(void) {
-	video_call_expected_size_for_specified_bandwidth(500000, 640, 480, "vga", "vp8");
+	video_call_expected_size_for_specified_bandwidth(550000, 640, 480, "vga", "vp8");
 }
 
 static void video_call_expected_size_for_high_bandwith_vp8(void) {

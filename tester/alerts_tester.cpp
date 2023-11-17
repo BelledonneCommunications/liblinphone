@@ -131,7 +131,7 @@ static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCall
 		liblinphone_tester_simulate_mire_defunct(marieVs->source, TRUE, fps);
 	}
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, marie->lc, &data.triggerCount, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &data.triggerCount, 1, 10000));
 	networkParams.enabled = FALSE;
 	linphone_core_set_network_simulator_params(marie->lc, &networkParams);
 	linphone_core_set_network_simulator_params(pauline->lc, &networkParams);
@@ -147,8 +147,8 @@ static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCall
 	// TODO : remove this if to make this assert true
 	if (data.expectedType != LinphoneAlertQoSBurstOccured && data.expectedType != LinphoneAlertQoSCameraLowFramerate &&
 	    data.expectedType != LinphoneAlertQoSLowQualitySentVideo) {
-		/* the new bandwidth estimate might take up to 10 seconds to happen*/
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, marie->lc, &data.stopped, 1, 15000));
+		/* the new bandwidth estimate might take up to 15 seconds to happen*/
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &data.stopped, 1, 15000));
 	}
 
 	end_call(marie, pauline);

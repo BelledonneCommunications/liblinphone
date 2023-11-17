@@ -178,10 +178,10 @@ string MS2Stream::getBindIp() {
 			                                                                                            : AF_INET6,
 			                               nullptr, multicastBindIp);
 			bindIp = mPortConfig.multicastBindIp = multicastBindIp;
-		} else {
-			/* Otherwise we shall use an address family of the same family of the multicast address, because
-			 * dual stack socket and multicast don't work well on Mac OS (linux is OK, as usual). */
-			bindIp = (mPortConfig.multicastIp.find_first_of(':') == string::npos) ? "0.0.0.0" : "::0";
+		} else if (mPortConfig.multicastRole == SalMulticastReceiver) {
+			/* the multicast address shall be supplied to oRTP. It automatically takes in charge the membership claim
+			 * and the binding to the multicast port */
+			bindIp = mPortConfig.multicastIp;
 		}
 	} else if (bindIp.empty()) {
 		/*If ipv6 is not enabled, listen to 0.0.0.0. The default behavior of mediastreamer when no IP is passed is to
@@ -925,12 +925,6 @@ void MS2Stream::configureRtpTransport(RtpSession *session) {
 }
 
 void MS2Stream::initializeSessions(MediaStream *stream) {
-	if (mPortConfig.multicastRole == SalMulticastReceiver) {
-		if (!mPortConfig.multicastIp.empty())
-			media_stream_join_multicast_group(stream, mPortConfig.multicastIp.c_str());
-		else lError() << "Cannot join multicast group if multicast ip is not set";
-	}
-
 	configureRtpSession(stream->sessions.rtp_session);
 	setupDtlsParams(stream);
 

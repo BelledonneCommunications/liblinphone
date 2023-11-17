@@ -91,9 +91,9 @@ static void early_media_with_multicast_base(bool_t video) {
 	LinphoneCallParams *params;
 	LinphoneCallStats *stats = NULL;
 
-	marie = linphone_core_manager_new("marie_rc");
-	pauline = linphone_core_manager_new("pauline_tcp_rc");
-	pauline2 = linphone_core_manager_new("pauline_tcp_rc");
+	marie = linphone_core_manager_new("marie_sips_rc");
+	pauline = linphone_core_manager_new("pauline_rc");
+	pauline2 = linphone_core_manager_new("pauline_rc");
 
 	marie_lp = linphone_core_get_config(marie->lc);
 	linphone_config_set_int(marie_lp, "misc", "real_early_media", 1);
