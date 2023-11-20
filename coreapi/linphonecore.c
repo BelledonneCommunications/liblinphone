@@ -733,12 +733,31 @@ void linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *c
                                                               LinphoneCoreCbsAccountRegistrationStateChangedCb cb) {
 	cbs->vtable->account_registration_state_changed = cb;
 }
+
 void linphone_core_cbs_set_new_alert_triggered(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewAlertTriggeredCb alert_cb) {
 	cbs->vtable->new_alert_triggered = alert_cb;
 }
+
 LinphoneCoreCbsNewAlertTriggeredCb linphone_core_cbs_get_new_alert_triggered(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->new_alert_triggered;
 }
+
+void linphone_core_cbs_set_default_account_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsDefaultAccountChangedCb cb) {
+	cbs->vtable->default_account_changed = cb;
+}
+
+LinphoneCoreCbsDefaultAccountChangedCb linphone_core_cbs_get_default_account_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->default_account_changed;
+}
+
+void linphone_core_cbs_set_new_account_added(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewAccountAddedCb cb) {
+	cbs->vtable->new_account_added = cb;
+}
+
+LinphoneCoreCbsNewAccountAddedCb linphone_core_cbs_get_new_account_added(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->new_account_added;
+}
+
 void lc_callback_obj_init(LCCallbackObj *obj, LinphoneCoreCbFunc func, void *ud) {
 	obj->_func = func;
 	obj->_user_data = ud;

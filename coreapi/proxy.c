@@ -666,6 +666,9 @@ LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyCon
 	lc->sip_conf.proxies = bctbx_list_append(lc->sip_conf.proxies, (void *)linphone_proxy_config_ref(cfg));
 	lc->sip_conf.accounts = bctbx_list_append(lc->sip_conf.accounts, (void *)linphone_account_ref(cfg->account));
 	linphone_proxy_config_apply(cfg, lc);
+
+	linphone_core_notify_new_account_added(lc, cfg->account);
+
 	return 0;
 }
 
@@ -831,6 +834,9 @@ LinphoneStatus linphone_core_add_account(LinphoneCore *lc, LinphoneAccount *acco
 	}
 
 	Account::toCpp(account)->apply(lc);
+
+	linphone_core_notify_new_account_added(lc, account);
+
 	return 0;
 }
 
@@ -936,6 +942,12 @@ void linphone_core_set_default_account(LinphoneCore *lc, LinphoneAccount *accoun
 			return;
 		}
 	}
+
+	if (lc->default_account == account) {
+		ms_warning("This account is already the default one, skipping.");
+		return;
+	}
+
 	lc->default_account = account;
 	lc->default_proxy = account ? Account::toCpp(account)->getConfig() : NULL;
 	if (linphone_core_ready(lc)) {
@@ -944,6 +956,8 @@ void linphone_core_set_default_account(LinphoneCore *lc, LinphoneAccount *accoun
 		 * different dial prefix */
 		linphone_core_invalidate_friends_maps(lc);
 	}
+
+	linphone_core_notify_default_account_changed(lc, account);
 }
 
 void linphone_proxy_config_write_to_config_file(LpConfig *config, LinphoneProxyConfig *cfg, int index) {

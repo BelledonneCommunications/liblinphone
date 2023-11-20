@@ -7291,7 +7291,9 @@ static void call_rejected_with_403(void) {
 	linphone_account_params_set_register_enabled(accountParams, TRUE);
 	LinphoneAccount *account = linphone_core_create_account(mgr->lc, accountParams);
 	linphone_core_add_account(mgr->lc, account);
+	BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneNewAccountAdded, 1));
 	linphone_core_set_default_account(mgr->lc, account);
+	BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneDefaultAccountChanged, 1));
 	linphone_core_iterate(mgr->lc);
 
 	LinphoneCall *call = linphone_core_invite(mgr->lc, "sip:nimportequoi@sip.example.org;transport=TLS");

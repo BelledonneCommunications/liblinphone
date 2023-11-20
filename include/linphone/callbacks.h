@@ -267,6 +267,22 @@ typedef void (*LinphoneCoreCbsReactionRemovedCb)(LinphoneCore *core,
                                                  const LinphoneAddress *address);
 
 /**
+ * Default account changed callback prototype
+ * @param core #LinphoneCore object @notnil
+ * @param account #LinphoneAccount object that has been set as the default account, probably by calling
+ * linphone_core_set_default_account(). @notnil
+ */
+typedef void (*LinphoneCoreCbsDefaultAccountChangedCb)(LinphoneCore *core, LinphoneAccount *account);
+
+/**
+ * New account added callback prototype
+ * @param core #LinphoneCore object @notnil
+ * @param account #LinphoneAccount object that has been added to the Core using linphone_core_add_account() for example.
+ * @notnil
+ */
+typedef void (*LinphoneCoreCbsNewAccountAddedCb)(LinphoneCore *core, LinphoneAccount *account);
+
+/**
  * Chat messages callback prototype.
  * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using
  * linphone_core_set_chat_messages_aggregation_enabled()), it replaces the single message received callback.

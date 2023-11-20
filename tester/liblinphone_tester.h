@@ -260,6 +260,8 @@ typedef struct _stats {
 	int number_of_LinphoneRegistrationFailed;
 	int number_of_auth_info_requested;
 	int number_of_LinphoneChatRoomExhumed;
+	int number_of_LinphoneNewAccountAdded;
+	int number_of_LinphoneDefaultAccountChanged;
 
 	int number_of_LinphoneCallCreated;
 	int number_of_LinphoneCallIncomingReceived;

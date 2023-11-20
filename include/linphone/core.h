@@ -306,6 +306,8 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsNewMessageReactionCb new_message_reaction;
 	LinphoneCoreCbsReactionRemovedCb reaction_removed;
 	LinphoneCoreCbsReactionRemovedPrivateCb reaction_removed_private;
+	LinphoneCoreCbsDefaultAccountChangedCb default_account_changed;
+	LinphoneCoreCbsNewAccountAddedCb new_account_added;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -1286,7 +1288,7 @@ LINPHONE_PUBLIC LinphoneCoreCbsChatRoomExhumedCb linphone_core_cbs_get_chat_room
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomExhumedCb cb);
 
-/*
+/**
  * Set the account registration state changed callback.
  * @param cbs #LinphoneCoreCbs object. @notnil
  * @param cb The account registration state changed callback to be used.
@@ -1294,6 +1296,35 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cb
 LINPHONE_PUBLIC void
 linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *cbs,
                                                          LinphoneCoreCbsAccountRegistrationStateChangedCb cb);
+/**
+ * Sets the default account changed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The default account changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_default_account_changed(LinphoneCoreCbs *cbs,
+                                                                   LinphoneCoreCbsDefaultAccountChangedCb cb);
+
+/**
+ * Gets the default account changed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The default account changed callback that will be triggered.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsDefaultAccountChangedCb
+linphone_core_cbs_get_default_account_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the new account added callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The new account added callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_new_account_added(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewAccountAddedCb cb);
+
+/**
+ * Gets the new account added callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The new account added callback that will be triggered.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsNewAccountAddedCb linphone_core_cbs_get_new_account_added(LinphoneCoreCbs *cbs);
 
 /**
  * Get the account registration state changed callback.
