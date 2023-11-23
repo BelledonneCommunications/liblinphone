@@ -975,6 +975,7 @@ test_suite_t call_video_quality_test_suite = {"Video Call quality",
                                               liblinphone_tester_after_each,
                                               sizeof(call_video_quality_tests) / sizeof(call_video_quality_tests[0]),
                                               call_video_quality_tests,
-                                              0};
+                                              0,
+                                              8 /* cpu weight - this suite is very cpu consuming */};
 
 #endif // ifdef VIDEO_ENABLED

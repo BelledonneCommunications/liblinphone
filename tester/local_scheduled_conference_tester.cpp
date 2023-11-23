@@ -2491,7 +2491,9 @@ test_suite_t local_conference_test_suite_scheduled_conference_basic = {
     sizeof(local_conference_scheduled_conference_basic_tests) /
         sizeof(local_conference_scheduled_conference_basic_tests[0]),
     local_conference_scheduled_conference_basic_tests,
-    0};
+    0,
+    4 /*cpu_weight : video conference uses more resources */
+};
 
 test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
     "Local conference tester (Scheduled Conference Advanced)",
@@ -2502,7 +2504,9 @@ test_suite_t local_conference_test_suite_scheduled_conference_advanced = {
     sizeof(local_conference_scheduled_conference_advanced_tests) /
         sizeof(local_conference_scheduled_conference_advanced_tests[0]),
     local_conference_scheduled_conference_advanced_tests,
-    0};
+    0,
+    4 /*cpu_weight : video conference uses more resources */
+};
 
 test_suite_t local_conference_test_suite_scheduled_conference_audio_only_participant = {
     "Local conference tester (Audio only participants)",
@@ -2513,4 +2517,6 @@ test_suite_t local_conference_test_suite_scheduled_conference_audio_only_partici
     sizeof(local_conference_scheduled_conference_audio_only_participant_tests) /
         sizeof(local_conference_scheduled_conference_audio_only_participant_tests[0]),
     local_conference_scheduled_conference_audio_only_participant_tests,
-    0};
+    0,
+    4 /*cpu_weight : video conference uses more resources */
+};

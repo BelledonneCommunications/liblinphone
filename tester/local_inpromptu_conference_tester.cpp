@@ -1897,7 +1897,9 @@ test_suite_t local_conference_test_suite_inpromptu_conference = {
     liblinphone_tester_after_each,
     sizeof(local_conference_inpromptu_conference_tests) / sizeof(local_conference_inpromptu_conference_tests[0]),
     local_conference_inpromptu_conference_tests,
-    0};
+    0,
+    4 /*cpu_weight : video conference uses more resources */
+};
 
 test_suite_t local_conference_test_suite_inpromptu_mismatch_conference = {
     "Local conference tester (Inpromptu Conference with mismatch)",
