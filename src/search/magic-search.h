@@ -264,7 +264,7 @@ private:
 	 * @private
 	 **/
 	std::list<std::shared_ptr<SearchResult>>
-	searchInFriend(const LinphoneFriend *lFriend, const std::string &filter, const std::string &withDomain) const;
+	searchInFriend(LinphoneFriend *lFriend, const std::string &filter, const std::string &withDomain) const;
 
 	/**
 	 * Search informations in address given

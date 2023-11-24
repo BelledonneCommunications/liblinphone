@@ -60,14 +60,14 @@ SearchResult::SearchResult() {
 SearchResult::SearchResult(const unsigned int weight,
                            const LinphoneAddress *address,
                            const string &phoneNumber,
-                           const LinphoneFriend *linphoneFriend,
+                           LinphoneFriend *linphoneFriend,
                            int sourceFlags) {
 	mWeight = weight;
 	mAddress = address;
 	if (mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
 	mPhoneNumber = phoneNumber;
 	mFriend = linphoneFriend;
-	if (mFriend) linphone_friend_ref(const_cast<LinphoneFriend *>(mFriend));
+	if (mFriend) linphone_friend_ref(mFriend);
 	mSourceFlags = sourceFlags;
 	updateCapabilities();
 }
@@ -78,7 +78,7 @@ SearchResult::SearchResult(const SearchResult &sr) : HybridObject(sr) {
 	if (mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(mAddress));
 	mPhoneNumber = sr.getPhoneNumber();
 	mFriend = sr.getFriend();
-	if (mFriend) linphone_friend_ref(const_cast<LinphoneFriend *>(mFriend));
+	if (mFriend) linphone_friend_ref(mFriend);
 	mSourceFlags = sr.getSourceFlags();
 	mCapabilities = sr.getCapabilities();
 }
@@ -86,7 +86,7 @@ SearchResult::SearchResult(const SearchResult &sr) : HybridObject(sr) {
 SearchResult::~SearchResult() {
 	// FIXME: Ugly temporary workaround to solve weak. Remove me later.
 	if (mAddress) linphone_address_unref(const_cast<LinphoneAddress *>(mAddress));
-	if (mFriend) linphone_friend_unref(const_cast<LinphoneFriend *>(mFriend));
+	if (mFriend) linphone_friend_unref(mFriend);
 };
 
 bool SearchResult::operator<(const SearchResult &other) const {
@@ -137,7 +137,7 @@ const char *SearchResult::getDisplayName() const {
 	return name;
 }
 
-const LinphoneFriend *SearchResult::getFriend() const {
+LinphoneFriend *SearchResult::getFriend() const {
 	return mFriend;
 }
 
@@ -185,12 +185,12 @@ void SearchResult::merge(const std::shared_ptr<SearchResult> &withResult) {
 
 	if (doOverride || mPhoneNumber.empty()) mPhoneNumber = withResult->getPhoneNumber();
 
-	const LinphoneFriend *other = withResult->getFriend();
+	LinphoneFriend *other = withResult->getFriend();
 	if (other && other != mFriend) { // There is a new data
-		if (doOverride && mFriend) linphone_friend_unref(const_cast<LinphoneFriend *>(mFriend));
+		if (doOverride && mFriend) linphone_friend_unref(mFriend);
 		if (doOverride || !mFriend) {
 			mFriend = other;
-			linphone_friend_ref(const_cast<LinphoneFriend *>(mFriend));
+			linphone_friend_ref(mFriend);
 		}
 	}
 

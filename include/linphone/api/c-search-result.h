@@ -50,7 +50,7 @@ LINPHONE_PUBLIC void linphone_search_result_unref(LinphoneSearchResult *search_r
  * @param search_result the #LinphoneSearchResult object @notnil
  * @return The associated #LinphoneFriend or NULL. @maybenil
  **/
-LINPHONE_PUBLIC const LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *search_result);
+LINPHONE_PUBLIC LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *search_result);
 
 /**
  * Gets the address of the search result if any.

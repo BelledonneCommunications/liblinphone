@@ -32,7 +32,7 @@ void linphone_search_result_unref(LinphoneSearchResult *searchResult) {
 	belle_sip_object_unref(searchResult);
 }
 
-const LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *searchResult) {
+LinphoneFriend *linphone_search_result_get_friend(const LinphoneSearchResult *searchResult) {
 	return SearchResult::toCpp(searchResult)->getFriend();
 }
 

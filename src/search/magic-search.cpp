@@ -757,7 +757,7 @@ static bool isSipUri(const std::string &phoneNumber) {
 }
 
 list<std::shared_ptr<SearchResult>>
-MagicSearch::searchInFriend(const LinphoneFriend *lFriend, const string &filter, const string &withDomain) const {
+MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const string &withDomain) const {
 	list<std::shared_ptr<SearchResult>> friendResult;
 	string phoneNumber = "";
 	unsigned int weight = getMinWeight();
