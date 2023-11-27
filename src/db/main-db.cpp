@@ -854,6 +854,7 @@ long long MainDbPrivate::insertOrUpdateFriend(const std::shared_ptr<Friend> &f) 
 	std::string vcardEtag = vcard ? vcard->getEtag() : "";
 	std::string vcardUrl = vcard ? vcard->getUrl() : "";
 	int presenceReceived = f->isPresenceReceived() ? 1 : 0;
+	int starred = f->getStarred() ? 1 : 0;
 
 	std::shared_ptr<Address> addr = f->getAddress();
 	long long sipAddressId = -1;
@@ -870,24 +871,24 @@ long long MainDbPrivate::insertOrUpdateFriend(const std::shared_ptr<Friend> &f) 
 		    << "UPDATE friend SET "
 		       "friends_list_id = :friendListId, sip_address_id = :sipAddressId, subscribe_policy = :subscribePolicy, "
 		       "send_subscribe = :sendSubscribe, ref_key = :refKey, v_card = :vcardStr, v_card_etag = :vcardEtag, "
-		       "v_card_sync_uri = :vcardUrl, presence_received = :presenceReceived "
+		       "v_card_sync_uri = :vcardUrl, presence_received = :presenceReceived, starred = :starred "
 		       "WHERE id = :friendId",
 		    soci::use(friendListId), soci::use(sipAddressId, sipAddressIndicator), soci::use(subscribePolicy),
 		    soci::use(sendSubscribe), soci::use(refKey), soci::use(vcardStr), soci::use(vcardEtag), soci::use(vcardUrl),
-		    soci::use(presenceReceived), soci::use(friendId);
+		    soci::use(presenceReceived), soci::use(starred), soci::use(friendId);
 	} else {
 		lInfo() << "Insert new friend in database: " << f->getName();
 
 		*dbSession.getBackendSession() << "INSERT INTO friend ("
 		                                  "friends_list_id, sip_address_id, subscribe_policy, send_subscribe, ref_key, "
-		                                  "v_card, v_card_etag, v_card_sync_uri, presence_received"
+		                                  "v_card, v_card_etag, v_card_sync_uri, presence_received, starred"
 		                                  ") VALUES ("
 		                                  ":friendListId, :sipAddressId, :subscribePolicy, :sendSubscribe, :refKey, "
-		                                  ":vcardStr, :vcardEtag, :vcardUrl, :presenceReceived"
+		                                  ":vcardStr, :vcardEtag, :vcardUrl, :presenceReceived, :starred"
 		                                  ")",
 		    soci::use(friendListId), soci::use(sipAddressId, sipAddressIndicator), soci::use(subscribePolicy),
 		    soci::use(sendSubscribe), soci::use(refKey), soci::use(vcardStr), soci::use(vcardEtag), soci::use(vcardUrl),
-		    soci::use(presenceReceived);
+		    soci::use(presenceReceived), soci::use(starred);
 
 		friendId = dbSession.getLastInsertId();
 	}
@@ -2142,7 +2143,7 @@ std::list<std::shared_ptr<Friend>> MainDbPrivate::getFriends(const std::shared_p
 	soci::rowset<soci::row> rows =
 	    (session->prepare
 	         << "SELECT id, sip_address_id, subscribe_policy, send_subscribe, ref_key, v_card, v_card_etag, "
-	            "v_card_sync_uri, presence_received "
+	            "v_card_sync_uri, presence_received, starred "
 	            "FROM friend "
 	            "WHERE friends_list_id = :dbFriendListId "
 	            "ORDER BY id",
@@ -2187,6 +2188,7 @@ std::shared_ptr<Friend> MainDbPrivate::selectFriend(const soci::row &row) const 
 	f->enableSubscribes(!!row.get<int>(3));
 	f->setRefKey(row.get<string>(4));
 	f->mPresenceReceived = !!row.get<int>(8);
+	f->mIsStarred = !!row.get<int>(9);
 	f->mStorageId = dbFriendId;
 
 	return f;
@@ -2810,6 +2812,7 @@ void MainDbPrivate::updateSchema() {
 		                "  subscribe_policy TINYINT UNSIGNED NOT NULL,"
 		                "  send_subscribe BOOLEAN NOT NULL,"
 		                "  presence_received BOOLEAN NOT NULL,"
+		                "  starred BOOLEAN NOT NULL,"
 		                "  ref_key VARCHAR(255),"
 
 		                "  v_card MEDIUMTEXT,"
@@ -2909,17 +2912,18 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 			const string &vCardEtag = friendInfo.get<string>(LegacyFriendColVCardEtag, "");
 			const string &vCardSyncUri = friendInfo.get<string>(LegacyFriendColVCardSyncUri, "");
 			const int &presenceReveived = friendInfo.get<int>(LegacyFriendColPresenceReceived, 0);
+			const int &starred = 0;
 
 			*session << "INSERT INTO friend ("
 			            "  sip_address_id, friends_list_id, subscribe_policy, send_subscribe, ref_key,"
-			            "  presence_received, v_card, v_card_etag, v_card_sync_uri"
+			            "  presence_received, starred, v_card, v_card_etag, v_card_sync_uri"
 			            ") VALUES ("
 			            "  :sipAddressId, :friendsListId, :subscribePolicy, :sendSubscribe, :refKey,"
-			            "  :presenceReceived, :vCard, :vCardEtag, :vCardSyncUri"
+			            "  :presenceReceived, :starred, :vCard, :vCardEtag, :vCardSyncUri"
 			            ")",
 			    soci::use(sipAddressId, sipAddressIndicator), soci::use(friendsListId), soci::use(subscribePolicy),
-			    soci::use(sendSubscribe), soci::use(refKey), soci::use(presenceReveived), soci::use(vCard),
-			    soci::use(vCardEtag), soci::use(vCardSyncUri);
+			    soci::use(sendSubscribe), soci::use(refKey), soci::use(presenceReveived), soci::use(starred),
+			    soci::use(vCard), soci::use(vCardEtag), soci::use(vCardSyncUri);
 		}
 		tr.commit();
 		lInfo() << "Successful import of legacy friends.";
