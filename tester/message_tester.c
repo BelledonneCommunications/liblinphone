@@ -2607,6 +2607,7 @@ static void aggregated_imdns(void) {
 
 	marie_chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 
+	ms_message("Marking all %s's messages as read", linphone_core_get_identity(marie->lc));
 	linphone_chat_room_mark_as_read(marie_chat_room); /* This sends the display notification */
 
 	/* Pauline should be notified of messages being displayed */
