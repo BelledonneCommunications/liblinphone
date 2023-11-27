@@ -3699,7 +3699,6 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 		if (BC_ASSERT_PTR_NOT_NULL(player)) {
 			BC_ASSERT_TRUE(linphone_player_open(player, recordfile) == 0);
 			BC_ASSERT_GREATER(linphone_player_get_duration(player), 5000, int, "%i");
-			linphone_player_close(player);
 		}
 		linphone_player_close(player);
 		linphone_player_unref(player);

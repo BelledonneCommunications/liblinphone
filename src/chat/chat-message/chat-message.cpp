@@ -881,7 +881,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 	// a modifier)
 	currentRecvStep = ChatMessagePrivate::Step::None;
 
-	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(nullptr));
+	//	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(nullptr));
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference &&
@@ -998,6 +998,9 @@ LinphoneReason ChatMessagePrivate::receive() {
 
 	chatRoom->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 	handleAutoDownload();
+	if (!chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
+		setParticipantState(q->getFromAddress(), ChatMessage::State::Displayed, ::ms_time(nullptr));
+	}
 
 	return reason;
 }
@@ -1715,7 +1718,6 @@ list<ParticipantImdnState> ChatMessage::getParticipantsState() const {
 	for (const auto &dbResult : dbResults) {
 		auto isMe = chatRoom->isMe(dbResult.address);
 		auto participant = isMe ? chatRoom->getMe() : chatRoom->findParticipant(dbResult.address);
-		// Do not add myself to the result list if I am the sender.
 		if (participant) {
 			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
 		}
@@ -1737,6 +1739,7 @@ list<ParticipantImdnState> ChatMessage::getParticipantsByImdnState(ChatMessage::
 	for (const auto &dbResult : dbResults) {
 		const auto &pAddress = dbResult.address;
 		auto participant = chatRoom->isMe(pAddress) ? chatRoom->getMe() : chatRoom->findParticipant(pAddress);
+		// Do not add myself to the result list if I am the sender.
 		if (participant && (participant != sender))
 			result.emplace_back(participant, dbResult.state, dbResult.timestamp);
 	}

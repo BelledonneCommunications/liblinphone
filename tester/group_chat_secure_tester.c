@@ -5286,7 +5286,7 @@ static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId, uint
 	                             initialLaureStats.number_of_LinphoneMessageReceived + 1,
 	                             10000)); // the message is correctly received by Laure
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceivedFailedToDecrypt,
-	                             initialLaureStats.number_of_LinphoneMessageReceivedFailedToDecrypt + 1,
+	                             initialPaulineStats.number_of_LinphoneMessageReceivedFailedToDecrypt + 1,
 	                             10000));        // Pauline fails to decrypt
 	if (paulineImdnPolicy == NO_DELIVERY_IMDN) { // Pauline shall not send any IMDN, wait 5 seconds to be sure
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered,

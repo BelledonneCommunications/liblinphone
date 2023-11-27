@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 27);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 28);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -1504,9 +1504,33 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 	for (const auto &content : chatMessage->getContents())
 		insertContent(eventId, *content);
 
+	bool stateRequiresUpdatingParticipants = false;
+	if (state == ChatMessage::State::NotDelivered) {
+		const auto &meAddress = chatRoom->getMe()->getAddress();
+		long long meAddressId = insertSipAddress(meAddress);
+		static const string query =
+		    "SELECT chat_message_participant.state FROM chat_message_participant WHERE event_id = :eventId AND "
+		    "chat_message_participant.participant_sip_address_id = :meAddressId";
+		soci::rowset<soci::row> rows =
+		    (session->prepare << query, soci::use(chatMessage->getStorageId()), soci::use(meAddressId));
+		ChatMessage::State meParticipantState = ChatMessage::State::Idle;
+		for (const auto &row : rows) {
+			meParticipantState = static_cast<ChatMessage::State>(row.get<int>(0));
+		}
+		stateRequiresUpdatingParticipants = (meParticipantState == ChatMessage::State::NotDelivered);
+	} else {
+		stateRequiresUpdatingParticipants = (state == ChatMessage::State::Delivered);
+	}
+
 	// 5. Update participants.
-	if (isOutgoing && (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered) &&
-	    (chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Conference) && chatMessage->isValid()) {
+	// Set all participants to NotDelivered only if the sender state is NotDelivered
+	// if (isOutgoing && (state == ChatMessage::State::Delivered || ((*sender == *meAddress) &&
+	// (static_cast<ChatMessage::State>(meParticipantState) == ChatMessage::State::NotDelivered) && (state ==
+	// ChatMessage::State::NotDelivered))) &&
+	bool updateParticipants =
+	    (isOutgoing && stateRequiresUpdatingParticipants &&
+	     (chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Conference) && chatMessage->isValid());
+	if (updateParticipants) {
 		static const string query = "SELECT sip_address.value"
 		                            " FROM sip_address, chat_message_participant"
 		                            " WHERE event_id = :eventId"
@@ -1751,7 +1775,6 @@ void MainDbPrivate::setChatMessageParticipantState(const shared_ptr<EventLog> &e
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
-
 	long long participantSipAddressId = selectSipAddressId(participantAddress);
 	long long nbEntries;
 	*dbSession.getBackendSession() << "SELECT count(*) FROM chat_message_participant WHERE event_id = :eventId AND "
@@ -1791,7 +1814,6 @@ void MainDbPrivate::setChatMessageParticipantState(const shared_ptr<EventLog> &e
 		    soci::use(stateInt), soci::use(stateChangeTm.first, stateChangeTm.second), soci::use(eventId),
 		    soci::use(participantSipAddressId);
 	}
-
 #endif
 }
 
@@ -2432,7 +2454,12 @@ void MainDbPrivate::updateSchema() {
 	}
 
 	if (version < makeVersion(1, 0, 22)) {
-		*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
+		try {
+			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Caught exception " << e.what()
+			         << ": Column 'security_level' already exists in table 'conference_info'";
+		}
 	}
 
 	if (version < makeVersion(1, 0, 23)) {
@@ -2600,6 +2627,11 @@ void MainDbPrivate::updateSchema() {
 			         << ": Column 'security_level' already exists in table 'conference_info'";
 		}
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN is_participant BOOLEAN NOT NULL DEFAULT 1";
+	}
+
+	if (version < makeVersion(1, 0, 28)) {
+		*session << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
+		            "GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
 	}
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
@@ -4976,6 +5008,10 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 
 	auto creationTimeToDeleteSoci = d->dbSession.getTimeWithSociIndicator(creationTimeToDelete);
 	soci::session *session = d->dbSession.getBackendSession();
+	lInfo() << "Moving all event of chatroom with ID " << dbChatRoomToRemoveId
+	        << " (conference id: " << conferenceIdToRemove << ") to chatroom with ID " << dbChatRoomToAddId
+	        << " (conference id:" << conferenceIdToAdd << ")";
+	;
 	// Move conference event that occurred before the latest chatroom was created.
 	// Events such as chat messages are already stored in both chat rooms
 	*session << "UPDATE conference_event SET chat_room_id = :newChatRoomid WHERE event_id IN (SELECT "
@@ -4984,6 +5020,8 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 	    soci::use(dbChatRoomToAddId), soci::use(dbChatRoomToRemoveId),
 	    soci::use(creationTimeToDeleteSoci.first, creationTimeToDeleteSoci.second);
 	if (dbChatRoomToRemoveId != -1) {
+		lInfo() << "Deleting chatroom with ID " << dbChatRoomToRemoveId << " (conference id: " << conferenceIdToRemove
+		        << ")";
 		*session << "DELETE FROM chat_room WHERE id = :chatRoomId", soci::use(dbChatRoomToRemoveId);
 	}
 	return chatRoomToAdd;
