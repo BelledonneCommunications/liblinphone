@@ -26,35 +26,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-static string linphone_alert_type_to_string(LinphoneAlertType type) {
-	switch (type) {
-		case LinphoneAlertQoSCameraMisfunction:
-			return "LinphoneAlertQoSCameraMisfunction";
-		case LinphoneAlertQoSCameraLowFramerate:
-			return "LinphoneAlertQoSCameraLowFramerate";
-		case LinphoneAlertQoSVideoStalled:
-			return "LinphoneAlertQoSVideoStalled";
-		case LinphoneAlertQoSHighLossLateRate:
-			return "LinphoneAlertQoSHighLossLateRate";
-		case LinphoneAlertQoSHighRemoteLossRate:
-			return "LinphoneAlertQoSHighRemoteLossRate";
-		case LinphoneAlertQoSRetransmissionFailures:
-			return "LinphoneAlertQoSRetransmissionFailures";
-		case LinphoneAlertQoSLowDownloadBandwidthEstimation:
-			return "LinphoneAlertQoSLowDownloadBandwidthEstimation";
-		case LinphoneAlertQoSLowQualityReceivedVideo:
-			return "LinphoneAlertQoSLowQualityReceivedVideo";
-		case LinphoneAlertQoSLowQualitySentVideo:
-			return "LinphoneAlertQoSLowQualitySentVideo";
-		case LinphoneAlertQoSLowSignal:
-			return "LinphoneAlertQoSLowSignal";
-		case LinphoneAlertQoSLostSignal:
-			return "LinphoneAlertQoSLostSignal";
-		case LinphoneAlertQoSBurstOccured:
-			return "LinphoneAlertQoSBurstOccured";
-	}
-	return "LinphoneAlertType not found";
-}
 // -----------------------------------------------------------------------------
 Alert::Alert(const Alert &other) : HybridObject(other) {
 }

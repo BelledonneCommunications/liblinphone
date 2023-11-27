@@ -24,6 +24,36 @@
 #include "linphone/api/c-alert-cbs.h"
 using namespace LinphonePrivate;
 
+const char *linphone_alert_type_to_string(LinphoneAlertType type) {
+	switch (type) {
+		case LinphoneAlertQoSCameraMisfunction:
+			return "LinphoneAlertQoSCameraMisfunction";
+		case LinphoneAlertQoSCameraLowFramerate:
+			return "LinphoneAlertQoSCameraLowFramerate";
+		case LinphoneAlertQoSVideoStalled:
+			return "LinphoneAlertQoSVideoStalled";
+		case LinphoneAlertQoSHighLossLateRate:
+			return "LinphoneAlertQoSHighLossLateRate";
+		case LinphoneAlertQoSHighRemoteLossRate:
+			return "LinphoneAlertQoSHighRemoteLossRate";
+		case LinphoneAlertQoSRetransmissionFailures:
+			return "LinphoneAlertQoSRetransmissionFailures";
+		case LinphoneAlertQoSLowDownloadBandwidthEstimation:
+			return "LinphoneAlertQoSLowDownloadBandwidthEstimation";
+		case LinphoneAlertQoSLowQualityReceivedVideo:
+			return "LinphoneAlertQoSLowQualityReceivedVideo";
+		case LinphoneAlertQoSLowQualitySentVideo:
+			return "LinphoneAlertQoSLowQualitySentVideo";
+		case LinphoneAlertQoSLowSignal:
+			return "LinphoneAlertQoSLowSignal";
+		case LinphoneAlertQoSLostSignal:
+			return "LinphoneAlertQoSLostSignal";
+		case LinphoneAlertQoSBurstOccured:
+			return "LinphoneAlertQoSBurstOccured";
+	}
+	return "LinphoneAlertType not found";
+}
+
 LinphoneAlert *linphone_alert_clone(const LinphoneAlert *alert) {
 	return Alert::toCpp(alert)->clone()->toC();
 }

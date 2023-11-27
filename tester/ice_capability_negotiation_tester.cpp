@@ -295,7 +295,8 @@ test_suite_t ice_capability_negotiation_test_suite = {"ICE Capability Negotiatio
                                                       sizeof(ice_capability_negotiation_tests) /
                                                           sizeof(ice_capability_negotiation_tests[0]),
                                                       ice_capability_negotiation_tests,
-                                                      0};
+                                                      0,
+                                                      2};
 
 test_suite_t srtp_ice_capability_negotiation_test_suite = {"SRTP ICE Capability Negotiation",
                                                            NULL,
@@ -305,7 +306,8 @@ test_suite_t srtp_ice_capability_negotiation_test_suite = {"SRTP ICE Capability 
                                                            sizeof(srtp_ice_capability_negotiation_tests) /
                                                                sizeof(srtp_ice_capability_negotiation_tests[0]),
                                                            srtp_ice_capability_negotiation_tests,
-                                                           0};
+                                                           0,
+                                                           2};
 
 test_suite_t zrtp_ice_capability_negotiation_test_suite = {"ZRTP ICE Capability Negotiation",
                                                            NULL,
@@ -315,7 +317,8 @@ test_suite_t zrtp_ice_capability_negotiation_test_suite = {"ZRTP ICE Capability 
                                                            sizeof(zrtp_ice_capability_negotiation_tests) /
                                                                sizeof(zrtp_ice_capability_negotiation_tests[0]),
                                                            zrtp_ice_capability_negotiation_tests,
-                                                           0};
+                                                           0,
+                                                           2};
 
 test_suite_t dtls_srtp_ice_capability_negotiation_test_suite = {
     "DTLS SRTP ICE Capability Negotiation",

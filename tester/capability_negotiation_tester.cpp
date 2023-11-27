@@ -3528,7 +3528,8 @@ test_suite_t capability_negotiation_test_suite = {"Capability Negotiation (SDP)"
                                                   sizeof(capability_negotiation_tests) /
                                                       sizeof(capability_negotiation_tests[0]),
                                                   capability_negotiation_tests,
-                                                  0};
+                                                  0,
+                                                  2};
 
 test_suite_t capability_negotiation_parameters_test_suite = {"Capability Negotiation (Parameters)",
                                                              NULL,
@@ -3538,7 +3539,8 @@ test_suite_t capability_negotiation_parameters_test_suite = {"Capability Negotia
                                                              sizeof(capability_negotiation_parameters_tests) /
                                                                  sizeof(capability_negotiation_parameters_tests[0]),
                                                              capability_negotiation_parameters_tests,
-                                                             0};
+                                                             0,
+                                                             2};
 
 test_suite_t capability_negotiation_no_sdp_test_suite = {"Capability Negotiation (No SDP)",
                                                          NULL,
@@ -3548,4 +3550,5 @@ test_suite_t capability_negotiation_no_sdp_test_suite = {"Capability Negotiation
                                                          sizeof(capability_negotiation_tests_no_sdp) /
                                                              sizeof(capability_negotiation_tests_no_sdp[0]),
                                                          capability_negotiation_tests_no_sdp,
-                                                         0};
+                                                         0,
+                                                         2};

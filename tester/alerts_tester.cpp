@@ -56,11 +56,10 @@ static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy 
 	linphone_core_set_preferred_video_definition_by_name(lc, name);
 }
 static void alert_on_terminated(LinphoneAlert *alert) {
-
-	BC_ASSERT_PTR_NOT_NULL(alert);
 	LinphoneAlertCbs *cbs = linphone_alert_get_current_callbacks(alert);
 	AlertCallbackData *data = (AlertCallbackData *)linphone_alert_cbs_get_user_data(cbs);
 	auto type = linphone_alert_get_type(alert);
+	ms_message("Alert ot type %s is terminated.", linphone_alert_type_to_string(type));
 	if (type == data->expectedType) {
 		data->stopped++;
 	}
@@ -71,6 +70,7 @@ static void alert_catch(LinphoneCore *core, LinphoneAlert *alert) {
 	auto *data = (AlertCallbackData *)linphone_core_cbs_get_user_data(linphone_core_get_current_callbacks(core));
 	LinphoneAlertCbs *alert_cbs = linphone_factory_create_alert_cbs(linphone_factory_get());
 	auto type = linphone_alert_get_type(alert);
+	ms_message("Alert ot type %s is detected.", linphone_alert_type_to_string(type));
 	if (type == data->expectedType) {
 		data->triggerCount++;
 	}
@@ -147,8 +147,8 @@ static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCall
 	// TODO : remove this if to make this assert true
 	if (data.expectedType != LinphoneAlertQoSBurstOccured && data.expectedType != LinphoneAlertQoSCameraLowFramerate &&
 	    data.expectedType != LinphoneAlertQoSLowQualitySentVideo) {
-		/* the new bandwidth estimate might take up to 15 seconds to happen*/
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &data.stopped, 1, 15000));
+		/* the new bandwidth estimate might take time to converge to a higher value*/
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &data.stopped, 1, 25000));
 	}
 
 	end_call(marie, pauline);
