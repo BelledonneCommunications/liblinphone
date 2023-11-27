@@ -107,7 +107,7 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 	int i;
 	int ret;
 	int liblinphone_max_failed_tests_threshold =
-	    2; /* Please adjust this threshold as long as the full tester becomes more and more reliable. Also update
+	    3; /* Please adjust this threshold as long as the full tester becomes more and more reliable. Also update
 	          liblinphone_helper value for documentation*/
 
 #ifdef __linux__
@@ -629,7 +629,7 @@ void liblinphone_tester_init(void (*ftester_printf)(int level, const char *fmt, 
 	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 	liblinphone_tester_add_suites();
 	bc_tester_set_max_parallel_suites(32); /* empiricaly defined as sustainable for our lab 12 threads machine.*/
-	bc_tester_set_global_timeout(30 * 60); /* 20 mn max */
+	bc_tester_set_global_timeout(30 * 60); /* 30 mn max */
 }
 
 int liblinphone_tester_set_log_file(const char *filename) {

@@ -32,6 +32,13 @@ extern "C" {
  */
 
 /**
+ * Provide a string describing the alert type.
+ * @param type the #LinphoneAlertType
+ * @return a string
+ */
+LINPHONE_PUBLIC const char *linphone_alert_type_to_string(LinphoneAlertType type);
+
+/**
  * Clone the given alert
  * @param alert The given alert. @notnil
  * @return A new alert with exactly same informations that param. @notnil

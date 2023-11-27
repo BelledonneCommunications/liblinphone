@@ -78,9 +78,7 @@ public:
 	void oglRender();
 	void sendVfu();
 
-	int getAf() const {
-		return af;
-	}
+	int getAf() const;
 
 	bool getSpeakerMuted() const;
 	void setSpeakerMuted(bool muted);
@@ -183,9 +181,6 @@ public:
 	bool isEncryptionMandatory() const;
 	MSWebCam *getVideoDevice() const;
 	void performMutualAuthentication();
-	const std::string &getMediaLocalIp() const {
-		return mediaLocalIp;
-	}
 	void lossOfMediaDetected();
 	/* test function */
 	IceSession *getIceSession() const;
@@ -201,6 +196,7 @@ public:
 	LinphoneMediaDirection getDirFromMd(const std::shared_ptr<SalMediaDescription> &md, const SalStreamType type) const;
 	void validateVideoStreamDirection(SalStreamConfiguration &cfg) const;
 	bool mandatoryRtpBundleEnabled() const;
+	const std::string &getMediaLocalIp() const;
 
 private:
 	/* IceServiceListener methods:*/
@@ -221,10 +217,13 @@ private:
 	void updateRemoteSessionIdAndVer();
 
 	void discoverMtu(const std::shared_ptr<Address> &remoteAddr);
-	void getLocalIp(const std::shared_ptr<Address> &remoteAddr);
+
 	void runStunTestsIfNeeded();
-	void selectIncomingIpVersion();
-	void selectOutgoingIpVersion();
+	std::string getLocalIpFromRemote(const std::string &remoteAddr) const;
+	std::string getLocalIpFromSignaling() const;
+	std::string getLocalIpFromMedia() const;
+	std::string getLocalIpFallback(bool preferIvp6) const;
+	std::string overrideLocalIpFromConfig(const std::string &localIp) const;
 
 	void forceStreamsDirAccordingToState(std::shared_ptr<SalMediaDescription> &md);
 	bool generateB64CryptoKey(size_t keyLength, std::string &keyOut);
@@ -370,13 +369,10 @@ private:
 	std::queue<std::function<LinphoneStatus()>> iceDeferedGatheringTasks;
 	std::queue<std::function<LinphoneStatus()>> iceDeferedCompletionTasks;
 
-	// The address family to prefer for RTP path, guessed from signaling path.
-	int af;
-
 	std::string dtmfSequence;
 	belle_sip_source_t *dtmfTimer = nullptr;
 
-	std::string mediaLocalIp;
+	mutable std::string mediaLocalIp;
 
 	std::shared_ptr<SalMediaDescription> localDesc = nullptr;
 	int localDescChanged = 0;
