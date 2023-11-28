@@ -667,7 +667,7 @@ LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyCon
 	lc->sip_conf.accounts = bctbx_list_append(lc->sip_conf.accounts, (void *)linphone_account_ref(cfg->account));
 	linphone_proxy_config_apply(cfg, lc);
 
-	linphone_core_notify_new_account_added(lc, cfg->account);
+	linphone_core_notify_account_added(lc, cfg->account);
 
 	return 0;
 }
@@ -696,6 +696,7 @@ void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cf
 		         cfg);
 		return;
 	}
+
 	lc->sip_conf.proxies = bctbx_list_remove(lc->sip_conf.proxies, cfg);
 	/* add to the list of destroyed proxies, so that the possible unREGISTER request can succeed authentication */
 	lc->sip_conf.deleted_proxies = bctbx_list_append(lc->sip_conf.deleted_proxies, cfg);
@@ -712,7 +713,10 @@ void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cf
 
 	if (lc->default_account == cfg->account) {
 		lc->default_account = NULL;
+		linphone_core_notify_default_account_changed(lc, NULL);
 	}
+
+	linphone_core_notify_account_removed(lc, cfg->account);
 
 	Account::toCpp(cfg->account)->setDeletionDate(ms_time(NULL));
 	if (linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
@@ -835,7 +839,7 @@ LinphoneStatus linphone_core_add_account(LinphoneCore *lc, LinphoneAccount *acco
 
 	Account::toCpp(account)->apply(lc);
 
-	linphone_core_notify_new_account_added(lc, account);
+	linphone_core_notify_account_added(lc, account);
 
 	return 0;
 }
@@ -866,6 +870,7 @@ void linphone_core_remove_account(LinphoneCore *core, LinphoneAccount *account) 
 
 	if (core->default_account == account) {
 		core->default_account = NULL;
+		linphone_core_notify_default_account_changed(core, NULL);
 	}
 
 	LinphoneProxyConfig *cfg = Account::toCpp(account)->getConfig();
@@ -876,6 +881,8 @@ void linphone_core_remove_account(LinphoneCore *core, LinphoneAccount *account) 
 	if (core->default_proxy == cfg) {
 		core->default_proxy = NULL;
 	}
+
+	linphone_core_notify_account_removed(core, account);
 
 	Account::toCpp(account)->setDeletionDate(ms_time(NULL));
 	if (linphone_account_get_state(account) == LinphoneRegistrationOk) {
@@ -939,6 +946,7 @@ void linphone_core_set_default_account(LinphoneCore *lc, LinphoneAccount *accoun
 		if (bctbx_list_find(lc->sip_conf.accounts, account) == NULL) {
 			ms_warning("Bad account address: it is not in the list !");
 			lc->default_account = NULL;
+			linphone_core_notify_default_account_changed(lc, NULL);
 			return;
 		}
 	}

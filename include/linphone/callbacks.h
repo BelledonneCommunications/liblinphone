@@ -270,17 +270,26 @@ typedef void (*LinphoneCoreCbsReactionRemovedCb)(LinphoneCore *core,
  * Default account changed callback prototype
  * @param core #LinphoneCore object @notnil
  * @param account #LinphoneAccount object that has been set as the default account, probably by calling
- * linphone_core_set_default_account(). @notnil
+ * linphone_core_set_default_account(), or NULL if the default account was removed. @maybenil
  */
 typedef void (*LinphoneCoreCbsDefaultAccountChangedCb)(LinphoneCore *core, LinphoneAccount *account);
 
 /**
- * New account added callback prototype
+ * Account added callback prototype
  * @param core #LinphoneCore object @notnil
  * @param account #LinphoneAccount object that has been added to the Core using linphone_core_add_account() for example.
  * @notnil
  */
-typedef void (*LinphoneCoreCbsNewAccountAddedCb)(LinphoneCore *core, LinphoneAccount *account);
+typedef void (*LinphoneCoreCbsAccountAddedCb)(LinphoneCore *core, LinphoneAccount *account);
+
+/**
+ * Account removed callback prototype
+ * @param core #LinphoneCore object @notnil
+ * @param account #LinphoneAccount object that has been added to the Core using linphone_core_remove_account() for
+ * example.
+ * @notnil
+ */
+typedef void (*LinphoneCoreCbsAccountRemovedCb)(LinphoneCore *core, LinphoneAccount *account);
 
 /**
  * Chat messages callback prototype.

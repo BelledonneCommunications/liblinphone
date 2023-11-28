@@ -750,12 +750,20 @@ LinphoneCoreCbsDefaultAccountChangedCb linphone_core_cbs_get_default_account_cha
 	return cbs->vtable->default_account_changed;
 }
 
-void linphone_core_cbs_set_new_account_added(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewAccountAddedCb cb) {
-	cbs->vtable->new_account_added = cb;
+void linphone_core_cbs_set_account_added(LinphoneCoreCbs *cbs, LinphoneCoreCbsAccountAddedCb cb) {
+	cbs->vtable->account_added = cb;
 }
 
-LinphoneCoreCbsNewAccountAddedCb linphone_core_cbs_get_new_account_added(LinphoneCoreCbs *cbs) {
-	return cbs->vtable->new_account_added;
+LinphoneCoreCbsAccountAddedCb linphone_core_cbs_get_account_added(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->account_added;
+}
+
+void linphone_core_cbs_set_account_removed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAccountRemovedCb cb) {
+	cbs->vtable->account_removed = cb;
+}
+
+LinphoneCoreCbsAccountRemovedCb linphone_core_cbs_get_account_removed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->account_removed;
 }
 
 void lc_callback_obj_init(LCCallbackObj *obj, LinphoneCoreCbFunc func, void *ud) {
