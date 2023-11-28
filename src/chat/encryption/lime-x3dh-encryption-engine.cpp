@@ -614,16 +614,12 @@ int LimeX3dhEncryptionEngine::downloadingFile(BCTBX_UNUSED(const shared_ptr<Chat
 	if (!fileKey) return -1;
 
 	if (!buffer) {
-		// get the authentication tag
-		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of decryption
-		int ret = bctbx_aes_gcm_decryptFile(content->getCryptoContextAddress(), NULL, FILE_TRANSFER_AUTH_TAG_SIZE,
-		                                    authTag, NULL);
-		if (ret < 0) return ret;
 		// compare auth tag if we have one
 		const size_t fileAuthTagSize = fileTransferContent->getFileAuthTagSize();
 		if (fileAuthTagSize == FILE_TRANSFER_AUTH_TAG_SIZE) {
-			const char *fileAuthTag = fileTransferContent->getFileAuthTag().data();
-			if (memcmp(authTag, fileAuthTag, FILE_TRANSFER_AUTH_TAG_SIZE) != 0) {
+			int ret = bctbx_aes_gcm_decryptFile(content->getCryptoContextAddress(), NULL, fileAuthTagSize,
+			                                    (char *)fileTransferContent->getFileAuthTag().data(), NULL);
+			if (ret != 0) {
 				lError() << "download encrypted file : authentication failure";
 				return ERROR_FILE_TRANFER_AUTHENTICATION_FAILED;
 			} else {
