@@ -307,7 +307,8 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsReactionRemovedCb reaction_removed;
 	LinphoneCoreCbsReactionRemovedPrivateCb reaction_removed_private;
 	LinphoneCoreCbsDefaultAccountChangedCb default_account_changed;
-	LinphoneCoreCbsNewAccountAddedCb new_account_added;
+	LinphoneCoreCbsAccountAddedCb account_added;
+	LinphoneCoreCbsAccountRemovedCb account_removed;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -1313,18 +1314,32 @@ LINPHONE_PUBLIC LinphoneCoreCbsDefaultAccountChangedCb
 linphone_core_cbs_get_default_account_changed(LinphoneCoreCbs *cbs);
 
 /**
- * Sets the new account added callback.
+ * Sets the account added callback.
  * @param cbs #LinphoneCoreCbs object. @notnil
- * @param cb The new account added callback to be used.
+ * @param cb The account added callback to be used.
  */
-LINPHONE_PUBLIC void linphone_core_cbs_set_new_account_added(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewAccountAddedCb cb);
+LINPHONE_PUBLIC void linphone_core_cbs_set_account_added(LinphoneCoreCbs *cbs, LinphoneCoreCbsAccountAddedCb cb);
 
 /**
- * Gets the new account added callback.
+ * Gets the account added callback.
  * @param cbs #LinphoneCoreCbs object. @notnil
- * @return The new account added callback that will be triggered.
+ * @return The account added callback that will be triggered.
  */
-LINPHONE_PUBLIC LinphoneCoreCbsNewAccountAddedCb linphone_core_cbs_get_new_account_added(LinphoneCoreCbs *cbs);
+LINPHONE_PUBLIC LinphoneCoreCbsAccountAddedCb linphone_core_cbs_get_account_added(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the account removed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The new account removed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_account_removed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAccountRemovedCb cb);
+
+/**
+ * Gets the new account removed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The new account removed callback that will be triggered.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAccountRemovedCb linphone_core_cbs_get_account_removed(LinphoneCoreCbs *cbs);
 
 /**
  * Get the account registration state changed callback.

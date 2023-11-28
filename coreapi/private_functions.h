@@ -887,7 +887,8 @@ void linphone_core_notify_audio_devices_list_updated(LinphoneCore *lc);
 void linphone_core_notify_conference_info_received(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
 void linphone_core_notify_push_notification_received(LinphoneCore *lc, const char *payload);
 void linphone_core_notify_default_account_changed(LinphoneCore *lc, LinphoneAccount *account);
-void linphone_core_notify_new_account_added(LinphoneCore *lc, LinphoneAccount *account);
+void linphone_core_notify_account_added(LinphoneCore *lc, LinphoneAccount *account);
+void linphone_core_notify_account_removed(LinphoneCore *lc, LinphoneAccount *account);
 /*
  * return true if at least a registered vtable has a cb for dtmf received*/
 bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore *lc);

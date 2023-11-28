@@ -538,8 +538,13 @@ void linphone_core_notify_default_account_changed(LinphoneCore *lc, LinphoneAcco
 	cleanup_dead_vtable_refs(lc);
 }
 
-void linphone_core_notify_new_account_added(LinphoneCore *lc, LinphoneAccount *account) {
-	NOTIFY_IF_EXIST(new_account_added, lc, account);
+void linphone_core_notify_account_added(LinphoneCore *lc, LinphoneAccount *account) {
+	NOTIFY_IF_EXIST(account_added, lc, account);
+	cleanup_dead_vtable_refs(lc);
+}
+
+void linphone_core_notify_account_removed(LinphoneCore *lc, LinphoneAccount *account) {
+	NOTIFY_IF_EXIST(account_removed, lc, account);
 	cleanup_dead_vtable_refs(lc);
 }
 

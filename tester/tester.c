@@ -771,15 +771,21 @@ void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
 }
 
 void default_account_changed(LinphoneCore *core, LinphoneAccount *account) {
-	BC_ASSERT_PTR_NOT_NULL(account);
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_account(core), account);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_LinphoneDefaultAccountChanged++;
 }
 
-void new_account_added(LinphoneCore *core, LinphoneAccount *account) {
+void account_added(LinphoneCore *core, LinphoneAccount *account) {
 	BC_ASSERT_PTR_NOT_NULL(account);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
-	manager->stat.number_of_LinphoneNewAccountAdded++;
+	manager->stat.number_of_LinphoneAccountAdded++;
+}
+
+void account_removed(LinphoneCore *core, LinphoneAccount *account) {
+	BC_ASSERT_PTR_NOT_NULL(account);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_LinphoneAccountRemoved++;
 }
 
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs,
@@ -2453,7 +2459,8 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_imee_user_registration(mgr->cbs, liblinphone_tester_x3dh_user_created);
 	linphone_core_cbs_set_conference_state_changed(mgr->cbs, core_conference_state_changed);
 	linphone_core_cbs_set_default_account_changed(mgr->cbs, default_account_changed);
-	linphone_core_cbs_set_new_account_added(mgr->cbs, new_account_added);
+	linphone_core_cbs_set_account_added(mgr->cbs, account_added);
+	linphone_core_cbs_set_account_removed(mgr->cbs, account_removed);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
