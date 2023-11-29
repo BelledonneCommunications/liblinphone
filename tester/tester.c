@@ -269,6 +269,8 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 		linphone_config_set_string(config, "sound", "remote_ring", ringbackpath);
 		linphone_config_set_string(config, "sound", "local_ring", ringpath);
 		linphone_config_set_string(config, "sip", "root_ca", rootcapath);
+		/* Disable the use of fsync() by sqlite3, which degrades performance for no benefit in the context of tests. */
+		linphone_config_set_int(config, "misc", "sqlite3_synchronous", 0);
 
 		LinphoneCoreManager *mgr = (LinphoneCoreManager *)user_data;
 		if (mgr && mgr->app_group_id) {

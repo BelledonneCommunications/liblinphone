@@ -162,6 +162,11 @@ void CorePrivate::init() {
 				lInfo() << "No charset defined forcing utf8 4 bytes specially for conference subjet storage";
 				uri += " charset=utf8mb4";
 			}
+			if (backend == MainDb::Sqlite3 &&
+			    linphone_config_get_int(linphone_core_get_config(lc), "misc", "sqlite3_synchronous", 1) == 0) {
+				lInfo() << "Setting sqlite3 synchronous mode to OFF.";
+				uri += " synchronous=OFF";
+			}
 			lInfo() << "Opening linphone database " << uri << " with backend " << backend;
 			uri = LinphonePrivate::Utils::localeToUtf8(uri); // `mainDb->connect` take a UTF8 string.
 			auto startMs = bctbx_get_cur_time_ms();
