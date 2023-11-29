@@ -82,14 +82,11 @@ target_link_libraries(exampleplugin PRIVATE liblinphone ${LIBS})
 set_target_properties(exampleplugin PROPERTIES LINKER_LANGUAGE CXX)
 if(APPLE)
 	if(IOS)
-		set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
 		set_target_properties(exampleplugin PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.exampleplugin
 			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
 		)
-	else()
-		set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
 	endif()
 endif()
 if(MSVC)
