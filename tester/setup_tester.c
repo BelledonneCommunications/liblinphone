@@ -639,6 +639,11 @@ void linphone_lpconfig_invalid_friend(void) {
 	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(mgr->lc);
 	const bctbx_list_t *friends = linphone_friend_list_get_friends(friendList);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(friends), 3, int, "%d");
+	LinphoneFriend *fakeFriend = linphone_core_create_friend(mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(fakeFriend);
+	const bctbx_list_t *addresses = linphone_friend_get_addresses(fakeFriend);
+	BC_ASSERT_EQUAL(bctbx_list_size(addresses), 0, size_t, "%0zu");
+	linphone_friend_unref(fakeFriend);
 	linphone_core_manager_destroy(mgr);
 }
 

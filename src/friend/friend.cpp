@@ -209,11 +209,11 @@ const std::shared_ptr<Address> Friend::getAddress() const {
 }
 
 const std::list<std::shared_ptr<Address>> &Friend::getAddresses() const {
-	if (linphone_core_vcard_supported()) {
+	if (linphone_core_vcard_supported() && mVcard) {
 		mAddresses = mVcard->getSipAddresses();
 	} else {
 		mAddresses.clear();
-		mAddresses.push_back(mUri);
+		if (mUri) mAddresses.push_back(mUri);
 	}
 	syncBctbxAddresses();
 	return mAddresses;
