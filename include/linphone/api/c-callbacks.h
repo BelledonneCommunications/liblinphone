@@ -552,6 +552,16 @@ typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb)(Linp
 typedef void (*LinphoneChatRoomCbsChatRoomReadCb)(LinphoneChatRoom *chat_room);
 
 /**
+ * Callback used to notify a reaction has been received or sent for a given message
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param message #LinphoneChatMessage object for which we received a reaction @notnil
+ * @param reaction the #LinphoneChatMessageReaction reaction that was sent or received @notnil
+ */
+typedef void (*LinphoneChatRoomCbsNewMessageReactionCb)(LinphoneChatRoom *chat_room,
+                                                        LinphoneChatMessage *message,
+                                                        const LinphoneChatMessageReaction *reaction);
+
+/**
  * @}
  **/
 

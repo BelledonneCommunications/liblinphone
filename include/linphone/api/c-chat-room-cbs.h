@@ -580,6 +580,22 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_room_read(LinphoneChatRoomC
                                                                LinphoneChatRoomCbsChatRoomReadCb cb);
 
 /**
+ * Get the new reaction callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current new reaction callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsNewMessageReactionCb
+linphone_chat_room_cbs_get_new_message_reaction(const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the new reaction callback.
+ * @param cbs LinphoneChatRoomCbs object. @notnil
+ * @param cb The new reaction callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_new_message_reaction(LinphoneChatRoomCbs *cbs,
+                                                                     LinphoneChatRoomCbsNewMessageReactionCb cb);
+
+/**
  * @}
  */
 

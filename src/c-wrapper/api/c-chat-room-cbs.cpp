@@ -60,6 +60,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsNewEventCb newEventCb;
 	LinphoneChatRoomCbsNewEventsCb newEventsCb;
 	LinphoneChatRoomCbsChatRoomReadCb chatRoomReadCb;
+	LinphoneChatRoomCbsNewMessageReactionCb newMessageReactionCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -387,4 +388,14 @@ LinphoneChatRoomCbsChatRoomReadCb linphone_chat_room_cbs_get_chat_room_read(cons
 
 void linphone_chat_room_cbs_set_chat_room_read(LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatRoomReadCb cb) {
 	cbs->chatRoomReadCb = cb;
+}
+
+LinphoneChatRoomCbsNewMessageReactionCb
+linphone_chat_room_cbs_get_new_message_reaction(const LinphoneChatRoomCbs *cbs) {
+	return cbs->newMessageReactionCb;
+}
+
+void linphone_chat_room_cbs_set_new_message_reaction(LinphoneChatRoomCbs *cbs,
+                                                     LinphoneChatRoomCbsNewMessageReactionCb cb) {
+	cbs->newMessageReactionCb = cb;
 }

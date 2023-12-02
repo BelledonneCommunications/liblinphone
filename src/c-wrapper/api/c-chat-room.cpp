@@ -788,6 +788,12 @@ void _linphone_chat_room_notify_chat_room_read(LinphoneChatRoom *cr) {
 	NOTIFY_IF_EXIST(ChatRoomRead, chat_room_read, cr);
 }
 
+void _linphone_chat_room_notify_new_reaction_received(LinphoneChatRoom *cr,
+                                                      LinphoneChatMessage *message,
+                                                      const LinphoneChatMessageReaction *reaction) {
+	NOTIFY_IF_EXIST(NewMessageReaction, new_message_reaction, cr, message, reaction);
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================

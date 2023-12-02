@@ -95,7 +95,7 @@ void ChatMessageReaction::onChatMessageStateChanged(const shared_ptr<ChatMessage
 		} else {
 			LinphoneChatMessageReaction *reaction = getSharedFromThis()->toC();
 			_linphone_chat_message_notify_new_message_reaction(msg, reaction);
-
+			_linphone_chat_room_notify_new_reaction_received(cr, msg, reaction);
 			linphone_core_notify_new_message_reaction(message->getCore()->getCCore(), cr, msg, reaction);
 		}
 

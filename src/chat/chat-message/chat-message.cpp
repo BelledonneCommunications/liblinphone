@@ -962,7 +962,7 @@ LinphoneReason ChatMessagePrivate::receive() {
 		    ChatMessageReaction::createCObject(messageId, getUtf8Text(), q->getFromAddress(), getCallId());
 
 		_linphone_chat_message_notify_new_message_reaction(msg, reaction);
-
+		_linphone_chat_room_notify_new_reaction_received(cr, msg, reaction);
 		linphone_core_notify_new_message_reaction(q->getCore()->getCCore(), cr, msg, reaction);
 
 		linphone_chat_message_reaction_unref(reaction);
