@@ -8019,6 +8019,10 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 		ms_free(lc->rec_file);
 		lc->rec_file = NULL;
 	}
+	if (lc->friends_db_file != NULL) {
+		ms_free(lc->friends_db_file);
+		lc->friends_db_file = NULL;
+	}
 	if (lc->tls_key) {
 		ms_free(lc->tls_key);
 		lc->tls_key = NULL;

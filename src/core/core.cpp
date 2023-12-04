@@ -85,6 +85,7 @@
 
 #define LINPHONE_DB "linphone.db"
 #define LINPHONE_CALL_HISTORY_DB "call-history.db"
+#define LINPHONE_FRIENDS_DB "friends.db"
 #define LINPHONE_ZRTP_SECRETS_DB "zrtp-secrets.db"
 
 #ifndef LINPHONE_PACKAGE_PLUGINS_DIR
@@ -201,6 +202,17 @@ void CorePrivate::init() {
 				lInfo() << "Using [" << zrtpSecretsDbPath << "] as default zrtp secrets database path";
 				linphone_core_set_zrtp_secrets_file(lc, zrtpSecretsDbPath.c_str());
 			} else lWarning() << "ZRTP secrets database explicitely not requested";
+		}
+
+		// Leave this part to import the legacy friends to MainDB
+		if (!lc->friends_db_file) {
+			string friendsDbPath = L_C_TO_STRING(
+			    linphone_config_get_string(linphone_core_get_config(lc), "storage", "friends_db_uri", nullptr));
+			if (friendsDbPath.empty()) friendsDbPath = q->getDataPath() + LINPHONE_FRIENDS_DB;
+			if (friendsDbPath != "null") {
+				lInfo() << "Using [" << friendsDbPath << "] as legacy friends database path";
+				linphone_core_set_friends_database_path(lc, friendsDbPath.c_str());
+			} else lWarning() << "Friends database explicitely not requested";
 		}
 	}
 

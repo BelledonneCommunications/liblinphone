@@ -44,3 +44,4 @@ sip_tls_port=-1
 
 [storage]
 call_logs_db_uri=null
+friends_db_uri=null

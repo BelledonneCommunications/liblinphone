@@ -794,10 +794,6 @@ bctbx_list_t *linphone_core_find_friends(const LinphoneCore *lc, const LinphoneA
 	return result;
 }
 
-const char *linphone_core_get_friends_database_path(BCTBX_UNUSED(LinphoneCore *lc)) {
-	return nullptr;
-}
-
 void linphone_core_interpret_friend_uri(LinphoneCore *lc, const char *uri, char **result) {
 	LinphoneAddress *fr = NULL;
 	*result = NULL;
@@ -858,10 +854,26 @@ void linphone_core_send_initial_subscribes(LinphoneCore *lc) {
 	ms_message("Initial friend lists subscribes has been sent");
 }
 
+const char *linphone_core_get_friends_database_path(BCTBX_UNUSED(LinphoneCore *lc)) {
+	lError() << "Do not use `linphone_core_get_friends_database_path`. Not necessary.";
+	return "";
+}
+
 void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path) {
-	if (!linphone_core_conference_server_enabled(lc) && L_GET_PRIVATE(lc->cppPtr)->mainDb) {
-		L_GET_PRIVATE(lc->cppPtr)->mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
-		linphone_core_friends_storage_resync_friends_lists(lc);
+	if (!linphone_core_conference_server_enabled(lc)) {
+		if (lc->friends_db_file) {
+			ms_free(lc->friends_db_file);
+			lc->friends_db_file = NULL;
+		}
+		if (path) {
+			ms_message("Using [%s] file for friends database", path);
+			lc->friends_db_file = ms_strdup(path);
+		}
+
+		if (L_GET_PRIVATE(lc->cppPtr)->mainDb) {
+			L_GET_PRIVATE(lc->cppPtr)->mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
+			linphone_core_friends_storage_resync_friends_lists(lc);
+		}
 	}
 }
 

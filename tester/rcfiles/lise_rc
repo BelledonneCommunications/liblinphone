@@ -77,6 +77,7 @@ mtu=1300
 #try to connect to the same default sqlite3 database.
 uri=null
 call_logs_db_uri=null
+friends_db_uri=null
 zrtp_secrets_db_uri=null
 
 [tester]

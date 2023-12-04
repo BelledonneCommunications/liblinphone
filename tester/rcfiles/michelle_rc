@@ -45,3 +45,4 @@ stun_server=stun.linphone.org
 
 [storage]
 call_logs_db_uri=null
+friends_db_uri=null

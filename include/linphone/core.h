@@ -6231,8 +6231,9 @@ LINPHONE_PUBLIC LinphoneFriend *linphone_core_get_friend_by_ref_key(const Linpho
  * @ingroup initializing
  * @param core the linphone core @notnil
  * @param path filesystem path. @maybenil
+ * @deprecated 27/10/2023 Friends are now stored in the main db
  **/
-LINPHONE_PUBLIC void linphone_core_set_friends_database_path(LinphoneCore *core, const char *path);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_friends_database_path(LinphoneCore *core, const char *path);
 
 /**
  * Create a new empty #LinphoneFriendList object.
@@ -7339,7 +7340,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_user_agent_ver
  * @param core the linphone core @notnil
  * @return filesystem path. @maybenil
  * @deprecated 27/10/2023 Friends are now stored in the main db
- * @donotwrap
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_friends_database_path(LinphoneCore *core);
 
