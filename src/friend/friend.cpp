@@ -56,14 +56,14 @@ static const std::string emptyString;
 
 // -----------------------------------------------------------------------------
 
-Friend::Friend(LinphoneCore *lc) : CoreAccessor(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr) {
+Friend::Friend(std::shared_ptr<Core> core) : CoreAccessor(core) {
 }
 
-Friend::Friend(LinphoneCore *lc, const std::string &address) : Friend(lc) {
+Friend::Friend(std::shared_ptr<Core> core, const std::string &address) : Friend(core) {
 	setAddress(Address::create(address));
 }
 
-Friend::Friend(LinphoneCore *lc, const std::shared_ptr<Vcard> &vcard) : Friend(lc) {
+Friend::Friend(std::shared_ptr<Core> core, const std::shared_ptr<Vcard> &vcard) : Friend(core) {
 	// Currently presence takes too much time when dealing with hundreds of friends, so I disable it for now
 	mSubscribePolicy = LinphoneSPDeny;
 	mSubscribe = false;

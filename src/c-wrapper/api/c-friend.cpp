@@ -662,11 +662,11 @@ void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *lf) {
 }
 
 LinphoneFriend *linphone_core_create_friend(LinphoneCore *lc) {
-	return Friend::createCObject(lc);
+	return Friend::createCObject(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr);
 }
 
 LinphoneFriend *linphone_core_create_friend_with_address(LinphoneCore *lc, const char *address) {
-	return Friend::createCObject(lc, address);
+	return Friend::createCObject(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr, address);
 }
 
 LinphoneFriend *linphone_core_create_friend_from_vcard(LinphoneCore *lc, LinphoneVcard *vcard) {
@@ -678,7 +678,7 @@ LinphoneFriend *linphone_core_create_friend_from_vcard(LinphoneCore *lc, Linphon
 		ms_error("Cannot create friend from null vcard");
 		return nullptr;
 	}
-	return Friend::createCObject(lc, Vcard::getSharedFromThis(vcard));
+	return Friend::createCObject(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr, Vcard::getSharedFromThis(vcard));
 }
 
 LinphoneFriend *linphone_core_find_friend(const LinphoneCore *lc, const LinphoneAddress *addr) {

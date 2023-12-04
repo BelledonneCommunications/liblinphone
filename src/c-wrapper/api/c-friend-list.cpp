@@ -126,7 +126,7 @@ void linphone_friend_list_cbs_set_presence_received(LinphoneFriendListCbs *cbs,
 }
 
 LinphoneFriendList *linphone_core_create_friend_list(LinphoneCore *lc) {
-	return FriendList::createCObject(lc);
+	return FriendList::createCObject(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr);
 }
 
 LinphoneFriendList *linphone_friend_list_ref(LinphoneFriendList *list) {

@@ -44,7 +44,7 @@ class LINPHONE_PUBLIC FriendList : public bellesip::HybridObject<LinphoneFriendL
                                    public CallbacksHolder<FriendListCbs>,
                                    public CoreAccessor {
 public:
-	FriendList(LinphoneCore *lc);
+	FriendList(std::shared_ptr<Core> core);
 	FriendList(const FriendList &other) = delete;
 	virtual ~FriendList();
 

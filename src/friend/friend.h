@@ -46,9 +46,9 @@ class LINPHONE_PUBLIC Friend : public bellesip::HybridObject<LinphoneFriend, Fri
                                public CallbacksHolder<FriendCbs>,
                                public CoreAccessor {
 public:
-	Friend(LinphoneCore *lc);
-	Friend(LinphoneCore *lc, const std::string &address);
-	Friend(LinphoneCore *lc, const std::shared_ptr<Vcard> &vcard);
+	Friend(std::shared_ptr<Core> core);
+	Friend(std::shared_ptr<Core> core, const std::string &address);
+	Friend(std::shared_ptr<Core> core, const std::shared_ptr<Vcard> &vcard);
 	Friend(const Friend &other) = delete;
 	virtual ~Friend();
 

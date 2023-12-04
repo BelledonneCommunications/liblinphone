@@ -2161,7 +2161,8 @@ std::list<std::shared_ptr<Friend>> MainDbPrivate::getFriends(const std::shared_p
 std::shared_ptr<Friend> MainDbPrivate::selectFriend(const soci::row &row) const {
 	L_Q();
 
-	LinphoneCore *lc = q->getCore()->getCCore();
+	auto core = q->getCore();
+	LinphoneCore *lc = core->getCCore();
 	const long long &dbFriendId = dbSession.resolveId(row, 0);
 
 	std::shared_ptr<Friend> f;
@@ -2169,9 +2170,9 @@ std::shared_ptr<Friend> MainDbPrivate::selectFriend(const soci::row &row) const 
 	if (vcard) {
 		vcard->setEtag(row.get<string>(6));
 		vcard->setUrl(row.get<string>(7));
-		f = Friend::create(lc, vcard);
+		f = Friend::create(core, vcard);
 	} else {
-		f = Friend::create(lc);
+		f = Friend::create(core);
 		switch (row.get_indicator(1)) {
 			case soci::i_ok: {
 				long long addrId = dbSession.resolveId(row, 1);

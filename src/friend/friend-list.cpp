@@ -49,9 +49,9 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-FriendList::FriendList(LinphoneCore *lc) : CoreAccessor(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr) {
-	if (lc) { // Will be nullptr if created from database
-		mSubscriptionsEnabled = linphone_core_is_friend_list_subscription_enabled(lc);
+FriendList::FriendList(std::shared_ptr<Core> core) : CoreAccessor(core) {
+	if (core) { // Will be nullptr if created from database
+		mSubscriptionsEnabled = linphone_core_is_friend_list_subscription_enabled(core->getCCore());
 	}
 }
 
@@ -76,20 +76,15 @@ void FriendList::setDisplayName(const std::string &displayName) {
 }
 
 void FriendList::setRlsAddress(const std::shared_ptr<const Address> &rlsAddr) {
-	mRlsAddr = rlsAddr ? rlsAddr->clone()->getSharedFromThis() : nullptr;
+	mRlsAddr = rlsAddr ? rlsAddr->clone()->toSharedPtr() : nullptr;
 	if (mRlsAddr) {
-		mRlsAddr->unref();
 		mRlsUri = mRlsAddr->asString();
 		saveInDb();
 	}
 }
 
 void FriendList::setRlsUri(const std::string &rlsUri) {
-	std::shared_ptr<Address> addr =
-	    rlsUri.empty()
-	        ? nullptr
-	        : Address::getSharedFromThis(linphone_core_create_address(getCore()->getCCore(), rlsUri.c_str()));
-	if (addr) addr->unref();
+	std::shared_ptr<Address> addr = rlsUri.empty() ? nullptr : Address::create(rlsUri);
 	setRlsAddress(addr);
 }
 
@@ -209,8 +204,7 @@ void FriendList::exportFriendsAsVcard4File(const std::string &vcardFile) const {
 }
 
 std::shared_ptr<Friend> FriendList::findFriendByAddress(const std::shared_ptr<const Address> &address) const {
-	std::shared_ptr<Address> cleanAddress = address->clone()->getSharedFromThis();
-	cleanAddress->unref();
+	std::shared_ptr<Address> cleanAddress = address->clone()->toSharedPtr();
 	if (cleanAddress->hasUriParam("gr")) cleanAddress->removeUriParam("gr");
 	std::shared_ptr<Friend> lf = findFriendByUri(cleanAddress->asStringUriOnly());
 	return lf;
@@ -231,7 +225,8 @@ std::shared_ptr<Friend> FriendList::findFriendByPhoneNumber(const std::string &p
 
 	const bctbx_list_t *accounts = linphone_core_get_account_list(getCore()->getCCore());
 	for (const bctbx_list_t *elem = accounts; elem != nullptr; elem = bctbx_list_next(elem)) {
-		std::shared_ptr<Account> account = Account::getSharedFromThis((LinphoneAccount *)bctbx_list_get_data(elem));
+		std::shared_ptr<Account> account =
+		    Account::toCpp((LinphoneAccount *)bctbx_list_get_data(elem))->getSharedFromThis();
 		char *normalizedPhoneNumber =
 		    linphone_account_normalize_phone_number(account->toC(), L_STRING_TO_C(phoneNumber));
 		std::shared_ptr<Friend> result = findFriendByPhoneNumber(account, normalizedPhoneNumber);
@@ -256,8 +251,7 @@ std::shared_ptr<Friend> FriendList::findFriendByUri(const std::string &uri) cons
 
 std::list<std::shared_ptr<Friend>>
 FriendList::findFriendsByAddress(const std::shared_ptr<const Address> &address) const {
-	std::shared_ptr<Address> cleanAddress = address->clone()->getSharedFromThis();
-	cleanAddress->unref();
+	std::shared_ptr<Address> cleanAddress = address->clone()->toSharedPtr();
 	if (cleanAddress->hasUriParam("gr")) cleanAddress->removeUriParam("gr");
 	std::list<std::shared_ptr<Friend>> result = findFriendsByUri(cleanAddress->asStringUriOnly());
 	return result;
@@ -608,7 +602,7 @@ LinphoneStatus FriendList::importFriendsFromVcard4(const std::list<std::shared_p
 	}
 	int count = 0;
 	for (const auto &vcard : vcards) {
-		std::shared_ptr<Friend> f = Friend::create(getCore()->getCCore(), vcard);
+		std::shared_ptr<Friend> f = Friend::create(getCore(), vcard);
 		if (importFriend(f, true) == LinphoneFriendListOK) {
 			f->saveInDb(), count++;
 		}
@@ -715,7 +709,7 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 				if (!addr) continue;
 				std::shared_ptr<Friend> lf = findFriendByAddress(addr);
 				if (!lf && mBodylessSubscription) {
-					lf = Friend::create(getCore()->getCCore(), uri);
+					lf = Friend::create(getCore(), uri);
 					addFriend(lf);
 				}
 				if (!name.empty()) lf->setName(name);
@@ -738,7 +732,7 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 						LinphoneContent *content = (LinphoneContent *)it->data;
 						const char *header = linphone_content_get_custom_header(content, "Content-Id");
 						if (header && (std::string(header) == cid)) {
-							presencePart = Content::getSharedFromThis(content);
+							presencePart = Content::toCpp(content)->getSharedFromThis();
 							break;
 						}
 						it = bctbx_list_next(it);
@@ -756,7 +750,7 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 							// it when we know for sure we have a presence to notify
 							std::string uri = xmlCtx.getTextContent("./@uri");
 							if (uri.empty()) continue;
-							std::shared_ptr<Address> addr = Address::create(uri)->getSharedFromThis();
+							std::shared_ptr<Address> addr = Address::create(uri);
 							if (!addr) continue;
 
 							// Clean the URI
@@ -766,11 +760,11 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 							const auto [first, last] = mFriendsMapByUri.equal_range(uri);
 							if (first == last) {
 								if (mBodylessSubscription) {
-									std::shared_ptr<Friend> lf = Friend::create(getCore()->getCCore(), uri);
+									std::shared_ptr<Friend> lf = Friend::create(getCore(), uri);
 									addFriend(lf);
 									lf->presenceReceived(
 									    getSharedFromThis(), uri,
-									    PresenceModel::getSharedFromThis((LinphonePresenceModel *)presence));
+									    PresenceModel::toCpp((LinphonePresenceModel *)presence)->getSharedFromThis());
 									listFriendsPresenceReceived.insert(lf);
 								}
 							} else {
@@ -782,7 +776,7 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 								for (const auto &it : its) {
 									it->second->presenceReceived(
 									    getSharedFromThis(), uri,
-									    PresenceModel::getSharedFromThis((LinphonePresenceModel *)presence));
+									    PresenceModel::toCpp((LinphonePresenceModel *)presence)->getSharedFromThis());
 									listFriendsPresenceReceived.insert(it->second);
 								}
 							}
@@ -918,16 +912,13 @@ void FriendList::sendListSubscriptionWithBody(const std::shared_ptr<Address> &ad
 		if (mContentDigest) delete mContentDigest;
 		mContentDigest = new std::array<unsigned char, 16>(digest);
 		if (mEvent) mEvent->terminate();
-		mEvent = Event::getSharedFromThis(
-		    linphone_core_create_subscribe(getCore()->getCCore(), address->toC(), "presence", expires));
-		mEvent->unref();
+		mEvent = (new EventSubscribe(getCore(), address, "presence", expires))->toSharedPtr();
 		mEvent->setInternal(true);
 		mEvent->addCustomHeader("Require", "recipient-list-subscribe");
 		mEvent->addCustomHeader("Supported", "eventlist");
 		mEvent->addCustomHeader("Accept", "multipart/related, application/pidf+xml, application/rlmi+xml");
 		mEvent->addCustomHeader("Content-Disposition", "recipient-list");
-		std::shared_ptr<Content> content =
-		    Content::getSharedFromThis(linphone_core_create_content(getCore()->getCCore()));
+		std::shared_ptr<Content> content = Content::create();
 		ContentType contentType("application", "resource-lists+xml");
 		content->setContentType(contentType);
 		content->setBodyFromUtf8(xmlContent);
@@ -937,7 +928,7 @@ void FriendList::sendListSubscriptionWithBody(const std::shared_ptr<Address> &ad
 		}
 		for (auto &lf : mFriends)
 			lf->mSubscribeActive = true;
-		linphone_event_send_subscribe(mEvent->toC(), content->toC());
+		mEvent->send(content->toC());
 		mEvent->setUserData(this);
 	}
 }
@@ -948,9 +939,7 @@ void FriendList::sendListSubscriptionWithoutBody(const std::shared_ptr<Address> 
 	if (mContentDigest) bctbx_free(mContentDigest);
 
 	if (mEvent) mEvent->terminate();
-	mEvent = Event::getSharedFromThis(
-	    linphone_core_create_subscribe(getCore()->getCCore(), address->toC(), "presence", expires));
-	mEvent->unref();
+	mEvent = (new EventSubscribe(getCore(), address, "presence", expires))->toSharedPtr();
 	mEvent->setInternal(true);
 	mEvent->addCustomHeader("Supported", "eventlist");
 	mEvent->addCustomHeader("Accept", "multipart/related, application/pidf+xml, application/rlmi+xml");

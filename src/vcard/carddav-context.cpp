@@ -237,9 +237,7 @@ void CardDAVContext::vcardsPulled(const std::list<CardDAVResponse> &vCards) {
 				vcard->setUrl(fullUrl);
 				vcard->setEtag(response.mEtag);
 				lDebug() << "[CardDAV] Downloaded vCard etag/url are " << response.mEtag << " and " << fullUrl;
-				LinphoneFriend *lf =
-				    linphone_core_create_friend_from_vcard(mFriendList->getCore()->getCCore(), vcard->toC());
-				std::shared_ptr<Friend> newFriend = lf ? Friend::getSharedFromThis(lf) : nullptr;
+				std::shared_ptr<Friend> newFriend = Friend::create(mFriendList->getCore(), vcard);
 				if (newFriend) {
 					const auto friendIt = std::find_if(friends.cbegin(), friends.cend(), [&](const auto &oldFriend) {
 						std::shared_ptr<Vcard> oldFriendVcard = oldFriend->getVcard();
@@ -268,7 +266,6 @@ void CardDAVContext::vcardsPulled(const std::list<CardDAVResponse> &vCards) {
 							mContactCreatedCb(this, newFriend);
 						}
 					}
-					linphone_friend_unref(lf);
 				} else {
 					lError() << "[CardDAV] Couldn't create a friend from vCard";
 				}
