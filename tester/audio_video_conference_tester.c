@@ -3586,7 +3586,11 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 	LinphoneCall *pauline_call, *laure_call;
 	char *play_file_pauline = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	bctbx_list_t *lcs = NULL;
-	char *recordfile = bc_tester_file("conference-record.mkv");
+	char record_file_name[255];
+	char random_part[10];
+	belle_sip_random_token(random_part, sizeof(random_part) - 1);
+	snprintf(record_file_name, sizeof(record_file_name), "conference-record-%s.mkv", random_part);
+	char *recordfile = bc_tester_file(record_file_name);
 
 	unlink(recordfile);
 	lcs = bctbx_list_append(lcs, marie->lc);
