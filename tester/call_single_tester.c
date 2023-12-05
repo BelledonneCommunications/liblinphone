@@ -26,6 +26,7 @@
 #include "belle-sip/sipstack.h"
 
 #include "mediastreamer2/msutils.h"
+#include "mediastreamer2/msvolume.h"
 
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
@@ -4139,6 +4140,17 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void assert_mic_gain(LinphoneCall *call, float linear_gain) {
+	AudioStream *astream = (AudioStream *)linphone_call_get_stream(call, LinphoneStreamTypeAudio);
+	MSFilter *volsend;
+	float cur_gain = -1;
+	if (!BC_ASSERT_PTR_NOT_NULL(astream)) return;
+	volsend = astream->volsend;
+	if (!BC_ASSERT_PTR_NOT_NULL(volsend)) return;
+	ms_filter_call_method(volsend, MS_VOLUME_GET_GAIN, &cur_gain);
+	BC_ASSERT_EQUAL(cur_gain, linear_gain, float, "%f");
+}
+
 static void early_media_call_with_ringing_base(bool_t network_change) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -4164,12 +4176,20 @@ static void early_media_call_with_ringing_base(bool_t network_change) {
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1, int, "%d");
 
 	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
+		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 		/* send a 183 to initiate the early media */
-		linphone_call_accept_early_media(linphone_core_get_current_call(pauline->lc));
+		linphone_call_accept_early_media(pauline_call);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, 5000));
+		/*
+		 * By default, on early media, both caller and callee must not send sensitive data.
+		 * This is enforced by muting microphones, ie applying a zero gain on the volume conntroller.
+		 */
 		BC_ASSERT_TRUE(linphone_call_get_all_muted(marie_call));
+		BC_ASSERT_TRUE(linphone_call_get_all_muted(pauline_call));
+		assert_mic_gain(marie_call, 0);
+		assert_mic_gain(pauline_call, 0);
 
 		bool_t ringWithEarlyMedia = linphone_core_get_ring_during_incoming_early_media(pauline->lc);
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone,
@@ -4191,6 +4211,9 @@ static void early_media_call_with_ringing_base(bool_t network_change) {
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1, 1000));
 			connected_time = ms_get_cur_time_ms();
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
+			/* Make sure that microphone is now unmuted */
+			assert_mic_gain(marie_call, 1.0f);
+			assert_mic_gain(pauline_call, 1.0f);
 			BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 1, int, "%d");
 
 			BC_ASSERT_PTR_EQUAL(marie_call, linphone_core_get_current_call(marie->lc));
