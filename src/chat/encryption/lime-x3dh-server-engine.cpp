@@ -102,6 +102,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessa
 	finalContent.setContentType(internalContent->getContentType());
 	finalContent.getContentType().removeParameter("boundary");
 	finalContent.getContentType().addParameter("boundary", boundary);
+	if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(), "deflate")) {
+		finalContent.setContentEncoding("deflate");
+	}
 	message->setInternalContent(finalContent);
 	return ChatMessageModifier::Result::Done;
 }
