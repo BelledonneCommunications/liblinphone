@@ -409,10 +409,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				    contentType.addParameter("protocol", "\"application/lime\"");
 				    contentType.addParameter("boundary", boundary);
 
-				    if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(),
-				                                                 "deflate")) {
-					    finalContent.setContentEncoding("deflate");
-				    }
+				if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(), "deflate")) {
+					finalContent.setContentEncoding("deflate");
+				}
 
 				    message->setInternalContent(finalContent);
 				    message->getPrivate()->send();
@@ -433,8 +432,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	return *result;
 }
 
-ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(const shared_ptr<ChatMessage> &message,
-                                                                             int &errorCode) {
+ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(const shared_ptr<ChatMessage> &message, int &errorCode) {
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
 	auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
@@ -564,6 +562,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	Content finalContent;
 	ContentType finalContentType = ContentType::Cpim; // TODO should be the content-type of the decrypted message
 	finalContent.setContentType(finalContentType);
+	finalContent.setContentEncoding(internalContent->getContentEncoding());
 	finalContent.setBodyFromUtf8(plainMessageString);
 	message->setInternalContent(finalContent);
 

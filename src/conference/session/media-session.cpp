@@ -1756,8 +1756,11 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 		stream.addActualConfiguration(cfg);
 		fillRtpParameters(stream);
 	} else {
-		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession ["
-		        << q << "]";
+		const std::string streamType(sal_stream_type_to_string(type));
+		lInfo() << "Don't put stream of type " << streamType << " on local offer for CallSession [" << q << "]: ";
+		lInfo() << "- capability is " << (enabled ? "enabled" : " disabled");
+		lInfo() << "- found " << codecs.size() << " codecs";
+		lInfo() << "- codec check is " << (dontCheckCodecs ? "disabled" : " enabled");
 		const auto &core = q->getCore()->getCCore();
 		cfg.dir = linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? dir : SalStreamInactive;
 		stream.rtp_port = 0;

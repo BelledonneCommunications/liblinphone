@@ -99,7 +99,7 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 	finalContent.setContentType(internalContent->getContentType());
 	finalContent.getContentType().removeParameter("boundary");
 	finalContent.getContentType().addParameter("boundary", boundary);
-	if (linphone_core_content_encoding_supported(L_GET_C_BACK_PTR(chatRoom->getCore()), "deflate")) {
+	if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(), "deflate")) {
 		finalContent.setContentEncoding("deflate");
 	} else {
 		lWarning() << "Cannot use 'deflate' Content-Encoding to compress body - consider rebuilding with libz support.";
