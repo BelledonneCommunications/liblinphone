@@ -563,7 +563,7 @@ std::string PresenceModel::toXml() const {
 
 #else
 
-std::string toXml() const {
+std::string PresenceModel::toXml() const {
 	ms_warning("PresenceModel::toXml(): stubbed.");
 	return std::string();
 }
@@ -678,9 +678,9 @@ time_t PresenceModel::parseTimestamp(const std::string &timestamp) {
 
 #else
 
-void PresenceModel::parsePresence(const std::string &contentType,
-                                  const std::string &contentSubtype,
-                                  const std::string &body,
+void PresenceModel::parsePresence(BCTBX_UNUSED(const std::string &contentType),
+                                  BCTBX_UNUSED(const std::string &contentSubtype),
+                                  BCTBX_UNUSED(const std::string &body),
                                   SalPresenceModel **result) {
 	if (result) *result = nullptr;
 	ms_warning("PresenceModel::parsePresence(): stubbed.");

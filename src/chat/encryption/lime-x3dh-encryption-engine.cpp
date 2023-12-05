@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <climits>
+
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/crypto.hh"
 #include "bctoolbox/defs.h"
@@ -709,7 +711,8 @@ AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel(const
 list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(const std::shared_ptr<Account> &account) {
 	// Sanity checks on the lime manager
 	if (!limeManager) {
-		lWarning() << "[LIME] Lime manager has not been created for encryption engine " << this << ", unable to setup identity key for ZRTP auxiliary shared secret";
+		lWarning() << "[LIME] Lime manager has not been created for encryption engine " << this
+		           << ", unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 
@@ -722,8 +725,8 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters(cons
 	// Get local device Id from local contact address
 	const auto &contactAddress = account->getContactAddress();
 	if (!contactAddress) {
-		lWarning()
-		    << "[LIME] No contactAddress available for account " << account << ", unable to setup identity key for ZRTP auxiliary shared secret";
+		lWarning() << "[LIME] No contactAddress available for account " << account
+		           << ", unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 

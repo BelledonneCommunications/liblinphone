@@ -2963,6 +2963,7 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 	};
 }
 
+#ifdef HAVE_XML2
 // TODO: Move in a helper file? With others xml.
 struct XmlCharObjectDeleter {
 	void operator()(void *ptr) const {
@@ -2979,8 +2980,10 @@ struct XmlDocObjectDeleter {
 using XmlDocObject = unique_ptr<remove_pointer<xmlDocPtr>::type, XmlDocObjectDeleter>;
 
 typedef const xmlChar *XmlCharPtr;
+#endif /* HAVE_XML2 */
 
 static string extractLegacyFileContentType(const string &xml) {
+#ifdef HAVE_XML2
 	XmlDocObject xmlMessageBody(xmlParseDoc(XmlCharPtr(xml.c_str())));
 	xmlNodePtr xmlElement = xmlDocGetRootElement(xmlMessageBody.get());
 	if (!xmlElement) return "";
@@ -2998,6 +3001,7 @@ static string extractLegacyFileContentType(const string &xml) {
 				return ContentType(reinterpret_cast<const char *>(xmlContentType.get())).getMediaType();
 			}
 	}
+#endif /* HAVE_XML2 */
 
 	return "";
 }

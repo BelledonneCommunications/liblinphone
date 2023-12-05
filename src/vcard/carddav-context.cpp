@@ -290,6 +290,8 @@ std::string CardDAVContext::generateUrlFromServerAddressAndUid(const std::string
 	return url;
 }
 
+#ifdef HAVE_XML2
+
 int CardDAVContext::parseCtagValueFromXmlResponse(const std::string &body) {
 	int result = -1;
 	XmlParsingContext xmlCtx(body);
@@ -356,6 +358,22 @@ std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(const std:
 	}
 	return result;
 }
+
+#else
+
+int CardDAVContext::parseCtagValueFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+	return -1;
+}
+
+std::list<CardDAVResponse> CardDAVContext::parseVcardsEtagsFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+	return std::list<CardDAVResponse>();
+}
+
+std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(BCTBX_UNUSED(const std::string &body)) {
+	return std::list<CardDAVResponse>();
+}
+
+#endif /* HAVE_XML2 */
 
 void CardDAVContext::processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) {
 	CardDAVQuery *query = static_cast<CardDAVQuery *>(data);

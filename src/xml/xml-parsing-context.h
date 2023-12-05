@@ -37,12 +37,14 @@ public:
 	std::string getError() const {
 		return errorBuffer;
 	}
+#ifdef HAVE_XML2
 	xmlXPathContextPtr getXpathContext() {
 		return mXpathCtx;
 	}
 	bool isValid() const {
 		return mDoc != nullptr;
 	}
+#endif /* HAVE_XML2 */
 
 	int createXpathContext();
 	std::string getAttributeTextContent(const std::string &xpathExpression, const std::string &attributeName);
@@ -50,16 +52,20 @@ public:
 	void initCarddavNs();
 	void readDocument(const std::string &body);
 
+#ifdef HAVE_XML2
 	xmlXPathObjectPtr getXpathObjectForNodeList(const std::string &xpathExpression);
 	void setXpathContextNode(xmlNodePtr node);
+#endif /* HAVE_XML2 */
 
 	static void genericErrorHandler(void *ctx, const char *fmt, ...);
 
 private:
 	static constexpr size_t XMLPARSING_BUFFER_LEN = 2048;
 
+#ifdef HAVE_XML2
 	xmlDoc *mDoc = nullptr;
 	xmlXPathContextPtr mXpathCtx = nullptr;
+#endif /* HAVE_XML2 */
 	char errorBuffer[XMLPARSING_BUFFER_LEN] = {0};
 };
 

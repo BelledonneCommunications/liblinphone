@@ -806,7 +806,7 @@ void FriendList::parseMultipartRelatedBody(const std::shared_ptr<const Content> 
 
 #else
 
-void FriendList::parseMultipartRelatedBody(BCTBX_UNUSED(const Content *content),
+void FriendList::parseMultipartRelatedBody(BCTBX_UNUSED(const std::shared_ptr<const Content> &content),
                                            BCTBX_UNUSED(const std::string &firstPartBody)) {
 	lWarning() << "FriendList::parseMultipartRelatedBody() is stubbed.";
 }
