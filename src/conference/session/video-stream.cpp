@@ -287,7 +287,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	const auto & label = stream.getLabel();
 	const auto & content = stream.getContent();
 	MSFilter *source = nullptr;
-	MSWebCam *cam = getVideoDevice(targetState);
+	MSWebCam *cam = nullptr;
 	const MSWebCam *currentCam = video_stream_get_camera(mStream);
 	bool cameraChanged = currentCam && cam && (currentCam != cam);
 
@@ -319,7 +319,6 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			if (muted && !mMuted) {
 				lInfo() << "Early media finished, unmuting video input...";
 				/* We were in early media, now we want to enable real media */
-				mMuted = false;
 				enableCamera(mCameraEnabled);
 				// Update video device
 				cam = getVideoDevice(targetState);
@@ -428,6 +427,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_use_preview_video_window(mStream, getCCore()->use_preview_window);
 	
 	MS2Stream::render(ctx, targetState);
+	// Since MS2Stream::render() may affect the used VideoDevice, this assignment must be done here.
+	cam = getVideoDevice(targetState);
 	
 	RtpAddressInfo dest;
 	getRtpDestination(ctx, &dest);
