@@ -284,8 +284,8 @@ void Imdn::parse(const shared_ptr<ChatMessage> &chatMessage) {
 						if ((reason.getCode() == 488) && imee) {
 							// stale the encryption sessions with this device: something went wrong, we will create a
 							// new one at next encryption
-							lWarning() << "Peer " << chatMessage->getFromAddress()->toString()
-							           << " could not decrypt message from " << chatMessageFromAddress->toString()
+							lWarning() << "Peer " << *chatMessage->getFromAddress()
+							           << " could not decrypt message from " << *chatMessageFromAddress
 							           << " -> Stale the lime X3DH session";
 							imee->staleSession(chatMessageFromAddress->asStringUriOnly(),
 							                   chatMessage->getFromAddress()->asStringUriOnly());

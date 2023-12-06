@@ -881,8 +881,6 @@ LinphoneReason ChatMessagePrivate::receive() {
 	// a modifier)
 	currentRecvStep = ChatMessagePrivate::Step::None;
 
-	//	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(nullptr));
-
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference &&
 	    chatRoom->getLocalAddress()->weakEqual(*fromAddress)) {
@@ -1056,14 +1054,16 @@ void ChatMessagePrivate::handleAutoDownload() {
 	// download is aborted The delivered state will be set again message_delivery_update upon reception of 200 Ok or 202
 	// Accepted when a message is sent
 	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(NULL));
+	const bool isBasicChatRoom = chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic);
+	if (!isBasicChatRoom) {
+		setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::DeliveredToUser, ::ms_time(nullptr));
+	}
 
 	for (auto &c : contents) {
 		ContentType contentType = c->getContentType();
-
 		if (contentType.strongEqual(ContentType::Icalendar)) {
 			LinphoneConferenceInfo *cConfInfo =
 			    linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), c->toC());
-
 			if (cConfInfo != nullptr) {
 				auto confInfo = ConferenceInfo::toCpp(cConfInfo)->getSharedFromThis();
 #ifdef HAVE_DB_STORAGE
