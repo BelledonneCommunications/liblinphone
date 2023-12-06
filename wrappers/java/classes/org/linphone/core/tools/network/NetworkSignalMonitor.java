@@ -152,6 +152,7 @@ public class NetworkSignalMonitor {
 	}
 
 	private boolean isCurrentNetworkCellular() {
+		if (mHelper == null) return false;
 		NetworkInfo currentNetworkInfo = mHelper.getActiveNetworkInfo();
 
 		if (currentNetworkInfo != null) {
