@@ -1775,7 +1775,8 @@ void MainDbPrivate::setChatMessageParticipantState(const shared_ptr<EventLog> &e
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
-	long long participantSipAddressId = selectSipAddressId(participantAddress);
+	auto participantAddressWithoutGruu = Address::create(participantAddress->getUriWithoutGruu());
+	long long participantSipAddressId = selectSipAddressId(participantAddressWithoutGruu);
 	long long nbEntries;
 	*dbSession.getBackendSession() << "SELECT count(*) FROM chat_message_participant WHERE event_id = :eventId AND "
 	                                  "participant_sip_address_id = :participantSipAddressId",
@@ -1786,7 +1787,7 @@ void MainDbPrivate::setChatMessageParticipantState(const shared_ptr<EventLog> &e
 	if (nbEntries == 0) {
 		if (participantSipAddressId <= 0) {
 			// If the address is not found in the DB, add it
-			participantSipAddressId = insertSipAddress(participantAddress);
+			participantSipAddressId = insertSipAddress(participantAddressWithoutGruu);
 		}
 		// We may be receiving an IMDN for a participant that received the message but we weren't aware of
 		insertChatMessageParticipant(eventId, participantSipAddressId, stateInt, stateChangeTime);
