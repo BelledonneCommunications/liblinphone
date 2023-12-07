@@ -881,6 +881,8 @@ LinphoneReason ChatMessagePrivate::receive() {
 	// a modifier)
 	currentRecvStep = ChatMessagePrivate::Step::None;
 
+	setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::Delivered, ::ms_time(NULL));
+
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference &&
 	    chatRoom->getLocalAddress()->weakEqual(*fromAddress)) {

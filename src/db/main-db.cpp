@@ -1524,9 +1524,6 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 
 	// 5. Update participants.
 	// Set all participants to NotDelivered only if the sender state is NotDelivered
-	// if (isOutgoing && (state == ChatMessage::State::Delivered || ((*sender == *meAddress) &&
-	// (static_cast<ChatMessage::State>(meParticipantState) == ChatMessage::State::NotDelivered) && (state ==
-	// ChatMessage::State::NotDelivered))) &&
 	bool updateParticipants =
 	    (isOutgoing && stateRequiresUpdatingParticipants &&
 	     (chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Conference) && chatMessage->isValid());

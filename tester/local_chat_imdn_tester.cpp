@@ -839,6 +839,680 @@ static void group_chat_room_lime_server_clear_message(void) {
 	group_chat_room_lime_server_message(FALSE);
 }
 
+static void secure_group_chat_message_state_transition_from_delivered_to_displayed(void) {
+	Focus focus("chloe_rc");
+	{ // to make sure focus is destroyed after clients.
+		linphone_core_enable_lime_x3dh(focus.getLc(), true);
+
+		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference pauline("pauline_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference pauline2("pauline_rc", focus.getConferenceFactoryAddress(), true);
+		ClientConference laure("laure_tcp_rc", focus.getConferenceFactoryAddress(), true);
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+		focus.registerAsParticipantDevice(pauline2);
+		focus.registerAsParticipantDevice(laure);
+
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline2.getLc()));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(laure.getLc()));
+
+		stats marie_stat = marie.getStats();
+		stats pauline_stat = pauline.getStats();
+		stats pauline2_stat = pauline2.getStats();
+		stats laure_stat = laure.getStats();
+
+		bctbx_list_t *coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+		coresList = bctbx_list_append(coresList, pauline2.getLc());
+		coresList = bctbx_list_append(coresList, laure.getLc());
+
+		// Wait for lime user creation
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_X3dhUserCreationSuccess, 1,
+		                             x3dhServer_creationTimeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_X3dhUserCreationSuccess, 1,
+		                             x3dhServer_creationTimeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2.getStats().number_of_X3dhUserCreationSuccess, 1,
+		                             x3dhServer_creationTimeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_X3dhUserCreationSuccess, 1,
+		                             x3dhServer_creationTimeout));
+
+		Address paulineAddr = pauline.getIdentity();
+		Address laureAddr = laure.getIdentity();
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(paulineAddr.toC()));
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laureAddr.toC()));
+
+		// Marie creates a new group chat room
+		const char *initialSubject = "Colleagues";
+		LinphoneChatRoom *marieCr =
+		    create_chat_room_client_side(coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject,
+		                                 TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &pauline_stat,
+		                                                                   confAddr, initialSubject, 2, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(paulineCr);
+		LinphoneChatRoom *pauline2Cr = check_creation_chat_room_client_side(
+		    coresList, pauline2.getCMgr(), &pauline2_stat, confAddr, initialSubject, 2, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(pauline2Cr);
+		LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure.getCMgr(), &laure_stat,
+		                                                                 confAddr, initialSubject, 2, FALSE);
+		BC_ASSERT_PTR_NOT_NULL(laureCr);
+
+		std::string msg_text0("Welcome everybody");
+		LinphoneChatMessage *msg0 = ClientConference::sendTextMsg(marieCr, msg_text0);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDelivered,
+		                             marie_stat.number_of_LinphoneMessageDelivered + 1,
+		                             liblinphone_tester_sip_timeout)); // Delivered to the server
+		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneMessageReceived,
+		                             laure_stat.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout)); // the message is correctly received by Laure
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+		                             pauline_stat.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout)); // the message is correctly received by Pauline
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2.getStats().number_of_LinphoneMessageReceived,
+		                             pauline2_stat.number_of_LinphoneMessageReceived + 1,
+		                             3000)); // the message is correctly received by Pauline2
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDelivered,
+		                             marie_stat.number_of_LinphoneMessageDelivered + 1,
+		                             liblinphone_tester_sip_timeout)); // Message is received by everybody
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDeliveredToUser,
+		                             marie_stat.number_of_LinphoneMessageDeliveredToUser + 1,
+		                             liblinphone_tester_sip_timeout)); // Message is received by everybody
+
+		Address paulineContactAddress =
+		    *Address::toCpp(linphone_account_get_contact_address(linphone_core_get_default_account(pauline.getLc())));
+		Address pauline2ContactAddress =
+		    *Address::toCpp(linphone_account_get_contact_address(linphone_core_get_default_account(pauline2.getLc())));
+		// Pauline2 goes offline so that she cannot receives the next message
+		ms_message("%s turns the network off", pauline2ContactAddress.toString().c_str());
+		linphone_core_set_network_reachable(pauline2.getLc(), FALSE);
+
+		// Restart Pauline core, so the encryption engine is stopped and started and looses his cache
+		ms_message("%s turns the network off", paulineContactAddress.toString().c_str());
+		linphone_core_set_network_reachable(pauline.getLc(), FALSE);
+		coresList = bctbx_list_remove(coresList, pauline.getLc());
+
+		marie_stat = marie.getStats();
+		pauline_stat = pauline.getStats();
+		pauline2_stat = pauline2.getStats();
+		laure_stat = laure.getStats();
+
+		// Marie send a new message, it shall fail and get a 488 response
+		std::string msg_text1("Do you copy?");
+		LinphoneChatMessage *msg1 = ClientConference::sendTextMsg(marieCr, msg_text1);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDelivered,
+		                             marie_stat.number_of_LinphoneMessageDelivered + 1,
+		                             liblinphone_tester_sip_timeout)); // Delivered to the server
+		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneMessageReceived,
+		                             laure_stat.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout)); // the message is correctly received by Laure
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived,
+		                              pauline_stat.number_of_LinphoneMessageReceived + 1,
+		                              3000)); // the message is correctly not received by Pauline2 because she's offline
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline2.getStats().number_of_LinphoneMessageReceived,
+		                              pauline2_stat.number_of_LinphoneMessageReceived + 1,
+		                              3000)); // the message is correctly not received by Pauline2 because she's offline
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDelivered,
+		                             marie_stat.number_of_LinphoneMessageDelivered + 1,
+		                             liblinphone_tester_sip_timeout)); // Not delivered to pauline
+
+		bctbx_list_t *not_delivered_list0 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(not_delivered_list0), 0, size_t, "%zu");
+		bctbx_list_free_with_data(not_delivered_list0, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg1), (int)LinphoneChatMessageStateDelivered, int, "%0d");
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&msg1] {
+			return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
+			            msg1, LinphoneChatMessageStateDelivered)) == 1);
+		}));
+
+		// Checks on Marie's side
+		bctbx_list_t *delivered_list0 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_list0), 1, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_list0, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg1), (int)LinphoneChatMessageStateDelivered, int, "%0d");
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&msg1] {
+			return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
+			            msg1, LinphoneChatMessageStateDeliveredToUser)) == 1);
+		}));
+
+		bctbx_list_t *delivered_to_user_list0 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_to_user_list0), 1, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_to_user_list0, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg1), (int)LinphoneChatMessageStateDelivered, int, "%0d");
+
+		// Checks on Laure's side
+		LinphoneChatMessage *laureLastMsg = laureCr ? linphone_chat_room_get_last_message_in_history(laureCr) : NULL;
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&laureLastMsg] {
+			return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
+			            laureLastMsg, LinphoneChatMessageStateDeliveredToUser)) == 1);
+		}));
+
+		bctbx_list_t *laure_not_delivered_list0 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_not_delivered_list0), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_not_delivered_list0,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_list0 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_list0), 1, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_list0, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(laureLastMsg), (int)LinphoneChatMessageStateDelivered, int,
+		                "%0d");
+
+		bctbx_list_t *laure_delivered_to_user_list0 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_to_user_list0), 1, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_to_user_list0,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_displayed_list0 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_displayed_list0), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_displayed_list0, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(laureLastMsg), (int)LinphoneChatMessageStateDelivered, int,
+		                "%0d");
+
+		BC_ASSERT_EQUAL(marie.getStats().number_of_LinphoneMessageDisplayed, 0, int, "%d");
+		BC_ASSERT_EQUAL(marie.getStats().number_of_LinphoneMessageDisplayed, 0, int, "%d");
+		BC_ASSERT_EQUAL(pauline.getStats().number_of_LinphoneMessageReceived, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline2.getStats().number_of_LinphoneMessageReceived, 1, int, "%d");
+		BC_ASSERT_EQUAL(laure.getStats().number_of_LinphoneMessageReceived, 2, int, "%d");
+
+		marie_stat = marie.getStats();
+		pauline2_stat = pauline2.getStats();
+		laure_stat = laure.getStats();
+
+		// Pauline2 comes back online again and she should now receive Marie's message
+		ms_message("%s comes back online", pauline2ContactAddress.toString().c_str());
+		linphone_core_set_network_reachable(pauline2.getLc(), TRUE);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2.getStats().number_of_LinphoneMessageReceived,
+		                             pauline2_stat.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout)); // the message is correctly received by Pauline2
+		BC_ASSERT_EQUAL(pauline2.getStats().number_of_LinphoneMessageReceived, 2, int, "%d");
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDeliveredToUser,
+		                             marie_stat.number_of_LinphoneMessageDeliveredToUser + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		const LinphoneAddress *pauline2DeviceAddr =
+		    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline2.getLc()));
+		pauline2Cr = linphone_core_search_chat_room(pauline2.getLc(), NULL, pauline2DeviceAddr, confAddr, NULL);
+		BC_ASSERT_PTR_NOT_NULL(pauline2Cr);
+		LinphoneChatMessage *pauline2LastMsg =
+		    pauline2Cr ? linphone_chat_room_get_last_message_in_history(pauline2Cr) : NULL;
+
+		// wait until chat message reaches the DeliveredToUser state
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&msg1] {
+			return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
+			            msg1, LinphoneChatMessageStateDeliveredToUser)) == 2);
+		}));
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&laureLastMsg] {
+			return (linphone_chat_message_get_state(laureLastMsg) == LinphoneChatMessageStateDeliveredToUser);
+		}));
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&laureLastMsg] {
+			return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
+			            laureLastMsg, LinphoneChatMessageStateDeliveredToUser)) == 2);
+		}));
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&pauline2LastMsg] {
+			return (linphone_chat_message_get_state(pauline2LastMsg) == LinphoneChatMessageStateDeliveredToUser);
+		}));
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&pauline2LastMsg] {
+			return (bctbx_list_size(linphone_chat_message_get_participants_by_imdn_state(
+			            pauline2LastMsg, LinphoneChatMessageStateDeliveredToUser)) == 2);
+		}));
+
+		// Not delivered
+		bctbx_list_t *not_delivered_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(not_delivered_list1), 0, size_t, "%zu");
+		bctbx_list_free_with_data(not_delivered_list1, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg1), (int)LinphoneChatMessageStateDeliveredToUser, int,
+		                "%0d");
+
+		bctbx_list_t *laure_not_delivered_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_not_delivered_list1), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_not_delivered_list1,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(laureLastMsg),
+		                (int)LinphoneChatMessageStateDeliveredToUser, int, "%0d");
+
+		bctbx_list_t *pauline2_not_delivered_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_not_delivered_list1), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_not_delivered_list1,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		// Delivered
+		bctbx_list_t *delivered_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_list1), 0, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_list1, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_list1), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_list1, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_list1), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_list1,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		// Delivered to user
+		bctbx_list_t *delivered_to_user_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_to_user_list1), 2, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_to_user_list1, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_to_user_list1 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_to_user_list1), 2, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_to_user_list1,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_to_user_list1 = linphone_chat_message_get_participants_by_imdn_state(
+		    pauline2LastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_to_user_list1), 2, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_to_user_list1,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg1), (int)LinphoneChatMessageStateDeliveredToUser, int,
+		                "%0d");
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(laureLastMsg),
+		                (int)LinphoneChatMessageStateDeliveredToUser, int, "%0d");
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(pauline2LastMsg),
+		                (int)LinphoneChatMessageStateDeliveredToUser, int, "%0d");
+
+		BC_ASSERT_EQUAL(marie.getCore().getChatRooms().size(), 1, size_t, "%zu");
+		for (auto &chatRoom : marie.getCore().getChatRooms()) {
+			chatRoom->markAsRead();
+		}
+
+		BC_ASSERT_EQUAL(pauline2.getCore().getChatRooms().size(), 1, size_t, "%zu");
+		for (auto &chatRoom : pauline2.getCore().getChatRooms()) {
+			chatRoom->markAsRead();
+		}
+
+		BC_ASSERT_EQUAL(laure.getCore().getChatRooms().size(), 1, size_t, "%zu");
+		for (auto &chatRoom : laure.getCore().getChatRooms()) {
+			chatRoom->markAsRead();
+		}
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDisplayed,
+		                             marie_stat.number_of_LinphoneMessageDisplayed + 2,
+		                             liblinphone_tester_sip_timeout));
+
+		// wait until chat message reaches the Displayed state
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&laureLastMsg] {
+			return (linphone_chat_message_get_state(laureLastMsg) == LinphoneChatMessageStateDisplayed);
+		}));
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&pauline2LastMsg] {
+			return (linphone_chat_message_get_state(pauline2LastMsg) == LinphoneChatMessageStateDisplayed);
+		}));
+
+		// Checks on Marie's side
+		bctbx_list_t *not_delivered_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(not_delivered_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(not_delivered_list2, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *delivered_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_list2, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *delivered_to_user_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_to_user_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_to_user_list2, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		for (const auto &msg : {msg0, msg1}) {
+			bctbx_list_t *displayed_list2 =
+			    linphone_chat_message_get_participants_by_imdn_state(msg, LinphoneChatMessageStateDisplayed);
+			BC_ASSERT_EQUAL(bctbx_list_size(displayed_list2), 2, size_t, "%zu");
+			bctbx_list_free_with_data(displayed_list2, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg), (int)LinphoneChatMessageStateDisplayed, int,
+			                "%0d");
+		}
+
+		// Checks on Laure's side
+		bctbx_list_t *laure_not_delivered_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_not_delivered_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_not_delivered_list2,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_list2, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_to_user_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_to_user_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_to_user_list2,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_displayed_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_displayed_list2), 2, size_t, "%zu");
+		bctbx_list_free_with_data(laure_displayed_list2, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(laureLastMsg), (int)LinphoneChatMessageStateDisplayed, int,
+		                "%0d");
+
+		// Checks on Pauline2's side
+		bctbx_list_t *pauline2_not_delivered_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_not_delivered_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_not_delivered_list2,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_list2,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_to_user_list2 = linphone_chat_message_get_participants_by_imdn_state(
+		    pauline2LastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_to_user_list2), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_to_user_list2,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_displayed_list2 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_displayed_list2), 2, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_displayed_list2,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(pauline2LastMsg), (int)LinphoneChatMessageStateDisplayed,
+		                int, "%0d");
+
+		marie_stat = marie.getStats();
+		pauline_stat = pauline.getStats();
+		pauline2_stat = pauline2.getStats();
+		laure_stat = laure.getStats();
+
+		// Pauline comes back online again and she should now receive Marie's message
+		ms_message("%s comes back online", paulineContactAddress.toString().c_str());
+		linphone_core_set_network_reachable(pauline.getLc(), TRUE);
+
+		const LinphoneAddress *paulineDeviceAddr =
+		    linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline.getLc()));
+		paulineCr = linphone_core_search_chat_room(pauline.getLc(), NULL, paulineDeviceAddr, confAddr, NULL);
+		BC_ASSERT_PTR_NOT_NULL(paulineCr);
+		LinphoneChatMessage *paulineLastMsg =
+		    paulineCr ? linphone_chat_room_get_last_message_in_history(paulineCr) : NULL;
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&paulineCr] {
+			return linphone_chat_room_get_history_size(paulineCr) == 2;
+		}));
+
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, pauline2, laure}).wait([&paulineLastMsg] {
+			return (linphone_chat_message_get_state(paulineLastMsg) == LinphoneChatMessageStateDisplayed);
+		}));
+
+		// Checks on Marie's side
+		bctbx_list_t *not_delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(not_delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(not_delivered_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *delivered_to_user_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_to_user_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_to_user_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		for (const auto &msg : {msg0, msg1}) {
+			bctbx_list_t *displayed_list3 =
+			    linphone_chat_message_get_participants_by_imdn_state(msg, LinphoneChatMessageStateDisplayed);
+			BC_ASSERT_EQUAL(bctbx_list_size(displayed_list3), 2, size_t, "%zu");
+			bctbx_list_free_with_data(displayed_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg), (int)LinphoneChatMessageStateDisplayed, int,
+			                "%0d");
+		}
+
+		// Checks on Laure's side
+		bctbx_list_t *laure_not_delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_not_delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_not_delivered_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_to_user_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_to_user_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_to_user_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_displayed_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_displayed_list3), 2, size_t, "%zu");
+		bctbx_list_free_with_data(laure_displayed_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(laureLastMsg), (int)LinphoneChatMessageStateDisplayed, int,
+		                "%0d");
+
+		// Checks on Pauline's side
+		bctbx_list_t *pauline_not_delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(paulineLastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_not_delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_not_delivered_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline_delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(paulineLastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_delivered_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline_delivered_to_user_list3 = linphone_chat_message_get_participants_by_imdn_state(
+		    paulineLastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_delivered_to_user_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_delivered_to_user_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline_displayed_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(paulineLastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_displayed_list3), 2, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_displayed_list3, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		// Checks on Pauline2's side
+		bctbx_list_t *pauline2_not_delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_not_delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_not_delivered_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_to_user_list3 = linphone_chat_message_get_participants_by_imdn_state(
+		    pauline2LastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_to_user_list3), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_to_user_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_displayed_list3 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_displayed_list3), 2, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_displayed_list3,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		BC_ASSERT_EQUAL(pauline.getCore().getChatRooms().size(), 1, size_t, "%zu");
+		for (auto &chatRoom : pauline.getCore().getChatRooms()) {
+			chatRoom->markAsRead();
+		}
+
+		// wait bit more to detect side effect if any
+		CoreManagerAssert({focus, marie, pauline, pauline2, laure}).waitUntil(chrono::seconds(5), [] { return false; });
+
+		// Checks on Marie's side
+		bctbx_list_t *not_delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(not_delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(not_delivered_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *delivered_to_user_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(msg1, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(delivered_to_user_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(delivered_to_user_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		for (const auto &msg : {msg0, msg1}) {
+			bctbx_list_t *displayed_list4 =
+			    linphone_chat_message_get_participants_by_imdn_state(msg, LinphoneChatMessageStateDisplayed);
+			BC_ASSERT_EQUAL(bctbx_list_size(displayed_list4), 2, size_t, "%zu");
+			bctbx_list_free_with_data(displayed_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(msg), (int)LinphoneChatMessageStateDisplayed, int,
+			                "%0d");
+		}
+
+		// Checks on Laure's side
+		bctbx_list_t *laure_not_delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_not_delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_not_delivered_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_delivered_to_user_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_delivered_to_user_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(laure_delivered_to_user_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *laure_displayed_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(laureLastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(laure_displayed_list4), 2, size_t, "%zu");
+		bctbx_list_free_with_data(laure_displayed_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(laureLastMsg), (int)LinphoneChatMessageStateDisplayed, int,
+		                "%0d");
+
+		// Checks on Pauline's side
+		bctbx_list_t *pauline_not_delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(paulineLastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_not_delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_not_delivered_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline_delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(paulineLastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_delivered_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline_delivered_to_user_list4 = linphone_chat_message_get_participants_by_imdn_state(
+		    paulineLastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_delivered_to_user_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_delivered_to_user_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline_displayed_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(paulineLastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_displayed_list4), 2, size_t, "%zu");
+		bctbx_list_free_with_data(pauline_displayed_list4, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		// Checks on Pauline2's side
+		bctbx_list_t *pauline2_not_delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateNotDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_not_delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_not_delivered_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateDelivered);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_delivered_to_user_list4 = linphone_chat_message_get_participants_by_imdn_state(
+		    pauline2LastMsg, LinphoneChatMessageStateDeliveredToUser);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_delivered_to_user_list4), 0, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_delivered_to_user_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		bctbx_list_t *pauline2_displayed_list4 =
+		    linphone_chat_message_get_participants_by_imdn_state(pauline2LastMsg, LinphoneChatMessageStateDisplayed);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_displayed_list4), 2, size_t, "%zu");
+		bctbx_list_free_with_data(pauline2_displayed_list4,
+		                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+
+		linphone_chat_message_unref(msg0);
+		linphone_chat_message_unref(msg1);
+
+		for (auto chatRoom : focus.getCore().getChatRooms()) {
+			for (auto participant : chatRoom->getParticipants()) {
+				//  force deletion by removing devices
+				std::shared_ptr<Address> participantAddress = participant->getAddress();
+				linphone_chat_room_set_participant_devices(L_GET_C_BACK_PTR(chatRoom), participantAddress->toC(), NULL);
+			}
+		}
+
+		// wait until chatroom is deleted server side
+		BC_ASSERT_TRUE(CoreManagerAssert({focus, marie, pauline, laure}).wait([&focus] {
+			return focus.getCore().getChatRooms().size() == 0;
+		}));
+
+		// wait bit more to detect side effect if any
+		CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(2), [] { return false; });
+
+		// to avoid creation attempt of a new chatroom
+		auto config = focus.getDefaultProxyConfig();
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
+
+		bctbx_list_free(coresList);
+	}
+}
+
 static void secure_group_chat_message_state_transition_from_not_delivered_to_displayed(void) {
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
@@ -1176,6 +1850,9 @@ static test_t local_conference_chat_imdn_tests[] = {
                  "LeaksMemory"), /* because of network up and down */
     TEST_ONE_TAG("Secure group chat with client IMDN sent after restart and participant added",
                  LinphoneTest::secure_group_chat_room_with_client_idmn_sent_after_restart_and_participant_added,
+                 "LeaksMemory"), /* because of network up and down */
+    TEST_ONE_TAG("Secure group chat with message state going from delivered to displayed",
+                 LinphoneTest::secure_group_chat_message_state_transition_from_delivered_to_displayed,
                  "LeaksMemory"), /* because of network up and down */
     TEST_ONE_TAG("Secure group chat with message state going from not delivered to displayed",
                  LinphoneTest::secure_group_chat_message_state_transition_from_not_delivered_to_displayed,
