@@ -3958,10 +3958,34 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 				bctbx_list_t *participants_in_delivered_state =
 				    linphone_chat_message_get_participants_by_imdn_state(msg, state);
 				BC_ASSERT_PTR_NOT_NULL(participants_in_delivered_state);
+				bctbx_list_t *participants_in_displayed_state =
+				    linphone_chat_message_get_participants_by_imdn_state(msg, LinphoneChatMessageStateDisplayed);
+				bctbx_list_t *participants_in_delivered_to_user_state =
+				    linphone_chat_message_get_participants_by_imdn_state(msg, LinphoneChatMessageStateDeliveredToUser);
+
+				size_t delivered_or_displayed = 0;
+				delivered_or_displayed +=
+				    ((participants_in_delivered_state) ? bctbx_list_size(participants_in_delivered_state) : 0);
+				delivered_or_displayed += ((participants_in_delivered_to_user_state)
+				                               ? bctbx_list_size(participants_in_delivered_to_user_state)
+				                               : 0);
+				delivered_or_displayed +=
+				    ((participants_in_displayed_state) ? bctbx_list_size(participants_in_displayed_state) : 0);
+
+				BC_ASSERT_EQUAL(delivered_or_displayed, bctbx_list_size(participants), size_t, "%0zu");
+
 				if (participants_in_delivered_state) {
-					BC_ASSERT_EQUAL(bctbx_list_size(participants_in_delivered_state), bctbx_list_size(participants),
-					                size_t, "%0zu");
 					bctbx_list_free_with_data(participants_in_delivered_state,
+					                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+				}
+
+				if (participants_in_delivered_to_user_state) {
+					bctbx_list_free_with_data(participants_in_delivered_to_user_state,
+					                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+				}
+
+				if (participants_in_displayed_state) {
+					bctbx_list_free_with_data(participants_in_displayed_state,
 					                          (bctbx_list_free_func)linphone_participant_imdn_state_unref);
 				}
 
