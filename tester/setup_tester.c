@@ -1601,6 +1601,8 @@ static void search_friend_with_presence(void) {
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
 	linphone_presence_model_set_contact(chloePresence, chloeSipUri);
+	linphone_friend_set_name(chloeFriend, NULL); // Test invalid friend name
+	linphone_friend_set_name(chloeFriend, "");
 	linphone_friend_set_name(chloeFriend, chloeName);
 	linphone_friend_add_phone_number(chloeFriend, chloePhoneNumber);
 	linphone_friend_set_presence_model_for_uri_or_tel(chloeFriend, chloePhoneNumber, chloePresence);

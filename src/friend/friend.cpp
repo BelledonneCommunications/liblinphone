@@ -131,7 +131,7 @@ void Friend::setJobTitle(const std::string &title) {
 LinphoneStatus Friend::setName(const std::string &name) {
 	if (linphone_core_vcard_supported()) {
 		if (!mVcard) createVcard(name);
-		mVcard->setFullName(name);
+		if (mVcard) mVcard->setFullName(name); // Test mVcard because the preceding line may fail
 	} else {
 		if (!mUri) {
 			lWarning()
