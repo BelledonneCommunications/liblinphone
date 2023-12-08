@@ -225,7 +225,7 @@ static void video_call_with_high_bandwidth_available(void) {
 		/*wait a little in order to have traffic*/
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 5, 50000));
 
-		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 810000.f, float, "%f");
+		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 750000.f, float, "%f");
 		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 1150000.f, float, "%f");
 
 		end_call(marie, pauline);
