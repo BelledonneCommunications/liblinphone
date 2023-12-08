@@ -1517,13 +1517,16 @@ void MainDbPrivate::updateConferenceChatMessageEvent(const shared_ptr<EventLog> 
 		for (const auto &row : rows) {
 			meParticipantState = static_cast<ChatMessage::State>(row.get<int>(0));
 		}
+		// Set all participants to NotDelivered only if the sender state is NotDelivered
 		stateRequiresUpdatingParticipants = (meParticipantState == ChatMessage::State::NotDelivered);
 	} else {
-		stateRequiresUpdatingParticipants = (state == ChatMessage::State::Delivered);
+		// Participants ar enot required to be updated if the chat message is moving from an IMDN controlled state
+		// (NotDelivered, DeliveredToUser and Displayed) to Delivered state
+		stateRequiresUpdatingParticipants =
+		    (!ChatMessagePrivate::isImdnControlledState(dbState)) && (state == ChatMessage::State::Delivered);
 	}
 
 	// 5. Update participants.
-	// Set all participants to NotDelivered only if the sender state is NotDelivered
 	bool updateParticipants =
 	    (isOutgoing && stateRequiresUpdatingParticipants &&
 	     (chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Conference) && chatMessage->isValid());

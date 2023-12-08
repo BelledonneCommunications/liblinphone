@@ -217,6 +217,7 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 		const auto imdnStates = q->getParticipantsState();
 		size_t nbRecipients = 0;
 		size_t nbDisplayedStates = 0;
+		size_t nbDeliveredStates = 0;
 		size_t nbDeliveredToUserStates = 0;
 		size_t nbNotDeliveredStates = 0;
 		for (const auto &imdnState : imdnStates) {
@@ -235,6 +236,9 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 					case ChatMessage::State::DeliveredToUser:
 						nbDeliveredToUserStates++;
 						break;
+					case ChatMessage::State::Delivered:
+						nbDeliveredStates++;
+						break;
 					case ChatMessage::State::NotDelivered:
 						nbNotDeliveredStates++;
 						break;
@@ -250,6 +254,9 @@ void ChatMessagePrivate::setParticipantState(const std::shared_ptr<Address> &par
 			setState(ChatMessage::State::Displayed);
 		} else if ((nbRecipients > 0) && ((nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
 			setState(ChatMessage::State::DeliveredToUser);
+		} else if ((nbRecipients > 0) &&
+		           ((nbDeliveredStates + nbDisplayedStates + nbDeliveredToUserStates) == nbRecipients)) {
+			setState(ChatMessage::State::Delivered);
 		}
 	}
 
