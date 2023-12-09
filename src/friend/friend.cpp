@@ -130,8 +130,11 @@ void Friend::setJobTitle(const std::string &title) {
 
 LinphoneStatus Friend::setName(const std::string &name) {
 	if (linphone_core_vcard_supported()) {
-		if (!mVcard) createVcard(name);
-		if (mVcard) mVcard->setFullName(name); // Test mVcard because the preceding line may fail
+		if (!mVcard) {
+			createVcard(name);
+		} else {
+			mVcard->setFullName(name);
+		}
 	} else {
 		if (!mUri) {
 			lWarning()
@@ -323,6 +326,10 @@ const std::string &Friend::getName() const {
 	}
 	if (mName.empty() && mUri) {
 		mName = mUri->getDisplayName();
+
+		if (mName.empty()) {
+			mName = mUri->getUsername();
+		}
 	}
 	return mName;
 }
@@ -450,22 +457,22 @@ void Friend::addPhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumb
 
 bool Friend::createVcard(const std::string &name) {
 	if (name.empty()) {
-		lError() << "Can't create vCard for friend [" << toC() << "] with name [" << L_STRING_TO_C(name) << "]";
+		lError() << "Can't create vCard for friend [" << toC() << "] with empty name";
 		return false;
 	}
 	if (!linphone_core_vcard_supported()) {
-		lWarning() << "VCard support is not builtin";
+		lWarning() << "vCard support is not builtin";
 		return false;
 	}
 	if (mVcard) {
-		lError() << "Friend already has a VCard";
+		lError() << "Friend already has a vCard";
 		return false;
 	}
 
 	std::shared_ptr<Vcard> vcard = Vcard::create();
 	vcard->setFullName(name);
 	setVcard(vcard);
-	lDebug() << "VCard created for friend [" << toC() << "]";
+	lDebug() << "vCard created for friend [" << toC() << "]";
 	return true;
 }
 
