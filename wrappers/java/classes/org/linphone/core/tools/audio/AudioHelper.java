@@ -369,7 +369,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         mPlayer.setAudioAttributes(audioAttrs);
 
         try {
-            if (ringtone.startsWith("content://")) {
+            if (ringtone.startsWith("content://") || ringtone.startsWith("android.resource://")) {
                 mPlayer.setDataSource(context, Uri.parse(ringtone));
             } else {
                 FileInputStream fis = new FileInputStream(ringtone);
