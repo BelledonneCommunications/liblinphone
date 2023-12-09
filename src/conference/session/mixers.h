@@ -192,6 +192,7 @@ public:
 	virtual void setOutputDevice(const std::shared_ptr<AudioDevice> &audioDevice) override;
 	virtual std::shared_ptr<AudioDevice> getInputDevice() const override;
 	virtual std::shared_ptr<AudioDevice> getOutputDevice() const override;
+	virtual std::shared_ptr<Player> getPlayer() const override;
 	// Used for the tone manager.
 	AudioStream *getAudioStream();
 
@@ -204,6 +205,8 @@ private:
 	void addLocalParticipant();
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile(int samplerate);
+	void createPlayer();
+
 	std::list<AudioMixerListener *> mListeners;
 	MSAudioConference *mConference = nullptr;
 	AudioStream *mLocalParticipantStream = nullptr;
@@ -213,6 +216,7 @@ private:
 	std::string mRecordPath;
 	belle_sip_source_t *mTimer = nullptr;
 	bool mLocalMicEnabled = true;
+	mutable std::shared_ptr<Player> mPlayer = nullptr;
 };
 
 #ifdef VIDEO_ENABLED

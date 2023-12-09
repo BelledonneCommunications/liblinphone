@@ -30,6 +30,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/ms2-streams.h"
 #include "core/core-p.h"
+#include "player/call-player.h"
 
 // =============================================================================
 
@@ -606,7 +607,8 @@ bool_t linphone_call_is_recording(LinphoneCall *call) {
 }
 
 LinphonePlayer *linphone_call_get_player(LinphoneCall *call) {
-	return Call::toCpp(call)->getPlayer();
+	std::shared_ptr<Player> player = Call::toCpp(call)->getPlayer();
+	return player ? player->toC() : nullptr;
 }
 
 bool_t linphone_call_media_in_progress(const LinphoneCall *call) {

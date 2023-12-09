@@ -75,6 +75,7 @@ class CallSessionListener;
 class ParticipantDevice;
 class AudioDevice;
 class ConferenceId;
+class Player;
 
 namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
 	                        // src/conference/*
@@ -196,6 +197,8 @@ public:
 	void setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress);
 	void setConferenceId(const ConferenceId &conferenceId);
 	virtual void notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+
+	virtual std::shared_ptr<Player> getPlayer() const;
 
 protected:
 	ConferenceInfo::participant_list_t mInvitedParticipants;

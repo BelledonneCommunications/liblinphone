@@ -811,7 +811,7 @@ LINPHONE_PUBLIC void linphone_call_stop_recording(LinphoneCall *call);
 /**
  * Gets a player associated with the call to play a local file and stream it to the remote peer.
  * @param call #LinphoneCall object. @notnil
- * @return A #LinphonePlayer object @notnil
+ * @return A #LinphonePlayer object. @maybenil
  */
 LINPHONE_PUBLIC LinphonePlayer *linphone_call_get_player(LinphoneCall *call);
 

@@ -77,7 +77,6 @@ LinphoneCall *linphone_call_new_incoming(struct _LinphoneCore *lc,
 LINPHONE_PUBLIC LinphoneCallLog *
 linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, const LinphoneAddress *from, const LinphoneAddress *to);
 void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
-LinphonePlayer *linphone_call_build_player(LinphoneCall *call);
 
 LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 
@@ -733,9 +732,6 @@ LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *lc,
  ****************************************************************************/
 
 LinphonePlayerCbs *linphone_player_cbs_new(void);
-LinphonePlayer *linphone_player_new(LinphoneCore *core);
-void _linphone_player_destroy(LinphonePlayer *player);
-void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
 
 /*****************************************************************************
  * OTHER UTILITY FUNCTIONS                                                   *

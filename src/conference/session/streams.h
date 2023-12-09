@@ -46,6 +46,7 @@ class IceService;
 class StreamMixer;
 class MixerSession;
 class AudioDevice;
+class Player;
 
 /**
  * Base class for any kind of stream that may be setup with SDP.
@@ -240,6 +241,9 @@ public:
 	virtual void setOutputDevice(const std::shared_ptr<AudioDevice> &audioDevice) = 0;
 	virtual std::shared_ptr<AudioDevice> getInputDevice() const = 0;
 	virtual std::shared_ptr<AudioDevice> getOutputDevice() const = 0;
+	virtual std::shared_ptr<Player> getPlayer() const {
+		return nullptr;
+	}
 	virtual ~AudioControlInterface() = default;
 };
 

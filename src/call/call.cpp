@@ -32,6 +32,7 @@
 #include "core/core-p.h"
 #include "factory/factory.h"
 #include "logger/logger.h"
+#include "player/call-player.h"
 #include "remote_conference.h"
 #include "sal/sal_media_description.h"
 
@@ -253,8 +254,9 @@ shared_ptr<Call> Call::startReferredCall(const MediaSessionParams *params) {
 
 // =============================================================================
 
-void Call::createPlayer() const {
-	mPlayer = linphone_call_build_player((LinphoneCall *)(this->toC()));
+void Call::createPlayer() {
+	AudioStream *audioStream = reinterpret_cast<AudioStream *>(getMediaStream(LinphoneStreamTypeAudio));
+	if (audioStream) mPlayer = CallPlayer::create<CallPlayer>(getCore(), audioStream);
 }
 
 // -----------------------------------------------------------------------------
@@ -1113,8 +1115,8 @@ const MediaSessionParams *Call::getParams() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getMediaParams();
 }
 
-LinphonePlayer *Call::getPlayer() const {
-	if (!mPlayer) createPlayer();
+std::shared_ptr<Player> Call::getPlayer() const {
+	if (!mPlayer) const_cast<Call *>(this)->createPlayer();
 	return mPlayer;
 }
 

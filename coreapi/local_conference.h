@@ -161,6 +161,8 @@ public:
 	void updateConferenceInformation(SalCallOp *op);
 	virtual std::shared_ptr<Call> getCall() const override;
 
+	std::shared_ptr<Player> getPlayer() const override;
+
 protected:
 	virtual void
 	callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) override;

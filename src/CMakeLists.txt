@@ -255,6 +255,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/property-container.h
 	object/singleton.h
 	payload-type/payload-type.h
+	player/call-player.h
+	player/local-player.h
+	player/player.h
 	presence/presence-activity.h
 	presence/presence-model.h
 	presence/presence-note.h
@@ -404,6 +407,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-payload-type.cpp
+	c-wrapper/api/c-player.cpp
 	c-wrapper/api/c-presence.cpp
 	c-wrapper/api/c-push-notification-message.cpp
 	c-wrapper/api/c-push-notification-config.cpp
@@ -516,6 +520,9 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/object.cpp
 	object/property-container.cpp
 	payload-type/payload-type.cpp
+	player/call-player.cpp
+	player/local-player.cpp
+	player/player.cpp
 	presence/presence-activity.cpp
 	presence/presence-model.cpp
 	presence/presence-note.cpp

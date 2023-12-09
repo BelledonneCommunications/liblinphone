@@ -344,44 +344,6 @@ struct _LinphoneXmlRpcSession {
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneXmlRpcSession);
 
 /*****************************************************************************
- * Player interface                                                          *
- ****************************************************************************/
-
-struct _LinphonePlayerCbs {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphonePlayerCbsEofReachedCb eof;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayerCbs);
-
-struct _LinphonePlayer {
-	belle_sip_object_t base;
-	void *user_data;
-	int (*open)(LinphonePlayer *player, const char *filename);
-	int (*start)(LinphonePlayer *player);
-	int (*pause)(LinphonePlayer *player);
-	int (*seek)(LinphonePlayer *player, int time_ms);
-	MSPlayerState (*get_state)(LinphonePlayer *player);
-	int (*get_duration)(LinphonePlayer *player);
-	int (*get_position)(LinphonePlayer *player);
-	void (*close)(LinphonePlayer *player);
-	void (*destroy)(LinphonePlayer *player);
-	void *(*create_window_id)(LinphonePlayer *player);
-	void (*set_window_id)(LinphonePlayer *player, void *window_id);
-	bool_t (*is_video_available)(LinphonePlayer *player);
-	void (*set_volume_gain)(LinphonePlayer *player, float gain);
-	float (*get_volume_gain)(const LinphonePlayer *player);
-	void *impl;
-	LinphonePlayerCbs *callbacks; // Deprecated, use a list of Cbs instead
-	LinphoneCore *core;
-	bctbx_list_t *callbacks_list;
-	LinphonePlayerCbs *currentCbs;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);
-
-/*****************************************************************************
  * OTHER UTILITY FUNCTIONS                                                     *
  ****************************************************************************/
 

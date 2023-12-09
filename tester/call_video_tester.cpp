@@ -2733,7 +2733,7 @@ static void video_call_with_mire_and_analyse(void) {
 }
 
 static void on_eof(LinphonePlayer *player) {
-	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
+	LinphonePlayerCbs *cbs = linphone_player_get_current_callbacks(player);
 	LinphoneCoreManager *marie = (LinphoneCoreManager *)linphone_player_cbs_get_user_data(cbs);
 	marie->stat.number_of_player_eof++;
 }
@@ -2746,6 +2746,7 @@ static void call_with_video_mkv_file_player(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphonePlayer *player;
+	LinphonePlayerCbs *cbs = NULL;
 	char *src_mkv, *hellowav;
 	bool_t call_ok;
 	LinphoneVideoActivationPolicy *pol;
@@ -2799,9 +2800,10 @@ static void call_with_video_mkv_file_player(void) {
 	BC_ASSERT_PTR_NOT_NULL(player);
 	if (player) {
 		LinphoneCallStats *video_stats;
-		LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
+		cbs = linphone_factory_create_player_cbs(linphone_factory_get());
 		linphone_player_cbs_set_eof_reached(cbs, on_eof);
 		linphone_player_cbs_set_user_data(cbs, marie);
+		linphone_player_add_callbacks(player, cbs);
 		int res = linphone_player_open(player, src_mkv);
 
 		BC_ASSERT_EQUAL(res, 0, int, "%d");
@@ -2838,6 +2840,7 @@ static void call_with_video_mkv_file_player(void) {
 	goto end;
 
 end:
+	if (cbs) linphone_player_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	ms_free(src_mkv);

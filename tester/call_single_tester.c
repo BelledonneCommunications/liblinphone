@@ -3773,7 +3773,7 @@ static void call_with_privacy2(void) {
 }
 
 static void on_eof(LinphonePlayer *player) {
-	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
+	LinphonePlayerCbs *cbs = linphone_player_get_current_callbacks(player);
 	LinphoneCoreManager *marie = (LinphoneCoreManager *)linphone_player_cbs_get_user_data(cbs);
 	marie->stat.number_of_player_eof++;
 }
@@ -3783,7 +3783,7 @@ static void call_with_file_player(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphonePlayer *player;
-	LinphonePlayerCbs *cbs;
+	LinphonePlayerCbs *cbs = NULL;
 	char *hellopath = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	char *recordpath = bc_tester_file("record-call_with_file_player.wav");
 	bool_t call_ok;
@@ -3815,11 +3815,12 @@ static void call_with_file_player(void) {
 		BC_ASSERT_TRUE((call_ok = call(marie, pauline)));
 		if (!call_ok) goto end;
 		player = linphone_call_get_player(linphone_core_get_current_call(marie->lc));
-		cbs = linphone_player_get_callbacks(player);
-		linphone_player_cbs_set_eof_reached(cbs, on_eof);
-		linphone_player_cbs_set_user_data(cbs, marie);
 		BC_ASSERT_PTR_NOT_NULL(player);
 		if (player) {
+			cbs = linphone_factory_create_player_cbs(linphone_factory_get());
+			linphone_player_cbs_set_eof_reached(cbs, on_eof);
+			linphone_player_cbs_set_user_data(cbs, marie);
+			linphone_player_add_callbacks(player, cbs);
 			BC_ASSERT_EQUAL(linphone_player_open(player, hellopath), 0, int, "%d");
 			BC_ASSERT_EQUAL(linphone_player_start(player), 0, int, "%d");
 		}
@@ -3841,6 +3842,7 @@ static void call_with_file_player(void) {
 	}
 
 end:
+	if (cbs) linphone_player_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	ms_free(recordpath);
@@ -3852,6 +3854,7 @@ static void call_with_mkv_file_player(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphonePlayer *player;
+	LinphonePlayerCbs *cbs = NULL;
 	char *hellomkv;
 	char *hellowav;
 	char *recordpath;
@@ -3887,9 +3890,10 @@ static void call_with_mkv_file_player(void) {
 	player = linphone_call_get_player(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(player);
 	if (player) {
-		LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
+		cbs = linphone_factory_create_player_cbs(linphone_factory_get());
 		linphone_player_cbs_set_eof_reached(cbs, on_eof);
 		linphone_player_cbs_set_user_data(cbs, marie);
+		linphone_player_add_callbacks(player, cbs);
 		int res = linphone_player_open(player, hellomkv);
 		// if(!ms_filter_codec_supported("opus")) {
 		if (!ms_factory_codec_supported(linphone_core_get_ms_factory(marie->lc), "opus") &&
@@ -3920,6 +3924,7 @@ static void call_with_mkv_file_player(void) {
 	ms_free(recordpath);
 
 end:
+	if (cbs) linphone_player_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	ms_free(hellomkv);
@@ -5669,6 +5674,7 @@ static void call_with_rtp_io_mode(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphonePlayer *player;
+	LinphonePlayerCbs *cbs = NULL;
 	char *hellopath = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	char *recordpath = bc_tester_file("record-call_with_rtp_io_mode.wav");
 	bool_t call_ok;
@@ -5710,9 +5716,10 @@ static void call_with_rtp_io_mode(void) {
 		player = linphone_call_get_player(linphone_core_get_current_call(marie->lc));
 		BC_ASSERT_PTR_NOT_NULL(player);
 		if (player) {
-			LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
+			cbs = linphone_factory_create_player_cbs(linphone_factory_get());
 			linphone_player_cbs_set_eof_reached(cbs, on_eof);
 			linphone_player_cbs_set_user_data(cbs, marie);
+			linphone_player_add_callbacks(player, cbs);
 			BC_ASSERT_EQUAL(linphone_player_open(player, hellopath), 0, int, "%d");
 			BC_ASSERT_EQUAL(linphone_player_start(player), 0, int, "%d");
 		}
@@ -5733,6 +5740,7 @@ static void call_with_rtp_io_mode(void) {
 	}
 
 end:
+	if (cbs) linphone_player_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	ms_free(recordpath);
@@ -5949,6 +5957,7 @@ static void custom_rtp_modifier(bool_t pauseResumeTest, bool_t recordTest) {
 	RtpTransportModifierData *data_pauline = NULL;
 	// The following are only used for the record test
 	LinphonePlayer *player;
+	LinphonePlayerCbs *player_cbs = NULL;
 	char *hellopath = bc_tester_res("sounds/ahbahouaismaisbon.wav");       // File to be played
 	char *recordpath = bc_tester_file("record-call_with_file_player.wav"); // File to record the received sound
 	double similar = 1;            // The factor of similarity between the played file and the one recorded
@@ -6018,9 +6027,10 @@ static void custom_rtp_modifier(bool_t pauseResumeTest, bool_t recordTest) {
 		BC_ASSERT_PTR_NOT_NULL(player);
 		if (player) {
 			// This will ask pauline to play the file
-			LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
-			linphone_player_cbs_set_eof_reached(cbs, on_eof);
-			linphone_player_cbs_set_user_data(cbs, pauline);
+			player_cbs = linphone_factory_create_player_cbs(linphone_factory_get());
+			linphone_player_cbs_set_eof_reached(player_cbs, on_eof);
+			linphone_player_cbs_set_user_data(player_cbs, pauline);
+			linphone_player_add_callbacks(player, player_cbs);
 			BC_ASSERT_EQUAL(linphone_player_open(player, hellopath), 0, int, "%d");
 			BC_ASSERT_EQUAL(linphone_player_start(player), 0, int, "%d");
 		}
@@ -6111,6 +6121,8 @@ end:
 	if (call_pauline) {
 		linphone_call_unref(call_pauline);
 	}
+
+	if (player_cbs) linphone_player_cbs_unref(player_cbs);
 
 	// The test is finished, the linphone core are no longer needed, we can safely free them
 	linphone_core_manager_destroy(marie);

@@ -87,13 +87,14 @@ void IncallPlayerStartCommand::exec(Daemon *app, const string &args) {
 	}
 	LinphonePlayer *p = linphone_call_get_player(call);
 
-	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(p);
+	LinphonePlayerCbs *cbs = linphone_factory_create_player_cbs(linphone_factory_get());
 
 	pair<int, Daemon *> *callPlayingData = (pair<int, Daemon *> *)linphone_player_get_user_data(p);
 	if (callPlayingData)
 		callPlayingData = new pair<int, Daemon *>({VOIDPTR_TO_INT(linphone_call_get_user_data(call)), app});
 	linphone_player_set_user_data(p, callPlayingData);
 	linphone_player_cbs_set_eof_reached(cbs, onEof);
+	linphone_player_add_callbacks(p, cbs);
 	linphone_player_open(p, filename.c_str());
 	linphone_player_start(p);
 	app->sendResponse(Response());

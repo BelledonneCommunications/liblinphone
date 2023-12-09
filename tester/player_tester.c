@@ -23,7 +23,7 @@
 #include <mediastreamer2/mediastream.h>
 
 static void eof_callback(LinphonePlayer *player) {
-	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
+	LinphonePlayerCbs *cbs = linphone_player_get_current_callbacks(player);
 	int *eof = (int *)linphone_player_cbs_get_user_data(cbs);
 	*eof = 1;
 }
@@ -31,7 +31,7 @@ static void eof_callback(LinphonePlayer *player) {
 static void play_file(const char *filename, bool_t supported_format, const char *audio_mime, const char *video_mime) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_new("marie_rc");
 	LinphonePlayer *player;
-	LinphonePlayerCbs *cbs;
+	LinphonePlayerCbs *cbs = NULL;
 	int res;
 	int eof = 0;
 
@@ -46,9 +46,10 @@ static void play_file(const char *filename, bool_t supported_format, const char 
 	BC_ASSERT_PTR_NOT_NULL(player);
 	if (player == NULL) goto fail;
 
-	cbs = linphone_player_get_callbacks(player);
+	cbs = linphone_factory_create_player_cbs(linphone_factory_get());
 	linphone_player_cbs_set_eof_reached(cbs, eof_callback);
 	linphone_player_cbs_set_user_data(cbs, &eof);
+	linphone_player_add_callbacks(player, cbs);
 	res = linphone_player_open(player, filename);
 	BC_ASSERT_EQUAL(res, expected_res, int, "%d");
 
@@ -63,6 +64,7 @@ static void play_file(const char *filename, bool_t supported_format, const char 
 	linphone_player_close(player);
 
 fail:
+	if (cbs) linphone_player_cbs_unref(cbs);
 	if (player) linphone_player_unref(player);
 	if (lc_manager) linphone_core_manager_destroy(lc_manager);
 }
@@ -70,7 +72,7 @@ fail:
 static void wav_player_test(bool_t seek) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_new("marie_rc");
 	LinphonePlayer *player;
-	LinphonePlayerCbs *cbs;
+	LinphonePlayerCbs *cbs = NULL;
 	int res;
 	int eof = 0;
 	int current_position;
@@ -82,9 +84,10 @@ static void wav_player_test(bool_t seek) {
 	BC_ASSERT_PTR_NOT_NULL(player);
 	if (player == NULL) goto fail;
 
-	cbs = linphone_player_get_callbacks(player);
+	cbs = linphone_factory_create_player_cbs(linphone_factory_get());
 	linphone_player_cbs_set_eof_reached(cbs, eof_callback);
 	linphone_player_cbs_set_user_data(cbs, &eof);
+	linphone_player_add_callbacks(player, cbs);
 	res = linphone_player_open(player, filename);
 	BC_ASSERT_EQUAL(res, 0, int, "%d");
 
@@ -118,6 +121,7 @@ static void wav_player_test(bool_t seek) {
 	linphone_player_close(player);
 
 fail:
+	if (cbs) linphone_player_cbs_unref(cbs);
 	if (player) linphone_player_unref(player);
 	if (lc_manager) linphone_core_manager_destroy(lc_manager);
 	bc_free(filename);
@@ -126,7 +130,7 @@ fail:
 static void mkv_player_test(void) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_new("marie_rc");
 	LinphonePlayer *player;
-	LinphonePlayerCbs *cbs;
+	LinphonePlayerCbs *cbs = NULL;
 	int res;
 	int eof = 0;
 	int current_position;
@@ -138,9 +142,10 @@ static void mkv_player_test(void) {
 	BC_ASSERT_PTR_NOT_NULL(player);
 	if (player == NULL) goto fail;
 
-	cbs = linphone_player_get_callbacks(player);
+	cbs = linphone_factory_create_player_cbs(linphone_factory_get());
 	linphone_player_cbs_set_eof_reached(cbs, eof_callback);
 	linphone_player_cbs_set_user_data(cbs, &eof);
+	linphone_player_add_callbacks(player, cbs);
 	res = linphone_player_open(player, filename);
 	BC_ASSERT_EQUAL(res, 0, int, "%d");
 
@@ -174,6 +179,7 @@ static void mkv_player_test(void) {
 	linphone_player_close(player);
 
 fail:
+	if (cbs) linphone_player_cbs_unref(cbs);
 	if (player) linphone_player_unref(player);
 	if (lc_manager) linphone_core_manager_destroy(lc_manager);
 	bc_free(filename);

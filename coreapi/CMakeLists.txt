@@ -55,12 +55,10 @@ set(LINPHONE_SOURCE_FILES_C
 	linphonecore.c
 	linphoneconference.c
 	linphone_tunnel_config.c
-	localplayer.c
 	logging.c
 	lpconfig.c
 	lsd.c
 	misc.c
-	player.c
 	proxy.c
 	quality_reporting.c
 	remote_provisioning.c

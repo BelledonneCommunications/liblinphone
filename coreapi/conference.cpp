@@ -650,6 +650,11 @@ ConferenceInfo::participant_list_t Conference::getFullParticipantList() const {
 	return participantList;
 }
 
+std::shared_ptr<Player> Conference::getPlayer() const {
+	lWarning() << "Getting a player is not available for this conference.";
+	return nullptr;
+}
+
 } // end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE

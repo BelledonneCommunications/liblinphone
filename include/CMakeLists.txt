@@ -115,6 +115,7 @@ set(C_API_HEADER_FILES
 	c-participant-device-identity.h
 	c-participant-imdn-state.h
 	c-payload-type.h
+	c-player.h
 	c-presence.h
 	c-push-notification-message.h
 	c-push-notification-config.h

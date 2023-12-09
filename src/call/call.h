@@ -45,6 +45,7 @@ class CallSessionPrivate;
 class MediaSessionPrivate;
 class AbstractChatRoom;
 class ConferencePrivate;
+class Player;
 
 namespace MediaConference {
 class Conference;
@@ -164,7 +165,7 @@ public:
 	void *getNativeVideoWindowId() const;
 	void *createNativeVideoWindowId() const;
 	const MediaSessionParams *getParams() const;
-	LinphonePlayer *getPlayer() const;
+	std::shared_ptr<Player> getPlayer() const;
 	float getPlayVolume() const;
 	LinphoneReason getReason() const;
 	float getRecordVolume() const;
@@ -211,7 +212,7 @@ public:
 	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
 	// -----------------------------------------------------------------------------
-	void createPlayer() const;
+	void createPlayer();
 	void initiateIncoming();
 	bool initiateOutgoing(const std::string &subject = "", const std::shared_ptr<const Content> content = nullptr);
 	void iterate(time_t currentRealTime, bool oneSecondElapsed);
@@ -325,7 +326,7 @@ public:
 
 private:
 	std::shared_ptr<Participant> mParticipant;
-	mutable LinphonePlayer *mPlayer = nullptr;
+	mutable std::shared_ptr<Player> mPlayer = nullptr;
 	CallCallbackObj mNextVideoFrameDecoded;
 	mutable std::shared_ptr<AbstractChatRoom> mChatRoom = nullptr;
 	bool mPlayingRingbackTone = false;

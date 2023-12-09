@@ -696,6 +696,13 @@ LINPHONE_PUBLIC void linphone_conference_set_microphone_muted(LinphoneConference
  */
 LINPHONE_PUBLIC float linphone_conference_get_input_volume(const LinphoneConference *conference);
 
+/**
+ * Gets a player associated with the conference to play a local file and stream it to the remote peers.
+ * @param call #LinphoneConference object. @notnil
+ * @return A #LinphonePlayer object. @maybenil
+ */
+LINPHONE_PUBLIC LinphonePlayer *linphone_conference_get_player(LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

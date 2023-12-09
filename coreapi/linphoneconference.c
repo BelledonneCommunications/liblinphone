@@ -41,6 +41,7 @@
 #include "linphone/conference.h"
 #include "linphone/utils/utils.h"
 #include "local_conference.h"
+#include "player/call-player.h"
 #include "remote_conference.h"
 
 using namespace std;
@@ -652,4 +653,9 @@ void linphone_conference_notify_audio_device_changed(LinphoneConference *confere
                                                      LinphoneAudioDevice *audio_device) {
 	LinphoneCore *core = MediaConference::Conference::toCpp(conference)->getCore()->getCCore();
 	linphone_core_notify_audio_device_changed(core, audio_device);
+}
+
+LinphonePlayer *linphone_conference_get_player(LinphoneConference *conference) {
+	std::shared_ptr<Player> player = MediaConference::Conference::toCpp(conference)->getPlayer();
+	return player ? player->toC() : nullptr;
 }

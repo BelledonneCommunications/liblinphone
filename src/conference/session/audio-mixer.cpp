@@ -24,6 +24,7 @@
 
 #include "linphone/core.h"
 #include "mixers.h"
+#include "player/call-player.h"
 #include "private.h"
 #include "streams.h"
 
@@ -283,6 +284,16 @@ AudioStream *MS2AudioMixer::getAudioStream() {
 
 MSAudioConference *MS2AudioMixer::getAudioConference() {
 	return mConference;
+}
+
+std::shared_ptr<Player> MS2AudioMixer::getPlayer() const {
+	if (!mPlayer) const_cast<MS2AudioMixer *>(this)->createPlayer();
+	return mPlayer;
+}
+
+void MS2AudioMixer::createPlayer() {
+	if (mLocalParticipantStream)
+		mPlayer = CallPlayer::create<CallPlayer>(getSession().getCore().getSharedFromThis(), mLocalParticipantStream);
 }
 
 LINPHONE_END_NAMESPACE

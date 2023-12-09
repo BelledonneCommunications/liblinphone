@@ -2179,6 +2179,11 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 	                                                                 participantDevice);
 }
 
+std::shared_ptr<Player> LocalConference::getPlayer() const {
+	AudioControlInterface *intf = getAudioControlInterface();
+	return intf ? intf->getPlayer() : nullptr;
+}
+
 } // end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE
