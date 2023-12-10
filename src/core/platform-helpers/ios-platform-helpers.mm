@@ -251,7 +251,9 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 		startNetworkMonitoring();
 	}
 	if (mUseAppDelgate && linphone_core_is_push_notification_enabled(getCore()->getCCore())) {
-		[mAppDelegate registerForPush];
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			[mAppDelegate registerForPush];
+		});
 	}
 	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
 		enableAutoIterate(TRUE);
