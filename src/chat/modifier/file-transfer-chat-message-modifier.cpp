@@ -750,11 +750,18 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 				message->getPrivate()->addContent(fileContent);
 			}
 
-			releaseHttpRequest();
-			message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
-			                                           ChatMessage::State::FileTransferDone, ::ms_time(nullptr));
+			// Rename file in case of auto download so proper File Content will be available in message state changed
+			// callback
 			if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
 				renameFileAfterAutoDownload(core, fileContent);
+			}
+
+			releaseHttpRequest();
+
+			message->getPrivate()->setParticipantState(message->getChatRoom()->getMe()->getAddress(),
+			                                           ChatMessage::State::FileTransferDone, ::ms_time(nullptr));
+
+			if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
 				message->getPrivate()->handleAutoDownload();
 			}
 		}
@@ -968,7 +975,7 @@ bool FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage>
 
 	lastNotifiedPercentage = 0;
 	lInfo() << "Downloading file transfer content [" << fileTransferContent
-	        << "], result will be available in file content [" << fileContent << "]";
+	        << "], result will be available in file content [" << fileContent->getFilePath() << "]";
 
 	belle_http_request_listener_callbacks_t cbs = {0};
 	cbs.process_response_headers = _chat_process_response_headers_from_get_file;
