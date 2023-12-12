@@ -274,15 +274,10 @@ public class CoreManager {
             public void onFirstCallStarted(Core core) {
                 Log.i("[Core Manager] First call started");
                 // Ensure Service is running. It will take care by itself to start as foreground.
-                if (!isServiceRunning()) {
-                    Log.w("[Core Manager] Service isn't running, let's start it");
-                    try {
-                        startService();
-                    } catch (IllegalStateException ise) {
-                        Log.w("[Core Manager] Failed to start service: ", ise);
-                    }
-                } else {
-                    Log.i("[Core Manager] Service appears to be running, everything is fine");
+                try {
+                    startService();
+                } catch (IllegalStateException ise) {
+                    Log.w("[Core Manager] Failed to start service: ", ise);
                 }
             }
 
