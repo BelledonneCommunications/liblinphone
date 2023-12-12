@@ -72,3 +72,18 @@ const char *linphone_video_source_descriptor_get_image(const LinphoneVideoSource
 void linphone_video_source_descriptor_set_image(LinphoneVideoSourceDescriptor *descriptor, const char *image_path) {
 	VideoSourceDescriptor::toCpp(descriptor)->setImage(L_C_TO_STRING(image_path));
 }
+
+LinphoneVideoSourceScreenSharingType
+linphone_video_source_descriptor_get_screen_sharing_type(const LinphoneVideoSourceDescriptor *descriptor) {
+	return static_cast<LinphoneVideoSourceScreenSharingType>(
+	    VideoSourceDescriptor::toCpp(descriptor)->getScreenSharingType());
+}
+void *linphone_video_source_descriptor_get_screen_sharing(const LinphoneVideoSourceDescriptor *descriptor) {
+	return VideoSourceDescriptor::toCpp(descriptor)->getScreenSharing();
+}
+void linphone_video_source_descriptor_set_screen_sharing(LinphoneVideoSourceDescriptor *descriptor,
+                                                         LinphoneVideoSourceScreenSharingType type,
+                                                         void *native_data) {
+	VideoSourceDescriptor::toCpp(descriptor)
+	    ->setScreenSharing(static_cast<VideoSourceDescriptor::ScreenSharingType>(type), native_data);
+}

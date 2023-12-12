@@ -3945,7 +3945,7 @@ LINPHONE_PUBLIC const LinphoneVideoDefinition *linphone_core_get_preview_video_d
  * @ingroup media_parameters
  * @see linphone_core_set_preview_video_definition()
  */
-LINPHONE_PUBLIC LinphoneVideoDefinition *linphone_core_get_current_preview_video_definition(const LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneVideoDefinition *linphone_core_get_current_preview_video_definition(LinphoneCore *core);
 
 /**
  * Get the preferred video definition for the stream that is captured and sent to the remote party.

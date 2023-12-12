@@ -38,6 +38,10 @@ using namespace ::std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+/**
+ *      Bandwith Controller Service
+ **/
+
 MSBandwidthController *BandwithControllerService::getBandWidthController() {
 	return mBandwidthController;
 }
@@ -50,6 +54,33 @@ void BandwithControllerService::initialize() {
 void BandwithControllerService::destroy() {
 	ms_bandwidth_controller_destroy(mBandwidthController);
 	mBandwidthController = nullptr;
+}
+
+/**
+ *      Screen Sharing Service
+ **/
+
+bool ScreenSharingService::localScreenSharingEnabled() const {
+	return mLocalEnabled;
+}
+
+void ScreenSharingService::enableLocalScreenSharing(bool enable) {
+	mLocalEnabled = enable;
+}
+
+bool ScreenSharingService::updateLocalScreenSharing(bool enable) {
+	if (enable != mLocalEnabled) {
+		mLocalEnabled = enable;
+		return true;
+	} else return false;
+}
+
+void ScreenSharingService::initialize() {
+	lInfo() << "StreamsGroup's shared screen sharing service created.";
+	mLocalEnabled = false;
+}
+
+void ScreenSharingService::destroy() {
 }
 
 /*

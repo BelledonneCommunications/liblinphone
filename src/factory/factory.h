@@ -131,6 +131,7 @@ public:
 	    const; // Return a list of ref on supported video definition as this list is not updatable.
 
 	LinphoneVideoDefinition *findSupportedVideoDefinition(unsigned int width, unsigned int height) const;
+	LinphoneVideoDefinition *findSupportedVideoDefinition(unsigned int width, unsigned int height, bool silent) const;
 
 	LinphoneVideoDefinition *findSupportedVideoDefinitionByName(const std::string &name) const;
 

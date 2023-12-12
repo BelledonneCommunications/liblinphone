@@ -25,6 +25,7 @@
 
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
+#include "mediastreamer2/msscreensharing.h"
 
 // =============================================================================
 
@@ -38,7 +39,14 @@ public:
 		Unknown = LinphoneVideoSourceUnknown,
 		Call = LinphoneVideoSourceCall,
 		Camera = LinphoneVideoSourceCamera,
-		Image = LinphoneVideoSourceImage
+		Image = LinphoneVideoSourceImage,
+		ScreenSharing = LinphoneVideoSourceScreenSharing
+	};
+
+	enum class ScreenSharingType {
+		Display = LinphoneVideoSourceScreenSharingDisplay,
+		Window = LinphoneVideoSourceScreenSharingWindow,
+		Area = LinphoneVideoSourceScreenSharingArea
 	};
 
 	VideoSourceDescriptor() = default;
@@ -48,6 +56,7 @@ public:
 	VideoSourceDescriptor *clone() const override;
 
 	VideoSourceDescriptor::Type getType() const;
+	VideoSourceDescriptor::ScreenSharingType getScreenSharingType() const;
 
 	std::shared_ptr<Call> getCall() const;
 	void setCall(std::shared_ptr<Call> call);
@@ -58,12 +67,22 @@ public:
 	const std::string &getImage() const;
 	void setImage(std::string imagePath);
 
+	void *getScreenSharing() const;
+	void setScreenSharing(VideoSourceDescriptor::ScreenSharingType type, void *nativeData);
+	MSScreenSharingDesc getScreenSharingDesc() const;
+
+	bool operator==(const VideoSourceDescriptor &descriptor) const;
+	bool operator!=(const VideoSourceDescriptor &descriptor) const;
+
 private:
 	VideoSourceDescriptor::Type mType = VideoSourceDescriptor::Type::Unknown;
 
 	std::weak_ptr<Call> mCall;
 	std::string mCameraId;
 	std::string mImagePath;
+
+	VideoSourceDescriptor::ScreenSharingType mScreenSharingType = VideoSourceDescriptor::ScreenSharingType::Display;
+	void *mNativeData = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

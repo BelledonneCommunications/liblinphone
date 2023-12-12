@@ -940,6 +940,11 @@ LinphoneVideoDefinition *linphone_video_definition_new(unsigned int width, unsig
 LinphoneVideoDefinition *linphone_factory_find_supported_video_definition(const LinphoneFactory *factory,
                                                                           unsigned int width,
                                                                           unsigned int height);
+// Same as linphone_factory_find_supported_video_definition but with a way to be silent
+LinphoneVideoDefinition *linphone_factory_find_supported_video_definition_2(const LinphoneFactory *factory,
+                                                                            unsigned int width,
+                                                                            unsigned int height,
+                                                                            bool silent);
 LinphoneVideoDefinition *linphone_factory_find_supported_video_definition_by_name(const LinphoneFactory *factory,
                                                                                   const char *name);
 

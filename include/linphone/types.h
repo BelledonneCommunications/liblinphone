@@ -301,10 +301,21 @@ typedef enum _LinphoneRecorderState {
  **/
 typedef enum _LinphoneVideoSourceType {
 	LinphoneVideoSourceUnknown,
-	LinphoneVideoSourceCall,   /**< The video source is another call. */
-	LinphoneVideoSourceCamera, /**< The video source is a camera. */
-	LinphoneVideoSourceImage   /**< The video source is an image. */
+	LinphoneVideoSourceCall,         /**< The video source is another call. */
+	LinphoneVideoSourceCamera,       /**< The video source is a camera. */
+	LinphoneVideoSourceImage,        /**< The video source is an image. */
+	LinphoneVideoSourceScreenSharing /**< The video source is a screen sharing. */
 } LinphoneVideoSourceType;
+
+/**
+ * @brief Enum representing the sub type of the screen sharing.
+ * @ingroup call_control
+ **/
+typedef enum _LinphoneVideoSourceScreenSharingType {
+	LinphoneVideoSourceScreenSharingDisplay, /**< The screen sharing is done from a display. */
+	LinphoneVideoSourceScreenSharingWindow,  /**< The screen sharing is done from a window. */
+	LinphoneVideoSourceScreenSharingArea     /**< The screen sharing is done from an area. */
+} LinphoneVideoSourceScreenSharingType;
 
 // -----------------------------------------------------------------------------
 // Friends.

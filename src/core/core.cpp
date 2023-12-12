@@ -636,11 +636,20 @@ bool CorePrivate::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevic
 }
 
 void CorePrivate::updateVideoDevice() {
+#ifdef VIDEO_ENABLED
 	if (currentCall && currentCall->getState() == CallSession::State::StreamsRunning) {
-		VideoControlInterface *i =
-		    currentCall->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(
-		        SalVideo);
-		if (i) i->parametersChanged();
+		MS2VideoControl *i =
+		    currentCall->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
+		// VideoDevice is a camera. If we are sharing screen, the camera change is only for thumbnail.
+		if (i) {
+			auto vs = i->getVideoStream();
+			if (vs && video_stream_local_screen_sharing_enabled(vs)) {
+				auto &group = currentCall->getMediaSession()->getStreamsGroup();
+				int idx = currentCall->getMediaSession()->getThumbnailStreamIdx();
+				if (idx >= 0) i = dynamic_cast<MS2VideoControl *>(group.getStream(idx));
+			}
+			if (i) i->parametersChanged();
+		}
 	}
 	if (getCCore()->conf_ctx) {
 		/* There is a local conference.*/
@@ -648,6 +657,7 @@ void CorePrivate::updateVideoDevice() {
 		VideoControlInterface *i = conf->getVideoControlInterface();
 		if (i) i->parametersChanged();
 	}
+#endif
 }
 
 int CorePrivate::getCodecPriority(const OrtpPayloadType *pt) const {
@@ -1793,7 +1803,8 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	if (confAddr) {
 		conferenceFactoryUri = confAddr;
 	} else {
-		conferenceFactoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr)->clone()->toSharedPtr();
+		conferenceFactoryUri =
+		    Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr)->clone()->toSharedPtr();
 		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
 			lWarning() << "Not creating conference: no conference factory uri for local address [" << *localAddr << "]";
 			return nullptr;

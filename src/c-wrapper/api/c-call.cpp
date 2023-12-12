@@ -777,7 +777,8 @@ const LinphoneAudioDevice *linphone_call_get_output_audio_device(const LinphoneC
 
 void linphone_call_set_video_source(LinphoneCall *call, const LinphoneVideoSourceDescriptor *descriptor) {
 	CallLogContextualizer logContextualizer(call);
-	Call::toCpp(call)->setVideoSource(VideoSourceDescriptor::toCpp(descriptor)->getSharedFromThis());
+	Call::toCpp(call)->setVideoSource(descriptor ? VideoSourceDescriptor::toCpp(descriptor)->getSharedFromThis()
+	                                             : nullptr);
 }
 
 const LinphoneVideoSourceDescriptor *linphone_call_get_video_source(const LinphoneCall *call) {

@@ -211,6 +211,13 @@ LinphoneVideoDefinition *linphone_factory_find_supported_video_definition(const 
 	return Factory::toCpp(factory)->findSupportedVideoDefinition(width, height);
 }
 
+LinphoneVideoDefinition *linphone_factory_find_supported_video_definition_2(const LinphoneFactory *factory,
+                                                                            unsigned int width,
+                                                                            unsigned int height,
+                                                                            bool silent) {
+	return Factory::toCpp(factory)->findSupportedVideoDefinition(width, height, silent);
+}
+
 LinphoneVideoDefinition *linphone_factory_find_supported_video_definition_by_name(const LinphoneFactory *factory,
                                                                                   const char *name) {
 	return Factory::toCpp(factory)->findSupportedVideoDefinitionByName(name ? name : "");

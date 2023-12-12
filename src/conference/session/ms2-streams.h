@@ -322,6 +322,25 @@ private:
 	static void sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 };
 
+/**
+ * @brief The ScreenSharingService class
+ *
+ *  Store the current screen sharing state for streams.
+ *  It is used to allow them to restart/swap their configuration only one time.
+ */
+
+class ScreenSharingService : public SharedService {
+public:
+	bool localScreenSharingEnabled() const;
+	void enableLocalScreenSharing(bool enable);
+	bool updateLocalScreenSharing(bool enable); // return true if changed
+	virtual void initialize() override;
+	virtual void destroy() override;
+
+private:
+	bool mLocalEnabled = false;
+};
+
 class MS2VideoStream : public MS2Stream, public MS2VideoControl {
 public:
 	MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param);
@@ -364,6 +383,12 @@ private:
 	static void sCameraNotWorkingCb(void *userData, const MSWebCam *oldWebcam);
 	void csrcChangedCb(uint32_t new_csrc);
 	static void sCsrcChangedCb(void *userData, uint32_t new_csrc);
+	void updateWindowId(const std::shared_ptr<ParticipantDevice> &participantDevice,
+	                    const std::string &label,
+	                    bool isMe,
+	                    bool isThumbnail,
+	                    bool fallbackToCore = true);
+	virtual bool enableLocalScreenSharing(bool enable);
 	MS2VideoMixer *getVideoMixer();
 	VideoStream *mStream = nullptr;
 	struct _MSVideoEndpoint *mConferenceEndpoint = nullptr;

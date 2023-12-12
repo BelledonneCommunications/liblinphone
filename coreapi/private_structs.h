@@ -471,6 +471,7 @@ class Core;
 	int max_call_logs;                                                                                                 \
 	int missed_calls;                                                                                                  \
 	VideoPreview *previewstream;                                                                                       \
+	LinphoneVideoDefinition *preview_video_definition_cache;                                                           \
 	struct _MSEventQueue *msevq;                                                                                       \
 	LinphoneRtpTransportFactories *rtptf;                                                                              \
 	MSList *bl_reqs;                                                                                                   \

@@ -20,6 +20,7 @@
 
 #include "bctoolbox/defs.h"
 
+#include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/msitc.h"
 #include "mediastreamer2/msjpegwriter.h"
 #include "mediastreamer2/msogl.h"
@@ -60,6 +61,7 @@ MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param
 		mPortConfig.rtpPort = localDesc.getRtpPort();
 		mPortConfig.rtcpPort = localDesc.getRtcpPort();
 	}
+	sg.installSharedService<ScreenSharingService>();
 
 	mStream = video_stream_new2(getCCore()->factory, L_STRING_TO_C(bindIp), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 
@@ -286,6 +288,56 @@ void MS2VideoStream::runAlertMonitors() {
 	MS2Stream::runAlertMonitors();
 }
 
+// Do swap like specified in [Window ID distribution for screen sharing] table in MediaSession::getNativeVideoWindowId.
+// It is needed to clean old window ID and avoid concurrency.
+bool MS2VideoStream::enableLocalScreenSharing(bool value) {
+	bool changed = false;
+	auto service = getGroup().getSharedService<ScreenSharingService>();
+	if (service->updateLocalScreenSharing(value)) {
+		changed = true;
+		VideoStream *vs = getVideoStream();
+		if (vs) {
+			video_stream_enable_local_screen_sharing(vs, value);
+			if (value) { // Activation. Stop native and swap
+				ms_debug("Enabling Screen sharing. Set preview ID to %x", mNativeWindowId);
+				video_stream_set_native_window_id(vs, NULL); // Clean first to avoid concurrency.
+				video_stream_set_native_preview_window_id(vs, mNativeWindowId);
+			} else { // Deactivation : Swap end reuse old preview id
+				ms_debug("Disabling Screen sharing. Set preview ID to %x and native ID to %x", mNativePreviewWindowId,
+				         mNativeWindowId);
+				video_stream_set_native_preview_window_id(vs, mNativePreviewWindowId);
+				video_stream_set_native_window_id(vs, mNativeWindowId);
+			}
+		}
+	}
+	return changed;
+}
+
+void MS2VideoStream::updateWindowId(const std::shared_ptr<ParticipantDevice> &participantDevice,
+                                    const std::string &label,
+                                    bool isMe,
+                                    bool isScreenSharing,
+                                    bool isThumbnail) {
+	if (mNativeWindowId) {
+		windowId = mNativeWindowId;
+	} else if (isMe && isThumbnail) {// Preview thumbnail is always set by core.
+		windowId = getCCore()->preview_window_id;
+	} else if (!label.empty()) {
+		if (participantDevice) setNativeWindowId(participantDevice->getWindowId());
+		else setNativeWindowId(getMediaSession().getParticipantWindowId(label));
+	} else if (fallbackToCore && getCCore()->video_window_id) {
+		setNativeWindowId(getCCore()->video_window_id);
+	} else {
+		lWarning() << " Video stream " << mStream << " does not set native window id";
+	}
+	if (getCCore()->preview_window_id) {
+		// Only set for Main or me's thumbnail.
+		if (isMe && ((isScreenSharing && isThumbnail) || !isScreenSharing))
+			setNativePreviewWindowId(getCCore()->preview_window_id);
+		else setNativePreviewWindowId(NULL);
+	}
+}
+
 void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State targetState) {
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
@@ -296,7 +348,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	MSFilter *source = nullptr;
 	MSWebCam *cam = nullptr;
 	const MSWebCam *currentCam = video_stream_get_camera(mStream);
-	bool cameraChanged = currentCam && cam && (currentCam != cam);
+	bool cameraChanged = false;
 
 	video_stream_set_fallback_to_dummy_codec(
 	    mStream,
@@ -309,18 +361,77 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 		else video_preview_stop(getCCore()->previewstream);
 		getCCore()->previewstream = nullptr;
 	}
-
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
 	bool isThumbnail = (content == "thumbnail");
+	bool isMe = false;
+	bool isConferenceScreenSharing = false; // Used to check display mode for SendRecv stream (aka isMain())
+	MS2VideoStream *auxStream = nullptr;
 
 	const auto conference =
 	    (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
 	if (conference) {
 		video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, this);
+		auto screenSharingDevice = conference->getScreenSharingDevice();
+		if (screenSharingDevice) isConferenceScreenSharing = screenSharingDevice->getIsScreenSharing();
 	} else {
 		video_stream_set_csrc_changed_callback(mStream, nullptr, nullptr);
 	}
 
+	// Main output display mode depend of participant screen sharing state.
+	bool localScreenSharingChanged = false, displayModeChanged = false;
+	auto participantDevice = getMediaSession().getParticipantDevice(LinphoneStreamTypeVideo, label);
+	if (!participantDevice) {
+		if (conference) {
+			participantDevice = conference->getMe()->findDevice(LinphoneStreamTypeVideo, label, false);
+			// is Me. Q : Me is always local? (multi account)
+			isScreenSharing = (participantDevice && participantDevice->getIsScreenSharing());
+			isMe = !!participantDevice; // Just for safety. In normal case, if no device have been found in MediaSession
+			                            // then it should be in getMe().
+			if (isMe) {
+				// Get auxiliary stream
+				if (isThumbnail) { // Get Main Stream
+					auxStream = dynamic_cast<MS2VideoStream *>(getGroup().lookupMainStream(SalVideo));
+					if (auxStream) {
+						localScreenSharingChanged = auxStream->enableLocalScreenSharing(isScreenSharing);
+						if (!localScreenSharingChanged && isScreenSharing) {
+							auto auxVs = auxStream->getVideoSource();
+							auto vs = getVideoStream();
+							cameraChanged = auxVs && auxVs->getType() == VideoSourceDescriptor::Type::ScreenSharing &&
+							                vs->cam != auxStream->getVideoDevice(targetState);
+						}
+					}
+				} else { // Get Thumbnail Stream.
+					int idx = getMediaSession().getThumbnailStreamIdx();
+					if (idx >= 0) auxStream = dynamic_cast<MS2VideoStream *>(getGroup().getStream(idx));
+					localScreenSharingChanged = enableLocalScreenSharing(isScreenSharing);
+				}
+			}
+		}
+	} else isScreenSharing = participantDevice->getIsScreenSharing();
+
+	// Display mode detection
+	MSVideoDisplayMode displayPreviewMode;
+	// Preview is forced to BlackBars only if the stream display a screen sharing.
+	// (Reminder: for Me(), Thumbnail is camera)
+	if (isScreenSharing && isMe && !isThumbnail) displayPreviewMode = MSVideoDisplayBlackBars;
+	else if (!label.empty() && !isMain())
+		displayPreviewMode = stringToVideoDisplayMode(linphone_config_get_string(
+		    linphone_core_get_config(getCCore()), "video", "other_display_mode", "OccupyAllSpace"));
+	else
+		displayPreviewMode = stringToVideoDisplayMode(
+		    linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "main_display_mode", "Hybrid"));
+	// For normal display, BlackBars is forced on all case of screen sharing:
+	//- Me() is screen sharing.
+	//- The device is screen sharing and is coming from ActiveSpeaker.
+	//- The stream is ActiveSpeaker and is screen sharing.
+	MSVideoDisplayMode displayMode =
+	    (isScreenSharing && (isMe || !isThumbnail)) || (isMain() && isConferenceScreenSharing) ? MSVideoDisplayBlackBars
+	                                                                                           : displayPreviewMode;
+	displayModeChanged = (video_stream_get_display_mode(mStream) != displayMode) ||
+	                     (video_stream_get_preview_display_mode(mStream) != displayPreviewMode);
+
+	bool isStopped = getState() == Stopped && isScreenSharing && isMe;
+	if (!participantDevice) lInfo() << "TOTO No device found for label " << label;
 	if (basicChangesHandled) {
 		bool muted = mMuted;
 		if (getState() == Running) {
@@ -340,14 +451,29 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 			setNativeWindowId(label.empty() ? getMediaSession().getParticipantWindowId(label) : NULL);
 			video_stream_set_label(mStream, L_STRING_TO_C(label));
 		}
-		if (!cameraChanged) {
+		if (!cameraChanged && !localScreenSharingChanged &&
+		    !displayModeChanged) { // Check only if mStream.State == Stopped?
+			if (isMe) {
+				updateWindowId(participantDevice, label, isMe, contentIsThumbnail, false);
+			}
 			return;
 		}
 	}
 
-	if (cameraChanged) {
-		lInfo() << "Camera device changed from " << ms_web_cam_get_name(currentCam) << " to "
-		        << ms_web_cam_get_name(cam);
+	if (localScreenSharingChanged) { // We need to stop this stream and the thumbnail stream because of
+		                             // source filter concurrency, and
+		                             // display mode replumbing
+		lInfo() << "Screen sharing mode changed : ScreenSharing=" << isScreenSharing << ". Stopping current stream ("
+		        << mStream << ") and auxiliary stream(" << auxStream << ")";
+		stop();
+		if (auxStream) auxStream->stop();
+	} else if (displayModeChanged) {
+		lInfo() << "Display mode changed.. Stopping current stream (" << mStream << ")";
+		stop();
+	} else if (cameraChanged) {
+		if (currentCam && cam)
+			lInfo() << "Camera device changed from " << ms_web_cam_get_name(currentCam) << " to "
+			        << ms_web_cam_get_name(cam);
 		stop();
 	}
 
@@ -363,6 +489,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	RtpProfile *videoProfile = makeProfile(ctx.resultMediaDescription, vstream, &usedPt);
 	if (usedPt == -1) {
 		lError() << "No payload types accepted for video stream !";
+		// Screen sharing cannot take place if no payload has been negotiated
+		enableLocalScreenSharing(false);
 		stop();
 		return;
 	}
@@ -387,6 +515,12 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	video_stream_set_fps(mStream, linphone_core_get_preferred_framerate(getCCore()));
 	if (linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "nowebcam_uses_normal_fps", 0))
 		mStream->staticimage_webcam_fps_optimization = false;
+	if (isMain()) {
+		// Reset the main stream with the current state of screen sharing that could be lost on restart,
+		// before using window ID.
+		auto service = getGroup().getSharedService<ScreenSharingService>();
+		video_stream_enable_local_screen_sharing(mStream, service->localScreenSharingEnabled());
+	}
 
 	LinphoneVideoDefinition *max_vdef = nullptr;
 
@@ -422,19 +556,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 
-	if (mNativeWindowId) {
-		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	} else if (!label.empty()) {
-		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
-	} else if (getCCore()->video_window_id) {
-		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
-	} else {
-		lWarning() << " Video stream " << mStream << " does not set native window id";
-	}
+	updateWindowId(participantDevice, label, isMe, isScreenSharing, isThumbnail);
 
-	if (getCCore()->preview_window_id) {
-		video_stream_set_native_preview_window_id(mStream, getCCore()->preview_window_id);
-	}
 	video_stream_use_preview_video_window(mStream, getCCore()->use_preview_window);
 
 	MS2Stream::render(ctx, targetState);
@@ -458,6 +581,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 			dir = MediaStreamSendOnly;
 		}
 	} else {
+		// Screen sharing cannot take place on an inactive stream
+		enableLocalScreenSharing(false);
 		lWarning() << "Video stream is inactive";
 		/* Either inactive or incompatible with local capabilities */
 		stop();
@@ -478,16 +603,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	    mStream, !!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
 	video_stream_use_video_preset(
 	    mStream, linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
-
-	if (!label.empty() && dir != MediaStreamSendRecv)
-		video_stream_set_display_mode(
-		    mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video",
-		                                                                 "other_display_mode", "OccupyAllSpace")));
-	else
-		video_stream_set_display_mode(
-		    mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video",
-		                                                                 "main_display_mode", "Hybrid")));
-
+	video_stream_set_preview_display_mode(mStream, displayPreviewMode);
+	video_stream_set_display_mode(mStream, displayMode);
 	configure(ctx);
 
 	if (getCCore()->video_conf.reuse_preview_source && source) {
@@ -508,9 +625,22 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 				lWarning() << "Cannot create video RTP IO session";
 			}
 		} else {
-			io.input.type = (videoMixer == nullptr) ? MSResourceCamera : MSResourceVoid;
-			io.input.camera = cam;
-			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
+			// Set io from video source
+			if (!videoMixer) {
+				auto videoSource = getVideoSource();
+				io.output.type = MSResourceDefault;
+				if (videoSource && videoSource->getType() == VideoSourceDescriptor::Type::ScreenSharing) {
+					io.input.type = MSResourceScreenSharing;
+					io.input.screen_sharing = videoSource->getScreenSharingDesc();
+				} else {
+					io.input.type = MSResourceCamera;
+					io.input.camera = cam;
+				}
+			} else {
+				io.input.type = MSResourceVoid;
+				io.input.camera = cam;
+				io.output.type = MSResourceVoid;
+			}
 		}
 		if (ok) {
 			const auto &streamCfg = vstream.getActualConfiguration();
@@ -536,8 +666,18 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 					lError() << "[mix to all] this thumbnail stream " << mStream
 					         << " can not find itcStream with label " << label;
 				}
-				io.input.type = MSResourceItc;
-				io.input.itc = itcFilter;
+				// Set the source of the Thumbnail
+				auto itcVideoSource = vs->getVideoSource();
+				auto itcCamera = vs->getVideoDevice(targetState);
+				if (itcVideoSource && itcCamera &&
+				    itcVideoSource->getType() == VideoSourceDescriptor::Type::ScreenSharing) {
+					// In the case of screen sharing, we want to send the camera of vs if it exists.
+					io.input.type = MSResourceCamera;
+					io.input.camera = itcCamera;
+				} else {
+					io.input.type = MSResourceItc;
+					io.input.itc = itcFilter;
+				}
 				media_stream_set_max_network_bitrate(&mStream->ms, 80000);
 
 				MSVideoSize vsize = {160, 120};
@@ -698,7 +838,10 @@ void MS2VideoStream::setVideoSource(const std::shared_ptr<const VideoSourceDescr
 		         << "]";
 		return;
 	}
-
+	if (!descriptor) {
+		mVideoSourceDescriptor = nullptr;
+		return;
+	}
 	switch (descriptor->getType()) {
 		case VideoSourceDescriptor::Type::Call: {
 			const auto &call = descriptor->getCall();
@@ -738,9 +881,9 @@ void MS2VideoStream::setVideoSource(const std::shared_ptr<const VideoSourceDescr
 			MSFilter *imageFilter = ms_web_cam_create_reader(cam);
 
 			if (imageFilter == nullptr) {
-				lError()
-				    << "Could not create filter for image while attempting to change video source on MS2VideoStream ["
-				    << this << "]";
+				lError() << "Could not create filter for image while attempting to change video source on "
+				            "MS2VideoStream ["
+				         << this << "]";
 				return;
 			}
 
@@ -748,192 +891,183 @@ void MS2VideoStream::setVideoSource(const std::shared_ptr<const VideoSourceDescr
 
 			video_stream_change_source_filter(mStream, NULL, imageFilter, FALSE);
 		} break;
+		case VideoSourceDescriptor::Type::ScreenSharing: {
+			if (mStream->source) {
+				auto sourceDescriptor = descriptor->getScreenSharingDesc();
+				if (ms_filter_get_id(mStream->source) == MS_SCREEN_SHARING_ID) {
+					// The filter is not changing so the configuration should remains and there is no need to
+					// replumb. If replumbing is really needed, the filter should send a
+					// MS_FILTER_OUTPUT_FMT_CHANGED event.
+					ms_filter_call_method(mStream->source, MS_SCREEN_SHARING_SET_SOURCE_DESCRIPTOR,
+					                      (void *)&sourceDescriptor);
+				} else {
+					MSFactory *factory = linphone_core_get_ms_factory(getCCore());
+					MSFilter *screenSharingFilter = ms_factory_create_filter(factory, MS_SCREEN_SHARING_ID);
+					ms_filter_call_method(screenSharingFilter, MS_SCREEN_SHARING_SET_SOURCE_DESCRIPTOR,
+					                      (void *)&sourceDescriptor);
+					video_stream_change_source_filter(mStream, NULL, screenSharingFilter, FALSE);
+				}
+			}
+		} break;
 		case VideoSourceDescriptor::Type::Unknown:
 			lError() << "Cannot change video source with an unknown video source type";
 			mVideoSourceDescriptor = nullptr;
 			return;
 	}
 
+	video_stream_forward_source_stream(mStream, source_stream->mStream);
+}
+break;
+case VideoSourceDescriptor::Type::Camera: {
+	const auto &id = descriptor->getCameraId();
+
+	MSFactory *factory = linphone_core_get_ms_factory(getCCore());
+	MSWebCam *cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(factory), id.c_str());
+
+	if (cam == nullptr) {
+		lError() << "Could not find camera id \"" << id
+		         << "\" while attempting to change video source on MS2VideoStream [" << this << "]";
+		return;
+	}
+
+	video_stream_change_camera(mStream, cam);
+} break;
+case VideoSourceDescriptor::Type::Image: {
+	const auto &imagePath = descriptor->getImage();
+
+	MSFactory *factory = linphone_core_get_ms_factory(getCCore());
+	MSWebCam *cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(factory), "StaticImage: Static picture");
+	MSFilter *imageFilter = ms_web_cam_create_reader(cam);
+
+	if (imageFilter == nullptr) {
+		lError() << "Could not create filter for image while attempting to change video source on "
+		            "MS2VideoStream ["
+		         << this << "]";
+		return;
+	}
+
+	ms_filter_call_method(imageFilter, MS_STATIC_IMAGE_SET_IMAGE, (void *)(imagePath.c_str()));
+
+	video_stream_change_source_filter(mStream, NULL, imageFilter, FALSE);
+} break;
+case VideoSourceDescriptor::Type::ScreenSharing: {
+	if (mStream->source) {
+		if (ms_filter_get_id(mStream->source) == MS_SCREEN_SHARING_ID) {
+			// The filter is not changing so the configuration should remains and there is no need to replumb.
+			// If replumbing is really needed, the filter should send a MS_FILTER_OUTPUT_FMT_CHANGED event.
+			ms_filter_call_method(mStream->source, MS_VIDEO_CAPTURE_SET_SOURCE_DESCRIPTOR,
+			                      descriptor->createScreenSharingDesc());
+		} else {
+			MSFactory *factory = linphone_core_get_ms_factory(getCCore());
+			MSFilter *screenSharingFilter = ms_factory_create_filter(factory, MS_SCREEN_SHARING_ID);
+			ms_filter_call_method(screenSharingFilter, MS_VIDEO_CAPTURE_SET_SOURCE_DESCRIPTOR,
+			                      descriptor->createScreenSharingDesc());
+			video_stream_change_source_filter(mStream, NULL, screenSharingFilter, FALSE);
+		}
+	}
+} break;
+case VideoSourceDescriptor::Type::Unknown:
+	lError() << "Cannot change video source with an unknown video source type";
+	mVideoSourceDescriptor = nullptr;
+	return;
+	}
 	mVideoSourceDescriptor = descriptor;
-}
+	}
 
-std::shared_ptr<const VideoSourceDescriptor> MS2VideoStream::getVideoSource() const {
-	return mVideoSourceDescriptor;
-}
+	std::shared_ptr<const VideoSourceDescriptor> MS2VideoStream::getVideoSource() const {
+		return mVideoSourceDescriptor;
+	}
 
-MS2VideoStream::~MS2VideoStream() {
-	if (mStream) video_stream_stop(mStream);
-}
+	MS2VideoStream::~MS2VideoStream() {
+		if (mStream) video_stream_stop(mStream);
+	}
 
-/*
- * Here comes the utility class that implements usual controls on top of mediastreamer2's VideoStream.
- */
 
-MS2VideoControl::MS2VideoControl(Core &core) : mCore(core) {
-}
+	/*
+	 * Here comes the utility class that implements usual controls on top of mediastreamer2's VideoStream.
+	 */
 
-bool MS2VideoControl::cameraEnabled() const {
-	return mCameraEnabled;
-}
+	MS2VideoControl::MS2VideoControl(Core &core) : mCore(core) {
+	}
 
+// Check [-- Window ID distribution for screen sharing ---] table in MediaSession::getNativeVideoWindowId
 void *MS2VideoControl::createNativeWindowId() const {
 	VideoStream *vs = getVideoStream();
-	return vs ? video_stream_create_native_window_id(vs) : nullptr;
+	return vs ? video_stream_local_screen_sharing_enabled(vs) ? video_stream_create_native_preview_window_id(vs)
+	                                                          : video_stream_create_native_window_id(vs)
+	          : nullptr;
 }
 
 void MS2VideoControl::setNativeWindowId(void *w) {
 	VideoStream *vs = getVideoStream();
 	mNativeWindowId = w;
-	if (vs) video_stream_set_native_window_id(vs, w);
-}
+	if (vs) {
+		if (video_stream_local_screen_sharing_enabled(vs)) {
+			video_stream_set_native_preview_window_id(vs, w);
+		} else {
+			s->fps = 0.0;
+			s->width = s->height = 0;
+		}
+	}
 
-void *MS2VideoControl::getNativeWindowId() const {
-	VideoStream *vs = getVideoStream();
-	if (mNativeWindowId) {
-		return mNativeWindowId;
+	void MS2VideoControl::getSendStats(VideoStats *s) const {
+		VideoStream *vs = getVideoStream();
+		if (vs) {
+			s->fps = video_stream_get_sent_framerate(vs);
+			MSVideoSize vsize = video_stream_get_sent_video_size(vs);
+			s->width = vsize.width;
+			s->height = vsize.height;
+		} else {
+			s->fps = 0.0;
+			s->width = s->height = 0;
+		}
 	}
 	/* It was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only) */
-	return vs ? video_stream_get_native_window_id(vs) : nullptr;
+	return vs ? video_stream_local_screen_sharing_enabled(vs) ? video_stream_get_native_preview_window_id(vs)
+	                                                          : video_stream_get_native_window_id(vs)
+	          : nullptr;
 }
 
+// Preview API should not be call for Main stream if screen sharing is activated.
+// MediaSession knows what stream to call:
+// In this case, the check on 'video_stream_local_screen_sharing_enabled' is enough to know what preview the stream is
+// using.
 void *MS2VideoControl::createNativePreviewWindowId() const {
 	VideoStream *vs = getVideoStream();
-	return vs ? video_stream_create_native_preview_window_id(vs) : nullptr;
+	if (vs) lInfo() << "Create " << this << " / " << vs << " -- " << vs->output2;
+	return vs && !video_stream_local_screen_sharing_enabled(vs) ? video_stream_create_native_preview_window_id(vs)
+	                                                            : nullptr;
 }
 
 void MS2VideoControl::setNativePreviewWindowId(void *w) {
 	VideoStream *vs = getVideoStream();
 	mNativePreviewWindowId = w;
-	if (vs) video_stream_set_native_preview_window_id(vs, w);
-}
+	if (vs) {
+		lInfo() << this << " / " << vs->output2 << " = " << mNativePreviewWindowId;
+		if (!video_stream_local_screen_sharing_enabled(vs)) video_stream_set_native_preview_window_id(vs, w);
+	}
 
-void *MS2VideoControl::getNativePreviewWindowId() const {
-	VideoStream *vs = getVideoStream();
-	if (mNativePreviewWindowId) {
-		return mNativePreviewWindowId;
+	void MS2VideoControl::sendVfuRequest() {
+		VideoStream *vs = getVideoStream();
+		if (vs) video_stream_send_fir(vs);
 	}
 	/* It was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only) */
-	return vs ? video_stream_get_native_preview_window_id(vs) : nullptr;
+	return vs && !video_stream_local_screen_sharing_enabled(vs) ? video_stream_get_native_preview_window_id(vs)
+	                                                            : nullptr;
 }
 
-void MS2VideoControl::requestNotifyNextVideoFrameDecoded() {
-	VideoStream *vs = getVideoStream();
-	if (vs && vs->ms.decoder)
-		ms_filter_call_method_noarg(vs->ms.decoder, MS_VIDEO_DECODER_RESET_FIRST_IMAGE_NOTIFICATION);
-}
-
-void MS2VideoControl::sSnapshotTakenCb(void *userdata, MSFilter *, unsigned int id, void *arg) {
-	MS2VideoControl *d = (MS2VideoControl *)userdata;
-	if (id == MS_JPEG_WRITER_SNAPSHOT_TAKEN) {
-		MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
-		d->onSnapshotTaken(data->filePath);
+	void MS2VideoControl::zoomVideo(float zoomFactor, float cx, float cy) {
+		VideoStream *vs = getVideoStream();
+		if (vs && vs->output) {
+			if (zoomFactor < 1) zoomFactor = 1;
+			float halfsize = 0.5f * 1.0f / zoomFactor;
+			if ((cx - halfsize) < 0) cx = 0 + halfsize;
+			if ((cx + halfsize) > 1) cx = 1 - halfsize;
+			if ((cy - halfsize) < 0) cy = 0 + halfsize;
+			if ((cy + halfsize) > 1) cy = 1 - halfsize;
+			float zoom[3] = {zoomFactor, cx, cy};
+			ms_filter_call_method(vs->output, MS_VIDEO_DISPLAY_ZOOM, &zoom);
+		} else lWarning() << "Could not apply zoom: video output wasn't activated";
 	}
-}
 
-int MS2VideoControl::takePreviewSnapshot(const string &file) {
-	VideoStream *vs = getVideoStream();
-	if (vs && vs->local_jpegwriter) {
-		ms_filter_clear_notify_callback(vs->local_jpegwriter);
-		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(vs->local_jpegwriter, sSnapshotTakenCb, this, FALSE);
-		return ms_filter_call_method(vs->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
-	}
-	lWarning() << "Cannot take local snapshot: no currently running video stream on this call";
-	return -1;
-}
-
-int MS2VideoControl::takeVideoSnapshot(const string &file) {
-	VideoStream *vs = getVideoStream();
-	if (vs && vs->jpegwriter) {
-		ms_filter_clear_notify_callback(vs->jpegwriter);
-		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(vs->jpegwriter, sSnapshotTakenCb, this, FALSE);
-		return ms_filter_call_method(vs->jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
-	}
-	lWarning() << "Cannot take snapshot: no currently running video stream on this call";
-	return -1;
-}
-
-void MS2VideoControl::parametersChanged() {
-	VideoStream *vs = getVideoStream();
-	if (!vs) return;
-	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(mCore.getCCore());
-	MSVideoSize vsize;
-	vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
-	vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
-	video_stream_set_sent_video_size(vs, vsize);
-	video_stream_set_fps(vs, linphone_core_get_preferred_framerate(mCore.getCCore()));
-	if (mCameraEnabled && (vs->cam != mCore.getCCore()->video_conf.device))
-		video_stream_change_camera(vs, mCore.getCCore()->video_conf.device);
-	else video_stream_update_video_params(vs);
-}
-
-void MS2VideoControl::enableCamera(bool value) {
-	VideoStream *vs = getVideoStream();
-	mCameraEnabled = value;
-	if (!vs) return;
-	MSWebCam *videoDevice = getVideoDevice();
-	if (video_stream_started(vs) && (video_stream_get_camera(vs) != videoDevice)) {
-		string currentCam = video_stream_get_camera(vs) ? ms_web_cam_get_name(video_stream_get_camera(vs)) : "NULL";
-		string newCam = videoDevice ? ms_web_cam_get_name(videoDevice) : "NULL";
-		lInfo() << "Switching video cam from [" << currentCam << "] to [" << newCam << "]";
-		video_stream_change_camera(vs, videoDevice);
-	}
-}
-
-void MS2VideoControl::setDeviceRotation(int rotation) {
-	VideoStream *vs = getVideoStream();
-	if (vs) video_stream_set_device_rotation(vs, rotation);
-}
-
-void MS2VideoControl::getRecvStats(VideoStats *s) const {
-	VideoStream *vs = getVideoStream();
-	if (vs) {
-		s->fps = video_stream_get_received_framerate(vs);
-		MSVideoSize vsize = video_stream_get_received_video_size(vs);
-		s->width = vsize.width;
-		s->height = vsize.height;
-	} else {
-		s->fps = 0.0;
-		s->width = s->height = 0;
-	}
-}
-
-void MS2VideoControl::getSendStats(VideoStats *s) const {
-	VideoStream *vs = getVideoStream();
-	if (vs) {
-		s->fps = video_stream_get_sent_framerate(vs);
-		MSVideoSize vsize = video_stream_get_sent_video_size(vs);
-		s->width = vsize.width;
-		s->height = vsize.height;
-	} else {
-		s->fps = 0.0;
-		s->width = s->height = 0;
-	}
-}
-
-void MS2VideoControl::sendVfu() {
-	VideoStream *vs = getVideoStream();
-	if (vs) video_stream_send_vfu(vs);
-}
-
-void MS2VideoControl::sendVfuRequest() {
-	VideoStream *vs = getVideoStream();
-	if (vs) video_stream_send_fir(vs);
-}
-
-void MS2VideoControl::zoomVideo(float zoomFactor, float cx, float cy) {
-	VideoStream *vs = getVideoStream();
-	if (vs && vs->output) {
-		if (zoomFactor < 1) zoomFactor = 1;
-		float halfsize = 0.5f * 1.0f / zoomFactor;
-		if ((cx - halfsize) < 0) cx = 0 + halfsize;
-		if ((cx + halfsize) > 1) cx = 1 - halfsize;
-		if ((cy - halfsize) < 0) cy = 0 + halfsize;
-		if ((cy + halfsize) > 1) cy = 1 - halfsize;
-		float zoom[3] = {zoomFactor, cx, cy};
-		ms_filter_call_method(vs->output, MS_VIDEO_DISPLAY_ZOOM, &zoom);
-	} else lWarning() << "Could not apply zoom: video output wasn't activated";
-}
-
-LINPHONE_END_NAMESPACE
+	LINPHONE_END_NAMESPACE

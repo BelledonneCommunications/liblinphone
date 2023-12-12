@@ -489,8 +489,10 @@ if __name__ == '__main__':
 		'linphone_core_get_new_message_from_callid',
 		'linphone_core_get_new_chat_room_from_conf_addr',
 		'linphone_core_set_native_preview_window_id',
-		'linphone_core_set_native_video_window_id'
+		'linphone_core_set_native_video_window_id''
+		'linphone_core_set_video_capture_window_id'
 	]
+	#	'linphone_core_set_video_capture_window_id
 	parser.classBl += 'LinphoneCoreVTable'
 	parser.enable_enum_relocations = False # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)
 	parser.parse_all()

@@ -197,6 +197,7 @@ end:
 
 #endif
 
+
 test_t video_tests[] = {
     TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
     TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),

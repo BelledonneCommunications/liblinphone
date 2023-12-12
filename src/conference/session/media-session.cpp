@@ -4873,16 +4873,35 @@ void MediaSession::zoomVideo(float zoomFactor, float cx, float cy) {
 // -----------------------------------------------------------------------------
 
 bool MediaSession::cameraEnabled() const {
+#ifdef VIDEO_ENABLED
 	L_D();
-	VideoControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (i) return i->cameraEnabled();
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
+	if (iface) {
+		auto vs = iface->getVideoStream();
+		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
+			auto streamIdx = getThumbnailStreamIdx();
+			if (streamIdx >= 0) iface = dynamic_cast<MS2VideoControl *>(d->getStreamsGroup().getStream(streamIdx));
+		}
+	}
+	if (iface) return iface->cameraEnabled();
+#endif
 	return false;
 }
 
 void MediaSession::enableCamera(bool value) {
+#ifdef VIDEO_ENABLED
 	L_D();
-	VideoControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (i) i->enableCamera(value);
+	const_cast<MediaSessionParams *>(getMediaParams())->enableCamera(value);
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
+	if (iface) {
+		auto vs = iface->getVideoStream();
+		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
+			auto streamIdx = getThumbnailStreamIdx();
+			if (streamIdx >= 0) iface = dynamic_cast<MS2VideoControl *>(d->getStreamsGroup().getStream(streamIdx));
+		}
+	}
+	if (iface) iface->enableCamera(value);
+#endif
 }
 
 bool MediaSession::echoCancellationEnabled() const {
@@ -4995,11 +5014,44 @@ void MediaSession::setSpeakerVolumeGain(float value) {
 	else lError() << "Could not set playback volume: no audio stream";
 }
 
+#ifdef VIDEO_ENABLED
 static bool_t compareFunc(Stream *s, const std::string &label) {
 	return s->getType() == SalVideo && label.compare(s->getLabel()) == 0;
 };
+#endif
 
-void *MediaSession::getNativeVideoWindowId(const std::string label) const {
+/**
+ * [-- Window ID distribution for screen sharing ---]
+ *
+ * Stream       Display !SS     SS_P      SS_me
+ * -------------------------------------------------
+ * Main :       Output  N       N       -
+ *              Output2 P       P       N
+ *
+ * Thumbnail:   Output2 -       -       P
+ *
+ * Recv:        Output  PD_N    PD_N    PD_N
+ * -------------------------------------------------
+ *  N = Native
+ *  P = Preview
+ *  SS_P = Participant is sharing a screen
+ *  SS_me = Me(local) is sharing a screen
+ *  SS = SS_P + SS_me
+ *  PD_N = Native for Participant Device
+ *
+ *Notes:
+ *  - Updates only occured if Me on local is sharing a screen.
+ *  - Each updates must clean previous window ID to avoid concurrency.
+ *
+ * Implementation remarks:
+ *  - MSVideoControl controls the changes of N/P inside a stream = enableLocalScreenSharing() +
+ *video_stream_local_screen_sharing_enabled()
+ *  - MediaSession controls the call between Main and Thumbnail = set/get/create_window_id + render()
+ */
+
+void *MediaSession::getNativeVideoWindowId(BCTBX_UNUSED(const std::string label),
+                                           BCTBX_UNUSED(const bool isThumbnail)) const {
+#ifdef VIDEO_ENABLED
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
 		if (label.empty()) {
 			auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
@@ -5021,10 +5073,12 @@ void *MediaSession::getNativeVideoWindowId(const std::string label) const {
 			}
 		}
 	}
+#endif
 	return nullptr;
 }
 
-void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
+void MediaSession::setNativeVideoWindowId(BCTBX_UNUSED(void *id), BCTBX_UNUSED(const std::string label)) {
+#ifdef VIDEO_ENABLED
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
 		if (label.empty()) {
 			auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
@@ -5052,35 +5106,64 @@ void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 			}
 		}
 	}
+#endif
 }
 
-void MediaSession::setNativePreviewWindowId(void *id) {
+void MediaSession::setNativePreviewWindowId(BCTBX_UNUSED(void *id)) {
+#ifdef VIDEO_ENABLED
 	L_D();
-	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
 	if (iface) {
-		iface->setNativePreviewWindowId(id);
+		auto vs = iface->getVideoStream();
+		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
+			auto streamIdx = getThumbnailStreamIdx();
+			if (streamIdx < 0) return;
+			auto videostream = dynamic_cast<VideoControlInterface *>(d->getStreamsGroup().getStream(streamIdx));
+			videostream->setNativePreviewWindowId(id);
+
+		} else iface->setNativePreviewWindowId(id);
 	}
+#endif
 }
 
 void *MediaSession::getNativePreviewVideoWindowId() const {
+#ifdef VIDEO_ENABLED
 	L_D();
-	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
 	if (iface) {
-		return iface->getNativePreviewWindowId();
+		auto vs = iface->getVideoStream();
+		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
+			auto streamIdx = getThumbnailStreamIdx();
+			if (streamIdx < 0) return nullptr;
+			auto videostream = dynamic_cast<VideoControlInterface *>(d->getStreamsGroup().getStream(streamIdx));
+			return videostream->getNativePreviewWindowId();
+
+		} else return iface->getNativePreviewWindowId();
 	}
+#endif
 	return nullptr;
 }
 
 void *MediaSession::createNativePreviewVideoWindowId() const {
+#ifdef VIDEO_ENABLED
 	L_D();
-	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<MS2VideoControl>(SalVideo);
 	if (iface) {
-		return iface->createNativePreviewWindowId();
+		auto vs = iface->getVideoStream();
+		if (vs && video_stream_local_screen_sharing_enabled(vs)) {
+			int streamIdx = getThumbnailStreamIdx();
+			if (streamIdx < 0) return nullptr;
+			auto videostream = dynamic_cast<MS2VideoControl *>(d->getStreamsGroup().getStream(streamIdx));
+			return videostream->createNativePreviewWindowId();
+
+		} else return iface->createNativePreviewWindowId();
 	}
+#endif
 	return nullptr;
 }
 
-void *MediaSession::createNativeVideoWindowId(const std::string label) const {
+void *MediaSession::createNativeVideoWindowId(BCTBX_UNUSED(const std::string label)) const {
+#ifdef VIDEO_ENABLED
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
 		if (label.empty()) {
 			auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
@@ -5102,6 +5185,7 @@ void *MediaSession::createNativeVideoWindowId(const std::string label) const {
 			}
 		}
 	}
+#endif
 	return nullptr;
 }
 
@@ -5502,5 +5586,14 @@ uint32_t MediaSession::getSsrc(LinphoneStreamType type) const {
 void MediaSession::setEkt(const MSEKTParametersSet *ekt_params) const {
 	getStreamsGroup().setEkt(ekt_params);
 }
-
+/*
+void MediaSession::startScreenSharing(const std::shared_ptr<const VideoSourceDescriptor> &descriptor) {
+#ifdef VIDEO_ENABLED
+    MS2VideoStream *stream = getStreamsGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
+    stream->setVideoSource(descriptor);
+#else
+    lError() << "Cannot start the screen sharing as video support is not enabled";
+#endif
+}
+*/
 LINPHONE_END_NAMESPACE

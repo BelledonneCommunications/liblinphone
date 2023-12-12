@@ -7629,22 +7629,29 @@ MSVideoSize linphone_core_get_current_preview_video_size(const LinphoneCore *lc)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-LinphoneVideoDefinition *linphone_core_get_current_preview_video_definition(const LinphoneCore *lc) {
+LinphoneVideoDefinition *linphone_core_get_current_preview_video_definition(LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
 	MSVideoSize vsize = {0};
 	if (lc->previewstream) {
 		vsize = video_preview_get_current_size(lc->previewstream);
+		LinphoneVideoDefinition *definition = linphone_factory_find_supported_video_definition_2(
+		    linphone_factory_get(), (unsigned int)vsize.width, (unsigned int)vsize.height, true);
+		if (definition) return definition;
 	}
-	return linphone_factory_find_supported_video_definition(linphone_factory_get(), (unsigned int)vsize.width,
-	                                                        (unsigned int)vsize.height);
+	// Store in cache the 0x0 definition or the custom format.
+	// A cache is used to have the same behavior as linphone_factory_find_supported_video_definition that return
+	// a definition from a local list from Factory.
+	if (lc->preview_video_definition_cache) {
+		linphone_video_definition_unref(lc->preview_video_definition_cache);
+	}
+	lc->preview_video_definition_cache = linphone_factory_create_video_definition(
+	    linphone_factory_get(), (unsigned int)vsize.width, (unsigned int)vsize.height);
+	return lc->preview_video_definition_cache;
 #else
 	ms_error("Video support is disabled");
 	return NULL;
 #endif
 }
-#ifndef _MSC_VER
-#pragma GCC diagnostic pop
-#endif // _MSC_VER
 
 void linphone_core_set_preview_video_size_by_name(LinphoneCore *lc, const char *name) {
 	MSVideoSize vsize = video_size_get_by_name(name);
@@ -8047,6 +8054,10 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	if (lc->zrtp_secrets_cache != NULL) {
 		ms_free(lc->zrtp_secrets_cache);
 		lc->zrtp_secrets_cache = NULL;
+	}
+	if (lc->preview_video_definition_cache != NULL) {
+		linphone_video_definition_unref(lc->preview_video_definition_cache);
+		lc->preview_video_definition_cache = NULL;
 	}
 
 	if (lc->user_certificates_path != NULL) {

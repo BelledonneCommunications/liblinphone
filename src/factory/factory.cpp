@@ -367,6 +367,11 @@ const bctbx_list_t *Factory::getRecommendedVideoDefinitions() const {
 }
 
 LinphoneVideoDefinition *Factory::findSupportedVideoDefinition(unsigned int width, unsigned int height) const {
+	return findSupportedVideoDefinition(width, height, false);
+}
+
+LinphoneVideoDefinition *
+Factory::findSupportedVideoDefinition(unsigned int width, unsigned int height, bool silent) const {
 	const bctbx_list_t *item;
 	const bctbx_list_t *supported = getSupportedVideoDefinitions();
 	LinphoneVideoDefinition *searched_vdef = linphone_video_definition_new(width, height, NULL);
@@ -381,7 +386,7 @@ LinphoneVideoDefinition *Factory::findSupportedVideoDefinition(unsigned int widt
 	}
 	linphone_video_definition_unref(searched_vdef);
 
-	if (!found) {
+	if (!silent && !found) {
 		ms_warning("Couldn't find supported video definition for %ux%u", width, height);
 	}
 	return found;

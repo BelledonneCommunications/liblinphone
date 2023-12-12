@@ -124,6 +124,44 @@ LINPHONE_PUBLIC void linphone_video_source_descriptor_set_image(LinphoneVideoSou
                                                                 const char *image_path);
 
 /**
+ * Gets the screen sharing type of a #LinphoneVideoSourceDescriptor.
+ * @param descriptor The #LinphoneVideoSourceDescriptor object. @notnil
+ * @return The #LinphoneVideoSourceScreenSharing Type corresponding to this video source descriptor.
+ */
+LINPHONE_PUBLIC LinphoneVideoSourceScreenSharingType
+linphone_video_source_descriptor_get_screen_sharing_type(const LinphoneVideoSourceDescriptor *descriptor);
+
+/**
+ * Gets the screen sharing description of a #LinphoneVideoSourceDescriptor.
+ * @param descriptor The #LinphoneVideoSourceDescriptor object. @notnil
+ * @return The native screen sharing description @maybenil
+ */
+LINPHONE_PUBLIC void *
+linphone_video_source_descriptor_get_screen_sharing(const LinphoneVideoSourceDescriptor *descriptor);
+
+/**
+ * Sets the source of a #LinphoneVideoSourceDescriptor as screen sharing. native_data depends of the type and the
+ * current platform:
+ * 1. #LinphoneVideoSourceScreenSharingDisplay
+ * - Linux : <uintptr_t> The index of the screen ordered by XineramaQueryScreens.
+ * - Mac : <CGDirectDisplayID> The display identification that can be retrieved from SCShareableContent.
+ * - Windows : <uintptr_t> The index of the screen ordered by IDXGIAdapter->EnumOutputs.
+ * 2. #LinphoneVideoSourceScreenSharingWindow
+ * - Linux : <Window> The Window object that can be retrieved from XQueryPointer.
+ * - Mac : <CGWindowID> The window identification that can be retrieved from NSEvent.
+ * - Windows : <HWND> The window handle that can be retrived from WindowFromPoint.
+ * 3. #LinphoneVideoSourceScreenSharingArea
+ * - not yet supported.
+ *
+ * @param descriptor The #LinphoneVideoSourceDescriptor object. @notnil
+ * @param type The #LinphoneVideoSourceScreenSharingType type of native_data. @notnil
+ * @param native_data The screen handle that will be used as a video source. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_video_source_descriptor_set_screen_sharing(LinphoneVideoSourceDescriptor *descriptor,
+                                                                         LinphoneVideoSourceScreenSharingType type,
+                                                                         void *native_data);
+
+/**
  * @}
  */
 

@@ -1352,5 +1352,17 @@ void Call::setVideoSource(std::shared_ptr<const VideoSourceDescriptor> descripto
 std::shared_ptr<const VideoSourceDescriptor> Call::getVideoSource() const {
 	return getMediaSession()->getVideoSource();
 }
+/*
+void Call::startScreenSharing(std::shared_ptr<const VideoSourceDescriptor> descriptor) {
+    // return static_pointer_cast<const MediaSession>(getActiveSession())->
+    // setVideoSource(descriptor);
+}
 
+void Call::stopScreenSharing() {
+}
+
+bool Call::isRunningScreenSharing() const {
+    return true;
+}
+*/
 LINPHONE_END_NAMESPACE

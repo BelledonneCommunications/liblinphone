@@ -31,9 +31,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 VideoSourceDescriptor::VideoSourceDescriptor(const VideoSourceDescriptor &other) : HybridObject(other) {
 	mType = other.mType;
+	mScreenSharingType = other.mScreenSharingType;
 	mCall = other.mCall;
 	mCameraId = other.mCameraId;
 	mImagePath = other.mImagePath;
+	mNativeData = other.mNativeData;
 }
 
 VideoSourceDescriptor *VideoSourceDescriptor::clone() const {
@@ -44,6 +46,10 @@ VideoSourceDescriptor *VideoSourceDescriptor::clone() const {
 
 VideoSourceDescriptor::Type VideoSourceDescriptor::getType() const {
 	return mType;
+}
+
+VideoSourceDescriptor::ScreenSharingType VideoSourceDescriptor::getScreenSharingType() const {
+	return mScreenSharingType;
 }
 
 shared_ptr<Call> VideoSourceDescriptor::getCall() const {
@@ -82,6 +88,63 @@ void VideoSourceDescriptor::setImage(std::string imagePath) {
 
 	mCall.reset();
 	mCameraId = "";
+}
+
+void *VideoSourceDescriptor::getScreenSharing() const {
+	return mNativeData;
+}
+
+void VideoSourceDescriptor::setScreenSharing(VideoSourceDescriptor::ScreenSharingType type, void *nativeData) {
+	mScreenSharingType = type;
+	mType = VideoSourceDescriptor::Type::ScreenSharing;
+	mNativeData = nativeData;
+
+	mCall.reset();
+	mCameraId = "";
+	mImagePath = "";
+}
+
+MSScreenSharingDesc VideoSourceDescriptor::getScreenSharingDesc() const {
+	MSScreenSharingType type = MS_SCREEN_SHARING_DISPLAY;
+	switch (mScreenSharingType) {
+		case VideoSourceDescriptor::ScreenSharingType::Display:
+			type = MS_SCREEN_SHARING_DISPLAY;
+			break;
+		case VideoSourceDescriptor::ScreenSharingType::Window:
+			type = MS_SCREEN_SHARING_WINDOW;
+			break;
+		case VideoSourceDescriptor::ScreenSharingType::Area:
+			type = MS_SCREEN_SHARING_AREA;
+			break;
+	}
+	MSScreenSharingDesc description;
+	description.type = type;
+	description.native_data = getScreenSharing();
+	return description;
+}
+
+bool VideoSourceDescriptor::operator==(const VideoSourceDescriptor &descriptor) const {
+	if (mType != descriptor.getType()) return false;
+	switch (mType) {
+		case Type::Call:
+			return mCall.lock() != descriptor.getCall();
+			break;
+		case Type::Camera:
+			return mCameraId == descriptor.getCameraId();
+		case Type::Image:
+			return mImagePath == descriptor.getImage();
+		case Type::ScreenSharing:
+			return mScreenSharingType == descriptor.getScreenSharingType() &&
+			       mNativeData == descriptor.getScreenSharing();
+		case Type::Unknown:
+			return mCameraId == descriptor.getCameraId() && mImagePath == descriptor.getImage() &&
+			       mScreenSharingType == descriptor.getScreenSharingType() &&
+			       mNativeData == descriptor.getScreenSharing();
+	}
+}
+
+bool VideoSourceDescriptor::operator!=(const VideoSourceDescriptor &descriptor) const {
+	return !(*this == descriptor);
 }
 
 LINPHONE_END_NAMESPACE
