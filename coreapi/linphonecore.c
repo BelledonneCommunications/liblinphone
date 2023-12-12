@@ -4662,12 +4662,12 @@ LinphoneAccount *linphone_core_lookup_account_by_conference_factory_strict(Linph
 	for (elem = linphone_core_get_account_list(lc); elem != NULL; elem = elem->next) {
 		LinphoneAccount *acc = (LinphoneAccount *)elem->data;
 		const LinphoneAccountParams *params = linphone_account_get_params(acc);
-		const LinphoneAddress *audio_video_conference_factory =
-		    linphone_account_params_get_audio_video_conference_factory_address(params);
+		const Address *audio_video_conference_factory =
+		    bellesip::toCpp<Address>(linphone_account_params_get_audio_video_conference_factory_address(params));
 		const char *conference_factory_str = linphone_account_params_get_conference_factory_uri(params);
-		LinphoneAddress *conference_factory = linphone_address_new(conference_factory_str);
-		if ((audio_video_conference_factory && linphone_address_weak_equal(uri, audio_video_conference_factory)) ||
-		    (conference_factory && linphone_address_weak_equal(uri, conference_factory))) {
+		Address conference_factory(L_C_TO_STRING(conference_factory_str));
+		if ((audio_video_conference_factory && Address::toCpp(uri)->weakEqual(*audio_video_conference_factory)) ||
+		    (conference_factory.isValid() && Address::toCpp(uri)->weakEqual(conference_factory))) {
 			if (linphone_account_get_state(acc) == LinphoneRegistrationOk) {
 				found_acc = acc;
 				break;
@@ -4676,9 +4676,6 @@ LinphoneAccount *linphone_core_lookup_account_by_conference_factory_strict(Linph
 			} else if (!found_noreg_acc) {
 				found_noreg_acc = acc;
 			}
-		}
-		if (conference_factory) {
-			linphone_address_unref(conference_factory);
 		}
 	}
 	if (!found_acc && found_reg_acc) found_acc = found_reg_acc;

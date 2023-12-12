@@ -1317,7 +1317,6 @@ void CallSession::configure(LinphoneCallDir direction,
 		op->enableCnxIpTo0000IfSendOnly(!!linphone_config_get_default_int(linphone_core_get_config(core), "sip",
 		                                                                  "cnx_ip_to_0000_if_sendonly_enabled", 0));
 		d->log->setCallId(op->getCallId()); /* Must be known at that time */
-		getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 	}
 
 	if (direction == LinphoneCallOutgoing) {
@@ -1329,6 +1328,9 @@ void CallSession::configure(LinphoneCallDir direction,
 	}
 
 	assignAccount(account);
+	if (direction == LinphoneCallIncoming) {
+		getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
+	}
 }
 
 void CallSession::configure(LinphoneCallDir direction, const string &callid) {
@@ -1351,12 +1353,35 @@ void CallSession::assignAccount(const std::shared_ptr<Account> &account) {
 		const LinphoneAddress *fromAddr = d->log->getFromAddress()->toC();
 		const auto &core = getCore()->getCCore();
 		const auto &direction = d->log->getDirection();
-		auto cAccount = (direction == LinphoneCallIncoming)
-		                    ? linphone_core_lookup_account_by_identity_strict(core, toAddr)
-		                    : linphone_core_lookup_account_by_identity(core, fromAddr);
-		if (!cAccount && linphone_core_conference_server_enabled(core)) {
-			// In the case of a server, clients may call the conference factory in order to create a conference
-			cAccount = linphone_core_lookup_account_by_conference_factory_strict(core, toAddr);
+		LinphoneAccount *cAccount = nullptr;
+
+		if (direction == LinphoneCallIncoming) {
+			if (linphone_core_conference_server_enabled(core)) {
+				// In the case of a server, clients may call the conference factory in order to create a conference
+				cAccount = linphone_core_lookup_account_by_conference_factory_strict(core, toAddr);
+			}
+			if (!cAccount) {
+				cAccount = linphone_core_lookup_account_by_identity_strict(core, toAddr);
+				if (!cAccount) {
+					string toUser = d->log->getToAddress()->getUsername();
+					if (!toUser.empty()) {
+						cAccount = linphone_core_lookup_known_account_2(core, fromAddr, FALSE);
+						if (cAccount &&
+						    Account::toCpp(cAccount)->getAccountParams()->getIdentityAddress()->getUsername() ==
+						        toUser) {
+							// We have a match for the from domain and the to username.
+							// We may face an IPBPX that sets the To domain to our IP address, which is
+							// a terribly stupid idea.
+							lWarning() << "Detecting to header probably ill-choosen. Applying workaround to have this "
+							              "call assigned to a known account.";
+							// We must "hack" the call-log so it is correctly reported for this Account.
+							d->log->setToAddress(Account::toCpp(cAccount)->getAccountParams()->getIdentityAddress());
+						}
+					}
+				}
+			}
+		} else {
+			cAccount = linphone_core_lookup_account_by_identity(core, fromAddr);
 		}
 		if (cAccount) {
 			const auto account = cAccount ? Account::toCpp(cAccount)->getSharedFromThis() : nullptr;
