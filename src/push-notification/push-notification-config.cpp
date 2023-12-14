@@ -42,6 +42,7 @@ PushNotificationConfig::PushNotificationConfig() {
 	mPushParams[PushConfigGroupChatStrKey] = "GC_MSG";
 	mPushParams[PushConfigCallSoundKey] = "notes_of_the_optimistic.caf";
 	mPushParams[PushConfigMsgSoundKey] = "msg.caf";
+	mPushParams[PushConfigRemotePushIntervalKey] = "";
 
 	mTeamId = "ABCD1234";
 	mBundleIdentifer = "";
@@ -169,6 +170,13 @@ void PushNotificationConfig::setTeamId(const string &teamId) {
 	mTeamId = teamId;
 }
 
+const string &PushNotificationConfig::getRemotePushInterval() const {
+	return mPushParams.at(PushConfigRemotePushIntervalKey);
+}
+void PushNotificationConfig::setRemotePushInterval(const string &remotePushInterval) {
+	mPushParams[PushConfigRemotePushIntervalKey] = remotePushInterval;
+}
+
 void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remotePushAllowed) {
 	if (mPushParams[PushConfigProviderKey].empty()) {
 #ifdef __ANDROID__
@@ -225,6 +233,7 @@ string PushNotificationConfig::asString(bool withRemoteSpecificParams) const {
 		appendParam(PushConfigGroupChatStrKey);
 		appendParam(PushConfigCallSoundKey);
 		appendParam(PushConfigMsgSoundKey);
+		appendParam(PushConfigRemotePushIntervalKey);
 	}
 
 	return serializedConfig;

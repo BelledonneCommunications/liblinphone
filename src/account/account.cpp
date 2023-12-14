@@ -605,6 +605,8 @@ std::shared_ptr<Address> Account::guessContactForRegister() {
 				                    newParams->getPushNotificationConfig()->getGroupChatStr());
 				result->setUriParam(PushConfigCallSoundKey, newParams->getPushNotificationConfig()->getCallSnd());
 				result->setUriParam(PushConfigMsgSoundKey, newParams->getPushNotificationConfig()->getMsgSnd());
+				if (!newParams->getPushNotificationConfig()->getRemotePushInterval().empty())
+					result->setUriParam(PushConfigRemotePushIntervalKey, newParams->getPushNotificationConfig()->getRemotePushInterval());
 			}
 			lInfo() << "Added push notification informations '"
 			        << newParams->getPushNotificationConfig()->asString(mParams->mRemotePushNotificationAllowed)

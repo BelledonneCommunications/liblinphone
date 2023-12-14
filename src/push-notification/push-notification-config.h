@@ -36,6 +36,7 @@ static string const PushConfigTimeoutKey = "pn-timeout";
 static string const PushConfigSilentKey = "pn-silent";
 static string const PushConfigCallSoundKey = "pn-call-snd";
 static string const PushConfigMsgSoundKey = "pn-msg-snd";
+static string const PushConfigRemotePushIntervalKey = "pn-call-remote-push-interval";
 
 class PushNotificationConfig : public bellesip::HybridObject<LinphonePushNotificationConfig, PushNotificationConfig> {
 public:
@@ -75,6 +76,8 @@ public:
 	void setRemoteToken(const string &remoteToken);
 	const string &getParam() const;
 	void setParam(const string &param);
+	const string &getRemotePushInterval() const;
+	void setRemotePushInterval(const string &remotePushInterval);
 
 	void generatePushParams(bool voipPushAllowed, bool remotePushAllowed);
 	map<string, string> const &getPushParamsMap();

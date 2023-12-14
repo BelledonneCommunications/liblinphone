@@ -86,6 +86,22 @@ LINPHONE_PUBLIC void linphone_push_notification_config_set_provider(LinphonePush
                                                                     const char *provider);
 
 /**
+ * Specifies the interval in seconds between to subsequent remote push notifications when
+ * remote push notifications are used to notify a call invite to clients that haven't published
+ * any token for VoIP and background push notifications. In that case, several PNs are sent
+ * subsequently until the call is picked up, declined or canceled. This parameter sets
+ * a value for 'pn-call-remote-push-interval' Contact header inside SIP REGISTER requests.
+ * A value of zero will cause the deactivation of push notification repetitions and the sending of the
+ * final notification. Thus, only the first push notification will be sent.
+ * If specified the value must be in [0;30]
+ * If not specified 'pn-call-remote-push-interval' will not be added to Contact header.
+ * @param push_cfg The #LinphonePushNotificationConfig object @notnil
+ * @param remote_push_interval The new remote push interval set for push notification config. @notnil
+ */
+LINPHONE_PUBLIC void linphone_push_notification_config_set_remote_push_interval(LinphonePushNotificationConfig *push_cfg,
+                                                                    const char *remote_push_interval);
+
+/**
  * Gets the team id for "contact uri parameter".
  * @param push_cfg The #LinphonePushNotificationConfig object @notnil
  * @return The team id if set, NULL otherwise. @maybenil
