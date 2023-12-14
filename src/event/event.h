@@ -49,8 +49,8 @@ public:
 
 	virtual ~Event();
 
-	virtual LinphoneStatus send(const LinphoneContent *body) = 0;
-	virtual LinphoneStatus update(const LinphoneContent *body) = 0;
+	virtual LinphoneStatus send(const std::shared_ptr<const Content> &body) = 0;
+	virtual LinphoneStatus update(const std::shared_ptr<const Content> &body) = 0;
 	virtual LinphoneStatus refresh() = 0;
 	virtual LinphoneStatus accept() = 0;
 	virtual LinphoneStatus deny(LinphoneReason reason) = 0;

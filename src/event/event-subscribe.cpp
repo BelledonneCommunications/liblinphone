@@ -96,7 +96,7 @@ string EventSubscribe::toString() const {
 	return ss.str();
 }
 
-LinphoneStatus EventSubscribe::send(const LinphoneContent *body) {
+LinphoneStatus EventSubscribe::send(const std::shared_ptr<const Content> &body) {
 	SalBodyHandler *body_handler;
 	int err;
 
@@ -127,7 +127,7 @@ LinphoneStatus EventSubscribe::send(const LinphoneContent *body) {
 		mSendCustomHeaders = nullptr;
 	} else mOp->setSentCustomHeaders(nullptr);
 
-	body_handler = sal_body_handler_from_content(body);
+	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
 	err = subscribeOp->subscribe(mName, mExpires, body_handler);
 	if (err == 0) {
@@ -136,7 +136,7 @@ LinphoneStatus EventSubscribe::send(const LinphoneContent *body) {
 	return err;
 }
 
-LinphoneStatus EventSubscribe::update(const LinphoneContent *body) {
+LinphoneStatus EventSubscribe::update(const std::shared_ptr<const Content> &body) {
 	return send(body);
 }
 
@@ -170,7 +170,7 @@ LinphoneStatus EventSubscribe::deny(LinphoneReason reason) {
 	return err;
 }
 
-LinphoneStatus EventSubscribe::notify(const LinphoneContent *body) {
+LinphoneStatus EventSubscribe::notify(const std::shared_ptr<const Content> &body) {
 	SalBodyHandler *body_handler;
 	if (mSubscriptionState != LinphoneSubscriptionActive &&
 	    mSubscriptionState != LinphoneSubscriptionIncomingReceived) {
@@ -181,7 +181,7 @@ LinphoneStatus EventSubscribe::notify(const LinphoneContent *body) {
 		ms_error("EventSubscribe::notify(): cannot notify if not an incoming subscription.");
 		return -1;
 	}
-	body_handler = sal_body_handler_from_content(body, false);
+	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr, false);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
 	return subscribeOp->notify(body_handler);
 }

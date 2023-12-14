@@ -219,7 +219,7 @@ private:
 	std::string createNotifyEphemeralMode(const EventLog::Type &type);
 	std::shared_ptr<Content> makeContent(const std::string &xml);
 	void notifyParticipant(const std::shared_ptr<Content> &notify, const std::shared_ptr<Participant> &participant);
-	void notifyParticipantDevice(const std::shared_ptr<Content> &notify,
+	void notifyParticipantDevice(const std::shared_ptr<Content> &content,
 	                             const std::shared_ptr<ParticipantDevice> &device);
 
 	std::shared_ptr<Participant> getConferenceParticipant(const std::shared_ptr<Address> &address) const;
