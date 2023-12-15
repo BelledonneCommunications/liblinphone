@@ -248,8 +248,9 @@ FileTransferChatMessageModifier::prepare_upload_body_handler(shared_ptr<ChatMess
 
 	auto fileTransferContent = FileTransferContent::create<FileTransferContent>();
 	fileTransferContent->setContentType(ContentType::FileTransfer);
-	fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
-	fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
+	fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize());         // Copy file size information
+	fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath());         // Copy file path information
+	fileTransferContent->setFileNameUtf8(currentFileContentToTransfer->getFileNameUtf8()); // Copy file name information
 	fileTransferContent->setFileDuration(
 	    currentFileContentToTransfer->getFileDuration()); // Copy file duration information
 	fileTransferContent->setFileContentType(
