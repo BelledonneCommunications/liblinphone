@@ -739,9 +739,12 @@ public class CoreManager {
             return;
         }
 
-        int orientation = mDisplayManager.getDisplay(displayId).getRotation();
-        int degrees = orientation * 90;
-        Log.i("[Core Manager] Device computed rotation is ", degrees, " device display id is ", displayId, ")");
-        mCore.setDeviceRotation(degrees);
+        Display display = mDisplayManager.getDisplay(displayId);
+        if (display != null) {
+            int orientation = display.getRotation();
+            int degrees = orientation * 90;
+            Log.i("[Core Manager] Device computed rotation is ", degrees, " device display id is ", displayId, ")");
+            mCore.setDeviceRotation(degrees);
+        }
     }
 }

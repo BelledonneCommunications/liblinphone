@@ -683,7 +683,7 @@ typedef void (*LinphoneCoreCbsAccountRegistrationStateChangedCb)(LinphoneCore *c
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
  * @param notified_event The event as string @notnil
- * @param body the #LinphoneContent of the event @notnil
+ * @param body the #LinphoneContent of the event @maybenil
  */
 typedef void (*LinphoneCoreCbsNotifySentCb)(LinphoneCore *core,
                                             LinphoneEvent *linphone_event,
@@ -694,7 +694,7 @@ typedef void (*LinphoneCoreCbsNotifySentCb)(LinphoneCore *core,
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
  * @param notified_event The event as string @notnil
- * @param body the #LinphoneContent of the event @notnil
+ * @param body the #LinphoneContent of the event @maybenil
  */
 typedef void (*LinphoneCoreCbsNotifyReceivedCb)(LinphoneCore *core,
                                                 LinphoneEvent *linphone_event,
@@ -759,7 +759,7 @@ typedef LinphoneCoreCbsPublishStateChangedCb LinphoneCorePublishStateChangedCb;
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
  * @param publish_event The event as string @notnil
- * @param body the #LinphoneContent of the event @notnil
+ * @param body the #LinphoneContent of the event @maybenil
  */
 typedef void (*LinphoneCoreCbsPublishReceivedCb)(LinphoneCore *core,
                                                  LinphoneEvent *linphone_event,
