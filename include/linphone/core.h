@@ -2229,6 +2229,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_codec_priority_policy(LinphoneCore 
  * See #LinphoneCodecPriorityPolicy for more details.
  * @param core, the core @notnil
  * @return the current #LinphoneCodecPriorityPolicy
+ * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC LinphoneCodecPriorityPolicy linphone_core_get_video_codec_priority_policy(const LinphoneCore *core);
 

@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
 
-## [5.3.0] Unreleased
+## Unreleased
+
+
+## [5.3.0] 2023-12-18
+
+### Added
+- Added notion of roles for conferences, so that there can be speakers and listeners.
+- Reactions with IM conversations
+- New video codec policy, so that hardware-accelerated codecs are prioritized in offer/answer. See LinphoneCodecPriorityPolicyAuto .
+- AV-1 codec
+- New LinphoneAlert object used to report various QoS alerts during calls.
+- SRTP AES GCM mode
 
 ### Changed
 - Enum relocations dictionnary is now automatically computed, which fixes some enum that were not
@@ -17,6 +28,11 @@ This changelog file was started on October 2019. Previous changes were more or l
 - TLS Client certificate request authentication callback removed (due to mbedtls update).
   Application using TLS client certificate must provide it before any TLS connexion needing it.
 - Refactoring of LinphoneAddress object implementation, leading to greater internal simplicity and performance.
+- C to C++ internal refactoring for LinphoneEvent, LinphonePayloadType, LinphoneContent
+
+### Fixed
+- Documentation issues in C++, Swift and C# wrappers
+- Memory leaks
 
 
 ## [5.2.0] 2022-11-14
