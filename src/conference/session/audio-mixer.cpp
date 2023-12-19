@@ -35,6 +35,7 @@ MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session) {
 	ms_conf_params.samplerate = linphone_config_get_int(mSession.getCCore()->config, "sound", "conference_rate", 16000);
 	ms_conf_params.active_talker_callback = &MS2AudioMixer::sOnActiveTalkerChanged;
 	ms_conf_params.security_level = StreamMixer::securityLevelToMsSecurityLevel(session.getSecurityLevel());
+	ms_conf_params.full_packet_mode = mSession.getCCore()->full_packet_mode;
 	ms_conf_params.user_data = this;
 	mConference = ms_audio_conference_new(&ms_conf_params, mSession.getCCore()->factory);
 }
@@ -117,7 +118,7 @@ void MS2AudioMixer::addLocalParticipant() {
 	                        playcard, captcard, linphone_core_echo_cancellation_enabled(core));
 	MS2AudioStream::postConfigureAudioStream(st, core, FALSE);
 	mLocalParticipantStream = st;
-	mLocalEndpoint = ms_audio_endpoint_get_from_stream(st, FALSE);
+	mLocalEndpoint = ms_audio_endpoint_get_from_stream(st, FALSE, params->full_packet_mode);
 	ms_message("Conference: adding local endpoint");
 	ms_audio_conference_add_member(mConference, mLocalEndpoint);
 	enableMic(mLocalMicEnabled);

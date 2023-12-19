@@ -83,10 +83,10 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg) {
 			 * However, if there is one or two participants, don't do this and let the ms2 mixer cross the streams.
 			 */
 			lInfo() << *this << "Showing video placeholder, participant has no video.";
-			MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceMix);
-			if (video_placeholder_ep) {
-				ms_video_conference_set_focus(mConferenceMix, video_placeholder_ep);
-			}
+			//			MSVideoEndpoint *video_placeholder_ep =
+			// ms_video_conference_get_video_placeholder_member(mConferenceMix); 			if (video_placeholder_ep) {
+			//				ms_video_conference_set_focus(mConferenceMix, video_placeholder_ep);
+			//			}
 		} else {
 			lInfo() << *this << "Not using video placeholder, participant count <= 2.";
 		}

@@ -1520,6 +1520,8 @@ void RemoteConference::onParticipantsCleared() {
 }
 
 void RemoteConference::notifyDisplayedSpeaker(uint32_t csrc) {
+	if (lastNotifiedSsrc == csrc) return;
+
 	displayedSpeaker = csrc;
 
 	if (csrc != 0) {
@@ -1538,15 +1540,27 @@ void RemoteConference::notifyDisplayedSpeaker(uint32_t csrc) {
 }
 
 void RemoteConference::notifyLouderSpeaker(uint32_t ssrc) {
+	if (lastNotifiedSsrc == ssrc) return;
+
 	louderSpeaker = ssrc;
 
-	if (displayedSpeaker > 0) return;
-
 	auto device = findParticipantDeviceBySsrc(ssrc, LinphoneStreamTypeAudio);
+	if (device == nullptr) {
+		lError() << "Conference [" << this << "]: Active speaker changed with ssrc: " << ssrc
+		         << " but it does not correspond to any participant device";
+		return;
+	}
 
-	if (device && !device->getStreamAvailability(LinphoneStreamTypeVideo)) {
+	if (!device->getStreamAvailability(LinphoneStreamTypeVideo)) {
 		notifyActiveSpeakerParticipantDevice(device);
 		lastNotifiedSsrc = ssrc;
+	} else {
+		// If we are notified of an active speaker that has video but is already the one displayed then we have to
+		// notify him again since notifyDisplayedSpeaker won't be called again.
+		if (displayedSpeaker == device->getSsrc(LinphoneStreamTypeVideo)) {
+			notifyActiveSpeakerParticipantDevice(device);
+			lastNotifiedSsrc = ssrc;
+		}
 	}
 }
 

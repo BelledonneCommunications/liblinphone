@@ -622,7 +622,9 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 	lInfo() << __func__ << ": mgr2 speaks";
 	/* mg2 is audio-only, so this shall not affect video on other participants */
 	wait_for_list(lcs, NULL, 0, 5000);
-	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+
+	// mgr1 still receives the video of the last active speaker that has video
+	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
 
 	// mgr1 should see mgr2 as active speaker even though it has no video as it's speaking

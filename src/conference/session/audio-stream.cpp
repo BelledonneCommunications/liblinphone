@@ -611,7 +611,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 
 	if (audioMixer && !mMuted) {
-		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
+		const auto &audioConfParams = ms_audio_conference_get_params(audioMixer->getAudioConference());
+		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE, audioConfParams->full_packet_mode);
 		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(
