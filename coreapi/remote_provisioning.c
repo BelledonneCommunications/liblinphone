@@ -130,7 +130,11 @@ int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc,
 			char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", addr));
 			ms_free(addr);
+		} else if (linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL) != NULL) {
+			const char *addr = linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL);
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", addr));
 		}
+		
 
 		return belle_http_provider_send_request(lc->http_provider, request, lc->provisioning_http_listener);
 	} else {
