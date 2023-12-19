@@ -120,7 +120,7 @@ std::shared_ptr<Address>
 ConferenceScheduler::createParticipantAddress(const ConferenceInfo::participant_list_t::value_type &p) const {
 	std::shared_ptr<Address> address = Address::create(p->getAddress()->getUri());
 	for (const auto &[name, value] : p->getAllParameters()) {
-		address->setParam(name, value);
+		address->setUriParam(name, value);
 	}
 	return address;
 }
