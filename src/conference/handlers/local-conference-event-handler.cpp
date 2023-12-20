@@ -968,7 +968,7 @@ void LocalConferenceEventHandler::notifyParticipant(const std::shared_ptr<Conten
 	}
 }
 
-void LocalConferenceEventHandler::notifyParticipantDevice(const shared_ptr<Content> &notify,
+void LocalConferenceEventHandler::notifyParticipantDevice(const shared_ptr<Content> &content,
                                                           const shared_ptr<ParticipantDevice> &device) {
 	if (!device->isSubscribedToConferenceEventPackage()) return;
 
@@ -978,8 +978,8 @@ void LocalConferenceEventHandler::notifyParticipantDevice(const shared_ptr<Conte
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
 
-	LinphoneContent *cContent = notify->isEmpty() ? nullptr : notify->toC();
-	ev->notify(cContent);
+	LinphoneContent *cContent = content->isEmpty() ? nullptr : content->toC();
+	ev->notify(content);
 	linphone_core_notify_notify_sent(conf->getCore()->getCCore(), ev->toC(), cContent);
 }
 

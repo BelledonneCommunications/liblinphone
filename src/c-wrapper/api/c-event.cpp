@@ -55,7 +55,9 @@ int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneContent *body
 		log_bad_cast("linphone_event_update_publish");
 		return -1;
 	}
-	return evPub->sendPublish(body, notify_err);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	return evPub->sendPublish(cppBody, notify_err);
 }
 
 LinphoneEvent *_linphone_core_create_publish(
@@ -116,7 +118,9 @@ LinphoneEvent *linphone_core_subscribe(
 	auto ev = new EventSubscribe(L_GET_CPP_PTR_FROM_C_OBJECT(lc), Address::toCpp(resource)->getSharedFromThis(),
 	                             L_C_TO_STRING(event), expires);
 	ev->setUnrefWhenTerminated(true);
-	ev->send(body);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	ev->send(cppBody);
 	return ev->toC();
 }
 
@@ -261,7 +265,9 @@ LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *linphone_event, cons
 		log_bad_cast("linphone_event_send_subscribe");
 		return -1;
 	}
-	return event_subscribe->send(body);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	return event_subscribe->send(cppBody);
 }
 
 LinphoneStatus linphone_event_update_subscribe(LinphoneEvent *linphone_event, const LinphoneContent *body) {
@@ -271,7 +277,9 @@ LinphoneStatus linphone_event_update_subscribe(LinphoneEvent *linphone_event, co
 		log_bad_cast("linphone_event_update_subscribe");
 		return -1;
 	}
-	return event_subscribe->update(body);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	return event_subscribe->update(cppBody);
 }
 
 LinphoneStatus linphone_event_refresh_subscribe(LinphoneEvent *linphone_event) {
@@ -311,7 +319,9 @@ LinphoneStatus linphone_event_notify(LinphoneEvent *linphone_event, const Linpho
 		log_bad_cast("linphone_event_notify");
 		return -1;
 	}
-	return event_subscribe->notify(body);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	return event_subscribe->notify(cppBody);
 }
 
 LinphoneStatus linphone_event_send_publish(LinphoneEvent *linphone_event, const LinphoneContent *body) {
@@ -321,7 +331,9 @@ LinphoneStatus linphone_event_send_publish(LinphoneEvent *linphone_event, const 
 		log_bad_cast("linphone_event_send_publish");
 		return -1;
 	}
-	return event_publish->send(body);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	return event_publish->send(cppBody);
 }
 
 LinphoneStatus linphone_event_update_publish(LinphoneEvent *linphone_event, const LinphoneContent *body) {
@@ -331,7 +343,9 @@ LinphoneStatus linphone_event_update_publish(LinphoneEvent *linphone_event, cons
 		log_bad_cast("linphone_event_update_publish");
 		return -1;
 	}
-	return event_publish->update(body);
+	const auto cppBody =
+	    (body && (linphone_content_get_size(body) > 0)) ? Content::toCpp(body)->getSharedFromThis() : nullptr;
+	return event_publish->update(cppBody);
 }
 
 LinphoneStatus linphone_event_refresh_publish(LinphoneEvent *linphone_event) {

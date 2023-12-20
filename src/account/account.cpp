@@ -606,7 +606,8 @@ std::shared_ptr<Address> Account::guessContactForRegister() {
 				result->setUriParam(PushConfigCallSoundKey, newParams->getPushNotificationConfig()->getCallSnd());
 				result->setUriParam(PushConfigMsgSoundKey, newParams->getPushNotificationConfig()->getMsgSnd());
 				if (!newParams->getPushNotificationConfig()->getRemotePushInterval().empty())
-					result->setUriParam(PushConfigRemotePushIntervalKey, newParams->getPushNotificationConfig()->getRemotePushInterval());
+					result->setUriParam(PushConfigRemotePushIntervalKey,
+					                    newParams->getPushNotificationConfig()->getRemotePushInterval());
 			}
 			lInfo() << "Added push notification informations '"
 			        << newParams->getPushNotificationConfig()->asString(mParams->mRemotePushNotificationAllowed)
@@ -1181,13 +1182,12 @@ int Account::sendPublish() {
 			mSipEtag = "";
 		}
 
-		LinphoneContent *content = linphone_content_new();
-		linphone_content_set_buffer(content, (const uint8_t *)presence_body, strlen(presence_body));
-		linphone_content_set_type(content, "application");
-		linphone_content_set_subtype(content, "pidf+xml");
+		auto content = Content::create(nullptr, true);
+		content->setBody((const uint8_t *)presence_body, strlen(presence_body));
+		ContentType contentType("application", "pidf+xml");
+		content->setContentType(contentType);
 
 		err = mPresencePublishEvent->send(content);
-		linphone_content_unref(content);
 		ms_free(presence_body);
 
 		if (presentityAddress) {

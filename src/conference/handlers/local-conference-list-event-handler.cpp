@@ -181,16 +181,14 @@ void LocalConferenceListEventHandler::subscribeReceived(const std::shared_ptr<Ev
 	for (Content &content : contents) {
 		contentsAsPtr.push_back(&content);
 	}
-
-	Content multipart = ContentManager::contentListToMultipart(contentsAsPtr);
-	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
-		multipart.setContentEncoding("deflate");
-	LinphoneContent *cContent = Content::createCObject(multipart);
 	shared_ptr<EventCbs> cbs = EventCbs::create();
 	cbs->setUserData(this);
 	cbs->notifyResponseCb = notifyResponseCb;
 	ev->addCallbacks(cbs);
-	ev->notify(cContent);
+	auto multipart = Content::create(ContentManager::contentListToMultipart(contentsAsPtr));
+	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
+		multipart->setContentEncoding("deflate");
+	ev->notify(multipart);
 }
 
 // -----------------------------------------------------------------------------

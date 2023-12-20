@@ -42,6 +42,7 @@ import org.linphone.core.SignalType;
 import org.linphone.core.SignalStrengthUnit;
 import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
+import org.linphone.mediastream.Version;
 
 public class NetworkSignalMonitor {
     private AndroidPlatformHelper mHelper;
@@ -117,9 +118,13 @@ public class NetworkSignalMonitor {
 				Log.i("[Platform Helper] [Signal Strength Monitor] Cdma cell type signal is [", dbm, "] dbm");
 				networkType = "CDMA";
 			} else if (cellSignal instanceof CellSignalStrengthGsm) {
-				CellSignalStrengthGsm gsm = (CellSignalStrengthGsm)cellSignal;
-				int rssi = gsm.getRssi();
-				Log.i("[Platform Helper] [Signal Strength Monitor] GSM cell type signal is [", dbm, "] dbm, RSSI is [", rssi, "]");
+				if (Version.sdkAboveOrEqual(Version.API30_ANDROID_11)) {
+					CellSignalStrengthGsm gsm = (CellSignalStrengthGsm)cellSignal;
+					int rssi = gsm.getRssi(); // Added in API 30!
+					Log.i("[Platform Helper] [Signal Strength Monitor] GSM cell type signal is [", dbm, "] dbm, RSSI is [", rssi, "]");
+				} else {
+					Log.i("[Platform Helper] [Signal Strength Monitor] GSM cell type signal is [", dbm, "] dbm, RSSI is only available on Android 11 and newer");
+				}
 				networkType = "GSM";
 			} else if (cellSignal instanceof CellSignalStrengthLte) {
 				CellSignalStrengthLte lte = (CellSignalStrengthLte)cellSignal;
@@ -147,6 +152,7 @@ public class NetworkSignalMonitor {
 	}
 
 	private boolean isCurrentNetworkCellular() {
+		if (mHelper == null) return false;
 		NetworkInfo currentNetworkInfo = mHelper.getActiveNetworkInfo();
 
 		if (currentNetworkInfo != null) {

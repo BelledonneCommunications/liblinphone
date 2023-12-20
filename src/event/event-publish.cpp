@@ -32,7 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-LinphoneStatus EventPublish::sendPublish(const LinphoneContent *body, bool notifyErr) {
+LinphoneStatus EventPublish::sendPublish(const std::shared_ptr<const Content> &body, bool notifyErr) {
 	SalBodyHandler *body_handler;
 	int err;
 
@@ -42,7 +42,7 @@ LinphoneStatus EventPublish::sendPublish(const LinphoneContent *body, bool notif
 		mSendCustomHeaders = nullptr;
 	} else mOp->setSentCustomHeaders(nullptr);
 
-	body_handler = sal_body_handler_from_content(body);
+	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr);
 	auto publishOp = dynamic_cast<SalPublishOp *>(mOp);
 	err = publishOp->publish(mName, mExpires, body_handler);
 	if (err == 0) {
@@ -116,11 +116,11 @@ string EventPublish::toString() const {
 	return ss.str();
 }
 
-LinphoneStatus EventPublish::send(const LinphoneContent *body) {
+LinphoneStatus EventPublish::send(const std::shared_ptr<const Content> &body) {
 	return sendPublish(body, TRUE);
 }
 
-LinphoneStatus EventPublish::update(const LinphoneContent *body) {
+LinphoneStatus EventPublish::update(const std::shared_ptr<const Content> &body) {
 	return send(body);
 }
 

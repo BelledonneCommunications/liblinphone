@@ -928,7 +928,7 @@ void FriendList::sendListSubscriptionWithBody(const std::shared_ptr<Address> &ad
 		}
 		for (auto &lf : mFriends)
 			lf->mSubscribeActive = true;
-		mEvent->send(content->toC());
+		mEvent->send(content);
 		mEvent->setUserData(this);
 	}
 }

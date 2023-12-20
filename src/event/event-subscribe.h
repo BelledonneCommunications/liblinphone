@@ -58,13 +58,13 @@ public:
 
 	std::string toString() const override;
 
-	LinphoneStatus send(const LinphoneContent *body) override;
-	LinphoneStatus update(const LinphoneContent *body) override;
+	LinphoneStatus send(const std::shared_ptr<const Content> &body) override;
+	LinphoneStatus update(const std::shared_ptr<const Content> &body) override;
 	LinphoneStatus refresh() override;
 	LinphoneStatus accept() override;
 	LinphoneStatus deny(LinphoneReason reason) override;
 
-	LinphoneStatus notify(const LinphoneContent *body);
+	LinphoneStatus notify(const std::shared_ptr<const Content> &body);
 	void notifyNotifyResponse();
 
 	LinphoneSubscriptionState getState() const;

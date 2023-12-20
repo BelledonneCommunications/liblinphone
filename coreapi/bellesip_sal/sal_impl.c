@@ -291,11 +291,13 @@ void sal_end_background_task(unsigned long id) {
 
 static belle_sip_header_t *sal_body_handler_find_header(const SalBodyHandler *body_handler, const char *header_name) {
 	belle_sip_body_handler_t *bsbh = BELLE_SIP_BODY_HANDLER(body_handler);
-	const belle_sip_list_t *l = belle_sip_body_handler_get_headers(bsbh);
-	for (; l != NULL; l = l->next) {
-		belle_sip_header_t *header = BELLE_SIP_HEADER(l->data);
-		if (strcmp(belle_sip_header_get_name(header), header_name) == 0) {
-			return header;
+	if (bsbh) {
+		const belle_sip_list_t *l = belle_sip_body_handler_get_headers(bsbh);
+		for (; l != NULL; l = l->next) {
+			belle_sip_header_t *header = BELLE_SIP_HEADER(l->data);
+			if (strcmp(belle_sip_header_get_name(header), header_name) == 0) {
+				return header;
+			}
 		}
 	}
 	return NULL;

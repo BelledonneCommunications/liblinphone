@@ -1535,6 +1535,7 @@ static void video_call_with_early_media_no_matching_audio_codecs(void) {
 	LinphoneCall *out_call, *pauline_call;
 	LinphoneVideoPolicy vpol = {0};
 	AudioStream *astream;
+	VideoStream *caller_vstream;
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
@@ -1575,6 +1576,12 @@ static void video_call_with_early_media_no_matching_audio_codecs(void) {
 	/*audio stream shall not have been requested to start*/
 	astream = (AudioStream *)linphone_call_get_stream(pauline_call, LinphoneStreamTypeAudio);
 	BC_ASSERT_PTR_NULL(astream->soundread);
+
+	/* assert that the caller does not sends camera, since it did not requested with
+	 * linphone_call_params_enable_early_media_sending(): */
+	caller_vstream = (VideoStream *)linphone_call_get_stream(out_call, LinphoneStreamTypeVideo);
+	if (BC_ASSERT_PTR_NOT_NULL(caller_vstream->source))
+		BC_ASSERT_NOT_EQUAL(caller_vstream->source->desc->id, MS_MIRE_ID, int, "%d");
 
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(out_call)));
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
@@ -1782,25 +1789,6 @@ static void two_accepted_call_in_send_only(void) {
 	bctbx_list_free(lcs);
 }
 
-static void video_early_media_call(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_early_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneCall *pauline_to_marie;
-
-	video_call_base_3(pauline, marie, TRUE, LinphoneMediaEncryptionNone, TRUE, TRUE);
-
-	BC_ASSERT_PTR_NOT_NULL(pauline_to_marie = linphone_core_get_current_call(pauline->lc));
-	if (pauline_to_marie) {
-		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(pauline_to_marie, LinphoneStreamTypeVideo);
-		if (BC_ASSERT_PTR_NOT_NULL(vstream->source)) BC_ASSERT_EQUAL(vstream->source->desc->id, MS_MIRE_ID, int, "%d");
-	}
-
-	end_call(pauline, marie);
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
 /*this is call forking with early media managed at client side (not by flexisip server)*/
 static void multiple_early_media(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -1950,19 +1938,25 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void classic_video_entry_phone_setup(void) {
+static void classic_video_entry_phone_setup(LinphoneMediaDirection callee_video_direction) {
 	LinphoneCoreManager *callee_mgr = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *caller_mgr =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *early_media_params = NULL;
 	LinphoneCallParams *in_call_params = NULL;
-	LinphoneCall *callee_call = NULL;
-	LinphoneVideoPolicy vpol;
+	LinphoneCallParams *caller_params;
+	LinphoneCall *callee_call = NULL, *caller_call = NULL;
+	LinphoneVideoActivationPolicy *vpol;
 	bctbx_list_t *lcs = NULL;
 	char *video_recording_file = bc_tester_file((generateRandomFilename("video_entry_phone_record_") + ".mkv").c_str());
 	bool_t ok;
+	VideoStream *caller_vstream;
+	VideoStream *callee_vstream;
 
-	vpol.automatically_initiate = vpol.automatically_accept = TRUE;
+	vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+
 	lcs = bctbx_list_append(lcs, caller_mgr->lc);
 	lcs = bctbx_list_append(lcs, callee_mgr->lc);
 
@@ -1977,8 +1971,9 @@ static void classic_video_entry_phone_setup(void) {
 	linphone_core_enable_video_display(callee_mgr->lc, TRUE);
 	linphone_core_set_avpf_mode(caller_mgr->lc, LinphoneAVPFEnabled);
 	linphone_core_set_avpf_mode(callee_mgr->lc, LinphoneAVPFEnabled);
-	linphone_core_set_video_policy(caller_mgr->lc, &vpol);
-	linphone_core_set_video_policy(callee_mgr->lc, &vpol);
+	linphone_core_set_video_activation_policy(caller_mgr->lc, vpol);
+	linphone_core_set_video_activation_policy(callee_mgr->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	remove(video_recording_file);
 
@@ -2006,7 +2001,12 @@ static void classic_video_entry_phone_setup(void) {
 	linphone_core_set_video_device(caller_mgr->lc, liblinphone_tester_mire_id);
 	linphone_core_set_video_device(callee_mgr->lc, liblinphone_tester_mire_id);
 
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address(caller_mgr->lc, callee_mgr->identity));
+	caller_params = linphone_core_create_call_params(caller_mgr->lc, NULL);
+	linphone_call_params_enable_early_media_sending(caller_params, TRUE);
+
+	caller_call = linphone_core_invite_address_with_params(caller_mgr->lc, callee_mgr->identity, caller_params);
+	linphone_call_params_unref(caller_params);
+	BC_ASSERT_PTR_NOT_NULL(caller_call);
 
 	ok = wait_for(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallIncomingReceived, 1);
 	BC_ASSERT_TRUE(ok);
@@ -2016,7 +2016,7 @@ static void classic_video_entry_phone_setup(void) {
 	callee_call = linphone_core_get_call_by_remote_address2(callee_mgr->lc, caller_mgr->identity);
 	early_media_params = linphone_core_create_call_params(callee_mgr->lc, callee_call);
 	linphone_call_params_set_audio_direction(early_media_params, LinphoneMediaDirectionInactive);
-	linphone_call_params_set_video_direction(early_media_params, LinphoneMediaDirectionRecvOnly);
+	linphone_call_params_set_video_direction(early_media_params, callee_video_direction);
 	linphone_call_params_set_record_file(early_media_params, video_recording_file);
 	linphone_call_accept_early_media_with_params(callee_call, early_media_params);
 	linphone_call_start_recording(callee_call);
@@ -2027,11 +2027,24 @@ static void classic_video_entry_phone_setup(void) {
 	BC_ASSERT_TRUE(
 	    wait_for(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallIncomingEarlyMedia, 1));
 
-	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionInactive, LinphoneMediaDirectionRecvOnly);
+	/* assert that the caller really sends camera, and that callee does not send anything */
+	caller_vstream = (VideoStream *)linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
+	callee_vstream = (VideoStream *)linphone_call_get_stream(callee_call, LinphoneStreamTypeVideo);
+	if (BC_ASSERT_PTR_NOT_NULL(caller_vstream->source))
+		BC_ASSERT_EQUAL(caller_vstream->source->desc->id, MS_MIRE_ID, int, "%d");
+
+	if (callee_video_direction == LinphoneMediaDirectionSendRecv) {
+		if (BC_ASSERT_PTR_NOT_NULL(callee_vstream->source))
+			BC_ASSERT_NOT_EQUAL(callee_vstream->source->desc->id, MS_MIRE_ID, int, "%d");
+	} else if (callee_video_direction == LinphoneMediaDirectionRecvOnly) {
+		BC_ASSERT_PTR_NULL(callee_vstream->source);
+	}
+
+	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionInactive, callee_video_direction);
 	callee_call = linphone_core_get_call_by_remote_address2(callee_mgr->lc, caller_mgr->identity);
 	in_call_params = linphone_core_create_call_params(callee_mgr->lc, callee_call);
 	linphone_call_params_set_audio_direction(in_call_params, LinphoneMediaDirectionSendRecv);
-	linphone_call_params_set_video_direction(in_call_params, LinphoneMediaDirectionRecvOnly);
+	linphone_call_params_set_video_direction(in_call_params, callee_video_direction);
 	linphone_call_accept_with_params(callee_call, in_call_params);
 	linphone_call_params_unref(in_call_params);
 
@@ -2040,11 +2053,23 @@ static void classic_video_entry_phone_setup(void) {
 
 	ok =
 	    wait_for_until(callee_mgr->lc, caller_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallStreamsRunning, 1,
-	                   2000) &&
-	    wait_for_until(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallStreamsRunning, 1, 2000);
+	                   5000) &&
+	    wait_for_until(callee_mgr->lc, caller_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallStreamsRunning, 1, 5000);
 	BC_ASSERT_TRUE(ok);
 	if (!ok) goto end;
-	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionRecvOnly);
+	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionSendRecv, callee_video_direction);
+
+	caller_vstream = (VideoStream *)linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
+	callee_vstream = (VideoStream *)linphone_call_get_stream(callee_call, LinphoneStreamTypeVideo);
+	if (BC_ASSERT_PTR_NOT_NULL(caller_vstream->source))
+		BC_ASSERT_EQUAL(caller_vstream->source->desc->id, MS_MIRE_ID, int, "%d");
+
+	if (callee_video_direction == LinphoneMediaDirectionSendRecv) {
+		if (BC_ASSERT_PTR_NOT_NULL(callee_vstream->source))
+			BC_ASSERT_EQUAL(callee_vstream->source->desc->id, MS_MIRE_ID, int, "%d");
+	} else if (callee_video_direction == LinphoneMediaDirectionRecvOnly) {
+		BC_ASSERT_PTR_NULL(callee_vstream->source);
+	}
 
 	callee_call = linphone_core_get_current_call(callee_mgr->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(callee_call)) goto end;
@@ -2071,6 +2096,14 @@ end:
 	linphone_core_manager_destroy(caller_mgr);
 	bctbx_list_free(lcs);
 	bc_free(video_recording_file);
+}
+
+static void classic_video_entry_phone_setup_sendrecv(void) {
+	classic_video_entry_phone_setup(LinphoneMediaDirectionSendRecv);
+}
+
+static void classic_video_entry_phone_setup_recvonly(void) {
+	classic_video_entry_phone_setup(LinphoneMediaDirectionRecvOnly);
 }
 
 static void video_call_recording_h264_test(void) {
@@ -3178,7 +3211,6 @@ static test_t call_video_tests[] = {
     TEST_NO_TAG("Call with video declined", call_with_declined_video),
     TEST_NO_TAG("Call with video declined despite policy", call_with_declined_video_despite_policy),
     TEST_NO_TAG("Call with video declined using policy", call_with_declined_video_using_policy),
-    TEST_NO_TAG("Video early-media call", video_early_media_call),
     TEST_NO_TAG("Call with multiple early media", multiple_early_media),
     TEST_ONE_TAG("Call with ICE from video to non-video", call_with_ice_video_to_novideo, "ICE"),
     TEST_ONE_TAG("Call with ICE and video added", call_with_ice_video_added, "ICE"),
@@ -3208,7 +3240,8 @@ static test_t call_video_tests[] = {
     TEST_ONE_TAG("Video call accepted in send only", accept_call_in_send_only, "H264"),
     TEST_TWO_TAGS("Video call accepted in send only with ice", accept_call_in_send_only_with_ice, "ICE", "H264"),
     TEST_ONE_TAG("2 Video call accepted in send only", two_accepted_call_in_send_only, "H264"),
-    TEST_ONE_TAG("Classic video entry phone setup", classic_video_entry_phone_setup, "H264"),
+    TEST_ONE_TAG("Classic video entry phone setup (sendrecv)", classic_video_entry_phone_setup_sendrecv, "H264"),
+    TEST_ONE_TAG("Classic video entry phone setup (recvonly)", classic_video_entry_phone_setup_recvonly, "H264"),
     TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
     TEST_NO_TAG("Video call with automatic video acceptance disabled on one end only",
                 video_call_with_auto_video_accept_disabled_on_one_end),

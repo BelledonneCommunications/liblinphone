@@ -142,8 +142,7 @@ void RemoteConferenceListEventHandler::subscribe(const shared_ptr<Account> &acco
 		evSub->addCustomHeader("Accept-Encoding", "deflate");
 	}
 	evSub->setProperty("event-handler-private", this);
-	LinphoneContent *cContent = content->toC();
-	evSub->send(cContent);
+	evSub->send(content);
 
 	levs.push_back(evSub);
 }

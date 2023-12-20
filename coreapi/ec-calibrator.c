@@ -67,6 +67,16 @@ static void ecc_init_filters(EcCalibrator *ecc) {
 	ms_message("[Echo Canceller Calibration] Using playback device ID: %s (%i)", ecc->play_card->id,
 	           ecc->play_card->internal_id);
 
+	// Notify capture filter of playback device (needed to change microphone when using AAudio on Android)
+	if (ms_filter_implements_interface(ecc->sndread, MSFilterAudioCaptureInterface)) {
+		if (ms_filter_has_method(ecc->sndread, MS_AUDIO_CAPTURE_PLAYBACK_DEVICE_CHANGED)) {
+			ms_message("[Echo Canceller Calibration] Notify record filter [%s:%p] that playback device is being "
+			           "set to [%s]",
+			           ms_filter_get_name(ecc->sndread), ecc->sndread, ecc->play_card->id);
+			ms_filter_call_method(ecc->sndread, MS_AUDIO_CAPTURE_PLAYBACK_DEVICE_CHANGED, ecc->play_card);
+		}
+	}
+
 	ms_filter_call_method(ecc->sndwrite, MS_FILTER_SET_SAMPLE_RATE, &ecc->rate);
 	ms_filter_call_method(ecc->sndwrite, MS_FILTER_GET_SAMPLE_RATE, &rate);
 	ms_filter_call_method(ecc->sndwrite, MS_FILTER_SET_NCHANNELS, &ecc_channels);

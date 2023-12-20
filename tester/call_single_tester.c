@@ -26,6 +26,7 @@
 #include "belle-sip/sipstack.h"
 
 #include "mediastreamer2/msutils.h"
+#include "mediastreamer2/msvolume.h"
 
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
@@ -4139,6 +4140,17 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void assert_mic_gain(LinphoneCall *call, float linear_gain) {
+	AudioStream *astream = (AudioStream *)linphone_call_get_stream(call, LinphoneStreamTypeAudio);
+	MSFilter *volsend;
+	float cur_gain = -1;
+	if (!BC_ASSERT_PTR_NOT_NULL(astream)) return;
+	volsend = astream->volsend;
+	if (!BC_ASSERT_PTR_NOT_NULL(volsend)) return;
+	ms_filter_call_method(volsend, MS_VOLUME_GET_GAIN, &cur_gain);
+	BC_ASSERT_EQUAL(cur_gain, linear_gain, float, "%f");
+}
+
 static void early_media_call_with_ringing_base(bool_t network_change) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
@@ -4164,12 +4176,20 @@ static void early_media_call_with_ringing_base(bool_t network_change) {
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1, int, "%d");
 
 	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
+		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 		/* send a 183 to initiate the early media */
-		linphone_call_accept_early_media(linphone_core_get_current_call(pauline->lc));
+		linphone_call_accept_early_media(pauline_call);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, 5000));
+		/*
+		 * By default, on early media, both caller and callee must not send sensitive data.
+		 * This is enforced by muting microphones, ie applying a zero gain on the volume conntroller.
+		 */
 		BC_ASSERT_TRUE(linphone_call_get_all_muted(marie_call));
+		BC_ASSERT_TRUE(linphone_call_get_all_muted(pauline_call));
+		assert_mic_gain(marie_call, 0);
+		assert_mic_gain(pauline_call, 0);
 
 		bool_t ringWithEarlyMedia = linphone_core_get_ring_during_incoming_early_media(pauline->lc);
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone,
@@ -4191,6 +4211,9 @@ static void early_media_call_with_ringing_base(bool_t network_change) {
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1, 1000));
 			connected_time = ms_get_cur_time_ms();
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
+			/* Make sure that microphone is now unmuted */
+			assert_mic_gain(marie_call, 1.0f);
+			assert_mic_gain(pauline_call, 1.0f);
 			BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 1, int, "%d");
 
 			BC_ASSERT_PTR_EQUAL(marie_call, linphone_core_get_current_call(marie->lc));
@@ -7434,9 +7457,9 @@ static void call_received_with_tel_uri(void) {
 }
 
 static void call_with_custom_m_line(void) {
-	const char *invite =
+	const char *invite_template =
 	    "INVITE "
-	    "sip:rsystems1@49.36.181.143:33703;transport=tcp;pn-key=7ca80b71bccdbda72957091955dec66f;aor=rsystems1%40sip1."
+	    "sip:%s@49.36.181.143:33703;transport=tcp;pn-key=7ca80b71bccdbda72957091955dec66f;aor=rsystems1%%40sip1."
 	    "mircomsip.com SIP/2.0\r\n"
 	    "v: SIP/2.0/UDP "
 	    "10.10.11.148:5060;received=38.32.59.74;branch=z9hG4bK62f554a1-bff3-5e1f-9c30-0007327ac1d5;rport=47758\r\n"
@@ -7444,15 +7467,16 @@ static void call_with_custom_m_line(void) {
 	    "c: application/sdp\r\n"
 	    "Content-Length: 378\r\n"
 	    "i: ba4214a1-bff3-5e1f-9c2e-0007327ac1d5@1AD143096\r\n"
-	    "t: <sip:rsystems1@sip1.mircomsip.com>\r\n"
+	    "t: <sip:%s@49.36.181.143>\r\n"
 	    "k: replaces\r\n"
 	    "m: \"TESTTOUCH1\" "
-	    "<sip:tx3touchf15b_testtouch1_1*38.32.59.74!47758_n@199.7.173.100;nat=yes;nat=yes;nat=yes;received=38.64.170.3;"
+	    "<sip:tx3touchf15b_testtouch1_1*38.32.59.74!47758_n@sip.example.org;nat=yes;nat=yes;nat=yes;received=38.64.170."
+	    "3;"
 	    "gr>\r\n"
 	    "Organization: Vox Lucida\r\n"
 	    "Max-Forwards: 66\r\n"
 	    "f: \"TESTTOUCH1\" "
-	    "<sip:tx3touchf15b_testtouch1_1@sip1.mircomsip.com>;tag=ba4214a1-bff3-5e1f-9c2d-0007327ac1d5\r\n"
+	    "<sip:yyyyyyzzzzz@sip.example.org>;tag=ba4214a1-bff3-5e1f-9c2d-0007327ac1d5\r\n"
 	    "Allow: INVITE,ACK,OPTIONS,BYE,CANCEL,SUBSCRIBE,NOTIFY,REFER,MESSAGE,INFO,PING\r\n"
 	    "User-Agent: TX3-VOIP/3.18.2\r\n"
 	    "\r\n"
@@ -7480,6 +7504,9 @@ static void call_with_custom_m_line(void) {
 	linphone_config_set_bool(linphone_core_get_config(laure->lc), "sip", "incoming_calls_early_media", 1);
 
 	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	const char *laure_username = linphone_address_get_username(laure->identity);
+	char *invite = bctbx_strdup_printf(invite_template, laure_username, laure_username);
+	bctbx_list_t *call_logs;
 
 	BC_ASSERT_TRUE(liblinphone_tester_send_data(invite, strlen(invite), "127.0.0.1",
 	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
@@ -7496,6 +7523,17 @@ static void call_with_custom_m_line(void) {
 
 	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+
+	/* Make sure that the call-log was reported as belonging to laure's SIP account, despite the To address that does
+	 * not mention sip.example.org. */
+	call_logs = linphone_account_get_call_logs(linphone_core_get_default_account(laure->lc));
+	if (BC_ASSERT_PTR_NOT_NULL(call_logs)) {
+		BC_ASSERT_TRUE(bctbx_list_size(call_logs) == 1);
+		LinphoneCallLog *clog = (LinphoneCallLog *)call_logs->data;
+		BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(linphone_call_log_get_to_address(clog)), "sip.example.org");
+	}
+	bctbx_list_free_with_data(call_logs, (bctbx_list_free_func)linphone_call_log_unref);
+	bctbx_free(invite);
 	linphone_core_manager_destroy(laure);
 }
 
@@ -7599,7 +7637,7 @@ static test_t call2_tests[] = {
     TEST_NO_TAG("Call with same codecs ordered differently", call_with_same_codecs_ordered_differently),
     TEST_NO_TAG("Call with audio stream added later on", call_with_audio_stream_added_later_on),
     TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
-    TEST_NO_TAG("Call with custom m line", call_with_custom_m_line),
+    TEST_NO_TAG("Call with custom m line and crappy to header", call_with_custom_m_line),
     TEST_NO_TAG("Call with tel uri", call_received_with_tel_uri)};
 
 static test_t call_not_established_tests[] = {

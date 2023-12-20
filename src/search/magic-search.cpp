@@ -355,7 +355,11 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 				string strTmp = d->mFilter;
 				setlocale(LC_ALL, "");
 				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c) { return tolower(c); });
-				LinphoneAddress *lastResult = linphone_core_interpret_url(this->getCore()->getCCore(), strTmp.c_str());
+				LinphoneAccount *account = linphone_proxy_config_get_account(proxy);
+				const LinphoneAccountParams *params = linphone_account_get_params(account);
+				bool_t apply_prefix = linphone_account_params_get_use_international_prefix_for_calls_and_chats(params);
+				LinphoneAddress *lastResult =
+				    linphone_core_interpret_url_2(this->getCore()->getCCore(), strTmp.c_str(), apply_prefix);
 				if (lastResult) {
 					returnList.push_back(SearchResult::create((unsigned int)0, lastResult, "", nullptr,
 					                                          LinphoneMagicSearchSourceRequest));

@@ -2221,9 +2221,8 @@ void Core::setVideoCodecPriorityPolicy(LinphoneCodecPriorityPolicy policy) {
 	if (linphone_core_ready(getCCore())) {
 		linphone_config_set_int(linphone_core_get_config(getCCore()), "video", "codec_priority_policy", (int)policy);
 	}
-	bool changed = policy != d->videoCodecPriorityPolicy;
 	d->videoCodecPriorityPolicy = policy;
-	if (changed) d->reorderVideoCodecList();
+	d->reorderVideoCodecList();
 }
 
 LinphoneCodecPriorityPolicy Core::getVideoCodecPriorityPolicy() const {

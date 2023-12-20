@@ -566,6 +566,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	Content finalContent;
 	ContentType finalContentType = ContentType::Cpim; // TODO should be the content-type of the decrypted message
 	finalContent.setContentType(finalContentType);
+	finalContent.setContentEncoding(internalContent->getContentEncoding());
 	finalContent.setBodyFromUtf8(plainMessageString);
 	message->setInternalContent(finalContent);
 

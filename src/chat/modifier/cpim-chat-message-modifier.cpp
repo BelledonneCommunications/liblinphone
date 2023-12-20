@@ -196,6 +196,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<Cha
 	if (contentDispositionHeader)
 		newContent.setContentDisposition(ContentDisposition(contentDispositionHeader->getValue()));
 	newContent.setBodyFromUtf8(cpimMessage->getContent());
+	newContent.setContentEncoding(content->getContentEncoding());
 
 	message->getPrivate()->setPositiveDeliveryNotificationRequired(false);
 	message->getPrivate()->setNegativeDeliveryNotificationRequired(false);
