@@ -507,6 +507,12 @@ void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session
 		}
 	} else {
 		/* Not already in a call or conference, so play the normal ringtone. */
+		/*
+		 * For ios, only one write sound card is allowed. To ensure this, free audio resources before a new incoming
+		 * call. It may be a call-end tone from a previous call, if a new call arrives closely after ending the current
+		 * one.
+		 */
+		freeAudioResources();
 		if (linphone_core_is_native_ringing_enabled(lc)) {
 			lInfo() << "Native (ie platform dependant) ringing is enabled, so not ringing from liblinphone.";
 			return;
@@ -515,10 +521,7 @@ void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session
 			lInfo() << "Callkit mode is enabled, will not play ring tone from liblinphone.";
 			return;
 		}
-		/*
-		 For ios, only one write sound card is allowed. To ensure this, free audio resources before a new incoming call.
-		 */
-		freeAudioResources();
+
 		startRingtone();
 		/* Setup the way this incoming call notification has to be stopped */
 		mSessionRingingStopFunction = [this]() { this->stopRingtone(); };

@@ -4388,7 +4388,8 @@ LinphoneStatus MediaSession::resume() {
 	lInfo() << "Resuming MediaSession " << this;
 	d->pausedByApp = false;
 	d->automaticallyPaused = false;
-	d->broken = false;
+	d->broken = false; // Set broken state to false in case the request is not being triggered by repairIfBroken(), so
+	                   // that we don't the job twice.
 	/* Stop playing music immediately. If remote side is a conference it
 	 * prevents the participants to hear it while the 200OK comes back. */
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
@@ -4741,7 +4742,8 @@ LinphoneStatus MediaSession::update(const MediaSessionParams *msp,
 		// forceStreamsDirAccordingToState (called by makeLocalMediaDescription) to set the stream directions
 		// accordingly
 		d->setState(nextState, "Updating call");
-		d->broken = false;
+		d->broken = false; // Set broken state to false in case the request is not being triggered by repairIfBroken(),
+		                   // so that we don't the job twice.
 		d->setParams(new MediaSessionParams(*msp));
 
 		std::shared_ptr<MediaConference::Conference> conference = nullptr;
