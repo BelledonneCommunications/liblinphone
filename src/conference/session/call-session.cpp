@@ -1149,9 +1149,8 @@ void CallSessionPrivate::repairIfBroken() {
 
 	try {
 		LinphoneCore *lc = q->getCore()->getCCore();
-		LinphoneConfig *config = linphone_core_get_config(lc);
-		if (!linphone_config_get_int(config, "sip", "repair_broken_calls", 1) ||
-		    !lc->media_network_state.global_state || !broken)
+		if (!lc->media_network_state.global_state || !broken ||
+		    !linphone_config_get_int(linphone_core_get_config(lc), "sip", "repair_broken_calls", 1))
 			return;
 	} catch (const bad_weak_ptr &) {
 		return; // Cannot repair if core is destroyed.
@@ -1180,13 +1179,17 @@ void CallSessionPrivate::repairIfBroken() {
 				// Need to cancel first re-INVITE as described in section 5.5 of RFC 6141
 				if (op->cancelInvite() == 0) {
 					reinviteOnCancelResponseRequested = true;
+					broken = false;
 				}
 			}
 			break;
 		case CallSession::State::StreamsRunning:
 		case CallSession::State::Paused:
 		case CallSession::State::PausedByRemote:
-			if (!op->dialogRequestPending()) reinviteToRecoverFromConnectionLoss();
+			if (!op->dialogRequestPending()) {
+				reinviteToRecoverFromConnectionLoss();
+				broken = false;
+			}
 			break;
 		case CallSession::State::UpdatedByRemote:
 			if (op->dialogRequestPending()) {
@@ -1194,20 +1197,24 @@ void CallSessionPrivate::repairIfBroken() {
 				op->declineWithErrorInfo(&sei, nullptr);
 			}
 			reinviteToRecoverFromConnectionLoss();
+			broken = false;
 			break;
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingProgress:
 			repairByInviteWithReplaces();
+			broken = false;
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::OutgoingRinging:
 			if (op->getRemoteTag() != nullptr) {
 				repairByInviteWithReplaces();
+				broken = false;
 			} else {
 				lWarning() << "No remote tag in last provisional response, no early dialog, so trying to cancel lost "
 				              "INVITE and will retry later.";
 				if (op->cancelInvite() == 0) {
 					reinviteOnCancelResponseRequested = true;
+					broken = false;
 				}
 			}
 			break;
