@@ -119,6 +119,11 @@ public class CoreManager {
         mForcedIterateTimer = null;
 
         Looper myLooper = Looper.myLooper();
+        if (myLooper == null) {
+            Log.w("[Core Manager] Failed to detect current process Looper, using main one");
+            myLooper = Looper.getMainLooper();
+        }
+        
         mHandler = new Handler(myLooper);
         Thread thread = myLooper.getThread();
         boolean isMainThread = myLooper == Looper.getMainLooper();
