@@ -143,7 +143,6 @@ enum LinphoneError: Error {
 }
 
 public var coreQueue : DispatchQueue = DispatchQueue(label:"core.queue")
-public var cancellables = Set<AnyCancellable>()
 
 public class LinphoneAsyncHelper {
 
@@ -174,25 +173,23 @@ public class LinphoneObjectsPublisher <T> : Publisher {
 	}
 
 	@discardableResult
-	public func postOnMainQueue(onError :@escaping ((Error) -> Void) = {_ in }, receiveValue:@escaping ((Output) -> Void)) ->  LinphoneObjectsPublisher <T> {
-		doOnQueue(onError,receiveValue,queue: DispatchQueue.main)
-		return self
+	public func postOnMainQueue(onError :@escaping ((Error) -> Void) = {_ in }, receiveValue:@escaping ((Output) -> Void)) ->  AnyCancellable {
+		return doOnQueue(onError,receiveValue,queue: DispatchQueue.main)
 	}
 
 	@discardableResult
-	public func postOnCoreQueue(onError :@escaping ((Error) -> Void) = {_ in }, receiveValue:@escaping ((Output) -> Void)) -> LinphoneObjectsPublisher <T> {
-		doOnQueue(onError,receiveValue,queue: coreQueue)
-		return self
+	public func postOnCoreQueue(onError :@escaping ((Error) -> Void) = {_ in }, receiveValue:@escaping ((Output) -> Void)) -> AnyCancellable {
+		return doOnQueue(onError,receiveValue,queue: coreQueue)
 	}
 
 
-	private func doOnQueue(_ onError :@escaping ((Error) -> Void) = {_ in }, _ receiveValue:@escaping ((Output) -> Void), queue:DispatchQueue) {
-		passThroughSubject.receive(on:queue)
+	private func doOnQueue(_ onError :@escaping ((Error) -> Void) = {_ in }, _ receiveValue:@escaping ((Output) -> Void), queue:DispatchQueue) -> AnyCancellable {
+		return passThroughSubject.receive(on:queue)
 		.sink { error in
 			onError(error as! Error)
 		} receiveValue: { result in
 			receiveValue(result)
-		}.store(in: &cancellables)
+		}
 	}
 }
 
