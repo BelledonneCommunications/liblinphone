@@ -159,7 +159,7 @@ public class LinphoneAsyncHelper {
 	}
 
 }
-@available(iOS 13.0, *)
+
 public class LinphoneObjectsPublisher <T> : Publisher {
 	public typealias Output = T
 	public typealias Failure = Error
@@ -242,7 +242,6 @@ public final class {{interfaceName}}Stub : {{interfaceName}}
 	}
 }
 
-@available(iOS 13.0, *)
 public final class {{interfaceName}}Publisher {
 	private var _{{interfaceBaseNameVar}} : {{interfaceBaseName}}
 
@@ -328,7 +327,6 @@ public class {{className}} : LinphoneObject
 	{{#hasListener}}
 	var delegateManagers : [{{className}}DelegateManager] = []
 
-@available(iOS 13.0, *)
 	public lazy var publisher : {{classDelegateName}}Publisher? = {
 		return {{classDelegateName}}Publisher({{className_var}} : self)
 	}()
