@@ -4939,6 +4939,12 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 			op->setPrivacy(linphone_account_params_get_privacy(linphone_account_get_params(account)));
 		}
 	} else identity = linphone_core_get_primary_contact(lc);
+
+	if (!identity) {
+		lError() << "No from identity to configure the op.";
+		return;
+	}
+
 	/*sending out of calls*/
 	if (account) {
 		routes = make_routes_for_account(account, dest);
@@ -4953,16 +4959,12 @@ void linphone_configure_op_with_account(LinphoneCore *lc,
 
 	if (with_contact && account && Account::toCpp(account)->getOp()) {
 		const LinphoneAddress *contact = linphone_account_get_contact_address(account);
-		SalAddress *salAddress = nullptr;
 		if (contact) {
-			const auto contact_addr = LinphonePrivate::Address::getSharedFromThis(contact);
-			salAddress = sal_address_clone(contact_addr->getImpl());
+			op->setContactAddress(Address::toCpp(contact)->getImpl());
 		}
-		op->setContactAddress(salAddress);
-		if (salAddress) sal_address_unref(salAddress);
 	}
-	op->enableCnxIpTo0000IfSendOnly(!!linphone_config_get_default_int(
-	    lc->config, "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0)); /*also set in linphone_call_new_incoming*/
+	op->enableCnxIpTo0000IfSendOnly(!!linphone_config_get_int(lc->config, "sip", "cnx_ip_to_0000_if_sendonly_enabled",
+	                                                          0)); /*also set in linphone_call_new_incoming*/
 }
 
 void linphone_configure_op(

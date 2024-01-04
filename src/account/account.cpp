@@ -642,15 +642,17 @@ std::list<SalAddress *> Account::getOtherContacts() {
 
 void Account::registerAccount() {
 	if (mParams->mRegisterEnabled) {
-		std::shared_ptr<Address> proxy = Address::create(mParams->mProxy);
-		if (proxy == nullptr) {
-			lError() << "Can't register LinphoneAccount [" << this << "] without a proxy";
+		if (mParams->mProxyAddress == nullptr) {
+			lError() << "Can't register LinphoneAccount [" << this << "] without a proxy address";
 			return;
 		}
-
+		if (mParams->mIdentityAddress == nullptr) {
+			lError() << "Can't register LinphoneAccount [" << this << "] without an identity address";
+			return;
+		}
 		lInfo() << "LinphoneAccount [" << this
 		        << "] about to register (LinphoneCore version: " << linphone_core_get_version() << ")";
-		auto proxy_string = proxy->asStringUriOnly();
+		auto proxy_string = mParams->mProxyAddress->asStringUriOnly();
 
 		if (mOp) mOp->release();
 		mOp = new SalRegisterOp(getCCore()->sal.get());

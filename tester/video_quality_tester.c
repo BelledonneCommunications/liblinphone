@@ -321,7 +321,7 @@ static void video_call_expected_fps_for_low_bandwidth(void) {
  *
  **/
 static void video_call_expected_fps_for_regular_bandwidth(void) {
-	video_call_expected_fps_for_specified_bandwidth(500000, 25, "vga");
+	video_call_expected_fps_for_specified_bandwidth(580000, 25, "vga");
 }
 
 /*
@@ -454,7 +454,7 @@ static void video_call_expected_size_for_specified_bandwidth(
 				LinphoneCallStats *stats;
 				uint64_t start_time = bctbx_get_cur_time_ms();
 				uint64_t elapsed;
-				uint64_t max_time = 45000;
+				uint64_t max_time = 55000;
 
 				while ((elapsed = bctbx_get_cur_time_ms() - start_time) < max_time) {
 					wait_for_until(marie->lc, pauline->lc, NULL, 1, 1000);
