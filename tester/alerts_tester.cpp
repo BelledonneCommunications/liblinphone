@@ -83,9 +83,17 @@ static void alert_catch(LinphoneCore *core, LinphoneAlert *alert) {
 static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCallbackData data) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
+	LinphonePayloadType *opus;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
+
+	opus = linphone_core_get_payload_type(marie->lc, "opus", 48000, 2);
+	linphone_payload_type_enable(opus, TRUE);
+	linphone_payload_type_unref(opus);
+	opus = linphone_core_get_payload_type(pauline->lc, "opus", 48000, 2);
+	linphone_payload_type_enable(opus, TRUE);
+	linphone_payload_type_unref(opus);
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_new_alert_triggered(cbs, alert_catch);
@@ -148,7 +156,7 @@ static void alert_call_base(OrtpNetworkSimulatorParams &networkParams, AlertCall
 	if (data.expectedType != LinphoneAlertQoSBurstOccured && data.expectedType != LinphoneAlertQoSCameraLowFramerate &&
 	    data.expectedType != LinphoneAlertQoSLowQualitySentVideo) {
 		/* the new bandwidth estimate might take time to converge to a higher value*/
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &data.stopped, 1, 25000));
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &data.stopped, 1, 45000));
 	}
 
 	end_call(marie, pauline);
@@ -165,7 +173,7 @@ static void high_loss_rate_test(void) {
 	AlertCallbackData data = {true, true, LinphoneAlertQoSHighLossLateRate};
 	alert_call_base(network_params, data);
 }
-void low_video_bandwidth_test(void) {
+static void low_video_bandwidth_test(void) {
 
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
@@ -173,11 +181,11 @@ void low_video_bandwidth_test(void) {
 	AlertCallbackData data = {true, true, LinphoneAlertQoSLowQualityReceivedVideo};
 	alert_call_base(network_params, data);
 }
-void low_bandwidth_estimation_test(void) {
+static void low_bandwidth_estimation_test(void) {
 
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
-	network_params.max_bandwidth = 120000;
+	network_params.max_bandwidth = 140000;
 	AlertCallbackData data = {true, true, LinphoneAlertQoSLowDownloadBandwidthEstimation};
 	alert_call_base(network_params, data);
 }

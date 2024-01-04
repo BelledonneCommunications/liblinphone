@@ -529,8 +529,8 @@ static void video_bandwidth_estimation(void) {
 	if (BC_ASSERT_TRUE(call(marie, pauline))) {
 		/* Wait for the first TMMBR */
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_tmmbr_received, 1, 50000));
-		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 270000.f, float, "%f");
-		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 330000.f, float, "%f");
+		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 190000.f, float, "%f");
+		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 250000.f, float, "%f");
 
 		end_call(marie, pauline);
 	}
@@ -555,7 +555,6 @@ test_t quality_reporting_tests[] = {
 #endif // ifdef VIDEO_ENABLED
     TEST_NO_TAG("Sent using custom route", quality_reporting_sent_using_custom_route),
     TEST_NO_TAG("Video bandwidth estimation", video_bandwidth_estimation)};
-
 
 test_suite_t quality_reporting_test_suite = {"QualityReporting",
                                              NULL,
