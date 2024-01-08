@@ -2615,7 +2615,6 @@ static void misc_config_read(LinphoneCore *lc) {
 		} else linphone_friend_list_ref(lc->base_contacts_list_for_synchronization);
 
 		linphone_friend_list_set_type(lc->base_contacts_list_for_synchronization, LinphoneFriendListTypeVCard4);
-		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
 	}
 }
 
@@ -2686,6 +2685,12 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 
 		// To apply any changes to LIME configuration
 		linphone_core_reload_lime(lc);
+	}
+
+	if (lc->base_contacts_list_for_synchronization) {
+		ms_message("contacts-vcard-list found, download it and storing it in DB if configured");
+		linphone_friend_list_enable_database_storage(lc->base_contacts_list_for_synchronization, TRUE);
+		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
 	}
 
 	if (lc->provisioning_http_listener) {

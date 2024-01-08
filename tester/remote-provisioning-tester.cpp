@@ -372,12 +372,12 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	linphone_friend_list_set_type(friendList2, LinphoneFriendListTypeVCard4);
 	linphone_friend_list_synchronize_friends_from_server(friendList2);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2,
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 3,
 	                              liblinphone_tester_sip_timeout)); // + 'contacts-vcard-list' sync
 
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList2)), 1, int, "%i");
 	linphone_friend_list_unref(friendList2);
 
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList2)), 1, int, "%i");
 	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 1, int, "%i");
 	LinphoneFriendList *friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NOT_NULL(friendList3);
