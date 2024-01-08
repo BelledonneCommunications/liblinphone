@@ -572,6 +572,22 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			audio_stream_set_client_to_mixer_extension_id(mStream, streamCfg.getClientToMixerExtensionId());
 		}
 
+		// When in conference and it is remote, always enable the local mix
+		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
+		if (conference) {
+			const auto remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
+			if (remoteConference) {
+				// This has to be called before audio_stream_start so that the AudioStream can configure it's filters
+				// properly
+				media_stream_enable_conference_local_mix(&mStream->ms, TRUE);
+			} else { // when conference is local, check if the core is configured to enable full packet mode
+				if (getCCore()->full_packet_mode) { // TODO: this setting should really be at core level ? -- change
+					                                // also in MS2AudioMixer constructor
+					audio_stream_enable_transfer_mode(mStream, TRUE);
+				}
+			}
+		}
+
 		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::sAudioStreamIsSpeakingCb, this);
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
 

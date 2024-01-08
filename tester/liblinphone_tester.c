@@ -516,6 +516,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_chat_imdn, 315);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_ephemeral_chat, 281);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_secure_chat, 441);
+	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_transfered_conference_basic, 100);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&tunnel_test_suite, 0);
 	liblinphone_tester_add_suite_with_default_time(&offeranswer_test_suite, 221);

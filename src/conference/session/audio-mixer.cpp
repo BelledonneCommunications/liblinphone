@@ -35,7 +35,8 @@ MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session) {
 	ms_conf_params.samplerate = linphone_config_get_int(mSession.getCCore()->config, "sound", "conference_rate", 16000);
 	ms_conf_params.active_talker_callback = &MS2AudioMixer::sOnActiveTalkerChanged;
 	ms_conf_params.security_level = StreamMixer::securityLevelToMsSecurityLevel(session.getSecurityLevel());
-	ms_conf_params.full_packet_mode = mSession.getCCore()->full_packet_mode;
+	ms_conf_params.full_packet_mode =
+	    mSession.getCCore()->full_packet_mode; // this core setting is also used in MS2AudioStream::render
 	ms_conf_params.user_data = this;
 	mConference = ms_audio_conference_new(&ms_conf_params, mSession.getCCore()->factory);
 }

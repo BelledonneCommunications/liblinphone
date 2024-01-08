@@ -280,6 +280,7 @@ set(SOURCE_FILES_C
 	local_chat_tester_functions.cpp
 	local_conference_tester_functions.cpp
 	local_scheduled_conference_tester.cpp
+	local_transfered_conference_tester.cpp
 	local_ice_conference_tester.cpp
 	local_inpromptu_conference_tester.cpp
 	local_conference_edition_tester.cpp
