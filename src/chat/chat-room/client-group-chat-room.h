@@ -115,6 +115,8 @@ public:
 	};
 
 private:
+	std::list<std::shared_ptr<Participant>> cachedParticipants;
+
 	ClientGroupChatRoom(const std::shared_ptr<Core> &core,
 	                    const std::shared_ptr<Address> &focus,
 	                    const ConferenceId &conferenceId,

@@ -595,8 +595,8 @@ ClientGroupChatRoom::getSecurityLevelExcept(const std::shared_ptr<ParticipantDev
 		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
 
-	// Until participant list & self devices list is populated, don't assume chat room is safe but encrypted
-	if (getParticipants().size() == 0 && getMe()->getDevices().size() == 0) {
+	// Until participant device list & self devices list is populated, don't assume chat room is safe but encrypted
+	if (getParticipantDevices().size() == 0) {
 		lDebug() << "Chatroom SecurityLevel = Encrypted";
 		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
@@ -707,6 +707,10 @@ bool ClientGroupChatRoom::addParticipants(const list<std::shared_ptr<Address>> &
 
 	if (getState() == ConferenceInterface::State::Instantiated) {
 		auto session = d->createSession();
+		for (const auto &address : addresses) {
+			const auto participant = Participant::create(getConference().get(), address);
+			cachedParticipants.push_back(participant);
+		}
 		sendInvite(session, addressesList);
 		setState(ConferenceInterface::State::CreationPending);
 	} else {
@@ -768,7 +772,11 @@ const list<shared_ptr<ParticipantDevice>> ClientGroupChatRoom::getParticipantDev
 }
 
 const list<shared_ptr<Participant>> &ClientGroupChatRoom::getParticipants() const {
-	return getConference()->getParticipants();
+	const auto &conferenceParticipants = getConference()->getParticipants();
+	if (conferenceParticipants.empty()) {
+		return cachedParticipants;
+	}
+	return conferenceParticipants;
 }
 
 void ClientGroupChatRoom::setParticipantAdminStatus(const shared_ptr<Participant> &participant, bool isAdmin) {

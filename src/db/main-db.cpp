@@ -1500,8 +1500,11 @@ long long MainDbPrivate::insertConferenceChatMessageEvent(const shared_ptr<Event
 
 	shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
 	for (const auto &participant : chatRoom->getParticipants()) {
-		const long long &participantSipAddressId = selectSipAddressId(participant->getAddress());
-		insertChatMessageParticipant(eventId, participantSipAddressId, state, chatMessage->getTime());
+		// If a participant has no device, then there is no need to add it to the list
+		if (participant->getDevices().size() > 0) {
+			const long long &participantSipAddressId = selectSipAddressId(participant->getAddress());
+			insertChatMessageParticipant(eventId, participantSipAddressId, state, chatMessage->getTime());
+		}
 	}
 
 	const long long &dbChatRoomId = selectChatRoomId(chatRoom->getConferenceId());
@@ -5231,8 +5234,16 @@ shared_ptr<AbstractChatRoom> MainDb::mergeChatRooms(const shared_ptr<AbstractCha
 		conferenceIdToRemove = chatRoom1ConferenceId;
 	}
 	chatRoomToAdd->getPrivate()->setCreationTime(creationTime);
-	d->unreadChatMessageCountCache.insert(conferenceIdToAdd, *d->unreadChatMessageCountCache[conferenceIdToAdd] +
-	                                                             *d->unreadChatMessageCountCache[conferenceIdToRemove]);
+	const auto unreadChatMessageCountChatRoomToAdd = d->unreadChatMessageCountCache[conferenceIdToAdd];
+	const auto unreadChatMessageCountChatRoomToRemove = d->unreadChatMessageCountCache[conferenceIdToRemove];
+	int unreadChatMessageCount = 0;
+	if (unreadChatMessageCountChatRoomToAdd) {
+		unreadChatMessageCount += *unreadChatMessageCountChatRoomToAdd;
+	}
+	if (unreadChatMessageCountChatRoomToRemove) {
+		unreadChatMessageCount += *unreadChatMessageCountChatRoomToRemove;
+	}
+	d->unreadChatMessageCountCache.insert(conferenceIdToAdd, unreadChatMessageCount);
 	d->unreadChatMessageCountCache.insert(conferenceIdToRemove, 0);
 
 	const long long &dbChatRoomToAddId = d->selectChatRoomId(conferenceIdToAdd);
