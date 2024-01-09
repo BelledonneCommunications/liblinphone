@@ -954,6 +954,10 @@ static void group_chat_room_creation_core_restart(void) {
 	                             initialMarieStats.number_of_LinphoneConferenceStateCreated + 1,
 	                             liblinphone_tester_sip_timeout));
 
+	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), initialSubject);
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_chat_room_get_participants(marieCr)),
+	                bctbx_list_size(participantsAddresses), size_t, "%zu");
+
 	const LinphoneAddress *localAddr = linphone_chat_room_get_local_address(marieCr);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(localAddr, marieAddr));
 
