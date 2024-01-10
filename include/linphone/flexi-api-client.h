@@ -113,6 +113,7 @@ public:
 	FlexiAPIClient *accountPhoneChange(string code);
 	FlexiAPIClient *accountAuthTokenAttach(string authToken);
 	FlexiAPIClient *accountProvision();
+	FlexiAPIClient *accountProvisioningInformation(string provisioningToken);
 
 	// Admin endpoints
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm);
@@ -160,6 +161,7 @@ private:
 	void prepareAndSendRequest(string path);
 	void prepareAndSendRequest(string path, string type);
 	void prepareAndSendRequest(string path, string type, JsonParams params);
+	void prepareAndSendRootRequest(string path, string type, string contentSubtype);
 	static void processResponse(void *ctx, const belle_http_response_event_t *event) noexcept;
 	static void processIoError(void *ctx, const belle_sip_io_error_event_t *event) noexcept;
 	static void processTimeout(void *ctx, const belle_sip_timeout_event_t *event) noexcept;

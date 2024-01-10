@@ -87,6 +87,16 @@ void linphone_account_creator_service_set_create_account_cb(LinphoneAccountCreat
 }
 
 LinphoneAccountCreatorRequestFunc
+linphone_account_creator_service_get_create_push_account_cb(const LinphoneAccountCreatorService *service) {
+	return service->create_push_account_request_cb;
+}
+
+void linphone_account_creator_service_set_create_push_account_cb(LinphoneAccountCreatorService *service,
+															LinphoneAccountCreatorRequestFunc cb) {
+	service->create_push_account_request_cb = cb;
+}
+
+LinphoneAccountCreatorRequestFunc
 linphone_account_creator_service_get_is_account_exist_cb(const LinphoneAccountCreatorService *service) {
 	return service->is_account_exist_request_cb;
 }

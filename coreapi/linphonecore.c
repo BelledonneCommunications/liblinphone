@@ -3053,6 +3053,8 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 		    service, linphone_account_creator_recover_phone_account_flexiapi);
 		linphone_account_creator_service_set_login_linphone_account_cb(
 		    service, linphone_account_creator_login_linphone_account_flexiapi);
+		linphone_account_creator_service_set_create_push_account_cb(
+			service, linphone_account_creator_create_push_account_with_token_flexiapi);
 	}
 #endif
 

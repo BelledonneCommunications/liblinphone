@@ -290,6 +290,15 @@ FlexiAPIClient *FlexiAPIClient::accountProvision() {
 }
 
 /**
+ * Non API (Root) public endpoints
+ */
+
+FlexiAPIClient *FlexiAPIClient::accountProvisioningInformation(string provisioningToken) {
+	prepareAndSendRootRequest("provisioning/"+provisioningToken, "GET", "xml");
+	return this;
+}
+
+/**
  * Admin endpoints
  */
 
@@ -470,6 +479,47 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 
 	if (mApiKey != nullptr) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", mApiKey));
+	}
+
+	// Set the same User-Agent header as for the SAL
+	belle_sip_header_user_agent_t *userAgentHeader = belle_sip_header_user_agent_new();
+	belle_sip_object_ref(userAgentHeader);
+	belle_sip_header_user_agent_set_products(userAgentHeader, nullptr);
+	belle_sip_header_user_agent_add_product(userAgentHeader, linphone_core_get_user_agent(mCore));
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), BELLE_SIP_HEADER(userAgentHeader));
+
+	internalCallbacks.process_response = processResponse;
+	internalCallbacks.process_io_error = processIoError;
+	internalCallbacks.process_timeout = processTimeout;
+	internalCallbacks.process_auth_requested = processAuthRequested;
+
+	listener = belle_http_request_listener_create_from_callbacks(&internalCallbacks, cb.release());
+
+	belle_http_provider_send_request(mCore->http_provider, req, listener);
+	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
+	belle_sip_object_unref(userAgentHeader);
+}
+
+// Requests to root url (non API requests).
+void FlexiAPIClient::prepareAndSendRootRequest(string path, string type, string contentSubtype) {
+	auto cb = make_unique<shared_ptr<Callbacks>>(mRequestCallbacks);
+	belle_http_request_listener_callbacks_t internalCallbacks = {};
+	belle_http_request_listener_t *listener;
+	belle_http_request_t *req;
+
+	const char *accountCreatorUrl = linphone_core_get_account_creator_url(mCore);
+	string uri = accountCreatorUrl ? accountCreatorUrl : "";
+
+	// strip "/api" from backend url to reach root end point
+	string apiQualifier = "/api";
+	uri.replace(uri.find(apiQualifier), apiQualifier.size(), "");
+
+	req = belle_http_request_create(type.c_str(), belle_generic_uri_parse(uri.append(path).c_str()),
+									belle_sip_header_content_type_create("application", contentSubtype.c_str()),
+									belle_sip_header_accept_create("application", contentSubtype.c_str()), NULL);
+	if (!req) {
+		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]";
+		return;
 	}
 
 	// Set the same User-Agent header as for the SAL

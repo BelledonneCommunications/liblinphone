@@ -69,6 +69,7 @@ struct _LinphoneAccountCreatorService {
 	LinphoneAccountCreatorRequestFunc account_creation_request_token_request_cb; /**< Generate and get a request token */
 	LinphoneAccountCreatorRequestFunc account_creation_token_using_request_token_request_cb; /**< Generate and get a token for account creation */
 	LinphoneAccountCreatorRequestFunc create_account_with_token_request_cb; /**< Use a received token to create an account */
+	LinphoneAccountCreatorRequestFunc create_push_account_request_cb;   /**< Request to create a push account */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorService);
@@ -353,6 +354,14 @@ linphone_account_creator_create_account_with_token_flexiapi(LinphoneAccountCreat
  **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus
 linphone_account_creator_admin_create_account_flexiapi(LinphoneAccountCreator *creator);
+
+/**
+ * Send an FlexiAPI request to create a push account
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus
+linphone_account_creator_create_push_account_with_token_flexiapi(LinphoneAccountCreator *creator);
 
 #ifdef __cplusplus
 }

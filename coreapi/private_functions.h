@@ -955,8 +955,13 @@ void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height);
 
+// Account creator functions
 LinphoneAccountCreatorCbs *linphone_account_creator_cbs_new(void);
 void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
+char * linphone_account_creator_get_identity(const LinphoneAccountCreator *creator);
+void linphone_account_creator_fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator);
+const char *linphone_account_creator_get_domain_with_fallback_to_proxy_domain(LinphoneAccountCreator *creator);
+
 LinphoneXmlRpcRequestCbs *linphone_xml_rpc_request_cbs_new(void);
 void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
 
