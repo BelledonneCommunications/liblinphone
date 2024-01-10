@@ -31,6 +31,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Alert;
 class CallSession;
 
 class LINPHONE_PUBLIC CallSessionListener {
@@ -156,6 +157,8 @@ public:
 	}
 
 	virtual void confirmGoClear() const {};
+
+	virtual void onAlertNotified(BCTBX_UNUSED(std::shared_ptr<Alert> &alert)){};
 };
 
 LINPHONE_END_NAMESPACE

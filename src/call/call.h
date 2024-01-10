@@ -21,6 +21,7 @@
 #ifndef _L_CALL_CALL_H_
 #define _L_CALL_CALL_H_
 
+#include "alert/alert.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call-log.h"
 #include "call/video-source/video-source-descriptor.h"
@@ -308,6 +309,8 @@ public:
 	void onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording) override;
 
 	void confirmGoClear() const override;
+
+	void onAlertNotified(std::shared_ptr<Alert> &alert) override;
 
 	std::shared_ptr<MediaConference::Conference> getConference() const;
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);

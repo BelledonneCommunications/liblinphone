@@ -30,10 +30,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class AlertMonitor;
 class Core;
 class IceAgent;
 class MediaSessionPrivate;
 class Participant;
+class ParticipantDevice;
 class StreamsGroup;
 class NatPolicy;
 
@@ -43,6 +45,7 @@ class RemoteConference;
 } // namespace MediaConference
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {
+	friend class AlertMonitor;
 	friend class Call;
 	friend class Core;
 	friend class IceAgent;

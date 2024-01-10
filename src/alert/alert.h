@@ -26,42 +26,43 @@
 #include <belle-sip/object++.hh>
 
 #include "call/call.h"
+#include "conference/session/media-session.h"
 #include "conference/session/streams.h"
 #include "dictionary/dictionary.h"
 #include "linphone/api/c-types.h"
 
-using namespace std;
-
 LINPHONE_BEGIN_NAMESPACE
+
 class AlertCbs;
 
 class LINPHONE_PUBLIC Alert : public bellesip::HybridObject<LinphoneAlert, Alert>, public CallbacksHolder<AlertCbs> {
 
 public:
-	Alert(){};
+	explicit Alert(LinphoneAlertType type);
 	Alert(const Alert &other);
 	virtual ~Alert();
 	Alert *clone() const override;
 
-	Alert(std::shared_ptr<Call> &call, LinphoneAlertType type);
 	time_t getStartTime() const;
 	time_t getEndTime() const;
 	LinphoneAlertType getType() const;
-	shared_ptr<Dictionary> getInformations() const;
-	weak_ptr<Call> getCall() const;
+	std::shared_ptr<Dictionary> getInformations() const;
+	std::weak_ptr<Call> getCall() const;
+	void setCall(const std::shared_ptr<Call> &call);
 	bool getState() const;
-	void setState(const bool state);
+	void setState(bool state);
 	std::ostream &toStream(std::ostream &stream) const;
-	shared_ptr<Dictionary> mInformations;
+
+	std::shared_ptr<Dictionary> mInformations = nullptr;
 
 private:
 	std::weak_ptr<Call> mCall;
 	LinphoneAlertType mType;
 	time_t mStartTime;
 	time_t mEndTime;
-	bool mState;
+	bool mState = true;
 };
-inline std::ostream &operator<<(ostream &stream, const Alert &alert) {
+inline std::ostream &operator<<(std::ostream &stream, const Alert &alert) {
 	return alert.toStream(stream);
 }
 
@@ -76,19 +77,21 @@ private:
 	uint64_t mLastCheck;
 };
 
-class AlertMonitor : public CoreAccessor {
+class AlertMonitor {
 public:
-	AlertMonitor(const std::shared_ptr<Core> &core);
+	explicit AlertMonitor(MediaSession &mediaSession);
+	virtual ~AlertMonitor() = default;
 	void notify(const std::shared_ptr<Dictionary> &properties, LinphoneAlertType);
 	bool alreadyRunning(LinphoneAlertType type);
 	void handleAlert(LinphoneAlertType type,
 	                 bool triggerCondition,
 	                 const std::function<std::shared_ptr<Dictionary>()> &getInformationFunction = nullptr);
-	void getTimer(LinphoneAlertType type, const string &section, const string &key, int delay);
+	void getTimer(LinphoneAlertType type, const std::string &section, const std::string &key, int delay);
 	virtual void reset(){};
 	bool getAlertsEnabled();
 
 protected:
+	MediaSession &mMediaSession;
 	std::unordered_map<LinphoneAlertType, AlertTimer> mTimers;
 	std::unordered_map<LinphoneAlertType, std::shared_ptr<Alert>> mRunningAlerts;
 	bool mAlertsEnabled;
@@ -96,7 +99,7 @@ protected:
 
 class VideoQualityAlertMonitor : public AlertMonitor {
 public:
-	VideoQualityAlertMonitor(const std::shared_ptr<Core> &core);
+	explicit VideoQualityAlertMonitor(MediaSession &mediaSession);
 	float getFpsThreshold();
 	void checkSendingLowQuality(const VideoControlInterface::VideoStats *stats);
 	void videoStalledCheck(float fps);
@@ -112,7 +115,7 @@ private:
 class VideoBandwidthAlertMonitor : public AlertMonitor {
 
 public:
-	VideoBandwidthAlertMonitor(const std::shared_ptr<Core> &core);
+	explicit VideoBandwidthAlertMonitor(MediaSession &mediaSession);
 	float getBandwidthThreshold();
 	void check(LinphoneCallStats *callStats);
 	void checkVideoBandwidth(float bandwidth);
@@ -125,7 +128,7 @@ private:
 class NetworkQualityAlertMonitor : public AlertMonitor {
 
 public:
-	NetworkQualityAlertMonitor(const std::shared_ptr<Core> &core);
+	explicit NetworkQualityAlertMonitor(MediaSession &mediaSession);
 	float getLossRateThreshold();
 	void checkRemoteLossRate(float receivedLossRate);
 	void checkLocalLossRate(float lossRate, float lateRate, LinphoneStreamType streamType);

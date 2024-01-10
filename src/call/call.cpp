@@ -1320,6 +1320,10 @@ void Call::confirmGoClear() const {
 	getMediaSession()->confirmGoClear();
 }
 
+void Call::onAlertNotified(std::shared_ptr<Alert> &alert) {
+	alert->setCall(getSharedFromThis());
+}
+
 // -----------------------------------------------------------------------------
 
 std::shared_ptr<MediaConference::Conference> Call::getConference() const {

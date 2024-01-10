@@ -83,7 +83,7 @@ LINPHONE_PUBLIC const LinphoneDictionary *linphone_alert_get_informations(const 
 /**
  * Return the call from the alert.
  * @param alert The given alert. @notnil
- * @return A #LinphoneCall from the alert. @notnil
+ * @return A #LinphoneCall from the alert. @maybenil
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_alert_get_call(const LinphoneAlert *alert);
 /**

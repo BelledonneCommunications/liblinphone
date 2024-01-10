@@ -57,8 +57,8 @@ void BandwithControllerService::destroy() {
  */
 
 MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params)
-    : Stream(sg, params), mVideoMonitor(sg.getCore().getSharedFromThis()),
-      mNetworkMonitor(sg.getCore().getSharedFromThis()), mBandwidthMonitor(sg.getCore().getSharedFromThis()) {
+    : Stream(sg, params), mVideoMonitor(getMediaSession()), mNetworkMonitor(getMediaSession()),
+      mBandwidthMonitor(getMediaSession()) {
 	memset(&mSessions, 0, sizeof(mSessions));
 	mStats = _linphone_call_stats_new();
 	_linphone_call_stats_set_type(mStats, (LinphoneStreamType)getType());
