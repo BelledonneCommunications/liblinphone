@@ -221,6 +221,8 @@ typedef enum _LinphoneAccountCreatorStatus {
 	LinphoneAccountCreatorStatusNotImplementedError = 23, /**< This API isn't implemented in the current backend */
 	LinphoneAccountCreatorStatusRequestNotAuthorized =
 	    24, /**< Request has been denied, probably due to invalid auth token */
+	LinphoneAccountCreatorStatusRequestTooManyRequests =
+		25, /**< Request has been denied, due to too many requests sent in given period */
 } LinphoneAccountCreatorStatus;
 
 // -----------------------------------------------------------------------------

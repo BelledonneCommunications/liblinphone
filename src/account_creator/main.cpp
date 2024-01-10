@@ -31,10 +31,53 @@
 
 using namespace LinphonePrivate;
 
+/**
+ * Utility functions
+ */
+
+static void reset_field(char **field) {
+	if (*field) {
+		bctbx_free(*field);
+		*field = nullptr;
+	}
+}
+
+static unsigned int validate_uri(LinphoneCore *lc, const char *username, const char *domain, const char *display_name) {
+	LinphoneAddress *addr;
+	unsigned int status = 0;
+	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(lc);
+	addr = linphone_address_new("sip:?@domain.com");
+	linphone_proxy_config_set_identity_address(proxy, addr);
+	if (addr) linphone_address_unref(addr);
+
+	if (username) {
+		addr = linphone_proxy_config_normalize_sip_uri(proxy, username);
+	} else {
+		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(proxy));
+	}
+
+	if (addr == NULL) {
+		status = 1;
+		goto end;
+	}
+
+	if (domain && linphone_address_set_domain(addr, domain) != 0) {
+		status = 1;
+	}
+
+	if (display_name && (!strlen(display_name) || linphone_address_set_display_name(addr, display_name) != 0)) {
+		status = 1;
+	}
+	linphone_address_unref(addr);
+end:
+	linphone_proxy_config_unref(proxy);
+	return status;
+}
+
 LinphoneProxyConfig *linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator) {
 	LinphoneAuthInfo *info;
 	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(creator->core);
-	char *identity_str = _get_identity(creator);
+	char *identity_str = linphone_account_creator_get_identity(creator);
 	LinphoneAddress *identity = linphone_address_new(identity_str);
 
 	ms_free(identity_str);
@@ -554,6 +597,13 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist(LinphoneA
 LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator) {
 	if (creator->service->create_account_request_cb) {
 		return creator->service->create_account_request_cb(creator);
+	}
+	return LinphoneAccountCreatorStatusNotImplementedError;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_create_push_account(LinphoneAccountCreator *creator) {
+	if (creator->service->create_push_account_request_cb) {
+		return creator->service->create_push_account_request_cb(creator);
 	}
 	return LinphoneAccountCreatorStatusNotImplementedError;
 }

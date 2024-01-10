@@ -31,45 +31,13 @@
 
 using namespace LinphonePrivate;
 
-const char *_get_domain(LinphoneAccountCreator *creator) {
+const char *linphone_account_creator_get_domain_with_fallback_to_proxy_domain(LinphoneAccountCreator *creator) {
 	if (creator->domain) return creator->domain;
 	else if (creator->proxy_cfg) return linphone_proxy_config_get_domain(creator->proxy_cfg);
 	return NULL;
 }
 
-unsigned int validate_uri(LinphoneCore *lc, const char *username, const char *domain, const char *display_name) {
-	LinphoneAddress *addr;
-	unsigned int status = 0;
-	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(lc);
-	addr = linphone_address_new("sip:?@domain.com");
-	linphone_proxy_config_set_identity_address(proxy, addr);
-	if (addr) linphone_address_unref(addr);
-
-	if (username) {
-		addr = linphone_proxy_config_normalize_sip_uri(proxy, username);
-	} else {
-		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(proxy));
-	}
-
-	if (addr == NULL) {
-		status = 1;
-		goto end;
-	}
-
-	if (domain && linphone_address_set_domain(addr, domain) != 0) {
-		status = 1;
-	}
-
-	if (display_name && (!strlen(display_name) || linphone_address_set_display_name(addr, display_name) != 0)) {
-		status = 1;
-	}
-	linphone_address_unref(addr);
-end:
-	linphone_proxy_config_unref(proxy);
-	return status;
-}
-
-char *_get_identity(const LinphoneAccountCreator *creator) {
+char *linphone_account_creator_get_identity(const LinphoneAccountCreator *creator) {
 	char *identity = NULL;
 	const char *username = creator->username ? creator->username : creator->phone_number;
 	if (username) {
@@ -104,14 +72,7 @@ char *_get_identity(const LinphoneAccountCreator *creator) {
 	return identity;
 }
 
-void reset_field(char **field) {
-	if (*field) {
-		bctbx_free(*field);
-		*field = nullptr;
-	}
-}
-
-void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
+void linphone_account_creator_fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
 	if (creator->domain == NULL) {
 		const char *domain =
 		    linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "domain", NULL);
@@ -126,19 +87,4 @@ void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
 			linphone_account_creator_set_algorithm(creator, algorithm);
 		}
 	}
-}
-
-static char generated_password_possible_characters[] =
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.:+=?!#%@&{}[]";
-
-char *generate_random_password(void) {
-	char password[12];
-	size_t i;
-	for (i = 0; i < sizeof(password) - 1; i++) {
-		password[i] = generated_password_possible_characters[bctbx_random() %
-		                                                     (sizeof(generated_password_possible_characters) - 1)];
-	}
-	password[i] = '\0';
-
-	return ms_strdup(password);
 }

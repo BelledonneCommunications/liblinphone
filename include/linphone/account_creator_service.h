@@ -131,6 +131,23 @@ linphone_account_creator_service_get_create_account_cb(const LinphoneAccountCrea
  **/
 LINPHONE_PUBLIC void linphone_account_creator_service_set_create_account_cb(LinphoneAccountCreatorService *service,
                                                                             LinphoneAccountCreatorRequestFunc cb);
+/**
+ * Get the create account request.
+ * @param service #LinphoneAccountCreatorService object.
+ * @return The current create account request.
+ * @donotwrap
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc
+linphone_account_creator_service_get_create_push_account_cb(const LinphoneAccountCreatorService *service);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorService object.
+ * @param service #LinphoneAccountCreatorService object.
+ * @param cb The create account request to be used.
+ * @donotwrap
+ **/
+LINPHONE_PUBLIC void linphone_account_creator_service_set_create_push_account_cb(LinphoneAccountCreatorService *service,
+																			LinphoneAccountCreatorRequestFunc cb);
 
 /**
  * Get the is account exist request.

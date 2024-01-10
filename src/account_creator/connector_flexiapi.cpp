@@ -34,13 +34,31 @@
 #include "private.h"
 
 using namespace LinphonePrivate;
+using namespace std;
+
+/**
+ * Utility functions
+ */
+
+static const string generated_password_possible_characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_.:+=?!#%@&{}[]";
+static const string generated_username_possible_characters = "0123456789abcdefghijklmnopqrstuvwxyz_";
+
+static string generate_random_string(string seed, int size) {
+	string result = "";
+	int i;
+	for (i = 0; i < size - 1; i++) {
+		result += seed[bctbx_random() % (sizeof(seed) - 1)];
+	}
+	result += '\0';
+	return result;
+}
 
 /**
  * Unsecure endpoint
  */
 LinphoneAccountCreatorStatus linphone_account_creator_create_account_flexiapi(LinphoneAccountCreator *creator) {
-	fill_domain_and_algorithm_if_needed(creator);
-	char *identity = _get_identity(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
+	char *identity = linphone_account_creator_get_identity(creator);
 
 	if (!identity || ((!creator->username && !creator->phone_number) || (!creator->password && !creator->ha1))) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
@@ -170,12 +188,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_fle
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient
-	    ->accountRecoverUsingRecoverKey(string(creator->username).append("@").append(_get_domain(creator)),
+	    ->accountRecoverUsingRecoverKey(string(creator->username).append("@").append(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
 	                                    string(creator->activation_code))
 	    ->then([creator](FlexiAPIClient::Response response) {
 		    auto passwords = response.json()["passwords"];
@@ -236,7 +254,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_fle
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_flexiapi(LinphoneAccountCreator *creator) {
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 	if (!creator->username || !creator->domain) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments,
 		                                "Missing required parameters")
@@ -277,7 +295,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_flexiapi(Li
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
@@ -312,12 +330,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_fle
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient
-	    ->accountActivateEmail(string(creator->username).append("@").append(_get_domain(creator)),
+	    ->accountActivateEmail(string(creator->username).append("@").append(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
 	                           creator->activation_code)
 	    ->then([creator](FlexiAPIClient::Response response) {
 		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
@@ -348,18 +366,18 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_fle
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_flexiapi(LinphoneAccountCreator *creator) {
-	char *identity = _get_identity(creator);
+	char *identity = linphone_account_creator_get_identity(creator);
 	if (!identity) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_activated, creator, LinphoneAccountCreatorStatusMissingArguments,
 		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
-	flexiAPIClient->accountInfo(string(creator->username).append("@").append(_get_domain(creator)))
+	flexiAPIClient->accountInfo(string(creator->username).append("@").append(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)))
 	    ->then([creator](FlexiAPIClient::Response response) {
 		    if (response.json()["activated"].asBool()) {
 			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_activated, creator,
@@ -398,7 +416,7 @@ linphone_account_creator_link_phone_number_with_account_flexiapi(LinphoneAccount
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
@@ -429,13 +447,13 @@ linphone_account_creator_link_phone_number_with_account_flexiapi(LinphoneAccount
 LinphoneAccountCreatorStatus
 linphone_account_creator_activate_phone_number_link_flexiapi(LinphoneAccountCreator *creator) {
 	if (!creator->phone_number || !creator->username || !creator->activation_code ||
-	    (!creator->password && !creator->ha1) || !_get_domain(creator)) {
+	    (!creator->password && !creator->ha1) || !linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusMissingArguments,
 		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
@@ -470,12 +488,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_fle
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient
-	    ->accountActivatePhone(string(creator->username).append("@").append(_get_domain(creator)),
+	    ->accountActivatePhone(string(creator->username).append("@").append(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
 	                           creator->activation_code)
 	    ->then([creator](BCTBX_UNUSED(FlexiAPIClient::Response response)) {
 		    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
@@ -501,9 +519,9 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_fle
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_update_password_flexiapi(LinphoneAccountCreator *creator) {
-	char *identity = _get_identity(creator);
+	char *identity = linphone_account_creator_get_identity(creator);
 	const char *new_pwd = (const char *)linphone_account_creator_get_user_data(creator);
-	if (!identity || ((!creator->username && !creator->phone_number) || !_get_domain(creator) ||
+	if (!identity || ((!creator->username && !creator->phone_number) || !linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator) ||
 	                  (!creator->password && !creator->ha1) || !new_pwd)) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusMissingArguments,
 		                                "Missing required parameters")
@@ -511,7 +529,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_flexiapi(L
 	}
 	bctbx_free(identity);
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
@@ -540,13 +558,13 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_flexiapi(L
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_flexiapi(LinphoneAccountCreator *creator) {
-	if (!creator->username || !_get_domain(creator)) {
+	if (!creator->username || !linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, LinphoneAccountCreatorStatusMissingArguments,
 		                                "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
@@ -599,7 +617,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_send_token_flexiapi(Linpho
 		    if (response.code == 422) {
 			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusMissingArguments,
 			                                    response.body.c_str())
-		    } else {
+		    } else if (response.code == 429) {
+				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusRequestTooManyRequests,
+											 response.body.c_str())
+		 	}	else {
 			    NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusUnexpectedError,
 			                                    response.body.c_str())
 		    }
@@ -673,7 +694,7 @@ linphone_account_creator_account_creation_token_using_request_token_flexiapi(Lin
 
 LinphoneAccountCreatorStatus
 linphone_account_creator_create_account_with_token_flexiapi(LinphoneAccountCreator *creator) {
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	if (!creator->username || !creator->domain || !creator->token) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
@@ -684,9 +705,7 @@ linphone_account_creator_create_account_with_token_flexiapi(LinphoneAccountCreat
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	if (creator->password == nullptr) {
-		char *generated_password = generate_random_password();
-		set_string(&creator->password, generated_password, FALSE);
-		ms_free(generated_password);
+		set_string(&creator->password, generate_random_string(generated_password_possible_characters,12).c_str(), FALSE);
 	}
 
 	string password = (creator->password) ? creator->password : "";
@@ -723,7 +742,7 @@ linphone_account_creator_create_account_with_token_flexiapi(LinphoneAccountCreat
  * The following method is only available if APP_EVERYONE_IS_ADMIN is enabled on FlexiAPI
  */
 LinphoneAccountCreatorStatus linphone_account_creator_admin_create_account_flexiapi(LinphoneAccountCreator *creator) {
-	fill_domain_and_algorithm_if_needed(creator);
+	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 
 	if (!creator->username || !creator->domain) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
@@ -733,10 +752,9 @@ LinphoneAccountCreatorStatus linphone_account_creator_admin_create_account_flexi
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
-	char *generated_password = generate_random_password();
+	string generated_password =  generate_random_string(generated_password_possible_characters,12);
 	string password = (creator->password) ? creator->password : generated_password;
 	string algo = (creator->algorithm) ? creator->algorithm : "MD5";
-	ms_free(generated_password);
 
 	string phone = (creator->phone_number) ? creator->phone_number : "";
 	string mail = (creator->email) ? creator->email : "";
@@ -763,6 +781,75 @@ LinphoneAccountCreatorStatus linphone_account_creator_admin_create_account_flexi
 
 		    return LinphoneAccountCreatorStatusRequestFailed;
 	    });
+
+	return LinphoneAccountCreatorStatusRequestOk;
+}
+
+/**
+ * Creates and activates a "push" account to be used as a dependent account for other sip account that cannot send push notifications.
+ * Account is created with a generated username and password, and is automatically activated.
+ * Uses FlexiApi endpoints :
+ * POST /accounts/with-account-creation-token (accountCreateWithAccountCreationToken) -> creates a deactivated account
+ * GET /accounts/me/provision -> get provisioning token
+ * GET /provisioning/{provisioning_token} -> activation (non api end point)
+ */
+LinphoneAccountCreatorStatus linphone_account_creator_create_push_account_with_token_flexiapi(LinphoneAccountCreator *creator) {
+
+	if (!creator->domain || !creator->token || !creator->algorithm) {
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+										"Missing required parameter (domain, token or algorithm)")
+		return LinphoneAccountCreatorStatusMissingArguments;
+	}
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
+
+	set_string(&creator->password, generate_random_string(generated_password_possible_characters,12).c_str(), FALSE);
+	set_string(&creator->username, generate_random_string(generated_username_possible_characters,24).c_str(), FALSE);
+
+	flexiAPIClient->accountCreateWithAccountCreationToken(creator->username, creator->password, creator->algorithm, creator->token) // Create the account
+		->then([creator](FlexiAPIClient::Response response) {
+			ms_message("[FlexiAPI Push Account Creator] push account created [%s]",response.body.c_str());
+			auto pushAccount = linphone_account_creator_create_account_in_core(creator); // This is required by end point /accounts/me/provision to set the From header of http request. To be revisited in the future when endpoint becomes /accounts/me/provision?<username>
+			auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
+			flexiAPIClient->accountProvision() // Generate a provisionning token for it
+				->then([creator,pushAccount](FlexiAPIClient::Response response) {
+					ms_message("[FlexiAPI Push Account Creator] provisioning token retrieved [%s]",response.body.c_str());
+					auto provisioningToken = response.json()["provisioning_token"].asString();
+					auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
+					flexiAPIClient->accountProvisioningInformation(provisioningToken) // Activate it with the provsionning token
+						->then([creator,pushAccount](FlexiAPIClient::Response response) {
+							linphone_core_remove_account(creator->core,pushAccount); // It is the app responsibilty to create the account locally (via linphone_account_creator_create_account_in_core)
+							linphone_account_unref(pushAccount);
+							ms_message("[FlexiAPI Push Account Creator] account activated [%s]",response.body.c_str());
+							NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
+														response.body.c_str());
+							return LinphoneAccountCreatorStatusRequestOk;
+						})
+						->error([creator,pushAccount](FlexiAPIClient::Response response) {
+							linphone_core_remove_account(creator->core,pushAccount);
+							linphone_account_unref(pushAccount);
+							NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountNotCreated,
+															response.body.c_str())
+							return LinphoneAccountCreatorStatusRequestFailed;
+						});
+				})
+				->error([creator,pushAccount](FlexiAPIClient::Response response) {
+					linphone_core_remove_account(creator->core,pushAccount);
+					linphone_account_unref(pushAccount);
+					NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountNotCreated,
+													response.body.c_str())
+					return LinphoneAccountCreatorStatusRequestFailed;
+				});
+		})
+		->error([creator](FlexiAPIClient::Response response) {
+			if (response.code == 422) {
+				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+												response.body.c_str())
+			} else {
+				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+											 response.body.c_str())
+		 	}
+			return LinphoneAccountCreatorStatusRequestFailed;
+		});
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
