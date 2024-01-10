@@ -121,7 +121,13 @@ public class AndroidPlatformHelper {
         mWifiOnly = wifiOnly;
         mDnsServers = null;
         mResources = mContext.getResources();
-        mHandler = new Handler(Looper.myLooper());
+        
+        Looper myLooper = Looper.myLooper();
+        if (myLooper == null) {
+            Log.w("[Platform Helper] Failed to detect current process Looper, using main one");
+            myLooper = Looper.getMainLooper();
+        }
+        mHandler = new Handler(myLooper);
 
         MediastreamerAndroidContext.setContext(mContext);
 
