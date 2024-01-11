@@ -1500,11 +1500,8 @@ long long MainDbPrivate::insertConferenceChatMessageEvent(const shared_ptr<Event
 
 	shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
 	for (const auto &participant : chatRoom->getParticipants()) {
-		// If a participant has no device, then there is no need to add it to the list
-		if (participant->getDevices().size() > 0) {
-			const long long &participantSipAddressId = selectSipAddressId(participant->getAddress());
-			insertChatMessageParticipant(eventId, participantSipAddressId, state, chatMessage->getTime());
-		}
+		const long long &participantSipAddressId = selectSipAddressId(participant->getAddress());
+		insertChatMessageParticipant(eventId, participantSipAddressId, state, chatMessage->getTime());
 	}
 
 	const long long &dbChatRoomId = selectChatRoomId(chatRoom->getConferenceId());

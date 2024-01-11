@@ -707,7 +707,7 @@ bool ClientGroupChatRoom::addParticipants(const list<std::shared_ptr<Address>> &
 
 	if (getState() == ConferenceInterface::State::Instantiated) {
 		auto session = d->createSession();
-		for (const auto &address : addresses) {
+		for (const auto &address : addressesList) {
 			const auto participant = Participant::create(getConference().get(), address);
 			cachedParticipants.push_back(participant);
 		}
