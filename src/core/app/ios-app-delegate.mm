@@ -232,6 +232,12 @@
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
 	if (!core) return;
 	LinphoneCore *lc = core->getCCore();
+
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalReady && linphone_core_get_global_state(lc) != LinphoneGlobalOff) {
+		ms_message("[Pushkit] Core is already started. Core State is %s", linphone_global_state_to_string(linphone_core_get_global_state(lc)));
+		return;
+	}
+
 	linphone_core_start(lc);
 	// support only for calls
 	NSDictionary *aps = [userInfo objectForKey:@"aps"];
