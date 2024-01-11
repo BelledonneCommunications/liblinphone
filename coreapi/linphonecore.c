@@ -7195,6 +7195,25 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 #endif
 }
 
+LinphoneStatus linphone_core_set_camera_whitebalance(LinphoneCore *core, BCTBX_UNUSED(int whitebalance)) {
+	CoreLogContextualizer logContextualizer(core);
+#ifdef VIDEO_ENABLED
+	ms_web_cam_manager_set_whitebalance(ms_factory_get_web_cam_manager(core->factory), whitebalance);
+	return 0;
+#else
+	return 1;
+#endif
+}
+
+int linphone_core_get_camera_whitebalance(LinphoneCore *core) {
+	CoreLogContextualizer logContextualizer(core);
+#ifdef VIDEO_ENABLED
+	return ms_web_cam_manager_get_whitebalance(ms_factory_get_web_cam_manager(core->factory));
+#else
+	return -1;
+#endif
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

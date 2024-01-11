@@ -4255,6 +4255,22 @@ LINPHONE_PUBLIC int linphone_core_get_device_rotation(LinphoneCore *core);
 LINPHONE_PUBLIC void linphone_core_set_device_rotation(LinphoneCore *core, int rotation);
 
 /**
+ * Sets the whitebalance of the camera (currently only supported by Android).
+ * @param core #LinphoneCore object. @notnil
+ * @param whitebalance The whitebalance of the camera.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_core_set_camera_whitebalance(LinphoneCore *core, int whitebalance);
+
+/**
+ * Gets the whitebalance of the camera (currently only supported by Android).
+ * @param core #LinphoneCore object. @notnil
+ * @return The whitebalance of the camera, default is -1 (disabled).
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC int linphone_core_get_camera_whitebalance(LinphoneCore *core);
+
+/**
  * Get the camera sensor rotation.
  *
  * This is needed on some mobile platforms to get the number of degrees the camera sensor
