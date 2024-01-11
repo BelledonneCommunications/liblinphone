@@ -110,24 +110,32 @@ void CorePrivate::iterateCalls(time_t currentRealTime, bool oneSecondElapsed) co
 
 void CorePrivate::notifySoundcardUsage(bool used) {
 	L_Q();
+
 	if (!linphone_config_get_int(linphone_core_get_config(q->getCCore()), "sound", "usage_hint", 1)) return;
-	MSSndCard *card = q->getCCore()->sound_conf.capt_sndcard;
-	if (!card || !(ms_snd_card_get_capabilities(card) & MS_SND_CARD_CAP_IS_SLOW)) return;
 	if (q->getCCore()->use_files) return;
 
 	LinphoneConfig *config = linphone_core_get_config(q->getCCore());
-
 	bool useRtpIo = !!linphone_config_get_int(config, "sound", "rtp_io", FALSE);
 	bool useRtpIoEnableLocalOutput = !!linphone_config_get_int(config, "sound", "rtp_io_enable_local_output", FALSE);
-
 	if (useRtpIo && !useRtpIoEnableLocalOutput) return;
 
 	LinphoneConference *conf_ctx = getCCore()->conf_ctx;
 	if (conf_ctx && ((linphone_conference_get_participant_count(conf_ctx) >= 1) || linphone_conference_is_in(conf_ctx)))
 		return;
-	if (used) lInfo() << "Notifying sound card that it is going to be used.";
-	else lInfo() << "Notifying sound card that is no longer needed.";
-	ms_snd_card_set_usage_hint(card, used);
+
+	MSSndCard *capture_card = q->getCCore()->sound_conf.capt_sndcard;
+	if (capture_card) {
+		if (used) lInfo() << "Notifying capture sound card that it is going to be used.";
+		else lInfo() << "Notifying capture sound card that is no longer needed.";
+		ms_snd_card_set_usage_hint(capture_card, used);
+	}
+
+	MSSndCard *playback_card = q->getCCore()->sound_conf.play_sndcard;
+	if (playback_card) {
+		if (used) lInfo() << "Notifying playback sound card that it is going to be used.";
+		else lInfo() << "Notifying playback sound card that is no longer needed.";
+		ms_snd_card_set_usage_hint(playback_card, used);
+	}
 }
 
 int CorePrivate::removeCall(const shared_ptr<Call> &call) {
@@ -200,9 +208,11 @@ void CorePrivate::setCurrentCall(const std::shared_ptr<Call> &call) {
 		/* we had no current call but now we have one. */
 		notifySoundcardUsage(true);
 	} else if (!call || currentCall != call) {
+#if TARGET_OS_IPHONE
 		/* the current call is reset or changed.
 		 * Indeed, with CallKit the AudioUnit cannot be reused between different calls (we get silence). */
 		notifySoundcardUsage(false);
+#endif
 	}
 	currentCall = call;
 }

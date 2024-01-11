@@ -365,6 +365,7 @@ void Call::onCallSessionSetTerminated(BCTBX_UNUSED(const shared_ptr<CallSession>
 	if (!getCore()->getPrivate()->hasCalls()) ms_bandwidth_controller_reset_state(core->bw_controller);
 
 	if (linphone_core_get_calls_nb(core) == 0) {
+		getCore()->getPrivate()->notifySoundcardUsage(false);
 		linphone_core_notify_last_call_ended(core);
 	}
 }
