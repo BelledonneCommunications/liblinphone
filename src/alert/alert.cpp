@@ -76,16 +76,23 @@ void Alert::setState(bool state) {
 }
 
 std::ostream &Alert::toStream(std::ostream &stream) const {
+	stream << linphone_alert_type_to_string(mType);
+
 	auto call = mCall.lock();
-	auto op = call->getOp();
-	string callId = op ? op->getCallId() : "<unknown>";
-	stream << linphone_alert_type_to_string(mType) << " | ";
-	stream << "Call-id :" << callId << " | ";
-	stream << "From " << call->getToAddress()->asString() << " | ";
-	stream << "To " << call->getLocalAddress()->asString() << endl;
+	if (call) {
+		auto op = call->getOp();
+		string callId = op ? op->getCallId() : "<unknown>";
+		stream << " | Call-id :" << callId << " | ";
+		stream << "From " << call->getToAddress()->asString() << " | ";
+		stream << "To " << call->getLocalAddress()->asString();
+	}
+
+	stream << endl;
+
 	if (mInformations) {
 		mInformations->toStream(stream);
 	}
+
 	return stream;
 }
 
