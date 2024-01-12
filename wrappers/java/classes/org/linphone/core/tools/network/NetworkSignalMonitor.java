@@ -25,6 +25,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Looper;
 import android.telephony.CellSignalStrength;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
@@ -53,19 +54,24 @@ public class NetworkSignalMonitor {
 	public NetworkSignalMonitor(Context context, final AndroidPlatformHelper helper) {
 		mHelper = helper;
 
-		mTelephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		if (mTelephonyManager != null) {
-			mPhoneStateListener = new PhoneStateListener() {
-				@Override
-				public void onSignalStrengthsChanged(SignalStrength signalStrength) {		
-					if (isCurrentNetworkCellular()) {
-						updateCellConnectionSignalStrengthFromSignalStrength(signalStrength);
-					}
-				}
-			};
-			mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
+		Looper myLooper = Looper.myLooper();
+        if (myLooper == null) {
+			Log.e("[Platform Helper] [Signal Strength Monitor] Looper not available from this thread (have you called Looper.prepare()?), can't create PhoneStateListener");
 		} else {
-			Log.w("[Platform Helper] [Signal Strength Monitor] TelephonyManager is not available");
+			mTelephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			if (mTelephonyManager != null) {
+				mPhoneStateListener = new PhoneStateListener() {
+					@Override
+					public void onSignalStrengthsChanged(SignalStrength signalStrength) {		
+						if (isCurrentNetworkCellular()) {
+							updateCellConnectionSignalStrengthFromSignalStrength(signalStrength);
+						}
+					}
+				};
+				mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
+			} else {
+				Log.w("[Platform Helper] [Signal Strength Monitor] TelephonyManager is not available");
+			}
 		}
 
 		mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);

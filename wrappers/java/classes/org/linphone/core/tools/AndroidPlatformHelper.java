@@ -124,7 +124,7 @@ public class AndroidPlatformHelper {
         
         Looper myLooper = Looper.myLooper();
         if (myLooper == null) {
-            Log.w("[Platform Helper] Failed to detect current process Looper, using main one");
+            Log.w("[Platform Helper] Failed to detect current process Looper (have you called Looper.prepare()?), using main one");
             myLooper = Looper.getMainLooper();
         }
         mHandler = new Handler(myLooper);
