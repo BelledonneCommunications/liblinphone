@@ -120,7 +120,7 @@ public class CoreManager {
 
         Looper myLooper = Looper.myLooper();
         if (myLooper == null) {
-            Log.w("[Core Manager] Failed to detect current process Looper, using main one");
+            Log.w("[Core Manager] Failed to detect current process Looper (have you called Looper.prepare()?), using main one");
             myLooper = Looper.getMainLooper();
         }
         
