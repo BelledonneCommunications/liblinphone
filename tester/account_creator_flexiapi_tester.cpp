@@ -100,6 +100,7 @@ static void server_account_exist(void) {
 	                                               (void *)LinphoneAccountCreatorStatusAccountExist);
 
 	linphone_account_creator_set_username(creator, linphone_address_get_username(marie->identity));
+	linphone_account_creator_set_domain(creator, linphone_address_get_domain(marie->identity));
 	linphone_account_creator_cbs_set_is_account_exist(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(linphone_account_creator_is_account_exist(creator), LinphoneAccountCreatorStatusRequestOk,
