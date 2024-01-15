@@ -86,10 +86,10 @@ LINPHONE_PUBLIC LinphonePlayerCbs *linphone_player_get_current_callbacks(const L
  *
  * Actually, only WAVE and MKV/MKA file formats are supported and a limited set of codecs depending
  * of the selected format. Here are the list of working combinations:
- * * WAVE format: only PCM s16le codec is supported.
- * * MKV/MKA format:
- *   * Supported audo codecs: Opus, PCMU, PCM s16le.
- *   * Supported video codecs: VP8, H264.
+ * - WAVE format: only PCM s16le codec is supported.
+ * - MKV/MKA format:
+ *   - Supported audo codecs: Opus, PCMU, PCM s16le.
+ *   - Supported video codecs: VP8, H264.
  *
  * @param player #LinphonePlayer object @notnil
  * @param filename The path to the file to open @notnil
