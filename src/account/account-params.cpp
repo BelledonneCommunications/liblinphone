@@ -43,6 +43,8 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 	mExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "reg_expires", 3600) : 3600;
 	mRegisterEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "reg_sendregister", 1) : 1;
 	mInternationalPrefix = lc ? linphone_config_get_default_string(lc->config, "proxy", "dial_prefix", "") : "";
+	mInternationalPrefixIsoCountryCode =
+	    lc ? linphone_config_get_default_string(lc->config, "proxy", "dial_prefix_iso_country_code", "") : "";
 	mUseInternationalPrefixForCallsAndChats =
 	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "use_dial_prefix_for_calls_and_chats", true) : true;
 	mDialEscapePlusEnabled =
@@ -215,6 +217,8 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 	mAvpfRrInterval = (uint8_t)linphone_config_get_int(config, key, "avpf_rr_interval", (int)mAvpfRrInterval);
 	mDialEscapePlusEnabled = !!linphone_config_get_int(config, key, "dial_escape_plus", mDialEscapePlusEnabled);
 	mInternationalPrefix = linphone_config_get_string(config, key, "dial_prefix", mInternationalPrefix.c_str());
+	mInternationalPrefixIsoCountryCode = linphone_config_get_string(config, key, "dial_prefix_iso_country_code",
+	                                                                mInternationalPrefixIsoCountryCode.c_str());
 	mUseInternationalPrefixForCallsAndChats = !!linphone_config_get_int(
 	    config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
 	mAllowCpimMessagesInBasicChatRooms =
@@ -289,6 +293,7 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	mUserData = other.mUserData;
 
 	mInternationalPrefix = other.mInternationalPrefix;
+	mInternationalPrefixIsoCountryCode = other.mInternationalPrefixIsoCountryCode;
 	mProxy = other.mProxy;
 	mRealm = other.mRealm;
 	mQualityReportingCollector = other.mQualityReportingCollector;
@@ -436,6 +441,10 @@ void AccountParams::setUserData(void *userData) {
 
 void AccountParams::setInternationalPrefix(const std::string &internationalPrefix) {
 	mInternationalPrefix = internationalPrefix;
+}
+
+void AccountParams::setInternationalPrefixIsoCountryCode(const std::string &internationalPrefixIsoCountryCode) {
+	mInternationalPrefixIsoCountryCode = internationalPrefixIsoCountryCode;
 }
 
 void AccountParams::setProxy(const std::string &proxy) {
@@ -671,6 +680,10 @@ void *AccountParams::getUserData() const {
 
 const std::string &AccountParams::getInternationalPrefix() const {
 	return mInternationalPrefix;
+}
+
+const std::string &AccountParams::getInternationalPrefixIsoCountryCode() const {
+	return mInternationalPrefixIsoCountryCode;
 }
 
 const char *AccountParams::getDomainCstr() const {
@@ -930,6 +943,7 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "avpf_rr_interval", mAvpfRrInterval);
 	linphone_config_set_int(config, key, "dial_escape_plus", (int)mDialEscapePlusEnabled);
 	linphone_config_set_string(config, key, "dial_prefix", mInternationalPrefix.c_str());
+	linphone_config_set_string(config, key, "dial_prefix_iso_country_code", mInternationalPrefixIsoCountryCode.c_str());
 	linphone_config_set_int(config, key, "use_dial_prefix_for_calls_and_chats",
 	                        mUseInternationalPrefixForCallsAndChats);
 	linphone_config_set_int(config, key, "privacy", (int)mPrivacy);

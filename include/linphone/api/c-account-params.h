@@ -212,7 +212,7 @@ linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *para
 LINPHONE_PUBLIC void linphone_account_params_enable_dial_escape_plus(LinphoneAccountParams *params, bool_t enable);
 
 /**
- * Set an international prefix to be automatically prepended when inviting a number with
+ * Sets an international prefix to be automatically prepended when inviting a number with
  * linphone_core_invite();
  * This international prefix shall usually be the country code of the country where the user is living, without "+".
  * @param params The #LinphoneAccountParams object. @notnil
@@ -220,6 +220,15 @@ LINPHONE_PUBLIC void linphone_account_params_enable_dial_escape_plus(LinphoneAcc
  **/
 LINPHONE_PUBLIC void linphone_account_params_set_international_prefix(LinphoneAccountParams *params,
                                                                       const char *prefix);
+
+/**
+ * Sets the ISO country code matching the international prefix.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param prefix_iso_country_code The ISO country code to set. @maybenil
+ **/
+LINPHONE_PUBLIC void
+linphone_account_params_set_international_prefix_iso_country_code(LinphoneAccountParams *params,
+                                                                  const char *prefix_iso_country_code);
 
 /**
  * If enabled, the international prefix will automaticaly be used for calls and chats.
@@ -460,11 +469,19 @@ linphone_account_params_get_dial_escape_plus_enabled(const LinphoneAccountParams
 LINPHONE_PUBLIC bool_t linphone_account_params_dial_escape_plus_enabled(const LinphoneAccountParams *params);
 
 /**
- * Get the prefix set for this account params.
+ * Gets the prefix set for this account params.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return The international prefix. @maybenil
+ * @return The international prefix if set, null otherwise. @maybenil
  **/
 LINPHONE_PUBLIC const char *linphone_account_params_get_international_prefix(const LinphoneAccountParams *params);
+
+/**
+ * Gets the ISO country code set for the international prefix in this account params.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The international prefix ISO country code if set, null otherwise. @maybenil
+ **/
+LINPHONE_PUBLIC const char *
+linphone_account_params_get_international_prefix_iso_country_code(const LinphoneAccountParams *params);
 
 /**
  * Return whether or not the international prefix will automaticaly be used for calls and chats.

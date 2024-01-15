@@ -62,6 +62,7 @@ public:
 	void setCpimMessagesAllowedInBasicChatRooms(bool allow);
 	void setUserData(void *userData);
 	void setInternationalPrefix(const std::string &internationalPrefix);
+	void setInternationalPrefixIsoCountryCode(const std::string &internationalPrefixIsoCountryCode);
 	void setProxy(const std::string &proxy);
 	void setRealm(const std::string &realm);
 	void setQualityReportingCollector(const std::string &qualityReportingCollector);
@@ -105,6 +106,7 @@ public:
 	bool isCpimMessagesAllowedInBasicChatRooms() const;
 	void *getUserData() const;
 	const std::string &getInternationalPrefix() const;
+	const std::string &getInternationalPrefixIsoCountryCode() const;
 	const std::string &getProxy() const;
 	const std::string &getRealm() const;
 	const std::string &getQualityReportingCollector() const;
@@ -173,6 +175,7 @@ private:
 	mutable char *mConferenceFactoryAddressCstr = nullptr;
 
 	std::string mInternationalPrefix;
+	std::string mInternationalPrefixIsoCountryCode;
 	std::string mProxy;
 	std::string mRealm;
 	std::string mQualityReportingCollector;

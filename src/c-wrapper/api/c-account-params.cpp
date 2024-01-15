@@ -128,6 +128,11 @@ void linphone_account_params_set_international_prefix(LinphoneAccountParams *par
 	AccountParams::toCpp(params)->setInternationalPrefix(L_C_TO_STRING(prefix));
 }
 
+void linphone_account_params_set_international_prefix_iso_country_code(LinphoneAccountParams *params,
+                                                                       const char *prefix_iso_country_code) {
+	AccountParams::toCpp(params)->setInternationalPrefixIsoCountryCode(L_C_TO_STRING(prefix_iso_country_code));
+}
+
 void linphone_account_params_set_use_international_prefix_for_calls_and_chats(LinphoneAccountParams *params,
                                                                               bool_t enable) {
 	AccountParams::toCpp(params)->setUseInternationalPrefixForCallsAndChats(enable);
@@ -247,6 +252,10 @@ bool_t linphone_account_params_dial_escape_plus_enabled(const LinphoneAccountPar
 
 const char *linphone_account_params_get_international_prefix(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getInternationalPrefix());
+}
+
+const char *linphone_account_params_get_international_prefix_iso_country_code(const LinphoneAccountParams *params) {
+	return L_STRING_TO_C(AccountParams::toCpp(params)->getInternationalPrefixIsoCountryCode());
 }
 
 bool_t linphone_account_params_get_use_international_prefix_for_calls_and_chats(const LinphoneAccountParams *params) {
