@@ -117,6 +117,11 @@ public class NetworkSignalMonitor {
 	}
 
 	private void updateCellConnectionSignalStrengthFromSignalStrength(SignalStrength signalStrength) {
+		if (signalStrength == null) {
+			Log.w("[Platform Helper] [Signal Strength Monitor] Failed to get a valid cellular SignalStrength object!");
+			return;
+		}
+
 		for (CellSignalStrength cellSignal : signalStrength.getCellSignalStrengths()) { // Added in API 29
 			int dbm = cellSignal.getDbm();
 			String networkType = "";
