@@ -190,17 +190,7 @@ void RemoteConference::updateAndSaveConferenceInformations() {
 }
 
 std::shared_ptr<ConferenceInfo> RemoteConference::createConferenceInfo() const {
-	auto session = static_pointer_cast<MediaSession>(getMainSession());
-	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
-	const auto guessedOrganizer = getOrganizer();
-	std::shared_ptr<Address> organizer = nullptr;
-	if (guessedOrganizer) {
-		organizer = guessedOrganizer;
-	} else if (referer) {
-		organizer = referer->getRemoteAddress();
-	} else {
-		organizer = getMe()->getAddress();
-	}
+	const auto organizer = getOrganizer();
 	return createConferenceInfoWithCustomParticipantList(organizer, getFullParticipantList());
 }
 
@@ -799,6 +789,28 @@ const std::shared_ptr<Address> RemoteConference::getOrganizer() const {
 		}
 	}
 #endif
+
+	// The me participant is designed as organizer as a last resort in our guesses, therefore it may not be right.
+	// A search for a participant which joined the conference as focus owner is therefore needed.
+	if (!organizer) {
+		const auto focusOwnerDevice = getFocusOwnerDevice();
+		if (focusOwnerDevice) {
+			organizer = focusOwnerDevice->getParticipant()->getAddress();
+		}
+	}
+
+	if (!organizer) {
+		auto session = static_pointer_cast<MediaSession>(getMainSession());
+		const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
+		if (referer) {
+			organizer = referer->getRemoteAddress();
+		}
+	}
+
+	if (!organizer) {
+		// Guess the organizer and as last resort set it to ourselves
+		organizer = getMe()->getAddress();
+	}
 	return organizer;
 }
 

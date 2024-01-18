@@ -316,6 +316,16 @@ void Participant::setUserData(void *ud) {
 	mUserData = ud;
 }
 
+void Participant::setRole(Participant::Role role) {
+	lInfo() << "Changing role of participant " << *getAddress() << " from " << Participant::roleToText(mRole) << " to "
+	        << Participant::roleToText(role);
+	mRole = role;
+}
+
+Participant::Role Participant::getRole() const {
+	return mRole;
+};
+
 string Participant::roleToText(const Participant::Role &role) {
 	std::string roleText = std::string();
 	switch (role) {
