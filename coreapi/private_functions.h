@@ -958,7 +958,7 @@ void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height)
 // Account creator functions
 LinphoneAccountCreatorCbs *linphone_account_creator_cbs_new(void);
 void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
-char * linphone_account_creator_get_identity(const LinphoneAccountCreator *creator);
+char *linphone_account_creator_get_identity(const LinphoneAccountCreator *creator);
 void linphone_account_creator_fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator);
 const char *linphone_account_creator_get_domain_with_fallback_to_proxy_domain(LinphoneAccountCreator *creator);
 
@@ -984,12 +984,17 @@ LINPHONE_PUBLIC int linphone_participant_info_get_sequence_number(const Linphone
 LINPHONE_PUBLIC void linphone_participant_info_set_sequence_number(LinphoneParticipantInfo *participant_info,
                                                                    int sequence);
 
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_conference_info_set_ics_sequence(LinphoneConferenceInfo *conference_info,
                                                                unsigned int sequence);
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info);
 LINPHONE_PUBLIC const char *linphone_conference_info_get_utf8_ics_uid(const LinphoneConferenceInfo *conference_info);
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_conference_info_set_ics_uid(LinphoneConferenceInfo *conference_info, const char *uid);
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info);
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_conference_info_set_state(LinphoneConferenceInfo *conference_info,
                                                         LinphoneConferenceInfoState state);
 

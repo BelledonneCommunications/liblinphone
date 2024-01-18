@@ -141,12 +141,8 @@ public:
 	void *getUserData() const;
 	void setUserData(void *ud);
 
-	inline void setRole(Role role) {
-		mRole = role;
-	};
-	inline Role getRole() const {
-		return mRole;
-	};
+	void setRole(Role role);
+	Role getRole() const;
 
 protected:
 	std::shared_ptr<Core> getCore() const;

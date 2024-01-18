@@ -292,6 +292,7 @@ protected:
 	createConferenceInfoWithCustomParticipantList(const std::shared_ptr<Address> &organizer,
 	                                              const ConferenceInfo::participant_list_t invitedParticipants) const;
 	const std::shared_ptr<ConferenceInfo> getUpdatedConferenceInfo() const;
+	const std::shared_ptr<ParticipantDevice> getFocusOwnerDevice() const;
 
 private:
 	L_DISABLE_COPY(Conference);

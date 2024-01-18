@@ -91,12 +91,21 @@ LocalConference::LocalConference(const shared_ptr<Core> &core,
 	}
 
 	setConferenceAddress(contactAddress);
-	getMe()->setAdmin(true);
-	getMe()->setFocus(true);
+	me->setRole(Participant::Role::Speaker);
+	me->setAdmin(true);
+	me->setFocus(true);
 
 	if (!eventLogEnabled) {
 		setConferenceId(ConferenceId(contactAddress, contactAddress));
 	}
+
+#ifdef HAVE_DB_STORAGE
+	auto conferenceInfo = createOrGetConferenceInfo();
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		mainDb->insertConferenceInfo(conferenceInfo);
+	}
+#endif // HAVE_DB_STORAGE
 }
 
 LocalConference::LocalConference(const std::shared_ptr<Core> &core, SalCallOp *op)
@@ -205,8 +214,9 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 				msp->getPrivate()->setEndTime(endTime);
 			}
 
-			getMe()->setAdmin(true);
-			getMe()->setFocus(true);
+			me->setRole(Participant::Role::Speaker);
+			me->setAdmin(true);
+			me->setFocus(true);
 
 			const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 			fillInvitedParticipantList(op, resourceList.isEmpty());
@@ -396,8 +406,9 @@ void LocalConference::configure(SalCallOp *op) {
 		session->configure(LinphoneCallIncoming, nullptr, op, organizer, conferenceAddress);
 	}
 
-	getMe()->setAdmin(true);
-	getMe()->setFocus(true);
+	me->setRole(Participant::Role::Speaker);
+	me->setAdmin(true);
+	me->setFocus(true);
 
 	if (createdConference) {
 		const auto &conferenceAddress = info->getUri();
@@ -1761,7 +1772,9 @@ int LocalConference::enter() {
 		if (linphone_core_get_current_call(getCore()->getCCore()))
 			linphone_call_pause(linphone_core_get_current_call(getCore()->getCCore()));
 
-		lInfo() << getMe()->getAddress()->toString() << " is rejoining conference " << *getConferenceAddress();
+		const auto &meAddress = me->getAddress();
+		lInfo() << *meAddress << " is rejoining conference " << *getConferenceAddress();
+		organizer = meAddress;
 		addLocalEndpoint();
 		if (me->getDevices().size() > 0) {
 			participantDeviceJoined(me, me->getDevices().front());

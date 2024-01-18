@@ -5489,3 +5489,174 @@ void enable_stun_in_core(LinphoneCoreManager *mgr, const bool_t enable_stun, con
 	linphone_core_set_nat_policy(lc, nat_policy);
 	linphone_nat_policy_unref(nat_policy);
 }
+
+int find_matching_participant_info(const LinphoneParticipantInfo *info1, const LinphoneParticipantInfo *info2) {
+	return !linphone_address_weak_equal(linphone_participant_info_get_address(info1),
+	                                    linphone_participant_info_get_address(info2));
+}
+
+LinphoneParticipantInfo *add_participant_info_to_list(bctbx_list_t **participants_info,
+                                                      const LinphoneAddress *address,
+                                                      LinphoneParticipantRole role,
+                                                      int sequence) {
+	LinphoneParticipantInfo *ret = NULL;
+	LinphoneParticipantInfo *participant_info = linphone_participant_info_new(address);
+	linphone_participant_info_set_role(participant_info, role);
+	linphone_participant_info_set_sequence_number(participant_info, sequence);
+	const bctbx_list_t *participant_info_it = bctbx_list_find_custom(
+	    *participants_info, (int (*)(const void *, const void *))find_matching_participant_info, participant_info);
+	if (participant_info_it) {
+		ret = (LinphoneParticipantInfo *)bctbx_list_get_data(participant_info_it);
+	} else {
+		ret = linphone_participant_info_ref(participant_info);
+		*participants_info = bctbx_list_append(*participants_info, ret);
+	}
+	linphone_participant_info_unref(participant_info);
+	return ret;
+}
+
+void check_conference_info_in_db(LinphoneCoreManager *mgr,
+                                 const char *uid,
+                                 LinphoneAddress *confAddr,
+                                 LinphoneAddress *organizer,
+                                 bctbx_list_t *participantList,
+                                 long long start_time,
+                                 int duration, // in minutes
+                                 const char *subject,
+                                 const char *description,
+                                 unsigned int sequence,
+                                 LinphoneConferenceInfoState state,
+                                 LinphoneConferenceSecurityLevel security_level,
+                                 bool_t skip_participant_info) {
+	LinphoneConferenceInfo *info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
+	if (BC_ASSERT_PTR_NOT_NULL(info)) {
+		check_conference_info_members(info, uid, confAddr, organizer, participantList, start_time, duration, subject,
+		                              description, sequence, state, security_level, skip_participant_info);
+		linphone_conference_info_unref(info);
+	}
+}
+
+void check_conference_info_against_db(LinphoneCoreManager *mgr,
+                                      LinphoneAddress *confAddr,
+                                      const LinphoneConferenceInfo *info1) {
+	LinphoneConferenceInfo *info2 = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
+	if (BC_ASSERT_PTR_NOT_NULL(info2)) {
+		compare_conference_infos(info1, info2, FALSE);
+		linphone_conference_info_unref(info2);
+	}
+}
+
+void check_conference_info_members(const LinphoneConferenceInfo *info,
+                                   const char *uid,
+                                   LinphoneAddress *confAddr,
+                                   LinphoneAddress *organizer,
+                                   bctbx_list_t *participantList,
+                                   long long start_time,
+                                   int duration, // in minutes
+                                   const char *subject,
+                                   const char *description,
+                                   unsigned int sequence,
+                                   LinphoneConferenceInfoState state,
+                                   LinphoneConferenceSecurityLevel security_level,
+                                   bool_t skip_participant_info) {
+	LinphoneConferenceInfo *info2 = linphone_conference_info_new();
+	linphone_conference_info_set_ics_uid(info2, uid);
+	linphone_conference_info_set_uri(info2, confAddr);
+	linphone_conference_info_set_organizer(info2, organizer);
+	linphone_conference_info_set_participant_infos(info2, participantList);
+	linphone_conference_info_set_date_time(info2, start_time);
+	linphone_conference_info_set_duration(info2, duration);
+	linphone_conference_info_set_subject(info2, subject);
+	linphone_conference_info_set_description(info2, description);
+	linphone_conference_info_set_ics_sequence(info2, sequence);
+	linphone_conference_info_set_state(info2, state);
+	linphone_conference_info_set_security_level(info2, security_level);
+	compare_conference_infos(info, info2, skip_participant_info);
+	linphone_conference_info_unref(info2);
+}
+
+void compare_conference_infos(const LinphoneConferenceInfo *info1,
+                              const LinphoneConferenceInfo *info2,
+                              bool_t skip_participant_info) {
+	BC_ASSERT_PTR_NOT_NULL(info1);
+	BC_ASSERT_PTR_NOT_NULL(info2);
+	if (info1 && info2) {
+		BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_conference_info_get_organizer(info1),
+		                                           linphone_conference_info_get_organizer(info2)));
+		BC_ASSERT_TRUE(
+		    linphone_address_equal(linphone_conference_info_get_uri(info1), linphone_conference_info_get_uri(info2)));
+
+		const bctbx_list_t *info1_participants = linphone_conference_info_get_participant_infos(info1);
+		const bctbx_list_t *info2_participants = linphone_conference_info_get_participant_infos(info2);
+		BC_ASSERT_EQUAL(bctbx_list_size(info1_participants), bctbx_list_size(info2_participants), size_t, "%zu");
+		for (const bctbx_list_t *it = info1_participants; it; it = bctbx_list_next(it)) {
+			const LinphoneParticipantInfo *participant_info1 = (LinphoneParticipantInfo *)bctbx_list_get_data(it);
+			const bctbx_list_t *participant_info2_it = bctbx_list_find_custom(
+			    info2_participants, (int (*)(const void *, const void *))find_matching_participant_info,
+			    participant_info1);
+			BC_ASSERT_PTR_NOT_NULL(participant_info2_it);
+			if (participant_info2_it) {
+				const LinphoneParticipantInfo *participant_info2 =
+				    (LinphoneParticipantInfo *)bctbx_list_get_data(participant_info2_it);
+				BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_participant_info_get_address(participant_info1),
+				                                           linphone_participant_info_get_address(participant_info2)));
+				if (!skip_participant_info) {
+					BC_ASSERT_EQUAL(linphone_participant_info_get_role(participant_info1),
+					                linphone_participant_info_get_role(participant_info2), int, "%0d");
+					BC_ASSERT_EQUAL(linphone_participant_info_get_sequence_number(participant_info1),
+					                linphone_participant_info_get_sequence_number(participant_info2), int, "%0d");
+				}
+			}
+		}
+
+		BC_ASSERT_EQUAL((int)linphone_conference_info_get_security_level(info1),
+		                (int)linphone_conference_info_get_security_level(info2), int, "%0d");
+
+		time_t start_time1 = linphone_conference_info_get_date_time(info1);
+		time_t start_time2 = linphone_conference_info_get_date_time(info2);
+
+		if ((start_time1 > 0) && (start_time2 > 0)) {
+			BC_ASSERT_EQUAL((long long)start_time1, (long long)start_time2, long long, "%lld");
+		} else {
+			if ((start_time1 != 0) && (start_time1 != -1)) {
+				BC_ASSERT_GREATER_STRICT((long long)linphone_conference_info_get_date_time(info1), 0, long long,
+				                         "%lld");
+			}
+			if ((start_time2 != 0) && (start_time2 != -1)) {
+				BC_ASSERT_GREATER_STRICT((long long)linphone_conference_info_get_date_time(info2), 0, long long,
+				                         "%lld");
+			}
+		}
+
+		const int duration1_m = linphone_conference_info_get_duration(info1);
+		const int duration2_m = linphone_conference_info_get_duration(info2);
+		BC_ASSERT_EQUAL(duration1_m, duration2_m, int, "%d");
+
+		const char *subject1 = linphone_conference_info_get_subject(info1);
+		const char *subject2 = linphone_conference_info_get_subject(info2);
+		if (subject1 && subject2) {
+			BC_ASSERT_STRING_EQUAL(subject1, subject2);
+		} else {
+			BC_ASSERT_PTR_NULL(subject1);
+			BC_ASSERT_PTR_NULL(subject2);
+		}
+
+		const char *description1 = linphone_conference_info_get_description(info1);
+		const char *description2 = linphone_conference_info_get_description(info2);
+		if (description1 && description2) {
+			BC_ASSERT_STRING_EQUAL(description1, description2);
+		}
+
+		const unsigned int ics_sequence1 = linphone_conference_info_get_ics_sequence(info1);
+		const unsigned int ics_sequence2 = linphone_conference_info_get_ics_sequence(info2);
+		BC_ASSERT_EQUAL(ics_sequence1, ics_sequence2, int, "%d");
+		BC_ASSERT_EQUAL((int)linphone_conference_info_get_state(info1), (int)linphone_conference_info_get_state(info2),
+		                int, "%d");
+
+		const char *uid1 = linphone_conference_info_get_ics_uid(info1);
+		const char *uid2 = linphone_conference_info_get_ics_uid(info2);
+		if (uid1 && uid2) {
+			BC_ASSERT_STRING_EQUAL(uid1, uid2);
+		}
+	}
+}

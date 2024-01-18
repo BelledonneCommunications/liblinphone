@@ -3812,6 +3812,8 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	BC_ASSERT_PTR_NOT_NULL(laure_call);
 
+	LinphoneAddress *confAddr = linphone_address_clone(linphone_conference_get_conference_address(conf));
+
 	if (pauline_call && laure_call) {
 		const bctbx_list_t *marie_calls, *it;
 		linphone_call_accept(pauline_call);
@@ -3872,7 +3874,20 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 		linphone_player_unref(player);
 	}
 
+	bctbx_list_t *participants_info = NULL;
+	add_participant_info_to_list(&participants_info, pauline->identity, LinphoneParticipantRoleSpeaker, -1);
+	add_participant_info_to_list(&participants_info, laure->identity, LinphoneParticipantRoleSpeaker, -1);
+	add_participant_info_to_list(&participants_info, marie->identity, LinphoneParticipantRoleSpeaker, -1);
+	check_conference_info_in_db(marie, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
+	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE);
+	check_conference_info_in_db(pauline, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
+	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE);
+	check_conference_info_in_db(laure, NULL, confAddr, marie->identity, participants_info, 0, 0, NULL, NULL, 0,
+	                            LinphoneConferenceInfoStateNew, LinphoneConferenceSecurityLevelNone, FALSE);
+
 	bc_free(recordfile);
+	bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
+	linphone_address_unref(confAddr);
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);

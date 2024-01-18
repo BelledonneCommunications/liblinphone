@@ -750,8 +750,32 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
 	return nullptr;
 }
 
+const std::shared_ptr<ParticipantDevice> Conference::getFocusOwnerDevice() const {
+	std::shared_ptr<ParticipantDevice> focusOwnerDevice = nullptr;
+	const auto devices = getParticipantDevices();
+	const auto deviceIt = std::find_if(devices.cbegin(), devices.cend(), [](const auto &device) {
+		return (device->getJoiningMethod() == ParticipantDevice::JoiningMethod::FocusOwner);
+	});
+	if (deviceIt != devices.cend()) {
+		focusOwnerDevice = (*deviceIt);
+	}
+	return focusOwnerDevice;
+}
+
 const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() const {
 	auto conferenceInfo = createOrGetConferenceInfo();
+
+	const auto focusOwnerDevice = getFocusOwnerDevice();
+	if (focusOwnerDevice) {
+		const auto &organizer = focusOwnerDevice->getParticipant()->getAddress();
+		if (organizer) {
+			auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
+			for (const auto &[name, value] : organizer->getParams()) {
+				organizerInfo->addParameter(name, value);
+			}
+			conferenceInfo->setOrganizer(organizerInfo);
+		}
+	}
 
 	// Update me only if he/she is already in the list of participants info
 	const auto &meAddress = getMe()->getAddress();
@@ -776,11 +800,13 @@ const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() con
 std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomParticipantList(
     const std::shared_ptr<Address> &organizer, const ConferenceInfo::participant_list_t invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
-	auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
-	for (const auto &[name, value] : organizer->getParams()) {
-		organizerInfo->addParameter(name, value);
+	if (organizer) {
+		auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
+		for (const auto &[name, value] : organizer->getParams()) {
+			organizerInfo->addParameter(name, value);
+		}
+		info->setOrganizer(organizerInfo);
 	}
-	info->setOrganizer(organizerInfo);
 	for (const auto &participant : invitedParticipants) {
 		info->addParticipant(participant);
 	}

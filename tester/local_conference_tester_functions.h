@@ -486,42 +486,6 @@ fill_memmber_list(std::list<LinphoneCoreManager *> members,
                   LinphoneCoreManager *organizer,
                   bctbx_list_t *participants_info);
 
-void check_conference_info_against_db(LinphoneCoreManager *mgr,
-                                      LinphoneAddress *confAddr,
-                                      const LinphoneConferenceInfo *info1);
-
-void check_conference_info_in_db(LinphoneCoreManager *mgr,
-                                 const char *uid,
-                                 LinphoneAddress *confAddr,
-                                 LinphoneAddress *organizer,
-                                 bctbx_list_t *participantList,
-                                 long long start_time,
-                                 int duration,
-                                 const char *subject,
-                                 const char *description,
-                                 unsigned int sequence,
-                                 LinphoneConferenceInfoState state,
-                                 LinphoneConferenceSecurityLevel security_level,
-                                 bool_t skip_participant_info);
-
-void check_conference_info_members(const LinphoneConferenceInfo *info,
-                                   const char *uid,
-                                   LinphoneAddress *confAddr,
-                                   LinphoneAddress *organizer,
-                                   bctbx_list_t *participantList,
-                                   long long start_time,
-                                   int duration,
-                                   const char *subject,
-                                   const char *description,
-                                   unsigned int sequence,
-                                   LinphoneConferenceInfoState state,
-                                   LinphoneConferenceSecurityLevel security_level,
-                                   bool_t skip_participant_info);
-
-void compare_conference_infos(const LinphoneConferenceInfo *info1,
-                              const LinphoneConferenceInfo *info2,
-                              bool_t skip_participant_info);
-
 size_t compute_no_audio_streams(LinphoneCall *call, LinphoneConference *conference);
 
 void conference_scheduler_state_changed(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state);
@@ -533,11 +497,6 @@ void update_sequence_number(bctbx_list_t **participants_info,
                             const std::list<LinphoneAddress *> new_participants,
                             int exp_sequence,
                             int exp_new_participant_sequence);
-int find_matching_participant_info(const LinphoneParticipantInfo *info1, const LinphoneParticipantInfo *info2);
-LinphoneParticipantInfo *add_participant_info_to_list(bctbx_list_t **participants_info,
-                                                      const LinphoneAddress *address,
-                                                      LinphoneParticipantRole role,
-                                                      int sequence);
 } // namespace LinphoneTest
 
 #endif // LOCAL_CONFERENCE_TESTER_FUNCTIONS_H_
