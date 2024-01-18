@@ -178,6 +178,8 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 
     public boolean isCurrentlyConnected(Context context) {
         int restrictBackgroundStatus = mConnectivityManager.getRestrictBackgroundStatus();
+        Log.i("[Platform Helper] [Network Manager 26] Restrict background status is [" + restrictBackgroundStatusToString(restrictBackgroundStatus) + "]");
+
         if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
             // Device is restricting metered network activity while application is running on background.
             // In this state, application should not try to use the network while running on background, because it would be denied.
@@ -186,10 +188,29 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
                 Log.w("[Platform Helper] [Network Manager 26] Considering network is not reachable due to background restrictions!");
                 return false;
             } else {
-                Log.i("[Platform Helper] [Network Manager 26] Active network not metered, considering network is reachable");
+                Log.i("[Platform Helper] [Network Manager 26] Active network is not metered");
             }
         }
-        return mNetworkAvailable != null;
+        
+        Network activeNetwork = getActiveNetwork();
+        if (activeNetwork != null) {
+            NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(activeNetwork);
+            if (networkInfo != null) {
+                boolean connected = networkInfo.isConnected();
+                if (connected) {
+                    Log.i("[Platform Helper] [Network Manager 26] Active network info says it's connected");
+                } else {
+                    Log.w("[Platform Helper] [Network Manager 26] Active network info says it's not connected..."); 
+                }
+                return connected;
+            } else {
+                Log.w("[Platform Helper] [Network Manager 26] Failed to get active network info, considering network as unavailable");
+                return false;
+            }
+        }
+
+        Log.w("[Platform Helper] [Network Manager 26] Failed to get active network, considering network as unavailable");
+        return false;
     }
 
     public boolean hasHttpProxy(Context context) {
@@ -274,5 +295,16 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
         activeNetworkDnsServers.addAll(dnsServers);
         activeNetworkDnsServers.addAll(mobileDnsServers);
         mHelper.updateDnsServers(activeNetworkDnsServers);
+    }
+
+    private String restrictBackgroundStatusToString(int restrictBackgroundStatus) {
+        if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
+            return "ENABLED";
+        } else if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_WHITELISTED) {
+            return "WHITELISTED";
+        } else if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED) {
+            return "DISABLED";
+        }
+        return "UNEXPECTED (" + restrictBackgroundStatus + ")";
     }
 }
