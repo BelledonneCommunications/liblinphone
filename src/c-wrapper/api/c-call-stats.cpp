@@ -564,6 +564,8 @@ const char *linphone_call_stats_get_zrtp_auth_tag_algo(const LinphoneCallStats *
 			return "Skein-32";
 		case (MS_ZRTP_AUTHTAG_SK64):
 			return "Skein-64";
+		case (MS_ZRTP_AUTHTAG_GCM):
+			return "GCM";
 		default:
 			return "Unknown Algo";
 	}
