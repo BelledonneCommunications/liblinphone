@@ -580,6 +580,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			    getMediaSession().getSharedFromThis());
 			if (conference) {
 				audio_stream_set_active_speaker_callback(mStream, &MS2AudioStream::sAudioStreamActiveSpeakerCb, this);
+
+				// Enable Voice Activity Detection
+				auto features = audio_stream_get_features(mStream);
+				features |= AUDIO_STREAM_FEATURE_VAD;
+				audio_stream_set_features(mStream, features);
 			}
 		}
 

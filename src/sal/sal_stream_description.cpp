@@ -70,13 +70,11 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription &other) {
 	tcaps = other.tcaps;
 	for (const auto &cfg : other.cfgs) {
 		const auto result = cfgs.insert(cfg);
-		if (!result.second)
-			cfgs[cfg.first] = cfg.second;
+		if (!result.second) cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto &cfg : other.unparsed_cfgs) {
 		const auto result = unparsed_cfgs.insert(cfg);
-		if (!result.second)
-			unparsed_cfgs[cfg.first] = cfg.second;
+		if (!result.second) unparsed_cfgs[cfg.first] = cfg.second;
 	}
 	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	for (const auto &pt : other.already_assigned_payloads) {
@@ -387,14 +385,14 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 					std::transform(protoString.begin(), protoString.end(), protoString.begin(), ::toupper);
 					baseCfg.proto_other = protoString;
 					switch (proto) {
-					case SalProtoRtpAvpf:
-					case SalProtoRtpSavpf:
-					case SalProtoUdpTlsRtpSavpf:
-						baseCfg.enableAvpfForStream();
-						break;
-					default:
-						baseCfg.disableAvpfForStream();
-						break;
+						case SalProtoRtpAvpf:
+						case SalProtoRtpSavpf:
+						case SalProtoUdpTlsRtpSavpf:
+							baseCfg.enableAvpfForStream();
+							break;
+						default:
+							baseCfg.disableAvpfForStream();
+							break;
 					}
 					auto cfgListForEnc = addAcapsToConfiguration(baseCfg, enc, attrList, mergeCfgLines);
 					for (auto cfg : cfgListForEnc) {
@@ -792,13 +790,11 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	tcaps = other.tcaps;
 	for (const auto &cfg : other.cfgs) {
 		const auto result = cfgs.insert(cfg);
-		if (!result.second)
-			cfgs[cfg.first] = cfg.second;
+		if (!result.second) cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto &cfg : other.unparsed_cfgs) {
 		const auto result = unparsed_cfgs.insert(cfg);
-		if (!result.second)
-			unparsed_cfgs[cfg.first] = cfg.second;
+		if (!result.second) unparsed_cfgs[cfg.first] = cfg.second;
 	}
 	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	for (const auto &pt : other.already_assigned_payloads) {
@@ -863,8 +859,7 @@ int SalStreamDescription::compareConfigurations(const SalStreamDescription &othe
 int SalStreamDescription::equal(const SalStreamDescription &other) const {
 	int result = globalEqual(other);
 
-	if (cfgs.size() != other.cfgs.size())
-		result |= SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED;
+	if (cfgs.size() != other.cfgs.size()) result |= SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED;
 
 	for (auto cfg1 = cfgs.cbegin(), cfg2 = other.cfgs.cbegin(); (cfg1 != cfgs.cend() && cfg2 != other.cfgs.cend());
 	     ++cfg1, ++cfg2) {
@@ -883,10 +878,8 @@ int SalStreamDescription::equal(const SalStreamDescription &other) const {
 int SalStreamDescription::globalEqual(const SalStreamDescription &other) const {
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
-	if (type != other.type)
-		result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	if (content.compare(other.content) != 0)
-		result |= SAL_MEDIA_DESCRIPTION_CONTENT_CHANGED;
+	if (type != other.type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	if (content.compare(other.content) != 0) result |= SAL_MEDIA_DESCRIPTION_CONTENT_CHANGED;
 
 	// RTP
 	if ((rtp_addr.compare(other.rtp_addr) != 0) && ((rtp_port != 0) || (other.rtp_port != 0)))
@@ -895,10 +888,8 @@ int SalStreamDescription::globalEqual(const SalStreamDescription &other) const {
 	    ms_is_multicast(L_STRING_TO_C(rtp_addr)) != ms_is_multicast(L_STRING_TO_C(other.rtp_addr)))
 		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (rtp_port != other.rtp_port) {
-		if ((rtp_port == 0) || (other.rtp_port == 0))
-			result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-		else
-			result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+		if ((rtp_port == 0) || (other.rtp_port == 0)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+		else result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	}
 
 	// RTCP
@@ -908,14 +899,11 @@ int SalStreamDescription::globalEqual(const SalStreamDescription &other) const {
 	    ms_is_multicast(L_STRING_TO_C(rtcp_addr)) != ms_is_multicast(L_STRING_TO_C(other.rtcp_addr)))
 		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (rtcp_port != other.rtcp_port) {
-		if ((rtcp_port == 0) || (other.rtcp_port == 0))
-			result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-		else
-			result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+		if ((rtcp_port == 0) || (other.rtcp_port == 0)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+		else result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	}
 
-	if (multicast_role != other.multicast_role)
-		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
+	if (multicast_role != other.multicast_role) result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 
 	return result;
 }
@@ -1015,10 +1003,8 @@ const SalStreamType &SalStreamDescription::getType() const {
 }
 
 const std::string SalStreamDescription::getTypeAsString() const {
-	if (type == SalOther)
-		return typeother;
-	else
-		return LinphonePrivate::Utils::toString(type);
+	if (type == SalOther) return typeother;
+	else return LinphonePrivate::Utils::toString(type);
 }
 
 void SalStreamDescription::setProto(const SalMediaProto &newProto) {
@@ -1151,20 +1137,17 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 		belle_sdp_connection_t *connection;
 		if (rtp_addr.find(':') != std::string::npos) {
 			inet6 = true;
-		} else
-			inet6 = false;
+		} else inet6 = false;
 		connection = belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", L_STRING_TO_C(rtp_addr));
 		if (ms_is_multicast(L_STRING_TO_C(rtp_addr))) {
 			/*remove session cline in case of multicast*/
 			belle_sdp_session_description_set_connection(session_desc, NULL);
-			if (inet6 == false)
-				belle_sdp_connection_set_ttl(connection, actualCfg.ttl);
+			if (inet6 == false) belle_sdp_connection_set_ttl(connection, actualCfg.ttl);
 		}
 		belle_sdp_media_description_set_connection(media_desc, connection);
 	}
 
-	if (bandwidth > 0)
-		belle_sdp_media_description_set_bandwidth(media_desc, "AS", bandwidth);
+	if (bandwidth > 0) belle_sdp_media_description_set_bandwidth(media_desc, "AS", bandwidth);
 
 	if (actualCfg.hasSrtp()) {
 		/* add crypto lines */
@@ -1216,7 +1199,7 @@ SalStreamDescription::toSdpMediaDescription(const SalMediaDescription *salMediaD
 	}
 
 	if (actualCfg.client_to_mixer_extension_id != 0) {
-		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:ssrc-audio-level vad=off",
+		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:ssrc-audio-level vad=on",
 		                                  actualCfg.client_to_mixer_extension_id);
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
 		bctbx_free(value);
@@ -1464,8 +1447,7 @@ void SalStreamDescription::sdpParsePayloadTypes(SalStreamConfiguration &cfg,
 		cfg.maxptime = belle_sdp_mime_parameter_get_max_ptime(mime_param);
 		ms_message("Found payload %s/%i fmtp=%s", pt->mime_type, pt->clock_rate, pt->send_fmtp ? pt->send_fmtp : "");
 	}
-	if (mime_params)
-		belle_sip_list_free_with_data(mime_params, belle_sip_object_unref);
+	if (mime_params) belle_sip_list_free_with_data(mime_params, belle_sip_object_unref);
 }
 
 void SalStreamDescription::sdpParseMediaCryptoParameters(SalStreamConfiguration &cfg,
@@ -1544,10 +1526,8 @@ void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_desc
 				}
 				ptr += offset;
 				if (ptr < endptr) {
-					if (*ptr == ' ')
-						ptr += 1;
-				} else
-					break;
+					if (*ptr == ' ') ptr += 1;
+				} else break;
 			}
 		} else if ((keywordcmp("ice-ufrag", att_name) == 0) && (value != NULL)) {
 			ice_ufrag = L_C_TO_STRING(value);
@@ -1564,50 +1544,50 @@ void SalStreamDescription::applyRtcpFbAttributeToPayload(SalStreamConfiguration 
                                                          PayloadType *pt) {
 	PayloadTypeAvpfParams avpf_params = payload_type_get_avpf_params(pt);
 	switch (belle_sdp_rtcp_fb_attribute_get_type(fb_attribute)) {
-	case BELLE_SDP_RTCP_FB_ACK:
-		if (belle_sdp_rtcp_fb_attribute_get_param(fb_attribute) == BELLE_SDP_RTCP_FB_RPSI) {
-			avpf_params.features |= PAYLOAD_TYPE_AVPF_RPSI;
-		}
-		break;
-	case BELLE_SDP_RTCP_FB_NACK:
-		switch (belle_sdp_rtcp_fb_attribute_get_param(fb_attribute)) {
-		case BELLE_SDP_RTCP_FB_PLI:
-			avpf_params.features |= PAYLOAD_TYPE_AVPF_PLI;
+		case BELLE_SDP_RTCP_FB_ACK:
+			if (belle_sdp_rtcp_fb_attribute_get_param(fb_attribute) == BELLE_SDP_RTCP_FB_RPSI) {
+				avpf_params.features |= PAYLOAD_TYPE_AVPF_RPSI;
+			}
 			break;
-		case BELLE_SDP_RTCP_FB_SLI:
-			avpf_params.features |= PAYLOAD_TYPE_AVPF_SLI;
+		case BELLE_SDP_RTCP_FB_NACK:
+			switch (belle_sdp_rtcp_fb_attribute_get_param(fb_attribute)) {
+				case BELLE_SDP_RTCP_FB_PLI:
+					avpf_params.features |= PAYLOAD_TYPE_AVPF_PLI;
+					break;
+				case BELLE_SDP_RTCP_FB_SLI:
+					avpf_params.features |= PAYLOAD_TYPE_AVPF_SLI;
+					break;
+				case BELLE_SDP_RTCP_FB_RPSI:
+					/* Linphone uses positive feeback for RPSI. However first versions handling
+					 * AVPF wrongly declared RPSI as negative feedback, so this is kept for compatibility
+					 * with these versions but will probably be removed at some point in time. */
+					avpf_params.features |= PAYLOAD_TYPE_AVPF_RPSI;
+					avpf_params.rpsi_compatibility = true;
+					break;
+				case BELLE_SDP_RTCP_FB_NONE:
+					cfg.rtcp_fb.generic_nack_enabled = true;
+					break;
+				default:
+					break;
+			}
 			break;
-		case BELLE_SDP_RTCP_FB_RPSI:
-			/* Linphone uses positive feeback for RPSI. However first versions handling
-			 * AVPF wrongly declared RPSI as negative feedback, so this is kept for compatibility
-			 * with these versions but will probably be removed at some point in time. */
-			avpf_params.features |= PAYLOAD_TYPE_AVPF_RPSI;
-			avpf_params.rpsi_compatibility = true;
+		case BELLE_SDP_RTCP_FB_TRR_INT:
+			avpf_params.trr_interval = belle_sdp_rtcp_fb_attribute_get_trr_int(fb_attribute);
 			break;
-		case BELLE_SDP_RTCP_FB_NONE:
-			cfg.rtcp_fb.generic_nack_enabled = true;
+		case BELLE_SDP_RTCP_FB_CCM:
+			switch (belle_sdp_rtcp_fb_attribute_get_param(fb_attribute)) {
+				case BELLE_SDP_RTCP_FB_FIR:
+					avpf_params.features |= PAYLOAD_TYPE_AVPF_FIR;
+					break;
+				case BELLE_SDP_RTCP_FB_TMMBR:
+					cfg.rtcp_fb.tmmbr_enabled = true;
+					break;
+				default:
+					break;
+			}
 			break;
 		default:
 			break;
-		}
-		break;
-	case BELLE_SDP_RTCP_FB_TRR_INT:
-		avpf_params.trr_interval = belle_sdp_rtcp_fb_attribute_get_trr_int(fb_attribute);
-		break;
-	case BELLE_SDP_RTCP_FB_CCM:
-		switch (belle_sdp_rtcp_fb_attribute_get_param(fb_attribute)) {
-		case BELLE_SDP_RTCP_FB_FIR:
-			avpf_params.features |= PAYLOAD_TYPE_AVPF_FIR;
-			break;
-		case BELLE_SDP_RTCP_FB_TMMBR:
-			cfg.rtcp_fb.tmmbr_enabled = true;
-			break;
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
 	}
 	payload_type_set_avpf_params(pt, avpf_params);
 }
