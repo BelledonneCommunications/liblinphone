@@ -3138,6 +3138,10 @@ void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneC
 	getPlatformHelpers(lc)->didRegisterForRemotePushWithStringifiedToken(device_token_str);
 }
 
+void linphone_core_set_push_registry_dispatch_queue(LinphoneCore *lc, void *dispatch_queue) {
+	getPlatformHelpers(lc)->setPushRegistryDispatchQueue(dispatch_queue);
+}
+
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
 	linphone_core_enable_auto_iterate(core, enable);
 }

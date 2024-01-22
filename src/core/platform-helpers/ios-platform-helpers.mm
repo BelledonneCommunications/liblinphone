@@ -97,6 +97,7 @@ public:
 
 	void didRegisterForRemotePush(void *token) override;
 	void didRegisterForRemotePushWithStringifiedToken(const char *token) override;
+	void setPushRegistryDispatchQueue(void *dispatchQueue) override;
 	void enableAutoIterate (bool autoIterateEnabled) override;
 
 	void onRecordingStarted () const override;
@@ -157,6 +158,10 @@ void IosPlatformHelpers::didRegisterForRemotePush(void *token) {
 
 void IosPlatformHelpers::didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) {
 	[mAppDelegate didRegisterForRemotePushWithStringifiedToken:tokenStr];
+}
+
+void IosPlatformHelpers::setPushRegistryDispatchQueue(void *dispatchQueue) {
+	[mAppDelegate setPushRegistryDispatchQueue:dispatchQueue];
 }
 
 void IosPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {

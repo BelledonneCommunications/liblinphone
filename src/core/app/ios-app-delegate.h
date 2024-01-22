@@ -43,6 +43,7 @@
  */
 @interface IosAppDelegate : IosObject <PKPushRegistryDelegate> {
 	BOOL mStopAsyncEnd;
+	dispatch_queue_t registryDispatchQueue;
 	PKPushRegistry* voipRegistry;
 }
 
@@ -50,6 +51,7 @@
 - (void)onStopAsyncEnd: (BOOL)stop;
 - (void)didRegisterForRemotePush:(NSData *)token;
 - (void)didRegisterForRemotePushWithStringifiedToken:(const char *)tokenStr;
+- (void)setPushRegistryDispatchQueue:(void *)dispatchQueue;
 - (void)registerForPush;
 
 @end

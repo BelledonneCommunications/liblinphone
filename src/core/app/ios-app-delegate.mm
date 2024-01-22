@@ -56,6 +56,7 @@
 			name:UIApplicationWillEnterForegroundNotification
 		  object:nil];
 		mStopAsyncEnd = true;
+		registryDispatchQueue = dispatch_get_main_queue();
 	}
 
 	return self;
@@ -105,7 +106,8 @@
 	if (!core) return;
 
 	ms_message("[PushKit] Connecting for push notifications");
-	voipRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
+	ms_message("[PushKit] Initializing push registry with queue : %s", dispatch_queue_get_label(registryDispatchQueue));
+	voipRegistry = [[PKPushRegistry alloc] initWithQueue:registryDispatchQueue];
 	voipRegistry.delegate = self;
 	voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 		
@@ -163,6 +165,11 @@
 	} else {
 		[self didRegisterForRemotePushWithStringifiedToken: nullptr];
 	}
+}
+
+- (void)setPushRegistryDispatchQueue:(void *)dispatchQueue {
+	registryDispatchQueue = (dispatch_queue_t)dispatchQueue;
+	ms_message("[PushKit] PushRegistryDispatchQueue set to %s", dispatch_queue_get_label(registryDispatchQueue));
 }
 
 //  PushKit Functions
@@ -233,11 +240,7 @@
 	if (!core) return;
 	LinphoneCore *lc = core->getCCore();
 
-	if (linphone_core_get_global_state(lc) != LinphoneGlobalReady && linphone_core_get_global_state(lc) != LinphoneGlobalOff) {
-		ms_message("[Pushkit] Core is already started. Core State is %s", linphone_global_state_to_string(linphone_core_get_global_state(lc)));
-		return;
-	}
-
+	ms_message("[PushKit] Processing remote notification on queue: %s", dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL));
 	linphone_core_start(lc);
 	// support only for calls
 	NSDictionary *aps = [userInfo objectForKey:@"aps"];
@@ -254,7 +257,7 @@
 		LinphoneCallLog *calllog = linphone_core_find_call_log(lc,[callId UTF8String], linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
 		if (calllog) {
 			/* After display a new callkit call, check if the call log with the same callid is created.
-			   If yes, that means the call is already aborted. */
+			 If yes, that means the call is already aborted. */
 			linphone_call_terminate(incomingCall);
 			linphone_call_log_unref(calllog);
 		}

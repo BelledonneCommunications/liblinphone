@@ -110,6 +110,7 @@ public:
 
 	virtual void didRegisterForRemotePush(void *token) = 0;
 	virtual void didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) = 0;
+	virtual void setPushRegistryDispatchQueue(void *dispatch_queue) = 0;
 	virtual void enableAutoIterate(bool autoIterateEnabled) = 0;
 
 	virtual void onRecordingStarted() const = 0;
@@ -188,6 +189,7 @@ public:
 
 	void didRegisterForRemotePush(BCTBX_UNUSED(void *token)) override{};
 	void didRegisterForRemotePushWithStringifiedToken(BCTBX_UNUSED(const char *tokenStr)) override{};
+	void setPushRegistryDispatchQueue(BCTBX_UNUSED(void *dispatch_queue)) override{};
 	void enableAutoIterate(BCTBX_UNUSED(bool autoIterateEnabled)) override{};
 
 	void onRecordingStarted() const override{};
