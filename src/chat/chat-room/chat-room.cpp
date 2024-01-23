@@ -101,13 +101,10 @@ void ChatRoomPrivate::addEvent(const shared_ptr<EventLog> &eventLog) {
 		lWarning() << "Failed to add event of type " << type << " to the database";
 	}
 
-	if (type == EventLog::Type::ConferenceParticipantDeviceAdded ||
-	    type == EventLog::Type::ConferenceParticipantDeviceRemoved ||
-	    type == EventLog::Type::ConferenceParticipantDeviceStatusChanged) {
-		// Do not update last event time on the chat room for those events
-		// because they are invisible and will cause the chat room to move
-		// up in the list and the user won't know why
-	} else {
+	if (type == EventLog::Type::ConferenceChatMessage || type == EventLog::Type::ConferenceChatMessageReaction) {
+		// Only update last event time on the chat room for those events
+		// because they are visible and may cause the chat room to move
+		// up in the list, so the user will know why.
 		setLastUpdateTime(eventLog->getCreationTime());
 		q->getCore()->getPrivate()->mainDb->updateChatRoomLastUpdatedTime(q->getConferenceId(), lastUpdateTime);
 
