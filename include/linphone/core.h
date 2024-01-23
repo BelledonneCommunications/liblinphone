@@ -1506,6 +1506,22 @@ LINPHONE_PUBLIC void linphone_core_set_label(LinphoneCore *core, const char *lab
 LINPHONE_PUBLIC const char *linphone_core_get_label(const LinphoneCore *core);
 
 /**
+ * Sets the maximum number of call logs to retrieve when using linphone_core_get_call_logs() or
+ *linphone_account_get_call_logs().
+ * @param core the #LinphoneCore. @notnil
+ * @param max the maximum number of call logs, use -1 to get them all.
+ **/
+LINPHONE_PUBLIC void linphone_core_set_max_call_logs(LinphoneCore *core, int max);
+
+/**
+ * Gets the maximum number of call logs retrieved when using linphone_core_get_call_logs() or
+ *linphone_account_get_call_logs().
+ * @param core the #LinphoneCore. @notnil
+ * @return the maximum number of call logs that will be returned. -1 will return them all.
+ **/
+LINPHONE_PUBLIC int linphone_core_get_max_call_logs(const LinphoneCore *core);
+
+/**
  * @}
  **/
 

@@ -888,7 +888,7 @@ list<shared_ptr<CallLog>> Account::getCallLogs() const {
 
 	auto localAddress = mParams->mIdentityAddress;
 	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
-	return mainDb->getCallHistoryForLocalAddress(localAddress, 0);
+	return mainDb->getCallHistoryForLocalAddress(localAddress, linphone_core_get_max_call_logs(getCore()->getCCore()));
 }
 
 list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<Address> remoteAddress) const {
@@ -900,7 +900,7 @@ list<shared_ptr<CallLog>> Account::getCallLogsForAddress(const std::shared_ptr<A
 
 	auto localAddress = mParams->mIdentityAddress;
 	unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
-	return mainDb->getCallHistory(remoteAddress, localAddress, 0);
+	return mainDb->getCallHistory(remoteAddress, localAddress, linphone_core_get_max_call_logs(getCore()->getCCore()));
 }
 
 void Account::deleteCallLogs() const {

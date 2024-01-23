@@ -3054,7 +3054,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 		linphone_account_creator_service_set_login_linphone_account_cb(
 		    service, linphone_account_creator_login_linphone_account_flexiapi);
 		linphone_account_creator_service_set_create_push_account_cb(
-			service, linphone_account_creator_create_push_account_with_token_flexiapi);
+		    service, linphone_account_creator_create_push_account_with_token_flexiapi);
 	}
 #endif
 
@@ -9923,4 +9923,13 @@ void linphone_core_set_label(LinphoneCore *core, const char *label) {
 
 const char *linphone_core_get_label(const LinphoneCore *core) {
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLabel());
+}
+
+void linphone_core_set_max_call_logs(LinphoneCore *core, int max) {
+	core->max_call_logs = max;
+	linphone_config_set_int(core->config, "misc", "history_max_size", max);
+}
+
+int linphone_core_get_max_call_logs(const LinphoneCore *core) {
+	return core->max_call_logs;
 }
