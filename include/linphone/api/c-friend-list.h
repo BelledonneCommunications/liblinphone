@@ -390,6 +390,23 @@ LINPHONE_PUBLIC void linphone_friend_list_cbs_set_presence_received(LinphoneFrie
                                                                     LinphoneFriendListCbsPresenceReceivedCb cb);
 
 /**
+ * Get the new SIP address discovered callback.
+ * @param cbs #LinphoneFriendListCbs object. @notnil
+ * @return The current new SIP address discovered callback.
+ **/
+LINPHONE_PUBLIC LinphoneFriendListCbsNewSipAddressDiscoveredCb
+linphone_friend_list_cbs_get_new_sip_address_discovered(const LinphoneFriendListCbs *cbs);
+
+/**
+ * Set the new SIP address discovered callback.
+ * @param cbs #LinphoneFriendListCbs object. @notnil
+ * @param cb The new SIP address discovered callback to be used.
+ **/
+LINPHONE_PUBLIC void
+linphone_friend_list_cbs_set_new_sip_address_discovered(LinphoneFriendListCbs *cbs,
+                                                        LinphoneFriendListCbsNewSipAddressDiscoveredCb cb);
+
+/**
  * Starts a CardDAV synchronization using value set using linphone_friend_list_set_uri.
  * @param friend_list #LinphoneFriendList object. @notnil
  */

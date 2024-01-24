@@ -189,6 +189,7 @@ public:
 	LinphoneFriendListCbsContactDeletedCb getContactDeleted() const;
 	LinphoneFriendListCbsContactUpdatedCb getContactUpdated() const;
 	LinphoneFriendListCbsPresenceReceivedCb getPresenceReceived() const;
+	LinphoneFriendListCbsNewSipAddressDiscoveredCb getNewlyDiscoveredSipAddress() const;
 	LinphoneFriendListCbsSyncStateChangedCb getSyncStatusChanged() const;
 
 	// Setters
@@ -196,6 +197,7 @@ public:
 	void setContactDeleted(LinphoneFriendListCbsContactDeletedCb cb);
 	void setContactUpdated(LinphoneFriendListCbsContactUpdatedCb cb);
 	void setPresenceReceived(LinphoneFriendListCbsPresenceReceivedCb cb);
+	void setNewlyDiscoveredSipAddress(LinphoneFriendListCbsNewSipAddressDiscoveredCb cb);
 	void setSyncStatusChanged(LinphoneFriendListCbsSyncStateChangedCb cb);
 
 private:
@@ -203,6 +205,7 @@ private:
 	LinphoneFriendListCbsContactDeletedCb mContactDeletedCb = nullptr;
 	LinphoneFriendListCbsContactUpdatedCb mContactUpdatedCb = nullptr;
 	LinphoneFriendListCbsPresenceReceivedCb mPresenceReceivedCb = nullptr;
+	LinphoneFriendListCbsNewSipAddressDiscoveredCb mNewSipAddressDiscoveredCb = nullptr;
 	LinphoneFriendListCbsSyncStateChangedCb mSyncStatusChangedCb = nullptr;
 };
 

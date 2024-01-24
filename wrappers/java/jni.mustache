@@ -555,7 +555,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEn
 		belle_sip_object_data_remove((belle_sip_object_t *)cbsToRemove, belle_sip_java_listener_user_data_key); // Global ref will be deleted by belle_sip_java_listener_data_removed_callback
 		{{cPrefix}}_remove_callbacks(cptr, cbsToRemove);
 	} else {
-		bctbx_error("Failed to find the native listener matching jobject [%p]", jlistener);
+		bctbx_warning("Failed to find the {{className}}'s [%p] native listener matching jobject [%p]", ptr, jlistener);
 	}
 }
 {{/isMultiListener}}

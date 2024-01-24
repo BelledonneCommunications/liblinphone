@@ -665,10 +665,14 @@ void Friend::addIncomingSubscription(SalOp *op) {
 void Friend::addPresenceModelForUriOrTel(const std::string &uriOrTel, const std::shared_ptr<PresenceModel> &model) {
 	const std::shared_ptr<Address> uriOrTelAddr = getCore()->interpretUrl(uriOrTel, false);
 	if (!uriOrTelAddr) return;
+
 	auto it = std::find_if(mPresenceModels.begin(), mPresenceModels.end(),
 	                       [&](const auto &elem) { return elem.first->weakEqual(*uriOrTelAddr); });
-	if (it == mPresenceModels.end()) mPresenceModels.insert({uriOrTelAddr, model});
-	else it->second = model;
+	if (it == mPresenceModels.end()) {
+		mPresenceModels.insert({uriOrTelAddr, model});
+	} else {
+		it->second = model;
+	}
 }
 
 void Friend::apply() {
@@ -850,14 +854,29 @@ void Friend::presenceReceived(const std::shared_ptr<FriendList> list,
 		                                                             model->toC());
 	} else {
 		std::string presenceUri = model->getContact();
-		bool foundFriendWithPhone = false;
-		for (auto [it, rangeEnd] = list->mFriendsMapByUri.equal_range(presenceUri); it != rangeEnd; it++) {
-			if (it->second == getSharedFromThis()) foundFriendWithPhone = true;
+
+		const std::shared_ptr<Address> sipAddress = getCore()->interpretUrl(presenceUri, false);
+		if (!sipAddress) {
+			lError() << "Failed to parse [" << presenceUri << "] received by presence as Address!";
+			return;
 		}
-		if (!foundFriendWithPhone) {
-			list->mFriendsMapByUri.insert({presenceUri, getSharedFromThis()});
+		sipAddress->clean(); // To get rid of ;user=phone at the end
+
+		const std::string &sipUri = sipAddress->asStringUriOnly();
+		bool foundFriendWithSipUri = false;
+		for (auto [it, rangeEnd] = list->mFriendsMapByUri.equal_range(sipUri); it != rangeEnd; it++) {
+			if (it->second == getSharedFromThis()) foundFriendWithSipUri = true;
 		}
+		if (!foundFriendWithSipUri) {
+			list->mFriendsMapByUri.insert({sipUri, getSharedFromThis()});
+		}
+
 		setPresenceModelForUriOrTel(phoneNumber, model);
+		if (!foundFriendWithSipUri) {
+			LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, list, linphone_friend_list_cbs_get_new_sip_address_discovered,
+			                                  toC(), sipUri.c_str());
+		}
+
 		linphone_core_notify_notify_presence_received_for_uri_or_tel(getCore()->getCCore(), toC(), phoneNumber.c_str(),
 		                                                             model->toC());
 	}

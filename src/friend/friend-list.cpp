@@ -1074,6 +1074,10 @@ LinphoneFriendListCbsPresenceReceivedCb FriendListCbs::getPresenceReceived() con
 	return mPresenceReceivedCb;
 }
 
+LinphoneFriendListCbsNewSipAddressDiscoveredCb FriendListCbs::getNewlyDiscoveredSipAddress() const {
+	return mNewSipAddressDiscoveredCb;
+}
+
 LinphoneFriendListCbsSyncStateChangedCb FriendListCbs::getSyncStatusChanged() const {
 	return mSyncStatusChangedCb;
 }
@@ -1092,6 +1096,10 @@ void FriendListCbs::setContactUpdated(LinphoneFriendListCbsContactUpdatedCb cb) 
 
 void FriendListCbs::setPresenceReceived(LinphoneFriendListCbsPresenceReceivedCb cb) {
 	mPresenceReceivedCb = cb;
+}
+
+void FriendListCbs::setNewlyDiscoveredSipAddress(LinphoneFriendListCbsNewSipAddressDiscoveredCb cb) {
+	mNewSipAddressDiscoveredCb = cb;
 }
 
 void FriendListCbs::setSyncStatusChanged(LinphoneFriendListCbsSyncStateChangedCb cb) {

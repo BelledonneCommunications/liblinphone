@@ -125,6 +125,16 @@ void linphone_friend_list_cbs_set_presence_received(LinphoneFriendListCbs *cbs,
 	FriendListCbs::toCpp(cbs)->setPresenceReceived(cb);
 }
 
+LinphoneFriendListCbsNewSipAddressDiscoveredCb
+linphone_friend_list_cbs_get_new_sip_address_discovered(const LinphoneFriendListCbs *cbs) {
+	return FriendListCbs::toCpp(cbs)->getNewlyDiscoveredSipAddress();
+}
+
+void linphone_friend_list_cbs_set_new_sip_address_discovered(LinphoneFriendListCbs *cbs,
+                                                             LinphoneFriendListCbsNewSipAddressDiscoveredCb cb) {
+	FriendListCbs::toCpp(cbs)->setNewlyDiscoveredSipAddress(cb);
+}
+
 LinphoneFriendList *linphone_core_create_friend_list(LinphoneCore *lc) {
 	return FriendList::createCObject(lc ? L_GET_CPP_PTR_FROM_C_OBJECT(lc) : nullptr);
 }

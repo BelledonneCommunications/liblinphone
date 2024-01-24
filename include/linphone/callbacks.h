@@ -847,6 +847,16 @@ typedef void (*LinphoneFriendListCbsSyncStateChangedCb)(LinphoneFriendList *frie
 typedef void (*LinphoneFriendListCbsPresenceReceivedCb)(LinphoneFriendList *friend_list, const bctbx_list_t *friends);
 
 /**
+ * Callback used to notify a list that a new SIP address was discovered through long term presence mechanism.
+ * @param friend_list The #LinphoneFriendList object for which the status has changed @notnil
+ * @param linphone_friend The #LinphoneFriend for which the SIP address was discovered @notnil
+ * @param sip_uri The newly discovered SIP URI @notnil
+ **/
+typedef void (*LinphoneFriendListCbsNewSipAddressDiscoveredCb)(LinphoneFriendList *friend_list,
+                                                               LinphoneFriend *linphone_friend,
+                                                               const char *sip_uri);
+
+/**
  * Callback used to notify a friend that it has received presence information.
  * @param linphone_friend The #LinphoneFriend object for which the status has changed @notnil
  **/
