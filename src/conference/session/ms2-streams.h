@@ -251,6 +251,7 @@ private:
 	void setupRingbackPlayer();
 	void telephoneEventReceived(int event);
 	void configureAudioStream();
+	void configureConference();
 	void setSoundCardType(MSSndCard *soundcard);
 	int restartStream(RestartReason reason); // reason is used for debug feedback. Return 0 if restart is scheduled, -1
 	                                         // if not or not needed.
