@@ -639,9 +639,6 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, BCTBX_UNUSE
 			lInfo() << "Ignoring bandwidth change - does not effect current stream";
 			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED;
 		}
-		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CODEC_CHANGED && updateRtpProfile(params)) {
-			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-		}
 		// SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED monitors the number of streams, it is ignored here.
 		changesToHandle &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
 
@@ -1061,32 +1058,6 @@ void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
 	        << " RTCP=" << rtcpAddr << ":" << resultStreamDesc.rtcp_port;
 	rtp_session_set_remote_addr_full(mSessions.rtp_session, rtpAddr.c_str(), resultStreamDesc.rtp_port,
 	                                 rtcpAddr.c_str(), resultStreamDesc.rtcp_port);
-}
-
-bool MS2Stream::updateRtpProfile(const OfferAnswerContext &params) {
-	const auto &resultStreamDesc = params.getResultStreamDescription();
-	const auto &payloads = resultStreamDesc.getPayloads();
-	const auto pt = getMediaSessionPrivate().getCurrentParams()->getUsedAudioPayloadType();
-
-	if (pt == nullptr || payloads.empty() ||
-	    !SalStreamConfiguration::isSamePayloadType(pt->getOrtpPt(), payloads.front())) {
-		lInfo() << "Preferred payload type has changed - stream must be restarted";
-		return false;
-	}
-
-	int usedPt = -1;
-	RtpProfile *audioProfile = makeProfile(params.resultMediaDescription, resultStreamDesc, &usedPt);
-
-	if (usedPt == -1) {
-		// This should never happen
-		lError() << "No payload types configured for this stream!";
-		return false;
-	}
-
-	rtp_session_set_profile(mSessions.rtp_session, audioProfile);
-	lInfo() << "RTP profile updated on current stream";
-
-	return true;
 }
 
 bool MS2Stream::canIgnorePtimeChange(const OfferAnswerContext &params) {
