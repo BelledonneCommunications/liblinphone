@@ -2571,9 +2571,14 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 				                              mgr->stat.number_of_X3dhUserCreationSuccess + lime_enabled,
 				                              x3dhServer_creationTimeout));
 			}
-			// At most the number of accounts that don't have lime enabled were able to register
-			BC_ASSERT_LOWER(mgr->stat.number_of_LinphoneRegistrationOk,
-			                old_registration_ok + (proxy_count - lime_enabled), int, "%d");
+			if (lime_enabled == 1) {
+				// At most the number of accounts that don't have lime enabled were able to register
+				// This assert is reliable only if there is one account, since the process of
+				// lime user creation followed by registration happens in parallel for the two accounts,
+				// not sequentially.
+				BC_ASSERT_LOWER(mgr->stat.number_of_LinphoneRegistrationOk,
+				                old_registration_ok + (proxy_count - lime_enabled), int, "%d");
+			}
 		}
 #define REGISTER_TIMEOUT 20 /* seconds */
 		int success = wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk,
