@@ -413,6 +413,7 @@ LINPHONE_PUBLIC void linphone_payload_type_set_priority_bonus(LinphonePayloadTyp
 
 LINPHONE_PUBLIC bool_t linphone_account_lime_enabled(LinphoneAccount *account);
 
+LINPHONE_PUBLIC void linphone_call_restart_main_audio_stream(LinphoneCall *call);
 #ifdef __cplusplus
 }
 #endif

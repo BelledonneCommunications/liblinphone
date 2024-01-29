@@ -230,15 +230,17 @@ public:
 	MSSndCard *getCurrentCaptureCard() const {
 		return mCurrentCaptureCard;
 	}
+	enum RestartReason {
+		InputChanged = 0,
+		OutputChanged = 1,
+	};
+	int restartStream(RestartReason reason); // reason is used for debug feedback. Return 0 if restart is scheduled, -1
+	                                         // if not or not needed. This method is public for testing purpose
 
 protected:
 	VideoStream *getPeerVideoStream();
 
 private:
-	enum RestartReason {
-		InputChanged = 0,
-		OutputChanged = 1,
-	};
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	void setupMediaLossCheck();
 	void setPlaybackGainDb(float gain);
@@ -253,8 +255,6 @@ private:
 	void configureAudioStream();
 	void configureConference();
 	void setSoundCardType(MSSndCard *soundcard);
-	int restartStream(RestartReason reason); // reason is used for debug feedback. Return 0 if restart is scheduled, -1
-	                                         // if not or not needed.
 	MS2AudioMixer *getAudioMixer();
 
 	void audioStreamIsSpeakingCb(uint32_t speakerSsrc, bool_t isSpeaking);

@@ -322,3 +322,17 @@ bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, M
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
+
+void linphone_call_restart_main_audio_stream(LinphoneCall *call) {
+	StreamsGroup &sg =
+	    L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession()))
+	        ->getStreamsGroup();
+	MS2AudioStream *s = nullptr;
+	s = sg.lookupMainStreamInterface<MS2AudioStream>(SalAudio);
+	if (!s) {
+		lWarning() << "linphone call restart main audio stream: No audio stream found in call [" << call << "]";
+		return;
+	}
+	s->restartStream(LinphonePrivate::MS2AudioStream::InputChanged);
+	lInfo() << "Restarting audio stream [" << s << "] on linphone call [" << call << "]";
+}
