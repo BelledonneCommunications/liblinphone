@@ -74,7 +74,8 @@ void create_transfer_conference_base(time_t start_time,
 		}
 
 		// Focus is in full packet mode: transfer packet not payload
-		linphone_core_enable_full_packet_mode(focus.getLc(), TRUE);
+		LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
+		linphone_config_set_bool(focus_config, "sound", "conference_full_packet", TRUE);
 		int nortp_timeout = 10;
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), participant_list_type);

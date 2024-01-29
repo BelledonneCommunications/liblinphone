@@ -322,7 +322,3 @@ bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, M
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
-
-void linphone_core_enable_full_packet_mode(LinphoneCore *lc, bool_t enable) {
-	lc->full_packet_mode = enable;
-}

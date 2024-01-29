@@ -359,14 +359,13 @@ void MS2AudioStream::configureConference() {
 			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters
 			// properly
 			media_stream_enable_conference_local_mix(&mStream->ms, TRUE);
-		} else { // when conference is local(we are a server), check if the core is configured to enable full packet
-			     // mode
-			if (getCCore()->full_packet_mode) {
+		} else { // when conference is local(we are a server), retrieve the full packet mode in the config
+			LinphoneConfig *config = linphone_core_get_config(getCCore());
+			if (linphone_config_get_bool(config, "sound", "conference_full_packet", FALSE)) {
 				audio_stream_enable_transfer_mode(mStream, TRUE);
 			}
 		}
 	}
-	audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::sAudioStreamIsSpeakingCb, this);
 }
 void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State targetState) {
 	const auto &stream = params.getResultStreamDescription();
@@ -594,6 +593,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		// Specific configuration for conference
 		configureConference();
 
+		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::sAudioStreamIsSpeakingCb, this);
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::sAudioStreamIsMutedCb, this);
 
 		if (getMediaSessionPrivate().getCallSessionListener()) {

@@ -413,8 +413,6 @@ LINPHONE_PUBLIC void linphone_payload_type_set_priority_bonus(LinphonePayloadTyp
 
 LINPHONE_PUBLIC bool_t linphone_account_lime_enabled(LinphoneAccount *account);
 
-LINPHONE_PUBLIC void linphone_core_enable_full_packet_mode(LinphoneCore *lc, bool_t enable);
-
 #ifdef __cplusplus
 }
 #endif
