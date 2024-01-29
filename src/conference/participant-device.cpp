@@ -265,7 +265,9 @@ void ParticipantDevice::setState(State newState, bool notify) {
 		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
 			setTimeOfJoining(time(nullptr));
 		}
-		lInfo() << "Moving participant device " << *getAddress() << " from state " << mState << " to " << newState;
+		if (getCore() != nullptr) { // When creating participant device from database
+			lInfo() << "Moving participant device " << *getAddress() << " from state " << mState << " to " << newState;
+		}
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
 		const auto &conference = getConference();

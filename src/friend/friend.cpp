@@ -427,6 +427,11 @@ void Friend::addAddress(const std::shared_ptr<const Address> &address) {
 	if (mFriendList) addFriendToListMapIfNotInItYet(uri);
 
 	if (linphone_core_vcard_supported()) {
+		if (!mVcard) {
+			const std::string name =
+			    newAddr->getDisplayName().empty() ? newAddr->getUsername() : newAddr->getDisplayName();
+			createVcard(name);
+		}
 		if (mVcard) mVcard->addSipAddress(uri);
 	} else if (!mUri) mUri = newAddr;
 	newAddr->unref();
@@ -440,7 +445,7 @@ void Friend::addPhoneNumber(const std::string &phoneNumber) {
 	}
 	if (linphone_core_vcard_supported()) {
 		if (!mVcard) createVcard(phoneNumber);
-		mVcard->addPhoneNumber(phoneNumber);
+		if (mVcard) mVcard->addPhoneNumber(phoneNumber);
 	}
 }
 
@@ -451,7 +456,7 @@ void Friend::addPhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumb
 	if (mFriendList) addFriendToListMapIfNotInItYet(phoneNumberToSipUri(phone));
 	if (linphone_core_vcard_supported()) {
 		if (!mVcard) createVcard(phone);
-		mVcard->addPhoneNumberWithLabel(phoneNumber);
+		if (mVcard) mVcard->addPhoneNumberWithLabel(phoneNumber);
 	}
 }
 
