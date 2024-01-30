@@ -1043,7 +1043,8 @@ void CallSessionPrivate::createOpTo(const std::shared_ptr<Address> &to) {
 	op = new SalCallOp(core->sal.get(), q->isCapabilityNegotiationEnabled());
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer()) op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());
-	linphone_configure_op(core, op, to->toC(), q->getParams()->getPrivate()->getCustomHeaders(), false);
+	linphone_configure_op_with_account(core, op, to->toC(), q->getParams()->getPrivate()->getCustomHeaders(), false,
+	                                   toC(getDestAccount()));
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
 	/* else privacy might be set by account */

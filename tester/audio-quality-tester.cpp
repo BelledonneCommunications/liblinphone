@@ -69,6 +69,66 @@ static void completion_cb(BCTBX_UNUSED(void *user_data), int percentage) {
 }
 #endif
 
+static void audio_call_with_soundcard(const char *codec_name, int clock_rate, bool_t stereo) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
+	LinphonePayloadType *pt;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	/*make sure we have the requested codec */
+	pt = linphone_core_get_payload_type(marie->lc, codec_name, clock_rate, 2);
+	if (!pt) {
+		ms_warning("%s not available, stereo with %s not tested.", codec_name, codec_name);
+		goto end;
+	}
+	if (stereo) linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	linphone_payload_type_unref(pt);
+
+	pt = linphone_core_get_payload_type(pauline->lc, codec_name, clock_rate, 2);
+	if (stereo) linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	linphone_payload_type_unref(pt);
+
+	disable_all_audio_codecs_except_one(marie->lc, codec_name, clock_rate);
+	disable_all_audio_codecs_except_one(pauline->lc, codec_name, clock_rate);
+
+	linphone_core_set_use_files(pauline->lc, TRUE);
+
+	/*stereo is supported only without volume control, echo canceller...*/
+	linphone_config_set_string(linphone_core_get_config(marie->lc), "sound", "features", "REMOTE_PLAYING");
+	linphone_config_set_string(linphone_core_get_config(pauline->lc), "sound", "features", "REMOTE_PLAYING");
+
+	if (!BC_ASSERT_TRUE(call(pauline, marie))) goto end;
+	{
+		AudioStream *as =
+		    (AudioStream *)linphone_call_get_stream(linphone_core_get_current_call(marie->lc), LinphoneStreamTypeAudio);
+		/*
+		 * Make sure that the soundcard was really configured to output wideband.
+		 */
+		if (clock_rate == 48000) {
+			int samplerate = 0;
+			int nchannels = 0;
+			ms_filter_call_method(as->soundread, MS_FILTER_GET_SAMPLE_RATE, &samplerate);
+			ms_filter_call_method(as->soundread, MS_FILTER_GET_NCHANNELS, &nchannels);
+			BC_ASSERT_GREATER(samplerate, 44100, int, "%i");
+			BC_ASSERT_EQUAL(nchannels, stereo ? 2 : 1, int, "%i");
+			samplerate = 0;
+			nchannels = 0;
+			ms_filter_call_method(as->soundwrite, MS_FILTER_GET_SAMPLE_RATE, &samplerate);
+			ms_filter_call_method(as->soundread, MS_FILTER_GET_NCHANNELS, &nchannels);
+			BC_ASSERT_GREATER(samplerate, 44100, int, "%i");
+			BC_ASSERT_EQUAL(nchannels, stereo ? 2 : 1, int, "%i");
+		}
+	}
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
+	end_call(pauline, marie);
+
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void
 audio_call_stereo_call(const char *codec_name, int clock_rate, int bitrate_override, bool_t stereo, bool_t plc) {
 	LinphoneCoreManager *marie;
@@ -481,6 +541,11 @@ static void audio_bandwidth_estimation() {
 static void audio_bandwidth_estimation_on_secure_call() {
 	audio_bandwidth_estimation_base(true);
 }
+
+static void audio_call_with_opus_and_soundcard(void) {
+	audio_call_with_soundcard("opus", 48000, TRUE);
+}
+
 test_t audio_quality_tests[] = {
     TEST_NO_TAG("Audio loss rate resilience opus", audio_call_loss_resilience_opus),
     TEST_NO_TAG("Simple stereo call with L16", audio_stereo_call_l16),
@@ -489,7 +554,7 @@ test_t audio_quality_tests[] = {
     TEST_NO_TAG("Simple mono call with opus", audio_mono_call_opus),
     TEST_NO_TAG("Audio bandwidth estimation", audio_bandwidth_estimation),
     TEST_NO_TAG("Audio bandwidth estimation on secure call", audio_bandwidth_estimation_on_secure_call),
-};
+    TEST_NO_TAG("Audio call with opus and soundcard", audio_call_with_opus_and_soundcard)};
 
 test_suite_t audio_quality_test_suite = {"Audio Call quality",
                                          NULL,
