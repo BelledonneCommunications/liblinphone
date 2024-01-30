@@ -265,7 +265,8 @@ void ParticipantDevice::setState(State newState, bool notify) {
 		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
 			setTimeOfJoining(time(nullptr));
 		}
-		if (getCore() != nullptr) { // When creating participant device from database
+		if (getCore() != nullptr && linphone_core_get_global_state(getCore()->getCCore()) !=
+		                                LinphoneGlobalStartup) { // When creating participant device from database
 			lInfo() << "Moving participant device " << *getAddress() << " from state " << mState << " to " << newState;
 		}
 		mState = newState;
