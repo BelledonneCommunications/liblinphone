@@ -183,6 +183,7 @@ void CorePrivate::init() {
 			}
 
 			loadChatRooms();
+			linphone_core_friends_storage_resync_friends_lists(lc); // Load friends from mainDB if any
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 
 		// Leave this part to import the legacy call logs to MainDB

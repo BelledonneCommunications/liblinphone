@@ -75,7 +75,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 28);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 29);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 1);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -906,21 +906,24 @@ long long MainDbPrivate::insertOrUpdateFriendList(const std::shared_ptr<FriendLi
 	std::string rlsUri = list->getRlsUri();
 	std::string syncUri = list->getUri();
 	int revision = list->mRevision;
+	int type = list->getType();
 
 	if (friendListId > 0) {
-		*dbSession.getBackendSession() << "UPDATE friends_list SET "
-		                                  "name = :name, rls_uri = :rlsUri, sync_uri = :syncUri, revision = :revision "
-		                                  "WHERE id = :friendListId",
-		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(friendListId);
+		*dbSession.getBackendSession()
+		    << "UPDATE friends_list SET "
+		       "name = :name, rls_uri = :rlsUri, sync_uri = :syncUri, revision = :revision, type = :type "
+		       "WHERE id = :friendListId",
+		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(type),
+		    soci::use(friendListId);
 	} else {
 		lInfo() << "Insert new friend list in database: " << name;
 
 		*dbSession.getBackendSession() << "INSERT INTO friends_list ("
-		                                  "name, rls_uri, sync_uri, revision"
+		                                  "name, rls_uri, sync_uri, revision, type"
 		                                  ") VALUES ("
-		                                  ":name, :rlsUri, :syncUri, :revision"
+		                                  ":name, :rlsUri, :syncUri, :revision, :type"
 		                                  ")",
-		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision);
+		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(type);
 
 		friendListId = dbSession.getLastInsertId();
 	}
@@ -2227,6 +2230,7 @@ std::shared_ptr<FriendList> MainDbPrivate::selectFriendList(const soci::row &row
 	friendList->setRlsUri(row.get<string>(2));
 	friendList->setUri(row.get<string>(3));
 	friendList->mRevision = row.get<int>(4);
+	friendList->setType((LinphoneFriendListType)row.get<int>(5));
 
 	return friendList;
 }
@@ -2825,6 +2829,10 @@ void MainDbPrivate::updateSchema() {
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 
+	if (version < makeVersion(1, 0, 29)) {
+		*session << "ALTER TABLE friends_list ADD COLUMN type INT NOT NULL DEFAULT -1";
+	}
+
 	if (getModuleVersion("friends") < makeVersion(1, 0, 1)) {
 		// The sip_address_id field needs to be nullable.
 		// Do not try to copy data from the old table because it was not used before this version (use of an other
@@ -2910,16 +2918,17 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 			const string &rlsUri = friendList.get<string>(LegacyFriendListColRlsUri, "");
 			const string &syncUri = friendList.get<string>(LegacyFriendListColSyncUri, "");
 			const int &revision = friendList.get<int>(LegacyFriendListColRevision, 0);
+			int type = -1;
 
 			string uniqueName = name;
 			for (int id = 0; names.find(uniqueName) != names.end(); uniqueName = name + "-" + Utils::toString(id++))
 				;
 			names.insert(uniqueName);
 
-			*session << "INSERT INTO friends_list (name, rls_uri, sync_uri, revision) VALUES ("
-			            "  :name, :rlsUri, :syncUri, :revision"
+			*session << "INSERT INTO friends_list (name, rls_uri, sync_uri, revision, type) VALUES ("
+			            "  :name, :rlsUri, :syncUri, :revision, :type"
 			            ")",
-			    soci::use(uniqueName), soci::use(rlsUri), soci::use(syncUri), soci::use(revision);
+			    soci::use(uniqueName), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(type);
 			resolvedListsIds[friendList.get<int>(LegacyFriendListColId)] = dbSession.getLastInsertId();
 		}
 
@@ -6428,7 +6437,7 @@ std::list<std::shared_ptr<FriendList>> MainDb::getFriendLists() {
 		soci::session *session = d->dbSession.getBackendSession();
 
 		soci::rowset<soci::row> rows =
-		    (session->prepare << "SELECT id, name, rls_uri, sync_uri, revision FROM friends_list ORDER BY id");
+		    (session->prepare << "SELECT id, name, rls_uri, sync_uri, revision, type FROM friends_list ORDER BY id");
 		for (const auto &row : rows) {
 			auto list = d->selectFriendList(row);
 			list->setCore(getCore());

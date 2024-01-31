@@ -223,8 +223,6 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	int code = 0;
 	int fetched = 0;
 	string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
-	char *friends_db = bc_tester_file("friends_friendlist_vcard_test.db");
-	unlink(friends_db);
 
 	// Create a test account
 	char *token = sal_get_random_token_lowercase(12);
@@ -308,105 +306,74 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	linphone_core_add_callbacks(marie->lc, cbs);
 	linphone_core_cbs_set_user_data(cbs, stats);
 
-	linphone_core_set_friends_database_path(marie->lc, friends_db);
 	linphone_core_set_provisioning_uri(marie->lc, remoteProvisioningURIWithConfirmationKey.c_str());
 	linphone_core_manager_start(marie, FALSE);
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1,
 	                              liblinphone_tester_sip_timeout));
 
-	// Check if the friend list has been parsed
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 1,
-	                              liblinphone_tester_sip_timeout)); // Added 'contacts-vcard-list'
+	BC_ASSERT_TRUE(
+	    wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneGlobalOn, 1, liblinphone_tester_sip_timeout));
 
 	std::string url =
 	    linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", NULL);
 	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
-
 	BC_ASSERT_PTR_NOT_NULL(friendList);
-	unsigned int friends_list_size = (unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList));
-	BC_ASSERT_EQUAL(friends_list_size, 2, unsigned int, "%u");
+	if (friendList) {
+		wait_for_until(marie->lc, NULL, NULL, 1, 5000);
 
-	if (friends_list_size > 0) {
-		// Check if the vCard has been properly parsed
-		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(linphone_friend_list_get_friends(friendList));
-		LinphoneVcard *vcard = linphone_friend_get_vcard(lf);
+		unsigned int friends_list_size = (unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList));
+		BC_ASSERT_EQUAL(friends_list_size, 2, unsigned int, "%u");
 
-		string fullName = string(linphone_vcard_get_full_name(vcard)).substr(0, usernameContact2.length());
-		BC_ASSERT_STRING_EQUAL(fullName.c_str(), usernameContact2.c_str());
+		if (friends_list_size > 0) {
+			// Check if the vCard has been properly parsed
+			LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(linphone_friend_list_get_friends(friendList));
+			LinphoneVcard *vcard = linphone_friend_get_vcard(lf);
 
-		bctbx_list_t *extended_properties =
-		    linphone_vcard_get_extended_properties_values_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
-		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(extended_properties), "rfc2833");
-		bctbx_list_free_with_data(extended_properties, (bctbx_list_free_func)bctbx_free);
+			string fullName = string(linphone_vcard_get_full_name(vcard)).substr(0, usernameContact2.length());
+			BC_ASSERT_STRING_EQUAL(fullName.c_str(), usernameContact2.c_str());
 
-		linphone_vcard_remove_extented_properties_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
-		linphone_vcard_add_extended_property(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL", "test");
+			bctbx_list_t *extended_properties =
+			    linphone_vcard_get_extended_properties_values_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
+			BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(extended_properties), "rfc2833");
+			bctbx_list_free_with_data(extended_properties, (bctbx_list_free_func)bctbx_free);
 
-		extended_properties =
-		    linphone_vcard_get_extended_properties_values_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
-		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(extended_properties), "test");
-		bctbx_list_free_with_data(extended_properties, (bctbx_list_free_func)bctbx_free);
+			linphone_vcard_remove_extented_properties_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
+			linphone_vcard_add_extended_property(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL", "test");
+
+			extended_properties =
+			    linphone_vcard_get_extended_properties_values_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
+			BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(extended_properties), "test");
+			bctbx_list_free_with_data(extended_properties, (bctbx_list_free_func)bctbx_free);
+		}
+		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_friends_lists(marie->lc)), 2, int, "%i");
+		linphone_core_remove_friend_list(marie->lc, friendList);
+		// Only _default remains
+		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_friends_lists(marie->lc)), 1, int, "%i");
+
+		// Reparse it with one less friend
+		fetched = 0;
+
+		flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
+		flexiAPIClient->useTestAdminAccount(true);
+
+		flexiAPIClient->adminAccountContactDelete(contactId0, contactId2)
+		    ->then([&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
+			    code = response.code;
+			    fetched = 1;
+		    });
+
+		wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
+
+		linphone_friend_list_synchronize_friends_from_server(friendList);
+		wait_for_until(marie->lc, NULL, NULL, 1, 5000);
+
+		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList)), 1, int, "%i");
+
+		BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 1, int, "%i");
+
+		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList)), 1, int, "%i");
 	}
-
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_friends_lists(marie->lc)), 2, int, "%i");
-	linphone_core_remove_friend_list(marie->lc, friendList);
-	// Only _default remains
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_friends_lists(marie->lc)), 1, int, "%i");
-
-	// Reparse it with one less friend
-	fetched = 0;
-
-	flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
-	flexiAPIClient->useTestAdminAccount(true);
-
-	flexiAPIClient->adminAccountContactDelete(contactId0, contactId2)
-	    ->then([&code, &fetched](const LinphonePrivate::FlexiAPIClient::Response &response) {
-		    code = response.code;
-		    fetched = 1;
-	    });
-
-	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
-
-	LinphoneFriendList *friendList2 = linphone_core_create_friend_list(marie->lc);
-	linphone_friend_list_set_type(friendList2, LinphoneFriendListTypeVCard4);
-	linphone_friend_list_synchronize_friends_from_server(friendList2);
-
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2,
-	                              liblinphone_tester_sip_timeout)); // + 'contacts-vcard-list' sync
-
-	linphone_friend_list_unref(friendList2);
-
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList2)), 1, int, "%i");
-	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 1, int, "%i");
-	LinphoneFriendList *friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
-	BC_ASSERT_PTR_NOT_NULL(friendList3);
-
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int, "%i");
-
-	linphone_core_stop(marie->lc);
-	stats->new_list_count = 0;
-	linphone_core_start(marie->lc);
-	BC_ASSERT_TRUE(
-	    wait_for_until(marie->lc, NULL, &stats->new_list_count, 2,
-	                   liblinphone_tester_sip_timeout)); // Init for 2 lists : Default and 'contacts-vcard-list'
-
-	// Resync the friends lists from the DB
-	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 1, int,
-	                "%i"); // One friend list in DB
-	friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
-	BC_ASSERT_PTR_NOT_NULL(friendList3);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int, "%i");
-
-	linphone_core_remove_friend_list(marie->lc, friendList3);
-
-	LinphoneFriendList *friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
-	BC_ASSERT_PTR_NULL(friendList4);
-
-	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int,
-	                "%i"); // No longer have friend list in DB
-	friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
-	BC_ASSERT_PTR_NULL(friendList4); // No change after resync
 
 	// Clean up
 	flexiAPIClient = make_shared<LinphonePrivate::FlexiAPIClient>(marie->lc);
@@ -423,7 +390,6 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 	linphone_core_cbs_unref(cbs);
 	ms_free(stats);
-	ms_free(friends_db);
 	linphone_core_manager_destroy(marie);
 }
 

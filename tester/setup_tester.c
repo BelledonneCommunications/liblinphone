@@ -3431,18 +3431,15 @@ static void friend_list_db_storage_base(bool_t set_friends_db_path) {
 	linphone_core_manager_reinit(manager);
 	linphone_core_manager_start(manager, TRUE);
 	core = manager->lc;
-	// Don't forget to set the friends DB path again
+
+	// Don't forget to set the friends DB path again if asked for it
 	if (set_friends_db_path) {
 		linphone_core_set_friends_database_path(core, friends_db);
 	}
 
 	// Check that only friends list stored in can be found using display name
 	found_list = linphone_core_get_friend_list_by_name(core, "DB_STORED_FL");
-	if (set_friends_db_path) {
-		BC_ASSERT_PTR_NOT_NULL(found_list);
-	} else {
-		BC_ASSERT_PTR_NULL(found_list);
-	}
+	BC_ASSERT_PTR_NOT_NULL(found_list);
 
 	found_list = linphone_core_get_friend_list_by_name(core, "NOT_DB_STORED_FL");
 	BC_ASSERT_PTR_NULL(found_list);
@@ -3452,18 +3449,10 @@ static void friend_list_db_storage_base(bool_t set_friends_db_path) {
 	BC_ASSERT_PTR_NULL(found_friend);
 
 	found_friend = linphone_core_find_friend_by_phone_number(core, "+3301020304"); // Pauline
-	if (set_friends_db_path) {
-		BC_ASSERT_PTR_NOT_NULL(found_friend);
-	} else {
-		BC_ASSERT_PTR_NULL(found_list);
-	}
+	BC_ASSERT_PTR_NOT_NULL(found_friend);
 
 	found_friend = linphone_core_find_friend_by_phone_number(core, "+3305060708"); // Marie
-	if (set_friends_db_path) {
-		BC_ASSERT_PTR_NOT_NULL(found_friend);
-	} else {
-		BC_ASSERT_PTR_NULL(found_list);
-	}
+	BC_ASSERT_PTR_NOT_NULL(found_friend);
 
 	found_friend = linphone_core_find_friend_by_phone_number(core, "+3312345678"); // Laure
 	BC_ASSERT_PTR_NULL(found_friend);

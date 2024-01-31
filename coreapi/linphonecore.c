@@ -2601,21 +2601,6 @@ static void misc_config_read(LinphoneCore *lc) {
 
 	lc->send_call_stats_periodical_updates =
 	    !!linphone_config_get_int(config, "misc", "send_call_stats_periodical_updates", 0);
-
-	const char *contacts_vcard_list_uri = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", NULL);
-	if (contacts_vcard_list_uri) {
-		if (lc->base_contacts_list_for_synchronization)
-			linphone_friend_list_unref(lc->base_contacts_list_for_synchronization);
-		lc->base_contacts_list_for_synchronization = linphone_core_get_friend_list_by_name(lc, contacts_vcard_list_uri);
-
-		if (!lc->base_contacts_list_for_synchronization) {
-			// The name (display_name) will be set when the synchronisation is done.
-			lc->base_contacts_list_for_synchronization = linphone_core_create_friend_list(lc);
-		} else linphone_friend_list_ref(lc->base_contacts_list_for_synchronization);
-
-		linphone_friend_list_set_type(lc->base_contacts_list_for_synchronization, LinphoneFriendListTypeVCard4);
-		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
-	}
 }
 
 void linphone_core_reload_ms_plugins(LinphoneCore *lc, const char *path) {
@@ -2685,6 +2670,35 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 
 		// To apply any changes to LIME configuration
 		linphone_core_reload_lime(lc);
+	}
+
+	const char *contacts_vcard_list_uri = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", NULL);
+	if (contacts_vcard_list_uri) {
+		if (lc->base_contacts_list_for_synchronization) {
+			ms_message("Found existing contacts-vcard-list friend list with URI [%s], unref it",
+			           contacts_vcard_list_uri);
+			linphone_friend_list_unref(lc->base_contacts_list_for_synchronization);
+			lc->base_contacts_list_for_synchronization = NULL;
+		}
+
+		lc->base_contacts_list_for_synchronization = linphone_core_get_friend_list_by_name(lc, contacts_vcard_list_uri);
+		if (!lc->base_contacts_list_for_synchronization) {
+			ms_message("contacts-vcard-list friend list with URI [%s] doesn't exists yet, creating it",
+			           contacts_vcard_list_uri);
+			// The name (display_name) will be set when the synchronisation is done.
+			lc->base_contacts_list_for_synchronization = linphone_core_create_friend_list(lc);
+			linphone_friend_list_set_display_name(lc->base_contacts_list_for_synchronization, contacts_vcard_list_uri);
+			linphone_friend_list_set_uri(lc->base_contacts_list_for_synchronization, contacts_vcard_list_uri);
+			linphone_friend_list_set_type(lc->base_contacts_list_for_synchronization, LinphoneFriendListTypeVCard4);
+			linphone_friend_list_enable_database_storage(lc->base_contacts_list_for_synchronization, TRUE);
+			linphone_core_add_friend_list(lc, lc->base_contacts_list_for_synchronization);
+		} else {
+			ms_message("Found existing contacts-vcard-list friend list with URI [%s], keep it",
+			           contacts_vcard_list_uri);
+			linphone_friend_list_ref(lc->base_contacts_list_for_synchronization);
+		}
+
+		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
 	}
 
 	if (lc->provisioning_http_listener) {

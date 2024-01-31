@@ -893,7 +893,6 @@ void linphone_core_update_friends_subscriptions(LinphoneCore *lc) {
 }
 
 int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
-	int nbOfSyncedFriendLists = 0;
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 
 	// First remove all the orphan friends from the DB (friends that are not in a friend list)
@@ -901,20 +900,17 @@ int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
 
 	std::list<std::shared_ptr<FriendList>> friendLists = mainDb->getFriendLists();
 	if (!friendLists.empty()) {
-		lWarning() << "Replacing current default friend list by the one(s) from the database";
 		lc->friends_lists =
 		    bctbx_list_free_with_data(lc->friends_lists, (bctbx_list_free_func)linphone_friend_list_unref);
 
-		const char *url = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", nullptr);
 		for (auto &friendList : friendLists) {
-			const std::string listName = friendList->getDisplayName();
-			if (!listName.empty() && url && (listName == url)) friendList->setType(LinphoneFriendListTypeVCard4);
 			linphone_core_add_friend_list(lc, friendList->toC());
-			nbOfSyncedFriendLists++;
 		}
 	}
 
-	return nbOfSyncedFriendLists;
+	int fetchedFromDb = (int)friendLists.size();
+	lInfo() << "Fetched [" << fetchedFromDb << "] friend lists from DB";
+	return fetchedFromDb;
 }
 
 bctbx_list_t *linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list) {

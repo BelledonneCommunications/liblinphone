@@ -119,6 +119,7 @@ public:
 	LinphoneStatus importFriendsFromVcard4File(const std::string &vcardFile);
 	void notifyPresence(const std::shared_ptr<PresenceModel> &model) const;
 	LinphoneFriendListStatus removeFriend(const std::shared_ptr<Friend> &lf);
+	void removeFriends();
 	bool subscriptionsEnabled() const;
 	void synchronizeFriendsFromServer();
 	void updateDirtyFriends();
@@ -140,7 +141,9 @@ private:
 	void invalidateSubscriptions();
 	void notifyPresenceReceived(const std::shared_ptr<const Content> &content);
 	void parseMultipartRelatedBody(const std::shared_ptr<const Content> &content, const std::string &firstPartBody);
+	void deleteFriend(const std::shared_ptr<Friend> &lf, bool removeFromServer);
 	LinphoneFriendListStatus removeFriend(const std::shared_ptr<Friend> &lf, bool removeFromServer);
+	void removeFriends(bool removeFromServer);
 	void removeFromDb();
 	void saveInDb();
 	void sendListSubscription();

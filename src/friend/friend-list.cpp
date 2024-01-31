@@ -94,6 +94,7 @@ void FriendList::setSubscriptionBodyless(bool bodyless) {
 
 void FriendList::setType(LinphoneFriendListType type) {
 	mType = type;
+	saveInDb();
 }
 
 void FriendList::setUri(const std::string &uri) {
@@ -294,6 +295,10 @@ LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> 
 	return removeFriend(lf, true);
 }
 
+void FriendList::removeFriends() {
+	removeFriends(true);
+}
+
 bool FriendList::subscriptionsEnabled() const {
 	return mSubscriptionsEnabled;
 }
@@ -305,10 +310,20 @@ void FriendList::synchronizeFriendsFromServer() {
 
 	// Vcard4.0 list synchronisation
 	if (mType == LinphoneFriendListTypeVCard4) {
-		const std::string contactsVcardListUri =
-		    L_C_TO_STRING(linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", nullptr));
+		if (mUri.empty()) {
+			lError() << "Can't synchronize vCard4 list [" << toC() << "](" << getDisplayName() << ") without an URI";
+			return;
+		}
+
+		ms_message("Starting downloading vCard 4 list using URI [%s], any existing friends will be removed first",
+		           mUri.c_str());
+		// Clear any previously existing friends
+		removeFriends(false);
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
+		                                  LinphoneFriendListSyncStarted, nullptr);
+
 		belle_http_request_listener_callbacks_t belle_request_listener = {0};
-		belle_generic_uri_t *uri = belle_generic_uri_parse(contactsVcardListUri.c_str());
+		belle_generic_uri_t *uri = belle_generic_uri_parse(mUri.c_str());
 		belle_request_listener.process_auth_requested = [](void *ctx, belle_sip_auth_event_t *event) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
 			linphone_auth_info_fill_belle_sip_event(
@@ -321,29 +336,22 @@ void FriendList::synchronizeFriendsFromServer() {
 		belle_request_listener.process_response = [](void *ctx, const belle_http_response_event_t *event) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
 			FriendList *friendList = FriendList::toCpp(list);
-			LinphoneCore *lc = friendList->getCore()->getCCore();
 			const char *body = belle_sip_message_get_body(BELLE_SIP_MESSAGE(event->response));
 			if (body) {
-				const std::string url =
-				    L_C_TO_STRING(linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", nullptr));
-				auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
-
-				// Remove any existing friend list with this url
-				mainDb->deleteFriendList(url);
-
-				// Then clean, clear and resync the complete database in memory
-				linphone_core_friends_storage_resync_friends_lists(lc);
-
-				// And then we save the received friendlist. Each of the following lines is calling saveInDb(), so we
-				// perform several SQL queries
-				friendList->setUri(url);
-				friendList->setDisplayName(url);
-				friendList->importFriendsFromVcard4Buffer(body);
-				linphone_core_add_friend_list(lc, list);
-
-				LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, friendList,
-				                                  linphone_friend_list_cbs_get_sync_status_changed,
-				                                  LinphoneFriendListSyncSuccessful, nullptr);
+				int importedFriends = friendList->importFriendsFromVcard4Buffer(body);
+				if (importedFriends > 0) {
+					ms_message("Successfully downloaded and imported [%i] friends", importedFriends);
+					LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, friendList,
+					                                  linphone_friend_list_cbs_get_sync_status_changed,
+					                                  LinphoneFriendListSyncSuccessful, nullptr);
+				} else {
+					ms_error("Failed to import downloaded vCards!");
+					LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, friendList,
+					                                  linphone_friend_list_cbs_get_sync_status_changed,
+					                                  LinphoneFriendListSyncFailure, nullptr);
+				}
+			} else {
+				ms_warning("No body was received...");
 			}
 		};
 		belle_request_listener.process_io_error = [](void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
@@ -372,6 +380,8 @@ void FriendList::synchronizeFriendsFromServer() {
 			std::string uri = Address::toCpp(linphone_proxy_config_get_identity_address(cfg))->asStringUriOnly();
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", uri.c_str()));
 		}
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
+		                                  LinphoneFriendListSyncStarted, nullptr);
 		belle_http_provider_send_request(lc->http_provider, request, lc->base_contacts_list_http_listener);
 	} else if (mType == LinphoneFriendListTypeCardDAV) {
 		if (mUri.empty()) {
@@ -813,13 +823,10 @@ void FriendList::parseMultipartRelatedBody(BCTBX_UNUSED(const std::shared_ptr<co
 
 #endif /* HAVE_XML2 */
 
-LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> &lf, bool removeFromServer) {
-	const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(), [&](const auto &f) { return f == lf; });
-	if (it == mFriends.cend()) return LinphoneFriendListNonExistentFriend;
-
+void FriendList::deleteFriend(const std::shared_ptr<Friend> &lf, bool removeFromServer) {
 #ifdef VCARD_ENABLED
 	if (lf && databaseStorageEnabled()) lf->removeFromDb();
-	if (removeFromServer) {
+	if (removeFromServer && getType() == LinphoneFriendListTypeCardDAV) {
 		std::shared_ptr<Vcard> vcard = lf->getVcard();
 		if (vcard && !vcard->getUid().empty()) {
 			CardDAVContext *context = new CardDAVContext(getSharedFromThis());
@@ -833,7 +840,6 @@ LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> 
 	lDebug() << "FriendList::removeFriend(" << lf->toC() << ", " << removeFromServer << ")";
 #endif
 
-	mFriends.erase(it);
 	const std::string &refKey = lf->getRefKey();
 	if (!refKey.empty()) {
 		const auto mapIt = mFriendsMapByRefKey.find(refKey);
@@ -859,6 +865,21 @@ LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> 
 	}
 
 	lf->mFriendList = nullptr;
+}
+
+void FriendList::removeFriends(bool removeFromServer) {
+	for (auto &lf : mFriends) {
+		deleteFriend(lf, removeFromServer);
+	}
+	mFriends.clear();
+}
+
+LinphoneFriendListStatus FriendList::removeFriend(const std::shared_ptr<Friend> &lf, bool removeFromServer) {
+	const auto it = std::find_if(mFriends.cbegin(), mFriends.cend(), [&](const auto &f) { return f == lf; });
+	if (it == mFriends.cend()) return LinphoneFriendListNonExistentFriend;
+
+	deleteFriend(lf, removeFromServer);
+	mFriends.erase(it);
 	return LinphoneFriendListOK;
 }
 
