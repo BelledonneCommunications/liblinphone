@@ -702,10 +702,17 @@ void MainDbPrivate::insertOrUpdateConferenceInfoParticipantParams(
 
 	// Add new name values pairs
 	for (const auto &[name, value] : paramsCopy) {
-		*session << "INSERT OR REPLACE INTO conference_info_participant_params (conference_info_participant_id, name, "
-		            "value)  "
-		            "VALUES ( :participantId, :name, :value )",
-		    soci::use(conferenceInfoParticipantId), soci::use(name), soci::use(value);
+		try {
+			*session << "INSERT INTO conference_info_participant_params (conference_info_participant_id, name, value)  "
+			            "VALUES ( :participantId, :name, :value )",
+			    soci::use(conferenceInfoParticipantId), soci::use(name), soci::use(value);
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Caught exception " << e.what() << ": participant info with ID " << conferenceInfoParticipantId
+			         << " has already parameter " << name;
+			*session << "REPLACE INTO conference_info_participant_params (conference_info_participant_id, name, value) "
+			            " VALUES ( :participantId, :name, :value )",
+			    soci::use(conferenceInfoParticipantId), soci::use(name), soci::use(value);
+		}
 	}
 #endif
 }
@@ -2012,10 +2019,17 @@ ParticipantInfo::participant_params_t MainDbPrivate::migrateConferenceInfoPartic
 		}
 		participantParams.insert(std::make_pair(name, actualValue));
 
-		*session << "INSERT OR REPLACE INTO conference_info_participant_params (conference_info_participant_id, name, "
-		            "value)  "
-		            "VALUES ( :participantId, :name, :value )",
-		    soci::use(participantId), soci::use(name), soci::use(actualValue);
+		try {
+			*session << "INSERT INTO conference_info_participant_params (conference_info_participant_id, name, value)  "
+			            "VALUES ( :participantId, :name, :value )",
+			    soci::use(participantId), soci::use(name), soci::use(actualValue);
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Caught exception " << e.what() << ": participant info with ID " << participantId
+			         << " has already parameter " << name;
+			*session << "REPLACE INTO conference_info_participant_params (conference_info_participant_id, name, value) "
+			            " VALUES ( :participantId, :name, :value )",
+			    soci::use(participantId), soci::use(name), soci::use(actualValue);
+		}
 	}
 #endif // HAVE_DB_STORAGE
 	return participantParams;
