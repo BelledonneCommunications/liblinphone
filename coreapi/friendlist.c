@@ -762,20 +762,15 @@ linphone_friend_list_import_friend(LinphoneFriendList *list, LinphoneFriend *lf,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif // _MSC_VER
-static LinphoneFriendListStatus
-_linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t remove_from_server) {
-	bctbx_list_t *iterator;
-	bctbx_list_t *phone_numbers;
-	const bctbx_list_t *addresses;
-	bctbx_list_t *elem = bctbx_list_find(list->friends, lf);
-	if (elem == NULL) return LinphoneFriendListNonExistentFriend;
 
+static void
+linphone_friend_list_delete_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t remove_from_server) {
 #if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
 	if (lf && lf->lc && linphone_friend_list_database_storage_enabled(list)) {
 		linphone_core_remove_friend_from_db(lf->lc, lf);
 	}
 
-	if (remove_from_server) {
+	if (remove_from_server && list->type == LinphoneFriendListTypeCardDAV) {
 		LinphoneVcard *lvc = linphone_friend_get_vcard(lf);
 		if (lvc && linphone_vcard_get_uid(lvc)) {
 			LinphoneCardDavContext *cdc = linphone_carddav_context_new(list);
@@ -790,7 +785,7 @@ _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf
 		}
 	}
 #endif
-	list->friends = bctbx_list_erase_link(list->friends, elem);
+
 	if (lf->refkey) {
 		bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map, lf->refkey);
 		bctbx_iterator_t *end = bctbx_map_cchar_end(list->friends_map);
@@ -802,8 +797,8 @@ _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf
 		if (end) bctbx_iterator_cchar_delete(end);
 	}
 
-	phone_numbers = linphone_friend_get_phone_numbers(lf);
-	iterator = phone_numbers;
+	bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers(lf);
+	bctbx_list_t *iterator = phone_numbers;
 	while (iterator) {
 		const char *number = (const char *)bctbx_list_get_data(iterator);
 		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
@@ -821,7 +816,7 @@ _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf
 	}
 	if (phone_numbers) bctbx_list_free_with_data(phone_numbers, bctbx_free);
 
-	addresses = linphone_friend_get_addresses(lf);
+	const bctbx_list_t *addresses = linphone_friend_get_addresses(lf);
 	iterator = (bctbx_list_t *)addresses;
 	while (iterator) {
 		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
@@ -843,6 +838,28 @@ _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf
 
 	lf->friend_list = NULL;
 	linphone_friend_unref(lf);
+}
+
+static void linphone_friend_list_remove_friends(LinphoneFriendList *list, bool_t remove_from_server) {
+	const bctbx_list_t *elem;
+	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
+		linphone_friend_list_delete_friend(list, lf, remove_from_server);
+	}
+
+	if (list->friends) {
+		list->friends = bctbx_list_free(list->friends);
+		list->friends = NULL;
+	}
+}
+
+static LinphoneFriendListStatus
+_linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t remove_from_server) {
+	bctbx_list_t *elem = bctbx_list_find(list->friends, lf);
+	if (elem == NULL) return LinphoneFriendListNonExistentFriend;
+
+	linphone_friend_list_delete_friend(list, lf, remove_from_server);
+	list->friends = bctbx_list_erase_link(list->friends, elem);
 	return LinphoneFriendListOK;
 }
 #ifndef _MSC_VER
@@ -931,17 +948,6 @@ static void carddav_updated(LinphoneCardDavContext *cdc, LinphoneFriend *lf_new,
 	}
 }
 
-static int linphone_sql_request_generic(sqlite3 *db, const char *stmt) {
-	char *errmsg = NULL;
-	int ret;
-	ret = sqlite3_exec(db, stmt, NULL, NULL, &errmsg);
-	if (ret != SQLITE_OK) {
-		ms_error("linphone_sql_request: statement %s -> error sqlite3_exec(): %s.", stmt, errmsg);
-		sqlite3_free(errmsg);
-	}
-	return ret;
-}
-
 void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *list) {
 	if (!list || !list->lc) {
 		ms_error("Either list or list's Core pointer is null, this is not expected!");
@@ -950,11 +956,21 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 
 	// Vcard4.0 list synchronisation
 	if (list->type == LinphoneFriendListTypeVCard4) {
-		const char *contacts_vcard_list_uri =
-		    linphone_config_get_string(list->lc->config, "misc", "contacts-vcard-list", NULL);
+		if (!list->uri) {
+			ms_error("Can't synchronize vCard4 list [%p](%s) without an URI", list,
+			         linphone_friend_list_get_display_name(list));
+			return;
+		}
+
+		ms_message("Starting downloading vCard 4 list using URI [%s], any existing friends will be removed first",
+		           list->uri);
+		// Clear any previously existing friends
+		linphone_friend_list_remove_friends(list, FALSE);
+
+		NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncStarted, NULL);
 
 		belle_http_request_listener_callbacks_t belle_request_listener = {0};
-		belle_generic_uri_t *uri = belle_generic_uri_parse(contacts_vcard_list_uri);
+		belle_generic_uri_t *uri = belle_generic_uri_parse(list->uri);
 
 		belle_request_listener.process_auth_requested = [](void *ctx, belle_sip_auth_event_t *event) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
@@ -971,48 +987,17 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 			const char *body = belle_sip_message_get_body(BELLE_SIP_MESSAGE(event->response));
 
 			if (body) {
-				const char *url = linphone_config_get_string(list->lc->config, "misc", "contacts-vcard-list", NULL);
-
-				char *buf;
-				/**
-				 * We directly remove from the SQLite database the friends, then the friends_lists
-				 * - Because we doesn't have a foreign key between the two tables
-				 * - Because removing friends can only be done using linphone_friend_list_remove_friend and requires a
-				 * loop
-				 * - Because the primary key is id (autoincrement) we can have several friends_lists that have the same
-				 * display_name
-				 * - Because doing the following lines using the current C API would require to load the full
-				 * friends_lists table in memory and do the where manually, then delete one by one each linked friends
-				 */
-
-				buf = sqlite3_mprintf("delete from friends where friend_list_id in (select id from friends_lists where "
-				                      "display_name = %Q)",
-				                      url);
-				linphone_sql_request_generic(list->lc->friends_db, buf);
-				sqlite3_free(buf);
-
-				buf = sqlite3_mprintf("delete from friends_lists where display_name = %Q", url);
-				linphone_sql_request_generic(list->lc->friends_db, buf);
-				sqlite3_free(buf);
-
-				/**
-				 * And then we clean, clear and resync the complete database in memory
-				 */
-				linphone_core_friends_storage_resync_friends_lists(list->lc);
-
-				/**
-				 * And then we save the received friendlist
-				 * Each of the following lines is calling linphone_core_store_friends_list_in_db
-				 * So we do 4 SQL requests
-				 */
-
-				linphone_friend_list_set_uri(list, url);
-				linphone_friend_list_set_display_name(list, url);
-				linphone_friend_list_import_friends_from_vcard4_buffer(list, body);
-
-				linphone_core_add_friend_list(list->lc, list);
-
-				NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncSuccessful, NULL)
+				int importedFriends = linphone_friend_list_import_friends_from_vcard4_buffer(list, body);
+				if (importedFriends > 0) {
+					ms_message("Successfully downloaded and imported [%i] friends", importedFriends);
+					NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncSuccessful,
+					                NULL);
+				} else {
+					ms_error("Failed to import downloaded vCards!");
+					NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, NULL);
+				}
+			} else {
+				ms_warning("No body was received...");
 			}
 		};
 
@@ -1067,7 +1052,7 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 			if (cdc && cdc->friend_list->cbs->sync_state_changed_cb) {
 				cdc->friend_list->cbs->sync_state_changed_cb(cdc->friend_list, LinphoneFriendListSyncStarted, NULL);
 			}
-			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncStarted, NULL)
+			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncStarted, NULL);
 			linphone_carddav_synchronize(cdc);
 		} else {
 			ms_error("Failed to create a CardDAV context for friend list [%p] with URI [%s]", list, list->uri);
