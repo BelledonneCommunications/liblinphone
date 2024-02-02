@@ -108,15 +108,14 @@ LINPHONE_PUBLIC const char *linphone_recorder_params_get_video_codec(const Linph
  * @param format The #LinphoneRecorderFileFormat to set.
  */
 LINPHONE_PUBLIC void linphone_recorder_params_set_file_format(LinphoneRecorderParams *params,
-                                                              LinphoneRecorderFileFormat format);
+                                                              LinphoneMediaFileFormat format);
 
 /**
  * Retrieves the #LinphoneRecorderFileFormat.
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the #LinphoneRecorderFileFormat.
  */
-LINPHONE_PUBLIC LinphoneRecorderFileFormat
-linphone_recorder_params_get_file_format(const LinphoneRecorderParams *params);
+LINPHONE_PUBLIC LinphoneMediaFileFormat linphone_recorder_params_get_file_format(const LinphoneRecorderParams *params);
 
 /**
  * Set the window id.

@@ -68,7 +68,7 @@ static void record_file(const char *filename,
                         BCTBX_UNUSED(bool_t supported_format),
                         BCTBX_UNUSED(const char *audio_mime),
                         const char *video_mime,
-                        LinphoneRecorderFileFormat file_format,
+                        LinphoneMediaFileFormat file_format,
                         bool_t use_evfs) {
 
 	uint8_t evfs_key[32] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
@@ -97,6 +97,7 @@ static void record_file(const char *filename,
 	}
 
 	LinphoneRecorderParams *params = linphone_core_create_recorder_params(lc_manager->lc);
+	linphone_recorder_params_set_audio_device(params, linphone_core_get_default_input_audio_device(lc_manager->lc));
 	linphone_recorder_params_set_webcam_name(params, linphone_core_get_video_device(lc_manager->lc));
 	linphone_recorder_params_set_file_format(params, file_format);
 	linphone_recorder_params_set_video_codec(params, video_mime);
@@ -159,9 +160,8 @@ static void record_file(const char *filename,
 		res = stat(filename, &st);
 		BC_ASSERT_EQUAL(res, 0, int, "%d");
 		ms_message("We check if the file can be opened, res = %d\n", res);
-		res2 = st.st_size > 0;
-		BC_ASSERT_TRUE(res2);
-		ms_message("We check if the file has non zero size, res2 = %d\n", res2);
+		BC_ASSERT_TRUE(st.st_size > 0);
+		ms_message("We check if the file has non zero size, size = %d\n", (int)st.st_size);
 		if (res == 0) {
 			bctbx_vfs_file_t *fp = bctbx_file_open(bctbx_vfs_get_default(), filename, "r");
 			if (fp != NULL) {
@@ -201,6 +201,17 @@ static void record_mkv_opus_h264_test(void) {
 #endif
 }
 
+static void record_mkv_opus_av1_test(void) {
+#ifdef VIDEO_ENABLED
+	char *filename = bctbx_strdup_printf("%s/testrecordopusav1.smff", bc_tester_get_writable_dir_prefix());
+	const char *audio_mime = "opus";
+	const char *video_mime = "AV1";
+	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime,
+	            LinphoneRecorderFileFormatSmff, FALSE);
+	ms_free(filename);
+#endif
+}
+
 static void record_mkv_opus_vp8_test(void) {
 #ifdef VIDEO_ENABLED
 	char *filename = bctbx_strdup_printf("%s/testrecordopusvp8.mkv", bc_tester_get_writable_dir_prefix());
@@ -226,6 +237,7 @@ static void record_mkv_opus_vp8_evfs_test(void) {
 test_t recorder_tests[] = {TEST_NO_TAG("Recording wave", record_wav_pcm_test),
                            TEST_NO_TAG("Recording mkv opus+h264", record_mkv_opus_h264_test),
                            TEST_NO_TAG("Recording mkv opus+VP8", record_mkv_opus_vp8_test),
+                           TEST_NO_TAG("Recording smff opus+av1", record_mkv_opus_av1_test),
                            TEST_NO_TAG("Recording mkv opus+VP8 using evfs", record_mkv_opus_vp8_evfs_test)};
 
 test_suite_t recorder_test_suite = {"Recorder",

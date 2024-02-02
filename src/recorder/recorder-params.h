@@ -36,7 +36,7 @@ public:
 	RecorderParams(std::shared_ptr<const AudioDevice> device,
 	               const std::string &webcamName,
 	               void *windowId,
-	               LinphoneRecorderFileFormat format = LinphoneRecorderFileFormatWav,
+	               LinphoneMediaFileFormat format = LinphoneRecorderFileFormatWav,
 	               const std::string &videoCodec = "");
 	RecorderParams(const RecorderParams &other);
 	~RecorderParams() = default;
@@ -46,20 +46,20 @@ public:
 	void setAudioDevice(std::shared_ptr<const AudioDevice> audioDevice);
 	void setWebcamName(const std::string &webcamName);
 	void setVideoCodec(const std::string &videoCodec);
-	void setFileFormat(LinphoneRecorderFileFormat format);
+	void setFileFormat(LinphoneMediaFileFormat format);
 	void setWindowId(void *windowId);
 
 	std::shared_ptr<const AudioDevice> getAudioDevice() const;
 	const std::string &getWebcamName() const;
 	const std::string &getVideoCodec() const;
-	LinphoneRecorderFileFormat getFileFormat() const;
+	LinphoneMediaFileFormat getFileFormat() const;
 	void *getWindowId() const;
 
 private:
 	std::shared_ptr<const AudioDevice> mAudioDevice;
 	std::string mWebcamName;
 	void *mWindowId;
-	LinphoneRecorderFileFormat mFormat;
+	LinphoneMediaFileFormat mFormat;
 	std::string mVideoCodec;
 };
 

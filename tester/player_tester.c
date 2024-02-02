@@ -127,7 +127,7 @@ fail:
 	bc_free(filename);
 }
 
-static void mkv_player_test(void) {
+static void multimedia_player_test(const char *filename) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_new("marie_rc");
 	LinphonePlayer *player;
 	LinphonePlayerCbs *cbs = NULL;
@@ -135,7 +135,7 @@ static void mkv_player_test(void) {
 	int eof = 0;
 	int current_position;
 	int duration;
-	char *filename = bc_tester_res("sounds/recording.mkv");
+	char *filepath = bc_tester_res(filename);
 	bool_t seek = TRUE;
 	player = linphone_core_create_local_player(lc_manager->lc, linphone_core_get_ringer_device(lc_manager->lc),
 	                                           linphone_core_get_default_video_display_filter(lc_manager->lc), 0);
@@ -146,7 +146,7 @@ static void mkv_player_test(void) {
 	linphone_player_cbs_set_eof_reached(cbs, eof_callback);
 	linphone_player_cbs_set_user_data(cbs, &eof);
 	linphone_player_add_callbacks(player, cbs);
-	res = linphone_player_open(player, filename);
+	res = linphone_player_open(player, filepath);
 	BC_ASSERT_EQUAL(res, 0, int, "%d");
 
 	duration = linphone_player_get_duration(player);
@@ -182,7 +182,15 @@ fail:
 	if (cbs) linphone_player_cbs_unref(cbs);
 	if (player) linphone_player_unref(player);
 	if (lc_manager) linphone_core_manager_destroy(lc_manager);
-	bc_free(filename);
+	bc_free(filepath);
+}
+
+static void mkv_player_test(void) {
+	multimedia_player_test("sounds/recording.mkv");
+}
+
+static void smff_player_test(void) {
+	multimedia_player_test("sounds/recording.smff");
 }
 
 static void wav_player_simple_test(void) {
@@ -217,12 +225,13 @@ static void sintel_trailer_opus_vp8_test(void) {
 	bc_free(filename);
 }
 
-test_t player_tests[] = {TEST_NO_TAG("Wav file", wav_player_simple_test),
-                         TEST_NO_TAG("Wav seeking", wav_player_seeking_test),
-                         TEST_NO_TAG("Mkv seeking", mkv_player_test),
-                         TEST_NO_TAG("Sintel trailer opus/h264", sintel_trailer_opus_h264_test),
-                         TEST_NO_TAG("Sintel trailer pcmu/h264", sintel_trailer_pcmu_h264_test),
-                         TEST_NO_TAG("Sintel trailer opus/VP8", sintel_trailer_opus_vp8_test)};
+static test_t player_tests[] = {TEST_NO_TAG("Wav file", wav_player_simple_test),
+                                TEST_NO_TAG("Wav seeking", wav_player_seeking_test),
+                                TEST_NO_TAG("Mkv seeking", mkv_player_test),
+                                TEST_NO_TAG("SMFF seeking", smff_player_test),
+                                TEST_NO_TAG("Sintel trailer opus/h264", sintel_trailer_opus_h264_test),
+                                TEST_NO_TAG("Sintel trailer pcmu/h264", sintel_trailer_pcmu_h264_test),
+                                TEST_NO_TAG("Sintel trailer opus/VP8", sintel_trailer_opus_vp8_test)};
 
 test_suite_t player_test_suite = {"Player",
                                   NULL,

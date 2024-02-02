@@ -71,11 +71,11 @@ const char *linphone_recorder_params_get_video_codec(const LinphoneRecorderParam
 	return L_STRING_TO_C(RecorderParams::toCpp(params)->getVideoCodec());
 }
 
-void linphone_recorder_params_set_file_format(LinphoneRecorderParams *params, LinphoneRecorderFileFormat format) {
+void linphone_recorder_params_set_file_format(LinphoneRecorderParams *params, LinphoneMediaFileFormat format) {
 	RecorderParams::toCpp(params)->setFileFormat(format);
 }
 
-LinphoneRecorderFileFormat linphone_recorder_params_get_file_format(const LinphoneRecorderParams *params) {
+LinphoneMediaFileFormat linphone_recorder_params_get_file_format(const LinphoneRecorderParams *params) {
 	return RecorderParams::toCpp(params)->getFileFormat();
 }
 

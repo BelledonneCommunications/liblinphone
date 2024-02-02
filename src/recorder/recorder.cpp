@@ -67,9 +67,8 @@ void Recorder::init() {
 
 LinphoneStatus Recorder::open(const std::string &file) {
 	mFilePath = file;
-	return ms_media_recorder_open(mRecorder, file.c_str(), linphone_core_get_device_rotation(getCore()->getCCore()))
-	           ? 0
-	           : -1;
+	ms_media_recorder_set_device_orientation(mRecorder, linphone_core_get_device_rotation(getCore()->getCCore()));
+	return ms_media_recorder_open(mRecorder, file.c_str()) ? 0 : -1;
 }
 
 void Recorder::close() {

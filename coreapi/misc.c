@@ -1023,30 +1023,42 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc,
 	return sas_count;
 }
 
-const char **linphone_core_get_supported_file_formats(LinphoneCore *core) {
+static const char **_linphone_core_get_supported_file_formats(const LinphoneCore *core) {
+	LinphoneCore *mutable_core = (LinphoneCore *)core;
 	static const char *mkv = "mkv";
 	static const char *wav = "wav";
+	static const char *mka = "mka";
+	static const char *smff = "smff";
+	int i = 0;
 	if (core->supported_formats == NULL) {
-		core->supported_formats = reinterpret_cast<const char **>(ms_malloc0(3 * sizeof(char *)));
-		core->supported_formats[0] = wav;
+		mutable_core->supported_formats = reinterpret_cast<const char **>(ms_malloc0(5 * sizeof(char *)));
+		core->supported_formats[i++] = wav;
 		if (ms_factory_lookup_filter_by_id(core->factory, MS_MKV_RECORDER_ID)) {
-			core->supported_formats[1] = mkv;
+			core->supported_formats[i++] = mkv;
+			core->supported_formats[i++] = mka;
+		}
+		if (ms_factory_lookup_filter_by_id(core->factory, MS_SMFF_RECORDER_ID)) {
+			core->supported_formats[i++] = smff;
 		}
 	}
 	return core->supported_formats;
 }
 
+const char **linphone_core_get_supported_file_formats(LinphoneCore *core) {
+	return _linphone_core_get_supported_file_formats(core);
+}
+
 bctbx_list_t *linphone_core_get_supported_file_formats_list(const LinphoneCore *core) {
 	bctbx_list_t *file_formats = NULL;
-	file_formats = bctbx_list_append(file_formats, ms_strdup("wav"));
-	if (ms_factory_lookup_filter_by_id(core->factory, MS_MKV_RECORDER_ID)) {
-		file_formats = bctbx_list_append(file_formats, ms_strdup("mkv"));
+	const char **fmts = _linphone_core_get_supported_file_formats(core);
+	for (; *fmts != nullptr; fmts++) {
+		file_formats = bctbx_list_append(file_formats, bctbx_strdup(*fmts));
 	}
 	return file_formats;
 }
 
 bool_t linphone_core_file_format_supported(LinphoneCore *lc, const char *fmt) {
-	const char **formats = linphone_core_get_supported_file_formats(lc);
+	const char **formats = _linphone_core_get_supported_file_formats(lc);
 	for (; *formats != NULL; ++formats) {
 		if (strcasecmp(*formats, fmt) == 0) return TRUE;
 	}

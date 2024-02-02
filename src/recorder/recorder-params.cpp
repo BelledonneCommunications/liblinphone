@@ -29,7 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 RecorderParams::RecorderParams(shared_ptr<const AudioDevice> device,
                                const string &webcamName,
                                void *windowId,
-                               LinphoneRecorderFileFormat format,
+                               LinphoneMediaFileFormat format,
                                const string &videoCodec)
     : mAudioDevice(device), mWebcamName(webcamName), mWindowId(windowId), mFormat(format), mVideoCodec(videoCodec) {
 }
@@ -58,7 +58,7 @@ void RecorderParams::setVideoCodec(const string &videoCodec) {
 	mVideoCodec = videoCodec;
 }
 
-void RecorderParams::setFileFormat(LinphoneRecorderFileFormat format) {
+void RecorderParams::setFileFormat(LinphoneMediaFileFormat format) {
 	mFormat = format;
 }
 
@@ -78,7 +78,7 @@ const string &RecorderParams::getVideoCodec() const {
 	return mVideoCodec;
 }
 
-LinphoneRecorderFileFormat RecorderParams::getFileFormat() const {
+LinphoneMediaFileFormat RecorderParams::getFileFormat() const {
 	return mFormat;
 }
 

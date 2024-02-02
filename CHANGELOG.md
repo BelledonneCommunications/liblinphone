@@ -9,15 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
 
 ## Unreleased
-### Added
-- Tests for improvement of video calls with flexible Forward Error Correction.
 
 ## [5.4.0] unreleased
 ### Added
 - linphone_participant_device_get_thumbnail_stream_capability() returns the direction of the thumbnail stream of a participant device
 - Added API to enable screen sharing during a conference as well as callback to be notified that a participant device is screen sharing
+- Tests for improvement of video call quality with flexible Forward Error Correction.
+
 
 ### Changed
+- LinphoneRecorderFileFormat enum has been renamed into LinphoneMediaFileFormat.
 - Participant devices now deal separately with the main video stream and the thumbnail stream
   linphone_participant_device_get_ssrc() for the video stream now returns the SSRC of the main stream. The SSRC of the thumbnail stream is now returned by linphone_participant_device_get_thumbnail_ssrc() 
   linphone_participant_device_get_stream_availability() for the video stream now returns the overall video availability of a participant device. Function linphone_participant_device_get_thumbnail_stream_availability() now return whether a participant is sending its video stream or not

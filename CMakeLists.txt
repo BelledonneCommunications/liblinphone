@@ -110,7 +110,7 @@ if(ENABLE_VCARD)
 	add_definitions(-DVCARD_ENABLED)
 endif()
 
-find_package(BelleSIP 5.3.0 REQUIRED)
+find_package(BelleSIP 5.3.0 REQUIRED OPTIONAL_COMPONENTS tester)
 find_package(Mediastreamer2 5.3.0 REQUIRED)
 find_package(Ortp 5.3.0 REQUIRED)
 find_package(BCToolbox 5.3.0 REQUIRED OPTIONAL_COMPONENTS tester)

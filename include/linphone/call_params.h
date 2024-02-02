@@ -415,7 +415,8 @@ LINPHONE_PUBLIC void linphone_call_params_set_privacy(LinphoneCallParams *call_p
  * linphone_call_start_recording() and linphone_call_pause_recording().
  * @param call_params #LinphoneCallParams object @notnil
  * @param path A string containing the path and filename of the file where audio/video streams are to be written.
- * The filename must have either .mkv or .wav extention. The video stream will be written only if a MKV file is given.
+ * The filename must have an extension that maps to any of the supported file formats listed in #LinphoneMediaFileFormat
+ *enum.
  *@maybenil
  **/
 LINPHONE_PUBLIC void linphone_call_params_set_record_file(LinphoneCallParams *call_params, const char *path);
