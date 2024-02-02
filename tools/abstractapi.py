@@ -725,11 +725,15 @@ class CParser:
 			for class_ in self.cProject.classes:
 				class_cname = class_.name
 				if enum_cname.startswith(class_cname):
-					print('Considering ' + enum_cname + ' as a child of ' + class_cname)
-					self.enum_relocations[enum_cname] = class_cname
-					self._pending_enums.append(enum)
-					found = True
-					break
+					if enum_cname[len(class_cname)].isupper():
+						print('Considering ' + enum_cname + ' as a child of ' + class_cname)
+						self.enum_relocations[enum_cname] = class_cname
+						self._pending_enums.append(enum)
+						found = True
+						break
+					else:
+						# example : LinphoneConfig & LinphoneConfiguringState
+						print('Warning! ' + enum_cname + ' seems like it could be a child of ' + class_cname + ' but it is not!')
 			
 			if enum_cname in self.enum_relocations.keys() and not found:
 				self._pending_enums.append(enum)
