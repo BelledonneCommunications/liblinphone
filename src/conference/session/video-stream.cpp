@@ -833,7 +833,7 @@ void MS2VideoControl::sSnapshotTakenCb(void *userdata, MSFilter *, unsigned int 
 int MS2VideoControl::takePreviewSnapshot(const string &file) {
 	VideoStream *vs = getVideoStream();
 	if (vs && vs->local_jpegwriter) {
-		ms_filter_clear_notify_callback(vs->jpegwriter);
+		ms_filter_clear_notify_callback(vs->local_jpegwriter);
 		const char *filepath = file.empty() ? nullptr : file.c_str();
 		ms_filter_add_notify_callback(vs->local_jpegwriter, sSnapshotTakenCb, this, FALSE);
 		return ms_filter_call_method(vs->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
