@@ -380,8 +380,6 @@ void FriendList::synchronizeFriendsFromServer() {
 			std::string uri = Address::toCpp(linphone_proxy_config_get_identity_address(cfg))->asStringUriOnly();
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", uri.c_str()));
 		}
-		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
-		                                  LinphoneFriendListSyncStarted, nullptr);
 		belle_http_provider_send_request(lc->http_provider, request, lc->base_contacts_list_http_listener);
 	} else if (mType == LinphoneFriendListTypeCardDAV) {
 		if (mUri.empty()) {
