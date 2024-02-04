@@ -224,6 +224,7 @@ private:
 };
 
 PlatformHelpers *createAndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
+PlatformHelpers *createJavaPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core);
 PlatformHelpers *createIosPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 PlatformHelpers *createMacPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 

@@ -25,7 +25,9 @@
 #endif // _MSC_VER
 
 #include <jni.h>
+#ifdef __ANDROID__
 #include <cpu-features.h>
+#endif /* __ANDROID__ */
 
 #include "bctoolbox/logging.h"
 #include "belle-sip/object.h"
@@ -52,9 +54,7 @@ static JavaVM *jvm = nullptr;
 static const char* LogDomain = "Linphone";
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *ajvm, void *reserved) {
-#ifdef __ANDROID__
 	ms_set_jvm(ajvm);
-#endif /* __ANDROID__ */
 	jvm = ajvm;
 	return JNI_VERSION_1_2;
 }
@@ -79,19 +79,11 @@ static jlong GetObjectNativePtr(JNIEnv *env, jobject object) {
 	return nativePtr;
 }
 
-static void LogJavaObjectForNativePtr(JNIEnv *env, jobject obj, jlong cptr) {
-	jclass javaObject = env->FindClass("java/lang/Object");
-	jmethodID javaObjectToString = env->GetMethodID(javaObject, "toString", "()Ljava/lang/String;");
-	jstring javaObjectName = (jstring)env->CallObjectMethod(obj, javaObjectToString);
-	const char *name = GetStringUTFChars(env, javaObjectName);
-	bctbx_debug("Java object name is %s for native pointer %p", name, (void *)cptr);
-	ReleaseStringUTFChars(env, javaObjectName, name);
-}
-
 extern "C" {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef __ANDROID__
 void linphone_android_log_handler(int prio, char *str) {
 	char *current;
 	char *next;
@@ -129,11 +121,14 @@ static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel l
 	linphone_android_log_handler(prio, str);
 	bctbx_free(str);
 }
+#endif /* __ANDROID__ */
 
 JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_setDebugMode(JNIEnv* env, jobject thiz, jboolean isDebug, jstring jdebugTag) {
 	if (isDebug) {
 		LogDomain = GetStringUTFChars(env, jdebugTag);
+#ifdef __ANDROID__
 		linphone_core_enable_logs_with_cb(linphone_android_ortp_log_handler);
+#endif /* __ANDROID__ */
 	} else {
 		linphone_core_disable_logs();
 	}
@@ -145,7 +140,9 @@ JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_setLoggerDomain(JNIEnv
 
 JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_enableLogcatLogs(JNIEnv* env, jobject thiz, jboolean enableLogcat) {
 	if (enableLogcat) {
+#ifdef __ANDROID__
 		linphone_core_set_log_handler(linphone_android_ortp_log_handler);
+#endif /* __ANDROID__ */
 	} else {
 		linphone_core_set_log_handler(NULL);
 	}
@@ -557,7 +554,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEn
 		belle_sip_object_data_remove((belle_sip_object_t *)cbsToRemove, belle_sip_java_listener_user_data_key); // Global ref will be deleted by belle_sip_java_listener_data_removed_callback
 		{{cPrefix}}_remove_callbacks(cptr, cbsToRemove);
 	} else {
-		bctbx_warning("Failed to find the {{className}}'s [%p] native listener matching jobject [%p]", ptr, jlistener);
+		bctbx_warning("Failed to find the {{className}}'s [%p] native listener matching jobject [%p]", (void *)ptr, (void *)(jlistener));
 	}
 }
 {{/isMultiListener}}
@@ -631,7 +628,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	jobjectArray jni_list_result = env->NewObjectArray((int)count, ljb->{{objectCPrefix}}_class, nullptr);{{/isRealObjectArray}}
 	{{#isStringObjectArray}}jobjectArray jni_list_result = env->NewObjectArray((int)count, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
 	{{#isEnumObjectArray}}jintArray jni_list_result = env->NewIntArray((int)count);
-	int carray[(int)count];{{/isEnumObjectArray}}
+	int *carray = (int *)malloc(count * sizeof(int));{{/isEnumObjectArray}}
 	int i = 0;
 	while (list_it != nullptr) {
 		{{#isRealObjectArray}}
@@ -654,7 +651,8 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 		i += 1;
 	}
 	{{#isEnumObjectArray}}
-	env->SetIntArrayRegion(jni_list_result, 0, (int)count, carray);
+	env->SetIntArrayRegion(jni_list_result, 0, (int)count, (jint *)carray);
+	free(carray);
 	{{/isEnumObjectArray}}
 	{{#isNotConst}}bctbx_list_free(list);{{/isNotConst}}
 	{{/hasListReturn}}{{#hasByteArrayReturn}}

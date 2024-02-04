@@ -131,8 +131,9 @@ class JNILangTranslator(AbsApi.Translator):
 
 
 class JavaTranslator:
-    def __init__(self, packageName, exceptions):
+    def __init__(self, packageName, exceptions, platform):
         self.exceptions = exceptions
+        self.platform = platform
         package_dirs = packageName.split('.')
         self.jni_package = ''
         self.jni_path = ''
@@ -291,7 +292,10 @@ class JavaTranslator:
             methodDict['enumName'] = methodDict['return'][:-2]
         methodDict['classCast'] = type(_method.returnType) is AbsApi.ClassType
 
-        methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '@NonNull ' if arg.notnil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
+        if self.platform == "android":
+            methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '@NonNull ' if arg.notnil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
+        else:
+            methodDict['params'] = ', '.join(['{0}'.format(arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
         methodDict['native_params'] = ', '.join(['long nativePtr'] + [arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['static_native_params'] = ', '.join([arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['native_params_impl'] = ', '.join(
@@ -425,7 +429,7 @@ class JavaTranslator:
                     methodDict['strings'].append({'string': argname})
                     methodDict['params_impl'] += 'c_' + argname
                 else:
-                    methodDict['params_impl'] += '(' + arg.type.translate(self.clangTranslator) + ')' + argname
+                    methodDict['params_impl'] += '(' + arg.type.translate(self.clangTranslator).replace("const ", "") + ')' + argname
             else:
                 methodDict['params_impl'] += argname
 
@@ -623,7 +627,7 @@ class JavaTranslator:
 ##########################################################################
 
 class JavaEnum:
-    def __init__(self, package, _enum, translator):
+    def __init__(self, package, _enum, translator, platform):
         javaNameTranslator = metaname.Translator.get('Java')
         self._class = translator.translate_enum(_enum)
         self.packageName = package
@@ -634,6 +638,7 @@ class JavaEnum:
         self.briefDoc = self._class['briefDoc']
         self.detailedDoc = self._class['detailedDoc']
         self.jniName = _enum.name.translate(JNINameTranslator.get())
+        self.isAndroid = (platform == "android")
 
 class JniInterface:
     def __init__(self, javaClass, apiClass):
@@ -650,7 +655,7 @@ class JniInterface:
             })
 
 class JavaInterface:
-    def __init__(self, package, _interface, translator):
+    def __init__(self, package, _interface, translator, platform):
         javaNameTranslator = metaname.Translator.get('Java')
         self._class = translator.translate_interface(_interface)
         self.packageName = package
@@ -662,6 +667,7 @@ class JavaInterface:
         self.briefDoc = self._class['briefDoc']
         self.detailedDoc = self._class['detailedDoc']
         self.jniMethods = self._class['jniMethods']
+        self.isAndroid = (platform == "android")
 
 class JavaInterfaceStub:
     def __init__(self, _interface):
@@ -670,10 +676,12 @@ class JavaInterfaceStub:
         self.classNameStub =  self.className + "Stub"
         self.filename = self.className + "Stub.java"
         self.methods = _interface.methods
+        self.isAndroid = _interface.isAndroid
 
 class JavaClass:
-    def __init__(self, package, _class, translator):
+    def __init__(self, package, _class, translator, platform):
         self._class = translator.translate_class(_class)
+        self.isAndroid = (platform == "android")
         self.isLinphoneFactory = self._class['isLinphoneFactory']
         self.isLinphoneCore = self._class['isLinphoneCore']
         self.isNotLinphoneFactory = not self.isLinphoneFactory
@@ -694,7 +702,7 @@ class JavaClass:
         self.toStringNotFound = not self._class['toStringFound']
         self.enums = []
         for enum in _class.enums:
-            self.enums.append(JavaEnum(package, enum, translator))
+            self.enums.append(JavaEnum(package, enum, translator, platform))
         self.jniInterface = None
         if _class.listenerInterface is not None:
             self.jniInterface = JniInterface(self, _class)
@@ -815,12 +823,13 @@ class Overview:
 ##########################################################################
 
 class GenWrapper:
-    def __init__(self, srcdir, javadir, javadocdir, package, xmldir, exceptions, upload_dir, version):
+    def __init__(self, srcdir, javadir, javadocdir, package, xmldir, exceptions, upload_dir, version, platform):
         self.srcdir = srcdir
         self.javadir = javadir
         self.javadocdir = javadocdir
         self.package = package
         self.exceptions = exceptions
+        self.platform = platform
 
         project = CApi.Project()
         project.initFromDir(xmldir)
@@ -897,7 +906,7 @@ class GenWrapper:
             'linphone_account_is_avpf_enabled',
         ]
         self.parser.parse_all()
-        self.translator = JavaTranslator(package, exceptions)
+        self.translator = JavaTranslator(package, exceptions, platform)
         self.renderer = pystache.Renderer()
         self.jni = Jni(package)
         self.proguard = Proguard(package)
@@ -944,7 +953,7 @@ class GenWrapper:
     def render_java_enum(self, _class):
         if _class is not None:
             try:
-                javaenum = JavaEnum(self.package, _class, self.translator)
+                javaenum = JavaEnum(self.package, _class, self.translator, self.platform)
                 self.enums[javaenum.className] = javaenum
                 self.jni.add_enum(javaenum)
             except AbsApi.Error as e:
@@ -953,7 +962,7 @@ class GenWrapper:
     def render_java_interface(self, _class):
         if _class is not None:
             try:
-                javainterface = JavaInterface(self.package, _class, self.translator)
+                javainterface = JavaInterface(self.package, _class, self.translator, self.platform)
                 self.interfaces[javainterface.className] = javainterface
                 javaInterfaceStub = JavaInterfaceStub(javainterface)
                 self.interfaces[javaInterfaceStub.classNameStub] = javaInterfaceStub
@@ -964,7 +973,7 @@ class GenWrapper:
     def render_java_class(self, _class):
         if _class is not None:
             try:
-                javaclass = JavaClass(self.package, _class, self.translator)
+                javaclass = JavaClass(self.package, _class, self.translator, self.platform)
                 self.classes[javaclass.className] = javaclass
                 for enum in javaclass.enums:
                     self.jni.add_enum(enum)
@@ -983,6 +992,7 @@ if __name__ == '__main__':
     argparser.add_argument('-v --version', type=str, help='the version of the SDK', dest='version', default='4.5.0')
     argparser.add_argument('-d --directory', type=str, help='the directory where doc will be upload', dest='directory', default='snapshots')
     argparser.add_argument('-e --exceptions', type=bool, help='enable the wrapping of LinphoneStatus into CoreException', dest='exceptions', default=False)
+    argparser.add_argument('-P --platform', type=str, help='the platform targeted by the wrapper, either "desktop" or "android"', dest='platform', default='android')
     argparser.add_argument('-V --verbose', action='store_true', dest='verbose_mode', default=False, help='Verbose mode.')
     args = argparser.parse_args()
 
@@ -1019,5 +1029,5 @@ if __name__ == '__main__':
             sys.exit(1)
 
     genwrapper = GenWrapper(srcdir, javadir, javadocdir, args.package,
-                            args.xmldir, args.exceptions, args.directory, args.version)
+                            args.xmldir, args.exceptions, args.directory, args.version, args.platform)
     genwrapper.render_all()

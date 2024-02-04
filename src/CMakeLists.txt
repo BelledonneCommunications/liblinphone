@@ -698,6 +698,9 @@ elseif (UNIX)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-linux.cpp)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-linux.h)
 endif ()
+if(ENABLE_JAVA_WRAPPER)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/platform-helpers/java-platform-helpers.cpp)
+endif()
 
 if(Lime_FOUND)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-encryption-engine.h)
@@ -791,6 +794,11 @@ if(APPLE)
 	target_link_libraries(liblinphone PUBLIC ${APPLE_LIBS})
 endif()
 
+if(JNI_FOUND)
+	target_include_directories(liblinphone PRIVATE ${JNI_INCLUDE_DIRS})
+	target_link_libraries(liblinphone PRIVATE ${JNI_LIBRARIES})
+endif()
+
 if(Iconv_FOUND AND APPLE)
 	# Prevent conflict between the system iconv.h header and the one from macports.
 	target_compile_options(liblinphone PRIVATE "-include" "${Iconv_INCLUDE_DIRS}/iconv.h")
@@ -815,10 +823,11 @@ if(BUILD_SHARED_LIBS)
 			PUBLIC_HEADER "${one_header_file}"
 		)
 	endif()
-	if(WIN32)
-		# Export Xerces and Soci symbols.
-		if(ENABLE_DB_STORAGE)
-			target_compile_definitions(liblinphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
+	if(WIN32 AND ENABLE_ADVANCED_IM AND TARGET xerces-c)
+		get_target_property(XERCES_TYPE xerces-c TYPE)
+		if(XERCES_TYPE STREQUAL "SHARED_LIBRARY")
+			# Export Xerces symbols.
+			target_compile_definitions(liblinphone PRIVATE "XERCES_EXPORTS")
 		endif()
 	elseif(ANDROID)
 		target_link_libraries(liblinphone PUBLIC log)

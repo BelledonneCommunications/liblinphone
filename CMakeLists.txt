@@ -152,12 +152,15 @@ endif()
 
 if(ENABLE_DB_STORAGE)
 	# APPLE platform does not use dlopen for soci backend
-	if(APPLE OR ANDROID)
+	if(APPLE OR ANDROID OR ENABLE_JAVA_WRAPPER)
 		find_package(Soci REQUIRED COMPONENTS sqlite3)
 	else()
 		find_package(Soci REQUIRED)
 	endif()
 	set(HAVE_DB_STORAGE 1)
+	if(Soci_STATIC)
+		set(HAVE_STATIC_SOCI 1)
+	endif()
 endif()
 
 bc_find_package(ZLIB ZLIB::ZLIB zlib)
@@ -186,6 +189,10 @@ if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_
 	if(ENABLE_DOC)
 		#check_python_module(swift_domain)
 	endif()
+endif()
+
+if(ENABLE_JAVA_WRAPPER AND NOT ANDROID)
+	find_package(JNI REQUIRED)
 endif()
 
 if(ENABLE_LDAP)

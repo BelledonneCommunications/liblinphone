@@ -67,3 +67,4 @@
 #cmakedefine HAVE_GOCLEAR
 #cmakedefine HAVE_DLOPEN 1
 #cmakedefine ENABLE_SANITIZER
+#cmakedefine HAVE_STATIC_SOCI

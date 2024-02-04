@@ -73,6 +73,7 @@ set(LINPHONE_SOURCE_FILES_CXX
 if(ENABLE_JAVA_WRAPPER)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX ${LINPHONE_JNI_SOURCES})
 	set_source_files_properties(${LINPHONE_JNI_SOURCES} PROPERTIES GENERATED TRUE)
+	add_definitions(-DJAVA_WRAPPER)
 endif()
 
 set(LINPHONE_SOURCE_FILES_OBJC)
@@ -145,6 +146,11 @@ target_link_libraries(liblinphone-coreapi PRIVATE ${JsonCPP_TARGET})
 add_dependencies(liblinphone-coreapi liblinphone-git-version)
 if(ENABLE_JAVA_WRAPPER)
 	add_dependencies(liblinphone-coreapi linphonej)
+endif()
+
+if(JNI_FOUND)
+	target_include_directories(liblinphone-coreapi PRIVATE ${JNI_INCLUDE_DIRS})
+	target_link_libraries(liblinphone-coreapi PRIVATE ${JNI_LIBRARIES})
 endif()
 
 if(BUILD_SHARED_LIBS)

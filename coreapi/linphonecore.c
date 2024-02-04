@@ -60,6 +60,9 @@
 #include "mediastreamer2/msvolume.h"
 #include <mediastreamer2/dtls_srtp.h>
 #include <mediastreamer2/zrtp.h>
+#ifdef JAVA_WRAPPER
+#include <mediastreamer2/msjava.h>
+#endif
 
 #include "account/account.h"
 #include "call/call.h"
@@ -3351,7 +3354,10 @@ static void linphone_core_init(LinphoneCore *lc,
 	if (lc->platform_helper == NULL) {
 		lc->platform_helper = LinphonePrivate::createMacPlatformHelpers(lc->cppPtr, lc->system_context);
 	}
-
+#elif defined(JAVA_WRAPPER)
+	if (lc->platform_helper == NULL) {
+		lc->platform_helper = LinphonePrivate::createJavaPlatformHelpers(lc->cppPtr);
+	}
 #endif
 	if (lc->platform_helper == NULL) lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
 

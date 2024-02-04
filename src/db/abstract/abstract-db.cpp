@@ -27,9 +27,9 @@
 #include "logger/logger.h"
 
 #ifdef HAVE_DB_STORAGE
-#if (__APPLE__ || defined(__ANDROID__))
+#ifdef HAVE_STATIC_SOCI
 #include <sqlite3.h>
-#endif // if (__APPLE__ || defined(__ANDROID__))
+#endif // HAVE_STATIC_SOCI
 #endif // ifdef HAVE_DB_STORAGE
 
 // =============================================================================
@@ -38,8 +38,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-#if (__APPLE__ || defined(__ANDROID__))
-// Force static sqlite3 linking for IOS and Android.
+#ifdef HAVE_STATIC_SOCI
+// Force static sqlite3 linking when soci is built statically (mainly for IOS and Android).
 extern "C" void register_factory_sqlite3();
 
 #ifdef HAVE_DB_STORAGE
@@ -47,7 +47,7 @@ static void sqlite3Log(void *, int iErrCode, const char *zMsg) {
 	lInfo() << "[sqlite3][" << iErrCode << "]" << zMsg;
 }
 #endif
-#endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
+#endif // HAVE_STATIC_SOCI
 
 void AbstractDbPrivate::safeInit() {
 #ifdef HAVE_DB_STORAGE
@@ -69,7 +69,7 @@ AbstractDb::AbstractDb(AbstractDbPrivate &p) : Object(p) {
 
 void AbstractDb::registerBackend(Backend backend) {
 #ifdef HAVE_DB_STORAGE
-#if (__APPLE__ || defined(__ANDROID__))
+#ifdef HAVE_STATIC_SOCI
 	if (backend == Sqlite3) {
 		static bool registered = false;
 		if (!registered) {
@@ -80,7 +80,7 @@ void AbstractDb::registerBackend(Backend backend) {
 	} else {
 		lWarning() << "AbstractDb::registerBackend() not implemented.";
 	}
-#endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
+#endif // HAVE_STATIC_SOCI
 #endif
 }
 

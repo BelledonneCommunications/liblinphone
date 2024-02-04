@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package {{packageName}};
 
+{{#isAndroid}}
 import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
+{{/isAndroid}}
 {{#imports}}
 import {{import}}
 {{/imports}}

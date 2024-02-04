@@ -19,21 +19,32 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package {{packageName}};
 
+{{#isAndroid}}
 import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
+{{/isAndroid}}
 {{#imports}}
 import {{import}}
 {{/imports}}
 {{#isLinphoneFactory}}
+{{#isAndroid}}
 import android.content.Context;
 import android.os.Build;
+{{/isAndroid}}
+{{#isLinphoneFactory}}
+{{^isAndroid}}
+import org.linphone.core.tools.java.LibraryLoader;
+{{/isAndroid}}
+{{/isLinphoneFactory}}
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+{{#isAndroid}}
 import org.linphone.mediastream.Version;
+{{/isAndroid}}
 {{/isLinphoneFactory}}
 import java.lang.StackTraceElement;
 import org.linphone.mediastream.Log;
@@ -156,8 +167,8 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
     {{/detailedDoc}}
     */
     {{#deprecated}}@Deprecated
-    {{/deprecated}}{{#return_maybenil}}@Nullable
-    {{/return_maybenil}}{{#return_notnil}}@NonNull
+    {{/deprecated}}{{#return_maybenil}}{{#isAndroid}}@Nullable{{/isAndroid}}
+    {{/return_maybenil}}{{#return_notnil}}{{#isAndroid}}@NonNull{{/isAndroid}}
     {{/return_notnil}}{{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public {{return}} {{name}}({{params}}){{#exception}} throws CoreException{{/exception}};
 
 {{/methods}}
@@ -211,6 +222,7 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     }
 
 {{#isLinphoneFactory}}
+{{#isAndroid}}
     private static boolean loadOptionalLibrary(String s) {
         try {
             System.loadLibrary(s);
@@ -220,8 +232,21 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
         }
         return false;
     }
+{{/isAndroid}}
 
     static {
+{{^isAndroid}}
+        try {
+            LibraryLoader.loadOptionalLibrary("vpx");
+            LibraryLoader.loadLibrary("bctoolbox");
+            LibraryLoader.loadLibrary("ortp");
+            LibraryLoader.loadLibrary("mediastreamer2");
+            LibraryLoader.loadLibrary("liblinphone");
+        } catch (IOException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+{{/isAndroid}}
+{{#isAndroid}}
         System.loadLibrary("c++_shared");
         loadOptionalLibrary("ffmpeg-linphone");
         System.loadLibrary("bctoolbox");
@@ -229,6 +254,7 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
         System.loadLibrary("mediastreamer2");
         System.loadLibrary("linphone");
         Version.dumpCapabilities();
+{{/isAndroid}}
     }
 
     private native Core getCore(long nativePtr, long ptr);
@@ -264,7 +290,7 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 
 {{#methods}}
     private native {{return_native}} {{name_native}}({{native_params}});
-    @Override{{#return_maybenil}} @Nullable{{/return_maybenil}}{{#return_notnil}} @NonNull{{/return_notnil}}
+    @Override{{#return_maybenil}} {{#isAndroid}}@Nullable{{/isAndroid}}{{/return_maybenil}}{{#return_notnil}} {{#isAndroid}}@NonNull{{/isAndroid}}{{/return_notnil}}
     synchronized public {{return}} {{name}}({{params}}) {{#exception}}throws CoreException{{/exception}} {
         {{#hasCoreAccessor}}{{#isNotGetCore}}synchronized(core) { {{/isNotGetCore}}{{/hasCoreAccessor}}
         {{#cantBeCalledIfObjectIsConst}}if (_isConst) {

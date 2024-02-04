@@ -60,6 +60,7 @@ if(TARGET soci_core OR TARGET soci_core_static)
         set(Soci_TARGET soci_core)
     else()
         set(Soci_TARGET soci_core_static)
+        set(Soci_STATIC ON)
     endif()
 
     foreach(_Soci_PLUGIN IN LISTS _Soci_ALL_PLUGINS)
