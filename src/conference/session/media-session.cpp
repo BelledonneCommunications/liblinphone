@@ -1746,8 +1746,14 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 		std::shared_ptr<MediaConference::Conference> conference =
 		    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 		if ((type == SalAudio) && isInConference()) {
-			cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
-			cfg.client_to_mixer_extension_id = RTP_EXTENSION_CLIENT_TO_MIXER_AUDIO_LEVEL;
+			bool rtpVolumesAllowed =
+			    !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "use_volumes", 1);
+			if (rtpVolumesAllowed) {
+				cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
+				cfg.client_to_mixer_extension_id = RTP_EXTENSION_CLIENT_TO_MIXER_AUDIO_LEVEL;
+			} else {
+				lInfo() << "RTP client-to-mixer and mixer-to-client volumes disabled by configuration.";
+			}
 		} else if ((type == SalVideo) && conference) {
 			validateVideoStreamDirection(cfg);
 		}
