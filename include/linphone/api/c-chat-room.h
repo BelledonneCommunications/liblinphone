@@ -242,6 +242,14 @@ LINPHONE_PUBLIC int linphone_chat_room_get_history_size(LinphoneChatRoom *chat_r
 LINPHONE_PUBLIC bool_t linphone_chat_room_is_empty(LinphoneChatRoom *chat_room);
 
 /**
+ * Gets all contents for which content-type starts with either video/ or image/.
+ * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which matching contents should be
+ * retrieved. @notnil
+ * @return A list of contents considered as "media". \bctbx_list{LinphoneContent} @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_media_contents(LinphoneChatRoom *chat_room);
+
+/**
  * Gets nb_message most recent messages from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be
  * retrieved @notnil

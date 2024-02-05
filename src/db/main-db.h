@@ -132,6 +132,8 @@ public:
 	bool isChatRoomEmpty(const ConferenceId &conferenceId) const;
 	std::shared_ptr<ChatMessage> getLastChatMessage(const ConferenceId &conferenceId) const;
 
+	std::list<std::shared_ptr<Content>> getMediaContents(const ConferenceId &conferenceId) const;
+
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages(const ConferenceId &conferenceId,
 	                                                         const std::string &imdnMessageId) const;
 

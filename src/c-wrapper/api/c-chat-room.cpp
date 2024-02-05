@@ -307,6 +307,12 @@ void linphone_chat_room_delete_history(LinphoneChatRoom *cr) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->deleteHistory();
 }
 
+bctbx_list_t *linphone_chat_room_get_media_contents(LinphoneChatRoom *cr) {
+	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
+	list<shared_ptr<LinphonePrivate::Content>> contents = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMediaContents();
+	return LinphonePrivate::Content::getCListFromCppList(contents, true);
+}
+
 bctbx_list_t *linphone_chat_room_get_history_range(LinphoneChatRoom *cr, int startm, int endm) {
 	LinphonePrivate::ChatRoomLogContextualizer logContextualizer(cr);
 	list<shared_ptr<LinphonePrivate::ChatMessage>> chatMessages;

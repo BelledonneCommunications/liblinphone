@@ -113,6 +113,11 @@ bool ProxyChatRoom::isReadOnly() const {
 
 // -----------------------------------------------------------------------------
 
+list<shared_ptr<Content>> ProxyChatRoom::getMediaContents() const {
+	L_D();
+	return d->chatRoom->getMediaContents();
+}
+
 list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistory(int nLast) const {
 	L_D();
 	return d->chatRoom->getMessageHistory(nLast);

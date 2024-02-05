@@ -110,6 +110,7 @@ public:
 	virtual bool hasBeenLeft() const = 0;
 	virtual bool isReadOnly() const = 0;
 
+	virtual std::list<std::shared_ptr<Content>> getMediaContents() const = 0;
 	virtual std::list<std::shared_ptr<EventLog>> getMessageHistory(int nLast) const = 0;
 	virtual std::list<std::shared_ptr<EventLog>> getMessageHistoryRange(int begin, int end) const = 0;
 	virtual std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages() const = 0;

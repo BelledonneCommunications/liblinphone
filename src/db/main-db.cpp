@@ -4642,6 +4642,40 @@ void MainDb::setChatMessageParticipantState(const shared_ptr<EventLog> &eventLog
 #endif
 }
 
+list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenceId) const {
+	list<shared_ptr<Content>> result = list<shared_ptr<Content>>();
+#ifdef HAVE_DB_STORAGE
+	static const string query =
+	    "SELECT name, path, size from chat_message_file_content WHERE chat_message_content_id IN ( "
+	    " SELECT id FROM chat_message_content WHERE content_type_id IN ( "
+	    " SELECT id from content_type WHERE value LIKE \"video/%\" OR value LIKE \"image/%\" ) "
+	    " AND event_id IN ( "
+	    " SELECT event_id from conference_event WHERE chat_room_id = :chatRoomId "
+	    " ) "
+	    " )";
+	return L_DB_TRANSACTION {
+		L_D();
+		const long long &chatRoomId = d->selectChatRoomId(conferenceId);
+		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(chatRoomId));
+		for (const auto &row : rows) {
+			string name = row.get<string>(0);
+			string path = row.get<string>(1);
+			int size = row.get<int>(2);
+
+			auto fileContent = FileContent::create<FileContent>();
+			fileContent->setFileName(name);
+			fileContent->setFileSize(size_t(size));
+			fileContent->setFilePath(path);
+
+			result.push_back(fileContent);
+		}
+		return result;
+	};
+#else
+	return result;
+#endif
+}
+
 bool MainDb::isChatRoomEmpty(const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	static const string query = "SELECT last_message_id FROM chat_room WHERE id = :1";
