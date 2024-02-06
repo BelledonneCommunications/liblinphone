@@ -640,19 +640,24 @@ public class CoreManager {
         try {
             PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SERVICES);
             ServiceInfo[] services = packageInfo.services;
-            for (ServiceInfo service : services) {
-                String serviceName = service.name;
-                try {
-                    Class serviceClass = Class.forName(serviceName);
-                    if (CoreService.class.isAssignableFrom(serviceClass)) {
-                        Log.i("[Core Manager] Found a service that herits from org.linphone.core.tools.service.CoreService: ", serviceName);
-                        return serviceClass;
+            if (services != null) {
+                for (ServiceInfo service : services) {
+                    String serviceName = service.name;
+                    try {
+                        Class serviceClass = Class.forName(serviceName);
+                        if (CoreService.class.isAssignableFrom(serviceClass)) {
+                            Log.i("[Core Manager] Found a service that herits from org.linphone.core.tools.service.CoreService: ", serviceName);
+                            return serviceClass;
+                        }
+                    } catch (Exception exception) {
+                        Log.e("[Core Manager] Exception trying to get Class from name [", serviceName, "]: ", exception);
+                    } catch (Error error) {
+                        Log.e("[Core Manager] Error trying to get Class from name [", serviceName, "]: ", error);
                     }
-                } catch (Exception exception) {
-                    Log.e("[Core Manager] Exception trying to get Class from name [", serviceName, "]: ", exception);
-                } catch (Error error) {
-                    Log.e("[Core Manager] Error trying to get Class from name [", serviceName, "]: ", error);
                 }
+            } else {
+                Log.w("[Core Manager] No Service found in package info, continuing without it...");
+                return null;
             }
         } catch (Exception e) {
             Log.e("[Core Manager] Exception thrown while trying to find available Services: ", e);

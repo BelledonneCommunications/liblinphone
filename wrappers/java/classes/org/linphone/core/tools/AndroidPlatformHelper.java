@@ -916,7 +916,13 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized void startPushService() {
-        boolean connected = mNetworkManager.isCurrentlyConnected(mContext);
+        boolean connected = false;
+        if (mNetworkManager != null) {
+            connected = mNetworkManager.isCurrentlyConnected(mContext);
+        } else {
+            Log.w("[Platform Helper] Network Manager isn't available yet, assuming network is un-reachable just in case");
+        }
+
         if (!connected) {
             Log.i("[Platform Helper] Push has been received but network seems unreachable, starting foreground push service");
             Intent i = new Intent(mContext, org.linphone.core.tools.service.PushService.class);
