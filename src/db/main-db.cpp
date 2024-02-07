@@ -4646,13 +4646,16 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 	list<shared_ptr<Content>> result = list<shared_ptr<Content>>();
 #ifdef HAVE_DB_STORAGE
 	static const string query =
-	    "SELECT name, path, size from chat_message_file_content WHERE chat_message_content_id IN ( "
-	    " SELECT id FROM chat_message_content WHERE content_type_id IN ( "
-	    " SELECT id from content_type WHERE value LIKE \"video/%\" OR value LIKE \"image/%\" ) "
-	    " AND event_id IN ( "
-	    " SELECT event_id from conference_event WHERE chat_room_id = :chatRoomId "
-	    " ) "
-	    " )";
+	    "SELECT name, path, size "
+	    " FROM chat_message_file_content "
+	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
+	    " JOIN conference_event ON conference_event.event_id = chat_message_content.event_id AND "
+	    "conference_event.chat_room_id = :chatRoomId "
+	    " WHERE chat_message_content.content_type_id IN ( "
+	    " SELECT id "
+	    " FROM content_type "
+	    " WHERE value LIKE 'video/%' OR value LIKE 'image/%' )"
+	    " ORDER BY chat_message_content.event_id ";
 	return L_DB_TRANSACTION {
 		L_D();
 		const long long &chatRoomId = d->selectChatRoomId(conferenceId);
