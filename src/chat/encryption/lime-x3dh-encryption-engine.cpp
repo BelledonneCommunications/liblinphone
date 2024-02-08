@@ -247,13 +247,17 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress()->asStringUriOnly();
 	auto peerAddress = chatRoom->getPeerAddress()->getUriWithoutGruu();
+	auto conferenceAddress = chatRoom->getConferenceAddress();
+	auto conferenceAddressStr = conferenceAddress ? conferenceAddress->asString() : std::string("<unknown>");
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.asStringUriOnly());
 
 	// Check if chatroom is encrypted or not
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
-		lInfo() << "[LIME] this chatroom is encrypted, proceed to encrypt outgoing message";
+		lInfo() << "[LIME] chatroom " << chatRoom << " (address " << conferenceAddressStr
+		        << ") is encrypted, proceed to encrypt outgoing message";
 	} else {
-		lInfo() << "[LIME] this chatroom is not encrypted, no need to encrypt outgoing message";
+		lInfo() << "[LIME] chatroom " << chatRoom << " (address " << conferenceAddressStr
+		        << ") is not encrypted, no need to encrypt outgoing message";
 		return ChatMessageModifier::Result::Skipped;
 	}
 
@@ -296,7 +300,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 
 	// Check if there is at least one recipient
 	if (recipients->empty()) {
-		lError() << "[LIME] encrypting message with no recipient";
+		lError() << "[LIME] encrypting message on chatroom " << chatRoom << " (address " << conferenceAddressStr
+		         << ") with no recipient";
 		errorCode = 488;
 		return ChatMessageModifier::Result::Error;
 	}

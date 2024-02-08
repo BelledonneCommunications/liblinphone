@@ -471,21 +471,17 @@ size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, Linphon
 			bool_t is_me = is_in_conference
 			                   ? linphone_address_weak_equal(device_address, linphone_call_get_remote_address(call))
 			                   : linphone_conference_is_me(conference, device_address);
+			LinphoneConferenceLayout call_video_layout = linphone_call_params_get_conference_video_layout(call_params);
 			bool_t dir_has_send_component =
 			    ((dir == LinphoneMediaDirectionSendRecv) || (dir == LinphoneMediaDirectionSendOnly));
-			LinphoneConferenceLayout call_video_layout = linphone_call_params_get_conference_video_layout(call_params);
-			LinphoneConferenceSecurityLevel conference_security_level =
-			    linphone_conference_params_get_security_level(linphone_conference_get_current_params(conference));
 			if (dir_has_send_component) {
-				if (is_me || ((call_video_layout == LinphoneConferenceLayoutActiveSpeaker) &&
-				              (conference_security_level == LinphoneConferenceSecurityLevelEndToEnd))) {
+				if (is_me) {
 					nb_video_streams += 2;
 				} else {
 					nb_video_streams++;
 				}
 			} else if (is_me && (call_video_layout == LinphoneConferenceLayoutActiveSpeaker) &&
-			           (dir == LinphoneMediaDirectionRecvOnly) &&
-			           (conference_security_level != LinphoneConferenceSecurityLevelEndToEnd)) {
+			           (dir == LinphoneMediaDirectionRecvOnly)) {
 				nb_video_streams++;
 			}
 		}
@@ -497,37 +493,8 @@ size_t compute_no_video_streams(bool_t enable_video, LinphoneCall *call, Linphon
 	return nb_video_streams;
 }
 
-size_t compute_no_audio_streams(LinphoneCall *call, LinphoneConference *conference) {
-	size_t nb_audio_streams = 0;
-	const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(conference);
-	if (linphone_conference_params_get_security_level(conference_params) == LinphoneConferenceSecurityLevelEndToEnd) {
-		const LinphoneAddress *remote_address = linphone_call_get_remote_address(call);
-		bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
-		for (bctbx_list_t *itp = participants; itp; itp = bctbx_list_next(itp)) {
-			LinphoneParticipant *participant = (LinphoneParticipant *)bctbx_list_get_data(itp);
-			LinphoneParticipantRole role = linphone_participant_get_role(participant);
-			if (role == LinphoneParticipantRoleSpeaker) {
-				bctbx_list_t *devices = linphone_participant_get_devices(participant);
-				for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
-					LinphoneParticipantDevice *device = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
-					if (linphone_participant_device_get_stream_availability(device, LinphoneStreamTypeAudio)) {
-						nb_audio_streams++;
-					}
-				}
-				bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
-			} else if (linphone_address_weak_equal(linphone_participant_get_address(participant), remote_address)) {
-				// Add an audio stream anyway if the participant holding the call is a listener
-				nb_audio_streams++;
-			}
-		}
-		bctbx_list_free_with_data(participants, (void (*)(void *))linphone_participant_unref);
-		if (!linphone_core_conference_server_enabled(linphone_conference_get_core(conference))) {
-			// Add own audio stream if the core holding the conference is not a server
-			nb_audio_streams++;
-		}
-	} else {
-		nb_audio_streams = 1;
-	}
+size_t compute_no_audio_streams(BCTBX_UNUSED(LinphoneCall *call), BCTBX_UNUSED(LinphoneConference *conference)) {
+	size_t nb_audio_streams = 1;
 	return nb_audio_streams;
 }
 
@@ -717,8 +684,6 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 	bool_t recvonly_video = TRUE;
 	bool_t inactive_call_video = TRUE;
 	LinphoneConferenceLayout call_conference_layout = LinphoneConferenceLayoutGrid;
-	LinphoneConferenceSecurityLevel security_level = LinphoneConferenceSecurityLevelNone;
-
 	for (auto mgr : members) {
 		coresList = bctbx_list_append(coresList, mgr->lc);
 		// Allocate memory
@@ -741,13 +706,6 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 			} else {
 				const LinphoneCallParams *call_params = linphone_call_get_params(call);
 				call_conference_layout = linphone_call_params_get_conference_video_layout(call_params);
-				LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
-				BC_ASSERT_PTR_NOT_NULL(conference);
-				if (conference) {
-					const LinphoneConferenceParams *conference_params =
-					    linphone_conference_get_current_params(conference);
-					security_level = linphone_conference_params_get_security_level(conference_params);
-				}
 			}
 		}
 
@@ -763,9 +721,8 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 	// are split therefore if the other participants have an inactive video or the can only receive it and the chose
 	// video direction is RecvOnly, then no video streams will be sent out
 	bool_t negotiated_inactive_video =
-	    (((call_conference_layout == LinphoneConferenceLayoutGrid) ||
-	      (security_level == LinphoneConferenceSecurityLevelEndToEnd)) &&
-	     (inactive_call_video || recvonly_video) && (video_direction == LinphoneMediaDirectionRecvOnly));
+	    ((call_conference_layout == LinphoneConferenceLayoutGrid) && (inactive_call_video || recvonly_video) &&
+	     (video_direction == LinphoneMediaDirectionRecvOnly));
 
 	// Whenever a participant chooses a grid layout, the participant requestes 2 streams for its send component and the
 	// streams with recvonly direction are those of the others participants
@@ -929,8 +886,7 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 					if (enable == TRUE) {
 						if (negotiated_inactive_video) {
 							expected_video_direction = LinphoneMediaDirectionInactive;
-						} else if (((call_conference_layout == LinphoneConferenceLayoutGrid) ||
-						            (security_level == LinphoneConferenceSecurityLevelEndToEnd)) &&
+						} else if ((call_conference_layout == LinphoneConferenceLayoutGrid) &&
 						           (inactive_call_video || recvonly_video) &&
 						           (video_direction == LinphoneMediaDirectionSendRecv)) {
 							// Layout Grid doesn't allow the server to always deduce the right client's video direction
@@ -1357,12 +1313,7 @@ void create_conference_base(time_t start_time,
 
 					size_t no_streams_audio = 0;
 					size_t no_active_streams_video = 0;
-					size_t no_streams_video = (enabled)
-					                              ? (((security_level == LinphoneConferenceSecurityLevelEndToEnd) &&
-					                                  (layout == LinphoneConferenceLayoutActiveSpeaker))
-					                                     ? 6
-					                                     : 4)
-					                              : 0;
+					size_t no_streams_video = (enabled) ? 4 : 0;
 					size_t no_streams_text = 0;
 					bool_t video_negotiated = enabled;
 
@@ -1627,12 +1578,7 @@ void create_conference_base(time_t start_time,
 
 						size_t no_streams_audio = 0;
 						size_t no_active_streams_video = 0;
-						size_t no_streams_video = (enabled)
-						                              ? (((security_level == LinphoneConferenceSecurityLevelEndToEnd) &&
-						                                  (layout == LinphoneConferenceLayoutActiveSpeaker))
-						                                     ? 6
-						                                     : 4)
-						                              : 0;
+						size_t no_streams_video = (enabled) ? 4 : 0;
 						size_t no_streams_text = 0;
 
 						LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
@@ -2516,12 +2462,7 @@ void create_conference_base(time_t start_time,
 							const bool_t enabled = linphone_call_params_video_enabled(call_cparams);
 							no_streams_audio = compute_no_audio_streams(pcall, pconference);
 							no_active_streams_video = compute_no_video_streams(enabled, pcall, pconference);
-							no_streams_video = (all_speakers)
-							                       ? no_active_streams_video
-							                       : (((security_level == LinphoneConferenceSecurityLevelEndToEnd) &&
-							                           (layout == LinphoneConferenceLayoutActiveSpeaker))
-							                              ? 6
-							                              : 4);
+							no_streams_video = (all_speakers) ? no_active_streams_video : 4;
 
 							_linphone_call_check_max_nb_streams(pcall, no_streams_audio, no_streams_video,
 							                                    no_streams_text);
@@ -2844,12 +2785,8 @@ void create_conference_base(time_t start_time,
 								const bool_t enabled = linphone_call_params_video_enabled(call_cparams);
 								no_streams_audio = compute_no_audio_streams(pcall, pconference);
 								no_active_streams_video = compute_no_video_streams(enabled, pcall, pconference);
-								no_streams_video = ((security_level == LinphoneConferenceSecurityLevelEndToEnd) &&
-								                    (layout == LinphoneConferenceLayoutActiveSpeaker))
-								                       ? 6
-								                       : 4;
-								no_max_streams_audio =
-								    (security_level == LinphoneConferenceSecurityLevelEndToEnd) ? 3 : 1;
+								no_streams_video = 4;
+								no_max_streams_audio = 1;
 
 								_linphone_call_check_max_nb_streams(pcall, no_max_streams_audio, no_streams_video,
 								                                    no_streams_text);

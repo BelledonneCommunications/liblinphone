@@ -2075,21 +2075,6 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 							}
 							const auto mid(bundleNameStreamPrefix + devLabel);
 							fillConferenceParticipantStream(newParticipantStream, oldMd, md, dev, pth, encs, type, mid);
-
-							const auto &confSecurityLevel = currentConfParams.getSecurityLevel();
-							if (isConferenceLayoutActiveSpeaker && (type == SalVideo) &&
-							    (confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd)) {
-								std::vector<std::pair<std::string, std::string>> attributes;
-								const auto &foundHDStreamIdx =
-								    devLabel.empty()
-								        ? -1
-								        : oldMd->findIdxStreamWithContent(HDParticipantVideoContent, devLabel);
-								SalStreamDescription &newHDStream = addStreamToMd(md, foundHDStreamIdx, oldMd);
-								newHDStream.setContent(HDParticipantVideoContent);
-								const auto midHDStream(bundleNameHDStreamPrefix + devLabel);
-								fillConferenceParticipantStream(newHDStream, oldMd, md, dev, pth, encs, type,
-								                                midHDStream);
-							}
 						}
 					}
 				}
@@ -2480,10 +2465,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 				enableVideoStream = callVideoEnabled;
 				switch (confLayout) {
 					case ConferenceLayout::ActiveSpeaker:
-						videoDir = (confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd)
-						               ? ((localIsOfferer) ? ((sendingVideo) ? SalStreamSendOnly : SalStreamInactive)
-						                                   : videoDirInParams)
-						               : videoDirInParams;
+						videoDir = videoDirInParams;
 						break;
 					case ConferenceLayout::Grid:
 						videoDir = ((sendingVideo) ? SalStreamSendOnly : SalStreamInactive);
@@ -2563,9 +2545,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 	if (conferenceCreated && eventLogEnabled && participantDevice &&
 	    ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) ||
 	     (deviceState == ParticipantDevice::State::OnHold))) {
-		if (addAudioStream && (confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd)) {
-			addConferenceParticipantStreams(md, oldMd, pth, encList, SalAudio);
-		}
 		if (addVideoStream) {
 			addConferenceParticipantStreams(md, oldMd, pth, encList, SalVideo);
 		}
