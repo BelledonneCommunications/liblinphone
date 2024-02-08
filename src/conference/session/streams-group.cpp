@@ -111,8 +111,10 @@ void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext &params) {
 
 void StreamsGroup::createStreams(const OfferAnswerContext &params) {
 	size_t index;
-	const auto &localMd = params.localMediaDescription;
-	for (index = 0; index < localMd->streams.size(); ++index) {
+	// If the offer answer context has a remote media description, it means that we are replying to an INVITE, therefore
+	// we need to create only as many streams as the offer has
+	const auto &md = params.remoteMediaDescription ? params.remoteMediaDescription : params.localMediaDescription;
+	for (index = 0; index < md->streams.size(); ++index) {
 		Stream *s = nullptr;
 		params.scopeStreamToIndexWithDiff(index, mCurrentOfferAnswerState);
 
