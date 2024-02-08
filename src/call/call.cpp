@@ -515,9 +515,9 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	std::shared_ptr<MediaConference::RemoteConference> remoteConference = nullptr;
 
 	if (conference) {
-		lInfo() << "Attaching call (local address " << session->getLocalAddress()->toString() << " remote address "
-		        << session->getRemoteAddress()->toString() << ") to conference " << conference->getConferenceAddress()
-		        << " ID " << conferenceId;
+		lInfo() << "Attaching call (local address " << *session->getLocalAddress() << " remote address "
+		        << *session->getRemoteAddress() << ") to conference " << *conference->getConferenceAddress() << " ID "
+		        << conferenceId;
 		remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
 		if (remoteConference) {
 			remoteConference->setMainSession(session);
@@ -1352,17 +1352,5 @@ void Call::setVideoSource(std::shared_ptr<const VideoSourceDescriptor> descripto
 std::shared_ptr<const VideoSourceDescriptor> Call::getVideoSource() const {
 	return getMediaSession()->getVideoSource();
 }
-/*
-void Call::startScreenSharing(std::shared_ptr<const VideoSourceDescriptor> descriptor) {
-    // return static_pointer_cast<const MediaSession>(getActiveSession())->
-    // setVideoSource(descriptor);
-}
 
-void Call::stopScreenSharing() {
-}
-
-bool Call::isRunningScreenSharing() const {
-    return true;
-}
-*/
 LINPHONE_END_NAMESPACE

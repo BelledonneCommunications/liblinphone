@@ -276,7 +276,8 @@ LINPHONE_PUBLIC void linphone_call_cbs_set_camera_not_working(LinphoneCallCbs *c
  * @param cbs The #LinphoneCallCbs object. @notnil
  * @return The failing rendering callback.
  */
-LINPHONE_PUBLIC LinphoneCallCbsVideoDisplayErrorOccurredCb linphone_call_cbs_get_video_display_error_occurred(LinphoneCallCbs *cbs);
+LINPHONE_PUBLIC LinphoneCallCbsVideoDisplayErrorOccurredCb
+linphone_call_cbs_get_video_display_error_occurred(LinphoneCallCbs *cbs);
 
 /**
  * Set the callback that will be used to notify that there are errors from the video rendering.
@@ -286,7 +287,7 @@ LINPHONE_PUBLIC LinphoneCallCbsVideoDisplayErrorOccurredCb linphone_call_cbs_get
  * @param[in] cb The failing rendering callback to be used.
  */
 LINPHONE_PUBLIC void linphone_call_cbs_set_video_display_error_occurred(LinphoneCallCbs *cbs,
-                                                              LinphoneCallCbsVideoDisplayErrorOccurredCb cb);
+                                                                        LinphoneCallCbsVideoDisplayErrorOccurredCb cb);
 
 /**
  * Get the audio device changed callback.

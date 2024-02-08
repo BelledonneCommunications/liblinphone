@@ -29,15 +29,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-VideoSourceDescriptor::VideoSourceDescriptor(const VideoSourceDescriptor &other) : HybridObject(other) {
-	mType = other.mType;
-	mScreenSharingType = other.mScreenSharingType;
-	mCall = other.mCall;
-	mCameraId = other.mCameraId;
-	mImagePath = other.mImagePath;
-	mNativeData = other.mNativeData;
-}
-
 VideoSourceDescriptor *VideoSourceDescriptor::clone() const {
 	return new VideoSourceDescriptor(*this);
 }
@@ -141,6 +132,7 @@ bool VideoSourceDescriptor::operator==(const VideoSourceDescriptor &descriptor) 
 			       mScreenSharingType == descriptor.getScreenSharingType() &&
 			       mNativeData == descriptor.getScreenSharing();
 	}
+	return false;
 }
 
 bool VideoSourceDescriptor::operator!=(const VideoSourceDescriptor &descriptor) const {

@@ -160,6 +160,14 @@ LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_stream_ca
     const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 
 /**
+ * Get the thumbnail stream capability of the device.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return the capability of the thumbnail stream of the device #LinphoneMediaDirection
+ */
+LINPHONE_PUBLIC LinphoneMediaDirection
+linphone_participant_device_get_thumbnail_stream_capability(const LinphoneParticipantDevice *participant_device);
+
+/**
  * Get the stream availability of the device.
  * The availability information represents whether a given stream type is currently available to be presented in the
  * conference for a #LinphoneParticipantDevice
@@ -171,13 +179,32 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_get_stream_availability(
     const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 
 /**
- * Get the audio stream SSRC of the device.
+ * Get the thumbnail stream availability of the device.
+ * The availability information represents whether a given stream type is currently available to be presented in the
+ * conference for a #LinphoneParticipantDevice
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @param stream_type A #LinphoneStreamType
+ * @return TRUE if the stream of type stream_type is available for device, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t
+linphone_participant_device_get_thumbnail_stream_availability(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the stream SSRC of the device.
  * @param participant A #LinphoneParticipantDevice object @notnil
  * @param stream_type A #LinphoneStreamType
- * @return the audio stream SSRC of the device
+ * @return the stream's SSRC of the device
  */
 LINPHONE_PUBLIC uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device,
                                                               const LinphoneStreamType stream_type);
+
+/**
+ * Get the thumbnail stream SSRC of the device.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return the thumbnail stream's SSRC of the device
+ */
+LINPHONE_PUBLIC uint32_t
+linphone_participant_device_get_thumbnail_ssrc(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Add a listener in order to be notified of #LinphoneParticipantDevice events. Once an event is received, registred
@@ -211,8 +238,7 @@ linphone_participant_device_get_current_callbacks(const LinphoneParticipantDevic
  * @param window_id the window ID of the device @maybenil
  */
 LINPHONE_PUBLIC void
-linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device,
-                                                       void *window_id);
+linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void *window_id);
 
 /**
  * Get window ID.
@@ -228,7 +254,7 @@ linphone_participant_device_get_native_video_window_id(const LinphoneParticipant
  * @return the window ID of the device @maybenil
  */
 LINPHONE_PUBLIC void *
-linphone_participant_device_create_native_video_window_id(const LinphoneParticipantDevice *participant_device);
+linphone_participant_device_create_native_video_window_id(LinphoneParticipantDevice *participant_device);
 
 /**
  * Return whether the participant device is speaking or not.
@@ -243,6 +269,14 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_get_is_speaking(const Linphon
  * @return TRUE if the participant device is muted, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_participant_device_get_is_muted(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Return whether the participant device is screen sharing or not.
+ * @param participant_device The #LinphoneParticipantDeviceCbs object @notnil
+ * @return TRUE if the participant device is screen sharing, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t
+linphone_participant_device_screen_sharing_enabled(const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}

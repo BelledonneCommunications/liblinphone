@@ -317,6 +317,7 @@ protected:
 	bool mCameraEnabled = true;
 	void *mNativeWindowId = nullptr;
 	void *mNativePreviewWindowId = nullptr;
+	bool mScreenSharingEnabled = false; // Swap window ID between normal and preview.
 
 private:
 	static void sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
@@ -358,6 +359,7 @@ public:
 	virtual VideoStream *getVideoStream() const override;
 	virtual MSWebCam *getVideoDevice() const override;
 	virtual std::string getLabel() const override;
+	bool isThumbnail() const;
 	void oglRender();
 	MSWebCam *getVideoDevice(CallSession::State targetState) const;
 

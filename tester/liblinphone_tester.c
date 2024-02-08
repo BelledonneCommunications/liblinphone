@@ -506,6 +506,8 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_conference_advanced, 574);
 	liblinphone_tester_add_suite_with_default_time(
 	    &local_conference_test_suite_scheduled_conference_audio_only_participant, 581);
+	liblinphone_tester_add_suite_with_default_time(
+	    &local_conference_test_suite_scheduled_conference_with_screen_sharing, 581);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_scheduled_ice_conference, 563);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_inpromptu_conference, 384);
 	liblinphone_tester_add_suite_with_default_time(&local_conference_test_suite_encrypted_inpromptu_conference, 150);

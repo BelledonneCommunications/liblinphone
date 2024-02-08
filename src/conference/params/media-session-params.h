@@ -75,6 +75,8 @@ public:
 	void setAudioDirection(SalStreamDir direction);
 	void setAudioDirection(LinphoneMediaDirection direction);
 
+	void enableCamera(bool value);
+	void enableScreenSharing(bool value);
 	void enableVideo(bool value);
 	void enableVideoMulticast(bool value);
 	float getReceivedFps() const;
@@ -85,6 +87,8 @@ public:
 	LinphoneMediaDirection getVideoDirection() const;
 	void setVideoDirection(SalStreamDir direction);
 	void setVideoDirection(LinphoneMediaDirection direction);
+	bool cameraEnabled() const;
+	bool screenSharingEnabled() const;
 	bool videoEnabled() const;
 	bool videoMulticastEnabled() const;
 
@@ -149,6 +153,9 @@ public:
 	void setOutputAudioDevice(const std::shared_ptr<AudioDevice> &device);
 	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
 	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
+
+	bool isValid() const;
+	bool isConfiguredForScreenSharing(bool enableLog = false) const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSessionParams);

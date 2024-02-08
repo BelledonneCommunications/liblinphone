@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+bool_t check_screen_sharing_sdp(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, bool_t screen_sharing_enabled);
+bool_t check_screen_sharing_call_sdp(LinphoneCall *call, bool_t screen_sharing_enabled);
 bool_t check_ice(LinphoneCoreManager *caller, LinphoneCoreManager *callee, LinphoneIceState state);
 bool_t check_ice_sdp(LinphoneCall *call);
 void check_lime_ik(LinphoneCoreManager *mgr, LinphoneCall *call);
@@ -86,6 +88,9 @@ void linphone_conference_info_check_participant(const LinphoneConferenceInfo *co
                                                 LinphoneAddress *address,
                                                 int sequence_number);
 void linphone_conference_info_check_organizer(const LinphoneConferenceInfo *conference_info, int sequence_number);
+bool_t screen_sharing_enabled_in_local_description(LinphoneCall *call);
+bool_t screen_sharing_enabled_in_remote_description(LinphoneCall *call);
+bool_t screen_sharing_enabled_in_negotiated_description(LinphoneCall *call);
 
 bool_t check_custom_m_line(LinphoneCall *call, const char *m_line);
 void check_chat_message_properties(LinphoneChatMessage *msg);

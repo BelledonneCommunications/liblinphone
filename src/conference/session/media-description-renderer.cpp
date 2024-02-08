@@ -26,7 +26,7 @@ LINPHONE_BEGIN_NAMESPACE
 const SalStreamDescription &OfferAnswerContext::chooseStreamDescription(const std::shared_ptr<SalMediaDescription> &md,
                                                                         const size_t &index) const {
 
-	if (index < md->streams.size()) {
+	if (md && (index < md->streams.size())) {
 		return md->streams[index];
 	}
 

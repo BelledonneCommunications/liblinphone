@@ -50,7 +50,7 @@ public:
 	};
 
 	VideoSourceDescriptor() = default;
-	VideoSourceDescriptor(const VideoSourceDescriptor &other);
+	VideoSourceDescriptor(const VideoSourceDescriptor &other) = default;
 	virtual ~VideoSourceDescriptor() = default;
 
 	VideoSourceDescriptor *clone() const override;
@@ -84,6 +84,8 @@ private:
 	VideoSourceDescriptor::ScreenSharingType mScreenSharingType = VideoSourceDescriptor::ScreenSharingType::Display;
 	void *mNativeData = nullptr;
 };
+
+std::ostream &operator<<(std::ostream &stream, VideoSourceDescriptor::Type type);
 
 LINPHONE_END_NAMESPACE
 

@@ -357,7 +357,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext &ctx) {
 		const auto &tcaps = localMediaDesc->getAllTcapForStream(streamIndex);
 
 		if (!tcaps.empty()) {
-			const auto &stream = localMediaDesc->getStreamIdx(streamIndex);
+			const auto &stream = localMediaDesc->getStreamAtIdx(streamIndex);
 			const auto &supportedEncs = stream.getSupportedEncryptionsInPotentialCfgs();
 
 			for (const auto &enc : supportedEncs) {
@@ -617,7 +617,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 
 	const auto &stream =
 	    (mRtpBundle && !mOwnsBundle && mBundleOwner)
-	        ? params.resultMediaDescription->getStreamIdx(static_cast<unsigned int>(mBundleOwner->getIndex()))
+	        ? params.resultMediaDescription->getStreamAtIdx(static_cast<unsigned int>(mBundleOwner->getIndex()))
 	        : params.getResultStreamDescription();
 
 	info->rtpAddr = stream.rtp_addr.empty() == false ? stream.rtp_addr : params.resultMediaDescription->addr;
@@ -644,11 +644,10 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, BCTBX_UNUSE
 		return true;
 	}
 	if (getState() == Stream::Running) {
-		if (getMediaSessionPrivate().getCurrentParams()->getPrivate()->getInConference() !=
-		    getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
+		const auto localIsInConference = getMediaSessionPrivate().getParams()->getPrivate()->getInConference();
+		if (getMediaSessionPrivate().getCurrentParams()->getPrivate()->getInConference() != localIsInConference) {
 			lInfo() << "Stream needs to be restarted because of a change in its conference membership attribute.";
-			lInfo() << "Will become joined to a conference: "
-			        << (getMediaSessionPrivate().getParams()->getPrivate()->getInConference() ? "yes" : "no");
+			lInfo() << "Will become joined to a conference: " << (localIsInConference ? "yes" : "no");
 			stop();
 			return false;
 		}

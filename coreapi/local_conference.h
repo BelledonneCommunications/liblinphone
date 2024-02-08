@@ -139,6 +139,11 @@ public:
 	                               const std::shared_ptr<Participant> &participant,
 	                               const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
+	notifyParticipantDeviceScreenSharingChanged(time_t creationTime,
+	                                            const bool isFullState,
+	                                            const std::shared_ptr<Participant> &participant,
+	                                            const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
 	notifyParticipantDeviceMediaCapabilityChanged(time_t creationTime,
 	                                              const bool isFullState,
 	                                              const std::shared_ptr<Participant> &participant,
@@ -162,6 +167,9 @@ public:
 	virtual std::shared_ptr<Call> getCall() const override;
 
 	std::shared_ptr<Player> getPlayer() const override;
+
+	virtual std::pair<bool, LinphoneMediaDirection> getMainStreamVideoDirection(
+	    const std::shared_ptr<CallSession> &session, bool localIsOfferer, bool useLocalParams) const override;
 
 protected:
 	virtual void
@@ -190,6 +198,7 @@ private:
 	std::list<std::shared_ptr<Address>> getAllowedAddresses() const;
 	void configure(SalCallOp *op);
 	void fillInvitedParticipantList(SalCallOp *op, bool cancelling);
+	void enableScreenSharing(const std::shared_ptr<LinphonePrivate::CallSession> &session, bool notify);
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();

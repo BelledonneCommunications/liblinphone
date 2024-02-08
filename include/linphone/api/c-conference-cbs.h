@@ -180,6 +180,22 @@ linphone_conference_cbs_set_participant_device_state_changed(LinphoneConferenceC
                                                              LinphoneConferenceCbsParticipantDeviceStateChangedCb cb);
 
 /**
+ * Get the participant device is screen sharing changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device is screen sharing changed callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceScreenSharingChangedCb
+linphone_conference_cbs_get_participant_device_screen_sharing_changed(const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device is screen sharing changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device is screen sharing changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_screen_sharing_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceScreenSharingChangedCb cb);
+
+/**
  * Get the participant device media availability changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current participant device media availability changed callback.

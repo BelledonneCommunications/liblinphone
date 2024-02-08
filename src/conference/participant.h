@@ -98,7 +98,7 @@ public:
 	explicit Participant(
 	    std::shared_ptr<Address> address); // acquires the address, that must be a simple URI without 'gr' parameter.
 	Participant() = default;
-	virtual ~Participant() = default;
+	virtual ~Participant();
 	// non clonable object
 	Participant *clone() const override {
 		return nullptr;
@@ -116,7 +116,8 @@ public:
 	                                              const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDevice(const std::shared_ptr<const CallSession> &session,
 	                                              const bool logFailure = true) const;
-	std::shared_ptr<ParticipantDevice> findDevice(const std::string &label, const bool logFailure = true) const;
+	std::shared_ptr<ParticipantDevice>
+	findDevice(const LinphoneStreamType type, const std::string &label, const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDeviceByCallId(const std::string &callId,
 	                                                      const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const;

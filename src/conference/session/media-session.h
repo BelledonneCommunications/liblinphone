@@ -38,6 +38,7 @@ class Participant;
 class ParticipantDevice;
 class StreamsGroup;
 class NatPolicy;
+class VideoControlInterface;
 
 namespace MediaConference {
 class Conference;
@@ -47,6 +48,7 @@ class RemoteConference;
 class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class AlertMonitor;
 	friend class Call;
+	friend class Conference;
 	friend class Core;
 	friend class IceAgent;
 	friend class ToneManager;
@@ -57,7 +59,7 @@ class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class MediaConference::RemoteConference;
 
 public:
-	static ConferenceLayout computeConferenceLayout(const std::shared_ptr<SalMediaDescription> &md);
+	ConferenceLayout computeConferenceLayout(const std::shared_ptr<SalMediaDescription> &md) const;
 
 	MediaSession(const std::shared_ptr<Core> &core,
 	             std::shared_ptr<Participant> me,
@@ -128,14 +130,17 @@ public:
 	RtpTransport *getMetaRtcpTransport(int streamIndex) const;
 	RtpTransport *getMetaRtpTransport(int streamIndex) const;
 	float getMicrophoneVolumeGain() const;
-	void *getNativeVideoWindowId(const std::string label = "") const;
+	void *
+	getNativeVideoWindowId(const std::string label = "", const bool isMe = false, const bool isThumbnail = false) const;
 	void *getNativePreviewVideoWindowId() const;
 	void *createNativePreviewVideoWindowId() const;
-	void *createNativeVideoWindowId(const std::string label = "") const;
+	void *createNativeVideoWindowId(const std::string label = "",
+	                                const bool isMe = false,
+	                                const bool isThumbnail = false) const;
 	const CallSessionParams *getParams() const override;
 	float getPlayVolume() const;
 	float getRecordVolume() const;
-	const MediaSessionParams *getRemoteParams();
+	const MediaSessionParams *getRemoteParams() const;
 	float getSpeakerVolumeGain() const;
 	LinphoneCallStats *getStats(LinphoneStreamType type) const;
 	int getStreamCount() const;
@@ -145,7 +150,10 @@ public:
 	bool mediaInProgress() const;
 	void setAuthenticationTokenVerified(bool value);
 	void setMicrophoneVolumeGain(float value);
-	void setNativeVideoWindowId(void *id, const std::string label = "");
+	void setNativeVideoWindowId(void *id,
+	                            const std::string label = "",
+	                            const bool isMe = false,
+	                            const bool isThumbnail = false);
 	void setNativePreviewWindowId(void *id);
 	void setParams(const MediaSessionParams *msp);
 	void setSpeakerVolumeGain(float value);
@@ -167,12 +175,18 @@ public:
 
 	void queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda);
 
+	bool canOfferVideoSharing(bool enableLog) const;
 	void setVideoSource(const std::shared_ptr<const VideoSourceDescriptor> &descriptor);
 	std::shared_ptr<const VideoSourceDescriptor> getVideoSource() const;
 
 	void confirmGoClear();
 
 	uint32_t getSsrc(LinphoneStreamType type) const;
+	uint32_t getSsrc(std::string content) const;
+
+	int getThumbnailStreamIdx() const;
+	int getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
+
 	/**
 	 * set the EKT to all audio and video streams of this media session
 	 *
@@ -181,12 +195,24 @@ public:
 	void setEkt(const MSEKTParametersSet *ekt_params) const;
 	bool dtmfSendingAllowed() const;
 
+	LinphoneMediaDirection getDirectionOfStream(const std::string content) const;
+	bool isScreenSharingNegotiated() const;
+	const std::shared_ptr<const VideoSourceDescriptor> getVideoSourceDescriptor() const;
+
+	bool requestThumbnail(const std::shared_ptr<ParticipantDevice> &device) const;
+
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);
 
 	int getRandomRtpPort(const SalStreamDescription &stream) const;
 	const std::shared_ptr<Conference> getLocalConference() const;
+
+	std::shared_ptr<const VideoSourceDescriptor> mVideoSourceDescriptor;
+
+	VideoControlInterface *getVideoControlInterface(const std::string label = "",
+	                                                const bool isMe = false,
+	                                                const bool isThumbnail = false) const;
 };
 
 /**

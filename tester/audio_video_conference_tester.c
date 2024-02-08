@@ -3794,6 +3794,9 @@ static void _simple_conference_from_scratch(bool_t with_video) {
 		linphone_core_enable_video_display(marie->lc, TRUE);
 		linphone_core_enable_video_capture(laure->lc, TRUE);
 		linphone_core_enable_video_display(laure->lc, TRUE);
+
+		linphone_core_set_default_conference_layout(laure->lc, LinphoneConferenceLayoutActiveSpeaker);
+		linphone_core_set_default_conference_layout(pauline->lc, LinphoneConferenceLayoutActiveSpeaker);
 	}
 
 	bctbx_list_t *participants = NULL;

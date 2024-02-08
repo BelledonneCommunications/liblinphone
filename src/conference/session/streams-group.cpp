@@ -197,6 +197,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 
 	const size_t resultMediaDescriptionStreamNb =
 	    (params.resultMediaDescription) ? params.resultMediaDescription->streams.size() : 0;
+
 	for (size_t index = 0; index < mStreams.size() && index < resultMediaDescriptionStreamNb; ++index) {
 		auto &stream = mStreams[index];
 		if (!stream) continue;
@@ -526,9 +527,16 @@ void StreamsGroup::computeAndReportBandwidth() {
 			     << fixed << setprecision(2);
 			introDone = true;
 		}
-		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType())
-		     << ") | cpu: " << stream->getCpuUsage() << "% |"
-		     << " RTP : [d=" << linphone_call_stats_get_download_bandwidth(stats)
+		const auto &label = stream->getLabel();
+		std::string labelStr;
+		if (!label.empty()) {
+			labelStr.append("label: ");
+			labelStr += label;
+			labelStr.append(" | ");
+		}
+		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | "
+		     << labelStr << "cpu: " << stream->getCpuUsage() << "% |"
+		     << " RTP: [d=" << linphone_call_stats_get_download_bandwidth(stats)
 		     << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
 		     << "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats)
 		     << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";

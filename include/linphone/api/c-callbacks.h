@@ -637,7 +637,7 @@ typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage *message,
  * @param[in] participant #LinphoneParticipant that has been added to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantAddedCb)(LinphoneConference *conference,
-                                                        const LinphoneParticipant *participant);
+                                                        LinphoneParticipant *participant);
 
 /**
  * Callback used to notify a conference that a participant has been removed.
@@ -656,6 +656,16 @@ typedef void (*LinphoneConferenceCbsParticipantRemovedCb)(LinphoneConference *co
 typedef void (*LinphoneConferenceCbsParticipantDeviceStateChangedCb)(LinphoneConference *conference,
                                                                      const LinphoneParticipantDevice *device,
                                                                      const LinphoneParticipantDeviceState state);
+
+/**
+ * Callback used to notify a conference that a participant device starts or stops screen sharing
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] device #LinphoneParticipantDevice who starts or stops screen sharing @notnil
+ * @param[in] enabled whether the screen sharing is enabled or disabled
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceScreenSharingChangedCb)(LinphoneConference *conference,
+                                                                             const LinphoneParticipantDevice *device,
+                                                                             bool_t enabled);
 
 /**
  * Callback used to notify a conference that the media availability of a participant device has been changed.
@@ -742,7 +752,7 @@ typedef void (*LinphoneConferenceCbsAudioDeviceChangedCb)(LinphoneConference *co
  * @param[in] participant_device #LinphoneParticipantDevice that has been added to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb)(LinphoneConference *conference,
-                                                              const LinphoneParticipantDevice *participant_device);
+                                                              LinphoneParticipantDevice *participant_device);
 
 /**
  * Callback used to notify a conference that a participant has been removed.
@@ -776,6 +786,14 @@ typedef void (*LinphoneParticipantDeviceCbsIsSpeakingChangedCb)(LinphoneParticip
 typedef void (*LinphoneParticipantDeviceCbsIsMutedCb)(LinphoneParticipantDevice *participant_device, bool_t is_muted);
 
 /**
+ * Callback used to notify that this participant device is screen sharing or is no longer screen sharing.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] is_screen_sharing is this participant device screen sharing
+ */
+typedef void (*LinphoneParticipantDeviceCbsScreenSharingChangedCb)(LinphoneParticipantDevice *participant_device,
+                                                                   bool_t is_screen_sharing);
+
+/**
  * Callback used to notify that participant device changed state
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
  */
@@ -785,20 +803,38 @@ typedef void (*LinphoneParticipantDeviceCbsStateChangedCb)(LinphoneParticipantDe
 /**
  * Callback used to notify that participant device stream capability has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- * @param[in] direction  participant device's audio direction
+ * @param[in] direction  participant device's stream direction
+ * @param[in] stream_type type of stream: aaudio, video or text
  */
 typedef void (*LinphoneParticipantDeviceCbsStreamCapabilityChangedCb)(LinphoneParticipantDevice *participant_device,
                                                                       LinphoneMediaDirection direction,
                                                                       const LinphoneStreamType stream_type);
 
 /**
+ * Callback used to notify that participant device thumbnail stream capability has changed.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] direction  participant device's thumbnail direction
+ */
+typedef void (*LinphoneParticipantDeviceCbsThumbnailStreamCapabilityChangedCb)(
+    LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
+
+/**
  * Callback used to notify that participant device stream availability has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- * @param[in] direction  participant device's video direction
+ * @param[in] available  participant device's stream availability
+ * @param[in] stream_type type of stream: aaudio, video or text
  */
 typedef void (*LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb)(LinphoneParticipantDevice *participant_device,
                                                                         bool_t available,
                                                                         const LinphoneStreamType stream_type);
+
+/**
+ * Callback used to notify that participant device thumbnail stream availability has changed.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] available  participant device's thumbnail stream availability
+ */
+typedef void (*LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb)(
+    LinphoneParticipantDevice *participant_device, bool_t available);
 
 /**
  * Callback to notify that there are errors from the video rendering of the participant device.

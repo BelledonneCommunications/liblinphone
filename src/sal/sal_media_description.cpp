@@ -520,7 +520,7 @@ const SalStreamDescription &SalMediaDescription::findSecureStreamOfType(SalStrea
 	auto idx = findIdxStream(SalProtoRtpSavpf, type);
 	if (idx == -1) idx = findIdxStream(SalProtoRtpSavp, type);
 	if (idx != -1) {
-		return getStreamIdx(static_cast<unsigned int>(idx));
+		return getStreamAtIdx(static_cast<unsigned int>(idx));
 	}
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
@@ -528,7 +528,7 @@ const SalStreamDescription &SalMediaDescription::findSecureStreamOfType(SalStrea
 const SalStreamDescription &SalMediaDescription::findBestStream(SalStreamType type) const {
 	const auto idx = findIdxBestStream(type);
 	if (idx != -1) {
-		return getStreamIdx(static_cast<unsigned int>(idx));
+		return getStreamAtIdx(static_cast<unsigned int>(idx));
 	}
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
@@ -895,12 +895,13 @@ const std::string &SalMediaDescription::getConnectionAddress() const {
 	return addr;
 }
 
-const SalStreamDescription &SalMediaDescription::getStreamIdx(unsigned int idx) const {
-	if (idx < streams.size()) {
-		return streams[idx];
+const SalStreamDescription &SalMediaDescription::getStreamAtIdx(unsigned int idx) const {
+	try {
+		return streams.at(idx);
+	} catch (std::out_of_range &) {
+		lError() << "Unable to find stream at index " << idx << " because media description " << this << " has "
+		         << streams.size() << " streams";
 	}
-	lError() << "Unable to find stream at index " << idx << " because media description " << this << " has "
-	         << streams.size() << " streams";
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
@@ -1071,7 +1072,7 @@ const SalStreamDescription::tcap_map_t &SalMediaDescription::getTcaps() const {
 }
 const SalStreamDescription::cfg_map SalMediaDescription::getCfgsForStream(const unsigned int &idx) const {
 	SalStreamDescription::cfg_map cfgs;
-	const SalStreamDescription &stream = getStreamIdx(idx);
+	const SalStreamDescription &stream = getStreamAtIdx(idx);
 	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 		cfgs = stream.getAllCfgs();
 	}
@@ -1080,7 +1081,7 @@ const SalStreamDescription::cfg_map SalMediaDescription::getCfgsForStream(const 
 
 const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(const unsigned int &idx) const {
 	SalStreamDescription::acap_map_t allAcaps;
-	const SalStreamDescription &stream = getStreamIdx(idx);
+	const SalStreamDescription &stream = getStreamAtIdx(idx);
 	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 		allAcaps = stream.getAcaps();
 		auto globalAcaps = getAcaps();
@@ -1090,7 +1091,7 @@ const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(
 }
 const SalStreamDescription::tcap_map_t SalMediaDescription::getAllTcapForStream(const unsigned int &idx) const {
 	SalStreamDescription::tcap_map_t allTcaps;
-	const SalStreamDescription &stream = getStreamIdx(idx);
+	const SalStreamDescription &stream = getStreamAtIdx(idx);
 	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 		allTcaps = stream.getTcaps();
 		auto globalTcaps = getTcaps();

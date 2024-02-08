@@ -44,6 +44,8 @@ void MediaSessionParamsPrivate::clone(const MediaSessionParamsPrivate *src) {
 	audioMulticastEnabled = src->audioMulticastEnabled;
 	toneIndications = src->toneIndications;
 	usedAudioCodec = src->usedAudioCodec;
+	cameraEnabled = src->cameraEnabled;
+	screenSharingEnabled = src->screenSharingEnabled;
 	videoEnabled = src->videoEnabled;
 	videoDirection = src->videoDirection;
 	videoMulticastEnabled = src->videoMulticastEnabled;
@@ -251,6 +253,8 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 	CallSessionParams::initDefault(core, dir);
 	LinphoneCore *cCore = core->getCCore();
 	d->audioEnabled = true;
+	d->screenSharingEnabled = false;
+	d->cameraEnabled = true;
 
 	LinphoneConference *conference = linphone_core_get_conference(cCore);
 
@@ -361,6 +365,16 @@ void MediaSessionParams::setAudioDirection(LinphoneMediaDirection direction) {
 
 // -----------------------------------------------------------------------------
 
+void MediaSessionParams::enableCamera(bool value) {
+	L_D();
+	d->cameraEnabled = value;
+}
+
+void MediaSessionParams::enableScreenSharing(bool value) {
+	L_D();
+	d->screenSharingEnabled = value;
+}
+
 void MediaSessionParams::enableVideo(bool value) {
 	L_D();
 	d->videoEnabled = value;
@@ -408,6 +422,16 @@ void MediaSessionParams::setVideoDirection(SalStreamDir direction) {
 void MediaSessionParams::setVideoDirection(LinphoneMediaDirection direction) {
 	L_D();
 	d->videoDirection = direction;
+}
+
+bool MediaSessionParams::cameraEnabled() const {
+	L_D();
+	return d->cameraEnabled;
+}
+
+bool MediaSessionParams::screenSharingEnabled() const {
+	L_D();
+	return d->screenSharingEnabled;
 }
 
 bool MediaSessionParams::videoEnabled() const {
@@ -665,6 +689,46 @@ std::shared_ptr<AudioDevice> MediaSessionParams::getInputAudioDevice() const {
 std::shared_ptr<AudioDevice> MediaSessionParams::getOutputAudioDevice() const {
 	L_D();
 	return d->outputAudioDevice;
+}
+
+bool MediaSessionParams::isConfiguredForScreenSharing(bool enableLog) const {
+	bool configured = false;
+#ifdef VIDEO_ENABLED
+	const auto isVideoEnabled = videoEnabled();
+	const auto isScreenSharingEnabled = screenSharingEnabled();
+	const auto videoDirection = getVideoDirection();
+	bool videoHasSendComponent =
+	    ((videoDirection == LinphoneMediaDirectionSendOnly) || (videoDirection == LinphoneMediaDirectionSendRecv));
+	if (isVideoEnabled && isScreenSharingEnabled && videoHasSendComponent) {
+		configured = true;
+	} else {
+		configured = false;
+		if (enableLog) {
+			lWarning() << "Screen sharing is not correctly configured right now because some requirements aren't met:";
+			lWarning() << "- video capability must be enabled";
+			lWarning() << "- screen sharing capability must be enabled";
+			lWarning() << "- video direction has send component: actual direction is "
+			           << std::string(linphone_media_direction_to_string(videoDirection));
+		}
+	}
+#else
+	if (enableLog) {
+		lError() << "Cannot offer screen sharing as video support is not enabled";
+	}
+#endif
+	return configured;
+}
+
+bool MediaSessionParams::isValid() const {
+	const auto isScreenSharingEnabled = screenSharingEnabled();
+
+	bool valid = true;
+
+	if (isScreenSharingEnabled) {
+		valid = isConfiguredForScreenSharing(true);
+	}
+
+	return valid;
 }
 
 LINPHONE_END_NAMESPACE

@@ -60,6 +60,22 @@ void MixerSession::setFocus(StreamsGroup *sg) {
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void MixerSession::enableScreenSharing(bool enable, StreamsGroup *sg) {
+#ifdef VIDEO_ENABLED
+	if (enable) {
+		setFocus(sg);
+	}
+	mScreenSharing = enable;
+#endif
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
+
 StreamMixer *MixerSession::getMixerByType(SalStreamType type) {
 	try {
 		auto &mixer = mMixers.at(type);
@@ -95,7 +111,9 @@ void MixerSession::enableLocalParticipant(bool enabled) {
 }
 
 void MixerSession::onActiveTalkerChanged(StreamsGroup *sg) {
-	setFocus(sg);
+	if (!mScreenSharing) {
+		setFocus(sg);
+	}
 }
 
 StreamMixer::StreamMixer(MixerSession &session) : mSession(session) {

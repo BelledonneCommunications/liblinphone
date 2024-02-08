@@ -314,7 +314,7 @@ bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, M
 	std::shared_ptr<LinphonePrivate::MediaSession> ms = Call::toCpp(call)->getMediaSession();
 	if (ms) {
 		StreamsGroup &sg = L_GET_PRIVATE(ms)->getStreamsGroup();
-		if (sg.lookupStream(lambda, dir, label, cl)) return true;
+		if (sg.lookupStream(lambda, dir, L_C_TO_STRING(label), cl)) return true;
 	}
 #endif
 	return false;

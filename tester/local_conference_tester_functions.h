@@ -414,7 +414,8 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
                                                  bool_t toggle_video,
                                                  bool_t toggle_all_mananger_video,
                                                  bool_t change_layout,
-                                                 LinphoneConferenceSecurityLevel security_level);
+                                                 LinphoneConferenceSecurityLevel security_level,
+                                                 bool_t enable_screen_sharing);
 
 void create_conference_base(time_t start_time,
                             int duration,
@@ -434,6 +435,17 @@ void create_conference_base(time_t start_time,
                             bool_t network_restart,
                             LinphoneConferenceSecurityLevel security_level,
                             std::list<LinphoneParticipantRole> allowedRoles);
+
+void create_conference_with_screen_sharing_base(time_t start_time,
+                                                int duration,
+                                                const LinphoneMediaEncryption encryption,
+                                                LinphoneConferenceLayout layout,
+                                                bool_t enable_video,
+                                                bool_t enable_camera,
+                                                bool_t turn_off_screen_sharing,
+                                                LinphoneMediaDirection video_direction,
+                                                LinphoneConferenceSecurityLevel security_level,
+                                                std::list<LinphoneParticipantRole> allowedRoles);
 
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,

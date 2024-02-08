@@ -184,6 +184,16 @@ void linphone_conference_cbs_set_participant_device_is_muted(LinphoneConferenceC
 	ConferenceCbs::toCpp(cbs)->participantDeviceIsMutedCb = cb;
 }
 
+LinphoneConferenceCbsParticipantDeviceScreenSharingChangedCb
+linphone_conference_cbs_get_participant_device_screen_sharing_changed(const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->participantDeviceScreenSharingChangedCb;
+}
+
+void linphone_conference_cbs_set_participant_device_screen_sharing_changed(
+    LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceScreenSharingChangedCb cb) {
+	ConferenceCbs::toCpp(cbs)->participantDeviceScreenSharingChangedCb = cb;
+}
+
 LinphoneConferenceCbsAudioDeviceChangedCb
 linphone_conference_cbs_get_audio_device_changed(const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->audioDeviceChangedCb;

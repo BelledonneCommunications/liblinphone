@@ -82,6 +82,10 @@ SalStreamDir get_video_dir_from_call_params(const LinphoneCallParams *params) {
 	return sal_dir_from_call_params_dir(linphone_call_params_get_video_direction(params));
 }
 
+bool_t linphone_call_params_is_valid(const LinphoneCallParams *params) {
+	return !!L_GET_CPP_PTR_FROM_C_OBJECT(params)->isValid();
+}
+
 bool_t linphone_call_params_tone_indications_enabled(const LinphoneCallParams *params) {
 	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->toneIndicationsEnabled();
 }
@@ -259,6 +263,14 @@ void linphone_call_params_set_realtime_text_keepalive_interval(LinphoneCallParam
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setRealtimeTextKeepaliveInterval(interval);
 }
 
+void linphone_call_params_enable_camera(LinphoneCallParams *params, bool_t enabled) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableCamera(!!enabled);
+}
+
+void linphone_call_params_enable_screen_sharing(LinphoneCallParams *params, bool_t enabled) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableScreenSharing(!!enabled);
+}
+
 void linphone_call_params_enable_video(LinphoneCallParams *params, bool_t enabled) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableVideo(!!enabled);
 }
@@ -394,6 +406,14 @@ bool_t linphone_call_params_realtime_text_enabled(const LinphoneCallParams *para
 
 unsigned int linphone_call_params_get_realtime_text_keepalive_interval(const LinphoneCallParams *params) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->realtimeTextKeepaliveInterval();
+}
+
+bool_t linphone_call_params_camera_enabled(const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->cameraEnabled();
+}
+
+bool_t linphone_call_params_screen_sharing_enabled(const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->screenSharingEnabled();
 }
 
 bool_t linphone_call_params_video_enabled(const LinphoneCallParams *params) {

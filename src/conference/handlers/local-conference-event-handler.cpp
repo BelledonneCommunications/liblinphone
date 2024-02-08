@@ -141,6 +141,26 @@ std::shared_ptr<Content> LocalConferenceEventHandler::createNotifyFullState(cons
 		confDescr.setKeywords(keywords);
 	}
 
+	auto &confDescrDOMDoc = confDescr.getDomDocument();
+	auto startTime = confParams.getStartTime();
+	auto endTime = confParams.getEndTime();
+	if ((startTime > -1) || (endTime > -1)) {
+		auto conferenceTimes = ConferenceTimes();
+		if (startTime > -1) {
+			conferenceTimes.setStart(timeTToDateTime(startTime));
+		}
+
+		if (endTime > -1) {
+			conferenceTimes.setEnd(timeTToDateTime(endTime));
+		}
+
+		::xercesc::DOMElement *confTimesE(confDescrDOMDoc.createElementNS(
+		    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
+		    ::xsd::cxx::xml::string("linphone-cie:conference-times").c_str()));
+		*confTimesE << conferenceTimes;
+		confDescr.getAny().push_back(confTimesE);
+	}
+
 	if (ephemerable && chatRoom) {
 		const ModeType mode =
 		    (chatRoom->getCurrentParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged)
@@ -149,14 +169,12 @@ std::shared_ptr<Content> LocalConferenceEventHandler::createNotifyFullState(cons
 
 		const auto ephemeral = Ephemeral(mode, std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
 
-		auto &confDescrDOMDoc = confDescr.getDomDocument();
-
-		::xercesc::DOMElement *e(confDescrDOMDoc.createElementNS(
+		::xercesc::DOMElement *ephemeralE(confDescrDOMDoc.createElementNS(
 		    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
 		    ::xsd::cxx::xml::string("linphone-cie:ephemeral").c_str()));
-		*e << ephemeral;
+		*ephemeralE << ephemeral;
 
-		confDescr.getAny().push_back(e);
+		confDescr.getAny().push_back(ephemeralE);
 	}
 
 	ConferenceParamsInterface::SecurityLevel securityLevel = confParams.getSecurityLevel();
@@ -166,12 +184,11 @@ std::shared_ptr<Content> LocalConferenceEventHandler::createNotifyFullState(cons
 		                                                 : ConferenceParamsInterface::SecurityLevel::None);
 	}
 	const auto cryptoSecurityLevel = CryptoSecurityLevel(ConferenceParams::getSecurityLevelAttribute(securityLevel));
-	auto &confDescrDOMDoc = confDescr.getDomDocument();
-	::xercesc::DOMElement *e(confDescrDOMDoc.createElementNS(
+	::xercesc::DOMElement *cryptoSecurityLevelE(confDescrDOMDoc.createElementNS(
 	    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
 	    ::xsd::cxx::xml::string("linphone-cie:crypto-security-level").c_str()));
-	*e << cryptoSecurityLevel;
-	confDescr.getAny().push_back(e);
+	*cryptoSecurityLevelE << cryptoSecurityLevel;
+	confDescr.getAny().push_back(cryptoSecurityLevelE);
 
 	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
 
@@ -206,18 +223,7 @@ std::shared_ptr<Content> LocalConferenceEventHandler::createNotifyFullState(cons
 			const string &displayName = device->getName();
 			if (!displayName.empty()) endpoint.setDisplayText(displayName);
 
-			auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
-			for (const auto &protocol : protocols) {
-				std::ostringstream versionStr;
-				versionStr << protocol.second;
-				const auto ephemeralService = ServiceDescription(protocol.first, versionStr.str());
-				auto &endpointDOMDoc = endpoint.getDomDocument();
-				::xercesc::DOMElement *e(endpointDOMDoc.createElementNS(
-				    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
-				    ::xsd::cxx::xml::string("linphone-cie:service-description").c_str()));
-				*e << ephemeralService;
-				//				endpoint.setAnyAttribute(e);
-			}
+			addProtocols(device, endpoint);
 
 			// Media capabilities
 			addMediaCapabilities(device, endpoint);
@@ -336,13 +342,7 @@ void LocalConferenceEventHandler::addEndpointSessionInfo(const std::shared_ptr<P
 
 	ExecutionType joiningInfoType = ExecutionType();
 	auto joiningTime = device->getTimeOfJoining();
-	auto utcTimeStruct = Utils::getTimeTAsTm(joiningTime);
-
-	LinphonePrivate::Xsd::XmlSchema::DateTime utcTime(
-	    (utcTimeStruct.tm_year + 1900), static_cast<short unsigned int>(utcTimeStruct.tm_mon + 1),
-	    static_cast<short unsigned int>(utcTimeStruct.tm_mday), static_cast<short unsigned int>(utcTimeStruct.tm_hour),
-	    static_cast<short unsigned int>(utcTimeStruct.tm_min), utcTimeStruct.tm_sec);
-	joiningInfoType.setWhen(utcTime);
+	joiningInfoType.setWhen(timeTToDateTime(joiningTime));
 
 	std::string reason = std::string("Reason: SIP;text=") + reasonText;
 	joiningInfoType.setReason(reason);
@@ -377,7 +377,9 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
 
-	const auto &videoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
+	const auto isScreenSharing = device->screenSharingEnabled();
+	const auto &videoDirection =
+	    isScreenSharing ? LinphoneMediaDirectionSendOnly : device->getStreamCapability(LinphoneStreamTypeVideo);
 	MediaType video = MediaType("2");
 	video.setDisplayText("video");
 	video.setType("video");
@@ -390,6 +392,15 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 		}
 	}
 	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
+	if (isScreenSharing) {
+		const auto streamData = StreamData("slides");
+		auto &videoDOMDoc = video.getDomDocument();
+		::xercesc::DOMElement *e(videoDOMDoc.createElementNS(
+		    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
+		    ::xsd::cxx::xml::string("linphone-cie:stream-data").c_str()));
+		*e << streamData;
+		video.getAny().push_back(e);
+	}
 	endpoint.getMedia().push_back(video);
 
 	const auto &textDirection = device->getStreamCapability(LinphoneStreamTypeText);
@@ -398,6 +409,45 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	text.setType("text");
 	text.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
 	endpoint.getMedia().push_back(text);
+
+	MediaType screenSharing = MediaType("4");
+	screenSharing.setDisplayText("thumbnail");
+	screenSharing.setType("video");
+
+	const auto &thumbnailVideoDirection = device->getThumbnailStreamCapability();
+	if (thumbnailVideoDirection != LinphoneMediaDirectionInactive) {
+		if (!device->getThumbnailStreamLabel().empty()) {
+			screenSharing.setLabel(device->getThumbnailStreamLabel());
+		}
+		if (device->getThumbnailStreamSsrc() > 0) {
+			screenSharing.setSrcId(std::to_string(device->getThumbnailStreamSsrc()));
+		}
+	}
+	screenSharing.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(thumbnailVideoDirection));
+	const auto streamData = StreamData("thumbnail");
+	auto &screenSharingDOMDoc = screenSharing.getDomDocument();
+	::xercesc::DOMElement *e(screenSharingDOMDoc.createElementNS(
+	    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
+	    ::xsd::cxx::xml::string("linphone-cie:stream-data").c_str()));
+	*e << streamData;
+	screenSharing.getAny().push_back(e);
+	endpoint.getMedia().push_back(screenSharing);
+}
+
+void LocalConferenceEventHandler::addProtocols(const std::shared_ptr<ParticipantDevice> &device,
+                                               EndpointType &endpoint) {
+	auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
+	for (const auto &protocol : protocols) {
+		std::ostringstream versionStr;
+		versionStr << protocol.second;
+		const auto ephemeralService = ServiceDescription(protocol.first, versionStr.str());
+		auto &endpointDOMDoc = endpoint.getDomDocument();
+		::xercesc::DOMElement *e(endpointDOMDoc.createElementNS(
+		    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
+		    ::xsd::cxx::xml::string("linphone-cie:service-description").c_str()));
+		*e << ephemeralService;
+		//				endpoint.setAnyAttribute(e);
+	}
 }
 
 std::shared_ptr<Content> LocalConferenceEventHandler::createNotifyMultipart(int notifyId) {
@@ -621,18 +671,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded(const std
 			const string &displayName = participantDevice->getName();
 			if (!displayName.empty()) endpoint.setDisplayText(displayName);
 
-			auto protocols = Utils::parseCapabilityDescriptor(participantDevice->getCapabilityDescriptor());
-			for (const auto &protocol : protocols) {
-				std::ostringstream versionStr;
-				versionStr << protocol.second;
-				const auto ephemeralService = ServiceDescription(protocol.first, versionStr.str());
-				auto &endpointDOMDoc = endpoint.getDomDocument();
-				::xercesc::DOMElement *e(endpointDOMDoc.createElementNS(
-				    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
-				    ::xsd::cxx::xml::string("linphone-cie:service-description").c_str()));
-				*e << ephemeralService;
-				//				endpoint.setAnyAttribute(e);
-			}
+			addProtocols(participantDevice, endpoint);
 
 			// Media capabilities
 			addMediaCapabilities(participantDevice, endpoint);
@@ -677,14 +716,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved(const s
 			const auto &timeOfDisconnection = participantDevice->getTimeOfDisconnection();
 			if (timeOfDisconnection > -1) {
 				ExecutionType disconnectionInfoType = ExecutionType();
-				auto utcTimeStruct = Utils::getTimeTAsTm(timeOfDisconnection);
-
-				LinphonePrivate::Xsd::XmlSchema::DateTime utcTime(
-				    (utcTimeStruct.tm_year + 1900), static_cast<short unsigned int>(utcTimeStruct.tm_mon + 1),
-				    static_cast<short unsigned int>(utcTimeStruct.tm_mday),
-				    static_cast<short unsigned int>(utcTimeStruct.tm_hour),
-				    static_cast<short unsigned int>(utcTimeStruct.tm_min), utcTimeStruct.tm_sec);
-				disconnectionInfoType.setWhen(utcTime);
+				disconnectionInfoType.setWhen(timeTToDateTime(timeOfDisconnection));
 				const auto &reason = participantDevice->getDisconnectionReason();
 				if (!reason.empty()) {
 					disconnectionInfoType.setReason(reason);
@@ -1315,6 +1347,20 @@ void LocalConferenceEventHandler::onParticipantDeviceStateChanged(
 	}
 }
 
+void LocalConferenceEventHandler::onParticipantDeviceScreenSharingChanged(
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
+    const std::shared_ptr<ParticipantDevice> &device) {
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		auto participant = device->getParticipant();
+		notifyAll(
+		    makeContent(createNotifyParticipantDeviceDataChanged(participant->getAddress(), device->getAddress())));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress()
+		           << " being added because pointer to conference is null";
+	}
+}
+
 void LocalConferenceEventHandler::onParticipantDeviceMediaCapabilityChanged(
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
     const std::shared_ptr<ParticipantDevice> &device) {
@@ -1379,6 +1425,15 @@ LocalConferenceEventHandler::getConferenceParticipant(const std::shared_ptr<Addr
 	}
 
 	return participant;
+}
+
+Xsd::XmlSchema::DateTime LocalConferenceEventHandler::timeTToDateTime(const time_t &unixTime) const {
+	auto utcTimeStruct = Utils::getTimeTAsTm(unixTime);
+	LinphonePrivate::Xsd::XmlSchema::DateTime utcTime(
+	    (utcTimeStruct.tm_year + 1900), static_cast<short unsigned int>(utcTimeStruct.tm_mon + 1),
+	    static_cast<short unsigned int>(utcTimeStruct.tm_mday), static_cast<short unsigned int>(utcTimeStruct.tm_hour),
+	    static_cast<short unsigned int>(utcTimeStruct.tm_min), utcTimeStruct.tm_sec, 0, 0);
+	return utcTime;
 }
 
 LINPHONE_END_NAMESPACE

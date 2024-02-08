@@ -313,9 +313,6 @@ void RemoteConference::setLocalParticipantStreamCapability(const LinphoneMediaDi
 	if (session) {
 		const MediaSessionParams *params = session->getMediaParams();
 		MediaSessionParams *currentParams = params->clone();
-		if (!currentParams->rtpBundleEnabled()) {
-			currentParams->enableRtpBundle(true);
-		}
 		lInfo() << "Setting direction of stream of type " << std::string(linphone_stream_type_to_string(type)) << " to "
 		        << std::string(linphone_media_direction_to_string(direction)) << " of main session " << session;
 		switch (type) {
@@ -751,17 +748,17 @@ void RemoteConference::leave() {
 	LinphoneCallState callState = static_cast<LinphoneCallState>(session->getState());
 	switch (callState) {
 		case LinphoneCallPaused:
-			lInfo() << getMe()->getAddress() << " is leaving conference " << *getConferenceAddress()
+			lInfo() << *getMe()->getAddress() << " is leaving conference " << *getConferenceAddress()
 			        << " while focus call is paused.";
 			break;
 		case LinphoneCallStreamsRunning:
-			lInfo() << getMe()->getAddress() << " is leaving conference " << *getConferenceAddress()
+			lInfo() << *getMe()->getAddress() << " is leaving conference " << *getConferenceAddress()
 			        << ". Focus call is going to be paused.";
 			session->pause();
 			participantDeviceLeft(me, me->getDevices().front());
 			break;
 		default:
-			lError() << getMe()->getAddress() << " cannot leave conference " << *getConferenceAddress()
+			lError() << *getMe()->getAddress() << " cannot leave conference " << *getConferenceAddress()
 			         << " because focus call is in state " << linphone_call_state_to_string(callState);
 	}
 }
@@ -899,7 +896,7 @@ void RemoteConference::onFocusCallStateChanged(LinphoneCallState state) {
 					lInfo() << "Sending re-INVITE in order to get streams after joining conference "
 					        << *getConferenceAddress();
 					setState(ConferenceInterface::State::Created);
-					auto ret = updateMainSession();
+					auto ret = updateMainSession(!fullStateUpdate);
 					return ret;
 				};
 
@@ -912,6 +909,7 @@ void RemoteConference::onFocusCallStateChanged(LinphoneCallState state) {
 					// An update has been successfully sent therefore clear the flag scheduleUpdate to avoid sending it
 					// twice.
 					scheduleUpdate = false;
+					fullStateUpdate = false;
 				}
 			}
 		}
@@ -985,8 +983,9 @@ void RemoteConference::onFocusCallStateChanged(LinphoneCallState state) {
 	    ms->getPrivate()->canSoundResourcesBeFreed()) {
 		lInfo() << "Executing scheduled update of the focus session of conference "
 		        << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<address-not-defined>"));
-		if (updateMainSession() == 0) {
+		if (updateMainSession(!fullStateUpdate) == 0) {
 			scheduleUpdate = false;
+			fullStateUpdate = false;
 		} else {
 			lInfo() << "Scheduled update of the focus session of conference "
 			        << (getConferenceAddress() ? getConferenceAddress()->toString()
@@ -1391,8 +1390,9 @@ void RemoteConference::onParticipantDeviceRemoved(
 	const auto &audioAvailable = device->getStreamAvailability(LinphoneStreamTypeAudio);
 	const auto audioNeedsReInvite = ((confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd) &&
 	                                 confParams->audioEnabled() && params->audioEnabled() && audioAvailable);
-
 	const auto videoNeedsReInvite = (confParams->videoEnabled() && params->videoEnabled());
+
+	updateMinatureRequestedFlag();
 
 	if ((audioNeedsReInvite || videoNeedsReInvite) && (getState() == ConferenceInterface::State::Created) &&
 	    !isMe(deviceAddress) && (device->getTimeOfJoining() >= 0)) {
@@ -1427,6 +1427,7 @@ void RemoteConference::onParticipantDeviceStateChanged(
 		return (*devAddr == contactAddress);
 	});
 
+	bool changed = updateMinatureRequestedFlag();
 	const auto &deviceAddress = device->getAddress();
 	const auto &audioAvailable = device->getStreamAvailability(LinphoneStreamTypeAudio);
 	const auto &confSecurityLevel = confParams->getSecurityLevel();
@@ -1435,8 +1436,8 @@ void RemoteConference::onParticipantDeviceStateChanged(
 	const auto &videoAvailable = device->getStreamAvailability(LinphoneStreamTypeVideo);
 	const auto videoNeedsReInvite = (confParams->videoEnabled() && params->videoEnabled() && videoAvailable);
 	if ((getState() == ConferenceInterface::State::Created) && (callIt == m_pendingCalls.cend()) && isIn() &&
-	    (device->getState() == ParticipantDevice::State::Present) && ((videoNeedsReInvite || audioNeedsReInvite)) &&
-	    !isMe(deviceAddress)) {
+	    (device->getState() == ParticipantDevice::State::Present) &&
+	    ((videoNeedsReInvite || audioNeedsReInvite || changed)) && !isMe(deviceAddress)) {
 		auto updateSession = [this, deviceAddress]() -> LinphoneStatus {
 			lInfo() << "Sending re-INVITE in order to get streams for participant device " << *deviceAddress
 			        << " that joined recently the conference " << *getConferenceAddress();
@@ -1459,6 +1460,7 @@ void RemoteConference::onParticipantDeviceMediaAvailabilityChanged(
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
     const std::shared_ptr<ParticipantDevice> &device) {
 	if ((!isMe(device->getAddress())) && (getState() == ConferenceInterface::State::Created) && isIn()) {
+		updateMinatureRequestedFlag();
 		auto updateSession = [this, device]() -> LinphoneStatus {
 			lInfo() << "Sending re-INVITE because device " << *device->getAddress()
 			        << " has changed its stream availability";
@@ -1476,15 +1478,46 @@ void RemoteConference::onParticipantDeviceMediaAvailabilityChanged(
 	}
 }
 
+void RemoteConference::onParticipantDeviceScreenSharingChanged(
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
+    const std::shared_ptr<ParticipantDevice> &device) {
+	auto session = getMainSession();
+	if ((device->getSession() == session) && isIn() && device->screenSharingEnabled()) {
+		notifyActiveSpeakerParticipantDevice(device);
+	}
+	const auto ms = static_pointer_cast<MediaSession>(session);
+	ConferenceLayout confLayout = ms->getMediaParams()->getConferenceVideoLayout();
+	bool isGridLayout = (confLayout == ConferenceLayout::Grid);
+	if (updateMinatureRequestedFlag() || isGridLayout) {
+		auto updateSession = [this, device]() -> LinphoneStatus {
+			lInfo() << "Sending re-INVITE because participant thumbnails are"
+			        << (areThumbnailsRequested(false) ? " " : " no longer ") << "requested in conference "
+			        << *getConferenceAddress() << " or the conference layout is Grid";
+			auto ret = updateMainSession();
+			if (ret != 0) {
+				lInfo() << "Delaying re-INVITE because participant thumbnails are "
+				        << (areThumbnailsRequested(false) ? "" : "no longer") << " requested in conference "
+				        << *getConferenceAddress() << " or the conference layout is Grid cannot be sent right now";
+			}
+			return ret;
+		};
+
+		if (updateSession() != 0) {
+			scheduleUpdate = true;
+		}
+	}
+}
+
 void RemoteConference::onFullStateReceived() {
 	// When receiving a full state, we must recreate the conference informations in order to get the security level and
 	// the participant list up to date
 	updateAndSaveConferenceInformations();
+	updateMinatureRequestedFlag();
 
 	auto requestStreams = [this]() -> LinphoneStatus {
 		lInfo() << "Sending re-INVITE in order to get streams after joining conference " << *getConferenceAddress();
 		setState(ConferenceInterface::State::Created);
-		auto ret = updateMainSession();
+		auto ret = updateMainSession(false);
 		return ret;
 	};
 
@@ -1497,10 +1530,12 @@ void RemoteConference::onFullStateReceived() {
 	if (session && (!session->mediaInProgress() || !session->getPrivate()->isUpdateSentWhenIceCompleted())) {
 		if (requestStreams() != 0) {
 			scheduleUpdate = true;
+			fullStateUpdate = true;
 		}
 	} else {
 		lInfo() << "Delaying re-INVITE in order to get streams after joining conference " << *getConferenceAddress()
 		        << " because ICE negotiations didn't end yet";
+		fullStateUpdate = true;
 	}
 
 	fullStateReceived = true;
@@ -1538,13 +1573,20 @@ void RemoteConference::notifyDisplayedSpeaker(uint32_t csrc) {
 
 	if (csrc != 0) {
 		auto device = findParticipantDeviceBySsrc(csrc, LinphoneStreamTypeVideo);
-
 		if (device) {
 			notifyActiveSpeakerParticipantDevice(device);
 			lastNotifiedSsrc = csrc;
 		} else {
-			lError() << "Conference [" << this << "]: Active speaker changed with csrc: " << csrc
-			         << " but it does not correspond to any participant device";
+			auto meDevice = getMe()->findDeviceBySsrc(csrc, LinphoneStreamTypeVideo);
+			if (meDevice) {
+				lInfo() << "Received notification that the me participant " << *getMe()->getAddress()
+				        << " is the active speaker of conference [" << this << " address: " << *getConferenceAddress()
+				        << "]";
+			} else {
+				lError() << "Conference [" << this << " address: " << *getConferenceAddress()
+				         << "]: Active speaker changed with csrc: " << csrc
+				         << " but it does not correspond to any participant device";
+			}
 		}
 	} else {
 		if (louderSpeaker != lastNotifiedSsrc) notifyLouderSpeaker(louderSpeaker);
@@ -1552,14 +1594,25 @@ void RemoteConference::notifyDisplayedSpeaker(uint32_t csrc) {
 }
 
 void RemoteConference::notifyLouderSpeaker(uint32_t ssrc) {
+	// Ignore louder speaker notification as long as a participant device is screen sharing as the stream in the active
+	// speaker window is the screen shared
+	if (getScreenSharingDevice()) return;
 	if (lastNotifiedSsrc == ssrc) return;
 
 	louderSpeaker = ssrc;
 
 	auto device = findParticipantDeviceBySsrc(ssrc, LinphoneStreamTypeAudio);
 	if (device == nullptr) {
-		lError() << "Conference [" << this << "]: Active speaker changed with ssrc: " << ssrc
-		         << " but it does not correspond to any participant device";
+		auto meDevice = getMe()->findDeviceBySsrc(ssrc, LinphoneStreamTypeAudio);
+		if (meDevice) {
+			lInfo() << "Received notification that the me participant " << *getMe()->getAddress()
+			        << " is the louder speaker of conference [" << this << " address: " << *getConferenceAddress()
+			        << "]";
+		} else {
+			lError() << "Conference [" << this << " address: " << *getConferenceAddress()
+			         << "]: Active speaker changed with ssrc: " << ssrc
+			         << " but it does not correspond to any participant device";
+		}
 		return;
 	}
 
@@ -1574,6 +1627,49 @@ void RemoteConference::notifyLouderSpeaker(uint32_t ssrc) {
 			lastNotifiedSsrc = ssrc;
 		}
 	}
+}
+
+std::pair<bool, LinphoneMediaDirection> RemoteConference::getMainStreamVideoDirection(
+    const std::shared_ptr<CallSession> &session, BCTBX_UNUSED(bool localIsOfferer), bool useLocalParams) const {
+	const auto ms = static_pointer_cast<MediaSession>(session);
+	auto participantDevice = getMe()->findDevice(session);
+	bool enableVideoStream =
+	    (useLocalParams) ? ms->getMediaParams()->videoEnabled() : ms->getCurrentParams()->videoEnabled();
+
+	const auto videoDirInParams = ms->getMediaParams()->getVideoDirection();
+	const auto sendingVideo =
+	    ((videoDirInParams == LinphoneMediaDirectionSendRecv) || (videoDirInParams == LinphoneMediaDirectionSendOnly));
+	bool isScreenSharing = ms->getMediaParams()->screenSharingEnabled();
+	ConferenceLayout confLayout = ms->getMediaParams()->getConferenceVideoLayout();
+	const auto &cameraEnabled = ms->getMediaParams()->cameraEnabled();
+	LinphoneMediaDirection videoDir = LinphoneMediaDirectionInactive;
+	if (isScreenSharing) {
+		// Set the video direction to inactive if the participant has enabled screen sharing but the video
+		// direction in the call parameters has no send component
+		videoDir = ((sendingVideo) ? LinphoneMediaDirectionSendOnly : LinphoneMediaDirectionInactive);
+	} else {
+		switch (confLayout) {
+			case ConferenceLayout::ActiveSpeaker:
+				if (cameraEnabled) {
+					videoDir = videoDirInParams;
+				} else {
+					videoDir = LinphoneMediaDirectionRecvOnly;
+				}
+				break;
+			case ConferenceLayout::Grid:
+				if (sendingVideo) {
+					if (cameraEnabled) {
+						videoDir = LinphoneMediaDirectionSendOnly;
+					} else {
+						videoDir = LinphoneMediaDirectionInactive;
+					}
+				} else {
+					videoDir = LinphoneMediaDirectionInactive;
+				}
+				break;
+		}
+	}
+	return std::make_pair(enableVideoStream, videoDir);
 }
 
 } // end of namespace MediaConference

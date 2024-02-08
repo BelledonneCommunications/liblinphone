@@ -226,7 +226,7 @@ time_t Utils::getTmAsTimeT(const tm &t) {
 	time_t adjustTimezone;
 #endif
 
-#if TARGET_IPHONE_SIMULATOR
+#if defined(TARGET_IPHONE_SIMULATOR) || defined(__linux__)
 	result = timegm(&tCopy);
 	adjustTimezone = 0;
 #else

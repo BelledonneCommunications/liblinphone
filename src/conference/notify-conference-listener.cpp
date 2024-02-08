@@ -81,6 +81,13 @@ void NotifyConferenceListener::onParticipantDeviceStateChanged(
 	                                                             (LinphoneParticipantDeviceState)device->getState());
 }
 
+void NotifyConferenceListener::onParticipantDeviceScreenSharingChanged(
+    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
+    const std::shared_ptr<ParticipantDevice> &device) {
+	_linphone_conference_notify_participant_device_screen_sharing_changed(conf->toC(), device->toC(),
+	                                                                      (bool_t)device->screenSharingEnabled());
+}
+
 void NotifyConferenceListener::onParticipantDeviceMediaAvailabilityChanged(
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
     const std::shared_ptr<ParticipantDevice> &device) {

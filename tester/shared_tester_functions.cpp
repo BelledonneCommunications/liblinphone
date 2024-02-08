@@ -26,6 +26,7 @@
 #include "conference/params/media-session-params.h"
 #include "conference/participant-device.h"
 #include "conference/participant-info.h"
+#include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "liblinphone_tester.h"
 #include "mediastreamer2/msmire.h"
@@ -110,7 +111,7 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 
 			LinphonePrivate::SalCallOp *op = LinphonePrivate::Call::toCpp(c2)->getOp();
 			const std::shared_ptr<SalMediaDescription> &result_desc = op->getFinalMediaDescription();
-			const auto &result_stream = result_desc->getStreamIdx(0);
+			const auto &result_stream = result_desc->getStreamAtIdx(0);
 			if (result_stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 				expected_addr = result_stream.getRtpAddress();
 			}
@@ -594,7 +595,6 @@ void _linphone_conference_video_change(bctbx_list_t *lcs,
 		bctbx_list_t *devices = linphone_participant_get_devices(participant);
 		const LinphoneAddress *addrMgr3 =
 		    linphone_participant_device_get_address((LinphoneParticipantDevice *)devices->data);
-
 		BC_ASSERT_TRUE(linphone_address_equal(addrMgr1, addrMgr3));
 
 		bctbx_list_free_with_data(devices, (bctbx_list_free_func)linphone_participant_device_unref);
@@ -673,7 +673,8 @@ const char *_linphone_call_get_subject(LinphoneCall *call) {
 
 static std::string get_ice_default_candidate(LinphoneCoreManager *m) {
 	std::string rtpAddress;
-	rtpAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(m->lc))->getStreamIdx(0).getRtpAddress();
+	rtpAddress =
+	    _linphone_call_get_local_desc(linphone_core_get_current_call(m->lc))->getStreamAtIdx(0).getRtpAddress();
 	if (!rtpAddress.empty()) {
 		return rtpAddress;
 	} else {
@@ -845,15 +846,12 @@ bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConfere
 	if (!remote_conference) ret = false;
 	if (local_conference && remote_conference) {
 		bctbx_list_t *local_conference_participants = linphone_conference_get_participant_list(local_conference);
-
-		LinphoneParticipant *remote_conference_me = linphone_conference_get_me(remote_conference);
-		const LinphoneAddress *remote_me_address = linphone_participant_get_address(remote_conference_me);
 		for (bctbx_list_t *itp = local_conference_participants; itp; itp = bctbx_list_next(itp)) {
 			LinphoneParticipant *p = (LinphoneParticipant *)bctbx_list_get_data(itp);
 			const LinphoneAddress *p_address = linphone_participant_get_address(p);
 			bctbx_list_t *local_devices = NULL;
 			LinphoneParticipant *remote_participant =
-			    (linphone_address_equal(p_address, remote_me_address))
+			    (linphone_conference_is_me(remote_conference, p_address))
 			        ? linphone_conference_get_me(remote_conference)
 			        : linphone_conference_find_participant(remote_conference, p_address);
 			if (!remote_participant) ret = false;
@@ -868,14 +866,40 @@ bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConfere
 						for (const auto type :
 						     {LinphoneStreamTypeAudio, LinphoneStreamTypeVideo, LinphoneStreamTypeText}) {
 							for (const auto device : {d, remote_device}) {
-								if (linphone_participant_device_get_stream_capability(device, type) !=
-								    LinphoneMediaDirectionInactive) {
-									if (linphone_participant_device_get_ssrc(device, type) == 0) {
+								LinphoneMediaDirection media_direction =
+								    linphone_participant_device_get_stream_capability(device, type);
+								// The thumbnail video stream can only be sendonly (or recvonly from the server
+								// standpoint) or inactive. Henceherefore a client that can only receive video, will
+								// have to set it to inactive
+								if (media_direction == LinphoneMediaDirectionInactive) {
+									if (linphone_participant_device_get_ssrc(device, type) != 0) {
 										ret = false;
 									}
 								} else {
-									if (linphone_participant_device_get_ssrc(device, type) != 0) {
+									if (linphone_participant_device_get_ssrc(device, type) == 0) {
 										ret = false;
+									}
+								}
+
+								if (type == LinphoneStreamTypeVideo) {
+									bool_t stream_available =
+									    linphone_participant_device_get_stream_availability(device, type);
+									if (!stream_available) {
+										continue;
+									}
+									uint32_t video_ssrc = linphone_participant_device_get_ssrc(device, type);
+
+									auto cppDevice = ParticipantDevice::toCpp(device)->getSharedFromThis();
+									bool thumbnail_available = cppDevice->getThumbnailStreamAvailability();
+									uint32_t thumbnail_ssrc = cppDevice->getThumbnailStreamSsrc();
+
+									if (thumbnail_available) {
+										if (thumbnail_ssrc == 0) {
+											ret = false;
+										}
+										if (thumbnail_ssrc == video_ssrc) {
+											ret = false;
+										}
 									}
 								}
 							}
@@ -892,6 +916,55 @@ bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConfere
 	return ret;
 }
 
+static bool_t screen_sharing_enabled_in_stream(const std::shared_ptr<SalMediaDescription> md) {
+	if (md) {
+		SalStreamDescription stream = md->findStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
+		if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			const SalStreamDir dir = stream.getDirection();
+			return (dir == SalStreamSendRecv) || (dir == SalStreamSendOnly);
+		}
+	}
+	return false;
+}
+
+bool_t screen_sharing_enabled_in_local_description(LinphoneCall *call) {
+	SalCallOp *op = Call::toCpp(call)->getOp();
+	if (op) {
+		const std::shared_ptr<SalMediaDescription> &local_desc = op->getLocalMediaDescription();
+		return screen_sharing_enabled_in_stream(local_desc);
+	}
+	return FALSE;
+}
+
+bool_t screen_sharing_enabled_in_remote_description(LinphoneCall *call) {
+	SalCallOp *op = Call::toCpp(call)->getOp();
+	if (op) {
+		const std::shared_ptr<SalMediaDescription> &remote_desc = op->getRemoteMediaDescription();
+		return screen_sharing_enabled_in_stream(remote_desc);
+	}
+	return FALSE;
+}
+
+bool_t screen_sharing_enabled_in_negotiated_description(LinphoneCall *call) {
+	SalCallOp *op = Call::toCpp(call)->getOp();
+	if (op) {
+		LinphoneCore *core = linphone_call_get_core(call);
+		bool_t is_conference_server = linphone_core_conference_server_enabled(core);
+		const std::shared_ptr<SalMediaDescription> &desc =
+		    is_conference_server ? op->getRemoteMediaDescription() : op->getLocalMediaDescription();
+		int streamIdx = desc->findIdxStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
+		if (streamIdx != -1) {
+			const std::shared_ptr<SalMediaDescription> &negotiated_desc = op->getFinalMediaDescription();
+			SalStreamDescription stream = negotiated_desc->getStreamAtIdx(streamIdx);
+			if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+				const SalStreamDir dir = stream.getDirection();
+				return (dir == SalStreamSendRecv) || (dir == SalStreamSendOnly);
+			}
+		}
+	}
+	return FALSE;
+}
+
 void check_chat_message_properties(LinphoneChatMessage *msg) {
 	BC_ASSERT_PTR_NOT_NULL(msg);
 	if (!msg) return;
@@ -901,4 +974,47 @@ void check_chat_message_properties(LinphoneChatMessage *msg) {
 		auto contentList = cppMsg->getProperty("content-list");
 		BC_ASSERT_TRUE(contentList.isValid());
 	}
+}
+
+bool_t check_screen_sharing_call_sdp(LinphoneCall *call, bool_t screen_sharing_enabled) {
+	bool ret = (call != nullptr);
+	BC_ASSERT_PTR_NOT_NULL(call);
+	if (call) {
+		LinphonePrivate::SalCallOp *op = LinphonePrivate::Call::toCpp(call)->getOp();
+		bool_t is_in_conference = linphone_call_is_in_conference(call);
+		const std::shared_ptr<SalMediaDescription> &content_desc =
+		    is_in_conference ? op->getRemoteMediaDescription() : op->getLocalMediaDescription();
+		int screenSharingStreamIdx =
+		    content_desc->findIdxStreamWithContent(MediaSessionPrivate::ScreenSharingContentAttribute);
+		if (screenSharingStreamIdx == -1) {
+			ret &= (screen_sharing_enabled == FALSE);
+		} else {
+			const std::shared_ptr<SalMediaDescription> &label_desc =
+			    is_in_conference ? op->getLocalMediaDescription() : op->getRemoteMediaDescription();
+			SalStreamDescription screen_sharing_stream = label_desc->getStreamAtIdx(screenSharingStreamIdx);
+			const std::string screen_sharing_label = screen_sharing_stream.getLabel();
+			int thumbnailStreamIdx =
+			    content_desc->findIdxStreamWithContent(MediaSessionPrivate::ThumbnailVideoContentAttribute);
+			if (thumbnailStreamIdx == -1) {
+				// If no thumbnail stream is found, then verify that the screen sharing label is not empty
+				ret &= screen_sharing_enabled ? !screen_sharing_label.empty() : screen_sharing_label.empty();
+			} else {
+				SalStreamDescription thumbnail_stream = label_desc->getStreamAtIdx(thumbnailStreamIdx);
+				const std::string thumbnail_label = thumbnail_stream.getLabel();
+				// Verify that the label of the screen sharing and thumbnail streams are different
+				ret &= screen_sharing_enabled ? (thumbnail_label.compare(screen_sharing_label) != 0)
+				                              : (thumbnail_label.compare(screen_sharing_label) == 0);
+			}
+		}
+	}
+	return ret ? TRUE : FALSE;
+}
+
+bool_t check_screen_sharing_sdp(LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, bool_t screen_sharing_enabled) {
+	bool_t ret = TRUE;
+	LinphoneCall *mgr1_call = linphone_core_get_call_by_remote_address2(mgr1->lc, mgr2->identity);
+	ret &= check_screen_sharing_call_sdp(mgr1_call, screen_sharing_enabled);
+	LinphoneCall *mgr2_call = linphone_core_get_call_by_remote_address2(mgr2->lc, mgr1->identity);
+	ret &= check_screen_sharing_call_sdp(mgr2_call, screen_sharing_enabled);
+	return ret;
 }

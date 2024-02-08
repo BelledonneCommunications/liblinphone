@@ -185,6 +185,14 @@ public:
 	                                             const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
+	 * This fonction is called each time a participant device starts or stops screen sharing
+	 * @param[in] event informations related to the device's participant who starts or stops screen sharing. @notnil
+	 * @param[in] device participant device who starts or stops screen sharing @notnil
+	 */
+	virtual void onParticipantDeviceScreenSharingChanged(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+	                                                     const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
 	 * This fonction is called each time a participant device changes the ephemeral settings
 	 * @param[in] event informations related to the device's participant.
 	 */
@@ -224,6 +232,7 @@ private:
 
 	std::shared_ptr<Participant> getConferenceParticipant(const std::shared_ptr<Address> &address) const;
 
+	void addProtocols(const std::shared_ptr<ParticipantDevice> &device, Xsd::ConferenceInfo::EndpointType &endpoint);
 	void addMediaCapabilities(const std::shared_ptr<ParticipantDevice> &device,
 	                          Xsd::ConferenceInfo::EndpointType &endpoint);
 	void addEndpointSessionInfo(const std::shared_ptr<ParticipantDevice> &device,
@@ -234,6 +243,8 @@ private:
 	                                   const LinphoneMediaDirection videoDirection,
 	                                   const LinphoneMediaDirection textDirection,
 	                                   Xsd::ConferenceInfo::ConferenceDescriptionType &confDescr);
+
+	Xsd::XmlSchema::DateTime timeTToDateTime(const time_t &unixTime) const;
 
 	L_DISABLE_COPY(LocalConferenceEventHandler);
 };

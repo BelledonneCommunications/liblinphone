@@ -251,7 +251,7 @@ static bool_t is_matching_a_local_address(const std::string &ip, const bctbx_lis
 static bool assert_ice_candidate_presence(const LinphonePrivate::SalMediaDescription *md,
                                           const std::string &type,
                                           const std::string &addr) {
-	const LinphonePrivate::SalStreamDescription &st = md->getStreamIdx(0);
+	const LinphonePrivate::SalStreamDescription &st = md->getStreamAtIdx(0);
 	for (const auto &candidate : st.getIceCandidates()) {
 		if (candidate.addr == addr && candidate.type == type) return true;
 	}
@@ -352,7 +352,7 @@ static void _call_with_ice_with_default_candidate(bool_t dont_default_to_stun_ca
 			}
 		} else {
 			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))
-			                   ->getStreamIdx(0)
+			                   ->getStreamAtIdx(0)
 			                   .getRtpAddress()
 			                   .find(':') == std::string::npos);
 		}
@@ -843,9 +843,11 @@ static void call_with_ice_and_dual_stack_stun_server(void) {
 
 	if (marie_call && pauline_call) {
 		std::string paulineConnectionAddress =
-		    _linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getStreamIdx(0).getRtpAddress();
+		    _linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))
+		        ->getStreamAtIdx(0)
+		        .getRtpAddress();
 		std::string marieConnectionAddress =
-		    _linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress();
+		    _linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamAtIdx(0).getRtpAddress();
 
 		/* The stun server shall provide marie with an IPv4 address, that we should find in c= of SDP.*/
 		BC_ASSERT_TRUE(marieConnectionAddress.find(':') == std::string::npos);

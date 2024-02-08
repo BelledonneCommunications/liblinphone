@@ -390,12 +390,11 @@ void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj);
 
 /* conference */
 LINPHONE_PUBLIC bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant);
-void _linphone_conference_notify_participant_added(LinphoneConference *conference,
-                                                   const LinphoneParticipant *participant);
+void _linphone_conference_notify_participant_added(LinphoneConference *conference, LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_removed(LinphoneConference *conference,
                                                      const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference,
-                                                          const LinphoneParticipantDevice *participant_device);
+                                                          LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference,
                                                             const LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_role_changed(LinphoneConference *conference,
@@ -409,6 +408,8 @@ void _linphone_conference_notify_participant_device_media_availability_changed(
 void _linphone_conference_notify_participant_device_state_changed(LinphoneConference *conference,
                                                                   const LinphoneParticipantDevice *participant_device,
                                                                   const LinphoneParticipantDeviceState state);
+void _linphone_conference_notify_participant_device_screen_sharing_changed(
+    LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t enabled);
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_available_media_changed(LinphoneConference *conference);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
@@ -425,12 +426,18 @@ void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipant
 void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *participant_device, bool_t is_muted);
 void _linphone_participant_device_notify_state_changed(LinphoneParticipantDevice *participant_device,
                                                        const LinphoneParticipantDeviceState state);
+void _linphone_participant_device_notify_screen_sharing_enabled(LinphoneParticipantDevice *participant_device,
+                                                                bool_t enabled);
 void _linphone_participant_device_notify_stream_availability_changed(LinphoneParticipantDevice *participant_device,
                                                                      bool_t available,
                                                                      const LinphoneStreamType stream_type);
+void _linphone_participant_device_notify_thumbnail_stream_availability_changed(
+    LinphoneParticipantDevice *participant_device, bool_t available);
 void _linphone_participant_device_notify_stream_capability_changed(LinphoneParticipantDevice *participant_device,
                                                                    LinphoneMediaDirection direction,
                                                                    const LinphoneStreamType stream_type);
+void _linphone_participant_device_notify_thumbnail_stream_capability_changed(
+    LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
 
 void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceScheduler *conference_scheduler,
                                                         LinphoneConferenceSchedulerState state);

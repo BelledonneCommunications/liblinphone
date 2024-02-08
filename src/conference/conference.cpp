@@ -25,6 +25,7 @@
 #include "conference/participant-device.h"
 #include "conference/participant-info.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
@@ -141,26 +142,46 @@ bool Conference::addParticipants(const std::list<std::shared_ptr<Call>> &calls) 
 	return soFarSoGood;
 }
 
-LinphoneStatus Conference::updateMainSession() {
+LinphoneStatus Conference::updateMainSession(bool modifyParams) {
 	LinphoneStatus ret = -1;
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	if (session) {
 		const MediaSessionParams *params = session->getMediaParams();
-		MediaSessionParams *currentParams = params->clone();
-		currentParams->getPrivate()->setInternalCallUpdate(false);
-		if (!currentParams->rtpBundleEnabled()) {
-			currentParams->enableRtpBundle(true);
-		}
+		if (params->rtpBundleEnabled()) {
+			MediaSessionParams *currentParams = params->clone();
+			currentParams->getPrivate()->setInternalCallUpdate(false);
 
-		// Update parameters based on conference capabilities
-		if (!confParams->audioEnabled()) {
-			currentParams->enableAudio(confParams->audioEnabled());
+			// Update parameters based on conference capabilities
+			if (!confParams->audioEnabled()) {
+				currentParams->enableAudio(confParams->audioEnabled());
+			}
+			if (!confParams->videoEnabled()) {
+				currentParams->enableVideo(confParams->videoEnabled());
+			}
+
+			bool wasScreenSharingEnabled = currentParams->screenSharingEnabled();
+			if (modifyParams) {
+				const auto screenSharingParticipant = getScreenSharingParticipant();
+				bool screenSharingEnabled = false;
+				if (getCachedScreenSharingDevice()) {
+					// Disable screen sharing if no participant is screen sharing or the participant who is sharing its
+					// screen is not the me participant
+					screenSharingEnabled = screenSharingParticipant && isMe(screenSharingParticipant->getAddress());
+				} else {
+					// If no one was screen sharing, we can try again to enabled screen sharing
+					screenSharingEnabled = wasScreenSharingEnabled;
+				}
+				currentParams->enableScreenSharing(screenSharingEnabled);
+			}
+			ret = session->update(currentParams);
+			// Restore the screen sharing flag as it was before and change local parameters
+			currentParams->enableScreenSharing(wasScreenSharingEnabled);
+			session->getPrivate()->setParams(currentParams);
+		} else {
+			lWarning() << "Unable to update session " << session << " of conference " << *getConferenceAddress()
+			           << " because RTP bundle is disabled";
+			ret = 0;
 		}
-		if (!confParams->videoEnabled()) {
-			currentParams->enableVideo(confParams->videoEnabled());
-		}
-		ret = session->update(currentParams);
-		delete currentParams;
 	}
 	return ret;
 }
@@ -217,6 +238,30 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices() co
 	}
 
 	return devices;
+}
+
+void Conference::setCachedScreenSharingDevice() {
+	cachedScreenSharingDevice = getScreenSharingDevice();
+}
+
+void Conference::resetCachedScreenSharingDevice() {
+	cachedScreenSharingDevice = nullptr;
+}
+
+std::shared_ptr<ParticipantDevice> Conference::getCachedScreenSharingDevice() const {
+	return cachedScreenSharingDevice;
+}
+
+const std::shared_ptr<Participant> Conference::getScreenSharingParticipant() const {
+	const auto device = getScreenSharingDevice();
+	return (device) ? device->getParticipant() : nullptr;
+}
+
+const std::shared_ptr<ParticipantDevice> Conference::getScreenSharingDevice() const {
+	const auto devices = getParticipantDevices();
+	const auto screenSharingDeviceIt =
+	    std::find_if(devices.cbegin(), devices.cend(), [](const auto &d) { return d->screenSharingEnabled(); });
+	return (screenSharingDeviceIt == devices.cend()) ? nullptr : (*screenSharingDeviceIt);
 }
 
 const string &Conference::getSubject() const {
@@ -302,6 +347,23 @@ Conference::notifyParticipantDeviceStateChanged(time_t creationTime,
 
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceStateChanged(event, participantDevice);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent>
+Conference::notifyParticipantDeviceScreenSharingChanged(time_t creationTime,
+                                                        const bool isFullState,
+                                                        const std::shared_ptr<Participant> &participant,
+                                                        const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+	    EventLog::Type::ConferenceParticipantDeviceStatusChanged, creationTime, conferenceId, participant->getAddress(),
+	    participantDevice->getAddress(), participantDevice->getName());
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceScreenSharingChanged(event, participantDevice);
 	}
 	return event;
 }
@@ -394,11 +456,8 @@ shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<Addres
 shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const LinphoneStreamType type,
                                                                        const std::string &label) const {
 	for (const auto &participant : participants) {
-		auto device = participant->findDevice(label, false);
+		auto device = participant->findDevice(type, label, false);
 		if (device) return device;
-		for (const auto &device : participant->getDevices()) {
-			if (device->getLabel(type) == label) return device;
-		}
 	}
 
 	lDebug() << "Unable to find participant device in conference "
@@ -726,10 +785,10 @@ void Conference::notifyStateChanged(LinphonePrivate::ConferenceInterface::State 
 }
 
 void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	activeSpeakerDevice = participantDevice;
 	for (const auto &l : confListeners) {
 		l->onActiveSpeakerParticipantDevice(participantDevice);
 	}
-	activeSpeakerDevice = participantDevice;
 }
 
 std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
@@ -789,6 +848,17 @@ const std::shared_ptr<ConferenceInfo> Conference::getUpdatedConferenceInfo() con
 
 	for (const auto &participant : getParticipants()) {
 		updateParticipantInfoInConferenceInfo(conferenceInfo, participant);
+	}
+
+	// Update start time and duration as this information can be sent through the SUBSCRIBE/NOTIFY dialog. In fact, if a
+	// client dials a conference without prior knowledge (for example it is given an URI to call), the start and end
+	// time are initially estimated as there is no conference information associated to that URI.
+	time_t startTime = confParams->getStartTime();
+	time_t endTime = confParams->getEndTime();
+	conferenceInfo->setDateTime(startTime);
+	if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
+		unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
+		conferenceInfo->setDuration(duration);
 	}
 
 	conferenceInfo->setSecurityLevel(confParams->getSecurityLevel());
@@ -984,6 +1054,47 @@ void Conference::updateParticipantInConferenceInfo(const std::shared_ptr<Partici
 		}
 	}
 #endif // HAVE_DB_STORAGE
+}
+
+bool Conference::updateMinatureRequestedFlag() const {
+	auto oldMinaturesRequested = thumbnailsRequested;
+	int thumbnailAvailableCount = 0;
+	for (const auto &p : participants) {
+		for (const auto &d : p->getDevices()) {
+			auto dir = d->getThumbnailStreamCapability();
+			if ((dir == LinphoneMediaDirectionSendOnly) || (dir == LinphoneMediaDirectionSendRecv)) {
+				thumbnailAvailableCount++;
+			}
+		}
+	}
+	int max_thumbnails = linphone_core_get_conference_max_thumbnails(getCore()->getCCore());
+	thumbnailsRequested = (thumbnailAvailableCount <= max_thumbnails);
+	bool changed = (oldMinaturesRequested != thumbnailsRequested);
+	for (const auto &p : participants) {
+		for (const auto &d : p->getDevices()) {
+			// Even if the request of thumbnails has not changed, it may be possible that the stream availabilities have
+			// changed if one participant devices stqrts or stops sharing its screen
+			auto availabilityChanges = d->updateStreamAvailabilities();
+			changed |= (availabilityChanges.find(LinphoneStreamTypeVideo) != availabilityChanges.cend());
+		}
+	}
+
+	return changed;
+}
+
+bool Conference::areThumbnailsRequested(bool update) const {
+	if (update) {
+		updateMinatureRequestedFlag();
+	}
+	return thumbnailsRequested;
+}
+
+std::pair<bool, LinphoneMediaDirection>
+Conference::getMainStreamVideoDirection(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+                                        BCTBX_UNUSED(bool localIsOfferer),
+                                        BCTBX_UNUSED(bool useLocalParams)) const {
+	lWarning() << __func__ << " not implemented";
+	return std::make_pair(false, LinphoneMediaDirectionInactive);
 }
 
 LINPHONE_END_NAMESPACE

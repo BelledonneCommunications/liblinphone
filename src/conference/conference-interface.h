@@ -336,6 +336,15 @@ public:
 	                                    BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)){};
 
 	/*
+	 * This fonction is called each time a participant device starts or stops screen sharing
+	 * @param[in] event informations related to the device's participant who starts or stops screen sharing. @notnil
+	 * @param[in] device participant device who starts or stops screen sharing @notnil
+	 */
+	virtual void onParticipantDeviceScreenSharingChanged(
+	    BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
+	    BCTBX_UNUSED(const std::shared_ptr<ParticipantDevice> &device)){};
+
+	/*
 	 * This fonction is called each time a participant device changes the ephemeral mode
 	 * @param[in] event informations related to the device's participant.
 	 */

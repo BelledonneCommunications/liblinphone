@@ -299,11 +299,15 @@ std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(MSFactory *factory
 		}
 		if (!found) {
 			const auto &p1 = local.front();
-			ms_message("Adding %s/%i for compatibility, just in case.", p1->mime_type, p1->clock_rate);
-			PayloadType *cloned_p1 = payload_type_clone(p1);
-			payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FLAG_CAN_RECV);
-			payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FROZEN_NUMBER);
-			res.push_back(cloned_p1);
+			if (p1) {
+				ms_message("Adding %s/%i for compatibility, just in case.", p1->mime_type, p1->clock_rate);
+				PayloadType *cloned_p1 = payload_type_clone(p1);
+				payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FLAG_CAN_RECV);
+				payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FROZEN_NUMBER);
+				res.push_back(cloned_p1);
+			} else {
+				ms_error("Unable to add payload for compatibilty. Local has %zu payloads available", local.size());
+			}
 		}
 	} else {
 		/* case of generating an answer */
@@ -770,14 +774,13 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 		    factory, local_cap, remote_offer, result, one_matching_codec, bundle_owner_mid, localCfgIdx, remoteCfgIdx);
 	}
 
-	if (!remote_offer.getLabel().empty()) {
+	if (remote_offer.getLabel().empty()) {
+		result.setLabel(local_cap.getLabel());
+	} else {
 		// Offer made by local conference
 		result.setLabel(remote_offer.getLabel());
-		result.setContent(remote_offer.getContent());
-	} else {
-		result.setLabel(local_cap.getLabel());
-		result.setContent(local_cap.getContent());
 	}
+	result.setContent(local_cap.getContent());
 
 	if (resultNegCfg) {
 		auto resultCfg = resultNegCfg.value();
@@ -1056,7 +1059,10 @@ OfferAnswerEngine::initiateOutgoing(MSFactory *factory,
 			ms_warning("No matching stream for %zu", i);
 		}
 	}
-	result->times = remote_answer->times;
+	// t= field on the final description must have the same value as the offer
+	// RFC3264 - Section 6
+	// The "t=" line in the answer MUST equal that of the offer. The time of the session cannot be negotiated.
+	result->times = local_offer->times;
 	result->bandwidth = remote_answer->bandwidth;
 	result->origin_addr = remote_answer->origin_addr;
 	result->addr = remote_answer->addr;
@@ -1173,7 +1179,10 @@ OfferAnswerEngine::initiateIncoming(MSFactory *factory,
 	}
 	result->username = local_capabilities->username;
 	result->addr = local_capabilities->addr;
-	result->times = local_capabilities->times;
+	// t= field on the answer must have the same value as the offer
+	// RFC3264 - Section 6
+	// The "t=" line in the answer MUST equal that of the offer. The time of the session cannot be negotiated.
+	result->times = remote_offer->times;
 	result->bandwidth = local_capabilities->bandwidth;
 	result->origin_addr = local_capabilities->origin_addr;
 	result->session_ver = local_capabilities->session_ver;

@@ -129,6 +129,8 @@ public:
 	int getParticipantCount() const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants() const override;
 	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices() const override;
+	const std::shared_ptr<Participant> getScreenSharingParticipant() const;
+	const std::shared_ptr<ParticipantDevice> getScreenSharingDevice() const;
 	const std::string &getSubject() const override;
 	const std::string &getUtf8Subject() const override;
 	void join(const std::shared_ptr<Address> &participantAddress) override;
@@ -221,6 +223,11 @@ public:
 	                                    const bool isFullState,
 	                                    const std::shared_ptr<Participant> &participant,
 	                                    const std::shared_ptr<ParticipantDevice> &participantDevice);
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent>
+	notifyParticipantDeviceScreenSharingChanged(time_t creationTime,
+	                                            const bool isFullState,
+	                                            const std::shared_ptr<Participant> &participant,
+	                                            const std::shared_ptr<ParticipantDevice> &participantDevice);
 
 	void notifySpeakingDevice(uint32_t ssrc, bool isSpeaking);
 	void notifyMutedDevice(uint32_t ssrc, bool muted);
@@ -241,12 +248,21 @@ public:
 
 	void clearParticipants();
 
+	void setCachedScreenSharingDevice();
+	void resetCachedScreenSharingDevice();
+	std::shared_ptr<ParticipantDevice> getCachedScreenSharingDevice() const;
+
 	void updateSubjectInConferenceInfo(const std::string &subject) const;
 	void updateParticipantInConferenceInfo(const std::shared_ptr<Participant> &participant) const;
 	bool updateParticipantInfoInConferenceInfo(std::shared_ptr<ConferenceInfo> &info,
 	                                           const std::shared_ptr<Participant> &participant) const;
 	void updateSecurityLevelInConferenceInfo(const ConferenceParams::SecurityLevel &level) const;
 	void updateParticipantRoleInConferenceInfo(const std::shared_ptr<Participant> &participant) const;
+
+	bool areThumbnailsRequested(bool update) const;
+
+	virtual std::pair<bool, LinphoneMediaDirection> getMainStreamVideoDirection(
+	    const std::shared_ptr<CallSession> &session, bool localIsOfferer, bool useLocalParams) const;
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
@@ -259,6 +275,7 @@ protected:
 	std::shared_ptr<Participant> activeParticipant;
 	std::shared_ptr<Participant> me;
 	std::shared_ptr<ParticipantDevice> activeSpeakerDevice = nullptr;
+	std::shared_ptr<ParticipantDevice> cachedScreenSharingDevice = nullptr;
 
 	std::list<std::shared_ptr<ConferenceListenerInterface>> confListeners;
 
@@ -270,7 +287,7 @@ protected:
 
 	std::map<ConferenceMediaCapabilities, bool> getMediaCapabilities() const;
 
-	LinphoneStatus updateMainSession();
+	LinphoneStatus updateMainSession(bool modifyParams = true);
 
 	ConferenceId conferenceId;
 
@@ -293,6 +310,10 @@ protected:
 	                                              const ConferenceInfo::participant_list_t invitedParticipants) const;
 	const std::shared_ptr<ConferenceInfo> getUpdatedConferenceInfo() const;
 	const std::shared_ptr<ParticipantDevice> getFocusOwnerDevice() const;
+
+	bool updateMinatureRequestedFlag() const;
+
+	mutable bool thumbnailsRequested = true;
 
 private:
 	L_DISABLE_COPY(Conference);

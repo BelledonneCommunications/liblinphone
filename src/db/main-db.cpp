@@ -2914,6 +2914,11 @@ static inline bool checkLegacyCallLogsTableExists(soci::session &session) {
 #ifdef HAVE_DB_STORAGE
 void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 	L_Q();
+	if (!q->isInitialized()) {
+		lWarning() << "Unable to import legacy friend because the database has not been initialized";
+		return;
+	}
+
 	L_DB_TRANSACTION_C(q) {
 		if (getModuleVersion("legacy-friends-import") >= makeVersion(1, 0, 0)) return;
 		updateModuleVersion("legacy-friends-import", ModuleVersionLegacyFriendsImport);
@@ -3032,6 +3037,12 @@ static string extractLegacyFileContentType(const string &xml) {
 
 void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 	L_Q();
+
+	if (!q->isInitialized()) {
+		lWarning() << "Unable to import legacy history because the database has not been initialized";
+		return;
+	}
+
 	L_DB_TRANSACTION_C(q) {
 		if (getModuleVersion("legacy-history-import") >= makeVersion(1, 0, 0)) return;
 		updateModuleVersion("legacy-history-import", ModuleVersionLegacyHistoryImport);
@@ -3165,6 +3176,12 @@ void MainDbPrivate::importLegacyHistory(DbSession &inDbSession) {
 
 void MainDbPrivate::importLegacyCallLogs(DbSession &inDbSession) {
 	L_Q();
+
+	if (!q->isInitialized()) {
+		lWarning() << "Unable to import legacy call logs because the database has not been initialized";
+		return;
+	}
+
 	L_DB_TRANSACTION_C(q) {
 		if (getModuleVersion("legacy-call-logs-import") >= makeVersion(1, 0, 0)) return;
 		updateModuleVersion("legacy-call-logs-import", ModuleVersionLegacyCallLogsImport);
@@ -6484,6 +6501,12 @@ void MainDb::deleteFriendList(const std::string &name) {
 
 void MainDb::deleteOrphanFriends() {
 #ifdef HAVE_DB_STORAGE
+
+	if (!isInitialized()) {
+		lWarning() << "Unable to delete orphan friends because the database has not been initialized";
+		return;
+	}
+
 	L_DB_TRANSACTION {
 		L_D();
 
@@ -6516,6 +6539,11 @@ std::list<std::shared_ptr<Friend>> MainDb::getFriends(const std::shared_ptr<Frie
 std::list<std::shared_ptr<FriendList>> MainDb::getFriendLists() {
 #ifdef HAVE_DB_STORAGE
 	DurationLogger durationLogger("Get friend lists.");
+
+	if (!isInitialized()) {
+		lWarning() << "Unable to get friend list because the database has not been initialized";
+		return std::list<std::shared_ptr<FriendList>>();
+	}
 
 	return L_DB_TRANSACTION {
 		L_D();

@@ -1522,6 +1522,21 @@ LINPHONE_PUBLIC void linphone_core_set_max_call_logs(LinphoneCore *core, int max
 LINPHONE_PUBLIC int linphone_core_get_max_call_logs(const LinphoneCore *core);
 
 /**
+ * Sets the maximum number of thumbnails requested in the SDP during a conference call
+ * @param core the #LinphoneCore. @notnil
+ * @param max the maximum number of thumbnails requested in the SDP during a conference call
+ **/
+LINPHONE_PUBLIC void linphone_core_set_conference_max_thumbnails(LinphoneCore *core, int max);
+
+/**
+ * Gets the maximum number of thumbnails requested in the SDP during a conference call
+ *linphone_account_get_call_logs().
+ * @param core the #LinphoneCore. @notnil
+ * @return the maximum number of thumbnails requested in the SDP during a conference call
+ **/
+LINPHONE_PUBLIC int linphone_core_get_conference_max_thumbnails(const LinphoneCore *core);
+
+/**
  * @}
  **/
 

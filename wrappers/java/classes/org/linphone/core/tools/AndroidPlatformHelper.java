@@ -639,7 +639,7 @@ public class AndroidPlatformHelper {
         }
 
         if (mParticipantTextureView.containsKey(participantDevice)) {
-            Log.w("[Platform Helper] Found an existing TextureView for participant device, let's destroy it first");
+            Log.w("[Platform Helper] Found existing TextureView [" + mParticipantTextureView.get(participantDevice) + "] for participant device, let's destroy it first");
             mParticipantTextureView.get(participantDevice).setSurfaceTextureListener(null);
             mParticipantTextureView.remove(participantDevice);
         }
@@ -675,13 +675,13 @@ public class AndroidPlatformHelper {
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-               Log.i("[Platform Helper] Rendering window surface texture [" + surface + "] is available for texture view [" + textureView + "]");
+               Log.i("[Platform Helper] Rendering participant device's window surface texture [" + surface + "] is available for texture view [" + textureView + "]");
                setParticipantDeviceNativeVideoWindowIdOnCoreThread(participantDevice, surface);
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                Log.i("[Platform Helper] Surface texture [" + surface + "] size changed: " + width + "x" + height);
+                Log.i("[Platform Helper] Surface texture [" + surface + "] of participant device size changed: " + width + "x" + height);
             }
 
             @Override
@@ -693,7 +693,7 @@ public class AndroidPlatformHelper {
             }
 
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-                Log.d("[Platform Helper] Surface texture [" + surface + "] has been updated");
+                Log.d("[Platform Helper] Surface texture [" + surface + "] of participant device has been updated");
             }
         });
         mParticipantTextureView.put(participantDevice, textureView);
@@ -702,7 +702,7 @@ public class AndroidPlatformHelper {
             Log.i("[Platform Helper] Rendering participant device window surface is directly available for texture view [" + textureView + "]");
             setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, textureView.getSurfaceTexture());
         } else {
-            Log.i("[Platform Helper] Rendering participant device window surface is not available !");
+            Log.i("[Platform Helper] Rendering participant device window surface [" + textureView.getSurfaceTexture() + "] of texture [" + textureView + "] is not available !");
         }
     }
 

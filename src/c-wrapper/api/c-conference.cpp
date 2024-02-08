@@ -56,8 +56,7 @@ const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConfere
 	return MediaConference::Conference::toCpp(conference)->getCCallbacksList();
 }
 
-void _linphone_conference_notify_participant_added(LinphoneConference *conference,
-                                                   const LinphoneParticipant *participant) {
+void _linphone_conference_notify_participant_added(LinphoneConference *conference, LinphoneParticipant *participant) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference),
 	                                  linphone_conference_cbs_get_participant_added, participant);
 }
@@ -83,7 +82,7 @@ void _linphone_conference_notify_participant_device_media_availability_changed(
 }
 
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference,
-                                                          const LinphoneParticipantDevice *participant_device) {
+                                                          LinphoneParticipantDevice *participant_device) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference),
 	                                  linphone_conference_cbs_get_participant_device_added, participant_device);
 }
@@ -100,6 +99,13 @@ void _linphone_conference_notify_participant_device_state_changed(LinphoneConfer
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference),
 	                                  linphone_conference_cbs_get_participant_device_state_changed, participant_device,
 	                                  state);
+}
+
+void _linphone_conference_notify_participant_device_screen_sharing_changed(
+    LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t enabled) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference),
+	                                  linphone_conference_cbs_get_participant_device_screen_sharing_changed,
+	                                  participant_device, enabled);
 }
 
 void _linphone_conference_notify_participant_role_changed(LinphoneConference *conference,
@@ -170,4 +176,14 @@ const LinphoneAddress *linphone_conference_get_conference_address(const Linphone
 	// 	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
 	const auto &address = MediaConference::Conference::toCpp(conference)->getConferenceAddress();
 	return address && address->isValid() ? address->toC() : nullptr;
+}
+
+const char *linphone_conference_layout_to_string(const LinphoneConferenceLayout layout) {
+	switch (layout) {
+		case LinphoneConferenceLayoutGrid:
+			return "LinphoneConferenceLayoutGrid";
+		case LinphoneConferenceLayoutActiveSpeaker:
+			return "LinphoneConferenceLayoutActiveSpeaker";
+	}
+	return NULL;
 }

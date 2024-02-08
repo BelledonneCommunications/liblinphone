@@ -51,6 +51,7 @@ class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
 	friend class ToneManager;
 	friend class ConferenceScheduler;
 	friend class SalMediaDescriptionParams;
+	friend class Conference;
 	friend class MediaConference::LocalConference;
 
 public:

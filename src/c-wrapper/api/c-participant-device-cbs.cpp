@@ -66,6 +66,16 @@ void linphone_participant_device_cbs_set_is_muted(LinphoneParticipantDeviceCbs *
 	ParticipantDeviceCbs::toCpp(cbs)->setIsMuted(cb);
 }
 
+LinphoneParticipantDeviceCbsScreenSharingChangedCb
+linphone_participant_device_cbs_get_screen_sharing_changed(const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getScreenSharingChanged();
+}
+
+void linphone_participant_device_cbs_set_screen_sharing_changed(LinphoneParticipantDeviceCbs *cbs,
+                                                           LinphoneParticipantDeviceCbsScreenSharingChangedCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setScreenSharingChanged(cb);
+}
+
 LinphoneParticipantDeviceCbsStateChangedCb
 linphone_participant_device_cbs_get_state_changed(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getStateChanged();
@@ -86,6 +96,16 @@ linphone_participant_device_cbs_get_stream_availability_changed(const LinphonePa
 	return ParticipantDeviceCbs::toCpp(cbs)->getStreamAvailabilityChanged();
 }
 
+void linphone_participant_device_cbs_set_thumbnail_stream_availability_changed(
+    LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setThumbnailStreamAvailabilityChanged(cb);
+}
+
+LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb
+linphone_participant_device_cbs_get_thumbnail_stream_availability_changed(const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getThumbnailStreamAvailabilityChanged();
+}
+
 void linphone_participant_device_cbs_set_stream_capability_changed(
     LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb) {
 	ParticipantDeviceCbs::toCpp(cbs)->setStreamCapabilityChanged(cb);
@@ -96,10 +116,22 @@ linphone_participant_device_cbs_get_stream_capability_changed(const LinphonePart
 	return ParticipantDeviceCbs::toCpp(cbs)->getStreamCapabilityChanged();
 }
 
-LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb linphone_participant_device_cbs_get_video_display_error_occurred(const LinphoneParticipantDeviceCbs *cbs) {
+void linphone_participant_device_cbs_set_thumbnail_stream_capability_changed(
+    LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsThumbnailStreamCapabilityChangedCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setThumbnailStreamCapabilityChanged(cb);
+}
+
+LinphoneParticipantDeviceCbsThumbnailStreamCapabilityChangedCb
+linphone_participant_device_cbs_get_thumbnail_stream_capability_changed(const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getThumbnailStreamCapabilityChanged();
+}
+
+LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb
+linphone_participant_device_cbs_get_video_display_error_occurred(const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getVideoDisplayErrorOccurred();
 }
 
-void linphone_participant_device_cbs_set_video_display_error_occurred(LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb) {
+void linphone_participant_device_cbs_set_video_display_error_occurred(
+    LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb) {
 	ParticipantDeviceCbs::toCpp(cbs)->setVideoDisplayErrorOccurred(cb);
 }

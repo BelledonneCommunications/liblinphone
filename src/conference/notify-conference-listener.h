@@ -143,6 +143,14 @@ public:
 	                                             const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
+	 * This fonction is called each time a participant device starts or stops screen sharing
+	 * @param[in] event informations related to the device's participant who starts or stops screen sharing. @notnil
+	 * @param[in] device participant device who starts or stops screen sharing @notnil
+	 */
+	virtual void onParticipantDeviceScreenSharingChanged(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+	                                                     const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
 	 * Notify Conference state changes.
 	 ** @param[in] newState the new state of this conference.
 	 */

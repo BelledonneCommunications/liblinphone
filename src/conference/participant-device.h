@@ -168,6 +168,8 @@ public:
 
 	bool setSsrc(const LinphoneStreamType type, uint32_t newSsrc);
 	uint32_t getSsrc(const LinphoneStreamType type) const;
+	bool setThumbnailStreamSsrc(uint32_t newSsrc);
+	uint32_t getThumbnailStreamSsrc() const;
 
 	void *getUserData() const;
 	void setUserData(void *ud);
@@ -179,19 +181,24 @@ public:
 	void enableAdminModeSupport(bool support);
 
 	// Media getters and setters
-	void *createWindowId() const;
+	void *createWindowId();
 	void setWindowId(void *newWindowId);
 	void *getWindowId() const;
 
-	// Media getters and setters
 	bool setLabel(const std::string &label, const LinphoneStreamType type);
 	const std::string &getLabel(const LinphoneStreamType type) const;
+	bool setThumbnailStreamLabel(const std::string &label);
+	const std::string &getThumbnailStreamLabel() const;
 
 	bool setStreamCapability(const LinphoneMediaDirection &direction, const LinphoneStreamType type);
 	LinphoneMediaDirection getStreamCapability(const LinphoneStreamType type) const;
+	bool setThumbnailStreamCapability(const LinphoneMediaDirection &direction);
+	LinphoneMediaDirection getThumbnailStreamCapability() const;
 
 	bool setStreamAvailability(const bool available, const LinphoneStreamType type);
 	bool getStreamAvailability(const LinphoneStreamType type) const;
+	bool setThumbnailStreamAvailability(const bool available);
+	bool getThumbnailStreamAvailability() const;
 
 	void setIsSpeaking(bool isSpeaking);
 	bool getIsSpeaking() const;
@@ -200,6 +207,9 @@ public:
 	bool getIsMuted() const;
 
 	void videoDisplayErrorOccurred(int error_code);
+
+	bool enableScreenSharing(bool enabled);
+	bool screenSharingEnabled() const;
 
 	static bool isLeavingState(const ParticipantDevice::State &state);
 
@@ -226,11 +236,16 @@ private:
 	mutable void *mWindowId = NULL;
 	bool mIsMuted = false;
 	bool mIsSpeaking = false;
+	bool mIsScreenSharing = false;
 
-	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
-	std::map<LinphoneStreamType, bool> streamAvailabilities;
-	std::map<LinphoneStreamType, uint32_t> ssrc;
-	std::map<LinphoneStreamType, std::string> label;
+	struct StreamData {
+		bool available = false;
+		LinphoneMediaDirection direction = LinphoneMediaDirectionInactive;
+		uint32_t ssrc = 0;
+		std::string label;
+	};
+	std::map<LinphoneStreamType, StreamData> streams;
+	StreamData thumbnailStream;
 
 	void *mUserData = nullptr;
 
@@ -253,21 +268,30 @@ public:
 	void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
 	LinphoneParticipantDeviceCbsIsMutedCb getIsMuted() const;
 	void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
+	LinphoneParticipantDeviceCbsScreenSharingChangedCb getScreenSharingChanged() const;
+	void setScreenSharingChanged(LinphoneParticipantDeviceCbsScreenSharingChangedCb cb);
 	LinphoneParticipantDeviceCbsStateChangedCb getStateChanged() const;
 	void setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb);
 	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb getStreamCapabilityChanged() const;
 	void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
+	LinphoneParticipantDeviceCbsThumbnailStreamCapabilityChangedCb getThumbnailStreamCapabilityChanged() const;
+	void setThumbnailStreamCapabilityChanged(LinphoneParticipantDeviceCbsThumbnailStreamCapabilityChangedCb cb);
 	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged() const;
 	void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
+	LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb getThumbnailStreamAvailabilityChanged() const;
+	void setThumbnailStreamAvailabilityChanged(LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb cb);
 	LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb getVideoDisplayErrorOccurred() const;
 	void setVideoDisplayErrorOccurred(LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb cb);
 
 private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsIsMutedCb mIsMutedCb = nullptr;
+	LinphoneParticipantDeviceCbsScreenSharingChangedCb mScreenSharingCb = nullptr;
 	LinphoneParticipantDeviceCbsStateChangedCb mStateChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb mStreamCapabilityChangedCb = nullptr;
+	LinphoneParticipantDeviceCbsThumbnailStreamCapabilityChangedCb mThumbnailStreamCapabilityChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb mStreamAvailabilityChangedCb = nullptr;
+	LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb mThumbnailStreamAvailabilityChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb mVideoDisplayErrorOccurredCb = nullptr;
 };
 

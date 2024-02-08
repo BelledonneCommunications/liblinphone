@@ -96,7 +96,7 @@ static void create_simple_end_to_end_encrypted_ice_conference(void) {
 
 static void create_simple_ice_conference_merging_calls(void) {
 	create_simple_conference_merging_calls_base(TRUE, LinphoneConferenceLayoutActiveSpeaker, TRUE, FALSE, TRUE,
-	                                            LinphoneConferenceSecurityLevelNone);
+	                                            LinphoneConferenceSecurityLevelNone, FALSE);
 }
 
 static void abort_call_to_ice_conference(void) {

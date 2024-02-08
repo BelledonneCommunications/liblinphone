@@ -68,6 +68,13 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCallParams *
 linphone_call_params_copy(const LinphoneCallParams *call_params);
 
 /**
+ * Check if call parameters are valid
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if the parameters are valid; FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_is_valid(const LinphoneCallParams *params);
+
+/**
  * Indicate whether sending of early media was enabled.
  * @param call_params #LinphoneCallParams object @notnil
  * @return A boolean value telling whether sending of early media was enabled.
@@ -223,6 +230,20 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_call_params_get_srtp_suites(const Linphon
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_call_params_set_srtp_suites(LinphoneCallParams *call_params, bctbx_list_t *srtpSuites);
+
+/**
+ * Enable camera stream.
+ * @param call_params #LinphoneCallParams object @notnil
+ * @param enabled A boolean value telling whether to enable camera or not.
+ **/
+LINPHONE_PUBLIC void linphone_call_params_enable_camera(LinphoneCallParams *call_params, bool_t enabled);
+
+/**
+ * Enable screen sharing stream.
+ * @param call_params #LinphoneCallParams object @notnil
+ * @param enabled A boolean value telling whether to enable screen sharing or not.
+ **/
+LINPHONE_PUBLIC void linphone_call_params_enable_screen_sharing(LinphoneCallParams *call_params, bool_t enabled);
 
 /**
  * Enable video stream.
@@ -413,6 +434,24 @@ LINPHONE_PUBLIC void linphone_call_params_set_session_name(LinphoneCallParams *c
  * @return A boolean value telling whether audio is enabled or not.
  **/
 LINPHONE_PUBLIC bool_t linphone_call_params_audio_enabled(const LinphoneCallParams *call_params);
+
+/**
+ * Tell whether camera is enabled or not. The value returned by this function has a different meaning whether it is from
+ *local or remote parameters. The former states the will of the user to use the camera of his/her device. On the other
+ *hand, the latter is just a guess to know whether the remote party enabled its camera or not. For example, while the
+ *call is part of a conference a core will understand that the remote party disabled its camera if the thumbnail
+ *stream's direction is inactive.
+ * @param call_params #LinphoneCallParams object @notnil
+ * @return A boolean value telling whether camera is enabled or not.
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_params_camera_enabled(const LinphoneCallParams *call_params);
+
+/**
+ * Tell whether screen sharing is enabled or not.
+ * @param call_params #LinphoneCallParams object @notnil
+ * @return A boolean value telling whether screen sharing is enabled or not.
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_params_screen_sharing_enabled(const LinphoneCallParams *call_params);
 
 /**
  * Tell whether video is enabled or not.

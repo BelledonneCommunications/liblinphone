@@ -134,7 +134,7 @@ protected:
 	CallSessionListener *listener = nullptr;
 	CallSessionParams *params = nullptr;
 	mutable CallSessionParams *currentParams = nullptr;
-	CallSessionParams *remoteParams = nullptr;
+	mutable CallSessionParams *remoteParams = nullptr;
 	mutable std::shared_ptr<Address> diversionAddress;
 
 	std::string subject;

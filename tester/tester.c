@@ -725,7 +725,7 @@ static void conference_subject_changed(LinphoneConference *conference, BCTBX_UNU
 	manager->stat.number_of_subject_changed++;
 }
 static void conference_participant_added(LinphoneConference *conference,
-                                         BCTBX_UNUSED(const LinphoneParticipant *participant)) {
+                                         BCTBX_UNUSED(LinphoneParticipant *participant)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participants_added++;
@@ -737,7 +737,7 @@ static void conference_participant_removed(LinphoneConference *conference,
 	manager->stat.number_of_participants_removed++;
 }
 static void conference_participant_device_added(LinphoneConference *conference,
-                                                BCTBX_UNUSED(const LinphoneParticipantDevice *participant_device)) {
+                                                BCTBX_UNUSED(LinphoneParticipantDevice *participant_device)) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_added++;
@@ -747,6 +747,17 @@ static void conference_participant_device_removed(LinphoneConference *conference
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_removed++;
+}
+
+static void conference_participant_device_screen_sharing_changed(
+    LinphoneConference *conference, BCTBX_UNUSED(const LinphoneParticipantDevice *participant_device), bool_t enabled) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	if (enabled) {
+		manager->stat.number_of_participant_devices_screen_sharing_enabled++;
+	} else {
+		manager->stat.number_of_participant_devices_screen_sharing_disabled++;
+	}
 }
 
 void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
@@ -766,6 +777,8 @@ void core_conference_state_changed(BCTBX_UNUSED(LinphoneCore *core),
 		linphone_conference_cbs_set_participant_device_added(cbs, conference_participant_device_added);
 		linphone_conference_cbs_set_participant_removed(cbs, conference_participant_removed);
 		linphone_conference_cbs_set_participant_device_removed(cbs, conference_participant_device_removed);
+		linphone_conference_cbs_set_participant_device_screen_sharing_changed(
+		    cbs, conference_participant_device_screen_sharing_changed);
 
 		linphone_conference_add_callbacks(conference, cbs);
 		linphone_conference_cbs_unref(cbs);

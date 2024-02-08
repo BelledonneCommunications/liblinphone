@@ -1654,12 +1654,22 @@ static void two_overlapping_dialout_conferences_from_different_organizers(void) 
 
 static void create_simple_conference_merging_calls(void) {
 	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE,
-	                                            LinphoneConferenceSecurityLevelNone);
+	                                            LinphoneConferenceSecurityLevelNone, FALSE);
+}
+
+static void create_simple_conference_merging_calls_with_screen_sharing(void) {
+	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, TRUE, FALSE, FALSE,
+	                                            LinphoneConferenceSecurityLevelNone, TRUE);
 }
 
 static void create_simple_conference_merging_calls_with_video_toggling(void) {
 	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE,
-	                                            LinphoneConferenceSecurityLevelNone);
+	                                            LinphoneConferenceSecurityLevelNone, FALSE);
+}
+
+static void create_simple_conference_merging_calls_with_video_toggling_after_screen_sharing(void) {
+	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE,
+	                                            LinphoneConferenceSecurityLevelNone, FALSE);
 }
 
 static void create_dial_out_conference_with_active_call(void) {
@@ -1873,6 +1883,10 @@ static test_t local_conference_inpromptu_conference_tests[] = {
     TEST_NO_TAG("Create simple conference by merging calls", LinphoneTest::create_simple_conference_merging_calls),
     TEST_NO_TAG("Create simple conference by merging calls with video toggling",
                 LinphoneTest::create_simple_conference_merging_calls_with_video_toggling),
+    TEST_NO_TAG("Create simple conference by merging calls with screen sharing",
+                LinphoneTest::create_simple_conference_merging_calls_with_screen_sharing),
+    TEST_NO_TAG("Create simple conference by merging calls with video toggling after screen sharing",
+                LinphoneTest::create_simple_conference_merging_calls_with_video_toggling_after_screen_sharing),
     TEST_NO_TAG("Create dial out conference with active call",
                 LinphoneTest::create_dial_out_conference_with_active_call),
     TEST_NO_TAG("Organizer creates 2 dialout conferences", LinphoneTest::organizer_creates_two_dialout_conferences),

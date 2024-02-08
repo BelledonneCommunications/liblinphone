@@ -88,6 +88,11 @@ public:
 	 */
 	const ConferenceParams::SecurityLevel &getSecurityLevel() const;
 
+	/**
+	 * Toggle screen sharing
+	 */
+	void enableScreenSharing(bool enable, StreamsGroup *sg);
+
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
 
@@ -95,6 +100,7 @@ private:
 	Core &mCore;
 	std::map<SalStreamType, std::unique_ptr<StreamMixer>> mMixers;
 	ConferenceParams::SecurityLevel mSecurityLevel = ConferenceParams::SecurityLevel::None;
+	bool mScreenSharing = false;
 };
 
 inline std::ostream &operator<<(std::ostream &str, const MixerSession &session) {

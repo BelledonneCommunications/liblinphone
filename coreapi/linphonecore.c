@@ -9401,12 +9401,12 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 			const std::shared_ptr<LinphonePrivate::Address> &identity_address =
 			    LinphonePrivate::ConferenceParams::toCpp(params)->getMe();
 			if (identity_address && identity_address->isValid()) {
-				lInfo() << "Creating remote conference with identity from conference params : " << identity_address;
+				lInfo() << "Creating remote conference with identity from conference params : " << *identity_address;
 				identity = linphone_address_clone(identity_address->toC());
 			} else {
 				identity = linphone_address_new(linphone_core_get_identity(lc));
 				lInfo() << "Creating remote conference with identity from default account "
-				        << LinphonePrivate::Address::toCpp(identity)->toString();
+				        << *LinphonePrivate::Address::toCpp(identity);
 			}
 		}
 
@@ -9967,4 +9967,12 @@ void linphone_core_set_max_call_logs(LinphoneCore *core, int max) {
 
 int linphone_core_get_max_call_logs(const LinphoneCore *core) {
 	return core->max_call_logs;
+}
+
+void linphone_core_set_conference_max_thumbnails(LinphoneCore *core, int max) {
+	linphone_config_set_int(core->config, "video", "conference_max_miniatures", max);
+}
+
+int linphone_core_get_conference_max_thumbnails(const LinphoneCore *core) {
+	return linphone_config_get_int(core->config, "video", "conference_max_miniatures", 10);
 }

@@ -30,6 +30,7 @@
 #include "linphone/utils/utils.h"
 
 #include "conference.h"
+#include "conference/session/media-session.h"
 #include "conference/participant.h"
 #include "conference/remote-conference.h"
 #include "content/content-manager.h"
@@ -269,6 +270,16 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged);
 					}
 				}
+			} else if (nodeName == "linphone-cie:conference-times") {
+				ConferenceTimes conferenceTimes{anyElement};
+				if (conferenceTimes.getStart().present()) {
+					auto startTime = conferenceTimes.getStart().get();
+					conf->confParams->setStartTime(dateTimeToTimeT(startTime));
+				}
+				if (conferenceTimes.getEnd().present()) {
+					auto endTime = conferenceTimes.getEnd().get();
+					conf->confParams->setEndTime(dateTimeToTimeT(endTime));
+				}
 			} else if (nodeName == "linphone-cie:crypto-security-level") {
 				CryptoSecurityLevel cryptoSecurityLevel{anyElement};
 				auto securityLevelString = cryptoSecurityLevel.getLevel();
@@ -303,8 +314,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 		std::shared_ptr<Address> address = core->interpretUrl(user.getEntity().get(), false);
 		StateType state = user.getState();
 
+		bool isMe = conf->isMe(address);
+
 		shared_ptr<Participant> participant = nullptr;
-		if (conf->isMe(address)) participant = conf->getMe();
+		if (isMe) participant = conf->getMe();
 		else participant = conf->findParticipant(address);
 
 		const auto &pIt =
@@ -314,7 +327,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 		auto &roles = user.getRoles();
 		if (state == StateType::deleted) {
-			if (conf->isMe(address)) {
+			if (isMe) {
 				lInfo() << "Participant " << *address << " requested to be deleted is me.";
 				continue;
 			} else if (participant) {
@@ -330,7 +343,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				lWarning() << "Participant " << *address << " removed but not in the list of participants!";
 			}
 		} else if (state == StateType::full) {
-			if (conf->isMe(address)) {
+			if (isMe) {
 				lInfo() << "Participant " << *address << " requested to be added is me.";
 				fillParticipantAttributes(participant, roles, state, isFullState, false);
 			} else if (participant) {
@@ -343,7 +356,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				lInfo() << "Participant " << *participant << " is successfully added - conference "
 				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
 				if (!isFullState ||
-				    (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !conf->isMe(address))) {
+				    (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !isMe)) {
 					conf->notifyParticipantAdded(creationTime, isFullState, participant);
 				}
 			}
@@ -351,7 +364,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 		if (!participant) {
 			// Try to get participant again as it may have been added or removed earlier on
-			if (conf->isMe(address)) participant = conf->getMe();
+			if (isMe) participant = conf->getMe();
 			else participant = conf->findParticipant(address);
 		}
 
@@ -451,7 +464,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					                        }
 					                    }
 					*/
+
+					bool isScreenSharing = false;
 					std::set<LinphoneStreamType> mediaCapabilityChanged;
+					bool thumbnailTagFound = false;
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
 						LinphoneStreamType streamType = LinphoneStreamTypeUnknown;
@@ -465,26 +481,74 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							lError() << "Unrecognized media type " << mediaType;
 						}
 
+						std::string content;
+						auto &mediaAnySequence(media.getAny());
+						for (const auto &anyElement : mediaAnySequence) {
+							auto name = xsd::cxx::xml::transcode<char>(anyElement.getLocalName());
+							auto nodeName = xsd::cxx::xml::transcode<char>(anyElement.getNodeName());
+							auto nodeValue = xsd::cxx::xml::transcode<char>(anyElement.getNodeValue());
+							if (nodeName == "linphone-cie:stream-data") {
+								StreamData streamData{anyElement};
+								content = streamData.getStreamContent();
+							}
+						}
+
+						isScreenSharing |= (streamType == LinphoneStreamTypeVideo) && (content.compare("slides") == 0);
 						LinphoneMediaDirection mediaDirection =
 						    RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
-						if (device->setStreamCapability(mediaDirection, streamType)) {
-							mediaCapabilityChanged.insert(streamType);
+						uint32_t ssrc = 0;
+						if (media.getSrcId() && (mediaDirection != LinphoneMediaDirectionInactive)) {
+							const std::string srcId = media.getSrcId().get();
+							ssrc = (uint32_t)std::stoul(srcId);
 						}
+						std::string label;
 						if (media.getLabel()) {
-							const std::string label = media.getLabel().get();
+							label = media.getLabel().get();
+						}
+						bool isThumbnailStream =
+						    (streamType == LinphoneStreamTypeVideo) && (content.compare("thumbnail") == 0);
+						if (isThumbnailStream) {
+							thumbnailTagFound = true;
+							device->setThumbnailStreamSsrc(ssrc);
+							if (!label.empty()) {
+								device->setThumbnailStreamLabel(label);
+							}
+							if (device->setThumbnailStreamCapability(mediaDirection)) {
+								mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);
+							}
+						} else {
+							device->setSsrc(streamType, ssrc);
 							if (!label.empty()) {
 								device->setLabel(label, streamType);
 							}
-						}
-						if (mediaDirection == LinphoneMediaDirectionInactive) {
-							device->setSsrc(streamType, 0);
-						} else {
-							if (media.getSrcId()) {
-								const std::string srcId = media.getSrcId().get();
-								unsigned long ssrc = std::stoul(srcId);
-								device->setSsrc(streamType, (uint32_t)ssrc);
+							if (device->setStreamCapability(mediaDirection, streamType)) {
+								mediaCapabilityChanged.insert(streamType);
 							}
 						}
+					}
+					const auto &mainSession = conf->getMainSession();
+					if (mainSession && isMe && !thumbnailTagFound) {
+						lInfo() << "It seems that we are dealing with a legacy conference server that doesn't provide device's thumbnail informations.";
+						const auto &remoteAddress = mainSession->getRemoteAddress();
+						if (remoteAddress && remoteAddress->uriEqual(*device->getAddress())) {
+							const auto &ms = dynamic_pointer_cast<MediaSession>(mainSession);
+							if (ms) {
+								const auto &params = ms->getMediaParams();
+								const auto &cameraEnabled = params->cameraEnabled();
+								if (cameraEnabled) {
+									device->setThumbnailStreamLabel(device->getLabel(LinphoneStreamTypeVideo));
+									if (device->setThumbnailStreamCapability(LinphoneMediaDirectionSendOnly)) {
+										mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);
+									}
+								}
+							}
+						}
+					}
+					conf->setCachedScreenSharingDevice();
+					const auto screenSharingChanged = device->enableScreenSharing(isScreenSharing);
+					if (!isFullState && (state != StateType::full) && screenSharingChanged) {
+						conf->notifyParticipantDeviceScreenSharingChanged(creationTime, isFullState, participant,
+						                                                  device);
 					}
 
 					auto mediaAvailabilityChanged = device->updateStreamAvailabilities();
@@ -504,6 +568,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							                                                    device);
 						}
 					}
+					conf->resetCachedScreenSharingDevice();
 
 					if (endpoint.getJoiningMethod().present()) {
 						const auto &joiningMethod = endpoint.getJoiningMethod().get();
@@ -575,19 +640,19 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 					if (!name.empty()) device->setName(name);
 
-					if (conf->isMe(address) && conf->getMainSession()) device->setSession(conf->getMainSession());
+					if (isMe && mainSession) device->setSession(mainSession);
 
 					if (state == StateType::full) {
 						lInfo() << "Participant device " << *gruu << " has been successfully added";
 						bool sendNotify =
-						    (!oldParticipants.empty() && (pIt == oldParticipants.cend())) && !conf->isMe(address);
+						    (!oldParticipants.empty() && (pIt == oldParticipants.cend())) && !isMe;
 						if (pIt != oldParticipants.cend()) {
 							const auto &oldDevices = (*pIt)->getDevices();
 							const auto &dIt =
 							    std::find_if(oldDevices.cbegin(), oldDevices.cend(), [&gruu](const auto &oldDevice) {
 								    return (*gruu == *oldDevice->getAddress());
 							    });
-							sendNotify = (dIt == oldDevices.cend()) && !conf->isMe(address);
+							sendNotify = (dIt == oldDevices.cend()) && !isMe;
 						}
 						if (!isFullState || sendNotify) {
 							conf->notifyParticipantDeviceAdded(creationTime, isFullState, participant, device);

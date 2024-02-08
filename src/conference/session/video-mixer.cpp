@@ -159,8 +159,6 @@ void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 		    vs, linphone_core_get_native_preview_window_id(
 		            core)); // Ensure to pass Window ID options (like not having to create a window)
 		video_stream_set_native_window_id(vs, linphone_core_get_native_video_window_id(core));
-		// video_stream_set_video_capture_window_id(vs, linphone_core_get_video_capture_window_id(core));
-		// video_stream_set_video_source_descriptor(vs, mSession.getCCore()-
 		if (linphone_core_get_video_display_filter(core)) {
 			video_stream_set_display_filter_name(
 			    vs, linphone_core_get_video_display_filter(core)); // Use the filter defined in configuration

@@ -51,6 +51,11 @@ Participant::Participant(std::shared_ptr<Address> address) : addr(address) {
 	L_ASSERT(!address->hasUriParam("gr"));
 }
 
+Participant::~Participant() {
+	const std::string addressString = (addr) ? addr->toString() : std::string("<unknown-address>");
+	lInfo() << "Destroying participant " << this << " (address " << addressString << ")";
+}
+
 void Participant::configure(Conference *conference, const std::shared_ptr<const Address> &address) {
 	mConference = conference;
 	auto identityAddress = Address::create(address->getUriWithoutGruu());
@@ -126,7 +131,7 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice(const std::shared_ptr<
 	if (device) return device;
 	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
 		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session
-		        << " to participant " << getAddress()->toString();
+		        << " to participant " << *getAddress();
 	} else {
 		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session
 		         << " to participant " << getAddress()->toString();
@@ -161,17 +166,19 @@ void Participant::clearDevices() {
 	devices.clear();
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice(const std::string &label, const bool logFailure) const {
+shared_ptr<ParticipantDevice>
+Participant::findDevice(const LinphoneStreamType type, const std::string &label, const bool logFailure) const {
 	for (const auto &device : devices) {
-		const auto &deviceVideoLabel = device->getLabel(LinphoneStreamTypeVideo);
-		const auto &deviceAudioLabel = device->getLabel(LinphoneStreamTypeAudio);
-		if (!label.empty() && ((!deviceAudioLabel.empty() && deviceAudioLabel.compare(label) == 0) ||
-		                       (!deviceVideoLabel.empty() && deviceVideoLabel.compare(label) == 0)))
+		const auto &deviceLabel = device->getLabel(type);
+		const auto &thumbnailLabel = device->getThumbnailStreamLabel();
+		if (!label.empty() && ((!deviceLabel.empty() && deviceLabel.compare(label) == 0) ||
+		                       ((type == LinphoneStreamTypeVideo) && (thumbnailLabel == label)))) {
 			return device;
+		}
 	}
 	if (logFailure) {
 		lInfo() << "Unable to find device with label " << label << " among those belonging to participant "
-		        << getAddress()->toString();
+		        << *getAddress();
 	}
 	return nullptr;
 }
@@ -182,7 +189,7 @@ shared_ptr<ParticipantDevice> Participant::findDeviceByCallId(const std::string 
 	}
 	if (logFailure) {
 		lInfo() << "Unable to find device with call id " << callId << " among those belonging to participant "
-		        << getAddress()->toString();
+		        << *getAddress();
 	}
 	return nullptr;
 }

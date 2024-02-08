@@ -162,7 +162,8 @@ LinphoneCallCbsVideoDisplayErrorOccurredCb linphone_call_cbs_get_video_display_e
 	return CallCbs::toCpp(cbs)->videoDisplayErrorOccurredCb;
 }
 
-void linphone_call_cbs_set_video_display_error_occurred(LinphoneCallCbs *cbs, LinphoneCallCbsVideoDisplayErrorOccurredCb cb) {
+void linphone_call_cbs_set_video_display_error_occurred(LinphoneCallCbs *cbs,
+                                                        LinphoneCallCbsVideoDisplayErrorOccurredCb cb) {
 	CallCbs::toCpp(cbs)->videoDisplayErrorOccurredCb = cb;
 }
 

@@ -10,6 +10,20 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## Unreleased
 
+## [5.4.0] unreleased
+### Added
+- linphone_participant_device_get_thumbnail_stream_capability() returns the direction of the thumbnail stream of a participant device
+- Added API to enable screen sharing during a conference as well as callback to be notified that a participant device is screen sharing
+
+### Changed
+- Participant devices now deal separately with the main video stream and the thumbnail stream
+  linphone_participant_device_get_ssrc() for the video stream now returns the SSRC of the main stream. The SSRC of the thumbnail stream is now returned by linphone_participant_device_get_thumbnail_ssrc() 
+  linphone_participant_device_get_stream_availability() for the video stream now returns the overall video availability of a participant device. Function linphone_participant_device_get_thumbnail_stream_availability() now return whether a participant is sending its video stream or not
+- The participant device callbacks follows changes made on the participant device API
+  LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb for the video stream is trigged by an change on the overall video availability. LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb is now called when a participant device toggle its camera setting
+  
+### Fixed
+- t= lines in the SDP no longer changed in the answer 
 
 ## [5.3.0] 2023-12-18
 

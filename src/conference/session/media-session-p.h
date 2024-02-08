@@ -47,6 +47,13 @@ class LINPHONE_INTERNAL_PUBLIC MediaSessionPrivate : public CallSessionPrivate, 
 	friend class StreamsGroup;
 
 public:
+	static const std::string DTXAudioContentAttribute;
+	static const std::string EncryptedActiveSpeakerVideoContentAttribute;
+	static const std::string ActiveSpeakerVideoContentAttribute;
+	static const std::string GridVideoContentAttribute;
+	static const std::string ThumbnailVideoContentAttribute;
+	static const std::string ScreenSharingContentAttribute;
+
 	static int resumeAfterFailedTransfer(void *userData, unsigned int);
 	static bool_t startPendingRefer(void *userData);
 	static void stunAuthRequestedCb(void *userData,
@@ -99,7 +106,7 @@ public:
 	}
 	void setCurrentParams(MediaSessionParams *msp);
 	void setParams(MediaSessionParams *msp);
-	void setRemoteParams(MediaSessionParams *msp);
+	void setRemoteParams(MediaSessionParams *msp) const;
 
 	IceService &getIceService() const {
 		return streamsGroup->getIceService();
@@ -191,8 +198,6 @@ public:
 	bool isMediaEncryptionAccepted(const LinphoneMediaEncryption enc) const;
 
 	LinphoneMediaEncryption getNegotiatedMediaEncryption() const;
-	int getThumbnailStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
-	int getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
 	LinphoneMediaDirection getDirFromMd(const std::shared_ptr<SalMediaDescription> &md, const SalStreamType type) const;
 	void validateVideoStreamDirection(SalStreamConfiguration &cfg) const;
 	bool mandatoryRtpBundleEnabled() const;
@@ -347,12 +352,6 @@ private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
 	static constexpr const int rtpExtHeaderMidNumber = RTP_EXTENSION_MID;
-
-	static const std::string DTXAudioContentAttribute;
-	static const std::string EncryptedActiveSpeakerVideoContentAttribute;
-	static const std::string ActiveSpeakerVideoContentAttribute;
-	static const std::string GridVideoContentAttribute;
-	static const std::string ThumbnailVideoContentAttribute;
 
 	std::weak_ptr<Participant> me;
 

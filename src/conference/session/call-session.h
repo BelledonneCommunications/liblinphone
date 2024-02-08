@@ -102,7 +102,8 @@ public:
 		Refresh = 2,
 		MediaChange = 3,
 		CallOnHold = 4,
-		BothPartiesOnHold = 5
+		BothPartiesOnHold = 5,
+		Resuming = 6
 	};
 
 	static const std::map<PredefinedSubjectType, std::string> predefinedSubject;

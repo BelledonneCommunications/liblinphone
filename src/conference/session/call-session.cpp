@@ -48,7 +48,8 @@ const std::map<CallSession::PredefinedSubjectType, std::string> CallSession::pre
     {CallSession::PredefinedSubjectType::Refresh, "Refreshing"},
     {CallSession::PredefinedSubjectType::MediaChange, "Media change"},
     {CallSession::PredefinedSubjectType::CallOnHold, "Call on hold"},
-    {CallSession::PredefinedSubjectType::BothPartiesOnHold, "Call on hold for me too"}};
+    {CallSession::PredefinedSubjectType::BothPartiesOnHold, "Call on hold for me too"},
+    {CallSession::PredefinedSubjectType::Resuming, "Call resuming"}};
 
 // =============================================================================
 

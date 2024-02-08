@@ -353,6 +353,22 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const Lin
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_device_list(const LinphoneConference *conference);
 
 /**
+ * Get the participant that is currently screen sharing
+ * @param conference A #LinphoneConference. @notnil
+ * @return a pointer to the participant found or nullptr. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneParticipant *
+linphone_conference_get_screen_sharing_participant(const LinphoneConference *conference);
+
+/**
+ * Get the participant device that is currently screen sharing
+ * @param conference A #LinphoneConference. @notnil
+ * @return a pointer to the participant device found or nullptr. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneParticipantDevice *
+linphone_conference_get_screen_sharing_participant_device(const LinphoneConference *conference);
+
+/**
  * @param conference A #LinphoneConference @notnil
  * @param uri URI of the participant to remove @notnil
  * @warning The passed participant uri must be one of those returned by linphone_conference_get_participants()

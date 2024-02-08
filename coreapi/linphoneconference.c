@@ -278,6 +278,19 @@ int linphone_conference_get_participant_count(const LinphoneConference *conferen
 	return MediaConference::Conference::toCpp(conference)->getParticipantCount();
 }
 
+LinphoneParticipant *linphone_conference_get_screen_sharing_participant(const LinphoneConference *conference) {
+	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
+	auto &participant = MediaConference::Conference::toCpp(conference)->getScreenSharingParticipant();
+	return participant ? participant->toC() : nullptr;
+}
+
+LinphoneParticipantDevice *
+linphone_conference_get_screen_sharing_participant_device(const LinphoneConference *conference) {
+	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
+	auto &device = MediaConference::Conference::toCpp(conference)->getScreenSharingDevice();
+	return device ? device->toC() : nullptr;
+}
+
 bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conference) {
 	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
 	bctbx_list_t *participants = linphone_conference_get_participant_list(conference);

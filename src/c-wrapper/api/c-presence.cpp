@@ -646,13 +646,13 @@ static bool _find_friend_by_address(bctbx_list_t *fl, const LinphoneAddress *add
 		    std::list<std::shared_ptr<Address>> addresses = f->getAddresses();
 		    const auto addrIt = std::find_if(addresses.cbegin(), addresses.cend(),
 		                                     [&](const auto &addr) { return searchedAddress->weakEqual(*addr.get()); });
-		    if (addrIt != addresses.cend()) {
-			    *lf = (*it)->toC();
-			    return true;
-		    }
-		    return false;
+		    return (addrIt != addresses.cend());
 	    });
-	return (it != friends.cend());
+	bool friendFound = (it != friends.cend());
+	if (friendFound) {
+		*lf = (*it)->toC();
+	}
+	return friendFound;
 }
 
 void linphone_subscription_new(LinphoneCore *lc, SalSubscribeOp *op, const char *from) {

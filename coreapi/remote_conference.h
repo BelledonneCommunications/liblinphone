@@ -136,6 +136,9 @@ public:
 	virtual void onAvailableMediaChanged(const std::shared_ptr<ConferenceAvailableMediaEvent> &event) override;
 	virtual void onFullStateReceived() override;
 
+	virtual void onParticipantDeviceScreenSharingChanged(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event,
+	                                                     const std::shared_ptr<ParticipantDevice> &device) override;
+
 	virtual void setParticipantAdminStatus(const std::shared_ptr<LinphonePrivate::Participant> &participant,
 	                                       bool isAdmin) override;
 
@@ -160,6 +163,9 @@ public:
 	/* Report the csrc included in the video stream, so that we can notify who is presented on the screen.*/
 	void notifyDisplayedSpeaker(uint32_t csrc);
 	void notifyLouderSpeaker(uint32_t ssrc);
+
+	virtual std::pair<bool, LinphoneMediaDirection> getMainStreamVideoDirection(
+	    const std::shared_ptr<CallSession> &session, bool localIsOfferer, bool useLocalParams) const override;
 
 protected:
 	virtual void
@@ -186,6 +192,7 @@ private:
 
 	bool finalized = false;
 	bool scheduleUpdate = false;
+	bool fullStateUpdate = false;
 	bool fullStateReceived = false;
 	std::string pendingSubject;
 	std::shared_ptr<Participant> focus;
