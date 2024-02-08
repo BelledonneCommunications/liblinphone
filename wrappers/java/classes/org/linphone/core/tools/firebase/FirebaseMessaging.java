@@ -31,6 +31,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import org.linphone.core.Core;
+import org.linphone.core.GlobalState;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.service.CoreManager;
@@ -79,14 +80,18 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 public void run() {
                     Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
                     Core core = CoreManager.instance().getCore();
-                    if (core != null) {
+                    if (core != null && core.getGlobalState() == GlobalState.On) {
                         Map<String, String> data = remoteMessage.getData();
                         String callId = DeviceUtils.getStringOrDefaultFromMap(data, "call-id", "");                    
                         String payload = new JSONObject(data).toString();
                         Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
                         CoreManager.instance().processPushNotification(callId, payload, false);
                     } else {
-                        Log.w("[Push Notification] No Core found, notifying application directly");
+                        if (core == null) {
+                            Log.w("[Push Notification] No Core found, notifying application directly");
+                        } else {
+                            Log.w("[Push Notification] Core was found but it isn't in GlobalState On yet, notifying application directly");
+                        }
                         Runnable pushRunnable = new Runnable() {
                             @Override
                             public void run() {
