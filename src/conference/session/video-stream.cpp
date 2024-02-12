@@ -370,11 +370,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	const auto conference =
 	    (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
 	if (conference) {
-		video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, this);
 		auto screenSharingDevice = conference->getScreenSharingDevice();
 		if (screenSharingDevice) isConferenceScreenSharing = screenSharingDevice->getIsScreenSharing();
-	} else {
-		video_stream_set_csrc_changed_callback(mStream, nullptr, nullptr);
 	}
 
 	// Main output display mode depend of participant screen sharing state.
