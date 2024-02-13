@@ -5419,8 +5419,8 @@ LINPHONE_PUBLIC bool_t linphone_core_is_provisioning_transient(LinphoneCore *cor
  * Versions of linphone < 3.7 did not support using multiple SIP transport simultaneously.
  * This function helps application to migrate the configuration so that all transports are enabled.
  * Existing proxy configuration are added a transport parameter so that they continue using the unique transport that
- *was set previously. This function must be used just after creating the core, before any call to
- *linphone_core_iterate()
+ * was set previously. This function must be used just after creating the core, before any call to
+ * linphone_core_iterate()
  * @param core the #LinphoneCore object @notnil
  * @return 1 if migration was done, 0 if not done because unnecessary or already done, -1 in case of error.
  * @ingroup initializing
@@ -5444,11 +5444,16 @@ LINPHONE_PUBLIC void linphone_core_enable_sdp_200_ack(LinphoneCore *core, bool_t
 LINPHONE_PUBLIC bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *core);
 
 /**
+ * @brief
  * Assign an audio file to be played as a specific tone id.
  * This function typically allows to customize telephony tones per country.
+ *
+ * If you want to disable a tone, set a path to a non-existent file.
+ * To disable all tones, use linphone_core_enable_call_tone_indications()
+ * or set the tone_indications to 0 in the [misc] section of your linphonerc.
  * @param core the core @notnil
  * @param tone_id the #LinphoneToneId
- * @param audiofile a wav file to be played or NULL to disable it. @maybenil
+ * @param audiofile a wav file to be played or NULL to use the default (generated) one. @maybenil
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_set_tone(LinphoneCore *core, LinphoneToneID tone_id, const char *audiofile);

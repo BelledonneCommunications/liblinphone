@@ -4679,6 +4679,43 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 #endif
 }
 
+list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &conferenceId) const {
+	list<shared_ptr<Content>> result = list<shared_ptr<Content>>();
+#ifdef HAVE_DB_STORAGE
+	static const string query =
+	    "SELECT name, path, size "
+	    " FROM chat_message_file_content "
+	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
+	    " JOIN conference_event ON conference_event.event_id = chat_message_content.event_id AND "
+	    "conference_event.chat_room_id = :chatRoomId "
+	    " WHERE chat_message_content.content_type_id IN ( "
+	    " SELECT id "
+	    " FROM content_type "
+	    " WHERE value LIKE 'text/%' OR value LIKE 'application/%' )"
+	    " ORDER BY chat_message_content.event_id ";
+	return L_DB_TRANSACTION {
+		L_D();
+		const long long &chatRoomId = d->selectChatRoomId(conferenceId);
+		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(chatRoomId));
+		for (const auto &row : rows) {
+			string name = row.get<string>(0);
+			string path = row.get<string>(1);
+			int size = row.get<int>(2);
+
+			auto fileContent = FileContent::create<FileContent>();
+			fileContent->setFileName(name);
+			fileContent->setFileSize(size_t(size));
+			fileContent->setFilePath(path);
+
+			result.push_back(fileContent);
+		}
+		return result;
+	};
+#else
+	return result;
+#endif
+}
+
 bool MainDb::isChatRoomEmpty(const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	static const string query = "SELECT last_message_id FROM chat_room WHERE id = :1";

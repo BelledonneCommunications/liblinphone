@@ -118,6 +118,11 @@ list<shared_ptr<Content>> ProxyChatRoom::getMediaContents() const {
 	return d->chatRoom->getMediaContents();
 }
 
+list<shared_ptr<Content>> ProxyChatRoom::getDocumentContents() const {
+	L_D();
+	return d->chatRoom->getDocumentContents();
+}
+
 list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistory(int nLast) const {
 	L_D();
 	return d->chatRoom->getMessageHistory(nLast);

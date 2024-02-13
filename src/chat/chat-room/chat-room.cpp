@@ -589,6 +589,10 @@ list<shared_ptr<Content>> ChatRoom::getMediaContents() const {
 	return getCore()->getPrivate()->mainDb->getMediaContents(getConferenceId());
 }
 
+list<shared_ptr<Content>> ChatRoom::getDocumentContents() const {
+	return getCore()->getPrivate()->mainDb->getDocumentContents(getConferenceId());
+}
+
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistory(int nLast) const {
 	return getCore()->getPrivate()->mainDb->getHistory(getConferenceId(), nLast,
 	                                                   MainDb::Filter::ConferenceChatMessageFilter);

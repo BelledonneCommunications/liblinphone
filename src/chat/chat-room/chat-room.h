@@ -54,6 +54,8 @@ public:
 	SecurityLevel getSecurityLevel() const override;
 
 	std::list<std::shared_ptr<Content>> getMediaContents() const override;
+	std::list<std::shared_ptr<Content>> getDocumentContents() const override;
+
 	std::list<std::shared_ptr<EventLog>> getMessageHistory(int nLast) const override;
 	std::list<std::shared_ptr<EventLog>> getMessageHistoryRange(int begin, int end) const override;
 	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages() const override;
