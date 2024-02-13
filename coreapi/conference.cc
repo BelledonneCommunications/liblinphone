@@ -1524,6 +1524,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			if (deviceSession) {
 				if (session == deviceSession) {
 					lWarning() << "Try to add again a participant device with session " << session;
+					return false;
 				} else {
 					lInfo() << "Already found a participant device with address " << *remoteContactAddress << ". Recreating it";
 					deviceSession->terminate();
