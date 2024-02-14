@@ -313,10 +313,11 @@ class PythonTranslator(object):
             getterDict['is_return_string_list'] = 'bctbx_list_t*' in translated_type and getter.returnType.containedTypeDesc.name == 'string'
             getterDict['is_return_obj'] = isinstance(getter.returnType, AbsApi.ClassType)
             getterDict['is_return_bool'] = translated_type == 'bint'
+            getterDict['is_return_string'] = getter.returnType.name == 'string'
             getterDict['is_return_void_ptr'] = translated_type == 'void*'
             getterDict['constructor'] = getter.returnAllocatedObject
             getterDict['is_const'] = getter.returnType.isconst
-            getterDict['is_simple_return'] = not getterDict['is_return_obj_list'] and not getterDict['is_return_string_list'] and not getterDict['is_return_obj'] and not getterDict['is_return_bool'] and not getterDict['is_return_void_ptr']
+            getterDict['is_simple_return'] = not getterDict['is_return_obj_list'] and not getterDict['is_return_string_list'] and not getterDict['is_return_obj'] and not getterDict['is_return_bool'] and not getterDict['is_return_string'] and not getterDict['is_return_void_ptr']
 
             getterDict['doc_return_type'] = self.translate_base_type_for_doc(getter.returnType)
             if getterDict['is_return_obj']:
@@ -376,8 +377,9 @@ class PythonTranslator(object):
         methodDict['has_return_string_list'] = 'bctbx_list_t*' in translated_type and _method.returnType.containedTypeDesc.name == 'string'
         methodDict['has_return_obj'] = isinstance(_method.returnType, AbsApi.ClassType)
         methodDict['has_return_bool'] = translated_type == 'bint'
+        methodDict['has_return_string'] = _method.returnType.name == 'string'
         methodDict['has_return_void_vptr'] = translated_type == 'void*'
-        methodDict['has_simple_return'] = methodDict['has_return'] and not methodDict['has_return_obj_list'] and not methodDict['has_return_string_list'] and not methodDict['has_return_obj'] and not methodDict['has_return_bool'] and not methodDict['has_return_void_vptr']
+        methodDict['has_simple_return'] = methodDict['has_return'] and not methodDict['has_return_obj_list'] and not methodDict['has_return_string_list'] and not methodDict['has_return_obj'] and not methodDict['has_return_bool'] and not methodDict['has_return_string'] and not methodDict['has_return_void_vptr']
         methodDict['constructor'] = _method.returnAllocatedObject
         methodDict['is_const'] = _method.returnType.isconst
         

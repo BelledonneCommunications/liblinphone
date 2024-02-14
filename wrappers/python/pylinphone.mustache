@@ -263,6 +263,12 @@ cdef class {{python_name}}:
         {{#is_return_void_ptr}}
         return <object>{{c_name}}(self.native_ptr)
         {{/is_return_void_ptr}}
+        {{#is_return_string}}
+        cdef char *return_s = {{c_name}}(self.native_ptr)
+        if return_s == NULL:
+            return None
+        return return_s
+        {{/is_return_string}}
         {{#is_simple_return}}
         return {{c_name}}(self.native_ptr)
         {{/is_simple_return}}
@@ -354,6 +360,12 @@ cdef class {{python_name}}:
         {{#has_return_bool}}
         return True if ret == 1 else False
         {{/has_return_bool}}
+        {{#has_return_string}}
+        cdef char *return_s = ret
+        if return_s == NULL:
+            return None
+        return return_s
+        {{/has_return_string}}
         {{#has_return_void_vptr}}
         return <object>ret
         {{/has_return_void_vptr}}
