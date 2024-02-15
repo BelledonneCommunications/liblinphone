@@ -93,12 +93,15 @@ protected:
 	std::string getBindIp();
 	int getBindPort();
 	void initializeSessions(MediaStream *stream);
-	RtpProfile *
-	makeProfile(const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &desc, int *usedPt);
+	RtpProfile *makeProfile(const std::shared_ptr<SalMediaDescription> &md,
+	                        const SalStreamDescription &desc,
+	                        int *usedPt,
+	                        bool applyProfile = true);
 	int getIdealAudioBandwidth(const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &desc);
 	RtpSession *createRtpIoSession();
 	void updateCryptoParameters(const OfferAnswerContext &params);
 	void updateDestinations(const OfferAnswerContext &params);
+	bool updateRtpProfile(const OfferAnswerContext &params);
 	bool canIgnorePtimeChange(const OfferAnswerContext &params);
 	bool handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState);
 	struct RtpAddressInfo {

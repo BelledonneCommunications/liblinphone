@@ -639,6 +639,9 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, BCTBX_UNUSE
 			lInfo() << "Ignoring bandwidth change - does not effect current stream";
 			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED;
 		}
+		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CODEC_CHANGED && updateRtpProfile(params)) {
+			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+		}
 		// SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED monitors the number of streams, it is ignored here.
 		changesToHandle &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
 
@@ -1031,7 +1034,7 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 
 	if (resultStreamDesc.hasDtls()) {
 		if (!mSessions.dtls_context) {
-			MediaStream *ms = getMediaStream();
+			ms = getMediaStream();
 			initDtlsParams(ms);
 			// Copy newly created dtls context into mSessions
 			media_stream_reclaim_sessions(ms, &mSessions);
@@ -1058,6 +1061,64 @@ void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
 	        << " RTCP=" << rtcpAddr << ":" << resultStreamDesc.rtcp_port;
 	rtp_session_set_remote_addr_full(mSessions.rtp_session, rtpAddr.c_str(), resultStreamDesc.rtp_port,
 	                                 rtcpAddr.c_str(), resultStreamDesc.rtcp_port);
+}
+
+bool MS2Stream::updateRtpProfile(const OfferAnswerContext &params) {
+	const auto &resultStreamDesc = params.getResultStreamDescription();
+	const auto &payloads = resultStreamDesc.getPayloads();
+	const auto pt = getMediaSessionPrivate().getCurrentParams()->getUsedAudioPayloadType();
+
+	if (pt == nullptr || payloads.empty() ||
+	    !SalStreamConfiguration::isSamePayloadType(pt->getOrtpPt(), payloads.front())) {
+		lInfo() << "Preferred payload type has changed - stream must be restarted";
+		return false;
+	}
+
+	int usedPt = -1;
+	RtpProfile *audioProfile = makeProfile(params.resultMediaDescription, resultStreamDesc, &usedPt, false);
+
+	if (usedPt == -1) {
+		// This should never happen
+		lError() << "No payload types configured for this stream!";
+		return false;
+	}
+
+	RtpProfile *currentAudioProfile = rtp_session_get_profile(mSessions.rtp_session);
+
+	// Let's first go through every common payload and see if there is any changes
+	for (int i = 0; i < RTP_PROFILE_MAX_PAYLOADS; i++) {
+		if (const auto payload = rtp_profile_get_payload(audioProfile, i); payload != nullptr) {
+			if (const auto currentPayload = rtp_profile_get_payload(currentAudioProfile, i);
+			    currentPayload != nullptr) {
+				if (!SalStreamConfiguration::isSamePayloadType(payload, currentPayload)) {
+					lInfo() << "One of the payloads has been modified - stream must be restarted";
+					rtp_profile_destroy(audioProfile);
+					return false;
+				}
+			}
+		}
+	}
+
+	// Then check for the rest
+	for (int i = 0; i < RTP_PROFILE_MAX_PAYLOADS; i++) {
+		const auto payload = rtp_profile_get_payload(audioProfile, i);
+		const auto currentPayload = rtp_profile_get_payload(currentAudioProfile, i);
+		if (payload != nullptr && currentPayload == nullptr) {
+			// Add the payload
+			rtp_profile_set_payload(currentAudioProfile, i, payload_type_clone(payload));
+		} else if (payload == nullptr && currentPayload != nullptr) {
+			// We "remove" the payload by making sure it cannot send or receive
+			int flags = payload_type_get_flags(currentPayload);
+			if (flags & PAYLOAD_TYPE_FLAG_CAN_RECV) payload_type_unset_flag(currentPayload, PAYLOAD_TYPE_FLAG_CAN_RECV);
+			if (flags & PAYLOAD_TYPE_FLAG_CAN_SEND) payload_type_unset_flag(currentPayload, PAYLOAD_TYPE_FLAG_CAN_SEND);
+		}
+	}
+
+	rtp_profile_destroy(audioProfile);
+
+	lInfo() << "RTP profile updated on current stream";
+
+	return true;
 }
 
 bool MS2Stream::canIgnorePtimeChange(const OfferAnswerContext &params) {
@@ -1142,12 +1203,15 @@ int MS2Stream::getIdealAudioBandwidth(const std::shared_ptr<SalMediaDescription>
 	return uploadBandwidth;
 }
 
-RtpProfile *
-MS2Stream::makeProfile(const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &desc, int *usedPt) {
-	if (mRtpProfile) {
+RtpProfile *MS2Stream::makeProfile(const std::shared_ptr<SalMediaDescription> &md,
+                                   const SalStreamDescription &desc,
+                                   int *usedPt,
+                                   bool applyProfile) {
+	if (applyProfile && mRtpProfile) {
 		rtp_profile_destroy(mRtpProfile);
 		mRtpProfile = nullptr;
 	}
+
 	*usedPt = -1;
 	int bandwidth = 0;
 	if (desc.type == SalAudio) bandwidth = getIdealAudioBandwidth(md, desc);
@@ -1195,8 +1259,12 @@ MS2Stream::makeProfile(const std::shared_ptr<SalMediaDescription> &md, const Sal
 			lWarning() << "A payload type with number " << number << " already exists in profile!";
 		else rtp_profile_set_payload(profile, number, clonedPt);
 	}
-	mRtpProfile = profile;
-	mOutputBandwidth = bandwidth;
+
+	if (applyProfile) {
+		mRtpProfile = profile;
+		mOutputBandwidth = bandwidth;
+	}
+
 	return profile;
 }
 
