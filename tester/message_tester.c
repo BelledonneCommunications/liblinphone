@@ -1895,6 +1895,12 @@ static void transfer_message_upload_cancelled(void) {
 
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
+		
+		// Resend message
+		linphone_chat_message_send(msg);
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
+		                              &pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 10000));
+
 
 		// When C pointer is unreffed first, callbacks will be removed,
 		// potentially during file upload causing issue in FileTransferChatMessageModifier::onSendBody

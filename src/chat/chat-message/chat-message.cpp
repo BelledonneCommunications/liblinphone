@@ -297,6 +297,7 @@ void ChatMessagePrivate::setState(ChatMessage::State newState) {
 			salOp->unref();
 			salOp = nullptr;
 		}
+		restoreFileTransferContentAsFileContent();
 	}
 
 	if (direction == ChatMessage::Direction::Outgoing) {
