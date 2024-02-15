@@ -76,6 +76,9 @@ class PythonTranslator(object):
             return 'str'
         elif type_.name == 'void' and type_.isref:
             return 'object'
+
+        if type_.name[:8] == 'Linphone':
+            return type_.name[8:]
         return type_.name
 
 ###############################################################################
@@ -185,13 +188,22 @@ class PythonTranslator(object):
         methodDict['is_static'] = False
         methodDict['c_name'] = 'linphone_factory_create_' + _obj.name.to_snake_case() + '_cbs'
         methodDict['python_name'] = 'create_' + _obj.name.to_snake_case() + '_listener'
+
         methodDict['params'] = []
         methodDict['python_params'] = ''
         methodDict['computed_params'] = ''
+
         methodDict['has_return'] = True
         methodDict['has_return_obj'] = True
         methodDict['constructor'] = True
+
         methodDict['return_python_type'] = _obj.name.to_camel_case() + 'Listener'
+        methodDict['doc_return_type'] = methodDict['return_python_type']
+
+        methodDict['briefDoc'] = ''
+        methodDict['detailedDoc'] = ''
+        methodDict['fakeDoc'] = 'Creates a ' + methodDict['return_python_type'] + ' listener to object that can be added later using `' + _obj.name.to_camel_case() + '.add_listener()` method'
+
         return methodDict
 
     def create_add_callbacks_method(self, _obj):
@@ -209,8 +221,14 @@ class PythonTranslator(object):
         paramDict['param_c_type'] = _obj.name.to_camel_case(fullName=True)
         paramDict['is_obj'] = True
         paramDict['python_param_type'] = _obj.name.to_camel_case() + 'Listener'
-
+        
+        methodDict['doc_python_params'] = ', ' + paramDict['python_param_name'] + ': ' + paramDict['python_param_type']
         methodDict['params'].append(paramDict)
+
+        methodDict['briefDoc'] = ''
+        methodDict['detailedDoc'] = ''
+        methodDict['fakeDoc'] = 'Adds a listener to this `' + _obj.name.to_camel_case() + '` object\n:param listener: The `' + paramDict['python_param_type'] + '` object to add'
+
         return methodDict
 
     def create_remove_callbacks_method(self, _obj):
@@ -228,8 +246,14 @@ class PythonTranslator(object):
         paramDict['param_c_type'] = _obj.name.to_camel_case(fullName=True)
         paramDict['is_obj'] = True
         paramDict['python_param_type'] = _obj.name.to_camel_case() + 'Listener'
-        
+
+        methodDict['doc_python_params'] = ', ' + paramDict['python_param_name'] + ': ' + paramDict['python_param_type']
         methodDict['params'].append(paramDict)
+
+        methodDict['briefDoc'] = ''
+        methodDict['detailedDoc'] = ''
+        methodDict['fakeDoc'] = 'Removes a listener from this this `' + _obj.name.to_camel_case() + '` object\n:param listener: The `' + paramDict['python_param_type'] + '` object to remove'
+
         return methodDict
 
     def create_get_callbacks_method(self, _obj):
@@ -383,11 +407,14 @@ class PythonTranslator(object):
         methodDict['constructor'] = _method.returnAllocatedObject
         methodDict['is_const'] = _method.returnType.isconst
         
+        methodDict['doc_return_type'] = self.translate_base_type_for_doc(_method.returnType)
         if methodDict['has_return_obj']:
             methodDict['return_python_type'] = _method.returnType.desc.name.translate(self.nameTranslator)
+            methodDict['doc_return_type'] = methodDict['return_python_type']
         elif methodDict['has_return_obj_list']:
             methodDict['return_python_type'] = _method.returnType.containedTypeDesc.desc.name.translate(self.nameTranslator)
             methodDict['return_c_type'] = _method.returnType.containedTypeDesc.name
+            methodDict['doc_return_type'] = "list[" + methodDict['return_python_type'] + "]"
 
         methodDict['params'] = []
         methodDict['python_params'] = ''

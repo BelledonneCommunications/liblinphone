@@ -144,7 +144,7 @@ class {{python_name}}:
     {{/setter}}
     {{/properties}}
     {{#methods}}
-    def {{python_name}}({{^is_static}}self{{/is_static}}{{doc_python_params}}):
+    def {{python_name}}({{^is_static}}self{{/is_static}}{{doc_python_params}}){{#has_return}} -> {{doc_return_type}}{{/has_return}}:
         """
         {{#briefDoc}}
         {{#lines}}
@@ -155,7 +155,7 @@ class {{python_name}}:
         {{#lines}}
         {{{line}}}
         {{/lines}}
-        {{/detailedDoc}}
+        {{/detailedDoc}}{{fakeDoc}}
         """
         pass
 
