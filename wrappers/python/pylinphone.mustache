@@ -243,16 +243,20 @@ cdef class {{python_name}}:
         {{^write_only}}
         {{#is_return_obj_list}}
         _list = {{c_name}}(self.native_ptr)
-        bctbx_list = BctbxList.from_ptr(_list{{^is_const}}, True{{/is_const}})
         plist = []
+        if _list == NULL:
+            return plist
+        bctbx_list = BctbxList.from_ptr(_list{{^is_const}}, True{{/is_const}})
         for i in range(0, bctbx_list.size):
             pt = {{python_return_type}}.from_ptr(<{{c_return_type}} *>bctbx_list.elem_at(i){{#constructor}}, False{{/constructor}})
             plist.append(pt)
         return plist
         {{/is_return_obj_list}}
         {{#is_return_string_list}}
-        bctbx_list = {{c_name}}(self.native_ptr)
-        return BctbxList.from_ptr(bctbx_list{{^is_const}}, True{{/is_const}}).to_string_array()
+        _list = {{c_name}}(self.native_ptr)
+        if _list == NULL:
+            return []
+        return BctbxList.from_ptr(_list{{^is_const}}, True{{/is_const}}).to_string_array()
         {{/is_return_string_list}}
         {{#is_return_obj}}
         return {{python_return_type}}.from_ptr({{c_name}}(self.native_ptr){{#constructor}}, False{{/constructor}})
@@ -344,14 +348,18 @@ cdef class {{python_name}}:
         {{/params}}
         {{#has_return}}ret = {{/has_return}}{{c_name}}({{^is_static}}self.native_ptr{{/is_static}}{{computed_params}})
         {{#has_return_obj_list}}
-        bctbx_list = BctbxList.from_ptr(ret{{^is_const}}, True{{/is_const}})
         plist = []
+        if ret == NULL:
+            return plist
+        bctbx_list = BctbxList.from_ptr(ret{{^is_const}}, True{{/is_const}})
         for i in range(0, bctbx_list.size):
             pt = {{return_python_type}}.from_ptr(<{{return_c_type}} *>bctbx_list.elem_at(i){{#constructor}}, False{{/constructor}})
             plist.append(pt)
         return plist
         {{/has_return_obj_list}}
         {{#has_return_string_list}}
+        if ret == NULL:
+            return []
         return BctbxList.from_ptr(ret{{^is_const}}, True{{/is_const}}).to_string_array()
         {{/has_return_string_list}}
         {{#has_return_obj}}

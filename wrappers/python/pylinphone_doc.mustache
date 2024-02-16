@@ -24,6 +24,7 @@
 """
 
 from enum import Enum
+from typing import Callable
 
 {{#enums}}
 class {{name}}(Enum):
@@ -73,7 +74,7 @@ class {{python_name}}:
     {{/is_factory}}
     {{#callbacks}}
     @property
-    def {{callback_var_name}}(self):
+    def {{callback_var_name}}(self) -> {{doc_python_params}}:
         """
         {{#briefDoc}}
         {{#lines}}
@@ -89,7 +90,7 @@ class {{python_name}}:
         pass
 
     @{{callback_var_name}}.setter
-    def {{callback_var_name}}(self, cb):
+    def {{callback_var_name}}(self, cb: {{doc_python_params}}):
         """
         {{#briefDoc}}
         {{#lines}}
@@ -108,7 +109,7 @@ class {{python_name}}:
     {{#properties}}
     {{#getter}}
     @property
-    def {{python_name}}(self) -> {{doc_return_type}}:
+    def {{python_name}}(self) -> {{doc_return_type}}{{#doc_return_maybenil}} | None{{/doc_return_maybenil}}:
         """
         {{#briefDoc}}
         {{#lines}}
@@ -126,7 +127,7 @@ class {{python_name}}:
     {{/getter}}
     {{#setter}}
     @{{python_name}}.setter
-    def {{python_name}}(self, value: {{doc_value_type}}):
+    def {{python_name}}(self, value: {{doc_value_type}}{{#doc_value_maybenil}} | None{{/doc_value_maybenil}}):
         """
         {{#briefDoc}}
         {{#lines}}
@@ -144,7 +145,7 @@ class {{python_name}}:
     {{/setter}}
     {{/properties}}
     {{#methods}}
-    def {{python_name}}({{^is_static}}self{{/is_static}}{{doc_python_params}}){{#has_return}} -> {{doc_return_type}}{{/has_return}}:
+    def {{python_name}}({{^is_static}}self{{/is_static}}{{doc_python_params}}){{#has_return}} -> {{doc_return_type}}{{#doc_return_maybenil}} | None{{/doc_return_maybenil}}{{/has_return}}:
         """
         {{#briefDoc}}
         {{#lines}}

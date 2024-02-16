@@ -287,6 +287,8 @@ class PythonTranslator(object):
         callbackDict['c_params'] = ''
         callbackDict['first_python_param_name'] = ''
         callbackDict['computed_params'] = ''
+        callbackDict['doc_python_params'] = 'Callable[['
+
         for arg in _method.args:
             paramDict = {}
             translated_arg_type = self.translate_c_type(arg.type)
@@ -294,6 +296,7 @@ class PythonTranslator(object):
             if arg is not _method.args[0]:
                 callbackDict['c_params'] += ', '
                 callbackDict['computed_params'] += ', '
+                callbackDict['doc_python_params'] += ', '
             else:
                 callbackDict['first_python_param_name'] = paramDict['python_param_name']
             callbackDict['computed_params'] += paramDict['python_param_name']
@@ -304,6 +307,7 @@ class PythonTranslator(object):
             paramDict['is_string_list'] = 'bctbx_list_t*' in translated_arg_type and arg.type.containedTypeDesc.name == 'string'
             paramDict['is_obj'] = isinstance(arg.type, AbsApi.ClassType)
             paramDict['is_bool'] = translated_arg_type == 'bint'
+            paramDict['is_enum'] = isinstance(arg.type, AbsApi.EnumType)
             paramDict['is_const'] = arg.type.isconst
 
             if paramDict['is_obj_list'] or paramDict['is_string_list']:
@@ -318,6 +322,19 @@ class PythonTranslator(object):
                 callbackDict['computed_params'] += '_b'
 
             callbackDict['params'].append(paramDict)
+            
+            argType = self.translate_base_type_for_doc(arg.type)
+            if paramDict['is_obj_list']:
+                argType = "list[" + paramDict['python_param_type'] + "]"
+            elif paramDict['is_obj']:
+                argType = paramDict['python_param_type']
+            elif paramDict['is_enum']:
+                argType = arg.type.desc.name.translate(self.nameTranslator)
+            callbackDict['doc_python_params'] += argType
+            if arg.maybenil:
+                callbackDict['doc_python_params'] += ' | None'
+
+        callbackDict['doc_python_params'] += '], None]' # assume callback returns nothing
 
         return callbackDict
 
@@ -344,6 +361,7 @@ class PythonTranslator(object):
             getterDict['is_simple_return'] = not getterDict['is_return_obj_list'] and not getterDict['is_return_string_list'] and not getterDict['is_return_obj'] and not getterDict['is_return_bool'] and not getterDict['is_return_string'] and not getterDict['is_return_void_ptr']
 
             getterDict['doc_return_type'] = self.translate_base_type_for_doc(getter.returnType)
+            getterDict['doc_return_maybenil'] = getter.maybenil and not getterDict['is_return_obj_list'] and not getterDict['is_return_string_list']
             if getterDict['is_return_obj']:
                 getterDict['python_return_type'] = getter.returnType.desc.name.translate(self.nameTranslator)
                 getterDict['doc_return_type'] = getterDict['python_return_type']
@@ -373,6 +391,7 @@ class PythonTranslator(object):
             setterDict['is_simple_value'] = not setterDict['is_value_obj_list'] and not setterDict['is_value_string_list'] and not setterDict['is_value_obj'] and not setterDict['is_value_bool'] and not setterDict['is_value_void_ptr'] and not setterDict['is_value_string']
 
             setterDict['doc_value_type'] = self.translate_base_type_for_doc(setter.args[0].type)
+            setterDict['doc_value_maybenil'] = setter.args[0].maybenil
             if setterDict['is_value_obj']:
                 setterDict['python_value_type'] = setter.args[0].type.desc.name.translate(self.nameTranslator)
                 setterDict['doc_value_type'] = setterDict['python_value_type']
@@ -408,6 +427,7 @@ class PythonTranslator(object):
         methodDict['is_const'] = _method.returnType.isconst
         
         methodDict['doc_return_type'] = self.translate_base_type_for_doc(_method.returnType)
+        methodDict['doc_return_maybenil'] = _method.maybenil and not methodDict['has_return_obj_list'] and not methodDict['has_return_string_list']
         if methodDict['has_return_obj']:
             methodDict['return_python_type'] = _method.returnType.desc.name.translate(self.nameTranslator)
             methodDict['doc_return_type'] = methodDict['return_python_type']
@@ -467,6 +487,8 @@ class PythonTranslator(object):
             elif paramDict['is_enum']:
                 argType = arg.type.desc.name.translate(self.nameTranslator)
             methodDict['doc_python_params'] += paramDict['python_param_name'] + ": " + argType
+            if arg.maybenil:
+                methodDict['doc_python_params'] += ' | None'
 
         return methodDict
 
