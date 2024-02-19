@@ -25,6 +25,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.graphics.SurfaceTexture;
 import android.net.ConnectivityManager;
@@ -55,6 +58,7 @@ import org.linphone.core.tools.network.NetworkSignalMonitor;
 import org.linphone.core.tools.receiver.DozeReceiver;
 import org.linphone.core.tools.receiver.InteractivityReceiver;
 import org.linphone.core.tools.service.CoreManager;
+import org.linphone.core.tools.service.PushService;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.video.capture.CaptureTextureView;
 import org.linphone.mediastream.Version;
@@ -91,6 +95,8 @@ public class AndroidPlatformHelper {
     private InteractivityReceiver mInteractivityReceiver;
     private String[] mDnsServers;
     private NetworkSignalMonitor mNetworkSignalMonitor;
+
+    private Class mPushServiceClass;
     private boolean mPushServiceStarted;
 
     private static int mTempCountWifi = 0;
@@ -167,6 +173,11 @@ public class AndroidPlatformHelper {
             mNetworkSignalMonitor = new NetworkSignalMonitor(mContext, this);
         } else {
             Log.w("[Platform Helper] Device is running Android < 10, can't use network signal strength monitoring");
+        }
+
+        mPushServiceClass = getPushServiceClass();
+        if (mPushServiceClass == null) {
+            mPushServiceClass = org.linphone.core.tools.service.PushService.class;
         }
     }
 
@@ -925,7 +936,7 @@ public class AndroidPlatformHelper {
 
         if (!connected) {
             Log.i("[Platform Helper] Push has been received but network seems unreachable, starting foreground push service");
-            Intent i = new Intent(mContext, org.linphone.core.tools.service.PushService.class);
+            Intent i = new Intent(mContext, mPushServiceClass);
             DeviceUtils.startForegroundService(mContext, i);
             mPushServiceStarted = true;
         }
@@ -934,9 +945,42 @@ public class AndroidPlatformHelper {
     public synchronized void stopPushService() {
         if (mPushServiceStarted) {
             Log.i("[Platform Helper] Foreground push service is no longer required");
-            Intent i = new Intent(mContext, org.linphone.core.tools.service.PushService.class); 
+            Intent i = new Intent(mContext, mPushServiceClass); 
             mContext.stopService(i);
             mPushServiceStarted = false;
         }
+    }
+
+    private Class getPushServiceClass() {
+        // Inspect services in package to get the class name of the Service that extends PushService, assume first one
+        try {
+            PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SERVICES);
+            ServiceInfo[] services = packageInfo.services;
+            if (services != null) {
+                for (ServiceInfo service : services) {
+                    String serviceName = service.name;
+                    try {
+                        Class serviceClass = Class.forName(serviceName);
+                        if (PushService.class.isAssignableFrom(serviceClass)) {
+                            Log.i("[Platform Helper] Found a service that herits from org.linphone.core.tools.service.PushService: ", serviceName);
+                            return serviceClass;
+                        }
+                    } catch (Exception exception) {
+                        Log.e("[Platform Helper] Exception trying to get Class from name [", serviceName, "]: ", exception);
+                    } catch (Error error) {
+                        Log.e("[Platform Helper] Error trying to get Class from name [", serviceName, "]: ", error);
+                    }
+                }
+            } else {
+                Log.w("[Platform Helper] No Service found in package info, continuing without it...");
+                return null;
+            }
+        } catch (Exception e) {
+            Log.e("[Platform Helper] Exception thrown while trying to find available Services: ", e);
+            return null;
+        }
+
+        Log.w("[Platform Helper] Failed to find a valid Service, continuing without it...");
+        return null;
     }
 };
