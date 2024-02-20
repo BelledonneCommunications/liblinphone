@@ -1793,7 +1793,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	if (confAddr) {
 		conferenceFactoryUri = confAddr;
 	} else {
-		conferenceFactoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
+		conferenceFactoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr)->clone()->toSharedPtr();
 		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
 			lWarning() << "Not creating conference: no conference factory uri for local address [" << *localAddr << "]";
 			return nullptr;
