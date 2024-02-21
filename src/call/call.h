@@ -153,7 +153,7 @@ public:
 	const MediaSessionParams *getCurrentParams() const;
 	float getCurrentQuality() const;
 	LinphoneCallDir getDirection() const;
-	const std::shared_ptr<Address> getDiversionAddress() const;
+	std::shared_ptr<const Address> getDiversionAddress() const;
 	int getDuration() const;
 	const LinphoneErrorInfo *getErrorInfo() const;
 	const std::shared_ptr<Address> getLocalAddress() const;
@@ -326,6 +326,7 @@ public:
 private:
 	std::shared_ptr<Participant> mParticipant;
 	mutable LinphonePlayer *mPlayer = nullptr;
+	mutable std::shared_ptr<Address> mDiversionAddress;
 	CallCallbackObj mNextVideoFrameDecoded;
 	mutable std::shared_ptr<AbstractChatRoom> mChatRoom = nullptr;
 	bool mPlayingRingbackTone = false;
