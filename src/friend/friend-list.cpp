@@ -455,7 +455,7 @@ LinphoneFriendListStatus FriendList::addFriend(const std::shared_ptr<Friend> &lf
 		present = (findFriendByRefKey(refKey) != nullptr);
 	}
 	if (present) {
-		std::string tmp = addr->asString();
+		std::string tmp = lf->getName();
 		lWarning() << "Friend " << (tmp.empty() ? "unknown" : tmp.c_str()) << " already in list [" << mDisplayName
 		           << "], ignored.";
 	} else {

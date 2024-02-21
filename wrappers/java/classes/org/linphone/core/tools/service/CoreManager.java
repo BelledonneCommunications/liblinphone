@@ -112,7 +112,6 @@ public class CoreManager {
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
         mCore = core;
-        sInstance = this;
         mServiceRunningInForeground = false;
 
         mTimer = null;
@@ -132,6 +131,7 @@ public class CoreManager {
         } else {
             Log.i("[Core Manager] Linphone SDK Android classes won't use main thread: [", thread.getName(), "], id=", thread.getId());
         }
+        sInstance = this;
 
         // DO NOT ADD A LISTENER ON THE CORE HERE!
         // Wait for onLinphoneCoreStart()
@@ -253,7 +253,13 @@ public class CoreManager {
 
     public void healNetwork() {
         if (mCore != null) {
-            healNetworkConnections(mCore.getNativePointer());
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    healNetworkConnections(mCore.getNativePointer());
+                }
+            };
+            dispatchOnCoreThread(runnable);
         }
     }
 

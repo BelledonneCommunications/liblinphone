@@ -826,18 +826,10 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	const char *c_callId = GetStringUTFChars(env, callId);
 	const char *c_payload = GetStringUTFChars(env, payload);
-	char *call_id = ms_strdup(c_callId);
-	char *push_payload = ms_strdup(c_payload);
 	bool_t is_core_starting = isCoreStarting ? TRUE : FALSE;
+	linphone_core_push_notification_received_2(core, c_payload, c_callId, is_core_starting);
 	ReleaseStringUTFChars(env, callId, c_callId);
 	ReleaseStringUTFChars(env, payload, c_payload);
-
-	const std::function<void()> fun = [core, push_payload, call_id, is_core_starting]() {
-		linphone_core_push_notification_received_2(core, push_payload, call_id, is_core_starting);
-		ms_free(call_id);
-		ms_free(push_payload);
-	};
-	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
 extern "C" JNIEXPORT void JNICALL

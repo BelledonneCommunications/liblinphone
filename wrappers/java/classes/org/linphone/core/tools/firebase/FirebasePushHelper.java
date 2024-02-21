@@ -60,7 +60,13 @@ public class FirebasePushHelper implements PushNotificationUtils.PushHelperInter
                                     String token = task.getResult();
                                     Log.i("[Push Notification] Token fetched from Firebase: " + token);
                                     if (CoreManager.isReady()) {
-                                        CoreManager.instance().setPushToken(token);
+                                        Runnable runnable = new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                CoreManager.instance().setPushToken(token);
+                                            }
+                                        };
+                                        CoreManager.instance().dispatchOnCoreThread(runnable);
                                     }
                                 }
                             });

@@ -446,7 +446,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    private synchronized void setNativePreviewWindowIdOnCoreThread(Object view) {
+    private synchronized void setNativePreviewWindowIdOnCoreThread(SurfaceTexture view) {
         Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -495,7 +495,7 @@ public class AndroidPlatformHelper {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
                 Log.i("[Platform Helper] Preview window surface texture [" + surface + "] is available for texture view [" + mPreviewTextureView + "]");
-                setNativePreviewWindowIdOnCoreThread(mPreviewTextureView);
+                setNativePreviewWindowIdOnCoreThread(surface);
             }
 
             @Override
@@ -530,11 +530,11 @@ public class AndroidPlatformHelper {
 
         if (mPreviewTextureView.isAvailable()) {
             Log.i("[Platform Helper] Preview window surface is directly available for texture view [" + mPreviewTextureView + "]");
-            setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
+            setNativePreviewWindowId(mNativePtr, mPreviewTextureView.getSurfaceTexture());
         }
     }
 
-    private synchronized void setNativeVideoWindowIdOnCoreThread(Object view) {
+    private synchronized void setNativeVideoWindowIdOnCoreThread(SurfaceTexture view) {
         Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -583,7 +583,7 @@ public class AndroidPlatformHelper {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
                 Log.i("[Platform Helper] Rendering window surface texture [" + surface + "] is available for texture view [" + mVideoTextureView + "]");
-                setNativeVideoWindowIdOnCoreThread(mVideoTextureView);
+                setNativeVideoWindowIdOnCoreThread(surface);
             }
 
             @Override
@@ -619,11 +619,11 @@ public class AndroidPlatformHelper {
 
         if (mVideoTextureView.isAvailable()) {
             Log.i("[Platform Helper] Rendering window surface is directly available for texture view [" + mVideoTextureView + "]");
-            setNativeVideoWindowId(mNativePtr, mVideoTextureView);
+            setNativeVideoWindowId(mNativePtr, mVideoTextureView.getSurfaceTexture());
         }
     }
 
-    private synchronized void setParticipantDeviceNativeVideoWindowIdOnCoreThread(long participantDevice, Object view) {
+    private synchronized void setParticipantDeviceNativeVideoWindowIdOnCoreThread(long participantDevice, SurfaceTexture view) {
         Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -671,12 +671,12 @@ public class AndroidPlatformHelper {
                     "so you can keep using your existing application code for managing video views.");
         }
 
-        mParticipantTextureView.put(participantDevice, (TextureView) view);
-        mParticipantTextureView.get(participantDevice).setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+        TextureView textureView = (TextureView) view;
+        textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-               Log.i("[Platform Helper] Rendering window surface texture [" + surface + "] is available for texture view [" + mParticipantTextureView.get(participantDevice) + "]");
-               setParticipantDeviceNativeVideoWindowIdOnCoreThread(participantDevice, mParticipantTextureView.get(participantDevice));
+               Log.i("[Platform Helper] Rendering window surface texture [" + surface + "] is available for texture view [" + textureView + "]");
+               setParticipantDeviceNativeVideoWindowIdOnCoreThread(participantDevice, surface);
             }
 
             @Override
@@ -696,10 +696,11 @@ public class AndroidPlatformHelper {
                 Log.d("[Platform Helper] Surface texture [" + surface + "] has been updated");
             }
         });
+        mParticipantTextureView.put(participantDevice, textureView);
 
-        if (mParticipantTextureView.get(participantDevice).isAvailable()) {
-            Log.i("[Platform Helper] Rendering participant device window surface is directly available for texture view [" + mParticipantTextureView.get(participantDevice) + "]");
-            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, mParticipantTextureView.get(participantDevice));
+        if (textureView.isAvailable()) {
+            Log.i("[Platform Helper] Rendering participant device window surface is directly available for texture view [" + textureView + "]");
+            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, textureView.getSurfaceTexture());
         } else {
             Log.i("[Platform Helper] Rendering participant device window surface is not available !");
         }

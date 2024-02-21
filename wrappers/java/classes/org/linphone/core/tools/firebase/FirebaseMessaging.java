@@ -54,7 +54,13 @@ public class FirebaseMessaging extends FirebaseMessagingService {
     public void onNewToken(final String token) {
         android.util.Log.i("FirebaseIdService", "[Push Notification] Refreshed token: " + token);
         if (CoreManager.isReady()) {
-            CoreManager.instance().setPushToken(token);
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    CoreManager.instance().setPushToken(token);
+                }
+            };
+            CoreManager.instance().dispatchOnCoreThread(runnable);
         }
     }
 
@@ -68,6 +74,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
             }
         };
         AndroidDispatcher.dispatchOnUIThread(pushRunnable);
+        
     }
 
     private void onPushReceived(RemoteMessage remoteMessage) {
@@ -102,7 +109,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                         AndroidDispatcher.dispatchOnUIThread(pushRunnable);
                     }
                 }
-            };                
+            };
             CoreManager.instance().dispatchOnCoreThread(runnable);
         }
     }
@@ -117,7 +124,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         editor.putString("call-id", callId);
         String payload = new JSONObject(data).toString();
         editor.putString("payload", payload);
-        editor.apply();
+        editor.commit();
         android.util.Log.i("FirebaseMessaging", "[Push Notification] Push information stored for Call-ID [" + callId + "]");
     }
 
