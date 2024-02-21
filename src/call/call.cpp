@@ -1072,8 +1072,9 @@ LinphoneCallDir Call::getDirection() const {
 	return getActiveSession()->getDirection();
 }
 
-const std::shared_ptr<Address> Call::getDiversionAddress() const {
-	return getActiveSession()->getDiversionAddress();
+std::shared_ptr<const Address> Call::getDiversionAddress() const {
+	mDiversionAddress = (new Address(getActiveSession()->getDiversionAddress()))->toSharedPtr();
+	return mDiversionAddress;
 }
 
 int Call::getDuration() const {

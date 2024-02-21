@@ -185,8 +185,14 @@ void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remot
 		mPushParams[PushConfigProviderKey] = "apns";
 #endif
 	}
-	
-	if (mPushParams[PushConfigParamKey].empty() || (mTokensHaveChanged && (!mVoipToken.empty() || !mRemoteToken.empty()) )) {
+	/* Push notification may be allowed and requested to the system, but sometimes the tokens are not
+	 * yet available. Modify the enablement so that we don't generate an ill-formed push parameter line.
+	 */
+	if (mRemoteToken.empty()) remotePushAllowed = false;
+	if (mVoipToken.empty()) voipPushAllowed = false;
+
+	if (mPushParams[PushConfigParamKey].empty() ||
+	    (mTokensHaveChanged && (!mVoipToken.empty() || !mRemoteToken.empty()))) {
 		string services;
 		if (voipPushAllowed) {
 			services += "voip";

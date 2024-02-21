@@ -1734,12 +1734,12 @@ LinphoneCallDir CallSession::getDirection() const {
 	return d->direction;
 }
 
-const std::shared_ptr<Address> CallSession::getDiversionAddress() const {
+Address CallSession::getDiversionAddress() const {
 	L_D();
 
-	std::shared_ptr<Address> diversionAddress = Address::create();
+	Address diversionAddress;
 	if (d->op && d->op->getDiversionAddress()) {
-		diversionAddress->setImpl(d->op->getDiversionAddress());
+		diversionAddress.setImpl(d->op->getDiversionAddress());
 	}
 	return diversionAddress;
 }

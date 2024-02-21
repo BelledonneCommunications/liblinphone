@@ -946,8 +946,8 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 			SalSrtpCryptoAlgo crypto_result;
 			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result,
 			                                        resultCfg.crypto_local_tag, true)) {
-				lWarning() << "[Initiate Incoming Configuration] No matching crypto algo for remote stream's offer ["
-				           << &remote_offer << "]";
+				lError() << "[Initiate Incoming Configuration] No matching crypto algo for remote stream's offer ["
+				         << &remote_offer << "]";
 				return std::nullopt;
 			}
 			crypto.emplace(crypto.begin(), crypto_result);
@@ -969,7 +969,7 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 	    (!localCfg.dtls_fingerprint.empty()) && (!remoteCfg.dtls_fingerprint.empty())) {
 		const auto dtlsFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionDTLS);
 		if (dtlsFound == availableEncs.cend()) {
-			lWarning() << "[Initiate Incoming Configuration] DTLS is not supported even tough negotiation succeded";
+			lWarning() << "[Initiate Incoming Configuration] DTLS is not supported even though negotiation succeeded";
 			return std::nullopt;
 		} else {
 			resultCfg.dtls_fingerprint = localCfg.dtls_fingerprint;

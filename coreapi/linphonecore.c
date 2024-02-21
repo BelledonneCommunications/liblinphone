@@ -7529,7 +7529,10 @@ void sip_config_uninit(LinphoneCore *lc) {
 	lc->im_notif_policy = NULL;
 	lc->sip_conf = {0};
 
-	if (lc->push_config) linphone_push_notification_config_unref(lc->push_config);
+	if (lc->push_config) {
+		linphone_push_notification_config_unref(lc->push_config);
+		lc->push_config = nullptr;
+	}
 }
 
 void rtp_config_uninit(LinphoneCore *lc) {

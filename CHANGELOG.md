@@ -33,7 +33,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - New video codec policy, so that hardware-accelerated codecs are prioritized in offer/answer. See LinphoneCodecPriorityPolicyAuto .
 - AV-1 codec
 - New LinphoneAlert object used to report various QoS alerts during calls.
-- SRTP AES GCM mode
+- SRTP AEAD_AES_128_GCM and AEAD_AES_256_GCM crypto suites.
 
 ### Changed
 - Enum relocations dictionnary is now automatically computed, which fixes some enum that were not
@@ -47,6 +47,9 @@ This changelog file was started on October 2019. Previous changes were more or l
 ### Fixed
 - Documentation issues in C++, Swift and C# wrappers
 - Memory leaks
+
+### Removed
+- SRTP AES_CM_128_HMAC_SHA1_32 and AES_CM_256_HMAC_SHA1_32 crypto suites, considered unsecure because of SHA1.
 
 
 ## [5.2.0] 2022-11-14

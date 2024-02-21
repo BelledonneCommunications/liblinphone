@@ -154,7 +154,7 @@ public:
 
 	CallSessionParams *getCurrentParams() const;
 	LinphoneCallDir getDirection() const;
-	const std::shared_ptr<Address> getDiversionAddress() const;
+	Address getDiversionAddress() const;
 	int getDuration() const;
 	const LinphoneErrorInfo *getErrorInfo() const;
 	const std::shared_ptr<Address> getLocalAddress() const;

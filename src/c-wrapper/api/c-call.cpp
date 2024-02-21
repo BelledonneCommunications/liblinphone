@@ -207,7 +207,7 @@ char *linphone_call_get_remote_address_as_string(const LinphoneCall *call) {
 }
 
 const LinphoneAddress *linphone_call_get_diversion_address(const LinphoneCall *call) {
-	const auto &diversionAddress = Call::toCpp(call)->getDiversionAddress();
+	auto diversionAddress = Call::toCpp(call)->getDiversionAddress();
 	return diversionAddress && diversionAddress->isValid() ? diversionAddress->toC() : nullptr;
 }
 
