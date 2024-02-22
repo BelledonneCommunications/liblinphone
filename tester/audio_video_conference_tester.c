@@ -2235,9 +2235,8 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol));
-		linphone_video_activation_policy_unref(cpol);
 
 		linphone_core_set_media_encryption(c, encryption);
 
@@ -5822,9 +5821,8 @@ static void remove_participant_from_video_conference_base(const LinphoneConferen
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == TRUE);
-		linphone_video_activation_policy_unref(cpol);
 
 		linphone_core_set_default_conference_layout(c, layout);
 	}
@@ -6044,9 +6042,8 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == TRUE);
-		linphone_video_activation_policy_unref(cpol);
 
 		linphone_config_set_int(linphone_core_get_config(c), "rtp", "rtcp_mux", 1);
 
@@ -6352,9 +6349,8 @@ static void ice_video_conference_one_participant(const LinphoneConferenceLayout 
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == TRUE);
-		linphone_video_activation_policy_unref(cpol);
 
 		linphone_core_set_firewall_policy(c, LinphonePolicyUseIce);
 
@@ -6552,21 +6548,19 @@ static void audio_calls_added_to_video_conference_base(const LinphoneConferenceL
 			linphone_core_enable_video_capture(c, TRUE);
 			linphone_core_enable_video_display(c, TRUE);
 
-			LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+			const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 			BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol));
 			BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_initiate(cpol));
-			linphone_video_activation_policy_unref(cpol);
 
 		} else {
 			linphone_core_set_video_activation_policy(c, participant_pol);
 			linphone_core_enable_video_capture(c, enable_participant_video);
 			linphone_core_enable_video_display(c, enable_participant_video);
 
-			LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+			const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 			BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == enable_participant_video);
 			BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_initiate(cpol) ==
 			               enable_participant_video);
-			linphone_video_activation_policy_unref(cpol);
 		}
 
 		linphone_config_set_int(linphone_core_get_config(c), "rtp", "rtcp_mux", 1);
@@ -9906,9 +9900,8 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == automatically_video_accept);
-		linphone_video_activation_policy_unref(cpol);
 	}
 
 	linphone_video_activation_policy_unref(pol);
@@ -10119,9 +10112,8 @@ static void simultaneous_toggle_video_settings_during_conference(void) {
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol));
-		linphone_video_activation_policy_unref(cpol);
 	}
 
 	linphone_video_activation_policy_unref(pol);
@@ -10318,9 +10310,8 @@ static void update_conf_params_during_conference(void) {
         linphone_core_enable_video_capture(c, TRUE);
         linphone_core_enable_video_display(c, TRUE);
 
-        LinphoneVideoActivationPolicy * cpol = linphone_core_get_video_activation_policy(c);
+        const LinphoneVideoActivationPolicy * cpol = linphone_core_get_video_activation_policy(c);
         BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol));
-        linphone_video_activation_policy_unref(cpol);
     }
 
     linphone_video_activation_policy_unref(pol);
@@ -10463,9 +10454,8 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol));
-		linphone_video_activation_policy_unref(cpol);
 	}
 
 	linphone_video_activation_policy_unref(pol);
@@ -10628,9 +10618,8 @@ static void try_to_update_call_params_during_conference(void) {
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
 
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol));
-		linphone_video_activation_policy_unref(cpol);
 	}
 	linphone_video_activation_policy_unref(pol);
 
@@ -12295,9 +12284,8 @@ static void conference_mix_created_by_merging_video_calls_base(LinphoneConferenc
 		linphone_core_enable_rtp_bundle(c, TRUE);
 
 		linphone_core_set_default_conference_layout(c, layout);
-		LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
+		const LinphoneVideoActivationPolicy *cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == TRUE);
-		linphone_video_activation_policy_unref(cpol);
 
 		if (enable_ice) {
 			linphone_core_set_firewall_policy(c, LinphonePolicyUseIce);

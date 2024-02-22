@@ -62,29 +62,27 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack,
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_pauline, *call_marie;
 	bctbx_list_t *lcs = NULL;
-	LinphoneVideoPolicy vpol;
 	bool_t call_ok;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_call_state_changed(cbs, call_paused_resumed_with_video_base_call_cb);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, marie->lc);
 
-	vpol.automatically_accept = FALSE;
-	vpol.automatically_initiate = TRUE; /* needed to present a video mline*/
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
-	linphone_core_set_video_policy(marie->lc, &vpol);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 
-	vpol.automatically_accept = FALSE;
-	vpol.automatically_initiate = TRUE;
-
-	linphone_core_set_video_policy(pauline->lc, &vpol);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
@@ -194,29 +192,27 @@ static void call_paused_resumed_with_video_enabled(void) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_pauline, *call_marie;
 	bctbx_list_t *lcs = NULL;
-	LinphoneVideoPolicy vpol;
 	bool_t call_ok;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_call_state_changed(cbs, call_paused_resumed_with_video_base_call_cb);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, marie->lc);
 
-	vpol.automatically_accept = TRUE;
-	vpol.automatically_initiate = TRUE; /* needed to present a video mline*/
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
-	linphone_core_set_video_policy(marie->lc, &vpol);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 
-	vpol.automatically_accept = TRUE;
-	vpol.automatically_initiate = TRUE;
-
-	linphone_core_set_video_policy(pauline->lc, &vpol);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
@@ -332,7 +328,6 @@ _request_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t 
 bool_t request_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t accept_with_params) {
 	stats initial_caller_stat = caller->stat;
 	stats initial_callee_stat = callee->stat;
-	LinphoneVideoActivationPolicy *video_policy;
 	LinphoneCall *call_obj;
 	bool_t video_added = FALSE;
 
@@ -346,7 +341,7 @@ bool_t request_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee, b
 		BC_ASSERT_TRUE(wait_for(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallStreamsRunning,
 		                        initial_caller_stat.number_of_LinphoneCallStreamsRunning + 1));
 
-		video_policy = linphone_core_get_video_activation_policy(caller->lc);
+		const LinphoneVideoActivationPolicy *video_policy = linphone_core_get_video_activation_policy(caller->lc);
 		if (linphone_video_activation_policy_get_automatically_accept(video_policy) || accept_with_params) {
 			video_added = BC_ASSERT_TRUE(linphone_call_params_video_enabled(
 			    linphone_call_get_current_params(linphone_core_get_current_call(callee->lc))));
@@ -359,7 +354,6 @@ bool_t request_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee, b
 			BC_ASSERT_FALSE(linphone_call_params_video_enabled(
 			    linphone_call_get_current_params(linphone_core_get_current_call(caller->lc))));
 		}
-		linphone_video_activation_policy_unref(video_policy);
 
 		/* Check custom header added in re-INVITE is available on both sides */
 		BC_ASSERT_STRING_EQUAL(
@@ -492,15 +486,16 @@ static void call_with_video_added_2(void) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
 	/*in this variant marie is already in automatically accept*/
-	LinphoneVideoPolicy marie_policy = {0};
-	marie_policy.automatically_accept = TRUE;
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	vpol->automatically_accept = TRUE;
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
-	linphone_core_set_video_policy(marie->lc, &marie_policy);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, FALSE);
 
@@ -551,7 +546,6 @@ static void call_with_declined_video_base(bool_t using_policy) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *marie_call;
 	LinphoneCall *pauline_call;
-	LinphoneVideoPolicy marie_policy, pauline_policy;
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 	bool_t call_ok;
 
@@ -566,13 +560,19 @@ static void call_with_declined_video_base(bool_t using_policy) {
 	linphone_core_enable_video_display(pauline->lc, FALSE);
 
 	if (using_policy) {
-		pauline_policy.automatically_initiate = TRUE;
-		pauline_policy.automatically_accept = FALSE;
-		marie_policy.automatically_initiate = FALSE;
-		marie_policy.automatically_accept = FALSE;
+		LinphoneVideoActivationPolicy *marie_vpol =
+		    linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(marie_vpol, FALSE);
+		linphone_video_activation_policy_set_automatically_initiate(marie_vpol, FALSE);
+		linphone_core_set_video_activation_policy(marie->lc, marie_vpol);
+		linphone_video_activation_policy_unref(marie_vpol);
 
-		linphone_core_set_video_policy(marie->lc, &marie_policy);
-		linphone_core_set_video_policy(pauline->lc, &pauline_policy);
+		LinphoneVideoActivationPolicy *pauline_vpol =
+		    linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(pauline_vpol, FALSE);
+		linphone_video_activation_policy_set_automatically_initiate(pauline_vpol, TRUE);
+		linphone_core_set_video_activation_policy(pauline->lc, pauline_vpol);
+		linphone_video_activation_policy_unref(pauline_vpol);
 	}
 
 	caller_test_params.base = linphone_core_create_call_params(pauline->lc, NULL);
@@ -611,7 +611,6 @@ static void call_with_declined_video_despite_policy(void) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *marie_call;
 	LinphoneCall *pauline_call;
-	LinphoneVideoPolicy marie_policy, pauline_policy;
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 	bool_t call_ok;
 
@@ -625,13 +624,12 @@ static void call_with_declined_video_despite_policy(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, FALSE);
 
-	pauline_policy.automatically_initiate = TRUE;
-	pauline_policy.automatically_accept = TRUE;
-	marie_policy.automatically_initiate = TRUE;
-	marie_policy.automatically_accept = TRUE;
-
-	linphone_core_set_video_policy(marie->lc, &marie_policy);
-	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	caller_test_params.base = linphone_core_create_call_params(pauline->lc, NULL);
 
@@ -669,16 +667,21 @@ void video_call_base_2(LinphoneCoreManager *caller,
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 	LinphoneCall *callee_call;
 	LinphoneCall *caller_call;
-	LinphoneVideoPolicy callee_policy, caller_policy;
 
 	if (using_policy) {
-		callee_policy.automatically_initiate = FALSE;
-		callee_policy.automatically_accept = TRUE;
-		caller_policy.automatically_initiate = TRUE;
-		caller_policy.automatically_accept = FALSE;
+		LinphoneVideoActivationPolicy *callee_vpol =
+		    linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+		linphone_video_activation_policy_set_automatically_accept(callee_vpol, TRUE);
+		linphone_core_set_video_activation_policy(callee->lc, callee_vpol);
+		linphone_video_activation_policy_unref(callee_vpol);
 
-		linphone_core_set_video_policy(callee->lc, &callee_policy);
-		linphone_core_set_video_policy(caller->lc, &caller_policy);
+		LinphoneVideoActivationPolicy *caller_vpol =
+		    linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+		linphone_video_activation_policy_set_automatically_accept(caller_vpol, FALSE);
+		linphone_core_set_video_activation_policy(caller->lc, caller_vpol);
+		linphone_video_activation_policy_unref(caller_vpol);
 	}
 
 	if (g_display_filter != "") {
@@ -790,16 +793,21 @@ void video_call_base_3(LinphoneCoreManager *caller,
 
 	LinphoneCall *callee_call;
 	LinphoneCall *caller_call;
-	LinphoneVideoPolicy callee_policy, caller_policy;
 
 	if (using_policy) {
-		callee_policy.automatically_initiate = FALSE;
-		callee_policy.automatically_accept = TRUE;
-		caller_policy.automatically_initiate = TRUE;
-		caller_policy.automatically_accept = FALSE;
+		LinphoneVideoActivationPolicy *callee_vpol =
+		    linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+		linphone_video_activation_policy_set_automatically_accept(callee_vpol, TRUE);
+		linphone_core_set_video_activation_policy(callee->lc, callee_vpol);
+		linphone_video_activation_policy_unref(callee_vpol);
 
-		linphone_core_set_video_policy(callee->lc, &callee_policy);
-		linphone_core_set_video_policy(caller->lc, &caller_policy);
+		LinphoneVideoActivationPolicy *caller_vpol =
+		    linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+		linphone_video_activation_policy_set_automatically_accept(caller_vpol, FALSE);
+		linphone_core_set_video_activation_policy(caller->lc, caller_vpol);
+		linphone_video_activation_policy_unref(caller_vpol);
 	}
 
 	if (g_display_filter != "") {
@@ -1069,20 +1077,24 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneVideoPolicy policy;
 	LinphoneCall *caller_call, *callee_call;
 	LinphoneCallParams *params;
 	VideoStream *vstream;
 	char *record_file = bc_tester_file((generateRandomFilename("avrecord") + ".mkv").c_str());
 
-	policy.automatically_initiate = FALSE;
-	policy.automatically_accept = FALSE;
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, FALSE);
+	linphone_core_set_video_activation_policy(callee->lc, callee_vpol);
+	linphone_video_activation_policy_unref(callee_vpol);
 
-	linphone_core_set_video_policy(callee->lc, &policy);
-
-	policy.automatically_initiate = TRUE;
-	policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(caller->lc, &policy);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, TRUE);
+	linphone_core_set_video_activation_policy(caller->lc, caller_vpol);
+	linphone_video_activation_policy_unref(caller_vpol);
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
@@ -1246,11 +1258,18 @@ static void call_with_ice_video_to_novideo(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneVideoPolicy vpol = {0};
-	vpol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(pauline->lc, &vpol);
-	vpol.automatically_initiate = FALSE;
-	linphone_core_set_video_policy(marie->lc, &vpol);
+
+	LinphoneVideoActivationPolicy *pauline_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(pauline_vpol, TRUE);
+	linphone_core_set_video_activation_policy(pauline->lc, pauline_vpol);
+	linphone_video_activation_policy_unref(pauline_vpol);
+
+	LinphoneVideoActivationPolicy *marie_vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(marie_vpol, FALSE);
+	linphone_core_set_video_activation_policy(marie->lc, marie_vpol);
+	linphone_video_activation_policy_unref(marie_vpol);
+
 	_call_with_ice_base(pauline, marie, TRUE, TRUE, TRUE, FALSE, FALSE);
 	_call_with_ice_base(pauline, marie, TRUE, TRUE, TRUE, FALSE, TRUE); // Cancel while gathering candidates.
 	linphone_core_manager_destroy(marie);
@@ -1262,8 +1281,8 @@ static void call_with_ice_video_to_novideo(void) {
  * either caller or callee. It doesn't use linphone_core_accept_call_with_params() to accept video despite of default
  * policies.
  */
-static void _call_with_ice_video(LinphoneVideoPolicy caller_policy,
-                                 LinphoneVideoPolicy callee_policy,
+static void _call_with_ice_video(LinphoneVideoActivationPolicy *caller_policy,
+                                 LinphoneVideoActivationPolicy *callee_policy,
                                  bool_t video_added_by_caller,
                                  bool_t video_added_by_callee,
                                  bool_t video_removed_by_caller,
@@ -1290,8 +1309,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy,
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
-	linphone_core_set_video_policy(pauline->lc, &caller_policy);
-	linphone_core_set_video_policy(marie->lc, &callee_policy);
+	linphone_core_set_video_activation_policy(pauline->lc, caller_policy);
+	linphone_core_set_video_activation_policy(marie->lc, callee_policy);
 	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
 	if (video_only) {
@@ -1325,7 +1344,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy,
 	marie_remote_params = linphone_call_get_remote_params(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(marie_remote_params);
 	if (marie_remote_params) {
-		BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_remote_params) == caller_policy.automatically_initiate);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_remote_params) ==
+		               caller_policy->automatically_initiate);
 	}
 
 	linphone_call_accept(linphone_core_get_current_call(marie->lc));
@@ -1336,14 +1356,14 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy,
 	BC_ASSERT_PTR_NOT_NULL(pauline_current_params);
 	if (pauline_current_params) {
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_current_params) ==
-		               (caller_policy.automatically_initiate && callee_policy.automatically_accept));
+		               (caller_policy->automatically_initiate && callee_policy->automatically_accept));
 		if (linphone_call_params_video_enabled(pauline_current_params)) nb_video_starts++;
 	}
 
 	/* Wait for ICE reINVITEs to complete. */
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2) &&
 	               wait_for(pauline->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
-	if (callee_policy.automatically_accept == FALSE) {
+	if (callee_policy->automatically_accept == FALSE) {
 		marie_remote_params = linphone_call_get_remote_params(linphone_core_get_current_call(marie->lc));
 		/*The ICE reINVITE must not propose again video if was refused by callee*/
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_remote_params));
@@ -1356,15 +1376,15 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy,
 	BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(marie->lc)));
 	BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(pauline->lc)));
 
-	if (caller_policy.automatically_initiate && callee_policy.automatically_accept &&
+	if (caller_policy->automatically_initiate && callee_policy->automatically_accept &&
 	    (video_added_by_caller || video_added_by_callee)) {
 		BC_FAIL("Tired developer detected. You have requested the test to add video while it is already established "
 		        "from the beginning of the call.");
 	} else {
 		if (video_added_by_caller) {
-			BC_ASSERT_TRUE(request_video(marie, pauline, FALSE) == callee_policy.automatically_accept);
+			BC_ASSERT_TRUE(request_video(marie, pauline, FALSE) == callee_policy->automatically_accept);
 		} else if (video_added_by_callee) {
-			BC_ASSERT_TRUE(request_video(pauline, marie, FALSE) == caller_policy.automatically_accept);
+			BC_ASSERT_TRUE(request_video(pauline, marie, FALSE) == caller_policy->automatically_accept);
 		}
 		if (video_added_by_caller || video_added_by_callee) {
 			BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
@@ -1398,72 +1418,132 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy,
 	end_call(pauline, marie);
 
 end:
+	linphone_video_activation_policy_unref(caller_policy);
+	linphone_video_activation_policy_unref(callee_policy);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_ice_video_added(void) {
 	/*
-	 * Scenario: video is not active at the beginning of the call, caller requests it but callee declines it
+	 * Scenario: video is not active at the beginning of the call,
+	  caller requests it but callee declines it
 	 */
-	LinphoneVideoPolicy vpol = {FALSE, FALSE};
-	_call_with_ice_video(vpol, vpol, TRUE, FALSE, FALSE, FALSE, FALSE);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, FALSE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, FALSE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, TRUE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void call_with_ice_video_added_2(void) {
-	LinphoneVideoPolicy vpol = {FALSE, FALSE};
 	/*
 	 * Scenario: video is not active at the beginning of the call, callee requests it but caller declines it
 	 */
-	_call_with_ice_video(vpol, vpol, FALSE, TRUE, FALSE, FALSE, FALSE);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, FALSE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, FALSE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, FALSE, TRUE, FALSE, FALSE, FALSE);
 }
 
-static void call_with_ice_video_added_3(void) {
-	LinphoneVideoPolicy caller_policy = {FALSE, FALSE};
-	LinphoneVideoPolicy callee_policy = {TRUE, TRUE};
-	/*
-	 * Scenario: video is not active at the beginning of the call, caller requests it and callee accepts.
-	 * Finally caller removes it.
-	 */
-	_call_with_ice_video(caller_policy, callee_policy, TRUE, FALSE, TRUE, FALSE, FALSE);
+static void call_with_ice_video_added_3(void) { /*
+	                                             * Scenario: video is not active at the beginning of the call, caller
+	                                             * requests it and callee accepts. Finally caller removes it.
+	                                             */
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, FALSE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, TRUE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, TRUE, FALSE, TRUE, FALSE, FALSE);
 }
 
 static void call_with_ice_video_added_4(void) {
-	LinphoneVideoPolicy caller_policy = {TRUE, TRUE};
-	LinphoneVideoPolicy callee_policy = {FALSE, FALSE};
 	/*
 	 * Scenario: video is not active at the beginning of the call, callee requests it and caller accepts.
 	 * Finally caller removes it.
 	 */
-	_call_with_ice_video(caller_policy, callee_policy, FALSE, TRUE, TRUE, FALSE, FALSE);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, TRUE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, FALSE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, FALSE, TRUE, TRUE, FALSE, FALSE);
 }
 
 static void call_with_ice_video_added_5(void) {
-	LinphoneVideoPolicy caller_policy = {TRUE, TRUE};
-	LinphoneVideoPolicy callee_policy = {FALSE, FALSE};
 	/*
 	 * Scenario: video is not active at the beginning of the call, callee requests it and caller accepts.
 	 * Finally callee removes it.
 	 */
-	_call_with_ice_video(caller_policy, callee_policy, FALSE, TRUE, FALSE, TRUE, FALSE);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, TRUE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, FALSE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, FALSE, TRUE, FALSE, TRUE, FALSE);
 }
 
 static void call_with_ice_video_added_6(void) {
-	LinphoneVideoPolicy caller_policy = {TRUE, TRUE};
-	LinphoneVideoPolicy callee_policy = {TRUE, TRUE};
 	/*
 	 * Scenario: video is active at the beginning of the call, caller removes it.
 	 */
-	_call_with_ice_video(caller_policy, callee_policy, FALSE, FALSE, TRUE, FALSE, FALSE);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, TRUE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, TRUE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, FALSE, FALSE, TRUE, FALSE, FALSE);
 }
 
 static void call_with_ice_video_added_7(void) {
-	LinphoneVideoPolicy caller_policy = {TRUE, TRUE};
-	LinphoneVideoPolicy callee_policy = {TRUE, TRUE};
 	/*
 	 * Scenario: video is active at the beginning of the call, callee removes it.
 	 */
-	_call_with_ice_video(caller_policy, callee_policy, FALSE, FALSE, FALSE, TRUE, FALSE);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, TRUE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, TRUE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, FALSE, FALSE, FALSE, TRUE, FALSE);
 }
 
 static void call_with_ice_video_and_rtt(void) {
@@ -1471,7 +1551,6 @@ static void call_with_ice_video_and_rtt(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
-	LinphoneVideoPolicy policy;
 	LinphoneCallParams *params = NULL;
 	LinphoneCall *marie_call = NULL;
 
@@ -1480,9 +1559,13 @@ static void call_with_ice_video_and_rtt(void) {
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
-	policy.automatically_initiate = policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(pauline->lc, &policy);
-	linphone_core_set_video_policy(marie->lc, &policy);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, FALSE);
 	linphone_core_enable_video_capture(pauline->lc, FALSE);
@@ -1520,12 +1603,20 @@ end:
 }
 
 static void call_with_ice_video_only(void) {
-	LinphoneVideoPolicy caller_policy = {TRUE, TRUE};
-	LinphoneVideoPolicy callee_policy = {TRUE, TRUE};
 	/*
 	 * Scenario: video is active at the beginning of the call, but no audio codecs match.
 	 */
-	_call_with_ice_video(caller_policy, callee_policy, FALSE, FALSE, FALSE, FALSE, TRUE);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, TRUE);
+
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, TRUE);
+
+	_call_with_ice_video(caller_vpol, callee_vpol, FALSE, FALSE, FALSE, FALSE, TRUE);
 }
 
 static void video_call_with_early_media_no_matching_audio_codecs(void) {
@@ -1533,7 +1624,6 @@ static void video_call_with_early_media_no_matching_audio_codecs(void) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *out_call, *pauline_call;
-	LinphoneVideoPolicy vpol = {0};
 	AudioStream *astream;
 	VideoStream *caller_vstream;
 
@@ -1547,10 +1637,12 @@ static void video_call_with_early_media_no_matching_audio_codecs(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, FALSE);
 
-	vpol.automatically_initiate = TRUE;
-	vpol.automatically_accept = TRUE;
-	linphone_core_set_video_policy(pauline->lc, &vpol);
-	linphone_core_set_video_policy(marie->lc, &vpol);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	LinphonePayloadType *pt_pcmu = linphone_core_get_payload_type(marie->lc, "PCMU", 8000, 1);
 	linphone_payload_type_enable(pt_pcmu, FALSE); /* Disable PCMU */
@@ -1631,10 +1723,7 @@ static void zrtp_video_ice_call(void) {
 static void accept_call_in_send_only_base(LinphoneCoreManager *pauline, LinphoneCoreManager *marie, bctbx_list_t *lcs) {
 #define DEFAULT_WAIT_FOR 10000
 	LinphoneCallParams *params;
-	LinphoneVideoPolicy pol;
 	LinphoneCall *call;
-	pol.automatically_accept = 1;
-	pol.automatically_initiate = 1;
 	int dummy = 0;
 
 	// important: VP8 has really poor performances with the mire camera, at least
@@ -1650,14 +1739,19 @@ static void accept_call_in_send_only_base(LinphoneCoreManager *pauline, Linphone
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
-	linphone_core_set_video_policy(pauline->lc, &pol);
 	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
-	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 
 	/*The send-only client shall set rtp symmetric in absence of media relay for this test.*/
@@ -1796,14 +1890,11 @@ static void multiple_early_media(void) {
 	LinphoneCoreManager *marie2 = linphone_core_manager_new("marie_early_rc");
 	bctbx_list_t *lcs = NULL;
 	LinphoneCallParams *params = linphone_core_create_call_params(pauline->lc, NULL);
-	LinphoneVideoPolicy pol;
 	LinphoneCall *marie1_call;
 	LinphoneCall *marie2_call;
 	LinphoneCall *pauline_call;
 	LinphoneInfoMessage *info;
 	int dummy = 0;
-	pol.automatically_accept = 1;
-	pol.automatically_initiate = 1;
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
@@ -1814,13 +1905,18 @@ static void multiple_early_media(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie1->lc, vpol);
+	linphone_core_set_video_activation_policy(marie2->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
 	linphone_core_enable_video_capture(marie1->lc, TRUE);
 	linphone_core_enable_video_display(marie1->lc, TRUE);
-	linphone_core_set_video_policy(marie1->lc, &pol);
 
 	linphone_core_enable_video_capture(marie2->lc, TRUE);
 	linphone_core_enable_video_display(marie2->lc, TRUE);
-	linphone_core_set_video_policy(marie2->lc, &pol);
 
 	lcs = bctbx_list_append(lcs, marie1->lc);
 	lcs = bctbx_list_append(lcs, marie2->lc);
@@ -1894,7 +1990,6 @@ static void audio_call_with_ice_with_video_policy_enabled(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneVideoPolicy vpol;
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
@@ -1904,10 +1999,19 @@ static void audio_call_with_ice_with_video_policy_enabled(void) {
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
-	vpol.automatically_accept = vpol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &vpol);
-	vpol.automatically_accept = vpol.automatically_initiate = FALSE;
-	linphone_core_set_video_policy(pauline->lc, &vpol);
+
+	LinphoneVideoActivationPolicy *marie_vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(marie_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_initiate(marie_vpol, FALSE);
+	linphone_core_set_video_activation_policy(marie->lc, marie_vpol);
+	linphone_video_activation_policy_unref(marie_vpol);
+
+	LinphoneVideoActivationPolicy *pauline_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(pauline_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(pauline_vpol, FALSE);
+	linphone_core_set_video_activation_policy(pauline->lc, pauline_vpol);
+	linphone_video_activation_policy_unref(pauline_vpol);
 
 	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
@@ -2455,7 +2559,6 @@ static void video_call_with_no_audio_and_no_video_codec(void) {
 	LinphoneCoreManager *caller =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *out_call;
-	LinphoneVideoPolicy callee_policy, caller_policy;
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 
 	if (g_display_filter != "") {
@@ -2470,13 +2573,19 @@ static void video_call_with_no_audio_and_no_video_codec(void) {
 	disable_all_codecs(elem_audio, caller);
 	disable_all_codecs(elem_video, caller);
 
-	callee_policy.automatically_initiate = FALSE;
-	callee_policy.automatically_accept = TRUE;
-	caller_policy.automatically_initiate = TRUE;
-	caller_policy.automatically_accept = FALSE;
+	LinphoneVideoActivationPolicy *callee_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(callee_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(callee_vpol, TRUE);
+	linphone_core_set_video_activation_policy(callee->lc, callee_vpol);
+	linphone_video_activation_policy_unref(callee_vpol);
 
-	linphone_core_set_video_policy(callee->lc, &callee_policy);
-	linphone_core_set_video_policy(caller->lc, &caller_policy);
+	LinphoneVideoActivationPolicy *caller_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(caller_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(caller_vpol, FALSE);
+	linphone_core_set_video_activation_policy(caller->lc, caller_vpol);
+	linphone_video_activation_policy_unref(caller_vpol);
 
 	linphone_core_enable_video_display(callee->lc, TRUE);
 	linphone_core_enable_video_capture(callee->lc, TRUE);
@@ -2508,20 +2617,24 @@ static void video_call_with_auto_video_accept_disabled_on_one_end(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneVideoPolicy marie_policy, pauline_policy;
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
-	marie_policy.automatically_initiate = FALSE;
-	marie_policy.automatically_accept = TRUE;
-	pauline_policy.automatically_initiate = FALSE;
-	pauline_policy.automatically_accept = FALSE;
+	LinphoneVideoActivationPolicy *marie_vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(marie_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(marie_vpol, FALSE);
+	linphone_core_set_video_activation_policy(marie->lc, marie_vpol);
+	linphone_video_activation_policy_unref(marie_vpol);
 
-	linphone_core_set_video_policy(marie->lc, &marie_policy);
-	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
+	LinphoneVideoActivationPolicy *pauline_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(pauline_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(pauline_vpol, FALSE);
+	linphone_core_set_video_activation_policy(pauline->lc, pauline_vpol);
+	linphone_video_activation_policy_unref(pauline_vpol);
 
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -2570,6 +2683,359 @@ static void video_call_with_auto_video_accept_disabled_on_one_end(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void asymmetrical_video_call(bool_t with_call_params) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCallParams *pauline_call_params = linphone_core_create_call_params(pauline->lc, NULL);
+
+	if (g_display_filter != "") {
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	// asymmetrical video policy
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, FALSE);
+	vpol->accept_media_direction = LinphoneMediaDirectionRecvOnly;
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	// Marie calls Pauline
+	if (with_call_params) {
+		// Pauline enables her video
+		linphone_call_params_enable_video(pauline_call_params, TRUE);
+		BC_ASSERT_TRUE(call_with_params(pauline, marie, pauline_call_params, NULL));
+	} else {
+		BC_ASSERT_TRUE(call(pauline, marie));
+	}
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	if (pauline_call && marie_call) {
+		if (!with_call_params) {
+			linphone_call_params_enable_video(pauline_call_params, TRUE);
+			linphone_call_update(pauline_call, pauline_call_params);
+
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdating, 1));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		}
+
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marie_call)));
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(pauline_call)));
+
+		const LinphoneCallParams *updated_pauline_call_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_PTR_NOT_NULL(updated_pauline_call_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(updated_pauline_call_params) ==
+		               linphone_call_params_video_enabled(pauline_call_params));
+
+		const LinphoneCallParams *marie_call_current_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_PTR_NOT_NULL(marie_call_current_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_current_params) ==
+		               linphone_call_params_video_enabled(pauline_call_params));
+
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(marie_call_current_params),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_params(marie_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(updated_pauline_call_params),
+		                LinphoneMediaDirectionSendOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_remote_params(pauline_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+
+		stats marie_stats = marie->stat;
+		stats pauline_stats = pauline->stat;
+
+		// Marie enables her video
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", TRUE);
+
+		LinphoneCallParams *marie_call_params = linphone_core_create_call_params(marie->lc, marie_call);
+		linphone_call_params_set_video_direction(marie_call_params, LinphoneMediaDirectionSendRecv);
+		linphone_call_update(marie_call, marie_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote,
+		                        pauline_stats.number_of_LinphoneCallUpdatedByRemote + 1));
+
+		linphone_call_params_unref(pauline_call_params);
+		pauline_call_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+		linphone_call_accept_update(pauline_call, pauline_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating,
+		                        marie_stats.number_of_LinphoneCallUpdating + 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+		                        marie_stats.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+		                        pauline_stats.number_of_LinphoneCallStreamsRunning + 1));
+
+		marie_call_current_params = linphone_call_get_current_params(marie_call);
+		updated_pauline_call_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(marie_call_current_params),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_params(marie_call)),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(updated_pauline_call_params),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_remote_params(pauline_call)),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+
+		linphone_call_params_unref(marie_call_params);
+		linphone_call_params_unref(pauline_call_params);
+	}
+
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void asymmetrical_video_call_with_callee_enabled_video_first() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCallParams *marie_call_params = linphone_core_create_call_params(marie->lc, NULL);
+
+	if (g_display_filter != "") {
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	// asymmetrical video policy
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, FALSE);
+	vpol->accept_media_direction = LinphoneMediaDirectionRecvOnly;
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	// Pauline calls Marie
+	BC_ASSERT_TRUE(call(pauline, marie));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	if (pauline_call && marie_call) {
+		linphone_call_params_enable_video(marie_call_params, TRUE);
+		linphone_call_update(marie_call, marie_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marie_call)));
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(pauline_call)));
+
+		const LinphoneCallParams *updated_marie_call_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_PTR_NOT_NULL(updated_marie_call_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(updated_marie_call_params) ==
+		               linphone_call_params_video_enabled(marie_call_params));
+
+		const LinphoneCallParams *pauline_call_current_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_PTR_NOT_NULL(pauline_call_current_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_call_current_params) ==
+		               linphone_call_params_video_enabled(marie_call_params));
+
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(pauline_call_current_params),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_params(pauline_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(updated_marie_call_params),
+		                LinphoneMediaDirectionSendOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_remote_params(marie_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+
+		stats marie_stats = marie->stat;
+		stats pauline_stats = pauline->stat;
+
+		// Pauline enables her video
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "defer_update_default", TRUE);
+
+		LinphoneCallParams *pauline_call_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+		linphone_call_params_set_video_direction(pauline_call_params, LinphoneMediaDirectionSendRecv);
+		linphone_call_update(pauline_call, pauline_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote,
+		                        marie_stats.number_of_LinphoneCallUpdatedByRemote + 1));
+
+		linphone_call_params_unref(marie_call_params);
+		marie_call_params = linphone_core_create_call_params(marie->lc, marie_call);
+		linphone_call_accept_update(marie_call, marie_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdating,
+		                        pauline_stats.number_of_LinphoneCallUpdating + 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+		                        marie_stats.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+		                        pauline_stats.number_of_LinphoneCallStreamsRunning + 1));
+
+		pauline_call_current_params = linphone_call_get_current_params(pauline_call);
+		updated_marie_call_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(pauline_call_current_params),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_params(pauline_call)),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(updated_marie_call_params),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_remote_params(marie_call)),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+
+		linphone_call_params_unref(marie_call_params);
+		linphone_call_params_unref(pauline_call_params);
+	}
+
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void asymmetrical_video_call_2(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCallParams *pauline_call_params = linphone_core_create_call_params(pauline->lc, NULL);
+
+	if (g_display_filter != "") {
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	// asymmetrical video policy
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, FALSE);
+	vpol->accept_media_direction = LinphoneMediaDirectionRecvOnly;
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	// Marie calls Pauline
+	BC_ASSERT_TRUE(call_with_params(pauline, marie, pauline_call_params, NULL));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	if (pauline_call && marie_call) {
+		linphone_call_params_enable_video(pauline_call_params, TRUE);
+		linphone_call_update(pauline_call, pauline_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdating, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marie_call)));
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(pauline_call)));
+
+		const LinphoneCallParams *updated_pauline_call_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_PTR_NOT_NULL(updated_pauline_call_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(updated_pauline_call_params) ==
+		               linphone_call_params_video_enabled(pauline_call_params));
+
+		const LinphoneCallParams *marie_call_current_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_PTR_NOT_NULL(marie_call_current_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_current_params) ==
+		               linphone_call_params_video_enabled(pauline_call_params));
+
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(marie_call_current_params),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_params(marie_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(updated_pauline_call_params),
+		                LinphoneMediaDirectionSendOnly, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_remote_params(pauline_call)),
+		                LinphoneMediaDirectionRecvOnly, int, "%d");
+
+		stats marie_stats = marie->stat;
+		stats pauline_stats = pauline->stat;
+
+		// Marie enables her video
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", TRUE);
+
+		LinphoneCallParams *marie_call_params = linphone_core_create_call_params(marie->lc, marie_call);
+		linphone_call_params_set_video_direction(marie_call_params, LinphoneMediaDirectionSendRecv);
+		linphone_call_update(marie_call, marie_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote,
+		                        pauline_stats.number_of_LinphoneCallUpdatedByRemote + 1));
+
+		linphone_call_accept_update(pauline_call, pauline_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating,
+		                        marie_stats.number_of_LinphoneCallUpdating + 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+		                        marie_stats.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+		                        pauline_stats.number_of_LinphoneCallStreamsRunning + 1));
+
+		marie_call_current_params = linphone_call_get_current_params(marie_call);
+		updated_pauline_call_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(marie_call_current_params),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_params(marie_call)),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(updated_pauline_call_params),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(linphone_call_get_remote_params(pauline_call)),
+		                LinphoneMediaDirectionSendRecv, int, "%d");
+
+		linphone_call_params_unref(marie_call_params);
+		linphone_call_params_unref(pauline_call_params);
+	}
+
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void asymmetrical_video_call_starts_with_video() {
+	asymmetrical_video_call(true);
+}
+
+static void asymmetrical_video_call_starts_without_video() {
+	asymmetrical_video_call(false);
 }
 
 static void call_with_early_media_and_no_sdp_in_200_with_video(void) {
@@ -2663,9 +3129,11 @@ static void video_call_with_mire_and_analyse(void) {
 
 	LinphoneCall *callee_call;
 	LinphoneCall *caller_call;
-	LinphoneVideoPolicy callee_policy;
-	callee_policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(callee->lc, &callee_policy);
+
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	vpol->automatically_accept = TRUE;
+	linphone_core_set_video_activation_policy(callee->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	linphone_core_set_video_device(callee->lc, liblinphone_tester_mire_id);
 	linphone_core_set_video_device(caller->lc, liblinphone_tester_mire_id);
@@ -2852,16 +3320,20 @@ static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
-	LinphoneVideoPolicy marie_policy, pauline_policy, laure_policy;
 	int dummy = 0;
 
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 
-	marie_policy.automatically_initiate = TRUE;
-	marie_policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(marie->lc, &marie_policy);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_core_set_video_activation_policy(laure->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	disable_all_video_codecs_except_one(marie->lc, "VP8");
@@ -2869,18 +3341,12 @@ static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
 	// Set Marie to shared media resources so that she can have two calls without pause
 	linphone_core_set_media_resource_mode(marie->lc, LinphoneSharedMediaResources);
 
-	pauline_policy.automatically_initiate = TRUE;
-	pauline_policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 	disable_all_video_codecs_except_one(pauline->lc, "VP8");
 
 	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
-	laure_policy.automatically_initiate = TRUE;
-	laure_policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(laure->lc, &laure_policy);
 	linphone_core_enable_video_capture(laure->lc, TRUE);
 	linphone_core_enable_video_display(laure->lc, TRUE);
 	disable_all_video_codecs_except_one(laure->lc, "VP8");
@@ -2976,21 +3442,21 @@ static void video_call_set_image_as_video_source(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneVideoPolicy marie_policy, pauline_policy;
 
 	char *qrcode_image = bc_tester_res("images/linphonesiteqr.jpg");
 
-	marie_policy.automatically_initiate = TRUE;
-	marie_policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(marie->lc, &marie_policy);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 
 	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 
-	pauline_policy.automatically_initiate = TRUE;
-	pauline_policy.automatically_accept = TRUE;
-	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
@@ -3127,20 +3593,24 @@ static void call_with_video_requested_and_terminate(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneVideoPolicy marie_policy, pauline_policy;
 
 	if (g_display_filter != "") {
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
-	marie_policy.automatically_initiate = FALSE;
-	marie_policy.automatically_accept = TRUE;
-	pauline_policy.automatically_initiate = FALSE;
-	pauline_policy.automatically_accept = FALSE;
+	LinphoneVideoActivationPolicy *marie_vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(marie_vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(marie_vpol, FALSE);
+	linphone_core_set_video_activation_policy(marie->lc, marie_vpol);
+	linphone_video_activation_policy_unref(marie_vpol);
 
-	linphone_core_set_video_policy(marie->lc, &marie_policy);
-	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
+	LinphoneVideoActivationPolicy *pauline_vpol =
+	    linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(pauline_vpol, FALSE);
+	linphone_video_activation_policy_set_automatically_accept(pauline_vpol, FALSE);
+	linphone_core_set_video_activation_policy(pauline->lc, pauline_vpol);
+	linphone_video_activation_policy_unref(pauline_vpol);
 
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -3248,6 +3718,11 @@ static test_t call_video_tests[] = {
     TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
     TEST_NO_TAG("Video call with automatic video acceptance disabled on one end only",
                 video_call_with_auto_video_accept_disabled_on_one_end),
+    TEST_NO_TAG("Asymmetrical video call starts with video", asymmetrical_video_call_starts_with_video),
+    TEST_NO_TAG("Asymmetrical video call starts without video", asymmetrical_video_call_starts_without_video),
+    TEST_NO_TAG("Asymmetrical video call with callee enabled video first",
+                asymmetrical_video_call_with_callee_enabled_video_first),
+    TEST_NO_TAG("Asymmetrical video call 2", asymmetrical_video_call_2),
     TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video",
                 call_with_early_media_and_no_sdp_in_200_with_video),
     TEST_NO_TAG("Video call with fallback to Static Picture when no fps",

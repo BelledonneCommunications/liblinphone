@@ -785,6 +785,12 @@ LinphoneCallParams *linphone_call_params_new(LinphoneCore *core) {
 	return params;
 }
 
+LinphoneCallParams *linphone_call_params_new_with_media_session_params(LinphonePrivate::MediaSessionParams *msp) {
+	LinphoneCallParams *params = L_INIT(CallParams);
+	L_SET_CPP_PTR_FROM_C_OBJECT(params, msp);
+	return params;
+}
+
 LinphoneCallParams *linphone_call_params_new_for_wrapper(void) {
 	return _linphone_CallParams_init();
 }

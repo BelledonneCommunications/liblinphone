@@ -264,6 +264,9 @@ public:
 	virtual std::pair<bool, LinphoneMediaDirection> getMainStreamVideoDirection(
 	    const std::shared_ptr<CallSession> &session, bool localIsOfferer, bool useLocalParams) const;
 
+	virtual LinphoneMediaDirection verifyVideoDirection(const std::shared_ptr<CallSession> &session,
+	                                                    const LinphoneMediaDirection suggestedVideoDirection) const;
+
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
 	                    const std::shared_ptr<Address> &myAddress,

@@ -3842,6 +3842,15 @@ LINPHONE_PUBLIC void linphone_video_activation_policy_set_user_data(LinphoneVide
                                                                     void *user_data);
 
 /**
+ * Instantiates a new #LinphoneVideoActivationPolicy object with same values as the source
+ * @param policy the #LinphoneVideoActivationPolicy object to clone @notnil
+ * @returns the newly created #LinphoneVideoActivationPolicy object @notnil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC LinphoneVideoActivationPolicy *
+linphone_video_activation_policy_clone(const LinphoneVideoActivationPolicy *policy);
+
+/**
  * Gets the value for the automatically accept video policy
  * @param policy the #LinphoneVideoActivationPolicy object @notnil
  * @return whether or not to automatically accept video requests is enabled
@@ -3849,6 +3858,15 @@ LINPHONE_PUBLIC void linphone_video_activation_policy_set_user_data(LinphoneVide
  */
 LINPHONE_PUBLIC bool_t
 linphone_video_activation_policy_get_automatically_accept(const LinphoneVideoActivationPolicy *policy);
+
+/**
+ * Gets the value for the automatically accept video policy
+ * @param policy the #LinphoneVideoActivationPolicy object @notnil
+ * @return the #LinphoneMediaDirection that will be set for video stream when automatically accepted.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC LinphoneMediaDirection
+linphone_video_activation_policy_get_automatically_accept_direction(const LinphoneVideoActivationPolicy *policy);
 
 /**
  * Gets the value for the automatically initiate video policy
@@ -3869,6 +3887,16 @@ LINPHONE_PUBLIC void linphone_video_activation_policy_set_automatically_accept(L
                                                                                bool_t enable);
 
 /**
+ * Sets the value for the automatically accept video policy
+ * @param policy the #LinphoneVideoActivationPolicy object @notnil
+ * @param direction the #LinphoneMediaDirection desired for video stream when automatically accepted.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void
+linphone_video_activation_policy_set_automatically_accept_direction(LinphoneVideoActivationPolicy *policy,
+                                                                    LinphoneMediaDirection direction);
+
+/**
  * Sets the value for the automatically initiate video policy
  * @param policy the #LinphoneVideoActivationPolicy object @notnil
  * @param enable whether or not to enable automatically initiate video calls
@@ -3882,22 +3910,24 @@ LINPHONE_PUBLIC void linphone_video_activation_policy_set_automatically_initiate
  * This policy defines whether:
  * - video shall be initiated by default for outgoing calls
  * - video shall be accepted by default for incoming calls
+ * - if video shall be accepted by default, what direction do we want (send/receive, receive only, etc...)
  *
  * @param core the #LinphoneCore object @notnil
  * @param policy The #LinphoneVideoActivationPolicy to use @notnil
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_set_video_activation_policy(LinphoneCore *core,
-                                                               const LinphoneVideoActivationPolicy *policy);
+                                                               LinphoneVideoActivationPolicy *policy);
 
 /**
  * Get the default policy for video.
  * See linphone_core_set_video_activation_policy() for more details.
  * @param core #LinphoneCore object @notnil
- * @return The video policy being used @tobefreed @notnil
+ * @return The currently used video policy @notnil
  * @ingroup media_parameters
  **/
-LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_core_get_video_activation_policy(const LinphoneCore *core);
+LINPHONE_PUBLIC const LinphoneVideoActivationPolicy *
+linphone_core_get_video_activation_policy(const LinphoneCore *core);
 
 /**
  * Set the preferred video definition for the stream that is captured and sent to the remote party.
@@ -8256,32 +8286,6 @@ linphone_core_get_call_history_for_address(LinphoneCore *core, const LinphoneAdd
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void
 linphone_core_enable_video(LinphoneCore *core, bool_t vcap_enabled, bool_t display_enabled);
-
-/**
- * Sets the default policy for video.
- * This policy defines whether:
- * - video shall be initiated by default for outgoing calls
- * - video shall be accepter by default for incoming calls
- *
- * @param core #LinphoneCore object
- * @param policy The video policy to use
- * @ingroup media_parameters
- * @deprecated 19/04/2017 Use linphone_video_activation_policy_set_automatically_accept instead
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_video_policy(LinphoneCore *core,
-                                                                        const LinphoneVideoPolicy *policy);
-
-/**
- * Get the default policy for video.
- * See linphone_core_set_video_policy() for more details.
- * @param core #LinphoneCore object
- * @return The video policy being used
- * @ingroup media_parameters
- * @deprecated 19/04/2017 Use linphone_video_activation_policy_get_automatically_accept instead
- * @donotwrap
- **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const LinphoneVideoPolicy *linphone_core_get_video_policy(const LinphoneCore *core);
 
 /**
  * @brief Returns the zero terminated table of supported video resolutions.

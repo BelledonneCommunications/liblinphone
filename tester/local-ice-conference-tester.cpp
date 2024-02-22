@@ -284,9 +284,8 @@ static void abort_call_to_ice_conference(void) {
 					}
 					BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
 
-					LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
+					const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 					bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-					linphone_video_activation_policy_unref(pol);
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {

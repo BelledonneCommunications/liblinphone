@@ -150,9 +150,12 @@ void AutoVideo::exec(Daemon *app, const string &args) {
 
 	bool enable = (args.compare("on") == 0);
 	LinphoneCore *lc = app->getCore();
-	LinphoneVideoPolicy vpol = {TRUE, TRUE};
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept_direction(vpol, LinphoneMediaDirectionSendRecv);
 
-	linphone_core_set_video_policy(lc, &vpol);
+	linphone_core_set_video_activation_policy(lc, vpol);
 	app->setAutoVideo(enable);
 	app->sendResponse(Response(enable ? "Auto video ON" : "Auto video OFF", Response::Ok));
 }

@@ -29,6 +29,8 @@
 
 // =============================================================================
 
+LinphoneCallParams *linphone_call_params_new_with_media_session_params(LinphonePrivate::MediaSessionParams *msp);
+
 extern LinphoneCallParams *linphone_call_params_new_for_wrapper(void);
 
 // =============================================================================
@@ -175,6 +177,8 @@ private:
 	bool micEnabled = true;
 	std::shared_ptr<AudioDevice> inputAudioDevice = nullptr;
 	std::shared_ptr<AudioDevice> outputAudioDevice = nullptr;
+
+	bool mUseDefaultVideoDirection = true;
 
 	L_DECLARE_PUBLIC(MediaSessionParams);
 };

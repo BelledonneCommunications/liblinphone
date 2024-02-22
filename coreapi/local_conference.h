@@ -166,7 +166,10 @@ public:
 	void updateConferenceInformation(SalCallOp *op);
 	virtual std::shared_ptr<Call> getCall() const override;
 
-	std::shared_ptr<Player> getPlayer() const override;
+	virtual std::shared_ptr<Player> getPlayer() const override;
+	virtual LinphoneMediaDirection
+	verifyVideoDirection(const std::shared_ptr<CallSession> &session,
+	                     const LinphoneMediaDirection suggestedVideoDirection) const override;
 
 	virtual std::pair<bool, LinphoneMediaDirection> getMainStreamVideoDirection(
 	    const std::shared_ptr<CallSession> &session, bool localIsOfferer, bool useLocalParams) const override;

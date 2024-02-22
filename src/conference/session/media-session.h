@@ -113,6 +113,7 @@ public:
 	void zoomVideo(float zoomFactor, float *cx, float *cy);
 	void zoomVideo(float zoomFactor, float cx, float cy);
 
+	MediaSessionParams *createMediaSessionParams();
 	bool cameraEnabled() const;
 	bool echoCancellationEnabled() const;
 	bool echoLimiterEnabled() const;

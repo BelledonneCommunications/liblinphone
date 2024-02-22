@@ -2351,8 +2351,6 @@ static void video_config_read(LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
 	int automatic_video = 1;
 	const char *str;
-	LinphoneVideoPolicy vpol;
-	memset(&vpol, 0, sizeof(LinphoneVideoPolicy));
 	build_video_devices_table(lc);
 
 	str = linphone_config_get_string(lc->config, "video", "device", NULL);
@@ -2369,15 +2367,18 @@ static void video_config_read(LinphoneCore *lc) {
 #if defined(__ANDROID__) || TARGET_OS_IPHONE
 	automatic_video = 0;
 #endif
-	vpol.automatically_initiate =
+	lc->video_policy->automatically_initiate =
 	    !!linphone_config_get_int(lc->config, "video", "automatically_initiate", automatic_video);
-	vpol.automatically_accept = !!linphone_config_get_int(lc->config, "video", "automatically_accept", automatic_video);
+	lc->video_policy->automatically_accept =
+	    !!linphone_config_get_int(lc->config, "video", "automatically_accept", automatic_video);
+	lc->video_policy->accept_media_direction = (LinphoneMediaDirection)linphone_config_get_int(
+	    lc->config, "video", "automatically_accept_direction", LinphoneMediaDirectionSendRecv);
+
 	linphone_core_enable_video_capture(lc, !!linphone_config_get_int(lc->config, "video", "capture", 1));
 	linphone_core_enable_video_display(lc, !!linphone_config_get_int(lc->config, "video", "display", 1));
 	linphone_core_enable_video_preview(lc, !!linphone_config_get_int(lc->config, "video", "show_local", 0));
 	linphone_core_enable_self_view(lc, !!linphone_config_get_int(lc->config, "video", "self_view", 1));
 	linphone_core_enable_video_source_reuse(lc, !!linphone_config_get_int(lc->config, "video", "reuse_source", 0));
-	linphone_core_set_video_policy(lc, &vpol);
 
 	lc->video_conf.retransmission_on_nack_enabled =
 	    !!linphone_config_get_int(lc->config, "video", "retransmission_on_nack_enabled", 0);
@@ -3237,6 +3238,7 @@ static void linphone_core_init(LinphoneCore *lc,
 	lc->supported_encryptions = NULL;
 	lc->config = linphone_config_ref(config);
 	lc->data = userdata;
+	lc->video_policy = linphone_factory_create_video_activation_policy(lfactory);
 
 	// We need the Sal on the Android platform helper init
 	lc->sal = std::make_shared<LinphonePrivate::Sal>(nullptr);
@@ -4864,7 +4866,7 @@ LinphoneCall *linphone_core_invite(LinphoneCore *lc, const char *url) {
 	LinphoneCall *call;
 	LinphoneCallParams *p = linphone_core_create_call_params(lc, NULL);
 	linphone_call_params_enable_video(p, linphone_call_params_video_enabled(p) &&
-	                                         !!lc->video_policy.automatically_initiate);
+	                                         !!lc->video_policy->automatically_initiate);
 	call = linphone_core_invite_with_params(lc, url, p);
 	linphone_call_params_unref(p);
 	return call;
@@ -4892,7 +4894,7 @@ LinphoneCall *linphone_core_invite_address(LinphoneCore *lc, const LinphoneAddre
 	LinphoneCall *call;
 	LinphoneCallParams *p = linphone_core_create_call_params(lc, NULL);
 	linphone_call_params_enable_video(p, linphone_call_params_video_enabled(p) &&
-	                                         !!lc->video_policy.automatically_initiate);
+	                                         !!lc->video_policy->automatically_initiate);
 	call = linphone_core_invite_address_with_params(lc, addr, p);
 	linphone_call_params_unref(p);
 	return call;
@@ -6768,18 +6770,6 @@ bool_t linphone_core_video_display_enabled(LinphoneCore *lc) {
 	return lc->video_conf.display;
 }
 
-void linphone_core_set_video_policy(LinphoneCore *lc, const LinphoneVideoPolicy *policy) {
-	lc->video_policy = *policy;
-	if (linphone_core_ready(lc)) {
-		linphone_config_set_int(lc->config, "video", "automatically_initiate", policy->automatically_initiate);
-		linphone_config_set_int(lc->config, "video", "automatically_accept", policy->automatically_accept);
-	}
-}
-
-const LinphoneVideoPolicy *linphone_core_get_video_policy(const LinphoneCore *lc) {
-	return &lc->video_policy;
-}
-
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneVideoActivationPolicy);
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneVideoActivationPolicy,
@@ -6793,6 +6783,7 @@ LinphoneVideoActivationPolicy *linphone_video_activation_policy_new() {
 	LinphoneVideoActivationPolicy *policy = belle_sip_object_new(LinphoneVideoActivationPolicy);
 	policy->automatically_accept = FALSE;
 	policy->automatically_initiate = FALSE;
+	policy->accept_media_direction = LinphoneMediaDirectionSendRecv;
 	return policy;
 }
 
@@ -6812,12 +6803,25 @@ void linphone_video_activation_policy_set_user_data(LinphoneVideoActivationPolic
 	policy->user_data = data;
 }
 
+LinphoneVideoActivationPolicy *linphone_video_activation_policy_clone(const LinphoneVideoActivationPolicy *policy) {
+	LinphoneVideoActivationPolicy *new_policy = linphone_video_activation_policy_new();
+	new_policy->automatically_accept = policy->automatically_accept;
+	new_policy->automatically_initiate = policy->automatically_initiate;
+	new_policy->accept_media_direction = policy->accept_media_direction;
+	return new_policy;
+}
+
 bool_t linphone_video_activation_policy_get_automatically_accept(const LinphoneVideoActivationPolicy *policy) {
 	return policy->automatically_accept;
 }
 
 bool_t linphone_video_activation_policy_get_automatically_initiate(const LinphoneVideoActivationPolicy *policy) {
 	return policy->automatically_initiate;
+}
+
+LinphoneMediaDirection
+linphone_video_activation_policy_get_automatically_accept_direction(const LinphoneVideoActivationPolicy *policy) {
+	return policy->accept_media_direction;
 }
 
 void linphone_video_activation_policy_set_automatically_accept(LinphoneVideoActivationPolicy *policy, bool_t enable) {
@@ -6828,20 +6832,27 @@ void linphone_video_activation_policy_set_automatically_initiate(LinphoneVideoAc
 	policy->automatically_initiate = enable;
 }
 
-void linphone_core_set_video_activation_policy(LinphoneCore *lc, const LinphoneVideoActivationPolicy *policy) {
-	lc->video_policy.automatically_accept = policy->automatically_accept;
-	lc->video_policy.automatically_initiate = policy->automatically_initiate;
+void linphone_video_activation_policy_set_automatically_accept_direction(LinphoneVideoActivationPolicy *policy,
+                                                                         LinphoneMediaDirection direction) {
+	policy->accept_media_direction = direction;
+}
+
+void linphone_core_set_video_activation_policy(LinphoneCore *lc, LinphoneVideoActivationPolicy *policy) {
+	if (policy != lc->video_policy) {
+		if (lc->video_policy) {
+			linphone_video_activation_policy_unref(lc->video_policy);
+		}
+		lc->video_policy = linphone_video_activation_policy_ref(policy);
+	}
 	if (linphone_core_ready(lc)) {
 		linphone_config_set_int(lc->config, "video", "automatically_initiate", policy->automatically_initiate);
 		linphone_config_set_int(lc->config, "video", "automatically_accept", policy->automatically_accept);
+		linphone_config_set_int(lc->config, "video", "automatically_accept_direction", policy->accept_media_direction);
 	}
 }
 
-LinphoneVideoActivationPolicy *linphone_core_get_video_activation_policy(const LinphoneCore *lc) {
-	LinphoneVideoActivationPolicy *policy = linphone_video_activation_policy_new();
-	policy->automatically_accept = lc->video_policy.automatically_accept;
-	policy->automatically_initiate = lc->video_policy.automatically_initiate;
-	return policy;
+const LinphoneVideoActivationPolicy *linphone_core_get_video_activation_policy(const LinphoneCore *lc) {
+	return lc->video_policy;
 }
 
 void linphone_core_enable_video_preview(LinphoneCore *lc, bool_t val) {
@@ -8106,6 +8117,10 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 		linphone_account_creator_service_unref(lc->default_ac_service);
 		lc->default_ac_service = NULL;
 	}
+	if (lc->video_policy) {
+		linphone_video_activation_policy_unref(lc->video_policy);
+		lc->video_policy = NULL;
+	}
 
 	linphone_core_free_payload_types(lc);
 	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
@@ -8463,7 +8478,7 @@ LinphoneCallParams *linphone_core_create_call_params(LinphoneCore *lc, LinphoneC
 	CoreLogContextualizer logContextualizer(lc);
 	if (!call) return linphone_call_params_new(lc);
 	if (linphone_call_get_params(call)) {
-		return _linphone_call_params_copy(linphone_call_get_params(call));
+		return linphone_call_params_new_with_media_session_params(Call::toCpp(call)->createCallParams());
 	}
 	ms_error(
 	    "linphone_core_create_call_params(): call [%p] is not in a state where call params can be created or used.",

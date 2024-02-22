@@ -1276,6 +1276,10 @@ void Call::setSpeakerVolumeGain(float value) {
 	static_pointer_cast<MediaSession>(getActiveSession())->setSpeakerVolumeGain(value);
 }
 
+MediaSessionParams *Call::createCallParams() {
+	return static_pointer_cast<MediaSession>(getActiveSession())->createMediaSessionParams();
+}
+
 void Call::setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if (getCore()->getCCore()->use_files) {
 		lInfo() << "Trying to change input audio device on call while use_files mode is on : do nothing";

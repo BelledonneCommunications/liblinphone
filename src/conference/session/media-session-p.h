@@ -93,6 +93,8 @@ public:
 	bool getMicrophoneMuted() const;
 	void setMicrophoneMuted(bool muted);
 
+	MediaSessionParams *createMediaSessionParams();
+
 	MediaSessionParams *getCurrentParams() const {
 		if (currentParams) currentParams->prohibitReuse();
 		return static_cast<MediaSessionParams *>(currentParams);
@@ -341,6 +343,8 @@ private:
 
 	void queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda);
 	void runIceCompletionTasks();
+
+	LinphoneMediaDirection computeNewVideoDirection(LinphoneMediaDirection acceptVideoDirection);
 
 	bool tryEnterConference();
 	void fillRtpParameters(SalStreamDescription &stream) const;

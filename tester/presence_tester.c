@@ -201,31 +201,6 @@ static void unsubscribe_while_subscribing(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-#if 0
-/* the core no longer changes the presence status when a call is ongoing, this is left to the application*/
-static void call_with_presence(void) {
-	LinphoneCoreManager* marie = presence_linphone_core_manager_new("marie");
-	LinphoneCoreManager* pauline = presence_linphone_core_manager_new("pauline");
-	LinphoneVideoPolicy pol={0};
-	linphone_core_set_video_policy(marie->lc,&pol);
-	BC_ASSERT_TRUE(subscribe_to_callee_presence(marie,pauline));
-	BC_ASSERT_TRUE(subscribe_to_callee_presence(pauline,marie));
-
-	BC_ASSERT_TRUE(call(marie,pauline));
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphonePresenceActivityOnThePhone,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphonePresenceActivityOnThePhone,1));
-
-	reset_counters(&marie->stat);
-	reset_counters(&pauline->stat);
-	linphone_core_terminate_all_calls(marie->lc);
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphonePresenceActivityOnline,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphonePresenceActivityOnline,1));
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-#endif
-
 static void presence_information(void) {
 	const char *bike_description = "Riding my bike";
 	const char *vacation_note = "I'm on vacation until July 4th";

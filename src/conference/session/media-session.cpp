@@ -866,6 +866,21 @@ void MediaSessionPrivate::setMicrophoneMuted(bool muted) {
 
 // -----------------------------------------------------------------------------
 
+MediaSessionParams *MediaSessionPrivate::createMediaSessionParams() {
+	L_Q();
+	MediaSessionParams *msp = new MediaSessionParams(*getParams());
+
+	auto videoDir = computeNewVideoDirection(q->getCore()->getCCore()->video_policy->accept_media_direction);
+	std::shared_ptr<MediaConference::Conference> conference =
+	    listener->getCallSessionConference(q->getSharedFromThis());
+	if (conference) {
+		videoDir = conference->verifyVideoDirection(q->getSharedFromThis(), videoDir);
+	}
+	msp->setVideoDirection(videoDir);
+
+	return msp;
+}
+
 void MediaSessionPrivate::setCurrentParams(MediaSessionParams *msp) {
 	if (currentParams) delete currentParams;
 	currentParams = msp;
@@ -1045,11 +1060,12 @@ void MediaSessionPrivate::fixCallParams(std::shared_ptr<SalMediaDescription> &rm
 				}
 			}
 		} else {
-			if (rcp->videoEnabled() && cCore->video_policy.automatically_accept && linphone_core_video_enabled(cCore) &&
-			    !getParams()->videoEnabled()) {
+			if (rcp->videoEnabled() && cCore->video_policy->automatically_accept &&
+			    linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
 				lInfo() << "CallSession [" << q
 				        << "]: re-enabling video in our call params because the remote wants it and the policy allows "
 				           "to automatically accept";
+				getParams()->setVideoDirection(cCore->video_policy->accept_media_direction);
 				getParams()->enableVideo(true);
 			}
 		}
@@ -1767,9 +1783,9 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 	} else {
 		const std::string streamType(sal_stream_type_to_string(type));
 		lInfo() << "Don't put stream of type " << streamType << " on local offer for CallSession [" << q << "]: ";
-		lInfo() << "- capability is " << (enabled ? "enabled" : " disabled");
+		lInfo() << "- capability is " << (enabled ? "enabled" : "disabled");
 		lInfo() << "- found " << codecs.size() << " codecs";
-		lInfo() << "- codec check is " << (dontCheckCodecs ? "disabled" : " enabled");
+		lInfo() << "- codec check is " << (dontCheckCodecs ? "disabled" : "enabled");
 		const auto &core = q->getCore()->getCCore();
 		cfg.dir = linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? dir : SalStreamInactive;
 		stream.rtp_port = 0;
@@ -3860,6 +3876,40 @@ LinphoneStatus MediaSessionPrivate::startAccept() {
 	return 0;
 }
 
+LinphoneMediaDirection MediaSessionPrivate::computeNewVideoDirection(LinphoneMediaDirection acceptVideoDirection) {
+	L_Q();
+	auto paramsVideoDirection = getParams()->getVideoDirection();
+	auto state = q->getState();
+	if (op &&
+	    ((op->getRemoteMediaDescription() &&
+	      ((state == CallSession::State::IncomingReceived) || (state == CallSession::State::UpdatedByRemote) ||
+	       (state == CallSession::State::EarlyUpdatedByRemote) || (state == CallSession::State::IncomingEarlyMedia))) ||
+	     (state == CallSession::State::StreamsRunning && q->getCore()->getCCore()->sip_conf.sdp_200_ack))) {
+		// We are accepting an offer
+		auto videoEnabled = getParams()->videoEnabled();
+		if (!videoEnabled) {
+			return acceptVideoDirection;
+		} else if (paramsVideoDirection == acceptVideoDirection) {
+			return paramsVideoDirection;
+		} else if (paramsVideoDirection == LinphoneMediaDirectionSendRecv ||
+		           acceptVideoDirection == LinphoneMediaDirectionSendRecv) {
+			return LinphoneMediaDirectionSendRecv;
+		} else if ((paramsVideoDirection == LinphoneMediaDirectionSendOnly &&
+		            acceptVideoDirection == LinphoneMediaDirectionRecvOnly) ||
+		           (paramsVideoDirection == LinphoneMediaDirectionRecvOnly &&
+		            acceptVideoDirection == LinphoneMediaDirectionSendOnly)) {
+			return LinphoneMediaDirectionSendRecv;
+		} else if (paramsVideoDirection == LinphoneMediaDirectionInactive) {
+			return acceptVideoDirection;
+		} else if (acceptVideoDirection == LinphoneMediaDirectionInactive) {
+			return paramsVideoDirection;
+		}
+	} else {
+		return paramsVideoDirection;
+	}
+	return LinphoneMediaDirectionInactive;
+}
+
 LinphoneStatus MediaSessionPrivate::accept(const MediaSessionParams *msp, BCTBX_UNUSED(bool wasRinging)) {
 	L_Q();
 	if (msp) {
@@ -3913,11 +3963,13 @@ MediaSessionPrivate::acceptUpdate(const CallSessionParams *csp, CallSession::Sta
 	if (csp) {
 		setParams(new MediaSessionParams(*static_cast<const MediaSessionParams *>(csp)));
 	} else {
+		auto msp = createMediaSessionParams();
 		if (!op->isOfferer()) {
 			/* Reset call params for multicast because this param is only relevant when offering */
-			getParams()->enableAudioMulticast(false);
-			getParams()->enableVideoMulticast(false);
+			msp->enableAudioMulticast(false);
+			msp->enableVideoMulticast(false);
 		}
+		setParams(msp);
 	}
 	if (getParams()->videoEnabled() && !linphone_core_video_enabled(q->getCore()->getCCore())) {
 		lWarning() << "Requested video but video support is globally disabled. Refusing video";
@@ -4897,6 +4949,11 @@ void MediaSession::zoomVideo(float zoomFactor, float cx, float cy) {
 }
 
 // -----------------------------------------------------------------------------
+
+MediaSessionParams *MediaSession::createMediaSessionParams() {
+	L_D();
+	return d->createMediaSessionParams();
+}
 
 bool MediaSession::cameraEnabled() const {
 #ifdef VIDEO_ENABLED

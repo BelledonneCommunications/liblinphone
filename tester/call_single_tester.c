@@ -4353,9 +4353,11 @@ static void call_with_early_update_failed(void) {
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 
-	LinphoneVideoPolicy vpol;
-	vpol.automatically_initiate = vpol.automatically_accept = TRUE;
-	linphone_core_set_video_policy(pauline->lc, &vpol);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
 	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
@@ -5532,16 +5534,19 @@ static void call_with_complex_late_offering(void) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_pauline;
 	LinphoneCall *call_marie;
-	LinphoneVideoPolicy vpol;
 	bool_t call_ok;
 
-	vpol.automatically_initiate = vpol.automatically_accept = TRUE;
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
-	linphone_core_set_video_policy(pauline->lc, &vpol);
-	linphone_core_set_video_policy(marie->lc, &vpol);
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead

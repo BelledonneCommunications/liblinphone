@@ -33,8 +33,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 	if (core) {
-		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
-		enableVideo(policy->automatically_initiate);
+		const LinphoneVideoActivationPolicy *policy = linphone_core_get_video_activation_policy(core);
+		enableVideo(linphone_video_activation_policy_get_automatically_initiate(policy));
 		setParticipantListType(
 		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
 		const auto defaultAccount = linphone_core_get_default_account(core);

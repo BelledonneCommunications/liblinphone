@@ -258,15 +258,23 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 
 	LinphoneConference *conference = linphone_core_get_conference(cCore);
 
+	d->videoDirection = LinphoneMediaDirectionSendRecv;
 	if (conference) {
 		// Default videoEnable to conference capabilities if the core is in a conference
 		const LinphoneConferenceParams *params = linphone_conference_get_current_params(conference);
 		d->videoEnabled = !!linphone_conference_params_video_enabled(params);
 	} else {
 		if (dir == LinphoneCallOutgoing) {
-			d->videoEnabled = cCore->video_policy.automatically_initiate;
+			d->videoEnabled = cCore->video_policy->automatically_initiate;
+			// if sdp_200_ack is true, we ask the other person to make an offer and it's up to us to accept.
+			if (cCore->sip_conf.sdp_200_ack) {
+				d->videoDirection = cCore->video_policy->accept_media_direction;
+			}
 		} else {
-			d->videoEnabled = cCore->video_policy.automatically_accept;
+			d->videoEnabled = cCore->video_policy->automatically_accept;
+			if (cCore->video_policy->automatically_accept) {
+				d->videoDirection = cCore->video_policy->accept_media_direction;
+			}
 		}
 	}
 	if (!linphone_core_video_enabled(cCore) && d->videoEnabled) {
@@ -285,7 +293,6 @@ void MediaSessionParams::initDefault(const std::shared_ptr<Core> &core, Linphone
 	    !!linphone_config_get_int(linphone_core_get_config(cCore), "rtp", "rtcp_fb_implicit_rtcp_fb", true);
 	d->avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(cCore) * 1000);
 	d->audioDirection = LinphoneMediaDirectionSendRecv;
-	d->videoDirection = LinphoneMediaDirectionSendRecv;
 	d->earlyMediaSendingEnabled =
 	    !!linphone_config_get_int(linphone_core_get_config(cCore), "misc", "real_early_media", false);
 	d->enableToneIndications(linphone_core_call_tone_indications_enabled(cCore));

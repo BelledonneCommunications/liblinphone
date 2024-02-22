@@ -754,11 +754,7 @@ static void early_media_call_forking(void) {
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bctbx_list_t *lcs = NULL;
 	LinphoneCallParams *params = linphone_core_create_call_params(pauline->lc, NULL);
-	LinphoneVideoPolicy pol;
 	int dummy = 0;
-
-	pol.automatically_accept = 1;
-	pol.automatically_initiate = 1;
 
 	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 	linphone_core_set_user_agent(marie2->lc, "Natted Linphone", NULL);
@@ -767,14 +763,19 @@ static void early_media_call_forking(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
-	linphone_core_set_video_policy(marie->lc, &pol);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
 
 	linphone_core_enable_video_capture(marie2->lc, TRUE);
 	linphone_core_enable_video_display(marie2->lc, TRUE);
+	linphone_core_set_video_activation_policy(marie2->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 
-	linphone_core_set_video_policy(marie2->lc, &pol);
 	linphone_core_set_audio_port_range(marie2->lc, 40200, 40300);
 	linphone_core_set_video_port_range(marie2->lc, 40400, 40500);
 

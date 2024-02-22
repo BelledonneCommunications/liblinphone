@@ -2302,6 +2302,30 @@ std::pair<bool, LinphoneMediaDirection> LocalConference::getMainStreamVideoDirec
 	return std::make_pair(enableVideoStream, videoDir);
 }
 
+LinphoneMediaDirection
+LocalConference::verifyVideoDirection(const std::shared_ptr<CallSession> &session,
+                                      const LinphoneMediaDirection suggestedVideoDirection) const {
+	const auto &device = findParticipantDevice(session);
+	// By default do not change the direction
+	auto videoDir = suggestedVideoDirection;
+	if (device) {
+		const auto &participant = device->getParticipant();
+		if (participant) {
+			const auto &role = participant->getRole();
+			// From the conference server standpoint, a listener has only the send component of the video stream as the
+			// server sends video streams to the client
+			if (role == Participant::Role::Listener) {
+				if (videoDir == LinphoneMediaDirectionSendRecv) {
+					videoDir = LinphoneMediaDirectionSendOnly;
+				} else if (videoDir == LinphoneMediaDirectionRecvOnly) {
+					videoDir = LinphoneMediaDirectionInactive;
+				}
+			}
+		}
+	}
+	return videoDir;
+}
+
 } // end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE

@@ -202,6 +202,7 @@ public:
 	void requestNotifyNextVideoFrameDecoded();
 	void setParams(const MediaSessionParams *msp);
 	void setSpeakerVolumeGain(float value);
+	MediaSessionParams *createCallParams();
 
 	// -----------------------------------------------------------------------------
 

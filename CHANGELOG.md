@@ -21,9 +21,14 @@ This changelog file was started on October 2019. Previous changes were more or l
   linphone_participant_device_get_stream_availability() for the video stream now returns the overall video availability of a participant device. Function linphone_participant_device_get_thumbnail_stream_availability() now return whether a participant is sending its video stream or not
 - The participant device callbacks follows changes made on the participant device API
   LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb for the video stream is trigged by an change on the overall video availability. LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb is now called when a participant device toggle its camera setting
-  
+- linphone_core_get_video_activation_policy() now returns a const object. Use linphone_video_activation_policy_clone() or create a new one
+  if you want to make changes before calling linphone_core_set_video_activation_policy().
+
 ### Fixed
 - t= lines in the SDP no longer changed in the answer 
+
+### Removed
+- Removed old & deprecated VideoPolicy object.
 
 ## [5.3.0] 2023-12-18
 

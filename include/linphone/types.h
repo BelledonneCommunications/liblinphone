@@ -1306,18 +1306,6 @@ typedef enum _LinphoneVersionUpdateCheckResult {
 	LinphoneVersionUpdateCheckError = 2
 } LinphoneVersionUpdateCheckResult;
 
-/**
- * @brief Structure describing policy regarding video streams establishments.
- * @ingroup media_parameters
- * @deprecated 18/04/17
- * @donotwrap
- **/
-typedef struct _LinphoneVideoPolicy {
-	bool_t automatically_initiate; /**<Whether video shall be automatically proposed for outgoing calls.*/
-	bool_t automatically_accept;   /**<Whether video shall be automatically accepted for incoming calls*/
-	bool_t unused[2];
-} LinphoneVideoPolicy;
-
 typedef struct LinphoneVideoSizeDef {
 	MSVideoSize vsize;
 	const char *name;

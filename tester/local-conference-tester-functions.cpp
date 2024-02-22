@@ -1521,9 +1521,8 @@ void create_conference_base(time_t start_time,
 						}
 					}
 
-					LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
+					const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 					bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-					linphone_video_activation_policy_unref(pol);
 
 					size_t no_streams_audio = 0;
 					size_t no_active_streams_video = 0;
@@ -1809,9 +1808,8 @@ void create_conference_base(time_t start_time,
 							BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
 						}
 
-						LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
+						const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 						bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-						linphone_video_activation_policy_unref(pol);
 
 						size_t no_streams_audio = 0;
 						size_t no_active_streams_video = 0;
@@ -1922,10 +1920,9 @@ void create_conference_base(time_t start_time,
 			bool_t enable = FALSE;
 			if (pauline_call) {
 				const LinphoneCallParams *call_cparams = linphone_call_get_current_params(pauline_call);
-				LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
+				const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
 				enable = !(!!linphone_video_activation_policy_get_automatically_initiate(pol) &&
 				           !!linphone_call_params_video_enabled(call_cparams));
-				linphone_video_activation_policy_unref(pol);
 			}
 
 			Address paulineAddr = pauline.getIdentity();
@@ -2372,6 +2369,7 @@ void create_conference_base(time_t start_time,
 			LinphoneCall *laure_call = linphone_core_get_call_by_remote_address2(laure.getLc(), confAddr);
 			BC_ASSERT_PTR_NOT_NULL(laure_call);
 
+			// Laure is a listener, therefore we expect the send component to be rejected
 			LinphoneMediaDirection laure_video_direction = LinphoneMediaDirectionSendRecv;
 			ms_message("%s enables video with direction %s", linphone_core_get_identity(laure.getLc()),
 			           linphone_media_direction_to_string(laure_video_direction));
@@ -2396,6 +2394,10 @@ void create_conference_base(time_t start_time,
 				                             focus_stat3.number_of_LinphoneCallStreamsRunning + 1,
 				                             liblinphone_tester_sip_timeout));
 
+				// If video direction is RecvOnly for all participants, then laure attempt to enable its video with
+				// SendRecv capabilities will not bring about any changes as she is a listener. Its send component will
+				// be always rejected as she is a listener Its recv component will only be accepted if at least one
+				// participant streams out its video stream causing a change in its capabilities
 				if ((video_direction == LinphoneMediaDirectionSendOnly) ||
 				    (video_direction == LinphoneMediaDirectionInactive)) {
 					BC_ASSERT_TRUE(wait_for_list(
@@ -5049,9 +5051,8 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 						                (int)LinphoneCallStateStreamsRunning, int, "%0d");
 					}
 
-					LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
+					const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 					bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-					linphone_video_activation_policy_unref(pol);
 
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					size_t no_streams_audio = 0;
@@ -5396,9 +5397,8 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr.toC());
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
 
-		LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
+		const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
 		bool_t enable = !!!linphone_video_activation_policy_get_automatically_initiate(pol);
-		linphone_video_activation_policy_unref(pol);
 
 		LinphoneAddress *paulineUri = pauline.getCMgr()->identity;
 		LinphoneConference *paulineConference =
@@ -8929,11 +8929,10 @@ void create_conference_dial_out_base(bool_t send_ics,
 				linphone_address_unref(uri);
 				BC_ASSERT_PTR_NOT_NULL(pconference);
 
-				LinphoneVideoActivationPolicy *mgr_pol = linphone_core_get_video_activation_policy(mgr->lc);
+				const LinphoneVideoActivationPolicy *mgr_pol = linphone_core_get_video_activation_policy(mgr->lc);
 				bool_t video_enabled =
 				    !!((mgr == marie.getCMgr()) ? linphone_video_activation_policy_get_automatically_initiate(mgr_pol)
 				                                : linphone_video_activation_policy_get_automatically_accept(mgr_pol));
-				linphone_video_activation_policy_unref(mgr_pol);
 
 				if (pconference) {
 					int no_participants = 0;
@@ -8985,11 +8984,10 @@ void create_conference_dial_out_base(bool_t send_ics,
 							BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
 						}
 
-						LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
+						const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 						bool_t enabled = !!((mgr == marie.getCMgr())
 						                        ? linphone_video_activation_policy_get_automatically_initiate(pol)
 						                        : linphone_video_activation_policy_get_automatically_accept(pol));
-						linphone_video_activation_policy_unref(pol);
 
 						size_t no_streams_audio = 0;
 						size_t no_max_streams_audio = (security_level == LinphoneConferenceSecurityLevelEndToEnd)
@@ -9144,9 +9142,8 @@ void create_conference_dial_out_base(bool_t send_ics,
 				LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr.toC());
 				BC_ASSERT_PTR_NOT_NULL(focus_call);
 
-				LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
+				const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
 				bool_t enable = !!!linphone_video_activation_policy_get_automatically_accept(pol);
-				linphone_video_activation_policy_unref(pol);
 
 				LinphoneAddress *paulineUri = linphone_address_new(linphone_core_get_identity(pauline.getLc()));
 				LinphoneConference *paulineConference =
@@ -10266,9 +10263,8 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 					}
 					BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
 
-					LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
+					const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 					bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-					linphone_video_activation_policy_unref(pol);
 
 					size_t no_streams_audio = 0;
 					size_t no_max_streams_audio = (security_level == LinphoneConferenceSecurityLevelEndToEnd)
@@ -10387,9 +10383,8 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 		LinphoneCall *focus_call = linphone_core_get_call_by_remote_address2(focus.getLc(), paulineAddr.toC());
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
 
-		LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
+		const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(pauline.getLc());
 		bool_t enable = !!!linphone_video_activation_policy_get_automatically_initiate(pol);
-		linphone_video_activation_policy_unref(pol);
 
 		LinphoneAddress *paulineUri = linphone_address_new(linphone_core_get_identity(pauline.getLc()));
 		LinphoneConference *paulineConference =

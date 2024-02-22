@@ -392,6 +392,7 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneTransports);
 struct _LinphoneVideoActivationPolicy {
 	belle_sip_object_t base;
 	void *user_data;
+	LinphoneMediaDirection accept_media_direction;
 	bool_t automatically_initiate; /**<Whether video shall be automatically proposed for outgoing calls.*/
 	bool_t automatically_accept;   /**<Whether video shall be automatically accepted for incoming calls*/
 };
@@ -495,7 +496,7 @@ class Core;
 	bctbx_list_t *plugin_list;                                                                                         \
 	char *zrtp_secrets_cache;                                                                                          \
 	char *user_certificates_path;                                                                                      \
-	LinphoneVideoPolicy video_policy;                                                                                  \
+	LinphoneVideoActivationPolicy *video_policy;                                                                       \
 	LinphoneNatPolicy *nat_policy;                                                                                     \
 	LinphoneImNotifPolicy *im_notif_policy;                                                                            \
 	bool_t use_files;                                                                                                  \

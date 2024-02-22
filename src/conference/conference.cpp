@@ -1097,4 +1097,10 @@ Conference::getMainStreamVideoDirection(BCTBX_UNUSED(const std::shared_ptr<CallS
 	return std::make_pair(false, LinphoneMediaDirectionInactive);
 }
 
+LinphoneMediaDirection Conference::verifyVideoDirection(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+                                                        const LinphoneMediaDirection suggestedVideoDirection) const {
+	// By default do not do anything
+	return suggestedVideoDirection;
+}
+
 LINPHONE_END_NAMESPACE

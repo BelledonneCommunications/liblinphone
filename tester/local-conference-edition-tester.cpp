@@ -430,9 +430,8 @@ static void edit_simple_conference_base(bool_t from_organizer,
 							                (int)LinphoneCallStateStreamsRunning, int, "%0d");
 						}
 
-						LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
+						const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(mgr->lc);
 						bool_t enabled = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-						linphone_video_activation_policy_unref(pol);
 
 						size_t no_streams_audio = 0;
 						size_t no_streams_video = 3;
