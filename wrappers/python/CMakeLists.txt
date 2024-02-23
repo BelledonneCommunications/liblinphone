@@ -41,7 +41,7 @@ add_custom_command(OUTPUT pylinphone.pyx pylinphone.py
     liblinphone-doc
 )
 
-list(APPEND CYTHON_ARGS "--module-name" "linphone")
+list(APPEND CYTHON_ARGS "--module-name" "pylinphone")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 	list(APPEND CYTHON_ARGS "--gdb")
 endif()
@@ -67,8 +67,7 @@ add_custom_target(liblinphone-python-wrapper ALL DEPENDS ${PYLINPHONE_DEPENDENCI
 add_library(pylinphone pylinphone.c)
 add_dependencies(pylinphone liblinphone-python-wrapper)
 
-# This way user will be able to do from pylinphone import linphone
-set_target_properties(pylinphone PROPERTIES OUTPUT_NAME linphone)
+set_target_properties(pylinphone PROPERTIES OUTPUT_NAME pylinphone)
 set_target_properties(pylinphone PROPERTIES PREFIX "")
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)

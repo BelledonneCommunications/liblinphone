@@ -103,6 +103,14 @@ cdef extern from "belle-sip/object.h":
     int belle_sip_object_data_set(belle_sip_object_t * obj, const char * name, void * data, belle_sip_data_destroy destroy_func)
     void belle_sip_object_data_remove(belle_sip_object_t * obj, const char * name)
 
+# Force this header file to be included in generated C file
+cdef extern from "linphone/tunnel.h":
+    pass
+
+# Force this header file to be included in generated C file
+cdef extern from "linphone/core_utils.h":
+    pass
+
 cdef extern from "linphone/core.h":
     {{#c_classes}}
     ctypedef struct {{c_class_name}}:
