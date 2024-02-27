@@ -64,7 +64,7 @@ endif()
 
 add_custom_target(liblinphone-python-wrapper ALL DEPENDS ${PYLINPHONE_DEPENDENCIES})
 
-add_library(pylinphone pylinphone.c)
+add_library(pylinphone MODULE pylinphone.c)
 add_dependencies(pylinphone liblinphone-python-wrapper)
 
 set_target_properties(pylinphone PROPERTIES OUTPUT_NAME pylinphone)
@@ -86,7 +86,10 @@ target_include_directories(pylinphone
 	PRIVATE
 		${PROJECT_BINARY_DIR}/include
 )
-set_target_properties(pylinphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
+if (NOT APPLE)
+    # see https://github.com/dealii/dealii/issues/2915
+    set_target_properties(pylinphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
+endif()
 
 install(TARGETS pylinphone
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
