@@ -6644,6 +6644,8 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val) {
 
 			lc->previewstream = video_preview_new(lc->factory);
 			video_preview_set_size(lc->previewstream, vsize);
+			ms_message("[Core] Video preview is enabled, forwarding device rotation [%i] to stream",
+			           lc->device_rotation);
 			video_stream_set_device_rotation(lc->previewstream, lc->device_rotation);
 			if (display_filter) {
 				video_preview_set_display_filter_name(lc->previewstream, display_filter);
@@ -7192,7 +7194,7 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 	CoreLogContextualizer logContextualizer(lc);
 	if (rotation == lc->device_rotation) return;
 
-	ms_message("%s : rotation=%d\n", __FUNCTION__, rotation);
+	ms_message("[Core] Device rotation set to [%d]", rotation);
 	lc->device_rotation = rotation;
 #ifdef VIDEO_ENABLED
 	{
@@ -7201,12 +7203,14 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 		if (call) {
 			vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
 			if (vstream) {
+				ms_message("[Core] Found a video stream, updating device rotation");
 				video_stream_set_device_rotation(vstream, rotation);
 				video_stream_change_camera_skip_bitrate(vstream, vstream->cam);
 			}
 		} else if (linphone_core_video_preview_enabled(lc)) {
 			vstream = lc->previewstream;
 			if (vstream) {
+				ms_message("[Core] Found a preview stream, updating device rotation");
 				video_stream_set_device_rotation(vstream, rotation);
 				video_preview_update_video_params(vstream);
 			}

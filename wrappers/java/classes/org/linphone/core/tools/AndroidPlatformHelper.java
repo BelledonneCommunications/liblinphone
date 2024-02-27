@@ -446,7 +446,7 @@ public class AndroidPlatformHelper {
         }
     }
 
-    private synchronized void setNativePreviewWindowIdOnCoreThread(SurfaceTexture view) {
+    private synchronized void setNativePreviewWindowIdOnCoreThread(TextureView view) {
         Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -477,7 +477,7 @@ public class AndroidPlatformHelper {
         }
 
         if (view instanceof SurfaceTexture) {
-            Log.i("[Platform Helper] Preview window surface is a SurfaceTexture");
+            Log.w("[Platform Helper] Preview window surface is a SurfaceTexture, rotation may be broken, prefer passing CaptureTextureView directly");
             SurfaceTexture surface = (SurfaceTexture) view;
             setNativePreviewWindowId(mNativePtr, surface);
             return;
@@ -495,7 +495,7 @@ public class AndroidPlatformHelper {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
                 Log.i("[Platform Helper] Preview window surface texture [" + surface + "] is available for texture view [" + mPreviewTextureView + "]");
-                setNativePreviewWindowIdOnCoreThread(surface);
+                setNativePreviewWindowIdOnCoreThread(mPreviewTextureView);
             }
 
             @Override
@@ -530,7 +530,7 @@ public class AndroidPlatformHelper {
 
         if (mPreviewTextureView.isAvailable()) {
             Log.i("[Platform Helper] Preview window surface is directly available for texture view [" + mPreviewTextureView + "]");
-            setNativePreviewWindowId(mNativePtr, mPreviewTextureView.getSurfaceTexture());
+            setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
         }
     }
 
@@ -712,6 +712,8 @@ public class AndroidPlatformHelper {
             ((CaptureTextureView) mPreviewTextureView).setAspectRatio(width, height);
         } else if (mPreviewTextureView != null) {
             Log.w("[Platform Helper] It seems you are using a TextureView instead of our CaptureTextureView, we strongly advise you to use ours to benefit from correct rotation & ratio");
+        } else {
+            Log.w("[Platform Helper] No preview surface found, nothing to resize!");
         }
     }
 

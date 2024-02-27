@@ -759,8 +759,10 @@ public class CoreManager {
         if (display != null) {
             int orientation = display.getRotation();
             int degrees = orientation * 90;
-            Log.i("[Core Manager] Device computed rotation is ", degrees, " device display id is ", displayId, ")");
+            Log.i("[Core Manager] Device computed rotation is ", degrees, " device display id is ", displayId);
             mCore.setDeviceRotation(degrees);
+        } else {
+            Log.w("[Core Manager] Display is null, can't update device rotation!");
         }
     }
 }
