@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 28);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 30);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2647,6 +2647,14 @@ void MainDbPrivate::updateSchema() {
 	if (version < makeVersion(1, 0, 28)) {
 		*session << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
 		            "GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+	}
+
+	if (version < makeVersion(1, 0, 30)) {
+		try {
+			*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Caught exception " << e.what() << ": Column 'muted' already exists in table 'chat_room'";
+		}
 	}
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
