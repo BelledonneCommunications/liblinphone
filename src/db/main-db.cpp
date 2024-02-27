@@ -75,7 +75,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 29);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 30);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 1);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2418,16 +2418,16 @@ void MainDbPrivate::updateSchema() {
 	const string charset = backend == MainDb::Backend::Mysql ? "DEFAULT CHARSET=utf8mb4" : "";
 
 	soci::session *session = dbSession.getBackendSession();
-	unsigned int version = getModuleVersion("events");
+	unsigned int eventsDbVersion = getModuleVersion("events");
 
-	if (version < makeVersion(1, 0, 1))
+	if (eventsDbVersion < makeVersion(1, 0, 1))
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN state TINYINT UNSIGNED DEFAULT 0";
-	if (version < makeVersion(1, 0, 2)) {
+	if (eventsDbVersion < makeVersion(1, 0, 2)) {
 		*session << "DROP TRIGGER IF EXISTS chat_message_participant_deleter";
 		*session << "ALTER TABLE chat_message_participant ADD COLUMN state_change_time" + dbSession.timestampType() +
 		                " NOT NULL DEFAULT " + dbSession.currentTimestamp();
 	}
-	if (version < makeVersion(1, 0, 3)) {
+	if (eventsDbVersion < makeVersion(1, 0, 3)) {
 		// Remove client group one-to-one chat rooms for the moment as there are still some issues
 		// with them and we prefer to keep using basic chat rooms instead
 		const int &capabilities = ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Conference) |
@@ -2437,13 +2437,13 @@ void MainDbPrivate::updateSchema() {
 		linphone_config_set_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "prefer_basic_chat_room",
 		                         TRUE);
 	}
-	if (version < makeVersion(1, 0, 4)) {
+	if (eventsDbVersion < makeVersion(1, 0, 4)) {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN delivery_notification_required BOOLEAN NOT "
 		            "NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN display_notification_required BOOLEAN NOT "
 		            "NULL DEFAULT 0";
 	}
-	if (version < makeVersion(1, 0, 5)) {
+	if (eventsDbVersion < makeVersion(1, 0, 5)) {
 		const string queryDelivery = "UPDATE conference_chat_message_event"
 		                             "  SET delivery_notification_required = 0"
 		                             "  WHERE direction = " +
@@ -2460,7 +2460,7 @@ void MainDbPrivate::updateSchema() {
 
 		*session << queryDisplay;
 	}
-	if (version < makeVersion(1, 0, 6)) {
+	if (eventsDbVersion < makeVersion(1, 0, 6)) {
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 		*session << "CREATE VIEW conference_event_view AS"
 		            "  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, "
@@ -2477,18 +2477,19 @@ void MainDbPrivate::updateSchema() {
 		            "  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 		            "  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
-	if (version < makeVersion(1, 0, 6) && linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()),
-	                                                               "lime", "migrate_to_secured_room", FALSE)) {
+	if (eventsDbVersion < makeVersion(1, 0, 6) &&
+	    linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "lime", "migrate_to_secured_room",
+	                             FALSE)) {
 		*session << "UPDATE chat_room "
 		            "SET capabilities = capabilities | " +
 		                Utils::toString(int(ChatRoom::Capabilities::Encrypted));
 	}
 
-	if (version < makeVersion(1, 0, 7)) {
+	if (eventsDbVersion < makeVersion(1, 0, 7)) {
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN name VARCHAR(255)";
 	}
 
-	if (version < makeVersion(1, 0, 8)) {
+	if (eventsDbVersion < makeVersion(1, 0, 8)) {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN marked_as_read BOOLEAN NOT NULL DEFAULT 1";
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 		*session << "CREATE VIEW conference_event_view AS"
@@ -2507,7 +2508,7 @@ void MainDbPrivate::updateSchema() {
 		            "  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
 
-	if (version < makeVersion(1, 0, 9)) {
+	if (eventsDbVersion < makeVersion(1, 0, 9)) {
 		*session
 		    << "ALTER TABLE conference_chat_message_event ADD COLUMN forward_info VARCHAR(255) NOT NULL DEFAULT ''";
 		*session << "DROP VIEW IF EXISTS conference_event_view";
@@ -2527,7 +2528,7 @@ void MainDbPrivate::updateSchema() {
 		            "  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
 
-	if (version < makeVersion(1, 0, 10)) {
+	if (eventsDbVersion < makeVersion(1, 0, 10)) {
 		*session << "CREATE INDEX incoming_not_delivered_index ON conference_chat_message_event "
 		            "(delivery_notification_required, direction)";
 		*session << "CREATE INDEX unread_index ON conference_chat_message_event (marked_as_read)";
@@ -2536,14 +2537,14 @@ void MainDbPrivate::updateSchema() {
 		            "ON conference_chat_message_event.event_id = event.id";
 	}
 
-	if (version < makeVersion(1, 0, 11)) {
+	if (eventsDbVersion < makeVersion(1, 0, 11)) {
 		*session << "ALTER TABLE chat_room ADD COLUMN last_message_id " +
 		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL DEFAULT 0";
 		*session << "UPDATE chat_room SET last_message_id = IFNULL((SELECT id FROM conference_event_simple_view WHERE "
 		            "chat_room_id = chat_room.id AND type = 5 ORDER BY id DESC LIMIT 1), 0)";
 	}
 
-	if (version < makeVersion(1, 0, 12)) {
+	if (eventsDbVersion < makeVersion(1, 0, 12)) {
 		*session << "ALTER TABLE chat_room ADD COLUMN ephemeral_enabled BOOLEAN NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE chat_room ADD COLUMN ephemeral_messages_lifetime DOUBLE NOT NULL DEFAULT 86400";
 		*session << "DROP VIEW IF EXISTS conference_event_view";
@@ -2567,7 +2568,7 @@ void MainDbPrivate::updateSchema() {
 		       "event.id";
 	}
 
-	if (version < makeVersion(1, 0, 13)) {
+	if (eventsDbVersion < makeVersion(1, 0, 13)) {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN call_id VARCHAR(255) DEFAULT ''";
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 		*session << "CREATE VIEW conference_event_view AS"
@@ -2590,7 +2591,7 @@ void MainDbPrivate::updateSchema() {
 		            "event.id";
 	}
 
-	if (version < makeVersion(1, 0, 14)) {
+	if (eventsDbVersion < makeVersion(1, 0, 14)) {
 		*session
 		    << "ALTER TABLE chat_message_content ADD COLUMN body_encoding_type TINYINT NOT NULL DEFAULT 0"; // Older
 		                                                                                                    // table
@@ -2599,7 +2600,7 @@ void MainDbPrivate::updateSchema() {
 		                                                                                                    // encoding.
 	}
 
-	if (version < makeVersion(1, 0, 15)) {
+	if (eventsDbVersion < makeVersion(1, 0, 15)) {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN reply_message_id VARCHAR(255) DEFAULT ''";
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN reply_sender_address_id " +
 		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") + " DEFAULT 0";
@@ -2624,15 +2625,15 @@ void MainDbPrivate::updateSchema() {
 		            "event.id";
 	}
 
-	if (version < makeVersion(1, 0, 16)) {
+	if (eventsDbVersion < makeVersion(1, 0, 16)) {
 		*session << "ALTER TABLE chat_message_file_content ADD COLUMN duration INT NOT NULL DEFAULT -1";
 	}
 
-	if (version < makeVersion(1, 0, 17)) {
+	if (eventsDbVersion < makeVersion(1, 0, 17)) {
 		*session << "ALTER TABLE sip_address ADD COLUMN display_name VARCHAR(255)";
 	}
 
-	if (version < makeVersion(1, 0, 18)) {
+	if (eventsDbVersion < makeVersion(1, 0, 18)) {
 		// We assume that the following statement is supported on all non-sqlite backends
 		if (backend != MainDb::Backend::Sqlite3) {
 			*session << "ALTER TABLE sip_address MODIFY COLUMN display_name VARCHAR(191) CHARACTER SET utf8mb4";
@@ -2643,24 +2644,24 @@ void MainDbPrivate::updateSchema() {
 		// whole column anyway as "MODIFY COLUMN" isn't supported in sqlite)
 	}
 
-	if (version < makeVersion(1, 0, 19)) {
+	if (eventsDbVersion < makeVersion(1, 0, 19)) {
 		*session << "ALTER TABLE conference_info ADD COLUMN state TINYINT UNSIGNED NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_info ADD COLUMN ics_sequence INT UNSIGNED DEFAULT 0";
 		*session << "ALTER TABLE conference_info ADD COLUMN ics_uid VARCHAR(255) DEFAULT ''";
 	}
 
-	if (version < makeVersion(1, 0, 20)) {
+	if (eventsDbVersion < makeVersion(1, 0, 20)) {
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN params VARCHAR(255) DEFAULT ''";
 	}
 
-	if (version < makeVersion(1, 0, 21)) {
+	if (eventsDbVersion < makeVersion(1, 0, 21)) {
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_method TINYINT UNSIGNED DEFAULT 0";
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_time" + dbSession.timestampType() +
 		                " NOT NULL DEFAULT " + dbSession.currentTimestamp();
 	}
 
-	if (version < makeVersion(1, 0, 22)) {
+	if (eventsDbVersion < makeVersion(1, 0, 22)) {
 		try {
 			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
 		} catch (const soci::soci_error &e) {
@@ -2669,11 +2670,11 @@ void MainDbPrivate::updateSchema() {
 		}
 	}
 
-	if (version < makeVersion(1, 0, 23)) {
+	if (eventsDbVersion < makeVersion(1, 0, 23)) {
 		*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
 	}
 
-	if (version < makeVersion(1, 0, 24)) {
+	if (eventsDbVersion < makeVersion(1, 0, 24)) {
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN is_organizer BOOLEAN NOT NULL DEFAULT 0";
 		// We must recreate table conference_info_participant to change the UNIQUE constraint.
 		*session << "CREATE TABLE IF NOT EXISTS conference_info_participant_clone ("
@@ -2732,7 +2733,7 @@ void MainDbPrivate::updateSchema() {
 		*session << "INSERT INTO conference_info_participant SELECT * FROM conference_info_participant_clone";
 	}
 
-	if (version < makeVersion(1, 0, 25)) {
+	if (eventsDbVersion < makeVersion(1, 0, 25)) {
 		*session << "CREATE TABLE IF NOT EXISTS chat_room_participant_device_clone ("
 		            "  chat_room_participant_id" +
 		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
@@ -2814,7 +2815,7 @@ void MainDbPrivate::updateSchema() {
 		}
 	}
 
-	if (version < makeVersion(1, 0, 26)) {
+	if (eventsDbVersion < makeVersion(1, 0, 26)) {
 		try {
 			*session << "ALTER TABLE conference_info_participant_params RENAME COLUMN \"key\" TO name";
 		} catch (const soci::soci_error &e) {
@@ -2826,7 +2827,7 @@ void MainDbPrivate::updateSchema() {
 		*session << "SELECT name FROM conference_info_participant_params";
 	}
 
-	if (version < makeVersion(1, 0, 27)) {
+	if (eventsDbVersion < makeVersion(1, 0, 27)) {
 		try {
 			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
 		} catch (const soci::soci_error &e) {
@@ -2836,22 +2837,36 @@ void MainDbPrivate::updateSchema() {
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN is_participant BOOLEAN NOT NULL DEFAULT 1";
 	}
 
-	if (version < makeVersion(1, 0, 28)) {
-		//*session << "DELETE FROM conference_info_participant p1 WHERE id IN (SELECT id FROM conference_info_participant p2 GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+	if (eventsDbVersion < makeVersion(1, 0, 28)) {
+		//*session << "DELETE FROM conference_info_participant p1 WHERE id IN (SELECT id FROM
+		// conference_info_participant p2 GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
 		if (backend == MainDb::Backend::Sqlite3) {
-			*session << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+			*session
+			    << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
+			       "GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
 		} else {
-			*session << "DELETE p1 FROM conference_info_participant p1 INNER JOIN conference_info_participant p2 WHERE p1.id < p2.id AND p1.conference_info_id = p2.conference_info_id AND p1.participant_sip_address_id = p2.participant_sip_address_id";
+			*session << "DELETE p1 FROM conference_info_participant p1 INNER JOIN conference_info_participant p2 WHERE "
+			            "p1.id < p2.id AND p1.conference_info_id = p2.conference_info_id AND "
+			            "p1.participant_sip_address_id = p2.participant_sip_address_id";
+		}
+	}
+
+	if (eventsDbVersion < makeVersion(1, 0, 29)) {
+		*session << "ALTER TABLE friends_list ADD COLUMN type INT NOT NULL DEFAULT -1";
+	}
+
+	if (eventsDbVersion < makeVersion(1, 0, 30)) {
+		try {
+			*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Caught exception " << e.what() << ": Column 'muted' already exists in table 'chat_room'";
 		}
 	}
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 
-	if (version < makeVersion(1, 0, 29)) {
-		*session << "ALTER TABLE friends_list ADD COLUMN type INT NOT NULL DEFAULT -1";
-	}
-
-	if (getModuleVersion("friends") < makeVersion(1, 0, 1)) {
+	unsigned int friendsDbVersion = getModuleVersion("friends");
+	if (friendsDbVersion < makeVersion(1, 0, 1)) {
 		// The sip_address_id field needs to be nullable.
 		// Do not try to copy data from the old table because it was not used before this version (use of an other
 		// database external to the mainDb)
