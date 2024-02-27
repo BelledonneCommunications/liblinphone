@@ -317,7 +317,7 @@ private:
 
 	void refreshSockets();
 	void reinviteToRecoverFromConnectionLoss() override;
-	void repairByInviteWithReplaces() override;
+	void repairByNewInvite(bool withReplaces) override;
 	void addStreamToBundle(const std::shared_ptr<SalMediaDescription> &md,
 	                       SalStreamDescription &sd,
 	                       SalStreamConfiguration &cfg,

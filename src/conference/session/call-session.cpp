@@ -420,7 +420,11 @@ void CallSessionPrivate::ackReceived(LinphoneHeaders *headers) {
 void CallSessionPrivate::cancelDone() {
 	if (reinviteOnCancelResponseRequested) {
 		reinviteOnCancelResponseRequested = false;
-		reinviteToRecoverFromConnectionLoss();
+		if (op->hasDialog()) {
+			reinviteToRecoverFromConnectionLoss();
+		} else {
+			repairByNewInvite(false);
+		}
 	}
 }
 
@@ -1102,21 +1106,24 @@ void CallSessionPrivate::reinviteToRecoverFromConnectionLoss() {
 	q->update(params, CallSession::UpdateMethod::Invite);
 }
 
-void CallSessionPrivate::repairByInviteWithReplaces() {
+void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 	L_Q();
 	lInfo() << "CallSession [" << q
-	        << "] is going to have a new INVITE replacing the previous one in order to recover from lost connectivity";
+	        << "] is going to have a new INVITE one in order to recover from lost connectivity; with Replaces header:"
+	        << (withReplaces ? "yes" : "no");
+
+	// Restore INVITE body if any, for example while creating a chat room
+	auto content = Content::create(op->getLocalBody());
 	string callId = op->getCallId();
 	string fromTag = op->getLocalTag();
 	string toTag = op->getRemoteTag();
-	// Restore INVITE body if any, for example while creating a chat room
-	auto content = Content::create(op->getLocalBody());
 
 	op->killDialog();
 	createOp();
-	op->setReplaces(callId.c_str(), fromTag,
-	                toTag.empty() ? "0" : toTag); // empty tag is set to 0 as defined by rfc3891
-	q->startInvite(nullptr, subject, content);    // Don't forget to set subject from call-session (and not from OP)
+	if (withReplaces) {
+		op->setReplaces(callId.c_str(), fromTag, toTag.empty() ? "0" : toTag);
+	}                                          // empty tag is set to 0 as defined by rfc3891
+	q->startInvite(nullptr, subject, content); // Don't forget to set subject from call-session (and not from OP)
 }
 
 void CallSessionPrivate::refreshContactAddress() {
@@ -1203,13 +1210,20 @@ void CallSessionPrivate::repairIfBroken() {
 			break;
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingProgress:
-			repairByInviteWithReplaces();
-			broken = false;
+			/* Don't attempt to send new INVITE with Replaces header: we don't know if the callee received
+			 * the INVITE. Instead, cancel the call and make a new one.
+			 */
+			if (op->cancelInvite() == 0) {
+				reinviteOnCancelResponseRequested = true;
+				broken = false;
+			} else {
+				lError() << "Do something here.";
+			}
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::OutgoingRinging:
 			if (op->getRemoteTag() != nullptr) {
-				repairByInviteWithReplaces();
+				repairByNewInvite(true);
 				broken = false;
 			} else {
 				lWarning() << "No remote tag in last provisional response, no early dialog, so trying to cancel lost "
@@ -1795,9 +1809,9 @@ const std::shared_ptr<Address> CallSession::getContactAddress() const {
 		contactAddress = Address::create();
 		contactAddress = accountContactAddress->clone()->toSharedPtr();
 	} else {
-		lError() << "Unable to retrieve contact address from op or account for call session " << this
-		         << " (local address " << *getLocalAddress() << " remote address "
-		         << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ").";
+		lInfo() << "No contact address from op or account for at this time call session " << this << " (local address "
+		        << *getLocalAddress() << " remote address "
+		        << (getRemoteAddress() ? getRemoteAddress()->toString() : "Unknown") << ").";
 	}
 	return contactAddress;
 }
