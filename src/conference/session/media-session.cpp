@@ -3950,11 +3950,11 @@ void MediaSessionPrivate::reinviteToRecoverFromConnectionLoss() {
 	q->update(&newParams, CallSession::UpdateMethod::Invite, q->isCapabilityNegotiationEnabled());
 }
 
-void MediaSessionPrivate::repairByInviteWithReplaces() {
+void MediaSessionPrivate::repairByNewInvite(bool withReplaces) {
 	if ((state == CallSession::State::IncomingEarlyMedia) || (state == CallSession::State::OutgoingEarlyMedia)) {
 		stopStreams();
 	}
-	CallSessionPrivate::repairByInviteWithReplaces();
+	CallSessionPrivate::repairByNewInvite(withReplaces);
 }
 
 int MediaSessionPrivate::sendDtmf() {
@@ -4546,9 +4546,9 @@ const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 		auto contactAddress = getContactAddress();
 		if (contactAddress) {
 			updateContactAddress(*contactAddress);
+			localConferenceId = ConferenceId(contactAddress, contactAddress);
+			conference = getCore()->findAudioVideoConference(localConferenceId, false);
 		}
-		localConferenceId = ConferenceId(contactAddress, contactAddress);
-		conference = getCore()->findAudioVideoConference(localConferenceId, false);
 	}
 	if (!conference) {
 		const auto to = Address::create(d->op->getTo());

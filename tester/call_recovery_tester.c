@@ -28,7 +28,11 @@
 #include <bctoolbox/defs.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-/*Case where the caller disconnects just after initiating the call (state outgoingprogress)*/
+
+/*Case where the caller disconnects just after initiating the call (state outgoingprogress).
+The callee may not have received the INVITE, so we can't send new INVITE with Replaces header,
+otherwise the callee is likely to send a 481 Call Leg / Transaction does not exist, per RFC3261.
+Instead, we send a CANCEL and then a new INVITE without Replaces header.*/
 static void recovered_call_on_network_switch_in_very_early_state(void) {
 	LinphoneCall *incoming_call;
 	const LinphoneCallParams *remote_params;
@@ -44,13 +48,18 @@ static void recovered_call_on_network_switch_in_very_early_state(void) {
 	linphone_core_invite_address(marie->lc, pauline->identity);
 	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1)))
 		goto end;
+
 	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1)))
 		goto end;
 
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingRinging, 0, int, "%i");
 	linphone_core_set_network_reachable(marie->lc, FALSE);
-	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_NetworkReachableFalse, 1);
 	linphone_core_set_network_reachable(marie->lc, TRUE);
-	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_NetworkReachableTrue, 2);
+
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1))) goto end;
+
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 2)))
+		goto end;
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingRinging, 1, int, "%i");
@@ -59,33 +68,47 @@ static void recovered_call_on_network_switch_in_very_early_state(void) {
 	remote_params = linphone_call_get_remote_params(incoming_call);
 	BC_ASSERT_PTR_NOT_NULL(remote_params);
 	if (remote_params != NULL) {
+		/* there should be no Replaces header here.*/
 		const char *replaces_header = linphone_call_params_get_custom_header(remote_params, "Replaces");
-		BC_ASSERT_PTR_NOT_NULL(replaces_header);
+		BC_ASSERT_PTR_NULL(replaces_header);
 	}
 	linphone_call_accept(incoming_call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallIncomingReceived, 1, int, "%i");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallIncomingReceived, 2, int, "%i");
 
 	liblinphone_tester_check_rtcp(marie, pauline);
 
 	linphone_call_terminate(incoming_call);
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 2));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 2));
 end:
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
 
-/*Case where the caller disconnects just after initiating the call (state outgoingRinging)*/
+static void call_log_updated(LinphoneCore *lc, LinphoneCallLog *cl) {
+	LinphoneCoreCbs *current = linphone_core_get_current_callbacks(lc);
+	int *counter = (int *)linphone_core_cbs_get_user_data(current);
+	(*counter)++;
+	BC_ASSERT_PTR_NOT_NULL(cl);
+}
+
+/*Case where the caller disconnects just after receiving the 180 Ringing (OutgoingRinging state)
+ In this scenario, we send a new INVITE with a Replaces header.*/
 static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager *callerMgr) {
 	const LinphoneCallParams *remote_params;
 	LinphoneCall *incoming_call, *outgoing_call;
-
+	LinphoneCoreCbs *core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	int number_of_call_log_updated = 0;
 	LinphoneCoreManager *pauline =
 	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	linphone_core_cbs_set_user_data(core_cbs, &number_of_call_log_updated);
+	linphone_core_cbs_set_call_log_updated(core_cbs, call_log_updated);
+	linphone_core_add_callbacks(callerMgr->lc, core_cbs);
 
 	outgoing_call = linphone_core_invite_address(callerMgr->lc, pauline->identity);
 	if (!BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1)))
@@ -93,6 +116,9 @@ static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager 
 	if (!BC_ASSERT_TRUE(
 	        wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingRinging, 1)))
 		goto end;
+
+	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_EQUAL(number_of_call_log_updated, 1, int, "%d");
 
 	linphone_core_set_network_reachable(callerMgr->lc, FALSE);
 	wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_NetworkReachableFalse, 1);
@@ -102,6 +128,9 @@ static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager 
 	char *repared_callid = bctbx_strdup(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)));
 
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallOutgoingRinging, 2));
+	BC_ASSERT_EQUAL(number_of_call_log_updated, 2, int, "%d");
+	BC_ASSERT_STRING_EQUAL(linphone_call_log_get_call_id(linphone_call_get_call_log(outgoing_call)), repared_callid);
+
 	incoming_call = linphone_core_get_current_call(pauline->lc);
 	remote_params = linphone_call_get_remote_params(incoming_call);
 	BC_ASSERT_PTR_NOT_NULL(remote_params);
@@ -124,8 +153,10 @@ static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager 
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &callerMgr->stat.number_of_LinphoneCallReleased, 1));
 	BC_ASSERT_TRUE(wait_for(callerMgr->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
-end:
 
+end:
+	linphone_core_remove_callbacks(callerMgr->lc, core_cbs);
+	linphone_core_cbs_unref(core_cbs);
 	linphone_core_manager_destroy(pauline);
 }
 static void recovered_call_on_network_switch_in_early_state_1(void) {

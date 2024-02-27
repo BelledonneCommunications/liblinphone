@@ -121,7 +121,7 @@ public:
 	void setContactOp();
 
 	virtual void reinviteToRecoverFromConnectionLoss();
-	virtual void repairByInviteWithReplaces();
+	virtual void repairByNewInvite(bool withReplaces);
 
 	// CoreListener
 	void onNetworkReachable(bool sipNetworkReachable, bool mediaNetworkReachable) override;
