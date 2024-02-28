@@ -107,9 +107,18 @@ void SalRegisterOp::registerRefresherListener(belle_sip_refresher_t *refresher,
 		if (contactHeader) {
 			auto p = BELLE_SIP_PARAMETERS(contactHeader);
 			const char *gruu = belle_sip_parameters_get_parameter(p, "pub-gruu");
+
 			if (gruu) {
 				char *unquotedGruu = belle_sip_unquote_strdup(gruu);
-				op->setContactAddress(reinterpret_cast<SalAddress *>(belle_sip_header_address_parse(unquotedGruu)));
+				auto parsedGruu = reinterpret_cast<SalAddress *>(belle_sip_header_address_parse(unquotedGruu));
+
+				if (parsedGruu != nullptr) {
+					op->setContactAddress(parsedGruu);
+				} else {
+					// Gruu is not valid, act as if there was none
+					op->setContactAddress(reinterpret_cast<SalAddress *>(BELLE_SIP_HEADER_ADDRESS(contactHeader)));
+				}
+
 				bctbx_free(unquotedGruu);
 				belle_sip_parameters_remove_parameter(p, "pub-gruu");
 			} else {
