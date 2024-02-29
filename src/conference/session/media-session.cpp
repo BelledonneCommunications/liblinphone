@@ -3542,7 +3542,8 @@ int MediaSessionPrivate::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDes
 			               : MediaSessionPrivate::ActiveSpeakerVideoContentAttribute)
 			        : MediaSessionPrivate::GridVideoContentAttribute;
 			streamIdx = md->findIdxStreamWithContent(mainStreamAttrValue);
-		} else {
+		}
+		if (streamIdx == -1) {
 			streamIdx = md->findIdxBestStream(SalVideo);
 		}
 	}
@@ -4101,7 +4102,8 @@ ConferenceLayout MediaSession::computeConferenceLayout(const std::shared_ptr<Sal
 		           (md->findIdxStreamWithContent(MediaSessionPrivate::ActiveSpeakerVideoContentAttribute) != -1)) {
 			layout = ConferenceLayout::ActiveSpeaker;
 		} else {
-			lDebug() << "Unable to deduce layout from media description " << md;
+			layout = ConferenceLayout::ActiveSpeaker;
+			lDebug() << "Unable to deduce layout from media description " << md << " - Default it to: " << Utils::toString(layout);
 		}
 	}
 	return layout;
