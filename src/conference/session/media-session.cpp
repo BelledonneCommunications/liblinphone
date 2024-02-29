@@ -4079,7 +4079,8 @@ ConferenceLayout MediaSession::computeConferenceLayout(const std::shared_ptr<Sal
 			const auto &params = (isInLocalConference) ? d->getRemoteParams() : d->getParams();
 			layout = params->getConferenceVideoLayout();
 		} else {
-			lDebug() << "Unable to deduce layout from media description " << md;
+			layout = ConferenceLayout::ActiveSpeaker;
+			lDebug() << "Unable to deduce layout from media description " << md << " - Default it to: " << Utils::toString(layout);
 		}
 	}
 	return layout;
@@ -5634,7 +5635,8 @@ int MediaSession::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescriptio
 				lDebug() << " - device is screen sharing: "
 				         << (participantDevice && participantDevice->screenSharingEnabled());
 			}
-		} else {
+		}
+		if (streamIdx == -1) {
 			streamIdx = md->findIdxBestStream(SalVideo);
 		}
 	}
