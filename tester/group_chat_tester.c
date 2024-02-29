@@ -1447,15 +1447,47 @@ static void group_chat_room_add_participant(void) {
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	linphone_core_remove_linphone_spec(chloe->lc, "groupchat");
 
+	linphone_core_set_user_agent(marie->lc, "liblinphone-tester/tester_version (Marie MacOSX) SDK",
+	                             "(sdk_version) (sdk_branch)");
+	linphone_core_set_user_agent(laure->lc, "liblinphone-tester/tester_version (Pixel 6 Pro) SDK",
+	                             "(sdk_version) (sdk_branch)");
+	linphone_core_set_user_agent(chloe->lc, "liblinphone-tester/tester_version (Windows 11 Pro de Chloe) SDK",
+	                             "(sdk_version) (sdk_branch)");
+
+	LinphoneAddress *marie_identity = linphone_address_new(linphone_core_get_identity(marie->lc));
+	LinphoneAddress *laure_identity = linphone_address_new(linphone_core_get_identity(laure->lc));
+	LinphoneAddress *chloe_identity = linphone_address_new(linphone_core_get_identity(chloe->lc));
+
 	start_core_for_conference(coresManagerList);
-	participantsAddresses =
-	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(marie->lc)));
-	participantsAddresses =
-	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(marie_identity));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(laure_identity));
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	stats initialLaureStats = laure->stat;
 	stats initialChloeStats = chloe->stat;
+
+	// Pauline creates friends
+	LinphoneFriend *marie_friend = linphone_core_create_friend(pauline->lc);
+	linphone_friend_set_name(marie_friend, "Marie");
+	linphone_friend_add_address(marie_friend, marie_identity);
+	linphone_core_add_friend(pauline->lc, marie_friend);
+
+	LinphoneFriend *laure_friend = linphone_core_create_friend(pauline->lc);
+	linphone_friend_set_name(laure_friend, "Laure");
+	linphone_friend_add_address(laure_friend, laure_identity);
+	linphone_core_add_friend(pauline->lc, laure_friend);
+
+	LinphoneFriend *chloe_friend = linphone_core_create_friend(pauline->lc);
+	linphone_friend_set_name(chloe_friend, "Chloe");
+	linphone_friend_add_address(chloe_friend, chloe_identity);
+	linphone_core_add_friend(pauline->lc, chloe_friend);
+
+	bctbx_list_t *marie_devices = linphone_friend_get_devices(marie_friend);
+	BC_ASSERT_PTR_NULL(marie_devices);
+	bctbx_list_t *laure_devices = linphone_friend_get_devices(laure_friend);
+	BC_ASSERT_PTR_NULL(laure_devices);
+	bctbx_list_t *chloe_devices = linphone_friend_get_devices(chloe_friend);
+	BC_ASSERT_PTR_NULL(chloe_devices);
 
 	// Pauline creates a new group chat room
 	const char *initialSubject = "Colleagues";
@@ -1472,6 +1504,10 @@ static void group_chat_room_add_participant(void) {
 	LinphoneChatRoom *laureCr =
 	    check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 
+	linphone_friend_unref(marie_friend);
+	linphone_friend_unref(laure_friend);
+	linphone_friend_unref(chloe_friend);
+
 	// To simulate dialog removal for Pauline
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	LinphoneAddress *paulineAddr = linphone_address_clone(linphone_chat_room_get_peer_address(paulineCr));
@@ -1486,10 +1522,21 @@ static void group_chat_room_add_participant(void) {
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	linphone_address_unref(paulineAddr);
 
+	marie_friend = linphone_core_find_friend(pauline->lc, marie_identity);
+	BC_ASSERT_PTR_NOT_NULL(marie_friend);
+	laure_friend = linphone_core_find_friend(pauline->lc, laure_identity);
+	BC_ASSERT_PTR_NOT_NULL(laure_friend);
+	chloe_friend = linphone_core_find_friend(pauline->lc, chloe_identity);
+	BC_ASSERT_PTR_NOT_NULL(chloe_friend);
+
+	marie_devices = linphone_friend_get_devices(marie_friend);
+	BC_ASSERT_PTR_NOT_NULL(marie_devices);
+	laure_devices = linphone_friend_get_devices(laure_friend);
+	BC_ASSERT_PTR_NOT_NULL(laure_devices);
+
 	// Pauline adds Chloe to the chat room
 	participantsAddresses = NULL;
-	participantsAddresses =
-	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(chloe_identity));
 	if (paulineCr) {
 		linphone_chat_room_add_participants(paulineCr, participantsAddresses);
 	}
@@ -1507,6 +1554,9 @@ static void group_chat_room_add_participant(void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(laureCr), 2, int, "%d");
+
+	chloe_devices = linphone_friend_get_devices(chloe_friend);
+	BC_ASSERT_PTR_NULL(chloe_devices);
 
 	// Try to search for a participant that is not in the chatroom
 	LinphoneAddress *fakeAddr = linphone_address_new("sip:toto@sip.example.org");
@@ -1535,8 +1585,7 @@ static void group_chat_room_add_participant(void) {
 
 	// Pauline adds Chloe to the chat room
 	participantsAddresses = NULL;
-	participantsAddresses =
-	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(chloe_identity));
 	linphone_chat_room_add_participants(paulineCr, participantsAddresses);
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	participantsAddresses = NULL;
@@ -1553,6 +1602,13 @@ static void group_chat_room_add_participant(void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 3, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 3, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(laureCr), 3, int, "%d");
+
+	chloe_devices = linphone_friend_get_devices(chloe_friend);
+	BC_ASSERT_PTR_NOT_NULL(chloe_devices);
+
+	linphone_address_unref(marie_identity);
+	linphone_address_unref(laure_identity);
+	linphone_address_unref(chloe_identity);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);

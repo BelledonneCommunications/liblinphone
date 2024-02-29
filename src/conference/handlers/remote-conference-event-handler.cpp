@@ -336,6 +336,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
 				if (!isFullState) {
 					conf->notifyParticipantRemoved(creationTime, isFullState, participant);
+
+					// TODO FIXME: Remove later when devices for friends will be notified through presence
+					lInfo() << "[Friend] Removing device with address [" << address->asStringUriOnly() << "]";
+					conf->getCore()->getPrivate()->mainDb->removeDevice(address);
 				}
 
 				continue;
@@ -643,6 +647,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 
 					if (!name.empty()) device->setName(name);
+					// TODO FIXME: Remove later when devices for friends will be notified through presence
+					lInfo() << "[Friend] Inserting new device with name [" << name << "] and address ["
+					        << gruu->asStringUriOnly() << "]";
+					conf->getCore()->getPrivate()->mainDb->insertDevice(gruu, name);
 
 					if (isMe && mainSession) device->setSession(mainSession);
 

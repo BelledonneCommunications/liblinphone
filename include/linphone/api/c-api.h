@@ -51,6 +51,7 @@
 #include "linphone/api/c-event-cbs.h"
 #include "linphone/api/c-event-log.h"
 #include "linphone/api/c-event.h"
+#include "linphone/api/c-friend-device.h"
 #include "linphone/api/c-friend-phone-number.h"
 #include "linphone/api/c-friend.h"
 #include "linphone/api/c-ldap-params.h"

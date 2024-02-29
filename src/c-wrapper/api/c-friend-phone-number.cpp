@@ -21,7 +21,7 @@
 #include <ctype.h>
 
 #include "c-wrapper/c-wrapper.h"
-#include "friend/friend_phone_number.h"
+#include "friend/friend-phone-number.h"
 #include "linphone/api/c-friend-phone-number.h"
 #include "linphone/wrapper_utils.h"
 

@@ -102,6 +102,7 @@ set(C_API_HEADER_FILES
 	c-factory.h
 	c-friend.h
 	c-friend-list.h
+	c-friend-device.h
 	c-friend-phone-number.h
 	c-ldap.h
 	c-ldap-params.h

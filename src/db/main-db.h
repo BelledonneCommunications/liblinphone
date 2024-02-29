@@ -45,6 +45,7 @@ class ChatMessage;
 class Core;
 class EventLog;
 class Friend;
+class FriendDevice;
 class FriendList;
 class MainDbKey;
 class MainDbPrivate;
@@ -253,6 +254,10 @@ public:
 	void deleteOrphanFriends();
 	std::list<std::shared_ptr<Friend>> getFriends(const std::shared_ptr<FriendList> &list);
 	std::list<std::shared_ptr<FriendList>> getFriendLists();
+
+	long long insertDevice(const std::shared_ptr<Address> &addressWithGruu, const std::string &displayName);
+	void removeDevice(const std::shared_ptr<Address> &addressWithGruu);
+	std::list<std::shared_ptr<FriendDevice>> getDevices(const std::shared_ptr<Address> &address);
 
 	// ---------------------------------------------------------------------------
 	// Other.

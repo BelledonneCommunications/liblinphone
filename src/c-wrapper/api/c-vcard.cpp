@@ -20,7 +20,7 @@
 
 #include <bctoolbox/crypto.h>
 
-#include "friend/friend_phone_number.h"
+#include "friend/friend-phone-number.h"
 #include "linphone/factory.h"
 #include "linphone/wrapper_utils.h"
 #include "vcard/vcard-context.h"

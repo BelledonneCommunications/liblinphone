@@ -631,6 +631,13 @@ typedef struct _LinphoneDigestAuthenticationPolicy LinphoneDigestAuthenticationP
  * @ingroup buddy_list
  */
 typedef struct _LinphoneFriendPhoneNumber LinphoneFriendPhoneNumber;
+
+/**
+ * Object that represents a #LinphoneFriend's device (name, trust level) for a given SIP address.
+ * @ingroup buddy_list
+ */
+typedef struct _LinphoneFriendDevice LinphoneFriendDevice;
+
 // -----------------------------------------------------------------------------
 // Dictionary
 // -----------------------------------------------------------------------------

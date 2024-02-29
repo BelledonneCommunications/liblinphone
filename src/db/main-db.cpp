@@ -48,6 +48,7 @@
 #include "core/core-p.h"
 #include "event-log/event-log-p.h"
 #include "event-log/events.h"
+#include "friend/friend-device.h"
 #include "friend/friend-list.h"
 #include "friend/friend.h"
 #include "main-db-key-p.h"
@@ -936,6 +937,49 @@ long long MainDbPrivate::insertOrUpdateFriendList(const std::shared_ptr<FriendLi
 	}
 
 	return friendListId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::insertOrUpdateDevice(const std::shared_ptr<Address> &addressWithGruu,
+                                              const std::string &displayName) {
+#ifdef HAVE_DB_STORAGE
+	std::string withGruu = addressWithGruu->toStringUriOnlyOrdered();
+	long long deviceAddressId = selectSipAddressId(withGruu);
+	if (deviceAddressId <= 0) {
+		deviceAddressId = insertSipAddress(addressWithGruu);
+	}
+
+	std::string withoutGruu = addressWithGruu->getUriWithoutGruu().toStringUriOnlyOrdered();
+	long long sipAaddressId = selectSipAddressId(withoutGruu);
+	if (sipAaddressId <= 0) {
+		std::shared_ptr<Address> addressWithoutGruu = Address::create(withoutGruu);
+		sipAaddressId = insertSipAddress(addressWithoutGruu);
+	}
+
+	soci::session *session = dbSession.getBackendSession();
+	long long deviceId = -1;
+	*session << "SELECT device_id from friend_devices WHERE sip_address_id = :sipAaddressId AND device_address_id = "
+	            ":deviceAddressId",
+	    soci::use(sipAaddressId), soci::use(deviceAddressId), soci::into(deviceId);
+	if (session->got_data() && deviceId > 0) {
+		*session << "UPDATE friend_devices SET "
+		            " display_name = :displayName "
+		            " WHERE device_id = :deviceId ",
+		    soci::use(displayName), soci::use(deviceId);
+	} else {
+		*session << "INSERT INTO friend_devices ( "
+		            " sip_address_id, device_address_id, display_name "
+		            " ) VALUES ( "
+		            " :sipAaddressId, :deviceAddressId, :displayName "
+		            " ) ",
+		    soci::use(sipAaddressId), soci::use(deviceAddressId), soci::use(displayName);
+
+		deviceId = dbSession.getLastInsertId();
+	}
+
+	return deviceId;
 #else
 	return -1;
 #endif
@@ -4003,6 +4047,31 @@ void MainDb::init() {
 		           ") " +
 		           charset;
 
+		*session << "CREATE TABLE IF NOT EXISTS friend_devices ("
+		            "  device_id" +
+		                primaryKeyStr("BIGINT UNSIGNED") +
+		                ","
+
+		                "  sip_address_id" +
+		                primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NOT NULL,"
+		                "  device_address_id" +
+		                primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NOT NULL,"
+
+		                "  display_name TEXT NOT NULL," +
+
+		                "  UNIQUE (sip_address_id, device_address_id),"
+
+		                "  FOREIGN KEY (sip_address_id)"
+		                "    REFERENCES sip_address(id)"
+		                "    ON DELETE CASCADE,"
+		                "  FOREIGN KEY (device_address_id)"
+		                "    REFERENCES sip_address(id)"
+		                "    ON DELETE CASCADE"
+		                ") " +
+		                charset;
+
 		d->updateSchema();
 
 		d->updateModuleVersion("events", ModuleVersionEvents);
@@ -6598,6 +6667,76 @@ std::list<std::shared_ptr<FriendList>> MainDb::getFriendLists() {
 	};
 #else
 	return std::list<std::shared_ptr<FriendList>>();
+#endif
+}
+
+long long MainDb::insertDevice(BCTBX_UNUSED(const std::shared_ptr<Address> &addressWithGruu),
+                               BCTBX_UNUSED(const std::string &displayName)) {
+#ifdef HAVE_DB_STORAGE
+	return L_DB_TRANSACTION {
+		L_D();
+
+		long long id = d->insertOrUpdateDevice(addressWithGruu, displayName);
+		tr.commit();
+
+		return id;
+	};
+#else
+	return -1;
+#endif
+}
+
+void MainDb::removeDevice(BCTBX_UNUSED(const std::shared_ptr<Address> &addressWithGruu)) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		const string query = "DELETE FROM friend_devices WHERE device_address_id = :1";
+		long long deviceAddressId = d->selectSipAddressId(addressWithGruu);
+
+		if (deviceAddressId > 0) {
+			soci::session *session = d->dbSession.getBackendSession();
+			(session->prepare << query, soci::use(deviceAddressId));
+		}
+
+		tr.commit();
+	};
+#endif
+}
+
+std::list<std::shared_ptr<FriendDevice>> MainDb::getDevices(BCTBX_UNUSED(const std::shared_ptr<Address> &address)) {
+#ifdef HAVE_DB_STORAGE
+	return L_DB_TRANSACTION {
+		L_D();
+
+		const string query = "SELECT device_address_id, display_name FROM friend_devices WHERE sip_address_id = :1";
+		std::list<std::shared_ptr<FriendDevice>> devicesList;
+
+		const string sipAddress = address->getUriWithoutGruu().asStringUriOnly();
+		long long sipAddressId = d->selectSipAddressId(sipAddress);
+
+		if (sipAddressId > 0) {
+			soci::session *session = d->dbSession.getBackendSession();
+			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(sipAddressId));
+
+			for (const auto &row : rows) {
+				long long addrId = d->dbSession.resolveId(row, 0);
+				Address gruuAddress = Address(d->selectSipAddressFromId(addrId));
+
+				std::string displayName = row.get<string>(1);
+
+				auto device = FriendDevice::create(gruuAddress, displayName,
+				                                   LinphoneSecurityLevelNone); // Security level isn't available here
+				devicesList.push_back(device);
+			}
+		}
+
+		tr.commit();
+
+		return devicesList;
+	};
+#else
+	return std::list<std::shared_ptr<FriendDevice>>();
 #endif
 }
 

@@ -20,7 +20,7 @@
 
 #include <bctoolbox/defs.h>
 
-#include "friend/friend_phone_number.h"
+#include "friend/friend-phone-number.h"
 #include "vcard.h"
 
 // =============================================================================

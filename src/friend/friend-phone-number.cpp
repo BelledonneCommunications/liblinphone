@@ -18,8 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "friend_phone_number.h"
-#include "linphone/api/c-friend-phone-number.h"
+#include "friend-phone-number.h"
 
 using namespace std;
 

@@ -23,6 +23,7 @@
 
 #include "linphone/api/c-types.h"
 #include "linphone/callbacks.h"
+#include "linphone/enums/c-enums.h"
 #include "linphone/sipsetup.h"
 
 #ifdef __cplusplus
@@ -64,6 +65,39 @@ LINPHONE_PUBLIC void linphone_friend_add_address(LinphoneFriend *linphone_friend
  * @return A list of #LinphoneAddress. \bctbx_list{LinphoneAddress} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_get_addresses(const LinphoneFriend *linphone_friend);
+
+/**
+ * Returns a list of #LinphoneFriendDevice for this friend, for all known addresses.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @return A list of #LinphoneFriendDevice. \bctbx_list{LinphoneFriendDevice} @tobefreed @maybenil
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_friend_get_devices(const LinphoneFriend *linphone_friend);
+
+/**
+ * Returns a list of #LinphoneFriendDevice for this friend and a specific address.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @param address #LinphoneAddress object @notnil
+ * @return A list of #LinphoneFriendDevice. \bctbx_list{LinphoneFriendDevice} @tobefreed @maybenil
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_friend_get_devices_for_address(const LinphoneFriend *linphone_friend,
+                                                                      const LinphoneAddress *address);
+
+/**
+ * Returns the security level of a friend which is the lowest among all devices we know for it.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @return A #LinphoneSecurityLevel, which is the lowest among all known devices.
+ */
+LINPHONE_PUBLIC LinphoneSecurityLevel linphone_friend_get_security_level(const LinphoneFriend *linphone_friend);
+
+/**
+ * Returns the security level of a friend for a given address which is the lowest among all devices we know for that
+ * address.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @param address #LinphoneAddress object @notnil
+ * @return A #LinphoneSecurityLevel, which is the lowest among all known devices for that address.
+ */
+LINPHONE_PUBLIC LinphoneSecurityLevel
+linphone_friend_get_security_level_for_address(const LinphoneFriend *linphone_friend, const LinphoneAddress *address);
 
 /**
  * Removes an address in this friend

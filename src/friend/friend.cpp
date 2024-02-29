@@ -23,9 +23,10 @@
 #include "address/address.h"
 #include "core/core-p.h"
 #include "db/main-db.h"
+#include "friend-device.h"
 #include "friend-list.h"
+#include "friend-phone-number.h"
 #include "friend.h"
-#include "friend_phone_number.h"
 #include "vcard/vcard.h"
 
 #include "c-wrapper/internal/c-tools.h"
@@ -414,6 +415,92 @@ LinphoneSubscriptionState Friend::getSubscriptionState() const {
 
 std::shared_ptr<Vcard> Friend::getVcard() const {
 	return linphone_core_vcard_supported() ? mVcard : nullptr;
+}
+
+LinphoneSecurityLevel Friend::getSecurityLevelFromChatRoomSecurityLevel(AbstractChatRoom::SecurityLevel level) {
+	switch (level) {
+		case AbstractChatRoom::SecurityLevel::ClearText:
+			return LinphoneSecurityLevelNone;
+		case AbstractChatRoom::SecurityLevel::Unsafe:
+			return LinphoneSecurityLevelUnsafe;
+		case AbstractChatRoom::SecurityLevel::Encrypted:
+			return LinphoneSecurityLevelEndToEndEncrypted;
+		case AbstractChatRoom::SecurityLevel::Safe:
+			return LinphoneSecurityLevelEndToEndEncryptedAndVerified;
+		default:
+			return LinphoneSecurityLevelNone;
+	}
+}
+
+const list<shared_ptr<FriendDevice>> Friend::getDevices() const {
+	mDevices.clear();
+
+	const auto addresses = getAddresses();
+	for (const auto &addr : addresses) {
+		auto devicesList = getDevicesForAddress(addr->getUri());
+		for (auto device : devicesList) {
+			mDevices.push_back(device);
+		}
+	}
+
+	return mDevices;
+}
+
+const list<shared_ptr<FriendDevice>> Friend::getDevicesForAddress(BCTBX_UNUSED(const Address &address)) const {
+	list<shared_ptr<FriendDevice>> devicesList;
+
+#ifdef HAVE_DB_STORAGE
+	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->mainDb;
+	if (mainDb) {
+		devicesList = mainDb->getDevices(Address::create(address));
+		lInfo() << "[Friend] Found [" << devicesList.size() << "] devices for address [" << address.asStringUriOnly()
+		        << "]";
+
+		const auto *encryptionEngine = getCore()->getEncryptionEngine();
+		if (encryptionEngine != nullptr) {
+			for (auto device : devicesList) {
+				const std::string &deviceId = device->getAddress()->asStringUriOnly();
+				AbstractChatRoom::SecurityLevel level = encryptionEngine->getSecurityLevel(deviceId);
+				LinphoneSecurityLevel securityLevel = getSecurityLevelFromChatRoomSecurityLevel(level);
+				lDebug() << "[Friend] Device with name [" << device->getName() << "] has security level ["
+				         << securityLevel << "]";
+				device->setSecurityLevel(securityLevel);
+			}
+		} else {
+			lError() << "[Friend] No encryption engine on the Core, can't fetch devices' security level";
+		}
+	}
+#endif
+
+	return devicesList;
+}
+
+LinphoneSecurityLevel Friend::getSecurityLevelForDevices(const list<shared_ptr<FriendDevice>> &devices) {
+	if (devices.empty()) {
+		return LinphoneSecurityLevelNone;
+	}
+
+	LinphoneSecurityLevel lowestLevel = LinphoneSecurityLevelEndToEndEncryptedAndVerified;
+	for (auto device : devices) {
+		LinphoneSecurityLevel deviceLevel = device->getSecurityLevel();
+		if (deviceLevel == LinphoneSecurityLevelUnsafe) {
+			return LinphoneSecurityLevelUnsafe;
+		} else if (deviceLevel != LinphoneSecurityLevelEndToEndEncryptedAndVerified) {
+			lowestLevel = LinphoneSecurityLevelEndToEndEncrypted;
+		}
+	}
+
+	return lowestLevel;
+}
+
+LinphoneSecurityLevel Friend::getSecurityLevel() const {
+	auto devices = getDevices();
+	return getSecurityLevelForDevices(devices);
+}
+
+LinphoneSecurityLevel Friend::getSecurityLevelForAddress(const Address &address) const {
+	auto devices = getDevicesForAddress(address);
+	return getSecurityLevelForDevices(devices);
 }
 
 // -----------------------------------------------------------------------------

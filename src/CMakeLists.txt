@@ -234,7 +234,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	factory/factory.h
 	friend/friend.h
 	friend/friend-list.h
-	friend/friend_phone_number.h
+	friend/friend-device.h
+	friend/friend-phone-number.h
 	hacks/hacks.h
 	ldap/ldap.h
 	ldap/ldap-config-keys.h
@@ -394,6 +395,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-factory.cpp
 	c-wrapper/api/c-friend.cpp
 	c-wrapper/api/c-friend-list.cpp
+	c-wrapper/api/c-friend-device.cpp
 	c-wrapper/api/c-friend-phone-number.cpp
 	c-wrapper/api/c-ldap.cpp
 	c-wrapper/api/c-ldap-params.cpp
@@ -506,7 +508,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	factory/factory.cpp
 	friend/friend.cpp
 	friend/friend-list.cpp
-	friend/friend_phone_number.cpp
+	friend/friend-device.cpp
+	friend/friend-phone-number.cpp
 	hacks/hacks.cpp
 	ldap/ldap.cpp
 	ldap/ldap-config-keys.cpp

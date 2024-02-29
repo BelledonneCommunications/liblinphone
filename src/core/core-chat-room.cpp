@@ -450,6 +450,20 @@ void CorePrivate::loadChatRooms() {
 	if (!mainDb->isInitialized()) return;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		insertChatRoom(chatRoom);
+
+		// TODO FIXME: Remove later when devices for friends will be notified through presence
+		for (const auto &p : chatRoom->getParticipants()) {
+			auto devices = mainDb->getDevices(p->getAddress());
+			if (devices.empty()) {
+				for (const auto &d : p->getDevices()) {
+					auto gruu = d->getAddress();
+					auto name = d->getName();
+					lInfo() << "[Friend] Inserting existing device with name [" << name << "] and address ["
+					        << gruu->asStringUriOnly() << "]";
+					mainDb->insertDevice(gruu, name);
+				}
+			}
+		}
 	}
 	sendDeliveryNotifications();
 }

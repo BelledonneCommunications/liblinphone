@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "c-wrapper/c-wrapper.h"
+#include "chat/chat-room/abstract-chat-room.h"
 #include "linphone/api/c-types.h"
 
 // =============================================================================
@@ -34,6 +35,7 @@ class Account;
 class CardDAVContext;
 class FriendCbs;
 class FriendList;
+class FriendDevice;
 class FriendPhoneNumber;
 class MainDb;
 class MainDbPrivate;
@@ -124,6 +126,11 @@ public:
 	LinphoneSubscriptionState getSubscriptionState() const;
 	std::shared_ptr<Vcard> getVcard() const;
 
+	const std::list<std::shared_ptr<FriendDevice>> getDevices() const;
+	const std::list<std::shared_ptr<FriendDevice>> getDevicesForAddress(const Address &address) const;
+	LinphoneSecurityLevel getSecurityLevel() const;
+	LinphoneSecurityLevel getSecurityLevelForAddress(const Address &address) const;
+
 	// Other
 	void addAddress(const std::shared_ptr<const Address> &address);
 	void addPhoneNumber(const std::string &phoneNumber);
@@ -174,6 +181,9 @@ private:
 	static std::string capabilityToName(const LinphoneFriendCapability capability);
 	static LinphoneFriendCapability nameToCapability(const std::string &name);
 
+	static LinphoneSecurityLevel getSecurityLevelFromChatRoomSecurityLevel(AbstractChatRoom::SecurityLevel level);
+	static LinphoneSecurityLevel getSecurityLevelForDevices(const std::list<std::shared_ptr<FriendDevice>> &devices);
+
 	LinphoneSubscribePolicy mSubscribePolicy = LinphoneSPAccept;
 	LinphoneSubscriptionState mOutSubState;
 	bool mSubscribe = true;
@@ -203,6 +213,7 @@ private:
 	mutable std::list<std::shared_ptr<Address>> mAddresses;
 	mutable bctbx_list_t *mBctbxAddresses = nullptr; // Kept in sync with mAddresses for C compatibility
 	mutable std::string mName;
+	mutable std::list<std::shared_ptr<FriendDevice>> mDevices;
 };
 
 class FriendCbs : public bellesip::HybridObject<LinphoneFriendCbs, FriendCbs>, public Callbacks {

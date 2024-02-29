@@ -136,4 +136,19 @@ typedef enum _LinphoneCodecPriorityPolicy {
 	          may re-order the offerer's list in its answer in order to give preference to certain codecs.*/
 } LinphoneCodecPriorityPolicy;
 
+/**
+ * Security level determined by type of encryption (point-to-point, end-to-end, etc...) and whether or not a SAS
+ * validation was made with the remote(s) end(s). A #LinphoneSecurityLevelEndToEndEncryptedAndVerified level means it's
+ * end-to-end encrypted and SAS validation was made. An #LinphoneSecurityLevelUnsafe level means end-to-end-encrypted
+ * but it's likely a man-in-the-middle exists between you and one device.
+ * @ingroup misc
+ */
+typedef enum _LinphoneSecurityLevel {
+	LinphoneSecurityLevelUnsafe = 0,                       /**< Security failure */
+	LinphoneSecurityLevelNone = 1,                         /**< No encryption */
+	LinphoneSecurityLevelEndToEndEncrypted = 2,            /**< End-to-end encrypted */
+	LinphoneSecurityLevelEndToEndEncryptedAndVerified = 3, /**< End-to-end encrypted and verified */
+	LinphoneSecurityLevelPointToPointEncrypted = 4         /**< Point-to-point encrypted */
+} LinphoneSecurityLevel;
+
 #endif

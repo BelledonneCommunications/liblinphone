@@ -53,9 +53,10 @@
 #include "c-wrapper/c-wrapper.h"
 #include "core/core-p.h"
 #include "db/main-db.h"
+#include "friend/friend-device.h"
 #include "friend/friend-list.h"
+#include "friend/friend-phone-number.h"
 #include "friend/friend.h"
-#include "friend/friend_phone_number.h"
 #include "vcard/vcard.h"
 
 using namespace std;
@@ -112,6 +113,25 @@ const bctbx_list_t *linphone_friend_get_addresses(const LinphoneFriend *lf) {
 	if (!lf) return nullptr;
 	Friend::toCpp(lf)->getAddresses();
 	return Friend::toCpp(lf)->mBctbxAddresses;
+}
+
+bctbx_list_t *linphone_friend_get_devices(const LinphoneFriend *lf) {
+	return FriendDevice::getCListFromCppList(Friend::toCpp(lf)->getDevices());
+}
+
+bctbx_list_t *linphone_friend_get_devices_for_address(const LinphoneFriend *lf, const LinphoneAddress *addr) {
+	return FriendDevice::getCListFromCppList(Friend::toCpp(lf)->getDevicesForAddress(*Address::toCpp(addr)));
+}
+
+LinphoneSecurityLevel linphone_friend_get_security_level(const LinphoneFriend *lf) {
+	if (!lf) return LinphoneSecurityLevelNone;
+	return Friend::toCpp(lf)->getSecurityLevel();
+}
+
+LinphoneSecurityLevel linphone_friend_get_security_level_for_address(const LinphoneFriend *lf,
+                                                                     const LinphoneAddress *addr) {
+	if (!lf) return LinphoneSecurityLevelNone;
+	return Friend::toCpp(lf)->getSecurityLevelForAddress(*Address::toCpp(addr));
 }
 
 int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
