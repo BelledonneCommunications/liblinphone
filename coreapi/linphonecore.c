@@ -2973,7 +2973,8 @@ linphone_core_internal_publish_state_changed(LinphoneCore *lc, LinphoneEvent *le
 		const bctbx_list_t *item;
 		for (item = accs; item != NULL; item = bctbx_list_next(item)) {
 			LinphoneAccount *acc = (LinphoneAccount *)bctbx_list_get_data(item);
-			if (Account::toCpp(acc)->getPresencePublishEvent()->toC() == lev) {
+			auto publishEvent = Account::toCpp(acc)->getPresencePublishEvent();
+			if (publishEvent && publishEvent->toC() == lev) {
 				Account::toCpp(acc)->notifyPublishStateChanged(state);
 				break;
 			}
