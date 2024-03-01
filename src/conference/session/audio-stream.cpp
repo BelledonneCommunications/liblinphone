@@ -361,7 +361,8 @@ void MS2AudioStream::configureConference() {
 			media_stream_enable_conference_local_mix(&mStream->ms, TRUE);
 		} else { // when conference is local(we are a server), retrieve the full packet mode in the config
 			LinphoneConfig *config = linphone_core_get_config(getCCore());
-			if (linphone_config_get_bool(config, "sound", "conference_full_packet", FALSE)) {
+			if (static_cast<MSConferenceMode>(linphone_config_get_int(
+			        config, "sound", "conference_mode", MSConferenceModeMixer)) == MSConferenceModeRouterFullPacket) {
 				audio_stream_enable_transfer_mode(mStream, TRUE);
 			}
 		}
@@ -638,7 +639,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 	if (audioMixer && !mMuted) {
 		const auto &audioConfParams = ms_audio_conference_get_params(audioMixer->getAudioConference());
-		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE, audioConfParams->full_packet_mode);
+		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE, audioConfParams->mode);
 		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(

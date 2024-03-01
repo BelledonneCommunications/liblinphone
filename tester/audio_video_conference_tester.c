@@ -3573,7 +3573,7 @@ static void on_eof(LinphonePlayer *player) {
 	mgr->stat.number_of_player_eof++;
 }
 
-static int check_recorded_audio(const char *hellopath, const char *recordpath) {
+int liblinphone_tester_check_recorded_audio(const char *hellopath, const char *recordpath) {
 	double similar = 1;
 	const double threshold = 0.9;
 	BC_ASSERT_EQUAL(ms_audio_diff(hellopath, recordpath, &similar, &audio_cmp_params, NULL, NULL), 0, int, "%d");
@@ -3712,9 +3712,9 @@ static void simple_conference_with_file_player(void) {
 		if (player_cbs) linphone_player_cbs_unref(player_cbs);
 
 		int nb_records_ok = 0;
-		nb_records_ok += check_recorded_audio(hellopath, pauline_recordpath);
-		nb_records_ok += check_recorded_audio(hellopath, laure_recordpath);
-		nb_records_ok += check_recorded_audio(hellopath, michelle_recordpath);
+		nb_records_ok += liblinphone_tester_check_recorded_audio(hellopath, pauline_recordpath);
+		nb_records_ok += liblinphone_tester_check_recorded_audio(hellopath, laure_recordpath);
+		nb_records_ok += liblinphone_tester_check_recorded_audio(hellopath, michelle_recordpath);
 		if (nb_records_ok == 3) break;
 	}
 

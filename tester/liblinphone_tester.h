@@ -1125,6 +1125,8 @@ void liblinphone_tester_add_soci_search_path(const char *path);
  * to be robust to parallel execution*/
 char *liblinphone_tester_make_unique_file_path(const char *name, const char *extension);
 
+int liblinphone_tester_check_recorded_audio(const char *hellopath, const char *recordpath);
+
 #ifdef __cplusplus
 };
 #endif
