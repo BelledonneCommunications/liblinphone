@@ -2837,8 +2837,12 @@ void MainDbPrivate::updateSchema() {
 	}
 
 	if (version < makeVersion(1, 0, 28)) {
-		*session << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
-		            "GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+		//*session << "DELETE FROM conference_info_participant p1 WHERE id IN (SELECT id FROM conference_info_participant p2 GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+		if (backend == MainDb::Backend::Sqlite3) {
+			*session << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+		} else {
+			*session << "DELETE p1 FROM conference_info_participant p1 INNER JOIN conference_info_participant p2 WHERE p1.id < p2.id AND p1.conference_info_id = p2.conference_info_id AND p1.participant_sip_address_id = p2.participant_sip_address_id";
+		}
 	}
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
