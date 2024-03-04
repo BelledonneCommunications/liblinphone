@@ -1936,8 +1936,11 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 	auto conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	if (conference) {
 		if (!getParams()->rtpBundleEnabled()) {
-			lWarning() << "In an effort to improve video conferencing quality, the thumbnail of local participant will "
-			              "not be sent because RTP bundle has been disabled";
+			lWarning()
+			    << "In an effort to ensure a satisfactory video conferencing quality, MediaSession [" << q
+			    << "] (local address " << *q->getLocalAddress() << " remote address " << *q->getRemoteAddress()
+			    << " in conference [" << conference << "] (address: " << *conference->getConferenceAddress()
+			    << ") is not sending the thumbnail of the local participant because RTP bundle has been disabled";
 			return;
 		}
 		const auto &currentConfParams = conference->getCurrentParams();
@@ -2051,11 +2054,6 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 	std::shared_ptr<MediaConference::Conference> conference =
 	    listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	if (conference) {
-		if (!getParams()->rtpBundleEnabled()) {
-			lWarning() << "In an effort to improve video conferencing quality, none of the thumbnail of conference "
-			              "participants will be requested because RTP bundle has been disabled";
-			return;
-		}
 		const auto &currentConfParams = conference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
 		bool isInLocalConference = getParams()->getPrivate()->getInConference();
@@ -2092,7 +2090,8 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 							const auto mediaDirection =
 							    useThumbnailStream ? dev->getThumbnailStreamCapability()
 							                       : dev->getStreamCapability(sal_stream_type_to_linphone(type));
-							const auto mediaAvailable = ((mediaDirection == LinphoneMediaDirectionSendOnly) || (mediaDirection == LinphoneMediaDirectionSendRecv));
+							const auto mediaAvailable = ((mediaDirection == LinphoneMediaDirectionSendOnly) ||
+							                             (mediaDirection == LinphoneMediaDirectionSendRecv));
 							const auto stateOk = (devState != ParticipantDevice::State::ScheduledForJoining) &&
 							                     (devState != ParticipantDevice::State::Joining) &&
 							                     (devState != ParticipantDevice::State::Alerting);
@@ -2116,7 +2115,22 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 						}
 					}
 				} else {
-					lWarning() << "MediaSession [" << q << "] (local address " << *q->getLocalAddress() << " remote address " << *q->getRemoteAddress() << " in conference [" << conference << "] (address: " << *conference->getConferenceAddress() << ") is not requesting other participants' camera stream because their number " << conference->getParticipantCount() << " is bigger than the maximum allowed fir this core " << linphone_core_get_conference_max_thumbnails(q->getCore()->getCCore());
+					if (getParams()->rtpBundleEnabled()) {
+						lWarning() << "MediaSession [" << q << "] (local address " << *q->getLocalAddress()
+						           << " remote address " << *q->getRemoteAddress() << " in conference [" << conference
+						           << "] (address: " << *conference->getConferenceAddress()
+						           << ") is not requesting other participants' camera stream because their number "
+						           << conference->getParticipantCount()
+						           << " is bigger than the maximum allowed for this core "
+						           << linphone_core_get_conference_max_thumbnails(q->getCore()->getCCore());
+					} else {
+						lWarning() << "In an effort to ensure a satisfactory video conferencing quality, MediaSession ["
+						           << q << "] (local address " << *q->getLocalAddress() << " remote address "
+						           << *q->getRemoteAddress() << " in conference [" << conference
+						           << "] (address: " << *conference->getConferenceAddress()
+						           << ") is not requesting other participants' camera stream because RTP bundle has "
+						              "been disabled";
+					}
 				}
 			} else {
 				// The conference server is a passive core, therefore he must not add any stream to the SDP

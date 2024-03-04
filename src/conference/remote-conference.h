@@ -70,6 +70,8 @@ protected:
 	void onEphemeralModeChanged(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 	void onEphemeralMessageEnabled(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 	void onEphemeralLifetimeChanged(const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+
+	virtual bool sessionParamsAllowThumbnails() const override;
 	virtual std::shared_ptr<Call> getCall() const override;
 
 private:

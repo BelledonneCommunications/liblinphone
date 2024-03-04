@@ -1068,7 +1068,7 @@ bool Conference::updateMinatureRequestedFlag() const {
 		}
 	}
 	int max_thumbnails = linphone_core_get_conference_max_thumbnails(getCore()->getCCore());
-	thumbnailsRequested = (thumbnailAvailableCount <= max_thumbnails);
+	thumbnailsRequested = (thumbnailAvailableCount <= max_thumbnails) && sessionParamsAllowThumbnails();
 	bool changed = (oldMinaturesRequested != thumbnailsRequested);
 	for (const auto &p : participants) {
 		for (const auto &d : p->getDevices()) {

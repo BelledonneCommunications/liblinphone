@@ -770,7 +770,8 @@ void LocalConference::enableScreenSharing(const std::shared_ptr<LinphonePrivate:
 			if ((screenSharingDevice && (screenSharingDevice->getSession() == session) && !isScreenSharingNegotiated) ||
 			    !screenSharingDevice) {
 				bool changed = device->enableScreenSharing(isScreenSharingNegotiated);
-				lInfo() << "Screen sharing is " << std::string(isScreenSharingNegotiated ? "enabled" : "disabled") << " for device " << *device->getAddress();
+				lInfo() << "Screen sharing is " << std::string(isScreenSharingNegotiated ? "enabled" : "disabled")
+				        << " for device " << *device->getAddress();
 				mMixerSession->enableScreenSharing(isScreenSharingNegotiated, &mediaSession->getStreamsGroup());
 				if (changed && notify) {
 					// Detect media changes to avoid having to send 2 NOTIFYs:
@@ -2239,6 +2240,15 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 std::shared_ptr<Player> LocalConference::getPlayer() const {
 	AudioControlInterface *intf = getAudioControlInterface();
 	return intf ? intf->getPlayer() : nullptr;
+}
+
+bool LocalConference::sessionParamsAllowThumbnails() const {
+	if (!mIsIn) {
+		// The local participant is not in the conference therefore by default allow thumbnails
+		return true;
+	}
+	auto session = static_pointer_cast<MediaSession>(me->getSession());
+	return session->getMediaParams()->rtpBundleEnabled();
 }
 
 std::pair<bool, LinphoneMediaDirection> LocalConference::getMainStreamVideoDirection(

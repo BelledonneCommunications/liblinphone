@@ -74,6 +74,9 @@ std::shared_ptr<Call> RemoteConference::getCall() const {
 	return nullptr;
 }
 
+bool RemoteConference::sessionParamsAllowThumbnails() const {
+	return true;
+}
 // -----------------------------------------------------------------------------
 
 void RemoteConference::onConferenceCreated(const std::shared_ptr<Address> &) {

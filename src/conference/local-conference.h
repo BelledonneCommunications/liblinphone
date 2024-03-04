@@ -95,6 +95,7 @@ public:
 	virtual std::shared_ptr<Call> getCall() const override;
 
 protected:
+	virtual bool sessionParamsAllowThumbnails() const override;
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
 #endif

@@ -83,6 +83,10 @@ std::shared_ptr<Call> LocalConference::getCall() const {
 	return nullptr;
 }
 
+bool LocalConference::sessionParamsAllowThumbnails() const {
+	return true;
+}
+
 // -----------------------------------------------------------------------------
 
 void LocalConference::subscribeReceived(const shared_ptr<EventSubscribe> &event) {

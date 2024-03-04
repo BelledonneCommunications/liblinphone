@@ -168,6 +168,7 @@ public:
 	    const std::shared_ptr<CallSession> &session, bool localIsOfferer, bool useLocalParams) const override;
 
 protected:
+	virtual bool sessionParamsAllowThumbnails() const override;
 	virtual void
 	callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) override;
 	virtual void

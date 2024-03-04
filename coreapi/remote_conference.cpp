@@ -1629,6 +1629,11 @@ void RemoteConference::notifyLouderSpeaker(uint32_t ssrc) {
 	}
 }
 
+bool RemoteConference::sessionParamsAllowThumbnails() const {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	return session->getMediaParams()->rtpBundleEnabled();
+}
+
 std::pair<bool, LinphoneMediaDirection> RemoteConference::getMainStreamVideoDirection(
     const std::shared_ptr<CallSession> &session, BCTBX_UNUSED(bool localIsOfferer), bool useLocalParams) const {
 	const auto ms = static_pointer_cast<MediaSession>(session);

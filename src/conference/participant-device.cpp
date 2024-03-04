@@ -727,10 +727,11 @@ std::set<LinphoneStreamType> ParticipantDevice::updateStreamAvailabilities() {
 				streamAvailabilityChanged.insert(LinphoneStreamTypeVideo);
 			}
 			bool thumbnailRequested = conference->areThumbnailsRequested(false);
-			// If RTP bundle is disabled in client conference session, then the thumbnail stream is not available for the
-			// participants
-			bool videoRequested = (thumbnailRequested || conference->isMe(getAddress())) &&
-			                      (isInLocalConference || ms->getMediaParams()->rtpBundleEnabled());
+			// If RTP bundle is disabled in client conference session, then the thumbnail stream is not available for
+			// the participants
+			bool videoRequested =
+			    (thumbnailRequested ||
+			     (conference->isMe(getAddress()) && (isInLocalConference || ms->getMediaParams()->rtpBundleEnabled())));
 			if (setThumbnailStreamAvailability(
 			        videoRequested &&
 			        computeStreamAvailable(conferenceVideoEnabled, videoEnabled, getThumbnailStreamCapability()))) {

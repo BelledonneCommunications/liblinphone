@@ -311,6 +311,7 @@ protected:
 	const std::shared_ptr<ConferenceInfo> getUpdatedConferenceInfo() const;
 	const std::shared_ptr<ParticipantDevice> getFocusOwnerDevice() const;
 
+	virtual bool sessionParamsAllowThumbnails() const = 0;
 	bool updateMinatureRequestedFlag() const;
 
 	mutable bool thumbnailsRequested = true;
