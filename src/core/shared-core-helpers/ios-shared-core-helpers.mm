@@ -212,6 +212,12 @@ static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChat
 	}
 }
 
+static void on_push_notification_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages) {
+	for (const bctbx_list_t* msg = messages; msg != NULL; msg = msg->next) {
+		on_push_notification_message_received(lc, room, (LinphoneChatMessage *)msg->data);
+	}
+}
+
 static void on_push_notification_reaction_to_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message, const LinphoneChatMessageReaction *reaction) {
 	const LinphoneAddress *from = NULL;
 	LinphoneAccount *account = NULL;
@@ -262,6 +268,7 @@ void IosSharedCoreHelpers::registerSharedCoreMsgCallback() {
 		lInfo() << "[push] register shared core msg callback";
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
+		linphone_core_cbs_set_messages_received(cbs, on_push_notification_messages_received);
 		linphone_core_cbs_set_new_message_reaction(cbs, on_push_notification_reaction_to_message_received);
 		linphone_core_cbs_set_reaction_removed_private(cbs, on_push_notification_reaction_to_message_removed);
 		linphone_core_add_callbacks(getCore()->getCCore(), cbs);
