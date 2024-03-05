@@ -93,6 +93,11 @@ static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc,
 	bctbx_list_t *elem;
 	const LinphoneAuthInfo *ret = NULL;
 
+	if (!username && !realm && !domain && !algorithm) {
+		ms_error("Looking for an auth info but all search criterias are null!");
+		return NULL;
+	}
+
 	for (elem = lc->auth_info; elem != NULL; elem = elem->next) {
 		LinphoneAuthInfo *pinfo = (LinphoneAuthInfo *)elem->data;
 

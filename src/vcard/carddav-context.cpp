@@ -378,24 +378,33 @@ std::list<CardDAVResponse> CardDAVContext::parseVcardsFromXmlResponse(BCTBX_UNUS
 void CardDAVContext::processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) {
 	CardDAVQuery *query = static_cast<CardDAVQuery *>(data);
 	LinphoneCore *lc = query->mContext->mFriendList->getCore()->getCCore();
-	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(
-	    lc, belle_sip_auth_event_get_realm(event), belle_sip_auth_event_get_username(event),
-	    belle_sip_auth_event_get_domain(event), belle_sip_auth_event_get_algorithm(event), FALSE);
-	if (auth_info) {
-		linphone_auth_info_fill_belle_sip_event(auth_info, event);
-	} else {
-		lError() << "[CardDAV] Authentication requested during CardDAV request sending, and username/password weren't "
-		            "provided";
-		if (query->isClientToServerSync()) {
-			query->mContext->clientToServerSyncDone(
-			    false,
-			    "Authentication requested during CardDAV request sending, and username/password weren't provided");
+
+	belle_sip_auth_mode_t mode = belle_sip_auth_event_get_mode(event);
+	lInfo() << "[CardDAV] Authentication requested with mode [" << belle_sip_auth_event_mode_to_string(mode) << "]";
+
+	if (mode != BELLE_SIP_AUTH_MODE_TLS) {
+		const char *realm = belle_sip_auth_event_get_realm(event);
+		lInfo() << "[CardDAV] Looking for auth info with realm [" << L_C_TO_STRING(realm) << "]";
+		const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(
+		    lc, realm, belle_sip_auth_event_get_username(event), belle_sip_auth_event_get_domain(event),
+		    belle_sip_auth_event_get_algorithm(event), FALSE);
+		if (auth_info) {
+			linphone_auth_info_fill_belle_sip_event(auth_info, event);
 		} else {
-			query->mContext->serverToClientSyncDone(
-			    false,
-			    "Authentication requested during CardDAV request sending, and username/password weren't provided");
+			lError()
+			    << "[CardDAV] Authentication requested during CardDAV request sending, and username/password weren't "
+			       "provided";
+			if (query->isClientToServerSync()) {
+				query->mContext->clientToServerSyncDone(
+				    false,
+				    "Authentication requested during CardDAV request sending, and username/password weren't provided");
+			} else {
+				query->mContext->serverToClientSyncDone(
+				    false,
+				    "Authentication requested during CardDAV request sending, and username/password weren't provided");
+			}
+			delete query;
 		}
-		delete query;
 	}
 }
 
