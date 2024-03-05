@@ -188,7 +188,7 @@ IosSharedCoreHelpers::IosSharedCoreHelpers (shared_ptr<LinphonePrivate::Core> co
 
 		/* use an iOS timer instead of belle sip timer to unlock
 		potentially stuck processes that won't be able to call iterate() */
-		CFRunLoopAddTimer (CFRunLoopGetCurrent(), mUnlockTimer, kCFRunLoopCommonModes);
+		CFRunLoopAddTimer (CFRunLoopGetMain(), mUnlockTimer, kCFRunLoopCommonModes);
 		lInfo() << "[SHARED] launch timer";
 		unlockSharedCoreIfNeeded();
 
