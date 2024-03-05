@@ -30,9 +30,9 @@
 #include "linphone/utils/utils.h"
 
 #include "conference.h"
-#include "conference/session/media-session.h"
 #include "conference/participant.h"
 #include "conference/remote-conference.h"
+#include "conference/session/media-session.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -355,8 +355,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 				conf->participants.push_back(participant);
 				lInfo() << "Participant " << *participant << " is successfully added - conference "
 				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
-				if (!isFullState ||
-				    (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !isMe)) {
+				if (!isFullState || (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !isMe)) {
 					conf->notifyParticipantAdded(creationTime, isFullState, participant);
 				}
 			}
@@ -527,21 +526,26 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						}
 					}
 					const auto &mainSession = conf->getMainSession();
-					if (mainSession && isMe && !thumbnailTagFound) {
-						lInfo() << "It seems that we are dealing with a legacy conference server that doesn't provide device's thumbnail informations.";
-						const auto &remoteAddress = mainSession->getRemoteAddress();
-						if (remoteAddress && remoteAddress->uriEqual(*device->getAddress())) {
+					if (!thumbnailTagFound) {
+						lInfo() << "It seems that we are dealing with a legacy conference server that doesn't provide "
+						           "device's thumbnail informations.";
+						const auto &remoteAddress = mainSession ? mainSession->getRemoteAddress() : nullptr;
+						bool thumbnailEnabled = false;
+						if (isMe && remoteAddress && remoteAddress->uriEqual(*device->getAddress())) {
 							const auto &ms = dynamic_pointer_cast<MediaSession>(mainSession);
 							if (ms) {
 								const auto &params = ms->getMediaParams();
-								const auto &cameraEnabled = params->cameraEnabled();
-								if (cameraEnabled) {
-									device->setThumbnailStreamLabel(device->getLabel(LinphoneStreamTypeVideo));
-									if (device->setThumbnailStreamCapability(LinphoneMediaDirectionSendOnly)) {
-										mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);
-									}
-								}
+								thumbnailEnabled = params->cameraEnabled();
 							}
+						} else {
+							const auto &deviceCapability = device->getStreamCapability(LinphoneStreamTypeVideo);
+							thumbnailEnabled = ((deviceCapability == LinphoneMediaDirectionSendOnly) ||
+							                    (deviceCapability == LinphoneMediaDirectionSendRecv));
+						}
+						device->setThumbnailStreamLabel(device->getLabel(LinphoneStreamTypeVideo));
+						if (device->setThumbnailStreamCapability(thumbnailEnabled ? LinphoneMediaDirectionSendOnly
+						                                                          : LinphoneMediaDirectionInactive)) {
+							mediaCapabilityChanged.insert(LinphoneStreamTypeVideo);
 						}
 					}
 					conf->setCachedScreenSharingDevice();
@@ -644,8 +648,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 
 					if (state == StateType::full) {
 						lInfo() << "Participant device " << *gruu << " has been successfully added";
-						bool sendNotify =
-						    (!oldParticipants.empty() && (pIt == oldParticipants.cend())) && !isMe;
+						bool sendNotify = (!oldParticipants.empty() && (pIt == oldParticipants.cend())) && !isMe;
 						if (pIt != oldParticipants.cend()) {
 							const auto &oldDevices = (*pIt)->getDevices();
 							const auto &dIt =
