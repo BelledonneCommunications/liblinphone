@@ -2798,9 +2798,16 @@ void MediaSessionPrivate::setupEncryptionKeys(std::shared_ptr<SalMediaDescriptio
 						// Generate new crypto keys
 						newStreamActualCfgCrypto = generateNewCryptoKeys();
 					} else if (oldStreamActualCfg.hasSrtp()) {
-						// If old stream actual configuration supported SRTP, then copy crypto parameters
-						lInfo() << "Keeping same crypto keys when making new local stream description";
-						newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
+						if ((state == CallSession::State::IncomingReceived) && params) {
+							// Attempt to reuse the keys generated during the first offer answer execution that allowed
+							// the remote to ring
+							lInfo() << "Merging already created crypto suites with the ones of the call parameters";
+							newStreamActualCfgCrypto = generateNewCryptoKeys(oldStreamActualCfgCrypto);
+						} else {
+							// If old stream actual configuration supported SRTP, then copy crypto parameters
+							lInfo() << "Keeping same crypto keys when making new local stream description";
+							newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
+						}
 					} else if (oldMd->getParams().capabilityNegotiationSupported()) {
 						const std::list<std::list<unsigned int>> acapIdx =
 						    oldStream.getChosenConfiguration().getAcapIndexes();
@@ -2958,7 +2965,37 @@ static LinphoneSrtpSuite MSCryptoSuite2LinphoneSrtpSuite(const MSCryptoSuite sui
 	}
 }
 
-std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() {
+unsigned int MediaSessionPrivate::generateCryptoTag(const std::vector<SalSrtpCryptoAlgo> &cryptos) {
+	L_Q();
+	auto cryptoId = linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
+	                                        "crypto_suite_tag_starting_value", 1);
+	unsigned int cryptoTag = 0;
+	// crypto tag lower than 1 is not valid
+	if (cryptoId < 1) {
+		lWarning() << "Trying to set initial value of the crypto tag suite to a value lower than 1: " << cryptoId
+		           << ". Automatically fixing it by setting it to 1";
+		cryptoTag = 1;
+	} else {
+		cryptoTag = static_cast<unsigned int>(cryptoId);
+	}
+	if (cryptos.empty()) {
+		return cryptoTag;
+	}
+	bool found = false;
+	do {
+		const auto &crypto = std::find_if(cryptos.cbegin(), cryptos.cend(),
+		                                  [&cryptoTag](const auto &crypto) { return (crypto.tag == cryptoTag); });
+
+		found = (crypto != cryptos.cend());
+		if (found) {
+			cryptoTag++;
+		}
+	} while (found);
+	return cryptoTag;
+}
+
+std::vector<SalSrtpCryptoAlgo>
+MediaSessionPrivate::generateNewCryptoKeys(const std::vector<SalSrtpCryptoAlgo> oldCryptos) {
 	L_Q();
 	std::vector<SalSrtpCryptoAlgo> cryptos;
 	const bool doNotUseParams = (direction == LinphoneCallIncoming) && (state == CallSession::State::Idle);
@@ -2981,24 +3018,17 @@ std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() {
 		}
 	}
 
-	auto cryptoId = linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip",
-	                                        "crypto_suite_tag_starting_value", 1);
-	unsigned int cryptoTag = 0;
-	// crypto tag lower than 1 is not valid
-	if (cryptoId < 1) {
-		lWarning() << "Trying to set initial value of the crypto tag suite to a value lower than 1: " << cryptoId
-		           << ". Automatically fixing it by setting it to 1";
-		cryptoTag = 1;
-	} else {
-		cryptoTag = static_cast<unsigned int>(cryptoId);
-	}
 	for (auto suite : suitesList) {
-		if (doNotUseParams || !isEncryptionMandatory() ||
-		    (isEncryptionMandatory() && !ms_crypto_suite_is_unencrypted(suite))) {
+		const auto &oldCrypto = std::find_if(oldCryptos.cbegin(), oldCryptos.cend(),
+		                                     [&suite](const auto &crypto) { return (crypto.algo == suite); });
+		if (oldCrypto != oldCryptos.cend()) {
+			cryptos.push_back(*oldCrypto);
+		} else if (doNotUseParams || !isEncryptionMandatory() ||
+		           (isEncryptionMandatory() && !ms_crypto_suite_is_unencrypted(suite))) {
 			SalSrtpCryptoAlgo newCrypto;
+			auto cryptoTag = generateCryptoTag(cryptos);
 			setupEncryptionKey(newCrypto, suite, cryptoTag);
 			cryptos.push_back(newCrypto);
-			cryptoTag++;
 		} else if (isEncryptionMandatory() && ms_crypto_suite_is_unencrypted(suite)) {
 			lWarning() << "Not offering " << std::string(ms_crypto_suite_to_string(suite))
 			           << " because either RTP or RTCP streams is not encrypted";
@@ -3847,7 +3877,7 @@ LinphoneStatus MediaSessionPrivate::accept(const MediaSessionParams *msp, BCTBX_
 	// accept the call is known. In this case, if the encryption is mandatory a new local media description must be
 	// generated in order to populate the crypto keys with the set actually ued in the call
 	if ((state == CallSession::State::IncomingReceived) && params)
-		makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false, true);
+		makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false, false);
 
 	updateRemoteSessionIdAndVer();
 

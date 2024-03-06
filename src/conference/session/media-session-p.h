@@ -121,8 +121,9 @@ public:
 		return md ? md : streamsGroup->getCurrentOfferAnswerContext().remoteMediaDescription;
 	}
 
+	unsigned int generateCryptoTag(const std::vector<SalSrtpCryptoAlgo> &cryptos);
 	int setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoSuite suite, unsigned int tag);
-	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys();
+	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys(const std::vector<SalSrtpCryptoAlgo> oldCryptos = {});
 
 	const LinphoneStreamInternalStats *getStreamInternalStats(LinphoneStreamType type) const;
 	const std::shared_ptr<NatPolicy> getNatPolicy() const {

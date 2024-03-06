@@ -993,10 +993,9 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 
 	if (resultStreamDesc.hasSrtp()) {
 		// Valid local tags are > 0
-		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto,
-		                                            resultStreamDesc.getChosenConfiguration().crypto_local_tag);
+		const auto &algo = resultStreamDesc.getCryptoAtIndex(0).algo;
+		int cryptoIdx = Sal::findCryptoIndexFromAlgo(localStreamDesc.getChosenConfiguration().crypto, algo);
 		if (cryptoIdx >= 0) {
-			MSCryptoSuite algo = resultStreamDesc.getChosenConfiguration().crypto[0].algo;
 			auto newSendMasterKey = localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key;
 			CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 			// The master key of an SRTP stream must be set in one of the following scenarios:
@@ -1023,8 +1022,8 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 				mReceiveMasterKey = newReceiveMasterKey;
 			}
 		} else {
-			lWarning() << "Failed to find local crypto algo with tag: "
-			           << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
+			lWarning() << "Failed to find local crypto suite with algorithm: "
+			           << std::string(ms_crypto_suite_to_string(algo));
 		}
 	} else if (mSessions.srtp_context &&
 	           (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionNone)) {

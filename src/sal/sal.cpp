@@ -857,15 +857,16 @@ belle_sip_response_t *Sal::createResponseFromRequest(belle_sip_request_t *reques
 	return response;
 }
 
-int Sal::findCryptoIndexFromTag(const std::vector<SalSrtpCryptoAlgo> &crypto, unsigned int tag) {
+int Sal::findCryptoIndexFromAlgo(const std::vector<SalSrtpCryptoAlgo> &crypto, const MSCryptoSuite suite) {
 	for (size_t i = 0; i < crypto.size(); i++) {
-		if (crypto[i].tag == tag) {
-			lInfo() << "Found crypto algorithm matching tag " << tag << ": algorithm " << crypto[i].algo
-			        << " master key " << crypto[i].master_key;
+		if (crypto[i].algo == suite) {
+			lInfo() << "Found crypto algorithm matching at index " << i << ": algorithm "
+			        << std::string(ms_crypto_suite_to_string(crypto[i].algo)) << " master key " << crypto[i].master_key
+			        << " tag " << crypto[i].tag;
 			return (int)i;
 		}
 	}
-	lInfo() << "Unable to find crypto algorithm matching tag " << tag;
+	lInfo() << "Unable to find crypto algorithm matching suite " << std::string(ms_crypto_suite_to_string(suite));
 	return -1;
 }
 

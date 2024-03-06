@@ -79,7 +79,6 @@ private:
 	static bool matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local,
 	                            const std::vector<SalSrtpCryptoAlgo> &remote,
 	                            SalSrtpCryptoAlgo &result,
-	                            unsigned int &choosen_local_tag,
 	                            bool use_local_key);
 	static std::list<OrtpPayloadType *> matchPayloads(MSFactory *factory,
 	                                                  const std::list<OrtpPayloadType *> &local,

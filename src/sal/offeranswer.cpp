@@ -325,7 +325,6 @@ std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(MSFactory *factory
 bool OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local,
                                         const std::vector<SalSrtpCryptoAlgo> &remote,
                                         SalSrtpCryptoAlgo &result,
-                                        unsigned int &choosen_local_tag,
                                         bool use_local_key) {
 	for (const auto &rc : remote) {
 		if (rc.algo == 0) break;
@@ -338,14 +337,12 @@ bool OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &lo
 				if (use_local_key) {
 					result.master_key = lc.master_key;
 					result.tag = rc.tag;
-					choosen_local_tag = lc.tag;
 				}
 				/* We received an answer to our SDP crypto proposal. Copy matching algo remote master key to result, and
 				   memorize local tag */
 				else {
 					result.master_key = rc.master_key;
 					result.tag = lc.tag;
-					choosen_local_tag = lc.tag;
 				}
 				return true;
 			}
@@ -686,8 +683,7 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 			/* verify crypto algo */
 			crypto.clear();
 			SalSrtpCryptoAlgo crypto_result;
-			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result,
-			                                        resultCfg.crypto_local_tag, false)) {
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, false)) {
 				return std::nullopt;
 			}
 			crypto.emplace(crypto.begin(), crypto_result);
@@ -944,8 +940,7 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 			/* select crypto algo */
 			crypto.clear();
 			SalSrtpCryptoAlgo crypto_result;
-			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result,
-			                                        resultCfg.crypto_local_tag, true)) {
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, true)) {
 				lError() << "[Initiate Incoming Configuration] No matching crypto algo for remote stream's offer ["
 				         << &remote_offer << "]";
 				return std::nullopt;
