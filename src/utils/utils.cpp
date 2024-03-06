@@ -140,6 +140,16 @@ string Utils::stringToLower(const string &str) {
 	return result;
 }
 
+std::vector<string> Utils::stringToLower(const std::vector<string> &strs) {
+	std::vector<std::string> results;
+	for(const auto& str : strs){
+		string result(str.size(), ' ');
+		transform(str.cbegin(), str.cend(), result.begin(), ::tolower);
+		results.push_back(result);
+	}
+	return results;
+}
+
 // -----------------------------------------------------------------------------
 
 string Utils::unicodeToUtf8(uint32_t ic) {
