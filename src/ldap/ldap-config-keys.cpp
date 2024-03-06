@@ -114,16 +114,28 @@ std::unordered_set<std::string> LdapConfigKeys::getUniqueAttributes(const std::m
 
 std::map<std::string, std::vector<std::string>> LdapConfigKeys::loadConfig(const std::map<std::string, std::vector<std::string>> &config) {
 	std::map<std::string, std::vector<std::string>> finalConfig;
+	for(auto conf : config)
+		if(gLdapConfigKeys.count(conf.first) == 0)
+			finalConfig[conf.first] = conf.second;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
-		finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : LdapConfigKeys::split(it->first,it->second.mValue);
+		if(it->first == "name_attribute")
+			finalConfig[it->first] = config.count(it->first) > 0 ? Utils::stringToLower(config.at(it->first)) : LdapConfigKeys::split(it->first,Utils::stringToLower(it->second.mValue));
+		else
+			finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : LdapConfigKeys::split(it->first,it->second.mValue);
 	}
 	return finalConfig;
 }
 
 std::map<std::string, std::string> LdapConfigKeys::loadConfig(const std::map<std::string, std::string> &config) {
 	std::map<std::string, std::string> finalConfig;
+	for(auto conf : config)
+		if(gLdapConfigKeys.count(conf.first) == 0)
+			finalConfig[conf.first] = conf.second;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
-		finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : it->second.mValue;
+		if(it->first == "name_attribute")
+			finalConfig[it->first] = config.count(it->first) > 0 ? Utils::stringToLower(config.at(it->first)) : Utils::stringToLower(it->second.mValue);
+		else
+			finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : it->second.mValue;
 	}
 	return finalConfig;
 }

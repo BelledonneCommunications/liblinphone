@@ -108,6 +108,7 @@ LINPHONE_PUBLIC double stod(const char *str, size_t *idx = 0);
 LINPHONE_PUBLIC float stof(const char *str, size_t *idx = 0);
 
 LINPHONE_PUBLIC std::string stringToLower(const std::string &str);
+LINPHONE_PUBLIC std::vector<std::string> stringToLower(const std::vector<std::string> &strs);
 
 LINPHONE_PUBLIC std::string unicodeToUtf8(uint32_t ic);
 LINPHONE_PUBLIC std::string unicodeToUtf8(const std::vector<uint32_t> &chars);
