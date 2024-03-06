@@ -1962,15 +1962,16 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 					content = MediaSessionPrivate::ThumbnailVideoContentAttribute;
 					deviceLabel = participantDevice->getThumbnailStreamLabel();
 				}
-				// Copy streams from previous SDP if we are the offerer or not a conference server as the latter is a
-				// passive agent
-				const auto &refMd =
-				    (localIsOfferer || !linphone_core_conference_server_enabled(q->getCore()->getCCore()))
-				        ? oldMd
-				        : op->getRemoteMediaDescription();
-				const auto &foundStreamIdx = refMd->findIdxStreamWithContent(content, deviceLabel);
+				bool isConferenceServer = !!linphone_core_conference_server_enabled(q->getCore()->getCCore());
+				// A conference server is a passive element, therefore it must not add any stream that has not requested
+				// by the client For this reason it always looks at the remote media description, if there is one. If
+				// this media session is part of an ad hoc meeting, then the conference server will not request the
+				// client thumbnail stream because the latter offered it
+				const auto &refMd = (isConferenceServer) ? op->getRemoteMediaDescription() : oldMd;
+				const auto &foundStreamIdx = refMd ? refMd->findIdxStreamWithContent(content, deviceLabel) : -1;
 				const auto addStream =
-				    ((foundStreamIdx != -1) || (localIsOfferer && (deviceState == ParticipantDevice::State::Joining)) ||
+				    ((foundStreamIdx != -1) ||
+				     (localIsOfferer && !isConferenceServer && (deviceState == ParticipantDevice::State::Joining)) ||
 				     (deviceState == ParticipantDevice::State::Present) ||
 				     (deviceState == ParticipantDevice::State::OnHold));
 				if (addStream) {

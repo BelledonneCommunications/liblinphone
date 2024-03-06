@@ -231,6 +231,13 @@ void MS2VideoStream::initZrtp() {
 }
 
 void MS2VideoStream::startZrtp() {
+	// If the bundle has been accepted by the remote party, there is no need to start the ZRTP video stream if it is not
+	// the transport owner as all traffic will go through the transport owner of the bundle
+	if (!isTransportOwner()) {
+		lWarning() << "Do not start video stream " << this
+		           << " because it isn't the transport owner of the bundle of session " << getMediaSession();
+		return;
+	}
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is
 	 * enabled */
 	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
@@ -327,7 +334,7 @@ void MS2VideoStream::updateWindowId(const std::shared_ptr<ParticipantDevice> &pa
 	void *windowId = nullptr;
 	if (mNativeWindowId) {
 		windowId = mNativeWindowId;
-	} else if (isMe && isThumbnail) {// Preview thumbnail is always set by core.
+	} else if (isMe && isThumbnail) { // Preview thumbnail is always set by core.
 		windowId = getCCore()->preview_window_id;
 	} else if (!label.empty()) {
 		if (participantDevice) windowId = participantDevice->getWindowId();
@@ -715,7 +722,8 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 				                           dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 
-				if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !contentIsThumbnail && !screensharingEnabledInService) {
+				if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !contentIsThumbnail &&
+				    !screensharingEnabledInService) {
 					getGroup().addPostRenderHook([this, &label] {
 						link_video_stream_with_itc_sink(mStream);
 						// Current stream is Main, search for the thumbnail to connect with ITC.
@@ -725,7 +733,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 						if (vs) {
 							VideoStream *itcStream = vs->getVideoStream();
 							lInfo() << "[mix to all] this normal stream " << mStream << " find itcStream " << itcStream
-								<< " with label " << label;
+							        << " with label " << label;
 							ms_filter_call_method(mStream->itcsink, MS_ITC_SINK_CONNECT, itcStream->source);
 						}
 					});

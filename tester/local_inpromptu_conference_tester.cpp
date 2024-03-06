@@ -1874,7 +1874,7 @@ static test_t local_conference_encrypted_inpromptu_conference_tests[] = {
 
 static test_t local_conference_inpromptu_conference_tests[] = {
     TEST_NO_TAG("Create simple dial out conference", LinphoneTest::create_simple_conference_dial_out),
-    TEST_NO_TAG("Create simple dial out conference and ICS sent",
+    TEST_NO_TAG("Create simple dial out ICE conference and ICS sent",
                 LinphoneTest::create_simple_conference_dial_out_and_ics),
     TEST_NO_TAG("Create simple dial out conference with late participant addition",
                 LinphoneTest::create_simple_conference_dial_out_with_late_participant_addition),
