@@ -840,19 +840,6 @@ linphone_friend_list_delete_friend(LinphoneFriendList *list, LinphoneFriend *lf,
 	linphone_friend_unref(lf);
 }
 
-static void linphone_friend_list_remove_friends(LinphoneFriendList *list, bool_t remove_from_server) {
-	const bctbx_list_t *elem;
-	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
-		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
-		linphone_friend_list_delete_friend(list, lf, remove_from_server);
-	}
-
-	if (list->friends) {
-		list->friends = bctbx_list_free(list->friends);
-		list->friends = NULL;
-	}
-}
-
 static LinphoneFriendListStatus
 _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t remove_from_server) {
 	bctbx_list_t *elem = bctbx_list_find(list->friends, lf);
@@ -875,6 +862,19 @@ const bctbx_list_t *linphone_friend_list_get_friends(const LinphoneFriendList *l
 }
 
 #if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
+
+static void linphone_friend_list_remove_friends(LinphoneFriendList *list, bool_t remove_from_server) {
+	const bctbx_list_t *elem;
+	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
+		linphone_friend_list_delete_friend(list, lf, remove_from_server);
+	}
+
+	if (list->friends) {
+		list->friends = bctbx_list_free(list->friends);
+		list->friends = NULL;
+	}
+}
 
 static void carddav_done(LinphoneCardDavContext *cdc, bool_t success, const char *msg) {
 	LinphoneFriendList *list = cdc->friend_list;
