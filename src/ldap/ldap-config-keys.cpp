@@ -44,22 +44,23 @@ static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys = {
     {"use_sal", LdapConfigKeys("0", '\0', false)},
     {"use_tls", LdapConfigKeys("1", '\0', false)},
     {"debug", LdapConfigKeys(Utils::toString((int)LinphoneLdapDebugLevelOff), '\0', false)},
-    {"verify_server_certificates",LdapConfigKeys(Utils::toString((int)LinphoneLdapCertVerificationDefault), '\0', false)} // -1:auto from core, 0:deactivate, 1:activate
+    {"verify_server_certificates", LdapConfigKeys(Utils::toString((int)LinphoneLdapCertVerificationDefault),
+                                                  '\0',
+                                                  false)} // -1:auto from core, 0:deactivate, 1:activate
 };
 
 LdapConfigKeys::LdapConfigKeys(const std::string &value, const char separator, const bool required)
     : mValue(value), mSeparator(separator), mRequired(required) {
 }
 
-LdapConfigKeys LdapConfigKeys::getConfigKeys(const std::string &key){
-	return gLdapConfigKeys.count(key)>0 ? gLdapConfigKeys.at(key) : LdapConfigKeys();
+LdapConfigKeys LdapConfigKeys::getConfigKeys(const std::string &key) {
+	return gLdapConfigKeys.count(key) > 0 ? gLdapConfigKeys.at(key) : LdapConfigKeys();
 }
 
-std::vector<std::string> LdapConfigKeys::split(const std::string& key, const std::string &values) {
+std::vector<std::string> LdapConfigKeys::split(const std::string &key, const std::string &values) {
 	auto configKeys = getConfigKeys(key);
 	char separator = configKeys.mSeparator;
-	if(separator == '\0')
-		return std::vector<std::string>{values};
+	if (separator == '\0') return std::vector<std::string>{values};
 	std::vector<std::string> tokens;
 	std::istringstream iss(values);
 	std::string s;
@@ -69,13 +70,12 @@ std::vector<std::string> LdapConfigKeys::split(const std::string& key, const std
 	return tokens;
 }
 
-std::string LdapConfigKeys::join(const std::string& key, const std::vector<std::string> &values) {
+std::string LdapConfigKeys::join(const std::string &key, const std::vector<std::string> &values) {
 	auto configKeys = getConfigKeys(key);
 	char separator = configKeys.mSeparator;
-	if(separator == '\0')
-		return values[0];
+	if (separator == '\0') return values[0];
 	std::string value = values[0];
-	for(size_t i = 1 ; i < values.size() ; ++i)
+	for (size_t i = 1; i < values.size(); ++i)
 		value.append(separator + values[i]);
 	return value;
 }
@@ -100,42 +100,46 @@ bool LdapConfigKeys::validConfig(const std::map<std::string, std::string> &confi
 	return valid;
 }
 
-std::unordered_set<std::string> LdapConfigKeys::getUniqueAttributes(const std::map<std::string, std::vector<std::string>> &splittedConfig, const std::vector<std::string> &keys){
+std::unordered_set<std::string>
+LdapConfigKeys::getUniqueAttributes(const std::map<std::string, std::vector<std::string>> &splittedConfig,
+                                    const std::vector<std::string> &keys) {
 	std::unordered_set<std::string> result;
-	for(auto it = keys.begin() ; it != keys.end() ; ++it){
-		if(splittedConfig.count(*it) > 0){
+	for (auto it = keys.begin(); it != keys.end(); ++it) {
+		if (splittedConfig.count(*it) > 0) {
 			const std::vector<std::string> &values = splittedConfig.at(*it);
-			for(size_t i = 0 ; i < values.size() ; ++i)
+			for (size_t i = 0; i < values.size(); ++i)
 				result.insert(values[i]);
 		}
 	}
 	return result;
 }
 
-std::map<std::string, std::vector<std::string>> LdapConfigKeys::loadConfig(const std::map<std::string, std::vector<std::string>> &config) {
+std::map<std::string, std::vector<std::string>>
+LdapConfigKeys::loadConfig(const std::map<std::string, std::vector<std::string>> &config) {
 	std::map<std::string, std::vector<std::string>> finalConfig;
-	for(auto conf : config)
-		if(gLdapConfigKeys.count(conf.first) == 0)
-			finalConfig[conf.first] = conf.second;
+	for (auto conf : config)
+		if (gLdapConfigKeys.count(conf.first) == 0) finalConfig[conf.first] = conf.second;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
-		if(it->first == "name_attribute")
-			finalConfig[it->first] = config.count(it->first) > 0 ? Utils::stringToLower(config.at(it->first)) : LdapConfigKeys::split(it->first,Utils::stringToLower(it->second.mValue));
+		if (it->first == "name_attribute")
+			finalConfig[it->first] = config.count(it->first) > 0
+			                             ? Utils::stringToLower(config.at(it->first))
+			                             : LdapConfigKeys::split(it->first, Utils::stringToLower(it->second.mValue));
 		else
-			finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : LdapConfigKeys::split(it->first,it->second.mValue);
+			finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first)
+			                                                     : LdapConfigKeys::split(it->first, it->second.mValue);
 	}
 	return finalConfig;
 }
 
 std::map<std::string, std::string> LdapConfigKeys::loadConfig(const std::map<std::string, std::string> &config) {
 	std::map<std::string, std::string> finalConfig;
-	for(auto conf : config)
-		if(gLdapConfigKeys.count(conf.first) == 0)
-			finalConfig[conf.first] = conf.second;
+	for (auto conf : config)
+		if (gLdapConfigKeys.count(conf.first) == 0) finalConfig[conf.first] = conf.second;
 	for (auto it = gLdapConfigKeys.begin(); it != gLdapConfigKeys.end(); ++it) {
-		if(it->first == "name_attribute")
-			finalConfig[it->first] = config.count(it->first) > 0 ? Utils::stringToLower(config.at(it->first)) : Utils::stringToLower(it->second.mValue);
-		else
-			finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : it->second.mValue;
+		if (it->first == "name_attribute")
+			finalConfig[it->first] = config.count(it->first) > 0 ? Utils::stringToLower(config.at(it->first))
+			                                                     : Utils::stringToLower(it->second.mValue);
+		else finalConfig[it->first] = config.count(it->first) > 0 ? config.at(it->first) : it->second.mValue;
 	}
 	return finalConfig;
 }

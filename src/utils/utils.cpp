@@ -142,7 +142,7 @@ string Utils::stringToLower(const string &str) {
 
 std::vector<string> Utils::stringToLower(const std::vector<string> &strs) {
 	std::vector<std::string> results;
-	for(const auto& str : strs){
+	for (const auto &str : strs) {
 		string result(str.size(), ' ');
 		transform(str.cbegin(), str.cend(), result.begin(), ::tolower);
 		results.push_back(result);
