@@ -390,7 +390,7 @@ public:
 	void cancelTimer(belle_sip_source_t *timer);
 
 	// utils
-	static int findCryptoIndexFromTag(const std::vector<SalSrtpCryptoAlgo> &crypto, unsigned int tag);
+	static int findCryptoIndexFromAlgo(const std::vector<SalSrtpCryptoAlgo> &crypto, const MSCryptoSuite suite);
 
 private:
 	struct SalUuid {

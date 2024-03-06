@@ -138,7 +138,6 @@ private:
 	int maxptime = 0;
 	SalStreamDir dir = SalStreamInactive;
 	std::vector<SalSrtpCryptoAlgo> crypto;
-	unsigned int crypto_local_tag = 0;
 	int max_rate = 0;
 	bool bundle_only = false;
 	bool implicit_rtcp_fb = false;

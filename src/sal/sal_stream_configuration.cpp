@@ -52,7 +52,6 @@ SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration &oth
 	maxptime = other.maxptime;
 	dir = other.dir;
 	crypto = other.crypto;
-	crypto_local_tag = other.crypto_local_tag;
 	max_rate = other.max_rate;
 	bundle_only = other.bundle_only;
 	implicit_rtcp_fb = other.implicit_rtcp_fb;
@@ -91,7 +90,6 @@ SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfigu
 	maxptime = other.maxptime;
 	dir = other.dir;
 	crypto = other.crypto;
-	crypto_local_tag = other.crypto_local_tag;
 	max_rate = other.max_rate;
 	bundle_only = other.bundle_only;
 	implicit_rtcp_fb = other.implicit_rtcp_fb;
@@ -533,4 +531,5 @@ SalSrtpCryptoAlgo SalStreamConfiguration::fillStrpCryptoAlgoFromString(const std
 	}
 	return keyEnc;
 }
+
 LINPHONE_END_NAMESPACE
