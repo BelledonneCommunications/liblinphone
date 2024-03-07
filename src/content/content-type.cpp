@@ -58,6 +58,7 @@ const ContentType ContentType::Sdp("application/sdp");
 const ContentType ContentType::SipFrag("message/sipfrag");
 const ContentType ContentType::VoiceRecording("audio/wav;voice-recording=yes");
 const ContentType ContentType::Icalendar("text/calendar;conference-event=yes");
+const ContentType ContentType::Mwi("application/simple-message-summary");
 
 // -----------------------------------------------------------------------------
 

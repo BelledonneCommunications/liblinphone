@@ -56,3 +56,13 @@ void linphone_account_cbs_set_registration_state_changed(LinphoneAccountCbs *cbs
                                                          LinphoneAccountCbsRegistrationStateChangedCb cb) {
 	AccountCbs::toCpp(cbs)->setRegistrationStateChanged(cb);
 }
+
+LinphoneAccountCbsMessageWaitingIndicationChangedCb
+linphone_account_cbs_get_message_waiting_indication_changed(const LinphoneAccountCbs *cbs) {
+	return AccountCbs::toCpp(cbs)->getMessageWaitingIndicationChanged();
+}
+
+void linphone_account_cbs_set_message_waiting_indication_changed(
+    LinphoneAccountCbs *cbs, LinphoneAccountCbsMessageWaitingIndicationChangedCb cb) {
+	AccountCbs::toCpp(cbs)->setMessageWaitingIndicationChanged(cb);
+}

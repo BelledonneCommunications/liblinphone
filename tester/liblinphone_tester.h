@@ -155,6 +155,7 @@ extern test_suite_t local_conference_test_suite_transfered_conference_basic;
 extern test_suite_t external_domain_test_suite;
 extern test_suite_t potential_configuration_graph_test_suite;
 extern test_suite_t call_race_conditions_suite;
+extern test_suite_t mwi_test_suite;
 
 #ifdef VCARD_ENABLED
 extern test_suite_t vcard_test_suite;
@@ -536,6 +537,12 @@ typedef struct _stats {
 
 	int number_of_LinphoneMagicSearchResultReceived;
 	int number_of_LinphoneMagicSearchLdapHaveMoreResults;
+
+	int number_of_mwi;
+	int number_of_new_LinphoneMessageWaitingIndicationVoice;
+	int number_of_old_LinphoneMessageWaitingIndicationVoice;
+	int number_of_new_urgent_LinphoneMessageWaitingIndicationVoice;
+	int number_of_old_urgent_LinphoneMessageWaitingIndicationVoice;
 } stats;
 
 typedef enum _LinphoneCoreManagerSubscribePolicy {

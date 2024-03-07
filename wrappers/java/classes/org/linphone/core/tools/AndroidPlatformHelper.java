@@ -365,11 +365,13 @@ public class AndroidPlatformHelper {
         String mGrammarCpimFile = basePath + "/share/belr/grammars/cpim_grammar";
         String mGrammarIcsFile = basePath + "/share/belr/grammars/ics_grammar";
         String mGrammarIdentityFile = basePath + "/share/belr/grammars/identity_grammar";
+        String mGrammarMwiFile = basePath + "/share/belr/grammars/mwi_grammar";
         String mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar";
 
         copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar"), mGrammarCpimFile);
         copyEvenIfExists(getResourceIdentifierFromName("ics_grammar"), mGrammarIcsFile);
         copyEvenIfExists(getResourceIdentifierFromName("identity_grammar"), mGrammarIdentityFile);
+        copyEvenIfExists(getResourceIdentifierFromName("mwi_grammar"), mGrammarMwiFile);
         copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar"), mGrammarVcardFile);
         copyEvenIfExists(getResourceIdentifierFromName("rootca"), mLinphoneRootCaFile);
         copyIfNotExist(getResourceIdentifierFromName("notes_of_the_optimistic"), mRingSoundFile);

@@ -2864,6 +2864,8 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 #else
 		ms_message("Advanced IM such as group chat is disabled!");
 #endif
+	} else if (Utils::iequals(notified_event, "message-summary")) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->handleIncomingMessageWaitingIndication(*Content::toCpp(body));
 	}
 }
 
@@ -3463,9 +3465,9 @@ LinphoneStatus linphone_core_start(LinphoneCore *lc) {
 		if (!autoNetworkStateMonitoringEnabled) {
 			bctbx_warning("Automatic network state monitoring is disabled by configuration (auto_net_state_mon=0). "
 			              "This is not recommended.");
-			bctbx_warning(
-			    "In this mode, apps must use linphone_core_set_network_reachable() and linphone_core_set_dns_servers() "
-			    "to notify the LinphoneCore of network availability and provide the DNS server list.");
+			bctbx_warning("In this mode, apps must use linphone_core_set_network_reachable() and "
+			              "linphone_core_set_dns_servers() "
+			              "to notify the LinphoneCore of network availability and provide the DNS server list.");
 		}
 		getPlatformHelpers(lc)->onLinphoneCoreStart(autoNetworkStateMonitoringEnabled);
 
@@ -3680,8 +3682,8 @@ static void update_primary_contact(LinphoneCore *lc) {
 	linphone_address_set_domain(url, tmp);
 	port = linphone_core_get_sip_port(lc);
 	if (port > 0)
-		linphone_address_set_port(url, port); /*if there is no listening socket the primary contact is somewhat useless,
-it won't work. But we prefer to return something in all cases. It at least shows username and ip address.*/
+		linphone_address_set_port(url, port); /*if there is no listening socket the primary contact is somewhat
+useless, it won't work. But we prefer to return something in all cases. It at least shows username and ip address.*/
 	guessed = linphone_address_as_string(url);
 	lc->sip_conf.guessed_contact = guessed;
 	linphone_address_unref(url);
@@ -4273,7 +4275,8 @@ void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val) {
 			/* we need to update the sip stack */
 			_linphone_core_apply_transports(lc);
 		}
-		/*update the localip immediately for the network monitor to avoid to "discover" later that we switched to ipv6*/
+		/*update the localip immediately for the network monitor to avoid to "discover" later that we switched to
+		 * ipv6*/
 		linphone_core_get_local_ip(lc, AF_INET, NULL, lc->localip4);
 		if (val) linphone_core_get_local_ip(lc, AF_INET6, NULL, lc->localip6);
 		if (linphone_core_ready(lc)) {
@@ -4824,8 +4827,9 @@ linphone_core_lookup_known_account_2(LinphoneCore *lc, const LinphoneAddress *ur
 	}
 end:
 	// ============ Choose the the most appropriate account =====================
-	// Check first if there is an account whose identity address matches the uri passed as argument to this function.
-	// Then try to guess an account based on the same domain as the address passed as argument to this function
+	// Check first if there is an account whose identity address matches the uri passed as argument to this
+	// function. Then try to guess an account based on the same domain as the address passed as argument to this
+	// function
 
 	// Account matched by identity address comparison
 	if (!found_acc && found_reg_acc) found_acc = found_reg_acc;
@@ -5082,9 +5086,9 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 	// the other one. In such a scenario, it is assumed that the application wishes to use the default account
 	if (account == nullptr) account = linphone_core_get_default_account(lc);
 
-	// If an account has been found earlier on either because it has been set in the call params or it is the default
-	// one or it has been deduced thanks to the from or to addresses, then get the from address if not already set in
-	// the call params
+	// If an account has been found earlier on either because it has been set in the call params or it is the
+	// default one or it has been deduced thanks to the from or to addresses, then get the from address if not
+	// already set in the call params
 	if ((from == nullptr) && (account != nullptr)) {
 		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
 		from = linphone_account_params_get_identity(account_params);
@@ -5121,8 +5125,8 @@ LinphoneCall *linphone_core_invite_address_with_params_2(LinphoneCore *lc,
 	}
 
 	// Try to free up resources after adding it to the call list.
-	// linphone_core_preempt_sound_resources tries to pause a call only if there is more than one in the list of core
-	// stored in the core
+	// linphone_core_preempt_sound_resources tries to pause a call only if there is more than one in the list of
+	// core stored in the core
 	if (linphone_core_sound_resources_need_locking(lc, params) && (linphone_core_preempt_sound_resources(lc) == -1)) {
 		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is "
 		         "already locking the sound resource. The call is automatically terminated.");
@@ -5294,7 +5298,8 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc) {
 
 	current_call = linphone_core_get_current_call(lc);
 
-	// If current call is not answered, do not try to pause it as user may take another one in the list of ringing calls
+	// If current call is not answered, do not try to pause it as user may take another one in the list of ringing
+	// calls
 	if ((current_call != NULL) && (!linphone_core_is_incoming_invite_pending(lc))) {
 		if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls().size() == 1) {
 			/*

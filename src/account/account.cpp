@@ -1391,6 +1391,14 @@ void AccountCbs::setRegistrationStateChanged(LinphoneAccountCbsRegistrationState
 	mRegistrationStateChangedCb = cb;
 }
 
+LinphoneAccountCbsMessageWaitingIndicationChangedCb AccountCbs::getMessageWaitingIndicationChanged() const {
+	return mMessageWaitingIndicationChangedCb;
+}
+
+void AccountCbs::setMessageWaitingIndicationChanged(LinphoneAccountCbsMessageWaitingIndicationChangedCb cb) {
+	mMessageWaitingIndicationChangedCb = cb;
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

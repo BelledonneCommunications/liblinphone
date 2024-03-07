@@ -48,6 +48,7 @@
 #endif
 
 #include "account/account.h"
+#include "account/mwi/message-waiting-indication.h"
 #include "address/address.h"
 #include "call/call.h"
 #include "chat/encryption/encryption-engine.h"
@@ -1550,6 +1551,28 @@ std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId(const std::string &
 	L_D();
 	std::list<std::shared_ptr<ChatMessage>> chatMessages = d->mainDb->findChatMessagesFromCallId(callId);
 	return chatMessages.empty() ? nullptr : chatMessages.front();
+}
+
+void Core::handleIncomingMessageWaitingIndication(const Content &content) {
+	shared_ptr<Mwi::MessageWaitingIndication> mwi = Mwi::MessageWaitingIndication::parse(content);
+	if (mwi) {
+		std::shared_ptr<Address> accountAddr = mwi->getAccountAddress();
+		if (!accountAddr) {
+			lInfo() << "MWI does not contain account address, cannot notify it to an account";
+			return;
+		}
+
+		LinphoneAccount *account = linphone_core_find_account_by_identity_address(getCCore(), accountAddr->toC());
+		if (!account) {
+			lInfo() << "No account found for the account address of the MWI, cannot notify it";
+			return;
+		}
+
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, Account::toCpp(account),
+		                                  linphone_account_cbs_get_message_waiting_indication_changed, mwi->toC());
+	} else {
+		lWarning() << "Wrongly formatted MWI notification";
+	}
 }
 
 // -----------------------------------------------------------------------------

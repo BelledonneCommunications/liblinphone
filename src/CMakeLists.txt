@@ -105,6 +105,9 @@ add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	account/account.h
 	account/account-params.h
+	account/mwi/message-waiting-indication.h
+	account/mwi/message-waiting-indication-summary.h
+	account/mwi/parser/mwi-parser.h
 	address/address.h
 	address/address-parser.cpp
 	alert/alert.h
@@ -353,6 +356,9 @@ endif()
 set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	account/account.cpp
 	account/account-params.cpp
+	account/mwi/message-waiting-indication.cpp
+	account/mwi/message-waiting-indication-summary.cpp
+	account/mwi/parser/mwi-parser.cpp
 	account_creator/utils.cpp
 	account_creator/service.cpp
 	account_creator/main.cpp
@@ -403,6 +409,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-ldap-params.cpp
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-magic-search-cbs.cpp
+	c-wrapper/api/c-message-waiting-indication.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-info.cpp
 	c-wrapper/api/c-participant-device.cpp

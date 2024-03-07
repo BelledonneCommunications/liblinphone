@@ -58,6 +58,7 @@
 #include "linphone/api/c-ldap-params.h"
 #include "linphone/api/c-ldap.h"
 #include "linphone/api/c-magic-search.h"
+#include "linphone/api/c-message-waiting-indication.h"
 #include "linphone/api/c-nat-policy.h"
 #include "linphone/api/c-participant-device-cbs.h"
 #include "linphone/api/c-participant-device-identity.h"

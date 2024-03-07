@@ -316,6 +316,7 @@ set(SOURCE_FILES_CXX
 	remote-provisioning-tester.cpp
 	contents-tester.cpp
 	multipart-tester.cpp
+	mwi-tester.cpp
 	offeranswer_tester.cpp
 	shared_tester_functions.cpp
 	property-container-tester.cpp

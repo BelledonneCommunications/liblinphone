@@ -27,6 +27,7 @@ set(GRAMMAR_FILES
 	"${CMAKE_CURRENT_SOURCE_DIR}/cpim_grammar"
 	"${CMAKE_CURRENT_SOURCE_DIR}/ics_grammar"
 	"${CMAKE_CURRENT_SOURCE_DIR}/identity_grammar"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mwi_grammar"
 	PARENT_SCOPE
 )
 

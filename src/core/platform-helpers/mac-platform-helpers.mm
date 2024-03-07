@@ -63,6 +63,12 @@ MacPlatformHelpers::MacPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	else
 		lError() << "MacPlatformHelpers did not find identity grammar resource directory...";
 
+	string mwiPath = getResourceDirPath(Framework, "mwi_grammar");
+	if (!mwiPath.empty())
+		belr::GrammarLoader::get().addPath(mwiPath);
+	else
+		lError() << "MacPlatformHelpers did not find mwi grammar resource directory...";
+
 #ifdef VCARD_ENABLED
 	string vcardPath = getResourceDirPath("org.linphone.belcard", "vcard_grammar");
 	if (!vcardPath.empty())

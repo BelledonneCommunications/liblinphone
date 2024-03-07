@@ -219,9 +219,12 @@ class AccountCbs : public bellesip::HybridObject<LinphoneAccountCbs, AccountCbs>
 public:
 	LinphoneAccountCbsRegistrationStateChangedCb getRegistrationStateChanged() const;
 	void setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb);
+	LinphoneAccountCbsMessageWaitingIndicationChangedCb getMessageWaitingIndicationChanged() const;
+	void setMessageWaitingIndicationChanged(LinphoneAccountCbsMessageWaitingIndicationChangedCb cb);
 
 private:
 	LinphoneAccountCbsRegistrationStateChangedCb mRegistrationStateChangedCb = nullptr;
+	LinphoneAccountCbsMessageWaitingIndicationChangedCb mMessageWaitingIndicationChangedCb = nullptr;
 };
 
 class AccountLogContextualizer : public CoreLogContextualizer {

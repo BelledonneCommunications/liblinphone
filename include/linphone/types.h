@@ -222,7 +222,7 @@ typedef enum _LinphoneAccountCreatorStatus {
 	LinphoneAccountCreatorStatusRequestNotAuthorized =
 	    24, /**< Request has been denied, probably due to invalid auth token */
 	LinphoneAccountCreatorStatusRequestTooManyRequests =
-		25, /**< Request has been denied, due to too many requests sent in given period */
+	    25, /**< Request has been denied, due to too many requests sent in given period */
 } LinphoneAccountCreatorStatus;
 
 // -----------------------------------------------------------------------------
@@ -1425,4 +1425,30 @@ typedef enum _LinphoneMagicSearchAggregation {
 	LinphoneMagicSearchAggregationFriend =
 	    1 /**< Aggregation is done by friend, you will have at most a SearchResult per Friend */
 } LinphoneMagicSearchAggregation;
+
+/**
+ * @brief Enum describing the different contexts for the #LinphoneMessageWaitingIndicationSummary.
+ * @ingroup account
+ */
+typedef enum _LinphoneMessageWaitingIndicationContextClass {
+	LinphoneMessageWaitingIndicationVoice = 0,
+	LinphoneMessageWaitingIndicationFax = 1,
+	LinphoneMessageWaitingIndicationPager = 2,
+	LinphoneMessageWaitingIndicationMultimedia = 3,
+	LinphoneMessageWaitingIndicationText = 4,
+	LinphoneMessageWaitingIndicationNone = 5,
+} LinphoneMessageWaitingIndicationContextClass;
+
+/**
+ * Object representing a Message Waiting Indication.
+ * @ingroup account
+ */
+typedef struct _LinphoneMessageWaitingIndication LinphoneMessageWaitingIndication;
+
+/**
+ * Object representing the summary for a context in a Message Waiting Indication.
+ * @ingroup account
+ */
+typedef struct _LinphoneMessageWaitingIndicationSummary LinphoneMessageWaitingIndicationSummary;
+
 #endif /* LINPHONE_TYPES_H_ */

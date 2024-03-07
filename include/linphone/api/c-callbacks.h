@@ -45,6 +45,14 @@ extern "C" {
 typedef void (*LinphoneAccountCbsRegistrationStateChangedCb)(LinphoneAccount *account,
                                                              LinphoneRegistrationState state,
                                                              const char *message);
+
+/**
+ * Callback for notifying a message waiting indication change for the account.
+ * @param account #LinphoneAccount object whose message waiting indication changed. @notnil
+ * @param mwi The current #LinphoneMessageWaitingIndication. @notnil
+ */
+typedef void (*LinphoneAccountCbsMessageWaitingIndicationChangedCb)(LinphoneAccount *account,
+                                                                    const LinphoneMessageWaitingIndication *mwi);
 /**
  * @}
  **/

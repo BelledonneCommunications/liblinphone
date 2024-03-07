@@ -1,0 +1,34 @@
+message-summary = msg-status-line CRLF [msg-account CRLF] [*(msg-summary-line CRLF)] [ *opt-msg-headers ]
+
+msg-status-line  = "Messages-Waiting" HCOLON msg-status
+msg-status = "yes" / "no"
+msg-account = "Message-Account" HCOLON Account-URI
+Account-URI = 1*(Str-char)
+
+msg-summary-line = message-context-class HCOLON newmsgs SLASH oldmsgs [ LPAREN new-urgentmsgs SLASH old-urgentmsgs RPAREN ]
+
+opt-msg-headers = CRLF 1*(extension-header CRLF)
+
+message-context-class = ( "voice-message" / "fax-message" / "pager-message" / "multimedia-message" / "text-message" / "none" )
+newmsgs = msgcount
+oldmsgs = msgcount
+new-urgentmsgs = msgcount
+old-urgentmsgs  = msgcount
+msgcount = 1*DIGIT
+
+extension-header = 1*(Str-char)
+
+Str-char = VCHAR / UCS-high
+UCS-high = UTF8-multi
+UTF8-multi = %xC0-DF %x80-BF
+	/ %xE0-EF %x80-BF %x80-BF
+	/ %xF0-F7 %x80-BF %x80-BF %x80-BF
+	/ %xF8-FB %x80-BF %x80-BF %x80-BF %x80-BF
+	/ %xFC-FD %x80-BF %x80-BF %x80-BF %x80-BF %x80-BF
+
+LWS = [*WSP CRLF] 1*WSP
+SWS = [LWS]
+HCOLON = *(SP / HTAB) ":" SWS
+LPAREN = SWS "(" SWS
+RPAREN = SWS ")" SWS
+SLASH = SWS "/" SWS

@@ -108,6 +108,7 @@ set(C_API_HEADER_FILES
 	c-ldap-params.h
 	c-magic-search.h
 	c-magic-search-cbs.h
+	c-message-waiting-indication.h
 	c-nat-policy.h
 	c-participant.h
 	c-participant-info.h

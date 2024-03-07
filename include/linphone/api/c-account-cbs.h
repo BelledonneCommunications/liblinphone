@@ -86,6 +86,23 @@ linphone_account_cbs_set_registration_state_changed(LinphoneAccountCbs *cbs,
                                                     LinphoneAccountCbsRegistrationStateChangedCb cb);
 
 /**
+ * Get the message waiting indication changed callback.
+ * @param cbs #LinphoneAccountCbs object. @notnil
+ * @return The current message waiting indication changed callback.
+ */
+LINPHONE_PUBLIC LinphoneAccountCbsMessageWaitingIndicationChangedCb
+linphone_account_cbs_get_message_waiting_indication_changed(const LinphoneAccountCbs *cbs);
+
+/**
+ * Set the message waiting indication changed callback.
+ * @param cbs #LinphoneAccountCbs object. @notnil
+ * @param cb The message waiting indication changed callback to be used.
+ */
+LINPHONE_PUBLIC void
+linphone_account_cbs_set_message_waiting_indication_changed(LinphoneAccountCbs *cbs,
+                                                            LinphoneAccountCbsMessageWaitingIndicationChangedCb cb);
+
+/**
  * @}
  */
 

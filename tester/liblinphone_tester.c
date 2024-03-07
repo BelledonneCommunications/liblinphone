@@ -617,6 +617,7 @@ void liblinphone_tester_add_suites(void) {
 #ifdef CXX_WRAPPER_ENABLED
 	liblinphone_tester_add_suite_with_default_time(&wrapper_cpp_test_suite, 8);
 #endif
+	liblinphone_tester_add_suite_with_default_time(&mwi_test_suite, 0);
 }
 
 void liblinphone_tester_init(void (*ftester_printf)(int level, const char *fmt, va_list args)) {
