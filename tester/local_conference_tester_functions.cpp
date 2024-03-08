@@ -141,7 +141,8 @@ static bool are_participants_camera_streams_requested(LinphoneCoreManager *mgr, 
 		bool_t is_me = linphone_conference_is_me(conference, device_address);
 		if (!is_me) {
 			LinphoneMediaDirection thumbnail_dir = linphone_participant_device_get_thumbnail_stream_capability(d);
-			if ((thumbnail_dir == LinphoneMediaDirectionSendOnly) || (thumbnail_dir == LinphoneMediaDirectionSendRecv)) {
+			if ((thumbnail_dir == LinphoneMediaDirectionSendOnly) ||
+			    (thumbnail_dir == LinphoneMediaDirectionSendRecv)) {
 				nb_thumbnails++;
 			}
 		}
@@ -622,7 +623,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 				bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
 				bool thumbnails_requested =
 				    MediaConference::Conference::toCpp(conference)->areThumbnailsRequested(true);
-				int devices_nb = bctbx_list_size(devices);
+				size_t devices_nb = bctbx_list_size(devices);
 				video_check = (devices_nb > 0);
 				participant_check = (devices_nb > 0);
 				device_check = (devices_nb > 0);
@@ -1933,7 +1934,8 @@ void create_conference_base(time_t start_time,
 						BC_ASSERT_EQUAL(laure.getStats().number_of_participant_devices_joined,
 						                laure_stat2.number_of_participant_devices_joined, int, "%0d");
 
-						bool pauline_expected_thumbnails_requested = are_participants_camera_streams_requested(pauline.getCMgr(), paulineConference);
+						bool pauline_expected_thumbnails_requested =
+						    are_participants_camera_streams_requested(pauline.getCMgr(), paulineConference);
 						for (auto mgr : conferenceMgrs) {
 							const LinphoneAddress *uri = mgr->identity;
 							LinphoneConference *pconference =
@@ -1958,7 +1960,9 @@ void create_conference_base(time_t start_time,
 												} else {
 													expected_video_direction = LinphoneMediaDirectionRecvOnly;
 												}
-											} else if ((!pauline_expected_thumbnails_requested || (video_direction == LinphoneMediaDirectionRecvOnly)) && (layout == LinphoneConferenceLayoutGrid)) {
+											} else if ((!pauline_expected_thumbnails_requested ||
+											            (video_direction == LinphoneMediaDirectionRecvOnly)) &&
+											           (layout == LinphoneConferenceLayoutGrid)) {
 												expected_video_direction = LinphoneMediaDirectionSendOnly;
 											} else {
 												expected_video_direction = video_direction;
