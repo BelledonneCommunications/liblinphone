@@ -75,7 +75,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 30);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 31);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 1);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2419,6 +2419,7 @@ void MainDbPrivate::updateSchema() {
 
 	soci::session *session = dbSession.getBackendSession();
 	unsigned int eventsDbVersion = getModuleVersion("events");
+	lInfo() << "Event table version is " << eventsDbVersion;
 
 	if (eventsDbVersion < makeVersion(1, 0, 1))
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN state TINYINT UNSIGNED DEFAULT 0";
@@ -2838,8 +2839,6 @@ void MainDbPrivate::updateSchema() {
 	}
 
 	if (eventsDbVersion < makeVersion(1, 0, 28)) {
-		//*session << "DELETE FROM conference_info_participant p1 WHERE id IN (SELECT id FROM
-		// conference_info_participant p2 GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
 		if (backend == MainDb::Backend::Sqlite3) {
 			*session
 			    << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
@@ -2862,10 +2861,22 @@ void MainDbPrivate::updateSchema() {
 			lDebug() << "Caught exception " << e.what() << ": Column 'muted' already exists in table 'chat_room'";
 		}
 	}
+
+	if (eventsDbVersion < makeVersion(1, 0, 31)) {
+		try {
+			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Caught exception " << e.what()
+			         << ": Column 'security_level' already exists in table 'conference_info'";
+		}
+	}
+
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 
 	unsigned int friendsDbVersion = getModuleVersion("friends");
+	lInfo() << "Friends table version is " << friendsDbVersion;
+
 	if (friendsDbVersion < makeVersion(1, 0, 1)) {
 		// The sip_address_id field needs to be nullable.
 		// Do not try to copy data from the old table because it was not used before this version (use of an other
