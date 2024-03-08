@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 30);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 31);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2228,6 +2228,8 @@ void MainDbPrivate::updateSchema() {
 	soci::session *session = dbSession.getBackendSession();
 	unsigned int version = getModuleVersion("events");
 
+	lInfo() << "Event table version is " << version;
+
 	if (version < makeVersion(1, 0, 1))
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN state TINYINT UNSIGNED DEFAULT 0";
 	if (version < makeVersion(1, 0, 2)) {
@@ -2645,11 +2647,14 @@ void MainDbPrivate::updateSchema() {
 	}
 
 	if (version < makeVersion(1, 0, 28)) {
-		//*session << "DELETE FROM conference_info_participant p1 WHERE id IN (SELECT id FROM conference_info_participant p2 GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
 		if (backend == MainDb::Backend::Sqlite3) {
-			*session << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+			*session
+			    << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
+			       "GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
 		} else {
-			*session << "DELETE p1 FROM conference_info_participant p1 INNER JOIN conference_info_participant p2 WHERE p1.id < p2.id AND p1.conference_info_id = p2.conference_info_id AND p1.participant_sip_address_id = p2.participant_sip_address_id";
+			*session << "DELETE p1 FROM conference_info_participant p1 INNER JOIN conference_info_participant p2 WHERE "
+			            "p1.id < p2.id AND p1.conference_info_id = p2.conference_info_id AND "
+			            "p1.participant_sip_address_id = p2.participant_sip_address_id";
 		}
 	}
 
@@ -2658,6 +2663,15 @@ void MainDbPrivate::updateSchema() {
 			*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
 		} catch (const soci::soci_error &e) {
 			lDebug() << "Caught exception " << e.what() << ": Column 'muted' already exists in table 'chat_room'";
+		}
+	}
+
+	if (version < makeVersion(1, 0, 31)) {
+		try {
+			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
+		} catch (const soci::soci_error &e) {
+			lDebug() << "Caught exception " << e.what()
+			         << ": Column 'security_level' already exists in table 'conference_info'";
 		}
 	}
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
