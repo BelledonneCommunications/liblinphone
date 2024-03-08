@@ -27,13 +27,13 @@ import android.content.pm.ServiceInfo;
 import org.linphone.core.tools.Log;
 
 public class DeviceUtils34 {
-    public static void startCallForegroundService(Service service, int notifId, Notification notif) {
+    public static void startCallForegroundService(Service service, int notifId, Notification notif, boolean isVideoCall) {
 		try {
-			service.startForeground(
-				notifId,
-				notif,
-				ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
-			);
+			int mask = ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
+			if (isVideoCall) {
+				mask |= ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA;
+			}
+			service.startForeground(notifId, notif, mask);
 		} catch (Exception e) {
 			Log.e("[Device Utils 34] Can't start service as foreground!", e);
 		}

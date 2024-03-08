@@ -182,9 +182,9 @@ public class DeviceUtils {
 		}
 	}
 
-	public static void startCallForegroundService(Service service, int notifId, Notification notif) {
+	public static void startCallForegroundService(Service service, int notifId, Notification notif, boolean isVideoCall) {
 		if (Version.sdkAboveOrEqual(Version.API34_ANDROID_14_UPSIDE_DOWN_CAKE)) {
-			DeviceUtils34.startCallForegroundService(service, notifId, notif);
+			DeviceUtils34.startCallForegroundService(service, notifId, notif, isVideoCall);
 		} else if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
 			DeviceUtils31.startForegroundService(service, notifId, notif);
 		} else {

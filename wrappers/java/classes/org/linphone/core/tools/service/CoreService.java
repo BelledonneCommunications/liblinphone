@@ -87,13 +87,17 @@ public class CoreService extends Service {
             public void onFirstCallStarted(Core core) {
                 Log.i("[Core Service] First call started");
                 // There is only one call, service shouldn't be in foreground mode yet
-                if (!mIsInForegroundMode) {
-                    startForeground();
-                }
-
-                // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
                 Call call = core.getCurrentCall();
+                if (call == null) {
+                    call = core.getCalls()[0];
+                }
+                // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
                 if (call != null) {
+                    if (!mIsInForegroundMode) {
+                        boolean isVideoEnabled = call.getCurrentParams().isVideoEnabled();
+                        startForeground(isVideoEnabled);
+                    }
+
                     if (call.getDir() == Call.Dir.Incoming && core.isVibrationOnIncomingCallEnabled()) {
                         vibrate(call.getRemoteAddress());
                     }
@@ -198,10 +202,14 @@ public class CoreService extends Service {
 
                         if (core.getCallsNb() > 0) {
                             Log.w("[Core Service] Core listener added while at least one call active !");
-                            startForeground();
-
                             Call call = core.getCurrentCall();
+                            if (call == null) {
+                                call = core.getCalls()[0];
+                            }
                             if (call != null) {
+                                boolean isVideoEnabled = call.getCurrentParams().isVideoEnabled();
+                                startForeground(isVideoEnabled);
+
                                 // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
                                 if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
                                     vibrate(call.getRemoteAddress());
@@ -268,11 +276,11 @@ public class CoreService extends Service {
     /*
      * This method is called when the service should be started as foreground.
      */
-    public void showForegroundServiceNotification() {
+    public void showForegroundServiceNotification(boolean isVideoCall) {
         if (mServiceNotification == null) {
             createServiceNotification();
         }
-        DeviceUtils.startCallForegroundService(this, SERVICE_NOTIF_ID, mServiceNotification);
+        DeviceUtils.startCallForegroundService(this, SERVICE_NOTIF_ID, mServiceNotification, isVideoCall);
     }
 
     /*
@@ -282,9 +290,9 @@ public class CoreService extends Service {
         stopForeground(true); // True to remove the notification
     }
 
-    void startForeground() {
+    void startForeground(boolean isVideoCall) {
         Log.i("[Core Service] Starting service as foreground");
-        showForegroundServiceNotification();
+        showForegroundServiceNotification(isVideoCall);
         mIsInForegroundMode = true;
 
         if (CoreManager.isReady()) {
