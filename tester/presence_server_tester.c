@@ -59,17 +59,32 @@ static void enable_deflate_content_encoding(LinphoneCoreManager *mgr, bool_t ena
 	else linphone_config_set_string(linphone_core_get_config(lc), "sip", "handle_content_encoding", "none");
 }
 
-char *generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan) {
+char *generate_random_phone_from_dial_plan(const LinphoneDialPlan *dialPlan) {
 	char phone[64];
 	size_t i;
 	/*now with have a dialplan*/
 	for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phone) - 1); i++) {
+		if (i == strlen(linphone_dial_plan_get_international_call_prefix(dialPlan))) {
+			// check if phone does not start with international call prefix
+			if (strncmp(phone, linphone_dial_plan_get_international_call_prefix(dialPlan), i) == 0) {
+				// bad luck, restarting phone number generation
+				return generate_random_phone_from_dial_plan(dialPlan);
+			}
+		}
 		phone[i] = '0' + bctbx_random() % 10;
 	}
 	phone[i] = '\0';
 
-	return ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phone);
+	return ms_strdup_printf("%s", phone);
 }
+
+char *generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan) {
+	char *phone = generate_random_phone_from_dial_plan(dialPlan);
+	char *e164_phone = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phone);
+	bctbx_free(phone);
+	return e164_phone;
+}
+
 char *generate_random_e164_phone(void) {
 	const LinphoneDialPlan *dialPlan;
 	const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
@@ -1277,9 +1292,8 @@ static void long_term_presence_with_phone_without_sip(void) {
 		const LinphoneDialPlan *dialPlan;
 		const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
 
-		char phone[20];
+		char *phone;
 		char *e164;
-		size_t i;
 		LinphoneProxyConfig *proxy_config;
 		LinphoneFriend *friend2;
 		char *presence_contact;
@@ -1289,11 +1303,7 @@ static void long_term_presence_with_phone_without_sip(void) {
 		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan)
 			;
 		/*now with have a dialplan*/
-		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phone) - 1); i++) {
-			phone[i] = '0' + bctbx_random() % 10;
-		}
-		phone[i] = '\0';
-
+		phone = generate_random_phone_from_dial_plan(dialPlan);
 		e164 = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phone);
 
 		ms_message("Phone number is %s, e164 is %s", phone, e164);
@@ -1348,8 +1358,9 @@ static void long_term_presence_with_phone_without_sip(void) {
 		                       // f is only to avoid wrong leak detection.
 		belle_sip_object_remove_from_leak_detector((void *)genericDialPlan);
 		linphone_core_manager_destroy(pauline);
-		ms_free(e164);
-		ms_free(identity);
+		bctbx_free(e164);
+		bctbx_free(phone);
+		bctbx_free(identity);
 		linphone_core_manager_destroy(marie);
 	} else ms_warning("Test skipped, no vcard support");
 }
@@ -2425,12 +2436,6 @@ static void notify_friend_capabilities_with_alias(void) {
 	if (linphone_core_vcard_supported()) {
 		const LinphoneDialPlan *dialPlan;
 		const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
-
-		char phoneMarie[20];
-		char phoneLaure[20];
-		char *e164Marie;
-		char *e164Laure;
-		size_t i;
 		LinphoneProxyConfig *proxy_config;
 		LinphoneFriend *marieFriend;
 		LinphoneFriend *laureFriend;
@@ -2440,20 +2445,11 @@ static void notify_friend_capabilities_with_alias(void) {
 
 		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan)
 			;
-		/*now with have a dialplan*/
-		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneMarie) - 1);
-		     i++) {
-			phoneMarie[i] = '0' + bctbx_random() % 10;
-		}
-		phoneMarie[i] = '\0';
-		e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);
 
-		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneLaure) - 1);
-		     i++) {
-			phoneLaure[i] = '0' + bctbx_random() % 10;
-		}
-		phoneLaure[i] = '\0';
-		e164Laure = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneLaure);
+		char *phoneMarie = generate_random_phone_from_dial_plan(dialPlan);
+		char *e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);
+		char *phoneLaure = generate_random_phone_from_dial_plan(dialPlan);
+		char *e164Laure = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneLaure);
 
 		marie = linphone_core_manager_create2("marie_rc", e164Marie);
 		linphone_config_set_bool(linphone_core_get_config(marie->lc), "lime", "enabled", FALSE);
@@ -2516,9 +2512,11 @@ static void notify_friend_capabilities_with_alias(void) {
 		                       // f is only to avoid wrong leak detection.
 		belle_sip_object_remove_from_leak_detector((void *)genericDialPlan);
 		linphone_core_manager_destroy(pauline);
-		ms_free(e164Laure);
+		bctbx_free(e164Laure);
+		bctbx_free(phoneLaure);
 		linphone_core_manager_destroy(laure);
 		ms_free(e164Marie);
+		bctbx_free(phoneMarie);
 		linphone_core_manager_destroy(marie);
 		bctbx_list_free(lcs);
 	} else ms_warning("Test skipped, no vcard support");
@@ -2528,9 +2526,8 @@ static void notify_search_result_capabilities_with_alias(void) {
 	if (linphone_core_vcard_supported()) {
 		const LinphoneDialPlan *dialPlan;
 		const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
-		char phoneMarie[20];
+		char *phoneMarie;
 		char *e164Marie;
-		size_t i;
 		LinphoneProxyConfig *proxy_config;
 		LinphoneFriend *marieFriend;
 		LinphoneCoreManager *marie = NULL;
@@ -2540,12 +2537,7 @@ static void notify_search_result_capabilities_with_alias(void) {
 
 		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan)
 			;
-		/*now with have a dialplan*/
-		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneMarie) - 1);
-		     i++) {
-			phoneMarie[i] = '0' + bctbx_random() % 10;
-		}
-		phoneMarie[i] = '\0';
+		phoneMarie = generate_random_phone_from_dial_plan(dialPlan);
 		e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);
 
 		marie = linphone_core_manager_create2("marie_rc", e164Marie);
@@ -2605,7 +2597,9 @@ static void notify_search_result_capabilities_with_alias(void) {
 		belle_sip_object_remove_from_leak_detector((void *)genericDialPlan);
 		linphone_core_manager_destroy(pauline);
 
-		ms_free(e164Marie);
+		bctbx_free(e164Marie);
+		bctbx_free(phoneMarie);
+
 		linphone_core_manager_destroy(marie);
 		bctbx_list_free(lcs);
 	} else ms_warning("Test skipped, no vcard support");
