@@ -47,6 +47,7 @@ public:
 	FriendList(std::shared_ptr<Core> core);
 	FriendList(const FriendList &other) = delete;
 	virtual ~FriendList();
+	void release();
 
 	FriendList *clone() const override;
 
@@ -156,6 +157,7 @@ private:
 	static void
 	subscriptionStateChanged(LinphoneCore *lc, const std::shared_ptr<Event> event, LinphoneSubscriptionState state);
 #ifdef VCARD_ENABLED
+	void createCardDavContextIfNotDoneYet();
 	static void carddavCreated(const CardDAVContext *context, const std::shared_ptr<Friend> &f);
 	static void carddavDone(const CardDAVContext *context, bool success, const std::string &msg);
 	static void carddavRemoved(const CardDAVContext *context, const std::shared_ptr<Friend> &f);
@@ -178,11 +180,12 @@ private:
 	std::string mUri;
 	std::list<std::shared_ptr<Friend>> mDirtyFriendsToUpdate;
 	bctbx_list_t *mBctbxDirtyFriendsToUpdate = nullptr; // This field must be kept in sync with mDirtyFriendsToUpdate
-	int mRevision = 0;
+	int mRevision = -1;
 	bool mSubscriptionsEnabled = false;
 	bool mBodylessSubscription = false;
 	LinphoneFriendListType mType = LinphoneFriendListTypeDefault;
 	bool mStoreInDb = false;
+	CardDAVContext *mCardDavContext = nullptr;
 };
 
 class FriendListCbs : public bellesip::HybridObject<LinphoneFriendListCbs, FriendListCbs>, public Callbacks {

@@ -62,10 +62,18 @@ FriendList::~FriendList() {
 	if (mContentDigest) delete mContentDigest;
 	if (mBctbxFriends) bctbx_list_free(mBctbxFriends);
 	if (mBctbxDirtyFriendsToUpdate) bctbx_list_free(mBctbxDirtyFriendsToUpdate);
+	release();
 }
 
 FriendList *FriendList::clone() const {
 	return nullptr;
+}
+
+void FriendList::release() {
+	if (mCardDavContext) {
+		delete mCardDavContext;
+		mCardDavContext = nullptr;
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -303,6 +311,16 @@ bool FriendList::subscriptionsEnabled() const {
 
 #ifdef VCARD_ENABLED
 
+void FriendList::createCardDavContextIfNotDoneYet() {
+	if (mCardDavContext == nullptr) {
+		mCardDavContext = new CardDAVContext(getSharedFromThis());
+		mCardDavContext->setContactCreatedCallback(carddavCreated);
+		mCardDavContext->setContactRemovedCallback(carddavRemoved);
+		mCardDavContext->setContactUpdatedCallback(carddavUpdated);
+		mCardDavContext->setSynchronizationDoneCallback(carddavDone);
+	}
+}
+
 void FriendList::synchronizeFriendsFromServer() {
 	LinphoneCore *lc = getCore()->getCCore();
 
@@ -389,26 +407,21 @@ void FriendList::synchronizeFriendsFromServer() {
 		}
 
 		// CardDav synchronisation
-		CardDAVContext *context = new CardDAVContext(getSharedFromThis());
-		context->setContactCreatedCallback(carddavCreated);
-		context->setContactRemovedCallback(carddavRemoved);
-		context->setContactUpdatedCallback(carddavUpdated);
-		context->setSynchronizationDoneCallback(carddavDone);
+		createCardDavContextIfNotDoneYet();
 		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
 		                                  LinphoneFriendListSyncStarted, nullptr);
-		context->synchronize();
+		mCardDavContext->synchronize();
 	} else {
 		lError() << "Failed to create a CardDAV context for friend list [" << toC() << "] with URI [" << mUri << "]";
 	}
 }
 
 void FriendList::updateDirtyFriends() {
+	createCardDavContextIfNotDoneYet();
 	for (const auto &lf : mDirtyFriendsToUpdate) {
-		CardDAVContext *context = new CardDAVContext(getSharedFromThis());
-		context->setSynchronizationDoneCallback(carddavDone);
 		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
 		                                  LinphoneFriendListSyncStarted, nullptr);
-		context->putVcard(lf);
+		mCardDavContext->putVcard(lf);
 	}
 	mDirtyFriendsToUpdate.clear();
 	mBctbxDirtyFriendsToUpdate = bctbx_list_free(mBctbxDirtyFriendsToUpdate);
@@ -828,11 +841,10 @@ void FriendList::deleteFriend(const std::shared_ptr<Friend> &lf, bool removeFrom
 	if (removeFromServer && getType() == LinphoneFriendListTypeCardDAV) {
 		std::shared_ptr<Vcard> vcard = lf->getVcard();
 		if (vcard && !vcard->getUid().empty()) {
-			CardDAVContext *context = new CardDAVContext(getSharedFromThis());
-			context->setSynchronizationDoneCallback(carddavDone);
+			createCardDavContextIfNotDoneYet();
 			LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, this, linphone_friend_list_cbs_get_sync_status_changed,
 			                                  LinphoneFriendListSyncStarted, nullptr);
-			context->deleteVcard(lf);
+			mCardDavContext->deleteVcard(lf);
 		}
 	}
 #else
@@ -1053,7 +1065,6 @@ void FriendList::carddavDone(const CardDAVContext *context, bool success, const 
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(
 	    FriendList, context->mFriendList, linphone_friend_list_cbs_get_sync_status_changed,
 	    success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg.c_str());
-	delete context;
 }
 
 void FriendList::carddavRemoved(const CardDAVContext *context, const std::shared_ptr<Friend> &f) {

@@ -62,26 +62,44 @@ public:
 	}
 
 	// Other
-	void deleteVcard(const std::shared_ptr<Friend> &f);
 	bool isValid() const {
 		return mFriendList != nullptr;
 	}
+
+	void deleteVcard(const std::shared_ptr<Friend> &f);
 	void putVcard(const std::shared_ptr<Friend> &f);
 	void synchronize();
 
 private:
 	void clientToServerSyncDone(bool success, const std::string &msg);
-	void ctagRetrieved(int ctag);
+
+	void userPrincipalUrlRetrieved(std::string principalUrl);
+	void userAddressBookHomeUrlRetrieved(std::string addressBookHomeUrl);
+	void addressBookUrlAndCtagRetrieved(const std::list<CardDAVResponse> &list);
+	void addressBookCtagRetrieved(int ctag);
+
+	void setSchemeAndHostIfNotDoneYet(CardDAVQuery *query);
+	void processRedirect(CardDAVQuery *query, belle_sip_message_t *message);
+
 	void fetchVcards();
 	void pullVcards(const std::list<CardDAVResponse> &list);
-	void retrieveCurrentCtag();
+
+	void queryWellKnown(CardDAVQuery *query);
+	void retrieveUserPrincipalUrl();
+	void retrieveUserAddressBooksHomeUrl();
+	void retrieveAddressBookUrlAndCtag();
+	void retrieveAddressBookCtag();
+
 	void sendQuery(CardDAVQuery *query);
 	void serverToClientSyncDone(bool success, const std::string &msg);
 	void vcardsFetched(const std::list<CardDAVResponse> &vCards);
 	void vcardsPulled(const std::list<CardDAVResponse> &vCards);
 
 	static std::string generateUrlFromServerAddressAndUid(const std::string &serverUrl);
-	static int parseCtagValueFromXmlResponse(const std::string &body);
+	static std::string parseUserPrincipalUrlValueFromXmlResponse(const std::string &body);
+	static std::string parseUserAddressBookUrlValueFromXmlResponse(const std::string &body);
+	static std::list<CardDAVResponse> parseAddressBookUrlAndCtagValueFromXmlResponse(const std::string &body);
+	static int parseAddressBookCtagValueFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseVcardsEtagsFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseVcardsFromXmlResponse(const std::string &body);
 	static void processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event);
@@ -89,7 +107,12 @@ private:
 	static void processResponseFromCarddavRequest(void *data, const belle_http_response_event_t *event);
 
 	std::shared_ptr<FriendList> mFriendList = nullptr;
-	int mCtag;
+	int mCtag = -1;
+	std::string mSyncUri = "";
+	std::string mScheme = "http";
+	std::string mHost = "";
+	bool mWellKnownQueried = true;
+
 	std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> mContactCreatedCb = nullptr;
 	std::function<void(const CardDAVContext *context, const std::shared_ptr<Friend> &f)> mContactRemovedCb = nullptr;
 	std::function<void(const CardDAVContext *context,

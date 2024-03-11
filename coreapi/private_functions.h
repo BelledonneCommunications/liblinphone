@@ -227,6 +227,7 @@ LINPHONE_PUBLIC int linphone_core_friends_storage_resync_friends_lists(LinphoneC
 LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list,
                                                                             LinphoneFriend *lf,
                                                                             bool_t synchronize);
+void linphone_friend_list_release(LinphoneFriendList *friend_list);
 LinphoneFriendCbs *linphone_friend_cbs_new(void);
 LinphoneFriendListCbs *linphone_friend_list_cbs_new(void);
 void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);

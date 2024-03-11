@@ -7810,7 +7810,7 @@ static void codecs_config_uninit(LinphoneCore *lc) {
 
 void friends_config_uninit(LinphoneCore *lc) {
 	ms_message("Destroying friends.");
-	lc->friends_lists = bctbx_list_free_with_data(lc->friends_lists, (void (*)(void *))linphone_friend_list_unref);
+	lc->friends_lists = bctbx_list_free_with_data(lc->friends_lists, (void (*)(void *))linphone_friend_list_release);
 	if (lc->subscribers) {
 		lc->subscribers = bctbx_list_free_with_data(lc->subscribers, (void (*)(void *))linphone_friend_release);
 	}

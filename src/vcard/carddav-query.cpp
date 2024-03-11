@@ -64,7 +64,7 @@ CardDAVQuery *CardDAVQuery::createAddressbookMultigetQuery(CardDAVContext *conte
 	CardDAVQuery *query = new CardDAVQuery(context);
 	query->mDepth = "1";
 	query->mMethod = "REPORT";
-	query->mUrl = context->mFriendList->getUri();
+	query->mUrl = context->mSyncUri;
 	query->mType = Type::AddressbookMultiget;
 	std::stringstream ssBody;
 	ssBody << "<card:addressbook-multiget xmlns:d=\"DAV:\" "
@@ -84,7 +84,7 @@ CardDAVQuery *CardDAVQuery::createAddressbookQuery(CardDAVContext *context) {
 	    "<card:addressbook-query xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\"><d:prop><d:getetag "
 	    "/></d:prop><card:filter></card:filter></card:addressbook-query>";
 	query->mMethod = "REPORT";
-	query->mUrl = context->mFriendList->getUri();
+	query->mUrl = context->mSyncUri;
 	query->mType = Type::AddressbookQuery;
 	return query;
 }
@@ -98,14 +98,51 @@ CardDAVQuery *CardDAVQuery::createDeleteQuery(CardDAVContext *context, const std
 	return query;
 }
 
-CardDAVQuery *CardDAVQuery::createPropfindQuery(CardDAVContext *context) {
+CardDAVQuery *CardDAVQuery::createUserPrincipalPropfindQuery(CardDAVContext *context) {
 	CardDAVQuery *query = new CardDAVQuery(context);
 	query->mDepth = "0";
+	query->mBody = "<d:propfind xmlns:d=\"DAV:\"><d:prop><d:current-user-principal /></d:prop></d:propfind>";
+	query->mMethod = "PROPFIND";
+	query->mUrl = context->mSyncUri;
+	query->mType = Type::Propfind;
+	query->mPropfindType = PropfindType::UserPrincipal;
+	return query;
+}
+
+CardDAVQuery *CardDAVQuery::createUserAddressBookPropfindQuery(CardDAVContext *context) {
+	CardDAVQuery *query = new CardDAVQuery(context);
+	query->mDepth = "0";
+	query->mBody =
+	    "<d:propfind xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\"><d:prop><card:addressbook-home-set "
+	    "/></d:prop></d:propfind>";
+	query->mMethod = "PROPFIND";
+	query->mUrl = context->mSyncUri;
+	query->mType = Type::Propfind;
+	query->mPropfindType = PropfindType::UserAddressBooksHome;
+	return query;
+}
+
+CardDAVQuery *CardDAVQuery::createAddressBookUrlAndCtagPropfindQuery(CardDAVContext *context) {
+	CardDAVQuery *query = new CardDAVQuery(context);
+	query->mDepth = "1"; // This PROPFIND must have Depth 1!
+	query->mBody = "<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\"><d:prop><d:resourcetype "
+	               "/><d:displayname /><cs:getctag /></d:prop></d:propfind>";
+	query->mMethod = "PROPFIND";
+	query->mUrl = context->mSyncUri;
+	query->mType = Type::Propfind;
+	query->mPropfindType = PropfindType::AddressBookUrlAndCTAG;
+	return query;
+}
+
+CardDAVQuery *CardDAVQuery::createAddressBookCtagPropfindQuery(CardDAVContext *context) {
+	CardDAVQuery *query = new CardDAVQuery(context);
+	query->mDepth = "1"; // This PROPFIND must have Depth 1!
 	query->mBody = "<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\"><d:prop><cs:getctag "
 	               "/></d:prop></d:propfind>";
 	query->mMethod = "PROPFIND";
-	query->mUrl = context->mFriendList->getUri();
+	query->mUrl = context->mSyncUri;
 	query->mType = Type::Propfind;
+	query->mPropfindType = PropfindType::AddressBookCTAG;
 	return query;
 }
 

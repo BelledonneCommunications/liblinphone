@@ -34,6 +34,7 @@ class Vcard;
 class CardDAVQuery : public UserDataAccessor {
 public:
 	enum class Type { Propfind, AddressbookQuery, AddressbookMultiget, Put, Delete };
+	enum class PropfindType { UserPrincipal, UserAddressBooksHome, AddressBookUrlAndCTAG, AddressBookCTAG };
 
 	CardDAVQuery(CardDAVContext *context);
 	CardDAVQuery(const CardDAVQuery &other) = delete;
@@ -44,11 +45,14 @@ public:
 
 	bool isClientToServerSync() const;
 
+	static CardDAVQuery *createUserPrincipalPropfindQuery(CardDAVContext *context);
+	static CardDAVQuery *createUserAddressBookPropfindQuery(CardDAVContext *context);
+	static CardDAVQuery *createAddressBookUrlAndCtagPropfindQuery(CardDAVContext *context);
+	static CardDAVQuery *createAddressBookCtagPropfindQuery(CardDAVContext *context);
+	static CardDAVQuery *createAddressbookQuery(CardDAVContext *context);
 	static CardDAVQuery *createAddressbookMultigetQuery(CardDAVContext *context,
 	                                                    const std::list<CardDAVResponse> &list);
-	static CardDAVQuery *createAddressbookQuery(CardDAVContext *context);
 	static CardDAVQuery *createDeleteQuery(CardDAVContext *context, const std::shared_ptr<Vcard> &vcard);
-	static CardDAVQuery *createPropfindQuery(CardDAVContext *context);
 	static CardDAVQuery *createPutQuery(CardDAVContext *context, const std::shared_ptr<Vcard> &vcard);
 
 private:
@@ -59,6 +63,7 @@ private:
 	std::string mBody;
 	std::string mDepth;
 	std::string mIfmatch;
+	PropfindType mPropfindType;
 	belle_http_request_listener_t *mHttpRequestListener = nullptr;
 };
 

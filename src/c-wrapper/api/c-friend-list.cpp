@@ -41,6 +41,11 @@ LinphoneFriendListCbs *linphone_friend_list_cbs_new(void) {
 	return FriendListCbs::createCObject();
 }
 
+void linphone_friend_list_release(LinphoneFriendList *friend_list) {
+	FriendList::toCpp(friend_list)->release();
+	linphone_friend_list_unref(friend_list);
+}
+
 void linphone_friend_list_add_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs) {
 	FriendList::toCpp(friend_list)->addCallbacks(FriendListCbs::toCpp(cbs)->getSharedFromThis());
 }
