@@ -1895,12 +1895,13 @@ static void transfer_message_upload_cancelled(void) {
 
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
-		
+
 		// Resend message
 		linphone_chat_message_send(msg);
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc,
 		                              &pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 10000));
-
+		BC_ASSERT_TRUE(
+		    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 10000));
 
 		// When C pointer is unreffed first, callbacks will be removed,
 		// potentially during file upload causing issue in FileTransferChatMessageModifier::onSendBody
@@ -2128,6 +2129,8 @@ static void file_transfer_2_messages_simultaneously(void) {
 		msg2 = _create_message_from_sintel_trailer(pauline_room, TRUE, "sounds/sintel_trailer_opus_h264.mkv",
 		                                           "sintel_trailer_opus_h264.mkv");
 
+		// Check that Marie has no active chat rooms with Pauline.
+		// This assert might fail if a previous test didn't clean all its contexts or wait for a message to be sent
 		bctbx_list_t *chat_rooms = linphone_account_get_chat_rooms(linphone_core_get_default_account(marie->lc));
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(chat_rooms), 0, unsigned int, "%u");
 		if (bctbx_list_size(chat_rooms) == 0) {
