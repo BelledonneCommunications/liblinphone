@@ -890,23 +890,33 @@ void ClientGroupChatRoom::exhume() {
 void ClientGroupChatRoomPrivate::sendChatMessage(const shared_ptr<ChatMessage> &chatMessage) {
 	L_Q();
 	const auto &conference = q->getConference();
+	const auto &conferenceId = conference->getConferenceId();
 
 	if (q->getState() == ConferenceInterface::State::Terminated &&
 	    (capabilities & ClientGroupChatRoom::Capabilities::OneToOne)) {
-		lInfo() << "Trying to send message into a terminated 1-1 chat room [" << conference->getConferenceId()
-		        << "], exhuming it first";
+		lInfo() << "Trying to send message into a terminated 1-1 chat room [" << conferenceId << "], exhuming it first";
 		q->exhume();
-
 		auto it = std::find(pendingExhumeMessages.begin(), pendingExhumeMessages.end(), chatMessage);
 		if (it == pendingExhumeMessages.end()) pendingExhumeMessages.push_back(chatMessage);
 	} else if (q->getState() == ConferenceInterface::State::Instantiated ||
 	           q->getState() == ConferenceInterface::State::CreationPending) {
-		lInfo() << "Trying to send a message [" << chatMessage
-		        << "] in a chat room that's not created yet, queuing the message and it will be sent later";
+		lInfo() << "Trying to send a message [" << chatMessage << "] in chat room " << q << " [" << conferenceId
+		        << "] that's not created yet, queuing the message and it will be sent later";
 		auto it = std::find(pendingCreationMessages.begin(), pendingCreationMessages.end(), chatMessage);
 		if (it == pendingCreationMessages.end()) pendingCreationMessages.push_back(chatMessage);
 	} else if (q->getState() == ConferenceInterface::State::Created) {
-		ChatRoomPrivate::sendChatMessage(chatMessage);
+		auto encryptionEngine = q->getCore()->getEncryptionEngine();
+		if (params->isEncrypted() && encryptionEngine && encryptionEngine->participantListRequired() &&
+		    conference->getParticipants().empty()) {
+			lInfo() << "Delaying sending of message [" << chatMessage << "] in the encrypted chat room " << q << " ["
+			        << conferenceId
+			        << "] because the list of participants has not been received yet and the encryption engine "
+			        << encryptionEngine << " required it";
+			auto it = std::find(pendingCreationMessages.begin(), pendingCreationMessages.end(), chatMessage);
+			if (it == pendingCreationMessages.end()) pendingCreationMessages.push_back(chatMessage);
+		} else {
+			ChatRoomPrivate::sendChatMessage(chatMessage);
+		}
 	} else {
 		lError() << "Can't send a chat message in a chat room that is in state " << q->getState();
 	}

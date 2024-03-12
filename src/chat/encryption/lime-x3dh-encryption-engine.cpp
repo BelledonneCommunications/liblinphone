@@ -1147,4 +1147,7 @@ void LimeX3dhEncryptionEngine::createLimeUser(shared_ptr<Account> &account, cons
 	}
 }
 
+bool LimeX3dhEncryptionEngine::participantListRequired() const {
+	return true;
+}
 LINPHONE_END_NAMESPACE

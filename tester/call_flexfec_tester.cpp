@@ -123,7 +123,11 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
 	if (vstream->ms.fec_stream) {
 		stats = fec_stream_get_stats(vstream->ms.fec_stream);
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &stats->packets_recovered, 50, 15000));
+		int expected_recovered_packets = 50;
+		BC_ASSERT_TRUE(
+		    wait_for_until(marie->lc, pauline->lc, &stats->packets_recovered, expected_recovered_packets, 15000));
+		ms_message("%s recovered %0d packets. The expected value is %0d", linphone_core_get_identity(marie->lc),
+		           stats->packets_recovered, expected_recovered_packets);
 	}
 	end_call(marie, pauline);
 

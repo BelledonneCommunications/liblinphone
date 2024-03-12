@@ -142,6 +142,8 @@ public:
 
 	void createLimeUser(std::shared_ptr<Account> &account, const std::string &gruu) override;
 
+	bool participantListRequired() const override;
+
 private:
 	void update(const std::string localDeviceId);
 	std::shared_ptr<LimeManager> limeManager;

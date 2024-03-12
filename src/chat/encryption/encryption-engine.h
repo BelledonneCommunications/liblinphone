@@ -167,6 +167,10 @@ public:
 	virtual void createLimeUser(BCTBX_UNUSED(std::shared_ptr<Account> &account),
 	                            BCTBX_UNUSED(const std::string &gruu)){};
 
+	virtual bool participantListRequired() const {
+		return false;
+	}
+
 protected:
 	EncryptionEngine(const std::shared_ptr<Core> &core) : CoreAccessor(core) {
 	}
