@@ -282,9 +282,12 @@ static void core_init_test_3(void) {
 }
 
 static void core_init_test_4(void) {
-	// Don't use a RC file used by other tests, it will be edited !!!
+	// Copy the RC file into a writable directory since it will be edited
 	char *rc_path = bc_tester_res("rcfiles/lise_rc");
-	LinphoneCore *lc = linphone_factory_create_core_3(linphone_factory_get(), rc_path, NULL, system_context);
+	char *writable_rc_path = liblinphone_tester_make_unique_file_path("lise", "rc");
+	BC_ASSERT_FALSE(liblinphone_tester_copy_file(rc_path, writable_rc_path));
+
+	LinphoneCore *lc = linphone_factory_create_core_3(linphone_factory_get(), writable_rc_path, NULL, system_context);
 
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		linphone_config_set_int(linphone_core_get_config(lc), "lime", "enabled", 0);
@@ -306,7 +309,9 @@ static void core_init_test_4(void) {
 		linphone_core_unref(lc);
 	}
 
-	ms_free(rc_path);
+	unlink(writable_rc_path);
+	bctbx_free(writable_rc_path);
+	bctbx_free(rc_path);
 }
 
 static void core_init_stop_test(void) {
