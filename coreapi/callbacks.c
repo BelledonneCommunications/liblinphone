@@ -214,17 +214,26 @@ static void call_received(SalCallOp *h) {
 		if (linphone_core_conference_server_enabled(lc)) {
 			shared_ptr<MediaConference::Conference> conference =
 			    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(to, to));
-			const auto &remoteMd = h->getRemoteMediaDescription();
-			const auto times = remoteMd->times;
-			time_t startTime = -1;
-			time_t endTime = -1;
-			if (times.size() > 0) {
-				startTime = times.front().first;
-				endTime = times.front().second;
-			}
 
 			std::shared_ptr<MediaConference::LocalConference> localConference = nullptr;
-			if (!conference) {
+			if (conference) {
+				const auto &remoteMd = h->getRemoteMediaDescription();
+				if (remoteMd) {
+					const auto times = remoteMd->times;
+					time_t startTime = -1;
+					time_t endTime = -1;
+					if (times.size() > 0) {
+						startTime = times.front().first;
+						endTime = times.front().second;
+					}
+
+					if ((startTime != -1) || (endTime != -1)) {
+						// If start time or end time is not -1, then the client wants to update the conference
+						localConference = static_pointer_cast<MediaConference::LocalConference>(conference);
+						localConference->updateConferenceInformation(h);
+					}
+				}
+			} else {
 #ifdef HAVE_DB_STORAGE
 				std::shared_ptr<ConferenceInfo> confInfo =
 				    L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized()
@@ -259,10 +268,6 @@ static void call_received(SalCallOp *h) {
 						return;
 					}
 				}
-			} else if ((startTime != -1) || (endTime != -1)) {
-				// If start time or end time is not -1, then the client wants to update the conference
-				localConference = static_pointer_cast<MediaConference::LocalConference>(conference);
-				localConference->updateConferenceInformation(h);
 			}
 		}
 	}
