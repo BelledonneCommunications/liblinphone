@@ -249,7 +249,7 @@ bool Content::isMultipart() const {
 }
 
 bool Content::isValid() const {
-	return mContentType.isValid() || (mContentType.isEmpty() && mBody.empty());
+	return mContentType.isValid() || (!mBody.empty());
 }
 
 bool Content::isFile() const {

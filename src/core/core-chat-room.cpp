@@ -240,6 +240,10 @@ CorePrivate::searchChatRoom(const shared_ptr<ChatRoomParams> &params,
                             const std::shared_ptr<const Address> &localAddress,
                             const std::shared_ptr<const Address> &remoteAddress,
                             const std::list<std::shared_ptr<Address>> &participants) const {
+	const auto localAddressWithoutGruu =
+	    (localAddress && localAddress->isValid()) ? localAddress->getUriWithoutGruu() : Address();
+	const auto remoteAddressWithoutGruu =
+	    (remoteAddress && remoteAddress->isValid()) ? remoteAddress->getUriWithoutGruu() : Address();
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		if (params) {
@@ -259,14 +263,12 @@ CorePrivate::searchChatRoom(const shared_ptr<ChatRoomParams> &params,
 		}
 
 		std::shared_ptr<Address> curLocalAddress = chatRoom->getLocalAddress();
-		const auto localAddressWithoutGruu =
-		    (localAddress && localAddress->isValid()) ? localAddress->getUriWithoutGruu() : Address();
+
 		const auto curLocalAddressWithoutGruu = curLocalAddress->getUriWithoutGruu();
 		if (localAddressWithoutGruu.isValid() && (localAddressWithoutGruu != curLocalAddressWithoutGruu)) continue;
 
 		std::shared_ptr<Address> curRemoteAddress = chatRoom->getPeerAddress();
-		const auto remoteAddressWithoutGruu =
-		    (remoteAddress && remoteAddress->isValid()) ? remoteAddress->getUriWithoutGruu() : Address();
+
 		const auto curRemoteAddressWithoutGruu = curRemoteAddress->getUriWithoutGruu();
 		if (remoteAddressWithoutGruu.isValid() && (remoteAddressWithoutGruu != curRemoteAddressWithoutGruu)) continue;
 

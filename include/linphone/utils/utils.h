@@ -24,6 +24,7 @@
 #include <ctime>
 #include <list>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -262,6 +263,7 @@ LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const s
 std::string getSipFragAddress(const Content &content);
 std::string getResourceLists(const std::list<std::shared_ptr<Address>> &addresses);
 ConferenceInfo::participant_list_t parseResourceLists(const Content &content);
+ConferenceInfo::participant_list_t parseResourceLists(std::optional<std::reference_wrapper<const Content>> content);
 std::shared_ptr<ConferenceInfo> createConferenceInfoFromOp(SalCallOp *op, bool remote);
 std::string computeHa1ForAlgorithm(const std::string &userId,
                                    const std::string &password,

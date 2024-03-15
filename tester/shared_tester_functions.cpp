@@ -900,3 +900,10 @@ void check_chat_message_properties(LinphoneChatMessage *msg) {
 		BC_ASSERT_TRUE(contentList.isValid());
 	}
 }
+
+const char *_linphone_call_get_local_rtp_address(const LinphoneCall *call) {
+	return _linphone_call_get_local_desc(call)->getConnectionAddress().c_str();
+}
+const char *_linphone_call_get_remote_rtp_address(const LinphoneCall *call) {
+	return _linphone_call_get_remote_desc(call)->getConnectionAddress().c_str();
+}

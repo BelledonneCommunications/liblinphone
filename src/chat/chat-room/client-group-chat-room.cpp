@@ -191,7 +191,7 @@ void ClientGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 	if (!previousSession && !found) {
 		q->setState(ConferenceInterface::State::CreationPending);
 		// Handle participants addition
-		const auto participantList = Utils::parseResourceLists(op->getRemoteBody());
+		const auto participantList = Utils::parseResourceLists(op->getContentInRemote(ContentType::ResourceLists));
 		for (const auto &participantInfo : participantList) {
 			const auto &address = participantInfo->getAddress();
 			auto participant = q->findParticipant(address);
