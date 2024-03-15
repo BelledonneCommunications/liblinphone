@@ -117,7 +117,8 @@ public:
 		return localDesc;
 	}
 	std::shared_ptr<SalMediaDescription> getRemoteDesc() const {
-		return streamsGroup->getCurrentOfferAnswerContext().remoteMediaDescription;
+		auto md = op->getRemoteMediaDescription();
+		return md ? md : streamsGroup->getCurrentOfferAnswerContext().remoteMediaDescription;
 	}
 
 	int setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoSuite suite, unsigned int tag);

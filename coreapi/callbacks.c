@@ -156,7 +156,8 @@ static void call_received(SalCallOp *h) {
 						return;
 					}
 					std::shared_ptr<Address> fromOp = Address::create(h->getFrom());
-					const auto participantList = Utils::parseResourceLists(h->getRemoteBody());
+					const auto participantList =
+					    Utils::parseResourceLists(h->getContentInRemote(ContentType::ResourceLists));
 					if (participantList.size() != 1) {
 						h->decline(SalReasonNotAcceptable);
 						h->release();
@@ -195,7 +196,8 @@ static void call_received(SalCallOp *h) {
 
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
-				const auto participantList = Utils::parseResourceLists(h->getRemoteBody());
+				const auto participantList =
+				    Utils::parseResourceLists(h->getContentInRemote(ContentType::ResourceLists));
 				if (participantList.size() == 1) {
 					const auto &participant = (*participantList.begin())->getAddress();
 					shared_ptr<AbstractChatRoom> chatRoom =
@@ -221,9 +223,12 @@ static void call_received(SalCallOp *h) {
 				chatRoom.reset();
 			}
 			if (!chatRoom) {
+				auto resourceListContent = h->getContentInRemote(ContentType::ResourceLists);
+				Content rl;
+				if (resourceListContent) rl = resourceListContent.value().get();
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
-				    h->getSubject(), ConferenceId(LinphonePrivate::Address::create(h->getRemoteContact()), to),
-				    h->getRemoteBody(), endToEndEncrypted == "true",
+				    h->getSubject(), ConferenceId(LinphonePrivate::Address::create(h->getRemoteContact()), to), rl,
+				    endToEndEncrypted == "true",
 				    ((ephemerable == "true") && (!ephemeralLifeTime.empty()))
 				        ? AbstractChatRoom::EphemeralMode::AdminManaged
 				        : AbstractChatRoom::EphemeralMode::DeviceManaged,

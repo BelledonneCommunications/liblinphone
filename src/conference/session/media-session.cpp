@@ -132,6 +132,7 @@ LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() cons
 	switch (state) {
 		case CallSession::State::Idle:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingProgress:
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
@@ -1334,6 +1335,7 @@ const std::string &MediaSessionPrivate::getMediaLocalIp() const {
 	bool preferIpv6 =
 	    !!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "prefer_ipv6", TRUE);
 	if (!preferIpv6) lInfo() << "rtp/prefer_ipv6 set to false.";
+	preferIpv6 = preferIpv6 && linphone_core_ipv6_enabled(q->getCore()->getCCore());
 
 	// Incoming SDP (if available) is the most accurate choice for guessing an appropriate local ip address
 	ip = getLocalIpFromMedia();
@@ -2652,7 +2654,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer,
 		}
 	}
 	forceStreamsDirAccordingToState(md);
-	if (op) op->setLocalMediaDescription(localDesc);
+	lInfo() << "makeLocalMediaDescription: address = " << localDesc->addr;
+	if (op) {
+		lInfo() << "Local media description assigned to op " << op;
+		op->setLocalMediaDescription(localDesc);
+	}
 }
 
 int MediaSessionPrivate::setupEncryptionKey(SalSrtpCryptoAlgo &crypto, MSCryptoSuite suite, unsigned int tag) {
@@ -4081,7 +4087,8 @@ ConferenceLayout MediaSession::computeConferenceLayout(const std::shared_ptr<Sal
 			layout = params->getConferenceVideoLayout();
 		} else {
 			layout = ConferenceLayout::ActiveSpeaker;
-			lDebug() << "Unable to deduce layout from media description " << md << " - Default it to: " << Utils::toString(layout);
+			lDebug() << "Unable to deduce layout from media description " << md
+			         << " - Default it to: " << Utils::toString(layout);
 		}
 	}
 	return layout;
@@ -4173,14 +4180,11 @@ void MediaSession::configure(LinphoneCallDir direction,
                              const std::shared_ptr<const Address> &from,
                              const std::shared_ptr<const Address> &to) {
 	L_D();
-	bool makeLocalDescription = true;
-	bool isOfferer = true;
 	std::shared_ptr<Address> remote;
 
 	CallSession::configure(direction, account, op, from, to);
 
 	if (direction == LinphoneCallOutgoing) {
-		isOfferer = makeLocalDescription = !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		remote = to->clone()->toSharedPtr();
 	} else if (direction == LinphoneCallIncoming) {
 		/* Note that the choice of IP version for streams is later refined by setCompatibleIncomingCallParams() when
@@ -4191,7 +4195,6 @@ void MediaSession::configure(LinphoneCallDir direction,
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 		d->initializeParamsAccordingToIncomingCallParams();
-		isOfferer = op->getRemoteMediaDescription() ? false : true;
 		/* For incoming calls, the bundle enablement is set according to remote call params and core's policy,
 		 * in fixCallParams() */
 	}
@@ -4230,11 +4233,6 @@ void MediaSession::configure(LinphoneCallDir direction,
 
 	if (d->natPolicy) d->runStunTestsIfNeeded();
 	d->discoverMtu(remote);
-
-	if (makeLocalDescription) {
-		/* Do not make a local media description when sending an empty INVITE. */
-		d->makeLocalMediaDescription(isOfferer, isCapabilityNegotiationEnabled(), false);
-	}
 }
 
 LinphoneStatus MediaSession::deferUpdate() {
@@ -4255,6 +4253,9 @@ LinphoneStatus MediaSession::deferUpdate() {
 void MediaSession::initiateIncoming() {
 	L_D();
 	CallSession::initiateIncoming();
+
+	bool isOfferer = d->op->getRemoteMediaDescription() ? false : true;
+	d->makeLocalMediaDescription(isOfferer, isCapabilityNegotiationEnabled(), false);
 
 	if (d->natPolicy && d->natPolicy->iceEnabled()) {
 		d->deferIncomingNotification = d->getStreamsGroup().prepare();
@@ -4282,6 +4283,12 @@ void MediaSession::initiateIncoming() {
 bool MediaSession::initiateOutgoing(const string &subject, const std::shared_ptr<const Content> content) {
 	L_D();
 	bool defer = CallSession::initiateOutgoing(subject, content);
+
+	if (!d->op) d->createOp();
+	if (!getCore()->getCCore()->sip_conf.sdp_200_ack) {
+		d->makeLocalMediaDescription(true, isCapabilityNegotiationEnabled(), false);
+		lInfo() << "Created local media description.";
+	}
 
 	if (d->natPolicy && d->natPolicy->iceEnabled()) {
 		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
@@ -5259,10 +5266,10 @@ const MediaSessionParams *MediaSession::getRemoteParams() const {
 			const char *supported = params->getCustomHeader("supported");
 			params->enableRecordAware(supported && strstr(supported, "record-aware"));
 		}
-		const list<Content> &additionnalContents = d->op->getAdditionalRemoteBodies();
+		const list<Content> &additionnalContents = d->op->getRemoteBodies();
 		for (auto &content : additionnalContents) {
 			if (!params) params = new MediaSessionParams();
-			params->addCustomContent(Content::create(content));
+			if (content.getContentType() != ContentType::Sdp) params->addCustomContent(Content::create(content));
 		}
 		d->setRemoteParams(params);
 		if (!params) {

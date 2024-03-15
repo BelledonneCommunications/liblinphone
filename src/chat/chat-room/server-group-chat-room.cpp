@@ -338,7 +338,7 @@ void ServerGroupChatRoomPrivate::confirmJoining(SalCallOp *op) {
 		// In protocol < 1.1, one to one chatroom can be resurected by a participant, but the participant actually never
 		// leaves from server's standpoint.
 		if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne) &&
-		    op->getRemoteBody().getContentType() == ContentType::ResourceLists) {
+		    op->isContentInRemote(ContentType::ResourceLists)) {
 			lError() << q << "Receiving ressource list body while not in creation step.";
 			op->decline(SalReasonNotAcceptable);
 			return;
@@ -637,7 +637,7 @@ void ServerGroupChatRoomPrivate::unSubscribeRegistrationForParticipant(const std
 bool ServerGroupChatRoomPrivate::initializeParticipants(const shared_ptr<Participant> &initiator, SalCallOp *op) {
 	handleSubjectChange(op);
 	// Handle participants addition
-	const auto participantList = Utils::parseResourceLists(op->getRemoteBody());
+	const auto participantList = Utils::parseResourceLists(op->getContentInRemote(ContentType::ResourceLists));
 	std::list<std::shared_ptr<Address>> identAddresses;
 	// DO not try to add participants with invalid address
 	for (auto it = participantList.begin(); it != participantList.end(); ++it) {

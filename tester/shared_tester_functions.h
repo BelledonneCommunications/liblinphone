@@ -68,6 +68,9 @@ bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantD
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice *participant_device);
 bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice *participant_device);
 
+const char *_linphone_call_get_local_rtp_address(const LinphoneCall *call);
+const char *_linphone_call_get_remote_rtp_address(const LinphoneCall *call);
+
 bool_t linphone_conference_type_is_full_state(const char *text);
 void check_video_conference(bctbx_list_t *lcs,
                             LinphoneCoreManager *lc1,

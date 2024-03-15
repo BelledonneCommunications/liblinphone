@@ -443,8 +443,9 @@ LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const Li
 	const auto &state = mSession->getState();
 	const auto &sessionNotEstablished =
 	    (state == CallSession::State::Idle) || (state == CallSession::State::IncomingReceived) ||
-	    (state == CallSession::State::OutgoingProgress) || (state == CallSession::State::OutgoingRinging) ||
-	    (state == CallSession::State::OutgoingEarlyMedia) || (state == CallSession::State::PushIncomingReceived);
+	    (state == CallSession::State::OutgoingInit) || (state == CallSession::State::OutgoingProgress) ||
+	    (state == CallSession::State::OutgoingRinging) || (state == CallSession::State::OutgoingEarlyMedia) ||
+	    (state == CallSession::State::PushIncomingReceived);
 
 	const MediaSessionParams *participantParams = nullptr;
 	auto isInLocalConference = false;

@@ -143,7 +143,7 @@ void CallSessionPrivate::setState(CallSession::State newState, const string &mes
 								const auto dialout = conference && (conference->getCurrentParams().getJoiningMode() ==
 								                                    ConferenceParams::JoiningMode::DialOut);
 								if (conference &&
-								    (resourceList.isEmpty() ||
+								    (!resourceList ||
 								     ((conference->getOrganizer()->weakEqual(*(q->getRemoteAddress()))) && dialout))) {
 									conference->addParticipant(call);
 								} else {
@@ -1112,8 +1112,15 @@ void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 	        << "] is going to have a new INVITE one in order to recover from lost connectivity; with Replaces header:"
 	        << (withReplaces ? "yes" : "no");
 
-	// Restore INVITE body if any, for example while creating a chat room
-	auto content = Content::create(op->getLocalBody());
+	// FIXME: startInvite shall() accept a list of bodies.
+	// Since it is not the case, we can only re-use the first one.
+	const list<Content> &contents = op->getLocalBodies();
+	shared_ptr<Content> contentToRestore;
+
+	if (!contents.empty()) {
+		contentToRestore = (new Content(contents.front()))->toSharedPtr();
+	}
+
 	string callId = op->getCallId();
 	string fromTag = op->getLocalTag();
 	string toTag = op->getRemoteTag();
@@ -1122,8 +1129,11 @@ void CallSessionPrivate::repairByNewInvite(bool withReplaces) {
 	createOp();
 	if (withReplaces) {
 		op->setReplaces(callId.c_str(), fromTag, toTag.empty() ? "0" : toTag);
-	}                                          // empty tag is set to 0 as defined by rfc3891
-	q->startInvite(nullptr, subject, content); // Don't forget to set subject from call-session (and not from OP)
+	} // empty tag is set to 0 as defined by rfc3891
+	// We have to re-create the local media description because the media local IP may have change, so go throug
+	// initiateOutgoing();
+	bool defer = q->initiateOutgoing(subject, nullptr);
+	if (!defer) q->startInvite(nullptr, subject, contentToRestore);
 }
 
 void CallSessionPrivate::refreshContactAddress() {
@@ -1634,13 +1644,14 @@ int CallSession::startInvite(const std::shared_ptr<Address> &destination,
 	}
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
+	d->op->setLocalBodies({});
 	if (content) {
-		d->op->setLocalBody(*content);
+		d->op->addLocalBody(*content);
 	}
 
 	// If a custom Content has been set in the call params, create a multipart body for the INVITE
 	for (auto &c : d->params->getCustomContents()) {
-		d->op->addAdditionalLocalBody(*c);
+		d->op->addLocalBody(*c);
 	}
 
 	int result = d->op->call(d->log->getFromAddress()->toString().c_str(), destinationStr, subject);
@@ -1732,7 +1743,13 @@ LinphoneStatus CallSession::update(const CallSessionParams *csp,
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (csp) d->setParams(new CallSessionParams(*csp));
 
-	d->op->setLocalBody(content ? *content : Content());
+	list<Content> contentList;
+	if (content) contentList.push_back(*content);
+	for (auto &c : d->params->getCustomContents()) {
+		contentList.push_back(*c);
+	}
+
+	d->op->setLocalBodies(contentList);
 	LinphoneStatus result = d->startUpdate(method, subject);
 	if (result && (d->state != initialState)) {
 		/* Restore initial state */
@@ -1881,9 +1898,11 @@ const CallSessionParams *CallSession::getRemoteParams() {
 			d->remoteParams->getPrivate()->setCustomHeaders(ch);
 		}
 
-		const list<Content> additionnalContents = d->op->getAdditionalRemoteBodies();
-		for (auto &content : additionnalContents)
-			d->remoteParams->addCustomContent(Content::create(content));
+		const list<Content> &additionnalContents = d->op->getRemoteBodies();
+		for (auto &content : additionnalContents) {
+			if (content.getContentType() != ContentType::Sdp)
+				d->remoteParams->addCustomContent(Content::create(content));
+		}
 
 		return d->remoteParams;
 	}
@@ -2037,7 +2056,7 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 		contactAddress.setParam("admin", Utils::toString(isAdmin));
 	} else {
 		std::shared_ptr<Address> organizer;
-		const auto sipfrag = d->op ? d->op->getContentInRemote(ContentType::SipFrag) : Content();
+		const auto sipfrag = d->op ? d->op->getContentInRemote(ContentType::SipFrag) : nullopt;
 		const auto &remoteContactSalAddress = d->op ? d->op->getRemoteContactAddress() : nullptr;
 
 		std::shared_ptr<Address> guessedConferenceAddress = Address::create();
@@ -2045,8 +2064,8 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 		// If remote contact address is not yet available, try with remote address
 		if (remoteContactSalAddress) {
 			guessedConferenceAddress->setImpl(remoteContactSalAddress);
-			if ((!sipfrag.isEmpty()) && guessedConferenceAddress->hasParam("isfocus")) {
-				auto organizerId = Utils::getSipFragAddress(sipfrag);
+			if (sipfrag && guessedConferenceAddress->hasParam("isfocus")) {
+				auto organizerId = Utils::getSipFragAddress(sipfrag.value());
 				organizer = Address::create(organizerId);
 			}
 		} else {

@@ -89,6 +89,79 @@ end:
 	linphone_core_manager_destroy(marie);
 }
 
+static void recovered_call_on_network_family_switch_in_early_state(void) {
+	LinphoneCall *incoming_call;
+	const LinphoneCallParams *remote_params;
+	const char *ip;
+
+	if (!liblinphone_tester_ipv6_available()) {
+		bctbx_warning("Test skipped, no ipv6.");
+		return;
+	}
+
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_sips_rc");
+
+	/* This is to activate media relay on Flexisip server*/
+	// linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
+	// linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
+
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1)))
+		goto end;
+
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1)))
+		goto end;
+	ip = _linphone_call_get_remote_rtp_address(linphone_core_get_current_call(pauline->lc));
+	if (BC_ASSERT_PTR_NOT_NULL(ip)) {
+		BC_ASSERT_TRUE(ms_is_ipv6(ip));
+	}
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingRinging, 0, int, "%i");
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	linphone_core_enable_ipv6(marie->lc, FALSE);
+	linphone_core_set_network_reachable(marie->lc, TRUE);
+
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1))) goto end;
+
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 2)))
+		goto end;
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingRinging, 1, int, "%i");
+
+	incoming_call = linphone_core_get_current_call(pauline->lc);
+	remote_params = linphone_call_get_remote_params(incoming_call);
+
+	ip = _linphone_call_get_remote_rtp_address(incoming_call);
+	if (BC_ASSERT_PTR_NOT_NULL(ip)) {
+		BC_ASSERT_TRUE(!ms_is_ipv6(ip));
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(remote_params);
+	if (remote_params != NULL) {
+		/* there should be no Replaces header here.*/
+		const char *replaces_header = linphone_call_params_get_custom_header(remote_params, "Replaces");
+		BC_ASSERT_PTR_NULL(replaces_header);
+	}
+	linphone_call_accept(incoming_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallIncomingReceived, 2, int, "%i");
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	linphone_call_terminate(incoming_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 2));
+end:
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void call_log_updated(LinphoneCore *lc, LinphoneCallLog *cl) {
 	LinphoneCoreCbs *current = linphone_core_get_current_callbacks(lc);
 	int *counter = (int *)linphone_core_cbs_get_user_data(current);
@@ -964,6 +1037,9 @@ static test_t call_recovery_tests[] = {
     TEST_NO_TAG("Call with network switch and no recovery possible", call_with_network_switch_no_recovery),
     TEST_ONE_TAG("Recovered call on network switch in early state 1",
                  recovered_call_on_network_switch_in_early_state_1,
+                 "CallRecovery"),
+    TEST_ONE_TAG("Recovered call on network family switch in early state 1",
+                 recovered_call_on_network_family_switch_in_early_state,
                  "CallRecovery"),
     TEST_ONE_TAG("Recovered call on network switch in early state 1 (udp caller)",
                  recovered_call_on_network_switch_in_early_state_1_udp,

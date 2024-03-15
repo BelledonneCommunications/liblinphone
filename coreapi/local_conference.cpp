@@ -219,11 +219,12 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 			me->setFocus(true);
 
 			const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
-			fillInvitedParticipantList(op, resourceList.isEmpty());
+			bool isEmpty = !resourceList || resourceList.value().get().isEmpty();
+			fillInvitedParticipantList(op, isEmpty);
 
 			const auto &conferenceInfo = createConferenceInfoWithCustomParticipantList(organizer, mInvitedParticipants);
 			auto infoState = ConferenceInfo::State::New;
-			if (resourceList.isEmpty()) {
+			if (isEmpty) {
 				infoState = ConferenceInfo::State::Cancelled;
 			} else {
 				infoState = ConferenceInfo::State::Updated;
@@ -245,7 +246,7 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 				callLog->setConferenceInfo(conferenceInfo);
 				callLog->setConferenceInfoId(conferenceInfoId);
 			}
-			if (resourceList.isEmpty()) {
+			if (isEmpty) {
 				setState(ConferenceInterface::State::TerminationPending);
 			}
 		} else {
@@ -260,7 +261,7 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 void LocalConference::fillInvitedParticipantList(SalCallOp *op, bool cancelling) {
 	mInvitedParticipants.clear();
 	const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
-	if (!resourceList.isEmpty()) {
+	if (resourceList && !resourceList.value().get().isEmpty()) {
 		auto invitees = Utils::parseResourceLists(resourceList);
 		mInvitedParticipants = invitees;
 		if (!cancelling) {
@@ -451,7 +452,7 @@ void LocalConference::confirmCreation() {
 		lError() << "Unable to confirm the creation of the conference in state " << state;
 	}
 
-	shared_ptr<CallSession> session = getMe()->getSession();
+	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(getMe()->getSession());
 
 	if (session) {
 		/* Assign a random conference address to this new conference, with domain
@@ -476,6 +477,17 @@ void LocalConference::confirmCreation() {
 		const_cast<LinphonePrivate::CallSessionParamsPrivate *>(L_GET_PRIVATE(session->getParams()))
 		    ->setInConference(true);
 		session->getPrivate()->setConferenceId(confId);
+
+		/* We have to call initiateIncoming() and startIncomingNotification() in order to perform the first
+		 * offer/answer, and make sure that the caller has compatible SDP offer. However, ICE creates problem here
+		 * because the gathering is asynchronous, and is useless anyway because the MediaSession here will anyway
+		 * terminate immediately by only two possibilities:
+		 * - 488 if SDP offer is not compatible
+		 * - or 302 if ok.
+		 * We have no need to perform ICE gathering for this session, so we set the NatPolicy to nullptr.
+		 */
+		session->setNatPolicy(nullptr);
+		session->initiateIncoming();
 		session->startIncomingNotification(false);
 
 		const auto &conferenceInfo = createOrGetConferenceInfo();
@@ -1374,10 +1386,11 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 		setState(ConferenceInterface::State::Created);
 
 		auto op = session->getPrivate()->getOp();
-		const auto resourceList = op ? op->getContentInRemote(ContentType::ResourceLists) : Content();
+		auto resourceList = op ? op->getContentInRemote(ContentType::ResourceLists) : nullopt;
+		bool isEmpty = resourceList ? resourceList.value().get().isEmpty() : true;
 
 		// If no resource list is provided in the INVITE, there is no need to call participants
-		if ((initialState == ConferenceInterface::State::CreationPending) && dialout && !resourceList.isEmpty()) {
+		if ((initialState == ConferenceInterface::State::CreationPending) && dialout && !isEmpty) {
 			list<std::shared_ptr<Address>> addresses;
 			for (auto &participant : mInvitedParticipants) {
 				const auto &addr = participant->getAddress();

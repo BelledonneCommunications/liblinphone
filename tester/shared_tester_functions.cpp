@@ -1018,3 +1018,11 @@ bool_t check_screen_sharing_sdp(LinphoneCoreManager *mgr1, LinphoneCoreManager *
 	ret &= check_screen_sharing_call_sdp(mgr2_call, screen_sharing_enabled);
 	return ret;
 }
+
+const char *_linphone_call_get_local_rtp_address(const LinphoneCall *call) {
+	return _linphone_call_get_local_desc(call)->getConnectionAddress().c_str();
+}
+
+const char *_linphone_call_get_remote_rtp_address(const LinphoneCall *call) {
+	return _linphone_call_get_remote_desc(call)->getConnectionAddress().c_str();
+}

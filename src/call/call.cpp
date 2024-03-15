@@ -181,12 +181,18 @@ LinphoneCallStats *Call::getPrivateStats(LinphoneStreamType type) const {
 
 void Call::initiateIncoming() {
 	getActiveSession()->initiateIncoming();
+	// initiateIncoming creates the Streams (through makeLocalMediaDescription())
+	// the configuration of sound devices must be done after streams are created.
+	configureSoundCardsFromCore(nullptr);
 }
 
 bool Call::initiateOutgoing(const string &subject, const std::shared_ptr<const Content> content) {
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing(subject, content);
-	session->getPrivate()->createOp();
+	// initiateIncoming creates the Streams (through makeLocalMediaDescription())
+	// the configuration of sound devices must be done after streams are created.
+	configureSoundCardsFromCore(static_cast<const MediaSessionParams *>(getActiveSession()->getParams()));
+
 	return defer;
 }
 
@@ -449,7 +455,7 @@ void Call::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
 			if (op && !getConference()) {
 				if (!op->getTo().empty() && conference) {
 					const auto &resourceList = op->getContentInRemote(ContentType::ResourceLists);
-					if (resourceList.isEmpty()) {
+					if (!resourceList || resourceList.value().get().isEmpty()) {
 						tryToAddToConference(conference, session);
 					}
 				} else if (op->getRemoteContactAddress()) {
@@ -532,9 +538,11 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 #endif
 		        nullptr;
 
+#ifdef HAVE_ADVANCED_IM
 		const auto op = session->getPrivate()->getOp();
-		const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
+		const auto &sipfrag = op->getContentInRemote(ContentType::SipFrag);
 		const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
+#endif
 		if (conferenceInfo) {
 			confParams->setUtf8Subject(conferenceInfo->getUtf8Subject());
 			auto startTime = conferenceInfo->getDateTime();
@@ -556,12 +564,13 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			        ->toSharedPtr());
 			remoteConference->initWithInvitees(confAddr, confAddr, session, invitees, confId);
 #ifdef HAVE_ADVANCED_IM
-		} else if (!resourceList.isEmpty() || !sipfrag.isEmpty()) {
+		} else if (resourceList || sipfrag) {
 			const auto &remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
 			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
 			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
 			auto invitees = Utils::parseResourceLists(resourceList);
-			const auto organizer = Utils::getSipFragAddress(sipfrag);
+			string organizer;
+			if (sipfrag) organizer = Utils::getSipFragAddress(sipfrag.value());
 			auto organizerInfo = Factory::get()->createParticipantInfo(Address::create(organizer));
 			invitees.push_back(organizerInfo);
 			remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(
@@ -802,8 +811,6 @@ Call::Call(shared_ptr<Core> core,
 	mParticipant = Participant::create(nullptr, ((direction == LinphoneCallIncoming) ? to : from));
 	mParticipant->createSession(getCore(), msp, TRUE, this);
 	mParticipant->getSession()->configure(direction, account, op, from, to);
-
-	configureSoundCardsFromCore(msp);
 }
 
 Call::Call(std::shared_ptr<Core> core, LinphoneCallDir direction, const string &callid) : CoreAccessor(core) {
@@ -815,8 +822,6 @@ Call::Call(std::shared_ptr<Core> core, LinphoneCallDir direction, const string &
 	mParticipant = Participant::create();
 	mParticipant->createSession(getCore(), nullptr, TRUE, this);
 	mParticipant->getSession()->configure(direction, callid);
-
-	configureSoundCardsFromCore(nullptr);
 }
 
 Call::~Call() {

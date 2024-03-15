@@ -21,6 +21,8 @@
 #ifndef _L_SAL_CALL_OP_H_
 #define _L_SAL_CALL_OP_H_
 
+#include <optional>
+
 #include "sal/message-op-interface.h"
 #include "sal/op.h"
 
@@ -38,21 +40,19 @@ public:
 		return mLocalMedia;
 	}
 	int setLocalMediaDescription(std::shared_ptr<SalMediaDescription> desc);
-	int setLocalBody(const Content &body);
-	int setLocalBody(Content &&body);
-	const Content &getLocalBody() const {
-		return mLocalBody;
+	void addLocalBody(const Content &content);
+	const std::list<Content> &getLocalBodies() const {
+		return mLocalBodies;
 	}
-	void addAdditionalLocalBody(const Content &content);
-	const std::list<Content> &getAdditionalRemoteBodies() const;
+	void setLocalBodies(const std::list<Content> &contents) {
+		mLocalBodies = contents;
+	}
+	const std::list<Content> &getRemoteBodies() const;
 	bool isContentInRemote(const ContentType &contentType) const;
-	const Content getContentInRemote(const ContentType &contentType) const;
+	std::optional<std::reference_wrapper<const Content>> getContentInRemote(const ContentType &contentType) const;
 
 	const std::shared_ptr<SalMediaDescription> &getRemoteMediaDescription() {
 		return mRemoteMedia;
-	}
-	const Content &getRemoteBody() const {
-		return mRemoteBody;
 	}
 	std::shared_ptr<SalMediaDescription> &getFinalMediaDescription();
 
@@ -115,6 +115,7 @@ private:
 
 	int parseSdpBody(const Content &body, belle_sdp_session_description_t **sessionDesc, SalReason *error);
 	void sdpProcess();
+	void fillRemoteBodies(const Content &body);
 	void handleBodyFromResponse(belle_sip_response_t *response);
 	void handleSessionTimersFromResponse(belle_sip_response_t *response);
 	SalReason processBodyForInvite(belle_sip_request_t *invite);
@@ -171,10 +172,8 @@ private:
 	bool capabilityNegotiation = false;
 	std::shared_ptr<SalMediaDescription> mLocalMedia = nullptr;
 	std::shared_ptr<SalMediaDescription> mRemoteMedia = nullptr;
-	Content mLocalBody;
-	Content mRemoteBody;
-	std::list<Content> mAdditionalLocalBodies;
-	std::list<Content> mAdditionalRemoteBodies;
+	std::list<Content> mLocalBodies;
+	std::list<Content> mRemoteBodies;
 };
 
 LINPHONE_END_NAMESPACE

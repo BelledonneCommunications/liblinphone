@@ -52,18 +52,6 @@ bool SalCallOp::capabilityNegotiationEnabled() const {
 
 int SalCallOp::setLocalMediaDescription(std::shared_ptr<SalMediaDescription> desc) {
 	mLocalMedia = desc;
-	if (mLocalMedia) {
-		belle_sip_error_code error;
-		belle_sdp_session_description_t *sdp = mLocalMedia->toSdp();
-		vector<char> buffer = marshalMediaDescription(sdp, error);
-		belle_sip_object_unref(sdp);
-		if (error != BELLE_SIP_OK) return -1;
-
-		mLocalBody.setContentType(ContentType::Sdp);
-		mLocalBody.setBody(std::move(buffer));
-	} else {
-		mLocalBody = Content();
-	}
 
 	if (mRemoteMedia) {
 		// Case of an incoming call where we modify the local capabilities between the time
@@ -77,61 +65,30 @@ int SalCallOp::setLocalMediaDescription(std::shared_ptr<SalMediaDescription> des
 	return 0;
 }
 
-int SalCallOp::setLocalBody(const Content &body) {
-	Content bodyCopy = body;
-	return setLocalBody(std::move(bodyCopy));
+void SalCallOp::addLocalBody(const Content &content) {
+	lInfo() << "Adding local body of type " << content.getContentType();
+	mLocalBodies.push_back(content);
 }
 
-int SalCallOp::setLocalBody(Content &&body) {
-	if (!body.isValid()) return -1;
-
-	if (body.getContentType() == ContentType::Sdp) {
-		std::shared_ptr<SalMediaDescription> desc = nullptr;
-		if (body.getSize() > 0) {
-			belle_sdp_session_description_t *sdp = belle_sdp_session_description_parse(body.getBodyAsString().c_str());
-			if (!sdp) return -1;
-			desc = std::make_shared<SalMediaDescription>(sdp);
-			if (!desc) {
-				return -1;
-			}
-		}
-		mLocalMedia = desc;
-	}
-
-	mLocalBody = std::move(body);
-	return 0;
-}
-
-void SalCallOp::addAdditionalLocalBody(const Content &content) {
-	mAdditionalLocalBodies.push_back(std::move(content));
-}
-
-const list<Content> &SalCallOp::getAdditionalRemoteBodies() const {
-	return mAdditionalRemoteBodies;
+const list<Content> &SalCallOp::getRemoteBodies() const {
+	return mRemoteBodies;
 }
 
 bool SalCallOp::isContentInRemote(const ContentType &contentType) const {
-	if (contentType == ContentType::Sdp) {
-		return !mRemoteBody.isEmpty();
-	} else {
-		auto it =
-		    std::find_if(mAdditionalRemoteBodies.begin(), mAdditionalRemoteBodies.end(),
-		                 [&contentType](const Content &content) { return (content.getContentType() == contentType); });
-		return (it != mAdditionalRemoteBodies.end());
-	}
+	auto it = std::find_if(mRemoteBodies.begin(), mRemoteBodies.end(), [&contentType](const Content &content) {
+		return (content.getContentType() == contentType);
+	});
+	return (it != mRemoteBodies.end());
 	return false;
 }
 
-const Content SalCallOp::getContentInRemote(const ContentType &contentType) const {
-	if (contentType == ContentType::Sdp) {
-		return mRemoteBody;
-	} else {
-		auto it =
-		    std::find_if(mAdditionalRemoteBodies.begin(), mAdditionalRemoteBodies.end(),
-		                 [&contentType](const Content &content) { return (content.getContentType() == contentType); });
-		return (it != mAdditionalRemoteBodies.end()) ? *it : Content();
-	}
-	return Content();
+std::optional<std::reference_wrapper<const Content>>
+SalCallOp::getContentInRemote(const ContentType &contentType) const {
+	auto it = std::find_if(mRemoteBodies.begin(), mRemoteBodies.end(), [&contentType](const Content &content) {
+		return (content.getContentType() == contentType);
+	});
+	if (it != mRemoteBodies.end()) return *it;
+	return nullopt;
 }
 
 belle_sip_header_allow_t *SalCallOp::createAllow(bool enableUpdate) {
@@ -191,21 +148,44 @@ int SalCallOp::setSdpFromDesc(belle_sip_message_t *msg, const std::shared_ptr<Sa
 
 void SalCallOp::fillInvite(belle_sip_request_t *invite) {
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), BELLE_SIP_HEADER(createAllow(mRoot->mEnableSipUpdate)));
+	Content sdpContent;
 
-	mSdpOffering = (mLocalBody.getContentType() == ContentType::Sdp);
+	if (mLocalMedia) {
+		belle_sip_error_code error;
+		belle_sdp_session_description_t *sdp = mLocalMedia->toSdp();
+		vector<char> buffer = marshalMediaDescription(sdp, error);
+		belle_sip_object_unref(sdp);
 
-	if (!mAdditionalLocalBodies.empty()) {
+		if (error != BELLE_SIP_OK) return;
+		mSdpOffering = true;
+		sdpContent.setContentType(ContentType::Sdp);
+		sdpContent.setBody(std::move(buffer));
+	} else mSdpOffering = false;
+
+	/* The SDP content must be replaced by the one generated from mLocalMedia */
+	auto it = std::find_if(mLocalBodies.begin(), mLocalBodies.end(),
+	                       [](const Content &content) { return (content.getContentType() == ContentType::Sdp); });
+	if (it != mLocalBodies.end()) {
+		if (sdpContent.isValid()) *it = std::move(sdpContent); // replace with the new SDP
+		else mLocalBodies.erase(it);
+	} else {
+		if (sdpContent.isValid()) mLocalBodies.emplace_back(sdpContent);
+	}
+	if (mLocalBodies.size() > 1) {
 		list<Content *> contents;
-		if (!mLocalBody.isEmpty()) {
-			contents.push_back(&mLocalBody);
-		}
-		for (auto &body : mAdditionalLocalBodies) {
-			contents.push_back(&body);
+
+		for (auto &body : mLocalBodies) {
+			// For backward compatibility, always set SDP as first content in the multipart.
+			if (body.getContentType() == ContentType::Sdp) {
+				contents.push_front(&body);
+			} else {
+				contents.push_back(&body);
+			}
 		}
 		Content multipartContent = ContentManager::contentListToMultipart(contents);
 		setCustomBody(BELLE_SIP_MESSAGE(invite), multipartContent);
-	} else {
-		setCustomBody(BELLE_SIP_MESSAGE(invite), mLocalBody);
+	} else if (!mLocalBodies.empty()) {
+		setCustomBody(BELLE_SIP_MESSAGE(invite), mLocalBodies.front());
 	}
 }
 
@@ -430,33 +410,20 @@ void SalCallOp::handleBodyFromResponse(belle_sip_response_t *response) {
 		mRemoteMedia = nullptr;
 	}
 
-	Content sdpBody = body;
-	if (body.isMultipart()) {
-		list<Content> contents = ContentManager::multipartToContentList(body);
-		for (auto &content : contents) {
-			if (content.getContentType() == ContentType::Sdp) {
-				sdpBody = content;
-			} else {
-				mAdditionalRemoteBodies.push_back(std::move(content));
-			}
-		}
-	}
+	fillRemoteBodies(body);
+	auto sdpBody = getContentInRemote(ContentType::Sdp);
 
-	if (sdpBody.getContentType() == ContentType::Sdp) {
+	if (sdpBody) {
 		belle_sdp_session_description_t *sdp = nullptr;
 		SalReason reason;
-		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
+		if (parseSdpBody(sdpBody.value(), &sdp, &reason) == 0) {
 			if (sdp) {
-
 				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
-				mRemoteBody = std::move(sdpBody);
 				belle_sip_object_unref(sdp);
 			} // If no SDP in response, what can we do?
 		}
 		// Process sdp in any case to reset result media description
 		if (mLocalMedia) sdpProcess();
-	} else {
-		mRemoteBody = std::move(sdpBody);
 	}
 }
 
@@ -741,34 +708,32 @@ bool SalCallOp::isMediaDescriptionAcceptable(std::shared_ptr<SalMediaDescription
 	return true;
 }
 
-SalReason SalCallOp::processBodyForInvite(belle_sip_request_t *invite) {
-	SalReason reason = SalReasonNone;
-	Content body = extractBody(BELLE_SIP_MESSAGE(invite));
-	if (!body.isValid()) return SalReasonUnsupportedContent;
-
-	Content sdpBody = body;
+void SalCallOp::fillRemoteBodies(const Content &body) {
+	mRemoteBodies.clear();
 	if (body.isMultipart()) {
 		list<Content> contents = ContentManager::multipartToContentList(body);
 		for (auto &content : contents) {
-			if (content.getContentType() == ContentType::Sdp) {
-				sdpBody = content;
-			} else {
-				mAdditionalRemoteBodies.push_back(std::move(content));
-			}
+			mRemoteBodies.push_back(std::move(content));
 		}
-	}
+	} else mRemoteBodies.push_back(std::move(body));
+}
 
-	if ((sdpBody.getContentType() == ContentType::Sdp) || (sdpBody.getContentType().isEmpty() && sdpBody.isEmpty())) {
+SalReason SalCallOp::processBodyForInvite(belle_sip_request_t *invite) {
+	SalReason reason = SalReasonNone;
+	Content body = extractBody(BELLE_SIP_MESSAGE(invite));
+
+	fillRemoteBodies(body);
+	auto sdpBody = getContentInRemote(ContentType::Sdp);
+
+	if (sdpBody) {
 		belle_sdp_session_description_t *sdp;
-		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
+		if (parseSdpBody(sdpBody.value(), &sdp, &reason) == 0) {
 			if (sdp) {
 				mSdpOffering = false;
 				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
 				// Make some sanity check about the received SDP
 				if (!isMediaDescriptionAcceptable(mRemoteMedia)) reason = SalReasonNotAcceptable;
 				belle_sip_object_unref(sdp);
-			} else {
-				mSdpOffering = true; // INVITE without SDP
 			}
 		}
 		if (reason != SalReasonNone) {
@@ -778,41 +743,31 @@ SalReason SalCallOp::processBodyForInvite(belle_sip_request_t *invite) {
 			declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
 		}
+	} else {
+		mSdpOffering = true; // INVITE without SDP
 	}
-	mRemoteBody = std::move(sdpBody);
 	return reason;
 }
 
 SalReason SalCallOp::processBodyForAck(belle_sip_request_t *ack) {
 	SalReason reason = SalReasonNone;
 	Content body = extractBody(BELLE_SIP_MESSAGE(ack));
-	if (!body.isValid()) return SalReasonUnsupportedContent;
 
-	Content sdpBody = body;
-	if (body.isMultipart()) {
-		list<Content> contents = ContentManager::multipartToContentList(body);
-		for (auto &content : contents) {
-			if (content.getContentType() == ContentType::Sdp) {
-				sdpBody = content;
-			} else {
-				mAdditionalRemoteBodies.push_back(std::move(content));
-			}
-		}
-	}
+	fillRemoteBodies(body);
+	auto sdpBody = getContentInRemote(ContentType::Sdp);
 
-	if (sdpBody.getContentType() == ContentType::Sdp) {
+	if (sdpBody) {
 		belle_sdp_session_description_t *sdp;
-		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
+		if (parseSdpBody(sdpBody.value(), &sdp, &reason) == 0) {
 			if (sdp) {
 				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
 				sdpProcess();
 				belle_sip_object_unref(sdp);
-			} else {
-				lWarning() << "SDP expected in ACK but not found";
 			}
 		}
+	} else {
+		lWarning() << "SDP expected in ACK but not found";
 	}
-	mRemoteBody = std::move(sdpBody);
 	return reason;
 }
 

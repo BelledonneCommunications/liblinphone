@@ -378,6 +378,12 @@ std::string Utils::getResourceLists(const std::list<std::shared_ptr<Address>> &a
 
 // -----------------------------------------------------------------------------
 
+ConferenceInfo::participant_list_t
+Utils::parseResourceLists(std::optional<std::reference_wrapper<const Content>> content) {
+	if (content) return Utils::parseResourceLists(content.value().get());
+	return ConferenceInfo::participant_list_t();
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -423,8 +429,8 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 	const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
 	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 
-	if (!sipfrag.isEmpty()) {
-		auto organizerStr = Utils::getSipFragAddress(sipfrag);
+	if (sipfrag) {
+		auto organizerStr = Utils::getSipFragAddress(sipfrag.value());
 		auto organizer = Address::create(organizerStr);
 		auto organizerInfo = ParticipantInfo::create(Address::create(organizer->getUri()));
 		for (const auto &[name, value] : organizer->getParams()) {
@@ -433,7 +439,7 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp(SalCallOp *op,
 		info->setOrganizer(organizerInfo);
 	}
 
-	if (!resourceList.isEmpty()) {
+	if (resourceList) {
 		auto invitees = Utils::parseResourceLists(resourceList);
 		for (const auto &invitee : invitees) {
 			info->addParticipant(invitee);
