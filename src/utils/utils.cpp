@@ -229,25 +229,15 @@ tm Utils::getTimeTAsTm(time_t t) {
 time_t Utils::getTmAsTimeT(const tm &t) {
 	tm tCopy = t;
 	time_t result;
-
-#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-	long adjustTimezone;
-#else
-	time_t adjustTimezone;
-#endif
-
-#if defined(TARGET_IPHONE_SIMULATOR) || defined(__linux__)
+	time_t offset = 0;
+#ifdef _WIN32
+	result = _mkgmtime(&tCopy);
+#elif defined(TARGET_IPHONE_SIMULATOR) || defined(__linux__)
 	result = timegm(&tCopy);
-	adjustTimezone = 0;
 #else
 	// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
 	result = mktime(&tCopy);
-
-#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-	_get_timezone(&adjustTimezone);
-#else
-	adjustTimezone = timezone;
-#endif
+	offset = time_t(timezone);
 #endif
 
 	if (result == time_t(-1)) {
@@ -259,7 +249,7 @@ time_t Utils::getTmAsTimeT(const tm &t) {
 		return time_t(-1);
 	}
 
-	return result - time_t(adjustTimezone);
+	return result - offset;
 }
 
 std::string Utils::getTimeAsString(const std::string &format, time_t t) {
