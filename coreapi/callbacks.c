@@ -76,6 +76,38 @@ bool_t check_core_state(LinphoneCore *lc, SalOp *op) {
 	return TRUE;
 }
 
+static Call *
+call_get_or_create(LinphoneCore *lc, SalCallOp *h, const shared_ptr<Address> &from, const shared_ptr<Address> &to) {
+	/* Lookup for a potential Call created via pushkit/callkit in PushIncomingReceived state. */
+	LinphoneCall *cCall = linphone_core_get_call_by_callid(lc, h->getCallId().c_str());
+	Call *call = bellesip::toCpp<Call>(cCall);
+
+	if (call) {
+		if (call->getState() == LinphonePrivate::CallSession::State::PushIncomingReceived) {
+			lInfo() << "There is already a call created on PushIncomingReceived, do configure";
+			call->configure(LinphoneCallIncoming, from, to, nullptr, h, nullptr);
+			call->initiateIncoming();
+		}
+	} else {
+		LinphoneCallLog *calllog = linphone_core_find_call_log(
+		    lc, h->getCallId().c_str(),
+		    linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
+		if (calllog) {
+			if (linphone_call_log_get_status(calllog) == LinphoneCallDeclined) {
+				/* Before create a new call, check if the call log with the same callid is created.
+				   If yes, that means the call is already declined by callkit. */
+				lInfo() << "The call " << h->getCallId() << " was already declined by callkit";
+				h->decline(SalReasonDeclined);
+				h->release();
+				h = nullptr;
+			}
+			linphone_call_log_unref(calllog);
+		}
+		if (h) call = Call::toCpp(linphone_call_new_incoming(lc, from->toC(), to->toC(), h));
+	}
+	return call;
+}
+
 static void call_received(SalCallOp *h) {
 	LinphoneCore *lc = static_cast<LinphoneCore *>(h->getSal()->getUserPointer());
 
@@ -334,33 +366,9 @@ static void call_received(SalCallOp *h) {
 		}
 	}
 
-	auto *call = [&] {
-		auto *call = linphone_core_get_call_by_callid(lc, h->getCallId().c_str());
-		return call ? LinphonePrivate::Call::toCpp(call) : nullptr;
-	}();
+	auto call = call_get_or_create(lc, h, from, to);
 
-	if (call && call->getState() == LinphonePrivate::CallSession::State::PushIncomingReceived) {
-		lInfo() << "There is already a call created on PushIncomingReceived, do configure";
-		call->configure(LinphoneCallIncoming, from, to, nullptr, h, nullptr);
-		call->initiateIncoming();
-	} else {
-		LinphoneCallLog *calllog = linphone_core_find_call_log(
-		    lc, h->getCallId().c_str(),
-		    linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
-		if (calllog && linphone_call_log_get_status(calllog) == LinphoneCallDeclined) {
-			/* Before create a new call, check if the call log with the same callid is created.
-			   If yes, that means the call is already declined by callkit. */
-			lInfo() << "The call " << h->getCallId() << " is already declined by callkit";
-			h->decline(SalReasonDeclined);
-			h->release();
-			linphone_call_log_unref(calllog);
-			return;
-		}
-		if (calllog) linphone_call_log_unref(calllog);
-		call = LinphonePrivate::Call::toCpp(linphone_call_new_incoming(lc, from->toC(), to->toC(), h));
-	}
-
-	call->startIncomingNotification();
+	if (call) call->startIncomingNotification();
 }
 
 static void call_rejected(SalCallOp *h) {

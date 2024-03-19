@@ -250,14 +250,29 @@
 	// Otherwise it will cause a crash.
 	LinphoneCall *incomingCall = linphone_core_get_call_by_callid(lc, [callId UTF8String]);
 	if (!incomingCall) {
-		ms_message("[pushkit] create new call");
+		LinphoneCallLog *calllog = linphone_core_find_call_log(lc,[callId UTF8String], linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
+		/* 
+		 * When displaying a new callkit call, check if the call log with the same callid was created in the past.
+		 * This happens if the push notification arrives after the INVITE, and the call is terminated quickly.
+		 * It may happens in degraded conditions (for example if the push notification is sent much too late, 
+		 * or sent with a call-id that is not the good one).
+		 * If yes, that means the call is already aborted.
+		 */
+		
+		ms_message("[pushkit] create new call, to be announced with CallKit by application.");
 		incomingCall = linphone_call_new_incoming_with_callid(lc, [callId UTF8String]);
+		if (calllog){
+			// Set a display name so that an indication of this error is given in call history.
+			auto from = LinphonePrivate::CallLog::toCpp(calllog)->getFromAddress();
+			from->setDisplayName("CallKit Error"); 
+		}
+		
 		linphone_call_start_basic_incoming_notification(incomingCall);
 		linphone_call_start_push_incoming_notification(incomingCall);
-		LinphoneCallLog *calllog = linphone_core_find_call_log(lc,[callId UTF8String], linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
+		
 		if (calllog) {
-			/* After display a new callkit call, check if the call log with the same callid is created.
-			 If yes, that means the call is already aborted. */
+			ms_error("[pushkit] terminating call prematuraly because a call with call-id [%s] was found in the past.", [callId UTF8String]);
+			lError() << "[pushkit] the past call with same call-id was: " << LinphonePrivate::CallLog::toCpp(calllog)->toString();
 			linphone_call_terminate(incomingCall);
 			linphone_call_log_unref(calllog);
 		}

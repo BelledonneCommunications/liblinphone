@@ -654,7 +654,6 @@ void Call::onPushCallSessionTimeoutCheck(BCTBX_UNUSED(const std::shared_ptr<Call
 		int statusCode =
 		    linphone_config_get_int(config, "sip", "push_incoming_call_timeout_status_code", 410); // LinphoneReasonGone
 		getActiveSession()->decline(linphone_error_code_to_reason(statusCode));
-		getActiveSession()->getPrivate()->setState(LinphonePrivate::CallSession::State::Released, "Call released");
 	}
 }
 
