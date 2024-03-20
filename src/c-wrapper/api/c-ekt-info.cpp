@@ -30,6 +30,7 @@
 
 using namespace LinphonePrivate;
 
+#ifdef HAVE_ADVANCED_IM
 LinphoneEktInfo *linphone_ekt_info_ref(LinphoneEktInfo *linphone_ekt_info) {
 	EktInfo::toCpp(linphone_ekt_info)->ref();
 	return linphone_ekt_info;
@@ -81,5 +82,52 @@ void linphone_ekt_info_add_cipher(LinphoneEktInfo *linphone_ekt_info, const char
 	                std::vector<uint8_t>(linphone_buffer_get_content(cipher),
 	                                     linphone_buffer_get_content(cipher) + linphone_buffer_get_size(cipher)));
 }
+
+#else // HAVE_ADVANCED_IM
+
+LinphoneEktInfo *linphone_ekt_info_ref(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info)) {
+	return nullptr;
+}
+
+void linphone_ekt_info_unref(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info)) {
+}
+
+const LinphoneAddress *linphone_ekt_info_get_from(BCTBX_UNUSED(const LinphoneEktInfo *linphone_ekt_info)) {
+	return nullptr;
+}
+
+void linphone_ekt_info_set_from(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info),
+                                BCTBX_UNUSED(const LinphoneAddress *from)) {
+}
+
+uint16_t linphone_ekt_info_get_sspi(BCTBX_UNUSED(const LinphoneEktInfo *linphone_ekt_info)) {
+	return 0;
+}
+
+void linphone_ekt_info_set_sspi(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info), BCTBX_UNUSED(uint16_t sspi)) {
+}
+
+LinphoneBuffer *linphone_ekt_info_get_cspi(BCTBX_UNUSED(const LinphoneEktInfo *linphone_ekt_info)) {
+	return nullptr;
+}
+
+void linphone_ekt_info_set_cspi(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info),
+                                BCTBX_UNUSED(const LinphoneBuffer *cspi)) {
+}
+
+LinphoneDictionary *linphone_ekt_info_get_ciphers(BCTBX_UNUSED(const LinphoneEktInfo *linphone_ekt_info)) {
+	return nullptr;
+}
+
+void linphone_ekt_info_set_ciphers(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info),
+                                   BCTBX_UNUSED(LinphoneDictionary *ciphers)) {
+}
+
+void linphone_ekt_info_add_cipher(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info),
+                                  BCTBX_UNUSED(const char *to),
+                                  BCTBX_UNUSED(const LinphoneBuffer *cipher)) {
+}
+
+#endif // HAVE_ADVANCED_IM
 
 #endif // LINPHONE_EKT_INFO_H_

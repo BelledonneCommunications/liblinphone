@@ -10002,7 +10002,6 @@ char *linphone_core_create_xml_from_ekt_info(const LinphoneCore *core, const Lin
 	auto ei = EktInfo::toCpp(ekt_info)->getSharedFromThis();
 	string xmlBody = L_GET_CPP_PTR_FROM_C_OBJECT(core)->createXmlFromEktInfo(ei);
 	return bctbx_strdup(xmlBody.c_str());
-#else  // HAVE_ADVANCED_IM
-	return NULL;
 #endif // HAVE_ADVANCED_IM
+	return NULL;
 }

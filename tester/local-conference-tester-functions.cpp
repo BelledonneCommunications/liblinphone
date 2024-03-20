@@ -542,6 +542,65 @@ size_t compute_no_audio_streams(BCTBX_UNUSED(LinphoneCall *call), BCTBX_UNUSED(L
 	return nb_audio_streams;
 }
 
+static bool check_conference_security(BCTBX_UNUSED(LinphoneConference *conference)) {
+	bool security_check = true;
+
+#ifdef HAVE_ADVANCED_IM
+	const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(conference);
+	auto security_level = linphone_conference_params_get_security_level(conference_params);
+	if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+		auto clientConference =
+		    dynamic_cast<const MediaConference::RemoteConference *>(MediaConference::Conference::toCpp(conference));
+		if (clientConference) {
+			const auto &clientEktManager = clientConference->getClientEktManager();
+			if (clientEktManager) {
+				// Check the EKT is known
+				return clientEktManager->getSelectedEkt();
+			} else {
+				security_check = false;
+			}
+		} else {
+			security_check = false;
+		}
+	}
+#endif // HAVE_ADVANCED_IM
+
+	return security_check;
+}
+
+#ifdef HAVE_ADVANCED_IM
+static void does_all_participants_have_matching_ekt(LinphoneCoreManager *focus,
+                                                    std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> members,
+                                                    const LinphoneAddress *confAddr) {
+	auto focusConference = linphone_core_search_conference_2(focus->lc, confAddr);
+	const LinphoneConferenceParams *conference_params = linphone_conference_get_current_params(focusConference);
+	auto security_level = linphone_conference_params_get_security_level(conference_params);
+	if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+		auto firstClientConf =
+		    dynamic_cast<const MediaConference::RemoteConference *>(MediaConference::Conference::toCpp(
+		        linphone_core_search_conference_2(members.begin()->first->lc, confAddr)));
+		shared_ptr<ClientEktManager::EktContext> firstClientEktCtx;
+		BC_ASSERT_PTR_NOT_NULL(firstClientConf);
+		if (firstClientConf) {
+			firstClientEktCtx = firstClientConf->getClientEktManager()->getEktCtx();
+			BC_ASSERT_PTR_NOT_NULL(firstClientEktCtx);
+			for (auto member : members) {
+				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
+				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(member.first->lc, confAddr)));
+				BC_ASSERT_PTR_NOT_NULL(rcConf);
+				if (rcConf) {
+					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
+					BC_ASSERT_PTR_NOT_NULL(rcEktCtx);
+					BC_ASSERT_EQUAL(firstClientEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
+					BC_ASSERT_TRUE(firstClientEktCtx->getCSpi() == rcEktCtx->getCSpi());
+					BC_ASSERT_TRUE(firstClientEktCtx->getEkt() == rcEktCtx->getEkt());
+				}
+			}
+		}
+	}
+}
+#endif // HAVE_ADVANCED_IM
+
 void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs,
                                  std::list<LinphoneCoreManager *> conferenceMgrs,
                                  LinphoneCoreManager *focus,
@@ -574,6 +633,13 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 			bool device_check = false;
 			bool call_check = true;
 			bool audio_direction_check = true;
+			bool security_check = true;
+
+			LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
+
+			if (conference && mgr != focus) {
+				security_check = check_conference_security(conference);
+			}
 
 			if (mgr == focus) {
 				for (const auto &m : members) {
@@ -604,7 +670,7 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 				}
 			}
 			call_check &= (calls.size() > 0);
-			LinphoneConference *conference = linphone_core_search_conference_2(mgr->lc, confAddr);
+
 			if (mgr != focus) {
 				for (auto call : calls) {
 					if (call) {
@@ -780,9 +846,13 @@ void wait_for_conference_streams(std::initializer_list<std::reference_wrapper<Co
 					}
 				}
 			}
-			return audio_direction_check && video_check && device_check && call_check && participant_check;
+			return audio_direction_check && video_check && device_check && call_check && participant_check &&
+			       security_check;
 		}));
 	}
+#ifdef HAVE_ADVANCED_IM
+	does_all_participants_have_matching_ekt(focus, members, confAddr);
+#endif // HAVE_ADVANCED_IM
 }
 
 void set_video_settings_in_conference(LinphoneCoreManager *focus,
@@ -836,15 +906,15 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 		recvonly_video = FALSE;
 	}
 
-	// During an encrypted conference or whenever a participant chooses a grid layout the receive and send video streams
-	// are split therefore if the other participants have an inactive video or the can only receive it and the chose
-	// video direction is RecvOnly, then no video streams will be sent out
+	// During an encrypted conference or whenever a participant chooses a grid layout the receive and send video
+	// streams are split therefore if the other participants have an inactive video or the can only receive it and
+	// the chose video direction is RecvOnly, then no video streams will be sent out
 	bool_t negotiated_inactive_video =
 	    ((call_conference_layout == LinphoneConferenceLayoutGrid) && (inactive_call_video || recvonly_video) &&
 	     (video_direction == LinphoneMediaDirectionRecvOnly));
 
-	// Whenever a participant chooses a grid layout, the participant requestes 2 streams for its send component and the
-	// streams with recvonly direction are those of the others participants
+	// Whenever a participant chooses a grid layout, the participant requestes 2 streams for its send component and
+	// the streams with recvonly direction are those of the others participants
 	bool_t inactive_video_sdp_sent =
 	    ((call_conference_layout == LinphoneConferenceLayoutGrid) && (inactive_call_video || recvonly_video) &&
 	     (video_direction == LinphoneMediaDirectionRecvOnly));
@@ -1007,8 +1077,8 @@ void set_video_settings_in_conference(LinphoneCoreManager *focus,
 						} else if ((call_conference_layout == LinphoneConferenceLayoutGrid) &&
 						           (inactive_call_video || recvonly_video) &&
 						           (video_direction == LinphoneMediaDirectionSendRecv)) {
-							// Layout Grid doesn't allow the server to always deduce the right client's video direction
-							// because the send and recv parts of the video streams are separate.
+							// Layout Grid doesn't allow the server to always deduce the right client's video
+							// direction because the send and recv parts of the video streams are separate.
 							expected_video_direction = LinphoneMediaDirectionSendOnly;
 						} else {
 							expected_video_direction = video_direction;
@@ -1274,11 +1344,7 @@ void create_conference_base(time_t start_time,
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyFullStateReceived, 1,
 			                             liblinphone_tester_sip_timeout));
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyEktReceived, 2,
-				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePublishOutgoingProgress, 1,
-				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePublishOk, 1,
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyEktReceived, 1,
 				                             liblinphone_tester_sip_timeout));
 			}
 
@@ -1326,35 +1392,6 @@ void create_conference_base(time_t start_time,
 		                             5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
 		                             focus_stat.number_of_LinphoneSubscriptionActive + (3 * nb_subscriptions), 5000));
-
-#ifdef HAVE_ADVANCED_IM
-		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishIncomingReceived,
-			                             focus_stat.number_of_LinphonePublishIncomingReceived + 3, 5000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishOk,
-			                             focus_stat.number_of_LinphonePublishOk + 3, 5000));
-			// wait bit more to receive all EKT packets
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
-				return false;
-			});
-			auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-			    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-			shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-			if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-			for (auto mgr : members) {
-				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-				BC_ASSERT_PTR_NOT_NULL(rcConf);
-				if (marieConf && rcConf) {
-					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-					BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-					BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-					BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-					BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-				}
-			}
-		}
-#endif // HAVE_ADVANCED_IM
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + 3, liblinphone_tester_sip_timeout));
@@ -1715,23 +1752,7 @@ void create_conference_base(time_t start_time,
 				CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
 					return false;
 				});
-				auto paulineConf =
-				    dynamic_cast<const MediaConference::RemoteConference *>(MediaConference::Conference::toCpp(
-				        linphone_core_search_conference_2(pauline.getCMgr()->lc, confAddr)));
-				shared_ptr<ClientEktManager::EktContext> paulineEktCtx;
-				if (paulineConf) paulineEktCtx = paulineConf->getClientEktManager()->getEktCtx();
-				for (auto mgr : members) {
-					auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-					    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-					BC_ASSERT_PTR_NOT_NULL(rcConf);
-					if (paulineConf && rcConf) {
-						auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-						BC_ASSERT_EQUAL(rcEktCtx->getSSpi(), paulineEktCtx->getSSpi(), uint16_t, "%d");
-						BC_ASSERT_TRUE(paulineEktCtx->getCSpi() == rcEktCtx->getCSpi());
-						BC_ASSERT_TRUE(paulineEktCtx->getEkt() == rcEktCtx->getEkt());
-						BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-					}
-				}
+				does_all_participants_have_matching_ekt(focus.getCMgr(), memberList, confAddr);
 			}
 #endif // HAVE_ADVANCED_IM
 
@@ -1890,23 +1911,7 @@ void create_conference_base(time_t start_time,
 
 #ifdef HAVE_ADVANCED_IM
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-				auto paulineConf =
-				    dynamic_cast<const MediaConference::RemoteConference *>(MediaConference::Conference::toCpp(
-				        linphone_core_search_conference_2(pauline.getCMgr()->lc, confAddr)));
-				shared_ptr<ClientEktManager::EktContext> paulineEktCtx;
-				if (paulineConf) paulineEktCtx = paulineConf->getClientEktManager()->getEktCtx();
-				for (auto mgr : members) {
-					auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-					    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-					BC_ASSERT_PTR_NOT_NULL(rcConf);
-					if (paulineConf && rcConf) {
-						auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-						BC_ASSERT_EQUAL(rcEktCtx->getSSpi(), paulineEktCtx->getSSpi(), uint16_t, "%d");
-						BC_ASSERT_TRUE(paulineEktCtx->getCSpi() == rcEktCtx->getCSpi());
-						BC_ASSERT_TRUE(paulineEktCtx->getEkt() == rcEktCtx->getEkt());
-						BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-					}
-				}
+				does_all_participants_have_matching_ekt(focus.getCMgr(), memberList, confAddr);
 			}
 #endif // HAVE_ADVANCED_IM
 		}
@@ -3675,10 +3680,6 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyEktReceived, 1,
 				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePublishOutgoingProgress, 1,
-				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePublishOk, 1,
-				                             liblinphone_tester_sip_timeout));
 			}
 
 			if ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP)) {
@@ -3725,35 +3726,6 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 		                             5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
 		                             focus_stat.number_of_LinphoneSubscriptionActive + (5 * nb_subscriptions), 5000));
-
-#ifdef HAVE_ADVANCED_IM
-		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishIncomingReceived,
-			                             focus_stat.number_of_LinphonePublishIncomingReceived + 5, 5000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishOk,
-			                             focus_stat.number_of_LinphonePublishOk + 5, 5000));
-			// wait bit more to receive all EKT packets
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
-				return false;
-			});
-			auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-			    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-			shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-			if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-			for (auto mgr : members) {
-				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-				BC_ASSERT_PTR_NOT_NULL(rcConf);
-				if (marieConf && rcConf) {
-					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-					BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-					BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-					BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-					BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-				}
-			}
-		}
-#endif // HAVE_ADVANCED_IM
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + 5, liblinphone_tester_sip_timeout));
@@ -4551,7 +4523,8 @@ void create_conference_with_screen_sharing_base(time_t start_time,
 				    const LinphoneCallParams *call_rparams = linphone_call_get_remote_params(focus_laure_call);
 				    params_ok &=
 				        (linphone_call_params_video_enabled(call_rparams) == clients_have_video_send_component);
-				    // Laure send an INVITE without requesting to share its screen If Berthe disables video capabilities
+				    // Laure send an INVITE without requesting to share its screen If Berthe disables video
+				    // capabilities
 				    params_ok = (linphone_call_params_screen_sharing_enabled(call_rparams) ==
 				                 (turn_off_screen_sharing && laure_can_screenshare));
 				    if (video_enabled) {
@@ -5035,35 +5008,6 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 		                                 (static_cast<int>(members.size()) * nb_subscriptions),
 		                             liblinphone_tester_sip_timeout));
 
-#ifdef HAVE_ADVANCED_IM
-		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishIncomingReceived,
-			                             focus_stat.number_of_LinphonePublishIncomingReceived + 4, 5000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishOk,
-			                             focus_stat.number_of_LinphonePublishOk + 4, 5000));
-			// wait bit more to receive all EKT packets
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
-				return false;
-			});
-			auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-			    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-			shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-			if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-			for (auto mgr : participants) {
-				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-				BC_ASSERT_PTR_NOT_NULL(rcConf);
-				if (marieConf && rcConf) {
-					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-					BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-					BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-					BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-					BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-				}
-			}
-		}
-#endif // HAVE_ADVANCED_IM
-
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + static_cast<int>(members.size()),
 		                             liblinphone_tester_sip_timeout));
@@ -5316,7 +5260,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 				                             michelle_stat.number_of_NotifyFullStateReceived + 1,
 				                             liblinphone_tester_sip_timeout));
 				if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-					BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_NotifyEktReceived, 2,
+					BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_NotifyEktReceived, 1,
 					                             liblinphone_tester_sip_timeout));
 				}
 			}
@@ -5340,22 +5284,7 @@ void create_conference_with_late_participant_addition_base(time_t start_time,
 				CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
 					return false;
 				});
-				auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-				shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-				if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-				for (auto mgr : participants) {
-					auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-					    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-					BC_ASSERT_PTR_NOT_NULL(rcConf);
-					if (marieConf && rcConf) {
-						auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-						BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-						BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-						BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-						BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-					}
-				}
+				does_all_participants_have_matching_ekt(focus.getCMgr(), memberList, confAddr);
 			}
 #endif // HAVE_ADVANCED_IM
 
@@ -8400,10 +8329,10 @@ void create_simple_conference_merging_calls_base(bool_t enable_ice,
 					set_video_settings_in_conference(focus.getCMgr(), mgr, participants, confAddr, TRUE,
 					                                 video_direction, TRUE, video_direction);
 
-					// wait a bit more to detect side effect if any. During this time, some participants light enable or
-					// disable video streams due to video toggling actions. It occurs for example when everybody is
-					// using a Grid layout and one participants enables its video stream with direction either SendOnly
-					// or SendRecv.
+					// wait a bit more to detect side effect if any. During this time, some participants light
+					// enable or disable video streams due to video toggling actions. It occurs for example when
+					// everybody is using a Grid layout and one participants enables its video stream with direction
+					// either SendOnly or SendRecv.
 					CoreManagerAssert({focus, marie, pauline, laure}).waitUntil(chrono::seconds(5), [] {
 						return false;
 					});
@@ -8811,12 +8740,7 @@ void create_conference_dial_out_base(bool_t send_ics,
 		                             marie_stat.number_of_NotifyFullStateReceived + 1, liblinphone_tester_sip_timeout));
 		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_NotifyEktReceived,
-			                             marie_stat.number_of_NotifyEktReceived + 2, liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphonePublishOutgoingProgress,
-			                             marie_stat.number_of_LinphonePublishOutgoingProgress + 1,
-			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphonePublishOk,
-			                             marie_stat.number_of_LinphonePublishOk + 1, liblinphone_tester_sip_timeout));
+			                             marie_stat.number_of_NotifyEktReceived + 1, liblinphone_tester_sip_timeout));
 		}
 
 		if (BC_ASSERT_PTR_NOT_NULL(oconference)) {
@@ -8879,7 +8803,6 @@ void create_conference_dial_out_base(bool_t send_ics,
 		add_participant_info_to_list(&participants_info, marie.getCMgr()->identity, LinphoneParticipantRoleSpeaker,
 		                             (send_ics) ? 0 : -1);
 
-		lInfo() << "DEBUG DEBUG";
 		if (accept) {
 			update_sequence_number(&participants_info, {}, (send_ics) ? 0 : -1, -1);
 
@@ -8963,12 +8886,6 @@ void create_conference_dial_out_base(bool_t send_ics,
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_NotifyEktReceived,
 				                             marie_stat.number_of_NotifyEktReceived + participant_no,
 				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphonePublishRefreshing,
-				                             marie_stat.number_of_LinphonePublishRefreshing + 2,
-				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphonePublishOk,
-				                             marie_stat.number_of_LinphonePublishOk + 2,
-				                             liblinphone_tester_sip_timeout));
 			}
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateCreated,
@@ -8982,35 +8899,6 @@ void create_conference_dial_out_base(bool_t send_ics,
 			    wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
 			                  focus_stat.number_of_LinphoneSubscriptionActive + (participant_no * nb_subscriptions),
 			                  liblinphone_tester_sip_timeout));
-
-#ifdef HAVE_ADVANCED_IM
-			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishRefreshing,
-				                             focus_stat.number_of_LinphonePublishRefreshing + participant_no, 5000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishOk,
-				                             focus_stat.number_of_LinphonePublishOk + participant_no, 5000));
-				// wait bit more to receive all EKT packets
-				CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
-					return false;
-				});
-				auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-				shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-				if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-				for (auto mgr : participants) {
-					auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-					    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-					BC_ASSERT_PTR_NOT_NULL(rcConf);
-					if (marieConf && rcConf) {
-						auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-						BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-						BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-						BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-						BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-					}
-				}
-			}
-#endif // HAVE_ADVANCED_IM
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 			                             focus_stat.number_of_participants_added + participant_no,
@@ -9195,25 +9083,25 @@ void create_conference_dial_out_base(bool_t send_ics,
 						bctbx_list_t *devices = linphone_conference_get_participant_device_list(conference);
 						for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
 							LinphoneParticipantDevice *d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
-							// If we are currently carrying out checks on the conference server side, the must set the
-							// value of video enabled flag for each participant. In fact each call session may have the
-							// video enabled or not and this is taken into account to compute the video availablity
-							// flag. Nonetheless, this is not required for the participants as they only have one call
-							// session towards the conference server therefore we can reuse the value computed earlier
-							// on.
+							// If we are currently carrying out checks on the conference server side, the must set
+							// the value of video enabled flag for each participant. In fact each call session may
+							// have the video enabled or not and this is taken into account to compute the video
+							// availablity flag. Nonetheless, this is not required for the participants as they only
+							// have one call session towards the conference server therefore we can reuse the value
+							// computed earlier on.
 							if (mgr == focus.getCMgr()) {
 								if (linphone_address_weak_equal(marie.getIdentity().toC(),
 								                                linphone_participant_device_get_address(d))) {
-									// The organizer will not offer video streams in its INVITE to join a conference if
-									// the policy doesn't allow it
+									// The organizer will not offer video streams in its INVITE to join a conference
+									// if the policy doesn't allow it
 									if (!initiate_video) {
 										video_enabled = FALSE;
 									} else {
 										video_enabled = TRUE;
 									}
 								} else {
-									// The participants will not accept video streams to answer the conference server
-									// INVITE to join a conference if the policy doesn't allow it
+									// The participants will not accept video streams to answer the conference
+									// server INVITE to join a conference if the policy doesn't allow it
 									if (!accept_video) {
 										video_enabled = FALSE;
 									} else {
@@ -9622,10 +9510,6 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyEktReceived, 1,
 				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePublishOutgoingProgress, 1,
-				                             liblinphone_tester_sip_timeout));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePublishOk, 1,
-				                             liblinphone_tester_sip_timeout));
 			}
 		}
 
@@ -9648,33 +9532,6 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		                             5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
 		                             focus_stat.number_of_LinphoneSubscriptionActive + (3 * nb_subscriptions), 5000));
-
-#ifdef HAVE_ADVANCED_IM
-		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishIncomingReceived,
-			                             focus_stat.number_of_LinphonePublishIncomingReceived + 3, 5000));
-			// wait bit more to receive all EKT packets
-			CoreManagerAssert({focus, marie, pauline, laure, berthe}).waitUntil(chrono::seconds(2), [] {
-				return false;
-			});
-			auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-			    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-			shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-			if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-			for (auto mgr : participants) {
-				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-				BC_ASSERT_PTR_NOT_NULL(rcConf);
-				if (marieConf && rcConf) {
-					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-					BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-					BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-					BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-					BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-				}
-			}
-		}
-#endif // HAVE_ADVANCED_IM
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + 3, liblinphone_tester_sip_timeout));
@@ -9829,35 +9686,6 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 		                             5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive,
 		                             focus_stat.number_of_LinphoneSubscriptionActive + nb_subscriptions, 5000));
-
-#ifdef HAVE_ADVANCED_IM
-		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishRefreshing,
-			                             focus_stat.number_of_LinphonePublishRefreshing + 3, 5000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishOk,
-			                             focus_stat.number_of_LinphonePublishOk + 3, 5000));
-			// wait bit more to receive all EKT packets
-			CoreManagerAssert({focus, marie, pauline, laure, berthe}).waitUntil(chrono::seconds(2), [] {
-				return false;
-			});
-			auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-			    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-			shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-			if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-			for (auto mgr : participants) {
-				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-				BC_ASSERT_PTR_NOT_NULL(rcConf);
-				if (marieConf && rcConf) {
-					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-					BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-					BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-					BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-					BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-				}
-			}
-		}
-#endif // HAVE_ADVANCED_IM
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + 1, liblinphone_tester_sip_timeout));
@@ -10248,11 +10076,6 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_NotifyEktReceived,
 			                             marie_stat.number_of_NotifyEktReceived + 1, liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphonePublishOutgoingProgress,
-			                             marie_stat.number_of_LinphonePublishOutgoingProgress + 1,
-			                             liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphonePublishOk,
-			                             marie_stat.number_of_LinphonePublishOk + 1, liblinphone_tester_sip_timeout));
 		}
 
 		LinphoneConference *oconference = linphone_core_search_conference_2(marie.getLc(), confAddr);
@@ -10357,31 +10180,6 @@ void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneRea
 		                             focus_stat.number_of_LinphoneSubscriptionActive +
 		                                 (static_cast<int>(active_participants.size()) + 1) * nb_subscriptions,
 		                             liblinphone_tester_sip_timeout));
-
-#ifdef HAVE_ADVANCED_IM
-		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-			// wait bit more to receive all EKT packets
-			CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
-				return false;
-			});
-			auto marieConf = dynamic_cast<const MediaConference::RemoteConference *>(
-			    MediaConference::Conference::toCpp(linphone_core_search_conference_2(marie.getLc(), confAddr)));
-			shared_ptr<ClientEktManager::EktContext> marieEktCtx;
-			if (marieConf) marieEktCtx = marieConf->getClientEktManager()->getEktCtx();
-			for (auto mgr : active_participants) {
-				auto rcConf = dynamic_cast<const MediaConference::RemoteConference *>(
-				    MediaConference::Conference::toCpp(linphone_core_search_conference_2(mgr->lc, confAddr)));
-				BC_ASSERT_PTR_NOT_NULL(rcConf);
-				if (marieConf && rcConf) {
-					auto rcEktCtx = rcConf->getClientEktManager()->getEktCtx();
-					BC_ASSERT_EQUAL(marieEktCtx->getSSpi(), rcEktCtx->getSSpi(), uint16_t, "%d");
-					BC_ASSERT_TRUE(marieEktCtx->getCSpi() == rcEktCtx->getCSpi());
-					BC_ASSERT_TRUE(marieEktCtx->getEkt() == rcEktCtx->getEkt());
-					BC_ASSERT_TRUE(rcConf->getClientEktManager()->getSelectedEkt());
-				}
-			}
-		}
-#endif // HAVE_ADVANCED_IM
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added,
 		                             focus_stat.number_of_participants_added + 5, liblinphone_tester_sip_timeout));

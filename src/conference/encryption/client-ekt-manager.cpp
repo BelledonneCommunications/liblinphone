@@ -282,19 +282,19 @@ void ClientEktManager::createPublish(const list<string> &to) {
 
 int ClientEktManager::checkSSpi(uint16_t eiSSpi, uint16_t ektCtxSSpi) {
 	if (eiSSpi == 0) {
-		lError() << "ClientEktManager::notifyReceived : Unexpected EKT NOTIFY format";
+		lError() << "ClientEktManager::checkSSpi : Unexpected EKT NOTIFY format";
 		return 1;
 	}
 	if (ektCtxSSpi == 0) {
-		lInfo() << "ClientEktManager::notifyReceived : Set first SSPI";
+		lInfo() << "ClientEktManager::checkSSpi : Set first SSPI";
 		mEktCtx->setSSpi(eiSSpi);
 	} else if (eiSSpi != ektCtxSSpi) {
-		lInfo() << "ClientEktManager::notifyReceived : Data cleaned";
+		lInfo() << "ClientEktManager::checkSSpi : Data cleaned";
 		clearData();
-		lInfo() << "ClientEktManager::notifyReceived : Set new SSPI";
+		lInfo() << "ClientEktManager::checkSSpi : Set new SSPI";
 		mEktCtx->setSSpi(eiSSpi);
 	} else {
-		lInfo() << "ClientEktManager::notifyReceived : Same SSPI as before";
+		lInfo() << "ClientEktManager::checkSSpi : Same SSPI as before";
 	}
 	return 0;
 }
@@ -309,29 +309,29 @@ int ClientEktManager::recoverEkt(shared_ptr<EktInfo> ei) {
 	}
 
 	if (ciphers.empty()) {
-		lInfo() << "ClientEktManager::notifyReceived : No ciphertext to decrypt";
+		lInfo() << "ClientEktManager::recoverEkt : No ciphertext to decrypt";
 		if (mEktCtx->getCSpi().empty()) lWarning() << "ClientEktManager::notifyReceived : Waiting for an EKT";
 		return 2;
 	}
 	if (!ei->getFrom()) {
-		lError() << "ClientEktManager::notifyReceived : Missing from field";
+		lError() << "ClientEktManager::recoverEkt : Missing from field";
 		return 3;
 	}
 	if (!dict) {
-		lError() << "ClientEktManager::notifyReceived : No cipher";
+		lError() << "ClientEktManager::recoverEkt : No cipher";
 		return 4;
 	}
 	auto myAddr = getAccount()->getContactAddress()->asStringUriOnly();
 	LinphoneBuffer *buffer = dict->getLinphoneBuffer(myAddr);
 	if (!buffer) {
-		lError() << "ClientEktManager::notifyReceived : Cipher not found";
+		lError() << "ClientEktManager::recoverEkt : Cipher not found";
 		return 5;
 	}
 	vector<uint8_t> cipher(linphone_buffer_get_size(buffer));
 	memcpy(cipher.data(), linphone_buffer_get_content(buffer), linphone_buffer_get_size(buffer));
 	bool success = decrypt(ei->getFrom()->asStringUriOnly(), myAddr, cipher);
 	if (success) {
-		lInfo() << "ClientEktManager::notifyReceived : EKT recovered";
+		lInfo() << "ClientEktManager::recoverEkt : EKT recovered";
 		mSelectedEkt = true;
 		MSEKTParametersSet ektParams;
 		mEktCtx->fillMSParametersSet(&ektParams);

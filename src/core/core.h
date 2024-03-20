@@ -32,7 +32,9 @@
 #include "call/audio-device/audio-device.h"
 #include "call/call-log.h"
 #include "conference/conference-id.h"
+#ifdef HAVE_ADVANCED_IM
 #include "conference/encryption/ekt-info.h"
+#endif // HAVE_ADVANCED_IM
 #include "event-log/event-log.h"
 #include "linphone/types.h"
 #include "object/object.h"

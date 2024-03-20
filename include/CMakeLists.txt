@@ -96,6 +96,7 @@ set(C_API_HEADER_FILES
 	c-dial-plan.h
 	c-dictionary.h
 	c-digest-authentication-policy.h
+	c-ekt-info.h
 	c-event-cbs.h
 	c-event-log.h
 	c-event.h
@@ -129,10 +130,6 @@ set(C_API_HEADER_FILES
 	c-video-source-descriptor.h
 	c-vcard.h
 )
-
-if(ENABLE_ADVANCED_IM)
-	list(APPEND C_API_HEADER_FILES c-ekt-info.h)
-endif()
 
 set(ENUMS_HEADER_FILES
 	c-enums.h

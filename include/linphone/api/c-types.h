@@ -451,7 +451,6 @@ typedef struct _LinphoneChatRoomCbs LinphoneChatRoomCbs;
 // -----------------------------------------------------------------------------
 // Ekt.
 // -----------------------------------------------------------------------------
-
 /**
  * @brief Object representing all informations present in an ekt event.
  * @ingroup ekt_info_api

@@ -397,6 +397,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-dictionary.cpp
+	c-wrapper/api/c-ekt-info.cpp
 	c-wrapper/api/c-event-cbs.cpp
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-event.cpp
@@ -611,7 +612,6 @@ endif()
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
-		c-wrapper/api/c-ekt-info.cpp
 		chat/chat-room/basic-to-client-group-chat-room.cpp
 		chat/chat-room/client-group-chat-room.cpp
 		chat/chat-room/client-group-to-basic-chat-room.cpp

@@ -277,17 +277,6 @@ set(SOURCE_FILES_C
 	stun_tester.c
 	tunnel_tester.c
 	video_quality_tester.c
-	local-chat-tester-functions.cpp
-	local-conference-tester-functions.cpp
-	local-scheduled-conference-tester.cpp
-	local-transfered-conference-tester.cpp
-	local-ice-conference-tester.cpp
-	local-inpromptu-conference-tester.cpp
-	local-conference-edition-tester.cpp
-	local-chat-tester.cpp
-	local-chat-imdn-tester.cpp
-	local-secure-chat-tester.cpp
-	local-ephemeral-chat-tester.cpp
 	video_tester.c
 )
 
@@ -322,6 +311,17 @@ set(SOURCE_FILES_CXX
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
+	local-chat-tester-functions.cpp
+	local-conference-tester-functions.cpp
+	local-scheduled-conference-tester.cpp
+	local-transfered-conference-tester.cpp
+	local-ice-conference-tester.cpp
+	local-inpromptu-conference-tester.cpp
+	local-conference-edition-tester.cpp
+	local-chat-tester.cpp
+	local-chat-imdn-tester.cpp
+	local-secure-chat-tester.cpp
+	local-ephemeral-chat-tester.cpp
 	vfs-encryption-tester.cpp
 	potential_configuration_tester.cpp
 	conference-info-tester.cpp

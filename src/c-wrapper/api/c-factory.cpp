@@ -183,8 +183,11 @@ LinphoneDictionary *linphone_factory_create_dictionary(const LinphoneFactory *fa
 	return Factory::toCpp(factory)->createDictionary();
 }
 
-LinphoneEktInfo *linphone_factory_create_ekt_info(const LinphoneFactory *factory) {
+LinphoneEktInfo *linphone_factory_create_ekt_info(BCTBX_UNUSED(const LinphoneFactory *factory)) {
+#ifdef HAVE_ADVANCED_IM
 	return Factory::toCpp(factory)->createEktInfo();
+#endif // HAVE_ADVANCED_IM
+	return NULL;
 }
 
 LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory) {

@@ -324,9 +324,11 @@ LinphoneDictionary *Factory::createDictionary() const {
 	return Dictionary::createCObject();
 }
 
+#ifdef HAVE_ADVANCED_IM
 LinphoneEktInfo *Factory::createEktInfo() const {
 	return EktInfo::createCObject();
 }
+#endif // HAVE_ADVANCED_IM
 
 LinphoneAlertCbs *Factory::createAlertCbs() const {
 	return AlertCbs::createCObject();

@@ -225,7 +225,7 @@ static void create_simple_end_to_end_encrypted_conference_dial_out_with_some_cal
 	                                                                LinphoneConferenceSecurityLevelEndToEnd);
 }
 
-static void create_simple_encrypted_conference_with_screen_sharing(void) {
+static void create_simple_end_to_end_encrypted_conference_with_screen_sharing(void) {
 	create_conference_with_screen_sharing_base(
 	    ms_time(NULL), -1, LinphoneMediaEncryptionZRTP, LinphoneConferenceLayoutActiveSpeaker, TRUE, TRUE, FALSE,
 	    LinphoneMediaDirectionSendOnly, LinphoneConferenceSecurityLevelEndToEnd, {LinphoneParticipantRoleSpeaker});
@@ -270,8 +270,8 @@ test_t local_conference_end_to_end_encryption[] = {
                 create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_declined),
     TEST_NO_TAG("Create simple end-to-end encrypted conference dial out with some calls busy",
                 create_simple_end_to_end_encrypted_conference_dial_out_with_some_calls_busy),
-    TEST_NO_TAG("Create simple conference with screen sharing override",
-                create_simple_encrypted_conference_with_screen_sharing)};
+    TEST_NO_TAG("Create simple end-to-end encrypted conference with screen sharing override",
+                create_simple_end_to_end_encrypted_conference_with_screen_sharing)};
 
 test_suite_t local_conference_test_suite_end_to_end_encryption = {"Local conference tester (End to end encryption)",
                                                                   NULL,
