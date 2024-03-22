@@ -998,6 +998,8 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 				}
 			} else {
 				ms_warning("No body was received...");
+				NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncSuccessful,
+								NULL);
 			}
 		};
 
