@@ -114,55 +114,112 @@ static void mwi_changed_on_account(LinphoneAccount *account, const LinphoneMessa
 	}
 }
 
-static void mwi_notified_on_account(void) {
-	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
-	LinphoneAccount *laure_account = linphone_core_get_default_account(laure->lc);
+static void mwi_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	stats *counters = get_stats(lc);
+	LinphoneCoreManager *mgr = get_manager(lc);
 
-	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneRegistrationOk, 1, 5000));
+	const LinphoneAddress *from_addr = linphone_event_get_from(lev);
+	char *from = linphone_address_as_string(from_addr);
+	const LinphoneAddress *to_addr = linphone_event_get_to(lev);
+	char *to = linphone_address_as_string(to_addr);
+	ms_message("Subscription state [%s] from [%s] to [%s]", linphone_subscription_state_to_string(state), from, to);
+
+	switch (state) {
+		case LinphoneSubscriptionNone:
+			break;
+		case LinphoneSubscriptionIncomingReceived:
+			counters->number_of_LinphoneSubscriptionIncomingReceived++;
+			mgr->lev = lev;
+			break;
+		case LinphoneSubscriptionOutgoingProgress:
+			counters->number_of_LinphoneSubscriptionOutgoingProgress++;
+			break;
+		case LinphoneSubscriptionPending:
+			counters->number_of_LinphoneSubscriptionPending++;
+			break;
+		case LinphoneSubscriptionActive:
+			counters->number_of_LinphoneSubscriptionActive++;
+			if (mgr->subscribe_policy == AcceptSubscription) {
+				if (linphone_event_get_subscription_dir(lev) == LinphoneSubscriptionIncoming) {
+					mgr->lev = lev;
+					if (strcmp(linphone_event_get_name(lev), "message-summary") == 0) {
+						auto mwi_stream = std::ostringstream();
+						mwi_stream << "Messages-Waiting: yes\r\n"
+						           << "Message-Account: " << from << "\r\n"
+						           << "Voice-Message: 4/8 (1/2)\r\n";
+						string mwi = mwi_stream.str();
+
+						LinphoneContent *content = linphone_core_create_content(lc);
+						linphone_content_set_type(content, "application");
+						linphone_content_set_subtype(content, "simple-message-summary");
+						linphone_content_set_buffer(content, (const uint8_t *)mwi.c_str(), mwi.size());
+						linphone_event_notify(lev, content);
+						linphone_content_unref(content);
+					}
+				}
+			}
+			break;
+		case LinphoneSubscriptionTerminated:
+			counters->number_of_LinphoneSubscriptionTerminated++;
+			if (lev == mgr->lev) {
+				mgr->lev = NULL;
+			}
+			break;
+		case LinphoneSubscriptionError:
+			counters->number_of_LinphoneSubscriptionError++;
+			if (lev == mgr->lev) {
+				mgr->lev = NULL;
+			}
+			break;
+		case LinphoneSubscriptionExpiring:
+			counters->number_of_LinphoneSubscriptionExpiring++;
+			if (lev == mgr->lev) {
+				mgr->lev = NULL;
+			}
+			break;
+	}
+
+	ms_free(from);
+	ms_free(to);
+}
+
+static void mwi_notified_on_account(void) {
+	// This test subscribes on MWI from pauline to herself in order for the request uri and
+	// the To header to be valid addresses that will be routed correctly and the subscribe be handled.
+	// If we used an other account as the destination of the subscribe by setting the request
+	// uri to this account, it would be routed correctly but not handled because the To header
+	// would still be the pauline account.
+
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneAccount *pauline_account = linphone_core_get_default_account(pauline->lc);
+	linphone_core_cbs_set_subscription_state_changed(pauline->cbs, mwi_subscription_state_changed);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, nullptr, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 5000));
 
 	LinphoneAccountCbs *cbs = linphone_factory_create_account_cbs(linphone_factory_get());
 	linphone_account_cbs_set_message_waiting_indication_changed(cbs, mwi_changed_on_account);
-	linphone_account_add_callbacks(laure_account, cbs);
+	linphone_account_add_callbacks(pauline_account, cbs);
 	linphone_account_cbs_unref(cbs);
 
-	LinphoneAddress *laure_addr = linphone_account_get_contact_address(laure_account);
-	linphone_address_clean(laure_addr);
-	char *laure_uri = linphone_address_as_string_uri_only(laure_addr);
+	const LinphoneAccountParams *initial_account_params = linphone_account_get_params(pauline_account);
+	const LinphoneAddress *pauline_address = linphone_account_params_get_identity_address(initial_account_params);
+	LinphoneAccountParams *new_account_params = linphone_account_params_clone(initial_account_params);
+	LinphoneAddress *new_pauline_address = linphone_address_clone(pauline_address);
+	linphone_account_params_set_mwi_server_address(new_account_params, new_pauline_address);
+	linphone_account_set_params(pauline_account, new_account_params);
+	linphone_account_params_unref(new_account_params);
+	linphone_address_unref(new_pauline_address);
 
-	auto mwi_notify_stream = std::ostringstream();
-	mwi_notify_stream
-	    << "NOTIFY " << laure_uri << " SIP/2.0\r\n"
-	    << "Via: SIP/2.0/UDP [2a01:cb19:83ad:ed00:6066:af3f:16b3:d980]:37486;branch=z9hG4bK.N5OIiMSAe;rport\r\n"
-	    << "To: <" << laure_uri << ">\r\n"
-	    << "From: <" << laure_uri << ">;tag=4442\r\n"
-	    << "Date: Mon, 10 Jul 2000 15:55:07 GMT\r\n"
-	    << "Call-Id: 1349882@sip.example.com\r\n"
-	    << "CSeq: 1 NOTIFY\r\n"
-	    << "Contact: <" << laure_uri << ">\r\n"
-	    << "Event: message-summary\r\n"
-	    << "Subscription-State: active\r\n"
-	    << "Content-Type: application/simple-message-summary\r\n"
-	    << "Content-Length: " << (68 + strlen(laure_uri)) << "\r\n"
-	    << "\r\n"
-	    << "Messages-Waiting: yes\r\n"
-	    << "Message-Account: " << laure_uri << "\r\n"
-	    << "Voice-Message: 4/8 (1/2)\r\n";
-	string mwi_notify = mwi_notify_stream.str();
-	bctbx_free(laure_uri);
+	BC_ASSERT_TRUE(
+	    wait_for_until(pauline->lc, nullptr, &pauline->stat.number_of_LinphoneSubscriptionIncomingReceived, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, nullptr, &pauline->stat.number_of_LinphoneSubscriptionActive, 1, 5000));
+	BC_ASSERT(wait_for(pauline->lc, pauline->lc, &pauline->stat.number_of_mwi, 1));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_new_LinphoneMessageWaitingIndicationVoice, 4, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_old_LinphoneMessageWaitingIndicationVoice, 8, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_new_urgent_LinphoneMessageWaitingIndicationVoice, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_old_urgent_LinphoneMessageWaitingIndicationVoice, 2, int, "%d");
 
-	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
-	BC_ASSERT_TRUE(liblinphone_tester_send_data(mwi_notify.c_str(), mwi_notify.length(), "127.0.0.1",
-	                                            linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
-	linphone_transports_unref(tp);
-
-	stats *counters = &laure->stat;
-	BC_ASSERT(wait_for(laure->lc, laure->lc, &counters->number_of_mwi, 1));
-	BC_ASSERT_EQUAL(counters->number_of_new_LinphoneMessageWaitingIndicationVoice, 4, int, "%d");
-	BC_ASSERT_EQUAL(counters->number_of_old_LinphoneMessageWaitingIndicationVoice, 8, int, "%d");
-	BC_ASSERT_EQUAL(counters->number_of_new_urgent_LinphoneMessageWaitingIndicationVoice, 1, int, "%d");
-	BC_ASSERT_EQUAL(counters->number_of_old_urgent_LinphoneMessageWaitingIndicationVoice, 2, int, "%d");
-
-	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
 }
 
 static test_t mwi_tests[] = {

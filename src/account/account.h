@@ -51,6 +51,7 @@ enum class LimeUserAccountStatus {
 
 class AccountCbs;
 class Address;
+class Event;
 class EventPublish;
 
 class Account : public bellesip::HybridObject<LinphoneAccount, Account>,
@@ -140,6 +141,9 @@ public:
 	std::shared_ptr<EventPublish> createPublish(const std::string event, int expires);
 	LinphoneReason getError();
 	LinphoneTransportType getTransport();
+	std::shared_ptr<Event> getMwiEvent() const;
+	void subscribeToMessageWaitingIndication();
+	void unsubscribeFromMessageWaitingIndication();
 
 	// Callbacks
 
@@ -170,6 +174,7 @@ private:
 	onAudioVideoConferenceFactoryAddressChanged(const std::shared_ptr<Address> &audioVideoConferenceFactoryAddress);
 	void onNatPolicyChanged(const std::shared_ptr<NatPolicy> &policy);
 	void onLimeServerUrlChanged(const std::string &limeServerUrl);
+	void onMwiServerAddressChanged();
 	bool customContactChanged();
 	std::list<SalAddress *> getOtherContacts();
 
@@ -213,6 +218,8 @@ private:
 	LinphoneProxyConfig *mConfig = nullptr;
 
 	int mMissedCalls;
+
+	std::shared_ptr<Event> mMwiEvent;
 };
 
 class AccountCbs : public bellesip::HybridObject<LinphoneAccountCbs, AccountCbs>, public Callbacks {

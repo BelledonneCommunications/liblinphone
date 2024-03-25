@@ -509,9 +509,14 @@ belle_sip_request_t *SalOp::buildRequest(const string &method) {
 		                                           belle_sip_random_token(token, sizeof(token)));
 	}
 
-	// Make sure to preserve components like headers or port
-	auto requestUri = BELLE_SIP_URI(belle_sip_object_clone(BELLE_SIP_OBJECT(toUri)));
-	belle_sip_uri_set_secure(requestUri, isSecure());
+	belle_sip_uri_t *requestUri = nullptr;
+	if (mRequestUri.empty()) {
+		// Make sure to preserve components like headers or port
+		requestUri = BELLE_SIP_URI(belle_sip_object_clone(BELLE_SIP_OBJECT(toUri)));
+		belle_sip_uri_set_secure(requestUri, isSecure());
+	} else {
+		requestUri = belle_sip_uri_parse(mRequestUri.c_str());
+	}
 
 	auto toHeader = belle_sip_header_to_create(BELLE_SIP_HEADER_ADDRESS(toAddress), nullptr);
 	auto callIdHeader = belle_sip_provider_create_call_id(mRoot->mProvider);

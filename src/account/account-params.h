@@ -87,6 +87,7 @@ public:
 	void setCustomContact(const std::shared_ptr<Address> contact);
 	void setLimeServerUrl(const std::string &url);
 	void setPictureUri(const std::string &uri);
+	void setMwiServerAddress(const std::shared_ptr<Address> &address);
 
 	// Getters
 	int getExpires() const;
@@ -135,6 +136,7 @@ public:
 	const std::shared_ptr<Address> &getCustomContact() const;
 	const std::string &getLimeServerUrl() const;
 	const std::string &getPictureUri() const;
+	const std::shared_ptr<Address> &getMwiServerAddress() const;
 
 	// Other
 	LinphoneStatus setServerAddress(const std::shared_ptr<Address> serverAddr);
@@ -151,6 +153,7 @@ public:
 private:
 	void updateRoutesCString();
 	void setCustomContact(const std::string &contact);
+	const char *getMwiServerAddressCstr() const;
 
 	int mExpires;
 	int mQualityReportingInterval;
@@ -173,6 +176,7 @@ private:
 	void *mUserData;
 
 	mutable char *mConferenceFactoryAddressCstr = nullptr;
+	mutable char *mMwiServerAddressCstr = nullptr;
 
 	std::string mInternationalPrefix;
 	std::string mInternationalPrefixIsoCountryCode;
@@ -206,6 +210,7 @@ private:
 	std::shared_ptr<Address> mConferenceFactoryAddress = nullptr;
 	std::shared_ptr<Address> mAudioVideoConferenceFactoryAddress = nullptr;
 	std::shared_ptr<Address> mCustomContact = nullptr;
+	std::shared_ptr<Address> mMwiServerAddress = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

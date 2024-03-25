@@ -75,6 +75,7 @@ public:
 	void notifyEnteringForeground();
 
 	void enableFriendListsSubscription(bool enable);
+	void enableMessageWaitingIndicationSubscription(bool enable);
 
 	int addCall(const std::shared_ptr<Call> &call);
 	bool canWeAddCall() const;

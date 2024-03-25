@@ -2865,7 +2865,8 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc,
 		ms_message("Advanced IM such as group chat is disabled!");
 #endif
 	} else if (Utils::iequals(notified_event, "message-summary")) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->handleIncomingMessageWaitingIndication(*Content::toCpp(body));
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->handleIncomingMessageWaitingIndication(Event::getSharedFromThis(lev),
+		                                                                        body ? Content::toCpp(body) : nullptr);
 	}
 }
 

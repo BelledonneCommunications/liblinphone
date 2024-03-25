@@ -95,6 +95,13 @@ public:
 		return mRequestAddress.borrow();
 	}
 
+	void setRequestUri(const std::string &value) {
+		mRequestUri = value;
+	}
+	const std::string &getRequestUri() const {
+		return mRequestUri;
+	}
+
 	void setContactAddress(const SalAddress *value);
 	/* The contact address returned here is be pub-gruu provided by the proxy during REGISTER transaction, if "gruu"
 	 is supported by client and server, otherwise the low-level transport address.*/
@@ -331,6 +338,7 @@ protected:
 	std::string mTo;
 	SalAddress *mToAddress = nullptr;
 	Owned<SalAddress> mRequestAddress = nullptr;
+	std::string mRequestUri;
 	std::string mOrigin;
 	SalAddress *mOriginAddress = nullptr;
 	SalAddress *mDiversionAddress = nullptr;

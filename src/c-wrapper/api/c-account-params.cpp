@@ -458,3 +458,12 @@ void linphone_account_params_set_picture_uri(LinphoneAccountParams *params, cons
 const char *linphone_account_params_get_picture_uri(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getPictureUri());
 }
+
+void linphone_account_params_set_mwi_server_address(LinphoneAccountParams *params, LinphoneAddress *address) {
+	AccountParams::toCpp(params)->setMwiServerAddress(address ? Address::toCpp(address)->getSharedFromThis() : nullptr);
+}
+
+const LinphoneAddress *linphone_account_params_get_mwi_server_address(const LinphoneAccountParams *params) {
+	const std::shared_ptr<Address> addr = AccountParams::toCpp(params)->getMwiServerAddress();
+	return addr ? addr->toC() : nullptr;
+}

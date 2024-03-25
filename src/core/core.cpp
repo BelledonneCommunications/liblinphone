@@ -333,6 +333,7 @@ void CorePrivate::shutdown() {
 		call->terminate();
 	}
 
+	enableMessageWaitingIndicationSubscription(false);
 	bctbx_list_t *elem = NULL;
 	for (elem = q->getCCore()->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
@@ -491,6 +492,7 @@ void CorePrivate::notifyEnteringBackground() {
 		listener->onEnteringBackground();
 
 	if (q->isFriendListSubscriptionEnabled()) enableFriendListsSubscription(false);
+	enableMessageWaitingIndicationSubscription(false);
 
 #if TARGET_OS_IPHONE
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
@@ -522,6 +524,7 @@ void CorePrivate::notifyEnteringForeground() {
 		listener->onEnteringForeground();
 
 	if (q->isFriendListSubscriptionEnabled()) enableFriendListsSubscription(true);
+	enableMessageWaitingIndicationSubscription(true);
 }
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop() {
@@ -549,6 +552,17 @@ void CorePrivate::enableFriendListsSubscription(bool enable) {
 	for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
 		linphone_friend_list_enable_subscriptions(list, enable);
+	}
+}
+
+void CorePrivate::enableMessageWaitingIndicationSubscription(bool enable) {
+	L_Q();
+
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
+	for (const bctbx_list_t *elem = linphone_core_get_account_list(lc); elem; elem = bctbx_list_next(elem)) {
+		LinphoneAccount *account = (LinphoneAccount *)elem->data;
+		if (enable) Account::toCpp(account)->subscribeToMessageWaitingIndication();
+		else Account::toCpp(account)->unsubscribeFromMessageWaitingIndication();
 	}
 }
 
@@ -1553,15 +1567,28 @@ std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId(const std::string &
 	return chatMessages.empty() ? nullptr : chatMessages.front();
 }
 
-void Core::handleIncomingMessageWaitingIndication(const Content &content) {
-	shared_ptr<Mwi::MessageWaitingIndication> mwi = Mwi::MessageWaitingIndication::parse(content);
-	if (mwi) {
-		std::shared_ptr<Address> accountAddr = mwi->getAccountAddress();
-		if (!accountAddr) {
-			lInfo() << "MWI does not contain account address, cannot notify it to an account";
-			return;
-		}
+void Core::handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, const Content *content) {
+	shared_ptr<Address> accountAddr = nullptr;
 
+	// Try to get the account that has subscribed for this event.
+	for (const bctbx_list_t *it = linphone_core_get_account_list(getCCore()); it; it = bctbx_list_next(it)) {
+		shared_ptr<Account> account =
+		    Account::getSharedFromThis(reinterpret_cast<LinphoneAccount *>(bctbx_list_get_data(it)));
+		if (account->getMwiEvent() != event) continue;
+		accountAddr = account->getAccountParams()->getIdentityAddress();
+	}
+	if (!accountAddr) {
+		lWarning() << "Received NOTIFY for an unknown MWI subscribe event";
+		return;
+	}
+
+	if (!content) {
+		lWarning() << "MWI NOTIFY without body, doing nothing";
+		return;
+	}
+
+	shared_ptr<Mwi::MessageWaitingIndication> mwi = Mwi::MessageWaitingIndication::parse(*content);
+	if (mwi) {
 		LinphoneAccount *account = linphone_core_find_account_by_identity_address(getCCore(), accountAddr->toC());
 		if (!account) {
 			lInfo() << "No account found for the account address of the MWI, cannot notify it";

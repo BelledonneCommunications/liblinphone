@@ -892,6 +892,22 @@ LINPHONE_PUBLIC void linphone_account_params_set_picture_uri(LinphoneAccountPara
 LINPHONE_PUBLIC const char *linphone_account_params_get_picture_uri(const LinphoneAccountParams *params);
 
 /**
+ * Sets the Message Waiting Indication server address.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param address The Message Waiting Indication server address. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_mwi_server_address(LinphoneAccountParams *params,
+                                                                    LinphoneAddress *address);
+
+/**
+ * Get the Message Waiting Indication server address.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The Message Waiting Indication server address. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress *
+linphone_account_params_get_mwi_server_address(const LinphoneAccountParams *params);
+
+/**
  * @}
  */
 

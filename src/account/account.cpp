@@ -239,6 +239,13 @@ void Account::applyParamsChanges() {
 	    !(mOldParams->mPushNotificationConfig->isEqual(*mParams->mPushNotificationConfig)) || customContactChanged()) {
 		mRegisterChanged = true;
 	}
+
+	if (mOldParams == nullptr ||
+	    ((mOldParams->mMwiServerAddress != nullptr) ^ (mParams->mMwiServerAddress != nullptr)) ||
+	    ((mOldParams->mMwiServerAddress != nullptr) && (mParams->mMwiServerAddress != nullptr) &&
+	     (*mOldParams->mMwiServerAddress == *mParams->mMwiServerAddress))) {
+		onMwiServerAddressChanged();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -396,6 +403,9 @@ void Account::setState(LinphoneRegistrationState state, const std::string &messa
 		if (linphone_core_should_subscribe_friends_only_when_registered(core) && state == LinphoneRegistrationOk &&
 		    previousState != state) {
 			linphone_core_update_friends_subscriptions(core);
+		}
+		if (state == LinphoneRegistrationOk && previousState != state) {
+			subscribeToMessageWaitingIndication();
 		}
 	} else {
 		/*state already reported*/
@@ -1279,6 +1289,32 @@ void Account::resolveDependencies() {
 	}
 }
 
+std::shared_ptr<Event> Account::getMwiEvent() const {
+	return mMwiEvent;
+}
+
+void Account::subscribeToMessageWaitingIndication() {
+	const std::shared_ptr<Address> &mwiServerAddress = mParams->getMwiServerAddress();
+	if (mwiServerAddress) {
+		int expires = linphone_config_get_int(getCore()->getCCore()->config, "sip", "mwi_expires", 86400);
+		if (mMwiEvent) mMwiEvent->terminate();
+		auto subscribeEvent = new EventSubscribe(getCore(), mParams->getIdentityAddress(), "message-summary", expires);
+		subscribeEvent->setRequestUri(mwiServerAddress->asStringUriOnly());
+		mMwiEvent = subscribeEvent->toSharedPtr();
+		mMwiEvent->setInternal(true);
+		mMwiEvent->addCustomHeader("Accept", "application/simple-message-summary");
+		linphone_event_send_subscribe(mMwiEvent->toC(), nullptr);
+		mMwiEvent->setUserData(this);
+	}
+}
+
+void Account::unsubscribeFromMessageWaitingIndication() {
+	if (mMwiEvent) {
+		mMwiEvent->terminate();
+		mMwiEvent = nullptr;
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 void Account::onInternationalPrefixChanged() {
@@ -1383,22 +1419,6 @@ LinphoneAccountAddressComparisonResult Account::isServerConfigChanged() {
 	return isServerConfigChanged(mOldParams, mParams);
 }
 
-LinphoneAccountCbsRegistrationStateChangedCb AccountCbs::getRegistrationStateChanged() const {
-	return mRegistrationStateChangedCb;
-}
-
-void AccountCbs::setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb) {
-	mRegistrationStateChangedCb = cb;
-}
-
-LinphoneAccountCbsMessageWaitingIndicationChangedCb AccountCbs::getMessageWaitingIndicationChanged() const {
-	return mMessageWaitingIndicationChangedCb;
-}
-
-void AccountCbs::setMessageWaitingIndicationChanged(LinphoneAccountCbsMessageWaitingIndicationChangedCb cb) {
-	mMessageWaitingIndicationChangedCb = cb;
-}
-
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -1444,6 +1464,31 @@ void Account::onLimeServerUrlChanged(const std::string &limeServerUrl) {
 	lWarning() << "Lime X3DH support is not available";
 #endif
 }
+
+void Account::onMwiServerAddressChanged() {
+	if (mState == LinphoneRegistrationOk) {
+		subscribeToMessageWaitingIndication();
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+LinphoneAccountCbsRegistrationStateChangedCb AccountCbs::getRegistrationStateChanged() const {
+	return mRegistrationStateChangedCb;
+}
+
+void AccountCbs::setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb) {
+	mRegistrationStateChangedCb = cb;
+}
+
+LinphoneAccountCbsMessageWaitingIndicationChangedCb AccountCbs::getMessageWaitingIndicationChanged() const {
+	return mMessageWaitingIndicationChangedCb;
+}
+
+void AccountCbs::setMessageWaitingIndicationChanged(LinphoneAccountCbsMessageWaitingIndicationChangedCb cb) {
+	mMessageWaitingIndicationChangedCb = cb;
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER

@@ -321,7 +321,7 @@ public:
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) const;
 	std::shared_ptr<ChatMessage> findChatMessageFromCallId(const std::string &callId) const;
 
-	void handleIncomingMessageWaitingIndication(const Content &content);
+	void handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, const Content *content);
 
 	// ---------------------------------------------------------------------------
 	// Ldap.

@@ -212,6 +212,15 @@ LinphoneSubscriptionDir EventSubscribe::getDir() {
 	return mDir;
 }
 
+void EventSubscribe::setRequestUri(const std::string &uri) {
+	if (uri.empty()) return;
+
+	auto addr = Address::create(uri);
+	if (addr) {
+		mOp->setRequestUri(addr->asStringUriOnly());
+	}
+}
+
 bool EventSubscribe::isOutOfDialogOp() const {
 	return mIsOutOfDialogOp;
 }

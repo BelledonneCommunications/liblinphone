@@ -271,6 +271,12 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 
 	setPictureUri(linphone_config_get_string(config, key, "picture_uri", mPictureUri.c_str()));
 
+	string mwiServerUri = linphone_config_get_string(config, key, "mwi_server_uri", "");
+	mMwiServerAddress = nullptr;
+	if (!mwiServerUri.empty()) {
+		setMwiServerAddress(Address::create(mwiServerUri));
+	}
+
 	readCustomParamsFromConfigFile(config, key);
 }
 
@@ -345,12 +351,21 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	}
 	mLimeServerUrl = other.mLimeServerUrl;
 	mPictureUri = other.mPictureUri;
+	if (other.mMwiServerAddress) {
+		mMwiServerAddress = other.mMwiServerAddress->clone()->toSharedPtr();
+	} else {
+		mMwiServerAddress = nullptr;
+	}
 }
 
 AccountParams::~AccountParams() {
 	if (mConferenceFactoryAddressCstr) {
 		ms_free(mConferenceFactoryAddressCstr);
 		mConferenceFactoryAddressCstr = nullptr;
+	}
+	if (mMwiServerAddressCstr) {
+		ms_free(mMwiServerAddressCstr);
+		mMwiServerAddressCstr = nullptr;
 	}
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 	if (mRoutesCString) {
@@ -828,6 +843,14 @@ const std::string &AccountParams::getPictureUri() const {
 	return mPictureUri;
 }
 
+void AccountParams::setMwiServerAddress(const std::shared_ptr<Address> &address) {
+	mMwiServerAddress = address;
+}
+
+const std::shared_ptr<Address> &AccountParams::getMwiServerAddress() const {
+	return mMwiServerAddress;
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneStatus AccountParams::setServerAddress(const std::shared_ptr<Address> serverAddr) {
@@ -896,6 +919,17 @@ void AccountParams::setTransport(LinphonePrivate::Transport transport) {
 
 LinphonePrivate::Transport AccountParams::getTransport() const {
 	return mProxyAddress->getTransport();
+}
+
+const char *AccountParams::getMwiServerAddressCstr() const {
+	if (mMwiServerAddressCstr) {
+		ms_free(mMwiServerAddressCstr);
+		mMwiServerAddressCstr = nullptr;
+	}
+	if (mMwiServerAddress) {
+		mMwiServerAddressCstr = mMwiServerAddress->asStringUriOnlyCstr();
+	}
+	return mMwiServerAddressCstr;
 }
 
 void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
@@ -976,6 +1010,9 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 
 	linphone_config_set_string(config, key, "lime_server_url", mLimeServerUrl.c_str());
 	linphone_config_set_string(config, key, "picture_uri", mPictureUri.c_str());
+	if (mMwiServerAddress) {
+		linphone_config_set_string(config, key, "mwi_server_uri", getMwiServerAddressCstr());
+	}
 }
 
 LINPHONE_END_NAMESPACE

@@ -875,7 +875,6 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 		/*out of dialog notify */
 		lev = linphone_event_new_subscribe_with_out_of_dialog_op(lc, op, LinphoneSubscriptionOutgoing, eventname);
 		Event::toCpp(lev)->setUnrefWhenTerminated(TRUE);
-		if (Utils::iequals(eventname, "message-summary")) Event::toCpp(lev)->setInternal(true);
 	}
 	linphone_event_ref(lev);
 	{
