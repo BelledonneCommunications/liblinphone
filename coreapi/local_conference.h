@@ -74,7 +74,7 @@ public:
 	virtual void leave() override;
 	virtual bool isIn() const override;
 
-	virtual int startRecording(const char *path) override;
+	virtual int startRecording(const std::string &path) override;
 
 	virtual void setLocalParticipantStreamCapability(const LinphoneMediaDirection &direction,
 	                                                 const LinphoneStreamType type) override;

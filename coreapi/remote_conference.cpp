@@ -205,7 +205,7 @@ const std::shared_ptr<CallSession> RemoteConference::getMainSession() const {
 	return focus ? focus->getSession() : nullptr;
 }
 
-int RemoteConference::startRecording(const char *path) {
+int RemoteConference::startRecording(const std::string &path) {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	if (session) {
 		session->setRecordPath(path);

@@ -335,7 +335,7 @@ bctbx_list_t *linphone_conference_get_participant_device_list(const LinphoneConf
 
 int linphone_conference_start_recording(LinphoneConference *conference, const char *path) {
 	LinphonePrivate::MediaConference::ConferenceLogContextualizer logContextualizer(conference);
-	return MediaConference::Conference::toCpp(conference)->startRecording(path);
+	return MediaConference::Conference::toCpp(conference)->startRecording(L_C_TO_STRING(path));
 }
 
 int linphone_conference_stop_recording(LinphoneConference *conference) {

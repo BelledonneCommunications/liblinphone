@@ -84,7 +84,7 @@ public:
 	virtual bool isIn() const override;
 	virtual const std::shared_ptr<Address> getOrganizer() const override;
 
-	virtual int startRecording(const char *path) override;
+	virtual int startRecording(const std::string &path) override;
 
 	virtual void setLocalParticipantStreamCapability(const LinphoneMediaDirection &direction,
 	                                                 const LinphoneStreamType type) override;

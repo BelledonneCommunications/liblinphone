@@ -50,6 +50,9 @@ MS2AudioMixer::~MS2AudioMixer() {
 	if (mRecordEndpoint) {
 		stopRecording();
 	}
+	if (mPlayer) {
+		mPlayer->close();
+	}
 	if (mLocalEndpoint) {
 		removeLocalParticipant();
 	}
@@ -128,6 +131,7 @@ void MS2AudioMixer::addLocalParticipant() {
 }
 
 void MS2AudioMixer::removeLocalParticipant() {
+	if (mPlayer) mPlayer = nullptr; // Stop audio file playing
 	if (mLocalEndpoint) {
 		ms_audio_conference_remove_member(mConference, mLocalEndpoint);
 		ms_audio_endpoint_release_from_stream(mLocalEndpoint);
@@ -296,8 +300,7 @@ std::shared_ptr<Player> MS2AudioMixer::getPlayer() const {
 }
 
 void MS2AudioMixer::createPlayer() {
-	if (mLocalParticipantStream)
-		mPlayer = CallPlayer::create<CallPlayer>(getSession().getCore().getSharedFromThis(), mLocalParticipantStream);
+	mPlayer = CallPlayer::create<CallPlayer>(getSession().getCore().getSharedFromThis(), getAudioConference());
 }
 
 LINPHONE_END_NAMESPACE

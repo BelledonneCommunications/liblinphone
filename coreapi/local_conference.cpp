@@ -1933,7 +1933,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 	return true;
 }
 
-int LocalConference::startRecording(const char *path) {
+int LocalConference::startRecording(const string &path) {
 	MS2AudioMixer *mixer =
 	    mMixerSession ? dynamic_cast<MS2AudioMixer *>(mMixerSession->getMixerByType(SalAudio)) : nullptr;
 	if (mixer) {

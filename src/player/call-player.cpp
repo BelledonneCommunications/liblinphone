@@ -35,12 +35,25 @@ CallPlayer::CallPlayer(std::shared_ptr<Core> core, AudioStream *audioStream) : P
 	mAudioStream = audioStream;
 }
 
+CallPlayer::CallPlayer(std::shared_ptr<Core> core, MSAudioConference *conference) : Player(core) {
+	mAudioConference = conference;
+}
+
+CallPlayer::~CallPlayer() {
+	if (mAudioEndpoint) {
+		ms_audio_player_endpoint_stop(mAudioEndpoint);
+		ms_audio_conference_remove_member(mAudioConference, mAudioEndpoint);
+		ms_audio_endpoint_destroy(mAudioEndpoint);
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 LinphonePlayerState CallPlayer::getState() const {
 	MSPlayerState state = MSPlayerClosed;
 	if (!checkState(true)) return LinphonePlayerClosed;
-	ms_filter_call_method(mAudioStream->av_player.player, MS_PLAYER_GET_STATE, &state);
+	if (mAudioEndpoint) state = ms_audio_player_endpoint_get_state(mAudioEndpoint);
+	if (mAudioStream) ms_filter_call_method(mAudioStream->av_player.player, MS_PLAYER_GET_STATE, &state);
 	return linphoneStateFromMs2State(state);
 }
 
@@ -48,40 +61,64 @@ LinphonePlayerState CallPlayer::getState() const {
 
 void CallPlayer::close() {
 	if (!checkState(true)) return;
-	audio_stream_close_remote_play(mAudioStream);
+	if (mAudioEndpoint) {
+		ms_audio_player_endpoint_stop(mAudioEndpoint);
+		ms_audio_conference_remove_member(mAudioConference, mAudioEndpoint);
+		ms_audio_endpoint_destroy(mAudioEndpoint);
+		mAudioEndpoint = nullptr;
+	}
+	if (mAudioStream) {
+		audio_stream_close_remote_play(mAudioStream);
+	}
 }
 
 LinphoneStatus CallPlayer::open(const std::string &filename) {
 	if (!checkState(false)) return -1;
-	MSFilter *filter = audio_stream_open_remote_play(mAudioStream, L_STRING_TO_C(filename));
-	if (!filter) return -1;
-	ms_filter_add_notify_callback(filter, &onEof, toC(), FALSE);
-	return 0;
+	if (mAudioConference) {
+		mAudioEndpoint = ms_audio_endpoint_new_player(getCore()->getCCore()->factory, L_STRING_TO_C(filename));
+		if (!mAudioEndpoint) return -1;
+		ms_audio_player_endpoint_set_eof_cb(mAudioEndpoint, &onEof, toC());
+		ms_audio_conference_add_member(mAudioConference, mAudioEndpoint);
+		return 0;
+	}
+	if (mAudioStream) {
+		MSFilter *filter = audio_stream_open_remote_play(mAudioStream, L_STRING_TO_C(filename));
+		if (!filter) return -1;
+		ms_filter_add_notify_callback(filter, &onEof, toC(), FALSE);
+		return 0;
+	}
+	return -1;
 }
 
 LinphoneStatus CallPlayer::pause() {
 	if (!checkState(true)) return -1;
-	return ms_filter_call_method_noarg(mAudioStream->av_player.player, MS_PLAYER_PAUSE);
+	if (mAudioEndpoint) return ms_audio_player_endpoint_pause(mAudioEndpoint);
+	if (mAudioStream) return ms_filter_call_method_noarg(mAudioStream->av_player.player, MS_PLAYER_PAUSE);
+	return -1;
 }
 
 LinphoneStatus CallPlayer::seek(int time_ms) {
 	if (!checkState(true)) return -1;
-	return ms_filter_call_method(mAudioStream->av_player.player, MS_PLAYER_SEEK_MS, &time_ms);
+	if (mAudioEndpoint) return ms_audio_player_endpoint_seek(mAudioEndpoint, time_ms);
+	if (mAudioStream) return ms_filter_call_method(mAudioStream->av_player.player, MS_PLAYER_SEEK_MS, &time_ms);
+	return -1;
 }
 
 LinphoneStatus CallPlayer::start() {
 	if (!checkState(true)) return -1;
-	return ms_filter_call_method_noarg(mAudioStream->av_player.player, MS_PLAYER_START);
+	if (mAudioEndpoint) return ms_audio_player_endpoint_start(mAudioEndpoint);
+	if (mAudioStream) return ms_filter_call_method_noarg(mAudioStream->av_player.player, MS_PLAYER_START);
+	return -1;
 }
 
 // -----------------------------------------------------------------------------
 
 bool CallPlayer::checkState(bool checkPlayer) const {
-	if (media_stream_get_state(&mAudioStream->ms) != MSStreamStarted) {
+	if (mAudioStream && media_stream_get_state(&mAudioStream->ms) != MSStreamStarted) {
 		lWarning() << "In-call player not usable with audio stream that is not started.";
 		return false;
 	}
-	if (checkPlayer && !mAudioStream->av_player.player) {
+	if (checkPlayer && !mAudioEndpoint && !mAudioStream->av_player.player) {
 		lError() << "CallPlayer::checkState(): no player.";
 		return false;
 	}

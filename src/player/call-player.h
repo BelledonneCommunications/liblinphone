@@ -33,8 +33,9 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC CallPlayer : public Player {
 public:
 	CallPlayer(std::shared_ptr<Core> core, AudioStream *audioStream);
+	CallPlayer(std::shared_ptr<Core> core, MSAudioConference *conference);
 	CallPlayer(const CallPlayer &other) = delete;
-	virtual ~CallPlayer() = default;
+	virtual ~CallPlayer();
 
 	// Getters
 	LinphonePlayerState getState() const override;
@@ -51,6 +52,8 @@ private:
 	static void onEof(void *userData, MSFilter *f, unsigned int eventId, void *arg);
 
 	AudioStream *mAudioStream = nullptr;
+	MSAudioEndpoint *mAudioEndpoint = nullptr;
+	MSAudioConference *mAudioConference = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

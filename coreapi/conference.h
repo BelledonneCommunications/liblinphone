@@ -166,7 +166,7 @@ public:
 	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
 	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
-	virtual int startRecording(const char *path) = 0;
+	virtual int startRecording(const std::string &path) = 0;
 	int stopRecording();
 	bool isRecording() const;
 
