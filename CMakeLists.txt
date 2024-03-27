@@ -119,6 +119,8 @@ find_package(BelleSIP 5.3.0 REQUIRED)
 find_package(Mediastreamer2 5.3.0 REQUIRED)
 find_package(Ortp 5.3.0 REQUIRED)
 find_package(BCToolbox 5.3.0 REQUIRED OPTIONAL_COMPONENTS tester)
+#Mandatory to init default compilation flags
+bc_init_compilation_flags(STRICT_OPTIONS_CPP STRICT_OPTIONS_C STRICT_OPTIONS_CXX ENABLE_STRICT)
 find_package(Belr 5.3.0 REQUIRED)
 
 if(ENABLE_ADVANCED_IM)
@@ -257,10 +259,6 @@ if(MSVC)
 	add_definitions("-D__STDC_LIMIT_MACROS")
 endif()
 
-set(STRICT_OPTIONS_CPP )
-set(STRICT_OPTIONS_C )
-set(STRICT_OPTIONS_CXX )
-set(STRICT_OPTIONS_OBJC )
 if(MSVC)
 	list(APPEND STRICT_OPTIONS_CPP "/wd4995") # Disable "name was marked as #pragma deprecated" warnings
 	list(APPEND STRICT_OPTIONS_CPP "/wd4996") # Disable deprecated function warnings
