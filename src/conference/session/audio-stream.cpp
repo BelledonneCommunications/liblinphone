@@ -363,7 +363,7 @@ void MS2AudioStream::configureConference() {
 			LinphoneConfig *config = linphone_core_get_config(getCCore());
 			if (static_cast<MSConferenceMode>(linphone_config_get_int(
 			        config, "sound", "conference_mode", MSConferenceModeMixer)) == MSConferenceModeRouterFullPacket) {
-				audio_stream_enable_transfer_mode(mStream, TRUE);
+				media_stream_enable_transfer_mode(&mStream->ms, TRUE);
 			}
 		}
 	}

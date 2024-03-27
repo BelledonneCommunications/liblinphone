@@ -245,6 +245,7 @@ public:
 	void setLocalParticipantLabel(const std::string &label);
 	std::string getLocalParticipantLabel() const;
 	virtual VideoStream *getVideoStream() const override;
+	const MSVideoConferenceParams &getConferenceParams() const;
 	~MS2VideoMixer();
 
 protected:
@@ -257,6 +258,7 @@ private:
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
 	int getOutputBandwidth();
+	MSVideoConferenceParams mConferenceParams{};
 	MSVideoConference *mConferenceMix = nullptr; // Add only normal streams to get switched stream (active speaker) and
 	                                             // all routed normal streams (mosaic)
 	MSVideoConference *mConferenceThumbnail =

@@ -20,6 +20,7 @@
 
 #include <bctoolbox/defs.h>
 
+#include "mediastreamer2/msconference.h"
 #include "mediastreamer2/msitc.h"
 
 #include "c-wrapper/internal/c-tools.h"
@@ -31,12 +32,14 @@
 LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoMixer::MS2VideoMixer(MixerSession &session) : StreamMixer(session), MS2VideoControl(session.getCore()) {
-	MSVideoConferenceParams paramsAlltoAll = {0};
-	paramsAlltoAll.codec_mime_type = "VP8";
-	paramsAlltoAll.min_switch_interval = 3000;
-	paramsAlltoAll.security_level = StreamMixer::securityLevelToMsSecurityLevel(session.getSecurityLevel());
-	mConferenceMix = ms_video_conference_new(mSession.getCCore()->factory, &paramsAlltoAll);
-	mConferenceThumbnail = ms_video_conference_new(mSession.getCCore()->factory, &paramsAlltoAll);
+	mConferenceParams.codec_mime_type = "VP8";
+	mConferenceParams.min_switch_interval = 3000;
+	mConferenceParams.security_level = StreamMixer::securityLevelToMsSecurityLevel(session.getSecurityLevel());
+	LinphoneConfig *config = linphone_core_get_config(mSession.getCCore());
+	mConferenceParams.mode = static_cast<MSConferenceMode>(
+	    linphone_config_get_int(config, "video", "conference_mode", MSConferenceModeRouterPayload));
+	mConferenceMix = ms_video_conference_new(mSession.getCCore()->factory, &mConferenceParams);
+	mConferenceThumbnail = ms_video_conference_new(mSession.getCCore()->factory, &mConferenceParams);
 }
 
 void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool thumbnail) {
@@ -199,11 +202,13 @@ void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 
 	if (isThumbnail) {
 		mLocalParticipantItcStream = vs;
-		mLocalEndpoint = ms_video_endpoint_get_from_stream(mLocalParticipantItcStream, FALSE);
+		MSConferenceMode mode = ms_video_conference_get_params(mConferenceThumbnail)->mode;
+		mLocalEndpoint = ms_video_endpoint_get_from_stream(mLocalParticipantItcStream, FALSE, mode);
 		ms_video_conference_add_member(mConferenceThumbnail, mLocalEndpoint);
 	} else {
 		mLocalParticipantStream = vs;
-		mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mLocalParticipantStream, FALSE);
+		MSConferenceMode mode = ms_video_conference_get_params(mConferenceMix)->mode;
+		mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mLocalParticipantStream, FALSE, mode);
 		ms_video_conference_add_member(mConferenceMix, mMainLocalEndpoint);
 	}
 }
@@ -260,6 +265,10 @@ void MS2VideoMixer::setLocalParticipantLabel(const std::string &label) {
 
 std::string MS2VideoMixer::getLocalParticipantLabel() const {
 	return mLocalParticipantLabel;
+}
+
+const MSVideoConferenceParams &MS2VideoMixer::getConferenceParams() const {
+	return mConferenceParams;
 }
 
 LINPHONE_END_NAMESPACE

@@ -56,6 +56,7 @@
 
 #include "conference.h"
 #include "private.h"
+#include "remote_conference.h"
 
 using namespace std;
 
@@ -1795,6 +1796,8 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription &strea
 			}
 		} else if ((type == SalVideo) && conference) {
 			validateVideoStreamDirection(cfg);
+
+			cfg.frame_marking_extension_id = RTP_EXTENSION_FRAME_MARKING;
 		}
 		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, stream, cfg, mid);
 
@@ -2062,6 +2065,8 @@ void MediaSessionPrivate::addConferenceLocalParticipantStreams(bool add,
 						cfg.dir = dir;
 						if (type == SalVideo) {
 							validateVideoStreamDirection(cfg);
+
+							if (!isInLocalConference) cfg.frame_marking_extension_id = RTP_EXTENSION_FRAME_MARKING;
 						}
 						if (bundle_enabled) {
 							const std::string bundleNamePrefix((type == SalVideo) ? "vs" : "as");
@@ -2150,6 +2155,16 @@ void MediaSessionPrivate::addConferenceParticipantStreams(std::shared_ptr<SalMed
 								const auto mid(bundleNameStreamPrefix + devLabel);
 								fillConferenceParticipantStream(newParticipantStream, oldMd, md, dev, pth, encs, type,
 								                                mid);
+								if (isVideoStream) {
+									try {
+										auto &cfg = newParticipantStream.cfgs.at(
+										    newParticipantStream.getActualConfigurationIndex());
+										cfg.frame_marking_extension_id = RTP_EXTENSION_FRAME_MARKING;
+									} catch (std::out_of_range &) {
+										lError()
+										    << "Trying to set frame marking extension to incorrect configuration index";
+									}
+								}
 							}
 						}
 					}

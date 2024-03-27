@@ -30,7 +30,9 @@ void create_transfer_conference_base(time_t start_time,
                                      LinphoneConferenceParticipantListType participant_list_type,
                                      const LinphoneMediaEncryption encryption,
                                      LinphoneConferenceLayout layout,
-                                     LinphoneConferenceSecurityLevel security_level) {
+                                     LinphoneConferenceSecurityLevel security_level,
+                                     bool audio_transfer,
+                                     bool video_transfer) {
 	char *pauline_recordpath = bc_tester_file("record-local_transfered_conference_with_file_player_pauline.wav");
 	char *laure_recordpath = bc_tester_file("record-local_transfered_conference_with_file_player_laure.wav");
 	char *marie_recordpath = bc_tester_file("record-local_transfered_conference_with_file_player_marie.wav");
@@ -40,6 +42,7 @@ void create_transfer_conference_base(time_t start_time,
 	unlink(pauline_recordpath);
 	unlink(laure_recordpath);
 	unlink(marie_recordpath);
+
 	Focus focus("chloe_rc");
 	{ // to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getConferenceFactoryAddress());
@@ -64,6 +67,29 @@ void create_transfer_conference_base(time_t start_time,
 		bctbx_list_t *coresList = NULL;
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
+			if (video_transfer) {
+				LinphoneVideoActivationPolicy *pol =
+				    linphone_factory_create_video_activation_policy(linphone_factory_get());
+				linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+				linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+				linphone_core_set_video_activation_policy(mgr->lc, pol);
+				linphone_video_activation_policy_unref(pol);
+				disable_all_video_codecs_except_one(mgr->lc, "vp8");
+
+				linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
+				linphone_core_enable_video_capture(mgr->lc, TRUE);
+				linphone_core_enable_video_display(mgr->lc, TRUE);
+
+				if (layout == LinphoneConferenceLayoutGrid) {
+					linphone_core_set_preferred_video_definition_by_name(mgr->lc, "720p");
+					linphone_config_set_string(linphone_core_get_config(mgr->lc), "video", "max_conference_size",
+					                           "vga");
+				}
+			}
+
+			if (mgr == pauline.getCMgr()) {
+				linphone_core_set_conference_max_thumbnails(mgr->lc, 2);
+			}
 
 			if (mgr != focus.getCMgr()) {
 				linphone_core_set_default_conference_layout(mgr->lc, layout);
@@ -75,8 +101,17 @@ void create_transfer_conference_base(time_t start_time,
 
 		// Focus is in full packet mode: transfer packet not payload
 		LinphoneConfig *focus_config = linphone_core_get_config(focus.getLc());
-		linphone_config_set_int(focus_config, "sound", "conference_mode",
-		                        static_cast<int>(MSConferenceModeRouterFullPacket));
+
+		if (audio_transfer) {
+			linphone_config_set_int(focus_config, "sound", "conference_mode",
+			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+		}
+
+		if (video_transfer) {
+			linphone_config_set_int(focus_config, "video", "conference_mode",
+			                        static_cast<int>(MSConferenceModeRouterFullPacket));
+		}
+
 		int nortp_timeout = 10;
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), participant_list_type);
@@ -193,7 +228,7 @@ void create_transfer_conference_base(time_t start_time,
 		std::map<LinphoneCoreManager *, LinphoneParticipantInfo *> memberList =
 		    fill_memmber_list(members, participantList, marie.getCMgr(), participants_info);
 		wait_for_conference_streams({focus, marie, pauline, laure}, conferenceMgrs, focus.getCMgr(), memberList,
-		                            confAddr, false);
+		                            confAddr, video_transfer);
 
 		LinphoneConference *fconference = linphone_core_search_conference_2(focus.getLc(), confAddr);
 		BC_ASSERT_PTR_NOT_NULL(fconference);
@@ -239,13 +274,14 @@ void create_transfer_conference_base(time_t start_time,
 					}
 
 					size_t no_streams_audio = 0;
-					size_t no_streams_video = 0;
+					size_t no_streams_video = video_transfer ? 3 : 0;
 					size_t no_streams_text = 0;
 
 					LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
 						no_streams_audio = compute_no_audio_streams(pcall, pconference);
+						no_streams_video = compute_no_video_streams(video_transfer, pcall, pconference);
 						_linphone_call_check_max_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_streams_video,
 						                                       no_streams_text);
@@ -369,6 +405,7 @@ void create_transfer_conference_base(time_t start_time,
 		bctbx_list_free_with_data(participants_info, (bctbx_list_free_func)linphone_participant_info_unref);
 		bctbx_list_free(coresList);
 	}
+
 	bc_free(pauline_recordpath);
 	bc_free(laure_recordpath);
 	bc_free(marie_recordpath);
@@ -376,16 +413,30 @@ void create_transfer_conference_base(time_t start_time,
 	bc_free(laure_soundpath);
 	bc_free(marie_soundpath);
 }
-static void create_transfer_conference(void) {
+
+static void create_audio_transfer_conference(void) {
 	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
 	                                LinphoneMediaEncryptionNone, LinphoneConferenceLayoutGrid,
-	                                LinphoneConferenceSecurityLevelNone);
+	                                LinphoneConferenceSecurityLevelNone, true, false);
+}
+
+static void create_video_transfer_conference(void) {
+	create_transfer_conference_base(ms_time(NULL), -1, LinphoneConferenceParticipantListTypeOpen,
+	                                LinphoneMediaEncryptionNone, LinphoneConferenceLayoutActiveSpeaker,
+	                                LinphoneConferenceSecurityLevelNone, true, true);
+}
+
+static void create_video_transfer_conference_active_speaker_changed(void) {
+	change_active_speaker_base(true);
 }
 
 } // namespace LinphoneTest
 
 static test_t local_conference_transfered_conference_basic_tests[] = {
-    TEST_NO_TAG("Create transfer conference", LinphoneTest::create_transfer_conference),
+    TEST_NO_TAG("Create audio transfer conference", LinphoneTest::create_audio_transfer_conference),
+    TEST_NO_TAG("Create video transfer conference", LinphoneTest::create_video_transfer_conference),
+    TEST_NO_TAG("Create video transfer conference with active speaker changed",
+                LinphoneTest::create_video_transfer_conference_active_speaker_changed),
 };
 
 test_suite_t local_conference_test_suite_transfered_conference_basic = {

@@ -36,6 +36,7 @@
 #include "conference/participant.h"
 #include "core/core.h"
 #include "linphone/core.h"
+#include "local_conference.h"
 #include "media-session-p.h"
 #include "media-session.h"
 #include "mixers.h"
@@ -578,6 +579,28 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 		else video_stream_set_csrc_changed_callback(mStream, nullptr, nullptr);
 	}
 
+	if (conference) {
+		if (const auto &streamCfg = vstream.getActualConfiguration(); streamCfg.getFrameMarkingExtensionId() > 0) {
+			video_stream_set_frame_marking_extension_id(mStream, streamCfg.getFrameMarkingExtensionId());
+			rtp_session_set_ssrc_changed_threshold(mStream->ms.sessions.rtp_session, 1);
+		}
+
+		const auto localConference = dynamic_pointer_cast<MediaConference::LocalConference>(conference);
+		if (localConference) {
+			// when conference is local(we are a server), enable the transfer mode if needed
+			LinphoneConfig *config = linphone_core_get_config(getCCore());
+			if (static_cast<MSConferenceMode>(
+			        linphone_config_get_int(config, "video", "conference_mode", MSConferenceModeRouterPayload)) ==
+			    MSConferenceModeRouterFullPacket) {
+				media_stream_enable_transfer_mode(&mStream->ms, TRUE);
+			}
+		} else {
+			// If we are a client in a RemoteConference, enable the active speaker mode.
+			// This mode will listen to any new incoming ssrc in the stream.
+			video_stream_enable_active_speaker_mode(mStream, TRUE);
+		}
+	}
+
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCCore());
 	if (vdef) {
 		MSVideoSize vsize;
@@ -677,15 +700,6 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 			}
 		}
 		if (ok) {
-			const auto &streamCfg = vstream.getActualConfiguration();
-
-			// Only activate frame marking if we are using VP8
-			if (streamCfg.getFrameMarkingExtensionId() > 0 && usedPt == 96) {
-				// This has to be called before video_stream_start so that the VideoStream can configure it's
-				// filters properly
-				video_stream_set_frame_marking_extension_id(mStream, streamCfg.getFrameMarkingExtensionId());
-			}
-
 			if (videoMixer == nullptr && !label.empty() && dir == MediaStreamSendOnly && contentIsThumbnail) {
 				// The current stream is thumbnail, search for the main stream in order to get data on what we are using
 				// for thumbnail (camera or Itc):
@@ -780,7 +794,7 @@ void MS2VideoStream::render(const OfferAnswerContext &ctx, CallSession::State ta
 	}
 
 	if (videoMixer && (targetState == CallSession::State::StreamsRunning)) {
-		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, true);
+		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, true, videoMixer->getConferenceParams().mode);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, isThumbnail());
 	}
 }

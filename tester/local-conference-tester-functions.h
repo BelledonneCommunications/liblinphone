@@ -520,6 +520,8 @@ void create_conference_with_audio_only_participants_base(LinphoneConferenceSecur
 
 void create_simple_conference_dial_out_with_some_calls_declined_base(LinphoneReason reason,
                                                                      LinphoneConferenceSecurityLevel securityLevel);
+
+void change_active_speaker_base(bool transfer_mode);
 } // namespace LinphoneTest
 
 #endif // LOCAL_CONFERENCE_TESTER_FUNCTIONS_H_
