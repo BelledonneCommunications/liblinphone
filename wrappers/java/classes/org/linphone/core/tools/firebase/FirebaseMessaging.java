@@ -130,20 +130,30 @@ public class FirebaseMessaging extends FirebaseMessagingService {
 
     private void notifyAppPushReceivedWithoutCoreAvailable() {
         Intent intent = new Intent();
-        intent.setAction("org.linphone.core.action.PUSH_RECEIVED");
+        String action = "org.linphone.core.action.PUSH_RECEIVED";
+        intent.setAction(action);
+
+        String appPackageName = getPackageName();
+        boolean found = false;
+        android.util.Log.i("FirebaseMessaging", "[Push Notification] Looking for an application with package name [" + appPackageName + "] that has registered a BroadcastReceiver for an Intent with action [" + action + "]");
 
         PackageManager pm = getPackageManager();
         List<ResolveInfo> matches = pm.queryBroadcastReceivers(intent, 0);
-
         for (ResolveInfo resolveInfo : matches) {
             String packageName = resolveInfo.activityInfo.applicationInfo.packageName;
-            if (packageName.equals(getPackageName())) {
+            if (packageName.equals(appPackageName)) {
+                android.util.Log.i("FirebaseMessaging", "[Push Notification] Notifying component [" + resolveInfo.activityInfo.name + "] using a Broadcast Intent with action [" + action + "]");
                 Intent explicit = new Intent(intent);
                 ComponentName cn = new ComponentName(packageName, resolveInfo.activityInfo.name);
                 explicit.setComponent(cn);
                 sendBroadcast(explicit);
+                found = true;
                 break;
             }
+        }
+
+        if (!found) {
+            android.util.Log.e("FirebaseMessaging", "[Push Notification] No matching BroadcastReceiver found for an Intent with action [" + action + "]!");
         }
     }
 

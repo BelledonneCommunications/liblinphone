@@ -57,6 +57,9 @@ public class DeviceUtils {
 	}
 
 	public static String getAppStandbyBucketNameFromValue(int bucket) {
+		if (Version.sdkAboveOrEqual(Version.API30_ANDROID_11)) {
+			return DeviceUtils30.getAppStandbyBucketNameFromValue(bucket);
+		}
 		if (Version.sdkAboveOrEqual(Version.API28_PIE_90)) {
 			return DeviceUtils28.getAppStandbyBucketNameFromValue(bucket);
 		}
