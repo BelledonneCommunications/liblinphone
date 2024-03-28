@@ -39,12 +39,14 @@ import org.linphone.core.tools.Log;
 
 public class DeviceUtils30 {
     public static void logPreviousCrashesIfAny(Context context) {
+		Log.i("==== Fetching last five exit reasons if available ====");
 		ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 		List<ApplicationExitInfo> exitInfos = activityManager.getHistoricalProcessExitReasons(null, 0, 5);
 
 		for (ApplicationExitInfo exitInfo : exitInfos) {
 			Log.i("==== Previous exit reason information dump ====");
-			Log.i("REASON=", getReasonAsString(exitInfo.getReason()));
+			Log.i("REASON=", getReasonAsString(exitInfo.getReason()) + "[" + exitInfo.getStatus() + "]");
+			Log.i("IMPORTANCE=", getImportanceAsString(exitInfo.getImportance()));
 			Log.i("TIMESTAMP=", getHumanReadableDateAndTimeFromTimestamp(exitInfo.getTimestamp()));
 			Log.i("DESCRIPTION=", exitInfo.getDescription());
 			if (exitInfo.getReason() == ApplicationExitInfo.REASON_ANR) {
@@ -68,6 +70,31 @@ public class DeviceUtils30 {
 			}
 			Log.i("=========================================");
 		}
+	}
+
+	public static String getImportanceAsString(int importance) {
+		if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+			return "Foreground";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE) {
+			return "Foreground Service";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING) {
+			return "Top sleeping";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE) {
+			return "Visible";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE) {
+			return "Perceptible";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE) {
+			return "Can't save state";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE) {
+			return "Service";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED) {
+			return "Cached";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE) {
+			return "Gone";
+		} else if (importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING) {
+			return "Top sleeping";
+		}
+		return "Unexpected: " + importance;
 	}
 
 	public static String getReasonAsString(int reason) {

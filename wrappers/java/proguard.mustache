@@ -41,3 +41,8 @@
 
 # Mediastreamer classes
 -keep class org.linphone.mediastream.** {*;}
+
+# Protobuf classes
+-keep class com.google.protobuf.GeneratedMessageLite { *; }
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
+-keep class com.android.server.os.LinphoneTombstoneProtos {*;}

@@ -82,7 +82,21 @@ public class DeviceUtils {
 	
 	public static void logPreviousCrashesIfAny(Context context) {
 		if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
-			DeviceUtils31.logPreviousCrashesIfAny(context);
+			boolean protobufDependencyFound = false;
+			try {
+				String className = "com.google.protobuf.GeneratedMessageLite";
+            	Class message = Class.forName(className);
+				protobufDependencyFound = true;
+			} catch (ClassNotFoundException e) {
+				Log.w("[Device Utils] Couldn't find class [com.google.protobuf.GeneratedMessageLite]");
+			} catch (Exception e) {
+				Log.w("[Device Utils] Couldn't load protobuf classes: " + e);
+			}
+
+			if (!protobufDependencyFound) {
+				Log.w("[Device Utils] Native crash tombstone can't be obtained, is app missing [implementation \"com.google.protobuf:protobuf-javalite:3.22.3\"] dependency?");
+			}
+			DeviceUtils31.logPreviousCrashesIfAny(context, protobufDependencyFound);
 		} else if (Version.sdkAboveOrEqual(Version.API30_ANDROID_11)) {
 			DeviceUtils30.logPreviousCrashesIfAny(context);
 		}

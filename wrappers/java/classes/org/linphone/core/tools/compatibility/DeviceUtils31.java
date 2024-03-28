@@ -29,6 +29,8 @@ import android.content.pm.PackageManager;
 import android.text.format.DateFormat;
 import android.Manifest;
 
+import com.android.server.os.LinphoneTombstoneProtos.Tombstone;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,22 +43,28 @@ import java.util.stream.Collectors;
 import org.linphone.core.tools.Log;
 
 public class DeviceUtils31 {
-    public static void logPreviousCrashesIfAny(Context context) {
+    public static void logPreviousCrashesIfAny(Context context, boolean printNativeCrashTombstone) {
+		Log.i("==== Fetching last five exit reasons if available ====");
 		ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 		List<ApplicationExitInfo> exitInfos = activityManager.getHistoricalProcessExitReasons(null, 0, 5);
 
 		for (ApplicationExitInfo exitInfo : exitInfos) {
 			Log.i("==== Previous exit reason information dump ====");
-			Log.i("REASON=", DeviceUtils30.getReasonAsString(exitInfo.getReason()));
+			Log.i("REASON=", DeviceUtils30.getReasonAsString(exitInfo.getReason()) + "[" + exitInfo.getStatus() + "]");
+			Log.i("IMPORTANCE=", DeviceUtils30.getImportanceAsString(exitInfo.getImportance()));
 			Log.i("TIMESTAMP=", DeviceUtils30.getHumanReadableDateAndTimeFromTimestamp(exitInfo.getTimestamp()));
 			Log.i("DESCRIPTION=", exitInfo.getDescription());
 			if (exitInfo.getReason() == ApplicationExitInfo.REASON_ANR || exitInfo.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
 				try {
 					InputStream inputStream = exitInfo.getTraceInputStream();
 					if (inputStream != null) {
-						if (exitInfo.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
-							//Tombstone tombstone = Tombstone.parseFrom(inputStream);
-							//Log.w("TOMBSTONE=", tombstone.toString());
+						if (exitInfo.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE && printNativeCrashTombstone) {
+							try {
+								Tombstone tombstone = Tombstone.parseFrom(inputStream);
+								Log.w("TOMBSTONE=", tombstone.getAbortMessage());
+							} catch (Exception e) {
+								Log.e("Failed to obtain tombstone, is app missing [implementation \"com.google.protobuf:protobuf-javalite:3.22.3\"] dependency?");
+							}
 						} else {
 							BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 							String trace = bufferedReader.lines().collect(Collectors.joining("\n"));
