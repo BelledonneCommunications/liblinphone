@@ -22,6 +22,7 @@ package org.linphone.core.tools.compatibility;
 
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
+import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.text.format.DateFormat;
 
@@ -106,5 +107,21 @@ public class DeviceUtils30 {
 		Calendar cal = Calendar.getInstance();
 		cal.setTimeInMillis(timestamp);
 		return DateFormat.format("dd-MM-yyyy HH:mm:ss", cal).toString();
+	}
+
+	public static String getAppStandbyBucketNameFromValue(int bucket) {
+		switch (bucket) {
+			case UsageStatsManager.STANDBY_BUCKET_ACTIVE:
+				return "STANDBY_BUCKET_ACTIVE";
+			case UsageStatsManager.STANDBY_BUCKET_FREQUENT:
+				return "STANDBY_BUCKET_FREQUENT";
+			case UsageStatsManager.STANDBY_BUCKET_RARE:
+				return "STANDBY_BUCKET_RARE";
+			case UsageStatsManager.STANDBY_BUCKET_WORKING_SET:
+				return "STANDBY_BUCKET_WORKING_SET";
+			case UsageStatsManager.STANDBY_BUCKET_RESTRICTED:
+				return "STANDBY_BUCKET_RESTRICTED";
+		}
+		return null;
 	}
 }
