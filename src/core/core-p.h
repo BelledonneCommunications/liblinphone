@@ -236,6 +236,7 @@ private:
 	std::list<std::shared_ptr<Ldap>> mLdapServers; // Persistent list of LDAP servers
 	std::string logLabel;
 	LinphoneCodecPriorityPolicy videoCodecPriorityPolicy = LinphoneCodecPriorityPolicyAuto;
+	std::unique_ptr<HttpClient> httpClient;
 
 	L_DECLARE_PUBLIC(Core);
 };

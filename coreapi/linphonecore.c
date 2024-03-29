@@ -47,7 +47,7 @@
 
 #include "belr/grammarbuilder.h"
 
-#include <ortp/telephonyevents.h>
+#include "ortp/telephonyevents.h"
 
 #include "mediastreamer2/dtmfgen.h"
 #include "mediastreamer2/mediastream.h"
@@ -98,6 +98,7 @@
 #include "core/core-p.h"
 #include "event/event-publish.h"
 #include "friend/friend-list.h"
+#include "http/http-client.h"
 #include "sal/sal.h"
 #include "vcard/vcard-context.h"
 #ifdef HAVE_CONFIG_H
@@ -1206,7 +1207,7 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 			belle_sip_object_data_set(
 			    BELLE_SIP_OBJECT(req), "http_request_listener", l,
 			    belle_sip_object_unref); // Ensure the listener object is destroyed when the request is destroyed
-			belle_http_provider_send_request(core->http_provider, req, l);
+			belle_http_provider_send_request(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getHttpClient().getProvider(), req, l);
 		} else if (code == 200) { /* The file has been uploaded correctly, get the server reply */
 			const char *body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
 			FileTransferChatMessageModifier fileTransferModifier = FileTransferChatMessageModifier(NULL);
@@ -1369,7 +1370,7 @@ void linphone_core_upload_log_collection(LinphoneCore *core) {
 		belle_sip_object_data_set(
 		    BELLE_SIP_OBJECT(req), "http_request_listener", l,
 		    belle_sip_object_unref); // Ensure the listener object is destroyed when the request is destroyed
-		belle_http_provider_send_request(core->http_provider, req, l);
+		belle_http_provider_send_request(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getHttpClient().getProvider(), req, l);
 		ms_free(name);
 	} else {
 		const char *msg = NULL;
@@ -3352,21 +3353,6 @@ static void linphone_core_init(LinphoneCore *lc,
 	lc->media_network_state.global_state = FALSE;
 	lc->media_network_state.user_state = TRUE;
 
-	/* Create the http provider in dual stack mode  if ipv6 enabled for sip (ipv4 and ipv6.
-	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
-	 * ipv6 config value is read later in fonction sip_config_read*/
-	int use_ipv6_for_sip = linphone_config_get_int(lc->config, "sip", "use_ipv6", TRUE);
-	/* TLS transports is always enabled, TCP can be disabled using the https_only flag in the configuration */
-	uint8_t transports = BELLE_SIP_HTTP_TRANSPORT_TLS;
-	if (linphone_config_get_bool(lc->config, "sip", "https_only", FALSE) == FALSE) {
-		transports |= BELLE_SIP_HTTP_TRANSPORT_TCP;
-	}
-	lc->http_provider = belle_sip_stack_create_http_provider_with_transports(
-	    reinterpret_cast<belle_sip_stack_t *>(lc->sal->getStackImpl()), (use_ipv6_for_sip ? "::0" : "0.0.0.0"),
-	    transports);
-	lc->http_crypto_config = belle_tls_crypto_config_new();
-	belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
-
 	// certificates_config_read(lc); // This will be done below in _linphone_core_read_config()
 
 	lc->ringtoneplayer = linphone_ringtoneplayer_new();
@@ -3455,8 +3441,8 @@ LinphoneStatus linphone_core_start(LinphoneCore *lc) {
 			lc->sal->setUuid(uuid);
 
 		if (!lc->sal->getRootCa().empty()) {
-			belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa().c_str());
-			belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
+			auto &httpClient = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient();
+			belle_tls_crypto_config_set_root_ca(httpClient.getCryptoConfig(), lc->sal->getRootCa().c_str());
 		}
 
 		bool autoNetworkStateMonitoringEnabled = !!lc->auto_net_state_mon;
@@ -5983,18 +5969,16 @@ bool_t linphone_core_native_ringing_enabled(const LinphoneCore *core) {
 
 void linphone_core_set_root_ca(LinphoneCore *lc, const char *path) {
 	lc->sal->setRootCa(L_C_TO_STRING(path));
-	if (lc->http_crypto_config) {
-		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, path);
-	}
+
+	belle_tls_crypto_config_set_root_ca(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getCryptoConfig(), path);
+
 	linphone_config_set_string(lc->config, "sip", "root_ca", path);
 }
 
 void linphone_core_set_root_ca_data(LinphoneCore *lc, const char *data) {
 	lc->sal->setRootCa("");
 	lc->sal->setRootCaData(L_C_TO_STRING(data));
-	if (lc->http_crypto_config) {
-		belle_tls_crypto_config_set_root_ca_data(lc->http_crypto_config, data);
-	}
+	belle_tls_crypto_config_set_root_ca_data(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getCryptoConfig(), data);
 }
 
 const char *linphone_core_get_root_ca(LinphoneCore *lc) {
@@ -6003,9 +5987,8 @@ const char *linphone_core_get_root_ca(LinphoneCore *lc) {
 
 void linphone_core_verify_server_certificates(LinphoneCore *lc, bool_t yesno) {
 	lc->sal->verifyServerCertificates(!!yesno);
-	if (lc->http_crypto_config) {
-		belle_tls_crypto_config_set_verify_exceptions(lc->http_crypto_config, yesno ? 0 : BELLE_TLS_VERIFY_ANY_REASON);
-	}
+	belle_tls_crypto_config_set_verify_exceptions(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getCryptoConfig(),
+	                                              yesno ? 0 : BELLE_TLS_VERIFY_ANY_REASON);
 	linphone_config_set_int(lc->config, "sip", "verify_server_certs", yesno);
 }
 
@@ -6015,9 +5998,8 @@ bool_t linphone_core_is_verify_server_certificates(LinphoneCore *lc) {
 
 void linphone_core_verify_server_cn(LinphoneCore *lc, bool_t yesno) {
 	lc->sal->verifyServerCn(!!yesno);
-	if (lc->http_crypto_config) {
-		belle_tls_crypto_config_set_verify_exceptions(lc->http_crypto_config, yesno ? 0 : BELLE_TLS_VERIFY_CN_MISMATCH);
-	}
+	belle_tls_crypto_config_set_verify_exceptions(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getCryptoConfig(),
+	                                              yesno ? 0 : BELLE_TLS_VERIFY_CN_MISMATCH);
 	linphone_config_set_int(lc->config, "sip", "verify_server_cn", yesno);
 }
 
@@ -6027,9 +6009,8 @@ bool_t linphone_core_is_verify_server_cn(LinphoneCore *lc) {
 
 void linphone_core_set_ssl_config(LinphoneCore *lc, void *ssl_config) {
 	lc->sal->setSslConfig(ssl_config);
-	if (lc->http_crypto_config) {
-		belle_tls_crypto_config_set_ssl_config(lc->http_crypto_config, ssl_config);
-	}
+	belle_tls_crypto_config_set_ssl_config(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getCryptoConfig(),
+	                                       ssl_config);
 }
 
 static void
@@ -7376,14 +7357,6 @@ void sip_config_uninit(LinphoneCore *lc) {
 
 	lc->sal->resetTransports();
 	lc->sal->unlistenPorts(); /*to make sure no new messages are received*/
-	if (lc->http_provider) {
-		belle_sip_object_unref(lc->http_provider);
-		lc->http_provider = NULL;
-	}
-	if (lc->http_crypto_config) {
-		belle_sip_object_unref(lc->http_crypto_config);
-		lc->http_crypto_config = NULL;
-	}
 
 	/*now that we are unregisted, there is no more channel using tunnel socket we no longer need the tunnel.*/
 #ifdef TUNNEL_ENABLED
@@ -7398,6 +7371,7 @@ void sip_config_uninit(LinphoneCore *lc) {
 
 	for (i = 0; i < 5; ++i)
 		lc->sal->iterate(); /*make sure event are purged*/
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->stopHttpClient();
 	lc->sal = NULL;
 
 	if (lc->sip_conf.guessed_contact) {

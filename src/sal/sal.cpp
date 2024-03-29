@@ -398,11 +398,12 @@ void Sal::processAuthRequestedCb(void *userCtx, belle_sip_auth_event_t *event) {
 	auto sal = static_cast<Sal *>(userCtx);
 	SalAuthInfo *authInfo = sal_auth_info_create(event);
 	sal->mCallbacks.auth_requested(sal, authInfo);
-	belle_sip_auth_event_set_passwd(event, (const char *)authInfo->password);
-	belle_sip_auth_event_set_ha1(event, (const char *)authInfo->ha1);
-	belle_sip_auth_event_set_userid(event, (const char *)authInfo->userid);
-	belle_sip_auth_event_set_signing_key(event, (belle_sip_signing_key_t *)authInfo->key);
-	belle_sip_auth_event_set_client_certificates_chain(event, (belle_sip_certificates_chain_t *)authInfo->certificates);
+	belle_sip_auth_event_set_passwd(event, authInfo->password);
+	belle_sip_auth_event_set_ha1(event, authInfo->ha1);
+	belle_sip_auth_event_set_userid(event, authInfo->userid);
+	belle_sip_auth_event_set_signing_key(event, authInfo->key);
+	belle_sip_auth_event_set_client_certificates_chain(event, authInfo->certificates);
+	belle_sip_auth_event_set_bearer_token(event, authInfo->bearer_token);
 	sal_auth_info_delete(authInfo);
 }
 

@@ -190,7 +190,6 @@ if(ENABLE_LDAP)
 endif()
 
 if(ENABLE_FLEXIAPI)
-	find_package(JsonCPP REQUIRED)
 	set(HAVE_FLEXIAPI TRUE)
 endif()
 
@@ -203,7 +202,8 @@ if(ENABLE_QRCODE)
 	endif()
 endif()
 
-
+#needed for OAUTH2 authentication.
+find_package(JsonCPP REQUIRED)
 
 if(UNIX AND NOT APPLE)
 	include(CheckIncludeFiles)

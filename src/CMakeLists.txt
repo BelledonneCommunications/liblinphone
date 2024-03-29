@@ -113,6 +113,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	alert/alert.h
 	auth-info/auth-info.h
 	auth-info/auth-stack.h
+	auth-info/bearer-token.h
 	c-wrapper/c-wrapper.h
 	c-wrapper/list-holder.h
 	c-wrapper/internal/c-sal.h
@@ -294,6 +295,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	variant/variant-impl.h
 	vcard/vcard.h
 	vcard/vcard-context.h
+	http/http-client.h
 )
 
 if(ENABLE_ADVANCED_IM)
@@ -368,6 +370,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	alert/alert.cpp
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
+	auth-info/bearer-token.cpp
 	c-wrapper/c-wrapper.cpp
 	c-wrapper/api/c-digest-authentication-policy.cpp
 	c-wrapper/api/c-account.cpp
@@ -430,6 +433,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-video-source-descriptor.cpp
 	c-wrapper/api/c-nat-policy.cpp
 	c-wrapper/api/c-vcard.cpp
+	c-wrapper/api/c-bearer-token.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	call/call-log.cpp
@@ -575,6 +579,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/version.cpp
 	vcard/vcard.cpp
 	vcard/vcard-context.cpp
+	http/http-client.cpp
 )
 
 if(ENABLE_LDAP)
@@ -757,9 +762,9 @@ target_link_libraries(liblinphone
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	target_link_libraries(liblinphone PUBLIC "Ws2_32" "Iphlpapi" "user32")
 endif()
-if(ENABLE_FLEXIAPI)
-	target_link_libraries(liblinphone PUBLIC ${JsonCPP_TARGET})
-endif()
+
+target_link_libraries(liblinphone PUBLIC ${JsonCPP_TARGET})
+
 
 if(APPLE)
 	target_link_libraries(liblinphone PUBLIC ${APPLE_LIBS})

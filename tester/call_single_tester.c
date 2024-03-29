@@ -5964,8 +5964,8 @@ static void custom_rtp_modifier(bool_t pauseResumeTest, bool_t recordTest) {
 	// The following are only used for the record test
 	LinphonePlayer *player;
 	LinphonePlayerCbs *player_cbs = NULL;
-	char *hellopath = bc_tester_res("sounds/ahbahouaismaisbon.wav");       // File to be played
-	char *recordpath = bc_tester_file("record-call_with_file_player.wav"); // File to record the received sound
+	char *hellopath = bc_tester_res("sounds/ahbahouaismaisbon.wav");          // File to be played
+	char *recordpath = bc_tester_file("record-call_custom_rtp_modifier.wav"); // File to record the received sound
 	double similar = 1;            // The factor of similarity between the played file and the one recorded
 	const double threshold = 0.85; // Minimum similarity value to consider the record file equal to the one sent
 

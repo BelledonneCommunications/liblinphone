@@ -47,6 +47,7 @@
 #include "core/core-p.h"
 #include "core/core.h"
 #include "factory/factory.h"
+#include "http/http-client.h"
 #include "logger/logger.h"
 #include "sip-tools/sip-headers.h"
 
@@ -59,7 +60,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir)
-    : fileTransferChatMessageModifier(cr->getCore()->getCCore()->http_provider) {
+    : fileTransferChatMessageModifier(cr->getCore()->getHttpClient().getProvider()) {
 	direction = dir;
 	setChatRoom(cr);
 }

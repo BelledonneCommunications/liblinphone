@@ -217,6 +217,14 @@ auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, B
 	counters->number_of_auth_info_requested++;
 }
 
+static void authentication_info_requested(LinphoneCore *lc,
+                                          BCTBX_UNUSED(LinphoneAuthInfo *info),
+                                          BCTBX_UNUSED(LinphoneAuthMethod method)) {
+	stats *counters;
+	counters = get_stats(lc);
+	counters->number_of_authentication_info_requested++;
+}
+
 void reset_counters(stats *counters) {
 	if (counters->last_received_chat_message) linphone_chat_message_unref(counters->last_received_chat_message);
 	if (counters->last_fail_to_decrypt_received_chat_message)
@@ -2476,6 +2484,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	mgr->cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_registration_state_changed(mgr->cbs, registration_state_changed);
 	linphone_core_cbs_set_auth_info_requested(mgr->cbs, auth_info_requested);
+	linphone_core_cbs_set_authentication_requested(mgr->cbs, authentication_info_requested);
 	linphone_core_cbs_set_call_created(mgr->cbs, call_created);
 	linphone_core_cbs_set_call_state_changed(mgr->cbs, call_state_changed);
 	linphone_core_cbs_set_message_received(mgr->cbs, message_received);

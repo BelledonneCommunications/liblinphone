@@ -501,6 +501,13 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 
 		BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_external_body_url(msg));
 		LinphoneContent *fileTransferContent = linphone_chat_message_get_file_transfer_information(msg);
+
+		// Take a ref. Indeed during the next wait_for_list(), the file may be downloaded entirely,
+		// which drops the Content and replaces it with a FileContent internally.
+		// Then the subsequent linphone_chat_message_download_content() on this fileTransferContent reference
+		// cause a crash.
+		// FIXME: the API shall not be so error-prone.
+		linphone_content_ref(fileTransferContent);
 		BC_ASSERT_TRUE(linphone_content_is_file_transfer(fileTransferContent));
 		if (!use_buffer) {
 			linphone_content_set_file_path(fileTransferContent, downloaded_file);
@@ -519,6 +526,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 		remove(downloaded_file_temp);
 		bctbx_free(downloaded_file_temp);
 		linphone_chat_message_download_content(msg, fileTransferContent);
+		linphone_content_unref(fileTransferContent);
 
 		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageFileTransferDone,
 		                                 receiverStats->number_of_LinphoneMessageFileTransferDone + 1,

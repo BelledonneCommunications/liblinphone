@@ -21,6 +21,7 @@
 #ifndef FACTORY_H_
 #define FACTORY_H_
 
+#include "auth-info/bearer-token.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/conference-info.h"
 #include "linphone/api/c-types.h"
@@ -30,6 +31,8 @@
 #include "private.h"
 
 LINPHONE_BEGIN_NAMESPACE
+
+class AuthInfo;
 
 class Factory : public bellesip::HybridObject<LinphoneFactory, Factory> {
 public:
@@ -92,23 +95,26 @@ public:
 	LinphoneAddress *createAddress(const std::string &addr) const;
 	LinphoneParticipantDeviceIdentity *createParticipantDeviceIdentity(const LinphoneAddress *address,
 	                                                                   const std::string &name) const;
-	LinphoneAuthInfo *createAuthInfo(const std::string &username,
-	                                 const std::string &userid,
-	                                 const std::string &passwd,
-	                                 const std::string &ha1,
-	                                 const std::string &realm,
-	                                 const std::string &domain) const;
-	LinphoneAuthInfo *createAuthInfo(const std::string &username,
-	                                 const std::string &userid,
-	                                 const std::string &passwd,
-	                                 const std::string &ha1,
-	                                 const std::string &realm,
-	                                 const std::string &domain,
-	                                 const std::string &algorithm) const;
+	AuthInfo *createAuthInfo(const std::string &username,
+	                         const std::string &userid,
+	                         const std::string &passwd,
+	                         const std::string &ha1,
+	                         const std::string &realm,
+	                         const std::string &domain) const;
+	AuthInfo *createAuthInfo(const std::string &username,
+	                         const std::string &userid,
+	                         const std::string &passwd,
+	                         const std::string &ha1,
+	                         const std::string &realm,
+	                         const std::string &domain,
+	                         const std::string &algorithm) const;
 	std::string computeHa1ForAlgorithm(const std::string &userId,
 	                                   const std::string &password,
 	                                   const std::string &realm,
 	                                   const std::string &algorithm) const;
+	AuthInfo *createAuthInfo(const std::string &username,
+	                         std::shared_ptr<BearerToken> access_token,
+	                         const std::string &realm) const;
 	LinphoneCallCbs *createCallCbs() const;
 	LinphoneConferenceCbs *createConferenceCbs() const;
 	LinphoneParticipantDeviceCbs *createParticipantDeviceCbs() const;
@@ -236,6 +242,7 @@ public:
 	                    const unsigned int &height = 100,
 	                    const unsigned int &margin = 0) const; // Write a jpeg image (TODO: check file path extension to
 	                                                           // select format). -2=SDK has not been build for jpeg.
+	std::shared_ptr<BearerToken> createBearerToken(const std::string &token, time_t expirationTime) const;
 
 protected:
 	static void _DestroyingCb(void);

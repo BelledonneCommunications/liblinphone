@@ -20,8 +20,9 @@
 #ifndef AUTH_INFO_H
 #define AUTH_INFO_H
 
+#include "bearer-token.h"
+#include "belle-sip/object++.hh"
 #include "linphone/api/c-types.h"
-#include <belle-sip/object++.hh>
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -48,6 +49,9 @@ public:
 	         const std::string &domain,
 	         const std::string &algorithm,
 	         const std::list<std::string> &availableAlgorithms);
+	AuthInfo(const std::string &username, const std::string &realm, const std::string &domain);
+	AuthInfo(const std::string &username, std::shared_ptr<BearerToken> accessToken, const std::string &realm);
+	AuthInfo(const AuthInfo &other) = default;
 
 	AuthInfo(LpConfig *config, std::string key);
 	AuthInfo *clone() const override;
@@ -82,7 +86,15 @@ public:
 	void setTlsCertPath(const std::string &tlsCertPath);
 	void setTlsKeyPath(const std::string &tlsKeyPath);
 	void setTlsKeyPassword(const std::string &tlsKeyPassword);
-
+	void setAccessToken(const std::shared_ptr<BearerToken> &accessToken) {
+		mAccessToken = accessToken;
+	};
+	void setRefreshToken(const std::shared_ptr<BearerToken> &refreshToken) {
+		mRefreshToken = refreshToken;
+	};
+	void setAuthorizationServer(const std::string &uri) {
+		mAuthServer = uri;
+	}
 	void writeConfig(LpConfig *config, int pos);
 	void clearAvailableAlgorithms(); // Remove all algorithms
 
@@ -99,11 +111,19 @@ public:
 	const std::string &getTlsCertPath() const;
 	const std::string &getTlsKeyPath() const;
 	const std::string &getTlsKeyPassword() const;
+	std::shared_ptr<const BearerToken> getAccessToken() const {
+		return mAccessToken;
+	}
+	std::shared_ptr<const BearerToken> getRefreshToken() const {
+		return mRefreshToken;
+	}
+	const std::string &getAuthorizationServer() const {
+		return mAuthServer;
+	}
 
 	std::string toString() const override;
-
-	bool_t isEqualButAlgorithms(
-	    const AuthInfo *authInfo) const; // Check if Authinfos are the same without taking account algorithms
+	// Check if Authinfos are the same without taking account algorithms
+	bool isEqualButAlgorithms(const AuthInfo *authInfo) const;
 
 private:
 	std::string mUsername;
@@ -119,10 +139,13 @@ private:
 	std::string mTlsCertPath;
 	std::string mTlsKeyPath;
 	std::string mTlsKeyPassword;
-	bool_t mNeedToRenewHa1;
+	std::shared_ptr<BearerToken> mAccessToken;
+	std::shared_ptr<BearerToken> mRefreshToken;
+	std::string mAuthServer;
+	bool mNeedToRenewHa1 = false;
 
-	void setNeedToRenewHa1(const bool_t &needToRenewHa1);
-	const bool_t &getNeedToRenewHa1() const;
+	void setNeedToRenewHa1(bool needToRenewHa1);
+	bool getNeedToRenewHa1() const;
 };
 
 LINPHONE_END_NAMESPACE

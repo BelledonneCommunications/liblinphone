@@ -22,6 +22,7 @@
 
 #include "account/account.h"
 #include "auth-info/auth-info.h"
+#include "auth-info/bearer-token.h"
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-auth-info.h"
 #include "linphone/core.h"
@@ -30,6 +31,8 @@
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
+
+using namespace ::LinphonePrivate;
 
 /**
  * Destroys a LinphoneAuthInfo object.
@@ -65,6 +68,12 @@ static bool_t realm_match(const char *realm1, const char *realm2) {
 	return FALSE;
 }
 
+static bool_t string_match(const char *s1, const char *s2) {
+	if (s1 == NULL && s2 == NULL) return TRUE;
+	if (s1 && s2 && strcmp(s1, s2) == 0) return TRUE;
+	return FALSE;
+}
+
 /* Check if the LinphoneAuthInfo candidate is compatible with the requested algorithm. */
 static bool_t check_algorithm_compatibility(const LinphoneAuthInfo *ai, const char *algorithm) {
 	const char *ai_algorithm = linphone_auth_info_get_algorithm(ai);
@@ -84,14 +93,14 @@ static bool_t check_algorithm_compatibility(const LinphoneAuthInfo *ai, const ch
 	return FALSE;
 }
 
-static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc,
-                                              const char *username,
-                                              const char *realm,
-                                              const char *domain,
-                                              const char *algorithm,
-                                              bool_t ignore_realm) {
+static LinphoneAuthInfo *find_auth_info(LinphoneCore *lc,
+                                        const char *username,
+                                        const char *realm,
+                                        const char *domain,
+                                        const char *algorithm,
+                                        bool_t ignore_realm) {
 	bctbx_list_t *elem;
-	const LinphoneAuthInfo *ret = NULL;
+	LinphoneAuthInfo *ret = NULL;
 
 	if (!username && !realm && !domain && !algorithm) {
 		ms_error("Looking for an auth info but all search criterias are null!");
@@ -114,7 +123,7 @@ static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc,
 			} else if (realm) {
 				if (linphone_auth_info_get_realm(pinfo) && realm_match(realm, linphone_auth_info_get_realm(pinfo))) {
 					if (ret != NULL) {
-						ms_warning("Non unique realm found for %s", username);
+						ms_warning("find_auth_info(): Non unique realm found for %s", username);
 						return NULL;
 					}
 					ret = pinfo;
@@ -131,7 +140,7 @@ static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc,
 	return ret;
 }
 
-const LinphoneAuthInfo *
+LinphoneAuthInfo *
 _linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain) {
 	bctbx_list_t *elem;
 	for (elem = lc->auth_info; elem != NULL; elem = elem->next) {
@@ -151,7 +160,7 @@ _linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username
 	return NULL;
 }
 
-const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc) {
+LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc) {
 	bctbx_list_t *elem;
 	for (elem = lc->auth_info; elem != NULL; elem = elem->next) {
 		LinphoneAuthInfo *pinfo = (LinphoneAuthInfo *)elem->data;
@@ -164,13 +173,13 @@ const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc) {
 	return NULL;
 }
 
-const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc,
-                                                      const char *realm,
-                                                      const char *username,
-                                                      const char *domain,
-                                                      const char *algorithm,
-                                                      bool_t ignore_realm) {
-	const LinphoneAuthInfo *ai = NULL;
+LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc,
+                                                const char *realm,
+                                                const char *username,
+                                                const char *domain,
+                                                const char *algorithm,
+                                                bool_t ignore_realm) {
+	LinphoneAuthInfo *ai = NULL;
 	if (realm) {
 		ai = find_auth_info(lc, username, realm, NULL, algorithm, FALSE);
 		if (ai == NULL && domain) {
@@ -194,6 +203,46 @@ const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc,
 const LinphoneAuthInfo *
 linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain) {
 	return _linphone_core_find_auth_info(lc, realm, username, domain, NULL, TRUE);
+}
+
+LinphoneAuthInfo *
+_linphone_core_find_bearer_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain) {
+	bctbx_list_t *elem;
+	LinphoneAuthInfo *ret = NULL;
+
+	for (elem = lc->auth_info; elem != NULL; elem = elem->next) {
+		LinphoneAuthInfo *pinfo = (LinphoneAuthInfo *)elem->data;
+
+		if (!AuthInfo::toCpp(pinfo)->getAccessToken() && !AuthInfo::toCpp(pinfo)->getRefreshToken()) continue;
+
+		if (!username || (username && linphone_auth_info_get_username(pinfo) &&
+		                  strcmp(username, linphone_auth_info_get_username(pinfo)) == 0)) {
+
+			if (realm && domain) {
+				if (linphone_auth_info_get_realm(pinfo) && realm_match(realm, linphone_auth_info_get_realm(pinfo)) &&
+				    linphone_auth_info_get_domain(pinfo) && strcmp(domain, linphone_auth_info_get_domain(pinfo)) == 0) {
+					ret = pinfo;
+					break;
+				}
+			}
+			if (realm && linphone_auth_info_get_realm(pinfo) &&
+			    realm_match(realm, linphone_auth_info_get_realm(pinfo))) {
+				if (ret != NULL) {
+					ms_warning("Non unique realm found for %s", username);
+				}
+				ret = pinfo;
+			} else if (domain && linphone_auth_info_get_domain(pinfo) &&
+			           strcmp(domain, linphone_auth_info_get_domain(pinfo)) == 0) {
+				ret = pinfo;
+			}
+		}
+	}
+	if (ret) {
+		ms_message("_linphone_core_find_bearer_auth_info(): returning auth info username=%s, realm=%s, domain=%s",
+		           AuthInfo::toCpp(ret)->getUsername().c_str(), AuthInfo::toCpp(ret)->getRealm().c_str(),
+		           AuthInfo::toCpp(ret)->getDomain().c_str());
+	}
+	return ret;
 }
 
 /*the auth info is expected to be in the core's list*/
@@ -239,16 +288,17 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 	bool_t updating = FALSE;
 
 	if (!linphone_auth_info_get_tls_key(info) && !linphone_auth_info_get_tls_key_path(info) &&
-	    !linphone_auth_info_get_ha1(info) && !linphone_auth_info_get_password(info)) {
-		ms_error("linphone_core_add_auth_info(): info supplied with empty password, ha1 or TLS client/key");
+	    !linphone_auth_info_get_ha1(info) && !linphone_auth_info_get_password(info) &&
+	    !linphone_auth_info_get_access_token(info) && !linphone_auth_info_get_refresh_token(info)) {
+		ms_error(
+		    "linphone_core_add_auth_info(): info supplied with empty password, ha1, TLS client/key or bearer token.");
 		return;
 	}
 	/* find if we are attempting to modify an existing auth info */
 	ai = (LinphoneAuthInfo *)linphone_core_find_auth_info(lc, linphone_auth_info_get_realm(info),
 	                                                      linphone_auth_info_get_username(info),
 	                                                      linphone_auth_info_get_domain(info));
-	if (ai != NULL && linphone_auth_info_get_domain(ai) && linphone_auth_info_get_domain(info) &&
-	    strcmp(linphone_auth_info_get_domain(ai), linphone_auth_info_get_domain(info)) == 0) {
+	if (ai != NULL && string_match(linphone_auth_info_get_domain(ai), linphone_auth_info_get_domain(info))) {
 		lc->auth_info = bctbx_list_remove(lc->auth_info, ai);
 		linphone_auth_info_unref(ai);
 		updating = TRUE;
@@ -257,41 +307,30 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 
 	/* retry pending authentication operations */
 	auto pendingAuths = lc->sal->getPendingAuths();
+	if (!pendingAuths.empty()) {
+		lInfo() << "Restarting operations pending authentications...";
+	}
+
 	for (const auto &op : pendingAuths) {
 		LinphoneAuthInfo *ai;
 		const SalAuthInfo *req_sai = op->getAuthRequested();
 		ai = (LinphoneAuthInfo *)_linphone_core_find_auth_info(lc, req_sai->realm, req_sai->username, req_sai->domain,
 		                                                       req_sai->algorithm, FALSE);
 		if (ai) {
-			SalAuthInfo sai;
-			bctbx_list_t *account;
-			sai.username = (char *)linphone_auth_info_get_username(ai);
-			sai.userid = (char *)linphone_auth_info_get_userid(ai);
-			sai.realm = (char *)linphone_auth_info_get_realm(ai);
-			sai.password = (char *)linphone_auth_info_get_password(ai);
-			sai.ha1 = (char *)linphone_auth_info_get_ha1(ai);
-			sai.algorithm = (char *)linphone_auth_info_get_algorithm(ai);
-			if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
-				sal_certificates_chain_parse(&sai, linphone_auth_info_get_tls_cert(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
-				sal_signing_key_parse(&sai, linphone_auth_info_get_tls_key(ai), "");
-			} else if (linphone_auth_info_get_tls_cert_path(ai) && linphone_auth_info_get_tls_key_path(ai)) {
-				sal_certificates_chain_parse_file(&sai, linphone_auth_info_get_tls_cert_path(ai),
-				                                  SAL_CERTIFICATE_RAW_FORMAT_PEM);
-				sal_signing_key_parse_file(&sai, linphone_auth_info_get_tls_key_path(ai), "");
-			}
 			/*account case*/
-			for (account = (bctbx_list_t *)linphone_core_get_account_list(lc); account != NULL;
-			     account = account->next) {
+			const bctbx_list_t *account;
+			for (account = linphone_core_get_account_list(lc); account != NULL; account = account->next) {
 				if (account->data == op->getUserPointer()) {
 					LinphonePrivate::Account::toCpp((LinphoneAccount *)account->data)
 					    ->setState(LinphoneRegistrationProgress, "Authentication...");
 					break;
 				}
 			}
-			op->authenticate(&sai);
+			op->authenticate();
 			restarted_op_count++;
 		}
 	}
+
 	if (!pendingAuths.empty()) {
 		ms_message("linphone_core_add_auth_info(): restarted [%i] operation(s) after %s auth info for\n"
 		           "\tusername: [%s]\n"
@@ -302,6 +341,7 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 		           linphone_auth_info_get_realm(info) ? linphone_auth_info_get_realm(info) : "",
 		           linphone_auth_info_get_domain(info) ? linphone_auth_info_get_domain(info) : "");
 	}
+
 	write_auth_infos(lc);
 }
 
@@ -343,11 +383,16 @@ void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, 
 		const char *auth_password = linphone_auth_info_get_password(auth_info);
 		const char *auth_ha1 = linphone_auth_info_get_ha1(auth_info);
 		const char *auth_algo = linphone_auth_info_get_algorithm(auth_info);
+		const LinphoneBearerToken *access_token = linphone_auth_info_get_access_token(auth_info);
 		belle_sip_auth_event_set_username(event, auth_username);
 		belle_sip_auth_event_set_userid(event, auth_user_id);
 		belle_sip_auth_event_set_passwd(event, auth_password);
 		belle_sip_auth_event_set_ha1(event, auth_ha1);
 		belle_sip_auth_event_set_algorithm(event, auth_algo);
+		if (access_token) {
+			belle_sip_auth_event_set_bearer_token(event,
+			                                      LinphonePrivate::BearerToken::toCpp(access_token)->getImpl()->toC());
+		}
 	}
 }
 
@@ -373,19 +418,29 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
                                              const char *username,
                                              const char *domain) {
 	bool done = false;
+	const char *realm = belle_sip_auth_event_get_realm(event);
+	const char *ae_username = belle_sip_auth_event_get_username(event);
+	const char *ae_domain = belle_sip_auth_event_get_domain(event);
+	LinphoneAuthMethod requestedMethod = LinphoneAuthHttpDigest;
 	switch (belle_sip_auth_event_get_mode(event)) {
 		case BELLE_SIP_AUTH_MODE_HTTP_DIGEST: {
-			const char *realm = belle_sip_auth_event_get_realm(event);
-			const char *username = belle_sip_auth_event_get_username(event);
-			const char *domain = belle_sip_auth_event_get_domain(event);
 			const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
 			const LinphoneAuthInfo *auth_info =
-			    _linphone_core_find_auth_info(lc, realm, username, domain, algorithm, TRUE);
+			    _linphone_core_find_auth_info(lc, realm, ae_username, ae_domain, algorithm, TRUE);
 			if (auth_info) {
 				linphone_auth_info_fill_belle_sip_event(auth_info, event);
 				done = true;
 			}
+			requestedMethod = LinphoneAuthHttpDigest;
+		} break;
+		case BELLE_SIP_AUTH_MODE_HTTP_BEARER: {
+			const LinphoneAuthInfo *auth_info = _linphone_core_find_bearer_auth_info(lc, realm, ae_username, ae_domain);
+			if (auth_info) {
+				linphone_auth_info_fill_belle_sip_event(auth_info, event);
+				done = true;
+			}
+			requestedMethod = LinphoneAuthBearer;
 		} break;
 		case BELLE_SIP_AUTH_MODE_TLS: {
 			/* extract username and domain from the GRUU stored in userData->username */
@@ -393,7 +448,9 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 			const char *key_path = nullptr;
 			const char *cert_chain = nullptr;
 			const char *key = nullptr;
-			const LinphoneAuthInfo *auth_info = _linphone_core_find_indexed_tls_auth_info(lc, username, domain);
+			const LinphoneAuthInfo *auth_info;
+			if (domain == NULL) domain = ae_domain;
+			auth_info = _linphone_core_find_indexed_tls_auth_info(lc, username, domain);
 			if (auth_info) { /* tls_auth_info found something */
 				if (linphone_auth_info_get_tls_cert(auth_info) && linphone_auth_info_get_tls_key(auth_info)) {
 					cert_chain = linphone_auth_info_get_tls_cert(auth_info);
@@ -440,12 +497,29 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 				//  callback. Not done as we assume that authentication on flexisip server was performed before so the
 				//  application layer already got a chance to set the correct auth_info in the core
 			}
-			done = true; // since we can't know if server requested a client certificate, assume all is good.'
+			done = true; // since we can't know if server requested a client certificate, assume all is good.
+			requestedMethod = LinphoneAuthTls;
 		} break;
 		default:
 			lError() << "Connection gets an auth event of unexpected type";
 			done = false;
 			break;
+	}
+	if (!done) {
+		/* We do not prompt the application for authentication info for http services, because it may happen
+		 * for various kind of events but user is not expected to supply them on the fly.
+		 * However, for provisioning process, for which bearer or digest is likely to be requested,
+		 * we notify the application.
+		 */
+		if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring) {
+			LinphoneAuthInfo *ai =
+			    linphone_factory_create_auth_info(linphone_factory_get(), ae_username,
+			                                      belle_sip_auth_event_get_userid(event), NULL, NULL, realm, ae_domain);
+			linphone_auth_info_set_algorithm(ai, belle_sip_auth_event_get_algorithm(event));
+			linphone_auth_info_set_authorization_server(ai, belle_sip_auth_event_get_authz_server(event));
+			linphone_core_notify_authentication_requested(lc, ai, requestedMethod);
+			linphone_auth_info_unref(ai);
+		}
 	}
 	return done;
 }

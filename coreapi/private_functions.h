@@ -162,18 +162,19 @@ void _linphone_core_stop_async_end(LinphoneCore *lc);
 void _linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
 void linphone_core_stop_tone_manager(LinphoneCore *lc);
-const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
-const LinphoneAuthInfo *
-_linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain);
-const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc,
-                                                      const char *realm,
-                                                      const char *username,
-                                                      const char *domain,
-                                                      const char *algorithm,
-                                                      bool_t ignore_realm);
+LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
+LinphoneAuthInfo *_linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain);
+LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc,
+                                                const char *realm,
+                                                const char *username,
+                                                const char *domain,
+                                                const char *algorithm,
+                                                bool_t ignore_realm);
+LinphoneAuthInfo *
+_linphone_core_find_bearer_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain);
 LinphoneAccount *linphone_core_find_account_by_identity_address(const LinphoneCore *core,
                                                                 const LinphoneAddress *identity_address);
-void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event);
+// void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event);
 bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
                                              belle_sip_auth_event *event,
                                              const char *username,

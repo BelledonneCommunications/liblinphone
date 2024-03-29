@@ -5398,11 +5398,10 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 // - set the creation time to the earliest one
 // - assign all events preceeding the latest creation time to the kept chatroom
 // - destroy the deleted chatroom from DB
-void MainDb::addChatroomToList(
-    std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> &chatRoomsMap,
-    const shared_ptr<AbstractChatRoom> chatRoom) const {
+void MainDb::addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
+                               const shared_ptr<AbstractChatRoom> &chatRoom) const {
 #ifdef HAVE_DB_STORAGE
-	const auto chatRoomConferenceId = chatRoom->getConferenceId();
+	const auto &chatRoomConferenceId = chatRoom->getConferenceId();
 	shared_ptr<AbstractChatRoom> chatRoomToAdd = nullptr;
 	try {
 		auto storedChatRoom = chatRoomsMap.at(chatRoomConferenceId);
@@ -5507,7 +5506,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 	return L_DB_TRANSACTION {
 		L_D();
 
-		std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> chatRoomsMap;
+		ChatRoomWeakCompareMap chatRoomsMap;
 
 		shared_ptr<Core> core = getCore();
 		bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
@@ -5534,7 +5533,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
-				chatRoomsMap.insert(std::make_pair(conferenceId, chatRoom));
+				chatRoomsMap.insert(std::make_pair(std::move(conferenceId), chatRoom));
 				continue;
 			}
 
@@ -5665,8 +5664,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 			dChatRoom->setIsEmpty(lastMessageId == 0);
 			dChatRoom->setIsMuted(muted);
 
-			lDebug() << "Found chat room in DB: (peer=" << conferenceId.getPeerAddress()->toStringUriOnlyOrdered()
-			         << ", local=" << conferenceId.getLocalAddress()->toStringUriOnlyOrdered() << ").";
+			bctbx_debug("Found chat room in DB: (peer=[%s] local=[%s])",
+			            conferenceId.getPeerAddress()->toStringUriOnlyOrdered().c_str(),
+			            conferenceId.getLocalAddress()->toStringUriOnlyOrdered().c_str());
 
 			addChatroomToList(chatRoomsMap, chatRoom);
 		}

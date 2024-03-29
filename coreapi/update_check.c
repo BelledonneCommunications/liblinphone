@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
@@ -27,27 +27,25 @@
 #include "linphone/lpconfig.h"
 #include "linphone/utils/utils.h"
 
+#include "http/http-client.h"
 #include "logging-private.h"
 #include "private.h"
 
 using namespace LinphonePrivate;
 
-LinphoneUpdateCheck *
-linphone_update_check_new(LinphoneCore *lc, const char *version, belle_http_request_listener_t *listener) {
+LinphoneUpdateCheck *linphone_update_check_new(LinphoneCore *lc, const char *version) {
 	LinphoneUpdateCheck *update = ms_new0(LinphoneUpdateCheck, 1);
 
 	update->lc = lc;
 	if (version) {
 		update->current_version = bctbx_strdup(version);
 	}
-	update->http_listener = listener;
 
 	return update;
 }
 
 static void linphone_update_check_destroy(LinphoneUpdateCheck *update) {
 	if (update->current_version) bctbx_free(update->current_version);
-	if (update->http_listener) belle_sip_object_unref(update->http_listener);
 	ms_free(update);
 }
 
@@ -63,51 +61,36 @@ static bool_t update_is_available(const char *current_version, const char *last_
 	return Utils::Version(current_version) < Utils::Version(last_version);
 }
 
-static void update_check_process_response_event(void *ctx, const belle_http_response_event_t *event) {
-	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
+static void update_check_process_response_event(LinphoneUpdateCheck *update, const HttpResponse &response) {
 
-	if (belle_http_response_get_status_code(event->response) == 200) {
-		belle_sip_message_t *message = BELLE_SIP_MESSAGE(event->response);
-		char *body = bctbx_strdup(belle_sip_message_get_body(message));
-		char *last_version = body;
-		char *url = strchr(body, '\t');
-		char *ptr;
-		if (url == NULL) {
-			ms_error("Bad format for update check answer, cannot find TAB between version and URL");
-			update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
+	if (response.getStatusCode() == 200) {
+		const Content &content = response.getBody();
+		if (!content.isEmpty()) {
+			char *body = bctbx_strdup(content.getBodyAsUtf8String().c_str());
+			char *last_version = body;
+			char *url = strchr(body, '\t');
+			char *ptr;
+			if (url == NULL) {
+				ms_error("Bad format for update check answer, cannot find TAB between version and URL");
+				update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
+				bctbx_free(body);
+				return;
+			}
+			*url = '\0';
+			url++;
+			ptr = strrchr(url, '\r');
+			if (ptr != NULL) *ptr = '\0';
+			ptr = strrchr(url, '\n');
+			if (ptr != NULL) *ptr = '\0';
+			if (update_is_available(update->current_version, last_version)) {
+				update_check_process_terminated(update, LinphoneVersionUpdateCheckNewVersionAvailable, last_version,
+				                                url);
+			} else {
+				update_check_process_terminated(update, LinphoneVersionUpdateCheckUpToDate, NULL, NULL);
+			}
 			bctbx_free(body);
-			return;
 		}
-		*url = '\0';
-		url++;
-		ptr = strrchr(url, '\r');
-		if (ptr != NULL) *ptr = '\0';
-		ptr = strrchr(url, '\n');
-		if (ptr != NULL) *ptr = '\0';
-		if (update_is_available(update->current_version, last_version)) {
-			update_check_process_terminated(update, LinphoneVersionUpdateCheckNewVersionAvailable, last_version, url);
-		} else {
-			update_check_process_terminated(update, LinphoneVersionUpdateCheckUpToDate, NULL, NULL);
-		}
-		bctbx_free(body);
 	} else {
-		update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
-	}
-}
-
-static void update_check_process_io_error(void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
-	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
-	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
-}
-
-static void update_check_process_timeout(void *ctx, BCTBX_UNUSED(const belle_sip_timeout_event_t *event)) {
-	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
-	update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
-}
-
-static void update_check_process_auth_requested(void *ctx, belle_sip_auth_event_t *event) {
-	LinphoneUpdateCheck *update = (LinphoneUpdateCheck *)ctx;
-	if (!linphone_core_fill_belle_sip_auth_event(update->lc, event, nullptr, nullptr)) {
 		update_check_process_terminated(update, LinphoneVersionUpdateCheckError, NULL, NULL);
 	}
 }
@@ -124,9 +107,6 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 	}
 
 	if (version_check_url_root != NULL) {
-		belle_http_request_listener_callbacks_t belle_request_listener = {0};
-		belle_http_request_t *request;
-		belle_generic_uri_t *uri;
 		char *version_check_url;
 		LinphoneUpdateCheck *update;
 		bctbx_list_t *item;
@@ -149,19 +129,14 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 			return;
 		}
 		version_check_url = bctbx_strdup_printf("%s/%s/RELEASE", version_check_url_root, platform);
-		uri = belle_generic_uri_parse(version_check_url);
 		ms_message("Checking for new version at: %s", version_check_url);
+
+		update = linphone_update_check_new(lc, current_version);
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)
+		    ->getHttpClient()
+		    .createRequest("GET", version_check_url)
+		    .addHeader("User-Agent", linphone_core_get_user_agent(lc))
+		    .execute([update](const HttpResponse &response) { update_check_process_response_event(update, response); });
 		bctbx_free(version_check_url);
-
-		belle_request_listener.process_response = update_check_process_response_event;
-		belle_request_listener.process_auth_requested = update_check_process_auth_requested;
-		belle_request_listener.process_io_error = update_check_process_io_error;
-		belle_request_listener.process_timeout = update_check_process_timeout;
-
-		update = linphone_update_check_new(lc, current_version, NULL);
-		update->http_listener = belle_http_request_listener_create_from_callbacks(&belle_request_listener, update);
-		request = belle_http_request_create(
-		    "GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), NULL);
-		belle_http_provider_send_request(lc->http_provider, request, update->http_listener);
 	}
 }

@@ -26,6 +26,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
+#include "http/http-client.h"
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
@@ -496,7 +497,7 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 
 	listener = belle_http_request_listener_create_from_callbacks(&internalCallbacks, cb.release());
 
-	belle_http_provider_send_request(mCore->http_provider, req, listener);
+	belle_http_provider_send_request(L_GET_CPP_PTR_FROM_C_OBJECT(mCore)->getHttpClient().getProvider(), req, listener);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
 	belle_sip_object_unref(userAgentHeader);
 }
@@ -537,7 +538,7 @@ void FlexiAPIClient::prepareAndSendRootRequest(string path, string type, string 
 
 	listener = belle_http_request_listener_create_from_callbacks(&internalCallbacks, cb.release());
 
-	belle_http_provider_send_request(mCore->http_provider, req, listener);
+	belle_http_provider_send_request(L_GET_CPP_PTR_FROM_C_OBJECT(mCore)->getHttpClient().getProvider(), req, listener);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
 	belle_sip_object_unref(userAgentHeader);
 }

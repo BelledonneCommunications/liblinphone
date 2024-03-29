@@ -41,8 +41,8 @@ Content::Content(const SalBodyHandler *bodyHandler, bool parseMultipart) {
 
 	mBodyHandler = sal_body_handler_ref((SalBodyHandler *)bodyHandler);
 
-	mContentType.setType(sal_body_handler_get_type(bodyHandler));
-	mContentType.setSubType(sal_body_handler_get_subtype(bodyHandler));
+	mContentType.setType(L_C_TO_STRING(sal_body_handler_get_type(bodyHandler)));
+	mContentType.setSubType(L_C_TO_STRING(sal_body_handler_get_subtype(bodyHandler)));
 	for (const belle_sip_list_t *params = sal_body_handler_get_content_type_parameters_names(bodyHandler); params;
 	     params = params->next) {
 		const char *paramName = reinterpret_cast<const char *>(params->data);
@@ -56,7 +56,8 @@ Content::Content(const SalBodyHandler *bodyHandler, bool parseMultipart) {
 		setBodyFromUtf8(body);
 		belle_sip_free(body);
 	} else {
-		setBodyFromUtf8(reinterpret_cast<char *>(sal_body_handler_get_data(bodyHandler)));
+		setBody(reinterpret_cast<char *>(sal_body_handler_get_data(bodyHandler)),
+		        sal_body_handler_get_size(bodyHandler));
 	}
 
 	auto headers = reinterpret_cast<const belle_sip_list_t *>(sal_body_handler_get_headers(bodyHandler));
@@ -89,6 +90,14 @@ Content::Content(Content &&other) noexcept : HybridObject(std::move(other)) {
 	mIsDirty = std::move(other.mIsDirty);
 	mBodyHandler = std::move(other.mBodyHandler);
 	other.mBodyHandler = nullptr;
+}
+
+Content::Content(ContentType &&ct, const std::string &data) : mContentType(ct) {
+	setBodyFromLocale(data);
+}
+
+Content::Content(ContentType &&ct, std::vector<char> &&data) : mContentType(ct) {
+	setBody(data);
 }
 
 Content::~Content() {
@@ -355,8 +364,7 @@ SalBodyHandler *Content::getBodyHandlerFromContent(const Content &content, bool 
 		bodyHandler = reinterpret_cast<SalBodyHandler *>(BELLE_SIP_BODY_HANDLER(bh));
 		bctbx_free(buffer);
 	} else {
-		bodyHandler = sal_body_handler_new();
-		sal_body_handler_set_data(bodyHandler, belle_sip_strdup(content.getBodyAsUtf8String().c_str()));
+		bodyHandler = sal_body_handler_new_from_buffer(content.mBody.data(), content.mBody.size());
 	}
 
 	for (const auto &header : content.getHeaders()) {

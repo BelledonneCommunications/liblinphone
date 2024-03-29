@@ -361,6 +361,8 @@ static void get_chat_rooms() {
 }
 
 static void load_a_lot_of_chatrooms(void) {
+	long expectedDurationMs = 600;
+	float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
 #ifndef _WIN32
 	int current_priority = getpriority(PRIO_PROCESS, 0);
 	int err = setpriority(PRIO_PROCESS, 0, -20);
@@ -375,14 +377,20 @@ static void load_a_lot_of_chatrooms(void) {
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
 	long ms = (long)chrono::duration_cast<chrono::milliseconds>(end - start).count();
 #ifdef ENABLE_SANITIZER
-	BC_ASSERT_LOWER(ms, 3200, long, "%li");
+	expectedDurationMs = 3000;
 #else
 #if __APPLE__
-	BC_ASSERT_LOWER(ms, 1000, long, "%li");
-#else
-	BC_ASSERT_LOWER(ms, 600, long, "%li");
+	expectedDurationMs = 1000;
 #endif
 #endif
+#ifndef __arm__
+	float bogomips = liblinphone_tester_get_cpu_bogomips();
+	if (bogomips != 0) {
+		expectedDurationMs = (long)(((float)expectedDurationMs) * referenceBogomips / bogomips);
+		bctbx_message("Adjusted expected duration with current bogomips (%f): %li ms", bogomips, expectedDurationMs);
+	}
+#endif
+	BC_ASSERT_LOWER(ms, expectedDurationMs, long, "%li");
 
 #ifndef _WIN32
 	err = setpriority(PRIO_PROCESS, 0, current_priority);

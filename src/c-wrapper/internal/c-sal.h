@@ -361,9 +361,11 @@ typedef enum SalMessageDeliveryStatus {
 /**
  * auth event mode
  * */
-typedef enum SalAuthMode {                            /*this enum must be same as belle_sip_auth_mode_t*/
-	                       SalAuthModeHttpDigest = 0, /** Digest authentication requested*/
-	                       SalAuthModeTls = 1         /** Client certificate requested*/
+typedef enum SalAuthMode { /*this enum must be same as belle_sip_auth_mode_t*/
+	                       SalAuthModeHttpDigest =
+	                           BELLE_SIP_AUTH_MODE_HTTP_DIGEST,      /** Digest authentication requested*/
+	                       SalAuthModeTls = BELLE_SIP_AUTH_MODE_TLS, /** Client certificate requested*/
+	                       SalAuthModeBearer = BELLE_SIP_AUTH_MODE_HTTP_BEARER
 } SalAuthMode;
 
 /**
@@ -382,9 +384,11 @@ typedef struct SalAuthInfo {
 	char *domain;
 	char *ha1;
 	char *algorithm;
+	char *authz_server;
 	SalAuthMode mode;
 	belle_sip_signing_key_t *key;
 	belle_sip_certificates_chain_t *certificates;
+	belle_sip_bearer_token_t *bearer_token;
 } SalAuthInfo;
 
 #ifdef __cplusplus
@@ -392,7 +396,7 @@ extern "C" {
 #endif
 
 SalAuthInfo *sal_auth_info_new(void);
-SalAuthInfo *sal_auth_info_clone(const SalAuthInfo *auth_info);
+// SalAuthInfo *sal_auth_info_clone(const SalAuthInfo *auth_info);
 void sal_auth_info_delete(SalAuthInfo *auth_info);
 LINPHONE_PUBLIC int sal_auth_compute_ha1(const char *userid, const char *realm, const char *password, char ha1[33]);
 LINPHONE_PUBLIC int sal_auth_compute_ha1_for_algorithm(
@@ -543,6 +547,7 @@ void sal_cancel_timer(Sal *sal, belle_sip_source_t *timer);
 // SalBodyHandler * sal_body_handler_new(const char *type, const char *subtype, void *data, size_t size, const char
 // *encoding);
 SalBodyHandler *sal_body_handler_new(void);
+SalBodyHandler *sal_body_handler_new_from_buffer(const void *data, size_t size);
 SalBodyHandler *sal_body_handler_ref(SalBodyHandler *body_handler);
 void sal_body_handler_unref(SalBodyHandler *body_handler);
 const char *sal_body_handler_get_type(const SalBodyHandler *body_handler);

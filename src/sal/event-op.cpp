@@ -518,16 +518,16 @@ void SalPublishOp::publishRefresherListenerCb(BCTBX_UNUSED(belle_sip_refresher_t
 	} else if (statusCode >= 200) {
 		string sipEtagStr;
 		belle_sip_header_t *sipEtagHeader = nullptr;
+		belle_sip_header_expires_t *headerExpires = nullptr;
 		if (response) {
 			sipEtagHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(response), "SIP-ETag");
 			if (sipEtagHeader) sipEtagStr = belle_sip_header_get_unparsed_value(sipEtagHeader);
+			headerExpires = belle_sip_message_get_header_by_type(response, belle_sip_header_expires_t);
 		}
 		op->setEntityTag(sipEtagStr);
 		sal_error_info_set(&op->mErrorInfo, SalReasonUnknown, "SIP", static_cast<int>(statusCode), reasonPhrase,
 		                   nullptr);
 		op->assignRecvHeaders(BELLE_SIP_MESSAGE(response));
-		belle_sip_header_expires_t *headerExpires =
-		    belle_sip_message_get_header_by_type(response, belle_sip_header_expires_t);
 		if (headerExpires) {
 			op->mExpires = belle_sip_header_expires_get_expires(headerExpires);
 		}

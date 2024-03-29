@@ -7520,8 +7520,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_remove_listener(LinphoneC
  * The current call remains active and thus can be later paused or terminated.
  * It is possible to follow the progress of the transfer provided that transferee sends notification about it.
  * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the
- *new call at the other party. The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress,
- *#LinphoneCallOutgoingRinging and #LinphoneCallConnected.
+ * new call at the other party. The notified states are #LinphoneCallStateOutgoingInit ,
+ *#LinphoneCallStateOutgoingProgress, #LinphoneCallStateOutgoingRinging and #LinphoneCallStateConnected.
  * @param core #LinphoneCore object
  * @param call The call to be transfered
  * @param refer_to The destination the call is to be refered to
@@ -7541,10 +7541,11 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_transfer_call(L
  * The destination call is a call previously established to introduce the transfered person.
  * This method will send a transfer request to the transfered person. The phone of the transfered is then
  * expected to automatically call to the destination of the transfer. The receiver of the transfer will then
- *automatically close the call with us (the 'dest' call). It is possible to follow the progress of the transfer provided
- *that transferee sends notification about it. In this case, the transfer_state_changed callback of the
- *#LinphoneCoreVTable is invoked to notify of the state of the new call at the other party. The notified states are
- *#LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
+ * automatically close the call with us (the 'dest' call). It is possible to follow the progress of the transfer
+ *provided that transferee sends notification about it. In this case, the transfer_state_changed callback of the
+ * #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party. The notified states are
+ * #LinphoneCallStateOutgoingInit , #LinphoneCallStateOutgoingProgress, #LinphoneCallStateOutgoingRinging and
+ *#LinphoneCallStateConnected.
  * @param core #LinphoneCore object
  * @param call A running call you want to transfer
  * @param dest A running call whose remote person will receive the transfer
@@ -7562,7 +7563,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_transfer_call_t
  *
  * Basically the application is notified of incoming calls within the
  * call_state_changed callback of the #LinphoneCoreVTable structure, where it will receive
- * a #LinphoneCallIncoming event with the associated #LinphoneCall object.
+ * a #LinphoneCallStateIncoming event with the associated #LinphoneCall object.
  * The application can later accept the call using this method.
  * @param core #LinphoneCore object
  * @param call The #LinphoneCall object representing the call to be answered
@@ -7578,13 +7579,13 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_accept_call(Lin
  *
  * Basically the application is notified of incoming calls within the
  * call_state_changed callback of the #LinphoneCoreVTable structure, where it will receive
- * a #LinphoneCallIncoming event with the associated #LinphoneCall object.
+ * a #LinphoneCallStateIncoming event with the associated #LinphoneCall object.
  * The application can later accept the call using
  * this method.
  * @param core #LinphoneCore object
  * @param call The #LinphoneCall object representing the call to be answered
  * @param params The specific parameters for this call, for example whether video is accepted or not. Use NULL to use
- *default parameters
+ * default parameters
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_accept_with_params() instead.
@@ -7597,9 +7598,9 @@ linphone_core_accept_call_with_params(LinphoneCore *core, LinphoneCall *call, co
  * @brief When receiving an incoming, accept to start a media session as early-media.
  *
  * This means the call is not accepted but audio & video streams can be established if the remote party supports early
- *media. However, unlike after call acceptance, mic and camera input are not sent during early-media, though received
- *audio & video are played normally. The call can then later be fully accepted using linphone_core_accept_call() or
- *linphone_core_accept_call_with_params().
+ * media. However, unlike after call acceptance, mic and camera input are not sent during early-media, though received
+ * audio & video are played normally. The call can then later be fully accepted using linphone_core_accept_call() or
+ * linphone_core_accept_call_with_params().
  * @param core #LinphoneCore object
  * @param call The call to accept
  * @param params The call parameters to use (can be NULL)
@@ -7700,12 +7701,12 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_resume_call(Lin
  *
  * In this version this is limited to the following use cases:
  * - setting up/down the video stream according to the video parameter of the #LinphoneCallParams (see
- *linphone_call_params_enable_video() ).
+ * linphone_call_params_enable_video() ).
  * - changing the size of the transmitted video after calling linphone_core_set_preferred_video_size()
  * In case no changes are requested through the #LinphoneCallParams argument, then this argument can be omitted and set
- *to NULL. WARNING: Updating a call in the #LinphoneCallPaused state will still result in a paused call even if the
- *media directions set in the params are sendrecv. To resume a paused call, you need to call
- *linphone_core_resume_call().
+ * to NULL. WARNING: Updating a call in the #LinphoneCallStatePaused state will still result in a paused call even if
+ *the media directions set in the params are sendrecv. To resume a paused call, you need to call
+ * linphone_core_resume_call().
  *
  * @param core #LinphoneCore object
  * @param call The call to be updated
@@ -7720,27 +7721,27 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_update_call(Lin
                                                                              const LinphoneCallParams *params);
 
 /**
- * When receiving a #LinphoneCallUpdatedByRemote state notification, prevent #LinphoneCore from performing an automatic
- *answer.
+ * When receiving a #LinphoneCallStateUpdatedByRemote state notification, prevent #LinphoneCore from performing an
+ *automatic answer.
  *
- * When receiving a #LinphoneCallUpdatedByRemote state notification (ie an incoming reINVITE), the default behaviour of
- * #LinphoneCore is defined by the "defer_update_default" option of the "sip" section of the config. If this option is 0
- *(the default) then the #LinphoneCore automatically answers the reINIVTE with call parameters unchanged. However when
- *for example when the remote party updated the call to propose a video stream, it can be useful to prompt the user
- *before answering. This can be achieved by calling linphone_core_defer_call_update() during the call state
- *notification, to deactivate the automatic answer that would just confirm the audio but reject the video. Then, when
- *the user responds to dialog prompt, it becomes possible to call linphone_core_accept_call_update() to answer the
- *reINVITE, with eventually video enabled in the #LinphoneCallParams argument.
+ * When receiving a #LinphoneCallStateUpdatedByRemote state notification (ie an incoming reINVITE), the default
+ *behaviour of #LinphoneCore is defined by the "defer_update_default" option of the "sip" section of the config. If this
+ *option is 0 (the default) then the #LinphoneCore automatically answers the reINIVTE with call parameters unchanged.
+ *However when for example when the remote party updated the call to propose a video stream, it can be useful to prompt
+ *the user before answering. This can be achieved by calling linphone_core_defer_call_update() during the call state
+ * notification, to deactivate the automatic answer that would just confirm the audio but reject the video. Then, when
+ * the user responds to dialog prompt, it becomes possible to call linphone_core_accept_call_update() to answer the
+ * reINVITE, with eventually video enabled in the #LinphoneCallParams argument.
  *
- * The #LinphoneCallUpdatedByRemote notification can also arrive when receiving an INVITE without SDP. In such case, an
- *unchanged offer is made in the 200Ok, and when the ACK containing the SDP answer is received,
- *#LinphoneCallUpdatedByRemote is triggered to notify the application of possible changes in the media session. However
- *in such case defering the update has no meaning since we just generating an offer.
+ * The #LinphoneCallStateUpdatedByRemote notification can also arrive when receiving an INVITE without SDP. In such
+ *case, an unchanged offer is made in the 200Ok, and when the ACK containing the SDP answer is received,
+ * #LinphoneCallStateUpdatedByRemote is triggered to notify the application of possible changes in the media session.
+ *However in such case defering the update has no meaning since we just generating an offer.
  *
  * @param core #LinphoneCore object
  * @param call The call for which to defer the update
  * @return 0 if successful, -1 if the linphone_core_defer_call_update() was done outside a valid
- *#LinphoneCallUpdatedByRemote notification
+ * #LinphoneCallStateUpdatedByRemote notification
  * @ingroup call_control
  * @deprecated 13/02/2017 Use linphone_call_defer_update() instead
  * @donotwrap
@@ -7751,21 +7752,21 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_defer_call_upda
 /**
  * @brief Accept call modifications initiated by other end.
  *
- * This call may be performed in response to a #LinphoneCallUpdatedByRemote state notification.
+ * This call may be performed in response to a #LinphoneCallStateUpdatedByRemote state notification.
  * When such notification arrives, the application can decide to call linphone_core_defer_update_call() so that it can
  * have the time to prompt the user. linphone_call_get_remote_params() can be used to get information about the call
- *parameters requested by the other party, such as whether a video stream is requested.
+ * parameters requested by the other party, such as whether a video stream is requested.
  *
  * When the user accepts or refuse the change, linphone_core_accept_call_update() can be done to answer to the other
- *party. If params is NULL, then the same call parameters established before the update request will continue to be used
- *(no change). If params is not NULL, then the update will be accepted according to the parameters passed. Typical
- *example is when a user accepts to start video, then params should indicate that video stream should be used (see
- *linphone_call_params_enable_video()).
+ * party. If params is NULL, then the same call parameters established before the update request will continue to be
+ *used (no change). If params is not NULL, then the update will be accepted according to the parameters passed. Typical
+ * example is when a user accepts to start video, then params should indicate that video stream should be used (see
+ * linphone_call_params_enable_video()).
  * @param core #LinphoneCore object
  * @param call The call for which to accept an update
  * @param params A #LinphoneCallParams object describing the call parameters to accept
  * @return 0 if successful, -1 otherwise (actually when this function call is performed outside ot
- *#LinphoneCallUpdatedByRemote state)
+ *#LinphoneCallStateUpdatedByRemote state)
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_accept_update() instead.
  * @donotwrap

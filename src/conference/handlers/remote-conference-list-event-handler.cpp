@@ -261,9 +261,9 @@ void RemoteConferenceListEventHandler::addHandler(RemoteConferenceEventHandler *
 	}
 
 	if (!isHandlerInSameDomainAsCore(conferenceId)) {
-		lWarning() << "The chatroom with conference id " << conferenceId
-		           << " is not in the same domain as the conference factory of the account is linked to hence not "
-		              "adding to the list of subscribes";
+		// lWarning() << "The chatroom with conference id " << conferenceId
+		//            << " is not in the same domain as the conference factory of the account is linked to hence not "
+		//               "adding to the list of subscribes";
 		return;
 	}
 
@@ -281,14 +281,15 @@ bool RemoteConferenceListEventHandler::isHandlerInSameDomainAsCore(const Confere
 	const auto conferenceFactoryUri = Core::getConferenceFactoryAddress(getCore(), localAddress);
 
 	if (!conferenceFactoryUri) {
-		lWarning() << "Account with local address " << *localAddress << " hasn't a conference factory URI defined";
+		bctbx_debug("Account with local address [%s] hasn't a conference factory URI defined.",
+		            localAddress->asStringUriOnly().c_str());
 		return false;
 	}
 
 	const std::shared_ptr<Address> &peerAddress = conferenceId.getPeerAddress();
 	if (peerAddress->getDomain() != conferenceFactoryUri->getDomain()) {
-		lWarning() << "Peer address " << *peerAddress << " is not in the same domain as the conference factory URI "
-		           << *conferenceFactoryUri;
+		bctbx_debug("Peer address [%s] is not in the same domain as the conference factory URI [%s]",
+		            peerAddress->asStringUriOnly().c_str(), conferenceFactoryUri->asStringUriOnly.c_str());
 		return false;
 	}
 

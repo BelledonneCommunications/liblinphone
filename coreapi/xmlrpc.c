@@ -25,11 +25,12 @@
 #include <libxml/xmlwriter.h>
 #endif
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "linphone/core.h"
 
 #include "c-wrapper/c-wrapper.h"
+#include "http/http-client.h"
 #include "linphone/api/c-auth-info.h"
 #include "xml/xml-parsing-context.h"
 
@@ -216,14 +217,7 @@ static void process_io_error_from_post_xml_rpc_request(void *data,
 static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_sip_auth_event_t *event) {
 	LinphoneXmlRpcRequest *request = (LinphoneXmlRpcRequest *)data;
 
-	const char *realm = belle_sip_auth_event_get_realm(event);
-	const char *username = belle_sip_auth_event_get_username(event);
-	const char *domain = belle_sip_auth_event_get_domain(event);
-	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
-
-	const LinphoneAuthInfo *auth_info =
-	    _linphone_core_find_auth_info(request->core, realm, username, domain, algorithm, TRUE);
-	linphone_auth_info_fill_belle_sip_event(auth_info, event);
+	linphone_core_fill_belle_sip_auth_event(request->core, event, NULL, NULL);
 }
 
 #ifdef HAVE_XML2
@@ -560,7 +554,7 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	cbs.process_auth_requested = process_auth_requested_from_post_xml_rpc_request;
 	l = belle_http_request_listener_create_from_callbacks(&cbs, request);
 
-	belle_http_provider_send_request(session->core->http_provider, req, l);
+	belle_http_provider_send_request(L_GET_CPP_PTR_FROM_C_OBJECT(session->core)->getHttpClient().getProvider(), req, l);
 	/*ensure that the listener object will be destroyed with the request*/
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(request), "listener", l, belle_sip_object_unref);
 	/*prevent destruction of the session while there are still pending http requests*/

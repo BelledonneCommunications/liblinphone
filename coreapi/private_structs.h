@@ -431,7 +431,6 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneVideoDefinition);
 struct _LinphoneUpdateCheck {
 	LinphoneCore *lc;
 	char *current_version;
-	belle_http_request_listener_t *http_listener;
 };
 
 namespace LinphonePrivate {
@@ -518,8 +517,6 @@ class Core;
 	LinphoneTunnel *tunnel;                                                                                            \
 	char *device_id;                                                                                                   \
 	char *friends_db_file;                                                                                             \
-	belle_http_provider_t *http_provider;                                                                              \
-	belle_tls_crypto_config_t *http_crypto_config;                                                                     \
 	belle_http_request_listener_t *provisioning_http_listener;                                                         \
 	belle_http_request_listener_t *base_contacts_list_http_listener;                                                   \
 	LinphoneFriendList *base_contacts_list_for_synchronization;                                                        \

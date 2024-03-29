@@ -41,7 +41,9 @@
 #include "bctoolbox/defs.h"
 #include "bctoolbox/utils.hh"
 
-#include <mediastreamer2/mscommon.h>
+#include "json/json.h"
+
+#include "mediastreamer2/mscommon.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include <xercesc/util/PlatformUtils.hpp>
@@ -78,6 +80,7 @@
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
+#include "http/http-client.h"
 
 #include "sal/sal_media_description.h"
 
@@ -88,7 +91,7 @@
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 #include "private.h"
-#include <utils/payload-type-handler.h>
+#include "utils/payload-type-handler.h"
 
 #define LINPHONE_DB "linphone.db"
 #define LINPHONE_CALL_HISTORY_DB "call-history.db"
@@ -2680,6 +2683,57 @@ int Core::sendPublish(LinphonePresenceModel *presence) {
 		}
 	}
 	return 0;
+}
+
+bool Core::refreshTokens(const std::shared_ptr<AuthInfo> &ai) {
+	if (ai->getAuthorizationServer().empty()) {
+		lWarning() << "Core::refreshTokens(): no authorization server set.";
+		return false;
+	}
+	if (ai->getRefreshToken() == nullptr) {
+		lWarning() << "Core::refreshTokens(): no refresh token is set.";
+		return false;
+	}
+	getHttpClient()
+	    .createRequest("POST", ai->getAuthorizationServer())
+	    .setBody(Content(ContentType("application", "x-www-form-urlencoded"),
+	                     "grant_type=refresh_token&refresh_token=" + ai->getRefreshToken()->getToken()))
+	    .execute([this, ai](const HttpResponse &response) {
+		    if (response.getStatusCode() == 200) {
+			    JsonDocument doc(response.getBody());
+			    const Json::Value &root = doc.getRoot();
+			    if (!root.isNull()) {
+				    auto bearerToken = (new BearerToken(root["access_token"].asString(),
+				                                        time(NULL) + (time_t)root["expires_in"].asInt64()))
+				                           ->toSharedPtr();
+				    ai->setAccessToken(bearerToken);
+				    string refreshToken = root["refresh_token"].asString();
+				    if (!refreshToken.empty()) {
+					    // FIXME: how to get the expiration of the refresh token ?
+					    auto bearerRefreshToken = (new BearerToken(refreshToken, time(NULL)))->toSharedPtr();
+					    ai->setRefreshToken(bearerRefreshToken);
+				    }
+				    /* this will resubmit all pending authentications */
+				    linphone_core_add_auth_info(getCCore(), ai->toC());
+				    return;
+			    }
+		    }
+		    lError() << "Token refreshing failed.";
+	    });
+	return true;
+}
+
+HttpClient &Core::getHttpClient() {
+	L_D();
+	if (!d->httpClient) {
+		d->httpClient.reset(new HttpClient(getSharedFromThis()));
+	}
+	return *d->httpClient;
+}
+
+void Core::stopHttpClient() {
+	L_D();
+	d->httpClient.reset();
 }
 
 #ifdef HAVE_ADVANCED_IM

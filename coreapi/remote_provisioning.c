@@ -20,6 +20,7 @@
 
 #include <bctoolbox/defs.h>
 
+#include "http/http-client.h"
 #include "linphone/lpconfig.h"
 #include "private.h"
 #include "xml2lpc.h"
@@ -38,14 +39,7 @@ static void belle_request_process_timeout(void *ctx, BCTBX_UNUSED(const belle_si
 
 static void belle_request_process_auth_requested(void *ctx, belle_sip_auth_event_t *event) {
 	LinphoneCore *lc = (LinphoneCore *)ctx;
-
-	const char *realm = belle_sip_auth_event_get_realm(event);
-	const char *username = belle_sip_auth_event_get_username(event);
-	const char *domain = belle_sip_auth_event_get_domain(event);
-	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
-
-	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(lc, realm, username, domain, algorithm, TRUE);
-	linphone_auth_info_fill_belle_sip_event(auth_info, event);
+	linphone_core_fill_belle_sip_auth_event(lc, event, NULL, NULL);
 }
 
 static void linphone_remote_provisioning_apply(LinphoneCore *lc, const char *xml) {
@@ -136,7 +130,8 @@ int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc,
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", addr));
 		}
 
-		return belle_http_provider_send_request(lc->http_provider, request, lc->provisioning_http_listener);
+		return belle_http_provider_send_request(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getProvider(), request,
+		                                        lc->provisioning_http_listener);
 	} else {
 		ms_error("Invalid provisioning URI [%s] (missing scheme or host ?)", remote_provisioning_uri);
 		if (uri) {

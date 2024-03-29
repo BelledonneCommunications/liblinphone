@@ -66,7 +66,7 @@ void ConferenceParams::updateFromAccount(
 				}
 			}
 		} else lInfo() << "Update conference parameters from account: no account parameters";
-	} else lInfo() << "Update conference parameters from account: no account";
+	} else lDebug() << "Update conference parameters from account: no account";
 }
 
 void ConferenceParams::setUtf8Description(const std::string &description) {

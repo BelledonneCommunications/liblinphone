@@ -31,6 +31,7 @@
 #include "linphone/api/c-alert.h"
 #include "linphone/api/c-audio-device.h"
 #include "linphone/api/c-auth-info.h"
+#include "linphone/api/c-bearer-token.h"
 #include "linphone/api/c-call-cbs.h"
 #include "linphone/api/c-call-log.h"
 #include "linphone/api/c-call-stats.h"

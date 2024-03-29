@@ -454,8 +454,8 @@ void CorePrivate::loadChatRooms() {
 				for (const auto &d : p->getDevices()) {
 					auto gruu = d->getAddress();
 					auto name = d->getName();
-					lInfo() << "[Friend] Inserting existing device with name [" << name << "] and address ["
-					        << gruu->asStringUriOnly() << "]";
+					lDebug() << "[Friend] Inserting existing device with name [" << name << "] and address ["
+					         << gruu->asStringUriOnly() << "]";
 					mainDb->insertDevice(gruu, name);
 				}
 			}

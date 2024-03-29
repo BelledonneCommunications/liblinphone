@@ -30,6 +30,7 @@
 #include "core/core.h"
 #include "db/main-db.h"
 #include "event/event.h"
+#include "http/http-client.h"
 #include "presence/presence-model.h"
 #include "vcard/carddav-context.h"
 #include "vcard/vcard-context.h"
@@ -344,12 +345,7 @@ void FriendList::synchronizeFriendsFromServer() {
 		belle_generic_uri_t *uri = belle_generic_uri_parse(mUri.c_str());
 		belle_request_listener.process_auth_requested = [](void *ctx, belle_sip_auth_event_t *event) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
-			linphone_auth_info_fill_belle_sip_event(
-			    _linphone_core_find_auth_info(
-			        FriendList::toCpp(list)->getCore()->getCCore(), belle_sip_auth_event_get_realm(event),
-			        belle_sip_auth_event_get_username(event), belle_sip_auth_event_get_domain(event),
-			        belle_sip_auth_event_get_algorithm(event), TRUE),
-			    event);
+			linphone_core_fill_belle_sip_auth_event(FriendList::toCpp(list)->getCore()->getCCore(), event, NULL, NULL);
 		};
 		belle_request_listener.process_response = [](void *ctx, const belle_http_response_event_t *event) {
 			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
@@ -401,7 +397,8 @@ void FriendList::synchronizeFriendsFromServer() {
 			std::string uri = account->getAccountParams()->getIdentityAddress()->asStringUriOnly();
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", uri.c_str()));
 		}
-		belle_http_provider_send_request(lc->http_provider, request, lc->base_contacts_list_http_listener);
+		belle_http_provider_send_request(getCore()->getHttpClient().getProvider(), request,
+		                                 lc->base_contacts_list_http_listener);
 	} else if (mType == LinphoneFriendListTypeCardDAV) {
 		if (mUri.empty()) {
 			lError() << "Can't synchronize CardDAV list [" << toC() << "](" << getDisplayName() << ") without an URI";

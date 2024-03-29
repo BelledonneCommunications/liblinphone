@@ -27,8 +27,8 @@
 #include "linphone/flexi-api-client.h"
 
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/defs.h"
 #include "bctoolbox/regex.h"
-#include <bctoolbox/defs.h>
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"

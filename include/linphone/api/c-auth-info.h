@@ -28,10 +28,6 @@
  * @{
  */
 
-/**
- * Safely cast a belle_sip_object_t into #LinphoneAuthInfo
- */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -279,8 +275,54 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_password(const Linpho
 LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *auth_info_1,
                                                                   const LinphoneAuthInfo *auth_info_2);
 
-/* you don't need those function*/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *info);
+/**
+ * Return a previously set access token.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return the access token, as a #LinphoneBearerToken object @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneBearerToken *linphone_auth_info_get_access_token(const LinphoneAuthInfo *auth_info);
+
+/**
+ * Return a previously set refresh token.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return the refresh token, as a #LinphoneBearerToken object. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneBearerToken *linphone_auth_info_get_refresh_token(const LinphoneAuthInfo *auth_info);
+
+/**
+ * Set an access token to authenticate, to be used when the server supports the "bearer" authentication method.
+ * The #LinphoneAuthInfo takes a reference to the supplied token, it is not making any copy.
+ * @param auth_info The #LinphoneAuthInfo object @notnil
+ * @param token The #LinphoneBearerToken object representing the access token. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_access_token(LinphoneAuthInfo *auth_info, LinphoneBearerToken *token);
+
+/**
+ * Set a refresh token to use when the access token set with linphone_auth_info_set_access_token() expires.
+ * The #LinphoneAuthInfo takes a reference to the supplied token, it is not making any copy.
+ * Provided that the authorization server uri was assigned with linphone_auth_info_set_authorization_server_uri(),
+ * once the #LinphoneAuthInfo is pushed in the #LinphoneCore, #LinphoneAuthInfo object automatically obtains new access
+ * token when needed, from the supplied refresh token.
+ * @param auth_info The #LinphoneAuthInfo object @notnil
+ * @param token The #LinphoneBearerToken object representing the refresh token. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_refresh_token(LinphoneAuthInfo *auth_info, LinphoneBearerToken *token);
+
+/**
+ * Set the authorization server uri, used to obtain new access tokens from the refresh token.
+ * @see linphone_auth_info_set_refresh_token().
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @param uri the authorization server uri. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_authorization_server(LinphoneAuthInfo *auth_info, const char *uri);
+
+/**
+ * Get the previously set authorization server uri, used to obtain new access tokens from the refresh token.
+ * @see linphone_auth_info_set_refresh_token().
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return the authorization server uri. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_auth_info_get_authorization_server(const LinphoneAuthInfo *auth_info);
 
 void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *auth_info, int pos);
 

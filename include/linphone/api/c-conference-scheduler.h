@@ -59,8 +59,8 @@ linphone_conference_scheduler_get_core(const LinphoneConferenceScheduler *confer
  * Set the #LinphoneAccount to use for the conference scheduler
  *
  * @param conference_scheduler The #LinphoneConferenceScheduler object. @notnil
- * @param account The #LinphoneAccount to use, or NULL if none has been selected. The #LinphoneCallParams keeps a
- *reference to it and removes the previous one, if any. @maybenil
+ * @param account The #LinphoneAccount to use, or NULL if none has been selected. The LinphoneConferenceScheduler keeps
+ *a reference to it and removes the previous one, if any. @maybenil
  **/
 LINPHONE_PUBLIC void linphone_conference_scheduler_set_account(LinphoneConferenceScheduler *conference_scheduler,
                                                                LinphoneAccount *account);

@@ -33,6 +33,7 @@ SalAuthInfo *sal_auth_info_create(belle_sip_auth_event_t *event) {
 	auth_info->domain = ms_strdup(belle_sip_auth_event_get_domain(event));
 	auth_info->mode = (SalAuthMode)belle_sip_auth_event_get_mode(event);
 	auth_info->algorithm = ms_strdup(belle_sip_auth_event_get_algorithm(event));
+	auth_info->authz_server = ms_strdup(belle_sip_auth_event_get_authz_server(event));
 	return auth_info;
 }
 
@@ -306,6 +307,10 @@ static belle_sip_header_t *sal_body_handler_find_header(const SalBodyHandler *bo
 SalBodyHandler *sal_body_handler_new(void) {
 	belle_sip_memory_body_handler_t *body_handler = belle_sip_memory_body_handler_new(NULL, NULL);
 	return (SalBodyHandler *)BELLE_SIP_BODY_HANDLER(body_handler);
+}
+
+SalBodyHandler *sal_body_handler_new_from_buffer(const void *data, size_t size) {
+	return (SalBodyHandler *)belle_sip_memory_body_handler_new_copy_from_buffer(data, size, NULL, NULL);
 }
 
 SalBodyHandler *sal_body_handler_ref(SalBodyHandler *body_handler) {

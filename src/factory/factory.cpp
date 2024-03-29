@@ -48,11 +48,12 @@
 #include <sstream>
 
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/defs.h"
 #include "bctoolbox/vfs_encrypted.hh"
-#include <bctoolbox/defs.h>
 
 #include "address/address.h"
 #include "alert/alert.h"
+#include "auth-info/auth-info.h"
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
 #include "conference/participant-info.h"
@@ -272,25 +273,29 @@ LinphoneParticipantDeviceIdentity *Factory::createParticipantDeviceIdentity(cons
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
 
-LinphoneAuthInfo *Factory::createAuthInfo(const std::string &username,
-                                          const std::string &userid,
-                                          const std::string &passwd,
-                                          const std::string &ha1,
-                                          const std::string &realm,
-                                          const std::string &domain) const {
-	return linphone_auth_info_new(username.c_str(), userid.c_str(), passwd.c_str(), ha1.c_str(), realm.c_str(),
-	                              domain.c_str());
+AuthInfo *Factory::createAuthInfo(const std::string &username,
+                                  const std::string &userid,
+                                  const std::string &passwd,
+                                  const std::string &ha1,
+                                  const std::string &realm,
+                                  const std::string &domain) const {
+	return new AuthInfo(username, userid, passwd, ha1, realm, domain);
 }
 
-LinphoneAuthInfo *Factory::createAuthInfo(const std::string &username,
-                                          const std::string &userid,
-                                          const std::string &passwd,
-                                          const std::string &ha1,
-                                          const std::string &realm,
-                                          const std::string &domain,
-                                          const std::string &algorithm) const {
-	return linphone_auth_info_new_for_algorithm(username.c_str(), userid.c_str(), passwd.c_str(), ha1.c_str(),
-	                                            realm.c_str(), domain.c_str(), algorithm.c_str());
+AuthInfo *Factory::createAuthInfo(const std::string &username,
+                                  const std::string &userid,
+                                  const std::string &passwd,
+                                  const std::string &ha1,
+                                  const std::string &realm,
+                                  const std::string &domain,
+                                  const std::string &algorithm) const {
+	return new AuthInfo(username, userid, passwd, ha1, realm, domain, algorithm);
+}
+
+AuthInfo *Factory::createAuthInfo(const std::string &username,
+                                  std::shared_ptr<BearerToken> access_token,
+                                  const std::string &realm) const {
+	return new AuthInfo(username, access_token, realm);
 }
 
 std::string Factory::computeHa1ForAlgorithm(const std::string &userId,
@@ -779,6 +784,10 @@ Factory::~Factory() {
 
 std::shared_ptr<ConferenceInfo> Factory::createConferenceInfo() const {
 	return ConferenceInfo::create();
+}
+
+std::shared_ptr<BearerToken> Factory::createBearerToken(const std::string &token, time_t expirationTime) const {
+	return BearerToken::create(token, expirationTime);
 }
 
 #ifndef _MSC_VER

@@ -64,38 +64,6 @@ class LINPHONE_PUBLIC Conference : public ConferenceInterface, public Conference
 	friend class ServerGroupChatRoom;
 
 public:
-	struct ConferenceIdCompare {
-		bool operator()(const ConferenceId &lhs, const ConferenceId &rhs) const {
-			const auto &lhsRawPeerAddress = lhs.getPeerAddress();
-			Address lhsPeerAddress = Address();
-			if (lhsRawPeerAddress) {
-				lhsPeerAddress = lhsRawPeerAddress->getUriWithoutGruu();
-				lhsPeerAddress.removeUriParam(Conference::SecurityModeParameter);
-			}
-			const auto &lhsRawLocalAddress = lhs.getLocalAddress();
-			Address lhsLocalAddress = Address();
-			if (lhsRawLocalAddress) {
-				lhsLocalAddress = lhsRawLocalAddress->getUriWithoutGruu();
-				lhsLocalAddress.removeUriParam(Conference::SecurityModeParameter);
-			}
-
-			const auto &rhsRawPeerAddress = rhs.getPeerAddress();
-			Address rhsPeerAddress = Address();
-			if (rhsRawPeerAddress) {
-				rhsPeerAddress = rhsRawPeerAddress->getUriWithoutGruu();
-				rhsPeerAddress.removeUriParam(Conference::SecurityModeParameter);
-			}
-			const auto &rhsRawLocalAddress = rhs.getLocalAddress();
-			Address rhsLocalAddress = Address();
-			if (rhsRawLocalAddress) {
-				rhsLocalAddress = rhsRawLocalAddress->getUriWithoutGruu();
-				rhsLocalAddress.removeUriParam(Conference::SecurityModeParameter);
-			}
-
-			return (lhsPeerAddress < rhsPeerAddress) ||
-			       ((lhsPeerAddress == rhsPeerAddress) && (lhsLocalAddress < rhsLocalAddress));
-		}
-	};
 	static constexpr int labelLength = 10;
 	static const std::string SecurityModeParameter;
 	~Conference();

@@ -156,6 +156,7 @@ extern test_suite_t external_domain_test_suite;
 extern test_suite_t potential_configuration_graph_test_suite;
 extern test_suite_t call_race_conditions_suite;
 extern test_suite_t mwi_test_suite;
+extern test_suite_t bearer_auth_test_suite;
 
 #ifdef VCARD_ENABLED
 extern test_suite_t vcard_test_suite;
@@ -262,7 +263,8 @@ typedef struct _stats {
 	int number_of_LinphoneRegistrationOk;
 	int number_of_LinphoneRegistrationCleared;
 	int number_of_LinphoneRegistrationFailed;
-	int number_of_auth_info_requested;
+	int number_of_auth_info_requested; /* obsolete callback */
+	int number_of_authentication_info_requested;
 	int number_of_LinphoneChatRoomExhumed;
 	int number_of_LinphoneAccountAdded;
 	int number_of_LinphoneDefaultAccountChanged;
@@ -1141,6 +1143,9 @@ void liblinphone_tester_add_soci_search_path(const char *path);
 char *liblinphone_tester_make_unique_file_path(const char *name, const char *extension);
 
 int liblinphone_tester_check_recorded_audio(const char *hellopath, const char *recordpath);
+
+/* returns a CPU bogomips indication. Only supported for linux.*/
+float liblinphone_tester_get_cpu_bogomips(void);
 
 #ifdef __cplusplus
 };

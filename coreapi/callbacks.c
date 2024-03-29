@@ -714,47 +714,70 @@ static bool_t fill_auth_info_with_client_certificate(LinphoneCore *lc, SalAuthIn
 
 static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo *sai) {
 	LinphoneAuthInfo *ai = NULL;
-	if (sai->mode == SalAuthModeTls) {
-		ai = (LinphoneAuthInfo *)_linphone_core_find_tls_auth_info(lc);
-	} else {
-		ai = (LinphoneAuthInfo *)_linphone_core_find_auth_info(lc, sai->realm, sai->username, sai->domain,
-		                                                       sai->algorithm, FALSE);
+	switch (sai->mode) {
+		case SalAuthModeTls:
+			ai = _linphone_core_find_tls_auth_info(lc);
+			break;
+		case SalAuthModeHttpDigest:
+			ai = _linphone_core_find_auth_info(lc, sai->realm, sai->username, sai->domain, sai->algorithm, FALSE);
+			break;
+		case SalAuthModeBearer:
+			ai = _linphone_core_find_bearer_auth_info(lc, sai->realm, sai->username, sai->domain);
+			break;
 	}
 	if (ai) {
-		if (sai->mode == SalAuthModeHttpDigest) {
-			sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai)
-			                                                          : linphone_auth_info_get_username(ai));
-			sai->password = linphone_auth_info_get_password(ai) ? ms_strdup(linphone_auth_info_get_password(ai)) : NULL;
-			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
+		switch (sai->mode) {
+			case SalAuthModeHttpDigest: {
+				sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai)
+				                                                          : linphone_auth_info_get_username(ai));
+				sai->password =
+				    linphone_auth_info_get_password(ai) ? ms_strdup(linphone_auth_info_get_password(ai)) : NULL;
+				sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
 
-			AuthStack &as = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack();
-			/* We have to construct the auth info as it was originally requested in auth_requested() below,
-			 * so that the matching is made correctly.
-			 */
-			as.authFound(AuthInfo::create(sai->username, "", "", "", sai->realm, sai->domain));
+				AuthStack &as = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack();
+				/* We have to construct the auth info as it was originally requested in auth_requested() below,
+				 * so that the matching is made correctly.
+				 */
+				as.authFound(AuthInfo::create(sai->username, "", "", "", sai->realm, sai->domain));
 
-		} else if (sai->mode == SalAuthModeTls) {
-			if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
-				sal_certificates_chain_parse(sai, linphone_auth_info_get_tls_cert(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
-				sal_signing_key_parse(sai, linphone_auth_info_get_tls_key(ai), "");
-			} else if (linphone_auth_info_get_tls_cert_path(ai) && linphone_auth_info_get_tls_key_path(ai)) {
-				sal_certificates_chain_parse_file(sai, linphone_auth_info_get_tls_cert_path(ai),
-				                                  SAL_CERTIFICATE_RAW_FORMAT_PEM);
-				sal_signing_key_parse_file(sai, linphone_auth_info_get_tls_key_path(ai), "");
-			} else {
-				fill_auth_info_with_client_certificate(lc, sai);
-			}
+			} break;
+			case SalAuthModeTls: {
+				if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
+					sal_certificates_chain_parse(sai, linphone_auth_info_get_tls_cert(ai),
+					                             SAL_CERTIFICATE_RAW_FORMAT_PEM);
+					sal_signing_key_parse(sai, linphone_auth_info_get_tls_key(ai), "");
+				} else if (linphone_auth_info_get_tls_cert_path(ai) && linphone_auth_info_get_tls_key_path(ai)) {
+					sal_certificates_chain_parse_file(sai, linphone_auth_info_get_tls_cert_path(ai),
+					                                  SAL_CERTIFICATE_RAW_FORMAT_PEM);
+					sal_signing_key_parse_file(sai, linphone_auth_info_get_tls_key_path(ai), "");
+				} else {
+					fill_auth_info_with_client_certificate(lc, sai);
+				}
+			} break;
+			case SalAuthModeBearer: {
+				auto cppAi = AuthInfo::toCpp(ai)->getSharedFromThis();
+				auto accessToken = cppAi->getAccessToken();
+				if (accessToken == nullptr || accessToken->isExpired()) {
+					lInfo() << "Absent or expired access token, using refresh token to obtain new one.";
+					L_GET_CPP_PTR_FROM_C_OBJECT(lc)->refreshTokens(cppAi);
+				} else {
+					sai->bearer_token = cppAi->getAccessToken()->getImpl()->toC();
+					lInfo() << "Bearer token found.";
+				}
+			} break;
 		}
 
 		if (sai->realm && (!linphone_auth_info_get_realm(ai) || !linphone_auth_info_get_algorithm(ai))) {
-			/*if realm was not known, then set it so that ha1 may eventually be calculated and clear text password
-			 * dropped*/
-			linphone_auth_info_set_realm(ai, sai->realm);
-			linphone_auth_info_set_algorithm(ai, sai->algorithm);
-			linphone_core_write_auth_info(lc, ai);
+			/*if realm was not known, then set it so that ha1 may be calculated and clear text password
+			 * dropped. We have to remove const exceptionnaly.*/
+			LinphoneAuthInfo *wai = (LinphoneAuthInfo *)ai;
+			linphone_auth_info_set_realm(wai, sai->realm);
+			linphone_auth_info_set_algorithm(wai, sai->algorithm);
+			linphone_core_write_auth_info(lc, wai);
 		}
 		return TRUE;
 	} else {
+		lInfo() << "fill_auth_info(): no auth info found";
 		if (sai->mode == SalAuthModeTls) {
 			return fill_auth_info_with_client_certificate(lc, sai);
 		}
@@ -769,17 +792,29 @@ static bool_t auth_requested(Sal *sal, SalAuthInfo *sai) {
 		/* only HttpDigest Mode requests App for credentials, TLS client cert does not support callback so the
 		 * authentication credential MUST be provided by the application before the connection without prompt from the
 		 * library */
-		if (sai->mode == SalAuthModeHttpDigest) {
-			LinphoneAuthInfo *ai =
-			    linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
-			linphone_auth_info_set_algorithm(ai, sai->algorithm);
-			/* Request app for new authentication information, but later. */
-			L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
-			linphone_auth_info_unref(ai);
-
-			if (fill_auth_info(lc, sai)) {
-				return TRUE;
-			}
+		switch (sai->mode) {
+			case SalAuthModeHttpDigest: {
+				LinphoneAuthInfo *ai =
+				    linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
+				linphone_auth_info_set_algorithm(ai, sai->algorithm);
+				/* Request app for new authentication information, but later. */
+				L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(
+				    AuthInfo::toCpp(ai)->getSharedFromThis());
+				linphone_auth_info_unref(ai);
+				if (fill_auth_info(lc, sai)) {
+					return TRUE;
+				}
+			} break;
+			case SalAuthModeBearer: {
+				LinphoneAuthInfo *ai =
+				    linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
+				linphone_auth_info_set_authorization_server(ai, sai->authz_server);
+				linphone_core_notify_authentication_requested(lc, ai, LinphoneAuthBearer);
+				linphone_auth_info_unref(ai);
+			} break;
+			case SalAuthModeTls:
+				/* TLS Client based authentication is cannot be requested to the application.*/
+				break;
 		}
 		return FALSE;
 	}

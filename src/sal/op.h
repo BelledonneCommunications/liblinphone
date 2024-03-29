@@ -219,7 +219,7 @@ public:
 	// callbacks for this op
 	void release();
 
-	virtual void authenticate(BCTBX_UNUSED(const SalAuthInfo *info)) {
+	virtual void authenticate() {
 		processAuthentication();
 	}
 	void cancelAuthentication() {

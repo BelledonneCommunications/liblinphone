@@ -34,76 +34,15 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class LoggerPrivate : public BaseObjectPrivate {
-public:
-	Logger::Level level;
-	ostringstream os;
-};
-
-// -----------------------------------------------------------------------------
-
-Logger::Logger(Level level) : BaseObject(*new LoggerPrivate) {
-	L_D();
-	d->level = level;
-}
-
-Logger::~Logger() {
-	L_D();
-
-	const string str = d->os.str();
-	
-	switch (d->level) {
-		case Debug:
-#ifdef DEBUG_LOGS
-			bctbx_debug("%s", str.c_str());
-#endif // if DEBUG_LOGS
-			break;
-		case Info:
-			bctbx_message("%s", str.c_str());
-			break;
-		case Warning:
-			bctbx_warning("%s", str.c_str());
-			break;
-		case Error:
-			bctbx_error("%s", str.c_str());
-			break;
-		case Fatal:
-			bctbx_fatal("%s", str.c_str());
-			break;
-	}
-}
-
-ostringstream &Logger::getOutput() {
-	L_D();
-	return d->os;
-}
-
-// -----------------------------------------------------------------------------
-
-class DurationLoggerPrivate : public BaseObjectPrivate {
-public:
-	unique_ptr<Logger> logger;
-
-	chrono::high_resolution_clock::time_point start;
-};
-
-// -----------------------------------------------------------------------------
-
-DurationLogger::DurationLogger(const string &label, Logger::Level level) : BaseObject(*new DurationLoggerPrivate) {
-	L_D();
-
-	d->logger.reset(new Logger(level));
-	d->logger->getOutput() << "Duration of [" + label + "]: ";
-	d->start = chrono::high_resolution_clock::now();
-
-	Logger(level).getOutput() << "Start measurement of [" + label + "].";
+DurationLogger::DurationLogger(const string &label, BctbxLogLevel level) : mLabel(label), mLevel(level) {
+	BCTBX_SLOG(BCTBX_LOG_DOMAIN, mLevel) << "Start measurement of [" + label + "].";
+	mStart = chrono::high_resolution_clock::now();
 }
 
 DurationLogger::~DurationLogger() {
-	L_D();
-
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
-	d->logger->getOutput() << chrono::duration_cast<chrono::milliseconds>(end - d->start).count() << "ms.";
+	BCTBX_SLOG(BCTBX_LOG_DOMAIN, mLevel) << "Duration of [" + mLabel + "]: "
+	                                     << chrono::duration_cast<chrono::milliseconds>(end - mStart).count() << "ms.";
 }
 
 LINPHONE_END_NAMESPACE

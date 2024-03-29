@@ -102,6 +102,7 @@ void sal_auth_info_delete(SalAuthInfo *auth_info) {
 	if (auth_info->certificates) sal_certificates_chain_delete(auth_info->certificates);
 	if (auth_info->key) sal_signing_key_delete(auth_info->key);
 	if (auth_info->algorithm) ms_free(auth_info->algorithm);
+	if (auth_info->authz_server) ms_free(auth_info->authz_server);
 	ms_free(auth_info);
 }
 

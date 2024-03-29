@@ -129,6 +129,7 @@ set(C_API_HEADER_FILES
 	c-types.h
 	c-video-source-descriptor.h
 	c-vcard.h
+	c-bearer-token.h
 )
 
 set(ENUMS_HEADER_FILES

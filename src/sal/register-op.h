@@ -44,7 +44,7 @@ public:
 		return refreshRegister(0);
 	}
 
-	void authenticate(BCTBX_UNUSED(const SalAuthInfo *info)) override {
+	void authenticate() override {
 		mRoot->removePendingAuth(this);
 		refreshRegister(-1);
 	}

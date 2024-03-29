@@ -40,6 +40,7 @@
 #include "event-log/conference/conference-chat-message-event.h"
 #include "friend/friend-list.h"
 #include "friend/friend.h"
+#include "http/http-client.h"
 #include "mediastreamer2/msanalysedisplay.h"
 
 using namespace std;
@@ -58,8 +59,8 @@ void linphone_core_lime_x3dh_set_test_decryption_failure_flag(const LinphoneCore
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->setTestForceDecryptionFailureFlag((flag == TRUE));
 }
 
-belle_http_provider_t *linphone_core_get_http_provider(const LinphoneCore *lc) {
-	return lc->http_provider;
+belle_http_provider_t *linphone_core_get_http_provider(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getHttpClient().getProvider();
 }
 
 void linphone_core_enable_send_call_stats_periodical_updates(LinphoneCore *lc, bool_t enabled) {

@@ -26,6 +26,7 @@ set(OTHER_LIBS_FOR_TESTER
 	${Ortp_TARGET}
 	${Mediastreamer2_TARGET}
 	${BelleSIP_TARGET}
+	${BelleSIP_tester_TARGET}
 	${Belr_TARGET}
 	${LibXml2_TARGET}
 	${XSD_LIBRARIES}
@@ -207,6 +208,7 @@ set(RC_FILES
 	rcfiles/marie_bodyless_rc
 	rcfiles/groupchat_rc
 	rcfiles/arthur_rc
+	rcfiles/marie_xml
 )
 
 set(IMAGE_FILES
@@ -327,6 +329,7 @@ set(SOURCE_FILES_CXX
 	conference-info-tester.cpp
 	alerts_tester.cpp
 	vcard_tester.cpp
+	bearer-auth.cpp
 )
 
 if(ENABLE_FLEXIAPI)

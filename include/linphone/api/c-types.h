@@ -687,6 +687,21 @@ typedef struct _LinphoneAlertCbs LinphoneAlertCbs;
  */
 typedef struct _LinphoneSignalInformation LinphoneSignalInformation;
 
+/**
+ * @brief Object that represents a bearer token (eg OAUTH).
+ * SIP servers may support "bearer" kind of authentication, in which case an authentication token
+ * needs to be supplied in order to authenticate to the SIP service.
+ * Applications are responsible to obtain the token from an authentication server.
+ * In order to pass it to liblinphone for usage, the token needs to be
+ * encapsulated into a #LinphoneBearerToken, together with its expiration time
+ * and target server name for which it is intended to use, then passed into a #LinphoneAuthInfo object.
+ * Both access and refresh tokens may be represented.
+ * If both are provided to the #LinphoneAuthInfo, then liblinphone automatically uses
+ * the refresh token to obtain a new access token when the latter is expired.
+ * @ingroup authentication
+ */
+typedef struct _LinphoneBearerToken LinphoneBearerToken;
+
 #ifdef __cplusplus
 }
 #endif // ifdef __cplusplus

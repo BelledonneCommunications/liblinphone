@@ -931,7 +931,7 @@ void ServerGroupChatRoomPrivate::updateProtocolVersionFromDevice(const shared_pt
 	if (protocolVersion > groupchat->second) {
 		protocolVersion = groupchat->second;
 		lWarning() << "Device " << device->getAddress()->toString() << " downgrades chatroom's protocol version to "
-		           << protocolVersion;
+		           << protocolVersion.toString();
 	}
 }
 

@@ -147,6 +147,8 @@ endif()
 if(CpuFeatures_FOUND)
 	target_link_libraries(liblinphone-coreapi PRIVATE ${CpuFeatures_TARGET})
 endif()
+target_link_libraries(liblinphone-coreapi PRIVATE ${JsonCPP_TARGET})
+
 add_dependencies(liblinphone-coreapi liblinphone-git-version)
 if(ENABLE_JAVA_WRAPPER)
 	add_dependencies(liblinphone-coreapi linphonej)

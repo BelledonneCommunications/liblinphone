@@ -86,6 +86,12 @@ int Version::compare(const Version &other) const {
 	return tmp;
 }
 
+LINPHONE_PUBLIC std::string Version::toString() const {
+	std::ostringstream ostr;
+	ostr << *this;
+	return ostr.str();
+}
+
 } // namespace Utils
 
 std::ostream &operator<<(std::ostream &ostr, const Utils::Version &version) {

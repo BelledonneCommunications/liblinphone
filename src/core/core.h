@@ -54,6 +54,7 @@ class AbstractChatRoom;
 class Account;
 class Address;
 class AudioDevice;
+class AuthInfo;
 class Call;
 class CallLog;
 class CallSession;
@@ -73,6 +74,7 @@ class SalMediaDescription;
 class ConferenceScheduler;
 class SalOp;
 class SignalInformation;
+class HttpClient;
 
 namespace MediaConference {
 class LocalConference;
@@ -424,6 +426,20 @@ public:
 
 	void releaseAccounts();
 	const bctbx_list_t *getProxyConfigList() const;
+
+	// ---------------------------------------------------------------------------
+	// AuthInfos
+	// ---------------------------------------------------------------------------
+	bool refreshTokens(const std::shared_ptr<AuthInfo> &ai);
+
+	// ---------------------------------------------------------------------------
+	// HTTP services
+	// ---------------------------------------------------------------------------
+	HttpClient &getHttpClient();
+	/* Only needed because the HttpClient has a dependency on the Sal object (belle_sip_stack_t),
+	 * so we have to destroy the HttpClient before the belle_sip_stack_t is destroyed.
+	 * This is to be removed when C Core and C++ Core are unified */
+	void stopHttpClient();
 
 private:
 	Core();

@@ -43,6 +43,8 @@ public:
 	explicit Content(const SalBodyHandler *bodyHandler, bool parseMultipart = true);
 	Content(const Content &other);
 	Content(Content &&other) noexcept;
+	Content(ContentType &&ct, const std::string &data);
+	Content(ContentType &&ct, std::vector<char> &&data);
 	virtual ~Content();
 
 	Content *clone() const override {

@@ -20,6 +20,7 @@
 
 #include <bctoolbox/defs.h>
 
+#include "auth-info/auth-info.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/participant-info.h"
 #include "factory/factory.h"
@@ -123,8 +124,10 @@ LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *facto
                                                     const char *ha1,
                                                     const char *realm,
                                                     const char *domain) {
-	return Factory::toCpp(factory)->createAuthInfo(username ? username : "", userid ? userid : "", passwd ? passwd : "",
-	                                               ha1 ? ha1 : "", realm ? realm : "", domain ? domain : "");
+	return Factory::toCpp(factory)
+	    ->createAuthInfo(L_C_TO_STRING(username), L_C_TO_STRING(userid), L_C_TO_STRING(passwd), L_C_TO_STRING(ha1),
+	                     L_C_TO_STRING(realm), L_C_TO_STRING(domain))
+	    ->toC();
 }
 
 LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *factory,
@@ -135,9 +138,19 @@ LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *fac
                                                       const char *realm,
                                                       const char *domain,
                                                       const char *algorithm) {
-	return Factory::toCpp(factory)->createAuthInfo(username ? username : "", userid ? userid : "", passwd ? passwd : "",
-	                                               ha1 ? ha1 : "", realm ? realm : "", domain ? domain : "",
-	                                               algorithm ? algorithm : "");
+	return Factory::toCpp(factory)
+	    ->createAuthInfo(L_C_TO_STRING(username), L_C_TO_STRING(userid), L_C_TO_STRING(passwd), L_C_TO_STRING(ha1),
+	                     L_C_TO_STRING(realm), L_C_TO_STRING(domain), L_C_TO_STRING(algorithm))
+	    ->toC();
+}
+LinphoneAuthInfo *linphone_factory_create_auth_info_3(const LinphoneFactory *factory,
+                                                      const char *username,
+                                                      LinphoneBearerToken *access_token,
+                                                      const char *realm) {
+	return Factory::toCpp(factory)
+	    ->createAuthInfo(L_C_TO_STRING(username), bellesip::getSharedPtr<BearerToken>(access_token),
+	                     L_C_TO_STRING(realm))
+	    ->toC();
 }
 
 char *linphone_factory_compute_ha1_for_algorithm(const LinphoneFactory *factory,
@@ -523,4 +536,9 @@ LinphoneFriendPhoneNumber *linphone_factory_create_friend_phone_number(BCTBX_UNU
 
 LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(BCTBX_UNUSED(LinphoneFactory *f)) {
 	return linphone_video_source_descriptor_new();
+}
+
+LinphoneBearerToken *
+linphone_factory_create_bearer_token(const LinphoneFactory *factory, const char *token, time_t expiration_time) {
+	return linphone_bearer_token_ref(Factory::toCpp(factory)->createBearerToken(token, expiration_time)->toC());
 }

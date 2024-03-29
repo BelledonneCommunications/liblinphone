@@ -586,6 +586,7 @@ typedef enum _LinphoneAddressFamily {
 typedef enum _LinphoneAuthMethod {
 	LinphoneAuthHttpDigest = 0, /**< Digest authentication requested */
 	LinphoneAuthTls = 1,        /**< Client certificate requested */
+	LinphoneAuthBearer = 2      /**< Bearer authentication */
 } LinphoneAuthMethod;
 
 /**

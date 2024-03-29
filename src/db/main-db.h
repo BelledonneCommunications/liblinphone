@@ -272,11 +272,11 @@ protected:
 private:
 	L_DECLARE_PRIVATE(MainDb);
 	L_DISABLE_COPY(MainDb);
-
+	using ChatRoomWeakCompareMap = std::
+	    unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>, ConferenceId::WeakHash, ConferenceId::WeakEqual>;
 	void initCleanup();
-	void addChatroomToList(
-	    std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> &chatRoomsMap,
-	    const std::shared_ptr<AbstractChatRoom> chatRoom) const;
+	void addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
+	                       const std::shared_ptr<AbstractChatRoom> &chatRoom) const;
 	std::shared_ptr<AbstractChatRoom> mergeChatRooms(const std::shared_ptr<AbstractChatRoom> chatRoom1,
 	                                                 const std::shared_ptr<AbstractChatRoom> chatRoom2) const;
 };

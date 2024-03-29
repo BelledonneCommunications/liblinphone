@@ -21,49 +21,34 @@
 #ifndef _L_LOGGER_H_
 #define _L_LOGGER_H_
 
-#include <sstream>
+#include "bctoolbox/logging.h"
+#include "linphone/utils/general.h"
 
-#include "object/base-object.h"
+#include <chrono>
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LoggerPrivate;
-
-class LINPHONE_PUBLIC Logger : public BaseObject {
+class DurationLogger {
 public:
-	enum Level { Debug, Info, Warning, Error, Fatal };
-
-	explicit Logger(Level level);
-	~Logger();
-
-	std::ostringstream &getOutput();
-
-private:
-	L_DECLARE_PRIVATE(Logger);
-	L_DISABLE_COPY(Logger);
-};
-
-class DurationLoggerPrivate;
-
-class DurationLogger : public BaseObject {
-public:
-	DurationLogger(const std::string &label, Logger::Level level = Logger::Info);
+	DurationLogger(const std::string &label, BctbxLogLevel level = BCTBX_LOG_MESSAGE);
+	DurationLogger(DurationLogger &) = delete;
 	~DurationLogger();
 
 private:
-	L_DECLARE_PRIVATE(DurationLogger);
-	L_DISABLE_COPY(DurationLogger);
+	std::chrono::high_resolution_clock::time_point mStart;
+	const std::string mLabel;
+	const BctbxLogLevel mLevel;
 };
 
 LINPHONE_END_NAMESPACE
 
-#define lDebug() LinphonePrivate::Logger(LinphonePrivate::Logger::Debug).getOutput()
-#define lInfo() LinphonePrivate::Logger(LinphonePrivate::Logger::Info).getOutput()
-#define lWarning() LinphonePrivate::Logger(LinphonePrivate::Logger::Warning).getOutput()
-#define lError() LinphonePrivate::Logger(LinphonePrivate::Logger::Error).getOutput()
-#define lFatal() LinphonePrivate::Logger(LinphonePrivate::Logger::Fatal).getOutput()
+#define lDebug() BCTBX_SLOGD
+#define lInfo() BCTBX_SLOGI
+#define lWarning() BCTBX_SLOGW
+#define lError() BCTBX_SLOGE
+#define lFatal() BCTBX_SLOGF
 
 #define L_BEGIN_LOG_EXCEPTION try {
 

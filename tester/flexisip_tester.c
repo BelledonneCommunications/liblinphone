@@ -1521,14 +1521,14 @@ static void on_eof(LinphonePlayer *player) {
 	marie->stat.number_of_player_eof++;
 }
 
-void transcoder_tester(void) {
+static void transcoder_tester(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	LinphonePlayer *player;
 	LinphonePlayerCbs *cbs = NULL;
 	char *hellopath = bc_tester_res("sounds/ahbahouaismaisbon.wav");
-	char *recordpath = bc_tester_file("record-call_with_file_player.wav");
+	char *recordpath = bc_tester_file("record-transcoder.wav");
 
 	bool_t call_ok;
 	double similar = 1;

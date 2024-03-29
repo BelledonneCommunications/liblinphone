@@ -29,6 +29,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+AuthInfo::AuthInfo(const std::string &username, const std::string &realm, const std::string &domain) {
+	AuthInfo::init(username, "", "", "", realm, domain, "");
+}
+
 AuthInfo::AuthInfo(const string &username,
                    const string &userid,
                    const string &passwd,
@@ -57,6 +61,13 @@ AuthInfo::AuthInfo(const string &username,
                    const list<string> &availableAlgorithms) {
 	AuthInfo::init(username, userid, passwd, ha1, realm, domain, algorithm, availableAlgorithms);
 }
+
+AuthInfo::AuthInfo(const std::string &username, std::shared_ptr<BearerToken> token, const std::string &realm) {
+	mUsername = username;
+	mAccessToken = token;
+	mRealm = realm;
+}
+
 void AuthInfo::init(const string &username,
                     const string &userid,
                     const string &passwd,
@@ -92,6 +103,7 @@ AuthInfo::AuthInfo(LpConfig *config, string key) {
 	const char *username, *userid, *passwd, *ha1, *realm, *domain, *tls_cert_path, *tls_key_path, *tls_key_password,
 	    *algo;
 	bctbx_list_t *algos;
+	const char *tokenString;
 
 	username = linphone_config_get_string(config, key.c_str(), "username", "");
 	userid = linphone_config_get_string(config, key.c_str(), "userid", "");
@@ -104,6 +116,11 @@ AuthInfo::AuthInfo(LpConfig *config, string key) {
 	tls_key_password = linphone_config_get_string(config, key.c_str(), "client_cert_key_passsword", "");
 	algo = linphone_config_get_string(config, key.c_str(), "algorithm", "");
 	algos = linphone_config_get_string_list(config, key.c_str(), "available_algorithms", nullptr);
+
+	tokenString = linphone_config_get_string(config, key.c_str(), "access_token", nullptr);
+	if (tokenString) mAccessToken = BearerToken::createFromConfig(tokenString)->toSharedPtr();
+	tokenString = linphone_config_get_string(config, key.c_str(), "refresh_token", nullptr);
+	if (tokenString) mRefreshToken = BearerToken::createFromConfig(tokenString)->toSharedPtr();
 
 	setTlsCertPath(tls_cert_path);
 	setTlsKeyPath(tls_key_path);
@@ -120,14 +137,7 @@ AuthInfo::AuthInfo(LpConfig *config, string key) {
 }
 
 AuthInfo *AuthInfo::clone() const {
-	AuthInfo *ai = new AuthInfo(getUsername(), getUserid(), getPassword(), getHa1(), getRealm(), getDomain(),
-	                            getAlgorithm(), getAvailableAlgorithms());
-	ai->setNeedToRenewHa1(getNeedToRenewHa1());
-	ai->setTlsCert(getTlsCert());
-	ai->setTlsCertPath(getTlsCertPath());
-	ai->setTlsKey(getTlsKey());
-	ai->setTlsKeyPath(getTlsKeyPath());
-	ai->setTlsKeyPassword(getTlsKeyPassword());
+	AuthInfo *ai = new AuthInfo(*this);
 	return ai;
 }
 
@@ -161,7 +171,7 @@ const string &AuthInfo::getHa1() const {
 	return mHa1;
 }
 
-const bool_t &AuthInfo::getNeedToRenewHa1() const {
+bool AuthInfo::getNeedToRenewHa1() const {
 	return mNeedToRenewHa1;
 }
 
@@ -248,7 +258,7 @@ void AuthInfo::setHa1(const string &ha1) {
 	mHa1 = ha1;
 }
 
-void AuthInfo::setNeedToRenewHa1(const bool_t &needToRenewHa1) {
+void AuthInfo::setNeedToRenewHa1(bool needToRenewHa1) {
 	mNeedToRenewHa1 = needToRenewHa1;
 }
 
@@ -327,16 +337,25 @@ void AuthInfo::writeConfig(LpConfig *config, int pos) {
 		linphone_config_set_string_list(config, key, "available_algorithms", algos);
 		bctbx_list_free(algos);
 	}
+	if (mAccessToken) {
+		linphone_config_set_string(config, key, "access_token", mAccessToken->toConfigString().c_str());
+	}
+	if (mRefreshToken) {
+		linphone_config_set_string(config, key, "refresh_token", mRefreshToken->toConfigString().c_str());
+	}
+	if (!mAuthServer.empty()) {
+		linphone_config_set_string(config, key, "authorization_server", mAuthServer.c_str());
+	}
 }
 
 std::string AuthInfo::toString() const {
 	std::ostringstream ss;
 
 	ss << "Username[" << mUsername << "];";
-	ss << "Userid[" << mUserid << "];";
+	if (!mUserid.empty()) ss << "Userid[" << mUserid << "];";
 	ss << "Realm[" << mRealm << "];";
 	ss << "Domain[" << mDomain << "];";
-	ss << "Algorithm[" << mAlgorithm << "];";
+	if (!mAlgorithm.empty()) ss << "Algorithm[" << mAlgorithm << "];";
 	ss << "AvailableAlgorithms[";
 	if (mAvailableAlgorithms.size() > 0) {
 		auto index = mAvailableAlgorithms.begin();
@@ -345,11 +364,14 @@ std::string AuthInfo::toString() const {
 			ss << "," << *(index++);
 	}
 	ss << "];";
+	if (!mAuthServer.empty()) ss << "AuthServer[" << mAuthServer << "];";
+	if (mAccessToken) ss << "AccessToken[" << mAccessToken->getToken().substr(0, 4) << "...];";
+	if (mRefreshToken) ss << "RefreshToken[" << mRefreshToken->getToken().substr(0, 4) << "...];";
 	return ss.str();
 }
 
 // Check if Authinfos are the same without taking account algorithms
-bool_t AuthInfo::isEqualButAlgorithms(const AuthInfo *authInfo) const {
+bool AuthInfo::isEqualButAlgorithms(const AuthInfo *authInfo) const {
 	return authInfo && getUsername() == authInfo->getUsername() && getUserid() == authInfo->getUserid() &&
 	       getRealm() == authInfo->getRealm() && getDomain() == authInfo->getDomain();
 }

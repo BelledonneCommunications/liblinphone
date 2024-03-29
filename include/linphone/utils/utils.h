@@ -248,6 +248,7 @@ public:
 	LINPHONE_PUBLIC inline const std::string &getBuildMetaData() const {
 		return mBuildMetaData;
 	};
+	LINPHONE_PUBLIC std::string toString() const;
 
 private:
 	int mMajor = 0, mMinor = 0, mPatch = 0;

@@ -246,6 +246,25 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const Linp
                                                                       const char *algorithm);
 
 /**
+ * Creates a #LinphoneAuthInfo object.
+ * The object can be created empty, that is with all arguments set to NULL.
+ * Username, userid, password, realm and domain can be set later using specific methods.
+ * At the end, username and passwd (or ha1) are required.
+ * @param factory The #LinphoneFactory singleton. @notnil
+ * @param username The username that needs to be authenticated @notnil
+ * @param access_token An access token to send to authenticate @maybenil
+ * @param passwd The password in clear text @maybenil
+ * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't
+ * use this parameter. @maybenil
+ * @return A #LinphoneAuthInfo object. linphone_auth_info_unref() must be used to destroy it when no longer needed.
+ * The #LinphoneCore makes a copy of #LinphoneAuthInfo passed through linphone_core_add_auth_info(). @notnil
+ */
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_3(const LinphoneFactory *factory,
+                                                                      const char *username,
+                                                                      LinphoneBearerToken *access_token,
+                                                                      const char *realm);
+
+/**
  * Computes the hashed version of the password given the user ID and the realm, using given algorithm.
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param userid the username or user ID to use. @notnil
@@ -994,7 +1013,7 @@ LINPHONE_PUBLIC LinphoneDigestAuthenticationPolicy *
 linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory);
 
 /**
- * Creates a new #LinphoneFriendPhoneNumber objects.
+ * Creates a new #LinphoneFriendPhoneNumber object.
  * @param factory The #LinphoneFactory @notnil
  * @param phone_number The phone number. @notnil
  * @param label the type of phone number, for example "home", "cell", etc. Use NULL or empty for no label. @maybenil
@@ -1003,6 +1022,16 @@ linphone_factory_create_digest_authentication_policy(const LinphoneFactory *fact
 LINPHONE_PUBLIC LinphoneFriendPhoneNumber *linphone_factory_create_friend_phone_number(const LinphoneFactory *factory,
                                                                                        const char *phone_number,
                                                                                        const char *label);
+
+/**
+ * Create a new #LinphoneBearerToken object.
+ * @param factory The #LinphoneFactory @notnil
+ * @param token the token, as an opaque string.
+ * @param expiration_time the expiration time as the number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).
+ * @return the newly created #LinphoneBearerToken . @notnil
+ */
+LINPHONE_PUBLIC LinphoneBearerToken *
+linphone_factory_create_bearer_token(const LinphoneFactory *factory, const char *token, time_t expiration_time);
 
 /**
  * @}

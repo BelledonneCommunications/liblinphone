@@ -618,6 +618,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&wrapper_cpp_test_suite, 8);
 #endif
 	liblinphone_tester_add_suite_with_default_time(&mwi_test_suite, 0);
+	bc_tester_add_suite(&bearer_auth_test_suite);
 }
 
 void liblinphone_tester_init(void (*ftester_printf)(int level, const char *fmt, va_list args)) {
@@ -675,3 +676,24 @@ int main(int argc, char *argv[])
 	return ret;
 }
 #endif
+
+float liblinphone_tester_get_cpu_bogomips(void) {
+	float ret = 0;
+#if defined(__linux__)
+	char buffer[256] = {0};
+	FILE *f = fopen("/proc/cpuinfo", "r");
+	if (!f) return ret;
+	while (fgets(buffer, sizeof(buffer) - 1, f)) {
+		const char *bogomips = "bogomips";
+		if (strncasecmp(buffer, bogomips, strlen(bogomips)) == 0) {
+			char *semicolon = strchr(buffer, ':');
+			if (semicolon) {
+				ret = (float)atof(semicolon + 1);
+				break;
+			}
+		}
+	}
+	fclose(f);
+#endif
+	return ret;
+}

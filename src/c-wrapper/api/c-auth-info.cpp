@@ -234,3 +234,27 @@ const char *linphone_auth_info_get_tls_key_password(const LinphoneAuthInfo *info
 	const char *tlsKeyPassword = AuthInfo::toCpp(info)->getTlsKeyPassword().c_str();
 	return strlen(tlsKeyPassword) != 0 ? tlsKeyPassword : NULL;
 }
+
+const LinphoneBearerToken *linphone_auth_info_get_access_token(const LinphoneAuthInfo *auth_info) {
+	return toC(AuthInfo::toCpp(auth_info)->getAccessToken());
+}
+
+const LinphoneBearerToken *linphone_auth_info_get_refresh_token(const LinphoneAuthInfo *auth_info) {
+	return toC(AuthInfo::toCpp(auth_info)->getRefreshToken());
+}
+
+void linphone_auth_info_set_access_token(LinphoneAuthInfo *auth_info, LinphoneBearerToken *token) {
+	AuthInfo::toCpp(auth_info)->setAccessToken(bellesip::getSharedPtr<BearerToken>(token));
+}
+
+void linphone_auth_info_set_refresh_token(LinphoneAuthInfo *auth_info, LinphoneBearerToken *token) {
+	AuthInfo::toCpp(auth_info)->setRefreshToken(bellesip::getSharedPtr<BearerToken>(token));
+}
+
+void linphone_auth_info_set_authorization_server(LinphoneAuthInfo *auth_info, const char *uri) {
+	AuthInfo::toCpp(auth_info)->setAuthorizationServer(L_C_TO_STRING(uri));
+}
+
+const char *linphone_auth_info_get_authorization_server(const LinphoneAuthInfo *auth_info) {
+	return L_STRING_TO_C(AuthInfo::toCpp(auth_info)->getAuthorizationServer());
+}
