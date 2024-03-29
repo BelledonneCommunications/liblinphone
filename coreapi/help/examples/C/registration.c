@@ -47,12 +47,13 @@ static void stop(int signum) {
 /**
  * Registration state notification callback
  */
-static void registration_state_changed(struct _LinphoneCore *lc,
-                                       LinphoneProxyConfig *cfg,
-                                       LinphoneRegistrationState cstate,
-                                       const char *message) {
+static void account_registration_state_changed(struct _LinphoneCore *lc,
+                                               LinphoneAccount *account,
+                                               LinphoneRegistrationState cstate,
+                                               const char *message) {
+	LinphoneAccountParams *account_params = linphone_account_get_params(account);
 	printf("New registration state %s for user id [%s] at proxy [%s]\n", linphone_registration_state_to_string(cstate),
-	       linphone_proxy_config_get_identity(cfg), linphone_proxy_config_get_addr(cfg));
+	       linphone_account_params_get_identity(account_params), linphone_account_params_get_addr(account_params));
 }
 
 LinphoneCore *lc;
@@ -83,20 +84,21 @@ int main(int argc, char *argv[]) {
 #endif
 	/*
 	 Fill the LinphoneCoreVTable with application callbacks.
-	 All are optional. Here we only use the registration_state_changed callbacks
+	 All are optional. Here we only use the account_registration_state_changed callbacks
 	 in order to get notifications about the progress of the registration.
 	 */
-	vtable.registration_state_changed = registration_state_changed;
+	vtable.account_registration_state_changed = account_registration_state_changed;
 
 	/*
 	 Instanciate a LinphoneCore object given the LinphoneCoreVTable
 	*/
 	lc = linphone_core_new(&vtable, NULL, NULL, NULL);
 
-	/*create proxy config*/
-	proxy_cfg = linphone_core_create_proxy_config(lc);
+	/*create account parameters*/
+	LinphoneAccountParams *params = linphone_account_params_new(NULL);
 	/*parse identity*/
-	from = linphone_address_new(identity);
+	LinphoneAddress *from = linphone_address_new(identity);
+	LinphoneAuthInfo *info;
 	if (from == NULL) {
 		printf("%s not a valid sip uri, must be like sip:toto@sip.linphone.org \n", identity);
 		goto end;
@@ -108,14 +110,19 @@ int main(int argc, char *argv[]) {
 	}
 
 	// configure proxy entries
-	linphone_proxy_config_set_identity_address(proxy_cfg, from);   /*set identity with user name and domain*/
-	server_addr = linphone_address_get_domain(from);               /*extract domain address from identity*/
-	linphone_proxy_config_set_server_addr(proxy_cfg, server_addr); /* we assume domain = proxy server address*/
-	linphone_proxy_config_enable_register(proxy_cfg, TRUE);        /*activate registration for this proxy config*/
-	linphone_address_unref(from);                                  /*release resource*/
+	linphone_account_params_set_identity_address(params, from); /*set identity with user name and domain*/
+	linphone_account_params_set_server_addr(
+	    params, linphone_address_get_domain(from));        /* we assume domain = proxy server address*/
+	linphone_account_params_enable_register(params, TRUE); /*activate registration for this account*/
+	linphone_address_unref(from);                          /*release resource*/
 
-	linphone_core_add_proxy_config(lc, proxy_cfg);         /*add proxy config to linphone core*/
-	linphone_core_set_default_proxy_config(lc, proxy_cfg); /*set to default proxy*/
+	/*create account*/
+	LinphoneAccount *account = linphone_core_create_account(NULL, params);
+
+	linphone_core_add_account(lc, account);         /*add account to linphone core*/
+	linphone_core_set_default_account(lc, account); /*set to default account*/
+
+	linphone_account_params_unref(params); /*release resource*/
 
 	/* main loop for receiving notifications and doing background linphonecore work: */
 	while (running) {

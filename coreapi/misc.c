@@ -236,10 +236,10 @@ int linphone_core_get_edge_ptime(LinphoneCore *lc) {
 }
 
 void linphone_core_resolve_stun_server(LinphoneCore *lc) {
-	auto proxies = linphone_core_get_proxy_config_list(lc);
-	for (auto item = proxies; item; item = bctbx_list_next(item)) {
-		auto proxy = static_cast<LinphoneProxyConfig *>(bctbx_list_get_data(item));
-		auto policy = linphone_proxy_config_get_nat_policy(proxy);
+	auto accounts = linphone_core_get_account_list(lc);
+	for (auto item = accounts; item; item = bctbx_list_next(item)) {
+		auto account = static_cast<LinphoneAccount *>(bctbx_list_get_data(item));
+		auto policy = linphone_account_params_get_nat_policy(linphone_account_get_params(account));
 		if (policy) linphone_nat_policy_resolve_stun_server(policy);
 	}
 	if (lc->nat_policy) linphone_nat_policy_resolve_stun_server(lc->nat_policy);

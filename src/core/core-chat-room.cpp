@@ -62,24 +62,22 @@ LINPHONE_BEGIN_NAMESPACE
  */
 std::shared_ptr<const Address> CorePrivate::getDefaultLocalAddress(const std::shared_ptr<Address> peerAddress,
                                                                    bool withGruu) const {
+	L_Q();
 	LinphoneCore *cCore = getCCore();
-	LinphoneProxyConfig *proxy = nullptr;
+	std::shared_ptr<Account> account = nullptr;
 
 	if (peerAddress) {
-		LinphoneAddress *cPeerAddress = peerAddress->toC();
-		if (cPeerAddress) {
-			proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
-		}
+		account = q->lookupKnownAccount(peerAddress, true);
 	}
 
-	if (!proxy) proxy = linphone_core_get_default_proxy_config(cCore);
+	if (!account) {
+		account = q->getDefaultAccount();
+	}
 
 	std::shared_ptr<const Address> localAddress = nullptr;
-	if (proxy) {
-		const LinphoneAddress *identity = (withGruu && linphone_proxy_config_get_contact(proxy))
-		                                      ? linphone_proxy_config_get_contact(proxy)
-		                                      : linphone_proxy_config_get_identity_address(proxy);
-		localAddress = Address::toCpp(identity)->getSharedFromThis();
+	if (account) {
+		localAddress = (withGruu && account->getContactAddress()) ? account->getContactAddress()
+		                                                          : account->getAccountParams()->getIdentityAddress();
 	} else {
 		localAddress = Address::create(linphone_core_get_primary_contact(cCore));
 	}
@@ -88,17 +86,13 @@ std::shared_ptr<const Address> CorePrivate::getDefaultLocalAddress(const std::sh
 
 std::shared_ptr<const Address>
 CorePrivate::getIdentityAddressWithGruu(const std::shared_ptr<const Address> &identityAddress) const {
+	L_Q();
 	std::shared_ptr<const Address> identityAddressWithGruu;
 
 	if (identityAddress && identityAddress->isValid()) {
-		LinphoneCore *cCore = getCCore();
-		LinphoneProxyConfig *proxyConfig = linphone_core_lookup_known_proxy(cCore, identityAddress->toC());
-
-		if (proxyConfig) {
-			const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxyConfig);
-			if (contactAddress) {
-				identityAddressWithGruu = Address::toCpp(contactAddress)->getSharedFromThis();
-			}
+		const auto &account = q->lookupKnownAccount(identityAddress, true);
+		if (account) {
+			identityAddressWithGruu = account->getContactAddress();
 		}
 	}
 
@@ -716,12 +710,9 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms() const {
 		}
 
 		if (hideChatRoomsFromRemovedProxyConfig) {
-			const bctbx_list_t *it2;
 			bool found = false;
-			for (it2 = linphone_core_get_proxy_config_list(lc); it2 != nullptr; it2 = it2->next) {
-				auto cfg = (LinphoneProxyConfig *)it2->data;
-				const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-				auto localAddress = Address::toCpp(const_cast<LinphoneAddress *>(identityAddr))->getSharedFromThis();
+			for (const auto &account : getAccounts()) {
+				auto localAddress = account->getAccountParams()->getIdentityAddress();
 				if (localAddress->weakEqual(*chatRoom->getLocalAddress())) {
 					found = true;
 					break;

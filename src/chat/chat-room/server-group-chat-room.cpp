@@ -219,7 +219,7 @@ void ServerGroupChatRoomPrivate::confirmCreation() {
 
 	auto destAccount = session->getPrivate()->getDestAccount();
 	if (!destAccount) {
-		destAccount = Account::toCpp(linphone_core_get_default_account(q->getCore()->getCCore()))->getSharedFromThis();
+		destAccount = q->getCore()->getDefaultAccount();
 	}
 	const auto accountParams = destAccount->getAccountParams();
 	auto addr = accountParams->getIdentityAddress()->clone()->toSharedPtr();

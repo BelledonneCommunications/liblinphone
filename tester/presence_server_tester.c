@@ -473,12 +473,12 @@ static void test_presence_list_base(bool_t enable_compression) {
 	bctbx_list_t *lcs = NULL;
 	LinphonePresenceModel *presence;
 
-	laure_identity = get_identity(laure);
-	marie_identity = get_identity(marie);
-	pauline_identity = get_identity(pauline);
 	enable_publish_verified(marie, TRUE);
 	enable_publish_verified(pauline, TRUE);
 	enable_publish_verified(laure, TRUE);
+	laure_identity = get_identity(laure);
+	marie_identity = get_identity(marie);
+	pauline_identity = get_identity(pauline);
 	lcs = bctbx_list_append(lcs, laure->lc);
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
@@ -726,11 +726,11 @@ static void test_presence_list_same_friend_two_addresses(void) {
 	const char *marie_identity;
 	bctbx_list_t *lcs = NULL;
 
-	marie_identity = get_identity(marie);
-
 	enable_publish_verified(marie, TRUE);
 	enable_publish_verified(pauline, TRUE);
 	enable_publish_verified(laure, TRUE);
+
+	marie_identity = get_identity(marie);
 
 	lcs = bctbx_list_append(lcs, laure->lc);
 	lcs = bctbx_list_append(lcs, marie->lc);
@@ -873,13 +873,13 @@ static void test_presence_list_subscribe_with_error(bool_t io_error) {
 	const char *rls_uri = "sip:rls@sip.example.org";
 	LinphoneFriendList *lfl;
 	LinphoneFriend *lf;
-	const char *pauline_identity;
+	char *pauline_identity;
 	bctbx_list_t *lcs = NULL;
 	int dummy = 0;
 	LinphonePresenceModel *presence;
 
 	linphone_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 5);
-	pauline_identity = get_identity(pauline);
+	pauline_identity = ms_strdup(get_identity(pauline));
 
 	presence = linphone_core_create_presence_model_with_activity(pauline->lc, LinphonePresenceActivityVacation, NULL);
 	linphone_core_set_presence_model(pauline->lc, presence);
@@ -953,6 +953,7 @@ static void test_presence_list_subscribe_with_error(bool_t io_error) {
 	lf = linphone_friend_list_find_friend_by_uri(linphone_core_get_default_friend_list(laure->lc), pauline_identity);
 	BC_ASSERT_EQUAL(linphone_friend_get_status(lf), LinphoneStatusAway, int, "%d");
 
+	ms_free(pauline_identity);
 	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
@@ -975,13 +976,13 @@ static void presence_list_subscribe_network_changes(void) {
 	const char *rls_uri = "sip:rls@sip.example.org";
 	LinphoneFriendList *lfl;
 	LinphoneFriend *lf;
-	const char *pauline_identity;
+	char *pauline_identity;
 	bctbx_list_t *lcs = NULL;
 	int dummy = 0;
 	LinphonePresenceModel *presence;
 
 	linphone_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 5);
-	pauline_identity = get_identity(pauline);
+	pauline_identity = ms_strdup(get_identity(pauline));
 
 	presence = linphone_core_create_presence_model_with_activity(pauline->lc, LinphonePresenceActivityVacation, NULL);
 	linphone_core_set_presence_model(pauline->lc, presence);
@@ -1054,6 +1055,7 @@ static void presence_list_subscribe_network_changes(void) {
 	lf = linphone_friend_list_find_friend_by_uri(linphone_core_get_default_friend_list(laure->lc), pauline_identity);
 	BC_ASSERT_EQUAL(linphone_friend_get_status(lf), LinphoneStatusAway, int, "%d");
 
+	ms_free(pauline_identity);
 	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);

@@ -74,10 +74,10 @@ LocalConference::LocalConference(const shared_ptr<Core> &core,
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
 	LinphoneAddress *cAddress = myAddress->toC();
-	LinphoneAccount *account = linphone_core_lookup_known_account(core->getCCore(), cAddress);
+	auto account = core->lookupKnownAccount(myAddress, true);
 	char *contactAddressStr = nullptr;
-	if (account && Account::toCpp(account)->getOp()) {
-		contactAddressStr = sal_address_as_string(Account::toCpp(account)->getOp()->getContactAddress());
+	if (account && account->getOp()) {
+		contactAddressStr = sal_address_as_string(account->getOp()->getContactAddress());
 	} else {
 		contactAddressStr =
 		    ms_strdup(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
@@ -728,8 +728,8 @@ int LocalConference::inviteAddresses(const list<std::shared_ptr<Address>> &addre
 				if (callAccount) {
 					confParams->setAccount(callAccount);
 				} else {
-					confParams->setAccount(
-					    Account::toCpp(linphone_core_lookup_known_account(lc, address->toC()))->getSharedFromThis());
+					auto account = getCore()->lookupKnownAccount(address, true);
+					confParams->setAccount(account);
 				}
 			}
 
@@ -1241,10 +1241,8 @@ bool LocalConference::addParticipant(std::shared_ptr<LinphonePrivate::Call> call
 			if (callAccount) {
 				confParams->setAccount(callAccount);
 			} else {
-				confParams->setAccount(
-				    Account::toCpp(linphone_core_lookup_known_account(getCore()->getCCore(),
-				                                                      linphone_call_get_to_address(call->toC())))
-				        ->getSharedFromThis());
+				auto account = getCore()->lookupKnownAccount(call->getToAddress(), true);
+				confParams->setAccount(account);
 			}
 		}
 

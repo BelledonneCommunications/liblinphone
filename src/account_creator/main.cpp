@@ -45,15 +45,18 @@ static void reset_field(char **field) {
 static unsigned int validate_uri(LinphoneCore *lc, const char *username, const char *domain, const char *display_name) {
 	LinphoneAddress *addr;
 	unsigned int status = 0;
-	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(lc);
+	LinphoneAccountParams *params = linphone_account_params_new(lc);
 	addr = linphone_address_new("sip:?@domain.com");
-	linphone_proxy_config_set_identity_address(proxy, addr);
+	linphone_account_params_set_identity_address(params, addr);
 	if (addr) linphone_address_unref(addr);
+	LinphoneAccount *account = linphone_core_create_account(lc, params);
+	linphone_account_params_unref(params);
 
 	if (username) {
-		addr = linphone_proxy_config_normalize_sip_uri(proxy, username);
+		addr = linphone_account_normalize_sip_uri(account, username);
 	} else {
-		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(proxy));
+		addr =
+		    linphone_address_clone(linphone_account_params_get_identity_address(linphone_account_get_params(account)));
 	}
 
 	if (addr == NULL) {
@@ -70,45 +73,54 @@ static unsigned int validate_uri(LinphoneCore *lc, const char *username, const c
 	}
 	linphone_address_unref(addr);
 end:
-	linphone_proxy_config_unref(proxy);
+	linphone_account_unref(account);
 	return status;
 }
 
 LinphoneProxyConfig *linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator) {
+	LinphoneAccount *account = linphone_account_creator_create_account_in_core(creator);
+	if (account != nullptr) {
+		auto cfg = linphone_proxy_config_ref(linphone_account_get_proxy_config(account));
+		linphone_account_unref(account);
+		return cfg;
+	}
+	return nullptr;
+}
+
+LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator) {
 	LinphoneAuthInfo *info;
-	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(creator->core);
+	LinphoneAccountParams *params = linphone_account_params_new(creator->core);
 	char *identity_str = linphone_account_creator_get_identity(creator);
 	LinphoneAddress *identity = linphone_address_new(identity_str);
-
 	ms_free(identity_str);
 	if (creator->display_name) {
 		linphone_address_set_display_name(identity, creator->display_name);
 	}
-	linphone_proxy_config_set_identity_address(cfg, identity);
+	linphone_account_params_set_identity_address(params, identity);
 	if (creator->phone_country_code) {
-		linphone_proxy_config_set_dial_prefix(cfg, creator->phone_country_code);
+		linphone_account_params_set_international_prefix(params, creator->phone_country_code);
 	} else if (creator->phone_number) {
 		int dial_prefix_number = DialPlan::lookupCccFromE164(creator->phone_number);
 		char buff[4];
 		snprintf(buff, sizeof(buff), "%d", dial_prefix_number);
-		linphone_proxy_config_set_dial_prefix(cfg, buff);
+		linphone_account_params_set_international_prefix(params, buff);
 	}
-	if (linphone_proxy_config_get_server_addr(cfg) == NULL && creator->domain != NULL) {
+	if (linphone_account_params_get_server_addr(params) == NULL && creator->domain != NULL) {
 		char *url = ms_strdup_printf("sip:%s", creator->domain);
 		LinphoneAddress *proxy_addr = linphone_address_new(url);
 		if (proxy_addr) {
 			linphone_address_set_transport(proxy_addr, creator->transport);
 			char *proxy_addr_str = linphone_address_as_string_uri_only(proxy_addr);
-			linphone_proxy_config_set_server_addr(cfg, proxy_addr_str);
+			linphone_account_params_set_server_addr(params, proxy_addr_str);
 			bctbx_free(proxy_addr_str);
 			linphone_address_unref(proxy_addr);
 		} else {
-			linphone_proxy_config_set_server_addr(cfg, creator->domain);
+			linphone_account_params_set_server_addr(params, creator->domain);
 		}
 		ms_free(url);
 	}
 
-	linphone_proxy_config_enable_register(cfg, TRUE);
+	linphone_account_params_enable_register(params, TRUE);
 
 	info = linphone_auth_info_new_for_algorithm(
 	    linphone_address_get_username(identity), // username
@@ -124,12 +136,15 @@ LinphoneProxyConfig *linphone_account_creator_create_proxy_config(const Linphone
 	linphone_core_add_auth_info(creator->core, info);
 	linphone_address_unref(identity);
 
-	if (linphone_core_add_proxy_config(creator->core, cfg) != -1) {
+	LinphoneAccount *account = linphone_core_create_account(creator->core, params);
+	linphone_account_params_unref(params);
+
+	if (linphone_core_add_account(creator->core, account) != -1) {
 		if (creator->set_as_default) {
-			linphone_core_set_default_proxy_config(creator->core, cfg);
+			linphone_core_set_default_account(creator->core, account);
 		}
 		linphone_auth_info_unref(info);
-		return cfg;
+		return account;
 	}
 
 	linphone_core_remove_auth_info(creator->core, info);
@@ -138,17 +153,11 @@ LinphoneProxyConfig *linphone_account_creator_create_proxy_config(const Linphone
 }
 
 LinphoneProxyConfig *linphone_account_creator_configure(const LinphoneAccountCreator *creator) {
-	return linphone_account_creator_create_proxy_config(creator);
-}
-
-LinphoneAccount *linphone_account_creator_create_account_in_core(const LinphoneAccountCreator *creator) {
-	LinphoneProxyConfig *cfg = linphone_account_creator_create_proxy_config(creator);
-	if (cfg != nullptr) {
-		auto account = linphone_account_ref(linphone_proxy_config_get_account(cfg));
-		linphone_proxy_config_unref(cfg);
-		return account;
+	LinphoneAccount *account = linphone_account_creator_create_account_in_core(creator);
+	if (account) {
+		return linphone_account_get_proxy_config(account);
 	}
-	return nullptr;
+	return NULL;
 }
 
 LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator,
@@ -241,12 +250,19 @@ LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_n
 		if (strlen(country_code) == 0 || strcmp(country_code, "+") == 0)
 			return LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
 
-		if (!creator->proxy_cfg) creator->proxy_cfg = linphone_core_create_proxy_config(creator->core);
-		LinphoneProxyConfig *numCfg = creator->proxy_cfg;
+		if (!creator->account) {
+			LinphoneAccountParams *params = linphone_account_params_new(creator->core);
+			creator->account = linphone_core_create_account(creator->core, params);
+			linphone_account_params_unref(params);
+		}
+		LinphoneAccount *numCfg = creator->account;
 
 		creator->phone_country_code = ms_strdup(country_code[0] == '+' ? &country_code[1] : country_code);
-		linphone_proxy_config_set_dial_prefix(numCfg, creator->phone_country_code);
-		normalized_phone_number = linphone_proxy_config_normalize_phone_number(numCfg, phone_number);
+		LinphoneAccountParams *account_params = linphone_account_params_clone(linphone_account_get_params(numCfg));
+		linphone_account_params_set_international_prefix(account_params, creator->phone_country_code);
+		linphone_account_set_params(numCfg, account_params);
+		linphone_account_params_unref(account_params);
+		normalized_phone_number = linphone_account_normalize_phone_number(numCfg, phone_number);
 		if (!normalized_phone_number) {
 			return LinphoneAccountCreatorPhoneNumberStatusInvalid;
 		}
@@ -411,9 +427,38 @@ LinphoneTransportType linphone_account_creator_get_transport(const LinphoneAccou
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_set_route(LinphoneAccountCreator *creator, const char *route) {
-	if (!creator->proxy_cfg) creator->proxy_cfg = linphone_core_create_proxy_config(creator->core);
-	if (!route || linphone_proxy_config_set_route(creator->proxy_cfg, route) != 0)
+	if (!creator->account) {
+		LinphoneAccountParams *params = linphone_account_params_new(creator->core);
+		creator->account = linphone_core_create_account(creator->core, params);
+		linphone_account_params_unref(params);
+	}
+	bool set_route_ok = true;
+	if (route != NULL && route[0] != '\0') {
+		bctbx_list_t *list = NULL;
+		std::string tmp;
+		/*try to prepend 'sip:' */
+		if (strstr(route, "sip:") == NULL && strstr(route, "sips:") == NULL) {
+			tmp.append("sip:");
+		}
+		tmp.append(route);
+
+		auto *addr = linphone_address_new(tmp.c_str());
+		if (addr != NULL) {
+			list = bctbx_list_append(list, addr);
+		}
+		LinphoneAccountParams *account_params =
+		    linphone_account_params_clone(linphone_account_get_params(creator->account));
+		set_route_ok = (linphone_account_params_set_routes_addresses(account_params, list) == 0);
+		linphone_account_set_params(creator->account, account_params);
+		linphone_account_params_unref(account_params);
+		if (list) {
+			bctbx_list_free_with_data(list, (bctbx_list_free_func)linphone_address_unref);
+		}
+	}
+
+	if (!route || !set_route_ok) {
 		return LinphoneAccountCreatorStatusRequestFailed;
+	}
 
 	set_string(&creator->route, route, TRUE);
 	return LinphoneAccountCreatorStatusRequestOk;
@@ -491,7 +536,10 @@ LinphoneAccountCreator *linphone_account_creator_new(LinphoneCore *core, const c
 	}
 
 	creator->set_as_default = TRUE;
-	creator->proxy_cfg = linphone_core_create_proxy_config(core);
+
+	LinphoneAccountParams *params = linphone_account_params_new(core);
+	creator->account = linphone_core_create_account(core, params);
+	linphone_account_params_unref(params);
 
 	if (creator->service != NULL && linphone_account_creator_service_get_constructor_cb(creator->service) != NULL)
 		linphone_account_creator_service_get_constructor_cb(creator->service)(creator);
@@ -521,9 +569,9 @@ void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
 	reset_field(&creator->pn_param);
 	reset_field(&creator->pn_provider);
 
-	if (creator->proxy_cfg) {
-		linphone_proxy_config_unref(creator->proxy_cfg);
-		creator->proxy_cfg = nullptr;
+	if (creator->account) {
+		linphone_account_unref(creator->account);
+		creator->account = nullptr;
 	}
 }
 
@@ -549,12 +597,16 @@ void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, voi
 }
 
 void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, LinphoneProxyConfig *cfg) {
-	LinphoneProxyConfig *old_cfg = creator->proxy_cfg;
+	linphone_account_creator_set_account(creator, cfg ? linphone_proxy_config_get_account(cfg) : nullptr);
+}
 
-	creator->proxy_cfg = cfg ? linphone_proxy_config_ref(cfg) : NULL;
+void linphone_account_creator_set_account(LinphoneAccountCreator *creator, LinphoneAccount *account) {
+	LinphoneAccount *old_account = creator->account;
 
-	if (old_cfg) {
-		linphone_proxy_config_unref(old_cfg);
+	creator->account = account ? linphone_account_ref(account) : NULL;
+
+	if (old_account) {
+		linphone_account_unref(old_account);
 	}
 }
 

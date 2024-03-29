@@ -828,7 +828,7 @@ void linphone_core_interpret_friend_uri(LinphoneCore *lc, const char *uri, char 
 			if (u != NULL) {
 				*result = tmp;
 			}
-		} else if (lc->default_proxy != NULL) {
+		} else if (linphone_core_get_default_account(lc) != NULL) {
 			/*try adding domain part from default current proxy*/
 			LinphoneAddress *id = linphone_address_new(linphone_core_get_identity(lc));
 			if ((id != NULL) && (uri[0] != '\0')) {

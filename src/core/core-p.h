@@ -45,6 +45,8 @@ class LocalConferenceListEventHandler;
 class RemoteConferenceListEventHandler;
 
 class CorePrivate : public ObjectPrivate {
+	friend class AuthStack;
+
 public:
 	class DatabaseConnectionFailure : public std::runtime_error {
 	public:

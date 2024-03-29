@@ -151,9 +151,12 @@ public:
 	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses(const std::shared_ptr<Address> &a,
 	                                                                       const std::shared_ptr<Address> &b);
 
+	static void writeAllToConfigFile(const std::shared_ptr<Core> core);
+	static void writeToConfigFile(LpConfig *config, const std::shared_ptr<Account> &account, int index);
+
 	// To be removed when not using proxy config anymore
 	LinphoneProxyConfig *getConfig() const;
-	void setConfig(LinphoneProxyConfig *config);
+	void setConfig(LinphoneProxyConfig *config, bool takeProxyConfigRef = true);
 	LinphoneAccountAddressComparisonResult isServerConfigChanged();
 
 private:
@@ -186,6 +189,8 @@ private:
 	bool mNeedToRegister = false;
 	bool mRegisterChanged = false;
 	bool mSendPublish = false;
+
+	bool hasProxyConfigRef = false;
 
 	time_t mDeletionDate;
 

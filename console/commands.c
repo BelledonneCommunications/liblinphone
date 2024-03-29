@@ -106,7 +106,7 @@ static int lpc_cmd_zrtp_unverified(LinphoneCore *lc, char *args);
 
 /* Command handler helpers */
 static void linphonec_proxy_add(LinphoneCore *lc);
-static void linphonec_proxy_display(LinphoneProxyConfig *lc);
+static void linphonec_proxy_display(LinphoneAccount *lc);
 static void linphonec_proxy_list(LinphoneCore *lc);
 static void linphonec_proxy_remove(LinphoneCore *lc, int index);
 static int linphonec_proxy_use(LinphoneCore *lc, int index);
@@ -995,7 +995,7 @@ static int lpc_cmd_proxy(LinphoneCore *lc, char *args) {
 			else linphonec_out("Current default proxy is %d.\n", proxynum);
 		}
 	} else if (strcmp(arg1, "unuse") == 0) {
-		linphone_core_set_default_proxy_config(lc, NULL);
+		linphone_core_set_default_account(lc, NULL);
 		linphonec_out("Use no proxy.\n");
 	}
 
@@ -1344,7 +1344,8 @@ static int lpc_cmd_conference(LinphoneCore *lc, char *args) {
 
 static void linphonec_proxy_add(LinphoneCore *lc) {
 	bool_t enable_register = FALSE;
-	LinphoneProxyConfig *cfg;
+	LinphoneAccount *account;
+	LinphoneAccountParams *params;
 
 	linphonec_out("Adding new proxy setup. Hit ^D to abort.\n");
 
@@ -1367,11 +1368,12 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 			continue;
 		}
 
-		cfg = linphone_core_create_proxy_config(lc);
-		if (linphone_proxy_config_set_server_addr(cfg, clean) < 0) {
+		params = linphone_account_params_new(lc);
+		/*create account parameters*/
+		if (linphone_accoount_params_set_server_addr(params, clean) < 0) {
 			linphonec_out("Invalid sip address (sip:sip.domain.tld).\n");
 			free(input);
-			linphone_proxy_config_unref(cfg);
+			linphone_account_params_unref(params);
 			continue;
 		}
 		free(input);
@@ -1387,7 +1389,7 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 
 		if (!input) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_unref(cfg);
+			linphone_account_params_unref(params);
 			return;
 		}
 
@@ -1399,9 +1401,10 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 		}
 
 		LinphoneAddress *identity = linphone_address_new(clean);
-		linphone_proxy_config_set_identity_address(cfg, identity);
-		if (!linphone_proxy_config_get_identity(cfg)) {
+		linphone_account_params_set_identity_address(params, identity);
+		if (!linphone_account_params_get_identity(params)) {
 			linphonec_out("Invalid identity (sip:name@sip.domain.tld).\n");
+			linphone_account_params_unref(params);
 			free(input);
 			continue;
 		}
@@ -1419,7 +1422,7 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 
 		if (!input) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_unref(cfg);
+			linphone_account_params_unref(params);
 			return;
 		}
 
@@ -1437,7 +1440,8 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 			free(input);
 			continue;
 		}
-		linphone_proxy_config_enableregister(cfg, enable_register);
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_enable_register(params, enable_register);
 		free(input);
 		break;
 	}
@@ -1453,15 +1457,15 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 
 			if (!input) {
 				linphonec_out("Aborted.\n");
-				linphone_proxy_config_unref(cfg);
+				linphone_account_params_unref(params);
 				return;
 			}
 
 			expires = atoi(input);
 			if (expires == 0) expires = 600;
 
-			linphone_proxy_config_set_expires(cfg, expires);
-			linphonec_out("Expiration: %d seconds\n", linphone_proxy_config_get_expires(cfg));
+			linphone_account_params_set_expires(params, expires);
+			linphonec_out("Expiration: %d seconds\n", linphone_account_params_get_expires(params));
 
 			free(input);
 			break;
@@ -1477,7 +1481,7 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 
 		if (!input) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_unref(cfg);
+			linphone_account_params_unref(params);
 			return;
 		}
 
@@ -1489,8 +1493,8 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 			break;
 		}
 
-		linphone_proxy_config_set_route(cfg, clean);
-		const char *route = linphone_proxy_config_get_route(cfg);
+		linphone_account_params_set_route(params, clean);
+		const char *route = linphone_account_params_get_route(params);
 		if (!route) {
 			linphonec_out("Invalid route.\n");
 			free(input);
@@ -1509,13 +1513,13 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 		char *clean;
 
 		linphonec_out("--------------------------------------------\n");
-		linphonec_proxy_display(cfg);
+		linphonec_proxy_display(account);
 		linphonec_out("--------------------------------------------\n");
 		input = linphonec_readline("Accept the above proxy configuration (yes/no) ?: ");
 
 		if (!input) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_unref(cfg);
+			linphone_account_params_unref(params);
 			return;
 		}
 
@@ -1529,7 +1533,7 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 		if (!strcmp(clean, "yes")) break;
 		else if (!strcmp(clean, "no")) {
 			linphonec_out("Declined.\n");
-			linphone_proxy_config_unref(cfg);
+			linphone_account_params_unref(params);
 			free(input);
 			return;
 		}
@@ -1539,31 +1543,36 @@ static void linphonec_proxy_add(LinphoneCore *lc) {
 		continue;
 	}
 
-	linphone_core_add_proxy_config(lc, cfg);
+	account = linphone_core_create_account(lc, params);
+	linphone_account_params_unref(params);
+
+	linphone_core_add_account(lc, account);
 
 	/* automatically set the last entered proxy as the default one */
-	linphone_core_set_default_proxy_config(lc, cfg);
+	linphone_core_set_default_account(lc, account);
 
 	linphonec_out("Proxy added.\n");
 }
 
-static void linphonec_proxy_display(LinphoneProxyConfig *cfg) {
-	const char *route = linphone_proxy_config_get_route(cfg);
-	char *identity = linphone_address_as_string(linphone_proxy_config_get_identity_address(cfg));
+static void linphonec_proxy_display(LinphoneAccount *account) {
+	const LinphoneAccountParams *params = linphone_account_get_params(account);
+	const char *route = linphone_account_params_get_route(params);
+	char *identity = linphone_address_as_string(linphone_account_params_get_identity_address(params));
 	linphonec_out("sip address: %s\nroute: %s\nidentity: %s\nregister: %s\nexpires: %i\nregistered: %s\n",
-	              linphone_proxy_config_get_addr(cfg), (route != NULL) ? route : "", (identity != NULL) ? identity : "",
-	              linphone_proxy_config_register_enabled(cfg) ? "yes" : "no", linphone_proxy_config_get_expires(cfg),
-	              linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk ? "yes" : "no");
+	              linphone_account_params_get_server_addr(params), (route != NULL) ? route : "",
+	              (identity != NULL) ? identity : "", linphone_account_params_register_enabled(params) ? "yes" : "no",
+	              linphone_account_params_get_expires(params),
+	              linphone_account_get_state(params) == LinphoneRegistrationOk ? "yes" : "no");
 	ms_free(identity);
 }
 
 static void linphonec_proxy_show(LinphoneCore *lc, int index) {
 	const bctbx_list_t *elem;
 	int i;
-	for (elem = linphone_core_get_proxy_config_list(lc), i = 0; elem != NULL; elem = elem->next, ++i) {
+	for (elem = linphone_core_get_account_list(lc), i = 0; elem != NULL; elem = elem->next, ++i) {
 		if (index == i) {
-			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)elem->data;
-			linphonec_proxy_display(cfg);
+			LinphoneAccount *account = (LinphoneAccount *)elem->data;
+			linphonec_proxy_display(account);
 			return;
 		}
 	}
@@ -1575,38 +1584,39 @@ static void linphonec_proxy_list(LinphoneCore *lc) {
 	int n;
 	int def = linphone_core_get_default_proxy(lc, NULL);
 
-	proxies = linphone_core_get_proxy_config_list(lc);
+	proxies = linphone_core_get_account_list(lc);
 	for (n = 0; proxies != NULL; proxies = bctbx_list_next(proxies), n++) {
 		if (n == def) linphonec_out("****** Proxy %i - this is the default one - *******\n", n);
 		else linphonec_out("****** Proxy %i *******\n", n);
-		linphonec_proxy_display((LinphoneProxyConfig *)proxies->data);
+		linphonec_proxy_display((LinphoneAccount *)proxies->data);
 	}
 	if (!n) linphonec_out("No proxies defined\n");
 }
 
 static void linphonec_proxy_remove(LinphoneCore *lc, int index) {
 	const bctbx_list_t *proxies;
-	LinphoneProxyConfig *cfg;
-	proxies = linphone_core_get_proxy_config_list(lc);
-	cfg = (LinphoneProxyConfig *)bctbx_list_nth_data(proxies, index);
-	if (cfg == NULL) {
+	LinphoneAccount *account;
+	proxies = linphone_core_get_account_list(lc);
+	account = (LinphoneAccount *)bctbx_list_nth_data(proxies, index);
+	if (account == NULL) {
 		linphonec_out("No such proxy.\n");
 		return;
 	}
-	linphone_core_remove_proxy_config(lc, cfg);
-	linphonec_out("Proxy %s removed.\n", linphone_proxy_config_get_addr(cfg));
+	LinphoneAccountParams *params = linphone_account_get_params(account);
+	linphonec_out("Proxy %s removed.\n", linphone_account_params_get_server_addr(params));
+	linphone_core_remove_account(lc, account);
 }
 
 static int linphonec_proxy_use(LinphoneCore *lc, int index) {
 	const bctbx_list_t *proxies;
-	LinphoneProxyConfig *cfg;
-	proxies = linphone_core_get_proxy_config_list(lc);
-	cfg = (LinphoneProxyConfig *)bctbx_list_nth_data(proxies, index);
-	if (cfg == NULL) {
+	LinphoneAccount *account;
+	proxies = linphone_core_get_account_list(lc);
+	account = (LinphoneAccount *)bctbx_list_nth_data(proxies, index);
+	if (account == NULL) {
 		linphonec_out("No such proxy (try 'proxy list').");
 		return 0;
 	}
-	linphone_core_set_default_proxy_config(lc, cfg);
+	linphone_core_set_default_account(lc, account);
 	return 1;
 }
 
@@ -1709,16 +1719,16 @@ static int lpc_cmd_register(LinphoneCore *lc, char *args) {
 	char identity[512];
 	char proxy[512];
 	char passwd[512];
-	LinphoneProxyConfig *cfg;
 	const bctbx_list_t *elem;
 
 	if (!args) {
 		/* it means that you want to register the default proxy */
-		LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
-		if (cfg) {
-			if (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk) {
-				linphone_proxy_config_enable_register(cfg, TRUE);
-				linphone_proxy_config_done(cfg);
+		LinphoneAccount *account = linphone_core_get_default_account(lc);
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+		if (account) {
+			if (linphone_account_get_state(account) != LinphoneRegistrationOk) {
+				linphone_account_params_enable_register(params, TRUE);
+				linphone_account_set_params(account, params);
 			} else {
 				linphonec_out("default proxy already registered\n");
 			}
@@ -1745,28 +1755,28 @@ static int lpc_cmd_register(LinphoneCore *lc, char *args) {
 			linphone_auth_info_unref(info);
 		}
 	}
-	elem = linphone_core_get_proxy_config_list(lc);
+	elem = linphone_core_get_account_list(lc);
+	LinphoneAccount *account;
 	if (elem) {
-		cfg = (LinphoneProxyConfig *)elem->data;
-		linphone_proxy_config_edit(cfg);
-	} else cfg = linphone_core_create_proxy_config(lc);
+		account = (LinphoneAccount *)elem->data;
+	} else account = linphone_core_create_account(lc);
+	LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
 	LinphoneAddress *addr = linphone_address_new(identity);
-	linphone_proxy_config_set_identity_address(cfg, addr);
+	linphone_account_params_set_identity_address(params, addr);
 	if (addr) linphone_address_unref(addr);
-	linphone_proxy_config_set_server_addr(cfg, proxy);
-	linphone_proxy_config_enable_register(cfg, TRUE);
-	if (elem) linphone_proxy_config_done(cfg);
-	else linphone_core_add_proxy_config(lc, cfg);
-	linphone_core_set_default_proxy_config(lc, cfg);
+	linphone_account_params_set_server_addr(params, proxy);
+	linphone_account_params_enable_register(params, TRUE);
+	linphone_account_set_params(account, params);
+	else linphone_core_add_account(lc, account); linphone_core_set_default_account(lc, account);
 	return 1;
 }
 
 static int lpc_cmd_unregister(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
-	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
-	if (cfg && linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
-		linphone_proxy_config_edit(cfg);
-		linphone_proxy_config_enable_register(cfg, FALSE);
-		linphone_proxy_config_done(cfg);
+	LinphoneAccount *account = linphone_core_get_default_account(lc);
+	if (account && linphone_account_get_state(account) == LinphoneRegistrationOk) {
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_enable_register(params, FALSE);
+		cclinphone_account_set_params(account, params);
 	} else {
 		linphonec_out("unregistered\n");
 	}
@@ -1786,21 +1796,21 @@ static int lpc_cmd_duration(LinphoneCore *lc, BCTBX_UNUSED(char *args)) {
 }
 
 static int lpc_cmd_status(LinphoneCore *lc, char *args) {
-	LinphoneProxyConfig *cfg;
+	LinphoneAccount *account;
 
 	if (!args) return 0;
-	cfg = linphone_core_get_default_proxy_config(lc);
+	account = linphone_core_get_default_account(lc);
 	if (strstr(args, "register")) {
-		if (cfg) {
-			if (linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
-				linphonec_out("registered, identity=%s duration=%i\n", linphone_proxy_config_get_identity(cfg),
-				              linphone_proxy_config_get_expires(cfg));
-			} else if (linphone_proxy_config_register_enabled(cfg)) {
+		if (account) {
+			if (linphone_account_get_state(account) == LinphoneRegistrationOk) {
+				linphonec_out("registered, identity=%s duration=%i\n", linphone_account_params_get_identity(params),
+				              linphone_account_params_get_expires(params));
+			} else if (linphone_account_params_register_enabled(params)) {
 				linphonec_out("registered=-1\n");
 			} else linphonec_out("registered=0\n");
 		} else linphonec_out("registered=0\n");
 	} else if (strstr(args, "autoanswer")) {
-		if (cfg && linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk)
+		if (account && linphone_account_get_state(account) == LinphoneRegistrationOk)
 			linphonec_out("autoanswer=%i\n", linphonec_get_autoanswer());
 		else linphonec_out("unregistered\n");
 	} else if (strstr(args, "hook")) {
@@ -2233,13 +2243,13 @@ static void lpc_display_proxy_states(LinphoneCore *lc) {
 	linphonec_out("Proxy registration states\n"
 	              "           Identity                      |      State\n"
 	              "------------------------------------------------------------\n");
-	elem = linphone_core_get_proxy_config_list(lc);
+	elem = linphone_core_get_account_list(lc);
 	if (elem == NULL) linphonec_out("(empty)\n");
 	else {
 		for (; elem != NULL; elem = elem->next) {
-			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)elem->data;
-			linphonec_out("%-40s | %s\n", linphone_proxy_config_get_identity(cfg),
-			              linphone_registration_state_to_string(linphone_proxy_config_get_state(cfg)));
+			LinphoneAccount *account = (LinphoneAccount *)elem->data;
+			linphonec_out("%-40s | %s\n", linphone_account_params_get_identity(params),
+			              linphone_registration_state_to_string(linphone_account_get_state(params)));
 		}
 	}
 }

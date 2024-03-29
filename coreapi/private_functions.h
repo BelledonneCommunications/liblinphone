@@ -185,7 +185,6 @@ const char *linphone_core_get_nat_address_resolved(LinphoneCore *lc);
 int linphone_proxy_config_send_publish(LinphoneProxyConfig *cfg, LinphonePresenceModel *presence);
 void linphone_proxy_config_set_state(LinphoneProxyConfig *cfg, LinphoneRegistrationState rstate, const char *message);
 void linphone_proxy_config_stop_refreshing(LinphoneProxyConfig *obj);
-void linphone_proxy_config_write_all_to_config_file(LinphoneCore *lc);
 void _linphone_proxy_config_release(LinphoneProxyConfig *cfg);
 void _linphone_proxy_config_unpublish(LinphoneProxyConfig *obj);
 void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg, LinphonePublishState state);
@@ -332,6 +331,10 @@ void linphone_core_send_initial_subscribes(LinphoneCore *lc);
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 LinphoneAccount *linphone_proxy_config_get_account(LinphoneProxyConfig *cfg);
 void linphone_account_update(LinphoneAccount *account);
+LinphoneProxyConfig *linphone_account_get_proxy_config(LinphoneAccount *account);
+
+const bctbx_list_t *linphone_core_get_deleted_account_list(const LinphoneCore *lc);
+void linphone_core_remove_deleted_account(LinphoneCore *core, LinphoneAccount *account);
 
 LinphoneProxyConfig *linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneProxyConfig *
@@ -353,9 +356,6 @@ LinphoneAccount *linphone_core_lookup_account_by_identity(LinphoneCore *lc, cons
 
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);
 LINPHONE_PUBLIC void linphone_core_get_local_ip(LinphoneCore *lc, int af, const char *dest, char *result);
-
-LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore *lc, int index);
-void linphone_proxy_config_write_to_config_file(LinphoneConfig *config, LinphoneProxyConfig *obj, int index);
 
 LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate::SalOp *op, const SalMessage *msg);
 

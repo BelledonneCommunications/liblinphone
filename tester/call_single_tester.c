@@ -225,6 +225,7 @@ void simple_call_base_with_rcs(const char *caller_rc,
 	/* with the account manager, we might lose the identity */
 	marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
 	{
+		BC_ASSERT_PTR_NOT_NULL(marie_cfg);
 		LinphoneAddress *marie_addr = linphone_address_clone(linphone_proxy_config_get_identity_address(marie_cfg));
 		char *marie_tmp_id = NULL;
 		linphone_address_set_display_name(marie_addr, "Super Marie");

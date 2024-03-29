@@ -73,7 +73,7 @@ public:
 
 	void sendInvitations(std::shared_ptr<ChatRoomParams> chatRoomParams);
 
-	const std::shared_ptr<Account> &getAccount() const;
+	const std::shared_ptr<Account> getAccount() const;
 	void setAccount(std::shared_ptr<Account> account);
 
 private:
@@ -90,7 +90,7 @@ private:
 	ConferenceScheduler::State mState;
 	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
 	std::shared_ptr<CallSession> mSession = nullptr;
-	std::shared_ptr<Account> mAccount = nullptr;
+	std::weak_ptr<Account> mAccount;
 
 	unsigned long mInvitationsSent = 0;
 	std::list<std::shared_ptr<Address>> mInvitationsToSend;

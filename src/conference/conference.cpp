@@ -294,10 +294,10 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 	if (confParams && ((confParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) ||
 	                   (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
 		lError() << "Trying to change frozen conference parameters:";
-		lError() << " -  factory address: actual " << confParams->getConferenceFactoryAddress() << " new value "
-		         << newConfParams.getConferenceFactoryAddress();
-		lError() << " -  conference address: actual " << confParams->getConferenceAddress() << " new value "
-		         << newConfParams.getConferenceAddress();
+		lError() << " -  factory address: actual " << *confParams->getConferenceFactoryAddress() << " new value "
+		         << *newConfParams.getConferenceFactoryAddress();
+		lError() << " -  conference address: actual " << *confParams->getConferenceAddress() << " new value "
+		         << *newConfParams.getConferenceAddress();
 		return false;
 	}
 	confParams = ConferenceParams::create(newConfParams);

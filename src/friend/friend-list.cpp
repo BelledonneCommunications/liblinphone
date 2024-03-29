@@ -212,10 +212,10 @@ std::shared_ptr<Friend> FriendList::findFriendByAddress(const std::shared_ptr<co
 }
 
 std::shared_ptr<Friend> FriendList::findFriendByPhoneNumber(const std::string &phoneNumber) const {
-	LinphoneAccount *account = linphone_core_get_default_account(getCore()->getCCore());
+	const auto &account = getCore()->getDefaultAccount();
 	// Account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number can
 	// handle it
-	if (phoneNumber.empty() || !linphone_account_is_phone_number(account, L_STRING_TO_C(phoneNumber))) {
+	if (phoneNumber.empty() || !linphone_account_is_phone_number(account->toC(), L_STRING_TO_C(phoneNumber))) {
 		lWarning() << "Phone number [" << phoneNumber << "] isn't valid";
 		return nullptr;
 	}
@@ -224,13 +224,11 @@ std::shared_ptr<Friend> FriendList::findFriendByPhoneNumber(const std::string &p
 		return nullptr;
 	}
 
-	const bctbx_list_t *accounts = linphone_core_get_account_list(getCore()->getCCore());
-	for (const bctbx_list_t *elem = accounts; elem != nullptr; elem = bctbx_list_next(elem)) {
-		std::shared_ptr<Account> account =
-		    Account::toCpp((LinphoneAccount *)bctbx_list_get_data(elem))->getSharedFromThis();
+	const auto &accounts = getCore()->getAccounts();
+	for (const auto &accountInList : accounts) {
 		char *normalizedPhoneNumber =
-		    linphone_account_normalize_phone_number(account->toC(), L_STRING_TO_C(phoneNumber));
-		std::shared_ptr<Friend> result = findFriendByPhoneNumber(account, normalizedPhoneNumber);
+		    linphone_account_normalize_phone_number(accountInList->toC(), L_STRING_TO_C(phoneNumber));
+		std::shared_ptr<Friend> result = findFriendByPhoneNumber(accountInList, normalizedPhoneNumber);
 		bctbx_free(normalizedPhoneNumber);
 		if (result) return result;
 	}
@@ -378,9 +376,9 @@ void FriendList::synchronizeFriendsFromServer() {
 		    belle_http_request_listener_create_from_callbacks(&belle_request_listener, toC());
 		belle_http_request_t *request = belle_http_request_create(
 		    "GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), nullptr);
-		LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
-		if (cfg) {
-			std::string uri = Address::toCpp(linphone_proxy_config_get_identity_address(cfg))->asStringUriOnly();
+		const auto &account = getCore()->getDefaultAccount();
+		if (account) {
+			std::string uri = account->getAccountParams()->getIdentityAddress()->asStringUriOnly();
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", uri.c_str()));
 		}
 		belle_http_provider_send_request(lc->http_provider, request, lc->base_contacts_list_http_listener);
@@ -987,18 +985,17 @@ void FriendList::syncBctbxFriends() const {
 }
 
 void FriendList::updateSubscriptions() {
-	LinphoneProxyConfig *cfg = nullptr;
+	std::shared_ptr<Account> account = nullptr;
 	bool onlyWhenRegistered = false;
 	bool shouldSendListSubscribe = false;
 
 	lInfo() << "Updating friend list [" << toC() << "](" << getDisplayName() << ") subscriptions";
 	std::shared_ptr<Address> address = getRlsAddressWithCoreFallback();
-	if (address) cfg = linphone_core_lookup_known_proxy(getCore()->getCCore(), address->toC());
+	if (address) account = getCore()->lookupKnownAccount(address, true);
 	onlyWhenRegistered = linphone_core_should_subscribe_friends_only_when_registered(getCore()->getCCore());
 	// In case of onlyWhenRegistered, proxy config is mandatory to send subscribes. Otherwise, unexpected
 	// subscribtion can be issued using default contact address even if no account is configured yet.
-	shouldSendListSubscribe =
-	    (!onlyWhenRegistered || (cfg && linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk));
+	shouldSendListSubscribe = (!onlyWhenRegistered || (account && (account->getState() == LinphoneRegistrationOk)));
 
 	if (address) {
 		if (mSubscriptionsEnabled) {

@@ -269,14 +269,14 @@ public:
 	LinphoneSoundDaemon *getLSD();
 	const std::list<DaemonCommand *> &getCommandList() const;
 	LinphoneCall *findCall(int id);
-	LinphoneProxyConfig *findProxy(int id);
+	LinphoneAccount *findProxy(int id);
 	LinphoneAuthInfo *findAuthInfo(int id);
 	AudioStream *findAudioStream(int id);
 	AudioStreamAndOther *findAudioStreamAndOther(int id);
 	void removeAudioStream(int id);
 	bool pullEvent();
 	int updateCallId(LinphoneCall *call);
-	int updateProxyId(LinphoneProxyConfig *proxy);
+	int updateProxyId(LinphoneAccount *account);
 	inline int maxProxyId() {
 		return mProxyIds;
 	}

@@ -61,6 +61,7 @@ class ConferenceId;
 class ConferenceInfo;
 class Participant;
 class ConferenceParams;
+class Event;
 class CorePrivate;
 class EncryptionEngine;
 class ChatMessage;
@@ -383,6 +384,9 @@ public:
 	void addOrUpdatePublishByEtag(SalPublishOp *op, std::shared_ptr<LinphonePrivate::EventPublish>);
 	Core::ETagStatus eTagHandler(SalPublishOp *op, const SalBodyHandler *body);
 
+	void notifyPublishStateChangedToAccount(const std::shared_ptr<Event> event, LinphonePublishState state);
+	int sendPublish(LinphonePresenceModel *presence);
+
 	void setLabel(const std::string &label);
 	const std::string &getLabel() const;
 
@@ -397,6 +401,28 @@ public:
 	std::string createXmlFromEktInfo(const std::shared_ptr<const EktInfo> &ei) const;
 #endif // HAVE_ADVANCED_IM
 
+	// ---------------------------------------------------------------------------
+	// Account
+	// ---------------------------------------------------------------------------
+	void setDefaultAccount(const std::shared_ptr<Account> &account);
+	const std::shared_ptr<Account> &getDefaultAccount() const;
+	void setDefaultAccountIndex(int index);
+	int getDefaultAccountIndex() const;
+	std::shared_ptr<Account> getAccountByIdKey(const std::string idKey) const;
+	LinphoneStatus addAccount(std::shared_ptr<Account> account);
+	void removeAccount(std::shared_ptr<Account> account);
+	void removeDeletedAccount(const std::shared_ptr<Account> &account);
+	void removeDependentAccount(const std::shared_ptr<Account> &account);
+	void clearAccounts();
+	const std::list<std::shared_ptr<Account>> &getDeletedAccounts() const;
+	const bctbx_list_t *getDeletedAccountsCList() const;
+	const std::list<std::shared_ptr<Account>> &getAccounts() const;
+	const bctbx_list_t *getAccountsCList() const;
+	std::shared_ptr<Account> lookupKnownAccount(const std::shared_ptr<const Address> uri, bool fallbackToDefault) const;
+
+	void releaseAccounts();
+	const bctbx_list_t *getProxyConfigList() const;
+
 private:
 	Core();
 
@@ -404,6 +430,7 @@ private:
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 	std::shared_ptr<SignalInformation> mSignalInformation = nullptr;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId &conferenceId) const;
+	void clearProxyConfigList() const;
 
 	std::list<std::string> plugins;
 #if defined(_WIN32) && !defined(_WIN32_WCE)
@@ -417,6 +444,13 @@ private:
 	bool_t dlopenPlugin(const std::string &plugin_path, const std::string plugin_name);
 
 	std::map<std::string, std::shared_ptr<LinphonePrivate::EventPublish>> mPublishByEtag;
+
+	mutable ListHolder<AbstractChatRoom> mChatRooms;
+	mutable ListHolder<Account> mAccounts;
+	mutable ListHolder<Account> mDeletedAccounts;
+	std::shared_ptr<Account> mDefaultAccount;
+
+	mutable bctbx_list_t *mCachedProxyConfigs = NULL;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);

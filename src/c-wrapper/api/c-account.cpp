@@ -25,6 +25,7 @@
 #include "account/account-params.h"
 #include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
+#include "core/core-p.h"
 #include "dial-plan/dial-plan.h"
 #include "linphone/api/c-account-cbs.h"
 #include "linphone/api/c-account-params.h"
@@ -125,6 +126,10 @@ LinphoneAccount *linphone_account_get_dependency(LinphoneAccount *account) {
 	return NULL;
 }
 
+LinphoneProxyConfig *linphone_account_get_proxy_config(LinphoneAccount *account) {
+	return Account::toCpp(account)->getConfig();
+}
+
 LinphoneCore *linphone_account_get_core(LinphoneAccount *account) {
 	return L_GET_C_BACK_PTR(Account::toCpp(account)->getCore());
 }
@@ -144,7 +149,7 @@ void linphone_account_set_contact_address(LinphoneAccount *account, const Linpho
 	return Account::toCpp(account)->setContactAddress(Address::toCpp(addr)->getSharedFromThis());
 }
 
-LinphoneRegistrationState linphone_account_get_state(LinphoneAccount *account) {
+LinphoneRegistrationState linphone_account_get_state(const LinphoneAccount *account) {
 	AccountLogContextualizer logContextualizer(account);
 	return Account::toCpp(account)->getState();
 }

@@ -37,16 +37,13 @@ ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 		enableVideo(linphone_video_activation_policy_get_automatically_initiate(policy));
 		setParticipantListType(
 		    static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
-		const auto defaultAccount = linphone_core_get_default_account(core);
-		if (defaultAccount) {
-			setAccount(Account::toCpp(defaultAccount)->getSharedFromThis());
-		}
+		setAccount(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getDefaultAccount());
 	}
 }
 
 void ConferenceParams::setAccount(const shared_ptr<Account> &a) {
 	m_account = a;
-	updateFromAccount(m_account);
+	updateFromAccount(a);
 }
 
 void ConferenceParams::updateFromAccount(

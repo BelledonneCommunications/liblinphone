@@ -81,8 +81,7 @@ EventPublish::EventPublish(const shared_ptr<Core> &core,
 
 	setExpires(expires);
 	if (!account) {
-		auto coreAccount =
-		    Account::toCpp(linphone_core_lookup_known_account(core->getCCore(), resource->toC()))->getSharedFromThis();
+		auto coreAccount = core->lookupKnownAccount(resource, true);
 		linphone_configure_op_with_account(
 		    core->getCCore(), mOp, resource->toC(), nullptr,
 		    !!linphone_config_get_int(core->getCCore()->config, "sip", "publish_msg_with_contact", 0),

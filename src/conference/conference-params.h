@@ -142,8 +142,8 @@ public:
 	};
 
 	void setAccount(const std::shared_ptr<Account> &a);
-	const std::shared_ptr<Account> &getAccount() const {
-		return m_account;
+	const std::shared_ptr<Account> getAccount() const {
+		return m_account.lock();
 	};
 
 	virtual void setStartTime(const time_t &start) override {
@@ -205,7 +205,7 @@ private:
 	std::shared_ptr<Address> m_me = nullptr;
 	time_t m_startTime = (time_t)-1;
 	time_t m_endTime = (time_t)-1;
-	std::shared_ptr<Account> m_account = nullptr;
+	std::weak_ptr<Account> m_account;
 	bool m_static = false;
 	bool m_hidden = false;
 };

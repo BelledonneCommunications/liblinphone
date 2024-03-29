@@ -68,7 +68,6 @@ void RegisterCommand::exec(Daemon *app, const string &args) {
 	if (!userid.empty() && (userid.compare("NULL") != 0)) cuserid = userid.c_str();
 	if (!realm.empty() && (realm.compare("NULL") != 0)) crealm = realm.c_str();
 	if (!parameter.empty()) cparameter = parameter.c_str();
-	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(NULL);
 	LinphoneAddress *from = linphone_address_new(cidentity);
 	if (cpassword != NULL) {
 		if (from != NULL) {
@@ -78,12 +77,15 @@ void RegisterCommand::exec(Daemon *app, const string &args) {
 			linphone_auth_info_unref(info);
 		}
 	}
-	linphone_proxy_config_set_identity_address(cfg, from);
+	LinphoneAccountParams *params = linphone_account_params_new(lc);
+	linphone_account_params_set_identity_address(params, from);
 	if (from) linphone_address_unref(from);
-	linphone_proxy_config_set_server_addr(cfg, cproxy);
-	linphone_proxy_config_enable_register(cfg, TRUE);
-	linphone_proxy_config_set_contact_parameters(cfg, cparameter);
-	ostr << "Id: " << app->updateProxyId(cfg) << "\n";
-	linphone_core_add_proxy_config(lc, cfg);
+	linphone_account_params_set_server_addr(params, cproxy);
+	linphone_account_params_enable_register(params, TRUE);
+	linphone_account_params_set_contact_parameters(params, cparameter);
+	LinphoneAccount *account = linphone_core_create_account(lc, params);
+	ostr << "Id: " << app->updateProxyId(account) << "\n";
+	linphone_core_add_account(lc, account);
+	linphone_account_params_unref(params);
 	app->sendResponse(Response(ostr.str(), Response::Ok));
 }

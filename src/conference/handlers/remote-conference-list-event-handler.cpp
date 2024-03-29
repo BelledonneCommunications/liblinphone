@@ -22,7 +22,6 @@
 
 #include "linphone/api/c-event.h"
 #include "linphone/core.h"
-#include "linphone/proxy_config.h"
 #include "linphone/utils/utils.h"
 
 #include "account/account.h"
@@ -68,11 +67,7 @@ RemoteConferenceListEventHandler::~RemoteConferenceListEventHandler() {
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceListEventHandler::subscribe() {
-	LinphoneCore *lc = getCore()->getCCore();
-	const bctbx_list_t *list = linphone_core_get_account_list(lc);
-
-	for (; list != NULL; list = list->next) {
-		const auto &account = Account::toCpp((LinphoneAccount *)list->data)->getSharedFromThis();
+	for (const auto &account : getCore()->getAccounts()) {
 		subscribe(account);
 	}
 }

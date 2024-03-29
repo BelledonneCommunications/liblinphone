@@ -194,7 +194,7 @@ LINPHONE_PUBLIC void linphone_account_set_contact_address(LinphoneAccount *accou
  * @param account The #LinphoneAccount object. @notnil
  * @return The #LinphoneRegistrationState of the account.
  **/
-LINPHONE_PUBLIC LinphoneRegistrationState linphone_account_get_state(LinphoneAccount *account);
+LINPHONE_PUBLIC LinphoneRegistrationState linphone_account_get_state(const LinphoneAccount *account);
 
 /**
  * Refresh a proxy registration.

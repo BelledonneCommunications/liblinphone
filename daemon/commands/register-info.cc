@@ -28,23 +28,27 @@ class RegisterInfoResponse : public Response {
 public:
 	RegisterInfoResponse() : Response() {
 	}
-	RegisterInfoResponse(int id, const ::LinphoneProxyConfig *cfg) : Response() {
-		append(id, cfg);
+	RegisterInfoResponse(int id, const ::LinphoneAccount *account) : Response() {
+		append(id, account);
 	}
-	void append(int id, const ::LinphoneProxyConfig *cfg) {
+	void append(int id, const ::LinphoneAccount *account) {
 		ostringstream ost;
 		ost << getBody();
 		if (ost.tellp() > 0) ost << endl;
 		ost << "Id: " << id << endl;
-		ost << "Identity: " << linphone_proxy_config_get_identity(cfg) << endl;
-		ost << "Proxy: " << linphone_proxy_config_get_server_addr(cfg) << endl;
+		const LinphoneAccountParams *params = linphone_account_get_params(account);
+		ost << "Identity: " << linphone_account_params_get_identity(params) << endl;
+		ost << "Proxy: " << linphone_account_params_get_server_addr(params) << endl;
 
-		const char *route = linphone_proxy_config_get_route(cfg);
+		bctbx_list_t *routes = linphone_account_params_get_routes_addresses(params);
+		char *route = linphone_address_as_string((LinphoneAddress *)bctbx_list_get_data(routes));
 		if (route != NULL) {
 			ost << "Route: " << route << endl;
 		}
+		bctbx_free(route);
+		bctbx_list_free_with_data(routes, (bctbx_list_free_func)linphone_address_unref);
 
-		ost << "State: " << linphone_registration_state_to_string(linphone_proxy_config_get_state(cfg)) << endl;
+		ost << "State: " << linphone_registration_state_to_string(linphone_account_get_state(account)) << endl;
 		setBody(ost.str());
 	}
 };
@@ -83,9 +87,9 @@ void RegisterInfoCommand::exec(Daemon *app, const string &args) {
 	if (param == "ALL") {
 		RegisterInfoResponse response;
 		for (int i = 1; i <= app->maxProxyId(); i++) {
-			::LinphoneProxyConfig *cfg = app->findProxy(i);
-			if (cfg != NULL) {
-				response.append(i, cfg);
+			::LinphoneAccount *account = app->findProxy(i);
+			if (account != NULL) {
+				response.append(i, account);
 			}
 		}
 		app->sendResponse(response);
@@ -100,11 +104,11 @@ void RegisterInfoCommand::exec(Daemon *app, const string &args) {
 			app->sendResponse(Response("Out of range ID.", Response::Error));
 			return;
 		}
-		::LinphoneProxyConfig *cfg = app->findProxy(id);
-		if (cfg == NULL) {
+		::LinphoneAccount *account = app->findProxy(id);
+		if (account == NULL) {
 			app->sendResponse(Response("No register with such id.", Response::Error));
 			return;
 		}
-		app->sendResponse(RegisterInfoResponse(id, cfg));
+		app->sendResponse(RegisterInfoResponse(id, account));
 	}
 }

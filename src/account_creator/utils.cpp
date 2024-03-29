@@ -33,7 +33,7 @@ using namespace LinphonePrivate;
 
 const char *linphone_account_creator_get_domain_with_fallback_to_proxy_domain(LinphoneAccountCreator *creator) {
 	if (creator->domain) return creator->domain;
-	else if (creator->proxy_cfg) return linphone_proxy_config_get_domain(creator->proxy_cfg);
+	else if (creator->account) return linphone_account_params_get_domain(linphone_account_get_params(creator->account));
 	return NULL;
 }
 
@@ -42,8 +42,11 @@ char *linphone_account_creator_get_identity(const LinphoneAccountCreator *creato
 	const char *username = creator->username ? creator->username : creator->phone_number;
 	if (username) {
 		// we must escape username
-		LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(creator->core);
-		LinphoneAddress *addr = linphone_proxy_config_normalize_sip_uri(proxy, username);
+		LinphoneCore *lc = creator->core;
+		LinphoneAccountParams *params = linphone_account_params_new(lc);
+		LinphoneAccount *account = linphone_core_create_account(lc, params);
+		linphone_account_params_unref(params);
+		LinphoneAddress *addr = linphone_account_normalize_sip_uri(account, username);
 		const char *addr_domain = addr ? linphone_address_get_domain(addr) : nullptr;
 		const char *creator_domain = creator->domain;
 
@@ -67,7 +70,7 @@ char *linphone_account_creator_get_identity(const LinphoneAccountCreator *creato
 		identity = linphone_address_as_string(addr);
 	end:
 		if (addr) linphone_address_unref(addr);
-		linphone_proxy_config_unref(proxy);
+		linphone_account_unref(account);
 	}
 	return identity;
 }

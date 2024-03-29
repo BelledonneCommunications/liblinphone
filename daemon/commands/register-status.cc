@@ -25,25 +25,25 @@ using namespace std;
 class RegisterStatusResponse : public Response {
 public:
 	RegisterStatusResponse();
-	RegisterStatusResponse(int id, const LinphoneProxyConfig *cfg);
-	void append(int id, const LinphoneProxyConfig *cfg);
+	RegisterStatusResponse(int id, const LinphoneAccount *account);
+	void append(int id, const LinphoneAccount *account);
 };
 
 RegisterStatusResponse::RegisterStatusResponse() {
 }
 
-RegisterStatusResponse::RegisterStatusResponse(int id, const LinphoneProxyConfig *cfg) {
-	append(id, cfg);
+RegisterStatusResponse::RegisterStatusResponse(int id, const LinphoneAccount *account) {
+	append(id, account);
 }
 
-void RegisterStatusResponse::append(int id, const LinphoneProxyConfig *cfg) {
+void RegisterStatusResponse::append(int id, const LinphoneAccount *account) {
 	ostringstream ost;
 	ost << getBody();
 	if (ost.tellp() > 0) {
 		ost << "\n";
 	}
 	ost << "Id: " << id << "\n";
-	ost << "State: " << linphone_registration_state_to_string(linphone_proxy_config_get_state(cfg)) << "\n";
+	ost << "State: " << linphone_registration_state_to_string(linphone_account_get_state(account)) << "\n";
 	setBody(ost.str());
 }
 
@@ -64,7 +64,7 @@ RegisterStatusCommand::RegisterStatusCommand()
 }
 
 void RegisterStatusCommand::exec(Daemon *app, const string &args) {
-	LinphoneProxyConfig *cfg = NULL;
+	LinphoneAccount *account = NULL;
 	string param;
 	int pid;
 
@@ -77,9 +77,9 @@ void RegisterStatusCommand::exec(Daemon *app, const string &args) {
 	if (param.compare("ALL") == 0) {
 		RegisterStatusResponse response;
 		for (int i = 1; i <= app->maxProxyId(); i++) {
-			cfg = app->findProxy(i);
-			if (cfg != NULL) {
-				response.append(i, cfg);
+			account = app->findProxy(i);
+			if (account != NULL) {
+				response.append(i, account);
 			}
 		}
 		app->sendResponse(response);
@@ -91,11 +91,11 @@ void RegisterStatusCommand::exec(Daemon *app, const string &args) {
 			app->sendResponse(Response("Incorrect parameter.", Response::Error));
 			return;
 		}
-		cfg = app->findProxy(pid);
-		if (cfg == NULL) {
+		account = app->findProxy(pid);
+		if (account == NULL) {
 			app->sendResponse(Response("No register with such id.", Response::Error));
 			return;
 		}
-		app->sendResponse(RegisterStatusResponse(pid, cfg));
+		app->sendResponse(RegisterStatusResponse(pid, account));
 	}
 }

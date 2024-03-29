@@ -1199,9 +1199,9 @@ void ChatMessagePrivate::send() {
 				string identity =
 				    linphone_core_find_best_identity(core->getCCore(), linphone_call_get_remote_address(lcall));
 				if (identity.empty()) {
-					LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(core->getCCore(), toAddr);
-					if (proxy) {
-						identity = Address::toCpp(linphone_proxy_config_get_identity_address(proxy))->toString();
+					auto account = core->lookupKnownAccount(toAddress, true);
+					if (account) {
+						identity = account->getAccountParams()->getIdentityAddress()->toString();
 					} else {
 						identity = linphone_core_get_primary_contact(core->getCCore());
 					}

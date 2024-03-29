@@ -70,10 +70,6 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneProxyConfig);
 struct sip_config {
 	char *contact;
 	char *guessed_contact;
-	MSList *proxies;
-	MSList *deleted_proxies;
-	MSList *accounts;
-	MSList *deleted_accounts;
 	int inc_timeout;                /*timeout after an un-answered incoming call is rejected*/
 	int push_incoming_call_timeout; /*timeout after push incoming received if stream not received*/
 	int in_call_timeout;            /*timeout after a call is hangup */
@@ -462,7 +458,6 @@ class Core;
 	codecs_config_t codecs_conf;                                                                                       \
 	ui_config_t ui_conf;                                                                                               \
 	autoreplier_config_t autoreplier_conf;                                                                             \
-	LinphoneProxyConfig *default_proxy;                                                                                \
 	LinphoneAccount *default_account;                                                                                  \
 	MSList *friends_lists;                                                                                             \
 	MSList *auth_info;                                                                                                 \

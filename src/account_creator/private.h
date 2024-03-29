@@ -66,10 +66,13 @@ struct _LinphoneAccountCreatorService {
 	    login_linphone_account_request_cb; /**< Request to get password & algorithm from confirmation key */
 
 	LinphoneAccountCreatorRequestFunc send_token_request_cb; /**< Generate and send a token via push notification */
-	LinphoneAccountCreatorRequestFunc account_creation_request_token_request_cb; /**< Generate and get a request token */
-	LinphoneAccountCreatorRequestFunc account_creation_token_using_request_token_request_cb; /**< Generate and get a token for account creation */
-	LinphoneAccountCreatorRequestFunc create_account_with_token_request_cb; /**< Use a received token to create an account */
-	LinphoneAccountCreatorRequestFunc create_push_account_request_cb;   /**< Request to create a push account */
+	LinphoneAccountCreatorRequestFunc
+	    account_creation_request_token_request_cb; /**< Generate and get a request token */
+	LinphoneAccountCreatorRequestFunc
+	    account_creation_token_using_request_token_request_cb; /**< Generate and get a token for account creation */
+	LinphoneAccountCreatorRequestFunc
+	    create_account_with_token_request_cb;                         /**< Use a received token to create an account */
+	LinphoneAccountCreatorRequestFunc create_push_account_request_cb; /**< Request to create a push account */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorService);
@@ -116,7 +119,7 @@ struct _LinphoneAccountCreator {
 	bctbx_list_t *callbacks;
 	LinphoneAccountCreatorCbs *currentCbs; /** Used during the callbacks list iteration */
 
-	LinphoneProxyConfig *proxy_cfg; /**< Default proxy config */
+	LinphoneAccount *account; /**< Default account */
 
 	/* User */
 	char *username;     /**< Username */
@@ -141,11 +144,11 @@ struct _LinphoneAccountCreator {
 	char *pn_param;
 	char *pn_prid;
 	char *token;
-	
+
 	/* account creation tokens */
 	char *account_creation_request_token;
 
-	bool_t set_as_default; /**< Set proxy config as the default one */
+	bool_t set_as_default; /**< Set account as the default one */
 
 	/* Deprecated */
 	char *route;
@@ -329,15 +332,17 @@ linphone_account_creator_send_token_flexiapi(LinphoneAccountCreator *creator);
  * Send a FlexiAPI request to generate a request token with a waiting url. Check callbacks.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_account_creation_request_token_flexiapi(LinphoneAccountCreator *creator);
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus
+linphone_account_creator_account_creation_request_token_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send a FlexiAPI request to generate a token from a request token. Check callbacks.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_account_creation_token_using_request_token_flexiapi(LinphoneAccountCreator *creator);
+ **/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus
+linphone_account_creator_account_creation_token_using_request_token_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an FlexiAPI request to create an account using a received token

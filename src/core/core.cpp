@@ -63,6 +63,7 @@
 #include "chat/chat-room/chat-room-p.h"
 #include "core/core-listener.h"
 #include "core/core-p.h"
+#include "event/event.h"
 #include "factory/factory.h"
 #include "ldap/ldap.h"
 #include "linphone/lpconfig.h"
@@ -243,6 +244,7 @@ void CorePrivate::unregisterListener(CoreListener *listener) {
 }
 
 void CorePrivate::writeNatPolicyConfigurations() {
+	L_Q();
 	int index = 0;
 	LinphoneCore *lc = getCCore();
 
@@ -254,10 +256,8 @@ void CorePrivate::writeNatPolicyConfigurations() {
 		NatPolicy::toCpp(lc->nat_policy)->saveToConfig(config, index);
 		++index;
 	}
-	const bctbx_list_t *elem;
-	for (elem = linphone_core_get_account_list(lc); elem != nullptr; elem = elem->next) {
-		LinphoneAccount *account = (LinphoneAccount *)elem->data;
-		auto natPolicy = Account::toCpp(account)->getAccountParams()->getNatPolicy();
+	for (const auto &account : q->getAccounts()) {
+		auto natPolicy = account->getAccountParams()->getNatPolicy();
 		if (natPolicy) {
 			natPolicy->saveToConfig(config, index);
 			++index;
@@ -511,12 +511,11 @@ void CorePrivate::notifyEnteringForeground() {
 	static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(q)->platform_helper)->updateNetworkReachability();
 #endif
 
-	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
-	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(lc);
-	if (lpc && linphone_proxy_config_get_state(lpc) == LinphoneRegistrationFailed) {
+	auto account = q->getDefaultAccount();
+	if (account && account->getState() == LinphoneRegistrationFailed) {
 		// This is to ensure an app bring to foreground that isn't registered correctly will try to fix that and not
 		// show a red registration dot to the user
-		linphone_proxy_config_refresh_register(lpc);
+		account->refreshRegister();
 	}
 
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
@@ -1430,8 +1429,7 @@ void Core::healNetworkConnections() {
 	// registration.
 	linphone_core_set_network_reachable_internal(lc, TRUE);
 
-	const bctbx_list_t *accounts = linphone_core_get_account_list(lc);
-	bctbx_list_t *it = (bctbx_list_t *)accounts;
+	const auto accounts = getAccounts();
 
 	/*
 	 * The following is a bit hacky. But sometimes 3 lines of code are better than
@@ -1449,28 +1447,25 @@ void Core::healNetworkConnections() {
 	 * attempt to connect and register.
 	 */
 	bool sendKeepAlive = false;
-	while (it) {
-		LinphoneAccount *account = (LinphoneAccount *)bctbx_list_get_data(it);
-		const LinphoneAccountParams *params = linphone_account_get_params(account);
-		if (AccountParams::toCpp(params)->getForceRegisterOnPushNotification()) {
+	for (const auto &account : accounts) {
+		const auto &params = account->getAccountParams();
+		if (params->getForceRegisterOnPushNotification()) {
 			lInfo() << "Account [" << account
 			        << "] is configured to force a REGISTER when a push is received, doing it now";
-			linphone_account_refresh_register(account);
-			it = bctbx_list_next(it);
+			account->refreshRegister();
 			continue;
 		}
 
-		LinphoneRegistrationState state = linphone_account_get_state(account);
+		LinphoneRegistrationState state = account->getState();
 		if (state == LinphoneRegistrationFailed) {
 			lInfo() << "Account [" << account << "] is in failed state, refreshing REGISTER";
-			if (linphone_account_params_register_enabled(params) && linphone_account_params_get_expires(params) > 0) {
-				linphone_account_refresh_register(account);
+			if (params->getRegisterEnabled() && (params->getExpires() > 0)) {
+				account->refreshRegister();
 			}
 		} else if (state == LinphoneRegistrationOk) {
 			// Send a keep-alive to ensure the socket isn't broken
 			sendKeepAlive = true;
 		}
-		it = bctbx_list_next(it);
 	}
 	/* Send a "\r\n" keepalive. If the socket is broken, it will generate an error. */
 	if (sendKeepAlive) {
@@ -1521,10 +1516,9 @@ int Core::getUnreadChatMessageCountFromActiveLocals() const {
 	int count = 0;
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
-		for (auto it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
-			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
-			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-			if (Address::toCpp(identityAddr)->weakEqual(*chatRoom->getLocalAddress())) {
+		for (const auto &account : getAccounts()) {
+			auto identityAddress = account->getAccountParams()->getIdentityAddress();
+			if (identityAddress->weakEqual(*chatRoom->getLocalAddress())) {
 				if (!chatRoom->getIsMuted()) {
 					count += chatRoom->getUnreadChatMessageCount();
 				}
@@ -1963,12 +1957,11 @@ const std::shared_ptr<Address>
 Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
                                             const std::shared_ptr<Address> &localAddress) {
 	std::shared_ptr<Address> addr = localAddress;
-	LinphoneAccount *account = linphone_core_lookup_known_account(core->getCCore(), addr->toC());
-
+	auto account = core->lookupKnownAccount(addr, true);
 	if (!account) {
 		lWarning() << "No account found for local address: [" << *localAddress << "]";
 		return nullptr;
-	} else return getAudioVideoConferenceFactoryAddress(core, Account::getSharedFromThis(account));
+	} else return getAudioVideoConferenceFactoryAddress(core, account);
 }
 
 const std::shared_ptr<Address> Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core,
@@ -2300,6 +2293,338 @@ LinphoneCodecPriorityPolicy Core::getVideoCodecPriorityPolicy() const {
 	return d->videoCodecPriorityPolicy;
 }
 
+void Core::setDefaultAccount(const std::shared_ptr<Account> &account) {
+	/* check if this account is in our list */
+	if (account) {
+		const auto &accounts = getAccounts();
+		const auto accountIt = std::find(accounts.cbegin(), accounts.cend(), account);
+		if (accountIt == accounts.cend()) {
+			lWarning() << "Bad account address: it is not in the list !";
+			mDefaultAccount = nullptr;
+			linphone_core_notify_default_account_changed(getCCore(), NULL);
+			return;
+		}
+	}
+
+	if (mDefaultAccount == account) {
+		lInfo() << "Account " << account << " is already the default one, skipping.";
+		return;
+	}
+
+	mDefaultAccount = account;
+	if (linphone_core_ready(getCCore())) {
+		linphone_config_set_int(linphone_core_get_config(getCCore()), "sip", "default_proxy", getDefaultAccountIndex());
+		/* Invalidate phone numbers in friends maps when default account changes because the new one may have a
+		 * different dial prefix */
+		linphone_core_invalidate_friends_maps(getCCore());
+	}
+
+	linphone_core_notify_default_account_changed(getCCore(), account ? account->toC() : nullptr);
+}
+
+const std::shared_ptr<Account> &Core::getDefaultAccount() const {
+	return mDefaultAccount;
+}
+
+void Core::setDefaultAccountIndex(int index) {
+	std::shared_ptr<Account> defaultAccount = nullptr;
+	if (index < 0) {
+		lInfo() << "Resetting default account as a negative index (" << index << ") has been provided";
+	} else {
+		const auto &accounts = getAccounts();
+		if (static_cast<size_t>(index) < accounts.size()) {
+			auto accountIt = accounts.cbegin();
+			std::advance(accountIt, index);
+			defaultAccount = *accountIt;
+		} else {
+			lInfo() << "Do not changing default account because the index request (" << index
+			        << ") is larger than the number of accounts available " << accounts.size();
+			defaultAccount = getDefaultAccount();
+		}
+	}
+	setDefaultAccount(defaultAccount);
+}
+
+int Core::getDefaultAccountIndex() const {
+	int pos = -1;
+	const auto &accounts = getAccounts();
+	const auto accountIt = std::find(accounts.cbegin(), accounts.cend(), getDefaultAccount());
+	if (accountIt != accounts.cend()) {
+		return static_cast<int>(std::distance(accounts.cbegin(), accountIt));
+	}
+	return pos;
+}
+
+void Core::removeAccount(std::shared_ptr<Account> account) {
+	/* check this account is in the list before doing more*/
+	auto &accounts = mAccounts.mList;
+	const auto accountIt = std::find(accounts.cbegin(), accounts.cend(), account);
+	if (accountIt == accounts.cend()) {
+		lError() << "Account [ " << account << "] is not known by Core [" << this << "] (programming error?)";
+		return;
+	}
+
+	/* we also need to update the accounts list */
+	accounts.erase(accountIt);
+	removeDependentAccount(account);
+	/* add to the list of destroyed accounts, so that the possible unREGISTER request can succeed authentication */
+	mDeletedAccounts.mList.push_back(account);
+
+	if (getDefaultAccount() == account) {
+		setDefaultAccount(nullptr);
+	}
+
+	linphone_core_notify_account_removed(getCCore(), account->toC());
+
+	account->setDeletionDate(ms_time(NULL));
+	if (account->getState() == LinphoneRegistrationOk) {
+		auto params = account->getAccountParams()->clone()->toSharedPtr();
+		params->setRegisterEnabled(FALSE);
+		account->setAccountParams(params);
+		account->update();
+	} else if (account->getState() != LinphoneRegistrationNone) {
+		account->setState(LinphoneRegistrationNone, "Registration disabled");
+	}
+	Account::writeAllToConfigFile(getSharedFromThis());
+
+	// Update the associated linphone specs on the core
+	auto params = account->getAccountParams()->clone()->toSharedPtr();
+	params->setConferenceFactoryAddress(nullptr);
+	account->setAccountParams(params);
+}
+
+void Core::removeDeletedAccount(const std::shared_ptr<Account> &account) {
+	auto &accounts = mDeletedAccounts.mList;
+	const auto accountIt = std::find(accounts.cbegin(), accounts.cend(), account);
+	if (accountIt == accounts.cend()) {
+		lError() << "Account [ " << account << "] is not in the list odf deleted accounts";
+		return;
+	}
+	/* we also need to update the accounts list */
+	accounts.erase(accountIt);
+}
+
+void Core::removeDependentAccount(const std::shared_ptr<Account> &account) {
+	const auto &params = account->getAccountParams();
+	const auto &accountIdKey = params->getIdKey();
+	auto &accounts = mAccounts.mList;
+	for (const auto &accountInList : accounts) {
+		if ((accountInList != account) && (accountInList->getDependency() == account)) {
+			lInfo() << "Updating dependent account [" << accountInList
+			        << "] caused by removal of 'master' account idkey[" << accountIdKey << "]";
+			accountInList->setDependency(NULL);
+			account->setNeedToRegister(true);
+			accountInList->update();
+		}
+	}
+}
+
+LinphoneStatus Core::addAccount(std::shared_ptr<Account> account) {
+	if (!account || !account->check()) {
+		return -1;
+	}
+	const auto &accounts = getAccounts();
+	if (std::find(accounts.cbegin(), accounts.cend(), account) != accounts.cend()) {
+		lWarning() << "Account already entered, ignored.";
+		return 0;
+	}
+
+	mAccounts.mList.push_back(account);
+
+	// If there is no back pointer to a proxy config then create a proxy config that will depend on this account
+	// to ensure backward compatibility when using only proxy configs
+	LinphoneProxyConfig *cfg = account->getConfig();
+	if (cfg) {
+		account->setConfig(cfg);
+	} else {
+		cfg = belle_sip_object_new(LinphoneProxyConfig);
+		cfg->account = linphone_account_ref(account->toC());
+		account->setConfig(cfg);
+		linphone_proxy_config_unref(cfg);
+	}
+
+	account->apply(getCCore());
+
+	linphone_core_notify_account_added(getCCore(), account->toC());
+
+	return 0;
+}
+
+void Core::clearAccounts() {
+	auto accountList = mAccounts.mList;
+	for (auto &account : accountList) {
+		removeAccount(account);
+	}
+	Account::writeAllToConfigFile(getSharedFromThis());
+}
+
+std::shared_ptr<Account> Core::getAccountByIdKey(const std::string idKey) const {
+	if (idKey.empty()) return nullptr;
+	for (const auto &account : getAccounts()) {
+		const auto &params = account->getAccountParams();
+		const auto &accountIdKey = params->getIdKey();
+		if (!accountIdKey.empty() && (accountIdKey.compare(idKey) == 0)) return account;
+	}
+	return nullptr;
+}
+
+const std::list<std::shared_ptr<Account>> &Core::getDeletedAccounts() const {
+	return mDeletedAccounts.mList;
+}
+
+const bctbx_list_t *Core::getDeletedAccountsCList() const {
+	return mDeletedAccounts.getCList();
+}
+
+void Core::clearProxyConfigList() const {
+	if (mCachedProxyConfigs) {
+		bctbx_list_free_with_data(mCachedProxyConfigs, (void (*)(void *))linphone_proxy_config_unref);
+		mCachedProxyConfigs = NULL;
+	}
+}
+
+void Core::releaseAccounts() {
+	clearProxyConfigList();
+	// This method will break a circular dependency as the proxy config has a reference towards the account and the
+	// account keeps a reference of the proxy config. When the core is shutting down, awe need to break this circular
+	// referencing from all actual and deleted accounts
+	for (const auto &account : getAccounts()) {
+		account->releaseOps();
+		account->setConfig(nullptr);
+	}
+
+	for (const auto &account : getDeletedAccounts()) {
+		account->releaseOps();
+		account->setConfig(nullptr);
+	}
+}
+
+const bctbx_list_t *Core::getProxyConfigList() const {
+	clearProxyConfigList();
+	for (const auto &account : getAccounts()) {
+		mCachedProxyConfigs =
+		    bctbx_list_append(mCachedProxyConfigs, (void *)linphone_proxy_config_ref(account->getConfig()));
+	}
+	return mCachedProxyConfigs;
+}
+
+const std::list<std::shared_ptr<Account>> &Core::getAccounts() const {
+	return mAccounts.mList;
+}
+
+const bctbx_list_t *Core::getAccountsCList() const {
+	return mAccounts.getCList();
+}
+
+std::shared_ptr<Account> Core::lookupKnownAccount(const std::shared_ptr<const Address> uri,
+                                                  bool fallbackToDefault) const {
+	std::shared_ptr<Account> foundAccount = NULL;
+	std::shared_ptr<Account> foundRegAccount = NULL;
+	std::shared_ptr<Account> foundNoRegAccount = NULL;
+	std::shared_ptr<Account> foundAccountDomainMatch = NULL;
+	std::shared_ptr<Account> foundRegAccountDomainMatch = NULL;
+	std::shared_ptr<Account> foundNoRegAccountDomainMatch = NULL;
+	std::shared_ptr<Account> defaultAccount = getDefaultAccount();
+
+	if (!uri || !uri->isValid()) {
+		lError() << "Cannot look for account for NULL uri, returning default";
+		return defaultAccount;
+	}
+	const std::string uriDomain = uri->getDomain();
+	if (uriDomain.empty()) {
+		lInfo() << "Cannot look for account for uri [" << *uri << "] that has no domain set, returning default";
+		return defaultAccount;
+	}
+
+	/*return default account if it is matching the destination uri*/
+	if (defaultAccount) {
+		const auto &defaultAccountParams = defaultAccount->getAccountParams();
+		const auto &identityAddress = defaultAccountParams->getIdentityAddress();
+		if (uri->weakEqual(*identityAddress)) {
+			foundAccount = defaultAccount;
+			goto end;
+		}
+		const auto &domain = defaultAccountParams->getDomain();
+		if (!domain.empty() && (domain == uriDomain)) {
+			foundAccountDomainMatch = defaultAccount;
+		}
+	}
+
+	/*otherwise return first registered, then first registering matching, otherwise first matching */
+	for (const auto &account : getAccounts()) {
+		const auto &accountParams = account->getAccountParams();
+		const auto &identityAddress = accountParams->getIdentityAddress();
+		const auto registered = (account->getState() == LinphoneRegistrationOk);
+		const auto canRegister = accountParams->getRegisterEnabled();
+		if (uri->weakEqual(*identityAddress)) {
+			if (registered) {
+				foundAccount = account;
+				break;
+			} else if (!foundRegAccount && canRegister) {
+				foundRegAccount = account;
+			} else if (!foundNoRegAccount) {
+				foundNoRegAccount = account;
+			}
+		}
+		const auto &domain = accountParams->getDomain();
+		if (!domain.empty() && (domain == uriDomain)) {
+			if (!foundAccountDomainMatch && registered) {
+				foundAccountDomainMatch = account;
+			} else if (!foundRegAccountDomainMatch && canRegister) {
+				foundRegAccountDomainMatch = account;
+			} else if (!foundNoRegAccountDomainMatch) {
+				foundNoRegAccountDomainMatch = account;
+			}
+		}
+	}
+end:
+	// ============ Choose the the most appropriate account =====================
+	// Check first if there is an account whose identity address matches the uri passed as argument to this
+	// function. Then try to guess an account based on the same domain as the address passed as argument to this
+	// function
+
+	// Account matched by identity address comparison
+	if (!foundAccount && foundRegAccount) foundAccount = foundRegAccount;
+	else if (!foundAccount && foundNoRegAccount) foundAccount = foundNoRegAccount;
+
+	// Default account fallback
+	if (foundAccount && foundAccount != defaultAccount) {
+		ms_debug("Overriding default account setting for this call/message/subscribe operation.");
+	} else if (fallbackToDefault && !foundAccount) {
+		foundAccount = defaultAccount; /*when no matching account is found, use the default account*/
+	}
+
+	// Account matched by identity address domain comparison
+	if (!foundAccount && foundAccountDomainMatch) foundAccount = foundAccountDomainMatch;
+	else if (!foundAccount && foundRegAccountDomainMatch) foundAccount = foundRegAccountDomainMatch;
+	else if (!foundAccount && foundNoRegAccountDomainMatch) foundAccount = foundNoRegAccountDomainMatch;
+	return foundAccount;
+}
+
+void Core::notifyPublishStateChangedToAccount(const std::shared_ptr<Event> event, LinphonePublishState state) {
+	auto &accounts = mAccounts.mList;
+	auto accountIt = std::find_if(accounts.begin(), accounts.end(), [&event](const auto &account) {
+		auto publishEvent = account->getPresencePublishEvent();
+		return (publishEvent && (publishEvent == event));
+	});
+
+	if (accountIt != accounts.end()) {
+		(*accountIt)->notifyPublishStateChanged(state);
+	}
+}
+
+int Core::sendPublish(LinphonePresenceModel *presence) {
+	auto &accounts = mAccounts.mList;
+	for (const auto &account : accounts) {
+		const auto &params = account->getAccountParams();
+		if (params->getPublishEnabled()) {
+			account->setPresenceModel(presence);
+			account->sendPublish();
+		}
+	}
+	return 0;
+}
+
 #ifdef HAVE_ADVANCED_IM
 shared_ptr<EktInfo> Core::createEktInfoFromXml(const std::string &xmlBody) const {
 	istringstream data(xmlBody);
@@ -2339,8 +2664,8 @@ shared_ptr<EktInfo> Core::createEktInfoFromXml(const std::string &xmlBody) const
 }
 
 string Core::createXmlFromEktInfo(const shared_ptr<const EktInfo> &ei) const {
-	LinphoneAccount *account = linphone_core_get_default_account(getCCore());
-	auto addr = Account::toCpp(account)->getContactAddress();
+	auto account = getDefaultAccount();
+	auto addr = account->getContactAddress();
 
 	CryptoType crypto = CryptoType(ei->getSSpi(), addr->asStringUriOnly());
 

@@ -294,7 +294,7 @@ FlexiAPIClient *FlexiAPIClient::accountProvision() {
  */
 
 FlexiAPIClient *FlexiAPIClient::accountProvisioningInformation(string provisioningToken) {
-	prepareAndSendRootRequest("provisioning/"+provisioningToken, "GET", "xml");
+	prepareAndSendRootRequest("provisioning/" + provisioningToken, "GET", "xml");
 	return this;
 }
 
@@ -460,13 +460,14 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]";
 		return;
 	}
-	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
+	LinphoneAccount *account = linphone_core_get_default_account(mCore);
 	if (mUseTestAdminAccount) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
 		                             belle_http_header_create("From", "sip:admin_test@sip.example.org"));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", "no_secret_at_all"));
-	} else if (cfg != nullptr) {
-		char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
+	} else if (account != nullptr) {
+		char *addr = linphone_address_as_string_uri_only(
+		    linphone_account_params_get_identity_address(linphone_account_get_params(account)));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("From", addr));
 
 		ms_free(addr);
@@ -515,8 +516,8 @@ void FlexiAPIClient::prepareAndSendRootRequest(string path, string type, string 
 	uri.replace(uri.find(apiQualifier), apiQualifier.size(), "");
 
 	req = belle_http_request_create(type.c_str(), belle_generic_uri_parse(uri.append(path).c_str()),
-									belle_sip_header_content_type_create("application", contentSubtype.c_str()),
-									belle_sip_header_accept_create("application", contentSubtype.c_str()), NULL);
+	                                belle_sip_header_content_type_create("application", contentSubtype.c_str()),
+	                                belle_sip_header_accept_create("application", contentSubtype.c_str()), NULL);
 	if (!req) {
 		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]";
 		return;

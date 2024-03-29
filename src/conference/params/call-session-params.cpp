@@ -24,7 +24,6 @@
 #include "call-session-params-p.h"
 #include "core/core-p.h"
 #include "linphone/core.h"
-#include "linphone/proxy_config.h"
 
 using namespace std;
 
@@ -335,7 +334,7 @@ const std::list<LinphoneSrtpSuite> &CallSessionParams::getSrtpSuites() const {
 
 shared_ptr<Account> CallSessionParams::getAccount() const {
 	L_D();
-	return d->account;
+	return d->account.lock();
 }
 
 void CallSessionParams::setAccount(shared_ptr<Account> account) {

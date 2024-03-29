@@ -338,7 +338,6 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 	list<std::shared_ptr<SearchResult>> returnList;
 	auto cache = getSearchCache();
 	if (cache) returnList = *cache;
-	LinphoneProxyConfig *proxy = nullptr;
 	if (getLimitedSearch() && returnList.size() > getSearchLimit()) {
 		auto limitIterator = returnList.begin();
 		advance(limitIterator, (int)getSearchLimit());
@@ -347,17 +346,16 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 
 	if (!d->mFilter.empty() && ((d->mAsyncData.mSearchRequest.getSourceFlags() & LinphoneMagicSearchSourceRequest) ==
 	                            LinphoneMagicSearchSourceRequest)) {
-		proxy = linphone_core_get_default_proxy_config(this->getCore()->getCCore());
+		const auto &account = getCore()->getDefaultAccount();
 		// Adding last item if proxy exist
-		if (proxy) {
-			const char *domain = linphone_proxy_config_get_domain(proxy);
-			if (domain) {
+		if (account) {
+			const auto &params = account->getAccountParams();
+			const auto &domain = params->getDomain();
+			if (!domain.empty()) {
 				string strTmp = d->mFilter;
 				setlocale(LC_ALL, "");
 				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c) { return tolower(c); });
-				LinphoneAccount *account = linphone_proxy_config_get_account(proxy);
-				const LinphoneAccountParams *params = linphone_account_get_params(account);
-				bool_t apply_prefix = linphone_account_params_get_use_international_prefix_for_calls_and_chats(params);
+				bool_t apply_prefix = params->getUseInternationalPrefixForCallsAndChats();
 				LinphoneAddress *lastResult =
 				    linphone_core_interpret_url_2(this->getCore()->getCCore(), strTmp.c_str(), apply_prefix);
 				if (lastResult) {
@@ -812,7 +810,7 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 	}
 
 	// PHONE NUMBER
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(this->getCore()->getCCore());
+	const auto &account = getCore()->getDefaultAccount();
 	bctbx_list_t *begin, *phoneNumbers = linphone_friend_get_phone_numbers(lFriend);
 	begin = phoneNumbers;
 	while (phoneNumbers && phoneNumbers->data) {
@@ -820,8 +818,8 @@ MagicSearch::searchInFriend(LinphoneFriend *lFriend, const string &filter, const
 		const LinphonePresenceModel *presence =
 		    linphone_friend_get_presence_model_for_uri_or_tel(lFriend, number.c_str());
 		phoneNumber = number;
-		if (proxy) {
-			char *buff = linphone_proxy_config_normalize_phone_number(proxy, phoneNumber.c_str());
+		if (account) {
+			char *buff = linphone_account_normalize_phone_number(account->toC(), phoneNumber.c_str());
 			if (buff) {
 				phoneNumber = buff;
 				bctbx_free(buff);

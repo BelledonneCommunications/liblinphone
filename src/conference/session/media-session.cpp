@@ -4088,10 +4088,7 @@ void MediaSessionPrivate::stunAuthRequestedCb(const char *realm,
 	const auto &account = getDestAccount();
 	if (account) stunAccount = account;
 	else {
-		auto defaultAccount = linphone_core_get_default_account(q->getCore()->getCCore());
-		if (defaultAccount) {
-			stunAccount = Account::toCpp(defaultAccount)->getSharedFromThis();
-		}
+		stunAccount = q->getCore()->getDefaultAccount();
 	}
 	if (!stunAccount) return;
 	const char *user = NULL;

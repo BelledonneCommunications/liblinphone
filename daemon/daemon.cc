@@ -370,9 +370,9 @@ Daemon::Daemon(const char *config_path,
 	linphone_core_enable_video_capture(mLc, capture_video);
 	linphone_core_enable_video_display(mLc, display_video);
 
-	for (const bctbx_list_t *proxy = linphone_core_get_proxy_config_list(mLc); proxy != NULL;
-	     proxy = bctbx_list_next(proxy)) {
-		updateProxyId((LinphoneProxyConfig *)bctbx_list_get_data(proxy));
+	for (const bctbx_list_t *account = linphone_core_get_account_list(mLc); account != NULL;
+	     account = bctbx_list_next(account)) {
+		updateProxyId((LinphoneAccount *)bctbx_list_get_data(account));
 	}
 
 	initCommands();
@@ -409,20 +409,20 @@ LinphoneCall *Daemon::findCall(int id) {
 	return NULL;
 }
 
-int Daemon::updateProxyId(LinphoneProxyConfig *cfg) {
-	int val = VOIDPTR_TO_INT(linphone_proxy_config_get_user_data(cfg));
+int Daemon::updateProxyId(LinphoneAccount *account) {
+	int val = VOIDPTR_TO_INT(linphone_account_get_user_data(account));
 	if (val == 0) {
-		linphone_proxy_config_set_user_data(cfg, INT_TO_VOIDPTR(++mProxyIds));
+		linphone_account_set_user_data(account, INT_TO_VOIDPTR(++mProxyIds));
 		return mProxyIds;
 	}
 	return val;
 }
 
-LinphoneProxyConfig *Daemon::findProxy(int id) {
-	const bctbx_list_t *elem = linphone_core_get_proxy_config_list(mLc);
+LinphoneAccount *Daemon::findProxy(int id) {
+	const bctbx_list_t *elem = linphone_core_get_account_list(mLc);
 	for (; elem != NULL; elem = elem->next) {
-		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)elem->data;
-		if (VOIDPTR_TO_INT(linphone_proxy_config_get_user_data(proxy)) == id) return proxy;
+		LinphoneAccount *account = (LinphoneAccount *)elem->data;
+		if (VOIDPTR_TO_INT(linphone_account_get_user_data(account)) == id) return account;
 	}
 	return NULL;
 }

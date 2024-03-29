@@ -636,10 +636,10 @@ bool Friend::hasCapabilityWithVersionOrMore(const LinphoneFriendCapability capab
 bool Friend::hasPhoneNumber(const std::string &searchedPhoneNumber) const {
 	if (searchedPhoneNumber.empty()) return false;
 
-	LinphoneAccount *account = linphone_core_get_default_account(getCore()->getCCore());
+	const auto &account = getCore()->getDefaultAccount();
 	/* account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number
 	can handle it */
-	if (!linphone_account_is_phone_number(account, L_STRING_TO_C(searchedPhoneNumber))) {
+	if (!linphone_account_is_phone_number(account->toC(), L_STRING_TO_C(searchedPhoneNumber))) {
 		lWarning() << "Phone number [" << L_STRING_TO_C(searchedPhoneNumber) << "] isn't valid";
 		return false;
 	}
@@ -650,12 +650,11 @@ bool Friend::hasPhoneNumber(const std::string &searchedPhoneNumber) const {
 	}
 
 	bool found = false;
-	const bctbx_list_t *accounts = linphone_core_get_account_list(getCore()->getCCore());
-	for (const bctbx_list_t *elem = accounts; elem != nullptr; elem = bctbx_list_next(elem)) {
-		account = (LinphoneAccount *)bctbx_list_get_data(elem);
+	const auto &accounts = getCore()->getAccounts();
+	for (const auto &accountInList : accounts) {
 		char *normalizedPhoneNumber =
-		    linphone_account_normalize_phone_number(account, L_STRING_TO_C(searchedPhoneNumber));
-		found = hasPhoneNumber(Account::getSharedFromThis(account), normalizedPhoneNumber);
+		    linphone_account_normalize_phone_number(accountInList->toC(), L_STRING_TO_C(searchedPhoneNumber));
+		found = hasPhoneNumber(accountInList, normalizedPhoneNumber);
 		if (normalizedPhoneNumber) bctbx_free(normalizedPhoneNumber);
 		if (found) break;
 	}
@@ -920,14 +919,14 @@ const std::string &Friend::phoneNumberToSipUri(const std::string &phoneNumber) c
 		mSipUriToPhoneNumberMap.erase(uri);
 	}
 
-	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(getCore()->getCCore());
-	if (!cfg) return emptyString;
+	const auto &account = getCore()->getDefaultAccount();
+	if (!account) return emptyString;
 	std::string cleanedPhoneNumber(phoneNumber);
 	if (cleanedPhoneNumber.find("tel:") == 0) cleanedPhoneNumber.replace(0, 4, "");
-	char *normalizedNumber = linphone_proxy_config_normalize_phone_number(cfg, cleanedPhoneNumber.c_str());
+	char *normalizedNumber = linphone_account_normalize_phone_number(account->toC(), cleanedPhoneNumber.c_str());
 	if (!normalizedNumber) return emptyString;
 	std::stringstream ss;
-	ss << "sip:" << normalizedNumber << "@" << linphone_proxy_config_get_domain(cfg) << ";user=phone";
+	ss << "sip:" << normalizedNumber << "@" << account->getAccountParams()->getDomain() << ";user=phone";
 	bctbx_free(normalizedNumber);
 	std::string uri = ss.str();
 	const auto pair = mPhoneNumberToSipUriMap.insert({phoneNumber, uri});
@@ -1064,10 +1063,10 @@ void Friend::updateSubscribes(bool onlyWhenRegistered) {
 	if (onlyWhenRegistered && (mSubscribe || mSubscribeActive)) {
 		const std::shared_ptr<Address> addr = getAddress();
 		if (addr) {
-			LinphoneProxyConfig *cfg = linphone_core_lookup_known_proxy(getCore()->getCCore(), addr->toC());
-			if (cfg && linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk) {
+			const auto &account = getCore()->lookupKnownAccount(addr, true);
+			if (account && (account->getState() != LinphoneRegistrationOk)) {
 				lDebug() << "Friend [" << addr->asString() << "] belongs to account with contact address ["
-				         << Address::toCpp(linphone_proxy_config_get_identity_address(cfg))->asString()
+				         << account->getAccountParams()->getIdentityAddress()->asString()
 				         << "], but this one isn't registered. Subscription is suspended.";
 				canSubscribe = false;
 			}

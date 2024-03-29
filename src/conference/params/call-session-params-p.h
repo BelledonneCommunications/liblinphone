@@ -103,7 +103,7 @@ public:
 	std::string sessionName;
 
 	LinphonePrivacyMask privacy = LinphonePrivacyNone;
-	std::shared_ptr<Account> account = nullptr;
+	std::weak_ptr<Account> account;
 
 private:
 	bool capabilityNegotiation = false;

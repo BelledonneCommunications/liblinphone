@@ -22,7 +22,7 @@
 #include "linphone/core_utils.h"
 
 int main(int argc, char *argv[]) {
-	LinphoneProxyConfig *cfg;
+	LinphoneAccount *account;
 	char *normalized_number;
 	if (argc < 2) {
 		fprintf(stderr, "Usage:\n%s <phone number> [<country code>] [--escape-plus]\nReturns normalized number.",
@@ -31,19 +31,22 @@ int main(int argc, char *argv[]) {
 	}
 	linphone_core_enable_logs(stderr);
 	linphone_core_set_log_level(ORTP_DEBUG);
-	cfg = linphone_core_create_proxy_config(NULL);
-	if (argc > 2) linphone_proxy_config_set_dial_prefix(cfg, argv[2]);
-	if (argc > 3 && strcmp(argv[3], "--escape-plus") == 0) linphone_proxy_config_set_dial_escape_plus(cfg, TRUE);
-	normalized_number = linphone_proxy_config_normalize_phone_number(cfg, argv[1]);
+	LinphoneAccountParams *params = linphone_account_params_new(NULL);
+	if (argc > 2) linphone_account_params_set_international_prefix(params, argv[2]);
+	if (argc > 3 && strcmp(argv[3], "--escape-plus") == 0) linphone_account_params_set_dial_escape_plus(params, TRUE);
+	account = linphone_core_create_account(NULL, params);
+	linphone_account_params_unref(params);
+	normalized_number = linphone_proxy_config_normalize_phone_number(account, argv[1]);
 
 	if (!normalized_number) {
 		printf("Invalid phone number: %s\n", argv[1]);
 	} else {
 		printf("Normalized number is %s\n", normalized_number);
 		/*check extracted ccc*/
-		if (linphone_proxy_config_get_dial_prefix(cfg) != NULL) {
+		const LinphoneAccountParams *account_params = linphone_account_get_params(account);
+		if (linphone_account_params_get_international_prefix(account_params) != NULL) {
 			if (linphone_dial_plan_lookup_ccc_from_e164(normalized_number) !=
-			    atoi(linphone_proxy_config_get_dial_prefix(cfg))) {
+			    atoi(linphone_account_params_get_international_prefix(account_params))) {
 				printf("Error ccc [%i] not correctly parsed\n",
 				       linphone_dial_plan_lookup_ccc_from_e164(normalized_number));
 			} else {

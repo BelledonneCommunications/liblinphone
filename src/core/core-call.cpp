@@ -370,11 +370,10 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 	// must be added to the call logs
 	if (!confInfo && to) {
 		// Do not add calls made to the conference factory in the history
-		LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), to->toC());
+		auto account = lookupKnownAccount(to, true);
 		std::shared_ptr<Address> from = callLog->getFromAddress() ? callLog->getFromAddress() : nullptr;
 		if (account) {
-			const auto &conferenceFactoryUri =
-			    Account::toCpp(account)->getAccountParams()->getConferenceFactoryAddress();
+			const auto &conferenceFactoryUri = account->getAccountParams()->getConferenceFactoryAddress();
 			if (conferenceFactoryUri && conferenceFactoryUri->isValid()) {
 				if (to->weakEqual(*conferenceFactoryUri)) {
 					return;
@@ -382,7 +381,7 @@ void Core::reportConferenceCallEvent(EventLog::Type type,
 			}
 			// Do not add calls made to the audio/video conference factory in the history either
 			const auto &audioVideoConferenceFactoryAddress =
-			    Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
+			    account->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 			if (audioVideoConferenceFactoryAddress != nullptr) {
 				if (to->weakEqual(*audioVideoConferenceFactoryAddress)) {
 					return;

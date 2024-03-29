@@ -243,13 +243,25 @@ LinphoneAccountCreatorStatus linphone_account_creator_constructor_linphone_xmlrp
 	const char *realm =
 	    linphone_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "realm", NULL);
 
-	if (!creator->proxy_cfg) creator->proxy_cfg = linphone_core_create_proxy_config(creator->core);
-	linphone_proxy_config_set_realm(creator->proxy_cfg, realm ? realm : "sip.linphone.org");
-	linphone_proxy_config_set_route(creator->proxy_cfg, route ? route : "sip.linphone.org");
-	linphone_proxy_config_set_server_addr(creator->proxy_cfg, proxy ? proxy : "sip.linphone.org");
-	addr = linphone_address_new(identity ? identity : "sip:username@sip.linphone.org");
-	linphone_proxy_config_set_identity_address(creator->proxy_cfg, addr);
-	linphone_address_unref(addr);
+	if (!creator->account) {
+		LinphoneAccountParams *account_params = linphone_core_create_account_params(creator->core);
+		linphone_account_params_set_realm(account_params, realm ? realm : "sip.linphone.org");
+		bctbx_list_t *route_list = nullptr;
+		LinphoneAddress *route_address = linphone_address_new(route ? route : "sip.linphone.org");
+		if (route_address != NULL) {
+			route_list = bctbx_list_append(route_list, route_address);
+		}
+		linphone_account_params_set_routes_addresses(account_params, route_list);
+		if (route_list) {
+			bctbx_list_free_with_data(route_list, (bctbx_list_free_func)linphone_address_unref);
+		}
+		linphone_account_params_set_server_addr(account_params, proxy ? proxy : "sip.linphone.org");
+		addr = linphone_address_new(identity ? identity : "sip:username@sip.linphone.org");
+		linphone_account_params_set_identity_address(account_params, addr);
+		linphone_address_unref(addr);
+		creator->account = linphone_core_create_account(creator->core, account_params);
+		linphone_account_params_unref(account_params);
+	}
 
 	return LinphoneAccountCreatorStatusRequestOk;
 }
@@ -298,11 +310,13 @@ linphone_account_creator_is_account_exist_linphone_xmlrpc(LinphoneAccountCreator
 	if (xmlrpc_session) {
 		ms_debug("Account creator: is_account_exist (%s=%s, domain=%s)",
 		         (creator->username) ? "username" : "phone number",
-		         (creator->username) ? creator->username : creator->phone_number, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		         (creator->username) ? creator->username : creator->phone_number,
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_phone_number_for_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
 		                                          _is_account_exist_response_cb);
@@ -344,18 +358,21 @@ static LinphoneXmlRpcRequest *_create_account_with_phone_custom(LinphoneAccountC
 	}
 	ms_debug(
 	    "Account creator: create_account_with_phone (phone number=%s, username=%s, domain=%s, language=%s, algo=%s)",
-	    creator->phone_number, (creator->username) ? creator->username : creator->phone_number, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator),
-	    creator->language, creator->algorithm);
+	    creator->phone_number, (creator->username) ? creator->username : creator->phone_number,
+	    linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->language,
+	    creator->algorithm);
 
 	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "create_phone_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
 	linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
 	std::string ha1 = Utils::computeHa1ForAlgorithm(
 	    L_C_TO_STRING(creator->username ? creator->username : creator->phone_number), L_C_TO_STRING(creator->password),
-	    L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)), L_C_TO_STRING(creator->algorithm));
+	    L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
+	    L_C_TO_STRING(creator->algorithm));
 	linphone_xml_rpc_request_add_string_arg(request, creator->password ? ha1.c_str() : "");
 	linphone_xml_rpc_request_add_string_arg(request, linphone_core_get_user_agent(creator->core));
-	linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+	linphone_xml_rpc_request_add_string_arg(request,
+	                                        linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 	linphone_xml_rpc_request_add_string_arg(request, creator->language);
 	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 	return request;
@@ -367,17 +384,20 @@ static LinphoneXmlRpcRequest *_create_account_with_email_custom(LinphoneAccountC
 		return NULL;
 	}
 	ms_debug("Account creator: create_account_with_email (username=%s, email=%s, domain=%s, algo=%s)",
-	         creator->username, creator->email, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
+	         creator->username, creator->email,
+	         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
 
 	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "create_email_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username);
 	linphone_xml_rpc_request_add_string_arg(request, creator->email);
 	std::string ha1 = Utils::computeHa1ForAlgorithm(
 	    L_C_TO_STRING(creator->username ? creator->username : creator->phone_number), L_C_TO_STRING(creator->password),
-	    L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)), L_C_TO_STRING(creator->algorithm));
+	    L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
+	    L_C_TO_STRING(creator->algorithm));
 	linphone_xml_rpc_request_add_string_arg(request, ha1.c_str());
 	linphone_xml_rpc_request_add_string_arg(request, linphone_core_get_user_agent(creator->core));
-	linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+	linphone_xml_rpc_request_add_string_arg(request,
+	                                        linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 	return request;
 }
@@ -438,7 +458,7 @@ static void _delete_linphone_account_response_cb(LinphoneXmlRpcRequest *request)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
-	if ((!creator->username && !creator->phone_number) || !creator->password || !creator->proxy_cfg) {
+	if ((!creator->username && !creator->phone_number) || !creator->password || !creator->account) {
 		if (creator->cbs->delete_account_response_cb != NULL) {
 			creator->cbs->delete_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
 			                                         "Missing required parameters");
@@ -449,8 +469,9 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_xm
 	}
 
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
+	const LinphoneAccountParams *account_params = linphone_account_get_params(creator->account);
 	ms_debug("Account creator: delete_account (username=%s, password=%s, domain=%s, algo=%s)", creator->username,
-	         creator->password, linphone_proxy_config_get_domain(creator->proxy_cfg), creator->algorithm);
+	         creator->password, linphone_account_params_get_domain(account_params), creator->algorithm);
 
 	LinphoneXmlRpcSession *xmlrpc_session =
 	    (LinphoneXmlRpcSession *)belle_sip_object_data_get(BELLE_SIP_OBJECT(creator), "xmlrpc_session");
@@ -458,7 +479,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_xm
 	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "delete_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
 	linphone_xml_rpc_request_add_string_arg(request, creator->password);
-	linphone_xml_rpc_request_add_string_arg(request, linphone_proxy_config_get_domain(creator->proxy_cfg));
+	linphone_xml_rpc_request_add_string_arg(request, linphone_account_params_get_domain(account_params));
 	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 	linphone_xml_rpc_request_set_user_data(request, creator);
 	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -566,12 +587,13 @@ linphone_account_creator_login_linphone_account_linphone_xmlrpc(LinphoneAccountC
 		ms_debug("Account creator: recover_account_from_confirmation_key (username=%s, activation code=%s, domain=%s, "
 		         "algo=%s)",
 		         creator->username ? creator->username : creator->phone_number, creator->activation_code,
-				 linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgStringStruct, "recover_account_from_confirmation_key");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -634,13 +656,15 @@ linphone_account_creator_activate_phone_account_linphone_xmlrpc(LinphoneAccountC
 		ms_debug("Account creator: activate_account_phone (phone number=%s, username=%s, activation code=%s, "
 		         "domain=%s, algo=%s)",
 		         creator->phone_number, creator->username ? creator->username : creator->phone_number,
-		         creator->activation_code, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
+		         creator->activation_code, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator),
+		         creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_phone_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
 		linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -672,12 +696,14 @@ linphone_account_creator_activate_email_account_linphone_xmlrpc(LinphoneAccountC
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 	if (xmlrpc_session) {
 		ms_debug("Account creator: activate_account_email (username=%s, activation code=%s, domain=%s, algo=%s)",
-		         creator->username, creator->activation_code, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
+		         creator->username, creator->activation_code,
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_email_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -718,7 +744,7 @@ static void get_linphone_confirmation_key_response_cb(LinphoneXmlRpcRequest *req
 
 LinphoneAccountCreatorStatus
 linphone_account_creator_get_confirmation_key_linphone_xmlrpc(LinphoneAccountCreator *creator) {
-	if (!creator->username || !creator->password || !creator->proxy_cfg) {
+	if (!creator->username || !creator->password || !creator->account) {
 		if (creator->cbs->confirmation_key_response_cb != NULL) {
 			creator->cbs->confirmation_key_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
 			                                           "Missing required parameters");
@@ -729,8 +755,9 @@ linphone_account_creator_get_confirmation_key_linphone_xmlrpc(LinphoneAccountCre
 	}
 
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
+	const LinphoneAccountParams *account_params = linphone_account_get_params(creator->account);
 	ms_debug("Account creator: confirmation_key (username=%s, password=%s, domain=%s, algo=%s)", creator->username,
-	         creator->password, linphone_proxy_config_get_domain(creator->proxy_cfg), creator->algorithm);
+	         creator->password, linphone_account_params_get_domain(account_params), creator->algorithm);
 
 	LinphoneXmlRpcSession *xmlrpc_session =
 	    (LinphoneXmlRpcSession *)belle_sip_object_data_get(BELLE_SIP_OBJECT(creator), "xmlrpc_session");
@@ -738,10 +765,10 @@ linphone_account_creator_get_confirmation_key_linphone_xmlrpc(LinphoneAccountCre
 	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_confirmation_key");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username);
 	std::string ha1 = Utils::computeHa1ForAlgorithm(L_C_TO_STRING(creator->username), L_C_TO_STRING(creator->password),
-	                                                L_C_TO_STRING(linphone_proxy_config_get_domain(creator->proxy_cfg)),
+	                                                L_C_TO_STRING(linphone_account_params_get_domain(account_params)),
 	                                                L_C_TO_STRING(creator->algorithm));
 	linphone_xml_rpc_request_add_string_arg(request, ha1.c_str());
-	linphone_xml_rpc_request_add_string_arg(request, linphone_proxy_config_get_domain(creator->proxy_cfg));
+	linphone_xml_rpc_request_add_string_arg(request, linphone_account_params_get_domain(account_params));
 	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 	linphone_xml_rpc_request_set_user_data(request, creator);
 	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -789,12 +816,13 @@ linphone_account_creator_is_account_activated_linphone_xmlrpc(LinphoneAccountCre
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 	if (xmlrpc_session) {
 		ms_debug("Account creator: is_account_activated (username=%s, domain=%s, algo=%s)",
-		         creator->username ? creator->username : creator->phone_number, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator),
-		         creator->algorithm);
+		         creator->username ? creator->username : creator->phone_number,
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "is_account_activated");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -849,11 +877,12 @@ linphone_account_creator_is_phone_number_used_linphone_xmlrpc(LinphoneAccountCre
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 	if (xmlrpc_session) {
 		ms_debug("Account creator: is_phone_number_used (phone number=%s, domain=%s)", creator->phone_number,
-				 linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "is_phone_number_used");
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
 		                                          _is_phone_number_used_cb_custom);
@@ -908,12 +937,14 @@ linphone_account_creator_link_phone_number_with_account_linphone_xmlrpc(Linphone
 	if (xmlrpc_session) {
 		ms_debug(
 		    "Account creator: link_phone_number_with_account (phone number=%s, username=%s, domain=%s, language=%s)",
-		    creator->phone_number, creator->username, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->language);
+		    creator->phone_number, creator->username,
+		    linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->language);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "link_phone_number_with_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->language);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -963,11 +994,12 @@ linphone_account_creator_is_account_linked_linphone_xmlrpc(LinphoneAccountCreato
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 	if (xmlrpc_session) {
 		ms_debug("Account creator: is_account_linked (username=%s, domain=%s)", creator->username,
-				 linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_phone_number_for_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
 		                                          _get_phone_number_for_account_cb_custom);
@@ -1001,7 +1033,8 @@ LinphoneAccountCreatorStatus
 linphone_account_creator_activate_phone_number_link_linphone_xmlrpc(LinphoneAccountCreator *creator) {
 	LinphoneXmlRpcRequest *request = NULL;
 	if (!creator->phone_number || !creator->username || !creator->activation_code ||
-	    (!creator->password && !creator->ha1) || !linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)) {
+	    (!creator->password && !creator->ha1) ||
+	    !linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)) {
 		if (creator->cbs->activate_alias_response_cb != NULL) {
 			creator->cbs->activate_alias_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
 			                                         "Missing required parameters");
@@ -1018,18 +1051,20 @@ linphone_account_creator_activate_phone_number_link_linphone_xmlrpc(LinphoneAcco
 	if (xmlrpc_session) {
 		ms_debug("Account creator: activate_phone_number_link (phone number=%s, username=%s, activation code=%s, "
 		         "domain=%s, algo=%s)",
-		         creator->phone_number, creator->username, creator->activation_code, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator),
-		         creator->algorithm);
+		         creator->phone_number, creator->username, creator->activation_code,
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_phone_number_link");
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
-		std::string ha1 =
-		    Utils::computeHa1ForAlgorithm(L_C_TO_STRING(creator->username), L_C_TO_STRING(creator->password),
-		                                  L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)), L_C_TO_STRING(creator->algorithm));
+		std::string ha1 = Utils::computeHa1ForAlgorithm(
+		    L_C_TO_STRING(creator->username), L_C_TO_STRING(creator->password),
+		    L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
+		    L_C_TO_STRING(creator->algorithm));
 		linphone_xml_rpc_request_add_string_arg(request, creator->ha1 ? creator->ha1 : ha1.c_str());
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -1086,11 +1121,13 @@ linphone_account_creator_recover_phone_account_linphone_xmlrpc(LinphoneAccountCr
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 	if (xmlrpc_session) {
 		ms_debug("Account creator: recover_phone_account (phone number=%s, domain=%s, language=%s)",
-		         creator->phone_number, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->language);
+		         creator->phone_number, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator),
+		         creator->language);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "recover_phone_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->language);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),
@@ -1132,7 +1169,8 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_x
 	LinphoneXmlRpcRequest *request = NULL;
 	char *identity = linphone_account_creator_get_identity(creator);
 	const char *new_pwd = (const char *)linphone_account_creator_get_user_data(creator);
-	if (!identity || ((!creator->username && !creator->phone_number) || !linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator) ||
+	if (!identity || ((!creator->username && !creator->phone_number) ||
+	                  !linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator) ||
 	                  (!creator->password && !creator->ha1) || !new_pwd)) {
 		if (creator->cbs->update_account_response_cb != NULL) {
 			creator->cbs->update_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments,
@@ -1150,23 +1188,26 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_x
 	linphone_account_creator_fill_domain_and_algorithm_if_needed(creator);
 	if (xmlrpc_session) {
 		const char *username = creator->username ? creator->username : creator->phone_number;
-		std::string generated_ha1 =
-		    Utils::computeHa1ForAlgorithm(L_C_TO_STRING(username), L_C_TO_STRING(creator->password),
-		                                  L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)), L_C_TO_STRING(creator->algorithm));
+		std::string generated_ha1 = Utils::computeHa1ForAlgorithm(
+		    L_C_TO_STRING(username), L_C_TO_STRING(creator->password),
+		    L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
+		    L_C_TO_STRING(creator->algorithm));
 		char *ha1 = bctbx_strdup(creator->ha1 ? creator->ha1 : generated_ha1.c_str());
-		std::string new_generated_ha1 =
-		    Utils::computeHa1ForAlgorithm(L_C_TO_STRING(username), L_C_TO_STRING(new_pwd),
-		                                  L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)), L_C_TO_STRING(creator->algorithm));
+		std::string new_generated_ha1 = Utils::computeHa1ForAlgorithm(
+		    L_C_TO_STRING(username), L_C_TO_STRING(new_pwd),
+		    L_C_TO_STRING(linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator)),
+		    L_C_TO_STRING(creator->algorithm));
 		char *new_ha1 = bctbx_strdup(new_generated_ha1.c_str());
 
 		ms_debug("Account creator: update_password (username=%s, domain=%s, algo=%s)", creator->username,
-				 linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
+		         linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator), creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "update_hash");
 		linphone_xml_rpc_request_add_string_arg(request, username);
 		linphone_xml_rpc_request_add_string_arg(request, ha1);
 		linphone_xml_rpc_request_add_string_arg(request, new_ha1);
-		linphone_xml_rpc_request_add_string_arg(request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
+		linphone_xml_rpc_request_add_string_arg(
+		    request, linphone_account_creator_get_domain_with_fallback_to_proxy_domain(creator));
 		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request),

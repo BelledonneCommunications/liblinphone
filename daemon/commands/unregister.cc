@@ -33,7 +33,7 @@ UnregisterCommand::UnregisterCommand()
 }
 
 void UnregisterCommand::exec(Daemon *app, const string &args) {
-	LinphoneProxyConfig *cfg = NULL;
+	LinphoneAccount *account = NULL;
 	string param;
 	int pid;
 
@@ -45,9 +45,9 @@ void UnregisterCommand::exec(Daemon *app, const string &args) {
 	}
 	if (param.compare("ALL") == 0) {
 		for (int i = 1; i <= app->maxProxyId(); i++) {
-			cfg = app->findProxy(i);
-			if (cfg != NULL) {
-				linphone_core_remove_proxy_config(app->getCore(), cfg);
+			account = app->findProxy(i);
+			if (account != NULL) {
+				linphone_core_remove_account(app->getCore(), account);
 			}
 		}
 	} else {
@@ -58,12 +58,12 @@ void UnregisterCommand::exec(Daemon *app, const string &args) {
 			app->sendResponse(Response("Incorrect parameter.", Response::Error));
 			return;
 		}
-		cfg = app->findProxy(pid);
-		if (cfg == NULL) {
+		account = app->findProxy(pid);
+		if (account == NULL) {
 			app->sendResponse(Response("No register with such id.", Response::Error));
 			return;
 		}
-		linphone_core_remove_proxy_config(app->getCore(), cfg);
+		linphone_core_remove_account(app->getCore(), account);
 	}
 	app->sendResponse(Response());
 }

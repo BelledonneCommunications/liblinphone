@@ -910,9 +910,9 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 		if (strcmp(linphone_event_get_name(lev), "conference") == 0) linphone_event_set_internal(lev, TRUE);
 		linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
-		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(lc, Address(op->getTo()).toC());
-		if (proxy && linphone_proxy_config_get_realm(proxy)) {
-			op->setRealm(linphone_proxy_config_get_realm(proxy));
+		LinphoneAccount *account = linphone_core_lookup_known_account(lc, Address(op->getTo()).toC());
+		if (account && linphone_account_params_get_realm(linphone_account_get_params(account))) {
+			op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(account)));
 		}
 		linphone_core_notify_subscribe_received(lc, lev, eventname, ct);
 		if (ct) linphone_content_unref(ct);
@@ -950,9 +950,9 @@ static void publish_received(SalPublishOp *op, const char *eventname, const SalB
 
 	LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 	Address to(op->getTo());
-	LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(lc, to.toC());
-	if (proxy && linphone_proxy_config_get_realm(proxy)) {
-		op->setRealm(linphone_proxy_config_get_realm(proxy));
+	LinphoneAccount *account = linphone_core_lookup_known_account(lc, to.toC());
+	if (account && linphone_account_params_get_realm(linphone_account_get_params(account))) {
+		op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(account)));
 	}
 	linphone_core_notify_publish_received(lc, lev, eventname, ct);
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Event, Event::toCpp(lev), linphone_event_cbs_get_publish_received, ct);

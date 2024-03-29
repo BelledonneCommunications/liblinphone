@@ -70,14 +70,12 @@ void AuthStack::authFound(const std::shared_ptr<AuthInfo> &ai) {
 void AuthStack::notifyAuthFailures() {
 	auto pendingAuths = mCore.getSal()->getPendingAuths();
 	for (const auto &op : pendingAuths) {
-		const bctbx_list_t *elem;
-		/*proxy case*/
-		for (elem = linphone_core_get_account_list(mCore.getCCore()); elem != NULL; elem = elem->next) {
-			LinphoneAccount *acc = (LinphoneAccount *)elem->data;
-			if (acc == op->getUserPointer()) {
+		/*account case*/
+		for (auto &acc : mCore.getPublic()->getAccounts()) {
+			if (acc->toC() == op->getUserPointer()) {
 				const SalErrorInfo *ei = op->getErrorInfo();
 				const char *details = ei->full_string;
-				Account::toCpp(acc)->setState(LinphoneRegistrationFailed, details);
+				acc->setState(LinphoneRegistrationFailed, details);
 				break;
 			}
 		}

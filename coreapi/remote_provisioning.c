@@ -125,16 +125,16 @@ int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc,
 			header_it = bctbx_list_next(header_it);
 		}
 
-		LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
-		if (cfg != nullptr) {
-			char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
+		LinphoneAccount *account = linphone_core_get_default_account(lc);
+		if (account != nullptr) {
+			char *addr = linphone_address_as_string_uri_only(
+			    linphone_account_params_get_identity_address(linphone_account_get_params(account)));
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", addr));
 			ms_free(addr);
 		} else if (linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL) != NULL) {
 			const char *addr = linphone_config_get_string(lc->config, "misc", "remote_provisioning_from_address", NULL);
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), belle_http_header_create("From", addr));
 		}
-		
 
 		return belle_http_provider_send_request(lc->http_provider, request, lc->provisioning_http_listener);
 	} else {

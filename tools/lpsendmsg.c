@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 	LinphoneAddress *from = NULL;
 	LinphoneAddress *to = NULL;
 	LinphoneAddress *route = NULL;
-	LinphoneProxyConfig *cfg;
+	LinphoneAccount *account;
 	LinphoneChatMessage *msg;
 	LinphoneChatRoom *room;
 	LinphoneChatMessageCbs *cbs;
@@ -175,14 +175,17 @@ int main(int argc, char *argv[]) {
 		linphone_address_set_display_name(route, NULL);
 	}
 
-	cfg = linphone_core_create_proxy_config(lc);
-	linphone_proxy_config_set_identity_address(cfg, from);
+	LinphoneAccountParams *account_params = linphone_account_params_new(lc);
+	linphone_account_params_set_identity_address(account_params, from);
 	tmp = linphone_address_as_string(route);
-	linphone_proxy_config_set_server_addr(cfg, tmp);
+	linphone_account_params_set_server_addr(account_params, tmp);
 	ms_free(tmp);
-	linphone_proxy_config_enable_register(cfg, FALSE);
-	linphone_core_add_proxy_config(lc, cfg);
-	linphone_proxy_config_unref(cfg);
+	linphone_account_params_enable_register(account_params, FALSE);
+
+	account = linphone_core_create_account(lc, account_params);
+	linphone_core_add_account(lc, account);
+	linphone_account_params_unref(account_params);
+	linphone_account_unref(account);
 
 	room = linphone_core_get_chat_room(lc, to);
 	msg = linphone_chat_room_create_message(room, text);

@@ -83,13 +83,15 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator);
 
 /**
- * Send a request to create a push account on server. Push accounts are used in account dependent situation when account cannot send push notifications.
- * A username and password are automatically generated, an account is automatically activated.
+ * Send a request to create a push account on server. Push accounts are used in account dependent situation when account
+ *cannot send push notifications. A username and password are automatically generated, an account is automatically
+ *activated.
  * @param creator #LinphoneAccountCreator object @notnil
  * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent,
  *#LinphoneAccountCreatorStatusRequestFailed otherwise
  **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_push_account(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus
+linphone_account_creator_create_push_account(LinphoneAccountCreator *creator);
 
 /**
  * Send a request to know if an account is activated on server.
@@ -220,6 +222,13 @@ LINPHONE_PUBLIC void *linphone_account_creator_get_user_data(const LinphoneAccou
  * @param user_data The user pointer to associate with the LinphoneAccountCreator. @maybenil
  **/
 LINPHONE_PUBLIC void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, void *user_data);
+
+/**
+ * Assign a proxy config pointer to the LinphoneAccountCreator.
+ * @param creator LinphoneAccountCreator object. @notnil
+ * @param account The LinphoneAccount to associate with the LinphoneAccountCreator. @maybenil
+ **/
+LINPHONE_PUBLIC void linphone_account_creator_set_account(LinphoneAccountCreator *creator, LinphoneAccount *account);
 
 /**
  * Assign a proxy config pointer to the LinphoneAccountCreator.

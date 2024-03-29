@@ -41,23 +41,17 @@ LINPHONE_BEGIN_NAMESPACE
 
 ConferenceScheduler::ConferenceScheduler(const shared_ptr<Core> &core) : CoreAccessor(core) {
 	mState = State::Idle;
-	auto default_account = linphone_core_get_default_account(core->getCCore());
-	if (default_account) {
-		mAccount = Account::toCpp(default_account)->getSharedFromThis();
-	}
+	mAccount = core->getDefaultAccount();
 }
 
 ConferenceScheduler::~ConferenceScheduler() {
 	if (mSession != nullptr) {
 		mSession->setListener(nullptr);
 	}
-	if (mAccount) {
-		mAccount = nullptr;
-	}
 }
 
-const std::shared_ptr<Account> &ConferenceScheduler::getAccount() const {
-	return mAccount;
+const std::shared_ptr<Account> ConferenceScheduler::getAccount() const {
+	return mAccount.lock();
 }
 
 void ConferenceScheduler::setAccount(std::shared_ptr<Account> account) {
@@ -136,15 +130,12 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	// Clone the conference info in order to be able to modify it freely
 	auto clone = info->clone()->toSharedPtr();
 
-	if (!mAccount) {
-		auto default_account = linphone_core_get_default_account(getCore()->getCCore());
-		if (default_account) {
-			mAccount = Account::toCpp(default_account)->getSharedFromThis();
-		}
+	if (!getAccount()) {
+		mAccount = getCore()->getDefaultAccount();
 	}
 
-	const auto creator = mAccount ? mAccount->getAccountParams()->getIdentityAddress()
-	                              : Address::create(linphone_core_get_identity(getCore()->getCCore()));
+	const auto creator = getAccount() ? getAccount()->getAccountParams()->getIdentityAddress()
+	                                  : Address::create(linphone_core_get_identity(getCore()->getCCore()));
 	if (!creator || !creator->isValid()) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Core address attempting to set conference information!";
 		return;
@@ -457,15 +448,12 @@ void ConferenceScheduler::sendInvitations(shared_ptr<ChatRoomParams> chatRoomPar
 		return;
 	}
 
-	if (!mAccount) {
-		auto default_account = linphone_core_get_default_account(getCore()->getCCore());
-		if (default_account) {
-			mAccount = Account::toCpp(default_account)->getSharedFromThis();
-		}
+	if (!getAccount()) {
+		mAccount = getCore()->getDefaultAccount();
 	}
 
-	const auto sender = mAccount ? mAccount->getAccountParams()->getIdentityAddress()
-	                             : Address::create(linphone_core_get_identity(getCore()->getCCore()));
+	const auto sender = getAccount() ? getAccount()->getAccountParams()->getIdentityAddress()
+	                                 : Address::create(linphone_core_get_identity(getCore()->getCCore()));
 	if (!sender || !sender->isValid()) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Core address attempting to send invitation isn't valid!";
 		return;
