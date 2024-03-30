@@ -65,7 +65,7 @@ public class DeviceUtils31 {
 							} catch (Exception e) {
 								Log.e("Failed to obtain tombstone, is app missing [implementation \"com.google.protobuf:protobuf-javalite:3.22.3\"] dependency?");
 							}
-						} else {
+						} else if (exitInfo.getReason() == ApplicationExitInfo.REASON_ANR) {
 							BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 							String trace = bufferedReader.lines().collect(Collectors.joining("\n"));
 							Log.w("TRACE=", trace);
