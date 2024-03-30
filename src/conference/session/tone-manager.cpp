@@ -122,6 +122,11 @@ void ToneManager::stopRingbackTone() {
 void ToneManager::startRingtone() {
 	LinphoneCore *lc = getCore().getCCore();
 	lInfo() << "[ToneManager] " << __func__;
+	if (!getPlatformHelpers(lc)->isRingingAllowed()) {
+		lWarning() << "[ToneManager] Platform Helper says ringing isn't allowed by platform, do not ring...";
+		return;
+	}
+
 	mStats.number_of_startRingtone++;
 	MSSndCard *ringcard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.ring_sndcard;
 	if (ringcard) {

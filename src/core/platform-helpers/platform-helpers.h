@@ -115,6 +115,7 @@ public:
 
 	virtual void onRecordingStarted() const = 0;
 	virtual void onRecordingPaused() const = 0;
+	virtual bool isRingingAllowed() const = 0;
 	virtual void stopRinging() const = 0;
 
 	virtual void setDeviceRotation(int orientation) const = 0;
@@ -194,6 +195,9 @@ public:
 
 	void onRecordingStarted() const override{};
 	void onRecordingPaused() const override{};
+	bool isRingingAllowed() const override {
+		return true;
+	};
 	void stopRinging() const override{};
 	void setDeviceRotation(BCTBX_UNUSED(int orientation)) const override{};
 

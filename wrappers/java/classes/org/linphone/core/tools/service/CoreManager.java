@@ -32,6 +32,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.hardware.display.DisplayManager;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -635,6 +636,17 @@ public class CoreManager {
 
     public void setAudioManagerInNormalMode() {
         if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
+    }
+
+    public boolean isRingingAllowed() {
+        AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        int ringerMode = audioManager.getRingerMode();
+        if (ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
+            Log.w("[Core Manager] Ringer mode is set to silent or vibrate (", ringerMode, ")");
+            return false;
+        }
+        Log.i("[Core Manager] Ringer mode is set to normal (", ringerMode, ")");
+        return true;
     }
 
     public void stopRinging() {
