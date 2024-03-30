@@ -85,6 +85,7 @@ public:
 
 	void onRecordingStarted() const override;
 	void onRecordingPaused() const override;
+	bool isRingingAllowed() const override;
 	void stopRinging() const override;
 
 	void setDeviceRotation(int orientation) const override;
@@ -145,6 +146,7 @@ private:
 	jmethodID mStopAutoIterateId = nullptr;
 	jmethodID mSetAudioManagerCommunicationMode = nullptr;
 	jmethodID mSetAudioManagerNormalMode = nullptr;
+	jmethodID mIsRingingAllowed = nullptr;
 	jmethodID mStopRingingId = nullptr;
 
 	bool mNetworkReachable = false;
@@ -201,6 +203,7 @@ void AndroidPlatformHelpers::createCoreManager(std::shared_ptr<LinphonePrivate::
 	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
 	mSetAudioManagerCommunicationMode = getMethodId(env, klass, "setAudioManagerInCommunicationMode", "()V");
 	mSetAudioManagerNormalMode = getMethodId(env, klass, "setAudioManagerInNormalMode", "()V");
+	mIsRingingAllowed = getMethodId(env, klass, "isRingingAllowed", "()Z");
 	mStopRingingId = getMethodId(env, klass, "stopRinging", "()V");
 
 	lInfo() << "[Android Platform Helper] CoreManager is fully initialised.";
@@ -579,6 +582,16 @@ void AndroidPlatformHelpers::onRecordingStarted() const {
 }
 
 void AndroidPlatformHelpers::onRecordingPaused() const {
+}
+
+bool AndroidPlatformHelpers::isRingingAllowed() const {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			return env->CallBooleanMethod(mJavaCoreManager, mIsRingingAllowed);
+		}
+	}
+	return false;
 }
 
 void AndroidPlatformHelpers::stopRinging() const {
