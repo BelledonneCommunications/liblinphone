@@ -138,28 +138,33 @@ LINPHONE_PUBLIC bool_t linphone_magic_search_get_use_delimiter(LinphoneMagicSear
 LINPHONE_PUBLIC void linphone_magic_search_set_use_delimiter(LinphoneMagicSearch *magic_search, bool_t enable);
 
 /**
- * Get the number of maximum search result the search will return
+ * Gets the number of maximum search result the search will return.
+ * The returned value doesn't take into account the "limited search" mode, so make sure to check
+ *linphone_magic_search_get_limited_search() result as well.
  * @param magic_search a #LinphoneMagicSearch object @notnil
- * @return the number of the maximum #LinphoneSearchResult which will be returned
+ * @return the number of the maximum #LinphoneSearchResult which will be returned if magic search is in limited mode.
  **/
 LINPHONE_PUBLIC unsigned int linphone_magic_search_get_search_limit(const LinphoneMagicSearch *magic_search);
 
 /**
- * Set the number of the maximum SearchResult which will be returned
+ * Sets the number of the maximum SearchResult which will be returned, if the magic search isn't configured as unlimited
+ *with linphone_magic_search_set_limited_search().
  * @param magic_search a #LinphoneMagicSearch object @notnil
- * @param limit the maximum number of #LinphoneSearchResult the search will return
+ * @param limit the maximum number of #LinphoneSearchResult the search will return if magic search is in limited mode.
  **/
 LINPHONE_PUBLIC void linphone_magic_search_set_search_limit(LinphoneMagicSearch *magic_search, unsigned int limit);
 
 /**
- * Return whether or not the search is limited
+ * Returns whether or not the search is limited or not. If not limited, the linphone_magic_search_get_search_limit()
+ *won't be applied.
  * @param magic_search a #LinphoneMagicSearch object @notnil
  * @return TRUE if the search is limited, FALSE otherwise
  **/
 LINPHONE_PUBLIC bool_t linphone_magic_search_get_limited_search(const LinphoneMagicSearch *magic_search);
 
 /**
- * Enable or disable the limited search
+ * Enables or disables the limited search.
+ * Even if configured as unlimited, the LDAP maxResults configuration parameter still applies.
  * @param magic_search a #LinphoneMagicSearch object @notnil
  * @param limited TRUE to limit the search, FALSE otherwise
  **/

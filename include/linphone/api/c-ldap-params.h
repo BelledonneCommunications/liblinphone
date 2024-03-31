@@ -145,8 +145,8 @@ LINPHONE_PUBLIC const char *linphone_ldap_params_get_base_object(const LinphoneL
 /*************************************************************************************/
 
 /**
- * @brief Timeout for requests in seconds. It limits the time for searchs and the value is passed to Ldap with `LDAP_OPT_NETWORK_TIMEOUT`.
- * Default value : 5.
+ * @brief Timeout for requests in seconds. It limits the time for searchs and the value is passed to Ldap with
+ *`LDAP_OPT_NETWORK_TIMEOUT`. Default value : 5.
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @param timeout The timeout in seconds.
@@ -183,6 +183,7 @@ LINPHONE_PUBLIC int linphone_ldap_params_get_timeout_tls_ms(const LinphoneLdapPa
  * @brief The max results when requesting searches.
  * Default value : 5. This value fit for standard cases where only first results are needed.
  * Also, it avoids latency on each searchs.
+ * Set this value to 0 to have an unlimited search (but magic search limitation may apply).
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @param max_results The max results when requesting searches.
@@ -191,6 +192,7 @@ LINPHONE_PUBLIC void linphone_ldap_params_set_max_results(LinphoneLdapParams *pa
 
 /**
  * @brief Get the max results when requesting searches.
+ * 0 means the results aren't limited (but magic search limitation may apply).
  *
  * @param params The #LinphoneLdapParams object. @notnil
  * @return The max results when requesting searches.

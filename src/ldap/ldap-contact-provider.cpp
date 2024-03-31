@@ -354,8 +354,16 @@ bool LdapContactProvider::search(const std::string &predicate,
 int LdapContactProvider::search(std::shared_ptr<LdapContactSearch> request) {
 	int ret = -1;
 	struct timeval timeout = {configValueToInt("timeout"), 0};
-	int maxResults = std::min(configValueToInt("max_results"), mMaxResults);
+	int maxResults = 0;
+	if (mMaxResults == -1) {
+		// If magic search is configured to return unlimited results, only use LDAP configuration max results value
+		maxResults = configValueToInt("max_results");
+	} else {
+		// Otherwise take min value between both configs
+		maxResults = std::min(configValueToInt("max_results"), mMaxResults);
+	}
 	if (maxResults > 0) ++maxResults; // +1 to know if there is more than limit
+
 	if (request->mMsgId == 0) {
 		ret = ldap_search_ext(mLd,
 		                      configValueToStr("base_object").c_str(), // base from which to start

@@ -570,8 +570,12 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromConferencesInfo(
 void MagicSearch::getAddressFromLDAPServerStartAsync(const string &filter,
                                                      const string &withDomain,
                                                      SearchAsyncData *asyncData) const {
+	int maxLimit = -1;
+	if (getLimitedSearch()) {
+		maxLimit = (int)getSearchLimit();
+	}
 	std::vector<std::shared_ptr<LdapContactProvider>> providers =
-	    LdapContactProvider::create(this->getCore(), (int)getSearchLimit());
+	    LdapContactProvider::create(this->getCore(), maxLimit);
 	// Requests
 	for (size_t i = 0; i < providers.size(); ++i) {
 		std::shared_ptr<LdapCbData> data = std::make_shared<LdapCbData>();
