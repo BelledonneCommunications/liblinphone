@@ -46,3 +46,5 @@
 -keep class com.google.protobuf.GeneratedMessageLite { *; }
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 -keep class com.android.server.os.LinphoneTombstoneProtos {*;}
+# Following allows to build a release app even without protobuf dependency
+-dontwarn com.google.protobuf.**
