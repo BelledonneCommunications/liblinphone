@@ -320,8 +320,12 @@ public class CoreManager {
 
                 if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
                     if (core.isNativeRingingEnabled()) {
-                        Log.i("[Core Manager] Incoming call received, no other call, start ringing");
-                        mAudioHelper.startRinging(mContext, core.getRing(), call.getRemoteAddress());
+                        if (core.getConfig().getInt("sound", "disable_ringing", 0) == 1) {
+                            Log.w("[Core Manager] Ringing was disabled in configuration (disable_ringing item in [sound] section is set to 1)");
+                        } else {
+                            Log.i("[Core Manager] Incoming call received, no other call, start ringing");
+                            mAudioHelper.startRinging(mContext, core.getRing(), call.getRemoteAddress());
+                        }
                     } else {
                         Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
                         mAudioHelper.requestRingingAudioFocus();

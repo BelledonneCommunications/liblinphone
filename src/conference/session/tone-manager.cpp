@@ -122,6 +122,13 @@ void ToneManager::stopRingbackTone() {
 void ToneManager::startRingtone() {
 	LinphoneCore *lc = getCore().getCCore();
 	lInfo() << "[ToneManager] " << __func__;
+
+	if (linphone_config_get_int(lc->config, "sound", "disable_ringing", 0) == 1) {
+		lWarning() << "[ToneManager] Ringing was disabled in configuration (disable_ringing item in [sound] section is "
+		              "set to 1)";
+		return;
+	}
+
 	if (!getPlatformHelpers(lc)->isRingingAllowed()) {
 		lWarning() << "[ToneManager] Platform Helper says ringing isn't allowed by platform, do not ring...";
 		return;
