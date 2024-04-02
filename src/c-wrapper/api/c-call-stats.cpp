@@ -582,3 +582,46 @@ const char *linphone_call_stats_get_zrtp_sas_algo(const LinphoneCallStats *stats
 			return "Unknown Algo";
 	}
 }
+LinphoneSrtpSuite linphone_call_stats_get_srtp_suite(const LinphoneCallStats *stats) {
+	// When send and receive suite are different, setting is not complete (on going nego), returns invalid
+	if (stats->srtp_info.send_suite != stats->srtp_info.recv_suite) {
+		return LinphoneSrtpSuiteInvalid;
+	}
+	switch (stats->srtp_info.send_suite) {
+		case (MS_AES_128_SHA1_80):
+			return LinphoneSrtpSuiteAESCM128HMACSHA180;
+		case (MS_AES_256_SHA1_80):
+		case (MS_AES_CM_256_SHA1_80):
+			return LinphoneSrtpSuiteAES256CMHMACSHA180;
+		case (MS_AES_128_SHA1_32):
+			return LinphoneSrtpSuiteAESCM128HMACSHA132;
+		case (MS_AES_256_SHA1_32):
+			return LinphoneSrtpSuiteAES256CMHMACSHA132;
+		case (MS_AEAD_AES_128_GCM):
+			return LinphoneSrtpSuiteAEADAES128GCM;
+		case (MS_AEAD_AES_256_GCM):
+			return LinphoneSrtpSuiteAEADAES256GCM;
+		case (MS_CRYPTO_SUITE_INVALID):
+		default:
+			return LinphoneSrtpSuiteInvalid;
+	}
+}
+LinphoneMediaEncryption linphone_call_stats_get_srtp_source(const LinphoneCallStats *stats) {
+	// When send and receive suite are different, setting is not complete (on going nego), returns invalid
+	if (stats->srtp_info.send_source != stats->srtp_info.recv_source) {
+		return LinphoneMediaEncryptionNone;
+	}
+	switch (stats->srtp_info.send_source) {
+		case (MSSrtpKeySourceSDES):
+			return LinphoneMediaEncryptionSRTP;
+		case (MSSrtpKeySourceZRTP):
+			return LinphoneMediaEncryptionZRTP;
+		case (MSSrtpKeySourceDTLS):
+			return LinphoneMediaEncryptionDTLS;
+		case (MSSrtpKeySourceUnknown):
+		case (MSSrtpKeySourceUnavailable):
+		case (MSSrtpKeySourceEKT):
+		default:
+			return LinphoneMediaEncryptionNone;
+	}
+}
