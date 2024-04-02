@@ -216,7 +216,7 @@ void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *sta
 LINPHONE_PUBLIC const char *linphone_call_stats_get_zrtp_cipher_algo(const LinphoneCallStats *stats);
 
 /**
- * Get the ZRTP algorithm statistics details (cipher)
+ * Get the ZRTP algorithm statistics details (key agreeement)
  * @param stats #LinphoneCallStats object @notnil
  * @return The key agreement algo
  */
@@ -231,25 +231,39 @@ LINPHONE_PUBLIC const char *linphone_call_stats_get_zrtp_key_agreement_algo(cons
 LINPHONE_PUBLIC bool_t linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum(const LinphoneCallStats *stats);
 
 /**
- * Get the ZRTP algorithm statistics details (cipher)
+ * Get the ZRTP algorithm statistics details (hash function)
  * @param stats #LinphoneCallStats object @notnil
  * @return The hash algo
  */
 LINPHONE_PUBLIC const char *linphone_call_stats_get_zrtp_hash_algo(const LinphoneCallStats *stats);
 
 /**
- * Get the ZRTP algorithm statistics details (cipher)
+ * Get the ZRTP algorithm statistics details (authentication method)
  * @param stats #LinphoneCallStats object @notnil
  * @return The auth tag algo
  */
 LINPHONE_PUBLIC const char *linphone_call_stats_get_zrtp_auth_tag_algo(const LinphoneCallStats *stats);
 
 /**
- * Get the ZRTP algorithm statistics details (cipher)
+ * Get the ZRTP algorithm statistics details (SAS display)
  * @param stats #LinphoneCallStats object @notnil
  * @return The sas algo
  */
 LINPHONE_PUBLIC const char *linphone_call_stats_get_zrtp_sas_algo(const LinphoneCallStats *stats);
+
+/**
+ * Get the SRTP Cryto suite in use
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The SRTP crypto suite currently in use #LinphoneSrtpSuite @notnil
+ */
+LINPHONE_PUBLIC LinphoneSrtpSuite linphone_call_stats_get_srtp_suite(const LinphoneCallStats *stats);
+
+/**
+ * Get the method used for SRTP key exchange
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The #LinphoneMediaEncryption method used to exchange the SRTP keys @notnil
+ */
+LINPHONE_PUBLIC LinphoneMediaEncryption linphone_call_stats_get_srtp_source(const LinphoneCallStats *stats);
 
 /**
  * @}
