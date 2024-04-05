@@ -907,11 +907,11 @@ void ClientGroupChatRoomPrivate::sendChatMessage(const shared_ptr<ChatMessage> &
 	} else if (q->getState() == ConferenceInterface::State::Created) {
 		auto encryptionEngine = q->getCore()->getEncryptionEngine();
 		if (params->isEncrypted() && encryptionEngine && encryptionEngine->participantListRequired() &&
-		    conference->getParticipants().empty()) {
+		    q->getParticipantDevices().empty()) {
 			lInfo() << "Delaying sending of message [" << chatMessage << "] in the encrypted chat room " << q << " ["
 			        << conferenceId
-			        << "] because the list of participants has not been received yet and the encryption engine "
-			        << encryptionEngine << " required it";
+			        << "] because the list of participant devices has not been received yet and the encryption engine "
+			        << encryptionEngine << " requires it";
 			auto it = std::find(pendingCreationMessages.begin(), pendingCreationMessages.end(), chatMessage);
 			if (it == pendingCreationMessages.end()) pendingCreationMessages.push_back(chatMessage);
 		} else {

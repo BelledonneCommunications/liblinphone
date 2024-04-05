@@ -3669,9 +3669,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int cu
 	paulineOneToOneCr =
 	    check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, TRUE);
 
-	LinphoneChatMessage *message =
-	    linphone_chat_room_create_message_from_utf8(paulineOneToOneCr, "Do. Or do not. There is no try.");
-	linphone_chat_message_send(message);
+	LinphoneChatMessage *message = _send_message(paulineOneToOneCr, "Do. Or do not. There is no try.");
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 1, 5000));
 	linphone_chat_message_unref(message);
@@ -3688,9 +3686,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int cu
 		BC_ASSERT_EQUAL((int)bctbx_list_size(participants), 1, int, "%d");
 		bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
 
-		LinphoneChatMessage *exhume_message =
-		    linphone_chat_room_create_message_from_utf8(paulineOneToOneCr, "No. I am your father.");
-		linphone_chat_message_send(exhume_message);
+		LinphoneChatMessage *exhume_message = _send_message(paulineOneToOneCr, "No. I am your father.");
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 2, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
@@ -3713,9 +3709,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int cu
 				int marie_messages = linphone_chat_room_get_history_size(marieOneToOneCr);
 				BC_ASSERT_EQUAL(marie_messages, 1, int, "%d");
 
-				LinphoneChatMessage *exhume_answer_message =
-				    linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "Nooooooooooooo !");
-				linphone_chat_message_send(exhume_answer_message);
+				LinphoneChatMessage *exhume_answer_message = _send_message(marieOneToOneCr, "Nooooooooooooo !");
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, 5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1, 5000));
 				linphone_chat_message_unref(exhume_answer_message);

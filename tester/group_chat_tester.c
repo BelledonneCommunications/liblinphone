@@ -389,6 +389,7 @@ LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const c
 		linphone_chat_message_cbs_set_ephemeral_message_deleted(msgCbs,
 		                                                        liblinphone_tester_chat_message_ephemeral_deleted);
 	}
+	ms_message("Chat room %p sends %smessage %s", chatRoom, (isEphemeral ? "ephemeral " : ""), message);
 	linphone_chat_message_send(msg);
 	return msg;
 }
