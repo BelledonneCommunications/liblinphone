@@ -40,12 +40,12 @@ void linphone_ekt_info_unref(LinphoneEktInfo *linphone_ekt_info) {
 	EktInfo::toCpp(linphone_ekt_info)->unref();
 }
 
-const LinphoneAddress *linphone_ekt_info_get_from(const LinphoneEktInfo *linphone_ekt_info) {
+const LinphoneAddress *linphone_ekt_info_get_from_address(const LinphoneEktInfo *linphone_ekt_info) {
 	const auto &address = EktInfo::toCpp(linphone_ekt_info)->getFrom();
 	return address && address->isValid() ? address->toC() : nullptr;
 }
 
-void linphone_ekt_info_set_from(LinphoneEktInfo *linphone_ekt_info, const LinphoneAddress *from) {
+void linphone_ekt_info_set_from_address(LinphoneEktInfo *linphone_ekt_info, const LinphoneAddress *from) {
 	if (from) EktInfo::toCpp(linphone_ekt_info)->setFrom(*Address::toCpp(from));
 }
 
@@ -92,12 +92,12 @@ LinphoneEktInfo *linphone_ekt_info_ref(BCTBX_UNUSED(LinphoneEktInfo *linphone_ek
 void linphone_ekt_info_unref(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info)) {
 }
 
-const LinphoneAddress *linphone_ekt_info_get_from(BCTBX_UNUSED(const LinphoneEktInfo *linphone_ekt_info)) {
+const LinphoneAddress *linphone_ekt_info_get_from_address(BCTBX_UNUSED(const LinphoneEktInfo *linphone_ekt_info)) {
 	return nullptr;
 }
 
-void linphone_ekt_info_set_from(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info),
-                                BCTBX_UNUSED(const LinphoneAddress *from)) {
+void linphone_ekt_info_set_from_address(BCTBX_UNUSED(LinphoneEktInfo *linphone_ekt_info),
+                                        BCTBX_UNUSED(const LinphoneAddress *from)) {
 }
 
 uint16_t linphone_ekt_info_get_sspi(BCTBX_UNUSED(const LinphoneEktInfo *linphone_ekt_info)) {

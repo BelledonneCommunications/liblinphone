@@ -50,14 +50,15 @@ LINPHONE_PUBLIC void linphone_ekt_info_unref(LinphoneEktInfo *linphone_ekt_info)
  * @param linphone_ekt_info the #LinphoneEktInfo. @notnil
  * @return a #LinphoneAddress object. @maybenil
  **/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_ekt_info_get_from(const LinphoneEktInfo *linphone_ekt_info);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_ekt_info_get_from_address(const LinphoneEktInfo *linphone_ekt_info);
 
 /**
  * Set from address.
  * @param linphone_ekt_info the #LinphoneEktInfo. @notnil
  * @param from the address to set. @maybenil
  **/
-LINPHONE_PUBLIC void linphone_ekt_info_set_from(LinphoneEktInfo *linphone_ekt_info, const LinphoneAddress *from);
+LINPHONE_PUBLIC void linphone_ekt_info_set_from_address(LinphoneEktInfo *linphone_ekt_info,
+                                                        const LinphoneAddress *from);
 
 /**
  * Get sSPI.
