@@ -33,6 +33,9 @@ LINPHONE_BEGIN_NAMESPACE
 class Sal;
 class Core;
 
+/*
+ * A convenient class to request the system not to suspend the process for some time.
+ */
 class BackgroundTask {
 public:
 	BackgroundTask() {
@@ -58,8 +61,11 @@ public:
 	void stop();
 
 protected:
-	virtual void handleTimeout();
-	virtual void handleSalTimeout();
+	// Called when the system decides to stop the background task. It may happen before the "soft timeout", or may not
+	// happen at all.
+	virtual void handleHardTimeout();
+	// Called when the duration setup when the background task was started is now reached.
+	virtual void handleSoftTimeout();
 
 private:
 	static int sHandleSalTimeout(void *data, unsigned int events);
@@ -71,6 +77,7 @@ private:
 	unsigned long mId = 0;
 };
 
+/* A background task that takes std::function<> parameters to notify when the background task expires.*/
 class ExtraBackgroundTask : public BackgroundTask {
 public:
 	ExtraBackgroundTask(const std::string &name) : BackgroundTask(name) {
@@ -78,17 +85,17 @@ public:
 	~ExtraBackgroundTask() = default;
 
 	void start(const std::shared_ptr<Core> &core,
-	           const std::function<void()> &extraFunc,
-	           const std::function<void()> &extraSalFunc,
+	           const std::function<void()> &hardTimeoutFunc,
+	           const std::function<void()> &softTimeoutFunc,
 	           int maxDurationSeconds = 15 * 60);
 
 protected:
-	void handleTimeout() override;
-	void handleSalTimeout() override;
+	void handleHardTimeout() override;
+	void handleSoftTimeout() override;
 
 private:
-	std::function<void()> sExtraFunc;
-	std::function<void()> sExtraSalFunc;
+	std::function<void()> mExtraFunc;
+	std::function<void()> mExtraSalFunc;
 };
 
 LINPHONE_END_NAMESPACE

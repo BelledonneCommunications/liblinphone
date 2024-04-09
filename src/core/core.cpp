@@ -419,9 +419,33 @@ void CorePrivate::disconnectMainDb() {
 	}
 }
 
+void CorePrivate::stopStartupBgTask() {
+	/* This is tricky. We have to wait one more iterate() cycle to ensure that the REGISTER procedures are started. */
+	if (getCCore()->state == LinphoneGlobalOn) {
+		doLater([this]() { coreStartupTask.stop(); });
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 void CorePrivate::notifyGlobalStateChanged(LinphoneGlobalState state) {
+	L_Q();
+	switch (state) {
+		case LinphoneGlobalStartup:
+			coreStartupTask.start(q->getSharedFromThis(), 60);
+			break;
+		case LinphoneGlobalOn:
+			q->doLater([this] { stopStartupBgTask(); });
+			break;
+		case LinphoneGlobalOff:
+		case LinphoneGlobalShutdown:
+			coreStartupTask.stop();
+			break;
+		case LinphoneGlobalConfiguring:
+		case LinphoneGlobalReady:
+			/* nothing to do here */
+			break;
+	}
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onGlobalStateChanged(state);
@@ -1782,7 +1806,8 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	if (confAddr) {
 		conferenceFactoryUri = confAddr;
 	} else {
-		conferenceFactoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr)->clone()->toSharedPtr();
+		conferenceFactoryUri =
+		    Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr)->clone()->toSharedPtr();
 		if (!conferenceFactoryUri || !conferenceFactoryUri->isValid()) {
 			lWarning() << "Not creating conference: no conference factory uri for local address [" << *localAddr << "]";
 			return nullptr;

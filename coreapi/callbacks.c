@@ -87,6 +87,11 @@ call_get_or_create(LinphoneCore *lc, SalCallOp *h, const shared_ptr<Address> &fr
 			lInfo() << "There is already a call created on PushIncomingReceived, do configure";
 			call->configure(LinphoneCallIncoming, from, to, nullptr, h, nullptr);
 			call->initiateIncoming();
+		} else {
+			lWarning() << "There is already a call with call-id " << h->getCallId()
+			           << " but not in PushIncomingReceived. Duplicated call ?";
+			/* With call forking, this may happen. Let the application decide what to do.*/
+			call = nullptr;
 		}
 	} else {
 		LinphoneCallLog *calllog = linphone_core_find_call_log(
@@ -103,8 +108,9 @@ call_get_or_create(LinphoneCore *lc, SalCallOp *h, const shared_ptr<Address> &fr
 			}
 			linphone_call_log_unref(calllog);
 		}
-		if (h) call = Call::toCpp(linphone_call_new_incoming(lc, from->toC(), to->toC(), h));
 	}
+	/* If no call was found, and the SalCallOp is still there, it means we can create a new call.*/
+	if (!call && h) call = Call::toCpp(linphone_call_new_incoming(lc, from->toC(), to->toC(), h));
 	return call;
 }
 
