@@ -35,15 +35,15 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 void BackgroundTask::sHandleTimeout(void *context) {
-	static_cast<BackgroundTask *>(context)->handleTimeout();
+	static_cast<BackgroundTask *>(context)->handleHardTimeout();
 }
 
 int BackgroundTask::sHandleSalTimeout(void *data, BCTBX_UNUSED(unsigned int events)) {
-	static_cast<BackgroundTask *>(data)->handleSalTimeout();
+	static_cast<BackgroundTask *>(data)->handleSoftTimeout();
 	return BELLE_SIP_STOP;
 }
 
-void BackgroundTask::handleSalTimeout() {
+void BackgroundTask::handleSoftTimeout() {
 	lWarning() << "Background task [" << mId << "] with name: [" << mName << "] is now expiring";
 	stop();
 }
@@ -88,7 +88,7 @@ void BackgroundTask::stop() {
 	mId = 0;
 }
 
-void BackgroundTask::handleTimeout() {
+void BackgroundTask::handleHardTimeout() {
 	lWarning() << "Background task [" << mId << "] with name: [" << mName
 	           << "] is expiring from OS before completion...";
 	stop();
@@ -98,23 +98,23 @@ void ExtraBackgroundTask::start(const shared_ptr<Core> &core,
                                 const std::function<void()> &extraFunc,
                                 const std::function<void()> &extraSalFunc,
                                 int maxDurationSeconds) {
-	sExtraFunc = extraFunc;
-	sExtraSalFunc = extraSalFunc;
+	mExtraFunc = extraFunc;
+	mExtraSalFunc = extraSalFunc;
 	BackgroundTask::start(core, maxDurationSeconds);
 }
 
-void ExtraBackgroundTask::handleTimeout() {
+void ExtraBackgroundTask::handleHardTimeout() {
 	lWarning() << "ExtraBackgroundTask::handleTimeout()";
-	BackgroundTask::handleTimeout();
+	BackgroundTask::handleHardTimeout();
 
-	sExtraFunc();
+	mExtraFunc();
 }
 
-void ExtraBackgroundTask::handleSalTimeout() {
+void ExtraBackgroundTask::handleSoftTimeout() {
 	lWarning() << "ExtraBackgroundTask::handleSalTimeout()";
-	BackgroundTask::handleSalTimeout();
+	BackgroundTask::handleSoftTimeout();
 
-	sExtraSalFunc();
+	mExtraSalFunc();
 }
 
 LINPHONE_END_NAMESPACE

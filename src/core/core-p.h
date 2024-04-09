@@ -197,6 +197,7 @@ public:
 	static const Utils::Version ephemeralProtocolVersion;
 
 private:
+	void stopStartupBgTask();
 	bool isInBackground = false;
 	static int ephemeralMessageTimerExpired(void *data, unsigned int revents);
 
@@ -230,6 +231,7 @@ private:
 	std::list<std::shared_ptr<AudioDevice>> audioDevices;
 	bool stopAsyncEndEnabled = false;
 	ExtraBackgroundTask bgTask{"Stop core async end"};
+	BackgroundTask coreStartupTask;
 
 	std::list<std::shared_ptr<Ldap>> mLdapServers; // Persistent list of LDAP servers
 	std::string logLabel;
