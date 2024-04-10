@@ -82,15 +82,16 @@ LINPHONE_PUBLIC LinphoneCore *linphone_conference_get_core(const LinphoneConfere
 
 /**
  * Get the conference address of the conference.
+ * This function may be return a NULL pointer if called before the conference switches to the Created state
  * @param conference A #LinphoneConference object. @notnil
- * @return The conference address of the conference. @notnil
+ * @return The conference address of the conference. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_address(const LinphoneConference *conference);
 
 /**
  * Set the conference address
  * @param conference The #LinphoneConference object. @notnil
- * @param address the conference address to set. @notnil
+ * @param address the conference address to set. @maybenil
  * @warning This is only allowed for a remote conference if it is in state CreationPending or Instantiated
  */
 LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConference *conference,
