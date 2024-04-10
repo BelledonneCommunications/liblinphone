@@ -352,6 +352,9 @@ void FriendList::synchronizeFriendsFromServer() {
 				}
 			} else {
 				ms_warning("No body was received...");
+				LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, friendList,
+				                                  linphone_friend_list_cbs_get_sync_status_changed,
+				                                  LinphoneFriendListSyncSuccessful, nullptr);
 			}
 		};
 		belle_request_listener.process_io_error = [](void *ctx, BCTBX_UNUSED(const belle_sip_io_error_event_t *event)) {
