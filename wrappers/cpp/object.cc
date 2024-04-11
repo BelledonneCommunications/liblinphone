@@ -47,7 +47,7 @@ void Object::unsetData(const std::string &key) {
 	userData.erase(key);
 }
 
-bool Object::dataExists(const std::string &key) {
+bool Object::dataExists(const std::string &key) const {
 	map<string, void *> &userData = getUserData();
 	return userData.find(key) != userData.end();
 }

@@ -62,7 +62,7 @@ public:
 		userData[key] = &data;
 	}
 	template <class T>
-	T &getData(const std::string &key) {
+	T &getData(const std::string &key) const {
 		std::map<std::string, void *> &userData = getUserData();
 		void *ptr = userData[key];
 		if (ptr == NULL) {
@@ -72,7 +72,7 @@ public:
 		}
 	}
 	LINPHONECXX_PUBLIC void unsetData(const std::string &key);
-	LINPHONECXX_PUBLIC bool dataExists(const std::string &key);
+	LINPHONECXX_PUBLIC bool dataExists(const std::string &key) const;
 
 public:
 	template <class T>
