@@ -779,7 +779,6 @@ void RemoteConferenceEventHandler::unsubscribe() {
 
 void RemoteConferenceEventHandler::updateInitialSubcriptionUnderWay(std::shared_ptr<Event> notifyLev) {
 	if (getInitialSubscriptionUnderWayFlag()) {
-		;
 		setInitialSubscriptionUnderWayFlag((ev != notifyLev));
 	}
 }

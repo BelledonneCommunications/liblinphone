@@ -1125,14 +1125,14 @@ void ChatMessagePrivate::send() {
 	const auto &chatRoomParams = chatRoom->getCurrentParams();
 	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
 	shared_ptr<Core> core = q->getCore();
-	// If the core is shutting down, the IMDN should be sent anyway even though we are potentially send it to an
-	// incomplete list of devices
+	// Postpone the sending of a message through an encrypted chatroom when we don't know yet the full list of
+	// participants. However, ff the core is shutting down, the message should be sent anyway even though we are
+	// potentially send it to an incomplete list of devices
 	if ((linphone_core_get_global_state(core->getCCore()) != LinphoneGlobalOff) &&
-	    (linphone_core_get_global_state(core->getCCore()) != LinphoneGlobalShutdown) &&
-	    (getContentType() == ContentType::Imdn) && chatRoomParams->isEncrypted() &&
+	    (linphone_core_get_global_state(core->getCCore()) != LinphoneGlobalShutdown) && chatRoomParams->isEncrypted() &&
 	    (dChatRoom->isSubscriptionUnderWay() || (chatRoomState == ConferenceInterface::State::Instantiated) ||
 	     (chatRoomState == ConferenceInterface::State::CreationPending))) {
-		lInfo() << "IMDN message is being sent while the subscription is underway or the conference is not yet full "
+		lInfo() << "Message is being sent while the subscription is underway or the conference is not yet full "
 		           "created";
 		dChatRoom->addPendingMessage(q->getSharedFromThis());
 		return;

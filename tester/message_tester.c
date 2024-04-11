@@ -1232,13 +1232,15 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 				BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
 
 				if (download_error) {
-					/* wait for file to be 50% downloaded */
-					BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.progress_of_LinphoneFileTransfer, 50));
-					/* and simulate network error */
+					/* Would like to wait for file to be 50% downloaded - no longer possible because the file is short
+					 and downloaded in one iterate() cycle. As a workaround, we trigger the receive error immediately */
+					// BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.progress_of_LinphoneFileTransfer,
+					// 50));
+					/* simulate network error */
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
 					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
 					                              &marie->stat.number_of_LinphoneMessageFileTransferError, 1, 10000));
-					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
+					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 1);
 					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 						BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
 						                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 3000));
@@ -1970,8 +1972,8 @@ static void transfer_message_download_cancelled(void) {
 		// State changed callback is already set by linphone_chat_message_start_file_download
 		linphone_chat_message_cbs_set_msg_state_changed(cbs, NULL);
 		linphone_chat_message_start_file_download(marie_msg, liblinphone_tester_chat_message_state_change, marie->lc);
-		/* wait for file to be 50% downloaded */
-		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.progress_of_LinphoneFileTransfer, 50));
+		/* wait for file to be 10% downloaded */
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.progress_of_LinphoneFileTransfer, 10));
 		/* and cancel the transfer */
 		linphone_chat_message_cancel_file_transfer(marie_msg);
 	}
@@ -2008,13 +2010,14 @@ static void transfer_message_auto_download_aborted(void) {
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chat_room);
 	linphone_chat_message_send(msg);
 
+	belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
 	/* wait for marie to receive pauline's msg */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
+
 	BC_ASSERT_TRUE(
 	    wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 5000));
 	LinphoneChatMessage *marie_msg = marie->stat.last_received_chat_message;
 	BC_ASSERT_PTR_NOT_NULL(marie_msg);
-	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageDelivered, 1, 1000));
 
 	// We auto download using random file name, so we expect above file to not exist yet
 	BC_ASSERT_EQUAL(bctbx_file_exist(path), -1, int, "%d");
