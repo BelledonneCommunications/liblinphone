@@ -1583,14 +1583,14 @@ void Core::handleIncomingMessageWaitingIndication(std::shared_ptr<Event> event, 
 
 	shared_ptr<Mwi::MessageWaitingIndication> mwi = Mwi::MessageWaitingIndication::parse(*content);
 	if (mwi) {
-		LinphoneAccount *account = linphone_core_find_account_by_identity_address(getCCore(), accountAddr->toC());
+		auto account = findAccountByIdentityAddress(accountAddr);
 		if (!account) {
 			lInfo() << "No account found for the account address of the MWI, cannot notify it";
 			return;
 		}
 
-		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, Account::toCpp(account),
-		                                  linphone_account_cbs_get_message_waiting_indication_changed, mwi->toC());
+		LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, account, linphone_account_cbs_get_message_waiting_indication_changed,
+		                                  mwi->toC());
 	} else {
 		lWarning() << "Wrongly formatted MWI notification";
 	}
@@ -2599,6 +2599,39 @@ end:
 	else if (!foundAccount && foundRegAccountDomainMatch) foundAccount = foundRegAccountDomainMatch;
 	else if (!foundAccount && foundNoRegAccountDomainMatch) foundAccount = foundNoRegAccountDomainMatch;
 	return foundAccount;
+}
+
+void Core::accountUpdate() {
+	const auto accounts = mAccounts.mList;
+	for (const auto &account : accounts) {
+		account->update();
+	}
+	const auto deletedAccounts = mDeletedAccounts.mList;
+	for (const auto &account : deletedAccounts) {
+		if ((ms_time(NULL) - account->getDeletionDate()) > 32) {
+			removeAccount(account);
+			const auto &params = account->getAccountParams();
+			lInfo() << __func__ << "Account for [" << *params->getServerAddress()
+			        << "] is definitely removed from core.";
+			account->releaseOps();
+		}
+	}
+}
+
+std::shared_ptr<Account> Core::findAccountByIdentityAddress(const std::shared_ptr<const Address> identity) const {
+	std::shared_ptr<Account> found = nullptr;
+	if (!identity) return found;
+
+	const auto accounts = mAccounts.mList;
+	for (const auto &account : accounts) {
+		const auto &params = account->getAccountParams();
+		const auto &address = params->getIdentityAddress();
+		if (identity->weakEqual(*address)) {
+			found = account;
+			break;
+		}
+	}
+	return found;
 }
 
 void Core::notifyPublishStateChangedToAccount(const std::shared_ptr<Event> event, LinphonePublishState state) {

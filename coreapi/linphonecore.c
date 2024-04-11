@@ -4323,24 +4323,6 @@ static void notify_network_reachable_change(LinphoneCore *lc) {
 	if (lc->sip_network_state.global_state) linphone_core_resolve_stun_server(lc);
 }
 
-static void account_update(LinphoneCore *lc) {
-	const bctbx_list_t *elem;
-	const bctbx_list_t *accounts = linphone_core_get_account_list(lc);
-	bctbx_list_for_each(accounts, (void (*)(void *)) & linphone_account_update);
-	const bctbx_list_t *deleted_accounts = linphone_core_get_deleted_account_list(lc);
-	for (elem = deleted_accounts; elem != NULL; elem = elem->next) {
-		LinphoneAccount *account = (LinphoneAccount *)elem->data;
-		auto cppAccount = Account::toCpp(account)->getSharedFromThis();
-		if ((ms_time(NULL) - cppAccount->getDeletionDate()) > 32) {
-			linphone_core_remove_deleted_account(lc, account);
-			const LinphoneAccountParams *params = linphone_account_get_params(account);
-			ms_message("Account for [%s] is definitely removed from core.",
-			           linphone_account_params_get_server_addr(params));
-			cppAccount->releaseOps();
-		}
-	}
-}
-
 static void assign_buddy_info(LinphoneCore *lc, BuddyInfo *info) {
 	LinphoneFriend *lf = linphone_core_get_friend_by_address(lc, info->sip_uri);
 	if (lf != NULL) {
@@ -4465,7 +4447,7 @@ void linphone_core_iterate(LinphoneCore *lc) {
 		// Avoid registration before getting remote configuration results
 		return;
 
-	account_update(lc);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->accountUpdate();
 
 	/* We have to iterate for each call */
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->iterateCalls(current_real_time, one_second_elapsed);
@@ -9824,26 +9806,6 @@ bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core) 
 void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_bool(core->config, "misc", "empty_chat_room_deletion", enable);
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->enableEmptyChatroomsDeletion(enable);
-}
-
-LinphoneAccount *linphone_core_find_account_by_identity_address(const LinphoneCore *core,
-                                                                const LinphoneAddress *identity_address) {
-	CoreLogContextualizer logContextualizer(core);
-	LinphoneAccount *found = NULL;
-	if (identity_address == NULL) return found;
-
-	bctbx_list_t *account_it;
-	for (account_it = (bctbx_list_t *)linphone_core_get_account_list(core); account_it != NULL;
-	     account_it = account_it->next) {
-		LinphoneAccount *account = (LinphoneAccount *)(account_it->data);
-		const LinphoneAccountParams *params = linphone_account_get_params(account);
-		const LinphoneAddress *address = linphone_account_params_get_identity_address(params);
-		if (linphone_address_weak_equal(address, identity_address)) {
-			found = account;
-			break;
-		}
-	}
-	return found;
 }
 
 const bctbx_list_t *linphone_core_get_loaded_plugins(LinphoneCore *core) {

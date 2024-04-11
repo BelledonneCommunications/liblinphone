@@ -1005,10 +1005,11 @@ static void on_expire(SalOp *op) {
 	if (user_data && event_name && linphone_event_is_internal(lev) && strcmp(event_name, "presence") == 0) {
 		LinphoneCore *lc = (LinphoneCore *)op->getSal()->getUserPointer();
 		LinphoneAddress *identity_address = (LinphoneAddress *)user_data;
-		LinphoneAccount *account = linphone_core_find_account_by_identity_address(lc, identity_address);
+		auto account = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAccountByIdentityAddress(
+		    Address::toCpp(identity_address)->getSharedFromThis());
 		if (account) {
 			lInfo() << "Presence publish about to expire, manually refreshing it for account [" << account << "]";
-			LinphonePrivate::Account::toCpp(account)->sendPublish();
+			account->sendPublish();
 		}
 	}
 }
