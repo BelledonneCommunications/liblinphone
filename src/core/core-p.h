@@ -231,7 +231,7 @@ private:
 	std::list<std::shared_ptr<AudioDevice>> audioDevices;
 	bool stopAsyncEndEnabled = false;
 	ExtraBackgroundTask bgTask{"Stop core async end"};
-	BackgroundTask coreStartupTask;
+	BackgroundTask coreStartupTask{"Core startup until registration"};
 
 	std::list<std::shared_ptr<Ldap>> mLdapServers; // Persistent list of LDAP servers
 	std::string logLabel;

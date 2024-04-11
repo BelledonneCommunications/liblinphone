@@ -19,7 +19,7 @@
  */
 
 #include "bctoolbox/crypto.h"
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "liblinphone_tester.h"
 #include "linphone/api/c-chat-room-params.h"
@@ -508,8 +508,8 @@ void _receive_file_plus_text(bctbx_list_t *coresList,
 		linphone_chat_message_download_content(msg, fileTransferContent);
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int,
 		                "%d");
-		// Cancel the download
-		wait_for_list(coresList, NULL, 0, 400);
+		// Cancel the download shortly
+		BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.progress_of_LinphoneFileTransfer, 5, 5000));
 
 		char *downloaded_file_temp = bctbx_concat(downloaded_file, ".copy", NULL);
 		remove(downloaded_file_temp);
@@ -1776,7 +1776,7 @@ static void group_chat_room_message(bool_t encrypt, bool_t sal_error) {
 	// Pauline begins composing a messagewith some accents
 	linphone_chat_room_compose(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
-	                             initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1,
+	                             initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 2,
 	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingActiveReceived,
 	                             initialChloeStats.number_of_LinphoneIsComposingActiveReceived + 1,
@@ -1784,13 +1784,13 @@ static void group_chat_room_message(bool_t encrypt, bool_t sal_error) {
 	const char *paulineTextMessage = "Héllö Dàrling";
 	LinphoneChatMessage *paulineMessage = _send_message(paulineCr, paulineTextMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived,
-	                             initialMarieStats.number_of_LinphoneMessageReceived + 1,
+	                             initialMarieStats.number_of_LinphoneMessageReceived + 2,
 	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageReceived,
 	                             initialChloeStats.number_of_LinphoneMessageReceived + 1,
 	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived,
-	                             initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 1,
+	                             initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 2,
 	                             liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingIdleReceived,
 	                             initialChloeStats.number_of_LinphoneIsComposingIdleReceived + 1,

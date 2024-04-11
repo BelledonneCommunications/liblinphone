@@ -452,7 +452,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
-	// Send message in basic chat room
+	// Marie sends a message in basic chat room to pauline.
 	LinphoneChatRoom *marieBasicCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	LinphoneChatMessage *basicMessage1 =
 	    linphone_chat_room_create_message_from_utf8(marieBasicCr, "Hello from our basic chat room");
@@ -477,7 +477,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_PTR_NOT_NULL(paulineBasicCr);
 	linphone_chat_message_unref(basicMessage1);
 
-	// Marie creates an encrypted chatroom
+	// Marie creates an encrypted chatroom to Pauline.
 	const char *initialSubject = "Encrypted Friends";
 	participantsAddresses =
 	    bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -499,12 +499,14 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
 
-	// Marie sends an encrypted message
+	// Marie sends an encrypted message to Pauline
 	const char *marieEncryptedMessage1 = "Hello from our secured chat room";
 	LinphoneChatMessage *msg = _send_message(marieEncryptedCr, marieEncryptedMessage1);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
 	                             initialPaulineStats.number_of_LinphoneMessageReceived + 2, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered,
+	                        initialMarieStats.number_of_LinphoneMessageDelivered + 2));
 	linphone_chat_message_unref(msg);
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg)) goto end;
 
@@ -519,7 +521,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_EQUAL(pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed,
 	                int, "%d");
 
-	// Marie creates the basic chat room again
+	// Marie creates the basic chat room again and sends a new message.
 	LinphoneChatRoom *marieNewBasicCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	LinphoneChatMessage *basicMessage2 =
 	    linphone_chat_room_create_message_from_utf8(marieNewBasicCr, "Hello again from our basic chat room");
@@ -528,7 +530,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	linphone_chat_message_send(basicMessage2);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageDelivered,
-	                        initialMarieStats.number_of_LinphoneMessageReceived + 3));
+	                        initialMarieStats.number_of_LinphoneMessageDelivered + 3));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived,
 	                        initialPaulineStats.number_of_LinphoneMessageReceived + 3));
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
@@ -543,7 +545,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	linphone_address_unref(marieAddr);
 
 end:
-	// Clean db from chat room
+	// Clean chat rooms from DB.
 	linphone_core_manager_delete_chat_room(pauline, paulineBasicCr, coresList);
 	linphone_core_manager_delete_chat_room(marie, marieEncryptedCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineEncryptedCr, coresList);
@@ -1497,7 +1499,8 @@ static void group_chat_lime_x3dh_chat_room_reaction_message_base(const int curve
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineReceivedMessage), textMessage);
 
 	// Pauline will react to Marie's message with love emoji
-	LinphoneChatMessageReaction *paulineReaction = linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
+	LinphoneChatMessageReaction *paulineReaction =
+	    linphone_chat_message_create_reaction(paulineReceivedMessage, "❤️");
 
 	const LinphoneAddress *paulineReactionAddr = linphone_chat_message_reaction_get_from_address(paulineReaction);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineReactionAddr, pauline->identity));
@@ -1841,7 +1844,8 @@ group_chat_lime_x3dh_chat_room_multiple_reactions_from_same_identity_but_differe
 	bctbx_list_free_with_data(reactions, (bctbx_list_free_func)linphone_chat_message_reaction_unref);
 
 	// Now marie's second device will react
-	LinphoneChatMessageReaction *marie2Reaction = linphone_chat_message_create_reaction(marie2ReceivedMessage, "❤️");
+	LinphoneChatMessageReaction *marie2Reaction =
+	    linphone_chat_message_create_reaction(marie2ReceivedMessage, "❤️");
 	marieOwnReaction = linphone_chat_message_get_own_reaction(marie2ReceivedMessage);
 	BC_ASSERT_PTR_NOT_NULL(marieOwnReaction);
 
