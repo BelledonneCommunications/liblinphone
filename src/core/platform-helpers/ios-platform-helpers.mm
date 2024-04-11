@@ -41,6 +41,11 @@
 #include "logger/logger.h"
 #include "mac-platform-helpers.h"
 
+#define DISPATCH_SYNC_MAIN(blockName) {\
+	if ([NSThread isMainThread]) {blockName();}\
+	else {dispatch_sync(dispatch_get_main_queue(), blockName);}\
+}
+
 // TODO: Remove me
 #include "private.h"
 
@@ -256,7 +261,7 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 		startNetworkMonitoring();
 	}
 	if (mUseAppDelgate && linphone_core_is_push_notification_enabled(getCore()->getCCore())) {
-		dispatch_sync(dispatch_get_main_queue(), ^{
+		DISPATCH_SYNC_MAIN(^{
 			[mAppDelegate registerForPush];
 		});
 	}
