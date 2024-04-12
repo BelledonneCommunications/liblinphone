@@ -336,13 +336,16 @@ void LocalConferenceEventHandler::addEndpointSessionInfo(const std::shared_ptr<P
 
 	ExecutionType joiningInfoType = ExecutionType();
 	auto joiningTime = device->getTimeOfJoining();
-	auto utcTimeStruct = Utils::getTimeTAsTm(joiningTime);
+	if (joiningTime >= 0) {
+		auto utcTimeStruct = Utils::getTimeTAsTm(joiningTime);
 
-	LinphonePrivate::Xsd::XmlSchema::DateTime utcTime(
-	    (utcTimeStruct.tm_year + 1900), static_cast<short unsigned int>(utcTimeStruct.tm_mon + 1),
-	    static_cast<short unsigned int>(utcTimeStruct.tm_mday), static_cast<short unsigned int>(utcTimeStruct.tm_hour),
-	    static_cast<short unsigned int>(utcTimeStruct.tm_min), utcTimeStruct.tm_sec);
-	joiningInfoType.setWhen(utcTime);
+		LinphonePrivate::Xsd::XmlSchema::DateTime utcTime(
+		    (utcTimeStruct.tm_year + 1900), static_cast<short unsigned int>(utcTimeStruct.tm_mon + 1),
+		    static_cast<short unsigned int>(utcTimeStruct.tm_mday),
+		    static_cast<short unsigned int>(utcTimeStruct.tm_hour),
+		    static_cast<short unsigned int>(utcTimeStruct.tm_min), utcTimeStruct.tm_sec);
+		joiningInfoType.setWhen(utcTime);
+	}
 
 	std::string reason = std::string("Reason: SIP;text=") + reasonText;
 	joiningInfoType.setReason(reason);
