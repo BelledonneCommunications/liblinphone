@@ -342,7 +342,9 @@ void LocalConferenceEventHandler::addEndpointSessionInfo(const std::shared_ptr<P
 
 	ExecutionType joiningInfoType = ExecutionType();
 	auto joiningTime = device->getTimeOfJoining();
-	joiningInfoType.setWhen(timeTToDateTime(joiningTime));
+	if (joiningTime >= 0) {
+		joiningInfoType.setWhen(timeTToDateTime(joiningTime));
+	}
 
 	std::string reason = std::string("Reason: SIP;text=") + reasonText;
 	joiningInfoType.setReason(reason);

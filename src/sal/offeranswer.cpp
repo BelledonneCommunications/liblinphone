@@ -328,7 +328,6 @@ bool OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &lo
                                         bool use_local_key) {
 	for (const auto &rc : remote) {
 		if (rc.algo == 0) break;
-
 		/* Look for a local enabled crypto algo that matches one of the proposed by remote */
 		for (const auto &lc : local) {
 			if (rc.algo == lc.algo) {

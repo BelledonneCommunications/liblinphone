@@ -1801,6 +1801,58 @@ static void call_accepting_all_encryptions(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void secure_call_with_replaces(LinphoneMediaEncryption encryption) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_media_encryption(marie->lc, encryption);
+	linphone_core_set_media_encryption_mandatory(marie->lc, TRUE);
+
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc, encryption);
+	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
+
+	// Set Pauline to shared media resources so that she can have two calls without pause
+	linphone_core_set_media_resource_mode(pauline->lc, LinphoneSharedMediaResources);
+
+	linphone_core_invite_address(pauline->lc, marie->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingRinging, 1));
+
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_NetworkReachableFalse, 1);
+	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_NetworkReachableTrue, 2);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingRinging, 2));
+
+	LinphoneCall *incoming_call = linphone_core_get_current_call(marie->lc);
+	linphone_call_accept(incoming_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	end_call(pauline, marie);
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+static void srtp_call_with_replaces(void) {
+	secure_call_with_replaces(LinphoneMediaEncryptionSRTP);
+}
+
+static void zrtp_call_with_replaces(void) {
+	secure_call_with_replaces(LinphoneMediaEncryptionZRTP);
+}
+
+static void dtls_srtp_call_with_replaces(void) {
+	secure_call_with_replaces(LinphoneMediaEncryptionDTLS);
+}
+
 test_t call_secure_tests[] = {
     TEST_ONE_TAG("SRTP call", srtp_call, "CRYPTO"),
     TEST_NO_TAG("SRTP call with non zero crypto suite tag", srtp_call_non_zero_tag),
@@ -1820,6 +1872,7 @@ test_t call_secure_tests[] = {
                 srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_3),
     TEST_NO_TAG("SRTP call with crypto suite parameters and mandatory encryption 4",
                 srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_4),
+    TEST_NO_TAG("SRTP call with Replaces", srtp_call_with_replaces),
     TEST_ONE_TAG("ZRTP call", zrtp_call, "CRYPTO"),
 #ifdef VIDEO_ENABLED
     TEST_NO_TAG("ZRTP call with several video switches", zrtp_call_with_several_video_switches),
@@ -1833,6 +1886,7 @@ test_t call_secure_tests[] = {
     TEST_NO_TAG("ZRTP Post Quantum Key Agreement call", zrtp_post_quantum_key_agreement_call),
     TEST_NO_TAG("ZRTP Hash call", zrtp_hash_call),
     TEST_ONE_TAG("ZRTP Authentication tag call", zrtp_authtag_call, "CRYPTO"),
+    TEST_NO_TAG("ZRTP call with Replaces", zrtp_call_with_replaces),
     TEST_TWO_TAGS("DTLS SRTP call", dtls_srtp_call, "DTLS", "CRYPTO"),
 #ifdef VIDEO_ENABLED
     TEST_ONE_TAG("DTLS SRTP call with several video switches", dtls_srtp_call_with_several_video_switches, "DTLS"),
@@ -1847,6 +1901,7 @@ test_t call_secure_tests[] = {
     TEST_ONE_TAG(
         "DTLS SRTP call with ICE and dtls start immediatly", dtls_srtp_call_with_ice_and_dtls_start_immediate, "DTLS"),
     TEST_ONE_TAG("DTLS SRTP call with media relay", dtls_srtp_call_with_media_realy, "DTLS"),
+    TEST_ONE_TAG("DTLS SRTP call with Replaces", dtls_srtp_call_with_replaces, "DTLS"),
     TEST_NO_TAG("SRTP call with declined srtp", call_with_declined_srtp),
     TEST_NO_TAG("SRTP call paused and resumed", call_srtp_paused_and_resumed),
     TEST_NO_TAG("Call with ZRTP configured calling side only", call_with_zrtp_configured_calling_side),
