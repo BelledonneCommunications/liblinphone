@@ -355,6 +355,7 @@ void MS2VideoStream::updateWindowId(const std::shared_ptr<ParticipantDevice> &pa
 		setNativePreviewWindowId(windowId);
 	} else {
 		setNativeWindowId(windowId);
+		if (mNativePreviewWindowId) setNativePreviewWindowId(mNativePreviewWindowId);
 	}
 }
 
