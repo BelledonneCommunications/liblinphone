@@ -70,7 +70,7 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	LinphoneCoreManager *pauline;
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
-	network_params.loss_rate = 8.;
+	network_params.loss_rate = 8.f;
 	network_params.mode = OrtpNetworkSimulatorOutbound;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -215,9 +215,9 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	LinphoneCoreManager *pauline;
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
-	network_params.loss_rate = 3.;
+	network_params.loss_rate = 3.f;
 	network_params.mode = OrtpNetworkSimulatorOutbound;
-	network_params.max_bandwidth = 5000000;
+	network_params.max_bandwidth = 5000000.f;
 	network_params.max_buffer_size = (int)network_params.max_bandwidth;
 
 	marie = linphone_core_manager_new("marie_rc");
@@ -322,7 +322,7 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	float fec_packets = (float)(stats_fec_session_pauline->packet_sent - prev_fec_sent_number);
 	float current_overhead = fec_stream_get_overhead(pauline_vstream->ms.fec_stream);
 	int it = 0;
-	while ((fec_packets / rtp_packets < 0.35 || current_overhead > 0.95) && it < 5) {
+	while ((fec_packets / rtp_packets < 0.35f || current_overhead > 0.95f) && it < 5) {
 		wait_for_list(lcs, &dummy, 1, 4000);
 		prev_rtp_sent_number = stats_rtp_session_pauline->packet_sent;
 		prev_fec_sent_number = stats_fec_session_pauline->packet_sent;
@@ -341,8 +341,8 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	BC_ASSERT_TRUE(pauline_vstream->ms.fec_stream != NULL);
 	BC_ASSERT_TRUE(fec_stream_enabled(pauline_vstream->ms.fec_stream));
 	// check the ratio between number of repair packets and source packets
-	BC_ASSERT_GREATER(fec_packets / rtp_packets, 0.35, float, "%f");
-	if (fec_packets / rtp_packets < 0.35) {
+	BC_ASSERT_GREATER(fec_packets / rtp_packets, 0.35f, float, "%f");
+	if (fec_packets / rtp_packets < 0.35f) {
 		BC_FAIL("Wrong parameters for FEC with high bandwidth");
 		end_call(marie, pauline);
 		bctbx_list_free(lcs);
@@ -358,7 +358,7 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	BC_ASSERT_LOWER(abs(fec_row_packets - fec_col_packets), 5, int, "%d");
 
 	// 2. Decrease max bandwidth to reduce FEC level and video encoder configuration
-	network_params.max_bandwidth = 300000;
+	network_params.max_bandwidth = 300000.f;
 	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
 	ortp_message("Update network parameters: reduce bw for pauline to %f", network_params.max_bandwidth);
 
@@ -376,13 +376,13 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	// check the ratio between number of repair packets and source packets
 	rtp_packets = (float)(stats_rtp_session_pauline->packet_sent - prev_rtp_sent_number);
 	fec_packets = (float)(stats_fec_session_pauline->packet_sent - prev_fec_sent_number);
-	BC_ASSERT_LOWER(fec_packets / rtp_packets, 0.25, float, "%f");
+	BC_ASSERT_LOWER(fec_packets / rtp_packets, 0.25f, float, "%f");
 
 	// check that Pauline still receives FEC packets from Marie
 	BC_ASSERT_TRUE(stats_fec_session_pauline->packet_recv > prev_fec_recv_number + 10);
 
 	// 3. Increase max bandwidth to increase FEC level
-	network_params.max_bandwidth = 5000000;
+	network_params.max_bandwidth = 5000000.f;
 	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
 	ortp_message("Update network parameters: increase bw for pauline to %f", network_params.max_bandwidth);
 
@@ -401,7 +401,7 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	fec_packets = (float)(stats_fec_session_pauline->packet_sent - prev_fec_sent_number);
 	current_overhead = fec_stream_get_overhead(pauline_vstream->ms.fec_stream);
 	it = 0;
-	while ((fec_packets / rtp_packets < 0.35 || current_overhead > 0.95) && it < 30) {
+	while ((fec_packets / rtp_packets < 0.35f || current_overhead > 0.95f) && it < 30) {
 		wait_for_list(lcs, &dummy, 1, 4000);
 		prev_rtp_sent_number = stats_rtp_session_pauline->packet_sent;
 		prev_fec_sent_number = stats_fec_session_pauline->packet_sent;
@@ -430,7 +430,7 @@ static void video_call_with_flexfec_bandwidth_variation(void) {
 	// check the ratio between number of repair packets and source packets
 	rtp_packets = (float)(stats_rtp_session_pauline->packet_sent - prev_rtp_sent_number);
 	fec_packets = (float)(stats_fec_session_pauline->packet_sent - prev_fec_sent_number);
-	BC_ASSERT_GREATER(fec_packets / rtp_packets, 0.35, float, "%f");
+	BC_ASSERT_GREATER(fec_packets / rtp_packets, 0.35f, float, "%f");
 	// check the number of rows and columns repair packets, should be equal
 	fec_row_packets = static_cast<int>(fec_stats_pauline->row_repair_sent) - static_cast<int>(prev_fec_row_sent_number);
 	fec_col_packets = static_cast<int>(fec_stats_pauline->col_repair_sent) - static_cast<int>(prev_fec_col_sent_number);
@@ -464,10 +464,10 @@ void video_call_fps_measurement(bool_t withFEC, std::vector<float> *fps) {
 	LinphoneCoreManager *pauline;
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
-	network_params.loss_rate = 5.;
-	network_params.max_bandwidth = 500000.;
+	network_params.loss_rate = 5.f;
+	network_params.max_bandwidth = 500000.f;
 	network_params.mode = OrtpNetworkSimulatorOutbound;
-	network_params.consecutive_loss_probability = 0.7;
+	network_params.consecutive_loss_probability = 0.7f;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
@@ -542,8 +542,8 @@ void video_call_fps_measurement(bool_t withFEC, std::vector<float> *fps) {
 static void video_call_with_flexfec_increase_fps(void) {
 	std::vector<float> fps_measured_with_FEC;
 	std::vector<float> fps_measured_without_FEC;
-	float lim_inf = 20.;
-	float lim_sup = 40.;
+	float lim_inf = 20.f;
+	float lim_sup = 40.f;
 	int anomaly_with_fec = 0;
 	int anomaly_without_fec = 0;
 	bool test_again = true;
