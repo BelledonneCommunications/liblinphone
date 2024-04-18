@@ -138,6 +138,9 @@ public class CoreService extends Service {
         if (!mIsListenerAdded) {
             addCoreListener();
         }
+        if (CoreManager.isReady()) {
+            CoreManager.instance().setServiceRunning(true);
+        }
 
         return START_STICKY;
     }
@@ -151,6 +154,10 @@ public class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
+
+        if (CoreManager.isReady()) {
+            CoreManager.instance().setServiceRunning(false);
+        }
         if (mIsListenerAdded) {
             removeCoreListener();
         }
