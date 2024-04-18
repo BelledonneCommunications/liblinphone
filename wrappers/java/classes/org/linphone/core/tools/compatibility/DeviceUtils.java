@@ -192,7 +192,9 @@ public class DeviceUtils {
 	}
 
 	public static void startForegroundService(Context context, Intent intent) {
-		if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
+		if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
+			DeviceUtils31.startForegroundService(context, intent);
+		} else if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
 			DeviceUtils26.startForegroundService(context, intent);
 		} else {
 			DeviceUtils23.startForegroundService(context, intent);

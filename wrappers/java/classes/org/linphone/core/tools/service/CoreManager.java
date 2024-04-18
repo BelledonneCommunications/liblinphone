@@ -108,11 +108,13 @@ public class CoreManager {
     private native void processPushNotification(long ptr, String callId, String payload, boolean isCoreStarting);
     private native void healNetworkConnections(long ptr);
 
+    private boolean mServiceRunning;
     private boolean mServiceRunningInForeground;
 
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
         mCore = core;
+        mServiceRunning = false;
         mServiceRunningInForeground = false;
 
         mTimer = null;
@@ -286,10 +288,15 @@ public class CoreManager {
             public void onFirstCallStarted(Core core) {
                 Log.i("[Core Manager] First call started");
                 // Ensure Service is running. It will take care by itself to start as foreground.
-                try {
-                    startService();
-                } catch (IllegalStateException ise) {
-                    Log.w("[Core Manager] Failed to start service: ", ise);
+                if (!mServiceRunning) {
+                    Log.w("[Core Manager] Service isn't running, let's start it");
+                    try {
+                        startService();
+                    } catch (IllegalStateException ise) {
+                        Log.w("[Core Manager] Failed to start service: ", ise);
+                    }
+                } else {
+                    Log.i("[Core Manager] Service appears to be running, everything is fine");
                 }
             }
 
@@ -389,7 +396,7 @@ public class CoreManager {
     public void onLinphoneCoreStop() {
         Log.i("[Core Manager] Core stopped");
 
-        if (isServiceRunning()) {
+        if (mServiceRunning) {
             Log.i("[Core Manager] Stopping service ", mServiceClass.getName());
             mContext.stopService(new Intent().setClass(mContext, mServiceClass));
         }
@@ -695,14 +702,14 @@ public class CoreManager {
         mContext.startService(new Intent().setClass(mContext, mServiceClass));
     }
 
-    private boolean isServiceRunning() {
-        ActivityManager manager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (mServiceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
+    public void setServiceRunning(boolean running) {
+        mServiceRunning = running;
+        
+        if (mServiceRunningInForeground) {
+            Log.i("[Core Manager] CoreService is now running");
+        } else {
+            Log.i("[Core Manager] CoreService is no longer running");
         }
-        return false;
     }
 
     public void setServiceRunningAsForeground(boolean foreground) {

@@ -25,6 +25,7 @@ import android.app.ApplicationExitInfo;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.text.format.DateFormat;
 import android.Manifest;
@@ -93,6 +94,14 @@ public class DeviceUtils31 {
 	public static boolean isBluetoothConnectPermissionGranted(Context context) {
 		return context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
 	}
+
+    public static void startForegroundService(Context context, Intent intent) {
+		try {
+			context.startForegroundService(intent);
+		} catch (Exception e) {
+			Log.e("[Device Utils 31] Can't start service with promise it will run as foreground!", e);
+		}
+    }
 
 	public static void startForegroundService(Service service, int notifId, Notification notif) {
 		try {
