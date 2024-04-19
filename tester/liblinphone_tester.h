@@ -1161,6 +1161,7 @@ void lime_setback_usersUpdateTs(const char *limedb, int days);
 uint64_t lime_get_userUpdateTs(const char *limedb);
 char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu);
 bool_t liblinphone_tester_is_lime_PQ_available(void);
+void delete_all_in_zrtp_table(const char *zrtpdb);
 
 void liblinphone_tester_simulate_mire_defunct(
     MSFilter *filter,

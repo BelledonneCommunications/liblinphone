@@ -363,11 +363,12 @@ void StreamsGroup::propagateEncryptionChanged() {
 	getMediaSessionPrivate().propagateEncryptionChanged();
 }
 
-void StreamsGroup::authTokenReady(const string &authToken, bool verified) {
+void StreamsGroup::authTokenReady(const string &authToken, bool verified, bool cacheMismatch) {
 	mAuthToken = authToken;
 	mAuthTokenVerified = verified;
+	mAuthTokenCacheMismatch = cacheMismatch;
 	lInfo() << "Authentication token is " << mAuthToken << "(" << (mAuthTokenVerified ? "verified" : "unverified")
-	        << ")";
+	        << " " << (mAuthTokenCacheMismatch ? "and cache mismatch" : "") << ")";
 }
 
 void StreamsGroup::setAuthTokenVerified(bool value) {
@@ -388,6 +389,7 @@ void StreamsGroup::setAuthTokenVerified(bool value) {
 		ms_zrtp_sas_reset_verified(zrtp_context);
 	}
 	mAuthTokenVerified = value;
+	if (mAuthTokenVerified) mAuthTokenCacheMismatch = false;
 }
 
 Stream *StreamsGroup::lookupMainStream(SalStreamType type) {

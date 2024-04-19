@@ -5059,6 +5059,11 @@ bool MediaSession::getAuthenticationTokenVerified() const {
 	return d->getStreamsGroup().getAuthenticationTokenVerified();
 }
 
+bool MediaSession::getAuthenticationTokenCacheMismatch() const {
+	L_D();
+	return d->getStreamsGroup().getAuthenticationTokenCacheMismatch();
+}
+
 float MediaSession::getAverageQuality() const {
 	L_D();
 	return d->getStreamsGroup().getAverageQuality();

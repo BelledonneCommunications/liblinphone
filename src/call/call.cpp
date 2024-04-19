@@ -1007,6 +1007,10 @@ bool Call::getAuthenticationTokenVerified() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationTokenVerified();
 }
 
+bool Call::getAuthenticationTokenCacheMismatch() const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationTokenCacheMismatch();
+}
+
 float Call::getAverageQuality() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAverageQuality();
 }

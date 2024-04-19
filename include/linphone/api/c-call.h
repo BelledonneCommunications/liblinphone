@@ -307,6 +307,14 @@ LINPHONE_PUBLIC bool_t linphone_call_get_authentication_token_verified(const Lin
 LINPHONE_PUBLIC void linphone_call_set_authentication_token_verified(LinphoneCall *call, bool_t verified);
 
 /**
+ * Returns whether ZRTP cache mismatch.
+ * If mismatch, the ZRTP authentication token must be verified by users as described in ZRTP procedure.
+ * @param call The #LinphoneCall object @notnil
+ * @return TRUE if ZRTP cache mismatch, false otherwise.
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_get_authentication_token_cache_mismatch(const LinphoneCall *call);
+
+/**
  * Request remote side to send us a Video Fast Update.
  * @param call #LinphoneCall object. @notnil
  **/

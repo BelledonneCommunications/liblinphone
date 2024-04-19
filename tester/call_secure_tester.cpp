@@ -1477,6 +1477,61 @@ static void recreate_zrtpdb_when_corrupted(void) {
 }
 
 /*
+ * This test checks the cache mismatch mechanism.
+ */
+static void zrtp_cache_mismatch_test(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	if (BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionZRTP))) {
+		void *db;
+
+		linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
+		linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
+
+		BC_ASSERT_TRUE(call(pauline, marie));
+		// The SAS is accepted by both
+		BC_ASSERT_FALSE(
+		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(
+		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(pauline->lc)));
+		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
+		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
+		end_call(marie, pauline);
+
+		db = linphone_core_get_zrtp_cache_db(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(db); // Check ZRTP cache database
+
+		// Delete Marie's ZRTP database
+		delete_all_in_zrtp_table(marie->zrtp_secrets_database_path);
+
+		BC_ASSERT_TRUE(call(pauline, marie));
+		BC_ASSERT_FALSE(
+		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_cache_mismatch(
+		    linphone_core_get_current_call(pauline->lc))); // Pauline has a cache mismatch
+		// Both must revalidate the SAS
+		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
+		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
+		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
+		// Cache mismatch is resolved
+		BC_ASSERT_FALSE(
+		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(
+		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(pauline->lc)));
+		end_call(marie, pauline);
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+/*
  * This test verifies that when a user with a specific media encryption (mandatory or not) calls another
  * with a different mandatory media encryption, the call should be in error and the reason should be
  * 488 Not Acceptable.
@@ -1910,6 +1965,7 @@ test_t call_secure_tests[] = {
     TEST_NO_TAG("Call from plain RTP to ZRTP mandatory should be silent", call_from_plain_rtp_to_zrtp),
     TEST_NO_TAG("Call ZRTP mandatory to plain RTP should be silent", call_from_zrtp_to_plain_rtp),
     TEST_NO_TAG("Recreate ZRTP db file when corrupted", recreate_zrtpdb_when_corrupted),
+    TEST_NO_TAG("ZRTP cache mismatch", zrtp_cache_mismatch_test),
     TEST_NO_TAG("Call declined with mandatory encryption on both sides", call_declined_encryption_mandatory_both_sides),
     TEST_NO_TAG("ZRTP mandatory called by non ZRTP", zrtp_mandatory_called_by_non_zrtp),
     TEST_NO_TAG("SRTP mandatory called by non SRTP", srtp_mandatory_called_by_non_srtp),

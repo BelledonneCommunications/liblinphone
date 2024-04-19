@@ -120,6 +120,7 @@ public:
 	LinphoneCallStats *getAudioStats() const;
 	const std::string &getAuthenticationToken() const;
 	bool getAuthenticationTokenVerified() const;
+	bool getAuthenticationTokenCacheMismatch() const;
 	float getAverageQuality() const;
 	MediaSessionParams *getCurrentParams() const;
 	float getCurrentQuality() const;

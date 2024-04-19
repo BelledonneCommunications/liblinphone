@@ -506,6 +506,9 @@ public:
 	bool getAuthenticationTokenVerified() const {
 		return mAuthTokenVerified;
 	}
+	bool getAuthenticationTokenCacheMismatch() const {
+		return mAuthTokenCacheMismatch;
+	}
 	const OfferAnswerContext &getCurrentOfferAnswerContext() const {
 		return mCurrentOfferAnswerState;
 	};
@@ -553,7 +556,7 @@ protected:
 	int getVideoBandwidth(const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &desc);
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();
-	void authTokenReady(const std::string &token, bool verified);
+	void authTokenReady(const std::string &token, bool verified, bool cacheMismatch);
 	void addPostRenderHook(const std::function<void()> &l);
 
 private:
@@ -578,6 +581,7 @@ private:
 	MixerSession *mMixerSession = nullptr;
 	std::map<std::string, std::unique_ptr<SharedService>> mSharedServices;
 	bool mAuthTokenVerified = false;
+	bool mAuthTokenCacheMismatch = false;
 	bool mFinished = false;
 };
 

@@ -326,6 +326,11 @@ void linphone_call_set_authentication_token_verified(LinphoneCall *call, bool_t 
 	Call::toCpp(call)->setAuthenticationTokenVerified(!!verified);
 }
 
+bool_t linphone_call_get_authentication_token_cache_mismatch(const LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
+	return Call::toCpp(call)->getAuthenticationTokenCacheMismatch();
+}
+
 void linphone_call_send_vfu_request(LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	Call::toCpp(call)->sendVfuRequest();

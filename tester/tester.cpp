@@ -131,6 +131,18 @@ char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu) {
 	return ret;
 }
 
+void delete_all_in_zrtp_table(const char *zrtpdb) {
+#ifdef HAVE_SOCI
+	try {
+		soci::session sql("sqlite3", zrtpdb); // open the DB
+		sql << "DELETE FROM zrtp;";           // Delete all in the zrtp table
+
+	} catch (std::exception &e) { // swallow any error on DB
+		lWarning() << "Cannot delete zrtp in database " << zrtpdb << ". Error is " << e.what();
+	}
+#endif
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif // _MSC_VER
