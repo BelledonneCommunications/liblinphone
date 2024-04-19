@@ -756,12 +756,18 @@ public class CoreManager {
             return;
         }
 
-        Display display = mDisplayManager.getDisplay(displayId);
-        if (display != null) {
-            int orientation = display.getRotation();
-            int degrees = orientation * 90;
-            Log.i("[Core Manager] Device computed rotation is ", degrees, " device display id is ", displayId, ")");
-            mCore.setDeviceRotation(degrees);
+        if (mDisplayManager != null) {
+            Display display = mDisplayManager.getDisplay(displayId);
+            if (display != null) {
+                int orientation = display.getRotation();
+                int degrees = orientation * 90;
+                Log.i("[Core Manager] Device computed rotation is [", degrees, "] device display id is [", displayId, "])");
+                mCore.setDeviceRotation(degrees);
+            } else {
+                Log.e("[Core Manager] Display manager returned null display for id [", displayId, "]");
+            }
+        } else {
+            Log.e("[Core Manager] Android's display manager not available yet");
         }
     }
 }
