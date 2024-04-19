@@ -667,6 +667,14 @@ LINPHONE_PUBLIC LinphoneDictionary *linphone_config_section_to_dict(const Linpho
 LINPHONE_PUBLIC void
 linphone_config_load_dict_to_section(LinphoneConfig *config, const char *section, const LinphoneDictionary *dict);
 
+/**
+ * Indicates whether the LinphoneConfig object is readonly, in other words
+ * it has no file backend or file is opened without write permission.
+ * @param config the #LinphoneConfig object @notnil
+ * @return a boolean.
+ */
+LINPHONE_PUBLIC bool_t linphone_config_is_readonly(const LpConfig *config);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

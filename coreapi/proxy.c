@@ -80,6 +80,11 @@ void linphone_proxy_config_write_all_to_config_file(LinphoneCore *lc) {
 	int i;
 	if (!linphone_core_ready(lc)) return;
 
+	if (linphone_config_is_readonly(lc->config)) {
+		lInfo() << "Storage of accounts to config file is skipped.";
+		return;
+	}
+
 	for (elem = lc->sip_conf.proxies, i = 0; elem != NULL; elem = bctbx_list_next(elem), i++) {
 		LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)elem->data;
 		linphone_proxy_config_write_to_config_file(lc->config, cfg, i);
