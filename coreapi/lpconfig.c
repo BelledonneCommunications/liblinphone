@@ -1387,6 +1387,10 @@ int linphone_config_has_entry(const LpConfig *lpconfig, const char *section, con
 	} else return FALSE;
 }
 
+bool_t linphone_config_is_readonly(const LpConfig *lpconfig) {
+	return lpconfig->filename == NULL || lpconfig->readonly;
+}
+
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneConfig,
                            belle_sip_object_t,
                            _linphone_config_uninit, // uninit

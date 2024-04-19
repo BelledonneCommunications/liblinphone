@@ -250,7 +250,7 @@ void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai) {
 	int i;
 	bctbx_list_t *elem = lc->auth_info;
 
-	if (!lc->sip_conf.save_auth_info) return;
+	if (!lc->sip_conf.save_auth_info || linphone_config_is_readonly(lc->config)) return;
 
 	for (i = 0; elem != NULL; elem = elem->next, i++) {
 		if (ai == elem->data) {
@@ -264,7 +264,7 @@ static void write_auth_infos(LinphoneCore *lc) {
 	int i;
 
 	if (!linphone_core_ready(lc)) return;
-	if (!lc->sip_conf.save_auth_info) return;
+	if (!lc->sip_conf.save_auth_info || linphone_config_is_readonly(lc->config)) return;
 	for (elem = lc->auth_info, i = 0; elem != NULL; elem = bctbx_list_next(elem), i++) {
 		LinphoneAuthInfo *ai = (LinphoneAuthInfo *)(elem->data);
 		linphone_auth_info_write_config(lc->config, ai, i);
