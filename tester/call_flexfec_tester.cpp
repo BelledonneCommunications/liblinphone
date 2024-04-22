@@ -111,8 +111,17 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 		disable_all_audio_codecs(pauline->lc);
 	}
 
-	disable_all_video_codecs_except_one(marie->lc, "AV1");
-	disable_all_video_codecs_except_one(pauline->lc, "AV1");
+	uint64_t expected_recovered_packets = 7;
+	PayloadType *pt_marie = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	PayloadType *pt_pauline = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	if (pt_marie && pt_pauline) {
+		disable_all_video_codecs_except_one(marie->lc, "AV1");
+		disable_all_video_codecs_except_one(pauline->lc, "AV1");
+	} else {
+		disable_all_video_codecs_except_one(marie->lc, "VP8");
+		disable_all_video_codecs_except_one(pauline->lc, "VP8");
+		expected_recovered_packets = 50;
+	}
 
 	enable_video_stream(marie->lc, pol);
 	enable_video_stream(pauline->lc, pol);
@@ -128,7 +137,6 @@ static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 20000));
 	if (vstream->ms.fec_stream) {
 		stats = fec_stream_get_stats(vstream->ms.fec_stream);
-		uint64_t expected_recovered_packets = 7;
 		BC_ASSERT_TRUE(wait_for_until_for_uint64(marie->lc, pauline->lc, &stats->packets_recovered,
 		                                         expected_recovered_packets, 25000));
 		ms_message("%s recovered %0d packets. The expected value is %0d", linphone_core_get_identity(marie->lc),
@@ -472,8 +480,15 @@ void video_call_fps_measurement(bool_t withFEC, std::vector<float> *fps) {
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	disable_all_video_codecs_except_one(marie->lc, "AV1");
-	disable_all_video_codecs_except_one(pauline->lc, "AV1");
+	PayloadType *pt_marie = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	PayloadType *pt_pauline = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	if (pt_marie && pt_pauline) {
+		disable_all_video_codecs_except_one(marie->lc, "AV1");
+		disable_all_video_codecs_except_one(pauline->lc, "AV1");
+	} else {
+		disable_all_video_codecs_except_one(marie->lc, "VP8");
+		disable_all_video_codecs_except_one(pauline->lc, "VP8");
+	}
 
 	linphone_core_set_media_encryption(marie->lc, params.encryption_mode);
 	linphone_core_set_media_encryption(pauline->lc, params.encryption_mode);
@@ -539,7 +554,7 @@ void video_call_fps_measurement(bool_t withFEC, std::vector<float> *fps) {
 
 	return;
 }
-static void video_call_with_flexfec_increase_fps(void) {
+static void video_call_with_flexfec_check_fps(void) {
 	std::vector<float> fps_measured_with_FEC;
 	std::vector<float> fps_measured_without_FEC;
 	float lim_inf = 20.f;
@@ -575,7 +590,7 @@ static test_t call_flexfec_tests[] = {
     TEST_NO_TAG("Video call with flexfec and dtls", video_call_with_flexfec_and_dtls),
     TEST_NO_TAG("Video call with flexfec and zrtp", video_call_with_flexfec_and_zrtp),
     TEST_NO_TAG("Video call with flexfec bandwidth variation", video_call_with_flexfec_bandwidth_variation),
-    TEST_NO_TAG("Video call with flexfec fps impact", video_call_with_flexfec_increase_fps),
+    TEST_NO_TAG("Video call with flexfec check fps", video_call_with_flexfec_check_fps),
 };
 
 test_suite_t call_flexfec_suite = {"Call with FlexFec",
