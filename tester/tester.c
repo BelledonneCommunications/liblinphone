@@ -118,38 +118,52 @@ const char *file_transfer_get_proxy_external_domain =
 // These lime server authenticate user using Digest auth only on sip.example.org domain
 const char *lime_server_c25519_url = "https://lime.wildcard1.linphone.org:8443/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_url = "https://lime.wildcard1.linphone.org:8443/lime-server-c448/lime-server.php";
+const char *lime_server_c25519k512_url =
+    "https://lime.wildcard1.linphone.org:8443/lime-server-c25519k512/lime-server.php";
 // These lime server authenticate user using Digest auth only on any auth domain (providing the flexisip base can
 // authenticate the user)
 const char *lime_server_any_domain_c25519_url =
     "https://lime.wildcard1.linphone.org:8442/lime-server-c25519/lime-server.php";
 const char *lime_server_any_domain_c448_url =
     "https://lime.wildcard1.linphone.org:8442/lime-server-c448/lime-server.php";
+const char *lime_server_any_domain_c25519k512_url =
+    "https://lime.wildcard1.linphone.org:8442/lime-server-c25519k512/lime-server.php";
 // These lime server authenticate user using TLS auth only
 const char *lime_server_c25519_tlsauth_req_url =
     "https://lime.wildcard1.linphone.org:8543/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_tlsauth_req_url =
     "https://lime.wildcard1.linphone.org:8543/lime-server-c448/lime-server.php";
+const char *lime_server_c25519k512_tlsauth_req_url =
+    "https://lime.wildcard1.linphone.org:8543/lime-server-c25519k512/lime-server.php";
 // These lime server authenticate user using optionnal TLS auth, falling back on digest auth if client did not provide a
 // client certificate Foreign domain external-domain.org is served on port 8643: lime_server_c25519/488_tlsauth_opt_url
 const char *lime_server_c25519_tlsauth_opt_url =
     "https://lime.wildcard1.linphone.org:8544/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_tlsauth_opt_url =
     "https://lime.wildcard1.linphone.org:8544/lime-server-c448/lime-server.php";
+const char *lime_server_c25519k512_tlsauth_opt_url =
+    "https://lime.wildcard1.linphone.org:8544/lime-server-c25519k512/lime-server.php";
 // Lime server using TLS and digest auth on external-domain - foreign domain is served by server on port 8544 :
 // lime_server_c25519/488_tlsauth_opt_url
 const char *lime_server_c25519_external_url =
     "https://lime.external-domain.org:8643/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_external_url = "https://lime.external-domain.org:8643/lime-server-c448/lime-server.php";
+const char *lime_server_c25519k512_external_url =
+    "https://lime.external-domain.org:8643/lime-server-c25519k512/lime-server.php";
 // Lime server enforcing both TLS and digest auth on sip.example.org
 const char *lime_server_c25519_dual_auth_url =
     "https://lime.wildcard1.linphone.org:8545/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_dual_auth_url =
     "https://lime.wildcard1.linphone.org:8545/lime-server-c448/lime-server.php";
+const char *lime_server_c25519k512_dual_auth_url =
+    "https://lime.wildcard1.linphone.org:8545/lime-server-c25519k512/lime-server.php";
 // Lime server enforcing both TLS and digest auth on external-domain
 const char *lime_server_c25519_external_dual_auth_url =
     "https://lime.external-domain.org:8644/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_external_dual_auth_url =
     "https://lime.external-domain.org:8644/lime-server-c448/lime-server.php";
+const char *lime_server_c25519512_external_dual_auth_url =
+    "https://lime.external-domain.org:8644/lime-server-c25519512/lime-server.php";
 bool_t liblinphonetester_ipv6 = TRUE;
 const char *liblinphone_tester_ipv6_probing_address = "2a01:e00::2";
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
@@ -5399,32 +5413,49 @@ static void dummy_capture_test_snd_card_detect(MSSndCardManager *m) {
 static void set_lime_server_and_curve_tls(
     const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req, bool_t in_account) {
 	const char *server = NULL;
-	if (curveId == 448) {
-		// Change the curve setting before the server URL
-		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c448");
-		// changing the url will restart the encryption engine allowing to also use the changed curve config
-		if (tls_auth_server == TRUE) {
-			if (req == TRUE) {
-				server = lime_server_c448_tlsauth_req_url;
+	switch (curveId) {
+		case 448:
+			// Change the curve setting before the server URL
+			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c448");
+			// changing the url will restart the encryption engine allowing to also use the changed curve config
+			if (tls_auth_server == TRUE) {
+				if (req == TRUE) {
+					server = lime_server_c448_tlsauth_req_url;
+				} else {
+					server = lime_server_c448_tlsauth_opt_url;
+				}
 			} else {
-				server = lime_server_c448_tlsauth_opt_url;
+				server = lime_server_c448_url;
 			}
-		} else {
-			server = lime_server_c448_url;
-		}
-	} else {
-		// Change the curve setting before the server URL
-		linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c25519");
-		// changing the url will restart the encryption engine allowing to also use the changed curve config
-		if (tls_auth_server == TRUE) {
-			if (req == TRUE) {
-				server = lime_server_c25519_tlsauth_req_url;
+			break;
+		case 25519:
+			// Change the curve setting before the server URL
+			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c25519");
+			// changing the url will restart the encryption engine allowing to also use the changed curve config
+			if (tls_auth_server == TRUE) {
+				if (req == TRUE) {
+					server = lime_server_c25519_tlsauth_req_url;
+				} else {
+					server = lime_server_c25519_tlsauth_opt_url;
+				}
 			} else {
-				server = lime_server_c25519_tlsauth_opt_url;
+				server = lime_server_c25519_url;
 			}
-		} else {
-			server = lime_server_c25519_url;
-		}
+			break;
+		case 25519512:
+			// Change the curve setting before the server URL
+			linphone_config_set_string(linphone_core_get_config(manager->lc), "lime", "curve", "c25519k512");
+			// changing the url will restart the encryption engine allowing to also use the changed curve config
+			if (tls_auth_server == TRUE) {
+				if (req == TRUE) {
+					server = lime_server_c25519k512_tlsauth_req_url;
+				} else {
+					server = lime_server_c25519k512_tlsauth_opt_url;
+				}
+			} else {
+				server = lime_server_c25519k512_url;
+			}
+			break;
 	}
 
 	if (in_account) { // This is the way to set the lime server url: in the accounts

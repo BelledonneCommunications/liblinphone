@@ -151,6 +151,8 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine(const std::string &dbAccess,
 	const std::string curveConfig = linphone_config_get_string(cCore->config, "lime", "curve", "c25519");
 	if (curveConfig.compare("c448") == 0) {
 		curve = lime::CurveId::c448;
+	} else if (curveConfig.compare("c25519k512") == 0) {
+		curve = lime::CurveId::c25519k512;
 	} else {
 		curve = lime::CurveId::c25519;
 	}
@@ -1094,6 +1096,8 @@ void LimeX3dhEncryptionEngine::onServerUrlChanged(std::shared_ptr<Account> &acco
 				const std::string curveConfig = linphone_config_get_string(lc->config, "lime", "curve", "c25519");
 				if (curveConfig.compare("c448") == 0) {
 					curve = lime::CurveId::c448;
+				} else if (curveConfig.compare("c25519k512") == 0) {
+					curve = lime::CurveId::c25519k512;
 				} else {
 					curve = lime::CurveId::c25519;
 				}

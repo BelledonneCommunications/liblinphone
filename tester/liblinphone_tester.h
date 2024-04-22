@@ -234,18 +234,31 @@ extern const char *file_transfer_get_proxy;
 extern const char *file_transfer_get_proxy_external_domain;
 extern const char *lime_server_c25519_url;
 extern const char *lime_server_c448_url;
+extern const char *lime_server_c25519k512_url;
 extern const char *lime_server_any_domain_c25519_url;
 extern const char *lime_server_any_domain_c448_url;
+extern const char *lime_server_any_domain_c25519k512_url;
+
 extern const char *lime_server_c25519_tlsauth_opt_url;
 extern const char *lime_server_c448_tlsauth_opt_url;
+extern const char *lime_server_c25519k512_tlsauth_opt_url;
+
 extern const char *lime_server_c25519_tlsauth_req_url;
 extern const char *lime_server_c448_tlsauth_req_url;
+extern const char *lime_server_c25519k512_tlsauth_req_url;
+
 extern const char *lime_server_c25519_dual_auth_url;
 extern const char *lime_server_c448_dual_auth_url;
+extern const char *lime_server_c25519k512_dual_auth_url;
+
 extern const char *lime_server_c25519_external_url;
 extern const char *lime_server_c448_external_url;
+extern const char *lime_server_c25519k512_external_url;
+
 extern const char *lime_server_c25519_external_dual_auth_url;
 extern const char *lime_server_c448_external_dual_auth_url;
+extern const char *lime_server_c25519k512_external_dual_auth_url;
+
 extern bool_t liblinphone_tester_keep_uuid;
 extern bool_t liblinphone_tester_tls_support_disabled;
 extern const MSAudioDiffParams audio_cmp_params;
@@ -1124,6 +1137,7 @@ void lime_delete_DRSessions(const char *limedb, const char *requestOption);
 void lime_setback_usersUpdateTs(const char *limedb, int days);
 uint64_t lime_get_userUpdateTs(const char *limedb);
 char *lime_get_userIk(LinphoneCoreManager *mgr, char *gruu);
+bool_t liblinphone_tester_is_lime_PQ_available(void);
 
 void liblinphone_tester_simulate_mire_defunct(
     MSFilter *filter,

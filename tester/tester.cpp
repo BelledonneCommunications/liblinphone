@@ -37,6 +37,7 @@
 
 #ifdef HAVE_LIME_X3DH
 #include "bctoolbox/crypto.hh"
+#include "lime/lime.hpp"
 #endif // HAVE_LIME_X3DH
 
 bool is_filepath_encrypted(const char *filepath) {
@@ -145,5 +146,16 @@ void liblinphone_tester_add_grammar_loader_path(const char *path) {
 #ifdef HAVE_SOCI
 void liblinphone_tester_add_soci_search_path(const char *path) {
 	soci::dynamic_backends::search_paths().emplace_back(path);
+}
+#endif
+
+#ifdef HAVE_LIME_X3DH
+bool_t liblinphone_tester_is_lime_PQ_available(void) {
+	return lime::lime_is_PQ_available() ? TRUE : FALSE;
+}
+#else
+/* We should not need to define this function when LIME_X3DH is not built */
+bool_t liblinphone_tester_is_lime_PQ_available(void) {
+	return FALSE;
 }
 #endif
