@@ -106,6 +106,23 @@ LINPHONE_PUBLIC void linphone_call_cbs_set_encryption_changed(LinphoneCallCbs *c
                                                               LinphoneCallCbsEncryptionChangedCb cb);
 
 /**
+ * Get the authentication token verified callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @return The current authentication token verified callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsAuthenticationTokenVerifiedCb
+linphone_call_cbs_get_authentication_token_verified(LinphoneCallCbs *cbs);
+
+/**
+ * Set the authentication token verified callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @param[in] cb The authentication token verified callback to be used.
+ */
+LINPHONE_PUBLIC void
+linphone_call_cbs_set_authentication_token_verified(LinphoneCallCbs *cbs,
+                                                    LinphoneCallCbsAuthenticationTokenVerifiedCb cb);
+
+/**
  * Get the send master key changed callback.
  * @param cbs #LinphoneCallCbs object. @notnil
  * @return The current send master key changed callback.

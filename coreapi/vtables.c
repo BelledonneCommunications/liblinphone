@@ -144,6 +144,11 @@ void linphone_core_notify_call_encryption_changed(LinphoneCore *lc,
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_call_authentication_token_verified(LinphoneCore *lc, LinphoneCall *call, bool_t verified) {
+	NOTIFY_IF_EXIST(call_authentication_token_verified, lc, call, verified);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_call_send_master_key_changed(LinphoneCore *lc, LinphoneCall *call, const char *master_key) {
 	NOTIFY_IF_EXIST(call_send_master_key_changed, lc, call, master_key);
 	cleanup_dead_vtable_refs(lc);

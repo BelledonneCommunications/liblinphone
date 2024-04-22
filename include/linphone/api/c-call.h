@@ -289,6 +289,20 @@ LINPHONE_PUBLIC const char *linphone_call_get_remote_contact(LinphoneCall *call)
 LINPHONE_PUBLIC const char *linphone_call_get_authentication_token(LinphoneCall *call);
 
 /**
+ * Returns the local ZRTP authentication token to verify by the remote.
+ * @param call The #LinphoneCall object @notnil
+ * @return the local authentication token to verify or NULL if ZRTP isn't enabled. @maybenil @tobefreed
+ **/
+LINPHONE_PUBLIC char *linphone_call_get_local_authentication_token(LinphoneCall *call);
+
+/**
+ * Returns a list of 4 remote ZRTP authentication tokens. The user needs to select one.
+ * @param call The #LinphoneCall object @notnil
+ * @return the authentication tokens to verify or NULL if ZRTP isn't enabled. \bctbx_list{char *} @maybenil @tobefreed
+ **/
+LINPHONE_PUBLIC bctbx_list_t *linphone_call_get_remote_authentication_tokens(LinphoneCall *call);
+
+/**
  * Returns whether ZRTP authentication token is verified.
  * If not, it must be verified by users as described in ZRTP procedure.
  * Once done, the application must inform of the results with linphone_call_set_authentication_token_verified().
@@ -296,6 +310,15 @@ LINPHONE_PUBLIC const char *linphone_call_get_authentication_token(LinphoneCall 
  * @return TRUE if authentication token is verifed, false otherwise.
  **/
 LINPHONE_PUBLIC bool_t linphone_call_get_authentication_token_verified(const LinphoneCall *call);
+
+/**
+ * Verify that the half ZRTP short authentication string (SAS) selected by the user is correct, and set the verification
+ *result accordingly. If the remote party also verifies his/her half code correctly, the ZRTP cache will be updated to
+ *prevent future verification requirements for these two users.
+ * @param call The #LinphoneCall object @notnil
+ * @param selected_value The ZRTP SAS selected by the user, or an empty string if the user cannot find the SAS
+ **/
+LINPHONE_PUBLIC void linphone_call_check_authentication_token_selected(LinphoneCall *call, const char *selected_value);
 
 /**
  * Set the result of ZRTP short code verification by user.
@@ -312,7 +335,7 @@ LINPHONE_PUBLIC void linphone_call_set_authentication_token_verified(LinphoneCal
  * @param call The #LinphoneCall object @notnil
  * @return TRUE if ZRTP cache mismatch, false otherwise.
  **/
-LINPHONE_PUBLIC bool_t linphone_call_get_authentication_token_cache_mismatch(const LinphoneCall *call);
+LINPHONE_PUBLIC bool_t linphone_call_get_zrtp_cache_mismatch_flag(const LinphoneCall *call);
 
 /**
  * Request remote side to send us a Video Fast Update.

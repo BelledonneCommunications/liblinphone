@@ -414,6 +414,8 @@ SalReason linphone_reason_to_sal(LinphoneReason reason) {
 		case LinphoneReasonTransferred: // It is not really used by Sal. This reason coming from managing tones on
 		                                // transferred call.
 			return SalReasonNone;
+		case LinphoneReasonSasCheckRequired:
+			return SalReasonSasCheckRequired;
 		case LinphoneReasonUnknown:
 			return SalReasonUnknown;
 	}
@@ -502,6 +504,9 @@ LinphoneReason linphone_reason_from_sal(SalReason r) {
 			break;
 		case SalReasonServerTimeout:
 			ret = LinphoneReasonServerTimeout;
+			break;
+		case SalReasonSasCheckRequired:
+			ret = LinphoneReasonSasCheckRequired;
 			break;
 	}
 	return ret;

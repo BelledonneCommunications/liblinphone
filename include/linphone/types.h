@@ -1129,18 +1129,19 @@ typedef enum _LinphoneReason {
 	LinphoneReasonNotAcceptable = 12, /**< Operation is rejected due to incompatible or unsupported media parameters */
 	LinphoneReasonNoMatch = 13,       /**< Operation could not be executed by server or remote client because it didn't
 	                                     have any context for it */
-	LinphoneReasonMovedPermanently = 14,        /**< Resource moved permanently */
-	LinphoneReasonGone = 15,                    /**< Resource no longer exists */
-	LinphoneReasonTemporarilyUnavailable = 16,  /**< Temporarily unavailable */
-	LinphoneReasonAddressIncomplete = 17,       /**< Address incomplete */
-	LinphoneReasonNotImplemented = 18,          /**< Not implemented */
-	LinphoneReasonBadGateway = 19,              /**< Bad gateway */
-	LinphoneReasonSessionIntervalTooSmall = 20, /**< The received request contains a Session-Expires header field
-	                                               with a duration below the minimum timer */
-	LinphoneReasonServerTimeout = 21,           /**< Server timeout */
-	LinphoneReasonUnknown = 22,                 /**< Unknown reason */
-	LinphoneReasonTransferred = 23,             /**< The call has been transferred */
-	LinphoneReasonConditionalRequestFailed = 24 /**< Conditional Request Failed */
+	LinphoneReasonMovedPermanently = 14,         /**< Resource moved permanently */
+	LinphoneReasonGone = 15,                     /**< Resource no longer exists */
+	LinphoneReasonTemporarilyUnavailable = 16,   /**< Temporarily unavailable */
+	LinphoneReasonAddressIncomplete = 17,        /**< Address incomplete */
+	LinphoneReasonNotImplemented = 18,           /**< Not implemented */
+	LinphoneReasonBadGateway = 19,               /**< Bad gateway */
+	LinphoneReasonSessionIntervalTooSmall = 20,  /**< The received request contains a Session-Expires header field
+	                                                with a duration below the minimum timer */
+	LinphoneReasonServerTimeout = 21,            /**< Server timeout */
+	LinphoneReasonUnknown = 22,                  /**< Unknown reason */
+	LinphoneReasonTransferred = 23,              /**< The call has been transferred */
+	LinphoneReasonConditionalRequestFailed = 24, /**< Conditional Request Failed */
+	LinphoneReasonSasCheckRequired = 25
 } LinphoneReason;
 
 #define LinphoneReasonBadCredentials LinphoneReasonForbidden
@@ -1233,13 +1234,14 @@ typedef enum _LinphoneSubscriptionState {
  * @ingroup misc
  **/
 typedef enum _LinphoneToneID {
-	LinphoneToneUndefined = 0,      /**< Not a tone */
-	LinphoneToneBusy = 1,           /**< Busy tone */
-	LinphoneToneCallWaiting = 2,    /**< Call waiting tone */
-	LinphoneToneCallOnHold = 3,     /**< Call on hold tone */
-	LinphoneToneCallLost = 4,       /**< Tone played when call is abruptly disconnected (media lost)*/
-	LinphoneToneCallEnd = 5,        /**< When the call end for any reason but lost */
-	LinphoneToneCallNotAnswered = 6 /**< When the call is not answered */
+	LinphoneToneUndefined = 0,       /**< Not a tone */
+	LinphoneToneBusy = 1,            /**< Busy tone */
+	LinphoneToneCallWaiting = 2,     /**< Call waiting tone */
+	LinphoneToneCallOnHold = 3,      /**< Call on hold tone */
+	LinphoneToneCallLost = 4,        /**< Tone played when call is abruptly disconnected (media lost)*/
+	LinphoneToneCallEnd = 5,         /**< When the call end for any reason but lost */
+	LinphoneToneCallNotAnswered = 6, /**< When the call is not answered */
+	LinphoneToneSasCheckRequired = 7 /**< When the SAS check is required */
 } LinphoneToneID;
 
 /**

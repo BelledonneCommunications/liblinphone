@@ -631,6 +631,10 @@ void Call::onEncryptionChanged(BCTBX_UNUSED(const shared_ptr<CallSession> &sessi
 	linphone_call_notify_encryption_changed(this->toC(), activated, L_STRING_TO_C(authToken));
 }
 
+void Call::onAuthenticationTokenVerified(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session), bool verified) {
+	linphone_call_notify_authentication_token_verified(this->toC(), verified);
+}
+
 void Call::onSendMasterKeyChanged(BCTBX_UNUSED(const shared_ptr<CallSession> &session), const string &masterKey) {
 	linphone_call_notify_send_master_key_changed(this->toC(), L_STRING_TO_C(masterKey));
 }
@@ -999,16 +1003,48 @@ LinphoneCallStats *Call::getAudioStats() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAudioStats();
 }
 
-const string &Call::getAuthenticationToken() {
+const string &Call::getAuthenticationToken() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationToken();
+}
+
+string Call::getHalfAuthenticationToken(bool localHalfAuthToken) const {
+	const string &authToken = getAuthenticationToken();
+	if (authToken.empty()) return nullptr; // ZRTP disabled
+	LinphoneCallStats *stats = getStats(LinphoneStreamTypeAudio);
+	int sasAlgo = linphone_call_stats_get_zrtp_algo(stats)->sas_algo;
+	linphone_call_stats_unref(stats);
+	bool firstPart = false;
+	string ret;
+	if ((getDirection() == LinphoneCallOutgoing && !localHalfAuthToken) ||
+	    (getDirection() == LinphoneCallIncoming && localHalfAuthToken)) {
+		firstPart = true;
+	}
+	if (sasAlgo == MS_ZRTP_SAS_B32) {
+		if (firstPart) {
+			return authToken.substr(0, 2);
+		} else {
+			return authToken.substr(2, 2);
+		}
+	} else {
+		auto pos = authToken.find(':');
+		if (firstPart) {
+			return authToken.substr(0, pos);
+		} else {
+			return authToken.substr(pos + 1);
+		}
+	}
+}
+
+const list<string> &Call::getIncorrectAuthenticationTokens() const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getIncorrectAuthenticationTokens();
 }
 
 bool Call::getAuthenticationTokenVerified() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationTokenVerified();
 }
 
-bool Call::getAuthenticationTokenCacheMismatch() const {
-	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationTokenCacheMismatch();
+bool Call::getZrtpCacheMismatch() const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getZrtpCacheMismatch();
 }
 
 float Call::getAverageQuality() const {
@@ -1199,6 +1235,12 @@ std::string Call::getConferenceId() const {
 
 bool Call::mediaInProgress() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->mediaInProgress();
+}
+
+void Call::checkAuthenticationTokenSelected(const string &selectedValue) {
+	auto halfAuthToken = getHalfAuthenticationToken(false);
+	static_pointer_cast<MediaSession>(getActiveSession())
+	    ->checkAuthenticationTokenSelected(selectedValue, halfAuthToken);
 }
 
 void Call::setAuthenticationTokenVerified(bool value) {

@@ -3369,7 +3369,7 @@ bool MediaSessionPrivate::isEncryptionMandatory() const {
 
 void MediaSessionPrivate::propagateEncryptionChanged() {
 	L_Q();
-	auto logContext = getLogContextualizer();
+
 	string authToken = getStreamsGroup().getAuthenticationToken();
 	const auto conference = q->getCore()->findConference(q->getSharedFromThis(), false);
 	// If the media session is part of a conference, the client has no way to check the token, hence do not pass it on
@@ -3410,6 +3410,9 @@ void MediaSessionPrivate::propagateEncryptionChanged() {
 					lError() << "EncryptionEngine cannot be notified of verified status because remote contact address "
 					            "is unknown.";
 				}
+			} else {
+				// ZRTP is enabled and we need to check the SAS, a security alert tones
+				q->getCore()->getPrivate()->getToneManager().notifySecurityAlert(q->getSharedFromThis());
 			}
 		} else {
 			/* Otherwise it must be DTLS as SDES doesn't go through this function */
@@ -5054,14 +5057,19 @@ const string &MediaSession::getAuthenticationToken() const {
 	return d->getStreamsGroup().getAuthenticationToken();
 }
 
+const list<string> &MediaSession::getIncorrectAuthenticationTokens() const {
+	L_D();
+	return d->getStreamsGroup().getIncorrectAuthenticationTokens();
+}
+
 bool MediaSession::getAuthenticationTokenVerified() const {
 	L_D();
 	return d->getStreamsGroup().getAuthenticationTokenVerified();
 }
 
-bool MediaSession::getAuthenticationTokenCacheMismatch() const {
+bool MediaSession::getZrtpCacheMismatch() const {
 	L_D();
-	return d->getStreamsGroup().getAuthenticationTokenCacheMismatch();
+	return d->getStreamsGroup().getZrtpCacheMismatch();
 }
 
 float MediaSession::getAverageQuality() const {
@@ -5473,8 +5481,16 @@ void MediaSession::setAuthenticationTokenVerified(bool value) {
 			encryptionEngine->authenticationRejected(peerDeviceId);
 			ms_free(peerDeviceId);
 		}
+		d->stopStreams();
 	}
 	d->propagateEncryptionChanged();
+}
+
+void MediaSession::checkAuthenticationTokenSelected(const string &selectedValue, const string &halfAuthToken) {
+	L_D();
+	bool value = (selectedValue.compare(halfAuthToken) == 0) ? true : false;
+	d->listener->onAuthenticationTokenVerified(getSharedFromThis(), value);
+	setAuthenticationTokenVerified(value);
 }
 
 void MediaSession::setParams(const MediaSessionParams *msp) {

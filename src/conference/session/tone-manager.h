@@ -51,6 +51,8 @@ public:
 	void prepareForNextState(const std::shared_ptr<CallSession> &session, CallSession::State nextState);
 	void notifyState(const std::shared_ptr<CallSession> &session, CallSession::State nextState);
 
+	void notifySecurityAlert(const std::shared_ptr<CallSession> &session);
+
 	/* Below are a few accessors required by other parts of liblinphone.*/
 	void playDtmf(char dtmf, int duration);
 	void stopDtmf();

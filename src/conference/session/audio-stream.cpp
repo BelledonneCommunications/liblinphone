@@ -867,16 +867,22 @@ void MS2AudioStream::telephoneEventReceived(int event) {
 void MS2AudioStream::handleEvent(const OrtpEvent *ev) {
 	OrtpEventType evt = ortp_event_get_type(ev);
 	OrtpEventData *evd = ortp_event_get_data(const_cast<OrtpEvent *>(ev));
+	list<string> sasList{};
 	switch (evt) {
 		case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
 			if (isMain()) getGroup().zrtpStarted(this);
 			break;
 		case ORTP_EVENT_ZRTP_SAS_READY:
-			getGroup().authTokenReady(evd->info.zrtp_info.sas, !!evd->info.zrtp_info.verified,
-			                          !!evd->info.zrtp_info.cache_mismatch);
+			for (int i = 0; i < 3; i++) {
+				sasList.emplace_back(evd->info.zrtp_info.incorrect_sas[i]);
+			}
+			getGroup().authTokensReady(std::move(sasList), evd->info.zrtp_info.sas, !!evd->info.zrtp_info.verified,
+			                           !!evd->info.zrtp_info.cache_mismatch);
 			break;
 		case ORTP_EVENT_TELEPHONE_EVENT:
 			telephoneEventReceived(evd->info.telephone_event);
+			break;
+		default:
 			break;
 	}
 }

@@ -300,7 +300,8 @@ typedef enum SalReason {
 	SalReasonSessionIntervalTooSmall = 23,
 	SalReasonIOError = 24,
 	SalReasonInternalError = 25,
-	SalReasonConditionalRequestFailed = 26
+	SalReasonConditionalRequestFailed = 26,
+	SalReasonSasCheckRequired = 27
 } SalReason;
 
 const char *sal_reason_to_string(const SalReason reason);

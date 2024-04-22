@@ -234,6 +234,8 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsCallGoClearAckSentCb call_goclear_ack_sent; /**< Notifies on sending of GoClear Ack */
 	LinphoneCoreCallEncryptionChangedCb
 	    call_encryption_changed; /**< Notifies on change in the encryption of call streams */
+	LinphoneCoreCallAuthenticationTokenVerifiedCb
+	    call_authentication_token_verified; /**< Notifies when the authentication token is verified */
 	LinphoneCoreCbsCallSendMasterKeyChangedCb
 	    call_send_master_key_changed; /**< Notifies on change of the send master key of call streams */
 	LinphoneCoreCbsCallReceiveMasterKeyChangedCb
@@ -781,6 +783,23 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_call_encryption_changed(LinphoneCoreC
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallEncryptionChangedCb
 linphone_core_cbs_get_call_encryption_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Get the #LinphoneCoreCbsCallAuthenticationTokenVerifiedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsCallAuthenticationTokenVerifiedCb
+linphone_core_cbs_get_call_authentication_token_verified(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsCallAuthenticationTokenVerifiedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void
+linphone_core_cbs_set_call_authentication_token_verified(LinphoneCoreCbs *cbs,
+                                                         LinphoneCoreCbsCallAuthenticationTokenVerifiedCb cb);
 
 /**
  * Set the #LinphoneCoreCbsCallSendMasterKeyChangedCb callback.

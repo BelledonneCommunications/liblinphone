@@ -105,6 +105,9 @@ public:
 	                                 BCTBX_UNUSED(bool activated),
 	                                 BCTBX_UNUSED(const std::string &authToken)) {
 	}
+	virtual void onAuthenticationTokenVerified(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
+	                                           BCTBX_UNUSED(bool verified)) {
+	}
 	virtual void onSendMasterKeyChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),
 	                                    BCTBX_UNUSED(const std::string &masterKey)){};
 	virtual void onReceiveMasterKeyChanged(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session),

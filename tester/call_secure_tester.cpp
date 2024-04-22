@@ -1491,10 +1491,8 @@ static void zrtp_cache_mismatch_test(void) {
 
 		BC_ASSERT_TRUE(call(pauline, marie));
 		// The SAS is accepted by both
-		BC_ASSERT_FALSE(
-		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_FALSE(
-		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(pauline->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(pauline->lc)));
 		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
 		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
@@ -1508,9 +1506,8 @@ static void zrtp_cache_mismatch_test(void) {
 		delete_all_in_zrtp_table(marie->zrtp_secrets_database_path);
 
 		BC_ASSERT_TRUE(call(pauline, marie));
-		BC_ASSERT_FALSE(
-		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_cache_mismatch(
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_TRUE(linphone_call_get_zrtp_cache_mismatch_flag(
 		    linphone_core_get_current_call(pauline->lc))); // Pauline has a cache mismatch
 		// Both must revalidate the SAS
 		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
@@ -1520,10 +1517,135 @@ static void zrtp_cache_mismatch_test(void) {
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
 		// Cache mismatch is resolved
-		BC_ASSERT_FALSE(
-		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_FALSE(
-		    linphone_call_get_authentication_token_cache_mismatch(linphone_core_get_current_call(pauline->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(pauline->lc)));
+		end_call(marie, pauline);
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+/*
+ * This test involves a call between Marie and Pauline. SAS is checked by comparing the real SAS and the SAS selected by
+ * the user.
+ */
+static void check_correct_zrtp_short_code_test(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	if (BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionZRTP))) {
+		char *marie_local_auth_token = NULL;
+		char *pauline_local_auth_token = NULL;
+		bctbx_list_t *marie_remote_auth_tokens = NULL;
+		bctbx_list_t *pauline_remote_auth_tokens = NULL;
+		const bctbx_list_t *it = NULL;
+		stats marie_stats;
+		stats pauline_stats;
+
+		linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
+		linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
+
+		BC_ASSERT_TRUE(call(pauline, marie));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(pauline->lc)));
+
+		// The correct SAS is selected by both
+		// SAS verified using linphone_call_check_authentication_token_selected
+		marie_local_auth_token =
+		    linphone_call_get_local_authentication_token(linphone_core_get_current_call(marie->lc));
+		pauline_local_auth_token =
+		    linphone_call_get_local_authentication_token(linphone_core_get_current_call(pauline->lc));
+		marie_remote_auth_tokens =
+		    linphone_call_get_remote_authentication_tokens(linphone_core_get_current_call(marie->lc));
+		pauline_remote_auth_tokens =
+		    linphone_call_get_remote_authentication_tokens(linphone_core_get_current_call(pauline->lc));
+
+		it = marie_remote_auth_tokens;
+		while (it && (strcmp((const char *)it->data, pauline_local_auth_token) != 0)) {
+			it = it->next;
+		}
+		BC_ASSERT_PTR_NOT_NULL(it);
+		marie_stats = marie->stat;
+		linphone_call_check_authentication_token_selected(linphone_core_get_current_call(marie->lc),
+		                                                  (const char *)it->data);
+		BC_ASSERT_EQUAL(marie_stats.number_of_LinphoneCallAuthenticationTokenVerified + 1,
+		                marie->stat.number_of_LinphoneCallAuthenticationTokenVerified, int, "%d");
+		bctbx_list_free_with_data(marie_remote_auth_tokens, bctbx_free);
+
+		it = pauline_remote_auth_tokens;
+		while (it && (strcmp((const char *)it->data, marie_local_auth_token) != 0)) {
+			it = it->next;
+		}
+		BC_ASSERT_PTR_NOT_NULL(it);
+		pauline_stats = pauline->stat;
+		linphone_call_check_authentication_token_selected(linphone_core_get_current_call(pauline->lc),
+		                                                  (const char *)it->data);
+		BC_ASSERT_EQUAL(pauline_stats.number_of_LinphoneCallAuthenticationTokenVerified + 1,
+		                pauline->stat.number_of_LinphoneCallAuthenticationTokenVerified, int, "%d");
+		bctbx_list_free_with_data(pauline_remote_auth_tokens, bctbx_free);
+		bctbx_free(marie_local_auth_token);
+		bctbx_free(pauline_local_auth_token);
+
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
+		end_call(marie, pauline);
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+/*
+ * This test involves a call between Marie and Pauline. Users select an incorrect SAS.
+ */
+static void check_incorrect_zrtp_short_code_test(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	if (BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionZRTP))) {
+		char *marie_local_auth_token = NULL;
+		bctbx_list_t *pauline_remote_auth_tokens = NULL;
+		const bctbx_list_t *it = NULL;
+		stats marie_stats;
+		stats pauline_stats;
+
+		linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
+		linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
+
+		BC_ASSERT_TRUE(call(pauline, marie));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_zrtp_cache_mismatch_flag(linphone_core_get_current_call(pauline->lc)));
+
+		// A incorrect SAS is selected by both
+		// SAS verified using linphone_call_check_authentication_token_selected
+		marie_local_auth_token =
+		    linphone_call_get_local_authentication_token(linphone_core_get_current_call(marie->lc));
+		pauline_remote_auth_tokens =
+		    linphone_call_get_remote_authentication_tokens(linphone_core_get_current_call(pauline->lc));
+
+		marie_stats = marie->stat;
+		// Marie selects "I don't find", characterised by an empty string
+		linphone_call_check_authentication_token_selected(linphone_core_get_current_call(marie->lc), "");
+		BC_ASSERT_EQUAL(marie_stats.number_of_LinphoneCallIncorrectAuthenticationTokenSelected + 1,
+		                marie->stat.number_of_LinphoneCallIncorrectAuthenticationTokenSelected, int, "%d");
+
+		// Pauline selects an incorrect SAS in her remote authentication token list
+		it = pauline_remote_auth_tokens;
+		while (it && (strcmp((const char *)it->data, marie_local_auth_token) == 0)) {
+			it = it->next;
+		}
+		BC_ASSERT_PTR_NOT_NULL(it);
+		pauline_stats = pauline->stat;
+		linphone_call_check_authentication_token_selected(linphone_core_get_current_call(pauline->lc),
+		                                                  (const char *)it->data);
+		BC_ASSERT_EQUAL(pauline_stats.number_of_LinphoneCallIncorrectAuthenticationTokenSelected + 1,
+		                pauline->stat.number_of_LinphoneCallIncorrectAuthenticationTokenSelected, int, "%d");
+		bctbx_list_free_with_data(pauline_remote_auth_tokens, bctbx_free);
+		bctbx_free(marie_local_auth_token);
+
+		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
 		end_call(marie, pauline);
 	}
 
@@ -1966,6 +2088,8 @@ test_t call_secure_tests[] = {
     TEST_NO_TAG("Call ZRTP mandatory to plain RTP should be silent", call_from_zrtp_to_plain_rtp),
     TEST_NO_TAG("Recreate ZRTP db file when corrupted", recreate_zrtpdb_when_corrupted),
     TEST_NO_TAG("ZRTP cache mismatch", zrtp_cache_mismatch_test),
+    TEST_NO_TAG("Check correct ZRTP short code", check_correct_zrtp_short_code_test),
+    TEST_NO_TAG("Check incorrect ZRTP short code", check_incorrect_zrtp_short_code_test),
     TEST_NO_TAG("Call declined with mandatory encryption on both sides", call_declined_encryption_mandatory_both_sides),
     TEST_NO_TAG("ZRTP mandatory called by non ZRTP", zrtp_mandatory_called_by_non_zrtp),
     TEST_NO_TAG("SRTP mandatory called by non SRTP", srtp_mandatory_called_by_non_srtp),

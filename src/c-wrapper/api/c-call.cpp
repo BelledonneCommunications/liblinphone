@@ -104,6 +104,12 @@ void linphone_call_notify_encryption_changed(LinphoneCall *call, bool_t on, cons
 	linphone_core_notify_call_encryption_changed(linphone_call_get_core(call), call, on, authentication_token);
 }
 
+void linphone_call_notify_authentication_token_verified(LinphoneCall *call, bool_t verified) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_authentication_token_verified,
+	                                  verified);
+	linphone_core_notify_call_authentication_token_verified(linphone_call_get_core(call), call, verified);
+};
+
 void linphone_call_notify_send_master_key_changed(LinphoneCall *call, const char *master_key) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_send_master_key_changed,
 	                                  master_key);
@@ -316,9 +322,28 @@ const char *linphone_call_get_authentication_token(LinphoneCall *call) {
 	return L_STRING_TO_C(Call::toCpp(call)->getAuthenticationToken());
 }
 
+char *linphone_call_get_local_authentication_token(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
+	return strdup(Call::toCpp(call)->getHalfAuthenticationToken(true).c_str());
+}
+
+bctbx_list_t *linphone_call_get_remote_authentication_tokens(LinphoneCall *call) {
+	CallLogContextualizer logContextualizer(call);
+	Call *callCpp = Call::toCpp(call);
+	auto remoteTokens = callCpp->getIncorrectAuthenticationTokens();
+	remoteTokens.push_back(Call::toCpp(call)->getHalfAuthenticationToken(false));
+	remoteTokens.sort();
+	return L_GET_C_LIST_FROM_CPP_LIST(remoteTokens);
+}
+
 bool_t linphone_call_get_authentication_token_verified(const LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	return Call::toCpp(call)->getAuthenticationTokenVerified();
+}
+
+void linphone_call_check_authentication_token_selected(LinphoneCall *call, const char *selected_value) {
+	CallLogContextualizer logContextualizer(call);
+	Call::toCpp(call)->checkAuthenticationTokenSelected(selected_value);
 }
 
 void linphone_call_set_authentication_token_verified(LinphoneCall *call, bool_t verified) {
@@ -326,9 +351,9 @@ void linphone_call_set_authentication_token_verified(LinphoneCall *call, bool_t 
 	Call::toCpp(call)->setAuthenticationTokenVerified(!!verified);
 }
 
-bool_t linphone_call_get_authentication_token_cache_mismatch(const LinphoneCall *call) {
+bool_t linphone_call_get_zrtp_cache_mismatch_flag(const LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
-	return Call::toCpp(call)->getAuthenticationTokenCacheMismatch();
+	return Call::toCpp(call)->getZrtpCacheMismatch();
 }
 
 void linphone_call_send_vfu_request(LinphoneCall *call) {

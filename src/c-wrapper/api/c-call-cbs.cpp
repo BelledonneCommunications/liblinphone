@@ -69,6 +69,15 @@ void linphone_call_cbs_set_encryption_changed(LinphoneCallCbs *cbs, LinphoneCall
 	CallCbs::toCpp(cbs)->encryptionChangedCb = cb;
 }
 
+LinphoneCallCbsAuthenticationTokenVerifiedCb linphone_call_cbs_get_authentication_token_verified(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->authenticationTokenVerifiedCb;
+}
+
+void linphone_call_cbs_set_authentication_token_verified(LinphoneCallCbs *cbs,
+                                                         LinphoneCallCbsAuthenticationTokenVerifiedCb cb) {
+	CallCbs::toCpp(cbs)->authenticationTokenVerifiedCb = cb;
+}
+
 LinphoneCallCbsSendMasterKeyChangedCb linphone_call_cbs_get_send_master_key_changed(LinphoneCallCbs *cbs) {
 	return CallCbs::toCpp(cbs)->sendMasterKeyChangedCb;
 }

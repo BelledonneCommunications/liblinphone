@@ -53,6 +53,7 @@ public:
 	LinphoneCallCbsDtmfReceivedCb dtmfReceivedCb;
 	LinphoneCallCbsGoClearAckSentCb goClearAckSentCb;
 	LinphoneCallCbsEncryptionChangedCb encryptionChangedCb;
+	LinphoneCallCbsAuthenticationTokenVerifiedCb authenticationTokenVerifiedCb;
 	LinphoneCallCbsSendMasterKeyChangedCb sendMasterKeyChangedCb;
 	LinphoneCallCbsReceiveMasterKeyChangedCb receiveMasterKeyChangedCb;
 	LinphoneCallCbsInfoMessageReceivedCb infoMessageReceivedCb;
@@ -144,9 +145,11 @@ public:
 	void enableEchoLimiter(bool value);
 	bool getAllMuted() const;
 	LinphoneCallStats *getAudioStats() const;
-	const std::string &getAuthenticationToken();
+	const std::string &getAuthenticationToken() const;
+	std::string getHalfAuthenticationToken(bool localHalfAuthToken) const;
+	const std::list<std::string> &getIncorrectAuthenticationTokens() const;
 	bool getAuthenticationTokenVerified() const;
-	bool getAuthenticationTokenCacheMismatch() const;
+	bool getZrtpCacheMismatch() const;
 	float getAverageQuality() const;
 	const MediaSessionParams *getCurrentParams() const;
 	float getCurrentQuality() const;
@@ -191,6 +194,7 @@ public:
 	std::string getConferenceId() const;
 	void setConferenceId(const std::string &conferenceId);
 	bool mediaInProgress() const;
+	void checkAuthenticationTokenSelected(const std::string &selectedValue);
 	void setAuthenticationTokenVerified(bool value);
 	void setMicrophoneVolumeGain(float value);
 	void setNativeVideoWindowId(void *id);
@@ -281,6 +285,7 @@ public:
 	void onEncryptionChanged(const std::shared_ptr<CallSession> &session,
 	                         bool activated,
 	                         const std::string &authToken) override;
+	void onAuthenticationTokenVerified(const std::shared_ptr<CallSession> &session, bool verified) override;
 	void onSendMasterKeyChanged(const std::shared_ptr<CallSession> &session, const std::string &masterKey) override;
 	void onReceiveMasterKeyChanged(const std::shared_ptr<CallSession> &session, const std::string &masterKey) override;
 	void onGoClearAckSent() override;

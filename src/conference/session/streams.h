@@ -503,11 +503,14 @@ public:
 	const std::string &getAuthenticationToken() const {
 		return mAuthToken;
 	}
+	const std::list<std::string> &getIncorrectAuthenticationTokens() const {
+		return mIncorrectAuthTokens;
+	}
 	bool getAuthenticationTokenVerified() const {
 		return mAuthTokenVerified;
 	}
-	bool getAuthenticationTokenCacheMismatch() const {
-		return mAuthTokenCacheMismatch;
+	bool getZrtpCacheMismatch() const {
+		return mZrtpCacheMismatch;
 	}
 	const OfferAnswerContext &getCurrentOfferAnswerContext() const {
 		return mCurrentOfferAnswerState;
@@ -556,7 +559,10 @@ protected:
 	int getVideoBandwidth(const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &desc);
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();
-	void authTokenReady(const std::string &token, bool verified, bool cacheMismatch);
+	void authTokensReady(const std::list<std::string> &&incorrectAuthTokens,
+	                     const std::string &authToken,
+	                     bool verified,
+	                     bool cacheMismatch);
 	void addPostRenderHook(const std::function<void()> &l);
 
 private:
@@ -574,6 +580,7 @@ private:
 	int mAudioBandwidth = 0;
 	// Zrtp auth token
 	std::string mAuthToken;
+	std::list<std::string> mIncorrectAuthTokens;
 	belle_sip_source_t *mBandwidthReportTimer = nullptr;
 	std::list<std::function<void()>> mPostRenderHooks;
 	OfferAnswerContext mCurrentOfferAnswerState;
@@ -581,7 +588,7 @@ private:
 	MixerSession *mMixerSession = nullptr;
 	std::map<std::string, std::unique_ptr<SharedService>> mSharedServices;
 	bool mAuthTokenVerified = false;
-	bool mAuthTokenCacheMismatch = false;
+	bool mZrtpCacheMismatch = false;
 	bool mFinished = false;
 };
 

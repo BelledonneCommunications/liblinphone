@@ -120,6 +120,21 @@ typedef void (*LinphoneCoreCbsCallEncryptionChangedCb)(LinphoneCore *core,
 typedef LinphoneCoreCbsCallEncryptionChangedCb LinphoneCoreCallEncryptionChangedCb;
 
 /**
+ * Call encryption changed callback.
+ * @param core the #LinphoneCore @notnil
+ * @param call the #LinphoneCall on which encryption is changed. @notnil
+ * @param verified whether authentication token is verified.
+ */
+typedef void (*LinphoneCoreCbsCallAuthenticationTokenVerifiedCb)(LinphoneCore *core,
+                                                                 LinphoneCall *call,
+                                                                 bool_t verified);
+
+/**
+ * Old name of #LinphoneCoreCbsCallAuthenticationTokenVerifiedCb.
+ */
+typedef LinphoneCoreCbsCallAuthenticationTokenVerifiedCb LinphoneCoreCallAuthenticationTokenVerifiedCb;
+
+/**
  * Registration state notification callback prototype
  * @param core the #LinphoneCore @notnil
  * @param proxy_config the #LinphoneProxyConfig which state has changed @notnil

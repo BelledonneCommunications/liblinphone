@@ -103,6 +103,13 @@ typedef void (*LinphoneCallCbsGoClearAckSentCb)(LinphoneCall *call);
 typedef void (*LinphoneCallCbsEncryptionChangedCb)(LinphoneCall *call, bool_t on, const char *authentication_token);
 
 /**
+ * Call authentication token verified callback.
+ * @param call #LinphoneCall object whose authentication is verified. @notnil
+ * @param verified Whether encryption is verified.
+ */
+typedef void (*LinphoneCallCbsAuthenticationTokenVerifiedCb)(LinphoneCall *call, bool_t verified);
+
+/**
  * Call send master key changed callback.
  * @param call #LinphoneCall object whose encryption is changed. @notnil
  * @param master_key The send master key of the SRTP session. @maybenil

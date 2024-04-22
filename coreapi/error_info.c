@@ -117,6 +117,8 @@ const char *linphone_reason_to_string(LinphoneReason err) {
 			return "Call transferred";
 		case LinphoneReasonConditionalRequestFailed:
 			return "Conditional request failed";
+		case LinphoneReasonSasCheckRequired:
+			return "SAS check required";
 		case LinphoneReasonUnknown:
 			return "Unknown error";
 	}

@@ -467,6 +467,16 @@ void linphone_core_cbs_set_call_encryption_changed(LinphoneCoreCbs *cbs, Linphon
 	cbs->vtable->call_encryption_changed = cb;
 }
 
+LinphoneCoreCbsCallAuthenticationTokenVerifiedCb
+linphone_core_cbs_get_call_authentication_token_verified(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->call_authentication_token_verified;
+}
+
+void linphone_core_cbs_set_call_authentication_token_verified(LinphoneCoreCbs *cbs,
+                                                              LinphoneCoreCbsCallAuthenticationTokenVerifiedCb cb) {
+	cbs->vtable->call_authentication_token_verified = cb;
+}
+
 LinphoneCoreCbsCallSendMasterKeyChangedCb linphone_core_cbs_get_call_send_master_key_changed(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->call_send_master_key_changed;
 }

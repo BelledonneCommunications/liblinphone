@@ -465,6 +465,12 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 			def.amplitude =
 			    0.5f; // This tone can be in parallel of other calls. This will be played on a lighter amplitude
 			break;
+		case LinphoneToneSasCheckRequired:
+			def.duration = 800;
+			def.frequencies[0] = 700;
+			def.interval = 500;
+			def.repeat_count = 4;
+			break;
 		default:
 			lWarning() << "[ToneManager] Unhandled tone id.";
 	}
@@ -574,6 +580,9 @@ void ToneManager::notifyToneIndication(LinphoneReason reason) {
 		case LinphoneReasonIOError:
 		case LinphoneReasonServerTimeout:
 			startNamedTone(LinphoneToneCallLost);
+			break;
+		case LinphoneReasonSasCheckRequired:
+			startNamedTone(LinphoneToneSasCheckRequired);
 			break;
 		default:
 			startNamedTone(LinphoneToneUndefined);
@@ -727,6 +736,10 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 		default:
 			break;
 	}
+}
+
+void ToneManager::notifySecurityAlert(BCTBX_UNUSED(const std::shared_ptr<CallSession> &session)) {
+	notifyToneIndication(LinphoneReasonSasCheckRequired);
 }
 
 LINPHONE_END_NAMESPACE
