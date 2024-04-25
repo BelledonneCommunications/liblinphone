@@ -4965,7 +4965,19 @@ LINPHONE_PUBLIC void linphone_core_enable_conference_server(LinphoneCore *core, 
  */
 LINPHONE_PUBLIC bool_t linphone_core_conference_server_enabled(const LinphoneCore *core);
 
+/**
+ * Enable the flexible FEC feature for video calls to recover RTP packet loss. See 1D and 2D parity codes in RFC8627.
+ * @param core A #LinphoneCore object @notnil
+ * @param enable A boolean value telling whether to enable or disable the flexible FEC feature
+ */
 LINPHONE_PUBLIC void linphone_core_enable_fec(LinphoneCore *core, bool_t enable);
+
+/**
+ * Tells whether the flexible FEC feature is enabled. If true, the lost packets in video calls are protected by 1D or 2D
+ * parity codes as described in RFC8627.
+ * @param core A #LinphoneCore object @notnil
+ * @return A boolean value telling whether the flexible FEC feature is enabled or not
+ */
 LINPHONE_PUBLIC bool_t linphone_core_fec_enabled(const LinphoneCore *core);
 
 /**
