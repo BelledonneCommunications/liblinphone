@@ -2635,7 +2635,7 @@ void Core::accountUpdate() {
 		if ((ms_time(NULL) - account->getDeletionDate()) > 32) {
 			removeAccount(account);
 			const auto &params = account->getAccountParams();
-			lInfo() << __func__ << "Account for [" << *params->getServerAddress()
+			lInfo() << __func__ << " Account for [" << *params->getServerAddress()
 			        << "] is definitely removed from core.";
 			account->releaseOps();
 		}

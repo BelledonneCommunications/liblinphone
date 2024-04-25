@@ -423,7 +423,8 @@ void AccountParams::setOutboundProxyEnabled(bool enable) {
 			return;
 		}
 
-		mRoutes.emplace_back(mProxyAddress);
+		mRoutes.clear();
+		mRoutes.push_front(mProxyAddress);
 	} else {
 		mRoutes.clear();
 	}
