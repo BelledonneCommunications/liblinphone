@@ -44,91 +44,84 @@ class OfferAnswerEngine {
 
 public:
 	using optional_sal_stream_configuration = std::optional<SalStreamConfiguration>;
-
+	OfferAnswerEngine(MSFactory *factory);
+	void setFactory(MSFactory *factory) {
+		mMsFactory = factory;
+	}
+	void setOneMatchingCodecPolicy(bool value);
+	void setAnswerWithOwnNumberingPolicy(bool value);
 	/**
 	 * Returns a media description to run the streams with, based on a local offer
 	 * and the returned response (remote).
 	 **/
-	static std::shared_ptr<SalMediaDescription>
-	initiateOutgoing(MSFactory *factory,
-	                 std::shared_ptr<SalMediaDescription> local_offer,
-	                 const std::shared_ptr<SalMediaDescription> remote_answer);
+	std::shared_ptr<SalMediaDescription> initiateOutgoing(std::shared_ptr<SalMediaDescription> local_offer,
+	                                                      const std::shared_ptr<SalMediaDescription> remote_answer);
 
 	/**
 	 * Returns a media description to run the streams with, based on the local capabilities and
 	 * and the received offer.
 	 * The returned media description is an answer and should be sent to the offerer.
 	 **/
-	static std::shared_ptr<SalMediaDescription>
-	initiateIncoming(MSFactory *factory,
-	                 const std::shared_ptr<SalMediaDescription> local_capabilities,
-	                 std::shared_ptr<SalMediaDescription> remote_offer,
-	                 bool one_matching_codec);
+	std::shared_ptr<SalMediaDescription> initiateIncoming(const std::shared_ptr<SalMediaDescription> local_capabilities,
+	                                                      std::shared_ptr<SalMediaDescription> remote_offer);
 
 private:
-	static void verifyBundles(const std::shared_ptr<SalMediaDescription> &local,
-	                          const std::shared_ptr<SalMediaDescription> &remote,
-	                          std::shared_ptr<SalMediaDescription> &result);
-	static bool onlyTelephoneEvent(const std::list<OrtpPayloadType *> &l);
-	static bool areProtoInStreamCompatibles(const SalStreamDescription &localStream,
-	                                        const SalStreamDescription &otherStream);
-	static bool areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto);
-	static SalStreamDir computeDirIncoming(SalStreamDir local, SalStreamDir offered);
-	static SalStreamDir computeConferenceStreamDir(SalStreamDir dir);
-	static SalStreamDir computeDirOutgoing(SalStreamDir local, SalStreamDir answered);
-	static bool matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local,
-	                            const std::vector<SalSrtpCryptoAlgo> &remote,
-	                            SalSrtpCryptoAlgo &result,
-	                            bool use_local_key);
-	static std::list<OrtpPayloadType *> matchPayloads(MSFactory *factory,
-	                                                  const std::list<OrtpPayloadType *> &local,
-	                                                  const std::list<OrtpPayloadType *> &remote,
-	                                                  bool reading_response,
-	                                                  bool one_matching_codec,
-	                                                  bool bundle_enabled);
-	static PayloadType *genericMatch(const std::list<OrtpPayloadType *> &local_payloads,
-	                                 const PayloadType *refpt,
-	                                 const std::list<OrtpPayloadType *> &remote_payloads);
-	static PayloadType *findPayloadTypeBestMatch(MSFactory *factory,
-	                                             const std::list<OrtpPayloadType *> &local_payloads,
-	                                             const PayloadType *refpt,
-	                                             const std::list<OrtpPayloadType *> &remote_payloads,
-	                                             bool reading_response);
+	void verifyBundles(const std::shared_ptr<SalMediaDescription> &local,
+	                   const std::shared_ptr<SalMediaDescription> &remote,
+	                   std::shared_ptr<SalMediaDescription> &result);
+	bool onlyTelephoneEvent(const std::list<OrtpPayloadType *> &l);
+	bool areProtoInStreamCompatibles(const SalStreamDescription &localStream, const SalStreamDescription &otherStream);
+	bool areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto);
+	SalStreamDir computeDirIncoming(SalStreamDir local, SalStreamDir offered);
+	SalStreamDir computeConferenceStreamDir(SalStreamDir dir);
+	SalStreamDir computeDirOutgoing(SalStreamDir local, SalStreamDir answered);
+	bool matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local,
+	                     const std::vector<SalSrtpCryptoAlgo> &remote,
+	                     SalSrtpCryptoAlgo &result,
+	                     bool use_local_key);
+	std::list<OrtpPayloadType *> matchPayloads(const std::list<OrtpPayloadType *> &local,
+	                                           const std::list<OrtpPayloadType *> &remote,
+	                                           bool reading_response,
+	                                           bool bundle_enabled);
+	PayloadType *genericMatch(const std::list<OrtpPayloadType *> &local_payloads,
+	                          const PayloadType *refpt,
+	                          const std::list<OrtpPayloadType *> &remote_payloads);
+	PayloadType *findPayloadTypeBestMatch(const std::list<OrtpPayloadType *> &local_payloads,
+	                                      const PayloadType *refpt,
+	                                      const std::list<OrtpPayloadType *> &remote_payloads,
+	                                      bool reading_response);
 
-	static SalStreamDescription initiateIncomingStream(MSFactory *factory,
-	                                                   const SalStreamDescription &local_cap,
-	                                                   const SalStreamDescription &remote_offer,
-	                                                   bool one_matching_codec,
-	                                                   const std::string &bundle_owner_mid,
-	                                                   const bool allowCapabilityNegotiation);
-	static OfferAnswerEngine::optional_sal_stream_configuration
-	initiateIncomingConfiguration(MSFactory *factory,
-	                              const SalStreamDescription &local_cap,
+	SalStreamDescription initiateIncomingStream(const SalStreamDescription &local_cap,
+	                                            const SalStreamDescription &remote_offer,
+	                                            const std::string &bundle_owner_mid,
+	                                            const bool allowCapabilityNegotiation);
+	OfferAnswerEngine::optional_sal_stream_configuration
+	initiateIncomingConfiguration(const SalStreamDescription &local_cap,
 	                              const SalStreamDescription &remote_offer,
 	                              const SalStreamDescription &result,
-	                              bool one_matching_codec,
 	                              const std::string &bundle_owner_mid,
 	                              const PotentialCfgGraph::media_description_config::key_type &localCfgIdx,
 	                              const PotentialCfgGraph::media_description_config::key_type &remoteCfgIdx);
 
-	static SalStreamDescription initiateOutgoingStream(MSFactory *factory,
-	                                                   const SalStreamDescription &local_offer,
-	                                                   const SalStreamDescription &remote_answer,
-	                                                   const bool allowCapabilityNegotiation);
+	SalStreamDescription initiateOutgoingStream(const SalStreamDescription &local_offer,
+	                                            const SalStreamDescription &remote_answer,
+	                                            const bool allowCapabilityNegotiation);
 
-	static OfferAnswerEngine::optional_sal_stream_configuration
-	initiateOutgoingConfiguration(MSFactory *factory,
-	                              const SalStreamDescription &local_offer,
+	OfferAnswerEngine::optional_sal_stream_configuration
+	initiateOutgoingConfiguration(const SalStreamDescription &local_offer,
 	                              const SalStreamDescription &remote_answer,
 	                              const SalStreamDescription &result,
 	                              const PotentialCfgGraph::media_description_config::key_type &localCfgIdx,
 	                              const PotentialCfgGraph::media_description_config::key_type &remoteCfgIdx);
 
-	static bool fillZrtpAttributes(const SalStreamDescription &localStream,
-	                               const unsigned int &localCfgIdx,
-	                               const SalStreamDescription &remoteStream,
-	                               const unsigned int &remoteCfgIdx,
-	                               SalStreamConfiguration &resultCfg);
+	bool fillZrtpAttributes(const SalStreamDescription &localStream,
+	                        const unsigned int &localCfgIdx,
+	                        const SalStreamDescription &remoteStream,
+	                        const unsigned int &remoteCfgIdx,
+	                        SalStreamConfiguration &resultCfg);
+	MSFactory *mMsFactory = nullptr;
+	bool mUseOneMatchingCodec = false;
+	bool mAnswerWithOwnNumbering = false;
 };
 
 LINPHONE_END_NAMESPACE

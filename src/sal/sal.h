@@ -26,6 +26,7 @@
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
+#include "sal/offeranswer.h"
 #include "sal/sal_stream_configuration.h"
 
 #include "c-wrapper/internal/c-sal.h"
@@ -137,9 +138,7 @@ public:
 	Sal(MSFactory *factory);
 	~Sal();
 
-	void setFactory(MSFactory *value) {
-		mFactory = value;
-	}
+	void setFactory(MSFactory *value);
 
 	void setUserPointer(void *value) {
 		mUserPointer = value;
@@ -242,9 +241,6 @@ public:
 
 	void useDates(bool value) {
 		mUseDates = value;
-	}
-	void useOneMatchingCodecPolicy(bool value) {
-		mOneMatchingCodec = value;
 	}
 	void useRport(bool value);
 	void enableAutoContacts(bool value) {
@@ -391,6 +387,9 @@ public:
 
 	// utils
 	static int findCryptoIndexFromAlgo(const std::vector<SalSrtpCryptoAlgo> &crypto, const MSCryptoSuite suite);
+	OfferAnswerEngine &getOfferAnswerEngine() {
+		return mOfferAnswerEngine;
+	}
 
 private:
 	struct SalUuid {
@@ -450,7 +449,6 @@ private:
 	int mRefresherRetryAfter = 60000; // Retry after value for refresher
 	std::vector<std::string> mSupportedTags;
 	belle_sip_header_t *mSupportedHeader = nullptr;
-	bool mOneMatchingCodec = false;
 	bool mUseTcpTlsKeepAlive = false;
 	bool mNatHelperEnabled = false;
 	bool mTlsVerify = true;
@@ -467,6 +465,7 @@ private:
 	std::string mLinphoneSpecs;
 	belle_tls_crypto_config_postcheck_callback_t mTlsPostcheckCb;
 	void *mTlsPostcheckCbData;
+	OfferAnswerEngine mOfferAnswerEngine;
 
 	// Cache values
 	mutable std::string mDnsUserHostsFile;
