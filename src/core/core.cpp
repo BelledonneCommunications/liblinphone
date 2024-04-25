@@ -2636,10 +2636,9 @@ void Core::accountUpdate() {
 	const auto deletedAccounts = mDeletedAccounts.mList;
 	for (const auto &account : deletedAccounts) {
 		if ((ms_time(NULL) - account->getDeletionDate()) > 32) {
-			removeAccount(account);
+			removeDeletedAccount(account);
 			const auto &params = account->getAccountParams();
-			lInfo() << __func__ << " Account for [" << *params->getServerAddress()
-			        << "] is definitely removed from core.";
+			lInfo() << "Account for [" << *params->getServerAddress() << "] is definitely removed from core.";
 			account->releaseOps();
 		}
 	}
