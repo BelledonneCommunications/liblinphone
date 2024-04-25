@@ -108,7 +108,7 @@ void ToneManager::startRingbackTone() {
 	destroyRingStream();
 
 	if (lc->sound_conf.remote_ring) {
-		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
+		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_DTMF);
 		mRingStream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, (lc->use_files) ? NULL : ringCard);
 	}
 }
