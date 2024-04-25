@@ -296,6 +296,11 @@ bool_t linphone_call_check_rtp_sessions(LinphoneCall *call) {
 	return false;
 }
 
+void linphone_core_set_answer_with_own_numbering_policy(LinphoneCore *lc, bool_t value) {
+	auto sal = lc->sal;
+	sal->getOfferAnswerEngine().setAnswerWithOwnNumberingPolicy(!!value);
+}
+
 #ifndef _MSC_VER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

@@ -407,7 +407,7 @@ void Sal::processAuthRequestedCb(void *userCtx, belle_sip_auth_event_t *event) {
 	sal_auth_info_delete(authInfo);
 }
 
-Sal::Sal(MSFactory *factory) : mFactory(factory) {
+Sal::Sal(MSFactory *factory) : mFactory(factory), mOfferAnswerEngine(factory) {
 	// First create the stack, which initializes the belle-sip object's pool for this thread
 	mStack = belle_sip_stack_new(nullptr);
 
@@ -477,6 +477,11 @@ void Sal::setCallbacks(const Callbacks *cbs) {
 		mCallbacks.incoming_publish_closed = (OnIncomingPublishClosedCb)unimplementedStub;
 	if (!mCallbacks.on_expire) mCallbacks.on_expire = (OnExpireCb)unimplementedStub;
 	if (!mCallbacks.process_redirect) mCallbacks.process_redirect = (OnRedirectCb)unimplementedStub;
+}
+
+void Sal::setFactory(MSFactory *value) {
+	mOfferAnswerEngine.setFactory(value);
+	mFactory = value;
 }
 
 void Sal::setTlsProperties() {

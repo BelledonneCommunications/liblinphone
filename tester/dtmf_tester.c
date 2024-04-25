@@ -161,6 +161,46 @@ static void send_dtmfs_sequence_rfc2833_with_hardcoded_payload_type(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void send_dtmfs_sequence_rfc2833_with_different_numbering(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCall *pauline_call = NULL;
+	int dtmf_count_prev;
+
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "telephone_event_pt", 104);
+	linphone_core_set_answer_with_own_numbering_policy(marie->lc, TRUE);
+
+	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, TRUE);
+	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, TRUE);
+
+	if (BC_ASSERT_TRUE(call(pauline, marie))) {
+		MediaStream *as;
+		char *expected;
+		char dtmf = '2';
+		pauline_call = linphone_core_get_current_call(pauline->lc);
+		BC_ASSERT_PTR_NOT_NULL(pauline_call);
+
+		dtmf_count_prev = marie->stat.dtmf_count;
+		linphone_call_send_dtmf(pauline_call, dtmf);
+
+		as = linphone_call_get_stream(pauline_call, 0);
+		BC_ASSERT_EQUAL(as->sessions.rtp_session->tev_send_pt, 104, int, "%i");
+
+		/*wait for the DTMF to be received by marie*/
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.dtmf_count, dtmf_count_prev + 1, 10000));
+		expected = ms_strdup_printf("%c", dtmf);
+		BC_ASSERT_PTR_NOT_NULL(marie->stat.dtmf_list_received);
+		if (marie->stat.dtmf_list_received) {
+			BC_ASSERT_STRING_EQUAL(marie->stat.dtmf_list_received, expected);
+		}
+		ms_free(expected);
+
+		end_call(marie, pauline);
+	}
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void send_dtmf_sip_info(void) {
 	LinphoneCoreManager *marie, *pauline;
 	send_dtmf_base(&marie, &pauline, FALSE, TRUE, '#', NULL, FALSE);
@@ -227,6 +267,8 @@ test_t dtmf_tests[10] = {
     TEST_NO_TAG("Send DTMF sequence using RFC2833", send_dtmfs_sequence_rfc2833),
     TEST_NO_TAG("Send DTMF sequence using RFC2833 with hardcoded payload type",
                 send_dtmfs_sequence_rfc2833_with_hardcoded_payload_type),
+    TEST_NO_TAG("Send DTMF sequence using RFC2833 and different payload type numbering",
+                send_dtmfs_sequence_rfc2833_with_different_numbering),
     TEST_NO_TAG("Send DTMF sequence using SIP INFO", send_dtmfs_sequence_sip_info),
     TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled),
     TEST_NO_TAG("DTMF sequence canceled if call state changed", send_dtmfs_sequence_call_state_changed),

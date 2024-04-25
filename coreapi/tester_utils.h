@@ -44,6 +44,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalMediaDescription;
 class SalEventOp;
 class SalSubscribeOp;
+class Sal;
 LINPHONE_END_NAMESPACE
 LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_local_desc(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_remote_desc(const LinphoneCall *call);
@@ -332,6 +333,8 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_is_static(const LinphoneConfer
 
 LINPHONE_PUBLIC char *sal_get_random_token_lowercase(int size);
 
+LINPHONE_PUBLIC void linphone_core_set_answer_with_own_numbering_policy(LinphoneCore *lc, bool_t value);
+
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);
 LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op(const LinphoneProxyConfig *cfg);
@@ -346,6 +349,7 @@ LINPHONE_PUBLIC void sal_set_uuid(Sal *ctx, const char *uuid);
 LINPHONE_PUBLIC const char *sal_get_uuid(const Sal *ctx);
 
 LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal *h, SalOpSDPHandling handling_method);
+
 LINPHONE_PUBLIC void sal_set_send_error(Sal *sal, int value);
 LINPHONE_PUBLIC void sal_set_recv_error(Sal *sal, int value);
 LINPHONE_PUBLIC void sal_set_client_bind_port(Sal *sal, int port);

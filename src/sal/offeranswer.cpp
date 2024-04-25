@@ -143,6 +143,17 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc) {
 
 LINPHONE_BEGIN_NAMESPACE
 
+OfferAnswerEngine::OfferAnswerEngine(MSFactory *factory) : mMsFactory(factory) {
+}
+
+void OfferAnswerEngine::setOneMatchingCodecPolicy(bool value) {
+	mUseOneMatchingCodec = value;
+}
+
+void OfferAnswerEngine::setAnswerWithOwnNumberingPolicy(bool value) {
+	mAnswerWithOwnNumbering = value;
+}
+
 void OfferAnswerEngine::verifyBundles(const std::shared_ptr<SalMediaDescription> &local,
                                       const std::shared_ptr<SalMediaDescription> &remote,
                                       std::shared_ptr<SalMediaDescription> &result) {
@@ -193,8 +204,7 @@ PayloadType *OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType *> 
 /*
  * Returns a PayloadType from the local list that matches a PayloadType offered or answered in the remote list
  */
-PayloadType *OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory,
-                                                         const std::list<OrtpPayloadType *> &local_payloads,
+PayloadType *OfferAnswerEngine::findPayloadTypeBestMatch(const std::list<OrtpPayloadType *> &local_payloads,
                                                          const PayloadType *refpt,
                                                          const std::list<OrtpPayloadType *> &remote_payloads,
                                                          bool reading_response) {
@@ -202,7 +212,7 @@ PayloadType *OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory,
 	MSOfferAnswerContext *ctx = NULL;
 
 	// When a stream is inactive, refpt->mime_type might be null
-	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
+	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(mMsFactory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type);
 		auto local_payloads_list = Utils::listToBctbxList(local_payloads);
 		auto remote_payloads_list = Utils::listToBctbxList(remote_payloads);
@@ -216,23 +226,21 @@ PayloadType *OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory,
 	return OfferAnswerEngine::genericMatch(local_payloads, refpt, remote_payloads);
 }
 
-std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(MSFactory *factory,
-                                                              const std::list<OrtpPayloadType *> &local,
+std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(const std::list<OrtpPayloadType *> &local,
                                                               const std::list<OrtpPayloadType *> &remote,
                                                               bool reading_response,
-                                                              bool one_matching_codec,
                                                               bool bundle_enabled) {
 	std::list<OrtpPayloadType *> res;
 	PayloadType *matched;
 	bool found_codec = false;
 
 	for (const auto &p2 : remote) {
-		matched = OfferAnswerEngine::findPayloadTypeBestMatch(factory, local, p2, remote, reading_response);
+		matched = OfferAnswerEngine::findPayloadTypeBestMatch(local, p2, remote, reading_response);
 		if (matched) {
 			int local_number = payload_type_get_number(matched);
 			int remote_number = payload_type_get_number(p2);
 
-			if (one_matching_codec) {
+			if (mUseOneMatchingCodec) {
 				if (strcasecmp(matched->mime_type, "telephone-event") != 0) {
 					if (found_codec) { /* we have found a real codec already*/
 						continue;      /*this codec won't be added*/
@@ -263,8 +271,15 @@ std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(MSFactory *factory
 				payload_type_unset_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 			}
 			res.push_back(matched);
-			/* we should use the remote numbering even when parsing a response */
-			payload_type_set_number(matched, remote_number);
+			/* we should use the remote numbering, even when parsing a response, but we need for testing
+			 * to reproduce the minority case where we answer with our own numbering.
+			 * This is tolerated by RFC3264.
+			 */
+			if (!reading_response && mAnswerWithOwnNumbering) {
+				payload_type_set_number(matched, local_number);
+			} else {
+				payload_type_set_number(matched, remote_number);
+			}
 			payload_type_set_flag(matched, PAYLOAD_TYPE_FROZEN_NUMBER);
 			if (reading_response && remote_number != local_number) {
 				ms_warning("For payload type %s, proposed number was %i but the remote phone answered %i",
@@ -277,6 +292,7 @@ std::list<OrtpPayloadType *> OfferAnswerEngine::matchPayloads(MSFactory *factory
 				matched = payload_type_clone(matched);
 				payload_type_set_number(matched, local_number);
 				payload_type_set_flag(matched, PAYLOAD_TYPE_FLAG_CAN_RECV);
+				payload_type_unset_flag(matched, PAYLOAD_TYPE_FLAG_CAN_SEND);
 				payload_type_set_flag(matched, PAYLOAD_TYPE_FROZEN_NUMBER);
 				res.push_back(matched);
 			}
@@ -401,8 +417,7 @@ SalStreamDir OfferAnswerEngine::computeConferenceStreamDir(SalStreamDir dir) {
 	return res;
 }
 
-SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory *factory,
-                                                               const SalStreamDescription &local_offer,
+SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(const SalStreamDescription &local_offer,
                                                                const SalStreamDescription &remote_answer,
                                                                const bool allowCapabilityNegotiation) {
 
@@ -479,8 +494,8 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory *factor
 				lInfo() << "[Initiate Outgoing Stream] Answerer chose offerer's actual configuration at index "
 				        << localCfgIdx;
 				localCfgIdx = local_offer.getActualConfigurationIndex();
-				resultNegCfg = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer, remote_answer,
-				                                                                result, localCfgIdx, remoteCfgIdx);
+				resultNegCfg = OfferAnswerEngine::initiateOutgoingConfiguration(local_offer, remote_answer, result,
+				                                                                localCfgIdx, remoteCfgIdx);
 			} else {
 				if (answerUnparsedCfgs.size() > 1) {
 					lError() << "[Initiate Outgoing Stream] The answer must contain only one potential configuration - "
@@ -496,7 +511,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory *factor
 						const auto cfgLine = cfg.second;
 						// Perform negotiations only with acfg
 						resultNegCfg = OfferAnswerEngine::initiateOutgoingConfiguration(
-						    factory, local_offer, remote_answer, result, localCfgIdx, remoteCfgIdx);
+						    local_offer, remote_answer, result, localCfgIdx, remoteCfgIdx);
 					}
 				}
 			}
@@ -512,7 +527,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory *factor
 
 		} else {
 			localCfgIdx = local_offer.getActualConfigurationIndex();
-			resultNegCfg = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer, remote_answer, result,
+			resultNegCfg = OfferAnswerEngine::initiateOutgoingConfiguration(local_offer, remote_answer, result,
 			                                                                localCfgIdx, remoteCfgIdx);
 		}
 
@@ -552,7 +567,6 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory *factor
 }
 
 OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiateOutgoingConfiguration(
-    MSFactory *factory,
     const SalStreamDescription &local_offer,
     const SalStreamDescription &remote_answer,
     const SalStreamDescription &result,
@@ -594,8 +608,8 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 
 	const auto &availableEncs = local_offer.getSupportedEncryptions();
 	if (remoteCfg != Utils::getEmptyConstRefObject<SalStreamConfiguration>()) {
-		resultCfg.payloads = OfferAnswerEngine::matchPayloads(factory, localCfg.payloads, remoteCfg.payloads, true,
-		                                                      false, bundle_enabled);
+		resultCfg.payloads =
+		    OfferAnswerEngine::matchPayloads(localCfg.payloads, remoteCfg.payloads, true, bundle_enabled);
 	} else {
 		lWarning() << "[Initiate Outgoing Configuration] Remote configuration has not been found";
 		return std::nullopt;
@@ -724,10 +738,8 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 	return resultCfg;
 }
 
-SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factory,
-                                                               const SalStreamDescription &local_cap,
+SalStreamDescription OfferAnswerEngine::initiateIncomingStream(const SalStreamDescription &local_cap,
                                                                const SalStreamDescription &remote_offer,
-                                                               bool one_matching_codec,
                                                                const std::string &bundle_owner_mid,
                                                                const bool allowCapabilityNegotiation) {
 	SalStreamDescription result;
@@ -753,9 +765,8 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 				} else {
 					localCfgIdx = localCfg.first;
 					remoteCfgIdx = remoteCfg.first;
-					resultNegCfg = OfferAnswerEngine::initiateIncomingConfiguration(
-					    factory, local_cap, remote_offer, result, one_matching_codec, bundle_owner_mid, localCfgIdx,
-					    remoteCfgIdx);
+					resultNegCfg = initiateIncomingConfiguration(local_cap, remote_offer, result, bundle_owner_mid,
+					                                             localCfgIdx, remoteCfgIdx);
 				}
 			}
 			if (resultNegCfg) {
@@ -765,8 +776,8 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	} else {
 		localCfgIdx = local_cap.getActualConfigurationIndex();
 		remoteCfgIdx = remote_offer.getActualConfigurationIndex();
-		resultNegCfg = OfferAnswerEngine::initiateIncomingConfiguration(
-		    factory, local_cap, remote_offer, result, one_matching_codec, bundle_owner_mid, localCfgIdx, remoteCfgIdx);
+		resultNegCfg =
+		    initiateIncomingConfiguration(local_cap, remote_offer, result, bundle_owner_mid, localCfgIdx, remoteCfgIdx);
 	}
 
 	if (remote_offer.getLabel().empty()) {
@@ -826,11 +837,9 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 }
 
 OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiateIncomingConfiguration(
-    MSFactory *factory,
     const SalStreamDescription &local_cap,
     const SalStreamDescription &remote_offer,
     const SalStreamDescription &result,
-    bool one_matching_codec,
     const std::string &bundle_owner_mid,
     const PotentialCfgGraph::media_description_config::key_type &localCfgIdx,
     const PotentialCfgGraph::media_description_config::key_type &remoteCfgIdx) {
@@ -868,8 +877,7 @@ OfferAnswerEngine::optional_sal_stream_configuration OfferAnswerEngine::initiate
 	}
 
 	const auto &availableEncs = local_cap.getSupportedEncryptions();
-	resultCfg.payloads = OfferAnswerEngine::matchPayloads(factory, localCfg.payloads, remoteCfg.payloads, false,
-	                                                      one_matching_codec, bundle_enabled);
+	resultCfg.payloads = OfferAnswerEngine::matchPayloads(localCfg.payloads, remoteCfg.payloads, false, bundle_enabled);
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		if (localCfg.getProto() != remoteCfg.getProto() && remoteCfg.hasAvpf()) {
 			lWarning() << "[Initiate Incoming Configuration] Sending a downgraded AVP answer (transport protocol "
@@ -1019,8 +1027,7 @@ bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaPr
  * and the returned response (remote).
  **/
 std::shared_ptr<SalMediaDescription>
-OfferAnswerEngine::initiateOutgoing(MSFactory *factory,
-                                    std::shared_ptr<SalMediaDescription> local_offer,
+OfferAnswerEngine::initiateOutgoing(std::shared_ptr<SalMediaDescription> local_offer,
                                     const std::shared_ptr<SalMediaDescription> remote_answer) {
 	size_t i;
 
@@ -1034,7 +1041,7 @@ OfferAnswerEngine::initiateOutgoing(MSFactory *factory,
 		if (i < remote_answer->streams.size()) {
 			SalStreamDescription stream;
 			if ((rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
-				stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls, rs, capabilityNegotiation);
+				stream = OfferAnswerEngine::initiateOutgoingStream(ls, rs, capabilityNegotiation);
 				SalStreamConfiguration actualCfg = stream.getActualConfiguration();
 				memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr,
 				       sizeof(stream.getChosenConfiguration().rtcp_xr));
@@ -1104,10 +1111,8 @@ OfferAnswerEngine::initiateOutgoing(MSFactory *factory,
  * The returned media description is an answer and should be sent to the offerer.
  **/
 std::shared_ptr<SalMediaDescription>
-OfferAnswerEngine::initiateIncoming(MSFactory *factory,
-                                    const std::shared_ptr<SalMediaDescription> local_capabilities,
-                                    std::shared_ptr<SalMediaDescription> remote_offer,
-                                    bool one_matching_codec) {
+OfferAnswerEngine::initiateIncoming(const std::shared_ptr<SalMediaDescription> local_capabilities,
+                                    std::shared_ptr<SalMediaDescription> remote_offer) {
 	auto result = std::make_shared<SalMediaDescription>(local_capabilities->getParams());
 	size_t i = 0;
 
@@ -1130,8 +1135,7 @@ OfferAnswerEngine::initiateIncoming(MSFactory *factory,
 					bundle_owner_mid = remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid();
 				}
 			}
-			stream = OfferAnswerEngine::initiateIncomingStream(factory, ls, rs, one_matching_codec, bundle_owner_mid,
-			                                                   capabilityNegotiation);
+			stream = OfferAnswerEngine::initiateIncomingStream(ls, rs, bundle_owner_mid, capabilityNegotiation);
 			// Get an up to date actual configuration as it may have changed
 			actualCfg = stream.getActualConfiguration();
 			// Handle global RTCP FB attributes

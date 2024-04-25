@@ -336,11 +336,10 @@ void SalCallOp::sdpProcess() {
 	if (!mRemoteMedia) return;
 
 	if (mSdpOffering) {
-		mResult = OfferAnswerEngine::initiateOutgoing(mRoot->mFactory, mLocalMedia, mRemoteMedia);
+		mResult = mRoot->mOfferAnswerEngine.initiateOutgoing(mLocalMedia, mRemoteMedia);
 	} else {
 		if (mSdpAnswer) belle_sip_object_unref(mSdpAnswer);
-		mResult =
-		    OfferAnswerEngine::initiateIncoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mRoot->mOneMatchingCodec);
+		mResult = mRoot->mOfferAnswerEngine.initiateIncoming(mLocalMedia, mRemoteMedia);
 		// For backward compatibility purpose
 		if (mCnxIpTo0000IfSendOnlyEnabled && mResult->hasDir(SalStreamSendOnly)) {
 			mResult->addr = setAddrTo0000(mResult->addr);

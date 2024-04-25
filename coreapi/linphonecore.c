@@ -1974,7 +1974,10 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sip_conf.tcp_tls_keepalive = !!linphone_config_get_int(lc->config, "sip", "tcp_tls_keepalive", 30000);
 	linphone_core_enable_keep_alive(lc, (lc->sip_conf.keepalive_period > 0));
 
-	lc->sal->useOneMatchingCodecPolicy(!!linphone_config_get_int(lc->config, "sip", "only_one_codec", 0));
+	lc->sal->getOfferAnswerEngine().setOneMatchingCodecPolicy(
+	    !!linphone_config_get_int(lc->config, "sip", "only_one_codec", 0));
+	lc->sal->getOfferAnswerEngine().setAnswerWithOwnNumberingPolicy(
+	    !!linphone_config_get_int(lc->config, "sip", "answer_with_own_numbering", 0));
 	lc->sal->useDates(!!linphone_config_get_int(lc->config, "sip", "put_date", 0));
 	lc->sal->enableSipUpdateMethod(!!linphone_config_get_int(lc->config, "sip", "sip_update", 1));
 	lc->sip_conf.vfu_with_info = !!linphone_config_get_int(lc->config, "sip", "vfu_with_info", 1);
