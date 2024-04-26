@@ -185,7 +185,9 @@ private:
 	bool mBodylessSubscription = false;
 	LinphoneFriendListType mType = LinphoneFriendListTypeDefault;
 	bool mStoreInDb = false;
+#if VCARD_ENABLED
 	CardDAVContext *mCardDavContext = nullptr;
+#endif
 };
 
 class FriendListCbs : public bellesip::HybridObject<LinphoneFriendListCbs, FriendListCbs>, public Callbacks {

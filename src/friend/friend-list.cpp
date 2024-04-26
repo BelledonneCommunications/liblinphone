@@ -70,10 +70,12 @@ FriendList *FriendList::clone() const {
 }
 
 void FriendList::release() {
+#if VCARD_ENABLED
 	if (mCardDavContext) {
 		delete mCardDavContext;
 		mCardDavContext = nullptr;
 	}
+#endif
 }
 
 // -----------------------------------------------------------------------------
