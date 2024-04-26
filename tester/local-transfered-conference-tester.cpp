@@ -85,10 +85,8 @@ void create_transfer_conference_base(time_t start_time,
 					linphone_config_set_string(linphone_core_get_config(mgr->lc), "video", "max_conference_size",
 					                           "vga");
 				}
-			}
 
-			if (mgr == pauline.getCMgr()) {
-				linphone_core_set_conference_max_thumbnails(mgr->lc, 2);
+				linphone_core_set_conference_max_thumbnails(mgr->lc, 0);
 			}
 
 			if (mgr != focus.getCMgr()) {
