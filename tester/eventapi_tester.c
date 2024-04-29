@@ -655,11 +655,18 @@ static void publish_expired(void) {
 	bctbx_list_free(lcs);
 }
 
+static void on_notify_response(LinphoneEvent *lev) {
+	int *flag = (int *)linphone_event_get_user_data(lev);
+	*flag = 1;
+}
+
 static void out_of_dialog_notify(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneContent *content;
 	LinphoneEvent *lev;
+	LinphoneEventCbs *lev_cbs;
+	int notify_response_done = 0;
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
@@ -669,17 +676,24 @@ static void out_of_dialog_notify(void) {
 	linphone_content_set_buffer(content, (const uint8_t *)notify_content, strlen(notify_content));
 
 	lev = linphone_core_create_notify(marie->lc, pauline->identity, "dodo");
+	lev_cbs = linphone_factory_create_event_cbs(linphone_factory_get());
+	linphone_event_cbs_set_notify_response(lev_cbs, on_notify_response);
+	linphone_event_set_user_data(lev, &notify_response_done);
+	linphone_event_add_callbacks(lev, lev_cbs);
 	linphone_event_add_custom_header(lev, "CustomHeader", "someValue");
 	linphone_event_notify(lev, content);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_NotifyReceived, 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_NotifyReceived, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &notify_response_done, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated, 1, 5000));
 
 	linphone_event_unref(lev);
+	linphone_event_cbs_unref(lev_cbs);
 
 	linphone_content_unref(content);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
 }
 
 static void subscribe_notify_with_missing_200ok(void) {

@@ -939,6 +939,11 @@ void Account::writeAllToConfigFile(const std::shared_ptr<Core> core) {
 	;
 	if (!linphone_core_ready(lc)) return;
 
+	if (linphone_config_is_readonly(lc->config)) {
+		lInfo() << "Storage of accounts to config file is skipped.";
+		return;
+	}
+
 	LpConfig *config = linphone_core_get_config(lc);
 	for (const auto &account : core->getAccounts()) {
 		Account::writeToConfigFile(config, account, i);

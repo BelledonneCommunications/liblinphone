@@ -98,7 +98,7 @@ public:
 
 	void onStateChanged(ConferenceInterface::State newState) override;
 
-	static void onPublishStateChangedCb(const LinphoneEvent *lev, LinphonePublishState state);
+	static void onPublishStateChangedCb(LinphoneEvent *lev, LinphonePublishState state);
 
 	void init(std::shared_ptr<MediaConference::RemoteConference> rc);
 

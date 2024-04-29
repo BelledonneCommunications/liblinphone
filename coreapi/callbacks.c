@@ -1062,6 +1062,7 @@ static void on_notify_response(SalOp *op) {
 	if (linphone_event_is_out_of_dialog_op(lev)) {
 		switch (linphone_event_get_subscription_state(lev)) {
 			case LinphoneSubscriptionIncomingReceived:
+				_linphone_event_notify_notify_response(lev);
 				if (op->getErrorInfo()->reason == SalReasonNone)
 					linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
 				else linphone_event_set_state(lev, LinphoneSubscriptionError);
@@ -1072,7 +1073,6 @@ static void on_notify_response(SalOp *op) {
 				break;
 		}
 	} else {
-		ms_warning("on_notify_response in dialog");
 		_linphone_event_notify_notify_response(lev);
 	}
 }

@@ -582,27 +582,28 @@ typedef void (*LinphoneChatRoomCbsNewMessageReactionCb)(LinphoneChatRoom *chat_r
  * Callback used to notify the response to a sent NOTIFY
  * @param event The #LinphoneEvent object that has sent the NOTIFY and for which we received a response @notnil
  **/
-typedef void (*LinphoneEventCbsNotifyResponseCb)(const LinphoneEvent *event);
+
+typedef void (*LinphoneEventCbsNotifyResponseCb)(LinphoneEvent *event);
 
 /**
  * Callback used to notify the received to a NOTIFY
  * @param event The #LinphoneEvent object that receive the NOTIFY @notnil
  * @param content The #LinphoneContent object that containe the body of the event @maybenil
  **/
-typedef void (*LinphoneEventCbsNotifyReceivedCb)(const LinphoneEvent *event, const LinphoneContent *content);
+typedef void (*LinphoneEventCbsNotifyReceivedCb)(LinphoneEvent *event, const LinphoneContent *content);
 
 /**
  * Callback used to notify the received to a SUBSCRIBE
  * @param event The #LinphoneEvent object that receive the SUBSCRIBE @notnil
  **/
-typedef void (*LinphoneEventCbsSubscribeReceivedCb)(const LinphoneEvent *event);
+typedef void (*LinphoneEventCbsSubscribeReceivedCb)(LinphoneEvent *event);
 
 /**
  * SUBSCRIBE state changed callback
  * @param event The #LinphoneEvent object that state changed @notnil
  * @param state The #LinphoneSubscriptionState
  **/
-typedef void (*LinphoneEventCbsSubscribeStateChangedCb)(const LinphoneEvent *event, LinphoneSubscriptionState state);
+typedef void (*LinphoneEventCbsSubscribeStateChangedCb)(LinphoneEvent *event, LinphoneSubscriptionState state);
 
 /**
  * Callback used to notify the received to a PUBLISH
@@ -616,7 +617,7 @@ typedef void (*LinphoneEventCbsPublishReceivedCb)(LinphoneEvent *event, Linphone
  * @param event The #LinphoneEvent object that state changed @notnil
  * @param state The #LinphonePublishState
  **/
-typedef void (*LinphoneEventCbsPublishStateChangedCb)(const LinphoneEvent *event, LinphonePublishState state);
+typedef void (*LinphoneEventCbsPublishStateChangedCb)(LinphoneEvent *event, LinphonePublishState state);
 
 /**
  * @}

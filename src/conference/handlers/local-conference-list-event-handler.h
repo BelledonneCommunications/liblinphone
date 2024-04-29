@@ -43,7 +43,7 @@ public:
 	void removeHandler(LocalConferenceEventHandler *handler);
 	LocalConferenceEventHandler *findHandler(const ConferenceId &conferenceId) const;
 
-	static void notifyResponseCb(const LinphoneEvent *lev);
+	static void notifyResponseCb(LinphoneEvent *lev);
 
 private:
 	std::unordered_map<ConferenceId, LocalConferenceEventHandler *> handlers;

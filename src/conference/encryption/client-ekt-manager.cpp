@@ -215,8 +215,8 @@ void ClientEktManager::onStateChanged(ConferenceInterface::State newState) {
 	}
 }
 
-void ClientEktManager::onPublishStateChangedCb(const LinphoneEvent *lev, LinphonePublishState state) {
-	auto ev = dynamic_pointer_cast<EventPublish>(Event::toCpp(const_cast<LinphoneEvent *>(lev))->getSharedFromThis());
+void ClientEktManager::onPublishStateChangedCb(LinphoneEvent *lev, LinphonePublishState state) {
+	auto ev = dynamic_pointer_cast<EventPublish>(Event::toCpp(lev)->getSharedFromThis());
 	auto cbs = ev->getCurrentCallbacks();
 	ClientEktManager *cem = static_cast<ClientEktManager *>(cbs->getUserData());
 	switch (state) {
