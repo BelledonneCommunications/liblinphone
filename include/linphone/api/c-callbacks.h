@@ -564,7 +564,7 @@ typedef void (*LinphoneChatRoomCbsChatRoomReadCb)(LinphoneChatRoom *chat_room);
  * Callback used to notify the response to a sent NOTIFY
  * @param linphone_event The #LinphoneEvent object that has sent the NOTIFY and for which we received a response @notnil
  **/
-typedef void (*LinphoneEventCbsNotifyResponseCb)(const LinphoneEvent *linphone_event);
+typedef void (*LinphoneEventCbsNotifyResponseCb)(LinphoneEvent *linphone_event);
 
 /**
  * @}

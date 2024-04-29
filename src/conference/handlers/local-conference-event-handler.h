@@ -93,7 +93,7 @@ public:
 	std::string createNotifyParticipantDeviceDataChanged(const std::shared_ptr<Address> &pAddress,
 	                                                     const std::shared_ptr<Address> &dAddress);
 
-	static void notifyResponseCb(const LinphoneEvent *lev);
+	static void notifyResponseCb(LinphoneEvent *lev);
 
 	/*
 	 * This fonction is called each time a full state notification is receied from the focus.

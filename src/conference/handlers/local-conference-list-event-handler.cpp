@@ -58,7 +58,7 @@ LocalConferenceListEventHandler::LocalConferenceListEventHandler(const std::shar
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceListEventHandler::notifyResponseCb(const LinphoneEvent *lev) {
+void LocalConferenceListEventHandler::notifyResponseCb(LinphoneEvent *lev) {
 	auto ev = dynamic_pointer_cast<EventSubscribe>(Event::toCpp(const_cast<LinphoneEvent *>(lev))->getSharedFromThis());
 	shared_ptr<EventCbs> cbs = ev->getCurrentCallbacks();
 	LocalConferenceListEventHandler *listHandler = static_cast<LocalConferenceListEventHandler *>(cbs->getUserData());
