@@ -93,6 +93,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
+#include "conference/sip-conference-scheduler.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
@@ -9345,8 +9346,15 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 }
 
 LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneCore *core) {
+	// TODO add other protocols to create a scheduled conference on server
 	CoreLogContextualizer logContextualizer(core);
-	return LinphonePrivate::ConferenceScheduler::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core));
+	LinphoneConfig *config = linphone_core_get_config(core);
+	const char *scheduling_type = linphone_config_get_string(config, "conference_scheduling", "protocol", "SIP");
+	if (strcmp(scheduling_type, "SIP") == 0) {
+		return (new LinphonePrivate::SIPConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
+	} else {
+		return (new LinphonePrivate::SIPConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
+	}
 }
 
 LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,

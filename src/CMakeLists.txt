@@ -462,6 +462,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-scheduler.cpp
 	conference/conference.cpp
 	conference/conference-interface.cpp
+	conference/sip-conference-scheduler.cpp
 	conference/notify-conference-listener.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp

@@ -26,9 +26,7 @@
 #include "conference/conference-params.h"
 #include "conference/conference-scheduler.h"
 #include "conference/conference.h"
-#include "conference/params/call-session-params-p.h"
 #include "conference/participant-info.h"
-#include "conference/session/media-session.h"
 #include "content/file-content.h"
 #include "core/core-p.h"
 #include "participant.h"
@@ -45,9 +43,6 @@ ConferenceScheduler::ConferenceScheduler(const shared_ptr<Core> &core) : CoreAcc
 }
 
 ConferenceScheduler::~ConferenceScheduler() {
-	if (mSession != nullptr) {
-		mSession->setListener(nullptr);
-	}
 }
 
 const std::shared_ptr<Account> ConferenceScheduler::getAccount() const {
@@ -237,17 +232,11 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 
 	if (isUpdate) {
 		// Updating an existing conference
-		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress);
+		createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress);
 	} else {
 		// Creating conference
-		mSession = getCore()->createConferenceOnServer(conferenceParams, creator, invitees);
+		createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, nullptr);
 	}
-	if (mSession == nullptr) {
-		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";
-		setState(State::Error);
-		return;
-	}
-	mSession->setListener(this);
 
 	if (getState() != State::Error) {
 		// Update conference info in database with updated conference information
@@ -332,75 +321,6 @@ void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &c
 #endif
 
 	setState(State::Ready);
-}
-
-void ConferenceScheduler::onCallSessionSetTerminated(const shared_ptr<CallSession> &session) {
-	const std::shared_ptr<Address> remoteAddress = session->getRemoteContactAddress();
-	if (remoteAddress == nullptr) {
-		auto conferenceAddress = mConferenceInfo->getUri();
-		lError() << "[Conference Scheduler] [" << this
-		         << "] The session to update the conference information of conference "
-		         << (conferenceAddress && conferenceAddress->isValid() ? conferenceAddress->toString()
-		                                                               : std::string("<unknown-address>"))
-		         << " did not succesfully establish hence it is likely that the request wasn't taken into account by "
-		            "the server";
-		setState(State::Error);
-	} else if (getState() != State::Error) {
-		// Do not try to call inpromptu conference if a participant updates its informations
-		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
-			lInfo() << "Automatically rejoining conference " << remoteAddress->toString();
-			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-			// Participant with the focus call is admin
-			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
-			std::list<std::shared_ptr<Address>> addressesList;
-			for (const auto &participantInfo : mConferenceInfo->getParticipants()) {
-				addressesList.push_back(participantInfo->getAddress());
-			}
-			addressesList.sort([](const auto &addr1, const auto &addr2) { return *addr1 < *addr2; });
-			addressesList.unique([](const auto &addr1, const auto &addr2) { return addr1->weakEqual(*addr2); });
-
-			if (!addressesList.empty()) {
-				auto content = Content::create();
-				content->setBodyFromUtf8(Utils::getResourceLists(addressesList));
-				content->setContentType(ContentType::ResourceLists);
-				content->setContentDisposition(ContentDisposition::RecipientList);
-				if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-					content->setContentEncoding("deflate");
-				}
-
-				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(content);
-			}
-			const LinphoneVideoActivationPolicy *pol = linphone_core_get_video_activation_policy(getCore()->getCCore());
-			bool_t initiate_video = !!linphone_video_activation_policy_get_automatically_initiate(pol);
-			linphone_call_params_enable_video(
-			    new_params,
-			    static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled() && initiate_video);
-
-			linphone_core_invite_address_with_params_2(getCore()->getCCore(), remoteAddress->toC(), new_params,
-			                                           L_STRING_TO_C(mConferenceInfo->getSubject()), NULL);
-			linphone_call_params_unref(new_params);
-		}
-
-		auto conferenceAddress = remoteAddress;
-		lInfo() << "[Conference Scheduler] [" << this
-		        << "] Conference has been succesfully created: " << *conferenceAddress;
-		setConferenceAddress(conferenceAddress);
-	}
-}
-
-void ConferenceScheduler::onCallSessionStateChanged(const shared_ptr<CallSession> &session,
-                                                    CallSession::State state,
-                                                    BCTBX_UNUSED(const string &message)) {
-	switch (state) {
-		case CallSession::State::Error:
-			setState(State::Error);
-			break;
-		case CallSession::State::StreamsRunning:
-			session->terminate();
-			break;
-		default:
-			break;
-	}
 }
 
 shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_ptr<AbstractChatRoom> chatRoom,

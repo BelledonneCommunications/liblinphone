@@ -1,0 +1,62 @@
+/*
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ *
+ * This file is part of Liblinphone
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef _L_SIP_CONFERENCE_SCHEDULER_H_
+#define _L_SIP_CONFERENCE_SCHEDULER_H_
+
+#include <conference/conference-scheduler.h>
+#include <conference/session/call-session-listener.h>
+#include <conference/session/call-session.h>
+
+// =============================================================================
+
+LINPHONE_BEGIN_NAMESPACE
+
+class LINPHONE_PUBLIC SIPConferenceScheduler : public CallSessionListener, public ConferenceScheduler {
+public:
+	SIPConferenceScheduler(const std::shared_ptr<Core> &core);
+	virtual ~SIPConferenceScheduler();
+
+	virtual void onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) override;
+	virtual void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
+	                                       CallSession::State state,
+	                                       const std::string &message) override;
+	virtual void createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &conferenceParams,
+	                                              const std::shared_ptr<Address> &creator,
+	                                              const std::list<std::shared_ptr<Address>> &invitees,
+	                                              const std::shared_ptr<Address> &conferenceAddress) override;
+
+	virtual void processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorCode),
+	                             BCTBX_UNUSED(const std::shared_ptr<Address> conferenceAddress)) override;
+
+private:
+	std::shared_ptr<CallSession> mSession = nullptr;
+};
+
+class SIPConferenceSchedulerLogContextualizer : public CoreLogContextualizer {
+public:
+	SIPConferenceSchedulerLogContextualizer(const LinphoneConferenceScheduler *cs)
+	    : CoreLogContextualizer(*SIPConferenceScheduler::toCpp(cs)) {
+	}
+};
+
+LINPHONE_END_NAMESPACE
+
+#endif // ifndef _L_SIP_CONFERENCE_SCHEDULER_H_

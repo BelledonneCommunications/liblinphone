@@ -49,7 +49,7 @@ class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
 	friend class MediaSessionPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ToneManager;
-	friend class ConferenceScheduler;
+	friend class SIPConferenceScheduler;
 	friend class SalMediaDescriptionParams;
 	friend class Conference;
 	friend class MediaConference::LocalConference;

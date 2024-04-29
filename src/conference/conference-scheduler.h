@@ -29,7 +29,7 @@
 #include <chat/chat-message/chat-message-listener.h>
 #include <chat/chat-room/chat-room-params.h>
 #include <conference/conference-info.h>
-#include <conference/session/call-session-listener.h>
+#include <conference/conference-params.h>
 #include <conference/session/call-session.h>
 
 // =============================================================================
@@ -43,7 +43,6 @@ class LINPHONE_PUBLIC ConferenceScheduler
       public CoreAccessor,
       public UserDataAccessor,
       public CallbacksHolder<ConferenceSchedulerCbs>,
-      public CallSessionListener,
       public ChatMessageListener {
 public:
 	enum class State {
@@ -57,10 +56,6 @@ public:
 	ConferenceScheduler(const std::shared_ptr<Core> &core);
 	virtual ~ConferenceScheduler();
 
-	void onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) override;
-	void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
-	                               CallSession::State state,
-	                               const std::string &message) override;
 	void onChatMessageStateChanged(const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) override;
 
 	State getState() const;
@@ -76,7 +71,7 @@ public:
 	const std::shared_ptr<Account> getAccount() const;
 	void setAccount(std::shared_ptr<Account> account);
 
-private:
+protected:
 	void setState(State newState);
 	std::string stateToString(State state);
 
@@ -86,10 +81,16 @@ private:
 	                                                         bool cancel);
 	void fillCancelList(const ConferenceInfo::participant_list_t &oldList,
 	                    const ConferenceInfo::participant_list_t &newList);
+	virtual void
+	    createOrUpdateConferenceOnServer(BCTBX_UNUSED(const std::shared_ptr<ConferenceParams> &conferenceParams),
+	                                     BCTBX_UNUSED(const std::shared_ptr<Address> &creator),
+	                                     BCTBX_UNUSED(const std::list<std::shared_ptr<Address>> &invitees),
+	                                     BCTBX_UNUSED(const std::shared_ptr<Address> &conferenceAddress)) = 0;
+	virtual void processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorCode),
+	                             BCTBX_UNUSED(const std::shared_ptr<Address> conferenceAddress)) = 0;
 
 	ConferenceScheduler::State mState;
 	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
-	std::shared_ptr<CallSession> mSession = nullptr;
 	std::weak_ptr<Account> mAccount;
 
 	unsigned long mInvitationsSent = 0;
