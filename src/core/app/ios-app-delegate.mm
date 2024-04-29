@@ -40,23 +40,22 @@
 }
 
 @end
-
 @implementation IosAppDelegate
 
 - (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core {
 	self = [super initWithCore:core];
 	if (self != nil) {
 		[NSNotificationCenter.defaultCenter addObserver:self
-		selector:@selector(didEnterBackground:)
-			name:UIApplicationDidEnterBackgroundNotification
-		  object:nil];
-
+											   selector:@selector(didEnterBackground:)
+												   name:UIApplicationDidEnterBackgroundNotification
+												 object:nil];
+		
 		[NSNotificationCenter.defaultCenter addObserver:self
-		selector:@selector(didEnterForeground:)
-			name:UIApplicationWillEnterForegroundNotification
-		  object:nil];
+											   selector:@selector(didEnterForeground:)
+												   name:UIApplicationWillEnterForegroundNotification
+												 object:nil];
 		mStopAsyncEnd = true;
-		registryDispatchQueue = dispatch_get_main_queue();
+		pushAndAppDelegateDispatchQueue = dispatch_get_main_queue();
 	}
 
 	return self;
@@ -68,15 +67,35 @@
 }
 
 - (void)didEnterBackground:(NSNotification *)notif {
-	ms_message("[Ios App] didEnterBackground");
-	if ([self getCore])
-		[self getCore]->enterBackground();
+	if (pushAndAppDelegateDispatchQueue == dispatch_get_main_queue()) {
+		ms_message("[Ios App] didEnterBackground");
+		if ([self getCore]) {
+			[self getCore]->enterBackground();
+		}
+	} else {
+		dispatch_async(pushAndAppDelegateDispatchQueue, ^{
+			ms_message("[Ios App] didEnterBackground (on pushAndAppDelegateDispatchQueue)");
+			if ([self getCore]) {
+				[self getCore]->enterBackground();
+			}
+		});
+	}
 }
 
 - (void)didEnterForeground:(NSNotification *)notif {
-	ms_message("[Ios App] didEnterForeground");
-	if ([self getCore])
-		[self getCore]->enterForeground();
+	if (pushAndAppDelegateDispatchQueue == dispatch_get_main_queue()) {
+		ms_message("[Ios App] didEnterForeground");
+		if ([self getCore]) {
+			[self getCore]->enterForeground();
+		}
+	} else {
+		dispatch_async(pushAndAppDelegateDispatchQueue, ^{
+			ms_message("[Ios App] didEnterForeground (on pushAndAppDelegateDispatchQueue)");
+			if ([self getCore]) {
+				[self getCore]->enterForeground();
+			}
+		});
+	}
 }
 
 - (void)iterate {
@@ -106,8 +125,8 @@
 	if (!core) return;
 
 	ms_message("[PushKit] Connecting for push notifications");
-	ms_message("[PushKit] Initializing push registry with queue : %s", dispatch_queue_get_label(registryDispatchQueue));
-	voipRegistry = [[PKPushRegistry alloc] initWithQueue:registryDispatchQueue];
+	ms_message("[PushKit] Initializing push registry with queue : %s", dispatch_queue_get_label(pushAndAppDelegateDispatchQueue));
+	voipRegistry = [[PKPushRegistry alloc] initWithQueue:pushAndAppDelegateDispatchQueue];
 	voipRegistry.delegate = self;
 	voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 		
@@ -167,9 +186,9 @@
 	}
 }
 
-- (void)setPushRegistryDispatchQueue:(void *)dispatchQueue {
-	registryDispatchQueue = (dispatch_queue_t)dispatchQueue;
-	ms_message("[PushKit] PushRegistryDispatchQueue set to %s", dispatch_queue_get_label(registryDispatchQueue));
+- (void)setPushAndAppDelegateDispatchQueue:(void *)dispatchQueue {
+	pushAndAppDelegateDispatchQueue = (dispatch_queue_t)dispatchQueue;
+	ms_message("[PushKit] PushRegistryDispatchQueue set to %s", dispatch_queue_get_label(pushAndAppDelegateDispatchQueue));
 }
 
 //  PushKit Functions

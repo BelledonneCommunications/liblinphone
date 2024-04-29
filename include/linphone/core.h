@@ -6832,14 +6832,14 @@ LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *co
 LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneCore *core,
                                                                                        const char *device_token_str);
 /**
- * Sets the dispatch queue that will be used to receive VOIP push notifications. Main queue by default. Must be used
- * before core is started (iOS only).
+ * Sets the dispatch queue that will be used to receive VOIP push notifications, and process enterbackground/enternockground notification from the application delegate.
+ * Main queue by default. Must be use before core is started (iOS only).
  * @param core The #LinphoneCore @notnil
  * @param dispatch_queue dispatch_queue. @notnil
  * @ingroup misc
  * @donotwrap
  */
-LINPHONE_PUBLIC void linphone_core_set_push_registry_dispatch_queue(LinphoneCore *core, void *dispatch_queue);
+LINPHONE_PUBLIC void linphone_core_set_push_and_app_delegate_dispatch_queue(LinphoneCore *core, void *dispatch_queue);
 
 /**
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
