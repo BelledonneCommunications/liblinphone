@@ -96,6 +96,10 @@ void LimeManager::processAuthRequested(void *data, belle_sip_auth_event_t *event
 
 	/* extract username and domain from the GRUU stored in userData->username */
 	auto address = Address::create(userData->username);
+	/* we are not using a From field in the request so our event username and domain is empty,
+	 * load it with the ones stored in userData */
+	belle_sip_auth_event_set_username(event, address->getUsername().c_str());
+	belle_sip_auth_event_set_domain(event, address->getDomain().c_str());
 
 	/* Notes: when registering on the Lime server, the user is already registered on the flexisip server
 	 * the requested auth info shall thus be present in linphone core (except if registering methods are differents on
@@ -128,7 +132,7 @@ LimeManager::LimeManager(const string &dbAccess, belle_http_provider_t *prov, sh
 	          req = belle_http_request_create("POST", uri,
 	                                          belle_http_header_create("User-Agent", userAgent.str().c_str()),
 	                                          belle_http_header_create("Content-type", "x3dh/octet-stream"),
-	                                          belle_http_header_create("From", from.data()), NULL);
+	                                          belle_http_header_create("X-Lime-user-identity", from.data()), NULL);
 
 	          belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req), BELLE_SIP_BODY_HANDLER(bh));
 	          cbs.process_response = processResponse;
