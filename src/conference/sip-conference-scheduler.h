@@ -43,18 +43,11 @@ public:
 	                                              const std::list<std::shared_ptr<Address>> &invitees,
 	                                              const std::shared_ptr<Address> &conferenceAddress) override;
 
-	virtual void processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorCode),
-	                             BCTBX_UNUSED(const std::shared_ptr<Address> conferenceAddress)) override;
+	virtual void processResponse(const LinphoneErrorInfo *errorCode,
+	                             const std::shared_ptr<Address> conferenceAddress) override;
 
 private:
 	std::shared_ptr<CallSession> mSession = nullptr;
-};
-
-class SIPConferenceSchedulerLogContextualizer : public CoreLogContextualizer {
-public:
-	SIPConferenceSchedulerLogContextualizer(const LinphoneConferenceScheduler *cs)
-	    : CoreLogContextualizer(*SIPConferenceScheduler::toCpp(cs)) {
-	}
 };
 
 LINPHONE_END_NAMESPACE

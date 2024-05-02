@@ -153,19 +153,19 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		return;
 	}
 
-	bool isUpdate = false;
+	bool isUpdate = conferenceAddress && conferenceAddress->isValid();
 #ifdef HAVE_DB_STORAGE
-	if (conferenceAddress && conferenceAddress->isValid()) {
+	if (isUpdate) {
 		auto &mainDb = getCore()->getPrivate()->mainDb;
 		auto confInfo = mainDb->getConferenceInfoFromURI(conferenceAddress);
 		if (confInfo) {
 			lInfo() << "[Conference Scheduler] [" << this
-			        << "] Found matching conference info in database for address ["
-			        << (conferenceAddress ? conferenceAddress->toString() : std::string("<unknown>")) << "]";
-			isUpdate = true;
+			        << "] Found matching conference info in database for address [" << *conferenceAddress << "]";
 			setState(State::Updating);
 			clone->updateFrom(confInfo);
 			fillCancelList(confInfo->getParticipants(), clone->getParticipants());
+		} else {
+			isUpdate = false;
 		}
 	}
 #endif // HAVE_DB_STORAGE
@@ -230,13 +230,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		invitees.push_back(createParticipantAddress(p));
 	}
 
-	if (isUpdate) {
-		// Updating an existing conference
-		createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress);
-	} else {
-		// Creating conference
-		createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, nullptr);
-	}
+	createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress);
 
 	if (getState() != State::Error) {
 		// Update conference info in database with updated conference information
