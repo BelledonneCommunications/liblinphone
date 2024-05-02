@@ -147,8 +147,8 @@ private:
 	static void unsupportedMethod(belle_sip_server_transaction_t *serverTransaction, belle_sip_request_t *request);
 	static belle_sip_header_reason_t *makeReasonHeader(const SalErrorInfo *info);
 	static belle_sip_header_allow_t *createAllow(bool enableUpdate);
-	static std::vector<char> marshalMediaDescription(belle_sdp_session_description_t *sessionDesc,
-	                                                 belle_sip_error_code &error);
+	static std::vector<uint8_t> marshalMediaDescription(belle_sdp_session_description_t *sessionDesc,
+	                                                    belle_sip_error_code &error);
 
 	// belle_sip_message handlers
 	static int setSdp(belle_sip_message_t *message, belle_sdp_session_description_t *sessionDesc);

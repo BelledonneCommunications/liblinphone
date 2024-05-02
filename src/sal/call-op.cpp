@@ -98,16 +98,17 @@ belle_sip_header_allow_t *SalCallOp::createAllow(bool enableUpdate) {
 	return belle_sip_header_allow_create(oss.str().c_str());
 }
 
-std::vector<char> SalCallOp::marshalMediaDescription(belle_sdp_session_description_t *sessionDesc,
-                                                     belle_sip_error_code &error) {
+std::vector<uint8_t> SalCallOp::marshalMediaDescription(belle_sdp_session_description_t *sessionDesc,
+                                                        belle_sip_error_code &error) {
 	size_t length = 0;
 	size_t bufferSize = 2048;
-	vector<char> buffer(bufferSize);
+	vector<uint8_t> buffer(bufferSize);
 
 	// Try to marshal the description. This could go higher than 2k so we iterate.
 	error = BELLE_SIP_BUFFER_OVERFLOW;
 	while ((error != BELLE_SIP_OK) && (bufferSize <= SIP_MESSAGE_BODY_LIMIT)) {
-		error = belle_sip_object_marshal(BELLE_SIP_OBJECT(sessionDesc), buffer.data(), bufferSize, &length);
+		error = belle_sip_object_marshal(BELLE_SIP_OBJECT(sessionDesc), reinterpret_cast<char *>(buffer.data()),
+		                                 bufferSize, &length);
 		if (error != BELLE_SIP_OK) {
 			bufferSize *= 2;
 			length = 0;
@@ -118,7 +119,7 @@ std::vector<char> SalCallOp::marshalMediaDescription(belle_sdp_session_descripti
 	// Give up if hard limit is reached
 	if (error != BELLE_SIP_OK) {
 		lError() << "Buffer too small (" << bufferSize << ") or not enough memory, giving up SDP";
-		return std::vector<char>(); // Return a new vector in order to free the buffer held by 'buffer' vector
+		return std::vector<uint8_t>(); // Return a new vector in order to free the buffer held by 'buffer' vector
 	}
 
 	buffer.resize(length);
@@ -129,7 +130,7 @@ int SalCallOp::setSdp(belle_sip_message_t *msg, belle_sdp_session_description_t 
 	if (!sessionDesc) return -1;
 
 	belle_sip_error_code error;
-	vector<char> buffer = marshalMediaDescription(sessionDesc, error);
+	auto buffer = marshalMediaDescription(sessionDesc, error);
 	if (error != BELLE_SIP_OK) return -1;
 
 	Content body;
@@ -153,7 +154,7 @@ void SalCallOp::fillInvite(belle_sip_request_t *invite) {
 	if (mLocalMedia) {
 		belle_sip_error_code error;
 		belle_sdp_session_description_t *sdp = mLocalMedia->toSdp();
-		vector<char> buffer = marshalMediaDescription(sdp, error);
+		auto buffer = marshalMediaDescription(sdp, error);
 		belle_sip_object_unref(sdp);
 
 		if (error != BELLE_SIP_OK) return;

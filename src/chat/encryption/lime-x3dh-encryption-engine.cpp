@@ -345,17 +345,32 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 		return ChatMessageModifier::Result::Error;
 	}
 
-	const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();
-	shared_ptr<const vector<uint8_t>> plainMessage =
-	    make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
+	// Compress plain text message - compression after encryption is much less efficient
+	// To keep compatibility with version not supporting the encryption at this stage, do it (for now: may 2024)
+	// only when the lime base algorithm is c25519k512
+	bool compressedPlain = false;
+	std::shared_ptr<vector<uint8_t>> plainMessage = nullptr;
+	const std::string curveConfig =
+	    linphone_config_get_string(message->getChatRoom()->getCore()->getCCore()->config, "lime", "curve", "c25519");
+	if (curveConfig.compare("c25519k512") == 0) {
+		Content plainContent(message->getInternalContent());
+		compressedPlain = plainContent.deflateBody();
+		auto contentBody = plainContent.getBody();
+		plainMessage = make_shared<vector<uint8_t>>(contentBody.cbegin(), contentBody.cend());
+	}
+	if (!compressedPlain) {
+		const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();
+		plainMessage = make_shared<vector<uint8_t>>(plainStringMessage.cbegin(), plainStringMessage.cend());
+	}
+
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
 		errorCode = 0; // no need to specify error code because not used later
 		limeManager->encrypt(
 		    localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage,
-		    [localDeviceId, recipients, cipherMessage, message, result](lime::CallbackReturn returnCode,
-		                                                                string errorMessage) {
+		    [localDeviceId, recipients, cipherMessage, message, result,
+		     compressedPlain](lime::CallbackReturn returnCode, string errorMessage) {
 			    if (returnCode == lime::CallbackReturn::success) {
 
 				    // Ignore devices which do not have keys on the X3DH server
@@ -407,6 +422,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 				    auto cipherMessageC = Content::create();
 				    cipherMessageC->setBodyFromLocale(cipherMessageB64);
 				    cipherMessageC->setContentType(ContentType::OctetStream);
+				    if (compressedPlain) {
+					    cipherMessageC->setContentEncoding("deflate");
+				    }
 				    cipherMessageC->addHeader("Content-Description", "Encrypted message");
 				    contents.push_back(std::move(cipherMessageC));
 
@@ -537,9 +555,14 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	// ---------------------------------------------- MESSAGE
 
 	string cipherMessage;
+	bool compressedPlain = false;
 	for (const auto &content : contentList) {
 		if (content.getContentType() == ContentType::OctetStream) {
 			cipherMessage = content.getBodyAsUtf8String();
+			if (content.getContentEncoding() == std::string("deflate")) {
+				compressedPlain = true;
+			}
+			break;
 		}
 	}
 
@@ -578,8 +601,11 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	Content finalContent;
 	ContentType finalContentType = ContentType::Cpim; // TODO should be the content-type of the decrypted message
 	finalContent.setContentType(finalContentType);
-	finalContent.setContentEncoding(internalContent->getContentEncoding());
 	finalContent.setBodyFromUtf8(plainMessageString);
+	if (compressedPlain) {
+		finalContent.inflateBody();
+	}
+	finalContent.setContentEncoding(internalContent->getContentEncoding());
 	message->setInternalContent(finalContent);
 
 	// Set the contact in sipfrag as the authenticatedFromAddress for sender authentication

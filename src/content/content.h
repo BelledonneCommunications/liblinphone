@@ -44,7 +44,7 @@ public:
 	Content(const Content &other);
 	Content(Content &&other) noexcept;
 	Content(ContentType &&ct, const std::string &data);
-	Content(ContentType &&ct, std::vector<char> &&data);
+	Content(ContentType &&ct, std::vector<uint8_t> &&data);
 	virtual ~Content();
 
 	Content *clone() const override {
@@ -70,12 +70,12 @@ public:
 	const std::string &getContentEncoding() const;
 	void setContentEncoding(const std::string &contentEncoding);
 
-	const std::vector<char> &getBody() const;
+	const std::vector<uint8_t> &getBody() const;
 	std::string getBodyAsString() const;
 	const std::string &getBodyAsUtf8String() const;
 
-	void setBody(const std::vector<char> &body);
-	void setBody(std::vector<char> &&body);
+	void setBody(const std::vector<uint8_t> &body);
+	void setBody(std::vector<uint8_t> &&body);
 	void setBodyFromLocale(const std::string &body);
 	void setBody(const void *buffer, size_t size);
 	void setBodyFromUtf8(const std::string &body);
@@ -115,12 +115,25 @@ public:
 
 	static SalBodyHandler *getBodyHandlerFromContent(const Content &content, bool parseMultipart = true);
 
+	/**
+	 * compress this content
+	 * content size is modified and set the content-encoding to deflate
+	 * @return true on success
+	 */
+	bool deflateBody(void);
+	/**
+	 * decompress this content
+	 * content size is modified and the content-encoding is unset
+	 * @return true on success
+	 */
+	bool inflateBody(void);
+
 protected:
 	bool isFileEncrypted(const std::string &filePath) const;
 	const std::string exportPlainFileFromEncryptedFile(const std::string &filePath) const;
 
 private:
-	std::vector<char> mBody;
+	std::vector<uint8_t> mBody;
 	ContentType mContentType;
 	ContentDisposition mContentDisposition;
 	std::string mContentEncoding;

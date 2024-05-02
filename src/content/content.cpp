@@ -28,6 +28,10 @@
 #include "linphone/utils/algorithm.h"
 #include "logger/logger.h"
 
+#ifdef HAVE_ZLIB
+#include "zlib.h"
+#endif // HAVE_ZLIB
+
 // =============================================================================
 
 using namespace std;
@@ -96,7 +100,7 @@ Content::Content(ContentType &&ct, const std::string &data) : mContentType(ct) {
 	setBodyFromLocale(data);
 }
 
-Content::Content(ContentType &&ct, std::vector<char> &&data) : mContentType(ct) {
+Content::Content(ContentType &&ct, std::vector<uint8_t> &&data) : mContentType(ct) {
 	setBody(data);
 }
 
@@ -177,7 +181,7 @@ void Content::setContentEncoding(const string &contentEncoding) {
 	mContentEncoding = contentEncoding;
 }
 
-const vector<char> &Content::getBody() const {
+const vector<uint8_t> &Content::getBody() const {
 	return mBody;
 }
 
@@ -190,31 +194,31 @@ const string &Content::getBodyAsUtf8String() const {
 	return mCache.buffer;
 }
 
-void Content::setBody(const vector<char> &body) {
+void Content::setBody(const vector<uint8_t> &body) {
 	mBody = body;
 }
 
-void Content::setBody(vector<char> &&body) {
+void Content::setBody(vector<uint8_t> &&body) {
 	mBody = std::move(body);
 }
 
 void Content::setBodyFromLocale(const string &body) {
 	string toUtf8 = Utils::localeToUtf8(body);
-	mBody = vector<char>(toUtf8.cbegin(), toUtf8.cend());
+	mBody = vector<uint8_t>(toUtf8.cbegin(), toUtf8.cend());
 }
 
 void Content::setBody(const void *buffer, size_t size) {
 	mIsDirty = true;
 
 	const char *start = static_cast<const char *>(buffer);
-	if (start != nullptr) mBody = vector<char>(start, start + size);
+	if (start != nullptr) mBody = vector<uint8_t>(start, start + size);
 	else mBody.clear();
 }
 
 void Content::setBodyFromUtf8(const string &body) {
 	mIsDirty = true;
 
-	mBody = vector<char>(body.cbegin(), body.cend());
+	mBody = vector<uint8_t>(body.cbegin(), body.cend());
 }
 
 const std::string &Content::getName() const {
@@ -507,4 +511,94 @@ std::ostream &operator<<(std::ostream &stream, const std::list<Content> &content
 	return stream;
 }
 
+bool Content::deflateBody(void) {
+#ifdef HAVE_ZLIB
+	z_stream zlibStream = {};
+	auto ret = deflateInit(&zlibStream, Z_DEFAULT_COMPRESSION);
+	if (ret != Z_OK) {
+		lError() << "Content deflateInit failed: " << ret;
+		deflateEnd(&zlibStream);
+		return false;
+	} else {
+		zlibStream.avail_in = static_cast<uInt>(mBody.size());
+		zlibStream.next_in = mBody.data();
+		std::vector<uint8_t> compressedMessage(deflateBound(&zlibStream, static_cast<uLong>(mBody.size())));
+		zlibStream.avail_out = static_cast<uInt>(compressedMessage.size());
+		zlibStream.next_out = compressedMessage.data();
+		ret = deflate(&zlibStream, Z_FINISH);
+		if (ret != Z_STREAM_END) {
+			lError() << "Content deflate failed: " << ret;
+			deflateEnd(&zlibStream);
+			return false;
+		} else {
+			auto compressedSize = compressedMessage.size() - zlibStream.avail_out;
+			// resize the output buffer according to what was actually written in it
+			compressedMessage.resize(compressedSize);
+			lInfo() << "Content deflate body from " << mBody.size() << " bytes to " << compressedMessage.size()
+			        << " bytes";
+			mBody = std::move(compressedMessage);
+			setContentEncoding("deflate");
+		}
+	}
+	deflateEnd(&zlibStream);
+	return true;
+#else  // HAVE_ZLIB
+	lError() << "Cannot deflate content as zlib support is missing" return false;
+#endif // HAVE_ZLIB
+}
+
+bool Content::inflateBody(void) {
+#ifdef HAVE_ZLIB
+	z_stream zlibStream = {};
+	auto ret = inflateInit(&zlibStream);
+	auto initialSize = mBody.size();
+	if (ret != Z_OK) {
+		lError() << "Content inflateInit failed: " << ret;
+		inflateEnd(&zlibStream);
+		return false;
+	} else {
+		zlibStream.avail_in = static_cast<uInt>(mBody.size());
+		zlibStream.next_in = mBody.data();
+		std::vector<uint8_t> outBuf(MIN(static_cast<size_t>(4096), 3 * mBody.size()));
+		zlibStream.avail_out = static_cast<uInt>(outBuf.size());
+		zlibStream.next_out = outBuf.data();
+		ret = inflate(&zlibStream, Z_SYNC_FLUSH);
+		if (ret != Z_STREAM_END && ret != Z_OK) {
+			lError() << "Content inflate failed: " << ret;
+			inflateEnd(&zlibStream);
+			return false;
+		}
+		if (ret == Z_STREAM_END) { // inflate finished in one pass
+			outBuf.resize(outBuf.size() - zlibStream.avail_out);
+			mBody = std::move(outBuf);
+		} else { // more passes to perform
+			std::vector<uint8_t> inflatedBody{outBuf.cbegin(), outBuf.cend()};
+			do {
+				zlibStream.avail_out = static_cast<uInt>(outBuf.size());
+				zlibStream.next_out = outBuf.data();
+				ret = inflate(&zlibStream, Z_SYNC_FLUSH);
+				if (ret == Z_OK) { // Still more data to inflate
+					inflatedBody.insert(inflatedBody.end(), outBuf.cbegin(), outBuf.cend());
+				} else {
+					if (ret != Z_STREAM_END) {
+						lError() << "Content inflate failed: " << ret;
+						inflateEnd(&zlibStream);
+						return false;
+					}
+				}
+			} while (ret != Z_STREAM_END);
+			// get the output of the last pass
+			outBuf.resize(outBuf.size() - zlibStream.avail_out);
+			inflatedBody.insert(inflatedBody.end(), outBuf.cbegin(), outBuf.cend());
+			mBody = std::move(inflatedBody);
+		}
+	}
+	lInfo() << "Content inflate message from " << initialSize << " bytes to " << mBody.size() << " bytes";
+	inflateEnd(&zlibStream);
+	setContentEncoding("");
+	return true;
+#else  // HAVE_ZLIB
+	lError() << "Cannot inflate content as zlib support is missing" return false;
+#endif // HAVE_ZLIB
+}
 LINPHONE_END_NAMESPACE
