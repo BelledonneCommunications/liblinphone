@@ -81,6 +81,7 @@ extern test_suite_t secure_group_chat_test_suite;
 extern test_suite_t secure_group_chat_exhume_test_suite;
 extern test_suite_t secure_message_test_suite;
 extern test_suite_t secure_message2_test_suite;
+extern test_suite_t secure_group_chat_migration_test_suite;
 extern test_suite_t ephemeral_group_chat_test_suite;
 extern test_suite_t ephemeral_group_chat_basic_test_suite;
 extern test_suite_t log_collection_test_suite;

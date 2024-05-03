@@ -497,6 +497,9 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&secure_group_chat_exhume_test_suite, 100);
 	liblinphone_tester_add_suite_with_default_time(&secure_message_test_suite, 423);
 	liblinphone_tester_add_suite_with_default_time(&secure_message2_test_suite, 204);
+	if (liblinphone_tester_is_lime_PQ_available()) {
+		liblinphone_tester_add_suite_with_default_time(&secure_group_chat_migration_test_suite, 40);
+	}
 	liblinphone_tester_add_suite_with_default_time(&lime_server_auth_test_suite, 125);
 	liblinphone_tester_add_suite_with_default_time(&ephemeral_group_chat_test_suite, 514);
 	liblinphone_tester_add_suite_with_default_time(&ephemeral_group_chat_basic_test_suite, 189);
