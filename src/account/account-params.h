@@ -88,6 +88,7 @@ public:
 	void setLimeServerUrl(const std::string &url);
 	void setPictureUri(const std::string &uri);
 	void setMwiServerAddress(const std::shared_ptr<Address> &address);
+	void setInstantMessagingEncryptionMandatory(bool mandatory);
 
 	// Getters
 	int getExpires() const;
@@ -137,6 +138,7 @@ public:
 	const std::string &getLimeServerUrl() const;
 	const std::string &getPictureUri() const;
 	const std::shared_ptr<Address> &getMwiServerAddress() const;
+	bool isInstantMessagingEncryptionMandatory() const;
 
 	// Other
 	LinphoneStatus setServerAddress(const std::shared_ptr<Address> serverAddr);
@@ -172,6 +174,7 @@ private:
 	bool mRtpBundleEnabled;
 	bool mRtpBundleAssumption;
 	bool mAllowCpimMessagesInBasicChatRooms;
+	bool mInstantMessagingEncryptionMandatory;
 
 	void *mUserData;
 

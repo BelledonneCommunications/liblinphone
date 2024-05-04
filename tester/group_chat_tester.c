@@ -1683,7 +1683,7 @@ static int im_encryption_engine_process_outgoing_message_cb(BCTBX_UNUSED(Linphon
 	return -1;
 }
 
-static void group_chat_room_message(bool_t encrypt, bool_t sal_error) {
+static void group_chat_room_message(bool_t encrypt, bool_t sal_error, bool_t im_encryption_mandatory) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
@@ -1707,6 +1707,27 @@ static void group_chat_room_message(bool_t encrypt, bool_t sal_error) {
 	LinphoneImEncryptionEngineCbs *pauline_cbs = linphone_im_encryption_engine_get_callbacks(pauline_imee);
 	LinphoneImEncryptionEngine *chloe_imee = linphone_im_encryption_engine_new();
 	LinphoneImEncryptionEngineCbs *chloe_cbs = linphone_im_encryption_engine_get_callbacks(chloe_imee);
+
+	if (im_encryption_mandatory) {
+		LinphoneAccount *pauline_account = linphone_core_get_default_account(pauline->lc);
+		LinphoneAccountParams *pauline_params =
+		    linphone_account_params_clone(linphone_account_get_params(pauline_account));
+		linphone_account_params_set_instant_messaging_encryption_mandatory(pauline_params, true);
+		linphone_account_set_params(pauline_account, pauline_params);
+		linphone_account_params_unref(pauline_params);
+
+		LinphoneAccount *marie_account = linphone_core_get_default_account(marie->lc);
+		LinphoneAccountParams *marie_params = linphone_account_params_clone(linphone_account_get_params(marie_account));
+		linphone_account_params_set_instant_messaging_encryption_mandatory(marie_params, true);
+		linphone_account_set_params(marie_account, marie_params);
+		linphone_account_params_unref(marie_params);
+
+		LinphoneAccount *chloe_account = linphone_core_get_default_account(chloe->lc);
+		LinphoneAccountParams *chloe_params = linphone_account_params_clone(linphone_account_get_params(chloe_account));
+		linphone_account_params_set_instant_messaging_encryption_mandatory(chloe_params, true);
+		linphone_account_set_params(chloe_account, chloe_params);
+		linphone_account_params_unref(chloe_params);
+	}
 
 	if (encrypt) {
 		linphone_im_encryption_engine_cbs_set_process_outgoing_message(
@@ -1745,73 +1766,112 @@ static void group_chat_room_message(bool_t encrypt, bool_t sal_error) {
 
 	// Chloe begins composing a message
 	linphone_chat_room_compose(chloeCr);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
-	                             initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived,
-	                             initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1,
-	                             liblinphone_tester_sip_timeout));
+	if ((im_encryption_mandatory && encrypt) || !im_encryption_mandatory) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
+		                             initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived,
+		                             initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+	} else {
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
+		                              initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived,
+		                              initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 5000));
+	}
+
 	const char *chloeTextMessage = "Hello";
 	LinphoneChatMessage *chloeMessage = _send_message(chloeCr, chloeTextMessage);
 	const char *messageId = linphone_chat_message_get_message_id(chloeMessage);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived,
-	                             initialMarieStats.number_of_LinphoneMessageReceived + 1,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
-	                             initialPaulineStats.number_of_LinphoneMessageReceived + 1,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived,
-	                             initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 1,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingIdleReceived,
-	                             initialPaulineStats.number_of_LinphoneIsComposingIdleReceived + 1,
-	                             liblinphone_tester_sip_timeout));
-	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
-	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg)) goto end;
+	LinphoneChatMessage *marieLastMsg = NULL;
 
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
-	LinphoneChatMessage *foundMessage = linphone_chat_room_find_message(chloeCr, messageId);
+	if ((im_encryption_mandatory && encrypt) || !im_encryption_mandatory) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived,
+		                             initialMarieStats.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
+		                             initialPaulineStats.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived,
+		                             initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingIdleReceived,
+		                             initialPaulineStats.number_of_LinphoneIsComposingIdleReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		marieLastMsg = marie->stat.last_received_chat_message;
+		if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg)) goto end;
+
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
+		LinphoneChatMessage *foundMessage = linphone_chat_room_find_message(chloeCr, messageId);
+		BC_ASSERT_PTR_NOT_NULL(foundMessage);
+		BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_text(foundMessage));
+		linphone_chat_message_unref(foundMessage);
+
+		LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
+		BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
+		linphone_address_unref(chloeAddr);
+	} else {
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived,
+		                              initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived,
+		                              initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived,
+		                              initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingIdleReceived,
+		                              initialPaulineStats.number_of_LinphoneIsComposingIdleReceived + 1, 5000));
+	}
 	linphone_chat_message_unref(chloeMessage); // Unref here because of messageId using
-	BC_ASSERT_PTR_NOT_NULL(foundMessage);
-	BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_text(foundMessage));
-	linphone_chat_message_unref(foundMessage);
-
-	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
-
-	BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
-	linphone_address_unref(chloeAddr);
 
 	// Pauline begins composing a messagewith some accents
 	linphone_chat_room_compose(paulineCr);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
-	                             initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 2,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingActiveReceived,
-	                             initialChloeStats.number_of_LinphoneIsComposingActiveReceived + 1,
-	                             liblinphone_tester_sip_timeout));
+	if ((im_encryption_mandatory && encrypt) || !im_encryption_mandatory) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
+		                             initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 2,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingActiveReceived,
+		                             initialChloeStats.number_of_LinphoneIsComposingActiveReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+	} else {
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived,
+		                              initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingActiveReceived,
+		                              initialChloeStats.number_of_LinphoneIsComposingActiveReceived + 1, 5000));
+	}
 	const char *paulineTextMessage = "Héllö Dàrling";
 	LinphoneChatMessage *paulineMessage = _send_message(paulineCr, paulineTextMessage);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived,
-	                             initialMarieStats.number_of_LinphoneMessageReceived + 2,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageReceived,
-	                             initialChloeStats.number_of_LinphoneMessageReceived + 1,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived,
-	                             initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 2,
-	                             liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingIdleReceived,
-	                             initialChloeStats.number_of_LinphoneIsComposingIdleReceived + 1,
-	                             liblinphone_tester_sip_timeout));
-	marieLastMsg = marie->stat.last_received_chat_message;
-	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg)) goto end;
 
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), paulineTextMessage);
+	if ((im_encryption_mandatory && encrypt) || !im_encryption_mandatory) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived,
+		                             initialMarieStats.number_of_LinphoneMessageReceived + 2,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageReceived,
+		                             initialChloeStats.number_of_LinphoneMessageReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived,
+		                             initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 2,
+		                             liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingIdleReceived,
+		                             initialChloeStats.number_of_LinphoneIsComposingIdleReceived + 1,
+		                             liblinphone_tester_sip_timeout));
+
+		marieLastMsg = marie->stat.last_received_chat_message;
+		if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg)) goto end;
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), paulineTextMessage);
+
+		LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
+		BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
+		linphone_address_unref(paulineAddr);
+	} else {
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived,
+		                              initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageReceived,
+		                              initialChloeStats.number_of_LinphoneMessageReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived,
+		                              initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneIsComposingIdleReceived,
+		                              initialChloeStats.number_of_LinphoneIsComposingIdleReceived + 1, 5000));
+	}
 	linphone_chat_message_unref(paulineMessage);
-	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
-
-	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
-	linphone_address_unref(paulineAddr);
 
 	if (sal_error) {
 		sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
@@ -1855,15 +1915,23 @@ end:
 }
 
 static void group_chat_room_send_message(void) {
-	group_chat_room_message(FALSE, FALSE);
+	group_chat_room_message(FALSE, FALSE, FALSE);
+}
+
+static void group_chat_room_send_message_im_encryption_mandatory(void) {
+	group_chat_room_message(FALSE, FALSE, TRUE);
 }
 
 static void group_chat_room_send_message_encrypted(void) {
-	group_chat_room_message(TRUE, FALSE);
+	group_chat_room_message(TRUE, FALSE, FALSE);
+}
+
+static void group_chat_room_send_message_encrypted_im_encryption_mandatory(void) {
+	group_chat_room_message(TRUE, FALSE, TRUE);
 }
 
 static void group_chat_room_send_message_with_error(void) {
-	group_chat_room_message(FALSE, TRUE);
+	group_chat_room_message(FALSE, TRUE, FALSE);
 }
 
 static void group_chat_room_invite_multi_register_account(void) {
@@ -9070,7 +9138,10 @@ test_t group_chat_tests[] = {
     TEST_NO_TAG("Network down/up while creating group chat room", group_chat_room_creation_server_network_down_up),
     TEST_ONE_TAG("Add participant", group_chat_room_add_participant, "LeaksMemory"),
     TEST_NO_TAG("Send message", group_chat_room_send_message),
+    TEST_NO_TAG("Send message IM encryption mandatory", group_chat_room_send_message_im_encryption_mandatory),
     TEST_NO_TAG("Send encrypted message", group_chat_room_send_message_encrypted),
+    TEST_NO_TAG("Send encrypted message IM encryption mandatory",
+                group_chat_room_send_message_encrypted_im_encryption_mandatory),
     TEST_NO_TAG("Send message with error", group_chat_room_send_message_with_error),
     TEST_NO_TAG("Send invite on a multi register account", group_chat_room_invite_multi_register_account),
     TEST_NO_TAG("Send message check sync between devices",

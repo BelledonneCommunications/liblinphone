@@ -355,7 +355,6 @@ public:
 
 	void destroyTimer(belle_sip_source_t *timer);
 
-	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
 	void onStopAsyncBackgroundTaskStarted(); /* Using background task to ensure stop core async ended */
 	void onStopAsyncBackgroundTaskStopped();
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;

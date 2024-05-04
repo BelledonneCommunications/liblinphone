@@ -908,6 +908,22 @@ LINPHONE_PUBLIC const LinphoneAddress *
 linphone_account_params_get_mwi_server_address(const LinphoneAccountParams *params);
 
 /**
+ * Check if encryption is mandatory for instant messages or not.
+ * @param params #LinphoneAccountParams object. @notnil
+ * @return TRUE if encryption is mandatory; FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t
+linphone_account_params_get_instant_messaging_encryption_mandatory(const LinphoneAccountParams *params);
+
+/**
+ * Define whether the encryption of instant messages is mandatory. If it is, clear text messages will be denied.
+ * @param params #LinphoneAccountParams object. @notnil
+ * @param mandatory TRUE to set it mandatory; FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_instant_messaging_encryption_mandatory(LinphoneAccountParams *params,
+                                                                                        bool_t mandatory);
+
+/**
  * @}
  */
 

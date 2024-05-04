@@ -1964,12 +1964,6 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	return session;
 }
 
-bool Core::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {
-	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
-	return linphone_core_is_media_encryption_mandatory(lc) &&
-	       linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionSRTP && !md->hasSrtp();
-}
-
 const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() const {
 	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
 	std::list<LinphoneMediaEncryption> encEnumList;

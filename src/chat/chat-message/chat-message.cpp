@@ -779,6 +779,12 @@ LinphoneReason ChatMessagePrivate::receive() {
 	shared_ptr<Core> core = q->getCore();
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 
+	bool encryptionMandatory = false;
+	auto account = core->findAccountByIdentityAddress(q->getLocalAddress());
+	if (account) {
+		encryptionMandatory = account->getAccountParams()->isInstantMessagingEncryptionMandatory();
+	}
+
 	// ---------------------------------------
 	// Start of message modification
 	// ---------------------------------------
@@ -803,12 +809,14 @@ LinphoneReason ChatMessagePrivate::receive() {
 			setParticipantState(chatRoom->getMe()->getAddress(), ChatMessage::State::NotDelivered, ::ms_time(nullptr),
 			                    reason);
 			return reason;
-		}
-
-		if (result == ChatMessageModifier::Result::Suspended) {
+		} else if (result == ChatMessageModifier::Result::Suspended) {
 			currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 			return LinphoneReasonNone;
+		} else if (result == ChatMessageModifier::Result::Skipped && encryptionMandatory) {
+			lError() << "Account receiving this message is configured to have encryption mandatory, refusing message";
+			return LinphoneReasonNotAcceptable;
 		}
+
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 	}
 

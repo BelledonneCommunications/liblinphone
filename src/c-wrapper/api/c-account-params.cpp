@@ -467,3 +467,12 @@ const LinphoneAddress *linphone_account_params_get_mwi_server_address(const Linp
 	const std::shared_ptr<Address> addr = AccountParams::toCpp(params)->getMwiServerAddress();
 	return addr ? addr->toC() : nullptr;
 }
+
+bool_t linphone_account_params_get_instant_messaging_encryption_mandatory(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->isInstantMessagingEncryptionMandatory();
+}
+
+void linphone_account_params_set_instant_messaging_encryption_mandatory(LinphoneAccountParams *params,
+                                                                        bool_t mandatory) {
+	AccountParams::toCpp(params)->setInstantMessagingEncryptionMandatory(mandatory);
+}

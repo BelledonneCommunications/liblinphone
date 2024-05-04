@@ -160,6 +160,9 @@ AccountParams::AccountParams(LinphoneCore *lc) {
 
 	string pictureUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "picture_uri", "") : "";
 	setPictureUri(pictureUri);
+
+	mInstantMessagingEncryptionMandatory =
+	    lc ? !!linphone_config_get_default_int(lc->config, "proxy", "im_encryption_mandatory", 0) : 0;
 }
 
 AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullptr) {
@@ -277,6 +280,8 @@ AccountParams::AccountParams(LinphoneCore *lc, int index) : AccountParams(nullpt
 		setMwiServerAddress(Address::create(mwiServerUri));
 	}
 
+	mInstantMessagingEncryptionMandatory = !!linphone_config_get_bool(config, key, "im_encryption_mandatory", false);
+
 	readCustomParamsFromConfigFile(config, key);
 }
 
@@ -356,6 +361,8 @@ AccountParams::AccountParams(const AccountParams &other) : HybridObject(other), 
 	} else {
 		mMwiServerAddress = nullptr;
 	}
+
+	mInstantMessagingEncryptionMandatory = other.mInstantMessagingEncryptionMandatory;
 }
 
 AccountParams::~AccountParams() {
@@ -933,6 +940,14 @@ const char *AccountParams::getMwiServerAddressCstr() const {
 	return mMwiServerAddressCstr;
 }
 
+bool AccountParams::isInstantMessagingEncryptionMandatory() const {
+	return mInstantMessagingEncryptionMandatory;
+}
+
+void AccountParams::setInstantMessagingEncryptionMandatory(bool mandatory) {
+	mInstantMessagingEncryptionMandatory = mandatory;
+}
+
 void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	char key[50];
 
@@ -1014,6 +1029,8 @@ void AccountParams::writeToConfigFile(LinphoneConfig *config, int index) {
 	if (mMwiServerAddress) {
 		linphone_config_set_string(config, key, "mwi_server_uri", getMwiServerAddressCstr());
 	}
+
+	linphone_config_set_bool(config, key, "im_encryption_mandatory", mInstantMessagingEncryptionMandatory);
 }
 
 LINPHONE_END_NAMESPACE
