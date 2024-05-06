@@ -1576,7 +1576,11 @@ int SalCallOp::referWithReplaces(SalCallOp *otherCallOp) {
 		return -1;
 	}
 
-	auto referToHeader = belle_sip_header_refer_to_create(belle_sip_dialog_get_remote_party(otherCallOp->mDialog));
+	auto refer_to = belle_sip_dialog_get_remote_target(otherCallOp->mDialog);
+	if (!refer_to) {
+		refer_to = belle_sip_dialog_get_remote_party(otherCallOp->mDialog);
+	}
+	auto referToHeader = belle_sip_header_refer_to_create(refer_to);
 	belle_sip_parameters_clean(BELLE_SIP_PARAMETERS(referToHeader));
 
 	// rfc3891

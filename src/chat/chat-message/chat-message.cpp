@@ -1141,8 +1141,8 @@ void ChatMessagePrivate::send() {
 	    (linphone_core_get_global_state(core->getCCore()) != LinphoneGlobalShutdown) && chatRoomParams->isEncrypted() &&
 	    (dChatRoom->isSubscriptionUnderWay() || (chatRoomState == ConferenceInterface::State::Instantiated) ||
 	     (chatRoomState == ConferenceInterface::State::CreationPending))) {
-		lInfo() << "Message is being sent while the subscription is underway or the conference is not yet full "
-		           "created";
+		lInfo() << "Message " << q << " in chat room " << chatRoom->getConferenceId()
+		        << " is being sent while the subscription is underway or the conference is not yet full created";
 		dChatRoom->addPendingMessage(q->getSharedFromThis());
 		return;
 	}
