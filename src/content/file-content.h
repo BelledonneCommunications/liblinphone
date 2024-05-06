@@ -66,6 +66,9 @@ public:
 	void setFileDuration(int durationInSeconds);
 	int getFileDuration() const;
 
+	void setCreationTimestamp(time_t timestamp);
+	time_t getCreationTimestamp() const;
+
 	bool isFile() const override;
 	bool isFileTransfer() const override;
 
@@ -82,6 +85,7 @@ private:
 	std::string mFilePath;
 	size_t mFileSize = 0;
 	int mFileDuration = 0;
+	time_t mFileCreationTimestamp = -1;
 };
 
 LINPHONE_END_NAMESPACE

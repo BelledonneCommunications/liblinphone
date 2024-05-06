@@ -370,6 +370,14 @@ bool_t linphone_content_is_file_encrypted(const LinphoneContent *content) {
 	return FALSE;
 }
 
+time_t linphone_content_get_creation_timestamp(const LinphoneContent *content) {
+	const auto c = Content::toCpp(content);
+	if (c->isFile()) {
+		return dynamic_cast<const FileContent *>(c)->getCreationTimestamp();
+	}
+	return -1;
+}
+
 // =============================================================================
 // Private functions.
 // =============================================================================

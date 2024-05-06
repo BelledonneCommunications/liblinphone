@@ -4762,15 +4762,16 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 	list<shared_ptr<Content>> result = list<shared_ptr<Content>>();
 #ifdef HAVE_DB_STORAGE
 	static const string query =
-	    "SELECT name, path, size "
+	    "SELECT name, path, size, conference_chat_message_event.time "
 	    " FROM chat_message_file_content "
 	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
+	    " JOIN conference_chat_message_event ON conference_chat_message_event.event_id = chat_message_content.event_id "
 	    " JOIN conference_event ON conference_event.event_id = chat_message_content.event_id AND "
 	    "conference_event.chat_room_id = :chatRoomId "
 	    " WHERE chat_message_content.content_type_id IN ( "
 	    " SELECT id "
 	    " FROM content_type "
-	    " WHERE value LIKE 'video/%' OR value LIKE 'image/%' )"
+	    " WHERE value LIKE 'video/%' OR value LIKE 'image/%' OR value LIKE 'audio/%' )"
 	    " ORDER BY chat_message_content.event_id ";
 	return L_DB_TRANSACTION {
 		L_D();
@@ -4780,11 +4781,13 @@ list<shared_ptr<Content>> MainDb::getMediaContents(const ConferenceId &conferenc
 			string name = row.get<string>(0);
 			string path = row.get<string>(1);
 			int size = row.get<int>(2);
+			time_t creation = d->dbSession.getTime(row, 3);
 
 			auto fileContent = FileContent::create<FileContent>();
 			fileContent->setFileName(name);
 			fileContent->setFileSize(size_t(size));
 			fileContent->setFilePath(path);
+			fileContent->setCreationTimestamp(creation);
 
 			result.push_back(fileContent);
 		}
@@ -4799,9 +4802,10 @@ list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &confer
 	list<shared_ptr<Content>> result = list<shared_ptr<Content>>();
 #ifdef HAVE_DB_STORAGE
 	static const string query =
-	    "SELECT name, path, size "
+	    "SELECT name, path, size, conference_chat_message_event.time "
 	    " FROM chat_message_file_content "
 	    " JOIN chat_message_content ON chat_message_content.id = chat_message_file_content.chat_message_content_id "
+	    " JOIN conference_chat_message_event ON conference_chat_message_event.event_id = chat_message_content.event_id "
 	    " JOIN conference_event ON conference_event.event_id = chat_message_content.event_id AND "
 	    "conference_event.chat_room_id = :chatRoomId "
 	    " WHERE chat_message_content.content_type_id IN ( "
@@ -4817,11 +4821,13 @@ list<shared_ptr<Content>> MainDb::getDocumentContents(const ConferenceId &confer
 			string name = row.get<string>(0);
 			string path = row.get<string>(1);
 			int size = row.get<int>(2);
+			time_t creation = d->dbSession.getTime(row, 3);
 
 			auto fileContent = FileContent::create<FileContent>();
 			fileContent->setFileName(name);
 			fileContent->setFileSize(size_t(size));
 			fileContent->setFilePath(path);
+			fileContent->setCreationTimestamp(creation);
 
 			result.push_back(fileContent);
 		}
@@ -5271,6 +5277,7 @@ void MainDb::loadChatMessageContents(const shared_ptr<ChatMessage> &chatMessage)
 					fileContent->setFileSize(size_t(size));
 					fileContent->setFilePath(path);
 					fileContent->setFileDuration(duration);
+					fileContent->setCreationTimestamp(chatMessage->getTime());
 					content = fileContent;
 				} else {
 					content = Content::create();

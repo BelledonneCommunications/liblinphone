@@ -334,6 +334,12 @@ LINPHONE_PUBLIC bool_t linphone_content_is_file_transfer(const LinphoneContent *
  */
 LINPHONE_PUBLIC bool_t linphone_content_is_file_encrypted(const LinphoneContent *content);
 
+/**
+ * Returns the creation timestamp if this content is a FileContent (received or sent by chat).
+ * @return The timestamp at which this content was created if available, -1 otherwise.
+ */
+LINPHONE_PUBLIC time_t linphone_content_get_creation_timestamp(const LinphoneContent *content);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

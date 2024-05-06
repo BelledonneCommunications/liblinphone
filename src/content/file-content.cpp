@@ -40,6 +40,7 @@ FileContent::FileContent(const FileContent &other) : Content(other) {
 	setFilePath(other.getFilePath());
 	mFileSize = other.getFileSize();
 	mFileDuration = other.getFileDuration();
+	mFileCreationTimestamp = other.getCreationTimestamp();
 }
 
 FileContent::FileContent(FileContent &&other) noexcept : Content(other) {
@@ -48,6 +49,7 @@ FileContent::FileContent(FileContent &&other) noexcept : Content(other) {
 	mFilePath = std::move(other.mFilePath);
 	mFileSize = std::move(other.mFileSize);
 	mFileDuration = std::move(other.mFileDuration);
+	mFileCreationTimestamp = std::move(other.getCreationTimestamp());
 }
 
 FileContent &FileContent::operator=(const FileContent &other) {
@@ -56,6 +58,7 @@ FileContent &FileContent::operator=(const FileContent &other) {
 	setFilePath(other.getFilePath());
 	mFileSize = other.getFileSize();
 	mFileDuration = other.getFileDuration();
+	mFileCreationTimestamp = other.getCreationTimestamp();
 	return *this;
 }
 
@@ -65,12 +68,14 @@ FileContent &FileContent::operator=(FileContent &&other) {
 	mFilePath = std::move(other.mFilePath);
 	mFileSize = std::move(other.mFileSize);
 	mFileDuration = std::move(other.mFileDuration);
+	mFileCreationTimestamp = std::move(other.getCreationTimestamp());
 	return *this;
 }
 
 bool FileContent::operator==(const FileContent &other) const {
 	return Content::operator==(other) && getFileName() == other.getFileName() && getFilePath() == other.getFilePath() &&
-	       mFileSize == other.getFileSize() && mFileDuration == other.getFileDuration();
+	       mFileSize == other.getFileSize() && mFileDuration == other.getFileDuration() &&
+	       mFileCreationTimestamp == other.getCreationTimestamp();
 }
 
 void FileContent::setFileSize(size_t size) {
@@ -135,6 +140,14 @@ void FileContent::setFileDuration(int durationInSeconds) {
 
 int FileContent::getFileDuration() const {
 	return mFileDuration;
+}
+
+void FileContent::setCreationTimestamp(time_t timestamp) {
+	mFileCreationTimestamp = timestamp;
+}
+
+time_t FileContent::getCreationTimestamp() const {
+	return mFileCreationTimestamp;
 }
 
 bool FileContent::isFile() const {
