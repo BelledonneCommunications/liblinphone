@@ -121,6 +121,7 @@ AuthInfo::AuthInfo(LpConfig *config, string key) {
 	if (tokenString) mAccessToken = BearerToken::createFromConfig(tokenString)->toSharedPtr();
 	tokenString = linphone_config_get_string(config, key.c_str(), "refresh_token", nullptr);
 	if (tokenString) mRefreshToken = BearerToken::createFromConfig(tokenString)->toSharedPtr();
+	mAuthServer = linphone_config_get_string(config, key.c_str(), "authorization_server", "");
 
 	setTlsCertPath(tls_cert_path);
 	setTlsKeyPath(tls_key_path);

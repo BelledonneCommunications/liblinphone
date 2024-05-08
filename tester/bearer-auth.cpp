@@ -340,7 +340,7 @@ static void test_bearer_auth_refresh_token(void) {
 	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
 	BC_ASSERT_EQUAL(lcm->stat.number_of_authentication_info_requested, 0, int, "%i");
 	const bctbx_list_t *ai_list = linphone_core_get_auth_info_list(lcm->lc);
-	BC_ASSERT_EQUAL(bctbx_list_size(ai_list), 1, int, "%i");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(ai_list), 1, int, "%i");
 	if (ai_list) {
 		/* Make sure that the refresh token was updated*/
 		const LinphoneAuthInfo *updated_ai = (const LinphoneAuthInfo *)ai_list->data;

@@ -67,7 +67,7 @@ static void audio_bypass_snd_read_init(MSFilter *f) {
 int audio_bypass_read_wav_header_from_fd(wave_header_t *header, int fd) {
 	int count;
 	int skip;
-	int hsize = 0;
+	ssize_t hsize = 0;
 	riff_t *riff_chunk = &header->riff_chunk;
 	format_t *format_chunk = &header->format_chunk;
 	data_t *data_chunk = &header->data_chunk;
@@ -110,7 +110,7 @@ int audio_bypass_read_wav_header_from_fd(wave_header_t *header, int fd) {
 			break;
 		}
 	} while (count < 30);
-	return hsize;
+	return (int)hsize;
 
 not_a_wav:
 	/*rewind*/
@@ -191,7 +191,7 @@ static void audio_bypass_snd_read_process(MSFilter *f) {
 				memset(om->b_wptr, 0, bytes);
 				d->pause_time -= f->ticker->interval;
 			} else {
-				err = read(d->fd, om->b_wptr, bytes);
+				err = bctbx_read(d->fd, om->b_wptr, (size_t)bytes);
 				if (d->swap) swap_bytes(om->b_wptr, bytes);
 			}
 			if (err >= 0) {

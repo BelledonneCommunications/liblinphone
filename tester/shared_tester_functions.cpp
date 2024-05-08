@@ -757,7 +757,7 @@ int liblinphone_tester_send_data(const void *buffer, size_t length, const char *
 		bctbx_error("liblinphone_tester_send_data: connection failed: %s", getSocketError());
 		goto end;
 	}
-	err = bctbx_send(sock, buffer, length, 0);
+	err = (int)bctbx_send(sock, buffer, length, 0);
 	if (err == -1) {
 		bctbx_error("liblinphone_tester_send_data: send() failed: %s", getSocketError());
 		goto end;

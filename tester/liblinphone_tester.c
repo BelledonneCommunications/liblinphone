@@ -107,7 +107,7 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 	int i;
 	int ret;
 	int liblinphone_max_failed_tests_threshold =
-	    3; /* Please adjust this threshold as long as the full tester becomes more and more reliable. Also update
+	    2; /* Please adjust this threshold as long as the full tester becomes more and more reliable. Also update
 	          liblinphone_helper value for documentation*/
 
 #ifdef __linux__

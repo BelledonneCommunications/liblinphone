@@ -449,7 +449,7 @@ const string Content::exportPlainFileFromEncryptedFile(const string &filePath) c
 		return std::string();
 	}
 
-	auto fileSize = bctbx_file_size(cf);
+	ssize_t fileSize = (ssize_t)bctbx_file_size(cf);
 	if (fileSize < 0) {
 		lError() << "[Content] Can't read size of file " << filePath;
 		bctbx_file_close(cf);
@@ -464,9 +464,9 @@ const string Content::exportPlainFileFromEncryptedFile(const string &filePath) c
 
 	size_t constexpr bufSize = 100 * 1024; // read by chunks of 100 kB
 	uint8_t *readBuf = new uint8_t[bufSize];
-	ssize_t readSize = 0;
+	off_t readSize = 0;
 	while (readSize < fileSize) {
-		auto read = bctbx_file_read(cf, readBuf, bufSize, readSize);
+		ssize_t read = bctbx_file_read(cf, readBuf, bufSize, readSize);
 		if (read < 0) {
 			lError() << "[Content] Can't read file " << filePath << " to decrypt it";
 			bctbx_file_close(cf);
@@ -486,7 +486,7 @@ const string Content::exportPlainFileFromEncryptedFile(const string &filePath) c
 			return std::string();
 		}
 
-		readSize += read;
+		readSize += (off_t)read;
 	}
 
 	delete[] readBuf;
