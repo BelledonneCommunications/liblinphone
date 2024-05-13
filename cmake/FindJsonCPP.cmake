@@ -80,4 +80,5 @@ else()
 		set(JsonCPP_TARGET jsoncpp_static)
 	endif()
 
+	set(JsonCPP_FOUND ${jsoncpp_FOUND})
 endif()
