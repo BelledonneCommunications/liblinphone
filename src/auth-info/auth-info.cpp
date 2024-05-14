@@ -122,6 +122,8 @@ AuthInfo::AuthInfo(LpConfig *config, string key) {
 	tokenString = linphone_config_get_string(config, key.c_str(), "refresh_token", nullptr);
 	if (tokenString) mRefreshToken = BearerToken::createFromConfig(tokenString)->toSharedPtr();
 	mAuthServer = linphone_config_get_string(config, key.c_str(), "authorization_server", "");
+	mTokenEndpoint = linphone_config_get_string(config, key.c_str(), "token_endpoint", "");
+	mClientId = linphone_config_get_string(config, key.c_str(), "client_id", "");
 
 	setTlsCertPath(tls_cert_path);
 	setTlsKeyPath(tls_key_path);
@@ -347,6 +349,12 @@ void AuthInfo::writeConfig(LpConfig *config, int pos) {
 	if (!mAuthServer.empty()) {
 		linphone_config_set_string(config, key, "authorization_server", mAuthServer.c_str());
 	}
+	if (!mTokenEndpoint.empty()) {
+		linphone_config_set_string(config, key, "token_endpoint", mTokenEndpoint.c_str());
+	}
+	if (!mClientId.empty()) {
+		linphone_config_set_string(config, key, "client_id", mClientId.c_str());
+	}
 }
 
 std::string AuthInfo::toString() const {
@@ -366,6 +374,8 @@ std::string AuthInfo::toString() const {
 	}
 	ss << "];";
 	if (!mAuthServer.empty()) ss << "AuthServer[" << mAuthServer << "];";
+	if (!mTokenEndpoint.empty()) ss << "TokenEndpoint[" << mTokenEndpoint << "];";
+	if (!mClientId.empty()) ss << "ClientID[" << mClientId << "];";
 	if (mAccessToken) ss << "AccessToken[" << mAccessToken->getToken().substr(0, 4) << "...];";
 	if (mRefreshToken) ss << "RefreshToken[" << mRefreshToken->getToken().substr(0, 4) << "...];";
 	return ss.str();
