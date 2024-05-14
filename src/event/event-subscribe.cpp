@@ -126,6 +126,9 @@ LinphoneStatus EventSubscribe::send(const std::shared_ptr<const Content> &body) 
 		sal_custom_header_free(mSendCustomHeaders);
 		mSendCustomHeaders = nullptr;
 	} else mOp->setSentCustomHeaders(nullptr);
+	if (mRequestAddress) {
+		mOp->setRequestUri(mRequestAddress->asStringUriOnly());
+	}
 
 	body_handler = sal_body_handler_from_content((body && !body->isEmpty()) ? body->toC() : nullptr);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(mOp);
@@ -210,15 +213,6 @@ void EventSubscribe::setState(LinphoneSubscriptionState state) {
 
 LinphoneSubscriptionDir EventSubscribe::getDir() {
 	return mDir;
-}
-
-void EventSubscribe::setRequestUri(const std::string &uri) {
-	if (uri.empty()) return;
-
-	auto addr = Address::create(uri);
-	if (addr) {
-		mOp->setRequestUri(addr->asStringUriOnly());
-	}
 }
 
 bool EventSubscribe::isOutOfDialogOp() const {

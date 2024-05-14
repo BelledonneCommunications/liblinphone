@@ -308,6 +308,21 @@ LINPHONE_PUBLIC void linphone_event_remove_callbacks(LinphoneEvent *linphone_eve
 LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *linphone_event);
 
 /**
+ * Get the "request uri" address of the subscription.
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @return the request uri #LinphoneAddress. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_request_address(const LinphoneEvent *linphone_event);
+
+/**
+ * Sets the "request uri" address of the subscription.
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @param request_address #LinphoneAddress to use in the request uri @maybenil
+ */
+LINPHONE_PUBLIC void linphone_event_set_request_address(LinphoneEvent *linphone_event,
+                                                        LinphoneAddress *request_address);
+
+/**
  * @}
  **/
 

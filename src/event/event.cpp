@@ -111,6 +111,14 @@ const std::shared_ptr<Address> Event::getResource() const {
 	return cacheTo();
 }
 
+const std::shared_ptr<Address> Event::getRequestAddress() const {
+	return cacheRequestAddress();
+}
+
+void Event::setRequestAddress(const std::shared_ptr<Address> &requestAddress) {
+	mRequestAddress = requestAddress->clone()->toSharedPtr();
+}
+
 const std::shared_ptr<Address> Event::getRemoteContact() const {
 	if (!mRemoteContactAddress) {
 		mRemoteContactAddress = Address::create();
@@ -133,6 +141,14 @@ const std::shared_ptr<Address> Event::cacheTo() const {
 	}
 	mToAddress->setImpl(mOp->getToAddress());
 	return mToAddress;
+}
+
+const std::shared_ptr<Address> Event::cacheRequestAddress() const {
+	if (!mRequestAddress) {
+		mRequestAddress = Address::create();
+	}
+	mRequestAddress->setImpl(mOp->getRequestAddress());
+	return mRequestAddress;
 }
 
 void Event::release() {

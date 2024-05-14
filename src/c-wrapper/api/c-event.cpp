@@ -494,6 +494,17 @@ const LinphoneAddress *linphone_event_get_remote_contact(const LinphoneEvent *li
 	return Event::toCpp(linphone_event)->getRemoteContact()->toC();
 }
 
+const LinphoneAddress *linphone_event_get_request_address(const LinphoneEvent *linphone_event) {
+	EventLogContextualizer logContextualizer(linphone_event);
+	return Event::toCpp(linphone_event)->getRequestAddress()->toC();
+}
+
+void linphone_event_set_request_address(LinphoneEvent *linphone_event, LinphoneAddress *request_address) {
+	EventLogContextualizer logContextualizer(linphone_event);
+	Event::toCpp(linphone_event)
+	    ->setRequestAddress(request_address ? Address::toCpp(request_address)->getSharedFromThis() : nullptr);
+}
+
 LinphoneCore *linphone_event_get_core(const LinphoneEvent *linphone_event) {
 	return Event::toCpp(linphone_event)->getCore()->getCCore();
 }

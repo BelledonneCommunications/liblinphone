@@ -244,7 +244,7 @@ void Account::applyParamsChanges() {
 	if (mOldParams == nullptr ||
 	    ((mOldParams->mMwiServerAddress != nullptr) ^ (mParams->mMwiServerAddress != nullptr)) ||
 	    ((mOldParams->mMwiServerAddress != nullptr) && (mParams->mMwiServerAddress != nullptr) &&
-	     (*mOldParams->mMwiServerAddress == *mParams->mMwiServerAddress))) {
+	     (*mOldParams->mMwiServerAddress != *mParams->mMwiServerAddress))) {
 		onMwiServerAddressChanged();
 	}
 }
@@ -714,6 +714,7 @@ void Account::pauseRegister() {
 void Account::unregister() {
 	if (mOp &&
 	    (mState == LinphoneRegistrationOk || (mState == LinphoneRegistrationProgress && mParams->mExpires != 0))) {
+		unsubscribeFromMessageWaitingIndication();
 		mOp->unregister();
 	}
 }
@@ -1316,7 +1317,7 @@ void Account::subscribeToMessageWaitingIndication() {
 		int expires = linphone_config_get_int(getCore()->getCCore()->config, "sip", "mwi_expires", 86400);
 		if (mMwiEvent) mMwiEvent->terminate();
 		auto subscribeEvent = new EventSubscribe(getCore(), mParams->getIdentityAddress(), "message-summary", expires);
-		subscribeEvent->setRequestUri(mwiServerAddress->asStringUriOnly());
+		subscribeEvent->setRequestAddress(mwiServerAddress);
 		mMwiEvent = subscribeEvent->toSharedPtr();
 		mMwiEvent->setInternal(true);
 		mMwiEvent->addCustomHeader("Accept", "application/simple-message-summary");

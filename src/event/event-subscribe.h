@@ -72,8 +72,6 @@ public:
 
 	LinphoneSubscriptionDir getDir();
 
-	void setRequestUri(const std::string &uri);
-
 	bool isOutOfDialogOp() const;
 	void setIsOutOfDialogOp(bool isOutOfDialogOp);
 

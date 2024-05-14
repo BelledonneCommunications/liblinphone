@@ -84,6 +84,9 @@ public:
 
 	const std::shared_ptr<Address> getResource() const;
 
+	const std::shared_ptr<Address> getRequestAddress() const;
+	void setRequestAddress(const std::shared_ptr<Address> &requestAddress);
+
 	LinphonePrivate::SalEventOp *getOp() const;
 	void setManualRefresherMode(bool manual);
 
@@ -101,10 +104,12 @@ public:
 protected:
 	const std::shared_ptr<Address> cacheFrom() const;
 	const std::shared_ptr<Address> cacheTo() const;
+	const std::shared_ptr<Address> cacheRequestAddress() const;
 
 	mutable std::shared_ptr<Address> mFromAddress = nullptr;
 	mutable std::shared_ptr<Address> mToAddress = nullptr;
 	mutable std::shared_ptr<Address> mRemoteContactAddress = nullptr;
+	mutable std::shared_ptr<Address> mRequestAddress = nullptr;
 	LinphonePrivate::SalEventOp *mOp = nullptr;
 	SalCustomHeader *mSendCustomHeaders = nullptr;
 
