@@ -159,6 +159,10 @@ public:
 	virtual void confirmGoClear() const {};
 
 	virtual void onAlertNotified(BCTBX_UNUSED(std::shared_ptr<Alert> &alert)){};
+
+	virtual std::unique_ptr<LogContextualizer> getLogContextualizer() {
+		return nullptr;
+	};
 };
 
 LINPHONE_END_NAMESPACE

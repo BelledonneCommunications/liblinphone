@@ -312,6 +312,7 @@ public:
 	void confirmGoClear() const override;
 
 	void onAlertNotified(std::shared_ptr<Alert> &alert) override;
+	std::unique_ptr<LogContextualizer> getLogContextualizer() override;
 
 	std::shared_ptr<MediaConference::Conference> getConference() const;
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
@@ -349,12 +350,20 @@ private:
 	void configureSoundCardsFromCore(const MediaSessionParams *msp);
 };
 
-class CallLogContextualizer : protected CoreLogContextualizer {
+class CallLogContextualizer : public CoreLogContextualizer {
 public:
 	CallLogContextualizer(const Call &call) : CoreLogContextualizer(call) {
+		pushTag(call);
 	}
 	CallLogContextualizer(const LinphoneCall *call) : CoreLogContextualizer(*Call::toCpp(call)) {
+		if (call) pushTag(*Call::toCpp(call));
 	}
+	~CallLogContextualizer();
+
+private:
+	void pushTag(const Call &call);
+	bool mPushed = false;
+	static constexpr char sTagIdentifier[] = "2.call.linphone";
 };
 
 LINPHONE_END_NAMESPACE

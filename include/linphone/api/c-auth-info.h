@@ -300,7 +300,7 @@ LINPHONE_PUBLIC void linphone_auth_info_set_access_token(LinphoneAuthInfo *auth_
 /**
  * Set a refresh token to use when the access token set with linphone_auth_info_set_access_token() expires.
  * The #LinphoneAuthInfo takes a reference to the supplied token, it is not making any copy.
- * Provided that the authorization server uri was assigned with linphone_auth_info_set_authorization_server_uri(),
+ * Provided that the token endpoint uri was assigned with linphone_auth_info_set_token_endpoint_uri(),
  * once the #LinphoneAuthInfo is pushed in the #LinphoneCore, #LinphoneAuthInfo object automatically obtains new access
  * token when needed, from the supplied refresh token.
  * @param auth_info The #LinphoneAuthInfo object @notnil
@@ -309,24 +309,50 @@ LINPHONE_PUBLIC void linphone_auth_info_set_access_token(LinphoneAuthInfo *auth_
 LINPHONE_PUBLIC void linphone_auth_info_set_refresh_token(LinphoneAuthInfo *auth_info, LinphoneBearerToken *token);
 
 /**
- * Set the authorization server uri, used to obtain new access tokens from the refresh token.
- * @see linphone_auth_info_set_refresh_token().
+ * Set the authorization server uri.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param uri the authorization server uri. @maybenil
  */
 LINPHONE_PUBLIC void linphone_auth_info_set_authorization_server(LinphoneAuthInfo *auth_info, const char *uri);
 
 /**
- * Get the previously set authorization server uri, used to obtain new access tokens from the refresh token.
- * @see linphone_auth_info_set_refresh_token().
+ * Get the previously set authorization server uri.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @return the authorization server uri. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_authorization_server(const LinphoneAuthInfo *auth_info);
 
-void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *auth_info, int pos);
+/**
+ * Get the previously set token endpoint https uri (OAUTH2).
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return the token endpoint uri. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_auth_info_get_token_endpoint_uri(const LinphoneAuthInfo *auth_info);
 
-LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig *config, int pos);
+/**
+ * Set the token endpoint https uri (OAUTH2). The token endpoint uri is used
+ * to renew access token from refresh token.
+ * @see linphone_auth_info_set_refresh_token()
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @param uri the token endpoint uri. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_token_endpoint_uri(LinphoneAuthInfo *auth_info, const char *uri);
+
+/**
+ * Get the previously set OAUTH2 client_id.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return the client_id. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_auth_info_get_client_id(const LinphoneAuthInfo *auth_info);
+
+/**
+ * Set the OAUTH2 client_id. The client_id may be used
+ * to renew access token from refresh token.
+ * @see linphone_auth_info_set_refresh_token()
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @param client_id the client_id. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_auth_info_set_client_id(LinphoneAuthInfo *auth_info, const char *client_id);
 
 /************ */
 /* DEPRECATED */

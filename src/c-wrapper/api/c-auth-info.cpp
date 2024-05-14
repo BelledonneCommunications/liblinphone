@@ -258,3 +258,19 @@ void linphone_auth_info_set_authorization_server(LinphoneAuthInfo *auth_info, co
 const char *linphone_auth_info_get_authorization_server(const LinphoneAuthInfo *auth_info) {
 	return L_STRING_TO_C(AuthInfo::toCpp(auth_info)->getAuthorizationServer());
 }
+
+const char *linphone_auth_info_get_token_endpoint_uri(const LinphoneAuthInfo *auth_info) {
+	return L_STRING_TO_C(AuthInfo::toCpp(auth_info)->getTokenEndpointUri());
+}
+
+void linphone_auth_info_set_token_endpoint_uri(LinphoneAuthInfo *auth_info, const char *uri) {
+	AuthInfo::toCpp(auth_info)->setTokenEndpointUri(L_C_TO_STRING(uri));
+}
+
+const char *linphone_auth_info_get_client_id(const LinphoneAuthInfo *auth_info) {
+	return L_STRING_TO_C(AuthInfo::toCpp(auth_info)->getClientId());
+}
+
+void linphone_auth_info_set_client_id(LinphoneAuthInfo *auth_info, const char *client_id) {
+	AuthInfo::toCpp(auth_info)->setClientId(L_STRING_TO_C(client_id));
+}

@@ -160,6 +160,9 @@ LINPHONE_PUBLIC bool_t linphone_call_is_op_configured(const LinphoneCall *call);
 
 void _linphone_core_stop_async_end(LinphoneCore *lc);
 void _linphone_core_uninit(LinphoneCore *lc);
+
+void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *auth_info, int pos);
+LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig *config, int pos);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
 void linphone_core_stop_tone_manager(LinphoneCore *lc);
 LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);

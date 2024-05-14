@@ -45,7 +45,12 @@ private:
 	std::weak_ptr<Core> mCore;
 };
 
-class CoreLogContextualizer {
+class LogContextualizer {
+public:
+	virtual ~LogContextualizer() = default;
+};
+
+class CoreLogContextualizer : public LogContextualizer {
 public:
 	CoreLogContextualizer(const LinphoneCore *core);
 	CoreLogContextualizer(const CoreAccessor &coreAccessor) : CoreLogContextualizer(&coreAccessor) {
@@ -56,7 +61,7 @@ public:
 private:
 	void pushTag(const std::string &tag);
 	bool mPushed = false;
-	static constexpr char sTagIdentifier[] = "linphone-core";
+	static constexpr char sTagIdentifier[] = "1.core.linphone";
 };
 
 LINPHONE_END_NAMESPACE

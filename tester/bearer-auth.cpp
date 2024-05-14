@@ -331,7 +331,7 @@ static void test_bearer_auth_refresh_token(void) {
 	LinphoneAuthInfo *ai = linphone_factory_create_auth_info_3(
 	    linphone_factory_get(), linphone_address_get_username(identity), access_token, "sip.example.com");
 	linphone_auth_info_set_refresh_token(ai, refresh_token);
-	linphone_auth_info_set_authorization_server(ai, (authorizationServer.mRootUrl + "/oauth/token").c_str());
+	linphone_auth_info_set_token_endpoint_uri(ai, (authorizationServer.mRootUrl + "/oauth/token").c_str());
 	linphone_bearer_token_unref(access_token);
 	linphone_bearer_token_unref(refresh_token);
 	linphone_core_add_auth_info(lcm->lc, ai);

@@ -2679,18 +2679,26 @@ int Core::sendPublish(LinphonePresenceModel *presence) {
 }
 
 bool Core::refreshTokens(const std::shared_ptr<AuthInfo> &ai) {
-	if (ai->getAuthorizationServer().empty()) {
-		lWarning() << "Core::refreshTokens(): no authorization server set.";
-		return false;
+	if (ai->getTokenEndpointUri().empty()) {
+		if (ai->getAuthorizationServer().empty()) {
+			lWarning() << "Core::refreshTokens(): no token endpoint uri and no authorization server uri set.";
+			return false;
+		}
+		ai->setTokenEndpointUri(ai->getAuthorizationServer() + "/token");
+		lWarning()
+		    << "Core::refreshTokens(): token endpoint uri guessed from authorization server base uri - not reliable.";
 	}
 	if (ai->getRefreshToken() == nullptr) {
 		lWarning() << "Core::refreshTokens(): no refresh token is set.";
 		return false;
 	}
+	std::string form = "grant_type=refresh_token&refresh_token=" + ai->getRefreshToken()->getToken();
+	if (!ai->getClientId().empty()) {
+		form += "&client_id=" + ai->getClientId();
+	}
 	getHttpClient()
-	    .createRequest("POST", ai->getAuthorizationServer())
-	    .setBody(Content(ContentType("application", "x-www-form-urlencoded"),
-	                     "grant_type=refresh_token&refresh_token=" + ai->getRefreshToken()->getToken()))
+	    .createRequest("POST", ai->getTokenEndpointUri())
+	    .setBody(Content(ContentType("application", "x-www-form-urlencoded"), form))
 	    .execute([this, ai](const HttpResponse &response) {
 		    if (response.getStatusCode() == 200) {
 			    JsonDocument doc(response.getBody());

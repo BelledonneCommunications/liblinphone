@@ -95,6 +95,12 @@ public:
 	void setAuthorizationServer(const std::string &uri) {
 		mAuthServer = uri;
 	}
+	void setTokenEndpointUri(const std::string &uri) {
+		mTokenEndpoint = uri;
+	}
+	void setClientId(const std::string &client_id) {
+		mClientId = client_id;
+	}
 	void writeConfig(LpConfig *config, int pos);
 	void clearAvailableAlgorithms(); // Remove all algorithms
 
@@ -120,6 +126,12 @@ public:
 	const std::string &getAuthorizationServer() const {
 		return mAuthServer;
 	}
+	const std::string &getTokenEndpointUri() const {
+		return mTokenEndpoint;
+	}
+	const std::string &getClientId() const {
+		return mClientId;
+	}
 
 	std::string toString() const override;
 	// Check if Authinfos are the same without taking account algorithms
@@ -142,6 +154,8 @@ private:
 	std::shared_ptr<BearerToken> mAccessToken;
 	std::shared_ptr<BearerToken> mRefreshToken;
 	std::string mAuthServer;
+	std::string mTokenEndpoint;
+	std::string mClientId;
 	bool mNeedToRenewHa1 = false;
 
 	void setNeedToRenewHa1(bool needToRenewHa1);

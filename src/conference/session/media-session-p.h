@@ -206,6 +206,7 @@ public:
 	void validateVideoStreamDirection(SalStreamConfiguration &cfg) const;
 	bool mandatoryRtpBundleEnabled() const;
 	const std::string &getMediaLocalIp() const;
+	std::unique_ptr<LogContextualizer> getLogContextualizer() const;
 
 private:
 	/* IceServiceListener methods:*/

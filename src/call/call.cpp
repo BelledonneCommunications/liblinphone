@@ -792,6 +792,10 @@ void Call::onRemoteRecording(BCTBX_UNUSED(const std::shared_ptr<CallSession> &se
 	linphone_call_notify_remote_recording(this->toC(), recording);
 }
 
+std::unique_ptr<LogContextualizer> Call::getLogContextualizer() {
+	return unique_ptr<LogContextualizer>(new CallLogContextualizer(*this));
+}
+
 // =============================================================================
 
 Call::Call(shared_ptr<Core> core,
@@ -1360,6 +1364,22 @@ void Call::setVideoSource(std::shared_ptr<const VideoSourceDescriptor> descripto
 
 std::shared_ptr<const VideoSourceDescriptor> Call::getVideoSource() const {
 	return getMediaSession()->getVideoSource();
+}
+
+CallLogContextualizer::~CallLogContextualizer() {
+	if (mPushed) bctbx_pop_log_tag(sTagIdentifier);
+}
+
+void CallLogContextualizer::pushTag(const Call &call) {
+	auto address = call.getRemoteAddress();
+	if (address) {
+		const char *value = address->getUsernameCstr();
+		if (!value) value = address->getDomainCstr();
+		if (value) {
+			bctbx_push_log_tag(sTagIdentifier, value);
+			mPushed = true;
+		}
+	}
 }
 
 LINPHONE_END_NAMESPACE

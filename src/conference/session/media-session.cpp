@@ -83,6 +83,13 @@ const string MediaSessionPrivate::ThumbnailVideoContentAttribute = "thumbnail";
 const string MediaSessionPrivate::ScreenSharingContentAttribute = "slides";
 
 // =============================================================================
+
+std::unique_ptr<LogContextualizer> MediaSessionPrivate::getLogContextualizer() const {
+	auto listener = getCallSessionListener();
+	if (listener) return listener->getLogContextualizer();
+	return nullptr;
+}
+
 void MediaSessionPrivate::setDtlsFingerprint(const std::string &fingerPrint) {
 	dtlsCertificateFingerprint = fingerPrint;
 }
@@ -229,6 +236,8 @@ bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescr
 
 void MediaSessionPrivate::accepted() {
 	L_Q();
+	auto logContext = getLogContextualizer();
+
 	CallSessionPrivate::accepted();
 	LinphoneTaskList tl;
 	linphone_task_list_init(&tl);
@@ -459,6 +468,7 @@ void MediaSessionPrivate::accepted() {
 
 void MediaSessionPrivate::ackReceived(LinphoneHeaders *headers) {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	CallSessionPrivate::ackReceived(headers);
 	if (expectMediaInAck) {
 		switch (state) {
@@ -478,12 +488,13 @@ void MediaSessionPrivate::ackReceived(LinphoneHeaders *headers) {
 
 void MediaSessionPrivate::dtmfReceived(char dtmf) {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	if (listener) listener->onDtmfReceived(q->getSharedFromThis(), dtmf);
 }
 
 bool MediaSessionPrivate::failure() {
 	L_Q();
-
+	auto logContext = getLogContextualizer();
 	if (CallSession::isEarlyState(state) && getStreamsGroup().isStarted()) {
 		stopStreams();
 	}
@@ -565,6 +576,7 @@ void MediaSessionPrivate::pauseForTransfer() {
 
 void MediaSessionPrivate::pausedByRemote() {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	MediaSessionParams newParams(*getParams());
 	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause",
 	                            0)) {
@@ -575,6 +587,7 @@ void MediaSessionPrivate::pausedByRemote() {
 
 void MediaSessionPrivate::remoteRinging() {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	/* Set privacy */
 	getCurrentParams()->setPrivacy((LinphonePrivacyMask)op->getPrivacy());
 	std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();
@@ -613,6 +626,7 @@ void MediaSessionPrivate::replaceOp(SalCallOp *newOp) {
 
 int MediaSessionPrivate::resumeAfterFailedTransfer() {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	if (automaticallyPaused && (state == CallSession::State::Pausing))
 		return BELLE_SIP_CONTINUE; // Was still in pausing state
 	if (automaticallyPaused && (state == CallSession::State::Paused)) {
@@ -626,11 +640,13 @@ int MediaSessionPrivate::resumeAfterFailedTransfer() {
 }
 
 void MediaSessionPrivate::resumed() {
+	auto logContext = getLogContextualizer();
 	acceptUpdate(nullptr, CallSession::State::StreamsRunning, "Connected (streams running)");
 }
 
 void MediaSessionPrivate::startPendingRefer() {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	if (listener) listener->onCallSessionStartReferred(q->getSharedFromThis());
 }
 
@@ -670,6 +686,7 @@ bool MediaSessionPrivate::isPausedByRemoteAllowed() {
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
 void MediaSessionPrivate::updated(bool isUpdate) {
 	L_Q();
+	auto logContext = getLogContextualizer();
 
 	const std::shared_ptr<SalMediaDescription> &rmd = op->getRemoteMediaDescription();
 	switch (state) {
@@ -725,6 +742,7 @@ bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDes
 
 void MediaSessionPrivate::updating(bool isUpdate) {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	if ((state == CallSession::State::End) || (state == CallSession::State::Released)) {
 		lWarning() << "Session [" << q << "] is going to reject the reINVITE or UPDATE because it is already in state ["
 		           << Utils::toString(state) << "]";
@@ -3310,7 +3328,7 @@ bool MediaSessionPrivate::isEncryptionMandatory() const {
 
 void MediaSessionPrivate::propagateEncryptionChanged() {
 	L_Q();
-
+	auto logContext = getLogContextualizer();
 	string authToken = getStreamsGroup().getAuthenticationToken();
 	std::shared_ptr<MediaConference::Conference> conference = nullptr;
 	if (listener) {
@@ -3394,6 +3412,7 @@ MSWebCam *MediaSessionPrivate::getVideoDevice() const {
 
 void MediaSessionPrivate::lossOfMediaDetected() {
 	L_Q();
+	auto logContext = getLogContextualizer();
 	if (listener) listener->onLossOfMediaDetected(q->getSharedFromThis());
 }
 
@@ -3406,7 +3425,7 @@ void MediaSessionPrivate::abort(const string &errorMsg) {
 
 void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification() {
 	L_Q();
-
+	auto logContext = getLogContextualizer();
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
 	if (notifyRinging) {
@@ -4630,7 +4649,7 @@ const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
 
 void MediaSession::startIncomingNotification(bool notifyRinging) {
 	L_D();
-
+	auto logContext = d->getLogContextualizer();
 	std::shared_ptr<SalMediaDescription> &md = d->op->getFinalMediaDescription();
 
 	auto conference = getLocalConference();
