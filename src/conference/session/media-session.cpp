@@ -200,7 +200,8 @@ bool MediaSessionPrivate::tryEnterConference() {
 	return false;
 }
 
-bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> &remoteMd,
+bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> &localMd,
+                                             const std::shared_ptr<SalMediaDescription> &remoteMd,
                                              const std::shared_ptr<SalMediaDescription> &finalMd) const {
 	L_Q();
 	if (remoteMd && remoteMd->isEmpty() &&
@@ -223,7 +224,8 @@ bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescr
 		}
 	}
 	auto securityCheckFailure = incompatibleSecurity(finalMd);
-	auto reject = (finalMd->isEmpty() || securityCheckFailure || bundleOwnerRejected);
+	auto reject = ((finalMd->isEmpty() && !(localIsOfferer ? localMd->isEmpty() : remoteMd->isEmpty())) ||
+	               securityCheckFailure || bundleOwnerRejected);
 	if (reject) {
 		lWarning() << "Session [" << q << "] may be rejected: ";
 		lWarning() << "- negotiated SDP is" << (finalMd->isEmpty() ? std::string() : std::string(" not")) << " empty";
@@ -279,6 +281,7 @@ void MediaSessionPrivate::accepted() {
 
 	/* Reset the internal call update flag, so it doesn't risk to be copied and used in further re-INVITEs */
 	getParams()->getPrivate()->setInternalCallUpdate(false);
+	std::shared_ptr<SalMediaDescription> lmd = op->getLocalMediaDescription();
 	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 	std::shared_ptr<SalMediaDescription> &md = op->getFinalMediaDescription();
 	if (!md && (prevState == CallSession::State::OutgoingEarlyMedia) && resultDesc) {
@@ -289,7 +292,7 @@ void MediaSessionPrivate::accepted() {
 	const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
 	bool updatingConference = conferenceInfo && (conferenceInfo->getState() == ConferenceInfo::State::Updated);
 	// Do not reject media session if the client is trying to update a conference
-	if (rejectMediaSession(rmd, md) && !updatingConference) {
+	if (rejectMediaSession(lmd, rmd, md) && !updatingConference) {
 		lInfo() << "Rejecting media session";
 		md = nullptr;
 	}
@@ -817,8 +820,9 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		SalErrorInfo sei;
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
+		std::shared_ptr<SalMediaDescription> lmd = op->getLocalMediaDescription();
 		std::shared_ptr<SalMediaDescription> &md = op->getFinalMediaDescription();
-		if (rejectMediaSession(rmd, md)) {
+		if (rejectMediaSession(lmd, rmd, md)) {
 			lWarning() << "Session [" << q << "] is going to be rejected because of an incompatible negotiated SDP";
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, "Incompatible SDP", nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
@@ -3574,7 +3578,7 @@ void MediaSessionPrivate::setTerminated() {
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate(CallSession::State nextState, const string &stateInfo) {
 	op->accept();
 	std::shared_ptr<SalMediaDescription> &md = op->getFinalMediaDescription();
-	if (md && !md->isEmpty()) updateStreams(md, nextState);
+	updateStreams(md, nextState);
 	setState(nextState, stateInfo);
 	getCurrentParams()->getPrivate()->setInConference(getParams()->getPrivate()->getInConference());
 
