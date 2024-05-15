@@ -5204,6 +5204,45 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_log_from_taken_from_p_asserted_id_in_response(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *c1, *c2;
+	LinphoneCallParams *params;
+	const char *pauline_asserted_id = "\"Paupauche\" <sip:pauline@super.net>";
+	LinphoneAddress *pauline_asserted_id_addr = linphone_address_new(pauline_asserted_id);
+
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "call_logs_use_asserted_id_instead_of_from", 1);
+
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+
+	c1 = linphone_core_get_current_call(marie->lc);
+	c2 = linphone_core_get_current_call(pauline->lc);
+
+	if (!BC_ASSERT_PTR_NOT_NULL(c1) || !BC_ASSERT_PTR_NOT_NULL(c2)) goto end;
+
+	params = linphone_core_create_call_params(pauline->lc, c2);
+	linphone_call_params_add_custom_header(params, "P-Asserted-Identity", pauline_asserted_id);
+
+	linphone_call_accept_early_media_with_params(c2, params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1));
+
+	BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_get_remote_address(c1), pauline_asserted_id_addr));
+	linphone_call_accept(c2);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_get_remote_address(c1), pauline_asserted_id_addr));
+	linphone_address_unref(pauline_asserted_id_addr);
+	end_call(pauline, marie);
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void incoming_invite_with_invalid_sdp(void) {
 	LinphoneCoreManager *caller = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
@@ -7624,6 +7663,7 @@ static test_t call2_tests[] = {
     TEST_NO_TAG("Call with early media and no SDP in 200 Ok", call_with_early_media_and_no_sdp_in_200),
     TEST_NO_TAG("Call with custom supported tags", call_with_custom_supported_tags),
     TEST_NO_TAG("Call log from taken from asserted id", call_log_from_taken_from_p_asserted_id),
+    TEST_NO_TAG("Call log from taken from asserted id in response", call_log_from_taken_from_p_asserted_id_in_response),
     TEST_NO_TAG("Call with generic CN", call_with_generic_cn),
     TEST_NO_TAG("Call with transport change after released", call_with_transport_change_after_released),
     TEST_NO_TAG("Call with FQDN in SDP", call_with_fqdn_in_sdp),

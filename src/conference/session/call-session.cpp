@@ -525,8 +525,28 @@ void CallSessionPrivate::referred(const std::shared_ptr<Address> &referToAddr) {
 	if (referPending && listener) listener->onCallSessionStartReferred(q->getSharedFromThis());
 }
 
+void CallSessionPrivate::updateToFromAssertedIdentity() {
+	L_Q();
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q->getCore());
+	/* We have the possibility to update the call's log remote identity based on P-Asserted-Identity */
+	const char *pAssertedId = sal_custom_header_find(op->getRecvCustomHeaders(), "P-Asserted-Identity");
+	/* In some situation, better to trust the network rather than the UAC */
+	if (pAssertedId &&
+	    linphone_config_get_int(linphone_core_get_config(lc), "sip", "call_logs_use_asserted_id_instead_of_from", 0)) {
+		auto pAssertedIdAddr = Address::create(pAssertedId);
+		if (pAssertedIdAddr) {
+			lInfo() << "Using P-Asserted-Identity [" << pAssertedId << "] instead of to [" << op->getTo().c_str()
+			        << "].";
+			log->setToAddress(pAssertedIdAddr);
+		} else {
+			lWarning() << "Unsupported P-Asserted-Identity header";
+		}
+	}
+}
+
 void CallSessionPrivate::remoteRinging() {
 	/* Set privacy */
+	updateToFromAssertedIdentity();
 	currentParams->setPrivacy((LinphonePrivacyMask)op->getPrivacy());
 	setState(CallSession::State::OutgoingRinging, "Remote ringing");
 }

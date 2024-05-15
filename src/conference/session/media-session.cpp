@@ -588,6 +588,8 @@ void MediaSessionPrivate::pausedByRemote() {
 void MediaSessionPrivate::remoteRinging() {
 	L_Q();
 	auto logContext = getLogContextualizer();
+
+	updateToFromAssertedIdentity();
 	/* Set privacy */
 	getCurrentParams()->setPrivacy((LinphonePrivacyMask)op->getPrivacy());
 	std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();

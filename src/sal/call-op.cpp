@@ -1142,7 +1142,10 @@ int SalCallOp::notifyRinging(bool earlyMedia, const LinphoneSupportLevel support
 	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
 	belle_sip_response_t *ringingResponse = createResponseFromRequest(request, statusCode);
 
-	if (earlyMedia) handleOfferAnswerResponse(ringingResponse);
+	if (earlyMedia) {
+		handleOfferAnswerResponse(ringingResponse);
+		addCustomHeaders(BELLE_SIP_MESSAGE(ringingResponse));
+	}
 
 	const char *requireTags = nullptr;
 	auto requireHeaderTags = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Require");

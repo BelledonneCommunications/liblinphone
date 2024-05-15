@@ -129,6 +129,7 @@ public:
 	                                LinphoneRegistrationState cstate,
 	                                const std::string &message) override;
 	void onCallStateChanged(LinphoneCall *call, LinphoneCallState state, const std::string &message) override;
+	void updateToFromAssertedIdentity();
 
 protected:
 	CallSessionListener *listener = nullptr;
