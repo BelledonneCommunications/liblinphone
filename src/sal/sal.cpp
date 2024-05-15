@@ -759,8 +759,8 @@ string Sal::generateUuid() {
 	bctoolbox::RNG::cRandomize((unsigned char *)&uuidStruct, sizeof(uuidStruct));
 	uuidStruct.clockSeqHiAndReserved &= (unsigned char)~(1 << 6);
 	uuidStruct.clockSeqHiAndReserved |= (unsigned char)(1 << 7);
-	uuidStruct.timeHiAndVersion &= (unsigned char)~(0xf << 12);
-	uuidStruct.timeHiAndVersion |= (unsigned char)(4 << 12);
+	uuidStruct.timeHiAndVersion &= (unsigned short)~(0xf << 12);
+	uuidStruct.timeHiAndVersion |= (unsigned short)(4 << 12);
 
 	char generatedUuid[128] = {0};
 	int written = snprintf(generatedUuid, sizeof(generatedUuid) - 1, "%8.8x-%4.4x-%4.4x-%2.2x%2.2x-",
