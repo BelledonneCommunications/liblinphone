@@ -41,12 +41,8 @@ add_custom_command(OUTPUT pylinphone.pyx pylinphone.py
     liblinphone-doc
 )
 
-list(APPEND CYTHON_ARGS "--module-name" "pylinphone")
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-	list(APPEND CYTHON_ARGS "--gdb")
-endif()
 add_custom_command(OUTPUT pylinphone.c
-    COMMAND "cython" ${CYTHON_ARGS} "pylinphone.pyx"
+    COMMAND "cython" "--module-name" "pylinphone" "$<$<CONFIG:Debug,RelWithDebInfo>:--gdb>" "pylinphone.pyx"
     DEPENDS pylinphone.pyx
 )
 

@@ -477,9 +477,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	add_library(linphone_tester_runtime MODULE ${RUNTIME_COMPONENT_SOURCES})
 	target_compile_options(linphone_tester_runtime PRIVATE "/wd4996")
 	target_link_libraries(linphone_tester_runtime linphone_tester_static)
+	target_link_options(linphone_tester_runtime PRIVATE "/WINMDFILE:BelledonneCommunications.Linphone.Tester.winmd")
 	set_target_properties(linphone_tester_runtime PROPERTIES VS_WINRT_COMPONENT TRUE)
 	set_target_properties(linphone_tester_runtime PROPERTIES LIBRARY_OUTPUT_NAME "BelledonneCommunications.Linphone.Tester")
-	set_target_properties(linphone_tester_runtime PROPERTIES LINK_FLAGS "/WINMDFILE:BelledonneCommunications.Linphone.Tester.winmd")
 
 	install(TARGETS linphone_tester_runtime
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -488,12 +488,11 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/BelledonneCommunications.Linphone.Tester.winmd" DESTINATION lib)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/BelledonneCommunications.Linphone.Tester.pdb
-			DESTINATION ${CMAKE_INSTALL_LIBDIR}
-			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+	install(FILES $<TARGET_PDB_FILE:linphone_tester_runtime>
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+		CONFIGURATIONS Debug RelWithDebInfo
 	)
-	endif()
 endif()
 
 if(NOT ANDROID)
@@ -507,12 +506,11 @@ if(NOT ANDROID)
 			target_link_libraries(liblinphone-tester "-framework AppKit")
 		endif()
 		if(MSVC)
-				if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-						install(FILES $<TARGET_PDB_FILE:liblinphone-tester>
-								DESTINATION ${CMAKE_INSTALL_BINDIR}
-								PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-						)
-				endif()
+			install(FILES $<TARGET_PDB_FILE:liblinphone-tester>
+				DESTINATION ${CMAKE_INSTALL_BINDIR}
+				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+				CONFIGURATIONS Debug RelWithDebInfo
+			)
 		endif()
 		install(TARGETS liblinphone-tester
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

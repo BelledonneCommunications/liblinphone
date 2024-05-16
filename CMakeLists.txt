@@ -82,12 +82,7 @@ cmake_dependent_option(ENABLE_QRCODE "Enable QRCode support" YES "ENABLE_VIDEO" 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release")
-endif()
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_definitions("-DDEBUG")
-endif()
+add_compile_definitions("$<$<CONFIG:Debug>:DEBUG>")
 
 set(LINPHONE_LIBS_FOR_TOOLS liblinphone)
 
