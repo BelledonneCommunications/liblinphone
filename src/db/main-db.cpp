@@ -4994,9 +4994,7 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 // - set the creation time to the earliest one
 // - assign all events preceeding the latest creation time to the kept chatroom
 // - destroy the deleted chatroom from DB
-void MainDb::addChatroomToList(
-    std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> &chatRoomsMap,
-    const shared_ptr<AbstractChatRoom> chatRoom) const {
+void MainDb::addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap, const shared_ptr<AbstractChatRoom> chatRoom) const {
 #ifdef HAVE_DB_STORAGE
 	const auto chatRoomConferenceId = chatRoom->getConferenceId();
 	shared_ptr<AbstractChatRoom> chatRoomToAdd = nullptr;
@@ -5103,7 +5101,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms() const {
 	return L_DB_TRANSACTION {
 		L_D();
 
-		std::map<ConferenceId, std::shared_ptr<AbstractChatRoom>, Conference::ConferenceIdCompare> chatRoomsMap;
+		ChatRoomWeakCompareMap chatRoomsMap;
 
 		shared_ptr<Core> core = getCore();
 		bool serverMode = linphone_core_conference_server_enabled(core->getCCore());
@@ -5774,8 +5772,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shar
 		               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"
-		               "  AND uri_sip_address.value = '" +
-		               uri->toStringUriOnlyOrdered() + "'";
+		               " AND uri_sip_address.value LIKE '" + uri->toStringUriOnlyOrdered() + "'";
 
 		return L_DB_TRANSACTION {
 			L_D();

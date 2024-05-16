@@ -57,10 +57,26 @@ public:
 	void setLocalAddress(const std::shared_ptr<const Address> &addr);
 
 	bool isValid() const;
+	size_t getHash() const;
+	size_t getWeakHash() const;
+	bool weakEqual(const ConferenceId &other) const;
+	struct WeakHash {
+		size_t operator()(const ConferenceId &id) const {
+			return id.getWeakHash();
+		}
+	};
+	struct WeakEqual {
+		bool operator()(const ConferenceId &id1, const ConferenceId &id2) const {
+			return id1.weakEqual(id2);
+		}
+	};
 
 private:
+	static Address reducedAddress(const Address &addr);
 	std::shared_ptr<Address> peerAddress;
 	std::shared_ptr<Address> localAddress;
+	mutable size_t mHash = 0;
+	mutable size_t mWeakHash = 0;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const ConferenceId &conferenceId) {
@@ -79,11 +95,7 @@ namespace std {
 template <>
 struct hash<LinphonePrivate::ConferenceId> {
 	std::size_t operator()(const LinphonePrivate::ConferenceId &conferenceId) const {
-		const auto peerAddress =
-		    conferenceId.getPeerAddress() ? conferenceId.getPeerAddress()->toStringOrdered() : "sip:";
-		const auto localAddress =
-		    conferenceId.getLocalAddress() ? conferenceId.getLocalAddress()->toStringOrdered() : "sip:";
-		return hash<string>()(peerAddress) ^ (hash<string>()(localAddress) << 1);
+		return conferenceId.getHash();
 	}
 };
 } // namespace std

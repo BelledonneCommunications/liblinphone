@@ -62,7 +62,7 @@ constexpr const char *select[SelectCount] = {
     /* SelectSipAddressId */ R"(
 			SELECT id
 			FROM sip_address
-			WHERE value = :1
+			WHERE value LIKE :1
 		)",
 
     /* SelectChatRoomId */ R"(

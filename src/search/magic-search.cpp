@@ -352,7 +352,6 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 			if (domain) {
 				string strTmp = d->mFilter;
 				setlocale(LC_ALL, "");
-				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c) { return tolower(c); });
 				LinphoneAccount *account = linphone_proxy_config_get_account(proxy);
 				const LinphoneAccountParams *params = linphone_account_get_params(account);
 				bool_t apply_prefix = linphone_account_params_get_use_international_prefix_for_calls_and_chats(params);

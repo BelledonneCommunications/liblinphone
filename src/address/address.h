@@ -132,8 +132,8 @@ public:
 	inline std::string asString() const {
 		return toString();
 	}
-	std::string toStringUriOnlyOrdered() const;
-	std::string toStringOrdered() const;
+	std::string toStringUriOnlyOrdered(bool lowercaseParams = false) const;
+	std::string toStringOrdered(bool lowercaseParams = false) const;
 
 	std::string asStringUriOnly() const;
 
