@@ -933,7 +933,7 @@ static void secure_group_chat_message_state_transition_to_displayed(bool corrupt
 		                             liblinphone_tester_sip_timeout)); // the message is correctly received by Pauline2
 		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneMessageReceived,
 		                             michelle_stat.number_of_LinphoneMessageReceived + 1,
-		                             liblinphone_tester_sip_timeout)); // the message is correctly received by Pauline2
+		                             liblinphone_tester_sip_timeout)); // the message is correctly received by Michelle
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDelivered,
 		                             marie_stat.number_of_LinphoneMessageDelivered + 1,
 		                             liblinphone_tester_sip_timeout)); // Message is received by everybody

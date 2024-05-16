@@ -305,7 +305,7 @@ std::string Address::toString() const {
 	return ret;
 }
 
-string Address::toStringUriOnlyOrdered() const {
+string Address::toStringUriOnlyOrdered(bool lowercaseParams) const {
 	ostringstream res;
 	res << getScheme() << ":";
 	if (!getUsername().empty()) {
@@ -322,25 +322,37 @@ string Address::toStringUriOnlyOrdered() const {
 
 	const auto uriParams = getUriParams();
 	for (const auto &param : uriParams) {
-		const auto &name = param.first;
+		auto name = param.first;
+		if (lowercaseParams) {
+			std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return tolower(c); });
+		}
 		res << ";" << name;
-		const auto &value = param.second;
+		auto value = param.second;
 		if (!value.empty()) {
+			if (lowercaseParams) {
+				std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) { return tolower(c); });
+			}
 			res << "=" << value;
 		}
 	}
 	return res.str();
 }
 
-string Address::toStringOrdered() const {
-	auto res = toStringUriOnlyOrdered();
+string Address::toStringOrdered(bool lowercaseParams) const {
+	auto res = toStringUriOnlyOrdered(lowercaseParams);
 	const auto uriParams = getUriParams();
 	for (const auto &param : uriParams) {
-		const auto &name = param.first;
+		auto name = param.first;
+		if (lowercaseParams) {
+			std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return tolower(c); });
+		}
 		res += ";";
 		res += name;
-		const auto &value = param.second;
+		auto value = param.second;
 		if (!value.empty()) {
+			if (lowercaseParams) {
+				std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) { return tolower(c); });
+			}
 			res += "=";
 			res += value;
 		}

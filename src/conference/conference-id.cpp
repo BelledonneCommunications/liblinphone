@@ -97,8 +97,8 @@ bool ConferenceId::isValid() const {
 
 size_t ConferenceId::getHash() const {
 	if (mHash == 0) {
-		const auto &pAddress = peerAddress ? peerAddress->toStringOrdered() : "sip:";
-		const auto &lAddress = localAddress ? localAddress->toStringOrdered() : "sip:";
+		const auto &pAddress = peerAddress ? peerAddress->toStringOrdered(true) : "sip:";
+		const auto &lAddress = localAddress ? localAddress->toStringOrdered(true) : "sip:";
 		mHash = hash<string>()(pAddress) ^ (hash<string>()(lAddress) << 1);
 	}
 	return mHash;
@@ -112,8 +112,8 @@ Address ConferenceId::reducedAddress(const Address &addr) {
 
 size_t ConferenceId::getWeakHash() const {
 	if (mWeakHash == 0) {
-		const auto &pAddress = peerAddress ? reducedAddress(*peerAddress).toStringUriOnlyOrdered() : "sip:";
-		const auto &lAddress = localAddress ? reducedAddress(*localAddress).toStringUriOnlyOrdered() : "sip:";
+		const auto &pAddress = peerAddress ? reducedAddress(*peerAddress).toStringUriOnlyOrdered(true) : "sip:";
+		const auto &lAddress = localAddress ? reducedAddress(*localAddress).toStringUriOnlyOrdered(true) : "sip:";
 		mWeakHash = hash<string>()(pAddress) ^ (hash<string>()(lAddress) << 1);
 	}
 	return mWeakHash;

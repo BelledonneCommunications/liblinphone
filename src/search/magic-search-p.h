@@ -30,17 +30,17 @@ LINPHONE_BEGIN_NAMESPACE
 
 class MagicSearchPrivate : public ObjectPrivate {
 private:
-	unsigned int mMaxWeight;
-	unsigned int mMinWeight;
-	unsigned int mSearchLimit; // Number of ResultSearch maximum when the search is limited
-	bool mLimitedSearch;       // Limit the search
-	int mRequestDelay = 500;   // Delay the first request in ms
-	std::string mDelimiter;    // Delimiter use for the search
-	bool mUseDelimiter;
+	unsigned int mMinWeight = 0;
+	unsigned int mMaxWeight = 1000;
+	unsigned int mSearchLimit = 30; // Number of ResultSearch maximum when the search is limited
+	bool mLimitedSearch = true;     // Limit the search
+	int mRequestDelay = 500;        // Delay the first request in ms
+	std::string mDelimiter = "+_-"; // Delimiter use for the search
+	bool mUseDelimiter = true;
 	std::string mFilter;
-	bool_t mAutoResetCache; // When a new search start, let MagicSearch to clean its cache
+	bool mAutoResetCache = true; // When a new search start, let MagicSearch to clean its cache
 
-	belle_sip_source_t *mIteration;
+	belle_sip_source_t *mIteration = nullptr;
 
 	std::shared_ptr<std::list<std::shared_ptr<SearchResult>>> mCacheResult;
 	SearchAsyncData mAsyncData;

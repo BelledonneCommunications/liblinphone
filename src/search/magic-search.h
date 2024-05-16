@@ -41,7 +41,7 @@ public:
 	friend class SearchAsyncData;
 	MagicSearch(const std::shared_ptr<Core> &core);
 	MagicSearch(const MagicSearch &ms) = delete;
-	~MagicSearch();
+	virtual ~MagicSearch();
 
 	/**
 	 * Set the minimum value used to calculate the weight in search
@@ -161,7 +161,7 @@ public:
 	std::list<std::shared_ptr<SearchResult>> getLastSearch() const;
 
 	// When a new search start, let MagicSearch to clean its cache. Default to true.
-	void setAutoResetCache(const bool_t &enable);
+	void setAutoResetCache(const bool &enable);
 
 private:
 	/**

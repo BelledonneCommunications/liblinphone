@@ -47,16 +47,6 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 MagicSearch::MagicSearch(const std::shared_ptr<Core> &core) : CoreAccessor(core), Object(*new MagicSearchPrivate) {
-	L_D();
-	d->mMinWeight = 0;
-	d->mMaxWeight = 1000;
-	d->mSearchLimit = 30;
-	d->mLimitedSearch = true;
-	d->mDelimiter = "+_-";
-	d->mUseDelimiter = true;
-	d->mCacheResult = nullptr;
-	d->mIteration = nullptr;
-	d->mAutoResetCache = TRUE;
 }
 
 MagicSearch::~MagicSearch() {
@@ -354,8 +344,7 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 			if (!domain.empty()) {
 				string strTmp = d->mFilter;
 				setlocale(LC_ALL, "");
-				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c) { return tolower(c); });
-				bool_t apply_prefix = params->getUseInternationalPrefixForCallsAndChats();
+				bool apply_prefix = params->getUseInternationalPrefixForCallsAndChats();
 				LinphoneAddress *lastResult =
 				    linphone_core_interpret_url_2(this->getCore()->getCCore(), strTmp.c_str(), apply_prefix);
 				if (lastResult) {
@@ -369,7 +358,7 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 	return returnList;
 }
 
-void MagicSearch::setAutoResetCache(const bool_t &enable) {
+void MagicSearch::setAutoResetCache(const bool &enable) {
 	L_D();
 	d->mAutoResetCache = enable;
 }

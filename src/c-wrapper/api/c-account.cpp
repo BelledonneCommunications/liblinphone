@@ -457,10 +457,16 @@ LinphoneAddress *linphone_account_normalize_sip_uri(LinphoneAccount *account, co
 	if ((strstr(username, "sip:") == NULL) && (strstr(username, "sips:") == NULL)) {
 		/* this doesn't look like a true sip uri */
 		if (strchr(username, '@') != NULL) {
+			char *username_lowercase = ms_strdup(username);
+			// Convert uppercase letters to lowercase
+			for (size_t i = 0; i < strlen(username_lowercase); i++) {
+				username_lowercase[i] = (char)tolower(username_lowercase[i]);
+			}
 			/* seems like sip: is missing !*/
-			tmpurl = ms_strdup_printf("sip:%s", username);
+			tmpurl = ms_strdup_printf("sip:%s", username_lowercase);
 			uri = linphone_address_new(tmpurl);
 			ms_free(tmpurl);
+			ms_free(username_lowercase);
 			if (uri) {
 				return _destroy_addr_if_not_sip(uri);
 			}
@@ -476,10 +482,16 @@ LinphoneAddress *linphone_account_normalize_sip_uri(LinphoneAccount *account, co
 			} else {
 				linphone_address_clean(uri);
 				linphone_address_set_display_name(uri, NULL);
+				char *username_lowercase = ms_strdup(username);
+				// Convert uppercase letters to lowercase
+				for (size_t i = 0; i < strlen(username_lowercase); i++) {
+					username_lowercase[i] = (char)tolower(username_lowercase[i]);
+				}
 				// Unescape character if possible
-				char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
+				char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username_lowercase);
 				linphone_address_set_username(uri, unescaped_username);
 				belle_sip_free(unescaped_username);
+				ms_free(username_lowercase);
 				return _destroy_addr_if_not_sip(uri);
 			}
 		} else {

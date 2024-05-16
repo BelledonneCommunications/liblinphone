@@ -1305,18 +1305,44 @@ void create_conference_base(time_t start_time,
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_call_params_set_video_direction(new_params, video_direction);
+			LinphoneAddress *confAddr2 = linphone_address_clone(confAddr);
 			if (mgr == pauline.getCMgr()) {
 				linphone_call_params_enable_mic(new_params, FALSE);
 			}
-			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
-			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
+
+			// Let Marie to call the conference after lowercasing the conf-id.
+			// In some tests, Marie's core restarts later on in the test and it will call with the unmodified conference
+			// address (the conf-id parameter will be a mix of uppercase and lowercase characters) and this will allow
+			// to verify that only one ConferenceInfo is created because the address parameter comparison is case
+			// insensitive
+			if (mgr == marie.getCMgr()) {
+				// Convert conf-id to lowercase
+				const char *conf_id_param_name = "conf-id";
+				if (linphone_address_has_uri_param(confAddr2, conf_id_param_name)) {
+					const char *conf_id = linphone_address_get_uri_param(confAddr2, conf_id_param_name);
+					char *conf_id_lowercase = ms_strdup(conf_id);
+					// Convert uppercase letters to lowercase
+					for (size_t i = 0; i < strlen(conf_id_lowercase); i++) {
+						conf_id_lowercase[i] = (char)tolower(conf_id_lowercase[i]);
+					}
+					linphone_address_remove_uri_param(confAddr2, conf_id_param_name);
+					linphone_address_set_uri_param(confAddr2, conf_id_param_name, conf_id_lowercase);
+					ms_free(conf_id_lowercase);
+				}
+			}
+			char *conference_address2_str =
+			    (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("<unknown>");
+			ms_message("%s is entering conference %s", linphone_core_get_identity(mgr->lc), conference_address2_str);
+			linphone_core_invite_address_with_params_2(mgr->lc, confAddr2, new_params, NULL, nullptr);
 			linphone_call_params_unref(new_params);
-			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
+			LinphoneCall *pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr2);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
 			if (pcall) {
 				LinphoneCallLog *call_log = linphone_call_get_call_log(pcall);
 				BC_ASSERT_TRUE(linphone_call_log_was_conference(call_log));
 			}
+			linphone_address_unref(confAddr2);
+			ms_free(conference_address2_str);
 		}
 
 		int nb_subscriptions = 1;
@@ -1663,6 +1689,8 @@ void create_conference_base(time_t start_time,
 			stats focus_stat2 = focus.getStats();
 			stats marie_stat2 = marie.getStats();
 
+			ms_message("%s is entering conference %s again", linphone_core_get_identity(marie.getLc()),
+			           conference_address_str);
 			LinphoneCallParams *new_params = linphone_core_create_call_params(marie.getLc(), nullptr);
 			linphone_call_params_set_media_encryption(new_params, encryption);
 			linphone_core_invite_address_with_params_2(marie.getLc(), confAddr, new_params, NULL, nullptr);
@@ -3484,9 +3512,18 @@ void create_conference_base(time_t start_time,
 			}
 		}
 		for (auto mgr : allMembers) {
+			bctbx_list_t *conference_infos = linphone_core_get_conference_information_list(mgr->lc);
+			BC_ASSERT_PTR_NOT_NULL(conference_infos);
+			if (conference_infos) {
+				BC_ASSERT_EQUAL(bctbx_list_size(conference_infos), 1, size_t, "%zu");
+				bctbx_list_free_with_data(conference_infos, (bctbx_list_free_func)linphone_conference_info_unref);
+			}
 			const bctbx_list_t *call_logs = linphone_core_get_call_logs(mgr->lc);
-			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(call_logs),
-			                ((client_restart && (mgr == marie.getCMgr())) ? 2 : 1), unsigned int, "%u");
+			BC_ASSERT_PTR_NOT_NULL(call_logs);
+			if (call_logs) {
+				BC_ASSERT_EQUAL(bctbx_list_size(call_logs), ((client_restart && (mgr == marie.getCMgr())) ? 2 : 1),
+				                size_t, "%zu");
+			}
 
 			bctbx_list_t *mgr_focus_call_log =
 			    linphone_core_get_call_history_2(mgr->lc, focus.getCMgr()->identity, mgr->identity);

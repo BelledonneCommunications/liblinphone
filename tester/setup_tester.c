@@ -1679,7 +1679,7 @@ static void search_friend_in_call_log(void) {
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *chloeSipUri = {"sip:chloe@sip.example.org"};
 	const char *benjaminSipUri = {"sip:benjamin@sip.example.org"};
-	const char *charlesSipUri = {"sip:charles@sip.test.org"};
+	const char *charlesSipUri = {"sip:charles@sip.test.org;id=ABCDEF"};
 	const char *ronanSipUri = {"sip:ronan@sip.example.org"};
 	LinphoneAddress *chloeAddress = linphone_address_new(chloeSipUri);
 	LinphoneAddress *benjaminAddress = linphone_address_new(benjaminSipUri);
@@ -1799,7 +1799,8 @@ static void search_friend_in_call_log_already_exist(void) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 6, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[1], NULL); //"sip:charette@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL); //"sip:charu@sip.test.org"
-		_check_friend_result_list(manager->lc, resultList, 2, chloeSipUri, NULL); //"sip:chloe@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 2, "sip:chloe@sip.example.org",
+		                          NULL);                                          //"sip:chloe@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 3, chloeSipUri, NULL); //"sip:chloe@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 4, "sip:pauline@sip.example.org",
 		                          NULL); // In the linphonerc "sip:pauline@sip.example.org"
@@ -2749,6 +2750,20 @@ static void async_search_friend_in_sources(void) {
 	}
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 
+	const char *charlesSipUri = {"sip:charles@sip.test.org;id=ABCDEF"};
+	linphone_magic_search_get_contacts_list_async(magicSearch, charlesSipUri, "", LinphoneMagicSearchSourceAll,
+	                                              LinphoneMagicSearchAggregationFriend);
+	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &manager->stat.number_of_LinphoneMagicSearchResultReceived, 1));
+	resultList = linphone_magic_search_get_last_search(magicSearch);
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		// The result has only lowercase characters
+		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri,
+		                          NULL); //"sip:charles@sip.test.org;id=ABCDEF"
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+	linphone_magic_search_reset_search_cache(magicSearch);
+
 	linphone_magic_search_cbs_unref(searchHandler);
 	linphone_magic_search_unref(magicSearch);
 
@@ -3136,10 +3151,12 @@ static void ldap_features_min_characters(void) {
 	BC_ASSERT_TRUE(wait_for(manager->lc, NULL, &stat->number_of_LinphoneMagicSearchResultReceived, 1));
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
-	for (bctbx_list_t *copy = resultList; copy != NULL;
-	     copy = bctbx_list_next(copy)) // Results doesn't contains LDAP result.
+
+	// Results doesn't contains LDAP result.
+	for (bctbx_list_t *copy = resultList; copy != NULL; copy = bctbx_list_next(copy)) {
 		BC_ASSERT_TRUE((linphone_search_result_get_source_flags((LinphoneSearchResult *)copy->data) &
 		                LinphoneMagicSearchSourceLdapServers) == LinphoneMagicSearchSourceNone);
+	}
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 
