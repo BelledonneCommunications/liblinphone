@@ -137,7 +137,6 @@ public:
 
 	Sal(MSFactory *factory);
 	~Sal();
-
 	void setFactory(MSFactory *value);
 
 	void setUserPointer(void *value) {
@@ -285,6 +284,9 @@ public:
 	}
 	int getTransportTimeout() const {
 		return belle_sip_stack_get_transport_timeout(mStack);
+	}
+	void setPongTimeout(int value) {
+		belle_sip_stack_set_pong_timeout(mStack, value);
 	}
 
 	void setUnreliableConnectionTimeout(int value) {
