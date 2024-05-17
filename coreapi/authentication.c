@@ -228,7 +228,7 @@ _linphone_core_find_bearer_auth_info(LinphoneCore *lc, const char *realm, const 
 			if (realm && linphone_auth_info_get_realm(pinfo) &&
 			    realm_match(realm, linphone_auth_info_get_realm(pinfo))) {
 				if (ret != NULL) {
-					ms_warning("Non unique realm found for %s", username);
+					ms_warning("Non unique realm found for %s", username ? username : "");
 				}
 				ret = pinfo;
 			} else if (domain && linphone_auth_info_get_domain(pinfo) &&
