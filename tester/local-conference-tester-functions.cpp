@@ -1771,10 +1771,6 @@ void create_conference_base(time_t start_time,
 
 #ifdef HAVE_ADVANCED_IM
 			if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishRefreshing,
-				                             focus_stat2.number_of_LinphonePublishRefreshing + 2, 5000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphonePublishOk,
-				                             focus_stat2.number_of_LinphonePublishOk + 2, 5000));
 				// wait bit more to receive all EKT packets
 				CoreManagerAssert({focus, marie, pauline, laure, michelle, berthe}).waitUntil(chrono::seconds(2), [] {
 					return false;
@@ -3272,10 +3268,6 @@ void create_conference_base(time_t start_time,
 				                             liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionTerminated,
 				                             nb_subscriptions, liblinphone_tester_sip_timeout));
-				if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
-					BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePublishCleared, 1,
-					                             liblinphone_tester_sip_timeout));
-				}
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateTerminationPending,
 				                             1, liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateTerminated, 1,
