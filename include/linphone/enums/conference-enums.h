@@ -82,9 +82,9 @@ typedef enum _LinphoneConferenceParticipantListType {
  * @ingroup conference
  */
 typedef enum _LinphoneConferenceSecurityLevel {
-	LinphoneConferenceSecurityLevelNone = 0,		 /**< No security */
+	LinphoneConferenceSecurityLevelNone = 0,         /**< No security */
 	LinphoneConferenceSecurityLevelPointToPoint = 1, /**< Point-to-point encryption */
-	LinphoneConferenceSecurityLevelEndToEnd = 2,	 /**< End-to-end encryption */
+	LinphoneConferenceSecurityLevelEndToEnd = 2,     /**< End-to-end encryption */
 } LinphoneConferenceSecurityLevel;
 
 /**
@@ -112,4 +112,16 @@ typedef enum _LinphoneConferenceInfoState {
 	LinphoneConferenceInfoStateUpdated = 1,   /**< Conference has been updated */
 	LinphoneConferenceInfoStateCancelled = 2, /**< Canceling a conference */
 } LinphoneConferenceInfoState;
+
+// WARNING: Conference scheduler type is stored in the RC file, therefore do not modify the integer value of the
+// enumeration items
+/**
+ * #LinphoneConferenceSchedulerType is used to know which conference scheduler type the core is using
+ * @ingroup conference
+ */
+typedef enum _LinphoneConferenceSchedulerType {
+	LinphoneConferenceSchedulerTypeSIP = 0,  /**< SIP conference scheduler type */
+	LinphoneConferenceSchedulerTypeDB = 1,   /**< Database conference scheduler type */
+	LinphoneConferenceSchedulerTypeCCMP = 2, /**< CCMP conference scheduler type */
+} LinphoneConferenceSchedulerType;
 #endif // ifndef _L_CONFERENCE_ENUMS_H_

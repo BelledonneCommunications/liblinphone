@@ -1877,6 +1877,8 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 
 	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
 	auto params = linphone_core_create_call_params(lc, nullptr);
+	const auto &account = confParams->getAccount();
+	linphone_call_params_set_account(params, account ? account->toC() : nullptr);
 
 	std::shared_ptr<Address> conferenceFactoryUri;
 	if (confAddr) {

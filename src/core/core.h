@@ -94,6 +94,8 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ChatRoom;
 	friend class ChatRoomPrivate;
 	friend class Conference;
+	friend class ConferenceScheduler;
+	friend class SIPConferenceScheduler;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
@@ -115,7 +117,6 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class MediaConference::Conference;
 	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
-	friend class ConferenceScheduler;
 
 	friend class ::LocalConferenceTester;
 

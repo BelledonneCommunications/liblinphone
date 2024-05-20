@@ -143,11 +143,12 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator](const auto &p) {
 		                               return (creator->weakEqual(*p->getAddress()));
 	                               }) != participants.cend());
-	if (!creator->weakEqual(*organizer) && !participantFound) {
-		lWarning() << "[Conference Scheduler] [" << this << "] Address " << creator->toString()
+	if (!creator->weakEqual(*organizer) && !participantFound &&
+	    !linphone_core_conference_server_enabled(getCore()->getCCore())) {
+		lWarning() << "[Conference Scheduler] [" << this << "] Address " << *creator
 		           << " is trying to modify the conference information but he/she is neither an invited participant "
 		              "nor the organizer ("
-		           << organizer << ") of conference "
+		           << *organizer << ") of conference "
 		           << (conferenceAddress ? conferenceAddress->toString() : std::string("<unknown>"));
 		setState(State::Error);
 		return;
@@ -202,43 +203,10 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 		}
 	}
 	clone->setState(infoState);
+
 	mConferenceInfo = clone;
 
-	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
-	conferenceParams->enableAudio(true);
-	conferenceParams->enableVideo(true);
-	conferenceParams->setSubject(mConferenceInfo->getSubject());
-	conferenceParams->setSecurityLevel(mConferenceInfo->getSecurityLevel());
-
-	if (mConferenceInfo->getDateTime() <= 0) {
-		if (!isUpdate) {
-			// Set start time only if a conference is going to be created
-			mConferenceInfo->setDateTime(ms_time(NULL));
-		}
-	} else {
-		const auto &startTime = clone->getDateTime();
-		conferenceParams->setStartTime(startTime);
-		const auto &duration = clone->getDuration();
-		if (duration > 0) {
-			const auto endTime = startTime + static_cast<time_t>(duration) * 60; // duration is in minutes
-			conferenceParams->setEndTime(endTime);
-		}
-	}
-
-	std::list<std::shared_ptr<Address>> invitees;
-	for (const auto &p : mConferenceInfo->getParticipants()) {
-		invitees.push_back(createParticipantAddress(p));
-	}
-
-	createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress);
-
-	if (getState() != State::Error) {
-		// Update conference info in database with updated conference information
-#ifdef HAVE_DB_STORAGE
-		auto &mainDb = getCore()->getPrivate()->mainDb;
-		mainDb->insertConferenceInfo(mConferenceInfo);
-#endif // HAVE_DB_STORAGE
-	}
+	createOrUpdateConference(mConferenceInfo, creator);
 }
 
 void ConferenceScheduler::onChatMessageStateChanged(const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
@@ -296,6 +264,12 @@ void ConferenceScheduler::onChatMessageStateChanged(const shared_ptr<ChatMessage
 }
 
 void ConferenceScheduler::setConferenceAddress(const std::shared_ptr<Address> &conferenceAddress) {
+	if (!conferenceAddress || !conferenceAddress->isValid()) {
+		lError() << "[Conference Scheduler] [" << this << "] Trying to assign invalid conference address";
+		setState(State::Error);
+		return;
+	}
+
 	if (mConferenceInfo == nullptr) {
 		lError() << "[Conference Scheduler] [" << this << "] Can't update conference address " << *conferenceAddress
 		         << " on null conference info";

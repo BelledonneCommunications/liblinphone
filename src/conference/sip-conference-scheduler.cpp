@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2024 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -41,11 +41,30 @@ SIPConferenceScheduler::~SIPConferenceScheduler() {
 	}
 }
 
-void SIPConferenceScheduler::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &conferenceParams,
-                                                              const std::shared_ptr<Address> &creator,
-                                                              const std::list<std::shared_ptr<Address>> &invitees,
-                                                              const std::shared_ptr<Address> &conferenceAddress) {
+void SIPConferenceScheduler::createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
+                                                      const std::shared_ptr<Address> &creator) {
 
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
+	conferenceParams->setAccount(getAccount());
+	conferenceParams->enableAudio(true);
+	conferenceParams->enableVideo(true);
+	conferenceParams->setSubject(mConferenceInfo->getSubject());
+	conferenceParams->setSecurityLevel(mConferenceInfo->getSecurityLevel());
+
+	const auto &startTime = conferenceInfo->getDateTime();
+	conferenceParams->setStartTime(startTime);
+	const auto &duration = conferenceInfo->getDuration();
+	if (duration > 0) {
+		const auto endTime = startTime + static_cast<time_t>(duration) * 60; // duration is in minutes
+		conferenceParams->setEndTime(endTime);
+	}
+
+	std::list<std::shared_ptr<Address>> invitees;
+	for (const auto &p : mConferenceInfo->getParticipants()) {
+		invitees.push_back(createParticipantAddress(p));
+	}
+
+	const auto &conferenceAddress = conferenceInfo->getUri();
 	mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, conferenceAddress);
 	if (mSession == nullptr) {
 		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";
@@ -53,6 +72,19 @@ void SIPConferenceScheduler::createOrUpdateConferenceOnServer(const std::shared_
 		return;
 	}
 	mSession->setListener(this);
+
+	if ((mConferenceInfo->getDateTime() <= 0) && (getState() == State::AllocationPending)) {
+		// Set start time only if a conference is going to be created
+		mConferenceInfo->setDateTime(ms_time(NULL));
+	}
+
+	if (getState() != State::Error) {
+		// Update conference info in database with updated conference information
+#ifdef HAVE_DB_STORAGE
+		auto &mainDb = getCore()->getPrivate()->mainDb;
+		mainDb->insertConferenceInfo(mConferenceInfo);
+#endif // HAVE_DB_STORAGE
+	}
 }
 
 void SIPConferenceScheduler::onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) {

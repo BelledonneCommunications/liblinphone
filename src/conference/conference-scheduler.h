@@ -81,11 +81,8 @@ protected:
 	                                                         bool cancel);
 	void fillCancelList(const ConferenceInfo::participant_list_t &oldList,
 	                    const ConferenceInfo::participant_list_t &newList);
-	virtual void
-	    createOrUpdateConferenceOnServer(BCTBX_UNUSED(const std::shared_ptr<ConferenceParams> &conferenceParams),
-	                                     BCTBX_UNUSED(const std::shared_ptr<Address> &creator),
-	                                     BCTBX_UNUSED(const std::list<std::shared_ptr<Address>> &invitees),
-	                                     BCTBX_UNUSED(const std::shared_ptr<Address> &conferenceAddress)) = 0;
+	virtual void createOrUpdateConference(BCTBX_UNUSED(const std::shared_ptr<ConferenceInfo> &conferenceInfo),
+	                                      BCTBX_UNUSED(const std::shared_ptr<Address> &creator)) = 0;
 	virtual void processResponse(BCTBX_UNUSED(const LinphoneErrorInfo *errorCode),
 	                             BCTBX_UNUSED(const std::shared_ptr<Address> conferenceAddress)) = 0;
 

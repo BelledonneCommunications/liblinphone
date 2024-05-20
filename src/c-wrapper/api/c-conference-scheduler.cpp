@@ -59,7 +59,9 @@ LinphoneAccount *linphone_conference_scheduler_get_account(const LinphoneConfere
 const LinphoneConferenceInfo *
 linphone_conference_scheduler_get_info(const LinphoneConferenceScheduler *conference_scheduler) {
 	ConferenceSchedulerLogContextualizer logContextualizer(conference_scheduler);
-	return ConferenceScheduler::toCpp(conference_scheduler)->getInfo()->toC();
+	return ConferenceScheduler::toCpp(conference_scheduler)->getInfo()
+	           ? ConferenceScheduler::toCpp(conference_scheduler)->getInfo()->toC()
+	           : NULL;
 }
 
 void linphone_conference_scheduler_set_info(LinphoneConferenceScheduler *conference_scheduler,

@@ -18,27 +18,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_SIP_CONFERENCE_SCHEDULER_H_
-#define _L_SIP_CONFERENCE_SCHEDULER_H_
+#ifndef _L_DB_CONFERENCE_SCHEDULER_H_
+#define _L_DB_CONFERENCE_SCHEDULER_H_
 
 #include "conference/conference-scheduler.h"
-#include "conference/session/call-session-listener.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CallSession;
-
-class LINPHONE_PUBLIC SIPConferenceScheduler : public CallSessionListener, public ConferenceScheduler {
+class LINPHONE_PUBLIC DBConferenceScheduler : public ConferenceScheduler {
 public:
-	SIPConferenceScheduler(const std::shared_ptr<Core> &core);
-	virtual ~SIPConferenceScheduler();
+	DBConferenceScheduler(const std::shared_ptr<Core> &core);
+	virtual ~DBConferenceScheduler() = default;
 
-	virtual void onCallSessionSetTerminated(const std::shared_ptr<CallSession> &session) override;
-	virtual void onCallSessionStateChanged(const std::shared_ptr<CallSession> &session,
-	                                       CallSession::State state,
-	                                       const std::string &message) override;
 	virtual void createOrUpdateConference(const std::shared_ptr<ConferenceInfo> &conferenceInfo,
 	                                      const std::shared_ptr<Address> &creator) override;
 
@@ -46,9 +39,8 @@ public:
 	                             const std::shared_ptr<Address> conferenceAddress) override;
 
 private:
-	std::shared_ptr<CallSession> mSession = nullptr;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_SIP_CONFERENCE_SCHEDULER_H_
+#endif // ifndef _L_DB_CONFERENCE_SCHEDULER_H_

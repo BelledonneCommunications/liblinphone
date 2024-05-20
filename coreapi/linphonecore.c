@@ -90,6 +90,7 @@
 #endif
 #include "conference/conference-info.h"
 #include "conference/conference-scheduler.h"
+#include "conference/db-conference-scheduler.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
@@ -9353,12 +9354,21 @@ LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneC
 	// TODO add other protocols to create a scheduled conference on server
 	CoreLogContextualizer logContextualizer(core);
 	LinphoneConfig *config = linphone_core_get_config(core);
-	const char *scheduling_type = linphone_config_get_string(config, "conference_scheduling", "protocol", "SIP");
-	if (strcmp(scheduling_type, "SIP") == 0) {
-		return (new LinphonePrivate::SIPConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
-	} else {
-		return (new LinphonePrivate::SIPConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
+	LinphoneConferenceSchedulerType scheduling_type = (LinphoneConferenceSchedulerType)linphone_config_get_int(
+	    config, "conference_scheduling", "protocol", LinphoneConferenceSchedulerTypeSIP);
+	switch (scheduling_type) {
+		case LinphoneConferenceSchedulerTypeDB:
+#ifdef HAVE_DB_STORAGE
+			return (new LinphonePrivate::DBConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
+#else
+			return NULL;
+#endif // HAVE_DB_STORAGE
+		case LinphoneConferenceSchedulerTypeCCMP:
+			return NULL;
+		case LinphoneConferenceSchedulerTypeSIP:
+			return (new LinphonePrivate::SIPConferenceScheduler(L_GET_CPP_PTR_FROM_C_OBJECT(core)))->toC();
 	}
+	return NULL;
 }
 
 LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc,

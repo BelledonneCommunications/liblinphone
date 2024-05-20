@@ -182,8 +182,8 @@ create_conference_on_server(Focus &focus,
 	char *uid = NULL;
 	LinphoneConferenceInfo *info = NULL;
 	for (const auto &[mgr, participant_info] : requested_participants) {
-		LinphoneParticipantInfo *info = linphone_participant_info_clone(participant_info);
-		participants_info = bctbx_list_append(participants_info, info);
+		LinphoneParticipantInfo *participant_info_clone = linphone_participant_info_clone(participant_info);
+		participants_info = bctbx_list_append(participants_info, participant_info_clone);
 		if (mgr == organizer.getCMgr()) {
 			found_me = true;
 		} else {
@@ -1218,7 +1218,7 @@ void create_conference_base(time_t start_time,
 		int nortp_timeout = 10;
 		linphone_core_set_nortp_timeout(marie.getLc(), nortp_timeout);
 
-		if (security_level == LinphoneConferenceSecurityLevelEndToEnd) {
+		if (enable_lime) {
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline.getLc()));
 			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure.getLc()));

@@ -165,6 +165,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-id.h
 	conference/conference-info.h
 	conference/conference-scheduler.h
+	conference/sip-conference-scheduler.h
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
@@ -340,6 +341,7 @@ if(ENABLE_DB_STORAGE)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 		db/internal/db-transaction.h
 		db/session/db-session.h
+		conference/db-conference-scheduler.h
 	)
 endif()
 
@@ -653,7 +655,10 @@ if(ENABLE_ADVANCED_IM)
 endif()
 
 if (ENABLE_DB_STORAGE)
-	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES db/session/db-session.cpp)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		db/session/db-session.cpp
+		conference/db-conference-scheduler.cpp
+	)
 endif()
 
 

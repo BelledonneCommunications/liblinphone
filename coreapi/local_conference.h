@@ -40,6 +40,8 @@ namespace MediaConference { // They are in a special namespace because of confli
  */
 class LINPHONE_PUBLIC LocalConference : public Conference {
 public:
+	static constexpr int confIdLength = 32;
+
 	LocalConference(const std::shared_ptr<Core> &core,
 	                const std::shared_ptr<Address> &myAddress,
 	                CallSessionListener *listener,
@@ -185,7 +187,6 @@ private:
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
 	std::shared_ptr<Address> organizer;
-	static constexpr int confIdLength = 10;
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
