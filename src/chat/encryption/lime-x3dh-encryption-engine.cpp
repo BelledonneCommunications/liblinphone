@@ -352,16 +352,12 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage(con
 	std::shared_ptr<vector<uint8_t>> plainMessage = nullptr;
 	const std::string curveConfig =
 	    linphone_config_get_string(message->getChatRoom()->getCore()->getCCore()->config, "lime", "curve", "c25519");
+	Content plainContent(message->getInternalContent());
 	if (curveConfig.compare("c25519k512") == 0) {
-		Content plainContent(message->getInternalContent());
 		compressedPlain = plainContent.deflateBody();
-		auto contentBody = plainContent.getBody();
-		plainMessage = make_shared<vector<uint8_t>>(contentBody.cbegin(), contentBody.cend());
 	}
-	if (!compressedPlain) {
-		const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();
-		plainMessage = make_shared<vector<uint8_t>>(plainStringMessage.cbegin(), plainStringMessage.cend());
-	}
+	auto &contentBody = plainContent.getBody();
+	plainMessage = make_shared<vector<uint8_t>>(contentBody.cbegin(), contentBody.cend());
 
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
@@ -597,11 +593,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage(con
 	}
 
 	// Prepare decrypted message for next modifier
-	string plainMessageString(plainMessage.begin(), plainMessage.end());
 	Content finalContent;
 	ContentType finalContentType = ContentType::Cpim; // TODO should be the content-type of the decrypted message
 	finalContent.setContentType(finalContentType);
-	finalContent.setBodyFromUtf8(plainMessageString);
+	finalContent.setBody(std::move(plainMessage));
 	if (compressedPlain) {
 		finalContent.inflateBody();
 	}
