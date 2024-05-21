@@ -362,7 +362,6 @@ static void get_chat_rooms() {
 
 static void load_a_lot_of_chatrooms(void) {
 	long expectedDurationMs = 600;
-	float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
 #ifndef _WIN32
 	int current_priority = getpriority(PRIO_PROCESS, 0);
 	int err = setpriority(PRIO_PROCESS, 0, -20);
@@ -384,6 +383,7 @@ static void load_a_lot_of_chatrooms(void) {
 #endif
 #endif
 #ifndef __arm__
+	float referenceBogomips = 6384.00; // the bogomips on the shuttle-linux (x86_64)
 	float bogomips = liblinphone_tester_get_cpu_bogomips();
 	if (bogomips != 0) {
 		expectedDurationMs = (long)(((float)expectedDurationMs) * referenceBogomips / bogomips);

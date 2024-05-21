@@ -33,7 +33,9 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-room/chat-room-p.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room-p.h"
+#endif // HAVE_ADVANCED_IM
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/media-session-p.h"
 #include "core/core-p.h"
@@ -253,8 +255,11 @@ char *linphone_core_get_download_path(LinphoneCore *lc) {
 
 size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr) {
 	auto abstract = L_GET_CPP_PTR_FROM_C_OBJECT(cr);
-
+#ifdef HAVE_ADVANCED_IM
 	return L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(abstract))->getPreviousConferenceIds().size();
+#else
+	return 0;
+#endif // HAVE_ADVANCED_IM
 }
 
 bool_t linphone_call_check_rtp_sessions(LinphoneCall *call) {
