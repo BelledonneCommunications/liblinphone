@@ -238,6 +238,7 @@ public:
 
 	bool downloadFile();
 
+	void endMessageReception();
 	LinphoneReason receive();
 	void send();
 
@@ -274,9 +275,9 @@ private:
 	std::string externalBodyUrl;
 	bool isSecured = false;
 	mutable bool isReadOnly = false;
+	bool isAutoDownloadAttachedFilesInProgress = false;
 	bool markedAsRead = false;
 	Content internalContent;
-	bool isAutoDownloadAttachedFilesInProgress = false;
 	std::string callId;
 
 	mutable LinphoneErrorInfo *errorInfo = nullptr;

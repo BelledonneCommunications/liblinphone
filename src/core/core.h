@@ -221,6 +221,14 @@ public:
 	void enableEmptyChatroomsDeletion(const bool enable);
 	bool emptyChatroomsDeletionEnabled() const;
 
+	unsigned int getRemainingUploadFileCount() const;
+	void incrementRemainingUploadFileCount();
+	void decrementRemainingUploadFileCount();
+
+	unsigned int getRemainingDownloadFileCount() const;
+	void incrementRemainingDownloadFileCount();
+	void decrementRemainingDownloadFileCount();
+
 	// ---------------------------------------------------------------------------
 	// Audio Video Conference.
 	// ---------------------------------------------------------------------------
@@ -454,6 +462,9 @@ private:
 	mutable ListHolder<Account> mAccounts;
 	mutable ListHolder<Account> mDeletedAccounts;
 	std::shared_ptr<Account> mDefaultAccount;
+
+	unsigned int mRemainingDownloadFileCount = 0;
+	unsigned int mRemainingUploadFileCount = 0;
 
 	mutable bctbx_list_t *mCachedProxyConfigs = NULL;
 

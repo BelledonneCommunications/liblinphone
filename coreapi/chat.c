@@ -281,3 +281,11 @@ unsigned int linphone_chat_message_store(BCTBX_UNUSED(LinphoneChatMessage *msg))
 	// DO nothing, just for old JNI compat...
 	return 1;
 }
+
+unsigned int linphone_core_get_remaining_download_file_count(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getRemainingDownloadFileCount();
+}
+
+unsigned int linphone_core_get_remaining_upload_file_count(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getRemainingUploadFileCount();
+}

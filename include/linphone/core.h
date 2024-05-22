@@ -220,9 +220,11 @@ typedef struct _LinphoneCoreVTable {
 	    auth_info_requested; /**< @brief Ask the application some authentication information.
 	                             @deprecated 21/09/2016 Use authentication_requested instead. */
 	LinphoneCoreAuthenticationRequestedCb
-	    authentication_requested;                      /**< Ask the application some authentication information */
-	LinphoneCoreCallLogUpdatedCb call_log_updated;     /**< Notifies that call log list has been updated */
-	LinphoneCoreCallIdUpdatedCb call_id_updated;       /**< Notifies that callid of a call has been updated */
+	    authentication_requested;                  /**< Ask the application some authentication information */
+	LinphoneCoreCallLogUpdatedCb call_log_updated; /**< Notifies that call log list has been updated */
+	LinphoneCoreCallIdUpdatedCb call_id_updated;   /**< Notifies that callid of a call has been updated */
+	LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb
+	    remaining_number_of_file_transfer_changed;     /**< the number of remaining attachment to download has changed*/
 	LinphoneCoreCbsMessageReceivedCb message_received; /**< a message is received, can be text or external body*/
 	LinphoneCoreCbsMessagesReceivedCb
 	    messages_received; /**< one or more messages are received, can be text or external body*/
@@ -571,6 +573,22 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_call_id_updated(LinphoneCoreCbs *cbs,
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallIdUpdatedCb linphone_core_cbs_get_call_id_updated(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_remaining_number_of_file_transfer_changed(
+    LinphoneCoreCbs *cbs, LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb
+linphone_core_cbs_get_remaining_number_of_file_transfer_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsMessageReceivedCb callback.
@@ -8712,6 +8730,22 @@ linphone_core_find_one_to_one_chat_room_2(const LinphoneCore *core,
                                           const LinphoneAddress *local_addr,
                                           const LinphoneAddress *participant_addr,
                                           bool_t encrypted);
+
+/**
+ * Returns how many attachments are yet to be downloaded
+ * @param core the linphone core @notnil
+ * @return how many attachments are yet to be downloaded.
+ * @ingroup chatroom
+ **/
+LINPHONE_PUBLIC unsigned int linphone_core_get_remaining_download_file_count(LinphoneCore *lc);
+
+/**
+ * Returns how many attachments are yet to be uploaded
+ * @param core the linphone core @notnil
+ * @return how many attachments are yet to be uploaded.
+ * @ingroup chatroom
+ **/
+LINPHONE_PUBLIC unsigned int linphone_core_get_remaining_upload_file_count(LinphoneCore *lc);
 
 /**
  * @deprecated 03/02/2017 Use linphone_core_interpret_url() instead

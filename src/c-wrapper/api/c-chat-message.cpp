@@ -160,6 +160,10 @@ void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMe
 	NOTIFY_IF_EXIST(ParticipantImdnStateChanged, participant_imdn_state_changed, msg, state);
 }
 
+void _linphone_chat_message_notify_file_transfer_terminated(LinphoneChatMessage *msg, LinphoneContent *content) {
+	NOTIFY_IF_EXIST(FileTransferTerminated, file_transfer_terminated, msg, content);
+}
+
 void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg,
                                                       LinphoneContent *content,
                                                       const LinphoneBuffer *buffer) {
@@ -492,6 +496,10 @@ bool_t linphone_chat_message_download_content(LinphoneChatMessage *msg, Linphone
 	}
 	auto fileTransferContent = dynamic_pointer_cast<LinphonePrivate::FileTransferContent>(content);
 	return !!L_GET_CPP_PTR_FROM_C_OBJECT(msg)->downloadFile(fileTransferContent);
+}
+
+bool_t linphone_chat_message_download_contents(LinphoneChatMessage *msg) {
+	return !!L_GET_CPP_PTR_FROM_C_OBJECT(msg)->downloadFiles();
 }
 
 // =============================================================================

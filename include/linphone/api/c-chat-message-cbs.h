@@ -113,6 +113,23 @@ LINPHONE_PUBLIC void linphone_chat_message_cbs_set_reaction_removed(LinphoneChat
                                                                     LinphoneChatMessageCbsReactionRemovedCb cb);
 
 /**
+ * Get the file transfer terminated callback.
+ * @param cbs LinphoneChatMessageCbs object. @notnil
+ * @return The current file transfer terminated callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsFileTransferTerminatedCb
+linphone_chat_message_cbs_get_file_transfer_terminated(const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the file transfer terminated callback.
+ * @param cbs LinphoneChatMessageCbs object. @notnil
+ * @param cb The file transfer terminated callback to be used.
+ */
+LINPHONE_PUBLIC void
+linphone_chat_message_cbs_set_file_transfer_terminated(LinphoneChatMessageCbs *cbs,
+                                                       LinphoneChatMessageCbsFileTransferTerminatedCb cb);
+
+/**
  * Get the file transfer receive callback.
  * @param cbs LinphoneChatMessageCbs object. @notnil
  * @return The current file transfer receive callback.

@@ -473,10 +473,12 @@ static void file_transfer_content(void) {
 
 	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, laure->identity);
 
-	LinphoneContent *file_transfer_content = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
-	linphone_content_set_file_path(file_transfer_content, send_filepath);
+	LinphoneContent *file_transfer_message_content =
+	    linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+	linphone_content_set_file_path(file_transfer_message_content, send_filepath);
 
-	LinphoneChatMessage *message = linphone_chat_room_create_file_transfer_message(chat_room, file_transfer_content);
+	LinphoneChatMessage *message =
+	    linphone_chat_room_create_file_transfer_message(chat_room, file_transfer_message_content);
 	const bctbx_list_t *contents = linphone_chat_message_get_contents(message);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int, "%d");
 
@@ -490,8 +492,102 @@ static void file_transfer_content(void) {
 	}
 
 	linphone_chat_message_unref(message);
-	linphone_content_unref(file_transfer_content);
+	linphone_content_unref(file_transfer_message_content);
 	bctbx_free(send_filepath);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void message_with_two_attachments(void) {
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_tcp_rc");
+	// Disable autodownload
+	linphone_core_set_max_size_for_auto_download_incoming_files(laure->lc, -1);
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	char *send_filepath1 = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *send_filepath2 = bc_tester_res("images/nowebcamVGA.jpg");
+
+	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, laure->identity);
+	linphone_chat_room_allow_multipart(chat_room);
+
+	LinphoneChatMessage *message = linphone_chat_room_create_empty_message(chat_room);
+
+	LinphoneContent *file_transfer_content1 = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+	linphone_content_set_file_path(file_transfer_content1, send_filepath1);
+	linphone_chat_message_add_file_content(message, file_transfer_content1);
+
+	LinphoneContent *file_transfer_content2 = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+	linphone_content_set_file_path(file_transfer_content2, send_filepath2);
+	linphone_chat_message_add_file_content(message, file_transfer_content2);
+
+	const bctbx_list_t *contents = linphone_chat_message_get_contents(message);
+	size_t nb_of_contents = bctbx_list_size(contents);
+	BC_ASSERT_EQUAL(nb_of_contents, 2, size_t, "%zu");
+
+	LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+	BC_ASSERT_PTR_NOT_NULL(content);
+	if (content) {
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "sintel_trailer_opus_h264.mkv");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_file_path(content), send_filepath1);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "octet-stream");
+	}
+
+	if (nb_of_contents > 1) {
+		content = (LinphoneContent *)bctbx_list_get_data(bctbx_list_next(contents));
+		if (content) {
+			BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "nowebcamVGA.jpg");
+			BC_ASSERT_STRING_EQUAL(linphone_content_get_file_path(content), send_filepath2);
+			BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+			BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "octet-stream");
+		}
+	}
+	LinphoneChatMessageCbs *send_cbs = linphone_chat_message_get_callbacks(message);
+	linphone_chat_message_cbs_set_msg_state_changed(send_cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_cbs_set_file_transfer_recv(send_cbs, file_transfer_received);
+	linphone_chat_message_cbs_set_file_transfer_progress_indication(send_cbs, file_transfer_progress_indication);
+	linphone_chat_message_send(message);
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+	BC_ASSERT_TRUE(wait_for(pauline->lc, laure->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, laure->lc, &laure->stat.number_of_LinphoneMessageReceivedWithFile, 1));
+	LinphoneChatMessage *laure_recv_msg = laure->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(laure_recv_msg);
+	if (laure_recv_msg != NULL) {
+		LinphoneChatMessageCbs *recv_cbs = linphone_chat_message_get_callbacks(laure_recv_msg);
+		linphone_chat_message_cbs_set_msg_state_changed(recv_cbs, liblinphone_tester_chat_message_msg_state_changed);
+		linphone_chat_message_cbs_set_file_transfer_recv(recv_cbs, file_transfer_received);
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(recv_cbs, file_transfer_progress_indication);
+		linphone_chat_message_cbs_set_file_transfer_terminated(
+		    recv_cbs, liblinphone_tester_chat_message_file_transfer_terminated);
+
+		const bctbx_list_t *recv_contents = linphone_chat_message_get_contents(laure_recv_msg);
+		size_t nb_of_recv_contents = bctbx_list_size(recv_contents);
+		BC_ASSERT_EQUAL(nb_of_recv_contents, nb_of_contents, size_t, "%zu");
+		linphone_chat_message_download_contents(laure_recv_msg);
+		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
+		                              &laure->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
+		                              nb_of_contents, liblinphone_tester_sip_timeout));
+		BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(laure->lc), nb_of_contents, unsigned int, "%u");
+		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
+		                              &laure->stat.number_of_LinphoneMessageFileTransferInProgress, nb_of_contents,
+		                              liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc, &laure->stat.number_of_LinphoneMessageFileTransferDone,
+		                              nb_of_contents, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
+		                              &laure->stat.number_of_LinphoneMessageFileTransferTerminated, nb_of_contents,
+		                              liblinphone_tester_sip_timeout));
+	}
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, pauline->lc,
+	                              &laure->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
+	                              2 * nb_of_contents, liblinphone_tester_sip_timeout));
+	BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(laure->lc), 0, unsigned int, "%u");
+	linphone_chat_message_unref(message);
+	linphone_content_unref(file_transfer_content1);
+	linphone_content_unref(file_transfer_content2);
+	bc_free(send_filepath1);
+	bc_free(send_filepath2);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
 }
@@ -1433,21 +1529,26 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 				}
 				BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_external_body_url(recv_msg));
 
-				if (two_files) {
-					const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);
-					BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 2, int, "%d");
-				}
+				const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);
+				size_t nb_of_contents = bctbx_list_size(contents);
+				BC_ASSERT_EQUAL(nb_of_contents, two_files ? 2 : 1, size_t, "%zu");
 
 				LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(recv_msg);
 				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+				linphone_chat_message_cbs_set_file_transfer_terminated(
+				    cbs, liblinphone_tester_chat_message_file_transfer_terminated);
 				if (use_file_body_handler_in_download) {
 					char *receive_filepath = random_filepath("receive_file", "dump");
 					linphone_chat_message_set_file_transfer_filepath(recv_msg, receive_filepath);
 					bctbx_free(receive_filepath);
 				}
 				linphone_chat_message_download_file(recv_msg);
+				BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
+				                              &marie->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged, 1,
+				                              liblinphone_tester_sip_timeout));
+				BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(marie->lc), 1, unsigned int, "%u");
 
 				if (expect_auth_failure_down) {
 					BC_ASSERT_TRUE(
@@ -1472,6 +1573,10 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 						BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc,
 						                               &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 3000));
 					}
+					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
+					                              &marie->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
+					                              2, liblinphone_tester_sip_timeout));
+					BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(marie->lc), 0, unsigned int, "%u");
 				} else {
 					/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though
 					 */
@@ -1482,9 +1587,32 @@ void transfer_message_base4(LinphoneCoreManager *marie,
 						remove(linphone_chat_message_get_file_transfer_filepath(recv_msg));
 					}
 
+					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
+					                              &marie->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
+					                              2, liblinphone_tester_sip_timeout));
+					BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(marie->lc), 0, unsigned int, "%u");
+					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
+					                              &marie->stat.number_of_LinphoneMessageFileTransferTerminated, 1,
+					                              liblinphone_tester_sip_timeout));
+
 					if (two_files) {
 						linphone_chat_message_download_file(recv_msg);
+						BC_ASSERT_TRUE(wait_for_until(
+						    marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
+						    3, liblinphone_tester_sip_timeout));
+						BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(marie->lc), 1, unsigned int,
+						                "%u");
+
 						BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
+
+						BC_ASSERT_TRUE(wait_for_until(
+						    marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRemainingNumberOfFileTransferChanged,
+						    4, liblinphone_tester_sip_timeout));
+						BC_ASSERT_EQUAL(linphone_core_get_remaining_download_file_count(marie->lc), 0, unsigned int,
+						                "%u");
+						BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc,
+						                              &marie->stat.number_of_LinphoneMessageFileTransferTerminated, 2,
+						                              liblinphone_tester_sip_timeout));
 
 						/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate
 						 * though */
@@ -4171,6 +4299,7 @@ static void received_messages_with_aggregation_enabled(void) {
 
 test_t message_tests[] = {
     TEST_NO_TAG("File transfer content", file_transfer_content),
+    TEST_NO_TAG("Message with 2 attachments", message_with_two_attachments),
     TEST_NO_TAG("Create two basic chat rooms with same remote", create_two_basic_chat_room_with_same_remote),
     TEST_NO_TAG("Text message", text_message),
     TEST_NO_TAG("Text forward message", text_forward_message),

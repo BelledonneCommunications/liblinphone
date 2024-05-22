@@ -162,6 +162,10 @@ void GenericPlatformHelpers::startPushService(){};
 
 void GenericPlatformHelpers::stopPushService(){};
 
+void GenericPlatformHelpers::startFileTransferService(){};
+
+void GenericPlatformHelpers::stopFileTransferService(){};
+
 void GenericPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
 

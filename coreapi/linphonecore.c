@@ -371,11 +371,21 @@ void linphone_core_cbs_set_chat_room_read(LinphoneCoreCbs *cbs, LinphoneCoreCbsC
 	cbs->vtable->chat_room_read = cb;
 }
 
-LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_sent(LinphoneCoreCbs *cbs) {
+LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb
+linphone_core_cbs_get_remaining_number_of_file_transfer_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->remaining_number_of_file_transfer_changed;
+}
+
+void linphone_core_cbs_set_remaining_number_of_file_transfer_changed(
+    LinphoneCoreCbs *cbs, LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb cb) {
+	cbs->vtable->remaining_number_of_file_transfer_changed = cb;
+}
+
+LinphoneCoreCbsMessageSentCb linphone_core_cbs_get_message_sent(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->message_sent;
 }
 
-void linphone_core_cbs_set_message_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageReceivedCb cb) {
+void linphone_core_cbs_set_message_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageSentCb cb) {
 	cbs->vtable->message_sent = cb;
 }
 

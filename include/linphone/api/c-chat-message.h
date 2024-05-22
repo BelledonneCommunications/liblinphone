@@ -239,6 +239,14 @@ linphone_chat_message_get_file_transfer_information(const LinphoneChatMessage *m
 LINPHONE_PUBLIC bool_t linphone_chat_message_download_content(LinphoneChatMessage *message, LinphoneContent *content);
 
 /**
+ * Start the download of all the #LinphoneContent objects with are of type file transfer (the
+ * linphone_content_is_file_transfer() method return TRUE) referenced in the #LinphoneChatMessage from remote server.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return FALSE if there is an error, TRUE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_message_download_contents(LinphoneChatMessage *message);
+
+/**
  * Cancel an ongoing file transfer attached to this message.(upload or download)
  * @param message #LinphoneChatMessage object. @notnil
  */

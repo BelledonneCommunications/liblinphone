@@ -301,6 +301,13 @@ typedef void (*LinphoneChatMessageCbsParticipantImdnStateChangedCb)(LinphoneChat
                                                                     const LinphoneParticipantImdnState *state);
 
 /**
+ * File transfer terminated callback prototype.
+ * @param message #LinphoneChatMessage message from which the body is received. @notnil
+ * @param content #LinphoneContent incoming content information @notnil
+ */
+typedef void (*LinphoneChatMessageCbsFileTransferTerminatedCb)(LinphoneChatMessage *message, LinphoneContent *content);
+
+/**
  * File transfer receive callback prototype. This function is called by the core upon an incoming File transfer is
  * started. This function may be call several time for the same file in case of large file.
  * @param message #LinphoneChatMessage message from which the body is received. @notnil

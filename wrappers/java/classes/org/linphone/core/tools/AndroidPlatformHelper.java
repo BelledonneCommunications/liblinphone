@@ -59,6 +59,7 @@ import org.linphone.core.tools.receiver.DozeReceiver;
 import org.linphone.core.tools.receiver.InteractivityReceiver;
 import org.linphone.core.tools.service.CoreManager;
 import org.linphone.core.tools.service.PushService;
+import org.linphone.core.tools.service.FileTransferService;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.video.capture.CaptureTextureView;
 import org.linphone.mediastream.Version;
@@ -98,6 +99,9 @@ public class AndroidPlatformHelper {
 
     private Class mPushServiceClass;
     private boolean mPushServiceStarted;
+
+    private Class mFileTransferServiceClass;
+    private boolean mFileTransferServiceStarted;
 
     private static int mTempCountWifi = 0;
     private static int mTempCountMCast = 0;
@@ -178,6 +182,11 @@ public class AndroidPlatformHelper {
         mPushServiceClass = getPushServiceClass();
         if (mPushServiceClass == null) {
             mPushServiceClass = org.linphone.core.tools.service.PushService.class;
+        }
+
+        mFileTransferServiceClass = getFileTransferServiceClass();
+        if (mFileTransferServiceClass == null) {
+            mFileTransferServiceClass = org.linphone.core.tools.service.FileTransferService.class;
         }
     }
 
@@ -950,9 +959,27 @@ public class AndroidPlatformHelper {
     public synchronized void stopPushService() {
         if (mPushServiceStarted) {
             Log.i("[Platform Helper] Foreground push service is no longer required");
-            Intent i = new Intent(mContext, mPushServiceClass); 
+            Intent i = new Intent(mContext, mPushServiceClass);
             mContext.stopService(i);
             mPushServiceStarted = false;
+        }
+    }
+
+    public synchronized void startFileTransferService() {
+        if (!mFileTransferServiceStarted) {
+            Log.i("[Platform Helper] Starting foreground file transfer service");
+            Intent i = new Intent(mContext, mFileTransferServiceClass);
+            DeviceUtils.startForegroundService(mContext, i);
+            mFileTransferServiceStarted = true;
+        }
+    }
+
+    public synchronized void stopFileTransferService() {
+        if (mFileTransferServiceStarted) {
+            Log.i("[Platform Helper] Foreground file transfer service is no longer required");
+            Intent i = new Intent(mContext, mFileTransferServiceClass);
+            mContext.stopService(i);
+            mFileTransferServiceStarted = false;
         }
     }
 
@@ -968,6 +995,39 @@ public class AndroidPlatformHelper {
                         Class serviceClass = Class.forName(serviceName);
                         if (PushService.class.isAssignableFrom(serviceClass)) {
                             Log.i("[Platform Helper] Found a service that herits from org.linphone.core.tools.service.PushService: ", serviceName);
+                            return serviceClass;
+                        }
+                    } catch (Exception exception) {
+                        Log.e("[Platform Helper] Exception trying to get Class from name [", serviceName, "]: ", exception);
+                    } catch (Error error) {
+                        Log.e("[Platform Helper] Error trying to get Class from name [", serviceName, "]: ", error);
+                    }
+                }
+            } else {
+                Log.w("[Platform Helper] No Service found in package info, continuing without it...");
+                return null;
+            }
+        } catch (Exception e) {
+            Log.e("[Platform Helper] Exception thrown while trying to find available Services: ", e);
+            return null;
+        }
+
+        Log.w("[Platform Helper] Failed to find a valid Service, continuing without it...");
+        return null;
+    }
+
+    private Class getFileTransferServiceClass() {
+        // Inspect services in package to get the class name of the Service that extends FileTransferService, assume first one
+        try {
+            PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SERVICES);
+            ServiceInfo[] services = packageInfo.services;
+            if (services != null) {
+                for (ServiceInfo service : services) {
+                    String serviceName = service.name;
+                    try {
+                        Class serviceClass = Class.forName(serviceName);
+                        if (FileTransferService.class.isAssignableFrom(serviceClass)) {
+                            Log.i("[Platform Helper] Found a service that herits from org.linphone.core.tools.service.FileTransferService: ", serviceName);
                             return serviceClass;
                         }
                     } catch (Exception exception) {

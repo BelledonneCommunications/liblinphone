@@ -593,10 +593,17 @@ error:
 void FileTransferChatMessageModifier::fileUploadBeginBackgroundTask() {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message) return;
+	message->getCore()->incrementRemainingUploadFileCount();
 	bgTask.start(message->getCore());
 }
 
 void FileTransferChatMessageModifier::fileUploadEndBackgroundTask() {
+	shared_ptr<ChatMessage> message = chatMessage.lock();
+	// Avoid decrementing the upload file count if the upload task didn't start
+	// This method is called by Core::uninit event for messages that do not involve the file transfer
+	if (message && bgTask.hasStarted()) {
+		message->getCore()->decrementRemainingUploadFileCount();
+	}
 	bgTask.stop();
 }
 
@@ -695,6 +702,7 @@ void FileTransferChatMessageModifier::onRecvBody(BCTBX_UNUSED(belle_sip_user_bod
 				                                           ::ms_time(nullptr));
 			}
 		}
+		message->getCore()->decrementRemainingDownloadFileCount();
 	}
 }
 
@@ -748,8 +756,8 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 		retval = imee->downloadingFile(message, 0, nullptr, 0, nullptr, currentFileTransferContent);
 	}
 	if (retval == 0 || retval == -1) {
+		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 		if (currentFileContentToTransfer->getFilePath().empty()) {
-			LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 			LinphoneContent *content = currentFileContentToTransfer->toC();
 			LinphoneBuffer *lb = linphone_buffer_new();
@@ -785,6 +793,14 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 				renameFileAfterAutoDownload(core, fileContent);
 			}
 
+			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+			LinphoneContent *content = currentFileContentToTransfer->toC();
+			// Deprecated: use list of callbacks now
+			if (linphone_chat_message_cbs_get_file_transfer_terminated(cbs)) {
+				linphone_chat_message_cbs_get_file_transfer_terminated(cbs)(msg, content);
+			}
+			_linphone_chat_message_notify_file_transfer_terminated(msg, content);
+
 			releaseHttpRequest();
 
 			if (meAddress) {
@@ -792,9 +808,8 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 				                                           ::ms_time(nullptr));
 			}
 
-			if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
-				message->getPrivate()->handleAutoDownload();
-			}
+			message->getCore()->decrementRemainingDownloadFileCount();
+			message->downloadTerminated();
 		}
 	} else {
 		lWarning() << "File transfer decrypt failed with code " << (int)retval;
@@ -803,6 +818,7 @@ void FileTransferChatMessageModifier::onRecvEnd(BCTBX_UNUSED(belle_sip_user_body
 			                                           ::ms_time(nullptr));
 		}
 		releaseHttpRequest();
+		message->getCore()->decrementRemainingDownloadFileCount();
 		currentFileTransferContent = nullptr;
 	}
 }
@@ -906,6 +922,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile(const be
 void FileTransferChatMessageModifier::onDownloadFailed() {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message) return;
+	message->getCore()->decrementRemainingDownloadFileCount();
 	if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
 		lError() << "Auto download failed for message [" << message << "]";
 		message->getPrivate()->doNotRetryAutoDownload();
@@ -922,6 +939,7 @@ void FileTransferChatMessageModifier::onDownloadFailed() {
 		}
 		releaseHttpRequest();
 		currentFileTransferContent = nullptr;
+		message->downloadTerminated();
 	}
 }
 
@@ -987,18 +1005,20 @@ static void createFileContentFromFileTransferContent(std::shared_ptr<FileTransfe
 	fileTransferContent->setFileContent(fileContent);
 }
 
-bool FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage> &message,
-                                                   std::shared_ptr<FileTransferContent> &fileTransferContent) {
+FileTransferChatMessageModifier::DownloadStatus
+FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage> &message,
+                                              std::shared_ptr<FileTransferContent> &fileTransferContent) {
 	chatMessage = message;
 
 	if (httpRequest) {
-		lError() << "There is already a download in progress.";
-		return false;
+		lError() << "Content " << fileTransferContent
+		         << " cannot be downloaded right now because there is already a download in progress.";
+		return DownloadStatus::DownloadInProgress;
 	}
 
 	if (fileTransferContent->getContentType() != ContentType::FileTransfer) {
-		lError() << "Content type is not a FileTransfer.";
-		return false;
+		lError() << "Content " << fileTransferContent << " cannot be downloaded because its type is not FileTransfer";
+		return DownloadStatus::BadContent;
 	}
 	auto fileContent = fileTransferContent->getFileContent();
 	if (fileContent) {
@@ -1008,7 +1028,10 @@ bool FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage>
 	createFileContentFromFileTransferContent(fileTransferContent);
 	fileContent = fileTransferContent->getFileContent();
 	currentFileContentToTransfer = fileContent;
-	if (!currentFileContentToTransfer) return false;
+	if (!currentFileContentToTransfer) {
+		lError() << "Content " << fileTransferContent << " has no specified file";
+		return DownloadStatus::BadFile;
+	}
 	currentFileTransferContent = fileTransferContent;
 
 	// THIS IS ONLY FOR BACKWARD C API COMPAT
@@ -1039,7 +1062,11 @@ bool FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage>
 		url.insert(0, proxy);
 	}
 	int err = startHttpTransfer(url, "GET", nullptr, &cbs);
-	if (err == -1) return false;
+	if (err == -1) {
+		lError() << "Content " << fileTransferContent << " cannot be downloaded due to HTTP failure";
+		return DownloadStatus::HttpFailure;
+	}
+
 	// start the download, status is In Progress
 	const auto &chatRoom = message->getChatRoom();
 	if (chatRoom) {
@@ -1049,7 +1076,7 @@ bool FileTransferChatMessageModifier::downloadFile(const shared_ptr<ChatMessage>
 			                                           ::ms_time(nullptr));
 		}
 	}
-	return true;
+	return DownloadStatus::Ok;
 }
 
 // ----------------------------------------------------------

@@ -2586,6 +2586,8 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_dtmf_received(mgr->cbs, dtmf_received);
 	linphone_core_cbs_set_call_stats_updated(mgr->cbs, call_stats_updated);
 	linphone_core_cbs_set_global_state_changed(mgr->cbs, global_state_changed);
+	linphone_core_cbs_set_remaining_number_of_file_transfer_changed(
+	    mgr->cbs, liblinphone_tester_remaining_number_of_file_transfer_changed);
 	linphone_core_cbs_set_message_sent(mgr->cbs, liblinphone_tester_chat_room_msg_sent);
 	linphone_core_cbs_set_first_call_started(mgr->cbs, first_call_started);
 	linphone_core_cbs_set_last_call_ended(mgr->cbs, last_call_ended);
@@ -4169,6 +4171,13 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 	}
 }
 
+void liblinphone_tester_chat_message_file_transfer_terminated(LinphoneChatMessage *msg,
+                                                              BCTBX_UNUSED(LinphoneContent *content)) {
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneMessageFileTransferTerminated++;
+}
+
 bctbx_list_t *liblinphone_tester_get_messages_and_states(
     LinphoneChatRoom *cr, int *messageCount, stats *stats) { // Return all LinphoneChatMessage and count states
 	bctbx_list_t *messages = linphone_chat_room_get_history(cr, 0);
@@ -4179,6 +4188,13 @@ bctbx_list_t *liblinphone_tester_get_messages_and_states(
 		    stats, linphone_chat_message_get_state((LinphoneChatMessage *)elem->data));
 	}
 	return messages;
+}
+
+void liblinphone_tester_remaining_number_of_file_transfer_changed(LinphoneCore *lc,
+                                                                  BCTBX_UNUSED(unsigned int download_count),
+                                                                  BCTBX_UNUSED(unsigned int upload_count)) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneRemainingNumberOfFileTransferChanged++;
 }
 
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc,

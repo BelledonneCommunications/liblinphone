@@ -54,6 +54,10 @@ public:
 		return mName;
 	}
 
+	bool hasStarted() const {
+		return mId != 0;
+	}
+
 	/**
 	 * Start a long running task for at most max_duration_seconds, after which it is automatically terminated
 	 */

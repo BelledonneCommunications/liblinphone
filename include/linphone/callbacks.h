@@ -292,6 +292,16 @@ typedef void (*LinphoneCoreCbsAccountAddedCb)(LinphoneCore *core, LinphoneAccoun
 typedef void (*LinphoneCoreCbsAccountRemovedCb)(LinphoneCore *core, LinphoneAccount *account);
 
 /**
+ * Called after a download is terminated or a new attachement is to be downloaded
+ * @param core #LinphoneCore object @notnil
+ * @param download_count outstanding number of files to be downloaded including the one that is currently downloading
+ * @param upload_count outstanding number of files to be upload including the one that is currently uploading
+ */
+typedef void (*LinphoneCoreCbsRemainingNumberOfFileTransferChangedCb)(LinphoneCore *core,
+                                                                      unsigned int download_count,
+                                                                      unsigned int upload_count);
+
+/**
  * Chat messages callback prototype.
  * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using
  * linphone_core_set_chat_messages_aggregation_enabled()), it replaces the single message received callback.

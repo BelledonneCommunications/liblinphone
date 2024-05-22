@@ -40,6 +40,8 @@ public:
 	FileTransferChatMessageModifier(belle_http_provider_t *prov);
 	~FileTransferChatMessageModifier();
 
+	enum class DownloadStatus { Ok, DownloadInProgress, BadContent, BadFile, HttpFailure };
+
 	Result encode(const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	Result decode(const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 
@@ -63,8 +65,8 @@ public:
 	void processIoErrorDownload(const belle_sip_io_error_event_t *event);
 	void processResponseFromGetFile(const belle_http_response_event_t *event);
 
-	bool downloadFile(const std::shared_ptr<ChatMessage> &message,
-	                  std::shared_ptr<FileTransferContent> &fileTransferContent);
+	DownloadStatus downloadFile(const std::shared_ptr<ChatMessage> &message,
+	                            std::shared_ptr<FileTransferContent> &fileTransferContent);
 	void cancelFileTransfer();
 	bool isFileTransferInProgressAndValid() const;
 	std::string createFakeFileTransferFromUrl(const std::string &url);

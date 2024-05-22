@@ -1033,4 +1033,58 @@ bool Core::emptyChatroomsDeletionEnabled() const {
 	return deleteEmptyChatrooms;
 }
 
+unsigned int Core::getRemainingUploadFileCount() const {
+	return mRemainingUploadFileCount;
+}
+
+void Core::incrementRemainingUploadFileCount() {
+	LinphoneCore *cCore = getCCore();
+	if ((mRemainingDownloadFileCount == 0) && (mRemainingUploadFileCount == 0)) {
+		static_cast<PlatformHelpers *>(cCore->platform_helper)->startFileTransferService();
+	}
+	mRemainingUploadFileCount++;
+	linphone_core_notify_remaining_number_of_file_transfer_changed(cCore, mRemainingDownloadFileCount,
+	                                                               mRemainingUploadFileCount);
+}
+
+void Core::decrementRemainingUploadFileCount() {
+	if (mRemainingUploadFileCount == 0) {
+		lFatal() << "Unexpectedly reaching negative upload file count";
+	}
+	mRemainingUploadFileCount--;
+	LinphoneCore *cCore = getCCore();
+	linphone_core_notify_remaining_number_of_file_transfer_changed(cCore, mRemainingDownloadFileCount,
+	                                                               mRemainingUploadFileCount);
+	if ((mRemainingDownloadFileCount == 0) && (mRemainingUploadFileCount == 0)) {
+		static_cast<PlatformHelpers *>(cCore->platform_helper)->stopFileTransferService();
+	}
+}
+
+unsigned int Core::getRemainingDownloadFileCount() const {
+	return mRemainingDownloadFileCount;
+}
+
+void Core::incrementRemainingDownloadFileCount() {
+	LinphoneCore *cCore = getCCore();
+	if ((mRemainingDownloadFileCount == 0) && (mRemainingUploadFileCount == 0)) {
+		static_cast<PlatformHelpers *>(cCore->platform_helper)->startFileTransferService();
+	}
+	mRemainingDownloadFileCount++;
+	linphone_core_notify_remaining_number_of_file_transfer_changed(cCore, mRemainingDownloadFileCount,
+	                                                               mRemainingUploadFileCount);
+}
+
+void Core::decrementRemainingDownloadFileCount() {
+	if (mRemainingDownloadFileCount == 0) {
+		lFatal() << "Unexpectedly reaching negative dowload file count";
+	}
+	mRemainingDownloadFileCount--;
+	LinphoneCore *cCore = getCCore();
+	linphone_core_notify_remaining_number_of_file_transfer_changed(cCore, mRemainingDownloadFileCount,
+	                                                               mRemainingUploadFileCount);
+	if ((mRemainingDownloadFileCount == 0) && (mRemainingUploadFileCount == 0)) {
+		static_cast<PlatformHelpers *>(cCore->platform_helper)->stopFileTransferService();
+	}
+}
+
 LINPHONE_END_NAMESPACE

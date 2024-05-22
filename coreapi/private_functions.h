@@ -56,6 +56,9 @@ void linphone_call_notify_send_master_key_changed(LinphoneCall *call, const char
 void linphone_call_notify_receive_master_key_changed(LinphoneCall *call, const char *master_key);
 void linphone_call_notify_transfer_state_changed(LinphoneCall *call, LinphoneCallState cstate);
 void linphone_call_notify_stats_updated(LinphoneCall *call, const LinphoneCallStats *stats);
+void linphone_core_notify_remaining_number_of_file_transfer_changed(LinphoneCore *lc,
+                                                                    unsigned int download_count,
+                                                                    unsigned int upload_count);
 void linphone_call_notify_info_message_received(LinphoneCall *call, const LinphoneInfoMessage *msg);
 void linphone_call_notify_ack_processing(LinphoneCall *call, LinphoneHeaders *msg, bool_t is_received);
 void linphone_call_notify_tmmbr_received(LinphoneCall *call, int stream_index, int tmmbr);
@@ -531,6 +534,7 @@ void _linphone_chat_message_notify_new_message_reaction(LinphoneChatMessage *msg
 void _linphone_chat_message_notify_reaction_removed(LinphoneChatMessage *msg, const LinphoneAddress *address);
 void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage *msg,
                                                                   const LinphoneParticipantImdnState *state);
+void _linphone_chat_message_notify_file_transfer_terminated(LinphoneChatMessage *msg, LinphoneContent *content);
 void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg,
                                                       LinphoneContent *content,
                                                       const LinphoneBuffer *buffer);

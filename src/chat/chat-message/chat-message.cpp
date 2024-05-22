@@ -1122,9 +1122,9 @@ void ChatMessagePrivate::handleAutoDownload() {
 		lInfo() << "Auto file download step already done, skipping";
 	} else {
 		int maxSize = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
-		bool_t autoDownloadVoiceRecordings =
-		    linphone_core_is_auto_download_voice_recordings_enabled(q->getCore()->getCCore());
-		bool_t autoDownloadIcalendars = linphone_core_is_auto_download_icalendars_enabled(q->getCore()->getCCore());
+		bool autoDownloadVoiceRecordings =
+		    !!linphone_core_is_auto_download_voice_recordings_enabled(q->getCore()->getCCore());
+		bool autoDownloadIcalendars = !!linphone_core_is_auto_download_icalendars_enabled(q->getCore()->getCCore());
 		for (auto &c : contents) {
 			if (c->isFileTransfer()) {
 				auto ftc = static_pointer_cast<FileTransferContent>(c);
@@ -1148,28 +1148,20 @@ void ChatMessagePrivate::handleAutoDownload() {
 						lInfo() << "Automatically downloading file to " << filepath;
 						ftc->setFilePath(filepath);
 						setAutoFileTransferDownloadInProgress(true);
-						q->downloadFile(ftc);
-						return;
 					}
 				}
 			}
 		}
-		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+		// Download all attachments
+		if (isAutoFileTransferDownloadInProgress()) {
+			q->downloadFiles();
+		} else {
+			currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+		}
 	}
 
-	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
-	if (!chatRoom) return;
-
-	const auto &meAddress = chatRoom->getMe()->getAddress();
-	chatRoom->removeTransientChatMessage(q->getSharedFromThis());
-	setAutoFileTransferDownloadInProgress(false);
-	// The message is set to delivered here because this code is hit if the attachment cannot be downloaded or the
-	// download is aborted The delivered state will be set again message_delivery_update upon reception of 200 Ok or 202
-	// Accepted when a message is sent
-	setParticipantState(meAddress, ChatMessage::State::Delivered, ::ms_time(NULL));
-	const bool isBasicChatRoom = chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic);
-	if (!isBasicChatRoom) {
-		setParticipantState(meAddress, ChatMessage::State::DeliveredToUser, ::ms_time(nullptr));
+	if (!isAutoFileTransferDownloadInProgress()) {
+		endMessageReception();
 	}
 
 	for (auto &c : contents) {
@@ -1190,6 +1182,22 @@ void ChatMessagePrivate::handleAutoDownload() {
 	}
 
 	return;
+}
+
+void ChatMessagePrivate::endMessageReception() {
+	L_Q();
+	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
+	if (!chatRoom) return;
+	const auto &meAddress = chatRoom->getMe()->getAddress();
+	chatRoom->removeTransientChatMessage(q->getSharedFromThis());
+	// The message is set to delivered here because this code is hit if the attachment cannot be downloaded or the
+	// download is aborted The delivered state will be set again message_delivery_update upon reception of 200 Ok or 202
+	// Accepted when a message is sent
+	setParticipantState(meAddress, ChatMessage::State::Delivered, ::ms_time(NULL));
+	const bool isBasicChatRoom = chatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic);
+	if (!isBasicChatRoom) {
+		setParticipantState(meAddress, ChatMessage::State::DeliveredToUser, ::ms_time(nullptr));
+	}
 }
 
 void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
@@ -1585,6 +1593,7 @@ ChatMessage::ChatMessage(ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getP
 ChatMessage::~ChatMessage() {
 	fileUploadEndBackgroundTask();
 	deleteChatMessageFromCache();
+	contentsToDownload.clear();
 	stopResendTimer();
 	std::shared_ptr<Core> core = nullptr;
 	try {
@@ -1949,9 +1958,64 @@ void ChatMessage::send() {
 	getChatRoom()->sendChatMessage(getSharedFromThis());
 }
 
-bool ChatMessage::downloadFile(std::shared_ptr<FileTransferContent> fileTransferContent) {
+bool ChatMessage::downloadFile(std::shared_ptr<FileTransferContent> fileTransferContent, bool retry) {
 	L_D();
-	return d->fileTransferChatMessageModifier.downloadFile(getSharedFromThis(), fileTransferContent);
+	const auto filepath =
+	    fileTransferContent->getFilePath().empty() ? d->getFileTransferFilepath() : fileTransferContent->getFilePath();
+	lInfo() << "ChatMessage [" << getSharedFromThis() << "]: Start download of file " << filepath;
+	const auto status = d->fileTransferChatMessageModifier.downloadFile(getSharedFromThis(), fileTransferContent);
+	if (status == FileTransferChatMessageModifier::DownloadStatus::DownloadInProgress) {
+		// There is already another file that it is downloading, therefore add it to the queue
+		lWarning() << "ChatMessage [" << getSharedFromThis()
+		           << "]: There is already a download in progress, therefore delaying download of file " << filepath
+		           << " of content " << fileTransferContent;
+		contentsToDownload.push_back(fileTransferContent);
+	}
+
+	switch (status) {
+		case FileTransferChatMessageModifier::DownloadStatus::DownloadInProgress:
+		case FileTransferChatMessageModifier::DownloadStatus::Ok:
+			if (!retry) getCore()->incrementRemainingDownloadFileCount();
+			break;
+		case FileTransferChatMessageModifier::DownloadStatus::BadContent:
+		case FileTransferChatMessageModifier::DownloadStatus::BadFile:
+		case FileTransferChatMessageModifier::DownloadStatus::HttpFailure:
+			break;
+	}
+
+	return (status == FileTransferChatMessageModifier::DownloadStatus::Ok);
+}
+
+bool ChatMessage::downloadFiles() {
+	L_D();
+	lInfo() << "Downloading all contents of message [" << getSharedFromThis() << "]";
+	const auto &contents = d->getContents();
+	bool ret = false;
+	for (auto &content : contents) {
+		if (content->isFileTransfer()) {
+			ret |= downloadFile(dynamic_pointer_cast<FileTransferContent>(content));
+		}
+	}
+	return ret;
+}
+
+// This method is call once the downlaod of a file is terminated and it kicks off the download of the following one if
+// the user wishes to do so
+bool ChatMessage::downloadTerminated() {
+	L_D();
+	bool ret = false;
+	if (contentsToDownload.empty()) {
+		if (d->isAutoFileTransferDownloadInProgress()) {
+			d->doNotRetryAutoDownload();
+			d->endMessageReception();
+			d->setAutoFileTransferDownloadInProgress(false);
+		}
+	} else {
+		auto content = contentsToDownload.front();
+		contentsToDownload.pop_front();
+		ret = downloadFile(dynamic_pointer_cast<FileTransferContent>(content), true);
+	}
+	return ret;
 }
 
 bool ChatMessage::isFileTransferInProgress() const {

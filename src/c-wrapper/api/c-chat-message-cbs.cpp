@@ -28,6 +28,7 @@ struct _LinphoneChatMessageCbs {
 	belle_sip_object_t base;
 	void *userData;
 	LinphoneChatMessageCbsMsgStateChangedCb msg_state_changed;
+	LinphoneChatMessageCbsFileTransferTerminatedCb file_transfer_terminated;
 	LinphoneChatMessageCbsFileTransferRecvCb file_transfer_recv;
 	LinphoneChatMessageCbsFileTransferSendCb file_transfer_send;
 	LinphoneChatMessageCbsFileTransferProgressIndicationCb file_transfer_progress_indication;
@@ -81,6 +82,16 @@ linphone_chat_message_cbs_get_msg_state_changed(const LinphoneChatMessageCbs *cb
 void linphone_chat_message_cbs_set_msg_state_changed(LinphoneChatMessageCbs *cbs,
                                                      LinphoneChatMessageCbsMsgStateChangedCb cb) {
 	cbs->msg_state_changed = cb;
+}
+
+LinphoneChatMessageCbsFileTransferTerminatedCb
+linphone_chat_message_cbs_get_file_transfer_terminated(const LinphoneChatMessageCbs *cbs) {
+	return cbs->file_transfer_terminated;
+}
+
+void linphone_chat_message_cbs_set_file_transfer_terminated(LinphoneChatMessageCbs *cbs,
+                                                            LinphoneChatMessageCbsFileTransferTerminatedCb cb) {
+	cbs->file_transfer_terminated = cb;
 }
 
 LinphoneChatMessageCbsFileTransferRecvCb

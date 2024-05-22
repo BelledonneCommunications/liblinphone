@@ -168,7 +168,9 @@ public:
 	const Content &getInternalContent() const;
 	void setInternalContent(const Content &content);
 
-	bool downloadFile(std::shared_ptr<FileTransferContent> content);
+	bool downloadFile(std::shared_ptr<FileTransferContent> content, bool retry = false);
+	bool downloadFiles();
+	bool downloadTerminated();
 	bool isFileTransferInProgress() const;
 	void fileUploadEndBackgroundTask();
 
@@ -187,6 +189,7 @@ protected:
 private:
 	ChatMessage(const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction);
 
+	std::list<std::shared_ptr<Content>> contentsToDownload;
 	belle_sip_source_t *mResendTimer = nullptr;
 
 	belle_sip_source_t *getResendTimer() const;

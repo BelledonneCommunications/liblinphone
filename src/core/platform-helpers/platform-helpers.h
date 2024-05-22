@@ -95,6 +95,8 @@ public:
 	virtual void stopNetworkMonitoring() = 0;
 	virtual void startPushService() = 0;
 	virtual void stopPushService() = 0;
+	virtual void startFileTransferService() = 0;
+	virtual void stopFileTransferService() = 0;
 
 	virtual void onLinphoneCoreStart(bool monitoringEnabled) = 0;
 	virtual void onLinphoneCoreStop() = 0;
@@ -175,6 +177,8 @@ public:
 	void stopNetworkMonitoring() override;
 	void startPushService() override;
 	void stopPushService() override;
+	void startFileTransferService() override;
+	void stopFileTransferService() override;
 
 	void onLinphoneCoreStart(bool monitoringEnabled) override;
 	void onLinphoneCoreStop() override;

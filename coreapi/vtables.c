@@ -252,6 +252,13 @@ void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *r
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_remaining_number_of_file_transfer_changed(LinphoneCore *lc,
+                                                                    unsigned int download_count,
+                                                                    unsigned int upload_count) {
+	NOTIFY_IF_EXIST(remaining_number_of_file_transfer_changed, lc, download_count, upload_count);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_new_message_reaction(LinphoneCore *lc,
                                                LinphoneChatRoom *room,
                                                LinphoneChatMessage *message,

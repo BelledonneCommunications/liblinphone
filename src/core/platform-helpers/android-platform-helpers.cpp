@@ -72,6 +72,8 @@ public:
 	void setHttpProxy(const string &host, int port) override;
 	void startPushService() override;
 	void stopPushService() override;
+	void startFileTransferService() override;
+	void stopFileTransferService() override;
 
 	void onLinphoneCoreStart(bool monitoringEnabled) override;
 	void onLinphoneCoreStop() override;
@@ -133,6 +135,8 @@ private:
 	jmethodID mDisableAudioRouteChangesId = nullptr;
 	jmethodID mStartPushService = nullptr;
 	jmethodID mStopPushService = nullptr;
+	jmethodID mStartFileTransferService = nullptr;
+	jmethodID mStopFileTransferService = nullptr;
 
 	// CoreManager methods
 	jmethodID mCoreManagerDestroyId = nullptr;
@@ -261,6 +265,8 @@ AndroidPlatformHelpers::AndroidPlatformHelpers(std::shared_ptr<LinphonePrivate::
 	mDisableAudioRouteChangesId = getMethodId(env, klass, "disableAudioRouteChanges", "(Z)V");
 	mStartPushService = getMethodId(env, klass, "startPushService", "()V");
 	mStopPushService = getMethodId(env, klass, "stopPushService", "()V");
+	mStartFileTransferService = getMethodId(env, klass, "startFileTransferService", "()V");
+	mStopFileTransferService = getMethodId(env, klass, "stopFileTransferService", "()V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -500,6 +506,20 @@ void AndroidPlatformHelpers::stopPushService() {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
 		env->CallVoidMethod(mJavaHelper, mStopPushService);
+	}
+}
+
+void AndroidPlatformHelpers::startFileTransferService() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mStartFileTransferService);
+	}
+}
+
+void AndroidPlatformHelpers::stopFileTransferService() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mStopFileTransferService);
 	}
 }
 
