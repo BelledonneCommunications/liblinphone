@@ -480,52 +480,17 @@ void CorePrivate::notifyRegistrationStateChanged(LinphoneProxyConfig *cfg,
 }
 
 void CorePrivate::notifyEnteringBackground() {
-	L_Q();
-	if (isInBackground) return;
-
-	ms_message("Core [%p] notify enter background", q);
-	isInBackground = true;
-
-#ifdef __ANDROID__
-	static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(q)->platform_helper)->updateNetworkReachability();
-#endif
 
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringBackground();
-
-	if (q->isFriendListSubscriptionEnabled()) enableFriendListsSubscription(false);
-
-#if TARGET_OS_IPHONE
-	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
-	/* Stop the dtmf stream in case it was started.*/
-	linphone_core_stop_dtmf_stream(lc);
-#endif
 }
 
 void CorePrivate::notifyEnteringForeground() {
-	L_Q();
-	if (!isInBackground) return;
-
-	isInBackground = false;
-
-#ifdef __ANDROID__
-	static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(q)->platform_helper)->updateNetworkReachability();
-#endif
-
-	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
-	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(lc);
-	if (lpc && linphone_proxy_config_get_state(lpc) == LinphoneRegistrationFailed) {
-		// This is to ensure an app bring to foreground that isn't registered correctly will try to fix that and not
-		// show a red registration dot to the user
-		linphone_proxy_config_refresh_register(lpc);
-	}
 
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringForeground();
-
-	if (q->isFriendListSubscriptionEnabled()) enableFriendListsSubscription(true);
 }
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop() {
@@ -742,12 +707,45 @@ shared_ptr<Core> Core::create(LinphoneCore *cCore) {
 
 void Core::enterBackground() {
 	L_D();
+	if (d->isInBackground) return;
+	lInfo() << "Core::enterBackground()";
+	d->isInBackground = true;
+
+#ifdef __ANDROID__
+	static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->updateNetworkReachability();
+#endif
+#if TARGET_OS_IPHONE
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+	/* Stop the dtmf stream in case it was started.*/
+	linphone_core_stop_dtmf_stream(lc);
+#endif
+	if (isFriendListSubscriptionEnabled()) d->enableFriendListsSubscription(false);
+
 	d->notifyEnteringBackground();
 }
 
 void Core::enterForeground() {
 	L_D();
+	if (!d->isInBackground) return;
+	lInfo() << "Core::enterForeground()";
+	d->isInBackground = false;
+
+#ifdef __ANDROID__
+	static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->updateNetworkReachability();
+#endif
+
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+	const bctbx_list_t *elem = linphone_core_get_account_list(lc);
+	for (; elem != nullptr; elem = elem->next) {
+		Account *account = Account::toCpp((LinphoneAccount *)elem->data);
+		if (account->getState() == LinphoneRegistrationFailed) {
+			lInfo() << "Refreshing failed account registration for "
+			        << *account->getAccountParams()->getIdentityAddress();
+			account->refreshRegister();
+		}
+	}
 	d->notifyEnteringForeground();
+	if (isFriendListSubscriptionEnabled()) d->enableFriendListsSubscription(true);
 }
 
 bool Core::isInBackground() const {
