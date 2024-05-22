@@ -43,7 +43,7 @@ public:
 
 	FriendPhoneNumber *clone() const override;
 #ifdef VCARD_ENABLED
-	std::shared_ptr<belcard::BelCardPhoneNumber> toBelcardPhoneNumber() const;
+	std::shared_ptr<belcard::BelCardPhoneNumber> toBelcardPhoneNumber(bool useV3Grammar) const;
 #endif
 
 	void setPhoneNumber(const std::string &phoneNumber);

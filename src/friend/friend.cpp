@@ -195,6 +195,7 @@ void Friend::setVcard(const std::shared_ptr<Vcard> &vcard) {
 	}
 
 	mVcard = vcard;
+	mRefKey = vcard->getUid();
 	if (mFriendList) saveInDb();
 }
 

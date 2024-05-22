@@ -40,7 +40,7 @@ class Vcard;
 class LINPHONE_PUBLIC VcardContext : public bellesip::HybridObject<LinphoneVcardContext, VcardContext>,
                                      public UserDataAccessor {
 public:
-	VcardContext();
+	VcardContext(bool useVCard3Grammar = false);
 	VcardContext(const VcardContext &other) = delete;
 	virtual ~VcardContext() = default;
 

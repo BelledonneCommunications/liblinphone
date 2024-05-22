@@ -29,8 +29,13 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef VCARD_ENABLED
 
-VcardContext::VcardContext() {
-	mParser = std::shared_ptr<belcard::BelCardParser>(belcard::BelCardParser::getInstance());
+VcardContext::VcardContext(bool useVCard3Grammar) {
+	if (useVCard3Grammar) {
+		lInfo() << "[vCard] Creating parser using 3.0 grammar (RFC 2425/2426)";
+	} else {
+		lInfo() << "[vCard] Creating parser using 4.0 grammar (RFC 6350/6358)";
+	}
+	mParser = std::shared_ptr<belcard::BelCardParser>(belcard::BelCardParser::getInstance(useVCard3Grammar));
 }
 
 VcardContext *VcardContext::clone() const {
@@ -76,7 +81,7 @@ std::list<std::shared_ptr<Vcard>> VcardContext::getVcardListFromFile(const std::
 
 #else
 
-VcardContext::VcardContext() {
+VcardContext::VcardContext(bool useVCard3Grammar) {
 }
 
 VcardContext *VcardContext::clone() const {

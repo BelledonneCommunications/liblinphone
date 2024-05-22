@@ -59,9 +59,13 @@ FriendPhoneNumber *FriendPhoneNumber::clone() const {
 }
 
 #ifdef VCARD_ENABLED
-shared_ptr<belcard::BelCardPhoneNumber> FriendPhoneNumber::toBelcardPhoneNumber() const {
-	shared_ptr<belcard::BelCardPhoneNumber> phoneNumber =
-	    belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+shared_ptr<belcard::BelCardPhoneNumber> FriendPhoneNumber::toBelcardPhoneNumber(bool useV3Grammar) const {
+	shared_ptr<belcard::BelCardPhoneNumber> phoneNumber;
+	if (useV3Grammar) {
+		phoneNumber = belcard::BelCardGeneric::createV3<belcard::BelCardPhoneNumber>();
+	} else {
+		phoneNumber = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+	}
 	phoneNumber->setValue(mPhoneNumber);
 	if (!mLabel.empty()) {
 		shared_ptr<belcard::BelCardTypeParam> label = belcard::BelCardGeneric::create<belcard::BelCardTypeParam>();

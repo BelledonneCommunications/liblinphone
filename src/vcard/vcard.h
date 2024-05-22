@@ -42,7 +42,7 @@ class FriendPhoneNumber;
 
 class LINPHONE_PUBLIC Vcard : public bellesip::HybridObject<LinphoneVcard, Vcard>, public UserDataAccessor {
 public:
-	Vcard();
+	Vcard(bool useVCard3Grammar = false);
 #ifdef VCARD_ENABLED
 	Vcard(const std::shared_ptr<belcard::BelCard> &belcard);
 #endif /* VCARD_ENABLED */
@@ -112,6 +112,8 @@ private:
 #endif /* VCARD_ENABLED */
 	mutable std::list<std::shared_ptr<Address>> mSipAddressesCache;
 	mutable bctbx_list_t *mBctbxSipAddressesCache = nullptr;
+
+	bool mUseVCard3Grammar = false;
 };
 
 LINPHONE_END_NAMESPACE

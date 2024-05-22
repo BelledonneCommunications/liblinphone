@@ -34,17 +34,25 @@ static const std::string emptyString;
 
 #ifdef VCARD_ENABLED
 
-Vcard::Vcard() {
-	mBelCard = std::shared_ptr<belcard::BelCard>(belcard::BelCardGeneric::create<belcard::BelCard>());
+Vcard::Vcard(bool useVCard3Grammar) {
+	mUseVCard3Grammar = useVCard3Grammar;
+
+	if (useVCard3Grammar) {
+		mBelCard = std::shared_ptr<belcard::BelCard>(belcard::BelCardGeneric::createV3<belcard::BelCard>());
+	} else {
+		mBelCard = std::shared_ptr<belcard::BelCard>(belcard::BelCardGeneric::create<belcard::BelCard>());
+	}
 }
 
 Vcard::Vcard(const std::shared_ptr<belcard::BelCard> &belcard) {
 	mBelCard = belcard;
+	mUseVCard3Grammar = belcard->isUsingV3Grammar();
 }
 
 Vcard::Vcard(const Vcard &other) : HybridObject(other) {
+	mUseVCard3Grammar = other.mBelCard->isUsingV3Grammar();
 	mBelCard = std::shared_ptr<belcard::BelCard>(
-	    belcard::BelCardParser::getInstance()->parseOne(other.mBelCard->toFoldedString()));
+	    belcard::BelCardParser::getInstance(mUseVCard3Grammar)->parseOne(other.mBelCard->toFoldedString()));
 	mUrl = other.mUrl;
 	mEtag = other.mEtag;
 	mMd5 = other.mMd5;
@@ -68,7 +76,12 @@ void Vcard::setFamilyName(const std::string &name) {
 	if (mBelCard->getName()) {
 		mBelCard->getName()->setFamilyName(name);
 	} else {
-		std::shared_ptr<belcard::BelCardName> n = belcard::BelCardGeneric::create<belcard::BelCardName>();
+		std::shared_ptr<belcard::BelCardName> n;
+		if (mUseVCard3Grammar) {
+			n = belcard::BelCardGeneric::createV3<belcard::BelCardName>();
+		} else {
+			n = belcard::BelCardGeneric::create<belcard::BelCardName>();
+		}
 		n->setFamilyName(name);
 		mBelCard->setName(n);
 	}
@@ -78,7 +91,12 @@ void Vcard::setFullName(const std::string &name) {
 	if (mBelCard->getFullName()) {
 		mBelCard->getFullName()->setValue(name);
 	} else {
-		std::shared_ptr<belcard::BelCardFullName> fn = belcard::BelCardGeneric::create<belcard::BelCardFullName>();
+		std::shared_ptr<belcard::BelCardFullName> fn;
+		if (mUseVCard3Grammar) {
+			fn = belcard::BelCardGeneric::createV3<belcard::BelCardFullName>();
+		} else {
+			fn = belcard::BelCardGeneric::create<belcard::BelCardFullName>();
+		}
 		fn->setValue(name);
 		mBelCard->setFullName(fn);
 	}
@@ -91,7 +109,12 @@ void Vcard::setJobTitle(const std::string &jobTitle) {
 		const std::shared_ptr<belcard::BelCardTitle> title = mBelCard->getTitles().front();
 		title->setValue(jobTitle);
 	} else {
-		std::shared_ptr<belcard::BelCardTitle> title = belcard::BelCardGeneric::create<belcard::BelCardTitle>();
+		std::shared_ptr<belcard::BelCardTitle> title;
+		if (mUseVCard3Grammar) {
+			title = belcard::BelCardGeneric::createV3<belcard::BelCardTitle>();
+		} else {
+			title = belcard::BelCardGeneric::create<belcard::BelCardTitle>();
+		}
 		title->setValue(jobTitle);
 		if (!mBelCard->addTitle(title)) {
 			lError() << "[vCard] Couldn't add TITLE value [" << jobTitle << "] to vCard [" << toC() << "]";
@@ -106,8 +129,12 @@ void Vcard::setOrganization(const std::string &organization) {
 		const std::shared_ptr<belcard::BelCardOrganization> org = mBelCard->getOrganizations().front();
 		org->setValue(organization);
 	} else {
-		std::shared_ptr<belcard::BelCardOrganization> org =
-		    belcard::BelCardGeneric::create<belcard::BelCardOrganization>();
+		std::shared_ptr<belcard::BelCardOrganization> org;
+		if (mUseVCard3Grammar) {
+			org = belcard::BelCardGeneric::createV3<belcard::BelCardOrganization>();
+		} else {
+			org = belcard::BelCardGeneric::create<belcard::BelCardOrganization>();
+		}
 		org->setValue(organization);
 		if (!mBelCard->addOrganization(org)) {
 			lError() << "[vCard] Couldn't add ORG value [" << organization << "] to vCard [" << toC() << "]";
@@ -119,7 +146,12 @@ void Vcard::setGivenName(const std::string &name) {
 	if (mBelCard->getName()) {
 		mBelCard->getName()->setGivenName(name);
 	} else {
-		std::shared_ptr<belcard::BelCardName> n = belcard::BelCardGeneric::create<belcard::BelCardName>();
+		std::shared_ptr<belcard::BelCardName> n;
+		if (mUseVCard3Grammar) {
+			n = belcard::BelCardGeneric::createV3<belcard::BelCardName>();
+		} else {
+			n = belcard::BelCardGeneric::create<belcard::BelCardName>();
+		}
 		n->setGivenName(name);
 		mBelCard->setName(n);
 	}
@@ -132,7 +164,12 @@ void Vcard::setPhoto(const std::string &picture) {
 		const std::shared_ptr<belcard::BelCardPhoto> photo = mBelCard->getPhotos().front();
 		photo->setValue(picture);
 	} else {
-		std::shared_ptr<belcard::BelCardPhoto> photo = belcard::BelCardGeneric::create<belcard::BelCardPhoto>();
+		std::shared_ptr<belcard::BelCardPhoto> photo;
+		if (mUseVCard3Grammar) {
+			photo = belcard::BelCardGeneric::createV3<belcard::BelCardPhoto>();
+		} else {
+			photo = belcard::BelCardGeneric::create<belcard::BelCardPhoto>();
+		}
 		photo->setValue(picture);
 		if (!mBelCard->addPhoto(photo)) {
 			lError() << "[vCard] Couldn't add PHOTO value [" << picture << "] to vCard [" << toC() << "]";
@@ -142,7 +179,12 @@ void Vcard::setPhoto(const std::string &picture) {
 
 void Vcard::setUid(const std::string &uid) {
 	if (uid.empty()) return;
-	std::shared_ptr<belcard::BelCardUniqueId> uniqueId = belcard::BelCardGeneric::create<belcard::BelCardUniqueId>();
+	std::shared_ptr<belcard::BelCardUniqueId> uniqueId;
+	if (mUseVCard3Grammar) {
+		uniqueId = belcard::BelCardGeneric::createV3<belcard::BelCardUniqueId>();
+	} else {
+		uniqueId = belcard::BelCardGeneric::create<belcard::BelCardUniqueId>();
+	}
 	uniqueId->setValue(uid);
 	mBelCard->setUniqueId(uniqueId);
 }
@@ -232,7 +274,12 @@ const std::string &Vcard::getUrl() const {
 
 void Vcard::addExtendedProperty(const std::string &name, const std::string &value) {
 	if (name.empty()) return;
-	std::shared_ptr<belcard::BelCardProperty> property = belcard::BelCardGeneric::create<belcard::BelCardProperty>();
+	std::shared_ptr<belcard::BelCardProperty> property;
+	if (mUseVCard3Grammar) {
+		property = belcard::BelCardGeneric::createV3<belcard::BelCardProperty>();
+	} else {
+		property = belcard::BelCardGeneric::create<belcard::BelCardProperty>();
+	}
 	property->setName(name);
 	property->setValue(value);
 	if (!mBelCard->addExtendedProperty(property)) {
@@ -242,8 +289,12 @@ void Vcard::addExtendedProperty(const std::string &name, const std::string &valu
 }
 
 void Vcard::addPhoneNumber(const std::string &phoneNumber) {
-	std::shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber =
-	    belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+	std::shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber;
+	if (mUseVCard3Grammar) {
+		belcardPhoneNumber = belcard::BelCardGeneric::createV3<belcard::BelCardPhoneNumber>();
+	} else {
+		belcardPhoneNumber = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+	}
 	belcardPhoneNumber->setValue(phoneNumber);
 	if (!mBelCard->addPhoneNumber(belcardPhoneNumber)) {
 		lError() << "[vCard] Couldn't add TEL value [" << phoneNumber << "] to vCard [" << toC() << "]";
@@ -252,14 +303,19 @@ void Vcard::addPhoneNumber(const std::string &phoneNumber) {
 
 void Vcard::addPhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumber> &phoneNumber) {
 	if (!phoneNumber) return;
-	std::shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber = phoneNumber->toBelcardPhoneNumber();
+	std::shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber =
+	    phoneNumber->toBelcardPhoneNumber(mUseVCard3Grammar);
 	if (!mBelCard->addPhoneNumber(belcardPhoneNumber)) {
 		const std::string &phone = phoneNumber->getPhoneNumber();
 		const std::string &label = phoneNumber->getLabel();
 		lError() << "[vCard] Couldn't add TEL value [" << phone << "] with label [" << label << "] to vCard [" << toC()
 		         << "]";
-		std::shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumberWithoutLabel =
-		    belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+		std::shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumberWithoutLabel;
+		if (mUseVCard3Grammar) {
+			belcardPhoneNumberWithoutLabel = belcard::BelCardGeneric::createV3<belcard::BelCardPhoneNumber>();
+		} else {
+			belcardPhoneNumberWithoutLabel = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+		}
 		belcardPhoneNumberWithoutLabel->setValue(phone);
 		if (!mBelCard->addPhoneNumber(belcardPhoneNumberWithoutLabel)) {
 			lError() << "[vCard] Couldn't add TEL value [" << phone << "] without label to vCard [" << toC()
@@ -271,7 +327,12 @@ void Vcard::addPhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumbe
 }
 
 void Vcard::addSipAddress(const std::string &sipAddress) {
-	std::shared_ptr<belcard::BelCardImpp> impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
+	std::shared_ptr<belcard::BelCardImpp> impp;
+	if (mUseVCard3Grammar) {
+		impp = belcard::BelCardGeneric::createV3<belcard::BelCardImpp>();
+	} else {
+		impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
+	}
 	impp->setValue(sipAddress);
 	if (!mBelCard->addImpp(impp)) {
 		lError() << "[vCard] Couldn't add IMPP value [" << sipAddress << "] to vCard [" << toC() << "]";
@@ -287,7 +348,12 @@ void Vcard::editMainSipAddress(const std::string &sipAddress) {
 		const std::shared_ptr<belcard::BelCardImpp> impp = mBelCard->getImpp().front();
 		impp->setValue(sipAddress);
 	} else {
-		std::shared_ptr<belcard::BelCardImpp> impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
+		std::shared_ptr<belcard::BelCardImpp> impp;
+		if (mUseVCard3Grammar) {
+			impp = belcard::BelCardGeneric::createV3<belcard::BelCardImpp>();
+		} else {
+			impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
+		}
 		impp->setValue(sipAddress);
 		if (!mBelCard->addImpp(impp)) {
 			lError() << "[vCard] Couldn't add IMPP value [" << sipAddress << "] to vCard [" << toC() << "]";
@@ -385,7 +451,7 @@ void *Vcard::getBelcard() {
 
 #else
 
-Vcard::Vcard() {
+Vcard::Vcard(bool useVCard3Grammar) {
 	bctbx_message("LinphoneVcard[%p] created", toC());
 }
 
