@@ -2404,6 +2404,8 @@ LINPHONE_PUBLIC LinphoneAccountParams *linphone_core_create_account_params(Linph
 
 /**
  * Create an account using given parameters, see linphone_core_create_account_params().
+ * Once created, the account must be added to the #LinphoneCore in order to be used for registration, calls,
+ * messages etc. Use linphone_core_add_account() to add it to the #LinphoneCore.
  * @param core #LinphoneCore object @notnil
  * @param params #LinphoneAccountParams object @notnil
  * @return #LinphoneAccount with default values set @notnil
@@ -6832,8 +6834,9 @@ LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *co
 LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneCore *core,
                                                                                        const char *device_token_str);
 /**
- * Sets the dispatch queue that will be used to receive VOIP push notifications, and process enterbackground/enternockground notification from the application delegate.
- * Main queue by default. Must be use before core is started (iOS only).
+ * Sets the dispatch queue that will be used to receive VOIP push notifications, and process
+ * enterbackground/enternockground notification from the application delegate. Main queue by default. Must be use before
+ * core is started (iOS only).
  * @param core The #LinphoneCore @notnil
  * @param dispatch_queue dispatch_queue. @notnil
  * @ingroup misc

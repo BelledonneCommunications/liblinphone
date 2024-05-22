@@ -1972,8 +1972,8 @@ static void transfer_message_download_cancelled(void) {
 		// State changed callback is already set by linphone_chat_message_start_file_download
 		linphone_chat_message_cbs_set_msg_state_changed(cbs, NULL);
 		linphone_chat_message_start_file_download(marie_msg, liblinphone_tester_chat_message_state_change, marie->lc);
-		/* wait for file to be 10% downloaded */
-		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.progress_of_LinphoneFileTransfer, 10));
+		/* wait for file to be 2% downloaded */
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.progress_of_LinphoneFileTransfer, 2));
 		/* and cancel the transfer */
 		linphone_chat_message_cancel_file_transfer(marie_msg);
 	}
