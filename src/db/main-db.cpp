@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 31);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 32);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2227,7 +2227,6 @@ void MainDbPrivate::updateSchema() {
 
 	soci::session *session = dbSession.getBackendSession();
 	unsigned int version = getModuleVersion("events");
-
 	lInfo() << "Event table version is " << version;
 
 	if (version < makeVersion(1, 0, 1))
@@ -2470,76 +2469,11 @@ void MainDbPrivate::updateSchema() {
 		                " NOT NULL DEFAULT " + dbSession.currentTimestamp();
 	}
 
-	if (version < makeVersion(1, 0, 22)) {
-		try {
-			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
-		} catch (const soci::soci_error &e) {
-			lDebug() << "Caught exception " << e.what()
-			         << ": Column 'security_level' already exists in table 'conference_info'";
-		}
-	}
-
-	if (version < makeVersion(1, 0, 23)) {
-		*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
-	}
-
-	if (version < makeVersion(1, 0, 24)) {
-		*session << "ALTER TABLE conference_info_participant ADD COLUMN is_organizer BOOLEAN NOT NULL DEFAULT 0";
-		// We must recreate table conference_info_participant to change the UNIQUE constraint.
-		*session << "CREATE TABLE IF NOT EXISTS conference_info_participant_clone ("
-		            "  id" +
-		                dbSession.primaryKeyStr("BIGINT UNSIGNED") +
-		                ","
-
-		                "  conference_info_id" +
-		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-		                " NOT NULL,"
-		                "  participant_sip_address_id" +
-		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-		                " NOT NULL,"
-		                " deleted BOOLEAN NOT NULL DEFAULT 0,"
-		                " params VARCHAR(2048) DEFAULT '',"
-		                " is_organizer BOOLEAN NOT NULL DEFAULT 0,"
-
-		                "  UNIQUE (conference_info_id, participant_sip_address_id),"
-
-		                "  FOREIGN KEY (conference_info_id)"
-		                "    REFERENCES conference_info(id)"
-		                "    ON DELETE CASCADE,"
-		                "  FOREIGN KEY (participant_sip_address_id)"
-		                "    REFERENCES sip_address(id)"
-		                "    ON DELETE CASCADE"
-		                ") " +
-		                charset;
-		*session << "INSERT INTO conference_info_participant_clone SELECT * FROM conference_info_participant";
-		*session << "DROP TABLE IF EXISTS conference_info_participant";
-
-		*session << "CREATE TABLE IF NOT EXISTS conference_info_participant ("
-		            "  id" +
-		                dbSession.primaryKeyStr("BIGINT UNSIGNED") +
-		                ","
-
-		                "  conference_info_id" +
-		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-		                " NOT NULL,"
-		                "  participant_sip_address_id" +
-		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
-		                " NOT NULL,"
-		                " deleted BOOLEAN NOT NULL DEFAULT 0,"
-		                " params VARCHAR(255) DEFAULT '',"
-		                " is_organizer BOOLEAN NOT NULL DEFAULT 0,"
-
-		                "  UNIQUE (conference_info_id, participant_sip_address_id, is_organizer),"
-
-		                "  FOREIGN KEY (conference_info_id)"
-		                "    REFERENCES conference_info(id)"
-		                "    ON DELETE CASCADE,"
-		                "  FOREIGN KEY (participant_sip_address_id)"
-		                "    REFERENCES sip_address(id)"
-		                "    ON DELETE CASCADE"
-		                ") " +
-		                charset;
-		*session << "INSERT INTO conference_info_participant SELECT * FROM conference_info_participant_clone";
+	try {
+		*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'security_level' already exists in table 'conference_info'";
 	}
 
 	if (version < makeVersion(1, 0, 25)) {
@@ -2624,58 +2558,107 @@ void MainDbPrivate::updateSchema() {
 		}
 	}
 
-	if (version < makeVersion(1, 0, 26)) {
-		try {
-			*session << "ALTER TABLE conference_info_participant_params RENAME COLUMN \"key\" TO name";
-		} catch (const soci::soci_error &e) {
-			lDebug() << "Caught exception " << e.what()
-			         << ": Column 'key' does not exists in table 'conference_info_participant_params' therefore it "
-			            "cannot be renames as 'name'";
-		}
-		// Sanity check
-		*session << "SELECT name FROM conference_info_participant_params";
+	try {
+		*session << "ALTER TABLE conference_info_participant_params RENAME COLUMN \"key\" TO name";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'key' does not exists in table 'conference_info_participant_params' therefore it cannot "
+		            "be renames as 'name'";
 	}
+	// Sanity check
+	*session << "SELECT name FROM conference_info_participant_params";
 
-	if (version < makeVersion(1, 0, 27)) {
-		try {
-			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
-		} catch (const soci::soci_error &e) {
-			lDebug() << "Caught exception " << e.what()
-			         << ": Column 'security_level' already exists in table 'conference_info'";
-		}
+	try {
 		*session << "ALTER TABLE conference_info_participant ADD COLUMN is_participant BOOLEAN NOT NULL DEFAULT 1";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'is_participant' already exists in table 'conference_info_participant'";
 	}
 
-	if (version < makeVersion(1, 0, 28)) {
-		if (backend == MainDb::Backend::Sqlite3) {
-			*session
-			    << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
-			       "GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
-		} else {
-			*session << "DELETE p1 FROM conference_info_participant p1 INNER JOIN conference_info_participant p2 WHERE "
-			            "p1.id < p2.id AND p1.conference_info_id = p2.conference_info_id AND "
-			            "p1.participant_sip_address_id = p2.participant_sip_address_id";
-		}
+	if (backend == MainDb::Backend::Sqlite3) {
+		*session << "DELETE FROM conference_info_participant WHERE id IN (SELECT id FROM conference_info_participant "
+		            "GROUP BY conference_info_id, participant_sip_address_id HAVING COUNT(*) > 1)";
+	} else {
+		*session << "DELETE p1 FROM conference_info_participant p1 INNER JOIN conference_info_participant p2 WHERE "
+		            "p1.id < p2.id AND p1.conference_info_id = p2.conference_info_id AND p1.participant_sip_address_id "
+		            "= p2.participant_sip_address_id";
 	}
 
-	if (version < makeVersion(1, 0, 30)) {
-		try {
-			*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
-		} catch (const soci::soci_error &e) {
-			lDebug() << "Caught exception " << e.what() << ": Column 'muted' already exists in table 'chat_room'";
-		}
+	try {
+		*session << "ALTER TABLE chat_room ADD COLUMN muted BOOLEAN NOT NULL DEFAULT 0";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what() << ": Column 'muted' already exists in table 'chat_room'";
 	}
 
-	if (version < makeVersion(1, 0, 31)) {
-		try {
-			*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
-		} catch (const soci::soci_error &e) {
-			lDebug() << "Caught exception " << e.what()
-			         << ": Column 'security_level' already exists in table 'conference_info'";
-		}
+	try {
+		*session << "ALTER TABLE conference_info_participant ADD COLUMN is_organizer BOOLEAN NOT NULL DEFAULT 0";
+		// We must recreate table conference_info_participant to change the UNIQUE constraint.
+		*session << "CREATE TABLE IF NOT EXISTS conference_info_participant_clone ("
+		            "  id" +
+		                dbSession.primaryKeyStr("BIGINT UNSIGNED") +
+		                ","
+
+		                "  conference_info_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NOT NULL,"
+		                "  participant_sip_address_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NOT NULL,"
+		                " deleted BOOLEAN NOT NULL DEFAULT 0,"
+		                " params VARCHAR(2048) DEFAULT '',"
+		                " is_organizer BOOLEAN NOT NULL DEFAULT 0,"
+
+		                "  UNIQUE (conference_info_id, participant_sip_address_id),"
+
+		                "  FOREIGN KEY (conference_info_id)"
+		                "    REFERENCES conference_info(id)"
+		                "    ON DELETE CASCADE,"
+		                "  FOREIGN KEY (participant_sip_address_id)"
+		                "    REFERENCES sip_address(id)"
+		                "    ON DELETE CASCADE"
+		                ") " +
+		                charset;
+		*session << "INSERT INTO conference_info_participant_clone SELECT * FROM conference_info_participant";
+		*session << "DROP TABLE IF EXISTS conference_info_participant";
+
+		*session << "CREATE TABLE IF NOT EXISTS conference_info_participant ("
+		            "  id" +
+		                dbSession.primaryKeyStr("BIGINT UNSIGNED") +
+		                ","
+
+		                "  conference_info_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NOT NULL,"
+		                "  participant_sip_address_id" +
+		                dbSession.primaryKeyRefStr("BIGINT UNSIGNED") +
+		                " NOT NULL,"
+		                " deleted BOOLEAN NOT NULL DEFAULT 0,"
+		                " params VARCHAR(255) DEFAULT '',"
+		                " is_organizer BOOLEAN NOT NULL DEFAULT 0,"
+
+		                "  UNIQUE (conference_info_id, participant_sip_address_id, is_organizer),"
+
+		                "  FOREIGN KEY (conference_info_id)"
+		                "    REFERENCES conference_info(id)"
+		                "    ON DELETE CASCADE,"
+		                "  FOREIGN KEY (participant_sip_address_id)"
+		                "    REFERENCES sip_address(id)"
+		                "    ON DELETE CASCADE"
+		                ") " +
+		                charset;
+		*session << "INSERT INTO conference_info_participant SELECT * FROM conference_info_participant_clone";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what()
+		         << ": Column 'is_organizer' already exists in table 'conference_info_participant'";
 	}
+
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
+	//
+	// Using DB table version cause issues when updating or downgrading the SDK version. It has been decided to drop
+	// this mechanism starting from DB version 21 and execute all MySql query at startup. Developpers must be careful
+	// either to catch exceptions or to make sure that the modification to the database is only applied once and the
+	// following restarts of the core will not do anything.
 
 #endif
 }
@@ -4994,7 +4977,8 @@ void MainDb::disableDisplayNotificationRequired(const std::shared_ptr<const Even
 // - set the creation time to the earliest one
 // - assign all events preceeding the latest creation time to the kept chatroom
 // - destroy the deleted chatroom from DB
-void MainDb::addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap, const shared_ptr<AbstractChatRoom> chatRoom) const {
+void MainDb::addChatroomToList(ChatRoomWeakCompareMap &chatRoomsMap,
+                               const shared_ptr<AbstractChatRoom> chatRoom) const {
 #ifdef HAVE_DB_STORAGE
 	const auto chatRoomConferenceId = chatRoom->getConferenceId();
 	shared_ptr<AbstractChatRoom> chatRoomToAdd = nullptr;
@@ -5772,7 +5756,8 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shar
 		               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"
-		               " AND uri_sip_address.value LIKE '" + uri->toStringUriOnlyOrdered() + "'";
+		               " AND uri_sip_address.value LIKE '" +
+		               uri->toStringUriOnlyOrdered() + "'";
 
 		return L_DB_TRANSACTION {
 			L_D();
