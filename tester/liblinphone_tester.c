@@ -553,7 +553,7 @@ void liblinphone_tester_add_suites(void) {
 	liblinphone_tester_add_suite_with_default_time(&call_video_advanced_scenarios_test_suite, 168);
 	liblinphone_tester_add_suite_with_default_time(&call_video_quality_test_suite, 455);
 	liblinphone_tester_add_suite_with_default_time(&alerts_test_suite, 90);
-	liblinphone_tester_add_suite_with_default_time(&call_flexfec_suite, 57);
+	liblinphone_tester_add_suite_with_default_time(&call_flexfec_suite, 280);
 #endif // ifdef VIDEO_ENABLED
 	liblinphone_tester_add_suite_with_default_time(&audio_bypass_suite, 11);
 	liblinphone_tester_add_suite_with_default_time(&audio_routes_test_suite, 349);
