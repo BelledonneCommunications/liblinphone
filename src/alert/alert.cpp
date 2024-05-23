@@ -78,7 +78,7 @@ void Alert::setState(bool state) {
 std::ostream &Alert::toStream(std::ostream &stream) const {
 	try {
 		stream << linphone_alert_type_to_string(mType) << " | ";
-		auto call = mCall.lock();
+		std::shared_ptr<Call> call(mCall);
 		auto op = call->getOp();
 		string callId = op ? op->getCallId() : "<unknown>";
 		stream << "Call-id :" << callId << " | ";

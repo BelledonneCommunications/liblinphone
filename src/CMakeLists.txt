@@ -708,7 +708,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
 		AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12
-		AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
+		AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
 	set_source_files_properties(sal/potential_config_graph.cpp
 			utils/version.cpp
 			PROPERTIES COMPILE_OPTIONS "-Wno-error=maybe-uninitialized")
