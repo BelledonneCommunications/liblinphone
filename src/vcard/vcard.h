@@ -79,6 +79,7 @@ public:
 	std::list<std::shared_ptr<FriendPhoneNumber>> getPhoneNumbersWithLabel() const;
 	const std::string &getPhoto() const;
 	const std::list<std::shared_ptr<Address>> &getSipAddresses() const;
+	std::list<std::string> getImppAddresses() const;
 	const std::string &getUid() const;
 	const std::string &getUrl() const;
 
@@ -96,7 +97,7 @@ public:
 	void removePhoneNumber(const std::string &phoneNumber);
 	void removePhoneNumberWithLabel(const std::shared_ptr<const FriendPhoneNumber> &phoneNumber);
 	void removePhoto();
-	void removeSipAddress(const std::string &sipAddress);
+	bool removeSipAddress(const std::string &sipAddress);
 
 private:
 	void cleanCache();

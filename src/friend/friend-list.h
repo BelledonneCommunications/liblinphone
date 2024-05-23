@@ -79,7 +79,7 @@ public:
 	friend int ::linphone_friend_list_get_expected_notification_version(const LinphoneFriendList *list);
 	friend const bctbx_list_t * ::linphone_friend_list_get_friends(const LinphoneFriendList *list);
 	friend bctbx_list_t ** ::linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl);
-	friend int ::linphone_friend_list_get_revision(const LinphoneFriendList *lfl);
+	friend const char * ::linphone_friend_list_get_revision(const LinphoneFriendList *lfl);
 	friend long long ::linphone_friend_list_get_storage_id(const LinphoneFriendList *list);
 	friend void ::linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list);
 	friend void ::linphone_friend_list_notify_presence_received(LinphoneFriendList *list,
@@ -130,7 +130,7 @@ public:
 	bool subscriptionsEnabled() const;
 	void synchronizeFriendsFromServer();
 	void updateDirtyFriends();
-	void updateRevision(int revision);
+	void updateRevision(const std::string &revision);
 
 private:
 	LinphoneFriendListStatus addFriend(const std::shared_ptr<Friend> &lf, bool synchronize);
@@ -186,7 +186,7 @@ private:
 	std::string mUri;
 	std::list<std::shared_ptr<Friend>> mDirtyFriendsToUpdate;
 	bctbx_list_t *mBctbxDirtyFriendsToUpdate = nullptr; // This field must be kept in sync with mDirtyFriendsToUpdate
-	int mRevision = -1;
+	std::string mRevision = "";
 	bool mSubscriptionsEnabled = false;
 	bool mBodylessSubscription = false;
 	LinphoneFriendListType mType = LinphoneFriendListTypeDefault;

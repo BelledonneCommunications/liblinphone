@@ -303,8 +303,8 @@ void linphone_friend_list_set_subscription_bodyless(LinphoneFriendList *list, bo
 	FriendList::toCpp(list)->setSubscriptionBodyless(bodyless);
 }
 
-void linphone_friend_list_update_revision(LinphoneFriendList *list, int rev) {
-	FriendList::toCpp(list)->updateRevision(rev);
+void linphone_friend_list_update_revision(LinphoneFriendList *list, const char *rev) {
+	FriendList::toCpp(list)->updateRevision(L_C_TO_STRING(rev));
 }
 
 void linphone_friend_list_subscription_state_changed(LinphoneCore *lc,

@@ -46,6 +46,14 @@ public:
 
 	VcardContext *clone() const override;
 
+	bool isUsingVCard3Grammar() const {
+#ifdef VCARD_ENABLED
+		return mParser->isUsingV3Grammar();
+#else
+		return false;
+#endif
+	}
+
 	// Getters
 	std::shared_ptr<Vcard> getVcardFromBuffer(const std::string &buffer) const;
 	std::list<std::shared_ptr<Vcard>> getVcardListFromBuffer(const std::string &buffer) const;

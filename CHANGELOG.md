@@ -25,6 +25,7 @@ This changelog file was started on October 2019. Previous changes were more or l
   LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb for the video stream is trigged by an change on the overall video availability. LinphoneParticipantDeviceCbsThumbnailStreamAvailabilityChangedCb is now called when a participant device toggle its camera setting
 - linphone_core_get_video_activation_policy() now returns a const object. Use linphone_video_activation_policy_clone() or create a new one
   if you want to make changes before calling linphone_core_set_video_activation_policy().
+- LinphoneFriendList revision field is now a string instead of an int. If there was a revision value > 0, it is kept but as string, otherwise newly created friend list will have a revision set to empty string.
 
 ### Fixed
 - t= lines in the SDP no longer changed in the answer 

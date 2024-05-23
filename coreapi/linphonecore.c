@@ -3395,8 +3395,9 @@ static void linphone_core_init(LinphoneCore *lc,
 	lc->qrcode_rect.x = 0;
 	lc->qrcode_rect.y = 0;
 
-	bool_t useVcard3Grammar = linphone_config_get_bool(lc->config, "misc", "use_vcard_3.0", FALSE);
+	bool_t useVcard3Grammar = !!linphone_config_get_bool(lc->config, "misc", "use_vcard_3.0", FALSE);
 	lc->vcard_context = VcardContext::createCObject(useVcard3Grammar);
+
 	linphone_core_initialize_supported_content_types(lc);
 	lc->bw_controller = ms_bandwidth_controller_new();
 

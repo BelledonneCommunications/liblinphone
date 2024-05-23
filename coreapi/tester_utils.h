@@ -202,7 +202,7 @@ LINPHONE_PUBLIC long long linphone_friend_get_storage_id(const LinphoneFriend *l
 LINPHONE_PUBLIC LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf);
 LINPHONE_PUBLIC bctbx_list_t **linphone_friend_list_get_friends_attribute(LinphoneFriendList *lfl);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl);
-LINPHONE_PUBLIC int linphone_friend_list_get_revision(const LinphoneFriendList *lfl);
+LINPHONE_PUBLIC const char *linphone_friend_list_get_revision(const LinphoneFriendList *lfl);
 
 LINPHONE_PUBLIC int linphone_remote_provisioning_load_file(LinphoneCore *lc, const char *file_path);
 

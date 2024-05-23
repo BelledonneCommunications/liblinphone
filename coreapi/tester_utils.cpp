@@ -121,8 +121,8 @@ const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const Linph
 	return FriendList::toCpp(lfl)->mBctbxDirtyFriendsToUpdate;
 }
 
-int linphone_friend_list_get_revision(const LinphoneFriendList *lfl) {
-	return FriendList::toCpp(lfl)->mRevision;
+const char *linphone_friend_list_get_revision(const LinphoneFriendList *lfl) {
+	return FriendList::toCpp(lfl)->mRevision.c_str();
 }
 
 unsigned int _linphone_call_get_nb_audio_starts(const LinphoneCall *call) {

@@ -250,16 +250,27 @@ const std::string &Vcard::getPhoto() const {
 const std::list<std::shared_ptr<Address>> &Vcard::getSipAddresses() const {
 	if (mSipAddressesCache.empty()) {
 		for (auto &impp : mBelCard->getImpp()) {
-			std::shared_ptr<Address> addr = Address::create(impp->getValue());
-			if (addr) {
-				auto displayName = mBelCard->getFullName();
-				if (addr->getDisplayName().empty() && displayName) addr->setDisplayName(displayName->getValue());
-				mSipAddressesCache.push_back(addr);
-				mBctbxSipAddressesCache = bctbx_list_append(mBctbxSipAddressesCache, addr->toC());
+			std::string value = impp->getValue();
+			// Only parse SIP URIs or URIs without a scheme
+			if (value.rfind("sip:", 0) == 0 || value.rfind("sips:", 0) == 0 || value.rfind(":") == std::string::npos) {
+				std::shared_ptr<Address> addr = Address::create(value);
+				if (addr) {
+					auto displayName = mBelCard->getFullName();
+					if (addr->getDisplayName().empty() && displayName) addr->setDisplayName(displayName->getValue());
+					mSipAddressesCache.push_back(addr);
+					mBctbxSipAddressesCache = bctbx_list_append(mBctbxSipAddressesCache, addr->toC());
+				}
 			}
 		}
 	}
 	return mSipAddressesCache;
+}
+
+std::list<std::string> Vcard::getImppAddresses() const {
+	std::list<std::string> result;
+	for (const auto &impp : mBelCard->getImpp())
+		result.push_back(impp->getValue());
+	return result;
 }
 
 const std::string &Vcard::getUid() const {
@@ -418,13 +429,20 @@ void Vcard::removePhoto() {
 	}
 }
 
-void Vcard::removeSipAddress(const std::string &sipAddress) {
+bool Vcard::removeSipAddress(const std::string &sipAddress) {
+	bool found = false;
 	for (auto &impp : mBelCard->getImpp()) {
-		if (impp->getValue() == sipAddress) {
+		if (strcasecmp(impp->getValue().c_str(), sipAddress.c_str()) == 0) {
 			mBelCard->removeImpp(impp);
+			found = true;
 			break;
 		}
 	}
+
+	if (!found) {
+		lWarning() << "[vCard] SIP URI [" << sipAddress << "] to remove wasn't found in vCard's IMPP";
+	}
+	return found;
 }
 
 // -----------------------------------------------------------------------------
@@ -541,6 +559,10 @@ const std::list<std::shared_ptr<Address>> &Vcard::getSipAddresses() const {
 	return mSipAddressesCache;
 }
 
+std::list<std::string> Vcard::getImppAddresses() const {
+	return std::list<std::string>();
+}
+
 const std::string &Vcard::getUid() const {
 	return emptyString;
 }
@@ -592,7 +614,8 @@ void Vcard::removePhoneNumberWithLabel(BCTBX_UNUSED(const std::shared_ptr<const 
 void Vcard::removePhoto() {
 }
 
-void Vcard::removeSipAddress(BCTBX_UNUSED(const std::string &sipAddress)) {
+bool Vcard::removeSipAddress(BCTBX_UNUSED(const std::string &sipAddress)) {
+	return false;
 }
 
 // -----------------------------------------------------------------------------

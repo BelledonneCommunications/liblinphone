@@ -256,9 +256,10 @@ LINPHONE_PUBLIC void linphone_friend_list_set_subscription_bodyless(LinphoneFrie
 /**
  * Sets the revision from the last synchronization.
  * @param friend_list #LinphoneFriendList object. @notnil
- * @param revision The revision
+ * @param revision The revision. @maybenil
+ * @warning before 5.4.0 release revision was an int, it's now a string.
  */
-LINPHONE_PUBLIC void linphone_friend_list_update_revision(LinphoneFriendList *friend_list, int revision);
+LINPHONE_PUBLIC void linphone_friend_list_update_revision(LinphoneFriendList *friend_list, const char *revision);
 
 /**
  * Adds the #LinphoneFriendListCbs object associated with a LinphoneFriendList.

@@ -34,7 +34,7 @@ public:
 	virtual ~CardDAVResponse() = default;
 
 	std::string mDisplayName;
-	int mCtag;
+	std::string mCtag;
 	std::string mEtag;
 	std::string mUrl;
 	std::string mVcard;

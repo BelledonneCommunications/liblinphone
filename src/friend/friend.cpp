@@ -202,13 +202,8 @@ void Friend::setVcard(const std::shared_ptr<Vcard> &vcard) {
 // -----------------------------------------------------------------------------
 
 const std::shared_ptr<Address> Friend::getAddress() const {
-	if (linphone_core_vcard_supported()) {
-		if (mVcard) {
-			const std::list<std::shared_ptr<Address>> sipAddresses = mVcard->getSipAddresses();
-			if (!sipAddresses.empty()) return sipAddresses.front();
-		}
-		return nullptr;
-	}
+	const std::list<std::shared_ptr<Address>> sipAddresses = getAddresses();
+	if (!sipAddresses.empty()) return sipAddresses.front();
 
 	if (mUri) return mUri;
 	return nullptr;
@@ -574,6 +569,10 @@ void Friend::done() {
 	if (linphone_core_vcard_supported() && mVcard) {
 		if (mVcard->compareMd5Hash()) {
 			lDebug() << "vCard's md5 has changed, mark friend as dirty and clear sip addresses list cache";
+			if (mFriendList && mFriendList->getType() == LinphoneFriendListTypeCardDAV) {
+				lInfo() << "Friend's vCard's md5 has changed, marking it as dirty to schedule an update on remote "
+				           "CardDAV server";
+			}
 			mVcard->cleanCache();
 			if (mFriendList) {
 				mFriendList->mDirtyFriendsToUpdate.push_back(getSharedFromThis());

@@ -76,7 +76,7 @@ private:
 	void userPrincipalUrlRetrieved(std::string principalUrl);
 	void userAddressBookHomeUrlRetrieved(std::string addressBookHomeUrl);
 	void addressBookUrlAndCtagRetrieved(const std::list<CardDAVResponse> &list);
-	void addressBookCtagRetrieved(int ctag);
+	void addressBookCtagRetrieved(std::string ctag);
 
 	void setSchemeAndHostIfNotDoneYet(CardDAVQuery *query);
 	void processRedirect(CardDAVQuery *query, belle_sip_message_t *message);
@@ -99,7 +99,7 @@ private:
 	static std::string parseUserPrincipalUrlValueFromXmlResponse(const std::string &body);
 	static std::string parseUserAddressBookUrlValueFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseAddressBookUrlAndCtagValueFromXmlResponse(const std::string &body);
-	static int parseAddressBookCtagValueFromXmlResponse(const std::string &body);
+	static std::string parseAddressBookCtagValueFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseVcardsEtagsFromXmlResponse(const std::string &body);
 	static std::list<CardDAVResponse> parseVcardsFromXmlResponse(const std::string &body);
 	static void processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event);
@@ -107,7 +107,7 @@ private:
 	static void processResponseFromCarddavRequest(void *data, const belle_http_response_event_t *event);
 
 	std::shared_ptr<FriendList> mFriendList = nullptr;
-	int mCtag = -1;
+	std::string mCtag = "";
 	std::string mSyncUri = "";
 	std::string mScheme = "http";
 	std::string mHost = "";

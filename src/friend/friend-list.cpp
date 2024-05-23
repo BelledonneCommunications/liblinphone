@@ -451,7 +451,7 @@ void FriendList::updateDirtyFriends() {
 
 #endif /* VCARD_ENABLED */
 
-void FriendList::updateRevision(int revision) {
+void FriendList::updateRevision(const string &revision) {
 	mRevision = revision;
 	saveInDb();
 }
@@ -1068,7 +1068,7 @@ void FriendList::subscriptionStateChanged(LinphoneCore *lc,
 #ifdef VCARD_ENABLED
 
 void FriendList::carddavCreated(const CardDAVContext *context, const std::shared_ptr<Friend> &f) {
-	context->mFriendList->importFriend(f, false);
+	context->mFriendList->addLocalFriend(f); // Add as local because we do not want to synchronize it right now
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(FriendList, context->mFriendList, linphone_friend_list_cbs_get_contact_created,
 	                                  f->toC());
 }

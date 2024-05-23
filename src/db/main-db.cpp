@@ -919,25 +919,25 @@ long long MainDbPrivate::insertOrUpdateFriendList(const std::shared_ptr<FriendLi
 	std::string name = list->getDisplayName();
 	std::string rlsUri = list->getRlsUri();
 	std::string syncUri = list->getUri();
-	int revision = list->mRevision;
+	std::string ctag = list->mRevision;
 	int type = list->getType();
 
 	if (friendListId > 0) {
 		*dbSession.getBackendSession()
 		    << "UPDATE friends_list SET "
-		       "name = :name, rls_uri = :rlsUri, sync_uri = :syncUri, revision = :revision, type = :type "
+		       "name = :name, rls_uri = :rlsUri, sync_uri = :syncUri, type = :type, ctag = :ctag "
 		       "WHERE id = :friendListId",
-		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(type),
+		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(type), soci::use(ctag),
 		    soci::use(friendListId);
 	} else {
 		lInfo() << "Insert new friend list in database: " << name;
 
 		*dbSession.getBackendSession() << "INSERT INTO friends_list ("
-		                                  "name, rls_uri, sync_uri, revision, type"
+		                                  "name, rls_uri, sync_uri, revision, type, ctag"
 		                                  ") VALUES ("
-		                                  ":name, :rlsUri, :syncUri, :revision, :type"
+		                                  ":name, :rlsUri, :syncUri, 0, :type, :ctag"
 		                                  ")",
-		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(type);
+		    soci::use(name), soci::use(rlsUri), soci::use(syncUri), soci::use(type), soci::use(ctag);
 
 		friendListId = dbSession.getLastInsertId();
 	}
@@ -2299,8 +2299,15 @@ std::shared_ptr<FriendList> MainDbPrivate::selectFriendList(const soci::row &row
 	friendList->setDisplayName(row.get<string>(1));
 	friendList->setRlsUri(row.get<string>(2));
 	friendList->setUri(row.get<string>(3));
-	friendList->mRevision = row.get<int>(4);
 	friendList->setType((LinphoneFriendListType)row.get<int>(5));
+
+	int revision = row.get<int>(4);
+	std::string ctag = row.get<string>(6);
+	if (ctag.empty() && revision != 0) {
+		friendList->mRevision = std::to_string(revision);
+	} else {
+		friendList->mRevision = ctag;
+	}
 
 	return friendList;
 }
@@ -2907,6 +2914,12 @@ void MainDbPrivate::updateSchema() {
 		         << ": Column 'is_organizer' already exists in table 'conference_info_participant'";
 	}
 
+	try {
+		*session << "ALTER TABLE friends_list ADD COLUMN ctag VARCHAR(255) NOT NULL DEFAULT ''";
+	} catch (const soci::soci_error &e) {
+		lDebug() << "Caught exception " << e.what() << ": Column 'ctag' already exists in table 'friends_list'";
+	}
+
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
 	// (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 	//
@@ -3010,6 +3023,7 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 			const string &rlsUri = friendList.get<string>(LegacyFriendListColRlsUri, "");
 			const string &syncUri = friendList.get<string>(LegacyFriendListColSyncUri, "");
 			const int &revision = friendList.get<int>(LegacyFriendListColRevision, 0);
+			string ctag = std::to_string(revision);
 			int type = -1;
 
 			string uniqueName = name;
@@ -3017,10 +3031,10 @@ void MainDbPrivate::importLegacyFriends(DbSession &inDbSession) {
 				;
 			names.insert(uniqueName);
 
-			*session << "INSERT INTO friends_list (name, rls_uri, sync_uri, revision, type) VALUES ("
-			            "  :name, :rlsUri, :syncUri, :revision, :type"
+			*session << "INSERT INTO friends_list (name, rls_uri, sync_uri, revision, type, ctag) VALUES ("
+			            "  :name, :rlsUri, :syncUri, 0, :type, :ctag"
 			            ")",
-			    soci::use(uniqueName), soci::use(rlsUri), soci::use(syncUri), soci::use(revision), soci::use(type);
+			    soci::use(uniqueName), soci::use(rlsUri), soci::use(syncUri), soci::use(type), soci::use(ctag);
 			resolvedListsIds[friendList.get<int>(LegacyFriendListColId)] = dbSession.getLastInsertId();
 		}
 
@@ -6735,7 +6749,8 @@ std::list<std::shared_ptr<FriendList>> MainDb::getFriendLists() {
 		soci::session *session = d->dbSession.getBackendSession();
 
 		soci::rowset<soci::row> rows =
-		    (session->prepare << "SELECT id, name, rls_uri, sync_uri, revision, type FROM friends_list ORDER BY id");
+		    (session->prepare
+		     << "SELECT id, name, rls_uri, sync_uri, revision, type, ctag FROM friends_list ORDER BY id");
 		for (const auto &row : rows) {
 			auto list = d->selectFriendList(row);
 			list->setCore(getCore());

@@ -571,7 +571,7 @@ static void carddav_integration(void) {
 	linphone_friend_list_cbs_set_sync_status_changed(cbs, carddav_sync_status_changed);
 	linphone_core_add_friend_list(manager->lc, lfl);
 
-	BC_ASSERT_EQUAL(linphone_friend_list_get_revision(lfl), -1, int, "%i");
+	BC_ASSERT_STRING_EQUAL(linphone_friend_list_get_revision(lfl), "");
 	linphone_friend_list_synchronize_friends_from_server(lfl);
 	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
 	BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
@@ -620,7 +620,7 @@ static void carddav_integration(void) {
 	stats->new_contact_count = 0;
 	stats->removed_contact_count = 0;
 	stats->updated_contact_count = 0;
-	BC_ASSERT_NOT_EQUAL(linphone_friend_list_get_revision(lfl), 0, int, "%i");
+	BC_ASSERT_STRING_NOT_EQUAL(linphone_friend_list_get_revision(lfl), "0");
 	linphone_friend_list_synchronize_friends_from_server(lfl);
 	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 4, CARDDAV_SYNC_TIMEOUT);
 	BC_ASSERT_EQUAL(stats->sync_done_count, 4, int, "%i");
@@ -630,7 +630,7 @@ static void carddav_integration(void) {
 	BC_ASSERT_EQUAL(stats->removed_contact_count, 2, int, "%i");
 	wait_for_until(manager->lc, NULL, &stats->updated_contact_count, 1, CARDDAV_SYNC_TIMEOUT);
 	BC_ASSERT_EQUAL(stats->updated_contact_count, 1, int, "%i");
-	BC_ASSERT_NOT_EQUAL(linphone_friend_list_get_revision(lfl), 0, int, "%i");
+	BC_ASSERT_STRING_NOT_EQUAL(linphone_friend_list_get_revision(lfl), "0");
 
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(lfl)), 1, size_t, "%zu");
 	lf = (LinphoneFriend *)bctbx_list_get_data((linphone_friend_list_get_friends(lfl)));
@@ -688,11 +688,11 @@ static void carddav_clean(
 	linphone_core_add_friend_list(manager->lc, lfl);
 	linphone_friend_list_unref(lfl);
 
-	BC_ASSERT_EQUAL(linphone_friend_list_get_revision(lfl), -1, int, "%i");
+	BC_ASSERT_STRING_EQUAL(linphone_friend_list_get_revision(lfl), "");
 	linphone_friend_list_synchronize_friends_from_server(lfl);
 	wait_for_until(manager->lc, NULL, &stats->sync_done_count, 1, CARDDAV_SYNC_TIMEOUT);
 	BC_ASSERT_EQUAL(stats->sync_done_count, 1, int, "%i");
-	BC_ASSERT_NOT_EQUAL(linphone_friend_list_get_revision(lfl), -1, int, "%i");
+	BC_ASSERT_STRING_NOT_EQUAL(linphone_friend_list_get_revision(lfl), "");
 	stats->sync_done_count = 0;
 
 	friends = bctbx_list_copy(linphone_friend_list_get_friends(lfl));
