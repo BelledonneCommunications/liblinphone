@@ -1538,10 +1538,14 @@ static void group_chat_room_add_participant(void) {
 	chloe_friend = linphone_core_find_friend(pauline->lc, chloe_identity);
 	BC_ASSERT_PTR_NOT_NULL(chloe_friend);
 
-	marie_devices = linphone_friend_get_devices(marie_friend);
-	BC_ASSERT_PTR_NOT_NULL(marie_devices);
-	laure_devices = linphone_friend_get_devices(laure_friend);
-	BC_ASSERT_PTR_NOT_NULL(laure_devices);
+	if (marie_friend) {
+		marie_devices = linphone_friend_get_devices(marie_friend);
+		BC_ASSERT_PTR_NOT_NULL(marie_devices);
+	}
+	if (laure_friend) {
+		laure_devices = linphone_friend_get_devices(laure_friend);
+		BC_ASSERT_PTR_NOT_NULL(laure_devices);
+	}
 
 	// Pauline adds Chloe to the chat room
 	participantsAddresses = NULL;
