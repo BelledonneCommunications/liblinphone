@@ -2579,7 +2579,6 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_publish_received(mgr->cbs, linphone_publish_received);
 	linphone_core_cbs_set_configuring_status(mgr->cbs, linphone_configuration_status);
 	linphone_core_cbs_set_call_encryption_changed(mgr->cbs, linphone_call_encryption_changed);
-	linphone_core_cbs_set_call_authentication_token_verified(mgr->cbs, linphone_call_authentication_token_verified);
 	linphone_core_cbs_set_call_send_master_key_changed(mgr->cbs, linphone_call_send_master_key_changed);
 	linphone_core_cbs_set_call_receive_master_key_changed(mgr->cbs, linphone_call_receive_master_key_changed);
 	linphone_core_cbs_set_call_goclear_ack_sent(mgr->cbs, linphone_call_goclear_ack_sent);
@@ -3978,19 +3977,6 @@ void linphone_call_encryption_changed(LinphoneCore *lc,
 	else counters->number_of_LinphoneCallEncryptedOff++;
 }
 
-void linphone_call_authentication_token_verified(LinphoneCore *lc, LinphoneCall *call, bool_t verified) {
-	LinphoneCallLog *calllog = linphone_call_get_call_log(call);
-	char *to = linphone_address_as_string(linphone_call_log_get_to_address(calllog));
-	char *from = linphone_address_as_string(linphone_call_log_get_from_address(calllog));
-	stats *counters;
-	ms_message("Authentication token [%s]", verified ? "verified" : "incorrect");
-	ms_free(to);
-	ms_free(from);
-	counters = get_stats(lc);
-	if (verified) counters->number_of_LinphoneCallAuthenticationTokenVerified++;
-	else counters->number_of_LinphoneCallIncorrectAuthenticationTokenSelected++;
-}
-
 void linphone_call_send_master_key_changed(LinphoneCore *lc,
                                            BCTBX_UNUSED(LinphoneCall *call),
                                            BCTBX_UNUSED(const char *master_key)) {
@@ -4816,8 +4802,8 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 				BC_ASSERT_TRUE(strlen(callee_token) > 0);
 				BC_ASSERT_TRUE(strlen(caller_token) > 0);
 
-				char *caller_local_token = linphone_call_get_local_authentication_token(caller_call);
-				char *callee_local_token = linphone_call_get_local_authentication_token(callee_call);
+				const char *caller_local_token = linphone_call_get_local_authentication_token(caller_call);
+				const char *callee_local_token = linphone_call_get_local_authentication_token(callee_call);
 				LinphoneCallStats *stats = linphone_call_get_stats(caller_call, LinphoneStreamTypeAudio);
 				const char *sas_algo = linphone_call_stats_get_zrtp_sas_algo(stats);
 				char *auth_token;
@@ -4846,8 +4832,6 @@ bool_t call_with_params2(LinphoneCoreManager *caller_mgr,
 				BC_ASSERT_TRUE(auth_token_found);
 				bctbx_list_free_with_data(caller_remote_tokens, bctbx_free);
 				bctbx_list_free_with_data(callee_remote_tokens, bctbx_free);
-				bctbx_free(caller_local_token);
-				bctbx_free(callee_local_token);
 			}
 		}
 

@@ -4054,8 +4054,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode,
 				BC_ASSERT_TRUE(strlen(pauline_token) > 0);
 				BC_ASSERT_TRUE(strlen(marie_token) > 0);
 
-				char *pauline_local_token = linphone_call_get_local_authentication_token(pauline_call);
-				char *marie_local_token = linphone_call_get_local_authentication_token(marie_call);
+				const char *pauline_local_token = linphone_call_get_local_authentication_token(pauline_call);
+				const char *marie_local_token = linphone_call_get_local_authentication_token(marie_call);
 				char *auth_token = (char *)bctbx_malloc(strlen(pauline_local_token) + strlen(marie_local_token) + 1);
 				if (linphone_call_get_dir(pauline_call) == LinphoneCallIncoming) {
 					strcat(strcpy(auth_token, pauline_local_token), marie_local_token);
@@ -4079,8 +4079,6 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode,
 				BC_ASSERT_TRUE(auth_token_found);
 				bctbx_list_free_with_data(pauline_remote_tokens, bctbx_free);
 				bctbx_list_free_with_data(marie_remote_tokens, bctbx_free);
-				bctbx_free(pauline_local_token);
-				bctbx_free(marie_local_token);
 			}
 			if (!plays_nothing) liblinphone_tester_check_rtcp(pauline, marie);
 		}

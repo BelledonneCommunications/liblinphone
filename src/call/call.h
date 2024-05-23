@@ -146,7 +146,8 @@ public:
 	bool getAllMuted() const;
 	LinphoneCallStats *getAudioStats() const;
 	const std::string &getAuthenticationToken() const;
-	std::string getHalfAuthenticationToken(bool localHalfAuthToken) const;
+	const std::string &forgeLocalAuthenticationToken();
+	const std::string &forgeRemoteAuthenticationToken();
 	const std::list<std::string> &getIncorrectAuthenticationTokens() const;
 	bool getAuthenticationTokenVerified() const;
 	bool getZrtpCacheMismatch() const;
@@ -340,12 +341,17 @@ private:
 	std::weak_ptr<Conference> mConfRef;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
+	std::string mLocalAuthToken;
+	std::string mRemoteAuthToken;
+
 	void cleanupSessionAndUnrefCObjectCall();
 
 	void updateRecordState(SalMediaRecord state);
 	void createRemoteConference(const std::shared_ptr<CallSession> &session);
 	void tryToAddToConference(std::shared_ptr<Conference> &conference, const std::shared_ptr<CallSession> &session);
 	void configureSoundCardsFromCore(const MediaSessionParams *msp);
+
+	void forgeHalfAuthenticationToken(bool localHalfAuthToken);
 };
 
 class CallLogContextualizer : public CoreLogContextualizer {

@@ -509,6 +509,12 @@ public:
 	bool getAuthenticationTokenVerified() const {
 		return mAuthTokenVerified;
 	}
+	bool getAuthenticationTokenCheckFailed() const {
+		return mAuthTokenCheckFailed;
+	}
+	void setAuthenticationTokenCheckFailed(bool value) {
+		mAuthTokenCheckFailed = value;
+	}
 	bool getZrtpCacheMismatch() const {
 		return mZrtpCacheMismatch;
 	}
@@ -588,6 +594,7 @@ private:
 	MixerSession *mMixerSession = nullptr;
 	std::map<std::string, std::unique_ptr<SharedService>> mSharedServices;
 	bool mAuthTokenVerified = false;
+	bool mAuthTokenCheckFailed = false;
 	bool mZrtpCacheMismatch = false;
 	bool mFinished = false;
 };

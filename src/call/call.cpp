@@ -1007,32 +1007,57 @@ const string &Call::getAuthenticationToken() const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationToken();
 }
 
-string Call::getHalfAuthenticationToken(bool localHalfAuthToken) const {
+void Call::forgeHalfAuthenticationToken(bool localHalfAuthToken) {
 	const string &authToken = getAuthenticationToken();
-	if (authToken.empty()) return nullptr; // ZRTP disabled
+	if (authToken.empty()) return; // ZRTP disabled
 	LinphoneCallStats *stats = getStats(LinphoneStreamTypeAudio);
 	int sasAlgo = linphone_call_stats_get_zrtp_algo(stats)->sas_algo;
 	linphone_call_stats_unref(stats);
-	bool firstPart = false;
-	string ret;
-	if ((getDirection() == LinphoneCallOutgoing && !localHalfAuthToken) ||
-	    (getDirection() == LinphoneCallIncoming && localHalfAuthToken)) {
-		firstPart = true;
-	}
-	if (sasAlgo == MS_ZRTP_SAS_B32) {
-		if (firstPart) {
-			return authToken.substr(0, 2);
+	if (localHalfAuthToken) {
+		if (sasAlgo == MS_ZRTP_SAS_B32) {
+			if (getDirection() == LinphoneCallOutgoing) {
+				mLocalAuthToken = authToken.substr(2, 2);
+			} else {
+				mLocalAuthToken = authToken.substr(0, 2);
+			}
 		} else {
-			return authToken.substr(2, 2);
+			auto pos = authToken.find(':');
+			if (getDirection() == LinphoneCallOutgoing) {
+				mLocalAuthToken = authToken.substr(pos + 1);
+			} else {
+				mLocalAuthToken = authToken.substr(0, pos);
+			}
 		}
 	} else {
-		auto pos = authToken.find(':');
-		if (firstPart) {
-			return authToken.substr(0, pos);
+		if (sasAlgo == MS_ZRTP_SAS_B32) {
+			if (getDirection() == LinphoneCallOutgoing) {
+				mRemoteAuthToken = authToken.substr(0, 2);
+			} else {
+				mRemoteAuthToken = authToken.substr(2, 2);
+			}
 		} else {
-			return authToken.substr(pos + 1);
+			auto pos = authToken.find(':');
+			if (getDirection() == LinphoneCallOutgoing) {
+				mRemoteAuthToken = authToken.substr(0, pos);
+			} else {
+				mRemoteAuthToken = authToken.substr(pos + 1);
+			}
 		}
 	}
+}
+
+const string &Call::forgeLocalAuthenticationToken() {
+	if (mLocalAuthToken.empty()) {
+		forgeHalfAuthenticationToken(true);
+	}
+	return mLocalAuthToken;
+}
+
+const string &Call::forgeRemoteAuthenticationToken() {
+	if (mRemoteAuthToken.empty()) {
+		forgeHalfAuthenticationToken(false);
+	}
+	return mRemoteAuthToken;
 }
 
 const list<string> &Call::getIncorrectAuthenticationTokens() const {
@@ -1238,9 +1263,9 @@ bool Call::mediaInProgress() const {
 }
 
 void Call::checkAuthenticationTokenSelected(const string &selectedValue) {
-	auto halfAuthToken = getHalfAuthenticationToken(false);
+	auto retmoteHalfAuthToken = forgeRemoteAuthenticationToken();
 	static_pointer_cast<MediaSession>(getActiveSession())
-	    ->checkAuthenticationTokenSelected(selectedValue, halfAuthToken);
+	    ->checkAuthenticationTokenSelected(selectedValue, retmoteHalfAuthToken);
 }
 
 void Call::setAuthenticationTokenVerified(bool value) {

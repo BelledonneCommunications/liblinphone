@@ -3298,6 +3298,11 @@ void MediaSessionPrivate::updateStreams(std::shared_ptr<SalMediaDescription> &ne
 		return;
 	}
 
+	if (q->getStreamsGroup().getAuthenticationTokenCheckFailed()) {
+		lError() << "updateStreams() The ZRTP authentication token check failed, unable to update the streams";
+		return;
+	}
+
 	updateBiggestDesc(localDesc);
 	resultDesc = newMd;
 
@@ -5481,9 +5486,13 @@ void MediaSession::setAuthenticationTokenVerified(bool value) {
 			encryptionEngine->authenticationRejected(peerDeviceId);
 			ms_free(peerDeviceId);
 		}
-		d->stopStreams();
 	}
 	d->propagateEncryptionChanged();
+}
+
+void MediaSession::setAuthenticationTokenCheckFailed(bool value) {
+	L_D();
+	d->getStreamsGroup().setAuthenticationTokenCheckFailed(value);
 }
 
 void MediaSession::checkAuthenticationTokenSelected(const string &selectedValue, const string &halfAuthToken) {
@@ -5491,6 +5500,8 @@ void MediaSession::checkAuthenticationTokenSelected(const string &selectedValue,
 	bool value = (selectedValue.compare(halfAuthToken) == 0) ? true : false;
 	d->listener->onAuthenticationTokenVerified(getSharedFromThis(), value);
 	setAuthenticationTokenVerified(value);
+	setAuthenticationTokenCheckFailed(!value);
+	if (!value) d->stopStreams();
 }
 
 void MediaSession::setParams(const MediaSessionParams *msp) {

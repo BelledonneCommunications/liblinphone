@@ -107,7 +107,6 @@ void linphone_call_notify_encryption_changed(LinphoneCall *call, bool_t on, cons
 void linphone_call_notify_authentication_token_verified(LinphoneCall *call, bool_t verified) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_authentication_token_verified,
 	                                  verified);
-	linphone_core_notify_call_authentication_token_verified(linphone_call_get_core(call), call, verified);
 };
 
 void linphone_call_notify_send_master_key_changed(LinphoneCall *call, const char *master_key) {
@@ -322,16 +321,16 @@ const char *linphone_call_get_authentication_token(LinphoneCall *call) {
 	return L_STRING_TO_C(Call::toCpp(call)->getAuthenticationToken());
 }
 
-char *linphone_call_get_local_authentication_token(LinphoneCall *call) {
+const char *linphone_call_get_local_authentication_token(LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
-	return strdup(Call::toCpp(call)->getHalfAuthenticationToken(true).c_str());
+	return L_STRING_TO_C(Call::toCpp(call)->forgeLocalAuthenticationToken());
 }
 
 bctbx_list_t *linphone_call_get_remote_authentication_tokens(LinphoneCall *call) {
 	CallLogContextualizer logContextualizer(call);
 	Call *callCpp = Call::toCpp(call);
 	auto remoteTokens = callCpp->getIncorrectAuthenticationTokens();
-	remoteTokens.push_back(Call::toCpp(call)->getHalfAuthenticationToken(false));
+	remoteTokens.push_back(Call::toCpp(call)->forgeRemoteAuthenticationToken());
 	remoteTokens.sort();
 	return L_GET_C_LIST_FROM_CPP_LIST(remoteTokens);
 }

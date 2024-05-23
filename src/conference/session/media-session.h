@@ -149,6 +149,7 @@ public:
 	bool mediaInProgress() const;
 	void checkAuthenticationTokenSelected(const std::string &selectedValue, const std::string &halfAuthToken);
 	void setAuthenticationTokenVerified(bool value);
+	void setAuthenticationTokenCheckFailed(bool value);
 	void setMicrophoneVolumeGain(float value);
 	void setNativeVideoWindowId(void *id,
 	                            const std::string label = "",

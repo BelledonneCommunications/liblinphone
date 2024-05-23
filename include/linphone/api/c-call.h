@@ -291,9 +291,9 @@ LINPHONE_PUBLIC const char *linphone_call_get_authentication_token(LinphoneCall 
 /**
  * Returns the local ZRTP authentication token to verify by the remote.
  * @param call The #LinphoneCall object @notnil
- * @return the local authentication token to verify or NULL if ZRTP isn't enabled. @maybenil @tobefreed
+ * @return the local authentication token to verify or NULL if ZRTP isn't enabled. @maybenil
  **/
-LINPHONE_PUBLIC char *linphone_call_get_local_authentication_token(LinphoneCall *call);
+LINPHONE_PUBLIC const char *linphone_call_get_local_authentication_token(LinphoneCall *call);
 
 /**
  * Returns a list of 4 remote ZRTP authentication tokens. The user needs to select one.
