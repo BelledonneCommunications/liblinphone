@@ -434,6 +434,17 @@ bool linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc,
 			}
 			requestedMethod = LinphoneAuthHttpDigest;
 		} break;
+		case BELLE_SIP_AUTH_MODE_HTTP_BASIC: {
+			const char *algorithm = belle_sip_auth_event_get_algorithm(event);
+
+			const LinphoneAuthInfo *auth_info =
+			    _linphone_core_find_auth_info(lc, realm, ae_username, ae_domain, algorithm, FALSE);
+			if (auth_info) {
+				linphone_auth_info_fill_belle_sip_event(auth_info, event);
+				done = true;
+			}
+			requestedMethod = LinphoneAuthBasic;
+		} break;
 		case BELLE_SIP_AUTH_MODE_HTTP_BEARER: {
 			const LinphoneAuthInfo *auth_info = _linphone_core_find_bearer_auth_info(lc, realm, ae_username, ae_domain);
 			if (auth_info) {
