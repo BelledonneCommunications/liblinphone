@@ -1351,6 +1351,8 @@ void MS2Stream::stop() {
 	for (bctbx_list_t *it = mSessions.auxiliary_sessions; it != nullptr; it = it->next) {
 		if (auto *session = (RtpSession *)it->data; session != nullptr) rtp_session_set_profile(session, &av_profile);
 	}
+	if (mSessions.fec_session) rtp_session_set_profile(mSessions.fec_session, &av_profile);
+
 	Stream::stop();
 
 	/* At this time the derived class hasn't yet stopped it streams.

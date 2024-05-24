@@ -25,6 +25,7 @@
 #include "call/call.h"
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
+#include <sys/stat.h>
 
 #include "tester_utils.h"
 
@@ -201,6 +202,259 @@ static void wait_for_tmmbr_count(const int max_iteration,
 		tmmbr_received.insert(last_tmmbr_value);
 		if (tmmbr_received.size() > tmmbr_min_count) break;
 	}
+}
+static void video_call_with_flexfec_disable_video(void) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
+	OrtpNetworkSimulatorParams network_params = {0};
+	network_params.enabled = TRUE;
+	network_params.loss_rate = 8.f;
+	network_params.mode = OrtpNetworkSimulatorOutbound;
+
+	// flexfec_tests_params params{
+	//     LinphoneMediaEncryptionNone,
+	//     FALSE,
+	//     TRUE,
+	// };
+	flexfec_tests_params params{LinphoneMediaEncryptionZRTP, FALSE, TRUE};
+
+	// typedef struct _flexfec_tests_params {
+
+	// 	LinphoneMediaEncryption encryption_mode;
+	// 	bool_t ice;
+	// 	bool_t audio_enabled;
+
+	// } flexfec_tests_params;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new("pauline_rc");
+	// fec_stats *fec_stats = NULL;
+
+	linphone_core_set_media_encryption(marie->lc, params.encryption_mode);
+	linphone_core_set_media_encryption(pauline->lc, params.encryption_mode);
+	if (params.encryption_mode == LinphoneMediaEncryptionDTLS) {
+		char *path = bc_tester_file("certificates-marie");
+		linphone_core_set_user_certificates_path(marie->lc, path);
+		bc_free(path);
+		path = bc_tester_file("certificates-pauline");
+		linphone_core_set_user_certificates_path(pauline->lc, path);
+		bc_free(path);
+		bctbx_mkdir(linphone_core_get_user_certificates_path(marie->lc));
+		bctbx_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+	}
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+
+	linphone_core_set_network_simulator_params(marie->lc, &network_params);
+	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
+
+	if (params.ice) {
+		enable_stun_in_mgr(marie, TRUE, TRUE, TRUE, TRUE);
+		enable_stun_in_mgr(pauline, TRUE, TRUE, TRUE, TRUE);
+	}
+	enable_rtp_bundle(marie->lc, TRUE);
+	enable_rtp_bundle(pauline->lc, TRUE);
+
+	linphone_core_enable_fec(marie->lc, TRUE);
+	linphone_core_enable_fec(pauline->lc, TRUE);
+
+	if (!params.audio_enabled) {
+		disable_all_audio_codecs(marie->lc);
+		disable_all_audio_codecs(pauline->lc);
+	}
+
+	uint64_t expected_recovered_packets = 7;
+	PayloadType *pt_marie = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	PayloadType *pt_pauline = linphone_core_find_payload_type(marie->lc, "AV1", -1, -1);
+	if (pt_marie && pt_pauline) {
+		disable_all_video_codecs_except_one(marie->lc, "AV1");
+		disable_all_video_codecs_except_one(pauline->lc, "AV1");
+	} else {
+		disable_all_video_codecs_except_one(marie->lc, "VP8");
+		disable_all_video_codecs_except_one(pauline->lc, "VP8");
+		expected_recovered_packets = 30;
+	}
+
+	enable_video_stream(marie->lc, pol);
+	enable_video_stream(pauline->lc, pol);
+
+	linphone_video_activation_policy_unref(pol);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	// LinphoneCall *pauline_call, *marie_call;
+	// marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	// BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	// pauline_call = linphone_core_get_current_call(pauline->lc);
+
+	// linphone_call_accept(pauline_call);
+
+	LinphoneCall *pauline_call;
+
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
+
+	// fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
+
+	// printf("wait for 5s\n");
+	// BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 5000));
+	// BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 20000));
+	// if (vstream->ms.fec_stream) {
+	// 	fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
+	// 	// BC_ASSERT_TRUE(wait_for_until_for_uint64(marie->lc, pauline->lc, &fec_stats->packets_recovered,
+	// 	//                                          expected_recovered_packets, 25000));
+	// 	// ms_message("%s recovered %0d packets. The expected value is %0d", linphone_core_get_identity(marie->lc),
+	// 	//            static_cast<int>(fec_stats->packets_recovered), static_cast<int>(expected_recovered_packets));
+	// } else {
+	// 	BC_FAIL("FEC not enabled.");
+	// }
+	// if (!vstream->ms.fec_stream) BC_FAIL("FEC not enabled.");
+
+	stats initial_marie_stat = marie->stat;
+	stats initial_pauline_stat = pauline->stat;
+	fec_stats *fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000));
+	if (vstream->ms.fec_stream) {
+		fec_stats = fec_stream_get_stats(vstream->ms.fec_stream);
+		BC_ASSERT_TRUE(wait_for_until_for_uint64(marie->lc, pauline->lc, &fec_stats->packets_recovered,
+		                                         expected_recovered_packets, 25000));
+		ms_message("%s recovered %0d packets. The expected value is %0d", linphone_core_get_identity(marie->lc),
+		           static_cast<int>(fec_stats->packets_recovered), static_cast<int>(expected_recovered_packets));
+	} else {
+		BC_FAIL("FEC not enabled.");
+	}
+
+	// now disable video
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	LinphoneCallParams *new_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_video(new_params, FALSE);
+	printf("disable video\n");
+	ortp_message(" *** disable video ***");
+	linphone_call_update(pauline_call, new_params);
+	printf("ok\n");
+	linphone_call_params_unref(new_params);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote,
+	                        initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating,
+	                        initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	// Check video parameters
+	const LinphoneCallParams *pauline_call_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(pauline_call_params));
+	const LinphoneCallParams *marie_call_params = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_call_params));
+
+	// wait
+	printf("wait for 10s\n");
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000);
+
+	initial_marie_stat = marie->stat;
+	initial_pauline_stat = pauline->stat;
+
+	// now enable video again
+	new_params = linphone_core_create_call_params(marie->lc, marie_call);
+	linphone_call_params_enable_video(new_params, TRUE);
+	printf("enable video again\n");
+	ortp_message(" *** enable video ***");
+	linphone_call_update(pauline_call, new_params);
+	printf("ok\n");
+	linphone_call_params_unref(new_params);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating,
+	                        initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote,
+	                        initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	// Check video parameters
+	pauline_call_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_call_params));
+	marie_call_params = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_params));
+
+	// wait
+	// printf("wait for 15s (not enough to enable FEC)\n");
+	// BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 15000));
+	printf("wait for 30s\n");
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 30000));
+
+	// =================================================
+	// now disable video
+	// pauline_call = linphone_core_get_current_call(pauline->lc);
+	new_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_video(new_params, FALSE);
+	printf("disable video\n");
+	ortp_message(" *** disable video ***");
+	linphone_call_update(pauline_call, new_params);
+	printf("ok\n");
+	linphone_call_params_unref(new_params);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote,
+	                        initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating,
+	                        initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	// Check video parameters
+	pauline_call_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(pauline_call_params));
+	marie_call_params = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_call_params));
+
+	// wait
+	printf("wait for 10s\n");
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000);
+
+	initial_marie_stat = marie->stat;
+	initial_pauline_stat = pauline->stat;
+
+	// now enable video again
+	new_params = linphone_core_create_call_params(marie->lc, marie_call);
+	linphone_call_params_enable_video(new_params, TRUE);
+	printf("enable video again\n");
+	ortp_message(" *** enable video ***");
+	linphone_call_update(pauline_call, new_params);
+	printf("ok\n");
+	linphone_call_params_unref(new_params);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating,
+	                        initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote,
+	                        initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,
+	                        initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	// Check video parameters
+	pauline_call_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_call_params));
+	marie_call_params = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_params));
+
+	// wait
+	// printf("wait for 15s (not enough to enable FEC)\n");
+	// BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 15000));
+	printf("wait for 30s (not enough to enable FEC)\n");
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 30000));
+
+	end_call(marie, pauline);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 static void video_call_with_flexfec_bandwidth_variation(void) {
 	/*This test checks that the FEC level adapts to the current bandwidth, for a given the loss rate. During the step 1,
@@ -595,6 +849,7 @@ static test_t call_flexfec_tests[] = {
     TEST_NO_TAG("Video call with flexfec and srtp", video_call_with_flexfec_and_srtp),
     TEST_NO_TAG("Video call with flexfec and dtls", video_call_with_flexfec_and_dtls),
     TEST_NO_TAG("Video call with flexfec and zrtp", video_call_with_flexfec_and_zrtp),
+    TEST_NO_TAG("Video call with flexfec video disabled", video_call_with_flexfec_disable_video),
     TEST_NO_TAG("Video call with flexfec bandwidth variation", video_call_with_flexfec_bandwidth_variation),
     TEST_NO_TAG("Video call with flexfec check fps", video_call_with_flexfec_check_fps),
 };
